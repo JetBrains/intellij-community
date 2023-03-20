@@ -27,7 +27,7 @@ class TerminalBlocksController(
       }
     })
 
-    session.addCommandListener(this, parentDisposable = this)
+    session.addCommandListener(this)
     session.model.addTerminalListener(object : TerminalModel.TerminalListener {
       override fun onAlternateBufferChanged(enabled: Boolean) {
         invokeLater {

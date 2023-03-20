@@ -26,7 +26,7 @@ import javax.swing.*
 
 class TerminalPromptPanel(private val project: Project,
                           private val settings: JBTerminalSystemSettingsProviderBase,
-                          private val session: TerminalSession,
+                          session: TerminalSession,
                           private val commandExecutor: TerminalCommandExecutor) : JPanel(), ComponentContainer, ShellCommandListener {
   private val editorTextField: LanguageTextField
   private val editor: EditorImpl
@@ -38,6 +38,7 @@ class TerminalPromptPanel(private val project: Project,
 
   private val completionManager: TerminalCompletionManager
 
+  private val commandHistoryManager: CommandHistoryManager
   private val commandHistoryPresenter: CommandHistoryPresenter
 
   val charSize: Dimension
@@ -51,12 +52,13 @@ class TerminalPromptPanel(private val project: Project,
 
     completionManager = TerminalCompletionManager(session)
 
+    commandHistoryManager = CommandHistoryManager(session)
     commandHistoryPresenter = CommandHistoryPresenter(project, editor)
 
     editor.putUserData(TerminalSession.KEY, session)
     editor.putUserData(TerminalCompletionManager.KEY, completionManager)
 
-    session.addCommandListener(this, parentDisposable = this)
+    session.addCommandListener(this)
 
     val innerBorder = JBUI.Borders.customLine(UIUtil.getTextFieldBackground(), 6, 0, 6, 0)
     val outerBorder = JBUI.Borders.customLineTop(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground())
@@ -124,7 +126,7 @@ class TerminalPromptPanel(private val project: Project,
   }
 
   fun showCommandHistory() {
-    val history = session.commandHistoryManager.history
+    val history = commandHistoryManager.history
     if (history.isNotEmpty()) {
       commandHistoryPresenter.showCommandHistory(history)
     }
