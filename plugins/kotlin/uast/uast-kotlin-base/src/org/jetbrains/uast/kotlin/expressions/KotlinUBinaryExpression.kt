@@ -51,38 +51,6 @@ class KotlinUBinaryExpression(
     override fun multiResolve(): Iterable<ResolveResult> =
         getResolveResultVariants(baseResolveProviderService, sourcePsi)
 
-    override fun hasOperator(expectedOperator: UastBinaryOperator): Boolean {
-        val operationToken = sourcePsi.operationToken
-
-        return when (expectedOperator) {
-            UastBinaryOperator.ASSIGN -> operationToken == KtTokens.EQ
-            UastBinaryOperator.PLUS -> operationToken == KtTokens.PLUS
-            UastBinaryOperator.MINUS -> operationToken == KtTokens.MINUS
-            UastBinaryOperator.MULTIPLY -> operationToken == KtTokens.MUL
-            UastBinaryOperator.DIV  -> operationToken == KtTokens.DIV
-            UastBinaryOperator.MOD -> operationToken == KtTokens.PERC
-            UastBinaryOperator.LOGICAL_OR -> operationToken == KtTokens.OROR
-            UastBinaryOperator.LOGICAL_AND -> operationToken == KtTokens.ANDAND
-            UastBinaryOperator.EQUALS -> operationToken == KtTokens.EQEQ
-            UastBinaryOperator.NOT_EQUALS  -> operationToken == KtTokens.EXCLEQ
-            UastBinaryOperator.IDENTITY_EQUALS -> operationToken == KtTokens.EQEQEQ
-            UastBinaryOperator.IDENTITY_NOT_EQUALS -> operationToken == KtTokens.EXCLEQEQEQ
-            UastBinaryOperator.GREATER  -> operationToken == KtTokens.GT
-            UastBinaryOperator.GREATER_OR_EQUALS -> operationToken == KtTokens.GTEQ
-            UastBinaryOperator.LESS -> operationToken == KtTokens.LT
-            UastBinaryOperator.LESS_OR_EQUALS -> operationToken == KtTokens.LTEQ
-            UastBinaryOperator.PLUS_ASSIGN -> operationToken == KtTokens.PLUSEQ
-            UastBinaryOperator.MINUS_ASSIGN -> operationToken == KtTokens.MINUSEQ
-            UastBinaryOperator.MULTIPLY_ASSIGN -> operationToken == KtTokens.MULTEQ
-            UastBinaryOperator.DIVIDE_ASSIGN -> operationToken == KtTokens.DIVEQ
-            UastBinaryOperator.REMAINDER_ASSIGN -> operationToken == KtTokens.PERCEQ
-            KotlinBinaryOperators.IN -> operationToken == KtTokens.IN_KEYWORD
-            KotlinBinaryOperators.NOT_IN -> operationToken == KtTokens.NOT_IN
-            KotlinBinaryOperators.RANGE_TO -> operationToken == KtTokens.RANGE
-            else -> expectedOperator == baseResolveProviderService.resolveBitwiseOperators(sourcePsi)
-        }
-    }
-
     override val operator: UastBinaryOperator
         get() = when (sourcePsi.operationToken) {
             KtTokens.EQ -> UastBinaryOperator.ASSIGN
@@ -109,7 +77,14 @@ class KotlinUBinaryExpression(
             KtTokens.IN_KEYWORD -> KotlinBinaryOperators.IN
             KtTokens.NOT_IN -> KotlinBinaryOperators.NOT_IN
             KtTokens.RANGE -> KotlinBinaryOperators.RANGE_TO
-            else -> baseResolveProviderService.resolveBitwiseOperators(sourcePsi)
-        }
+            else -> {
+                val text = sourcePsi.operationReference.text
 
+                if (BITWISE_OPERATORS.containsKey(text)) {
+                    baseResolveProviderService.resolveBitwiseOperators(sourcePsi)
+                } else {
+                    UastBinaryOperator.OTHER
+                }
+            }
+        }
 }
