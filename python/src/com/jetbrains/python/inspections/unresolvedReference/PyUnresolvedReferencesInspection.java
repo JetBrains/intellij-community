@@ -7,10 +7,12 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -101,7 +103,11 @@ public class PyUnresolvedReferencesInspection extends PyUnresolvedReferencesInsp
             return StreamEx
               .of(packageName)
               .append(PyPsiPackageUtil.PACKAGES_TOPLEVEL.getOrDefault(packageName, Collections.emptyList()))
-              .filter(PyPIPackageUtil.INSTANCE::isInPyPI)
+              .filter(
+                ApplicationManager.getApplication().isUnitTestMode()
+                      ? Predicates.alwaysTrue()
+                      : PyPIPackageUtil.INSTANCE::isInPyPI
+              )
               .map(pkg -> getInstallPackageAction(pkg, module, sdk));
           }
         }
