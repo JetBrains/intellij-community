@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.ide.util.ClassFilter;
@@ -105,7 +105,7 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
     }
     if (!hasConstantFields) myIntroduceEnumConstants.setVisible(false);
     for (PsiMethod method : methods) {
-      if (method.hasModifierProperty(PsiModifier.STATIC)) {
+      if (method.hasModifierProperty(PsiModifier.STATIC) && !(method instanceof SyntheticElement)) {
         MemberInfo info = new MemberInfo(method);
         if (preselectMembers.contains(method)) {
           info.setChecked(true);
