@@ -67,7 +67,7 @@ private class ScaledResultIcon(image: Image,
                                private val scale: Float) : ImageIcon(image), ReplaceableIcon {
   @Synchronized
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
-    drawImage(g = g, image = image, dx = x, dy = y, sourceBounds = null, op = null, observer = imageObserver ?: c)
+    drawImage(g = g, image = image, x = x, y = y, sourceBounds = null, op = null, observer = imageObserver ?: c)
   }
 
   override fun replaceBy(replacer: IconReplacer): Icon {

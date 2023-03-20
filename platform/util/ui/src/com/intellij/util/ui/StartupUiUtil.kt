@@ -7,8 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.JreHiDpiUtil
-import com.intellij.ui.scale.JBUIScale.isHiDPI
-import com.intellij.ui.scale.JBUIScale.sysScale
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.JBHiDPIScaledImage
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -75,20 +74,20 @@ object StartupUiUtil {
    */
   @JvmStatic
   val isJreHiDPI: Boolean
-    get() = JreHiDpiUtil.isJreHiDPI(sysScale())
+    get() = JreHiDpiUtil.isJreHiDPI(JBUIScale.sysScale())
 
   /**
    * Returns whether the JRE-managed HiDPI mode is enabled and the provided component is tied to a HiDPI device.
    */
   @JvmStatic
-  fun isJreHiDPI(comp: Component?): Boolean = JreHiDpiUtil.isJreHiDPI(comp?.graphicsConfiguration)
+  fun isJreHiDPI(component: Component?): Boolean = JreHiDpiUtil.isJreHiDPI(component?.graphicsConfiguration)
 
   /**
    * Returns whether the JRE-managed HiDPI mode is enabled and the provided system scale context is HiDPI.
    */
   @JvmStatic
-  fun isJreHiDPI(ctx: ScaleContext?): Boolean {
-    return JreHiDpiUtil.isJreHiDPIEnabled() && isHiDPI(sysScale(ctx))
+  fun isJreHiDPI(scaleContext: ScaleContext?): Boolean {
+    return JreHiDpiUtil.isJreHiDPIEnabled() && JBUIScale.isHiDPI(JBUIScale.sysScale(scaleContext))
   }
 
   @JvmStatic
@@ -108,13 +107,13 @@ object StartupUiUtil {
    */
   @JvmStatic
   fun drawImage(g: Graphics, image: Image, x: Int, y: Int, observer: ImageObserver?) {
-    drawImage(g = g, image = image, dx = x, dy = y, sourceBounds = null, op = null, observer = observer)
+    drawImage(g = g, image = image, x = x, y = y, sourceBounds = null, op = null, observer = observer)
   }
 
   @JvmStatic
   fun drawImage(g: Graphics, image: Image, x: Int, y: Int, width: Int, height: Int, op: BufferedImageOp?) {
     val srcBounds = if (width >= 0 && height >= 0) Rectangle(x, y, width, height) else null
-    drawImage(g = g, image = image, dx = x, dy = y, dw = width, dh = height, sourceBounds = srcBounds, op = op, observer = null)
+    drawImage(g = g, image = image, x = x, y = y, dw = width, dh = height, sourceBounds = srcBounds, op = op, observer = null)
   }
 
   @JvmStatic
@@ -145,7 +144,7 @@ object StartupUiUtil {
    */
   @JvmStatic
   fun drawImage(g: Graphics, image: BufferedImage, op: BufferedImageOp?, x: Int, y: Int) {
-    drawImage(g = g, image = image, dx = x, dy = y, dw = -1, dh = -1, sourceBounds = null, op = op, observer = null)
+    drawImage(g = g, image = image, x = x, y = y, dw = -1, dh = -1, sourceBounds = null, op = op, observer = null)
   }
 
   @JvmStatic
@@ -249,8 +248,8 @@ fun drawImage(g: Graphics,
   else {
     drawImage(g = g,
               image = image,
-              dx = destinationBounds.x,
-              dy = destinationBounds.y,
+              x = destinationBounds.x,
+              y = destinationBounds.y,
               dw = destinationBounds.width,
               dh = destinationBounds.height,
               sourceBounds = sourceBounds,
@@ -271,21 +270,21 @@ private val useAccuracyDelta = System.getProperty("ide.icon.scale.useAccuracyDel
 @Internal
 fun drawImage(g: Graphics,
               image: Image,
-              dx: Int = 0,
-              dy: Int = 0,
+              x: Int = 0,
+              y: Int = 0,
               dw: Int = -1,
               dh: Int = -1,
-              sourceBounds: Rectangle?,
-              op: BufferedImageOp?,
-              observer: ImageObserver?) {
+              sourceBounds: Rectangle? = null,
+              op: BufferedImageOp? = null,
+              observer: ImageObserver? = null) {
   val hasDestinationSize = dw >= 0 && dh >= 0
   if (image is JBHiDPIScaledImage) {
     doDrawHiDpi(userWidth = image.getUserWidth(null),
                 userHeight = image.getUserHeight(null),
                 g = g,
                 scale = image.scale,
-                dx = dx,
-                dy = dy,
+                dx = x,
+                dy = y,
                 dw = dw,
                 dh = dh,
                 hasDestinationSize = hasDestinationSize,
@@ -305,8 +304,8 @@ fun drawImage(g: Graphics,
            userWidth = image.getWidth(null),
            userHeight = image.getHeight(null),
            g = g,
-           dx = dx,
-           dy = dy,
+           dx = x,
+           dy = y,
            observer = observer,
            scale = 1.0)
   }
