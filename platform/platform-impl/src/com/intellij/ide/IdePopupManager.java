@@ -113,9 +113,8 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
   }
 
   public void push(IdePopupEventDispatcher dispatcher) {
-    if (!myDispatchStack.contains(dispatcher)) {
-      myDispatchStack.add(dispatcher);
-    }
+    myDispatchStack.remove(dispatcher);
+    myDispatchStack.add(dispatcher);
   }
 
   public void remove(IdePopupEventDispatcher dispatcher) {

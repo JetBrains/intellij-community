@@ -93,7 +93,7 @@ final class TrafficLightPopup {
   }
 
   private boolean canClose() {
-    return !insidePopup && levelLinks.stream().allMatch(l -> l.getPopupState().isHidden());
+    return !insidePopup && !StackingPopupDispatcher.getInstance().isPopupFocused();
   }
 
   void updateUI() {
