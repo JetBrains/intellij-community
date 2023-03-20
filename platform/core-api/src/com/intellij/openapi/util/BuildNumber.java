@@ -2,6 +2,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.registry.EarlyAccessRegistryManager;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -293,6 +294,6 @@ public final class BuildNumber implements Comparable<BuildNumber> {
   }
 
   private static @Nullable String getPluginsCompatibleBuild() {
-    return System.getProperty("idea.plugins.compatible.build");
+    return EarlyAccessRegistryManager.INSTANCE.getString("idea.plugins.compatible.build");
   }
 }

@@ -6,6 +6,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -20,14 +21,13 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
   companion object {
 
     const val DISABLED_PLUGINS_FILENAME: @NonNls String = "disabled_plugins.txt"
-    private val IGNORE_DISABLED_PLUGINS = java.lang.Boolean.getBoolean("idea.ignore.disabled.plugins")
 
     @Volatile
     private var disabledPlugins: Set<PluginId>? = null
     private val ourDisabledPluginListeners = CopyOnWriteArrayList<Runnable>()
 
     @Volatile
-    private var isDisabledStateIgnored = IGNORE_DISABLED_PLUGINS
+    private var isDisabledStateIgnored = EarlyAccessRegistryManager.getBoolean("idea.ignore.disabled.plugins")
 
     private val defaultFilePath: Path
       get() = PathManager.getConfigDir().resolve(DISABLED_PLUGINS_FILENAME)
