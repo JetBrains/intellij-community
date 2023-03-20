@@ -9,7 +9,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 
-class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
+class CustomLayoutsActionGroup : DefaultActionGroup(), DumbAware {
 
   private val childrenCache = NamedLayoutListBasedCache<AnAction> {
     CustomLayoutActionGroup(it)
@@ -18,6 +18,11 @@ class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
   override fun getChildren(e: AnActionEvent?): Array<AnAction> = childrenCache.getCachedOrUpdatedArray(AnAction.EMPTY_ARRAY)
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    e.presentation.isPopupGroup = e.place != ActionPlaces.MAIN_MENU // to be used as a popup, e.g., in toolbars
+  }
 
   private class CustomLayoutActionGroup(
     @NlsSafe private val layoutName: String
