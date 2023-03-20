@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.io.URLUtil
-import org.jetbrains.kotlin.idea.checkers.CompilerTestLanguageVersionSettings
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.config.addKotlinSourceRoot
 import org.jetbrains.kotlin.cli.common.messages.MessageRenderer
