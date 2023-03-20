@@ -17,8 +17,9 @@ import java.util.concurrent.CompletableFuture
 
 class TerminalCompletionContributor : CompletionContributor() {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
-    val session = parameters.editor.getUserData(TerminalPromptPanel.SESSION_KEY)
-    if (session == null || parameters.completionType != CompletionType.BASIC) {
+    val session = parameters.editor.getUserData(TerminalSession.KEY)
+    val completionManager = parameters.editor.getUserData(TerminalCompletionManager.KEY)
+    if (session == null || completionManager == null || parameters.completionType != CompletionType.BASIC) {
       return
     }
 
@@ -31,7 +32,7 @@ class TerminalCompletionContributor : CompletionContributor() {
 
     val resultSet = result.caseInsensitive()
     val baseTimeoutMillis = 1000
-    var completionResult = invokeCompletion(session, command, baseTimeoutMillis)
+    var completionResult = invokeCompletion(session.model, completionManager, command, baseTimeoutMillis)
     if (completionResult.isSingleItem) {
       val addedPart = completionResult.items.single()
       // Consider item, that ends with '/' as fully completed item
@@ -41,7 +42,7 @@ class TerminalCompletionContributor : CompletionContributor() {
         // We get 'foo' as the only one completion item for command 'f'
         // But there can be more specific items: 'foobar' and 'fooboo'
         // And in this case we need to show these two items instead of incomplete 'foo'
-        val secondResult = invokeCompletion(session, command + addedPart, baseTimeoutMillis / 2)
+        val secondResult = invokeCompletion(session.model, completionManager, command + addedPart, baseTimeoutMillis / 2)
         if (secondResult.isSingleItem) {
           completionResult = CompletionResult(addedPart + secondResult.items.single())
         }
@@ -63,17 +64,15 @@ class TerminalCompletionContributor : CompletionContributor() {
     resultSet.stopHere()
   }
 
-  private fun invokeCompletion(session: TerminalSession,
+  private fun invokeCompletion(model: TerminalModel,
+                               completionManager: TerminalCompletionManager,
                                command: String,
                                timeoutMillis: Int): CompletionResult {
-    val completionManager = session.completionManager
-    val model: TerminalModel = session.model
-
     completionManager.waitForTerminalLock()
 
     val listenerDisposable = Disposer.newDisposable()
     val future = CompletableFuture<CompletionResult>()
-    val promptText = model.withContentLock { session.model.getAllText() }.replace("\n", "")
+    val promptText = model.withContentLock { model.getAllText() }.replace("\n", "")
     val context = ParsingContext(command, promptText, model.width)
     try {
       model.addContentListener(object : TerminalModel.ContentListener {

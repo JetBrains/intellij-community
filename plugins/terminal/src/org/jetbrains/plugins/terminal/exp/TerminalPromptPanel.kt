@@ -36,6 +36,8 @@ class TerminalPromptPanel(private val project: Project,
 
   private val promptLabel: JLabel
 
+  private val completionManager: TerminalCompletionManager
+
   private val commandHistoryPresenter: CommandHistoryPresenter
 
   val charSize: Dimension
@@ -47,9 +49,12 @@ class TerminalPromptPanel(private val project: Project,
     promptLabel = createPromptLabel()
     promptLabel.text = computePromptText(TerminalProjectOptionsProvider.getInstance(project).startingDirectory ?: "")
 
+    completionManager = TerminalCompletionManager(session)
+
     commandHistoryPresenter = CommandHistoryPresenter(project, editor)
 
-    editor.putUserData(SESSION_KEY, session)
+    editor.putUserData(TerminalSession.KEY, session)
+    editor.putUserData(TerminalCompletionManager.KEY, completionManager)
 
     session.addCommandListener(this, parentDisposable = this)
 
@@ -151,7 +156,6 @@ class TerminalPromptPanel(private val project: Project,
 
   companion object {
     val KEY: Key<TerminalPromptPanel> = Key.create("TerminalPromptPanel")
-    val SESSION_KEY: Key<TerminalSession> = Key.create("TerminalSession")
 
     private const val LEFT_INSET: Int = 7
   }

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.util.ConcurrencyUtil
 import com.jediterm.core.typeahead.TerminalTypeAheadManager
@@ -24,7 +25,6 @@ class TerminalSession(private val project: Project,
                       private val settings: JBTerminalSystemSettingsProviderBase) : Disposable {
   val model: TerminalModel
   lateinit var terminalStarter: TerminalStarter
-  val completionManager: TerminalCompletionManager
   val commandHistoryManager: CommandHistoryManager
 
   private val terminalExecutor: ExecutorService = ConcurrencyUtil.newSingleScheduledThreadExecutor("Terminal-${sessionIndex++}")
@@ -42,7 +42,6 @@ class TerminalSession(private val project: Project,
     controller = TerminalController(model, settings)
 
     commandManager = ShellCommandManager(controller)
-    completionManager = TerminalCompletionManager(model) { terminalStarter }
     commandHistoryManager = CommandHistoryManager(commandManager)
 
     val typeAheadTerminalModel = JediTermTypeAheadModel(controller, textBuffer, settings)
@@ -82,5 +81,9 @@ class TerminalSession(private val project: Project,
     if (this::terminalStarter.isInitialized) {
       terminalStarter.close()
     }
+  }
+
+  companion object {
+    val KEY: Key<TerminalSession> = Key.create("TerminalSession")
   }
 }

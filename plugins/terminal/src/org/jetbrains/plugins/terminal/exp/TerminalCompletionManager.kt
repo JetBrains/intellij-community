@@ -6,25 +6,26 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.jediterm.terminal.TerminalOutputStream
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
-class TerminalCompletionManager(private val model: TerminalModel,
-                                private val terminalOutputGetter: () -> TerminalOutputStream) {
+class TerminalCompletionManager(private val session: TerminalSession) {
   @RequiresBackgroundThread
   fun waitForTerminalLock() {
+    val model = session.model
     ProgressIndicatorUtils.awaitWithCheckCanceled(model.commandExecutionSemaphore, ProgressManager.getInstance().progressIndicator)
     model.commandExecutionSemaphore.down()
   }
 
   fun invokeCompletion(command: String) {
-    terminalOutputGetter().sendString(command + "\t", false)
+    session.terminalStarter.sendString(command + "\t", false)
   }
 
   @RequiresBackgroundThread
   fun resetPrompt(promptText: String) {
+    val model = session.model
     val disposable = Disposer.newDisposable()
     try {
       val promptRestoredFuture = checkTerminalContent(disposable) {
@@ -35,7 +36,7 @@ class TerminalCompletionManager(private val model: TerminalModel,
       // There are two invocations: first will clear possible "zsh: do you wish to see all..." question,
       // and the second will clear the typed command
       val command = "\u0015\u0015"
-      terminalOutputGetter().sendString(command, false)
+      session.terminalStarter.sendString(command, false)
 
       promptRestoredFuture.get(3000, TimeUnit.MILLISECONDS)
 
@@ -60,7 +61,7 @@ class TerminalCompletionManager(private val model: TerminalModel,
 
   private fun checkTerminalContent(disposable: Disposable, check: () -> Boolean): CompletableFuture<Boolean> {
     val future = CompletableFuture<Boolean>()
-    model.addContentListener(object : TerminalModel.ContentListener {
+    session.model.addContentListener(object : TerminalModel.ContentListener {
       override fun onContentChanged() {
         if (check()) {
           future.complete(true)
@@ -68,5 +69,9 @@ class TerminalCompletionManager(private val model: TerminalModel,
       }
     }, disposable)
     return future
+  }
+
+  companion object {
+    val KEY: Key<TerminalCompletionManager> = Key.create("TerminalCompletionManager")
   }
 }
