@@ -61,7 +61,7 @@ class ContextSwitchTest : CancellationTest() {
   }
 
   private fun testPrepareThreadContext(blockingTest: () -> Unit) {
-    prepareThreadContext {
+    prepareThreadContextTest {
       assertNotNull(Cancellation.currentJob())
       assertNull(ProgressManager.getGlobalProgressIndicator())
       blockingTest()

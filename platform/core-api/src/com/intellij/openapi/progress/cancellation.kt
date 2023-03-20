@@ -10,6 +10,7 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.ConcurrencyUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
+import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 private val LOG: Logger = Logger.getInstance("#com.intellij.openapi.progress")
@@ -42,16 +43,16 @@ fun <X> withJob(job: Job, action: () -> X): X = withCurrentJob(job, action)
  * @throws CancellationException if there was a current job it was cancelled
  */
 @Internal
-fun <T> prepareThreadContext(action: (Job) -> T): T {
+fun <T> prepareThreadContext(action: (CoroutineContext) -> T): T {
   return prepareThreadContext(allowOrphan = false, action)
 }
 
 @Internal
-fun <T> prepareThreadContextAllowingOrphan(action: (Job) -> T): T {
+fun <T> prepareThreadContextAllowingOrphan(action: (CoroutineContext) -> T): T {
   return prepareThreadContext(allowOrphan = true, action)
 }
 
-internal fun <T> prepareThreadContext(allowOrphan: Boolean, action: (Job) -> T): T {
+internal fun <T> prepareThreadContext(allowOrphan: Boolean, action: (CoroutineContext) -> T): T {
   val indicator = ProgressManager.getGlobalProgressIndicator()
   if (indicator != null) {
     return prepareIndicatorThreadContext(indicator, action)
@@ -73,7 +74,7 @@ internal fun <T> prepareThreadContext(allowOrphan: Boolean, action: (Job) -> T):
  * @throws ProcessCanceledException if [indicator] is cancelled,
  * or a child coroutine is started and failed
  */
-internal fun <T> prepareIndicatorThreadContext(indicator: ProgressIndicator, action: (currentJob: Job) -> T): T {
+internal fun <T> prepareIndicatorThreadContext(indicator: ProgressIndicator, action: (CoroutineContext) -> T): T {
   val currentJob = Job(parent = null) // no job parent, the "parent" is the indicator
   val indicatorWatcher = cancelWithIndicator(currentJob, indicator)
   val progressModality = ProgressManager.getInstance().currentProgressModality?.asContextElement()

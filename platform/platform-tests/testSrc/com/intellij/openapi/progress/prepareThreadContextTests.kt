@@ -2,7 +2,9 @@
 package com.intellij.openapi.progress
 
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.job
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
@@ -54,9 +56,15 @@ fun testPrepareThreadContextRethrow() {
 
 private inline fun <reified T : Throwable> testPrepareThreadContextRethrow(t: T) {
   val thrown = assertThrows<T> {
-    prepareThreadContext {
+    prepareThreadContextTest {
       throw t
     }
   }
   assertSame(t, thrown)
+}
+
+fun <T> prepareThreadContextTest(action: (Job) -> T): T {
+  return prepareThreadContext {
+    action(it.job)
+  }
 }

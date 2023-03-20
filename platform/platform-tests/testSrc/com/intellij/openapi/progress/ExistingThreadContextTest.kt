@@ -15,7 +15,7 @@ class ExistingThreadContextTest : CancellationTest() {
       assertSame(job, Cancellation.currentJob())
       assertNull(ProgressManager.getGlobalProgressIndicator())
 
-      prepareThreadContext { currentJob ->
+      prepareThreadContextTest { currentJob ->
         assertSame(job, Cancellation.currentJob())
         assertSame(job, currentJob)
         assertNull(ProgressManager.getGlobalProgressIndicator())
@@ -32,7 +32,7 @@ class ExistingThreadContextTest : CancellationTest() {
     val ce = assertThrows<CurrentJobCancellationException> {
       withCurrentJob<Unit>(Job()) {
         throw assertThrows<JobCanceledException> {
-          prepareThreadContext { currentJob ->
+          prepareThreadContextTest { currentJob ->
             testNoExceptions()
             currentJob.cancel("", t)
             testExceptionsAndNonCancellableSection()
@@ -59,7 +59,7 @@ class ExistingThreadContextTest : CancellationTest() {
     val ce = assertThrows<CurrentJobCancellationException> {
       withCurrentJob<Unit>(job) {
         throw assertThrows<JobCanceledException> {
-          prepareThreadContext { currentJob ->
+          prepareThreadContextTest { currentJob ->
             testNoExceptions()
             Job(parent = currentJob).completeExceptionally(t)
             assertThrows<JobCanceledException> {

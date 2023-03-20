@@ -10,11 +10,12 @@ import com.intellij.openapi.progress.prepareThreadContext
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils.runActionAndCancelBeforeWrite
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
+import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.cancellation.CancellationException
 
-internal fun <X> cancellableReadAction(action: () -> X): X = prepareThreadContext { currentJob ->
+internal fun <X> cancellableReadAction(action: () -> X): X = prepareThreadContext { ctx ->
   try {
-    cancellableReadActionInternal(currentJob, action)
+    cancellableReadActionInternal(ctx, action)
   }
   catch (ce: CancellationException) {
     // One of two variants is thrown:
@@ -37,9 +38,9 @@ internal fun <X> cancellableReadAction(action: () -> X): X = prepareThreadContex
   }
 }
 
-internal fun <X> cancellableReadActionInternal(currentJob: Job, action: () -> X): X {
+internal fun <X> cancellableReadActionInternal(ctx: CoroutineContext, action: () -> X): X {
   // A child Job is started to be externally cancellable by a write action without cancelling the current Job.
-  val readJob = Job(parent = currentJob)
+  val readJob = Job(parent = ctx[Job])
   var resultRef: Value<X>? = null
   val application = ApplicationManagerEx.getApplicationEx()
   runActionAndCancelBeforeWrite(application, readJob::cancelReadJob) {

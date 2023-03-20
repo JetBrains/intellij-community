@@ -43,7 +43,7 @@ class CurrentJobTest : CancellationTest() {
   @Test
   fun `ensureCurrentJob without current job or current indicator`() {
     assertThrows<IllegalStateException> {
-      prepareThreadContext {
+      prepareThreadContextTest {
         fail()
       }
     }

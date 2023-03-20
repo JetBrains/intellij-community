@@ -120,9 +120,9 @@ private fun <T> runBlockingCancellable(allowOrphan: Boolean, action: suspend Cor
     return indicatorRunBlockingCancellable(indicator, action)
   }
   assertBackgroundThreadOrWriteAction()
-  return prepareThreadContext(allowOrphan) { currentJob ->
+  return prepareThreadContext(allowOrphan) { ctx ->
     val context = currentThreadContext() +
-                  currentJob +
+                  ctx +
                   CoroutineName("job run blocking")
     resetThreadContext().use {
       @Suppress("RAW_RUN_BLOCKING")
@@ -153,9 +153,9 @@ fun <T> runBlockingMaybeCancellable(action: suspend CoroutineScope.() -> T): T {
 @Internal
 fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
   assertBackgroundThreadOrWriteAction()
-  return prepareIndicatorThreadContext(indicator) { currentJob ->
+  return prepareIndicatorThreadContext(indicator) { ctx ->
     val context = currentThreadContext() +
-                  currentJob +
+                  ctx +
                   CoroutineName("indicator run blocking") +
                   IndicatorRawProgressReporter(indicator).asContextElement()
     resetThreadContext().use {

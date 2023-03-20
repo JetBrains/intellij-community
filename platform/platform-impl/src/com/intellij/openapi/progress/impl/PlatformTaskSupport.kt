@@ -107,9 +107,9 @@ class PlatformTaskSupport : TaskSupport {
     title: @ProgressTitle String,
     cancellation: TaskCancellation,
     action: suspend CoroutineScope.() -> T,
-  ): T = prepareThreadContextAllowingOrphan {
+  ): T = prepareThreadContextAllowingOrphan { ctx ->
     val descriptor = ModalIndicatorDescriptor(owner, title, cancellation)
-    val scope = CoroutineScope(currentThreadContext())
+    val scope = CoroutineScope(currentThreadContext() + ctx)
     runBlockingModalInternal(cs = scope, descriptor, action)
   }
 

@@ -14,7 +14,7 @@ class IndicatorThreadContextTest : CancellationTest() {
       assertNull(Cancellation.currentJob())
       assertNotNull(ProgressManager.getGlobalProgressIndicator())
 
-      prepareThreadContext { currentJob ->
+      prepareThreadContextTest { currentJob ->
         assertSame(currentJob, Cancellation.currentJob())
         assertNull(ProgressManager.getGlobalProgressIndicator())
       }
@@ -29,7 +29,7 @@ class IndicatorThreadContextTest : CancellationTest() {
     val indicator = EmptyProgressIndicator()
     withIndicator(indicator) {
       val pce = assertThrows<ProcessCanceledException> {
-        prepareThreadContext { currentJob ->
+        prepareThreadContextTest { currentJob ->
           testNoExceptions()
           indicator.cancel()
           currentJob.timeoutJoinBlocking() // not immediate because watch job polls indicator every 10ms
@@ -51,7 +51,7 @@ class IndicatorThreadContextTest : CancellationTest() {
   fun `completes normally`() {
     indicatorTest {
       lateinit var currentJob: Job
-      val result = prepareThreadContext {
+      val result = prepareThreadContextTest {
         currentJob = it
         42
       }
@@ -67,7 +67,7 @@ class IndicatorThreadContextTest : CancellationTest() {
       val t = Throwable()
       lateinit var currentJob: Job
       val thrown = assertThrows<Throwable> {
-        prepareThreadContext {
+        prepareThreadContextTest {
           currentJob = it
           throw t
         }
@@ -85,7 +85,7 @@ class IndicatorThreadContextTest : CancellationTest() {
     val pce = assertThrows<ProcessCanceledException> {
       withIndicator(indicator) {
         throw assertThrows<ProcessCanceledException> {
-          prepareThreadContext { currentJob ->
+          prepareThreadContextTest { currentJob ->
             testNoExceptions()
             Job(parent = currentJob).completeExceptionally(t)
             assertThrows<JobCanceledException> {
