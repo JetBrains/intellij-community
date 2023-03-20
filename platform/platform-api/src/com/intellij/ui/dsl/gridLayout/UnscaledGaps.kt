@@ -38,6 +38,10 @@ fun Insets.toUnscaledGaps(): UnscaledGaps = toGaps().toUnscaled()
 @Internal
 fun Int.unscale(): Int = (this / JBUIScale.scale(1f)).roundToInt()
 
+@Suppress("UseDPIAwareInsets")
+@Internal
+fun Insets.unscale(): Insets = Insets(top.unscale(), left.unscale(), bottom.unscale(), right.unscale())
+
 fun UnscaledGaps.toJBEmptyBorder(): JBEmptyBorder {
   return JBEmptyBorder(top, left, bottom, right)
 }

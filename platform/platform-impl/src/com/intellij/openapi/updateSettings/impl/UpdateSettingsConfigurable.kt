@@ -17,10 +17,9 @@ import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.JBGaps
-import com.intellij.ui.dsl.gridLayout.VerticalGaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.util.text.DateFormatUtil
-import com.intellij.util.ui.JBUI
 import javax.swing.JComponent
 import javax.swing.JEditorPane
 
@@ -120,7 +119,7 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
             row {
               icon(PluginLogo.reloadIcon(AllIcons.Nodes.Toolbox, 40, 40, null))
                 .align(AlignY.TOP)
-                .customize(customGaps = JBGaps(right = 10))
+                .customize(customGaps = UnscaledGaps(right = 10))
               panel {
                 row {
                   text(IdeBundle.message("updates.settings.recommend.toolbox", TOOLBOX_URL, ExternalUpdateManager.TOOLBOX.toolName))
@@ -128,9 +127,9 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
                 }
                 row {
                   text(IdeBundle.message("updates.settings.recommend.toolbox.multiline.description"))
-                }.customize(customRowGaps = VerticalGaps(top = JBUI.scale(3)))
+                }.customize(customRowGaps = UnscaledGapsY(top = 3))
               }
-            }.customize(customRowGaps = VerticalGaps(top = JBUI.scale(12)))
+            }.customize(customRowGaps = UnscaledGapsY(top = 12))
           }
         }
       }

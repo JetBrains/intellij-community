@@ -36,7 +36,7 @@ import com.intellij.psi.PsiFileFactory
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.JBGaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.layout.selected
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.PairProcessor
@@ -138,7 +138,7 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
       comment(StatisticsBundle.message("stats.validation.rules.format"))
     }
   }.apply {
-    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, JBGaps(left = 2))
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps(left = 2))
   }
 
   private fun updateGenerateSchemeButton() {

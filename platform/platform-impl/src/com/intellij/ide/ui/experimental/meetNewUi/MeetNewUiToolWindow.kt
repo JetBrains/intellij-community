@@ -24,9 +24,8 @@ import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.ui.Gray
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.dsl.gridLayout.JBGaps
-import com.intellij.ui.dsl.gridLayout.JBVerticalGaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
@@ -81,10 +80,10 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
             .applyToComponent {
               font = JBFont.regular().biggerOn(7f).deriveFont(Font.PLAIN)
             }
-        }.customize(JBVerticalGaps(bottom = 24))
+        }.customize(UnscaledGapsY(bottom = 24))
         row {
           label(IdeBundle.message("meetnewui.toolwindow.theme"))
-        }.customize(JBVerticalGaps(bottom = 8))
+        }.customize(UnscaledGapsY(bottom = 8))
         row {
           themes += Theme(null, false, null, null)
           findLafReference("Light")?.let { lafReference ->
@@ -98,31 +97,31 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
           val gap = JBUI.scale(8)
           val themesPanel = JPanel(WrapLayout(FlowLayout.LEADING, gap, gap))
           // Remove gaps around of the panel
-          themesPanel.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, JBGaps(gap, gap, gap, gap))
+          themesPanel.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps(gap, gap, gap, gap))
           for (theme in themes) {
             themesPanel.add(theme.button)
           }
 
           cell(themesPanel)
             .align(AlignX.FILL)
-        }.customize(JBVerticalGaps(bottom = 20))
+        }.customize(UnscaledGapsY(bottom = 20))
         row {
           label(IdeBundle.message("meetnewui.toolwindow.density"))
-        }.customize(JBVerticalGaps(bottom = 8))
+        }.customize(UnscaledGapsY(bottom = 8))
         row {
-          cleanDensity = density(ExpUiIcons.MeetNewUi.DensityDefault, IdeBundle.message("meetnewui.toolwindow.clean"), JBGaps(right = 8),
+          cleanDensity = density(ExpUiIcons.MeetNewUi.DensityDefault, IdeBundle.message("meetnewui.toolwindow.clean"), UnscaledGaps(right = 8),
                                  false)
 
-          compactDensity = density(ExpUiIcons.MeetNewUi.DensityCompact, IdeBundle.message("meetnewui.toolwindow.compact"), Gaps.EMPTY, true)
+          compactDensity = density(ExpUiIcons.MeetNewUi.DensityCompact, IdeBundle.message("meetnewui.toolwindow.compact"), UnscaledGaps.EMPTY, true)
 
           cell() // Deny right component to shrink
-        }.customize(JBVerticalGaps(bottom = 20))
+        }.customize(UnscaledGapsY(bottom = 20))
         row {
           comment(IdeBundle.message("meetnewui.toolwindow.description"), maxLineLength = MAX_LINE_LENGTH_NO_WRAP) {
             ExperimentalUiCollector.logMeetNewUiAction(ExperimentalUiCollector.MeetNewUiAction.NEW_UI_LINK)
             ShowSettingsUtil.getInstance().showSettingsDialog(project, IdeBundle.message("configurable.new.ui.name"))
           }
-        }.customize(JBVerticalGaps(bottom = 20))
+        }.customize(UnscaledGapsY(bottom = 20))
         row {
           /*
           button(IdeBundle.message("meetnewui.toolwindow.button.startTour")) {
@@ -139,7 +138,7 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
 
           cell() // Deny right component to shrink
         }
-      }.customize(JBGaps(32, 32, 16, 32))
+      }.customize(UnscaledGaps(32, 32, 16, 32))
     }
   }
 
@@ -182,10 +181,10 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
     return lafManager.lafComboBoxModel.items.find { it.toString() == name }
   }
 
-  private fun Row.density(icon: Icon, @Nls name: String, gaps: Gaps, compactMode: Boolean): Density {
+  private fun Row.density(icon: Icon, @Nls name: String, gaps: UnscaledGaps, compactMode: Boolean): Density {
     val button = MeetNewUiButton(null, icon, icon).apply {
       border = null
-      putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY)
+      putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
       selectionArc = JBUI.scale(8)
       addClickListener {
         setDensity(compactMode)
@@ -196,7 +195,7 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
     this.panel {
       row {
         cell(button)
-          .customize(JBGaps(bottom = 8))
+          .customize(UnscaledGaps(bottom = 8))
       }
 
       row {

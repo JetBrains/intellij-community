@@ -7,7 +7,7 @@ import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.JBGaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import javax.swing.Icon
@@ -35,7 +35,7 @@ abstract class IdeRepresentationSection(private val prefs: SettingsPreferences,
   final override fun getUI() = panel {
     customizeSpacingConfiguration(EmptySpacingConfiguration()) {
       row {
-        icon(icon).align(AlignY.TOP).customize(JBGaps(left = 30, right = 30)).applyToComponent {
+        icon(icon).align(AlignY.TOP).customize(UnscaledGaps(left = 30, right = 30)).applyToComponent {
           _isSelected.afterChange {
             this.icon = if (it) this@IdeRepresentationSection.icon else IconLoader.getDisabledIcon(icon)
           }
@@ -48,7 +48,7 @@ abstract class IdeRepresentationSection(private val prefs: SettingsPreferences,
               _isSelected.afterChange {
                 this.foreground = if (it) UIUtil.getLabelForeground() else UIUtil.getLabelDisabledForeground()
               }
-            }.customize(JBGaps(bottom = 5, top = 5))
+            }.customize(UnscaledGaps(bottom = 5, top = 5))
             label("").visible(false).apply {
               applyToComponent { foreground = UIUtil.getLabelDisabledForeground() }
               _isSelected.afterChange {
@@ -57,11 +57,11 @@ abstract class IdeRepresentationSection(private val prefs: SettingsPreferences,
                   component.text = disabledCheckboxText
                 }
               }
-            }.customize(JBGaps(left = 10))
+            }.customize(UnscaledGaps(left = 10))
           }.layout(RowLayout.INDEPENDENT)
 
           row {
-            cell(getContent()).customize(JBGaps(left = leftGap)) // TODO: retrieve size of checkbox and add padding here
+            cell(getContent()).customize(UnscaledGaps(left = leftGap)) // TODO: retrieve size of checkbox and add padding here
           }
         }.align(AlignY.TOP)
       }

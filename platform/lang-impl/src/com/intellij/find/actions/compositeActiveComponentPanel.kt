@@ -3,7 +3,7 @@ package com.intellij.find.actions
 
 import com.intellij.ui.ActiveComponent
 import com.intellij.ui.dsl.gridLayout.GridLayout
-import com.intellij.ui.dsl.gridLayout.JBGaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.util.ui.JBUI
 import javax.swing.JPanel
@@ -14,7 +14,7 @@ internal fun createPanel(vararg components: ActiveComponent): JPanel {
   result.isOpaque = false
   val builder = RowsGridBuilder(result).resizableRow()
   for ((index, component) in components.withIndex()) {
-    builder.cell(component.component, gaps = JBGaps(left = if (index == 0) 0 else 2))
+    builder.cell(component.component, gaps = UnscaledGaps(left = if (index == 0) 0 else 2))
   }
   return result
 }

@@ -34,8 +34,7 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.border.CustomLineBorder
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.dsl.gridLayout.JBGaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.launch
@@ -106,16 +105,16 @@ class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScre
           cell(notificationPanel)
             .align(AlignX.RIGHT)
             .applyToComponent {
-              putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY)
+              putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
             }
         }
         if (promo != null) {
           row {
             cell(promo)
-              .customize(JBGaps(0, PROMO_BORDER_OFFSET, PROMO_BORDER_OFFSET, PROMO_BORDER_OFFSET))
+              .customize(UnscaledGaps(0, PROMO_BORDER_OFFSET, PROMO_BORDER_OFFSET, PROMO_BORDER_OFFSET))
               .align(AlignX.FILL)
               .applyToComponent {
-                putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY)
+                putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
               }
           }
         }
