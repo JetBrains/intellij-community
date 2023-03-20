@@ -103,6 +103,21 @@ class OperationLogStorageImpl(
     OperationReadResult.Invalid(e)
   }
 
+  override fun readPrecedingFiltered(position: Long, toReadMask: VfsOperationTagsMask): OperationReadResult = try {
+    readLastTag(position) { actualPos, tag ->
+      if (toReadMask.contains(tag)) return readWholeDescriptor(actualPos, tag)
+      // validate left tag
+      val buf = ByteArray(VfsOperationTag.SIZE_BYTES)
+      storageIO.read(position, buf)
+      if (tag.ordinal.toByte() != buf[0]) {
+        return OperationReadResult.Invalid(IllegalStateException("bounding tags do not match: ${buf[0]} ${tag.ordinal}"))
+      }
+      return OperationReadResult.Incomplete(tag)
+    }
+  } catch (e: Throwable) {
+    OperationReadResult.Invalid(e)
+  }
+
   private inline fun readFirstTag(position: Long,
                                   cont: (position: Long, tag: VfsOperationTag) -> OperationReadResult): OperationReadResult {
     val buf = ByteArray(VfsOperationTag.SIZE_BYTES)
@@ -202,27 +217,33 @@ class OperationLogStorageImpl(
       return iterPos > 0 && !invalidationFlag
     }
 
-    override fun next(): OperationReadResult = readAt(iterPos).also {
-      when (it) {
-        is OperationReadResult.Valid -> iterPos += bytesForOperationDescriptor(it.operation.tag)
-        is OperationReadResult.Incomplete -> iterPos += bytesForOperationDescriptor(it.tag)
-        is OperationReadResult.Invalid -> invalidationFlag = true
-      }
-    }
+    override fun next(): OperationReadResult = readAt(iterPos).alsoAdvance()
+    override fun nextFiltered(mask: VfsOperationTagsMask): OperationReadResult = readAtFiltered(iterPos, mask).alsoAdvance()
 
-    override fun previous(): OperationReadResult = readPreceding(iterPos).also {
-      when (it) {
-        is OperationReadResult.Valid -> iterPos -= bytesForOperationDescriptor(it.operation.tag)
-        is OperationReadResult.Incomplete -> iterPos -= bytesForOperationDescriptor(it.tag)
-        is OperationReadResult.Invalid -> invalidationFlag = true
-      }
-    }
+    override fun previous(): OperationReadResult = readPreceding(iterPos).alsoRetreat()
+    override fun previousFiltered(mask: VfsOperationTagsMask): OperationReadResult = readPrecedingFiltered(iterPos, mask).alsoRetreat()
 
     override fun clone(): IteratorImpl = IteratorImpl(iterPos)
 
     override fun compareTo(other: OperationLogStorage.Iterator): Int {
       other as IteratorImpl
       return iterPos.compareTo(other.iterPos)
+    }
+
+    private fun OperationReadResult.alsoAdvance() = this.also {
+      when (this) {
+        is OperationReadResult.Valid -> iterPos += bytesForOperationDescriptor(operation.tag)
+        is OperationReadResult.Incomplete -> iterPos += bytesForOperationDescriptor(tag)
+        is OperationReadResult.Invalid -> invalidationFlag = true
+      }
+    }
+
+    private fun OperationReadResult.alsoRetreat() = this.also {
+      when (this) {
+        is OperationReadResult.Valid -> iterPos -= bytesForOperationDescriptor(operation.tag)
+        is OperationReadResult.Incomplete -> iterPos -= bytesForOperationDescriptor(tag)
+        is OperationReadResult.Invalid -> invalidationFlag = true
+      }
     }
   }
 }

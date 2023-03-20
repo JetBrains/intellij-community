@@ -35,6 +35,12 @@ interface OperationLogStorage {
   fun readPreceding(position: Long): OperationReadResult
 
   /**
+   * @see readAtFiltered
+   * @see readPreceding
+   */
+  fun readPrecedingFiltered(position: Long, toReadMask: VfsOperationTagsMask): OperationReadResult
+
+  /**
    * Tries to read the whole storage in a sequential manner.
    * In case [OperationReadResult.Invalid] was read, it will be the last item to be passed to [action].
    * @param action return true to continue reading, false to stop.
@@ -84,19 +90,29 @@ interface OperationLogStorage {
 
     /** Couldn't retrieve any information at all */
     data class Invalid(val cause: Throwable) : OperationReadResult
+
+    fun getTag(): VfsOperationTag = when (this) {
+      is Valid -> operation.tag
+      is Incomplete -> tag
+      is Invalid -> throw IllegalAccessException("data access on OperationReadResult.Invalid")
+    }
   }
 
   /**
    * [Iterator] gets invalidated in case [OperationReadResult.Invalid] was read, and its [hasNext] and [hasPrevious]
    * will return false afterward in such case.
    */
-  interface Iterator: Comparable<Iterator> {
-    fun hasNext(): Boolean
-    fun hasPrevious(): Boolean
-
-    fun next(): OperationReadResult
-    fun previous(): OperationReadResult
-
+  interface Iterator: Comparable<Iterator>, BiDiIterator<OperationReadResult> {
     fun clone(): Iterator
+
+    /**
+     * @see [OperationLogStorage.readAtFiltered]
+     */
+    fun nextFiltered(mask: VfsOperationTagsMask): OperationReadResult
+
+    /**
+     * @see [OperationLogStorage.readAtFiltered]
+     */
+    fun previousFiltered(mask: VfsOperationTagsMask): OperationReadResult
   }
 }
