@@ -6,5 +6,5 @@ UFile (package = ) [public final class AssertionKt {...]
                     ULocalVariable (name = s) [var s: java.lang.String = "Not Null"]
                         ULiteralExpression (value = "Not Null") ["Not Null"] = "Not Null"
                 UReturnExpression [return s!!] = Nothing
-                    UPostfixExpression (operator = !!) [s!!] = Undetermined
+                    UPostfixExpression (operator = !!) [s!!] = (var s = "Not Null")
                         USimpleNameReferenceExpression (identifier = s) [s] = (var s = "Not Null")

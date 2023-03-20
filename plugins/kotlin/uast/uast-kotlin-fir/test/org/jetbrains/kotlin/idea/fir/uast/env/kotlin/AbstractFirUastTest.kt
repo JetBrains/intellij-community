@@ -21,8 +21,10 @@ import org.jetbrains.kotlin.test.KtAssert
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.UastFacade
 import org.jetbrains.uast.UastLanguagePlugin
+import org.jetbrains.uast.evaluation.UEvaluatorExtension
 import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.FirKotlinUastResolveProviderService
+import org.jetbrains.uast.kotlin.evaluation.KotlinEvaluatorExtension
 import org.jetbrains.uast.kotlin.internal.FirCliKotlinUastResolveProviderService
 import org.jetbrains.uast.test.common.kotlin.UastPluginSelection
 import java.io.File
@@ -48,6 +50,7 @@ abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase(), Ua
             UastLanguagePlugin.extensionPointName,
             UastLanguagePlugin::class.java
         )
+        area.getExtensionPoint(UEvaluatorExtension.EXTENSION_POINT_NAME).registerExtension(KotlinEvaluatorExtension(), project)
         val service = FirCliKotlinUastResolveProviderService()
         ApplicationManager.getApplication().registerServiceInstance(
             BaseKotlinUastResolveProviderService::class.java,
