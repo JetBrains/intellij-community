@@ -2,6 +2,9 @@
 package org.jetbrains.kotlin.idea.runConfigurations.jvm
 
 import com.intellij.codeInsight.TestFrameworks
+import com.intellij.lang.OuterModelsModificationTrackerManager
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.testIntegration.TestFramework
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -10,6 +13,7 @@ import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 /**
@@ -27,11 +31,12 @@ class KotlinDelegatingTestFramework : KotlinTestFramework {
         }
     }
 
-    override fun isTestClass(declaration: KtClassOrObject): Boolean {
-        val lightClass = declaration.toLightClass() ?: return false
-        val framework = TestFrameworks.detectFramework(lightClass) ?: return false
-        return framework.isTestClass(lightClass)
-    }
+    override fun isTestClass(declaration: KtClassOrObject): Boolean =
+        CachedValuesManager.getCachedValue(declaration) {
+            val isTestClass =
+                declaration.toLightClass()?.let { lightClass -> TestFrameworks.detectFramework(lightClass)?.isTestClass(lightClass) } ?: false
+            CachedValueProvider.Result.create(isTestClass, OuterModelsModificationTrackerManager.getInstance(declaration.project).tracker)
+        }
 
     override fun isTestMethod(declaration: KtNamedFunction): Boolean {
         val framework = detectFramework(declaration) ?: return false
@@ -54,9 +59,9 @@ class KotlinDelegatingTestFramework : KotlinTestFramework {
         else -> null
     }
 
-    private fun detectFramework(function: KtNamedFunction): TestFramework? {
-        val lightMethod = function.toLightMethods().firstOrNull() ?: return null
-        val lightClass = lightMethod.containingClass.safeAs<KtLightClass>() ?: return null
-        return TestFrameworks.detectFramework(lightClass)
-    }
+    private fun detectFramework(function: KtNamedFunction): TestFramework? =
+        function.containingClassOrObject
+            ?.takeIf(::isTestClass)
+            ?.toLightClass()
+            ?.let(TestFrameworks::detectFramework)
 }

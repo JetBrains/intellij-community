@@ -1,11 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.testIntegration.framework
 
+import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiClass
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
+import java.util.concurrent.ConcurrentHashMap
 
 abstract class AbstractKotlinTestFramework : KotlinTestFramework {
     abstract val markerClassFqn: String
@@ -14,13 +18,18 @@ abstract class AbstractKotlinTestFramework : KotlinTestFramework {
     override val isSlow: Boolean
         get() = false
 
-
-    protected fun isFrameworkAvailable(element: KtElement): Boolean =
-        findMarkerPsiClass(element) != null
-
-    private fun findMarkerPsiClass(element: KtElement): PsiClass? =
-        JavaPsiFacade.getInstance(element.project)
-            .findClass(markerClassFqn, element.resolveScope)
+    protected fun isFrameworkAvailable(element: KtElement): Boolean {
+        // TODO: migrate to JavaLibraryUtils
+        val project = element.project
+        val module = element.module ?: return false
+        val resolveScope = element.resolveScope
+        val map = CachedValuesManager.getManager(project).getCachedValue(module) {
+            CachedValueProvider.Result.create(ConcurrentHashMap<String, Boolean>(), ProjectRootModificationTracker.getInstance(project))
+        }
+        return map.computeIfAbsent(markerClassFqn) {
+            JavaPsiFacade.getInstance(project).findClass(markerClassFqn, resolveScope) != null
+        }
+    }
 
     override fun responsibleFor(declaration: KtNamedDeclaration): Boolean {
         if (!isFrameworkAvailable(declaration)) {
