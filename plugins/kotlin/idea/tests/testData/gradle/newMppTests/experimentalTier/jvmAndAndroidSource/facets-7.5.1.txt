@@ -80,14 +80,14 @@ project.producer.androidTest
 project.producer.commonMain
     externalProjectId = :producer
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     targetPlatform = JVM (1.8)
 
 project.producer.commonTest
     externalProjectId = :producer
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     additionalVisibleModuleNames = :producer:commonMain, :producer:jvmAndAndroidMain
     targetPlatform = JVM (1.8)
@@ -95,7 +95,7 @@ project.producer.commonTest
 project.producer.jvmAndAndroidMain
     externalProjectId = :producer
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = :producer:commonMain
     targetPlatform = JVM (1.8)
