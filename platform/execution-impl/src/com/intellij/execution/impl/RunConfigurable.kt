@@ -28,6 +28,7 @@ import com.intellij.openapi.options.SettingsEditorConfigurable
 import com.intellij.openapi.project.*
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.AlignedPopup
+import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.SystemInfo
@@ -41,7 +42,6 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.mac.touchbar.Touchbar
 import com.intellij.ui.mac.touchbar.TouchbarActionCustomizations
-import com.intellij.ui.popup.PopupState
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.Alarm
 import com.intellij.util.ArrayUtilRt
@@ -920,8 +920,6 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   protected inner class MyToolbarAddAction : AnAction(ExecutionBundle.message("add.new.run.configuration.action2.name"),
                                                       ExecutionBundle.message("add.new.run.configuration.action2.name"),
                                                       AllIcons.General.Add), AnActionButtonRunnable {
-    private val myPopupState = PopupState.forPopup()
-
     init {
       registerCustomShortcutSet(CommonShortcuts.INSERT, tree)
     }
@@ -935,7 +933,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     }
 
     fun showAddPopup(showApplicableTypesOnly: Boolean, clickEvent: MouseEvent?) {
-      if (showApplicableTypesOnly && myPopupState.isRecentlyHidden) return // do not show new popup
+      if (showApplicableTypesOnly) return // do not show new popup
       val allTypes = ConfigurationType.CONFIGURATION_TYPE_EP.extensionList
       val configurationTypes: MutableList<ConfigurationType?> = configurationTypeSorted(project, showApplicableTypesOnly, allTypes, true).toMutableList()
       val hiddenCount = allTypes.size - configurationTypes.size
@@ -948,10 +946,12 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
                                                                                   hiddenCount),
                                                           { factory -> createNewConfiguration(factory) }, selectedConfigurationType,
                                                           { showAddPopup(false, null) }, true)
-      //new TreeSpeedSearch(myTree);
-      myPopupState.prepareToShow(popup)
       if (clickEvent == null) AlignedPopup.showUnderneathWithoutAlignment(popup, toolbarDecorator!!.actionsPanel)
-      else popup.show(RelativePoint(clickEvent))
+      else {
+        // it seems this method can be called asynchronously with input event, so need store the source component manually
+        PopupUtil.setPopupToggleComponent(popup, clickEvent.component)
+        popup.show(RelativePoint(clickEvent))
+      }
     }
   }
 
