@@ -683,4 +683,36 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     assertCopied("target/test-classes/file.properties");
   }
 
+  @Test
+  public void testAnnotationPathsInCompoundModules() throws Exception {
+    Assume.assumeTrue(isWorkspaceImport());
+
+    createProjectSubFile("src/main/java/Main.java", "class Main {}");
+    createProjectSubFile("src/test/java/Test.java", "class Test {}");
+
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <properties>
+                      <maven.compiler.release>8</maven.compiler.release>
+                      <maven.compiler.testRelease>11</maven.compiler.testRelease>
+                    </properties>
+                     <build>
+                      <plugins>
+                        <plugin>
+                          <artifactId>maven-compiler-plugin</artifactId>
+                          <version>3.11.0</version>
+                        </plugin>
+                      </plugins>
+                    </build>"""
+    );
+
+    assertModules("project", "project.main", "project.test");
+    compileModules("project", "project.main", "project.test");
+
+    assertCopied("target/generated-sources/annotations");
+    assertCopied("target/generated-test-sources/test-annotations");
+  }
+
 }
