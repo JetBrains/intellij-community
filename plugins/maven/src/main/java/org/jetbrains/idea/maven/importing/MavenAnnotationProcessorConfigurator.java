@@ -254,6 +254,8 @@ public class MavenAnnotationProcessorConfigurator extends MavenImporter implemen
     List<String> processors = mavenProject.getDeclaredAnnotationProcessors();
     Map<String, String> options = mavenProject.getAnnotationProcessorOptions();
 
+    var outputRelativeToContentRoot = !MavenImportUtil.isMainOrTestSubmodule(module.getName());
+
     String annotationProcessorDirectory = getRelativeAnnotationProcessorDirectory(mavenProject, false, DEFAULT_ANNOTATION_PATH_OUTPUT);
     String testAnnotationProcessorDirectory = getRelativeAnnotationProcessorDirectory(mavenProject, true, DEFAULT_TEST_ANNOTATION_OUTPUT);
 
@@ -283,8 +285,8 @@ public class MavenAnnotationProcessorConfigurator extends MavenImporter implemen
     }
 
     ProcessorConfigProfile moduleProfile =
-      getModuleProfile(module, mavenProject, compilerConfiguration, moduleProfileName, annotationProcessorDirectory,
-                       testAnnotationProcessorDirectory);
+      getModuleProfile(module, mavenProject, compilerConfiguration, moduleProfileName, outputRelativeToContentRoot,
+                       annotationProcessorDirectory, testAnnotationProcessorDirectory);
     if (moduleProfile == null) return null;
 
     if (StringUtil.isNotEmpty(annotationProcessorPath)) {
@@ -372,6 +374,7 @@ public class MavenAnnotationProcessorConfigurator extends MavenImporter implemen
                                                          MavenProject mavenProject,
                                                          CompilerConfigurationImpl compilerConfiguration,
                                                          String moduleProfileName,
+                                                         boolean outputRelativeToContentRoot,
                                                          String annotationProcessorDirectory,
                                                          String testAnnotationProcessorDirectory) {
     ProcessorConfigProfile moduleProfile = compilerConfiguration.findModuleProcessorProfile(moduleProfileName);
@@ -383,13 +386,9 @@ public class MavenAnnotationProcessorConfigurator extends MavenImporter implemen
     }
     if (!moduleProfile.isEnabled()) return null;
 
-    if (MavenImportUtil.isMainOrTestSubmodule(module.getName())) {
-      moduleProfile.setOutputRelativeToContentRoot(false);
-    }
-    else {
-      moduleProfile.setOutputRelativeToContentRoot(true);
-    }
     moduleProfile.setObtainProcessorsFromClasspath(true);
+
+    moduleProfile.setOutputRelativeToContentRoot(outputRelativeToContentRoot);
     moduleProfile.setGeneratedSourcesDirectoryName(annotationProcessorDirectory, false);
     moduleProfile.setGeneratedSourcesDirectoryName(testAnnotationProcessorDirectory, true);
 
