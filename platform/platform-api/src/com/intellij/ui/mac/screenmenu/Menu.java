@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-@SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
+@SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext", "unused"})
 public class Menu extends MenuItem {
   private static final boolean USE_STUB = Boolean.getBoolean("jbScreenMenuBar.useStubItem"); // just for tests/experiments
   private static final int CLOSE_DELAY = Integer.getInteger("jbScreenMenuBar.closeDelay", 500); // in milliseconds
@@ -98,7 +98,7 @@ public class Menu extends MenuItem {
     nativeSetTitle(nativePeer, label, isInHierarchy);
   }
 
-  // Search for subitem by title (reg-exp) in native NSMenu peer
+  // Search for subitem by title (regexp) in native NSMenu peer
   // Returns the index of first child with matched title.
   public int findIndexByTitle(String re) {
     if (re == null || re.isEmpty()) return -1;
@@ -107,7 +107,7 @@ public class Menu extends MenuItem {
     return nativeFindIndexByTitle(nativePeer, re);
   }
 
-  // Search for subitem by title (reg-exp) in native NSMenu peer
+  // Search for subitem by title (regexp) in native NSMenu peer
   // Returns the first child with matched title.
   // NOTE: Always creates java-wrapper for native NSMenuItem (that must be disposed manually)
   synchronized
@@ -222,7 +222,7 @@ public class Menu extends MenuItem {
     myIsOpened = true;
     if (myOnOpen != null) {
       if (USE_STUB) {
-        // NOTE: must add stub item when menu opens (otherwise AppKit considers it as empty and we can't fill it later)
+        // NOTE: must add stub item when menu opens (otherwise AppKit considers it as empty, and we can't fill it later)
         MenuItem stub = new MenuItem();
         myItems.add(stub);
         stub.isInHierarchy = true;
@@ -348,11 +348,11 @@ public class Menu extends MenuItem {
   private static void invokeWithLWCToolkit(Runnable r, Runnable after, Component invoker) {
     try {
       Class<?> toolkitClass = Class.forName("sun.lwawt.macosx.LWCToolkit");
+      @SuppressWarnings("deprecation")
       Method invokeMethod = ReflectionUtil.getDeclaredMethod(toolkitClass, "invokeAndWait", Runnable.class, Component.class, boolean.class, int.class);
       if (invokeMethod != null) {
         try {
           invokeMethod.invoke(toolkitClass, r, invoker, true, -1);
-          invokeMethod.invoke(toolkitClass, r, invoker);
         }
         catch (Exception e) {
           // suppress InvocationTargetException as in openjdk implementation (see com.apple.laf.ScreenMenu.java)
