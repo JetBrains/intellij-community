@@ -2,12 +2,13 @@
 package com.intellij.core;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
-import com.intellij.psi.javadoc.PsiSnippetDocTagValue;
+import com.intellij.psi.javadoc.PsiSnippetAttributeValue;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,10 +61,8 @@ public class CoreJavaPsiImplementationHelper extends JavaPsiImplementationHelper
   }
 
   @Override
-  public @Nullable PsiElement resolveSnippetRegion(@NotNull PsiElement context,
-                                                   @NotNull PsiSnippetDocTagValue snippet,
-                                                   @NotNull String region) {
-    return null;
+  public @NotNull PsiSymbolReference getSnippetRegionSymbol(@NotNull PsiSnippetAttributeValue value) {
+    throw new UnsupportedOperationException();
   }
 
   @NotNull
