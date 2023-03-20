@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
 import com.intellij.openapi.externalSystem.util.DiscardingInputStream;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -128,8 +129,10 @@ public class ExternalSystemProcessHandler extends BuildProcessHandler implements
     if (dataHolder != null) {
       dataHolder.putUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY, null);
     }
-    closeStream(processInputWriter);
-    closeStream(processInputReader);
+    //noinspection deprecation
+    StreamUtil.closeStream(processInputWriter);
+    //noinspection deprecation
+    StreamUtil.closeStream(processInputReader);
   }
 
   private static void closeLeakedStream(@NotNull UserDataHolder dataHolder) {
@@ -138,18 +141,8 @@ public class ExternalSystemProcessHandler extends BuildProcessHandler implements
     if (leakedStream != null) {
       LOG.warn("Unexpected stream found, closing it...");
     }
-    closeStream(leakedStream);
-  }
-
-  private static void closeStream(@Nullable Closeable stream) {
-    if (stream != null) {
-      try {
-        stream.close();
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
+    //noinspection deprecation
+    StreamUtil.closeStream(leakedStream);
   }
 
   @Override
