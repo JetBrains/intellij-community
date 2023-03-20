@@ -1,5 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceNegatedIsEmptyWithIsNotEmpty", "LiftReturnOrAssignment")
+
 package org.jetbrains.intellij.build.devServer
 
 import com.intellij.diagnostic.telemetry.useWithScope2
@@ -108,7 +109,7 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
   }
 
   coroutineScope {
-    launch {
+    val buildPluginsJob = launch {
       withContext(Dispatchers.IO) {
         Files.createDirectories(pluginRootDir)
       }
@@ -117,7 +118,7 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
                    pluginCacheRootDir = pluginCacheRootDir,
                    context = context)
     }
-    launch {
+    val buildClassPathJob = launch {
       val isPackagedLib = request.isPackagedLib
       val classPath = spanBuilder("compute lib classpath").useWithScope2 {
         layoutPlatform(homePath = request.homePath, runDir = runDir, isPackagedLib = isPackagedLib, context = context)
@@ -138,6 +139,8 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
         platformClassPathConsumer(classPath, runDir)
       }
     }
+
+    joinAll(buildPluginsJob, buildClassPathJob)
   }
 }
 
@@ -317,7 +320,7 @@ fun computeAdditionalModulesFingerprint(additionalModules: List<String>): String
     return ""
   }
 
-  val string = additionalModules.sorted().joinToString (",")
+  val string = additionalModules.sorted().joinToString(",")
   val result = Xx3UnencodedString.hashUnencodedString(string, 0).toString(26) +
                Xx3UnencodedString.hashUnencodedString(string, 301236010888646397L).toString(36)
   // - maybe here due to negative number
