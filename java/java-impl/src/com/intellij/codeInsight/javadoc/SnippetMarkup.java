@@ -3,6 +3,7 @@ package com.intellij.codeInsight.javadoc;
 
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -722,7 +723,12 @@ public class SnippetMarkup {
       String replacement = replace.replacement();
       if (selector instanceof Regex regex) {
         try {
-          content = regex.pattern().matcher(content).replaceAll(replacement);
+          content = regex.pattern().matcher(StringUtil.newBombedCharSequence(content, 1000)).replaceAll(replacement);
+        }
+        catch (StackOverflowError | ProcessCanceledException e) {
+          ErrorMarkup replacementError = new ErrorMarkup(
+            replace.range(), JavaBundle.message("javadoc.snippet.error.regex.too.complex", "replace", regex.pattern().pattern()));
+          visitor.visitError(replacementError);
         }
         catch (IllegalArgumentException | IndexOutOfBoundsException e) {
           ErrorMarkup replacementError = new ErrorMarkup(
