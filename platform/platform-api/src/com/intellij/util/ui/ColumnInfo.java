@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.NlsContexts.ColumnName;
@@ -13,13 +13,14 @@ import java.util.Comparator;
 import java.util.Objects;
 
 public abstract class ColumnInfo<Item, Aspect> {
-  private @ColumnName String myName;
-  public static final ColumnInfo[] EMPTY_ARRAY = new ColumnInfo[0];
+  public static final ColumnInfo<?, ?>[] EMPTY_ARRAY = new ColumnInfo[0];
 
-  @SuppressWarnings("unchecked")
   public static <I, A> @NotNull ColumnInfo<I, A> @NotNull [] emptyArray() {
-    return EMPTY_ARRAY;
+    @SuppressWarnings("unchecked") ColumnInfo<I, A>[] array = (ColumnInfo<I, A>[])EMPTY_ARRAY;
+    return array;
   }
+
+  private @ColumnName String myName;
 
   public ColumnInfo(@ColumnName String name) {
     myName = name;
@@ -55,9 +56,7 @@ public abstract class ColumnInfo<Item, Aspect> {
     return false;
   }
 
-  public void setValue(Item item, Aspect value) {
-
-  }
+  public void setValue(Item item, Aspect value) { }
 
   /**
    * @see com.intellij.util.ui.table.IconTableCellRenderer
@@ -99,17 +98,12 @@ public abstract class ColumnInfo<Item, Aspect> {
     return null;
   }
 
+  @Override
   public boolean equals(final Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    final ColumnInfo that = (ColumnInfo)o;
-
-    if (!Objects.equals(myName, that.myName)) return false;
-
-    return true;
+    return this == o || o != null && getClass() == o.getClass() && Objects.equals(myName, ((ColumnInfo<?, ?>)o).myName);
   }
 
+  @Override
   public int hashCode() {
     return myName != null ? myName.hashCode() : 0;
   }
