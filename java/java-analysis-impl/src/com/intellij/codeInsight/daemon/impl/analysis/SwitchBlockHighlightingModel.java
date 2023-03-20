@@ -508,7 +508,7 @@ public class SwitchBlockHighlightingModel {
     void checkSwitchLabelValues(@NotNull HighlightInfoHolder holder) {
       PsiCodeBlock body = myBlock.getBody();
       if (body == null) return;
-      boolean java20plus = PsiUtil.getLanguageLevel(holder.getProject()).isAtLeast(LanguageLevel.JDK_20_PREVIEW);
+      boolean java20plus = PsiUtil.getLanguageLevel(myBlock).isAtLeast(LanguageLevel.JDK_20_PREVIEW);
       MultiMap<Object, PsiElement> elementsToCheckDuplicates = new MultiMap<>();
       List<List<PsiSwitchLabelStatementBase>> elementsToCheckFallThroughLegality = new SmartList<>();
       List<PsiElement> elementsToCheckDominance = new ArrayList<>();

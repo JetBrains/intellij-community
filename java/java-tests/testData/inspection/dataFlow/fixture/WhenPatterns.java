@@ -8,14 +8,14 @@ class Test {
   int test3(String s1) {
     return switch(s1) {
       case String s when s.length() <= 3 && (s.length() > 1 || <warning descr="Condition 's.length() > 10' is always 'false' when reached">s.length() > 10</warning>) -> 1;
-      case default -> 3;
+      case <error descr="The label for the default case must only use the 'default' keyword, without 'case'">default</error> -> 3;
     };
   }
 
   int test4(String s) {
     return switch (s) {
       case String ss when (ss.length() < 3 || ss.length() == 4) -> 1;
-      case default -> 3;
+      case <error descr="The label for the default case must only use the 'default' keyword, without 'case'">default</error> -> 3;
     };
   }
 
