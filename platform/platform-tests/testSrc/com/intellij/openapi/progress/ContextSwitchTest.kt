@@ -4,6 +4,7 @@ package com.intellij.openapi.progress
 import com.intellij.concurrency.TestElement
 import com.intellij.concurrency.TestElementKey
 import com.intellij.concurrency.currentThreadContext
+import com.intellij.concurrency.currentThreadContextOrNull
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.readActionBlocking
@@ -13,7 +14,6 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
 
 class ContextSwitchTest : CancellationTest() {
 
@@ -134,21 +134,21 @@ class ContextSwitchTest : CancellationTest() {
     }
 
     withContext(testElement) {
-      assertSame(currentThreadContext(), EmptyCoroutineContext)
+      assertNull(currentThreadContextOrNull())
       blockingContext {
         assertThreadContext()
         runBlockingCancellable {
-          assertSame(currentThreadContext(), EmptyCoroutineContext)
+          assertNull(currentThreadContextOrNull())
           withContext(Dispatchers.Default) {
             blockingContext {
               assertThreadContext()
             }
           }
-          assertSame(currentThreadContext(), EmptyCoroutineContext)
+          assertNull(currentThreadContextOrNull())
         }
         assertThreadContext()
       }
-      assertSame(currentThreadContext(), EmptyCoroutineContext)
+      assertNull(currentThreadContextOrNull())
     }
   }
 }

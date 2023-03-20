@@ -3,7 +3,6 @@ package com.intellij.openapi.progress
 
 import com.intellij.concurrency.TestElement
 import com.intellij.concurrency.TestElementKey
-import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.currentThreadContextOrNull
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -19,7 +18,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.lang.Runnable
 import kotlin.coroutines.ContinuationInterceptor
-import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * @see WithModalProgressIndicatorTest
@@ -31,13 +29,12 @@ class RunBlockingModalTest : ModalCoroutineTest() {
     val testElement = TestElement("xx")
     withContext(testElement) {
       runBlockingModalContext {
-        assertNull(currentThreadContextOrNull())
         assertSame(testElement, coroutineContext[TestElementKey])
-        assertSame(currentThreadContext(), EmptyCoroutineContext)
+        assertNull(currentThreadContextOrNull())
         withContext(Dispatchers.EDT) {
-          assertSame(currentThreadContext(), EmptyCoroutineContext)
+          assertNull(currentThreadContextOrNull())
         }
-        assertSame(currentThreadContext(), EmptyCoroutineContext)
+        assertNull(currentThreadContextOrNull())
       }
     }
   }
