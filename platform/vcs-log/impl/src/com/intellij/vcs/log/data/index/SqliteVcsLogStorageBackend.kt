@@ -13,15 +13,14 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.childScope
-import com.intellij.vcs.log.Hash
-import com.intellij.vcs.log.VcsLogTextFilter
-import com.intellij.vcs.log.VcsUser
-import com.intellij.vcs.log.VcsUserRegistry
+import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.data.VcsLogStorageImpl
 import com.intellij.vcs.log.data.index.VcsLogPathsIndex.*
 import com.intellij.vcs.log.history.EdgeData
+import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.VcsLogIndexer
+import com.intellij.vcs.log.impl.VcsRefImpl
 import com.intellij.vcs.log.util.PersistentUtil
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntArrayList
@@ -34,10 +33,7 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.sqlite.*
 import java.io.IOException
 import java.nio.file.Files
-import java.util.function.IntConsumer
-import java.util.function.IntFunction
-import java.util.function.ObjIntConsumer
-import java.util.function.ToIntFunction
+import java.util.function.*
 
 private const val DB_VERSION = 2
 
@@ -79,6 +75,9 @@ private const val TABLE_SCHEMA = """
   create index path_index on path (position, relativePath);
   create table path_change (commitId integer not null, pathId integer not null, kind integer not null) strict;
   create index path_change_index on path_change(pathId);
+  
+  create table commit_hashes (hash text not null, position integer not null, name text null, type integer null) strict;
+  create unique index commit_hashes_index on commit_hashes (position, hash);
   
   commit transaction;
 """
@@ -134,8 +133,9 @@ private const val RENAME_DELETE_SQL = "delete from rename where parent = ? and c
 internal class SqliteVcsLogStorageBackend(project: Project,
                                           logId: String,
                                           roots: Set<VirtualFile>,
+                                          private val logProviders: Map<VirtualFile, VcsLogProvider>,
                                           disposable: Disposable) :
-  VcsLogStorageBackend, VcsLogUserBiMap, VcsLogIndexedPaths, VcsLogPathsStorage {
+  VcsLogStorageBackend, VcsLogUserBiMap, VcsLogIndexedPaths, VcsLogPathsStorage, VcsLogStorage {
 
   private val connectionManager = ProjectLevelConnectionManager(project, logId).also { Disposer.register(disposable, it) }
 
@@ -493,6 +493,109 @@ internal class SqliteVcsLogStorageBackend(project: Project,
     }
 
     return null
+  }
+
+  override fun getCommitIndex(hash: Hash, root: VirtualFile): Int {
+    val position = rootsToPosition.getInt(root)
+    val commitId = getCommitId(position, hash)
+    if (commitId != null) return commitId
+
+    connection.execute("insert into commit_hashes(position, hash) values(?, ?)", arrayOf(position, hash.asString()))
+
+    return getCommitId(position, hash)!!
+  }
+
+  private fun getCommitId(position: Int, hash: Hash): Int? {
+    val paramBinder = ObjectBinder(paramCount = 2)
+    connection.prepareStatement("select rowid from commit_hashes where position = ? and hash = ?", paramBinder).use { statement ->
+      paramBinder.bindMultiple(position, hash.asString())
+
+      val rs = statement.executeQuery()
+      if (rs.next()) {
+        return rs.getInt(0)
+      }
+    }
+    return null
+  }
+
+  override fun getCommitId(commitIndex: Int): CommitId? {
+    val paramBinder = IntBinder(paramCount = 1)
+    connection.prepareStatement("select position, hash from commit_hashes where rowid = ?", paramBinder).use { statement ->
+      paramBinder.bind(commitIndex)
+
+      val rs = statement.executeQuery()
+      if (rs.next()) {
+        val root = sortedRoots.get(rs.getInt(0))
+        val hash = rs.getString(1)!!.let(HashImpl::build)
+        return CommitId(hash, root)
+      }
+    }
+
+    return null
+  }
+
+  override fun containsCommit(id: CommitId): Boolean {
+    val position = rootsToPosition.getInt(id.root)
+    val hashStr = id.hash.asString()
+    return !connection.selectBoolean("select not exists (select 1 from commit_hashes where position = ? and hash = ?)",
+                                     arrayOf(position, hashStr))
+  }
+
+  override fun getRefIndex(ref: VcsRef): Int {
+    val position = rootsToPosition.getInt(ref.root)
+    val hash = ref.commitHash
+    val hashStr = ref.commitHash.asString()
+    val name = ref.name
+    val refTypeSerializer = VcsRefTypeSerializer()
+    logProviders[ref.root]!!.referenceManager.serialize(refTypeSerializer, ref.type)
+    val type = refTypeSerializer.readInt()
+    val commitId = getCommitId(position, ref.commitHash)
+
+    if (commitId != null) {
+      val params = arrayOf(name, type, position, hashStr)
+      connection.execute("update commit_hashes set name = ?, type = ? where position = ? and hash = ?", params)
+    }
+    else {
+      val params = arrayOf(position, hashStr, name, type)
+      connection.execute("insert into commit_hashes(position, hash, name, type) values(?, ?, ?, ?)", params)
+    }
+
+    return getCommitId(position, hash)!!
+  }
+
+  override fun getVcsRef(refIndex: Int): VcsRef? {
+    val paramBinder = IntBinder(paramCount = 1)
+    connection.prepareStatement("select position, hash, name, type from commit_hashes where rowid = ?", paramBinder).use { statement ->
+      paramBinder.bind(refIndex)
+
+      val rs = statement.executeQuery()
+      if (rs.next()) {
+        val root = sortedRoots.get(rs.getInt(0))
+        val hash = rs.getString(1)!!.let(HashImpl::build)
+        val name = rs.getString(2)!!
+        val refTypeSerializer = VcsRefTypeSerializer().apply { writeInt(rs.getInt(3)) }
+        val type = logProviders[root]!!.referenceManager.deserialize(refTypeSerializer)
+        return VcsRefImpl(hash, name, type, root)
+      }
+    }
+
+    return null
+  }
+
+  override fun iterateCommits(consumer: Predicate<in CommitId>) {
+    val paramBinder = IntBinder(paramCount = 0)
+    connection.prepareStatement("select position, hash from commit_hashes", paramBinder).use { statement ->
+      val rs = statement.executeQuery()
+
+      while (rs.next()) {
+        val root = sortedRoots.get(rs.getInt(0))
+        val hash = rs.getString(1)!!.let(HashImpl::build)
+
+        if (!consumer.test(CommitId(hash, root))){
+          return
+        }
+      }
+    }
   }
 }
 

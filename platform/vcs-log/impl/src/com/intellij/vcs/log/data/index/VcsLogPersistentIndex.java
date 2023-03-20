@@ -114,7 +114,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     String logId = calcIndexId(myProject, myIndexers);
     myIndexStorageId = new StorageId(myProject.getName(), INDEX, logId,
                                      VcsLogStorageImpl.VERSION + VERSION);
-    myIndexStorage = createIndexStorage(logId, myIndexStorageId, errorHandler, userRegistry);
+    myIndexStorage = createIndexStorage(myIndexStorageId, errorHandler, userRegistry);
     if (myIndexStorage != null) {
       myDataGetter = new IndexDataGetter(myProject, ContainerUtil.filter(providers, root -> myRoots.contains(root)),
                                          myIndexStorage, myStorage, myErrorHandler);
@@ -142,13 +142,12 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     return Math.max(1, Registry.intValue("vcs.log.index.limit.minutes"));
   }
 
-  private IndexStorage createIndexStorage(@NotNull String logId,
-                                          @NotNull StorageId indexStorageId,
+  private IndexStorage createIndexStorage(@NotNull StorageId indexStorageId,
                                           @NotNull VcsLogErrorHandler errorHandler,
                                           @NotNull VcsUserRegistry registry) {
     try {
       return IOUtil.openCleanOrResetBroken(
-        () -> new IndexStorage(myProject, logId, indexStorageId, myStorage, registry, myRoots, errorHandler, this),
+        () -> new IndexStorage(indexStorageId, myStorage, registry, myRoots, errorHandler, this),
         () -> {
           if (!indexStorageId.cleanupAllStorageFiles()) {
             LOG.error("Could not clean up storage files in " + indexStorageId.getProjectStorageDir());
@@ -314,9 +313,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     public final @NotNull VcsLogUserBiMap users;
     public final @NotNull VcsLogIndexedPaths paths;
 
-    IndexStorage(@NotNull Project project,
-                 @NotNull String logId,
-                 @NotNull StorageId indexStorageId,
+    IndexStorage(@NotNull StorageId indexStorageId,
                  @NotNull VcsLogStorage storage,
                  @NotNull VcsUserRegistry userRegistry,
                  @NotNull Set<VirtualFile> roots,
@@ -328,7 +325,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       try {
         StorageLockContext storageLockContext = new StorageLockContext();
         if (useSqlite) {
-          store = new SqliteVcsLogStorageBackend(project, logId, roots, this);
+          store = (SqliteVcsLogStorageBackend)storage;
         }
         else {
           store = new PhmVcsLogStorageBackend(indexStorageId, storageLockContext, errorHandler, this);

@@ -18,10 +18,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.index.IndexDiagnosticRunner;
-import com.intellij.vcs.log.data.index.VcsLogIndex;
-import com.intellij.vcs.log.data.index.VcsLogModifiableIndex;
-import com.intellij.vcs.log.data.index.VcsLogPersistentIndex;
+import com.intellij.vcs.log.data.index.*;
 import com.intellij.vcs.log.impl.VcsLogCachesInvalidator;
 import com.intellij.vcs.log.impl.VcsLogErrorHandler;
 import com.intellij.vcs.log.impl.VcsLogSharedSettings;
@@ -32,10 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.*;
 
 import static com.intellij.diagnostic.telemetry.TraceKt.runSpanWithScope;
@@ -79,6 +73,8 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
   private @NotNull State myState = State.CREATED;
   private @Nullable SingleTaskController.SingleTask myInitialization = null;
 
+  private static final boolean useSqlite = Registry.is("vcs.log.index.sqlite.storage", false);
+
   public VcsLogData(@NotNull Project project,
                     @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
                     @NotNull VcsLogErrorHandler errorHandler,
@@ -91,7 +87,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     VcsLogProgress progress = new VcsLogProgress(this);
 
     if (VcsLogCachesInvalidator.getInstance().isValid()) {
-      myStorage = createStorage();
+      myStorage = createStorage(logProviders);
       if (VcsLogSharedSettings.isIndexSwitchedOn(myProject)) {
         myIndex = new VcsLogPersistentIndex(myProject, myStorage, progress, logProviders, myErrorHandler, this);
       }
@@ -138,10 +134,17 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     Disposer.register(this, myDisposableFlag);
   }
 
-  private @NotNull VcsLogStorage createStorage() {
+  private @NotNull VcsLogStorage createStorage(@NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
     VcsLogStorage vcsLogStorage;
     try {
-      vcsLogStorage = new VcsLogStorageImpl(myProject, myLogProviders, myErrorHandler, this);
+      if (useSqlite) {
+        Set<VirtualFile> roots = new LinkedHashSet<>(logProviders.keySet());
+        String logId = PersistentUtil.calcLogId(myProject, logProviders);
+        vcsLogStorage = new SqliteVcsLogStorageBackend(myProject, logId, roots, logProviders, this);
+      }
+      else {
+        vcsLogStorage = new VcsLogStorageImpl(myProject, myLogProviders, myErrorHandler, this);
+      }
     }
     catch (IOException e) {
       vcsLogStorage = new InMemoryStorage();
