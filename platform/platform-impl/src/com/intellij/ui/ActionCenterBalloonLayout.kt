@@ -190,6 +190,8 @@ internal class ActionCenterBalloonLayout(parent: IdeRootPane, insets: Insets) : 
   }
 
   override fun setBounds(balloons: List<Balloon>, startX: Int, startY: Int) {
+    val shadowVerticalOffset = JBUI.scale(8)
+    var verticalOffset = JBUI.scale(2)
     var y = startY
 
     for (balloon in balloons) {
@@ -200,7 +202,8 @@ internal class ActionCenterBalloonLayout(parent: IdeRootPane, insets: Insets) : 
         y -= info.height
       }
 
-      y -= bounds.height
+      y -= bounds.height - verticalOffset
+      verticalOffset = shadowVerticalOffset
       bounds.setLocation(startX - bounds.width, y)
       balloon.setBounds(bounds)
     }
