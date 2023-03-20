@@ -2,7 +2,7 @@ package org.jetbrains.plugins.textmate.editor
 
 fun fileNameExtensions(fileName: CharSequence): Sequence<CharSequence> {
   return generateSequence(fileNameExtension(fileName)) { s ->
-    fileNameExtension(s)?.ifEmpty { null }
+    fileNameExtension(s)
   }
 }
 
