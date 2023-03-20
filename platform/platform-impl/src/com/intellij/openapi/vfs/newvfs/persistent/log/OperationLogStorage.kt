@@ -90,11 +90,13 @@ interface OperationLogStorage {
    * [Iterator] gets invalidated in case [OperationReadResult.Invalid] was read, and its [hasNext] and [hasPrevious]
    * will return false afterward in such case.
    */
-  interface Iterator {
+  interface Iterator: Comparable<Iterator> {
     fun hasNext(): Boolean
     fun hasPrevious(): Boolean
 
     fun next(): OperationReadResult
     fun previous(): OperationReadResult
+
+    fun clone(): Iterator
   }
 }

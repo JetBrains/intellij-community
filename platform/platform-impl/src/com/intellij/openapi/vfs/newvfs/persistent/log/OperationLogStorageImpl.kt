@@ -217,5 +217,12 @@ class OperationLogStorageImpl(
         is OperationReadResult.Invalid -> invalidationFlag = true
       }
     }
+
+    override fun clone(): IteratorImpl = IteratorImpl(iterPos)
+
+    override fun compareTo(other: OperationLogStorage.Iterator): Int {
+      other as IteratorImpl
+      return iterPos.compareTo(other.iterPos)
+    }
   }
 }
