@@ -2,11 +2,11 @@
 package com.intellij.concurrency
 
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertDoesNotThrow
-import org.junit.jupiter.api.assertThrows
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertSame
 
 class ThreadContextTest {
@@ -23,25 +23,15 @@ class ThreadContextTest {
 
   @Test
   fun `resetThreadContext resets context`() {
-    assertDoesNotThrow {
-      checkUninitializedThreadContext()
-    }
+    assertNull(currentThreadContextOrNull())
     withThreadContext(EmptyCoroutineContext).use {
-      assertThrows<IllegalStateException> {
-        checkUninitializedThreadContext()
-      }
+      assertNotNull(currentThreadContextOrNull())
       resetThreadContext().use {
-        assertDoesNotThrow {
-          checkUninitializedThreadContext()
-        }
+        assertNull(currentThreadContextOrNull())
       }
-      assertThrows<IllegalStateException> {
-        checkUninitializedThreadContext()
-      }
+      assertNotNull(currentThreadContextOrNull())
     }
-    assertDoesNotThrow {
-      checkUninitializedThreadContext()
-    }
+    assertNull(currentThreadContextOrNull())
   }
 
   @Test

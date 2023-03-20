@@ -5,6 +5,7 @@
 package com.intellij.concurrency
 
 import com.intellij.openapi.application.AccessToken
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.concurrency.captureCallableThreadContext
 import com.intellij.util.concurrency.captureRunnableThreadContext
 import org.jetbrains.annotations.ApiStatus.Experimental
@@ -14,14 +15,21 @@ import java.util.concurrent.Callable
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
+private val LOG: Logger = Logger.getInstance("#com.intellij.concurrency")
+
 private val tlCoroutineContext: ThreadLocal<CoroutineContext?> = ThreadLocal()
 
 @Internal
-@VisibleForTesting
 fun checkUninitializedThreadContext() {
-  check(tlCoroutineContext.get() == null) {
-    "Thread context was already set"
+  val currentContext = tlCoroutineContext.get()
+  if (currentContext != null) {
+    LOG.error("Thread context was already set: $currentContext")
   }
+}
+
+@VisibleForTesting
+fun currentThreadContextOrNull(): CoroutineContext? {
+  return tlCoroutineContext.get()
 }
 
 /**

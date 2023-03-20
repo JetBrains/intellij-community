@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
-import com.intellij.concurrency.checkUninitializedThreadContext
+import com.intellij.concurrency.currentThreadContextOrNull
 import com.intellij.openapi.progress.impl.ProgressState
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.*
@@ -19,7 +19,7 @@ class RunBlockingCancellableTest : CancellationTest() {
 
       runBlockingCancellable {
         assertJobIsChildOf(job = coroutineContext.job, parent = job)
-        checkUninitializedThreadContext()
+        assertNull(currentThreadContextOrNull())
         assertNull(Cancellation.currentJob())
         assertNull(ProgressManager.getGlobalProgressIndicator())
       }
@@ -36,7 +36,7 @@ class RunBlockingCancellableTest : CancellationTest() {
       assertNotNull(ProgressManager.getGlobalProgressIndicator())
 
       runBlockingCancellable {
-        checkUninitializedThreadContext()
+        assertNull(currentThreadContextOrNull())
         assertNull(Cancellation.currentJob())
         assertNull(ProgressManager.getGlobalProgressIndicator())
       }

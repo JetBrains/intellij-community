@@ -3,8 +3,8 @@ package com.intellij.openapi.progress
 
 import com.intellij.concurrency.TestElement
 import com.intellij.concurrency.TestElementKey
-import com.intellij.concurrency.checkUninitializedThreadContext
 import com.intellij.concurrency.currentThreadContext
+import com.intellij.concurrency.currentThreadContextOrNull
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -31,7 +31,7 @@ class RunBlockingModalTest : ModalCoroutineTest() {
     val testElement = TestElement("xx")
     withContext(testElement) {
       runBlockingModalContext {
-        checkUninitializedThreadContext()
+        assertNull(currentThreadContextOrNull())
         assertSame(testElement, coroutineContext[TestElementKey])
         assertSame(currentThreadContext(), EmptyCoroutineContext)
         withContext(Dispatchers.EDT) {
@@ -47,9 +47,9 @@ class RunBlockingModalTest : ModalCoroutineTest() {
     withContext(Dispatchers.EDT) {
       assertFalse(LaterInvocator.isInModalContext())
       runBlockingModal {
-        checkUninitializedThreadContext()
+        assertNull(currentThreadContextOrNull())
         withContext(Dispatchers.EDT) {
-          checkUninitializedThreadContext()
+          assertNull(currentThreadContextOrNull())
           assertTrue(LaterInvocator.isInModalContext())
           val contextModality = coroutineContext.contextModality()
           assertNotEquals(ModalityState.any(), contextModality)
