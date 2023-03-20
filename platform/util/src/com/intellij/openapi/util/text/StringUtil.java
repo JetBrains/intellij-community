@@ -2829,9 +2829,14 @@ public class StringUtil extends StringUtilRt {
            trimStart(s, className) : s;
   }
 
+  /**
+   * @param sequence original CharSequence
+   * @param delayMillis max delay in milliseconds
+   * @return a wrapped CharSequence that throws {@link ProcessCanceledException} if still accessed after delay.
+   */
   @Contract(pure = true)
-  public static @NotNull CharSequence newBombedCharSequence(@NotNull CharSequence sequence, long delay) {
-    long myTime = System.currentTimeMillis() + delay;
+  public static @NotNull CharSequence newBombedCharSequence(@NotNull CharSequence sequence, long delayMillis) {
+    long myTime = System.currentTimeMillis() + delayMillis;
     return new BombedCharSequence(sequence) {
       @Override
       protected void checkCanceled() {
