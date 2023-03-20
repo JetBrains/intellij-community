@@ -1135,8 +1135,12 @@ public final class JBUI {
         }
 
         public static @NotNull Border border() {
-          return new EmptyBorder(insets("CompletionPopup.Advertiser.borderInsets",
+          return new EmptyBorder(insets(borderInsetsKey(),
                                         isNewUI() ? insets(4, 12, 3, 8) : CurrentTheme.Advertiser.borderInsets()));
+        }
+
+        public @NotNull static String borderInsetsKey() {
+          return "CompletionPopup.Advertiser.borderInsets";
         }
       }
     }
