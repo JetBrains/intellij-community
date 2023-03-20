@@ -25,7 +25,9 @@ class IndicatorThreadContextTest : CancellationTest() {
         assertNull(ProgressManager.getGlobalProgressIndicator())
         assertNull(ctx.job.parent())
         assertSame(indicator.modalityState, ctx.contextModality())
-        assertEquals(2, ctx.fold(0) { acc, _ -> acc + 1 })
+        assertNull(ctx.progressReporter)
+        assertNotNull(ctx.rawProgressReporter)
+        assertEquals(3, ctx.fold(0) { acc, _ -> acc + 1 })
       }
 
       assertNull(currentThreadContextOrNull())

@@ -62,7 +62,8 @@ internal fun <T> prepareIndicatorThreadContext(indicator: ProgressIndicator, act
   val indicatorWatcher = cancelWithIndicator(currentJob, indicator)
   val progressModality = ProgressManager.getInstance().currentProgressModality?.asContextElement()
                          ?: EmptyCoroutineContext
-  val context = currentThreadContext() + currentJob + progressModality
+  val reporter = IndicatorRawProgressReporter(indicator).asContextElement()
+  val context = currentThreadContext() + currentJob + progressModality + reporter
   return try {
     ProgressManager.getInstance().silenceGlobalIndicator {
       resetThreadContext().use {

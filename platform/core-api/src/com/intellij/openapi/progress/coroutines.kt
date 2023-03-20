@@ -154,8 +154,7 @@ fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: su
   assertBackgroundThreadOrWriteAction()
   return prepareIndicatorThreadContext(indicator) { ctx ->
     val context = ctx +
-                  CoroutineName("indicator run blocking") +
-                  IndicatorRawProgressReporter(indicator).asContextElement()
+                  CoroutineName("indicator run blocking")
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking(context, action)
   }
