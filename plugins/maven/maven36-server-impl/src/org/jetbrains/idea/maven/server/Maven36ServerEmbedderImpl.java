@@ -33,7 +33,7 @@ public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
       if (repositorySystem instanceof DefaultRepositorySystem) {
         DefaultRepositorySystem defaultRepositorySystem = (DefaultRepositorySystem)repositorySystem;
         defaultRepositorySystem.setArtifactResolver(enhancedArtifactResolver);
-        defaultRepositorySystem.setArtifactDescriptorReader(enhancedArtifactDescriptorReader);
+        //defaultRepositorySystem.setArtifactDescriptorReader(enhancedArtifactDescriptorReader);
       }
 
       ArtifactDescriptorReader artifactDescriptorReader = getComponent(ArtifactDescriptorReader.class);
