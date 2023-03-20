@@ -18,7 +18,6 @@ import com.intellij.ui.scale.JBUIScale.sysScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleContextSupport
 import com.intellij.ui.scale.ScaleType
-import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.RetinaImage
 import com.intellij.util.SVGLoader.SvgElementColorPatcherProvider
@@ -298,9 +297,11 @@ object IconLoader {
         effectiveScaleContext = ScaleContext.create()
       }
       image = if (StartupUiUtil.isJreHiDPI(effectiveScaleContext)) {
-        JBHiDPIScaledImage(effectiveScaleContext, effectiveIcon.iconWidth.toDouble(), effectiveIcon.iconHeight.toDouble(),
-                           BufferedImage.TYPE_INT_ARGB_PRE,
-                           PaintUtil.RoundingMode.ROUND)
+        HiDPIImage(scaleContext = effectiveScaleContext,
+                   width = effectiveIcon.iconWidth.toDouble(),
+                   height = effectiveIcon.iconHeight.toDouble(),
+                   type = BufferedImage.TYPE_INT_ARGB_PRE,
+                   roundingMode = PaintUtil.RoundingMode.ROUND)
       }
       else {
         GraphicsEnvironment.getLocalGraphicsEnvironment()

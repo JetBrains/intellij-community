@@ -126,7 +126,7 @@ fun convertImage(image: Image,
     // To avoid that, we instead directly use the provided ScaleContext which contains correct ScaleContext.SYS_SCALE,
     // the image user space size will then be derived by JBHiDPIScaledImage (it is assumed the derived size is equal to
     // {originalUserSize} * DerivedScaleType.EFF_USR_SCALE, taking into account calculation accuracy).
-    result = JBHiDPIScaledImage(result, scaleContext, BufferedImage.TYPE_INT_ARGB)
+    result = JBHiDPIScaledImage(image = result, scaleContext = scaleContext, type = BufferedImage.TYPE_INT_ARGB)
   }
   return result
 }

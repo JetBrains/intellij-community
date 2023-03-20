@@ -53,7 +53,7 @@ public final class ImageUtil {
    */
   public static @NotNull BufferedImage createImage(@Nullable GraphicsConfiguration gc, int width, int height, int type) {
     if (JreHiDpiUtil.isJreHiDPI(gc)) {
-      return new JBHiDPIScaledImage(gc, width, height, type);
+      return new HiDPIImage(gc, width, height, type);
     }
     else {
       //noinspection UndesirableClassUsage
@@ -71,7 +71,7 @@ public final class ImageUtil {
                                                    int type,
                                                    @NotNull PaintUtil.RoundingMode rm) {
     if (StartupUiUtil.isJreHiDPI(context)) {
-      return new JBHiDPIScaledImage(context, width, height, type, rm);
+      return new HiDPIImage(context, width, height, type, rm);
     }
     else {
       //noinspection UndesirableClassUsage

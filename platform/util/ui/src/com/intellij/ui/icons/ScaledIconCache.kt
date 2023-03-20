@@ -10,9 +10,11 @@ import com.intellij.reference.SoftReference
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
-import com.intellij.util.ui.JBImageIcon
+import com.intellij.util.ui.StartupUiUtil
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Component
+import java.awt.Graphics
 import java.awt.Image
 import javax.swing.Icon
 import javax.swing.ImageIcon
@@ -62,7 +64,12 @@ internal class ScaledIconCache {
 
 private class ScaledResultIcon(image: Image,
                                private val original: CachedImageIcon,
-                               private val scale: Float) : JBImageIcon(image), ReplaceableIcon {
+                               private val scale: Float) : ImageIcon(image), ReplaceableIcon {
+  @Synchronized
+  override fun paintIcon(c: Component?, g: Graphics?, x: Int, y: Int) {
+    StartupUiUtil.drawImage(g!!, image, x, y, imageObserver ?: c)
+  }
+
   override fun replaceBy(replacer: IconReplacer): Icon {
     val originalReplaced = replacer.replaceIcon(original)
     if (originalReplaced is ScalableIcon) {

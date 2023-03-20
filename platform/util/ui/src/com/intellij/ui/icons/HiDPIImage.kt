@@ -3,14 +3,21 @@ package com.intellij.ui.icons
 
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.JBHiDPIScaledImage
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics2D
 import java.awt.GraphicsConfiguration
+import java.awt.Image
 
 @ApiStatus.Internal
 class HiDPIImage : JBHiDPIScaledImage {
-  constructor(width: Int, height: Int, type: Int) : super(width = width, height = height, type = type)
+  constructor(width: Int, height: Int, type: Int) : super(gc = null, width = width.toDouble(), height = height.toDouble(), type = type)
+
+  constructor(image: Image, width: Int, height: Int, type: Int) : super(image = image,
+                                                                        width = width.toDouble(),
+                                                                        height = height.toDouble(),
+                                                                        type = type)
 
   /**
    * Creates a scaled HiDPI-aware BufferedImage, targeting the graphics scale.
@@ -19,21 +26,45 @@ class HiDPIImage : JBHiDPIScaledImage {
    * @param width the width in user coordinate space
    * @param height the height in user coordinate space
    * @param type the type
-   * @param rm the rounding mode
+   * @param roundingMode the rounding mode
    */
-  constructor(g: Graphics2D?, width: Double, height: Double, type: Int, rm: PaintUtil.RoundingMode) : super(
-    g = g,
+  constructor(g: Graphics2D?, width: Double, height: Double, type: Int, roundingMode: PaintUtil.RoundingMode) : super(
+    scale = JBUIScale.sysScale(g).toDouble(),
     width = width,
     height = height,
     type = type,
-    rm = rm,
+    roundingMode = roundingMode,
   )
 
-  @JvmOverloads
+  /**
+   * Creates a scaled HiDPI-aware BufferedImage, targeting the graphics config.
+   *
+   * @param gc the graphics config which provides the target scale
+   * @param width the width in user coordinate space
+   * @param height the height in user coordinate space
+   * @param type the type
+   */
   constructor(gc: GraphicsConfiguration?,
               width: Double,
               height: Double,
               type: Int,
-              rm: PaintUtil.RoundingMode = PaintUtil.RoundingMode.FLOOR) : super(
-    JBUIScale.sysScale(gc).toDouble(), width, height, type, rm)
+              roundingMode: PaintUtil.RoundingMode) : super(
+    JBUIScale.sysScale(gc).toDouble(), width, height, type, roundingMode)
+
+  /**
+   * @see .JBHiDPIScaledImage
+   */
+  constructor(gc: GraphicsConfiguration?, width: Int, height: Int, type: Int) :
+    super(scale = JBUIScale.sysScale(gc = gc).toDouble(),
+          width = width.toDouble(),
+          height = height.toDouble(),
+          type = type,
+          roundingMode = PaintUtil.RoundingMode.FLOOR)
+
+  constructor(scaleContext: ScaleContext?, width: Double, height: Double, type: Int, roundingMode: PaintUtil.RoundingMode) :
+    super(scale = JBUIScale.sysScale(context = scaleContext),
+          width = width,
+          height = height,
+          type = type,
+          roundingMode = roundingMode)
 }

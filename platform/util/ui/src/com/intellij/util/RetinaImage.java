@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
+import com.intellij.ui.icons.HiDPIImage;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +14,7 @@ import java.awt.image.ImageObserver;
  * @author Anton Makeev
  * @author Konstantin Bulenkov
  */
-public final class RetinaImage { // [tav] todo: create HiDPIImage class
+public final class RetinaImage {
   private static final SynchronizedClearableLazy<Component> component = new SynchronizedClearableLazy<>(() -> new Component() {
   });
 
@@ -57,6 +58,6 @@ public final class RetinaImage { // [tav] todo: create HiDPIImage class
   }
 
   public static @NotNull BufferedImage create(GraphicsConfiguration gc, double width, double height, int type, @NotNull RoundingMode rm) {
-    return new JBHiDPIScaledImage(gc, width, height, type, rm);
+    return new HiDPIImage(gc, width, height, type, rm);
   }
 }
