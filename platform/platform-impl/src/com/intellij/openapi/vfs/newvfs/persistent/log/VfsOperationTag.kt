@@ -60,11 +60,21 @@ private val nullSerializer = object : Serializer<Nothing> {
 val VfsOperationTag.isRecordOperation get() = VfsOperationTag.REC_ALLOC <= this && this <= VfsOperationTag.REC_SET_VERSION
 val VfsOperationTag.isAttributeOperation get() = VfsOperationTag.ATTR_WRITE_ATTR <= this && this <= VfsOperationTag.ATTR_SET_VERSION
 val VfsOperationTag.isContentOperation get() = VfsOperationTag.CONTENT_WRITE_BYTES <= this && this <= VfsOperationTag.CONTENT_SET_VERSION
+val VfsOperationTag.isVFileEventStartOperation get() = VfsOperationTag.VFILE_EVENT_CONTENT_CHANGE <= this && this <= VfsOperationTag.VFILE_EVENT_PROPERTY_CHANGED
 val VfsOperationTag.isVFileEventOperation get() = VfsOperationTag.VFILE_EVENT_CONTENT_CHANGE <= this && this <= VfsOperationTag.VFILE_EVENT_END
 
 @JvmInline
 value class VfsOperationTagsMask(val mask: Long) {
-  constructor(vararg tags: VfsOperationTag): this(tags.map { 1L shl it.ordinal }.fold(0L, Long::or))
+  constructor(vararg tags: VfsOperationTag) : this(tags.map { 1L shl it.ordinal }.fold(0L, Long::or))
 
   fun contains(tag: VfsOperationTag) = (mask and (1L shl tag.ordinal)) != 0L
+
+  companion object {
+    val EMPTY = VfsOperationTagsMask(0L)
+    val RecordsMask = VfsOperationTagsMask(*VfsOperationTag.values().filter { it.isRecordOperation }.toTypedArray())
+    val AttributesMask = VfsOperationTagsMask(*VfsOperationTag.values().filter { it.isAttributeOperation }.toTypedArray())
+    val ContentsMask = VfsOperationTagsMask(*VfsOperationTag.values().filter { it.isContentOperation }.toTypedArray())
+    val VFileEventsStartMask = VfsOperationTagsMask(*VfsOperationTag.values().filter { it.isVFileEventStartOperation }.toTypedArray())
+    val VFileEventsMask = VfsOperationTagsMask(*VfsOperationTag.values().filter { it.isVFileEventOperation }.toTypedArray())
+  }
 }
