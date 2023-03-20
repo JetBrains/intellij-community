@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.kotlin.analysis
 
 import com.intellij.lang.Language
@@ -6,6 +6,7 @@ import javaslang.Tuple2
 import javaslang.control.Option
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -18,7 +19,6 @@ import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.analysis.UExpressionFact
 import org.jetbrains.uast.analysis.UNullability
 import org.jetbrains.uast.analysis.UastAnalysisPlugin
-import org.jetbrains.uast.kotlin.analyze
 import org.jetbrains.uast.kotlin.unwrapBlockOrParenthesis
 
 class KotlinUastAnalysisPlugin : UastAnalysisPlugin {
