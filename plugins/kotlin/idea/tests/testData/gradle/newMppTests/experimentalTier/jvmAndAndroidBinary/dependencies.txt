@@ -99,12 +99,24 @@ project.producer.androidTest
     producer.main (friend, TEST)
 
 project.producer.commonMain
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains:annotations:13.0 (COMPILE)
 
 project.producer.commonTest
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
+    org.jetbrains:annotations:13.0 (TEST)
     producer.commonMain (friend, TEST)
     producer.jvmAndAndroidMain (friend, TEST)
 
 project.producer.jvmAndAndroidMain
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains:annotations:13.0 (COMPILE)
     producer.commonMain (refines, COMPILE)
 
 project.producer.jvmMain
