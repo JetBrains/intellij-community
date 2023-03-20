@@ -11,6 +11,8 @@ import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import java.util.stream.Stream
+import kotlin.io.path.exists
+import kotlin.io.path.name
 import kotlin.streams.asSequence
 
 fun main() {
@@ -22,6 +24,8 @@ fun main() {
   }
 }
 
+private val context = Context()
+
 /**
  * Generate icon mappings for https://github.com/JetBrains/IntelliJIcons-web-site
  */
@@ -30,12 +34,11 @@ private fun generateMappings() {
                      ?.split(",")
                      ?.map(String::trim)
                    ?: emptyList()
-  val context = Context()
-  val mappings = (loadIdeaGeneratedIcons(context) {
+  val mappings = loadIdeaGeneratedIcons {
     exclusions.none { excluded ->
       path.startsWith(excluded)
     }
-  }.asSequence() + loadNonGeneratedIcons(context, "idea"))
+  }.asSequence().plus(loadNonGeneratedIcons())
     .groupByTo(TreeMap()) { "${it.product}#${it.set}" }
     .values
     .asSequence()
@@ -47,12 +50,14 @@ private fun generateMappings() {
         } + it.first()
       }
       else it
-    }
-    .filter { mapping ->
+    }.filter { mapping ->
       exclusions.none { excluded ->
         mapping.path.startsWith(excluded)
       }
-    }
+    }.toList()
+  check(mappings.isNotEmpty()) {
+    "No mappings loaded"
+  }
   val mappingsJson = mappings.joinToString(separator = ",\n") {
     it.toString().prependIndent("     ")
   }
@@ -82,6 +87,13 @@ private fun generateMappings() {
 }
 
 private class Mapping(val product: String, val set: String, val path: String) : Comparable<Mapping> {
+  init {
+    val absolutePath = context.iconRepoDir.resolve(path)
+    check(absolutePath.exists()) {
+      "$absolutePath is missing for $set of $product"
+    }
+  }
+
   override fun toString(): String {
     val productName = when (product) {
       "kotlin", "mps" -> product
@@ -100,7 +112,7 @@ private class Mapping(val product: String, val set: String, val path: String) : 
   override fun compareTo(other: Mapping) = path.compareTo(other.path)
 }
 
-private fun loadIdeaGeneratedIcons(context: Context, filter: Mapping.() -> Boolean): Stream<Mapping> {
+private fun loadIdeaGeneratedIcons(filter: Mapping.() -> Boolean): Stream<Mapping> {
   val home = context.devRepoDir
   val project = jpsProject(home.toString())
   val generator = IconsClassGenerator(home, project.modules)
@@ -111,30 +123,27 @@ private fun loadIdeaGeneratedIcons(context: Context, filter: Mapping.() -> Boole
       .filter { it.images.isNotEmpty() }
       .flatMap { info ->
         val icons = info.images.asSequence()
-          .filter { it.basicFile != null && Icon(it.basicFile!!).isValid }
+          .filter { it.basicFile?.let(::Icon)?.isValid == true }
           .map { Paths.get(JpsPathUtil.urlToPath(it.sourceRoot.url)) }
           .distinct()
           .map { Mapping("idea", info.className, "idea/${home.relativize(it)}") }
           .filter(filter)
           .toList()
-        if (icons.size > 1) {
-          error("Expected single source root for ${info.className} mapping but found: ${icons.joinToString()}")
+        check(icons.size < 2) {
+          "Expected single source root for ${info.className} mapping but found: ${icons.joinToString()}"
         }
         icons.stream()
       }
   }
 }
 
-private fun loadNonGeneratedIcons(context: Context, vararg skip: String): Sequence<Mapping> {
+private fun loadNonGeneratedIcons(): Sequence<Mapping> {
   val iconRepo = context.iconRepoDir
-  val toSkip = sequenceOf(*skip)
-    .map(iconRepo::resolve)
-    .map(Path::toString)
-    .toList()
+  val toSkip = iconRepo.resolve("idea")
   val iconsRoots = mutableSetOf<Path>()
   Files.walkFileTree(iconRepo, object : SimpleFileVisitor<Path>() {
     override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult? {
-      return if (toSkip.contains(dir.toString()) || dir.fileName.toString() == ".git") {
+      return if (dir.startsWith(toSkip) || dir.name == ".git") {
         FileVisitResult.SKIP_SUBTREE
       }
       else super.preVisitDirectory(dir, attrs)
@@ -151,25 +160,25 @@ private fun loadNonGeneratedIcons(context: Context, vararg skip: String): Sequen
     .groupBy { product(iconRepo, it) }
     .asSequence()
     .flatMap { entry ->
-    val (product, roots) = entry
-    val rootSet = "${product.capitalize()}Icons"
-    if (roots.size == 1) {
-      val path = roots.single().relativize(iconRepo).toString()
-      return@flatMap listOf(Mapping(product, rootSet, path))
+      val (product, roots) = entry
+      val rootSet = "${product.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }}Icons"
+      if (roots.size == 1) {
+        val path = iconRepo.relativize(roots.single()).toString()
+        return@flatMap listOf(Mapping(product, rootSet, path))
+      }
+      roots.map { root ->
+        val path = iconRepo.relativize(root).toString()
+        val set = set(root, roots, iconRepo, product)
+          .takeIf(String::isNotBlank)
+          ?.let { "$rootSet.$it" }
+        Mapping(product, set ?: rootSet, path)
+      }.distinct()
     }
-    roots.map { root ->
-      val path = iconRepo.relativize(root).toString()
-      val set = set(root, roots, iconRepo, product)
-        .takeIf(String::isNotBlank)
-        ?.let { "$rootSet.$it" }
-      Mapping(product, set ?: rootSet, path)
-    }.distinct()
-  }
 }
 
 private fun product(iconRepo: Path, iconDir: Path): String {
   return when {
-    iconRepo == iconDir.parent -> iconDir.fileName.toString()
+    iconRepo == iconDir.parent -> iconDir.name
     iconDir.parent != null -> product(iconRepo, iconDir.parent)
     else -> error("Unable to determine product name for $iconDir")
   }
@@ -185,10 +194,12 @@ private fun set(root: Path, roots: Collection<Path>, iconRepo: Path, product: St
   val parts = iconRepo.relativize(root).toString()
     .splitToSequence(*delimiters)
     .filter(String::isNotBlank)
-    .filter { it.toLowerCase() != product }
-    .filter { !exclusions.contains(it.toLowerCase()) }
+    .filter { it.lowercase() != product }
+    .filter { !exclusions.contains(it.lowercase()) }
     .toMutableList()
-  ancestors.forEach { parts -= iconRepo.relativize(it).toString().split(*delimiters) }
+  ancestors.forEach {
+    parts -= iconRepo.relativize(it).toString().splitToSequence(*delimiters).toSet()
+  }
   val parentPrefix = parent(root, roots, iconRepo)
                        ?.let { set(it, roots, iconRepo, product) }
                        ?.takeIf(String::isNotBlank)
@@ -196,7 +207,11 @@ private fun set(root: Path, roots: Collection<Path>, iconRepo: Path, product: St
   return parentPrefix + parts.asSequence()
     .distinct()
     .filter(String::isNotBlank)
-    .joinToString(separator = ".", transform = String::capitalize)
+    .joinToString(separator = ".") {
+      it.replaceFirstChar { char ->
+        if (char.isLowerCase()) char.titlecase() else char.toString()
+      }
+    }
 }
 
 private fun parent(root: Path?, roots: Collection<Path>, iconRepo: Path): Path? {
