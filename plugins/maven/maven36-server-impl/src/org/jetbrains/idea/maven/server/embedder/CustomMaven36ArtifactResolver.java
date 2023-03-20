@@ -32,20 +32,6 @@ public class CustomMaven36ArtifactResolver implements ArtifactResolver {
     }
   }
 
-  private ArtifactResult doResolveArtifact(RepositorySystemSession session, ArtifactRequest request) throws ArtifactResolutionException {
-    if (null == request) return null;
-
-    ArtifactRequestData requestData = new ArtifactRequestData(request);
-
-    ArtifactResultData resultData = artifactCache.computeIfAbsent(requestData, rd -> doResolveArtifactAndWrapException(session, request));
-
-    if (null != resultData.getResolutionException()) {
-      throw resultData.getResolutionException();
-    }
-
-    return getResult(request, resultData);
-  }
-
   @NotNull
   private static ArtifactResult getResult(ArtifactRequest request, ArtifactResultData resultData) {
     ArtifactResult result = new ArtifactResult(request);
@@ -62,7 +48,17 @@ public class CustomMaven36ArtifactResolver implements ArtifactResolver {
 
   @Override
   public ArtifactResult resolveArtifact(RepositorySystemSession session, ArtifactRequest request) throws ArtifactResolutionException {
-    return doResolveArtifact(session, request);
+    if (null == request) return null;
+
+    ArtifactRequestData requestData = new ArtifactRequestData(request);
+
+    ArtifactResultData resultData = artifactCache.computeIfAbsent(requestData, rd -> doResolveArtifactAndWrapException(session, request));
+
+    if (null != resultData.getResolutionException()) {
+      throw resultData.getResolutionException();
+    }
+
+    return getResult(request, resultData);
   }
 
   @Override
