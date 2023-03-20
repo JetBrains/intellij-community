@@ -20,6 +20,7 @@ import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.StartupUiUtilKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -300,7 +301,7 @@ final class PainterHelper implements Painter.Listener {
 
       float adjustedAlpha = Boolean.TRUE.equals(g.getRenderingHint(IdeBackgroundUtil.ADJUST_ALPHA)) ? 0.65f * alpha : alpha;
       GraphicsConfig gc = new GraphicsConfig(g).setAlpha(adjustedAlpha);
-      StartupUiUtil.drawImage(g, scaled, dst, src, null, null);
+      StartupUiUtilKt.drawImage(g, scaled, dst, src, null, null);
       gc.restore();
     }
 

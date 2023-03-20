@@ -11,8 +11,7 @@ import com.intellij.ui.scale.JBUIScale.isHiDPI
 import com.intellij.ui.scale.JBUIScale.sysScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.JBHiDPIScaledImage
-import org.intellij.lang.annotations.JdkConstants
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
 import java.awt.event.AWTEventListener
 import java.awt.event.InputEvent
@@ -21,7 +20,6 @@ import java.awt.image.BufferedImage
 import java.awt.image.BufferedImageOp
 import java.awt.image.ImageObserver
 import java.util.*
-import java.util.function.Function
 import javax.swing.InputMap
 import javax.swing.KeyStroke
 import javax.swing.UIDefaults
@@ -32,10 +30,10 @@ import javax.swing.text.StyleContext
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.pow
-import kotlin.math.roundToLong
+import kotlin.math.roundToInt
 
 object StartupUiUtil {
-  @ApiStatus.Internal
+  @Internal
   @JvmField
   val patchableFontResources = arrayOf("Button.font", "ToggleButton.font", "RadioButton.font",
                                        "CheckBox.font", "ColorChooser.font", "ComboBox.font", "Label.font", "List.font", "MenuBar.font",
@@ -53,7 +51,7 @@ object StartupUiUtil {
   val isUnderDarcula: Boolean
     get() = UIManager.getLookAndFeel().name.contains("Darcula")
 
-  @ApiStatus.Internal
+  @Internal
   @JvmStatic
   fun doGetLcdContrastValueForSplash(isUnderDarcula: Boolean): Int {
     if (SystemInfoRt.isMac) {
@@ -149,116 +147,6 @@ object StartupUiUtil {
   }
 
   /**
-   * A hidpi-aware wrapper over [Graphics.drawImage].
-   *
-   *
-   * The `dstBounds` and `srcBounds` are in the user space (just like the width/height of the image).
-   * If `dstBounds` is null or if its width/height is set to (-1) the image bounds or the image width/height is used.
-   * If `srcBounds` is null or if its width/height is set to (-1) the image bounds or the image right/bottom area to the provided x/y is used.
-   */
-  @JvmStatic
-  fun drawImage(g: Graphics,
-                image: Image,
-                dstBounds: Rectangle?,
-                srcBounds: Rectangle?,
-                op: BufferedImageOp?,
-                observer: ImageObserver?) {
-    var g = g
-    var image = image
-    val userWidth = ImageUtil.getUserWidth(image)
-    val userHeight = ImageUtil.getUserHeight(image)
-    var dx = 0
-    var dy = 0
-    var dw = -1
-    var dh = -1
-    if (dstBounds != null) {
-      dx = dstBounds.x
-      dy = dstBounds.y
-      dw = dstBounds.width
-      dh = dstBounds.height
-    }
-    val hasDstSize = dw >= 0 && dh >= 0
-    var invG: Graphics2D? = null
-    var scale = 1.0
-    if (image is JBHiDPIScaledImage) {
-      val delegate = image.delegate
-      if (delegate != null) {
-        image = delegate
-      }
-      scale = (image as JBHiDPIScaledImage).scale
-      var delta = 0.0
-      if (java.lang.Boolean.parseBoolean(System.getProperty("ide.icon.scale.useAccuracyDelta", "true"))) {
-        // Calculate the delta based on the image size. The bigger the size - the smaller the delta.
-        val maxSize = max(userWidth, userHeight)
-        if (maxSize < Int.MAX_VALUE / 2) { // sanity check
-          var dotAccuracy = 1
-          var pow: Double
-          while (maxSize > 10.0.pow(dotAccuracy.toDouble()).also { pow = it }) dotAccuracy++
-          delta = 1 / pow
-        }
-      }
-      val tx = (g as Graphics2D).transform
-      if (abs(scale - tx.scaleX) <= delta) {
-        scale = tx.scaleX
-
-        // The image has the same original scale as the graphics scale. However, the real image
-        // scale - userSize/realSize - can suffer from inaccuracy due to the image user size
-        // rounding to int (userSize = (int)realSize/originalImageScale). This may case quality
-        // loss if the image is drawn via Graphics.drawImage(image, <srcRect>, <dstRect>)
-        // due to scaling in Graphics. To avoid that, the image should be drawn directly via
-        // Graphics.drawImage(image, 0, 0) on the unscaled Graphics.
-        val gScaleX = tx.scaleX
-        val gScaleY = tx.scaleY
-        tx.scale(1 / gScaleX, 1 / gScaleY)
-        tx.translate(dx * gScaleX, dy * gScaleY)
-        dy = 0
-        dx = dy
-        invG = g.create() as Graphics2D
-        g = invG
-        invG!!.transform = tx
-      }
-    }
-
-    val _scale = scale
-    val size = Function { size1: Int -> (size1 * _scale).roundToLong().toInt() }
-    try {
-      if (op != null && image is BufferedImage) {
-        image = op.filter(image, null)
-      }
-      if (invG != null && hasDstSize) {
-        dw = size.apply(dw)
-        dh = size.apply(dh)
-      }
-      if (srcBounds != null) {
-        val sx = size.apply(srcBounds.x)
-        val sy = size.apply(srcBounds.y)
-        val sw = if (srcBounds.width >= 0) size.apply(srcBounds.width) else size.apply(userWidth) - sx
-        val sh = if (srcBounds.height >= 0) size.apply(srcBounds.height) else size.apply(userHeight) - sy
-        if (!hasDstSize) {
-          dw = size.apply(userWidth)
-          dh = size.apply(userHeight)
-        }
-        g.drawImage(image,
-                    dx, dy, dx + dw, dy + dh,
-                    sx, sy, sx + sw, sy + sh,
-                    observer)
-      }
-      else if (hasDstSize) {
-        g.drawImage(image, dx, dy, dw, dh, observer)
-      }
-      else if (invG == null) {
-        g.drawImage(image, dx, dy, userWidth, userHeight, observer)
-      }
-      else {
-        g.drawImage(image, dx, dy, observer)
-      }
-    }
-    finally {
-      invG?.dispose()
-    }
-  }
-
-  /**
    * @see .drawImage
    */
   @JvmStatic
@@ -276,26 +164,30 @@ object StartupUiUtil {
   @JvmStatic
   fun initInputMapDefaults(defaults: UIDefaults) {
     // Make ENTER work in JTrees
-    val treeInputMap = defaults["Tree.focusInputMap"] as InputMap?
+    val treeInputMap = defaults.get("Tree.focusInputMap") as InputMap?
     treeInputMap?.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "toggle")
     // Cut/Copy/Paste in JTextAreas
-    val textAreaInputMap = defaults["TextArea.focusInputMap"] as InputMap?
-    if (textAreaInputMap != null) { // It really can be null, for example when LAF isn't properly initialized (Alloy license problem)
+    val textAreaInputMap = defaults.get("TextArea.focusInputMap") as InputMap?
+    if (textAreaInputMap != null) {
+      // It really can be null, for example, when LAF isn't properly initialized (an Alloy license problem)
       installCutCopyPasteShortcuts(textAreaInputMap, false)
     }
     // Cut/Copy/Paste in JTextFields
-    val textFieldInputMap = defaults["TextField.focusInputMap"] as InputMap?
-    if (textFieldInputMap != null) { // It really can be null, for example when LAF isn't properly initialized (Alloy license problem)
+    val textFieldInputMap = defaults.get("TextField.focusInputMap") as InputMap?
+    if (textFieldInputMap != null) {
+      // It really can be null, for example, when LAF isn't properly initialized (an Alloy license problem)
       installCutCopyPasteShortcuts(textFieldInputMap, false)
     }
     // Cut/Copy/Paste in JPasswordField
-    val passwordFieldInputMap = defaults["PasswordField.focusInputMap"] as InputMap?
-    if (passwordFieldInputMap != null) { // It really can be null, for example when LAF isn't properly initialized (Alloy license problem)
+    val passwordFieldInputMap = defaults.get("PasswordField.focusInputMap") as InputMap?
+    if (passwordFieldInputMap != null) {
+      // It really can be null, for example, when LAF isn't properly initialized (an Alloy license problem)
       installCutCopyPasteShortcuts(passwordFieldInputMap, false)
     }
     // Cut/Copy/Paste in JTables
-    val tableInputMap = defaults["Table.ancestorInputMap"] as InputMap?
-    if (tableInputMap != null) { // It really can be null, for example when LAF isn't properly initialized (Alloy license problem)
+    val tableInputMap = defaults.get("Table.ancestorInputMap") as InputMap?
+    if (tableInputMap != null) {
+      // It really can be null, for example, when LAF isn't properly initialized (an Alloy license problem)
       installCutCopyPasteShortcuts(tableInputMap, true)
     }
   }
@@ -331,9 +223,9 @@ object StartupUiUtil {
   }
 
   @JvmStatic
-  fun getFontWithFallback(familyName: String?, @JdkConstants.FontStyle style: Int, size: Float): FontUIResource {
+  fun getFontWithFallback(familyName: String?, @Suppress("DEPRECATION") @org.intellij.lang.annotations.JdkConstants.FontStyle style: Int, size: Float): FontUIResource {
     // On macOS font fallback is implemented in JDK by default
-    // (except for explicitly registered fonts, e.g. the fonts we bundle with IDE, for them we don't have a solution now)
+    // (except for explicitly registered fonts, e.g. the fonts we bundle with IDE, for them, we don't have a solution now)
     // in headless mode just use fallback in order to avoid font loading
     val fontWithFallback = if (SystemInfoRt.isMac || GraphicsEnvironment.isHeadless()) Font(familyName, style, size.toInt()).deriveFont(
       size)
@@ -345,5 +237,138 @@ object StartupUiUtil {
   fun addAwtListener(listener: AWTEventListener, mask: Long, parent: Disposable) {
     Toolkit.getDefaultToolkit().addAWTEventListener(listener, mask)
     Disposer.register(parent) { Toolkit.getDefaultToolkit().removeAWTEventListener(listener) }
+  }
+}
+
+@Internal
+fun drawImage(g: Graphics,
+              image: Image,
+              dstBounds: Rectangle?,
+              srcBounds: Rectangle?,
+              op: BufferedImageOp?,
+              observer: ImageObserver?) {
+  if (dstBounds == null) {
+    drawImage(g = g, image = image, srcBounds = srcBounds, op = op, observer = observer)
+  }
+  else {
+    drawImage(g = g,
+              image = image,
+              dx = dstBounds.x,
+              dy = dstBounds.y,
+              dw = dstBounds.width,
+              dh = dstBounds.height,
+              srcBounds = srcBounds,
+              op = op,
+              observer = observer)
+  }
+}
+
+/**
+ * A hidpi-aware wrapper over [Graphics.drawImage].
+ *
+ * The `dstBounds` and `srcBounds` are in the user space (just like the width/height of the image).
+ * If `dstBounds` is null or if its width/height is set to (-1) the image bounds or the image width/height is used.
+ * If `srcBounds` is null or if its width/height is set to (-1) the image bounds or the image right/bottom area to the provided x/y is used.
+ */
+@Internal
+@Suppress("NAME_SHADOWING")
+fun drawImage(g: Graphics,
+              image: Image,
+              dx: Int = 0,
+              dy: Int = 0,
+              dw: Int = -1,
+              dh: Int = -1,
+              srcBounds: Rectangle?,
+              op: BufferedImageOp?,
+              observer: ImageObserver?) {
+  var g = g
+  var image = image
+  val userWidth = ImageUtil.getUserWidth(image)
+  val userHeight = ImageUtil.getUserHeight(image)
+  val hasDstSize = dw >= 0 && dh >= 0
+  var invG: Graphics2D? = null
+  var scale = 1.0
+
+  var dx = dx
+  var dy = dy
+  var dw = dw
+  var dh = dh
+  if (image is JBHiDPIScaledImage) {
+    val delegate = image.delegate
+    if (delegate != null) {
+      image = delegate
+    }
+    scale = (image as JBHiDPIScaledImage).scale
+    var delta = 0.0
+    if (java.lang.Boolean.parseBoolean(System.getProperty("ide.icon.scale.useAccuracyDelta", "true"))) {
+      // Calculate the delta based on the image size. The bigger the size - the smaller the delta.
+      val maxSize = max(userWidth, userHeight)
+      if (maxSize < Int.MAX_VALUE / 2) {
+        var dotAccuracy = 1
+        var pow: Double
+        while (maxSize > 10.0.pow(dotAccuracy.toDouble()).also { pow = it }) dotAccuracy++
+        delta = 1 / pow
+      }
+    }
+    val tx = (g as Graphics2D).transform
+    if (abs(scale - tx.scaleX) <= delta) {
+      scale = tx.scaleX
+
+      // The image has the same original scale as the graphics scale. However, the real image
+      // scale - userSize/realSize - can suffer from inaccuracy due to the image user size
+      // rounding to int (userSize = (int)realSize/originalImageScale). This may case quality
+      // loss if the image is drawn via Graphics.drawImage(image, <srcRect>, <dstRect>)
+      // due to scaling in Graphics. To avoid that, the image should be drawn directly via
+      // Graphics.drawImage(image, 0, 0) on the unscaled Graphics.
+      val gScaleX = tx.scaleX
+      val gScaleY = tx.scaleY
+      tx.scale(1 / gScaleX, 1 / gScaleY)
+      tx.translate(dx * gScaleX, dy * gScaleY)
+      dy = 0
+      dx = 0
+      invG = g.create() as Graphics2D
+      g = invG
+      invG.transform = tx
+    }
+  }
+
+  val size: (Int) -> Int = { (it * scale).roundToInt() }
+  try {
+    if (op != null && image is BufferedImage) {
+      image = op.filter(image, null)
+    }
+    if (invG != null && hasDstSize) {
+      dw = size(dw)
+      dh = size(dh)
+    }
+
+    when {
+      srcBounds != null -> {
+        val sx = size(srcBounds.x)
+        val sy = size(srcBounds.y)
+        val sw = if (srcBounds.width >= 0) size(srcBounds.width) else size(userWidth) - sx
+        val sh = if (srcBounds.height >= 0) size(srcBounds.height) else size(userHeight) - sy
+        if (!hasDstSize) {
+          dw = size(userWidth)
+          dh = size(userHeight)
+        }
+        g.drawImage(/* img = */ image,
+                    /* dx1 = */ dx, /* dy1 = */ dy, /* dx2 = */ dx + dw, /* dy2 = */ dy + dh,
+                    /* sx1 = */ sx, /* sy1 = */ sy, /* sx2 = */ sx + sw, /* sy2 = */ sy + sh,
+                    /* observer = */ observer)
+      }
+      hasDstSize -> {
+        g.drawImage(image, dx, dy, dw, dh, observer)
+      }
+      invG == null -> {
+        g.drawImage(image, dx, dy, userWidth, userHeight, observer)
+      }
+      else -> {
+        g.drawImage(image, dx, dy, observer)
+      }
+    }
+  }
+  finally {
+    invG?.dispose()
   }
 }

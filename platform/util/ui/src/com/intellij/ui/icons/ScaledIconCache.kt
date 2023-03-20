@@ -10,7 +10,7 @@ import com.intellij.reference.SoftReference
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
-import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.drawImage
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
@@ -68,7 +68,7 @@ private class ScaledResultIcon(image: Image,
                                private val scale: Float) : ImageIcon(image), ReplaceableIcon {
   @Synchronized
   override fun paintIcon(c: Component?, g: Graphics?, x: Int, y: Int) {
-    StartupUiUtil.drawImage(g!!, image, Rectangle(x, y, -1, -1), null, null, imageObserver ?: c)
+    drawImage(g = g!!, image = image, dstBounds = Rectangle(x, y, -1, -1), srcBounds = null, op = null, observer = imageObserver ?: c)
   }
 
   override fun replaceBy(replacer: IconReplacer): Icon {

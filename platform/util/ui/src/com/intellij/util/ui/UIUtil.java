@@ -656,7 +656,7 @@ public final class UIUtil {
       int width = fontMetrics.stringWidth(s);
 
       if (width >= widthLimit - fontMetrics.charWidth('w')) {
-        if (currentLine.length() > 0) {
+        if (!currentLine.isEmpty()) {
           lines.add(currentLine.toString());
           currentLine = new StringBuilder();
         }
@@ -3374,7 +3374,7 @@ public final class UIUtil {
                                @Nullable Rectangle dstBounds,
                                @Nullable Rectangle srcBounds,
                                @Nullable ImageObserver observer) {
-    StartupUiUtil.drawImage(g, image, dstBounds, srcBounds, null, observer);
+    StartupUiUtilKt.drawImage(g, image, dstBounds, srcBounds, null, observer);
   }
 
   /**
