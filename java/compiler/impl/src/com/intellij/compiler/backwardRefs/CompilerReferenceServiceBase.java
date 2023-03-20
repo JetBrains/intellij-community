@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs;
 
-import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
 import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.backwardRefs.view.CompilerReferenceFindUsagesTestInfo;
@@ -25,6 +24,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -442,6 +442,8 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
         return null;
       }
       if (place == ElementPlace.LIB && buildHierarchyForLibraryElements) {
+        if (adapter.isTooCommonLibraryElement(psiElement)) return null;
+
         return computeInLibraryScope(() -> {
           GlobalSearchScope librariesScope = ProjectScope.getLibrariesScope(project);
           List<CompilerRef> resultList = new ArrayList<>(refs);
@@ -463,7 +465,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     }
   }
 
-  public @NotNull <T, E extends Throwable> T computeInLibraryScope(ThrowableComputable<T, E> action) throws E {
+  public <T, E extends Throwable> T computeInLibraryScope(ThrowableComputable<T, E> action) throws E {
     myIsInsideLibraryScope.set(true);
     try {
       return action.compute();

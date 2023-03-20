@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.search.refIndex
 
 import com.intellij.compiler.backwardRefs.LanguageCompilerRefAdapter
@@ -13,6 +13,7 @@ import com.intellij.util.Processor
 import org.jetbrains.jps.backwardRefs.CompilerRef
 import org.jetbrains.jps.backwardRefs.NameEnumerator
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
@@ -36,6 +37,16 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
             is KtCallableDeclaration -> originalElement.asCallableCompilerRefs(names)
             else -> null
         }
+
+    override fun isTooCommonLibraryElement(element: PsiElement): Boolean = runReadAction {
+        val ktClassOrObject = when (element) {
+            is KtClassOrObject -> element
+            is KtCallableDeclaration -> element.containingClassOrObject
+            else -> null
+        }
+
+        ktClassOrObject?.fqName?.asString() == StandardNames.FqNames.any.asString()
+    }
 
     override fun getHierarchyRestrictedToLibraryScope(
         baseRef: CompilerRef,

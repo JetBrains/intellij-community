@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -103,7 +103,17 @@ public interface LanguageCompilerRefAdapter {
   }
 
   /**
+   * @return true if {@link #getHierarchyRestrictedToLibraryScope(CompilerRef, PsiElement, NameEnumerator, GlobalSearchScope)} can
+   * process the element
+   * @see LanguageCompilerRefAdapter#getHierarchyRestrictedToLibraryScope(CompilerRef, PsiElement, NameEnumerator, GlobalSearchScope)
+   */
+  default boolean isTooCommonLibraryElement(@NotNull PsiElement element) {
+    return false;
+  }
+
+  /**
    * @return "hierarchy" of given element inside the libraries scope.
+   * @see LanguageCompilerRefAdapter#isTooCommonLibraryElement(PsiElement)
    */
   @NotNull
   List<CompilerRef> getHierarchyRestrictedToLibraryScope(@NotNull CompilerRef baseRef,

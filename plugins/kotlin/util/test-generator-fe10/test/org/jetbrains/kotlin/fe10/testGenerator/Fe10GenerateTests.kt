@@ -122,6 +122,7 @@ import org.jetbrains.kotlin.idea.scratch.AbstractScratchLineMarkersTest
 import org.jetbrains.kotlin.idea.scratch.AbstractScratchRunActionTest
 import org.jetbrains.kotlin.idea.script.*
 import org.jetbrains.kotlin.idea.search.refIndex.AbstractFindUsagesWithCompilerReferenceIndexTest
+import org.jetbrains.kotlin.idea.search.refIndex.AbstractKotlinCompilerReferenceByReferenceTest
 import org.jetbrains.kotlin.idea.search.refIndex.AbstractKotlinCompilerReferenceTest
 import org.jetbrains.kotlin.idea.slicer.AbstractSlicerLeafGroupingTest
 import org.jetbrains.kotlin.idea.slicer.AbstractSlicerMultiplatformTest
@@ -1246,6 +1247,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     testGroup("compiler-reference-index/tests") {
         testClass<AbstractKotlinCompilerReferenceTest> {
             model("compilerIndex", pattern = DIRECTORY, classPerTest = true)
+        }
+
+        testClass<AbstractKotlinCompilerReferenceByReferenceTest> {
+            model("compilerIndexByReference", pattern = DIRECTORY, classPerTest = true)
         }
     }
 

@@ -3,9 +3,7 @@ package org.jetbrains.kotlin.fir.testGenerator
 
 import org.jetbrains.kotlin.idea.fir.search.refIndex.AbstractFindUsagesWithCompilerReferenceIndexFirTest
 import org.jetbrains.kotlin.idea.fir.search.refIndex.AbstractKotlinCompilerReferenceFirTest
-import org.jetbrains.kotlin.idea.k2.inheritorsSearch.AbstractDirectKotlinInheritorsSearcherTest
-import org.jetbrains.kotlin.idea.k2.inheritorsSearch.AbstractKotlinDefinitionsSearchTest
-import org.jetbrains.kotlin.idea.k2.search.AbstractFirAnnotatedMembersSearchTest
+import org.jetbrains.kotlin.idea.search.refIndex.AbstractKotlinCompilerReferenceByReferenceFirTest
 import org.jetbrains.kotlin.testGenerator.model.*
 
 internal fun MutableTWorkspace.generateK2RefIndexTests() {
@@ -20,6 +18,9 @@ internal fun MutableTWorkspace.generateK2RefIndexTests() {
     testGroup("compiler-reference-index/tests.k2", testDataPath = "../tests/testData") {
         testClass<AbstractKotlinCompilerReferenceFirTest> {
             model("compilerIndex", pattern = Patterns.DIRECTORY, classPerTest = true)
+        }
+        testClass<AbstractKotlinCompilerReferenceByReferenceFirTest> {
+            model("compilerIndexByReference", pattern = Patterns.DIRECTORY, classPerTest = true)
         }
     }
 }
