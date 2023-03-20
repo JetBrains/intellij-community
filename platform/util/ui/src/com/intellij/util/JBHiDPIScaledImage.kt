@@ -16,7 +16,6 @@ import java.awt.Image
 import java.awt.image.BufferedImage
 import java.awt.image.ImageObserver
 import kotlin.math.roundToInt
-import kotlin.math.roundToLong
 
 /**
  * @author Konstantin Bulenkov
@@ -138,8 +137,8 @@ open class JBHiDPIScaledImage : BufferedImage {
     val w = getUserWidth(null)
     val h = getUserHeight(null)
     if (w <= 0 || h <= 0 || w == targetUserWidth && h == targetUserHeight) return this
-    val targetWidth = (targetUserWidth * scale).roundToLong().toInt()
-    val targetHeight = (targetUserHeight * scale).roundToLong().toInt()
+    val targetWidth = (targetUserWidth * scale).roundToInt()
+    val targetHeight = (targetUserHeight * scale).roundToInt()
     val scaled: Image = Scalr.resize(ImageUtil.toBufferedImage(img), Scalr.Method.QUALITY, Scalr.Mode.FIT_EXACT, targetWidth, targetHeight)
     if (delegate != null) {
       return JBHiDPIScaledImage(image = scaled, width = targetUserWidth.toDouble(), height = targetUserHeight.toDouble(), type = type)
@@ -162,9 +161,7 @@ open class JBHiDPIScaledImage : BufferedImage {
    *
    * @return the width
    */
-  override fun getWidth(): Int {
-    return getWidth(null)
-  }
+  override fun getWidth(): Int = getWidth(null)
 
   /**
    * Returns the height in user coordinate space for the image created as a wrapper,
@@ -172,9 +169,7 @@ open class JBHiDPIScaledImage : BufferedImage {
    *
    * @return the height
    */
-  override fun getHeight(): Int {
-    return getHeight(null)
-  }
+  override fun getHeight(): Int = getHeight(null)
 
   /**
    * Returns the width in user coordinate space for the image created as a wrapper,
@@ -183,7 +178,7 @@ open class JBHiDPIScaledImage : BufferedImage {
    * @return the width
    */
   override fun getWidth(observer: ImageObserver?): Int {
-    return if (delegate != null) getUserWidth(observer) else getRealWidth(observer)
+    return if (delegate == null) getRealWidth(observer) else getUserWidth(observer)
   }
 
   /**
@@ -193,7 +188,7 @@ open class JBHiDPIScaledImage : BufferedImage {
    * @return the height
    */
   override fun getHeight(observer: ImageObserver?): Int {
-    return if (delegate != null) getUserHeight(observer) else getRealHeight(observer)
+    return if (delegate == null) getRealHeight(observer) else getUserHeight(observer)
   }
 
   /**
@@ -203,7 +198,7 @@ open class JBHiDPIScaledImage : BufferedImage {
    * @return the width
    */
   fun getUserWidth(observer: ImageObserver?): Int {
-    return if (delegate != null) userWidth.roundToInt() else (super.getWidth(observer) / scale).roundToLong().toInt()
+    return if (delegate == null) (super.getWidth(observer) / scale).roundToInt() else userWidth.roundToInt()
   }
 
   /**
@@ -213,7 +208,7 @@ open class JBHiDPIScaledImage : BufferedImage {
    * @return the height
    */
   fun getUserHeight(observer: ImageObserver?): Int {
-    return if (delegate != null) userHeight.roundToInt() else (super.getHeight(observer) / scale).roundToLong().toInt()
+    return if (delegate == null) (super.getHeight(observer) / scale).roundToInt() else userHeight.roundToInt()
   }
 
   /**

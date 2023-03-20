@@ -81,9 +81,7 @@ object StartupUiUtil {
    * Returns whether the JRE-managed HiDPI mode is enabled and the provided component is tied to a HiDPI device.
    */
   @JvmStatic
-  fun isJreHiDPI(comp: Component?): Boolean {
-    return JreHiDpiUtil.isJreHiDPI(comp?.graphicsConfiguration)
-  }
+  fun isJreHiDPI(comp: Component?): Boolean = JreHiDpiUtil.isJreHiDPI(comp?.graphicsConfiguration)
 
   /**
    * Returns whether the JRE-managed HiDPI mode is enabled and the provided system scale context is HiDPI.
@@ -110,13 +108,13 @@ object StartupUiUtil {
    */
   @JvmStatic
   fun drawImage(g: Graphics, image: Image, x: Int, y: Int, observer: ImageObserver?) {
-    drawImage(g = g, image = image, destinationBounds = Rectangle(x, y, -1, -1), sourceBounds = null, op = null, observer = observer)
+    drawImage(g = g, image = image, dx = x, dy = y, sourceBounds = null, op = null, observer = observer)
   }
 
   @JvmStatic
   fun drawImage(g: Graphics, image: Image, x: Int, y: Int, width: Int, height: Int, op: BufferedImageOp?) {
     val srcBounds = if (width >= 0 && height >= 0) Rectangle(x, y, width, height) else null
-    drawImage(g = g, image = image, destinationBounds = Rectangle(x, y, width, height), sourceBounds = srcBounds, op = op, observer = null)
+    drawImage(g = g, image = image, dx = x, dy = y, dw = width, dh = height, sourceBounds = srcBounds, op = op, observer = null)
   }
 
   @JvmStatic
@@ -138,11 +136,7 @@ object StartupUiUtil {
    * @see .drawImage
    */
   @JvmStatic
-  fun drawImage(g: Graphics,
-                image: Image,
-                dstBounds: Rectangle?,
-                srcBounds: Rectangle?,
-                observer: ImageObserver?) {
+  fun drawImage(g: Graphics, image: Image, dstBounds: Rectangle?, srcBounds: Rectangle?, observer: ImageObserver?) {
     drawImage(g = g, image = image, destinationBounds = dstBounds, sourceBounds = srcBounds, op = null, observer = observer)
   }
 
@@ -151,7 +145,7 @@ object StartupUiUtil {
    */
   @JvmStatic
   fun drawImage(g: Graphics, image: BufferedImage, op: BufferedImageOp?, x: Int, y: Int) {
-    drawImage(g = g, image = image, x = x, y = y, width = -1, height = -1, op = op)
+    drawImage(g = g, image = image, dx = x, dy = y, dw = -1, dh = -1, sourceBounds = null, op = op, observer = null)
   }
 
   @JvmStatic
