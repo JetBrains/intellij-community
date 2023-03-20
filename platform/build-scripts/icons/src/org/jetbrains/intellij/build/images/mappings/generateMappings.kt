@@ -10,10 +10,8 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
-import java.util.stream.Stream
 import kotlin.io.path.exists
 import kotlin.io.path.name
-import kotlin.streams.asSequence
 
 fun main() {
   try {
@@ -26,37 +24,47 @@ fun main() {
 
 private val context = Context()
 
+private object Exclusions {
+  val paths: List<Path> = System.getProperty("mappings.json.exclude.paths", "")
+    .splitToSequence(",")
+    .map { context.devRepoDir.resolve(it.trim()) }
+    .toList()
+
+  val unmatched: MutableList<Path> = paths.toMutableList()
+
+  fun match(image: Path): Boolean =
+    paths.none {
+      val excluded = image.startsWith(it)
+      if (excluded) unmatched.remove(it)
+      excluded
+    }
+}
+
 /**
  * Generate icon mappings for https://github.com/JetBrains/IntelliJIcons-web-site
  */
 private fun generateMappings() {
-  val exclusions = System.getProperty("mappings.json.exclude.paths")
-                     ?.split(",")
-                     ?.map(String::trim)
-                   ?: emptyList()
-  val mappings = loadIdeaGeneratedIcons {
-    exclusions.none { excluded ->
-      path.startsWith(excluded)
+  val mappings = (loadIdeaGeneratedIcons() + loadNonGeneratedIcons()).groupByTo(TreeMap()) {
+    "${it.product}#${it.set}"
+  }.entries.asSequence().flatMap { (key, mappings) ->
+    if (mappings.size > 1) {
+      System.err.println(
+        mappings.joinToString(
+          prefix = "Duplicates for $key were generated:\n\t",
+          separator = "\n\t", postfix = "\nRenamed."
+        ) { it.path }
+      )
+      mappings.subList(1, mappings.size).sorted().mapIndexed { i, duplicate ->
+        Mapping(duplicate.product, "${duplicate.set}${i + 1}", duplicate.path)
+      } + mappings.first()
     }
-  }.asSequence().plus(loadNonGeneratedIcons())
-    .groupByTo(TreeMap()) { "${it.product}#${it.set}" }
-    .values
-    .asSequence()
-    .flatMap {
-      if (it.size > 1) {
-        System.err.println("Duplicates were generated $it\nRenaming")
-        it.subList(1, it.size).sorted().mapIndexed { i, duplicate ->
-          Mapping(duplicate.product, "${duplicate.set}${i + 1}", duplicate.path)
-        } + it.first()
-      }
-      else it
-    }.filter { mapping ->
-      exclusions.none { excluded ->
-        mapping.path.startsWith(excluded)
-      }
-    }.toList()
+    else mappings
+  }.toList()
   check(mappings.isNotEmpty()) {
     "No mappings loaded"
+  }
+  check(Exclusions.unmatched.isEmpty()) {
+    "Nothing matched to exclusions: ${Exclusions.unmatched}"
   }
   val mappingsJson = mappings.joinToString(separator = ",\n") {
     it.toString().prependIndent("     ")
@@ -112,27 +120,27 @@ private class Mapping(val product: String, val set: String, val path: String) : 
   override fun compareTo(other: Mapping) = path.compareTo(other.path)
 }
 
-private fun loadIdeaGeneratedIcons(filter: Mapping.() -> Boolean): Stream<Mapping> {
+private fun loadIdeaGeneratedIcons(): Sequence<Mapping> {
   val home = context.devRepoDir
   val project = jpsProject(home.toString())
   val generator = IconsClassGenerator(home, project.modules)
   val config = IntellijIconClassGeneratorConfig()
   return protectStdErr {
-    project.modules.parallelStream()
-      .flatMap { generator.getIconClassInfo(it, moduleConfig = config.getConfigForModule(it.name)).stream() }
+    project.modules.asSequence()
+      .flatMap { generator.getIconClassInfo(it, moduleConfig = config.getConfigForModule(it.name)) }
       .filter { it.images.isNotEmpty() }
       .flatMap { info ->
         val icons = info.images.asSequence()
           .filter { it.basicFile?.let(::Icon)?.isValid == true }
+          .filter { Exclusions.match(requireNotNull(it.basicFile)) }
           .map { Paths.get(JpsPathUtil.urlToPath(it.sourceRoot.url)) }
           .distinct()
           .map { Mapping("idea", info.className, "idea/${home.relativize(it)}") }
-          .filter(filter)
           .toList()
         check(icons.size < 2) {
           "Expected single source root for ${info.className} mapping but found: ${icons.joinToString()}"
         }
-        icons.stream()
+        icons
       }
   }
 }
@@ -150,7 +158,7 @@ private fun loadNonGeneratedIcons(): Sequence<Mapping> {
     }
 
     override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
-      if (isImage(file)) {
+      if (isImage(file) && Exclusions.match(file)) {
         iconsRoots.add(file.parent)
       }
       return FileVisitResult.CONTINUE
