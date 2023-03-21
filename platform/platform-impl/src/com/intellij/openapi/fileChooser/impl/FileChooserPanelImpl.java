@@ -385,7 +385,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       }
     }
     synchronized (myLock) {
-      load(myCurrentDirectory, focusOn, EnumSet.of(OpenFlags.UPDATE_PATH_BAR, OpenFlags.KEEP_HISTORY));
+      load(myCurrentDirectory, focusOn, EnumSet.of(OpenFlags.RELOAD, OpenFlags.UPDATE_PATH_BAR, OpenFlags.KEEP_HISTORY));
     }
   }
 
@@ -467,7 +467,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   }
 
   private enum OpenFlags {
-    UPPER_LEVEL, INTO_ARCHIVE, UPDATE_PATH_BAR, KEEP_HISTORY
+    UPPER_LEVEL, INTO_ARCHIVE, RELOAD, UPDATE_PATH_BAR, KEEP_HISTORY
   }
 
   private void load(@Nullable Path path, @Nullable Path focusOn, Set<OpenFlags> flags) {
@@ -484,7 +484,9 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       myList.setPaintBusy(true);
 
       var childDir = flags.contains(OpenFlags.UPPER_LEVEL) ? myCurrentDirectory : null;
-      myCurrentDirectory = null;
+      if (!flags.contains(OpenFlags.RELOAD)) {
+        myCurrentDirectory = null;
+      }
       myCurrentContent.clear();
       cancelCurrentTask();
       var id = myCounter++;
