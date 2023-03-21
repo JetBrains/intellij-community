@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
@@ -55,7 +55,7 @@ public final class TestLoggerFactory implements Logger.Factory {
   private boolean mySplitTestLogs = Boolean.getBoolean("idea.split.test.logs");
 
   /** When enabled, log records with at least "FINE" level are echoed to the stdout with a timestamp relative to the test start time. */
-  private final boolean myEchoDebugToStdout = Boolean.getBoolean("idea.test.logs.echo.debug.to.stdout");
+  private static final boolean myEchoDebugToStdout = Boolean.getBoolean("idea.test.logs.echo.debug.to.stdout");
 
   private TestLoggerFactory() { }
 
@@ -221,7 +221,7 @@ public final class TestLoggerFactory implements Logger.Factory {
       logComparisonFailure(sb, e.getExpected(), e.getActual());
     });
 
-    return sb.length() != 0 ? sb.toString() : null;
+    return sb.isEmpty() ? null : sb.toString();
   }
 
   private static void logComparisonFailure(StringBuilder sb, @Nullable String expected, @Nullable String actual) {
@@ -294,7 +294,7 @@ public final class TestLoggerFactory implements Logger.Factory {
   private void dumpLogBuffer(boolean success, String testName) {
     String buffer;
     synchronized (myBuffer) {
-      buffer = success || myBuffer.length() == 0 ? null : myBuffer.toString();
+      buffer = success || myBuffer.isEmpty() ? null : myBuffer.toString();
       myBuffer.setLength(0);
     }
 

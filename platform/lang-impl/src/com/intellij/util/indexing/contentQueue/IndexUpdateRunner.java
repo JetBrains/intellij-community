@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.contentQueue;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -70,7 +70,7 @@ public final class IndexUpdateRunner {
   private final AtomicInteger myIndexingAttemptCount = new AtomicInteger();
   private final AtomicInteger myIndexingSuccessfulCount = new AtomicInteger();
 
-  private final boolean WRITE_INDEXES_ON_SEPARATE_THREAD = Boolean.getBoolean("idea.write.indexes.on.separate.thread");
+  private static final boolean WRITE_INDEXES_ON_SEPARATE_THREAD = Boolean.getBoolean("idea.write.indexes.on.separate.thread");
   private final ExecutorService myIndexWriteExecutor =
     WRITE_INDEXES_ON_SEPARATE_THREAD
     ? SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Index Write Thread")

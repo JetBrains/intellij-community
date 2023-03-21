@@ -38,7 +38,7 @@ class NotificationTest : LightPlatformTestCase() {
   }
 
   private fun buildStatusMessage(title: String, subtitle: String?, content: String, vararg actions: String): String {
-    val notification = Notification("xxx", title, content, NotificationType.ERROR)
+    val notification = Notification("IDE-errors", title, content, NotificationType.ERROR)
     if (subtitle != null) {
       notification.subtitle = subtitle
     }

@@ -60,7 +60,7 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
   /**
    * @param oldExpr old expression that will be substituted
    * @param newExpr new expression to substitute with
-   * @return whether new expression should be wrapped in parenthesis to preserve original semantics
+   * @return whether new expression should be wrapped in parentheses to preserve original semantics
    */
   public static boolean isNeedParenthesis(@NotNull final PyElement oldExpr, @NotNull final PyElement newExpr) {
     final PyElement parentExpr = (PyElement)oldExpr.getParent();
@@ -131,14 +131,14 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
     final PyArgumentList newStyleFormatValue = getNewStyleFormatValueExpression(oldExpression);
     final String newText = newExpression.getText();
 
-    final List<PyStringFormatParser.SubstitutionChunk> substitutions;
+    final List<SubstitutionChunk> substitutions;
     if (newStyleFormatValue != null) {
       substitutions = filterSubstitutions(parseNewStyleFormat(fullText));
     }
     else {
       substitutions = filterSubstitutions(parsePercentFormat(fullText));
     }
-    final boolean hasSubstitutions = substitutions.size() > 0;
+    final boolean hasSubstitutions = !substitutions.isEmpty();
 
     if (formatValue != null && !containsStringFormatting(substitutions, textRange)) {
       if (formatValue instanceof PyTupleExpression) {

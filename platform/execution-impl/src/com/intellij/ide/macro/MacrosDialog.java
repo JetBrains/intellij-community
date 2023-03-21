@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.macro;
 
 import com.intellij.execution.ExecutionBundle;
@@ -155,7 +155,7 @@ public final class MacrosDialog extends DialogWrapper {
         return name1.compareToIgnoreCase(name2);
       }
 
-      private final String ZERO = new String(new char[]{0});
+      private static final String ZERO = new String(new char[]{0});
     });
 
     if (userMacros != null && !userMacros.isEmpty()) {
@@ -186,7 +186,7 @@ public final class MacrosDialog extends DialogWrapper {
     }));
 
     addListeners();
-    if (myMacrosModel.size() > 0) {
+    if (!myMacrosModel.isEmpty()) {
       myMacrosList.setSelectedIndex(0);
     }
     else {

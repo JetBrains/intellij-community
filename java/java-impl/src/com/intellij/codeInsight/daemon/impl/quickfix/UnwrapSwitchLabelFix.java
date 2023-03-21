@@ -162,7 +162,7 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
     PsiStatement[] statements = body.getStatements();
     if (statements.length != 1 || !(statements[0] instanceof PsiSwitchLabeledRuleStatement rule)) return;
     PsiStatement ruleBody = rule.getBody();
-    if (!(ruleBody instanceof PsiExpressionStatement expressionStatement)) return;
+    if (!(ruleBody instanceof PsiExpressionStatement)) return;
     CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(switchExpression);
     if (surrounder != null) {
       CodeBlockSurrounder.SurroundResult surroundResult = surrounder.surround();
