@@ -2,8 +2,10 @@
 package org.jetbrains.kotlin.gradle.idea.importing.newTests
 
 import com.intellij.lang.annotation.HighlightSeverity
+import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.gradle.newTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.newTests.TestConfigurationDslScope
+import org.jetbrains.kotlin.gradle.newTests.testFeatures.checkers.facets.KotlinFacetSettingsChecker
 import org.jetbrains.kotlin.gradle.newTests.testFeatures.checkers.orderEntries.OrderEntriesChecker
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.Test
@@ -127,6 +129,14 @@ class KotlinMppExperimentalTierCasesImportingTest : AbstractKotlinMppGradleImpor
             hideStdlib = true
             hideKotlinTest = true
             hideKotlinNativeDistribution = true
+        }
+    }
+
+    @Test
+    fun testSimilarTargetsBamboo() {
+        doTest {
+            onlyCheckers(KotlinFacetSettingsChecker, OrderEntriesChecker)
+            onlyFacetFields(KotlinFacetSettings::targetPlatform)
         }
     }
 }
