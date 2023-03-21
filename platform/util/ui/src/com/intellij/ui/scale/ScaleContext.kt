@@ -2,8 +2,6 @@
 package com.intellij.ui.scale
 
 import com.intellij.ui.JreHiDpiUtil
-import com.intellij.ui.scale.JBUIScale.scale
-import com.intellij.ui.scale.JBUIScale.sysScale
 import java.awt.Component
 import java.awt.Graphics2D
 import java.awt.GraphicsConfiguration
@@ -26,13 +24,12 @@ class ScaleContext() : UserScaleContext() {
      * Creates a context with all scale factors set to 1.
      */
     @JvmStatic
-    fun createIdentity(): ScaleContext = create(ScaleType.USR_SCALE.of(1.0), ScaleType.SYS_SCALE.of(1.0))
+    fun createIdentity(): ScaleContext = ScaleContext(ScaleType.USR_SCALE.of(1.0), ScaleType.SYS_SCALE.of(1.0))
 
     /**
      * Creates a context from the provided `ctx`.
      */
-    @JvmStatic
-    fun create(context: UserScaleContext?): ScaleContext {
+    fun create(context: UserScaleContext): ScaleContext {
       val result = ScaleContext()
       result.update(context)
       return result
@@ -43,24 +40,25 @@ class ScaleContext() : UserScaleContext() {
      */
     @JvmStatic
     fun create(component: Component?): ScaleContext {
-      val context = ScaleContext(ScaleType.SYS_SCALE.of(sysScale(component).toDouble()))
-      if (component != null) {
-        context.componentRef = WeakReference(component)
+      if (component == null) {
+        return ScaleContext()
       }
+
+      val context = create(component.graphicsConfiguration)
+      context.componentRef = WeakReference(component)
       return context
     }
 
     /**
      * Creates a context based on the GraphicsConfiguration's system scale
      */
-    @JvmStatic
-    fun create(gc: GraphicsConfiguration?): ScaleContext = ScaleContext(ScaleType.SYS_SCALE.of(sysScale(gc).toDouble()))
+    fun create(gc: GraphicsConfiguration): ScaleContext = ScaleContext(ScaleType.SYS_SCALE.of(JBUIScale.sysScale(gc).toDouble()))
 
     /**
      * Creates a context based on the g's system scale
      */
     @JvmStatic
-    fun create(g: Graphics2D?): ScaleContext = ScaleContext(ScaleType.SYS_SCALE.of(sysScale(g).toDouble()))
+    fun create(g: Graphics2D?): ScaleContext = ScaleContext(ScaleType.SYS_SCALE.of(JBUIScale.sysScale(g).toDouble()))
 
     /**
      * Creates a context with the provided scale
@@ -71,13 +69,7 @@ class ScaleContext() : UserScaleContext() {
     /**
      * Creates a context with the provided scale factors
      */
-    fun create(vararg scales: Scale): ScaleContext {
-      val scaleContext = ScaleContext()
-      for (s in scales) {
-        scaleContext.setScale(s)
-      }
-      return scaleContext
-    }
+    fun of(vararg scales: Scale): ScaleContext = ScaleContext(scales = scales)
 
     /**
      * Creates a default context with the default screen scale and the current user scale
@@ -86,7 +78,7 @@ class ScaleContext() : UserScaleContext() {
     fun create(): ScaleContext = ScaleContext()
   }
 
-  private var sysScale = ScaleType.SYS_SCALE.of(sysScale().toDouble())
+  private var sysScale: Scale = ScaleType.SYS_SCALE.of(JBUIScale.sysScale().toDouble())
   private var componentRef: WeakReference<Component>? = null
 
   init {
@@ -103,6 +95,22 @@ class ScaleContext() : UserScaleContext() {
       }
       ScaleType.SYS_SCALE -> {
         sysScale = scale
+      }
+    }
+  }
+
+  private constructor(vararg scales: Scale) : this() {
+    for (scale in scales) {
+      when (scale.type) {
+        ScaleType.USR_SCALE -> {
+          usrScale = scale
+        }
+        ScaleType.OBJ_SCALE -> {
+          objScale = scale
+        }
+        ScaleType.SYS_SCALE -> {
+          sysScale = scale
+        }
       }
     }
   }
@@ -136,11 +144,11 @@ class ScaleContext() : UserScaleContext() {
    * Also updates the system scale (if the context was created from Component) if necessary.
    */
   override fun update(): Boolean {
-    var updated = setScale(ScaleType.USR_SCALE.of(scale(1f).toDouble()))
+    var updated = setScale(ScaleType.USR_SCALE.of(JBUIScale.scale(1f).toDouble()))
     if (componentRef != null) {
       val component = componentRef!!.get()
       if (component != null) {
-        updated = setScale(ScaleType.SYS_SCALE.of(sysScale(component.graphicsConfiguration).toDouble())) || updated
+        updated = setScale(ScaleType.SYS_SCALE.of(JBUIScale.sysScale(component.graphicsConfiguration).toDouble())) || updated
       }
     }
     return onUpdated(updated)

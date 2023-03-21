@@ -78,7 +78,7 @@ public class IconScaleTest extends BareTestFixtureTestCase {
     JBUIScale.setUserScaleFactorForTest(usrScale);
     JBUIScale.setSystemScaleFactor(sysScale);
 
-    ScaleContext context = ScaleContext.Companion.create(SYS_SCALE.of(sysScale), USR_SCALE.of(usrScale));
+    ScaleContext context = ScaleContext.Companion.of(SYS_SCALE.of(sysScale), USR_SCALE.of(usrScale));
 
     //
     // 1. CachedImageIcon
@@ -109,7 +109,7 @@ public class IconScaleTest extends BareTestFixtureTestCase {
   private static void test(@NotNull Icon icon, @NotNull UserScaleContext iconUserContext) {
     ((ScaleContextAware)icon).updateScaleContext(iconUserContext);
 
-    ScaleContext iconContext = ScaleContext.create(iconUserContext);
+    ScaleContext iconContext = ScaleContext.Companion.create(iconUserContext);
 
     /*
      * (A) normal conditions

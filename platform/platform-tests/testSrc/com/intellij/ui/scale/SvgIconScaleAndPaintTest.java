@@ -8,7 +8,6 @@ import com.intellij.ui.scale.paint.ImageComparator;
 import com.intellij.ui.scale.paint.ImageComparator.AASmootherComparator;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.StartupUiUtil;
 import org.junit.*;
 import org.junit.rules.ExternalResource;
@@ -67,7 +66,7 @@ public class SvgIconScaleAndPaintTest {
     Graphics2D g = paintIconImage.createGraphics();
     try {
       g.scale(SYSTEM_SCALE, SYSTEM_SCALE);
-      StartupUiUtil.drawImage(g, ((JBImageIcon)scaledIcon).getImage(), 0, 0, null);
+      StartupUiUtil.drawImage(g, ((ImageIcon)scaledIcon).getImage(), 0, 0, null);
     }
     finally {
       g.dispose();
@@ -77,8 +76,7 @@ public class SvgIconScaleAndPaintTest {
 
     BufferedImage goldImage = loadImage(getGoldImagePath());
 
-    ImageComparator.compareAndAssert(
-      new AASmootherComparator(0.1, 0.1, new Color(0, 0, 0, 0)), paintIconImage, goldImage, null);
+    ImageComparator.compareAndAssert(new AASmootherComparator(0.1, 0.1, new Color(0, 0, 0, 0)), paintIconImage, goldImage, null);
   }
 
   private static String getSvgIconPath() {

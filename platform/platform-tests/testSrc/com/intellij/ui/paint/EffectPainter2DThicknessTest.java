@@ -33,13 +33,13 @@ public class EffectPainter2DThicknessTest {
 
     overrideJreHiDPIEnabled(false);
     for (int usrScale : new int[] {1, 2, 3}) {
-      test(ScaleContext.Companion.create(SYS_SCALE.of(1), USR_SCALE.of(usrScale)));
+      test(ScaleContext.Companion.of(SYS_SCALE.of(1), USR_SCALE.of(usrScale)));
     }
 
     overrideJreHiDPIEnabled(true);
     for (int sysScale : new int[] {1, 2, 3}) {
       for (int usrScale : new int[] {1, 2, 3}) {
-        test(ScaleContext.Companion.create(SYS_SCALE.of(sysScale), USR_SCALE.of(usrScale)));
+        test(ScaleContext.Companion.of(SYS_SCALE.of(sysScale), USR_SCALE.of(usrScale)));
       }
     }
   }

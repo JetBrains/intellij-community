@@ -65,7 +65,6 @@ internal class ScaledIconCache {
 private class ScaledResultIcon(image: Image,
                                private val original: CachedImageIcon,
                                private val scale: Float) : ImageIcon(image), ReplaceableIcon {
-  @Synchronized
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     drawImage(g = g, image = image, x = x, y = y, sourceBounds = null, op = null, observer = imageObserver ?: c)
   }

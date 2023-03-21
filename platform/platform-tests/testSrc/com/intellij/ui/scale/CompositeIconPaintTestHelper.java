@@ -37,7 +37,7 @@ public abstract class CompositeIconPaintTestHelper {
       int usrScale = bit2scale.apply(mask, 1);
       int sysScale = bit2scale.apply(mask, 0);
       assert iconScale * usrScale * sysScale <= 4;
-      test(ScaleContext.Companion.create(SYS_SCALE.of(sysScale), USR_SCALE.of(usrScale), OBJ_SCALE.of(iconScale)));
+      test(ScaleContext.Companion.of(SYS_SCALE.of(sysScale), USR_SCALE.of(usrScale), OBJ_SCALE.of(iconScale)));
     }
   }
 
