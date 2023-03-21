@@ -24,12 +24,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.JavaLanguageLevelPusher;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
+import com.intellij.platform.backend.documentation.DocumentationResult;
+import com.intellij.platform.backend.documentation.DocumentationSymbol;
+import com.intellij.platform.backend.documentation.DocumentationTarget;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -379,7 +383,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     };
   }
 
-  public static final class SnippetRegionSymbol implements NavigatableSymbol {
+  public static final class SnippetRegionSymbol implements NavigatableSymbol, DocumentationSymbol {
     private final @NotNull TextRange myRangeInFile;
     private final @NlsSafe @NotNull String myText;
     private final @NotNull VirtualFile myVirtualFile;
@@ -391,8 +395,32 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     }
 
     @Override
-    public @NotNull Pointer<? extends Symbol> createPointer() {
+    public @NotNull Pointer<? extends DocumentationSymbol> createPointer() {
       return Pointer.hardPointer(this);
+    }
+
+    @Override
+    public @NotNull DocumentationTarget getDocumentationTarget() {
+      return new DocumentationTarget() {
+        @NotNull
+        @Override
+        public Pointer<? extends DocumentationTarget> createPointer() {
+          return Pointer.hardPointer(this);
+        }
+
+        @Override
+        public @NlsContexts.HintText @NotNull String computeDocumentationHint() {
+          return myText;
+        }
+
+        @NotNull
+        @Override
+        public TargetPresentation computePresentation() {
+          return TargetPresentation.builder(myText)
+            .locationText(myVirtualFile.getName(), myVirtualFile.getFileType().getIcon())
+            .presentation();
+        }
+      };
     }
 
     @Override
@@ -406,9 +434,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
 
           @Override
           public @NotNull TargetPresentation presentation() {
-            return TargetPresentation.builder(myText)
-              .locationText(myVirtualFile.getName(), myVirtualFile.getFileType().getIcon())
-              .presentation();
+            return getDocumentationTarget().computePresentation();
           }
 
           @Override
