@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -60,6 +61,20 @@ public final class MemoryUsagePanel implements CustomStatusBarWidget, Activatabl
 
   public static boolean isInstance(@NotNull JComponent component) {
     return component instanceof MemoryUsagePanelImpl;
+  }
+
+  // These three methods are purely for internal ABI compatibility, as some plugins use them.
+
+  public void addMouseListener(MouseListener l) {
+    myComponent.get().addMouseListener(l);
+  }
+
+  public MouseListener[] getMouseListeners() {
+    return myComponent.get().getMouseListeners();
+  }
+
+  public void removeMouseListener(MouseListener l) {
+    myComponent.get().removeMouseListener(l);
   }
 
 private class MemoryUsagePanelImpl extends TextPanel {
