@@ -8,7 +8,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.ui.DeferredIconImpl;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.RestoreScaleRule;
+import com.intellij.ui.RestoreScaleExtension;
 import com.intellij.ui.RetrievableIcon;
 import com.intellij.ui.icons.CachedImageIcon;
 import com.intellij.ui.icons.IconUtilKt;
@@ -16,9 +16,9 @@ import com.intellij.ui.scale.paint.ImageComparator;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ImageUtil;
 import org.jetbrains.annotations.NotNull;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.ExternalResource;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,45 +33,42 @@ import static com.intellij.ui.scale.DerivedScaleType.EFF_USR_SCALE;
 import static com.intellij.ui.scale.ScaleType.*;
 import static com.intellij.ui.scale.TestScaleHelper.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Tests that {@link com.intellij.openapi.util.ScalableIcon#scale(float)} works correctly for custom JB icons.
+ * 0.75 is an impractical system scale factor, however, it's used to stress-test the scale subsystem
  *
  * @author tav
  */
+
 public class IconScaleTest extends BareTestFixtureTestCase {
   private static final int ICON_BASE_SIZE = 16;
   private static final float ICON_OBJ_SCALE = 1.75f;
   private static final float ICON_OVER_USR_SCALE = 1.0f;
 
-  // 0.75 is an impractical system scale factor, however, it's used to stress-test the scale subsystem
-  private static final float[] SCALES = {0.75f, 1, 2, 2.5f};
+  @RegisterExtension
+  public static final RestoreScaleExtension manageState = new RestoreScaleExtension();
 
-  @ClassRule
-  public static final ExternalResource manageState = new RestoreScaleRule();
-
-  @Test
-  public void testJreHiDpi() throws MalformedURLException {
+  @ParameterizedTest
+  @ValueSource(floats = {0.75f, 1, 2, 2.5f})
+  public void jreHiDpi(float scale) throws MalformedURLException {
     assumeTrue(!SystemInfoRt.isLinux);
 
     overrideJreHiDPIEnabled(true);
     try {
-      for (float s : SCALES) {
-        test(1, s);
-      }
+      test(1, scale);
     }
     finally {
       overrideJreHiDPIEnabled(false);
     }
   }
 
-  @Test
-  public void testIdeHiDpi() throws MalformedURLException {
-    for (float s : SCALES) {
-      // the system scale repeats the default user scale in IDE-HiDPI
-      test(s, s);
-    }
+  @ParameterizedTest
+  @ValueSource(floats = {0.75f, 1, 2, 2.5f})
+  public void ideHiDpi(float scale) throws MalformedURLException {
+    // the system scale repeats the default user scale in IDE-HiDPI
+    test(scale, scale);
   }
 
   public void test(float usrScale, float sysScale) throws MalformedURLException {
@@ -147,7 +144,7 @@ public class IconScaleTest extends BareTestFixtureTestCase {
         int scaledUsrSize = (int)Math.round(scaledUsrSize2D);
         int scaledDevSize = (int)Math.round(iconContext.apply(scaledUsrSize2D, DEV_SCALE));
         return Pair.create(scaledUsrSize, scaledDevSize);
-      };
+    };
 
     Icon iconC = IconUtil.scale(icon, null, ICON_OBJ_SCALE);
 
@@ -160,7 +157,8 @@ public class IconScaleTest extends BareTestFixtureTestCase {
     assertIcon(iconC, contextC, scales.first, scales.second, "Test (C) scale icon");
 
     // Additionally, check that the original image hasn't changed after scaling
-    Pair<BufferedImage, Graphics2D> pair = createImageAndGraphics(iconContext.getScale(DEV_SCALE), icon.getIconWidth(), icon.getIconHeight());
+    Pair<BufferedImage, Graphics2D> pair =
+      createImageAndGraphics(iconContext.getScale(DEV_SCALE), icon.getIconWidth(), icon.getIconHeight());
     BufferedImage iconImage = pair.first;
     Graphics2D g2d = pair.second;
 
@@ -195,8 +193,10 @@ public class IconScaleTest extends BareTestFixtureTestCase {
     assertThat(icon.getIconWidth()).describedAs(testDescription + ": unexpected icon user width").isEqualTo(usrSize);
     assertThat(icon.getIconHeight()).describedAs(testDescription + ": unexpected icon user height").isEqualTo(usrSize);
 
-    assertThat(ImageUtil.getRealWidth(IconLoader.toImage(icon, ctx))).describedAs(testDescription + ": unexpected icon real width").isEqualTo(devSize);
-    assertThat(ImageUtil.getRealHeight(IconLoader.toImage(icon, ctx))).describedAs(testDescription + ": unexpected icon real height").isEqualTo(devSize);
+    assertThat(ImageUtil.getRealWidth(IconLoader.toImage(icon, ctx))).describedAs(testDescription + ": unexpected icon real width")
+      .isEqualTo(devSize);
+    assertThat(ImageUtil.getRealHeight(IconLoader.toImage(icon, ctx))).describedAs(testDescription + ": unexpected icon real height")
+      .isEqualTo(devSize);
   }
 
   private static Path getIconPath() {

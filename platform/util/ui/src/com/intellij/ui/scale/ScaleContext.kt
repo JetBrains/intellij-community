@@ -18,7 +18,7 @@ import java.util.function.Function
  *
  * @author tav
  */
-class ScaleContext() : UserScaleContext() {
+class ScaleContext : UserScaleContext {
   companion object {
     /**
      * Creates a context with all scale factors set to 1.
@@ -81,7 +81,7 @@ class ScaleContext() : UserScaleContext() {
   private var sysScale: Scale = ScaleType.SYS_SCALE.of(JBUIScale.sysScale())
   private var componentRef: WeakReference<Component>? = null
 
-  init {
+  constructor() {
     pixScale = derivePixScale()
   }
 
@@ -97,6 +97,7 @@ class ScaleContext() : UserScaleContext() {
         sysScale = scale
       }
     }
+    pixScale = derivePixScale()
   }
 
   private constructor(vararg scales: Scale) : this() {
@@ -113,6 +114,7 @@ class ScaleContext() : UserScaleContext() {
         }
       }
     }
+    pixScale = derivePixScale()
   }
 
   override fun derivePixScale(): Double = getScale(DerivedScaleType.DEV_SCALE) * super.derivePixScale()
@@ -171,6 +173,12 @@ class ScaleContext() : UserScaleContext() {
     else {
       return super.setScale(scale)
     }
+  }
+
+  fun copyWithScale(scale: Scale): ScaleContext {
+    val result = ScaleContext(usrScale, sysScale, objScale, scale)
+    result.overriddenScales = overriddenScales?.clone()
+    return result
   }
 
   override fun <T : UserScaleContext> updateAll(scaleContext: T): Boolean {

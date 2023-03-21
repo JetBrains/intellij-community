@@ -13,7 +13,6 @@ import com.intellij.ui.svg.SvgAttributePatcher
 import com.intellij.ui.svg.loadSvgAndCacheIfApplicable
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.SVGLoader
-import com.intellij.util.SystemProperties
 import com.intellij.util.io.URLUtil
 import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.annotations.ApiStatus
@@ -31,8 +30,6 @@ import java.util.concurrent.TimeUnit
 
 private val LOG: Logger
   get() = logger<ImageCache>()
-
-internal val CACHED_IMAGE_MAX_SIZE: Long = (SystemProperties.getFloatProperty("ide.cached.image.max.size", 1.5f) * 1024 * 1024).toLong()
 
 internal fun clearImageCache() {
   ImageCache.clearCache()

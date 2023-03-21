@@ -265,7 +265,7 @@ object IconLoader {
   @JvmStatic
   fun findResolvedIcon(path: String, classLoader: ClassLoader): Icon? {
     val icon = findIconUsingNewImplementation(path, classLoader)
-    return if (icon is com.intellij.ui.icons.CachedImageIcon && icon.getRealIcon() === com.intellij.ui.icons.CachedImageIcon.EMPTY_ICON) null else icon
+    return if (icon is com.intellij.ui.icons.CachedImageIcon && icon.getRealIcon() === EMPTY_ICON) null else icon
   }
 
   @JvmOverloads
@@ -406,7 +406,7 @@ object IconLoader {
           icon is LazyIcon -> replaceIcon(icon.getOrComputeIcon())
           icon is ReplaceableIcon -> icon.replaceBy(this)
           !checkIconSize(icon) -> {
-            com.intellij.ui.icons.CachedImageIcon.EMPTY_ICON
+            EMPTY_ICON
           }
           icon is com.intellij.ui.icons.CachedImageIcon -> cachedImageIconReplacer(icon)
           else -> icon
@@ -422,7 +422,7 @@ object IconLoader {
   fun filterIcon(icon: Icon, filterSupplier: () -> RGBImageFilter): Icon {
     val effectiveIcon = if (icon is LazyIcon) icon.getOrComputeIcon() else icon
     if (!checkIconSize(effectiveIcon)) {
-      return com.intellij.ui.icons.CachedImageIcon.EMPTY_ICON
+      return EMPTY_ICON
     }
     return if (effectiveIcon is com.intellij.ui.icons.CachedImageIcon) {
       effectiveIcon.createWithFilter(filterSupplier)

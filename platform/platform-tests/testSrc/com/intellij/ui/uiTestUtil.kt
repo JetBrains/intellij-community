@@ -26,6 +26,9 @@ import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.io.write
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.extension.AfterAllCallback
+import org.junit.jupiter.api.extension.BeforeAllCallback
+import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestName
 import org.junit.runners.model.MultipleFailureException
@@ -59,6 +62,19 @@ open class RequireHeadlessMode : ExternalResource() {
     }
   }
 }
+
+class RestoreScaleExtension : BeforeAllCallback, AfterAllCallback {
+  override fun beforeAll(context: ExtensionContext?) {
+    IconLoader.activate()
+    TestScaleHelper.setState()
+  }
+
+  override fun afterAll(context: ExtensionContext?) {
+    IconLoader.deactivate()
+    TestScaleHelper.restoreState()
+  }
+}
+
 
 open class RestoreScaleRule : ExternalResource() {
   override fun before() {

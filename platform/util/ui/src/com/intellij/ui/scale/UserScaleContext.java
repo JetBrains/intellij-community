@@ -28,7 +28,7 @@ public class UserScaleContext {
   protected double pixScale = usrScale.getValue();
 
   private List<UpdateListener> listeners;
-  private EnumSet<ScaleType> overriddenScales;
+  protected @Nullable EnumSet<ScaleType> overriddenScales;
 
   private static final Scale @NotNull [] EMPTY_SCALE_ARRAY = new Scale[]{};
 
@@ -108,6 +108,7 @@ public class UserScaleContext {
     if (overriddenScales == null) {
       return EMPTY_SCALE_ARRAY;
     }
+
     Scale[] scales = new Scale[overriddenScales.size()];
     int i = 0;
     for (ScaleType type : overriddenScales) {

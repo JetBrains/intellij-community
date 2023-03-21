@@ -25,6 +25,12 @@ import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.ImageIcon
 
+val EMPTY_ICON: ImageIcon by lazy {
+  object : ImageIcon(BufferedImage(1, 1, BufferedImage.TYPE_3BYTE_BGR)) {
+    override fun toString(): String = "Empty icon ${super.toString()}"
+  }
+}
+
 @ApiStatus.Internal
 @ApiStatus.NonExtendable
 open class CachedImageIcon protected constructor(
@@ -57,11 +63,6 @@ open class CachedImageIcon protected constructor(
     @JvmField
     internal val iconToStrokeIcon: ConcurrentMap<CachedImageIcon, CachedImageIcon> =
       CollectionFactory.createConcurrentWeakKeyWeakValueMap<CachedImageIcon, CachedImageIcon>()
-
-    @Suppress("UndesirableClassUsage")
-    val EMPTY_ICON: ImageIcon = object : ImageIcon(BufferedImage(1, 1, BufferedImage.TYPE_3BYTE_BGR)) {
-      override fun toString(): String = "Empty icon ${super.toString()}"
-    }
   }
 
   @Suppress("CanBePrimaryConstructorProperty")
@@ -187,9 +188,9 @@ open class CachedImageIcon protected constructor(
       return this
     }
     else {
-      val effectiveScaleContext: ScaleContext = scaleContext.copy()
-      effectiveScaleContext.setScale(ScaleType.OBJ_SCALE.of(scale))
-      return scaledIconCache.getOrScaleIcon(scale = scale, host = this, scaleContext = effectiveScaleContext) ?: this
+      return scaledIconCache.getOrScaleIcon(scale = scale,
+                                            host = this,
+                                            scaleContext = scaleContext.copyWithScale(ScaleType.OBJ_SCALE.of(scale))) ?: this
     }
   }
 
@@ -313,7 +314,7 @@ open class CachedImageIcon protected constructor(
     }
 
     synchronized(scaledIconCache) {
-      val resolver = this.resolver ?: return true
+      val resolver = resolver ?: return true
       if (!resolver.isMyClassLoader(loader)) {
         return false
       }
@@ -331,6 +332,6 @@ open class CachedImageIcon protected constructor(
 
   val imageFlags: Int
     get() {
-      return (this.resolver ?: return 0).flags
+      return (resolver ?: return 0).flags
     }
 }
