@@ -19,7 +19,8 @@ public class UnsyncByteArrayInputStream extends InputStream {
   public UnsyncByteArrayInputStream(@NotNull byte[] buf, int offset, int length) {
     myBuffer = buf;
     myPosition = offset;
-    myCount = length;
+    myCount = Math.min(offset + length, buf.length);
+    myMarkedPosition = offset;
   }
 
   @Override
