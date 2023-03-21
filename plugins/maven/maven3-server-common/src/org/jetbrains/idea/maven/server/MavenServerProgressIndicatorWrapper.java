@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.server;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -20,15 +19,15 @@ public class MavenServerProgressIndicatorWrapper extends MavenRemoteObject
 
 
   @Override
-  public void setText(String text) throws RemoteException {
+  public void setText(String text) {
   }
 
   @Override
-  public void setText2(String text) throws RemoteException {
+  public void setText2(String text) {
   }
 
   @Override
-  public void startedDownload(ResolveType type, String dependencyId) throws RemoteException {
+  public void startedDownload(ResolveType type, String dependencyId) {
     myPullingQueue.add(new MavenArtifactDownloadServerProgressEvent(type,
                                                                     MavenArtifactDownloadServerProgressEvent.ArtifactEventType.DOWNLOAD_STARTED,
                                                                     dependencyId,
@@ -37,7 +36,7 @@ public class MavenServerProgressIndicatorWrapper extends MavenRemoteObject
   }
 
   @Override
-  public void completedDownload(ResolveType type, String dependencyId) throws RemoteException {
+  public void completedDownload(ResolveType type, String dependencyId) {
     myPullingQueue.add(new MavenArtifactDownloadServerProgressEvent(type,
                                                                     MavenArtifactDownloadServerProgressEvent.ArtifactEventType.DOWNLOAD_COMPLETED,
                                                                     dependencyId,
@@ -45,7 +44,7 @@ public class MavenServerProgressIndicatorWrapper extends MavenRemoteObject
   }
 
   @Override
-  public void failedDownload(ResolveType type, String dependencyId, String errorMessage, String stackTrace) throws RemoteException {
+  public void failedDownload(ResolveType type, String dependencyId, String errorMessage, String stackTrace) {
     myPullingQueue.add(new MavenArtifactDownloadServerProgressEvent(type,
                                                                     MavenArtifactDownloadServerProgressEvent.ArtifactEventType.DOWNLOAD_FAILED,
                                                                     dependencyId,
@@ -53,32 +52,32 @@ public class MavenServerProgressIndicatorWrapper extends MavenRemoteObject
   }
 
   @Override
-  public boolean isCanceled() throws RemoteException {
+  public boolean isCanceled() {
     return myCancelled;
   }
 
   @Override
-  public void setIndeterminate(boolean value) throws RemoteException {
+  public void setIndeterminate(boolean value) {
   }
 
   @Override
-  public void setFraction(double fraction) throws RemoteException {
+  public void setFraction(double fraction) {
   }
 
   @Nullable
   @Override
-  public List<MavenArtifactDownloadServerProgressEvent> pullDownloadEvents() throws RemoteException {
+  public List<MavenArtifactDownloadServerProgressEvent> pullDownloadEvents() {
     return MavenRemotePullUtil.pull(myPullingQueue);
   }
 
   @Nullable
   @Override
-  public List<MavenServerConsoleEvent> pullConsoleEvents() throws RemoteException {
+  public List<MavenServerConsoleEvent> pullConsoleEvents() {
     return MavenRemotePullUtil.pull(myConsoleEventsQueue);
   }
 
   @Override
-  public void printMessage(int level, String message, Throwable throwable) throws RemoteException {
+  public void printMessage(int level, String message, Throwable throwable) {
     myConsoleEventsQueue.add(new MavenServerConsoleEvent(level, message, throwable));
   }
 

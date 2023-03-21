@@ -381,17 +381,4 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     }
   }
 
-
-  private static class RemoteMavenServerConsole extends MavenRemoteObject implements MavenServerConsole {
-    private final MavenConsole myConsole;
-
-    RemoteMavenServerConsole(MavenConsole console) {
-      myConsole = console;
-    }
-
-    @Override
-    public void printMessage(int level, String message, Throwable throwable) {
-      myConsole.printMessage(level, message, throwable);
-    }
-  }
 }
