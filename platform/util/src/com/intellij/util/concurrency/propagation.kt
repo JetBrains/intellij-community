@@ -69,11 +69,12 @@ private fun createChildContext(): Pair<CoroutineContext, CompletableJob?> {
   else {
     null
   }
+  val childJobContext = childJob ?: EmptyCoroutineContext
   val childContext = if (isPropagateThreadContext) {
-    currentThreadContext.minusKey(Job)
+    currentThreadContext.minusKey(Job) + childJobContext
   }
   else {
-    EmptyCoroutineContext
+    childJobContext
   }
   return Pair(childContext, childJob)
 }

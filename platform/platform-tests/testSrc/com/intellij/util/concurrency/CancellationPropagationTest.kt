@@ -428,7 +428,7 @@ class CancellationPropagationTest {
     }
     lock.timeoutWaitUp()
     rootJob.cancel()
-    waitAssertCompletedWithCancellation(childFuture)
+    waitAssertCompletedWith(childFuture, JobCanceledException::class)
     rootJob.timeoutJoinBlocking()
   }
 
@@ -490,7 +490,7 @@ class CancellationPropagationTest {
     childFuture1CanThrow.up()
     waitAssertCompletedWith(childFuture1, E::class)
     childFuture2CanFinish.up()
-    waitAssertCompletedWithCancellation(childFuture2)
+    waitAssertCompletedWith(childFuture2, JobCanceledException::class)
     waitAssertCancelled(rootJob)
   }
 

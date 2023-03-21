@@ -1,11 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
 import kotlinx.coroutines.CompletableJob;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
-
-import static com.intellij.openapi.progress.Cancellation.withCurrentJob;
 
 @Internal
 public final class PeriodicCancellationRunnable implements Runnable {
@@ -21,10 +19,7 @@ public final class PeriodicCancellationRunnable implements Runnable {
   @Override
   public void run() {
     try {
-      withCurrentJob(myJob, () -> {
-        myRunnable.run();
-        return null;
-      });
+      myRunnable.run();
       // don't complete the job, it can be either failed, or cancelled
     }
     catch (Throwable e) {

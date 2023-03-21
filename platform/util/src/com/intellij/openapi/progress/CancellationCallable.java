@@ -7,8 +7,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Callable;
 
-import static com.intellij.openapi.progress.Cancellation.withCurrentJob;
-
 /**
  * A Callable, which, when called, associates the calling thread with a job,
  * invokes original callable, and completes the job with its result.
@@ -30,7 +28,7 @@ public final class CancellationCallable<V> implements Callable<V> {
   @Override
   public V call() throws Exception {
     try {
-      V result = withCurrentJob(myJob, myCallable::call);
+      V result = myCallable.call();
       myJob.complete();
       return result;
     }
