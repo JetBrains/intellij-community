@@ -80,7 +80,7 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
       unwrapStatement(labelStatement, label, switchStatement);
     }
     else {
-      unwrapExpression((PsiSwitchExpression)block, label);
+      unwrapExpression((PsiSwitchExpression)block);
     }
   }
 
@@ -156,7 +156,7 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
     }
   }
 
-  private static void unwrapExpression(@NotNull PsiSwitchExpression switchExpression, @NotNull PsiCaseLabelElement label) {
+  private static void unwrapExpression(@NotNull PsiSwitchExpression switchExpression) {
     PsiCodeBlock body = switchExpression.getBody();
     if (body == null) return;
     PsiStatement[] statements = body.getStatements();
@@ -170,7 +170,7 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
       rule = (PsiSwitchLabeledRuleStatement)Objects.requireNonNull(switchExpression.getBody()).getStatements()[0];
       ruleBody = rule.getBody();
       if (ruleBody == null) return;
-      label = Objects.requireNonNull(rule.getCaseLabelElementList()).getElements()[0];
+      PsiCaseLabelElement label = Objects.requireNonNull(rule.getCaseLabelElementList()).getElements()[0];
       List<PsiLocalVariable> variables = collectVariables(label, switchExpression);
       if (variables.isEmpty()) {
         new CommentTracker().replaceAndRestoreComments(switchExpression, ((PsiExpressionStatement)ruleBody).getExpression());
