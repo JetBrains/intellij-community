@@ -183,9 +183,13 @@ open class ProjectFrameHelper internal constructor(
     if (SystemInfoRt.isMac) {
       frame.iconImage = null
     }
-    else if (SystemInfoRt.isLinux) {
-      IdeMenuBar.installAppMenuIfNeeded(frame)
-      // in production (not from sources) makes sense only on Linux
+    else {
+      if (SystemInfoRt.isLinux) {
+        IdeMenuBar.installAppMenuIfNeeded(frame)
+      }
+
+      // in production (not from sources) it makes sense only on Linux
+      // or on Windows (for products that don't use a native launcher, e.g. MPS)
       AppUIUtil.updateWindowIcon(frame)
     }
     return frame
