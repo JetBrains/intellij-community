@@ -31,6 +31,24 @@ val EMPTY_ICON: ImageIcon by lazy {
   }
 }
 
+@JvmField
+internal var isIconActivated: Boolean = !GraphicsEnvironment.isHeadless()
+
+@JvmField
+internal val pathTransformGlobalModCount: AtomicInteger = AtomicInteger()
+
+internal fun patchIconPath(originalPath: String, classLoader: ClassLoader): Pair<String, ClassLoader>? {
+  return pathTransform.get().patchPath(originalPath, classLoader)
+}
+
+@JvmField
+internal val pathTransform: AtomicReference<IconTransform> = AtomicReference(
+  IconTransform(StartupUiUtil.isUnderDarcula, arrayOf<IconPathPatcher>(DeprecatedDuplicatesIconPathPatcher()), null)
+)
+
+@JvmField
+internal val iconToStrokeIcon: ConcurrentMap<CachedImageIcon, CachedImageIcon> = CollectionFactory.createConcurrentWeakKeyWeakValueMap<CachedImageIcon, CachedImageIcon>()
+
 @ApiStatus.Internal
 @ApiStatus.NonExtendable
 open class CachedImageIcon protected constructor(
@@ -44,27 +62,6 @@ open class CachedImageIcon protected constructor(
   private val toolTip: Supplier<String?>? = null,
   private val scaleContext: ScaleContext = ScaleContext.create(),
 ) : CopyableIcon, ScalableIcon, DarkIconProvider, MenuBarIconProvider, IconWithToolTip, ScaleContextAware {
-  companion object {
-    @JvmField
-    internal var isActivated: Boolean = !GraphicsEnvironment.isHeadless()
-
-    @JvmField
-    internal val pathTransformGlobalModCount: AtomicInteger = AtomicInteger()
-
-    fun patchPath(originalPath: String, classLoader: ClassLoader): Pair<String, ClassLoader>? {
-      return pathTransform.get().patchPath(originalPath, classLoader)
-    }
-
-    @JvmField
-    internal val pathTransform: AtomicReference<IconTransform> = AtomicReference(
-      IconTransform(StartupUiUtil.isUnderDarcula, arrayOf<IconPathPatcher>(DeprecatedDuplicatesIconPathPatcher()), null)
-    )
-
-    @JvmField
-    internal val iconToStrokeIcon: ConcurrentMap<CachedImageIcon, CachedImageIcon> =
-      CollectionFactory.createConcurrentWeakKeyWeakValueMap<CachedImageIcon, CachedImageIcon>()
-  }
-
   @Suppress("CanBePrimaryConstructorProperty")
   @Volatile
   var resolver: ImageDataLoader? = resolver
@@ -128,7 +125,7 @@ open class CachedImageIcon protected constructor(
 
   internal fun resolveActualIcon(sysScale: Double): ImageIcon {
     val resolver = resolver
-    if (resolver == null || !isActivated) {
+    if (resolver == null || !isIconActivated) {
       return EMPTY_ICON
     }
 

@@ -125,7 +125,7 @@ object IconLoader {
     iconCache.invalidateAll()
     iconToDisabledIcon.clear()
     clearImageCache()
-    com.intellij.ui.icons.CachedImageIcon.pathTransformGlobalModCount.incrementAndGet()
+    pathTransformGlobalModCount.incrementAndGet()
   }
 
   @Deprecated("Use {@link #getIcon(String, ClassLoader)}", level = DeprecationLevel.ERROR)
@@ -192,13 +192,13 @@ object IconLoader {
   @TestOnly
   @JvmStatic
   fun activate() {
-    com.intellij.ui.icons.CachedImageIcon.isActivated = true
+    isIconActivated = true
   }
 
   @TestOnly
   @JvmStatic
   fun deactivate() {
-    com.intellij.ui.icons.CachedImageIcon.isActivated = false
+    isIconActivated = false
   }
 
   /**
@@ -320,7 +320,7 @@ object IconLoader {
 
   @Internal
   fun getDisabledIcon(icon: Icon, disableFilter: (() -> RGBImageFilter)?): Icon {
-    if (!com.intellij.ui.icons.CachedImageIcon.isActivated) {
+    if (!isIconActivated) {
       return icon
     }
 
@@ -558,15 +558,15 @@ private fun updateTransform(updater: Function<in IconTransform, IconTransform>) 
   var prev: IconTransform
   var next: IconTransform
   do {
-    prev = CachedImageIcon.pathTransform.get()
+    prev = pathTransform.get()
     next = updater.apply(prev)
   }
-  while (!CachedImageIcon.pathTransform.compareAndSet(prev, next))
-  CachedImageIcon.pathTransformGlobalModCount.incrementAndGet()
+  while (!pathTransform.compareAndSet(prev, next))
+  pathTransformGlobalModCount.incrementAndGet()
   if (prev != next) {
     iconToDisabledIcon.clear()
     colorPatchCache.clear()
-    CachedImageIcon.iconToStrokeIcon.clear()
+    iconToStrokeIcon.clear()
 
     // clear svg cache
     clearImageCache()
@@ -603,7 +603,7 @@ fun findIconUsingDeprecatedImplementation(originalPath: String,
                                           strict: Boolean = STRICT_LOCAL.get()): Icon? {
   var effectiveClassLoader = classLoader
   val startTime = StartUpMeasurer.getCurrentTimeIfEnabled()
-  val patchedPath = CachedImageIcon.patchPath(originalPath = originalPath, classLoader = effectiveClassLoader)
+  val patchedPath = patchIconPath(originalPath = originalPath, classLoader = effectiveClassLoader)
   val effectivePath = patchedPath?.first ?: originalPath
   if (patchedPath?.second != null) {
     effectiveClassLoader = patchedPath.second
@@ -635,7 +635,7 @@ private abstract class LazyIcon : ScaleContextSupport(), CopyableIcon, Retrievab
   @Volatile
   private var icon: Icon? = null
 
-  private var transformModCount = CachedImageIcon.pathTransformGlobalModCount.get()
+  private var transformModCount = pathTransformGlobalModCount.get()
 
   override fun isComplex(): Boolean = true
 
@@ -654,7 +654,7 @@ private abstract class LazyIcon : ScaleContextSupport(), CopyableIcon, Retrievab
   @Synchronized
   fun getOrComputeIcon(): Icon {
     var icon = icon
-    val newTransformModCount = CachedImageIcon.pathTransformGlobalModCount.get()
+    val newTransformModCount = pathTransformGlobalModCount.get()
     if (icon != null && wasComputed && transformModCount == newTransformModCount) {
       return icon
     }

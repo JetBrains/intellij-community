@@ -23,7 +23,7 @@ class ImageDataByPathLoader private constructor(private val path: String,
       val startTime = StartUpMeasurer.getCurrentTimeIfEnabled()
 
       val originalPath = normalizePath(path)
-      val patched = CachedImageIcon.patchPath(originalPath, classLoader)
+      val patched = patchIconPath(originalPath, classLoader)
       val effectivePath = patched?.first ?: originalPath
       val effectiveClassLoader = patched?.second ?: classLoader
       val icon: Icon? = when {

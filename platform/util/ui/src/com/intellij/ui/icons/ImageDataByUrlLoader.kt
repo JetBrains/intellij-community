@@ -12,22 +12,14 @@ import java.net.URL
 private val UNRESOLVED_URL = URL("file:///unresolved")
 
 @ApiStatus.Internal
-class ImageDataByUrlLoader private constructor(
+internal class ImageDataByUrlLoader internal constructor(
   private val ownerClass: Class<*>? = null,
   private val classLoader: ClassLoader? = null,
   private val useCacheOnLoad: Boolean,
-  private val overriddenPath: String? = null,
   override val url: URL,
 ) : ImageDataLoader {
-  internal constructor(url: URL, classLoader: ClassLoader?, useCacheOnLoad: Boolean) :
-    this(classLoader = classLoader, useCacheOnLoad = useCacheOnLoad, overriddenPath = null, url = url)
-
   override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image? {
-    var path = overriddenPath
-    if (path == null || ownerClass == null && (classLoader == null || !path.startsWith('/'))) {
-      path = url.toString()
-    }
-    return loadImage(path = path,
+    return loadImage(path = url.toString(),
                      filters = parameters.filters,
                      colorPatcherProvider = parameters.colorPatcher,
                      resourceClass = ownerClass,
@@ -44,7 +36,7 @@ class ImageDataByUrlLoader private constructor(
   override fun isMyClassLoader(classLoader: ClassLoader): Boolean = this.classLoader === classLoader
 
   override fun toString(): String {
-    return "UrlResolver(ownerClass=${ownerClass?.name}, classLoader=$classLoader, overriddenPath=$overriddenPath, url=$url, useCacheOnLoad=$useCacheOnLoad)"
+    return "UrlResolver(ownerClass=${ownerClass?.name}, classLoader=$classLoader, url=$url, useCacheOnLoad=$useCacheOnLoad)"
   }
 }
 

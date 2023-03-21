@@ -20,7 +20,7 @@ import java.net.URL
 @Internal
 fun createRasterizedImageDataLoader(path: String, classLoader: ClassLoader, cacheKey: Int, imageFlags: Int): ImageDataLoader {
   val startTime = StartUpMeasurer.getCurrentTimeIfEnabled()
-  val patchedPath = CachedImageIcon.patchPath(originalPath = path, classLoader = classLoader)
+  val patchedPath = patchIconPath(originalPath = path, classLoader = classLoader)
   val classLoaderWeakRef = WeakReference(classLoader)
   val resolver = if (patchedPath == null) {
     RasterizedImageDataLoader(path = path,
