@@ -1,9 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.daemon.impl.quickfix;
+package com.siyeh.ig.redundancy;
 
-import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.RedundantExplicitChronoFieldInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.siyeh.InspectionGadgetsBundle;
@@ -14,8 +12,7 @@ import org.jetbrains.annotations.Nullable;
 public class RedundantExplicitChronoFieldInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() +
- "/codeInsight/daemonCodeAnalyzer/quickFix/redundantExplicitChronoField";
+    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/redundancy/redundant_explicit_chrono_field/";
   }
 
   @Override
@@ -65,7 +62,7 @@ public class RedundantExplicitChronoFieldInspectionTest extends LightJavaCodeIns
   }
 
   private void doTest(@Nullable String quickFixName) {
-    myFixture.configureByFile("before" + getTestName(false) + ".java");
+    myFixture.configureByFile(getTestDataPath() + "before" + getTestName(false) + ".java");
     if (quickFixName != null) {
       myFixture.checkPreviewAndLaunchAction(myFixture.findSingleIntention(quickFixName));
     }

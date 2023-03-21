@@ -109,8 +109,7 @@ public final class ChronoUtil {
 
   @Nullable
   public static String getQualifiedName(@NotNull PsiMethod method) {
-    return Optional.of(method)
-      .map(m -> m.getContainingClass())
+    return Optional.ofNullable(method.getContainingClass())
       .map(c -> c.getQualifiedName())
       .orElse(null);
   }
