@@ -29,7 +29,7 @@ import org.jetbrains.uast.*
 inline fun String?.orAnonymous(kind: String = ""): String = this ?: "<anonymous" + (if (kind.isNotBlank()) " $kind" else "") + ">"
 
 fun <T> lz(initializer: () -> T) =
-    lazy(LazyThreadSafetyMode.SYNCHRONIZED, initializer)
+    lazy(LazyThreadSafetyMode.PUBLICATION, initializer)
 
 inline fun <reified T : UDeclaration, reified P : PsiElement> unwrap(element: P): P {
     val unwrapped = if (element is T) element.javaPsi else element
