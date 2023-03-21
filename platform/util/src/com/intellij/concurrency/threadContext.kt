@@ -37,7 +37,7 @@ fun currentThreadContext(): CoroutineContext {
  * @return handle to restore the previous thread context
  */
 fun resetThreadContext(): AccessToken {
-  return updateThreadContext {
+  return withThreadLocal(tlCoroutineContext) { _ ->
     null
   }
 }
@@ -49,18 +49,12 @@ fun resetThreadContext(): AccessToken {
  * @return handle to restore the previous thread context
  */
 fun installThreadContext(coroutineContext: CoroutineContext, replace: Boolean = false): AccessToken {
-  return updateThreadContext { previousContext ->
+  return withThreadLocal(tlCoroutineContext) { previousContext: CoroutineContext? ->
     if (!replace && previousContext != null) {
       LOG.error("Thread context was already set: $previousContext")
     }
     coroutineContext
   }
-}
-
-private fun updateThreadContext(
-  update: (CoroutineContext?) -> CoroutineContext?
-): AccessToken {
-  return withThreadLocal(tlCoroutineContext, update)
 }
 
 /**
