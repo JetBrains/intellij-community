@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
 import kotlinx.coroutines.Job
@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
-class EnsureCurrentJobWithJobTest : CancellationTest() {
+class ExistingThreadContextTest : CancellationTest() {
 
   @Test
   fun context() {
@@ -15,7 +15,7 @@ class EnsureCurrentJobWithJobTest : CancellationTest() {
       assertSame(job, Cancellation.currentJob())
       assertNull(ProgressManager.getGlobalProgressIndicator())
 
-      ensureCurrentJob { currentJob ->
+      prepareThreadContext { currentJob ->
         assertSame(job, Cancellation.currentJob())
         assertSame(job, currentJob)
         assertNull(ProgressManager.getGlobalProgressIndicator())
@@ -32,7 +32,7 @@ class EnsureCurrentJobWithJobTest : CancellationTest() {
     val ce = assertThrows<CurrentJobCancellationException> {
       withCurrentJob<Unit>(Job()) {
         throw assertThrows<JobCanceledException> {
-          ensureCurrentJob { currentJob ->
+          prepareThreadContext { currentJob ->
             testNoExceptions()
             currentJob.cancel("", t)
             testExceptionsAndNonCancellableSection()
@@ -48,7 +48,7 @@ class EnsureCurrentJobWithJobTest : CancellationTest() {
   @Test
   fun rethrow() {
     currentJobTest {
-      testEnsureCurrentJobRethrow()
+      testPrepareThreadContextRethrow()
     }
   }
 
@@ -59,7 +59,7 @@ class EnsureCurrentJobWithJobTest : CancellationTest() {
     val ce = assertThrows<CurrentJobCancellationException> {
       withCurrentJob<Unit>(job) {
         throw assertThrows<JobCanceledException> {
-          ensureCurrentJob { currentJob ->
+          prepareThreadContext { currentJob ->
             testNoExceptions()
             Job(parent = currentJob).completeExceptionally(t)
             assertThrows<JobCanceledException> {

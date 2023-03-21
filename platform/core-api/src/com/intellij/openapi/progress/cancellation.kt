@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Internal
 
 package com.intellij.openapi.progress
@@ -42,19 +42,19 @@ fun <X> withJob(job: Job, action: () -> X): X = withCurrentJob(job, action)
  * @throws CancellationException if there was a current job it was cancelled
  */
 @Internal
-fun <T> ensureCurrentJob(action: (Job) -> T): T {
-  return ensureCurrentJob(allowOrphan = false, action)
+fun <T> prepareThreadContext(action: (Job) -> T): T {
+  return prepareThreadContext(allowOrphan = false, action)
 }
 
 @Internal
-fun <T> ensureCurrentJobAllowingOrphan(action: (Job) -> T): T {
-  return ensureCurrentJob(allowOrphan = true, action)
+fun <T> prepareThreadContextAllowingOrphan(action: (Job) -> T): T {
+  return prepareThreadContext(allowOrphan = true, action)
 }
 
-internal fun <T> ensureCurrentJob(allowOrphan: Boolean, action: (Job) -> T): T {
+internal fun <T> prepareThreadContext(allowOrphan: Boolean, action: (Job) -> T): T {
   val indicator = ProgressManager.getGlobalProgressIndicator()
   if (indicator != null) {
-    return ensureCurrentJob(indicator, action)
+    return prepareThreadContext(indicator, action)
   }
   val currentJob = Cancellation.currentJob()
   if (currentJob != null) {
@@ -73,7 +73,7 @@ internal fun <T> ensureCurrentJob(allowOrphan: Boolean, action: (Job) -> T): T {
  * @throws ProcessCanceledException if [indicator] is cancelled,
  * or a child coroutine is started and failed
  */
-internal fun <T> ensureCurrentJob(indicator: ProgressIndicator, action: (currentJob: Job) -> T): T {
+internal fun <T> prepareThreadContext(indicator: ProgressIndicator, action: (currentJob: Job) -> T): T {
   val currentJob = Job(parent = null) // no job parent, the "parent" is the indicator
   val indicatorWatcher = cancelWithIndicator(currentJob, indicator)
   val progressModality = ProgressManager.getInstance().currentProgressModality?.asContextElement()

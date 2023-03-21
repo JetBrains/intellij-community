@@ -1,18 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.application.rw
 
 import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.progress.Cancellation
-import com.intellij.openapi.progress.ensureCurrentJob
 import com.intellij.openapi.progress.executeWithJobAndCompleteIt
+import com.intellij.openapi.progress.prepareThreadContext
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils.runActionAndCancelBeforeWrite
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
 import kotlin.coroutines.cancellation.CancellationException
 
-internal fun <X> cancellableReadAction(action: () -> X): X = ensureCurrentJob { currentJob ->
+internal fun <X> cancellableReadAction(action: () -> X): X = prepareThreadContext { currentJob ->
   try {
     cancellableReadActionInternal(currentJob, action)
   }

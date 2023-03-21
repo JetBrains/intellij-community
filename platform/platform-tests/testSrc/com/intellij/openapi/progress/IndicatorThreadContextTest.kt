@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
 import kotlinx.coroutines.CancellationException
@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
-class EnsureCurrentJobWithIndicatorTest : CancellationTest() {
+class IndicatorThreadContextTest : CancellationTest() {
 
   @Test
   fun context() {
@@ -16,7 +16,7 @@ class EnsureCurrentJobWithIndicatorTest : CancellationTest() {
       assertNull(Cancellation.currentJob())
       assertNotNull(ProgressManager.getGlobalProgressIndicator())
 
-      ensureCurrentJob { currentJob ->
+      prepareThreadContext { currentJob ->
         assertSame(currentJob, Cancellation.currentJob())
         assertNull(ProgressManager.getGlobalProgressIndicator())
       }
@@ -31,7 +31,7 @@ class EnsureCurrentJobWithIndicatorTest : CancellationTest() {
     val indicator = EmptyProgressIndicator()
     withIndicator(indicator) {
       val pce = assertThrows<ProcessCanceledException> {
-        ensureCurrentJob { currentJob ->
+        prepareThreadContext { currentJob ->
           testNoExceptions()
           indicator.cancel()
           currentJob.timeoutJoinBlocking() // not immediate because watch job polls indicator every 10ms
@@ -57,7 +57,7 @@ class EnsureCurrentJobWithIndicatorTest : CancellationTest() {
   @Test
   fun rethrow() {
     indicatorTest {
-      testEnsureCurrentJobRethrow()
+      testPrepareThreadContextRethrow()
     }
   }
 
@@ -65,7 +65,7 @@ class EnsureCurrentJobWithIndicatorTest : CancellationTest() {
   fun `completes normally`() {
     indicatorTest {
       lateinit var currentJob: Job
-      val result = ensureCurrentJob {
+      val result = prepareThreadContext {
         currentJob = it
         42
       }
@@ -81,7 +81,7 @@ class EnsureCurrentJobWithIndicatorTest : CancellationTest() {
       val t = Throwable()
       lateinit var currentJob: Job
       val thrown = assertThrows<Throwable> {
-        ensureCurrentJob {
+        prepareThreadContext {
           currentJob = it
           throw t
         }
@@ -99,7 +99,7 @@ class EnsureCurrentJobWithIndicatorTest : CancellationTest() {
     val pce = assertThrows<ProcessCanceledException> {
       withIndicator(indicator) {
         throw assertThrows<ProcessCanceledException> {
-          ensureCurrentJob { currentJob ->
+          prepareThreadContext { currentJob ->
             testNoExceptions()
             Job(parent = currentJob).completeExceptionally(t)
             assertThrows<JobCanceledException> {

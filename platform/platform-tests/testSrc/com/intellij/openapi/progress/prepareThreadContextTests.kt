@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
 import kotlinx.coroutines.CancellationException
@@ -46,15 +46,15 @@ fun testExceptionsAndNonCancellableSection(): Nothing {
   }
 }
 
-fun testEnsureCurrentJobRethrow() {
-  testEnsureCurrentJobRethrow(object : Throwable() {})
-  testEnsureCurrentJobRethrow(CancellationException()) // manual CE
-  testEnsureCurrentJobRethrow(ProcessCanceledException()) // manual PCE
+fun testPrepareThreadContextRethrow() {
+  testPrepareThreadContextRethrow(object : Throwable() {})
+  testPrepareThreadContextRethrow(CancellationException()) // manual CE
+  testPrepareThreadContextRethrow(ProcessCanceledException()) // manual PCE
 }
 
-private inline fun <reified T : Throwable> testEnsureCurrentJobRethrow(t: T) {
+private inline fun <reified T : Throwable> testPrepareThreadContextRethrow(t: T) {
   val thrown = assertThrows<T> {
-    ensureCurrentJob {
+    prepareThreadContext {
       throw t
     }
   }
