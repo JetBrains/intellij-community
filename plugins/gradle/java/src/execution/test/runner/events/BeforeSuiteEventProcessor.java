@@ -53,7 +53,7 @@ public class BeforeSuiteEventProcessor extends AbstractTestEventProcessor {
     @Nullable String parentTestId,
     @NotNull String suiteName,
     @NotNull String fqClassName,
-    @Nullable String displayName
+    @NotNull String displayName
   ) {
     var isCombineSameTests = !showInternalTestNodes();
 

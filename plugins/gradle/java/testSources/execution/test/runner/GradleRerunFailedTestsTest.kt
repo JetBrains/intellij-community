@@ -22,44 +22,18 @@ class GradleRerunFailedTestsTest : GradleRerunFailedTestsTestCase() {
       """.trimMargin())
 
       executeTasks(":test --tests org.example.TestCase")
-      assertTestExecutionTree(
-        testLauncher = """
-          |-[root]
-          | -TestCase
-          |  Test test1()(org.example.TestCase)
-          |  Test test2()(org.example.TestCase)
-        """.trimMargin(),
-        junit5 = """
-          |-[root]
-          | -TestCase
-          |  test1()
-          |  test2()
-        """.trimMargin(),
-        junit4 = """
-          |-[root]
-          | -org.example.TestCase
-          |  test1
-          |  test2
-        """.trimMargin()
-      )
+      assertTestExecutionTree("""
+        |-[root]
+        | -TestCase
+        |  test1
+        |  test2
+      """.trimMargin())
       Assertions.assertTrue(performRerunFailedTestsAction())
-      assertTestExecutionTree(
-        testLauncher = """
-          |-[root]
-          | -TestCase
-          |  Test test2()(org.example.TestCase)
-        """.trimMargin(),
-        junit5 = """
-          |-[root]
-          | -TestCase
-          |  test2()
-        """.trimMargin(),
-        junit4 = """
-          |-[root]
-          | -org.example.TestCase
-          |  test2
-        """.trimMargin()
-      )
+      assertTestExecutionTree("""
+        |-[root]
+        | -TestCase
+        |  test2
+      """.trimMargin())
     }
   }
 
@@ -89,93 +63,35 @@ class GradleRerunFailedTestsTest : GradleRerunFailedTestsTestCase() {
       """.trimMargin())
 
       executeTasks(":test --tests org.example.SubTestCase1")
-      assertTestExecutionTree(
-        testLauncher = """
-          |-[root]
-          | -SubTestCase1
-          |  Test test1()(org.example.SubTestCase1)
-          |  Test test2()(org.example.SubTestCase1)
-        """.trimMargin(),
-        junit5 = """
-          |-[root]
-          | -SubTestCase1
-          |  test1()
-          |  test2()
-        """.trimMargin(),
-        junit4 = """
-          |-[root]
-          | -org.example.SubTestCase1
-          |  test1
-          |  test2
-        """.trimMargin()
-      )
+      assertTestExecutionTree("""
+        |-[root]
+        | -SubTestCase1
+        |  test1
+        |  test2
+      """.trimMargin())
       Assertions.assertTrue(performRerunFailedTestsAction())
-      assertTestExecutionTree(
-        testLauncher = """
-          |-[root]
-          | -SubTestCase1
-          |  Test test2()(org.example.SubTestCase1)
-        """.trimMargin(),
-        junit5 = """
-          |-[root]
-          | -SubTestCase1
-          |  test2()
-        """.trimMargin(),
-        junit4 = """
-          |-[root]
-          | -org.example.SubTestCase1
-          |  test2
-        """.trimMargin()
-      )
+      assertTestExecutionTree("""
+        |-[root]
+        | -SubTestCase1
+        |  test2
+      """.trimMargin())
 
       executeTasks(":test --tests org.example.SubTestCase2")
-      assertTestExecutionTree(
-        testLauncher = """
-          |-[root]
-          | -SubTestCase2
-          |  Test test1()(org.example.SubTestCase2)
-          |  Test test2()(org.example.SubTestCase2)
-          |  Test test3()(org.example.SubTestCase2)
-          |  Test test4()(org.example.SubTestCase2)
-        """.trimMargin(),
-        junit5 = """
-          |-[root]
-          | -SubTestCase2
-          |  test1()
-          |  test2()
-          |  test3()
-          |  test4()
-        """.trimMargin(),
-        junit4 = """
-          |-[root]
-          | -org.example.SubTestCase2
-          |  test1
-          |  test2
-          |  test3
-          |  test4
-        """.trimMargin()
-      )
+      assertTestExecutionTree("""
+        |-[root]
+        | -SubTestCase2
+        |  test1
+        |  test2
+        |  test3
+        |  test4
+      """.trimMargin())
       Assertions.assertTrue(performRerunFailedTestsAction())
-      assertTestExecutionTree(
-        testLauncher = """
-          |-[root]
-          | -SubTestCase2
-          |  Test test2()(org.example.SubTestCase2)
-          |  Test test4()(org.example.SubTestCase2)
-        """.trimMargin(),
-        junit5 = """
-          |-[root]
-          | -SubTestCase2
-          |  test2()
-          |  test4()
-        """.trimMargin(),
-        junit4 = """
-          |-[root]
-          | -org.example.SubTestCase2
-          |  test2
-          |  test4
-        """.trimMargin()
-      )
+      assertTestExecutionTree("""
+        |-[root]
+        | -SubTestCase2
+        |  test2
+        |  test4
+      """.trimMargin())
     }
   }
 }

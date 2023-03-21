@@ -227,8 +227,8 @@ abstract class GradleTestExecutionTestCase : GradleProjectTestCase() {
     }
   }
 
-  fun assertTestExecutionTree(testLauncher: String, junit5: String, junit4: String) {
-    assertTestDisplayName(getTestExecutionTreeString(), testLauncher, junit5, junit4)
+  fun assertTestExecutionTree(expected: String) {
+    Assertions.assertEquals(expected, getTestExecutionTreeString())
   }
 
   fun assertTestDisplayName(actual: String, testLauncher: String, junit5: String, junit4: String) {

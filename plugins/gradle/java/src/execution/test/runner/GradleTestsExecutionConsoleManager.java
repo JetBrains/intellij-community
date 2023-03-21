@@ -63,6 +63,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.action.GradleRerunFailedTestsAction;
 import org.jetbrains.plugins.gradle.execution.filters.ReRunTaskFilter;
+import org.jetbrains.plugins.gradle.execution.test.runner.events.GradleTestEventsProcessor;
+import org.jetbrains.plugins.gradle.execution.test.runner.events.GradleTestsExecutionConsoleOutputProcessor;
 import org.jetbrains.plugins.gradle.service.execution.GradleTestExecutionUtil;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;

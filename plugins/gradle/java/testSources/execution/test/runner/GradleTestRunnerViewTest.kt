@@ -43,26 +43,12 @@ class GradleTestRunnerViewTest : GradleTestRunnerViewTestCase() {
 
       executeTasks(":test :additionalTest")
 
-      assertTestExecutionTree(
-        testLauncher = """
-          |-[root]
-          | -AppTest
-          |  Test test()(org.example.AppTest)
-          |  Test test()(org.example.AppTest)
-        """.trimMargin(),
-        junit5 = """
-          |-[root]
-          | -AppTest
-          |  test()
-          |  test()
-        """.trimMargin(),
-        junit4 = """
-          |-[root]
-          | -org.example.AppTest
-          |  test
-          |  test
-        """.trimMargin()
-      )
+      assertTestExecutionTree("""
+        |-[root]
+        | -AppTest
+        |  test
+        |  test
+      """.trimMargin())
       assertBuildExecutionTreeContains(
         testLauncher = """
           |-
@@ -128,23 +114,11 @@ class GradleTestRunnerViewTest : GradleTestRunnerViewTestCase() {
 
       executeTasks(":test")
 
-      assertTestExecutionTree(
-        testLauncher = """
-          |-[root]
-          | -AppTest
-          |  Test test()(org.example.AppTest)
-        """.trimMargin(),
-        junit5 = """
-          |-[root]
-          | -AppTest
-          |  test()
-        """.trimMargin(),
-        junit4 = """
-          |-[root]
-          | -org.example.AppTest
-          |  test
-        """.trimMargin()
-      )
+      assertTestExecutionTree("""
+        |-[root]
+        | -AppTest
+        |  test
+      """.trimMargin())
       when {
         SystemInfo.isWindows ->
           assertTestExecutionConsoleContains("buildscript \n" + "output\n" + "\n" + "text\n")
@@ -170,23 +144,11 @@ class GradleTestRunnerViewTest : GradleTestRunnerViewTestCase() {
 
       executeTasks(":test")
 
-      assertTestExecutionTree(
-        testLauncher = """
-          |-[root]
-          | -AppTest
-          |  Test test()(org.example.AppTest)
-        """.trimMargin(),
-        junit5 = """
-          |-[root]
-          | -AppTest
-          |  test()
-        """.trimMargin(),
-        junit4 = """
-          |-[root]
-          | -org.example.AppTest
-          |  test
-        """.trimMargin()
-      )
+      assertTestExecutionTree("""
+        |-[root]
+        | -AppTest
+        |  test
+      """.trimMargin())
       assertBuildExecutionTree(
         testLauncher = """
           |-
@@ -247,24 +209,9 @@ class GradleTestRunnerViewTest : GradleTestRunnerViewTestCase() {
       val classTestProxy = rootTestProxy.children.single()
       val methodTestProxy = classTestProxy.children.single()
       val errorTestProxy = methodTestProxy.children.single()
-      assertTestDisplayName(
-        actual = classTestProxy.name,
-        testLauncher = "HelloSpockSpec",
-        junit5 = "HelloSpockSpec",
-        junit4 = "org.example.HelloSpockSpec",
-      )
-      assertTestDisplayName(
-        actual = methodTestProxy.name,
-        testLauncher = "Test suite 'length of #name is #length'",
-        junit5 = "length of #name is #length",
-        junit4 = "length of #name is #length"
-      )
-      assertTestDisplayName(
-        actual = errorTestProxy.name,
-        testLauncher = "Test length of Spock is 5(org.example.HelloSpockSpec)",
-        junit5 = "length of Spock is 5",
-        junit4 = "length of Spock is 5",
-      )
+      Assertions.assertEquals("HelloSpockSpec", classTestProxy.name)
+      Assertions.assertEquals("length of #name is #length", methodTestProxy.name)
+      Assertions.assertEquals("length of Spock is 5", errorTestProxy.name)
       Assertions.assertEquals("HelloSpockSpec", classTestProxy.psiClass.name)
       Assertions.assertEquals("length of #name is #length", methodTestProxy.psiMethod.name)
       Assertions.assertEquals("length of #name is #length", errorTestProxy.psiMethod.name)

@@ -48,7 +48,7 @@ public class BeforeTestEventProcessor extends AbstractTestEventProcessor {
     @NotNull String suiteName,
     @NotNull String fqClassName,
     @Nullable String methodName,
-    @Nullable String displayName
+    @NotNull String displayName
   ) {
     var testProxy = createTestProxy(parentTestId, suiteName, fqClassName, methodName, displayName);
     registerTestProxy(testId, testProxy);

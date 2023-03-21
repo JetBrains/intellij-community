@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleConsoleProperties;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleSMTestProxy;
-import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestLocationCustomizer;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
 
 import java.nio.charset.StandardCharsets;
@@ -79,33 +78,25 @@ public abstract class AbstractTestEventProcessor implements TestEventProcessor {
   protected @NotNull GradleSMTestProxy createTestProxy(
     @Nullable String parentTestId,
     @NotNull String suiteName,
-    @NotNull String fqClassName,
+    @NotNull String className,
     @Nullable String methodName,
-    @Nullable String displayName
-  ) {
-    var parentTestProxy = findParentTestProxy(parentTestId);
-    var locationUrl = createLocationUrl(parentTestProxy, suiteName, fqClassName, methodName);
-    var testProxy = new GradleSMTestProxy(displayName, methodName == null, locationUrl, fqClassName);
-    testProxy.setLocator(getExecutionConsole().getUrlProvider());
-    testProxy.setParentId(parentTestId);
-    return testProxy;
-  }
-
-  private @NotNull String createLocationUrl(
-    @NotNull SMTestProxy parentProxy,
-    @NotNull String suiteName,
-    @NotNull String fqClassName,
-    @Nullable String methodName
+    @NotNull String displayName
   ) {
     var project = getProject();
     var isSuite = isSuite();
-    var testLocationCustomizer = GradleTestLocationCustomizer.EP_NAME
-      .findFirstSafe(it -> it.isApplicable(project, parentProxy, isSuite, suiteName, fqClassName, methodName));
-    if (testLocationCustomizer != null) {
-      return testLocationCustomizer.createLocationUrl(parentProxy, isSuite, suiteName, fqClassName, methodName);
-    }
+    var parentTestProxy = findParentTestProxy(parentTestId);
+    var customizer = GradleTestEventConverter.getInstance(
+      project, parentTestProxy, isSuite, suiteName, className, methodName, displayName
+    );
+    var aClassName = customizer.getClassName();
+    var aMethodName = customizer.getMethodName();
+    var aDisplayName = customizer.getDisplayName();
     var locationProtocol = isSuite ? JavaTestLocator.SUITE_PROTOCOL : JavaTestLocator.TEST_PROTOCOL;
-    return JavaTestLocator.createLocationUrl(locationProtocol, fqClassName, methodName);
+    var locationUrl = JavaTestLocator.createLocationUrl(locationProtocol, aClassName, aMethodName);
+    var testProxy = new GradleSMTestProxy(aDisplayName, isSuite, locationUrl, aClassName);
+    testProxy.setLocator(getExecutionConsole().getUrlProvider());
+    testProxy.setParentId(parentTestId);
+    return testProxy;
   }
 
   protected void setParentForAllNodesInTreePath(@NotNull GradleSMTestProxy node) {
