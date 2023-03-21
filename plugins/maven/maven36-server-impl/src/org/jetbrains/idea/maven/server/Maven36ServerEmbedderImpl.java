@@ -50,8 +50,8 @@ public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
         ((DefaultRepositorySystem)repositorySystem).setArtifactDescriptorReader(enhancedArtifactDescriptorReader);
       }
 
-      // depth-first
-      DependencyCollector dependencyCollector = getComponent(DependencyCollector.class, "df");
+      // depth-first dependency collector, available since maven 3.9.0
+      DependencyCollector dependencyCollector = getComponentIfExists(DependencyCollector.class, "df");
       if (null != dependencyCollector) {
         // DependencyCollectorDelegate.setArtifactDescriptorReader
         try {
@@ -83,7 +83,7 @@ public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
 
     //TODO: registry key to turn off
     customizeArtifactResolver();
-    //customizeArtifactDescriptorReader();
+    customizeArtifactDescriptorReader();
   }
 
   @Override

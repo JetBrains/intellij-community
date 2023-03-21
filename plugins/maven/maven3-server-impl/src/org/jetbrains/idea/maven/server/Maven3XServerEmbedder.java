@@ -625,6 +625,15 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     }
   }
 
+  public <T> T getComponentIfExists(Class<T> clazz, String roleHint) {
+    try {
+      return (T)myContainer.lookup(clazz.getName(), roleHint);
+    }
+    catch (ComponentLookupException e) {
+      return null;
+    }
+  }
+
 
   private ArtifactRepository createLocalRepository() {
     try {
