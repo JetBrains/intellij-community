@@ -60,7 +60,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   private final Project myProject;
 
-  private final TrackedEdtActivityService myTrackedEdtActivityService;
+  private final CancellableLaterEdtInvoker myCancellableLaterEdtInvoker;
   private final DumbServiceMergingTaskQueue myTaskQueue;
   private final DumbServiceGuiExecutor myGuiDumbTaskRunner;
   private final DumbServiceSyncTaskQueue mySyncDumbTaskRunner;
@@ -99,7 +99,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     @Override
     public void afterLastTask(@Nullable SubmissionReceipt latestReceipt) {
-      myTrackedEdtActivityService.invokeLaterAfterProjectInitialized(() -> {
+      myCancellableLaterEdtInvoker.invokeLaterAfterProjectInitialized(() -> {
         // dumb service may already set to smart state by completeJustSubmittedTasks.
         if (myLatestReceipt.equals(latestReceipt) && myState.compareAndSet(State.SCHEDULED_OR_RUNNING_TASKS, State.WAITING_FOR_FINISH)) {
           updateFinished();
@@ -118,7 +118,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   @VisibleForTesting
   DumbServiceImpl(@NotNull Project project, @NotNull DumbModeListener publisher) {
     myProject = project;
-    myTrackedEdtActivityService = new TrackedEdtActivityService(project);
+    myCancellableLaterEdtInvoker = new CancellableLaterEdtInvoker(project);
     myTaskQueue = new DumbServiceMergingTaskQueue();
     myGuiDumbTaskRunner = new DumbServiceGuiExecutor(myProject, myTaskQueue, new DumbTaskListener());
     mySyncDumbTaskRunner = new DumbServiceSyncTaskQueue(myTaskQueue);
@@ -146,7 +146,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       // invokeLaterAfterProjectInitialized(this::updateFinished) does not work well in synchronous environments (e.g. in unit tests): code
       // continues to execute without waiting for smart mode to start because of invoke*Later*. See, for example, DbSrcFileDialectTest
       myState.compareAndSet(State.WAITING_FOR_FINISH, State.SMART);
-      myTrackedEdtActivityService.submitTransaction(myPublisher::exitDumbMode);
+      myCancellableLaterEdtInvoker.submitTransaction(myPublisher::exitDumbMode);
     }
   }
 
@@ -268,7 +268,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       runnable.run(); // will log errors if not already in a write-safe context
     }
     else {
-      myTrackedEdtActivityService.submitTransaction(runnable);
+      myCancellableLaterEdtInvoker.submitTransaction(runnable);
     }
   }
 
@@ -284,7 +284,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     // we want to invoke LATER. I.e. right now one can invoke completeJustSubmittedTasks and
     // drain the queue synchronously under modal progress
-    myTrackedEdtActivityService.invokeLaterIfProjectNotDisposed(() -> {
+    myCancellableLaterEdtInvoker.invokeLaterIfProjectNotDisposed(() -> {
       try {
         myGuiDumbTaskRunner.startBackgroundProcess();
       }
@@ -305,7 +305,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       if (old == State.SCHEDULED_OR_RUNNING_TASKS) return false;
       myDumbStart = trace;
       myDumbEnterTrace = new Throwable();
-      myTrackedEdtActivityService.setDumbStartModality(modality);
+      myCancellableLaterEdtInvoker.setDumbStartModality(modality);
       myModificationCount++;
       return true;
     });
@@ -376,7 +376,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         PingProgress.interactWithEdtProgress();
         LockSupport.parkNanos(50_000_000);
         // polls next dumb mode task
-        myTrackedEdtActivityService.executeAllQueuedActivities();
+        myCancellableLaterEdtInvoker.executeAllQueuedActivities();
         // cancels all scheduled and running tasks
         myGuiDumbTaskRunner.cancelAllTasks();
       });

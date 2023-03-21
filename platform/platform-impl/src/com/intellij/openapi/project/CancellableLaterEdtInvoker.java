@@ -11,13 +11,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-final class TrackedEdtActivityService {
+final class CancellableLaterEdtInvoker {
   private final BlockingQueue<TrackedEdtActivity> myTrackedEdtActivities = new LinkedBlockingQueue<>();
   private final @NotNull Project myProject;
 
   private volatile ModalityState myDumbStartModality;
 
-  TrackedEdtActivityService(@NotNull Project project) {
+  CancellableLaterEdtInvoker(@NotNull Project project) {
     myProject = project;
   }
 
