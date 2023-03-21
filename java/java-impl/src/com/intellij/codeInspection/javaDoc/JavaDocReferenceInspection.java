@@ -4,6 +4,9 @@ package com.intellij.codeInspection.javaDoc;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
+import com.intellij.codeInsight.daemon.quickFix.CreateFilePathFix;
+import com.intellij.codeInsight.daemon.quickFix.NewFileLocation;
+import com.intellij.codeInsight.daemon.quickFix.TargetDirectory;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -24,6 +27,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -116,10 +120,23 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
       @Override
       public void visitSnippetAttributeValue(@NotNull PsiSnippetAttributeValue attributeValue) {
         PsiReference ref = attributeValue.getReference();
-        if (ref != null) {
-          PsiElement resolved = ref.resolve();
+        if (ref instanceof PsiFileReference fileRef) {
+          PsiElement resolved = fileRef.resolve();
           if (resolved == null) {
-            holder.registerProblem(attributeValue, JavaBundle.message("inspection.message.snippet.file.not.found"));
+            CreateFilePathFix fix = null;
+            String path = fileRef.getCanonicalText();
+            PsiDirectory parent = comment.getContainingFile().getParent();
+            if (parent != null) {
+              String[] components = path.split("/");
+              if (components.length > 0) {
+                TargetDirectory directory = new TargetDirectory(parent, Arrays.copyOf(components, components.length - 1));
+                NewFileLocation location = new NewFileLocation(Collections.singletonList(directory), components[components.length - 1]);
+                fix = new CreateFilePathFix(attributeValue, location);
+              }
+            }
+            holder.registerProblem(attributeValue, 
+                                   JavaBundle.message("inspection.message.snippet.file.not.found", path),
+                                   LocalQuickFix.notNullElements(fix));
           }
         }
         PsiSymbolReference symRef = ContainerUtil.getOnlyItem(attributeValue.getOwnReferences());

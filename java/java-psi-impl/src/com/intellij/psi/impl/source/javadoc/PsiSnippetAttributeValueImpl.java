@@ -140,7 +140,7 @@ public class PsiSnippetAttributeValueImpl extends LeafPsiElement implements PsiS
     @Nullable
     private VirtualFile getDirectory() {
       if (mySnippetRoot == null) return null;
-      List<String> path = StringUtil.split(getCanonicalText(), mySeparator);
+      List<String> path = StringUtil.split(getValue(), mySeparator);
       if (path.isEmpty()) return null;
       VirtualFile dir = mySnippetRoot;
       for (int i = 0; i < path.size() - 1; i++) {
@@ -175,7 +175,7 @@ public class PsiSnippetAttributeValueImpl extends LeafPsiElement implements PsiS
     }
 
     @Override
-    public Object @NotNull [] getVariants() {
+    public @NotNull Object @NotNull [] getVariants() {
       VirtualFile directory = getDirectory();
       if (directory == null) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
       PsiManager manager = getManager();
@@ -199,7 +199,9 @@ public class PsiSnippetAttributeValueImpl extends LeafPsiElement implements PsiS
 
     @Override
     public @NotNull @NlsSafe String getCanonicalText() {
-      return getValue();
+      String text = getValue();
+      return PsiSnippetAttribute.SNIPPETS_FOLDER + '/' +
+             text.replace(mySeparator, "/") + (myExtension == null ? "" : "." + myExtension);
     }
 
     @Override
@@ -252,7 +254,7 @@ public class PsiSnippetAttributeValueImpl extends LeafPsiElement implements PsiS
 
     @Override
     public String toString() {
-      return getClass().getName() + "(" + getCanonicalText() + ")";
+      return getClass().getName() + "(" + getValue() + ")";
     }
   }
 }
