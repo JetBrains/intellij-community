@@ -15,7 +15,17 @@ import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
 import com.jetbrains.python.psi.resolve.resolveQualifiedName
 
 private val LAYOUT_PER_VERSION: List<Pair<VersionRange, Map<String, String>>> = listOf(
-  VersionRange("2.0.0a0", null) to mapOf(
+  VersionRange("2.6.0", null) to mapOf(
+    "keras" to "keras.api._v2.keras",
+    "estimator" to "tensorflow_estimator.python.estimator.api._v2.estimator",
+    "initializers" to "keras.api._v2.keras.initializers",
+    "losses" to "keras.api._v2.keras.losses",
+    "metrics" to "keras.api._v2.keras.metrics",
+    "optimizers" to "keras.api._v2.keras.optimizers",
+    "summary" to "tensorboard.summary._tf.summary",
+    "*" to "tensorflow._api.v2",
+  ),
+  VersionRange("2.0.0a0", "2.6.0") to mapOf(
     "compiler" to "tensorflow_core.compiler",
     "core" to "tensorflow_core.core",
     "tools" to "tensorflow_core.tools",
