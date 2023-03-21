@@ -7,8 +7,6 @@ import com.intellij.ui.RetrievableIcon
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.IconUtil
 import org.jetbrains.annotations.ApiStatus
-import java.net.MalformedURLException
-import java.net.URL
 import javax.swing.Icon
 import kotlin.math.roundToInt
 
@@ -38,34 +36,14 @@ fun scaleIconOrLoadCustomVersion(icon: Icon, scale: Float): Icon {
 }
 
 private fun loadIconCustomVersion(icon: CachedImageIcon, width: Int, height: Int): Icon? {
-  val resolver = icon.resolver ?: return null
-  var foundIcon: Icon? = null
-
-  val coords = resolver.getCoords()
-  if (coords != null) {
-    val path = coords.first
-    if (!path.endsWith(".svg")) {
-      return null
-    }
-
-    val modifiedPath = "${path.substring(0, path.length - 4)}@${width}x$height.svg"
-    foundIcon = IconLoader.findIcon(path = modifiedPath, classLoader = coords.second)
-  }
-  else {
-    val url = resolver.url
-    val path = url?.toString()
-    if (path == null || !path.endsWith(".svg")) {
-      return null
-    }
-
-    val modified = "${path.substring(0, path.length - 4)}@${width}x$height.svg"
-    try {
-      foundIcon = IconLoader.findIcon(URL(modified))
-    }
-    catch (ignore: MalformedURLException) {
-    }
+  val coords = icon.resolver?.getCoords() ?: return null
+  val path = coords.first
+  if (!path.endsWith(".svg")) {
+    return null
   }
 
+  val modifiedPath = "${path.substring(0, path.length - 4)}@${width}x$height.svg"
+  val foundIcon = IconLoader.findIcon(path = modifiedPath, classLoader = coords.second) ?: return null
   if (foundIcon is CachedImageIcon &&
       foundIcon.getIconWidth() == JBUIScale.scale(width) && foundIcon.getIconHeight() == JBUIScale.scale(height)) {
     return foundIcon

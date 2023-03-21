@@ -22,7 +22,6 @@ import com.intellij.util.Urls;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.URLUtil;
-import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +34,6 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -55,6 +53,7 @@ public final class PluginLogo {
   private static final String PLUGIN_ICON_DARK = "pluginIcon_dark.svg";
   private static final int PLUGIN_ICON_SIZE = 40;
   private static final int PLUGIN_ICON_SIZE_SCALED = 50;
+  private static final float PLUGIN_ICON_SIZE_SCALE = (float)PLUGIN_ICON_SIZE_SCALED / PLUGIN_ICON_SIZE;
 
   private static final Map<String, Pair<PluginLogoIconProvider, PluginLogoIconProvider>> ICONS = ContainerUtil.createWeakValueMap();
   private static PluginLogoIconProvider Default;
@@ -110,50 +109,18 @@ public final class PluginLogo {
 
   static @NotNull PluginLogoIconProvider getDefault() {
     if (Default == null) {
-      Default = new HiDPIPluginLogoIcon(reloadIcon(AllIcons.Plugins.PluginLogo, PLUGIN_ICON_SIZE, PLUGIN_ICON_SIZE, LOG),
-                                        reloadIcon(AllIcons.Plugins.PluginLogoDisabled, PLUGIN_ICON_SIZE, PLUGIN_ICON_SIZE, LOG),
-                                        reloadIcon(AllIcons.Plugins.PluginLogo, PLUGIN_ICON_SIZE_SCALED, PLUGIN_ICON_SIZE_SCALED, LOG),
-                                        reloadIcon(AllIcons.Plugins.PluginLogoDisabled, PLUGIN_ICON_SIZE_SCALED, PLUGIN_ICON_SIZE_SCALED, LOG));
+      Default = new HiDPIPluginLogoIcon(AllIcons.Plugins.PluginLogo,
+                                        AllIcons.Plugins.PluginLogoDisabled,
+                                        ((CachedImageIcon)AllIcons.Plugins.PluginLogo).scale(PLUGIN_ICON_SIZE_SCALE),
+                                        ((CachedImageIcon)AllIcons.Plugins.PluginLogoDisabled).scale(PLUGIN_ICON_SIZE_SCALE));
     }
     return Default;
   }
 
-  public static @NotNull Icon reloadIcon(@NotNull Icon icon, int width, int height, @Nullable Logger logger) {
-    URL url = icon instanceof CachedImageIcon ? ((CachedImageIcon)icon).getUrl() : null;
-    if (url == null) {
-      return icon;
-    }
-
-    try {
-      if (!JBColor.isBright() && url.getPath().endsWith(".svg") && !url.getPath().endsWith("_dark.svg")) {
-        Path file = Path.of(UrlClassLoader.urlToFilePath(url.getPath()));
-        String fileName = file.getFileName().toString();
-        Path darkFile = file.getParent().resolve(fileName.substring(0, fileName.length() - 4) + "_dark.svg");
-        try (InputStream stream = Files.newInputStream(darkFile)) {
-          return HiDPIPluginLogoIcon.loadSVG(toURL(darkFile), stream, width, height);
-        }
-        catch (NoSuchFileException ignore) {
-        }
-        catch (IOException e) {
-          if (logger != null) {
-            logger.error(e);
-          }
-        }
-      }
-    }
-    catch (Exception e) {
-      if (logger != null) {
-        logger.warn(e);
-      }
-    }
-
-    try {
-      return HiDPIPluginLogoIcon.loadSVG(url, url.openStream(), width, height);
-    }
-    catch (Exception e) {
-      if (logger != null) {
-        logger.error(e);
-      }
+  public static @NotNull Icon reloadIcon(@NotNull Icon icon, int width, int height) {
+    if (icon instanceof CachedImageIcon cachedImageIcon) {
+      assert width == height;
+      return cachedImageIcon.scale((float)width / icon.getIconWidth());
     }
     return icon;
   }

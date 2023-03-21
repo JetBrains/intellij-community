@@ -117,7 +117,7 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
         group(indent = false) {
           customizeSpacingConfiguration(EmptySpacingConfiguration()) {
             row {
-              icon(PluginLogo.reloadIcon(AllIcons.Nodes.Toolbox, 40, 40, null))
+              icon(PluginLogo.reloadIcon(AllIcons.Nodes.Toolbox, 40, 40))
                 .align(AlignY.TOP)
                 .customize(customGaps = UnscaledGaps(right = 10))
               panel {
