@@ -1146,10 +1146,13 @@
       <separator/>
       <action id="FileChooser.Refresh" class="com.intellij.openapi.fileChooser.actions.RefreshFileChooserAction"
               icon="AllIcons.Actions.Refresh" use-shortcut-of="Synchronize"/>
-      <action id="FileChooser.ShowHidden" class="com.intellij.openapi.fileChooser.actions.ToggleVisibilityAction"
-              icon="AllIcons.Actions.ToggleVisibility"/>
-      <action id="FileChooser.TogglePathBar" class="com.intellij.openapi.fileChooser.actions.TogglePathShowingAction"
-              icon="AllIcons.Nodes.Console"/>
+
+      <add-to-group group-id="Other.KeymapGroup"/>
+    </group>
+
+    <group id="FileChooserSettings">
+      <action id="FileChooser.ShowHidden" class="com.intellij.openapi.fileChooser.actions.ToggleVisibilityAction"/>
+      <action id="FileChooser.TogglePathBar" class="com.intellij.openapi.fileChooser.actions.TogglePathShowingAction"/>
 
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>

@@ -118,8 +118,15 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
 
     var label = new JLabel(descriptor.getDescription());
 
-    var group = (DefaultActionGroup)ActionManager.getInstance().getAction("FileChooserToolbar");
+    var group = new DefaultActionGroup();
+    for (var action : ((DefaultActionGroup)ActionManager.getInstance().getAction("FileChooserToolbar")).getChildActionsOrStubs()) {
+      group.addAction(action);
+    }
+    for (var action : ((DefaultActionGroup)ActionManager.getInstance().getAction("FileChooserSettings")).getChildActionsOrStubs()) {
+      group.addAction(action).setAsSecondary(true);
+    }
     var toolBar = ActionManager.getInstance().createActionToolbar("FileChooserDialog", group, true);
+    toolBar.setSecondaryActionsIcon(AllIcons.Actions.More, true);
     toolBar.setTargetComponent(this);
 
     myPath = new ComboBox<>(Stream.of(recentPaths).map(PathWrapper::new).toArray(PathWrapper[]::new));
