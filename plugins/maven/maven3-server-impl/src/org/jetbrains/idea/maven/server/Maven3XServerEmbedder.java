@@ -759,6 +759,22 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     }
   }
 
+  @Nullable
+  @Override
+  public String evaluateEffectivePom(@NotNull File file,
+                                     @NotNull List<String> activeProfiles,
+                                     @NotNull List<String> inactiveProfiles,
+                                     MavenToken token)
+    throws RemoteException {
+    MavenServerUtil.checkToken(token);
+    try {
+      return MavenEffectivePomDumper.evaluateEffectivePom(this, file, activeProfiles, inactiveProfiles);
+    }
+    catch (Exception e) {
+      throw wrapToSerializableRuntimeException(e);
+    }
+  }
+
   @NotNull
   @Override
   public Collection<MavenServerExecutionResult> resolveProject(@NotNull Collection<File> files,
@@ -785,22 +801,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
           throw new RuntimeException(e);
         }
       });
-    }
-    catch (Exception e) {
-      throw wrapToSerializableRuntimeException(e);
-    }
-  }
-
-  @Nullable
-  @Override
-  public String evaluateEffectivePom(@NotNull File file,
-                                     @NotNull List<String> activeProfiles,
-                                     @NotNull List<String> inactiveProfiles,
-                                     MavenToken token)
-    throws RemoteException {
-    MavenServerUtil.checkToken(token);
-    try {
-      return MavenEffectivePomDumper.evaluateEffectivePom(this, file, activeProfiles, inactiveProfiles);
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
