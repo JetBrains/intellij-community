@@ -40,7 +40,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 
@@ -70,15 +69,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private final DumbServiceBalloon myBalloon;
 
   private volatile @Nullable Thread myWaitIntolerantThread;
-
-  // cancelAllTasksAndWait will increase the epoch to avoid race conditions
-  // We queue new tasks on EDT, cancelAllTasksAndWait also requires EDT. This is how DumbService makes sure that no new tasks are submitted
-  // during "wait". But clients do not know that dumb service uses EDT thread in "queueTask" and the task will be queued after "queueTask"
-  // finish. This means that cancelAllTasksAndWait looks broken for clients that do not use EDT thread: queueTask has exit normally in one
-  // thread, in the EDT thread we invoke cancelAllTasksAndWait. Previously queued task will be executed (because task had not yet been
-  // queued by the moment when cancelAllTasksAndWait was invoked, it was waiting for EDT thread and write lock).
-  // See test for more details
-  private final AtomicInteger myDumbEpoch = new AtomicInteger();
 
   // should only be accessed from EDT to avoid races between `queueTaskOnEDT` and `updateFinished` (invoked from `afterLastTask`)
   private SubmissionReceipt myLatestReceipt;
@@ -165,7 +155,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   public void dispose() {
     ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     myBalloon.dispose();
-    myDumbEpoch.incrementAndGet();
+    myCancellableLaterEdtInvoker.cancelAllPendingTasks();
     myTaskQueue.disposePendingTasks();
   }
 
@@ -262,23 +252,16 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     Throwable trace = new Throwable();
     ModalityState modality = ModalityState.defaultModalityState();
     // we need EDT because enterDumbMode runs write action to make sure that we do not enter dumb mode during read actions
-    final int dumbEpochBeforeQueuing = myDumbEpoch.get();
-    Runnable runnable = () -> queueTaskOnEdt(task, modality, trace, dumbEpochBeforeQueuing);
+    Runnable runnable = () -> queueTaskOnEdt(task, modality, trace);
     if (ApplicationManager.getApplication().isDispatchThread()) {
       runnable.run(); // will log errors if not already in a write-safe context
     }
     else {
-      myCancellableLaterEdtInvoker.submitTransaction(runnable);
+      myCancellableLaterEdtInvoker.submitTransaction(runnable, () -> Disposer.dispose(task));
     }
   }
 
-  private void queueTaskOnEdt(@NotNull DumbModeTask task, @NotNull ModalityState modality, @NotNull Throwable trace,
-                              int dumbEpochBeforeQueuing) {
-    if (dumbEpochBeforeQueuing != myDumbEpoch.get()) {
-      Disposer.dispose(task);
-      return;
-    }
-
+  private void queueTaskOnEdt(@NotNull DumbModeTask task, @NotNull ModalityState modality, @NotNull Throwable trace) {
     myLatestReceipt = myTaskQueue.addTask(task);
     enterDumbModeIfSmart(modality, trace);
 
@@ -365,22 +348,24 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     if (!application.isWriteIntentLockAcquired() || application.isWriteAccessAllowed()) {
       throw new AssertionError("Must be called on write thread without write action");
     }
-    myDumbEpoch.incrementAndGet();
+
+    LOG.info("Purge dumb task queue");
 
     Thread currentThread = Thread.currentThread();
     String initialThreadName = currentThread.getName();
-    while (!(myState.get() == State.SMART ||
-             myState.get() == State.WAITING_FOR_FINISH)
-           && !myProject.isDisposed()) {
-      ConcurrencyUtil.runUnderThreadName(initialThreadName + " [DumbService.cancelAllTasksAndWait(state = " + myState.get() + ")]", () -> {
+    ConcurrencyUtil.runUnderThreadName(initialThreadName + " [DumbService.cancelAllTasksAndWait(state = " + myState.get() + ")]", () -> {
+      // isRunning will be false eventually, because we are on EDT, and no new task can be queued outside the EDT
+      // (we only wait for currently running task to terminate).
+      myGuiDumbTaskRunner.cancelAllTasks();
+      while (myGuiDumbTaskRunner.isRunning() && !myProject.isDisposed()) {
         PingProgress.interactWithEdtProgress();
         LockSupport.parkNanos(50_000_000);
-        // polls next dumb mode task
-        myCancellableLaterEdtInvoker.executeAllQueuedActivities();
-        // cancels all scheduled and running tasks
-        myGuiDumbTaskRunner.cancelAllTasks();
-      });
-    }
+      }
+
+      // Invoked after myGuiDumbTaskRunner has stopped to make sure that all the tasks submitted from the executor callbacks are canceled
+      // This also cancels all the tasks that are waiting for the EDT to queue new dumb tasks
+      myCancellableLaterEdtInvoker.cancelAllPendingTasks();
+    });
   }
 
   @Override

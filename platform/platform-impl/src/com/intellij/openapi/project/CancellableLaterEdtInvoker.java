@@ -4,28 +4,23 @@ package com.intellij.openapi.project;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 final class CancellableLaterEdtInvoker {
-  private final BlockingQueue<TrackedEdtActivity> myTrackedEdtActivities = new LinkedBlockingQueue<>();
   private final @NotNull Project myProject;
 
   private volatile ModalityState myDumbStartModality;
+  private final AtomicInteger myCancellationCounter = new AtomicInteger();
 
   CancellableLaterEdtInvoker(@NotNull Project project) {
     myProject = project;
   }
 
-  void executeAllQueuedActivities() {
-    // polls next dumb mode task
-    while (!myTrackedEdtActivities.isEmpty()) {
-      myTrackedEdtActivities.poll().run();
-    }
+  void cancelAllPendingTasks() {
+    myCancellationCounter.incrementAndGet();
   }
 
   void invokeLaterIfProjectNotDisposed(@NotNull Runnable runnable) {
@@ -39,7 +34,11 @@ final class CancellableLaterEdtInvoker {
   }
 
   void submitTransaction(@NotNull Runnable runnable) {
-    new TrackedEdtActivity(runnable).invokeLaterWithModality(ModalityState.NON_MODAL);
+    submitTransaction(runnable, null);
+  }
+
+  void submitTransaction(@NotNull Runnable runnable, @Nullable Runnable onCancelRunnable) {
+    new TrackedEdtActivity(runnable, onCancelRunnable).invokeLaterWithModality(ModalityState.NON_MODAL);
   }
 
   void setDumbStartModality(@NotNull ModalityState modality) {
@@ -48,27 +47,31 @@ final class CancellableLaterEdtInvoker {
 
   private class TrackedEdtActivity implements Runnable {
     private final @NotNull Runnable myRunnable;
+    private final @Nullable Runnable myCancelationRunnable;
+    private final int cancellationCounterValueWhenCreated;
 
     TrackedEdtActivity(@NotNull Runnable runnable) {
+      this(runnable, null);
+    }
+
+    TrackedEdtActivity(@NotNull Runnable runnable, @Nullable Runnable cancelationRunnable) {
       myRunnable = runnable;
-      myTrackedEdtActivities.add(this);
+      myCancelationRunnable = cancelationRunnable;
+      cancellationCounterValueWhenCreated = myCancellationCounter.get();
     }
 
     void invokeLaterWithModality(@NotNull ModalityState modalityState) {
-      ApplicationManager.getApplication().invokeLater(this,
-                                                      modalityState,
-                                                      getProjectActivityExpirationCondition());
+      ApplicationManager.getApplication().invokeLater(this, modalityState);
     }
 
     @Override
     public void run() {
-      myTrackedEdtActivities.remove(this);
-      myRunnable.run();
-    }
-
-    private @NotNull Condition<?> getProjectActivityExpirationCondition() {
-      return Conditions.or(myProject.getDisposed(),
-                           __ -> !myTrackedEdtActivities.contains(this));
+      if (cancellationCounterValueWhenCreated == myCancellationCounter.get() && !myProject.isDisposed()) {
+        myRunnable.run();
+      }
+      else if (myCancelationRunnable != null) {
+        myCancelationRunnable.run();
+      }
     }
   }
 }
