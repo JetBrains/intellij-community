@@ -112,7 +112,12 @@ internal object MessageFactory {
   fun convertToGotItFormat(@Language("HTML") htmlText: String): GotItTextBuilder.() -> @Nls String = {
     if (htmlText.contains('\n')) error("GotIt tooltip can contain only single paragraph, provided text:\n$htmlText")
 
-    val element: Element = parseXml(htmlText)
+    // remove surrounding spaces from shortcut and code elements,
+    // because GotIt will configure the insets itself
+    val spaces = "${StringUtil.NON_BREAK_SPACE}${StringUtil.NON_BREAK_SPACE}"
+    val adjustedText = htmlText.replace("$spaces<", "<").replace(">$spaces", ">")
+
+    val element: Element = parseXml(adjustedText)
     val builder = StringBuilder()
 
     for (content in element.content) {
