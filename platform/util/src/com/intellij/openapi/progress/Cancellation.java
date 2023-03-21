@@ -24,11 +24,6 @@ public final class Cancellation {
     return ThreadContext.currentThreadContext().get(Job.Key);
   }
 
-  public static boolean isCancelled() {
-    Job job = currentJob();
-    return job != null && job.isCancelled();
-  }
-
   public static void checkCancelled() {
     Job currentJob = currentJob();
     if (currentJob != null) {
