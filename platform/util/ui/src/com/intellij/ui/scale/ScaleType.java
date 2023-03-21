@@ -88,6 +88,6 @@ public enum ScaleType {
 
   @NotNull
   public Scale of(double value) {
-    return Scale.create(value, this);
+    return Scale.Companion.create(value, this);
   }
 }

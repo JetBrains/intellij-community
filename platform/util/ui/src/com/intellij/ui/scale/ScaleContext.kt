@@ -94,7 +94,17 @@ class ScaleContext() : UserScaleContext() {
   }
 
   private constructor(scale: Scale) : this() {
-    setScale(scale)
+    when (scale.type) {
+      ScaleType.USR_SCALE -> {
+        usrScale = scale
+      }
+      ScaleType.OBJ_SCALE -> {
+        objScale = scale
+      }
+      ScaleType.SYS_SCALE -> {
+        sysScale = scale
+      }
+    }
   }
 
   override fun derivePixScale(): Double = getScale(DerivedScaleType.DEV_SCALE) * super.derivePixScale()
@@ -167,15 +177,10 @@ class ScaleContext() : UserScaleContext() {
   }
 
   override fun equals(other: Any?): Boolean {
-    return if (super.equals(other) && other is ScaleContext) {
-      other.sysScale.value == sysScale.value
-    }
-    else false
+    return if (super.equals(other) && other is ScaleContext) other.sysScale.value == sysScale.value else false
   }
 
-  override fun hashCode(): Int {
-    return java.lang.Double.hashCode(sysScale.value) * 31 + super.hashCode()
-  }
+  override fun hashCode(): Int = sysScale.value.hashCode() * 31 + super.hashCode()
 
   override fun dispose() {
     super.dispose()

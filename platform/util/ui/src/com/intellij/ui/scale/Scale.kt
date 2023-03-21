@@ -1,59 +1,47 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui.scale;
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
-import it.unimi.dsi.fastutil.doubles.Double2ObjectMap;
-import it.unimi.dsi.fastutil.doubles.Double2ObjectOpenHashMap;
-import org.jetbrains.annotations.NotNull;
+package com.intellij.ui.scale
 
-import java.util.EnumMap;
+import it.unimi.dsi.fastutil.doubles.Double2ObjectMap
+import it.unimi.dsi.fastutil.doubles.Double2ObjectOpenHashMap
+import org.jetbrains.annotations.ApiStatus.Internal
+import java.util.*
+import java.util.function.DoubleFunction
 
 /**
- * A scale factor value of {@link ScaleType}.
+ * A scale factor value of [ScaleType].
  *
  * @author tav
  */
-public final class Scale {
-  final double value;
-  final ScaleType type;
-
-  // The cache radically reduces potentially thousands of equal Scale instances.
-  private static final ThreadLocal<EnumMap<ScaleType, Double2ObjectMap<Scale>>> cache =
-    ThreadLocal.withInitial(() -> new EnumMap<>(ScaleType.class));
-
-  @NotNull
-  public static Scale create(double value, @NotNull ScaleType type) {
-    EnumMap<ScaleType, Double2ObjectMap<Scale>> enumMap = cache.get();
-    Double2ObjectMap<Scale> map = enumMap.get(type);
-    if (map == null) {
-      enumMap.put(type, map = new Double2ObjectOpenHashMap<>());
+@Internal
+class Scale private constructor(val value: Double, val type: ScaleType) {
+  companion object {
+    // the cache radically reduces potential thousands of equal Scale instances
+    private val cache = ThreadLocal.withInitial {
+      EnumMap<ScaleType, Double2ObjectMap<Scale>>(ScaleType::class.java)
     }
-    Scale scale = map.get(value);
-    if (scale != null) return scale;
-    map.put(value, scale = new Scale(value, type));
-    return scale;
+
+    fun create(value: Double, type: ScaleType): Scale {
+      return cache.get()
+        .computeIfAbsent(type) { Double2ObjectOpenHashMap() }
+        .computeIfAbsent(value, DoubleFunction { Scale(value, type) })
+    }
   }
 
-  private Scale(double value, @NotNull ScaleType type) {
-    this.value = value;
-    this.type = type;
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is Scale) return false
+
+    if (value != other.value) return false
+    return type == other.type
   }
 
-  public double value() {
-    return value;
+  override fun hashCode(): Int {
+    var result = value.hashCode()
+    result = 31 * result + type.hashCode()
+    return result
   }
 
-  @NotNull
-  public ScaleType type() {
-    return type;
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    return this == obj; // can rely on default impl due to caching
-  }
-
-  @Override
-  public String toString() {
-    return "[" + type.name() + " " + value + "]";
-  }
+  override fun toString(): String = "[${type.name} $value]"
 }

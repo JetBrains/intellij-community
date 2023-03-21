@@ -301,7 +301,7 @@ public final class ImageUtil {
       if (delegate == null) return doClipImage(scaledImage, clip);
       BufferedImage clippedImage = doClipImage(toBufferedImage(delegate), clip);
       return new JBHiDPIScaledImage(clippedImage,
-                                    ScaleContext.create(Scale.create(scaledImage.getScale(), ScaleType.SYS_SCALE)),
+                                    ScaleContext.create(Scale.Companion.create(scaledImage.getScale(), ScaleType.SYS_SCALE)),
                                     scaledImage.getType());
     }
 
