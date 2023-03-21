@@ -287,15 +287,31 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
       }
 
       String trimmed = trimLabelText(fragment.text, allowedWidth, fontMetrics);
-      int fragmentStyle = fragment.isItalic() ? style | SimpleTextAttributes.STYLE_ITALIC : style;
-      if (fragment.isHighlighted()) {
-        renderItemName(item, foreground, fragmentStyle, trimmed, myTailComponent, presentation.getItemDecorations());
+      @SimpleTextAttributes.StyleAttributeConstant int fragmentStyle = fragment.isItalic() ? style | SimpleTextAttributes.STYLE_ITALIC : style;
+      SimpleTextAttributes baseAttributes = new SimpleTextAttributes(fragmentStyle, getTailTextColor(isSelected, fragment, foreground, nonFocusedSelection));
+      if (fragment.isMatchHighlighted()) {
+        highlightTail(item, trimmed, fragmentStyle, baseAttributes);
       }
       else {
-        myTailComponent.append(trimmed, new SimpleTextAttributes(fragmentStyle, getTailTextColor(isSelected, fragment, foreground, nonFocusedSelection)));
+        myTailComponent.append(trimmed, baseAttributes);
       }
       allowedWidth -= getStringWidth(trimmed, fontMetrics);
     }
+  }
+
+  private void highlightTail(@NotNull LookupElement item, @NlsSafe String text, int fragmentStyle, @NotNull SimpleTextAttributes baseAttributes) {
+    final String prefix = item instanceof EmptyLookupItem ? "" : myLookup.itemPattern(item);
+    if (prefix.isEmpty()) {
+      myTailComponent.append(text, baseAttributes);
+      return;
+    }
+    Iterable<TextRange> ranges = getMatchingFragments(prefix, text);
+    if (ranges == null) {
+      myTailComponent.append(text, baseAttributes);
+      return;
+    }
+    SimpleTextAttributes highlighted = new SimpleTextAttributes(fragmentStyle, MATCHED_FOREGROUND_COLOR);
+    SpeedSearchUtil.appendColoredFragments(myTailComponent, text, ranges, baseAttributes, highlighted);
   }
 
   @NlsSafe

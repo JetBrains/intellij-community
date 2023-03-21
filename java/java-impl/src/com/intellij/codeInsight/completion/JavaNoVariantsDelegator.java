@@ -110,7 +110,9 @@ public class JavaNoVariantsDelegator extends CompletionContributor implements Du
         suggestNonImportedClasses(parameters, result, session);
         return;
       }
-      suggestTagCalls(parameters, result, position);
+      if (parameters.getInvocationCount() <= 1) {
+        suggestTagCalls(parameters, result, position);
+      }
       suggestChainedCalls(parameters, result, position);
     }
 
@@ -376,17 +378,17 @@ public class JavaNoVariantsDelegator extends CompletionContributor implements Du
     public void renderElement(@NotNull LookupElementPresentation presentation) {
       super.renderElement(presentation);
       if (myTags.size()==1) {
-        presentation.appendTailText(" " + JavaBundle.message("java.completion.tag") + " ", true);
-        presentation.appendTailText(myTags.iterator().next(), true, true);
+        presentation.appendTailText(" " + JavaBundle.message("java.completion.tag", myTags.size()) + " ", true);
+        presentation.appendMatchHighlightedTailText(myTags.iterator().next(), true);
       }
       else if (myTags.size() > 1) {
-        presentation.appendTailText(" " + JavaBundle.message("java.completion.tags") + " ", true);
+        presentation.appendTailText(" " + JavaBundle.message("java.completion.tag", myTags.size()) + " ", true);
         Iterator<String> iterator = myTags.iterator();
         String firstTag = iterator.next();
-        presentation.appendTailText(firstTag, true, true);
+        presentation.appendMatchHighlightedTailText(firstTag, true);
         while (iterator.hasNext()) {
           presentation.appendTailText(", ", true);
-          presentation.appendTailText(iterator.next(), true, true);
+          presentation.appendMatchHighlightedTailText(iterator.next(), true);
         }
       }
     }

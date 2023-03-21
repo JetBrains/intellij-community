@@ -81,8 +81,8 @@ public class LookupElementPresentation {
     appendTailText(new TextFragment(text, grayed, false, false, null));
   }
 
-  public void appendTailText(@NotNull String text, boolean grayed, boolean highlight) {
-    appendTailText(new TextFragment(text, grayed, false, highlight, null));
+  public void appendMatchHighlightedTailText(@NotNull String text, boolean grayed) {
+    appendTailText(new TextFragment(text, grayed, false, true, null));
   }
 
   public void appendTailTextItalic(@NotNull String text, boolean grayed) {
@@ -270,15 +270,15 @@ public class LookupElementPresentation {
     private final boolean myGrayed;
     private final boolean myItalic;
 
-    private final boolean myHighlighted;
+    private final boolean myHighlightedMatched;
     @Nullable private final Color myFgColor;
 
-    private TextFragment(String text, boolean grayed, boolean italic, boolean highlight, @Nullable Color fgColor) {
+    private TextFragment(String text, boolean grayed, boolean italic, boolean highlightMatched, @Nullable Color fgColor) {
       this.text = text;
       myGrayed = grayed;
       myItalic = italic;
       myFgColor = fgColor;
-      myHighlighted = highlight;
+      myHighlightedMatched = highlightMatched;
     }
 
     @Override
@@ -299,8 +299,8 @@ public class LookupElementPresentation {
       return myItalic;
     }
 
-    public boolean isHighlighted() {
-      return myHighlighted;
+    public boolean isMatchHighlighted() {
+      return myHighlightedMatched;
     }
 
     @Nullable

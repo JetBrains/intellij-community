@@ -17,6 +17,9 @@ import static com.intellij.codeInsight.completion.MethodTags.Tag.*;
 
 public final class MethodTags {
 
+  /**
+   * @return proposed tags (synonyms), which can be used to extend search
+   */
   @ApiStatus.Experimental
   @NotNull
   public static Set<Tag> tags(@Nullable String referenceName) {
