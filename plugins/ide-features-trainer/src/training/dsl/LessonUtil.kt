@@ -28,6 +28,8 @@ import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.editor.impl.EditorComponentImpl
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.OptionsBundle
 import com.intellij.openapi.project.DumbService
@@ -696,6 +698,23 @@ fun TaskContext.triggerOnQuickDocumentationPopup() {
   }
   else {
     triggerUI().component { _: DocumentationComponent -> true }
+  }
+}
+
+fun TaskContext.triggerOnEditorText(text: String, centerOffset: Int? = null, highlightBorder: Boolean = false) {
+  triggerUI { this.highlightBorder = highlightBorder }.componentPart l@{ ui: EditorComponentImpl ->
+    if (ui.editor != editor) return@l null
+    val offset = editor.document.charsSequence.indexOf(text)
+    if (offset < 0) return@l null
+    if (centerOffset == null) {
+      val point = editor.offsetToPoint2D(offset)
+      val width = (editor as EditorImpl).charHeight * text.length
+      Rectangle(point.x.toInt(), point.y.toInt(), width, editor.lineHeight)
+    }
+    else {
+      val point = editor.offsetToPoint2D(offset + centerOffset)
+      Rectangle(point.x.toInt() - 1, point.y.toInt(), 2, editor.lineHeight)
+    }
   }
 }
 
