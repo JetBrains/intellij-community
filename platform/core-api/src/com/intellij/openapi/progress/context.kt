@@ -7,6 +7,7 @@ import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.openapi.application.asContextElement
 import com.intellij.util.ConcurrencyUtil
+import com.intellij.util.concurrency.BlockingJob
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.CoroutineContext
@@ -27,6 +28,29 @@ fun <X> withCurrentJob(job: Job, action: () -> X): X = blockingContext(job, acti
   )
 )
 fun <X> withJob(job: Job, action: () -> X): X = blockingContext(job, action)
+
+/**
+ * ```
+ * launch {
+ *   blockingContext {
+ *     val blockingJob = Cancellation.currentJob()
+ *     executeOnPooledThread {
+ *       val executeOnPooledThreadJob = Cancellation.currentJob() // a child of blockingJob
+ *       runBlockingCancellable { // child of executeOnPooledThreadJob
+ *         blockingContext {
+ *           // currentThreadContext() should not contain BlockingJob here
+ *           // => BlockingJob is removed during blocking -> coroutine transition in `runBlockingCancellable`
+ *           // Same applies for `runBlockingModal`
+ *         }
+ *       }
+ *     }
+ *   }
+ * }
+ * ```
+ */
+private fun prepareCurrentThreadContext(): CoroutineContext {
+  return currentThreadContext().minusKey(BlockingJob)
+}
 
 /**
  * Ensures that the current thread has an [associated job][Cancellation.currentJob].
@@ -50,7 +74,7 @@ fun <T> prepareThreadContext(action: (CoroutineContext) -> T): T {
   if (indicator != null) {
     return prepareIndicatorThreadContext(indicator, action)
   }
-  val currentContext = currentThreadContext()
+  val currentContext = prepareCurrentThreadContext()
   return resetThreadContext().use {
     action(currentContext)
   }
@@ -66,7 +90,7 @@ internal fun <T> prepareIndicatorThreadContext(indicator: ProgressIndicator, act
   val progressModality = ProgressManager.getInstance().currentProgressModality?.asContextElement()
                          ?: EmptyCoroutineContext
   val reporter = IndicatorRawProgressReporter(indicator).asContextElement()
-  val context = currentThreadContext() + currentJob + progressModality + reporter
+  val context = prepareCurrentThreadContext() + currentJob + progressModality + reporter
   return try {
     ProgressManager.getInstance().silenceGlobalIndicator {
       resetThreadContext().use {

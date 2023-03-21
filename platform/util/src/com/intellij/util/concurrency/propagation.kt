@@ -15,6 +15,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
 import java.util.concurrent.FutureTask
+import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import com.intellij.openapi.util.Pair as JBPair
@@ -54,23 +55,46 @@ internal val isPropagateThreadContext: Boolean
 internal val isPropagateCancellation: Boolean
   get() = Holder.propagateThreadCancellation
 
+@Internal
+class BlockingJob(val blockingJob: Job) : AbstractCoroutineContextElement(BlockingJob) {
+  companion object : CoroutineContext.Key<BlockingJob>
+}
+
 private fun createChildContext(): Pair<CoroutineContext, CompletableJob?> {
   val currentThreadContext = currentThreadContext()
-  val currentJob = currentThreadContext[Job]
-  val childJob = if (isPropagateCancellation) {
-    Job(parent = currentJob)
+
+  // Problem: a task may infinitely reschedule itself
+  //   => each re-scheduling adds a child Job and completes the current Job
+  //   => the current Job cannot become completed because it has a newly added child
+  //   => Job chain grows indefinitely.
+  //
+  // How it's handled:
+  // - initially, the current job is only present in the context.
+  // - the current job is installed to the context by `blockingContext`.
+  // - a new child job is created, it becomes current inside scheduled task.
+  // - initial current job is saved as BlockingJob into child context.
+  // - BlockingJob is used to attach children.
+  //
+  // Effectively, the chain becomes a 1-level tree,
+  // as jobs of all scheduled tasks are attached to the initial current Job.
+  val (cancellationContext, childJob) = if (isPropagateCancellation) {
+    val parentJob = currentThreadContext[BlockingJob]?.blockingJob
+                    ?: currentThreadContext[Job]
+    // Put BlockingJob into context so that the child of the child context would see and use it.
+    val parentJobContext = parentJob?.let(::BlockingJob) ?: EmptyCoroutineContext
+    val childJob = Job(parent = parentJob)
+    Pair(parentJobContext + childJob, childJob)
   }
   else {
-    null
+    Pair(EmptyCoroutineContext, null)
   }
-  val childJobContext = childJob ?: EmptyCoroutineContext
   val childContext = if (isPropagateThreadContext) {
-    currentThreadContext.minusKey(Job) + childJobContext
+    currentThreadContext.minusKey(Job)
   }
   else {
-    childJobContext
+    EmptyCoroutineContext
   }
-  return Pair(childContext, childJob)
+  return Pair(childContext + cancellationContext, childJob)
 }
 
 internal fun captureRunnableThreadContext(command: Runnable): Runnable {

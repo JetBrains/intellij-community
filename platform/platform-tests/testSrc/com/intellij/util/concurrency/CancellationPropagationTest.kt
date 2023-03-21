@@ -2,6 +2,7 @@
 package com.intellij.util.concurrency
 
 import com.intellij.concurrency.callable
+import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
 import com.intellij.concurrency.runnable
 import com.intellij.openapi.application.ApplicationManager
@@ -33,6 +34,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.coroutineContext
+import kotlin.coroutines.resume
+import kotlin.test.assertNotNull
 
 /**
  * Rough cancellation equivalents with respect to structured concurrency are provided in comments.
@@ -506,5 +509,48 @@ class CancellationPropagationTest {
     }
     val loggedError = loggedError(canThrow)
     assertSame(t, loggedError)
+  }
+
+  @Test
+  fun `infinite re-scheduling does not grow job chain`(): Unit = timeoutRunBlocking {
+    suspendCancellableCoroutine { c ->
+      installThreadContext(c.context).use {
+        val job = assertNotNull(Cancellation.currentJob())
+        fun chain(remaining: Int) {
+          ApplicationManager.getApplication().executeOnPooledThread {
+            assertCurrentJobIsChildOf(job)
+            if (remaining > 0) {
+              chain(remaining - 1)
+            }
+            else {
+              c.resume(Unit)
+            }
+          }
+        }
+        chain(1000)
+      }
+    }
+  }
+
+  @Test
+  fun `prepareThreadContext resets blocking job`(): Unit = timeoutRunBlocking {
+    suspendCancellableCoroutine { c ->
+      installThreadContext(coroutineContext).use {
+        val job = assertNotNull(Cancellation.currentJob())
+        ApplicationManager.getApplication().executeOnPooledThread {
+          val result = runCatching {
+            val blockingJob = assertNotNull(currentThreadContext()[BlockingJob])
+            assertSame(job, blockingJob.blockingJob)
+            prepareThreadContext { prepared ->
+              assertNull(prepared[BlockingJob])
+            }
+            runBlockingCancellable {
+              assertNull(coroutineContext[BlockingJob])
+            }
+          }
+          c.resumeWith(result)
+        }
+      }
+    }
   }
 }
