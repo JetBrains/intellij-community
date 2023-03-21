@@ -14,6 +14,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.reference.SoftReference;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.SelectablePanel;
@@ -31,10 +32,13 @@ import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 import java.awt.event.ComponentEvent;
 import java.awt.event.InputEvent;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 
 public final class PopupUtil {
   private static final Logger LOG = Logger.getInstance(PopupUtil.class);
+
+  private static final String POPUP_TOGGLE_COMPONENT = "POPUP_TOGGLE_BUTTON";
 
   private PopupUtil() {
   }
@@ -274,5 +278,21 @@ public final class PopupUtil {
     int bottomInset = adVisible ? JBUI.CurrentTheme.Popup.bodyBottomInsetBeforeAd() : JBUI.CurrentTheme.Popup.bodyBottomInsetNoAd();
     return new JBInsets(topInset, 0, bottomInset, 0);
 
+  }
+
+  /**
+   * In most cases this method is not needed: {@link com.intellij.ui.popup.AbstractPopup} stores the source component automatically.
+   *
+   * @param toggleComponent treat this component as toggle component and block further mouse event processing
+   *                        if user closed the popup by clicking on it
+   */
+  public static void setPopupToggleComponent(@NotNull JBPopup jbPopup, @Nullable Component toggleComponent) {
+    JComponent content = jbPopup.getContent();
+    content.putClientProperty(POPUP_TOGGLE_COMPONENT, toggleComponent != null ? new WeakReference<>(toggleComponent) : null);
+  }
+
+  @Nullable
+  public static Component getPopupToggleComponent(@NotNull JBPopup jbPopup) {
+    return (Component)SoftReference.dereference((WeakReference<?>)jbPopup.getContent().getClientProperty(POPUP_TOGGLE_COMPONENT));
   }
 }

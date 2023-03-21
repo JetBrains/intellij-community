@@ -9,7 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.reference.SoftReference;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -20,13 +20,10 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
-import java.lang.ref.WeakReference;
 
 @ApiStatus.Internal
 public final class PopupImplUtil {
   private static final Logger LOG = Logger.getInstance(PopupImplUtil.class);
-
-  private static final String POPUP_TOGGLE_BUTTON = "POPUP_TOGGLE_BUTTON";
 
   private PopupImplUtil() { }
 
@@ -72,20 +69,10 @@ public final class PopupImplUtil {
     return null;
   }
 
-  /**
-   * In most cases this method is not needed: {@link com.intellij.ui.popup.AbstractPopup} stores the source component automatically.
-   *
-   * @param toggleButton treat this component as toggle button and block further mouse event processing
-   *                     if user closed the popup by clicking on it
-   */
+  /** @deprecated Use @{@link PopupUtil#setPopupToggleComponent}, but in the most cases it is not needed any more */
+  @Deprecated(forRemoval = true)
   public static void setPopupToggleButton(@NotNull JBPopup jbPopup, @Nullable Component toggleButton) {
-    JComponent content = jbPopup.getContent();
-    content.putClientProperty(POPUP_TOGGLE_BUTTON, toggleButton != null ? new WeakReference<>(toggleButton) : null);
-  }
-
-  @Nullable
-  public static Component getPopupToggleButton(@NotNull JBPopup jbPopup) {
-    return (Component)SoftReference.dereference((WeakReference<?>)jbPopup.getContent().getClientProperty(POPUP_TOGGLE_BUTTON));
+    PopupUtil.setPopupToggleComponent(jbPopup, toggleButton);
   }
 
   public static @Nullable Component getClickSourceFromLastInputEvent() {

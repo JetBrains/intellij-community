@@ -6,8 +6,8 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.popup.util.PopupImplUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.ApiStatus;
@@ -266,7 +266,7 @@ public final class StackingPopupDispatcherImpl extends StackingPopupDispatcher i
     if (mouseEvent.getButton() != MouseEvent.BUTTON1 || modifiers != 0) { // on right mouse in most cases we can customize corresponding toolbar
       return false;
     }
-    Component toggleButton = PopupImplUtil.getPopupToggleButton(popup);
+    Component toggleButton = PopupUtil.getPopupToggleComponent(popup);
     Component c = mouseEvent.getComponent();
     if (toggleButton == null || c == null) {
       return false;
