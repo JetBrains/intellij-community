@@ -4,13 +4,20 @@ package com.siyeh.ig.performance;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
 public class FieldMayBeStaticInspectionTest extends LightJavaInspectionTestCase {
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_11;
+  }
 
   public void testFieldMayBeStatic() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_11, this::doTest);

@@ -19,6 +19,8 @@ import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.options.JavaInspectionButtons;
 import com.intellij.codeInsight.options.JavaInspectionControls;
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -75,7 +77,8 @@ public class FieldMayBeStaticInspection extends BaseInspection {
         return;
       }
       final PsiType type = field.getType();
-      if (!ClassUtils.isImmutable(type)) {
+      if (!ClassUtils.isImmutable(type) && 
+          Mutability.fromDfType(CommonDataflow.getDfType(initializer)) != Mutability.UNMODIFIABLE) {
         return;
       }
       final PsiClass containingClass = field.getContainingClass();
