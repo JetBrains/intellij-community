@@ -10,17 +10,46 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.svg.SvgCacheClassifier
 import com.intellij.ui.svg.loadSvgFromClassResource
 import org.intellij.lang.annotations.MagicConstant
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Image
 import java.io.IOException
 import java.lang.ref.WeakReference
 import java.net.URL
 
-internal class RasterizedImageDataLoader(private val path: String,
-                                         private val classLoaderRef: WeakReference<ClassLoader>,
-                                         private val originalPath: String,
-                                         private val originalClassLoaderRef: WeakReference<ClassLoader>,
-                                         private val cacheKey: Int,
-                                         override val flags: Int) : ImageDataLoader {
+// a reflective path is not supported, a result is not cached
+@Internal
+fun createRasterizedImageDataLoader(path: String, classLoader: ClassLoader, cacheKey: Int, imageFlags: Int): ImageDataLoader {
+  val startTime = StartUpMeasurer.getCurrentTimeIfEnabled()
+  val patchedPath = CachedImageIcon.patchPath(originalPath = path, classLoader = classLoader)
+  val classLoaderWeakRef = WeakReference(classLoader)
+  val resolver = if (patchedPath == null) {
+    RasterizedImageDataLoader(path = path,
+                              classLoaderRef = classLoaderWeakRef,
+                              originalPath = path,
+                              originalClassLoaderRef = classLoaderWeakRef,
+                              cacheKey = cacheKey,
+                              flags = imageFlags)
+  }
+  else {
+    // not safe for now to decide should patchPath return a path with leading slash or not
+    createPatched(originalPath = path,
+                  originalClassLoaderRef = classLoaderWeakRef,
+                  patched = patchedPath,
+                  cacheKey = cacheKey,
+                  imageFlags = imageFlags)
+  }
+  if (startTime != -1L) {
+    IconLoadMeasurer.findIcon.end(startTime)
+  }
+  return resolver
+}
+
+private class RasterizedImageDataLoader(private val path: String,
+                                        private val classLoaderRef: WeakReference<ClassLoader>,
+                                        private val originalPath: String,
+                                        private val originalClassLoaderRef: WeakReference<ClassLoader>,
+                                        private val cacheKey: Int,
+                                        override val flags: Int) : ImageDataLoader {
   override fun getCoords(): Pair<String, ClassLoader>? = classLoaderRef.get()?.let { path to it }
 
   override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image? {
@@ -81,11 +110,14 @@ internal class RasterizedImageDataLoader(private val path: String,
                   }
                   else null
     if (patched.first.startsWith("file:/")) {
-      val effectiveClassLoader = patched.second ?: classLoader
-      return ImageDataByUrlLoader(url = URL(patched.first), path = patched.first, classLoader = effectiveClassLoader)
+      return ImageDataByFilePathLoader(patched.first)
     }
     else {
-      return createPatched(this.originalPath, originalClassLoaderRef, patched, cacheKey, flags)
+      return createPatched(originalPath = this.originalPath,
+                           originalClassLoaderRef = originalClassLoaderRef,
+                           patched = patched,
+                           cacheKey = cacheKey,
+                           imageFlags = flags)
     }
   }
 
@@ -94,11 +126,11 @@ internal class RasterizedImageDataLoader(private val path: String,
   override fun toString() = "RasterizedImageDataLoader(classLoader=${classLoaderRef.get()}, path=$path)"
 }
 
-internal fun createPatched(originalPath: String,
-                           originalClassLoaderRef: WeakReference<ClassLoader>,
-                           patched: Pair<String, ClassLoader?>,
-                           cacheKey: Int,
-                           imageFlags: Int): ImageDataLoader {
+private fun createPatched(originalPath: String,
+                          originalClassLoaderRef: WeakReference<ClassLoader>,
+                          patched: Pair<String, ClassLoader?>,
+                          cacheKey: Int,
+                          imageFlags: Int): ImageDataLoader {
   val effectivePath = normalizePath(patched.first)
   val effectiveClassLoaderRef = patched.second?.let(::WeakReference) ?: originalClassLoaderRef
   return RasterizedImageDataLoader(path = effectivePath,

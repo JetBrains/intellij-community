@@ -97,6 +97,13 @@ open class JBHiDPIScaledImage : BufferedImage {
     userHeight = delegate.getHeight(null) / scale
   }
 
+  internal constructor(image: Image, sysScale: Double) : super(1, 1, TYPE_INT_ARGB) {
+    delegate = image
+    scale = sysScale
+    userWidth = delegate.getWidth(null) / scale
+    userHeight = delegate.getHeight(null) / scale
+  }
+
   /**
    * Returns JBHiDPIScaledImage of the same structure scaled by the provided factor.
    *

@@ -315,7 +315,8 @@ open class CachedImageIcon protected constructor(
 
     synchronized(scaledIconCache) {
       val resolver = resolver ?: return true
-      if (!resolver.isMyClassLoader(loader)) {
+      val originalResolver = originalResolver
+      if (!resolver.isMyClassLoader(loader) && !(originalResolver != null && originalResolver.isMyClassLoader(loader))) {
         return false
       }
 

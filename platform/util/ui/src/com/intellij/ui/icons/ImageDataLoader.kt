@@ -2,13 +2,11 @@
 package com.intellij.ui.icons
 
 import com.intellij.ui.scale.ScaleContext
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.awt.Image
 import java.net.URL
 
-@ApiStatus.Internal
-interface ImageDataLoader {
+sealed interface ImageDataLoader {
   fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image?
 
   val url: URL?

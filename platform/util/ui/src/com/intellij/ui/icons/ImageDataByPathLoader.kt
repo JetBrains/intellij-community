@@ -72,7 +72,7 @@ class ImageDataByPathLoader private constructor(private val path: String,
       val patched = transform.patchPath(originalLoader.path, originalLoader.classLoader) ?: return if (isOriginal) null else originalLoader
       val classLoader = if (patched.second == null) originalLoader.classLoader else patched.second!!
       return if (patched.first.startsWith("file:/")) {
-        ImageDataByUrlLoader(url = URL(patched.first), path = patched.first, classLoader = classLoader)
+        ImageDataByFilePathLoader(patched.first)
       }
       else {
         ImageDataByPathLoader(path = normalizePath(patched.first), classLoader = classLoader, original = originalLoader)

@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.RetrievableIcon
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.scale.ScaleType
 import com.intellij.ui.svg.SvgCacheClassifier
 import com.intellij.ui.svg.loadSvg
 import com.intellij.ui.svg.renderSvg
@@ -120,7 +121,7 @@ fun convertImage(image: Image,
     // To avoid that, we instead directly use the provided ScaleContext which contains correct ScaleContext.SYS_SCALE,
     // the image user space size will then be derived by JBHiDPIScaledImage (it is assumed the derived size is equal to
     // {originalUserSize} * DerivedScaleType.EFF_USR_SCALE, taking into account calculation accuracy).
-    return JBHiDPIScaledImage(image = result, scaleContext = scaleContext, type = BufferedImage.TYPE_INT_ARGB)
+    return JBHiDPIScaledImage(image = result, sysScale = scaleContext.getScale(ScaleType.SYS_SCALE))
   }
   else {
     return result

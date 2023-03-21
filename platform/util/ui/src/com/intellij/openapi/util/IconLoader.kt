@@ -32,8 +32,6 @@ import java.awt.image.BufferedImage
 import java.awt.image.ImageFilter
 import java.awt.image.RGBImageFilter
 import java.lang.invoke.MethodHandles
-import java.lang.ref.WeakReference
-import java.net.MalformedURLException
 import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
@@ -190,26 +188,6 @@ object IconLoader {
            ?: throw IllegalStateException("Icon cannot be found in '$path', classLoader='$classLoader'")
   }
 
-  fun createNewResolverIfNeeded(originalClassLoader: ClassLoader?,
-                                originalPath: String,
-                                transform: IconTransform): ImageDataLoader? {
-    val patchedPath = transform.patchPath(originalPath, originalClassLoader) ?: return null
-    val classLoader = if (patchedPath.second == null) originalClassLoader else patchedPath.second
-    val path = patchedPath.first
-    if (path != null && path.startsWith('/')) {
-      return FinalImageDataLoader(path = path.substring(1), classLoader = classLoader ?: transform.javaClass.classLoader)
-    }
-
-    // This uses case for temp themes only. Here we want to immediately replace the existing icon with a local one.
-    if (path != null && path.startsWith("file:/")) {
-      try {
-        return ImageDataByUrlLoader(url = URL(path), path = path, classLoader = classLoader)
-      }
-      catch (ignore: MalformedURLException) {
-      }
-    }
-    return null
-  }
 
   @TestOnly
   @JvmStatic
@@ -702,35 +680,4 @@ private abstract class LazyIcon : ScaleContextSupport(), CopyableIcon, Retrievab
   override fun retrieveIcon(): Icon = getOrComputeIcon()
 
   override fun copy(): Icon = copyIcon(icon = getOrComputeIcon(), ancestor = null, deepCopy = false)
-}
-
-private class FinalImageDataLoader(private val path: String, classLoader: ClassLoader) : ImageDataLoader {
-  private val classLoaderRef: WeakReference<ClassLoader>
-
-  init {
-    classLoaderRef = WeakReference(classLoader)
-  }
-
-  override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image? {
-    val classLoader = classLoaderRef.get() ?: return null
-    // do not use cache
-    return loadImage(path = path,
-                     useCache = false,
-                     isDark = parameters.isDark,
-                     filters = parameters.filters,
-                     colorPatcherProvider = parameters.colorPatcher,
-                     scaleContext = scaleContext,
-                     resourceClass = null,
-                     classLoader = classLoader)
-  }
-
-  override val url: URL?
-    get() = classLoaderRef.get()?.getResource(path)
-
-  // this resolver is already produced as a result of a patch
-  override fun patch(originalPath: String, transform: IconTransform): ImageDataLoader? = null
-
-  override fun isMyClassLoader(classLoader: ClassLoader): Boolean = classLoaderRef.get() === classLoader
-
-  override fun toString(): String = "FinalImageDataLoader(classLoader=${classLoaderRef.get()}, path='$path')"
 }
