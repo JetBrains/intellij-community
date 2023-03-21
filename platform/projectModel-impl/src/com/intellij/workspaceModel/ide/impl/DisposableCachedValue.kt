@@ -1,13 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.workspaceModel.storage.impl
+package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.workspaceModel.storage.CachedValue
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
+import com.intellij.workspaceModel.storage.impl.DummyVersionedEntityStorage
 
 class DisposableCachedValue<R : Disposable>(
   private val entityStorage: () -> VersionedEntityStorage,
@@ -40,7 +43,11 @@ class DisposableCachedValue<R : Disposable>(
       val oldValue = latestValue
       if (oldValue !== currentValue && oldValue != null) {
         log.debug { "Dispose old value. Cache name: `$cacheName`. Store type: ${storage.javaClass}. Store version: ${storage.version}" }
-        Disposer.dispose(oldValue)
+        invokeLater {
+          runWriteAction {
+            Disposer.dispose(oldValue)
+          }
+        }
       }
       latestValue = currentValue
 
