@@ -4,7 +4,7 @@
 package com.intellij.openapi.progress
 
 import com.intellij.concurrency.currentThreadContext
-import com.intellij.concurrency.replaceThreadContext
+import com.intellij.concurrency.installThreadContext
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -187,7 +187,7 @@ fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: su
  */
 suspend fun <T> blockingContext(action: () -> T): T {
   val currentContext = coroutineContext.minusKey(ContinuationInterceptor.Key)
-  return replaceThreadContext(currentContext).use {
+  return installThreadContext(currentContext).use {
     // this will catch com.intellij.openapi.progress.JobCanceledException
     // and throw original java.util.concurrent.CancellationException instead
     withCurrentJob(currentContext.job, action)

@@ -25,10 +25,7 @@ final class ContextCallable<V> implements Callable<V> {
 
   @Override
   public V call() throws Exception {
-    if (myRoot) {
-      ThreadContext.checkUninitializedThreadContext();
-    }
-    try (AccessToken ignored = ThreadContext.replaceThreadContext(myParentContext)) {
+    try (AccessToken ignored = ThreadContext.installThreadContext(myParentContext, !myRoot)) {
       return myCallable.call();
     }
   }

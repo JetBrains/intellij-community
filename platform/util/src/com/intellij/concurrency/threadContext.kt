@@ -19,14 +19,6 @@ private val LOG: Logger = Logger.getInstance("#com.intellij.concurrency")
 
 private val tlCoroutineContext: ThreadLocal<CoroutineContext?> = ThreadLocal()
 
-@Internal
-fun checkUninitializedThreadContext() {
-  val currentContext = tlCoroutineContext.get()
-  if (currentContext != null) {
-    LOG.error("Thread context was already set: $currentContext")
-  }
-}
-
 @VisibleForTesting
 fun currentThreadContextOrNull(): CoroutineContext? {
   return tlCoroutineContext.get()
@@ -51,12 +43,16 @@ fun resetThreadContext(): AccessToken {
 }
 
 /**
- * Replaces the current thread context with [coroutineContext].
+ * Installs [coroutineContext] as the current thread context.
+ * If [replace] is `false` (default) and the current thread already has context, then this function logs an error.
  *
  * @return handle to restore the previous thread context
  */
-fun replaceThreadContext(coroutineContext: CoroutineContext): AccessToken {
-  return updateThreadContext {
+fun installThreadContext(coroutineContext: CoroutineContext, replace: Boolean = false): AccessToken {
+  return updateThreadContext { previousContext ->
+    if (!replace && previousContext != null) {
+      LOG.error("Thread context was already set: $previousContext")
+    }
     coroutineContext
   }
 }
@@ -134,7 +130,7 @@ fun <T> withThreadLocal(variable: ThreadLocal<T>, update: (value: T) -> T): Acce
  * val executor = Executors.newSingleThreadExecutor()
  * val context = currentThreadContext()
  * executor.submit {
- *   replaceThreadContext(context).use {
+ *   installThreadContext(context).use {
  *     runnable.run()
  *   }
  * }

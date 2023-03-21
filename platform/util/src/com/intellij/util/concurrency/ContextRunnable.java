@@ -20,10 +20,7 @@ final class ContextRunnable implements Runnable {
 
   @Override
   public void run() {
-    if (myRoot) {
-      ThreadContext.checkUninitializedThreadContext();
-    }
-    try (AccessToken ignored = ThreadContext.replaceThreadContext(myParentContext)) {
+    try (AccessToken ignored = ThreadContext.installThreadContext(myParentContext, !myRoot)) {
       myRunnable.run();
     }
   }
