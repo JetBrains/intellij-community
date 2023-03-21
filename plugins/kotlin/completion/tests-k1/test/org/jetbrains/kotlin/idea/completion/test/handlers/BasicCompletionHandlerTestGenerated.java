@@ -1348,25 +1348,33 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
         public void testTypeParameter() throws Exception {
             runTest("../testData/handlers/basic/TypeParameter.kt");
         }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/handlers/basic/unstableSmartCast")
+    public static class UnstableSmartCast extends AbstractBasicCompletionHandlerTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
         @TestMetadata("UnstableSmartCast.kt")
         public void testUnstableSmartCast() throws Exception {
-            runTest("../testData/handlers/basic/UnstableSmartCast.kt");
+            runTest("../testData/handlers/basic/unstableSmartCast/UnstableSmartCast.kt");
         }
 
         @TestMetadata("UnstableSmartCast_notDenotable.kt")
         public void testUnstableSmartCast_notDenotable() throws Exception {
-            runTest("../testData/handlers/basic/UnstableSmartCast_notDenotable.kt");
+            runTest("../testData/handlers/basic/unstableSmartCast/UnstableSmartCast_notDenotable.kt");
         }
 
         @TestMetadata("UnstableSmartCast_typeAlias.kt")
         public void testUnstableSmartCast_typeAlias() throws Exception {
-            runTest("../testData/handlers/basic/UnstableSmartCast_typeAlias.kt");
+            runTest("../testData/handlers/basic/unstableSmartCast/UnstableSmartCast_typeAlias.kt");
         }
 
         @TestMetadata("UnstableSmartCast_typeParams.kt")
         public void testUnstableSmartCast_typeParams() throws Exception {
-            runTest("../testData/handlers/basic/UnstableSmartCast_typeParams.kt");
+            runTest("../testData/handlers/basic/unstableSmartCast/UnstableSmartCast_typeParams.kt");
         }
     }
 

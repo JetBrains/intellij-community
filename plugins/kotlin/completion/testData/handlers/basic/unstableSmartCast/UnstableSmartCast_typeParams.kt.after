@@ -1,9 +1,6 @@
-// FIR_IDENTICAL
 // FIR_COMPARISON
-typealias MyList<T> = List<T>
-
 fun test(p: Pair<Any, Any>) {
-    if (p.first is MyList<*>) {
+    if (p.first is List<*>) {
         p.first.size<caret>
     }
 }

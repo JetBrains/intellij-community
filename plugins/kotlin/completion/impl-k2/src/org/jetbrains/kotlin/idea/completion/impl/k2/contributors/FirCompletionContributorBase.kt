@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.completion.contributors
 
 import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
@@ -15,8 +16,10 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.fir.codeInsight.HLIndexHelper
 import org.jetbrains.kotlin.idea.completion.ItemPriority
+import org.jetbrains.kotlin.idea.completion.KOTLIN_CAST_REQUIRED_COLOR
 import org.jetbrains.kotlin.idea.completion.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
@@ -142,33 +145,32 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
                     }
                 }
 
-            // TODO this code should be uncommented when KTIJ-20913 is fixed
-            //// Make the text gray and insert type cast if the receiver type does not match.
-            //is CallableMetadataProvider.CallableKind.ReceiverCastRequired -> object : LookupElementDecorator<LookupElement>(this) {
-            //    override fun renderElement(presentation: LookupElementPresentation) {
-            //        super.renderElement(presentation)
-            //        presentation.itemTextForeground = KOTLIN_CAST_REQUIRED_COLOR
-            //        // gray all tail fragments too:
-            //        val fragments = presentation.tailFragments
-            //        presentation.clearTail()
-            //        for (fragment in fragments) {
-            //            presentation.appendTailText(fragment.text, true)
-            //        }
-            //    }
-            //
-            //    override fun handleInsert(context: InsertionContext) {
-            //        super.handleInsert(context)
-            //        if (explicitReceiverRange == null || explicitReceiverText == null) return
-            //        val castType = explicitReceiverTypeHint ?: return
-            //        val newReceiver = "(${explicitReceiverText} as $castType)"
-            //        context.document.replaceString(explicitReceiverRange.startOffset, explicitReceiverRange.endOffset, newReceiver)
-            //        context.commitDocument()
-            //        shortenReferencesInRange(
-            //            context.file as KtFile,
-            //            explicitReceiverRange.grown(newReceiver.length)
-            //        )
-            //    }
-            //}
+            // Make the text gray and insert type cast if the receiver type does not match.
+            is CallableMetadataProvider.CallableKind.ReceiverCastRequired -> object : LookupElementDecorator<LookupElement>(this) {
+                override fun renderElement(presentation: LookupElementPresentation) {
+                    super.renderElement(presentation)
+                    presentation.itemTextForeground = KOTLIN_CAST_REQUIRED_COLOR
+                    // gray all tail fragments too:
+                    val fragments = presentation.tailFragments
+                    presentation.clearTail()
+                    for (fragment in fragments) {
+                        presentation.appendTailText(fragment.text, true)
+                    }
+                }
+
+                override fun handleInsert(context: InsertionContext) {
+                    super.handleInsert(context)
+                    if (explicitReceiverRange == null || explicitReceiverText == null) return
+                    val castType = explicitReceiverTypeHint ?: return
+                    val newReceiver = "(${explicitReceiverText} as $castType)"
+                    context.document.replaceString(explicitReceiverRange.startOffset, explicitReceiverRange.endOffset, newReceiver)
+                    context.commitDocument()
+                    shortenReferencesInRange(
+                        context.file as KtFile,
+                        explicitReceiverRange.grown(newReceiver.length)
+                    )
+                }
+            }
 
             else -> this
         }
