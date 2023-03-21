@@ -3,7 +3,6 @@
 
 #immediately exit script with an error if a command fails
 set -euo pipefail
-set -x
 
 cd "$(dirname "$0")"
 
@@ -15,7 +14,7 @@ CLEANUP_EXPLODED=${5:-"true"}
 CONTENT_SIGNED=${6:-"true"}
 
 function log() {
-  echo "$(date '+[%H:%M:%S]') $*"
+  echo "$(date '+[%H:%M:%S]') [$RESULT_DMG] $*"
 }
 
 function retry() {
