@@ -65,7 +65,7 @@ public class EditorSearchSession implements SearchSession,
                                             SearchResults.SearchResultsListener,
                                             SearchReplaceComponent.Listener {
   public static final DataKey<EditorSearchSession> SESSION_KEY = DataKey.create("EditorSearchSession");
-  public static final Logger SELECTION_UPDATE_LOGGER = Logger.getInstance("com.intellij.find.selection");
+  private static final Logger SELECTION_UPDATE_LOGGER = Logger.getInstance("com.intellij.find.selection");
 
   private final Editor myEditor;
   private final LivePreviewController myLivePreviewController;
@@ -84,11 +84,11 @@ public class EditorSearchSession implements SearchSession,
   });
   private final Disposable myDisposable = Disposer.newDisposable(EditorSearchSession.class.getName());
 
-  public EditorSearchSession(@NotNull Editor editor, Project project) {
+  public EditorSearchSession(@NotNull Editor editor, @NotNull Project project) {
     this(editor, project, createDefaultFindModel(project, editor));
   }
 
-  public EditorSearchSession(@NotNull final Editor editor, Project project, @NotNull FindModel findModel) {
+  public EditorSearchSession(@NotNull final Editor editor, @NotNull Project project, @NotNull FindModel findModel) {
     assert !editor.isDisposed();
 
     myClickToHighlightLabel.setVisible(false);
@@ -141,6 +141,7 @@ public class EditorSearchSession implements SearchSession,
       boolean myReentrantLock = false;
       boolean myIsGlobal = myFindModel.isGlobal();
       boolean myIsReplace = myFindModel.isReplaceState();
+
       @Override
       public void findModelChanged(FindModel findModel1) {
         if (myReentrantLock) return;
@@ -153,7 +154,8 @@ public class EditorSearchSession implements SearchSession,
             if (!myFindModel.isGlobal()) {
               if (myFindModel.getStringToFind().equals(myStartSelectedText)) {
                 myFindModel.setStringToFind("");
-              } else {
+              }
+              else {
                 restoreInitialCaretPositionAndSelection();
               }
             }
@@ -164,7 +166,8 @@ public class EditorSearchSession implements SearchSession,
           mySearchResults.clear();
           EditorSearchSession.this.updateResults(true);
           FindUtil.updateFindInFileModel(EditorSearchSession.this.getProject(), myFindModel, !ConsoleViewUtil.isConsoleViewEditor(editor));
-        } finally {
+        }
+        finally {
           myReentrantLock = false;
         }
       }
@@ -194,9 +197,9 @@ public class EditorSearchSession implements SearchSession,
     FindUsagesCollector.triggerUsedOptionsStats(project, FindUsagesCollector.FIND_IN_FILE, findModel);
   }
 
-  protected AnAction[] createPrimarySearchActions() {
+  private AnAction @NotNull [] createPrimarySearchActions() {
     if (ExperimentalUI.isNewUI()) {
-      return new AnAction[] {
+      return new AnAction[]{
         new StatusTextAction(),
         new PrevOccurrenceAction(),
         new NextOccurrenceAction(),
@@ -277,14 +280,14 @@ public class EditorSearchSession implements SearchSession,
   }
 
   @NotNull
-  public static EditorSearchSession start(@NotNull Editor editor, @Nullable Project project) {
+  public static EditorSearchSession start(@NotNull Editor editor, @NotNull Project project) {
     EditorSearchSession session = new EditorSearchSession(editor, project);
     editor.setHeaderComponent(session.getComponent());
     return session;
   }
 
   @NotNull
-  public static EditorSearchSession start(@NotNull Editor editor, @NotNull FindModel findModel, @Nullable Project project) {
+  public static EditorSearchSession start(@NotNull Editor editor, @NotNull FindModel findModel, @NotNull Project project) {
     EditorSearchSession session = new EditorSearchSession(editor, project, findModel);
     editor.setHeaderComponent(session.getComponent());
     return session;
@@ -301,7 +304,7 @@ public class EditorSearchSession implements SearchSession,
   }
 
   @NotNull
-  private static FindModel createDefaultFindModel(Project project, Editor editor) {
+  private static FindModel createDefaultFindModel(@NotNull Project project, @NotNull Editor editor) {
     FindModel findModel = new FindModel();
     findModel.copyFrom(FindManager.getInstance(project).getFindInFileModel());
     if (editor.getSelectionModel().hasSelection()) {
@@ -338,14 +341,16 @@ public class EditorSearchSession implements SearchSession,
     if (sr.getFindModel() == null) return;
     if (myComponent.getSearchTextComponent().getText().isEmpty()) {
       updateUIWithEmptyResults();
-    } else {
+    }
+    else {
       int matches = sr.getMatchesCount();
       boolean tooManyMatches = matches > mySearchResults.getMatchesLimit();
       String status;
       if (matches == 0 && !sr.getFindModel().isGlobal() && !myEditor.getSelectionModel().hasSelection()) {
         status = ApplicationBundle.message("editorsearch.noselection");
         myComponent.setRegularBackground();
-      } else {
+      }
+      else {
         int cursorIndex = sr.getCursorVisualIndex();
         status = tooManyMatches
                  ? ApplicationBundle.message("editorsearch.toomuch", mySearchResults.getMatchesLimit())
@@ -448,7 +453,9 @@ public class EditorSearchSession implements SearchSession,
       cweText.getEmptyText().setText(emptyText);
     }
 
-    if (ExperimentalUI.isNewUI() && myFindModel.isReplaceState() && myComponent.getReplaceTextComponent() instanceof ComponentWithEmptyText) {
+    if (ExperimentalUI.isNewUI() &&
+        myFindModel.isReplaceState() &&
+        myComponent.getReplaceTextComponent() instanceof ComponentWithEmptyText) {
       ComponentWithEmptyText cweText = (ComponentWithEmptyText)myComponent.getReplaceTextComponent();
       String emptyText = myFindModel.getStringToReplace().isEmpty() ? ApplicationBundle.message("editorsearch.replace.hint") : "";
       cweText.getEmptyText().setText(emptyText);
@@ -506,7 +513,7 @@ public class EditorSearchSession implements SearchSession,
     }
   }
 
-  public void addTextToRecent(JTextComponent textField) {
+  private void addTextToRecent(JTextComponent textField) {
     myComponent.addTextToRecent(textField);
   }
 
@@ -608,7 +615,8 @@ public class EditorSearchSession implements SearchSession,
         mySelectionUpdatedFromSearchResults = true;
       }
       myEditor.getSelectionModel().setSelection(originalSelectionStart, originalSelectionEnd);
-    } finally {
+    }
+    finally {
       mySelectionUpdatedFromSearchResults = false;
     }
     myEditor.getCaretModel().moveToOffset(Math.min(myStartSessionCaretMarker.getEndOffset(), myEditor.getDocument().getTextLength()));

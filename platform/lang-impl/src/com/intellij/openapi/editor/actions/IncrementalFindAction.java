@@ -47,17 +47,19 @@ public class IncrementalFindAction extends EditorAction {
     @Override
     protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
-      if (!editor.isOneLineMode()) {
+      if (!editor.isOneLineMode() && project != null) {
         EditorSearchSession search = EditorSearchSession.get(editor);
         if (search != null) {
           search.getComponent().requestFocusInTheSearchFieldAndSelectContent(project);
           FindUtil.configureFindModel(myReplace, editor, search.getFindModel(), false);
-        } else {
+        }
+        else {
           FindManager findManager = FindManager.getInstance(project);
           FindModel model;
           if (myReplace) {
             model = findManager.createReplaceInFileModel();
-          } else {
+          }
+          else {
             model = new FindModel();
             model.copyFrom(findManager.getFindInFileModel());
           }
