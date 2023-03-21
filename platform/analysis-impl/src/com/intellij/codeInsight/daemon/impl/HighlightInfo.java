@@ -96,13 +96,18 @@ public class HighlightInfo implements Segment {
    * Find the quickfix (among ones added by {@link #registerFix}) selected by returning non-null value from the {@code predicate}
    * and return that value, or null if the quickfix was not found.
    */
-  synchronized
   public <T> T findRegisteredQuickFix(@NotNull BiFunction<? super @NotNull IntentionActionDescriptor, ? super @NotNull TextRange, ? extends @Nullable T> predicate) {
     Set<IntentionActionDescriptor> processed = new HashSet<>();
+    List<Pair<IntentionActionDescriptor, RangeMarker>> markers;
+    List<Pair<IntentionActionDescriptor, TextRange>> ranges;
+    synchronized (this) {
+      markers = quickFixActionMarkers;
+      ranges = quickFixActionRanges;
+    }
     // prefer range markers as having more actual offsets
-    T result = find(quickFixActionMarkers, processed, predicate);
+    T result = find(markers, processed, predicate);
     if (result != null) return result;
-    return find(quickFixActionRanges, processed, predicate);
+    return find(ranges, processed, predicate);
   }
 
   @Nullable
