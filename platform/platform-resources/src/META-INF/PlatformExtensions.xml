@@ -1264,18 +1264,23 @@
 
     <applicationService serviceImplementation="com.intellij.internal.DebugAttachDetector" headlessImplementation="" preload="true"/>
 
-    <projectService serviceInterface="com.intellij.ui.EditorNotifications" serviceImplementation="com.intellij.ui.EditorNotificationsImpl" preload="true"/>
+    <projectService serviceInterface="com.intellij.ui.EditorNotifications" serviceImplementation="com.intellij.ui.EditorNotificationsImpl"
+                    preload="true"/>
 
-    <applicationService serviceImplementation="com.intellij.ui.WindowDeactivationManager" client="local"/>
+    <applicationService serviceInterface="com.intellij.ui.ToolbarService"
+                        serviceImplementation="com.intellij.ui.ToolbarServiceImpl" client="local"/>
+
     <applicationService serviceInterface="com.intellij.ui.AutoScrollToSourceTaskManager"
                         serviceImplementation="com.intellij.ui.AutoScrollToSourceTaskManagerImpl"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerService" headlessImplementation=""/>
     <postStartupActivity implementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerService$MyActivity" order="last"/>
 
-    <notificationGroup id="IDE-errors" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.ide.errors" isLogByDefault="false"/>
+    <notificationGroup id="IDE-errors" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.ide.errors"
+                       isLogByDefault="false"/>
     <notificationGroup id="System Clipboard" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.system.clipboard"/>
-    <notificationGroup id="Project Startup Tasks Messages" displayType="NONE" bundle="messages.ExecutionBundle" key="notification.group.startup.task"/>
+    <notificationGroup id="Project Startup Tasks Messages" displayType="NONE" bundle="messages.ExecutionBundle"
+                       key="notification.group.startup.task"/>
     <notificationGroup id="scrolling-capabilities-debug" displayType="NONE" hideFromSettings="true"/>
     <notificationGroup id="URL does not respond notification" displayType="BALLOON" bundle="messages.IdeBundle" key="browser.notification.timeout.group"/>
     <notificationGroup id="editor-rendering-benchmark" displayType="NONE" hideFromSettings="true"/>

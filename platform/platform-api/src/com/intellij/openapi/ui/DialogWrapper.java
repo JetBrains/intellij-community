@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
@@ -1675,19 +1675,8 @@ public abstract class DialogWrapper {
       Disposer.register(uiParent, myDisposable); // ensure everything is disposed on app quit
     }
 
-    createTitleBar();
-
     myPeer.show();
   }
-
-  protected void createTitleBar() {
-    Window window = getWindow();
-    JRootPane rootPane = getRootPane();
-    if (window instanceof JDialog && !((JDialog)window).isUndecorated() && rootPane != null) {
-      ToolbarUtil.setTransparentTitleBar(window, rootPane, runnable -> Disposer.register(getDisposable(), () -> runnable.run()));
-    }
-  }
-
 
   /**
    * @return Location in absolute coordinates which is used when dialog has no dimension service key or no position was stored yet.
