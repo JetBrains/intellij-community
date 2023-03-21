@@ -82,11 +82,11 @@ private fun createChildContext(): Pair<CoroutineContext, CompletableJob?> {
 internal fun capturePropagationAndCancellationContext(command: Runnable): Runnable {
   val (childContext, childJob) = createChildContext()
   var command = command
-  if (childJob != null) {
-    command = CancellationRunnable(childJob, command)
-  }
   if (childContext != EmptyCoroutineContext) {
     command = ContextRunnable(true, childContext, command)
+  }
+  if (childJob != null) {
+    command = CancellationRunnable(childJob, command)
   }
   return command
 }
@@ -98,12 +98,12 @@ fun capturePropagationAndCancellationContext(
   val (childContext, childJob) = createChildContext()
   var command = command
   var expired = expired
+  if (childContext != EmptyCoroutineContext) {
+    command = ContextRunnable(true, childContext, command)
+  }
   if (childJob != null) {
     command = CancellationRunnable(childJob, command)
     expired = cancelIfExpired(expired, childJob)
-  }
-  if (childContext != EmptyCoroutineContext) {
-    command = ContextRunnable(true, childContext, command)
   }
   return JBPair.create(command, expired)
 }
