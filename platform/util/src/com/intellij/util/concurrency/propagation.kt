@@ -6,10 +6,6 @@
 package com.intellij.util.concurrency
 
 import com.intellij.concurrency.currentThreadContext
-import com.intellij.openapi.progress.CancellationCallable
-import com.intellij.openapi.progress.CancellationFutureTask
-import com.intellij.openapi.progress.CancellationRunnable
-import com.intellij.openapi.progress.PeriodicCancellationRunnable
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.SchedulingWrapper.MyScheduledFutureTask
@@ -162,7 +158,8 @@ internal fun <V> capturePropagationAndCancellationContext(
     callable = ContextCallable(false, childContext, callable)
   }
   if (childJob != null) {
-    return CancellationScheduledFutureTask(wrapper, childJob, CancellationCallable(childJob, callable), ns)
+    return CancellationScheduledFutureTask(wrapper, childJob,
+                                           CancellationCallable(childJob, callable), ns)
   }
   else {
     return wrapper.MyScheduledFutureTask(callable, ns)
