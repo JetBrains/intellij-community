@@ -14,6 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.javadoc.PsiInlineDocTag;
+import com.intellij.psi.javadoc.PsiSnippetDocTagBody;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,7 @@ public class JavadocBlankLinesInspection extends LocalInspectionTool {
       @Override
       public void visitDocToken(@NotNull PsiDocToken token) {
         super.visitDocToken(token);
+        if (token.getParent() instanceof PsiSnippetDocTagBody) return;
         PsiElement nextWhitespace = token.getNextSibling();
         PsiElement prevWhitespace = token.getPrevSibling();
         if (token.getTokenType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS &&
