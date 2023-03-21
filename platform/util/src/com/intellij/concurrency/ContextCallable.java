@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency;
 
 import com.intellij.openapi.application.AccessToken;
@@ -18,9 +18,9 @@ public final class ContextCallable<V> implements Callable<V> {
   private final @NotNull CoroutineContext myParentContext;
   private final @NotNull Callable<? extends V> myCallable;
 
-  public ContextCallable(boolean root, @NotNull Callable<? extends V> callable) {
+  public ContextCallable(boolean root, @NotNull CoroutineContext context, @NotNull Callable<? extends V> callable) {
     myRoot = root;
-    myParentContext = ThreadContext.currentThreadContext();
+    myParentContext = context;
     myCallable = callable;
   }
 

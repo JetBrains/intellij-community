@@ -8,6 +8,7 @@ package com.intellij.util.concurrency
 import com.intellij.concurrency.ContextCallable
 import com.intellij.concurrency.ContextRunnable
 import com.intellij.concurrency.captureThreadContext
+import com.intellij.concurrency.currentThreadContext
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.registry.Registry
@@ -128,7 +129,7 @@ internal fun <V> capturePropagationAndCancellationContext(
 
 private fun <V> capturePropagationContext(callable: Callable<V>): Callable<V> {
   if (isPropagateThreadContext) {
-    return ContextCallable(false, callable)
+    return ContextCallable(false, currentThreadContext(), callable)
   }
   return callable
 }
@@ -150,7 +151,7 @@ internal fun capturePropagationAndCancellationContext(
 
 private fun wrapWithPropagationContext(runnable: Runnable): Runnable {
   if (isPropagateThreadContext) {
-    return ContextRunnable(false, runnable)
+    return ContextRunnable(false, currentThreadContext(), runnable)
   }
   return runnable
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency;
 
 import com.intellij.openapi.application.AccessToken;
@@ -13,9 +13,9 @@ public final class ContextRunnable implements Runnable {
   private final @NotNull CoroutineContext myParentContext;
   private final @NotNull Runnable myRunnable;
 
-  public ContextRunnable(boolean root, @NotNull Runnable runnable) {
+  public ContextRunnable(boolean root, @NotNull CoroutineContext context, @NotNull Runnable runnable) {
     myRoot = root;
-    myParentContext = ThreadContext.currentThreadContext();
+    myParentContext = context;
     myRunnable = runnable;
   }
 

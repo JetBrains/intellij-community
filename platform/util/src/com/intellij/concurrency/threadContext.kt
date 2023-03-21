@@ -138,12 +138,12 @@ fun <T> withThreadLocal(variable: ThreadLocal<T>, update: (value: T) -> T): Acce
  * Do not use this method with executors returned from [com.intellij.util.concurrency.AppExecutorUtil], they already capture the context.
  */
 fun captureThreadContext(runnable: Runnable): Runnable {
-  return ContextRunnable(true, runnable)
+  return ContextRunnable(true, currentThreadContext(), runnable)
 }
 
 /**
  * Same as [captureThreadContext] but for [Callable].
  */
 fun <V> captureThreadContext(callable: Callable<V>): Callable<V> {
-  return ContextCallable(true, callable)
+  return ContextCallable(true, currentThreadContext(), callable)
 }
