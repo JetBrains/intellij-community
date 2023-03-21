@@ -20,11 +20,8 @@ import com.intellij.openapi.fileChooser.ex.FileTextFieldImpl;
 import com.intellij.openapi.fileChooser.ex.LocalFsFinder;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.Formats;
@@ -101,6 +98,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private @Nullable WatchKey myWatchKey;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private final List<@Nullable Path> myHistory = new ArrayList<>();
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private int myHistoryIndex = -1;  // points to the last added or used element
+  private volatile boolean myReloadSuppressed = false;
 
   FileChooserPanelImpl(@NotNull FileChooserDescriptor descriptor,
                        @NotNull Runnable callback,
@@ -169,7 +167,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
             var key = watcher.take();
             var events = key.pollEvents();
             key.reset();
-            if (!events.isEmpty()) {
+            if (!events.isEmpty() && !myReloadSuppressed) {
               UIUtil.invokeLaterIfNeeded(() -> {
                 synchronized (myLock) {
                   if (key == myWatchKey && myCurrentDirectory != null) {
@@ -388,6 +386,17 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     }
     synchronized (myLock) {
       load(myCurrentDirectory, focusOn, EnumSet.of(OpenFlags.UPDATE_PATH_BAR, OpenFlags.KEEP_HISTORY));
+    }
+  }
+
+  @Override
+  public void reloadAfter(@SuppressWarnings("BoundedWildcard") @NotNull ThrowableComputable<@Nullable Path, IOException> task) throws IOException {
+    try {
+      myReloadSuppressed = true;
+      reload(task.compute());
+    }
+    finally {
+      myReloadSuppressed = false;
     }
   }
 

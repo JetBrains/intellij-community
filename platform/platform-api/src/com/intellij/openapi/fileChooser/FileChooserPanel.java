@@ -2,11 +2,13 @@
 package com.intellij.openapi.fileChooser;
 
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.util.ThrowableComputable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -29,6 +31,7 @@ public interface FileChooserPanel {
   void loadHistory(boolean backward);
 
   void reload(@Nullable Path focusOn);
+  void reloadAfter(@NotNull ThrowableComputable<@Nullable Path, IOException> task) throws IOException;
 
   boolean showPathBar();
   void showPathBar(boolean show);
