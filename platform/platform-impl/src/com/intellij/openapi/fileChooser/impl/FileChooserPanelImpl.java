@@ -43,7 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
+import javax.swing.event.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
@@ -74,6 +74,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   private static final Logger LOG = Logger.getInstance(FileChooserPanelImpl.class);
   private static final String SEPARATOR = "!/";
   private static final CoreLocalFileSystem FS = new CoreLocalFileSystem();
+  private static final String OPEN = "open";
 
   private final FileTypeRegistry myRegistry;
   private final FileChooserDescriptor myDescriptor;
@@ -269,22 +270,21 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         if (e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 2) {
           var idx = myList.rowAtPoint(e.getPoint());
           if (idx >= 0) {
-            openItemAtIndex(idx, e);
+            myList.setRowSelectionInterval(idx, idx);
+            var action = myList.getActionMap().get(OPEN);
+            if (action != null) action.actionPerformed(null);
+            e.consume();
           }
         }
       }
     });
-    myList.addKeyListener(new KeyAdapter() {
+    myList.getActionMap().put(OPEN, new AbstractAction() {
       @Override
-      public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_ENTER && e.getModifiersEx() == 0) {
-          var selection = myList.getSelectedRows();
-          if (selection.length == 1) {
-            openItemAtIndex(selection[0], e);
-          }
-        }
+      public void actionPerformed(ActionEvent e) {
+        openSelectedRow();
       }
     });
+    myList.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), OPEN);
     TableSpeedSearch.installOn(myList);
     myList.getActionMap().put(TableActions.Left.ID, myList.getActionMap().get(TableActions.CtrlHome.ID));
     myList.getActionMap().put(TableActions.Right.ID, myList.getActionMap().get(TableActions.CtrlEnd.ID));
@@ -316,18 +316,20 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     return null;
   }
 
-  private void openItemAtIndex(int idx, InputEvent e) {
-    var item = myList.getRow(idx);
-    if (item.directory) {
-      load(item.path, null, EnumSet.of(OpenFlags.UPDATE_PATH_BAR));
+  private void openSelectedRow() {
+    var selection = myList.getSelectedRows();
+    if (selection.length == 1) {
+      var item = myList.getRow(selection[0]);
+      if (item.directory) {
+        load(item.path, null, EnumSet.of(OpenFlags.UPDATE_PATH_BAR));
+      }
+      else if (myDescriptor.isChooseJarContents() && myRegistry.getFileTypeByFileName(item.name) == ArchiveFileType.INSTANCE) {
+        load(item.path, null, EnumSet.of(OpenFlags.UPDATE_PATH_BAR, OpenFlags.INTO_ARCHIVE));
+      }
+      else {
+        myCallback.run();
+      }
     }
-    else if (myDescriptor.isChooseJarContents() && myRegistry.getFileTypeByFileName(item.name) == ArchiveFileType.INSTANCE) {
-      load(item.path, null, EnumSet.of(OpenFlags.UPDATE_PATH_BAR, OpenFlags.INTO_ARCHIVE));
-    }
-    else {
-      myCallback.run();
-    }
-    e.consume();
   }
 
   JComponent getPreferredFocusedComponent() {
