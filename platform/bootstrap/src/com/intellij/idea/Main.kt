@@ -56,11 +56,7 @@ fun main(rawArgs: Array<String>) {
         MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as AppStarter
       }
 
-      if (!args.isEmpty()) {
-        initProjectorIfNeeded(args)
-        // must be called after projector init
-        initLuxIfNeeded(args)
-      }
+      initRemoteDevIfNeeded(args)
 
       val busyThread = Thread.currentThread()
       withContext(Dispatchers.Default + StartupAbortedExceptionHandler()) {
@@ -77,38 +73,47 @@ fun main(rawArgs: Array<String>) {
   }
 }
 
-private fun initProjectorIfNeeded(args: List<String>) {
-  if (args.isEmpty() || (AppMode.CWM_HOST_COMMAND != args[0] && AppMode.CWM_HOST_NO_LOBBY_COMMAND != args[0] && AppMode.REMOTE_DEV_HOST_COMMAND != args[0])) {
+private fun initRemoteDevIfNeeded(args: List<String>) {
+  val command = args.firstOrNull()
+  val isRemoteDevEnabled = AppMode.CWM_HOST_COMMAND == command ||
+                           AppMode.CWM_HOST_NO_LOBBY_COMMAND == command ||
+                           AppMode.REMOTE_DEV_HOST_COMMAND == command
+  if (!isRemoteDevEnabled) {
     return
   }
 
+  runActivity("cwm host init") {
+    if (System.getProperty("lux.enabled", "true").toBoolean()) {
+      initLux()
+    }
+    else {
+      initProjector()
+    }
+  }
+}
+
+private fun initProjector() {
   if (!JBR.isProjectorUtilsSupported()) {
     error("JBR version 17.0.5b653.12 or later is required to run a remote-dev server")
   }
 
-  runActivity("cwm host init") {
-    JBR.getProjectorUtils().setLocalGraphicsEnvironmentProvider {
-      val projectorEnvClass = AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.awt.image.PGraphicsEnvironment")
-      projectorEnvClass.getDeclaredMethod("getInstance").invoke(null) as GraphicsEnvironment
-    }
-
-    val projectorMainClass = AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.server.ProjectorLauncher\$Starter")
-    MethodHandles.privateLookupIn(projectorMainClass, MethodHandles.lookup()).findStatic(
-      projectorMainClass, "runProjectorServer", MethodType.methodType(Boolean::class.javaPrimitiveType)
-    ).invoke()
+  JBR.getProjectorUtils().setLocalGraphicsEnvironmentProvider {
+    val projectorEnvClass = AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.awt.image.PGraphicsEnvironment")
+    projectorEnvClass.getDeclaredMethod("getInstance").invoke(null) as GraphicsEnvironment
   }
+
+  val projectorMainClass = AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.server.ProjectorLauncher\$Starter")
+  MethodHandles.privateLookupIn(projectorMainClass, MethodHandles.lookup()).findStatic(
+    projectorMainClass, "runProjectorServer", MethodType.methodType(Boolean::class.javaPrimitiveType)
+  ).invoke()
 }
 
-private fun initLuxIfNeeded(args: List<String>) {
-  if (args.isEmpty() || (AppMode.CWM_HOST_COMMAND != args[0] && AppMode.CWM_HOST_NO_LOBBY_COMMAND != args[0] && AppMode.REMOTE_DEV_HOST_COMMAND != args[0])) {
-    return
-  }
-  if (!System.getProperty("lux.enabled", "true").toBoolean()) {
-    return
-  }
+private fun initLux() {
   if (!JBR.isGraphicsUtilsSupported()) {
     error("JBR version 17.0.6b796 or later is required to run a remote-dev server with lux")
   }
+
+  initProjector()
 
   System.setProperty("awt.nativeDoubleBuffering", false.toString())
   System.setProperty("swing.bufferPerWindow", true.toString())
