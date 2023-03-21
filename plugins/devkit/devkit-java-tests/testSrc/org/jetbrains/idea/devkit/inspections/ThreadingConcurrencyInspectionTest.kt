@@ -99,17 +99,21 @@ class ThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestBas
 
       val intention = myFixture.findSingleIntention("Annotate method 'checkUnannotated()' as '@RequiresEdt'")
       myFixture.checkPreviewAndLaunchAction(intention)
-      myFixture.checkResult("""    import com.intellij.util.concurrency.annotations.*;
+      myFixture.checkResult("""
+        import com.intellij.util.concurrency.annotations.*;
 
-    public class A {
-        @RequiresEdt
-        public void checkUnannotated() {
-    edt();
-}
+        public class A {
 
-@RequiresEdt
-public void edt() {}
-    }""".trimIndent(), true)
+            @RequiresEdt
+            public void checkUnannotated() {
+                edt();
+            }
+
+            @RequiresEdt
+            public void edt() {}
+
+        }
+      """.trimIndent(), true)
     }
   }
 
@@ -310,7 +314,7 @@ public void edt() {}
     import com.intellij.util.concurrency.annotations.*;
       
     public class A {
-      ${classBody.trimIndent()}
+      ${classBody}
     }
     """.trimIndent())
 

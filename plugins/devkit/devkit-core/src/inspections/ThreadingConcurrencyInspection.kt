@@ -14,7 +14,6 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.*
 import com.intellij.util.containers.map2Array
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.uast.*
@@ -48,15 +47,13 @@ internal class ThreadingConcurrencyInspection(
   }
 
   override fun checkMethod(method: UMethod, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
-    if (method.uastBody == null) {
-      return null
-    }
+    val uastBody = method.uastBody ?: return null
 
     val problemsHolder = createProblemsHolder(method, manager, isOnTheFly)
 
     val checkMissingAnnotations = checkMissingAnnotations &&
                                   method.javaPsi.hasModifier(JvmModifier.PUBLIC)
-    method.uastBody!!.accept(ThreadingVisitor(problemsHolder, method.getThreadingStatuses(), checkMissingAnnotations))
+    uastBody.accept(ThreadingVisitor(problemsHolder, method.getThreadingStatuses(), checkMissingAnnotations))
 
     return problemsHolder.resultsArray
   }
@@ -190,25 +187,20 @@ internal class ThreadingConcurrencyInspection(
     }
 
     private fun registerThreadingStatusProblem(uElement: UCallExpression,
-                                               @NotNull @PropertyKey(resourceBundle = DevKitBundle.BUNDLE) messageKey: String,
+                                               @PropertyKey(resourceBundle = DevKitBundle.BUNDLE) messageKey: String,
                                                vararg params: ThreadingStatus) {
       registerProblem(uElement, LocalQuickFix.EMPTY_ARRAY, messageKey, *params.map2Array { it.getDisplayName() })
     }
 
     private fun registerProblem(uCallExpression: UCallExpression,
                                 quickFixes: Array<LocalQuickFix> = LocalQuickFix.EMPTY_ARRAY,
-                                @NotNull @PropertyKey(resourceBundle = DevKitBundle.BUNDLE) messageKey: String,
-                                vararg params: Any?) {
+                                @PropertyKey(resourceBundle = DevKitBundle.BUNDLE) messageKey: String,
+                                vararg params: Any) {
       val uElement = when (uCallExpression.kind) {
-        UastCallKind.CONSTRUCTOR_CALL -> {
-          uCallExpression.classReference
-        }
-        else -> {
-          uCallExpression.methodIdentifier
-        }
+        UastCallKind.CONSTRUCTOR_CALL -> uCallExpression.classReference
+        else -> uCallExpression.methodIdentifier
       }
-      val sourcePsi = uElement?.sourcePsi
-      if (sourcePsi == null) return
+      val sourcePsi = uElement?.sourcePsi ?: return
 
       problemsHolder.registerProblem(sourcePsi, DevKitBundle.message(messageKey, *params), *quickFixes)
     }

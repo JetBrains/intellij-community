@@ -97,17 +97,21 @@ class KtThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestB
 
       val intention = myFixture.findSingleIntention("Annotate as @RequiresEdt")
       myFixture.checkPreviewAndLaunchAction(intention)
-      myFixture.checkResult("""    import com.intellij.util.concurrency.annotations.*
+      myFixture.checkResult("""
+        import com.intellij.util.concurrency.annotations.*
 
-    class A {
-      @RequiresEdt
-      fun checkUnannotated() {
-    edt()
-}
+        class A {
 
-@RequiresEdt
-fun edt() {}
-    }""".trimIndent(), true)
+            @RequiresEdt
+            fun checkUnannotated() {
+                edt()
+            }
+
+            @RequiresEdt
+            fun edt() {}
+
+        }
+      """.trimIndent(), true)
     }
   }
 
@@ -306,7 +310,7 @@ fun edt() {}
     import com.intellij.util.concurrency.annotations.*
 
     class A {
-      ${classBody.trimIndent()}
+      ${classBody}
     }
     """.trimIndent())
 
