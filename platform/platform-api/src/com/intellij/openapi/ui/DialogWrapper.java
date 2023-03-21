@@ -1675,8 +1675,19 @@ public abstract class DialogWrapper {
       Disposer.register(uiParent, myDisposable); // ensure everything is disposed on app quit
     }
 
+    createTitleBar();
+
     myPeer.show();
   }
+
+  protected void createTitleBar() {
+    Window window = getWindow();
+    JRootPane rootPane = getRootPane();
+    if (window instanceof JDialog && !((JDialog)window).isUndecorated() && rootPane != null) {
+      ToolbarUtil.setTransparentTitleBar(window, rootPane, runnable -> Disposer.register(getDisposable(), () -> runnable.run()));
+    }
+  }
+
 
   /**
    * @return Location in absolute coordinates which is used when dialog has no dimension service key or no position was stored yet.
