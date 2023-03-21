@@ -16,7 +16,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.Consumer
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBDimension
@@ -73,7 +73,7 @@ abstract class NewEditChangelistPanel(protected val project: Project) : Wrapper(
         .resizableColumn()
         .align(AlignX.FILL)
         .applyToComponent {
-          putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps(gap))
+          putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps(gap))
         }
     }.bottomGap(BottomGap.SMALL)
 
@@ -85,7 +85,7 @@ abstract class NewEditChangelistPanel(protected val project: Project) : Wrapper(
       cell(descriptionTextArea)
         .resizableColumn()
         .align(Align.FILL)
-        .customize(Gaps(left = gap, right = gap))
+        .customize(UnscaledGaps(left = gap, right = gap))
     }.resizableRow()
       .layout(RowLayout.PARENT_GRID)
       .bottomGap(BottomGap.SMALL)
