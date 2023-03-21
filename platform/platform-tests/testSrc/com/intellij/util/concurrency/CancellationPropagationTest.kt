@@ -48,7 +48,7 @@ class CancellationPropagationTest {
       invocationContext: ReflectiveInvocationContext<Method>,
       extensionContext: ExtensionContext,
     ) {
-      Propagation.runWithCancellationPropagationEnabled {
+      runWithCancellationPropagationEnabled {
         invocation.proceed()
       }
     }

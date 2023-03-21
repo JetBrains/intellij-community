@@ -34,7 +34,7 @@ class ThreadContextPropagationTest {
       invocationContext: ReflectiveInvocationContext<Method>,
       extensionContext: ExtensionContext,
     ) {
-      Propagation.runWithContextPropagationEnabled {
+      runWithContextPropagationEnabled {
         invocation.proceed()
       }
     }
