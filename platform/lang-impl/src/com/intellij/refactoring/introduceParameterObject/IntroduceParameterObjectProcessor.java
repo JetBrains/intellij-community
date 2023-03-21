@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceParameterObject;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
@@ -118,7 +118,9 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
         if (element != null && IntroduceParameterObjectDelegate.findDelegate(element) == null) {
           final PsiFile containingFile = element.getContainingFile();
           if (filesWithUsages.add(containingFile)) {
-            conflicts.putValue(element, "Method is overridden in a language that doesn't support this refactoring: " + containingFile.getName());
+            String message = RefactoringBundle.message("dialog.message.method.overridden.in.language.that.doesn.t.support.this.refactoring",
+                                                       containingFile.getName());
+            conflicts.putValue(element, message);
           }
         }
         changeSignatureUsages.add(info);

@@ -234,9 +234,11 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
           !refMember.hasModifierProperty(PsiModifier.STATIC) &&
           fieldInSubClass != refMember &&
           !member.hasModifierProperty(PsiModifier.STATIC)) {
-        conflicts.putValue(refMember, StringUtil.capitalize(RefactoringUIUtil.getDescription(fieldInSubClass, true) +
-                                                            " would hide " + RefactoringUIUtil.getDescription(refMember, true) +
-                                                            " which is used by moved " + RefactoringUIUtil.getDescription(member, false)));
+        conflicts.putValue(refMember, StringUtil.capitalize(
+          JavaRefactoringBundle.message("dialog.message.0.would.hide.which.1.used.by.moved.2",
+                                        RefactoringUIUtil.getDescription(fieldInSubClass, true),
+                                        RefactoringUIUtil.getDescription(refMember, true),
+                                        RefactoringUIUtil.getDescription(member, false))));
       }
     }
   }

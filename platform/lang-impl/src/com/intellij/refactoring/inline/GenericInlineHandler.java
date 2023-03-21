@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -192,7 +192,8 @@ public final class GenericInlineHandler {
       }
     }
     else {
-      conflicts.putValue(referenceElement, "Cannot inline reference from " + language.getDisplayName());
+      conflicts.putValue(referenceElement,
+                         RefactoringBundle.message("dialog.message.cannot.inline.reference.from.0", language.getDisplayName()));
     }
   }
 
