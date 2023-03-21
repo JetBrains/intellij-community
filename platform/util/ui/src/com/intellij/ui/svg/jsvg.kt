@@ -36,7 +36,7 @@ internal inline fun <T> withSvgSize(document: SVG, baseWidth: Float, baseHeight:
   return consumer(w, h)
 }
 
-internal fun renderSvgWithSize(document: SVG, width: Float, height: Float, defaultEm: Float = SVGFont.defaultFontSize()): BufferedImage {
+fun renderSvgWithSize(document: SVG, width: Float, height: Float, defaultEm: Float = SVGFont.defaultFontSize()): BufferedImage {
   @Suppress("UndesirableClassUsage")
   val result = BufferedImage((width + 0.5f).toInt(), (height + 0.5f).toInt(), BufferedImage.TYPE_INT_ARGB)
   val g = result.createGraphics()

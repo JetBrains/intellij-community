@@ -98,7 +98,7 @@ public final class HiDPIPluginLogoIcon extends PluginLogoIcon {
     return getHiDPI(context, t);
   }
 
-  private static @NotNull Icon getHiDPI(@NotNull ScaleContext context, @NotNull Object source) {
+  static @NotNull Icon getHiDPI(@NotNull ScaleContext context, @NotNull Object source) {
     if (source instanceof ImageIcon) {
       Image image = ((ImageIcon)source).getImage();
       if (image instanceof JBHiDPIScaledImage) {

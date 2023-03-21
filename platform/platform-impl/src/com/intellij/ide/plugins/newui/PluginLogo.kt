@@ -14,17 +14,19 @@ import com.intellij.openapi.application.JetBrainsProtocolHandler
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.ui.JBColor
 import com.intellij.ui.icons.CachedImageIcon
+import com.intellij.ui.svg.loadWithScales
 import com.intellij.util.Urls.newFromEncoded
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
+import com.intellij.util.ui.JBImageIcon
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -41,21 +43,23 @@ import java.util.zip.ZipFile
 import javax.swing.Icon
 
 private val ICONS = ContainerUtil.createWeakValueMap<String, Pair<PluginLogoIconProvider?, PluginLogoIconProvider?>>()
+private const val CACHE_DIR = "imageCache"
+private const val PLUGIN_ICON = "pluginIcon.svg"
+private const val PLUGIN_ICON_DARK = "pluginIcon_dark.svg"
+private const val PLUGIN_ICON_SIZE = 40
+private const val PLUGIN_ICON_SIZE_SCALED = 50
+private const val PLUGIN_ICON_SIZE_SCALE = PLUGIN_ICON_SIZE_SCALED.toFloat() / PLUGIN_ICON_SIZE
 
 /**
  * @author Alexander Lobas
  */
 object PluginLogo {
-  val LOG = Logger.getInstance(PluginLogo::class.java)
-  private const val CACHE_DIR = "imageCache"
-  private const val PLUGIN_ICON = "pluginIcon.svg"
-  private const val PLUGIN_ICON_DARK = "pluginIcon_dark.svg"
-  private const val PLUGIN_ICON_SIZE = 40
-  private const val PLUGIN_ICON_SIZE_SCALED = 50
-  private const val PLUGIN_ICON_SIZE_SCALE = PLUGIN_ICON_SIZE_SCALED.toFloat() / PLUGIN_ICON_SIZE
+  private val LOG = logger<PluginLogo>()
+
   private var Default: PluginLogoIconProvider? = null
-  private var myPrepareToLoad: MutableList<Pair<IdeaPluginDescriptor, LazyPluginLogoIcon>>? = null
+  private var prepareToLoad: MutableList<Pair<IdeaPluginDescriptor, LazyPluginLogoIcon>>? = null
   private var lafListenerAdded = false
+
   private fun initLafListener() {
     if (!lafListenerAdded) {
       lafListenerAdded = true
@@ -74,6 +78,7 @@ object PluginLogo {
     }
   }
 
+  @JvmStatic
   fun getIcon(descriptor: IdeaPluginDescriptor, big: Boolean, error: Boolean, disabled: Boolean): Icon? {
     initLafListener()
     return getIcon(descriptor)?.getIcon(big, error, disabled)
@@ -81,35 +86,35 @@ object PluginLogo {
 
   private fun getIcon(descriptor: IdeaPluginDescriptor): PluginLogoIconProvider? {
     val icons = getOrLoadIcon(descriptor)
-    return if (icons != null) if (JBColor.isBright()) icons.first else icons.second!! else getDefault()
+    return if (icons == null) getDefault() else if (JBColor.isBright()) icons.first else icons.second!!
   }
 
   @JvmStatic
   fun startBatchMode() {
-    assert(myPrepareToLoad == null)
-    myPrepareToLoad = ArrayList()
+    assert(prepareToLoad == null)
+    prepareToLoad = ArrayList()
   }
 
   @JvmStatic
   fun endBatchMode() {
-    assert(myPrepareToLoad != null)
-    val descriptors: List<Pair<IdeaPluginDescriptor, LazyPluginLogoIcon>>? = myPrepareToLoad
-    myPrepareToLoad = null
+    assert(prepareToLoad != null)
+    val descriptors: List<Pair<IdeaPluginDescriptor, LazyPluginLogoIcon>>? = prepareToLoad
+    prepareToLoad = null
     service<PluginLogoLoader>().schedulePluginIconLoading(descriptors!!)
   }
 
+  @JvmStatic
   internal fun getDefault(): PluginLogoIconProvider {
     if (Default == null) {
       Default = HiDPIPluginLogoIcon(AllIcons.Plugins.PluginLogo,
                                     AllIcons.Plugins.PluginLogoDisabled,
-                                    (AllIcons.Plugins.PluginLogo as CachedImageIcon).scale(
-                                      PLUGIN_ICON_SIZE_SCALE),
-                                    (AllIcons.Plugins.PluginLogoDisabled as CachedImageIcon).scale(
-                                      PLUGIN_ICON_SIZE_SCALE))
+                                    (AllIcons.Plugins.PluginLogo as CachedImageIcon).scale(PLUGIN_ICON_SIZE_SCALE),
+                                    (AllIcons.Plugins.PluginLogoDisabled as CachedImageIcon).scale(PLUGIN_ICON_SIZE_SCALE))
     }
     return Default!!
   }
 
+  @JvmStatic
   fun reloadIcon(icon: Icon, width: Int, height: Int): Icon {
     if (icon is CachedImageIcon) {
       assert(width == height)
@@ -128,11 +133,11 @@ object PluginLogo {
     val lazyIcons = Pair<PluginLogoIconProvider, PluginLogoIconProvider?>(lazyIcon, lazyIcon)
     ICONS[idPlugin] = lazyIcons
     val info = Pair(descriptor, lazyIcon)
-    if (myPrepareToLoad == null) {
+    if (prepareToLoad == null) {
       service<PluginLogoLoader>().schedulePluginIconLoading(listOf(info))
     }
     else {
-      myPrepareToLoad!!.add(info)
+      prepareToLoad!!.add(info)
     }
     return lazyIcons
   }
@@ -282,7 +287,7 @@ object PluginLogo {
 
   private fun tryLoadIcon(iconFile: Path): PluginLogoIconProvider? {
     return try {
-      if (Files.exists(iconFile) && Files.size(iconFile) > 0) loadFileIcon(toURL(iconFile)) { Files.newInputStream(iconFile) } else null
+      if (Files.exists(iconFile) && Files.size(iconFile) > 0) loadFileIcon { Files.newInputStream(iconFile) } else null
     }
     catch (e: NoSuchFileException) {
       null
@@ -295,19 +300,16 @@ object PluginLogo {
 
   private fun tryLoadIcon(zipFile: ZipFile, light: Boolean): PluginLogoIconProvider? {
     val iconEntry = zipFile.getEntry(getIconFileName(light))
-    return if (iconEntry == null) null else loadFileIcon(toURL(zipFile)) { zipFile.getInputStream(iconEntry) }
+    return if (iconEntry == null) null else loadFileIcon { zipFile.getInputStream(iconEntry) }
   }
 
+  @JvmStatic
   fun toURL(file: Any): URL? {
     try {
-      if (file is File) {
-        return file.toURI().toURL()
-      }
-      if (file is Path) {
-        return file.toUri().toURL()
-      }
-      if (file is ZipFile) {
-        return File(file.name).toURI().toURL()
+      when (file) {
+        is File -> return file.toURI().toURL()
+        is Path -> return file.toUri().toURL()
+        is ZipFile -> return File(file.name).toURI().toURL()
       }
     }
     catch (e: MalformedURLException) {
@@ -316,31 +318,26 @@ object PluginLogo {
     return null
   }
 
-  fun getIconFileName(light: Boolean): String {
-    return PluginManagerCore.META_INF + if (light) PLUGIN_ICON else PLUGIN_ICON_DARK
-  }
+  @JvmStatic
+  fun getIconFileName(light: Boolean): String = PluginManagerCore.META_INF + if (light) PLUGIN_ICON else PLUGIN_ICON_DARK
 
-  fun height(): Int {
-    return PLUGIN_ICON_SIZE
-  }
+  fun height(): Int = PLUGIN_ICON_SIZE
 
-  fun width(): Int {
-    return PLUGIN_ICON_SIZE
-  }
+  fun width(): Int = PLUGIN_ICON_SIZE
 
-  private fun loadFileIcon(url: URL?, provider: ThrowableComputable<out InputStream, out IOException>): PluginLogoIconProvider? {
-    return try {
-      val logo40 = HiDPIPluginLogoIcon.loadSVG(url, provider.compute(), PLUGIN_ICON_SIZE, PLUGIN_ICON_SIZE)
-      val logo80 = HiDPIPluginLogoIcon.loadSVG(url, provider.compute(), PLUGIN_ICON_SIZE_SCALED, PLUGIN_ICON_SIZE_SCALED)
-      HiDPIPluginLogoIcon(logo40, logo80)
+  private fun loadFileIcon(provider: () -> InputStream): PluginLogoIconProvider? {
+    try {
+      val images = loadWithScales(listOf(PLUGIN_ICON_SIZE, PLUGIN_ICON_SIZE_SCALED), provider())
+      return HiDPIPluginLogoIcon(JBImageIcon(images.get(0)), JBImageIcon(images.get(1)))
     }
     catch (e: IOException) {
-      LOG.debug(e)
-      null
+      LOG.warn(e)
+      return null
     }
   }
 }
 
+@Service(Service.Level.APP)
 private class PluginLogoLoader(private val coroutineScope: CoroutineScope) {
   fun schedulePluginIconLoading(loadInfo: List<Pair<IdeaPluginDescriptor, LazyPluginLogoIcon>>) {
     val app = ApplicationManager.getApplication()
@@ -351,7 +348,7 @@ private class PluginLogoLoader(private val coroutineScope: CoroutineScope) {
     coroutineScope.launch(Dispatchers.IO) {
       for (info in loadInfo) {
         launch {
-          PluginLogo.loadPluginIcons(info.first, info.second)
+          PluginLogo.loadPluginIcons(descriptor = info.first, lazyIcon = info.second)
         }
       }
     }

@@ -6,9 +6,11 @@ package com.intellij.ui.svg
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.ui.icons.getResourceData
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.SVGLoader
 import com.intellij.util.text.CharSequenceReader
 import com.intellij.util.xml.dom.createXmlStreamReader
@@ -290,4 +292,20 @@ private fun renderImage(colorPatcher: SvgAttributePatcher?,
     IconLoadMeasurer.svgDecoding.end(decodingStart)
   }
   return bufferedImage
+}
+
+@ApiStatus.Internal
+fun loadWithScales(sizes: List<Int>, inputStream: InputStream): List<Image> {
+  val document = createJSvgDocument(inputStream)
+  val scale = JBUIScale.sysScale()
+  val isHiDpiNeeded = JreHiDpiUtil.isJreHiDPIEnabled() && JBUIScale.isHiDPI(scale.toDouble())
+  return sizes.map { size ->
+    val result = renderSvgWithSize(document = document, width = (size * scale), height = (size * scale))
+    if (isHiDpiNeeded) {
+      JBHiDPIScaledImage(result, scale.toDouble())
+    }
+    else {
+      result
+    }
+  }
 }
