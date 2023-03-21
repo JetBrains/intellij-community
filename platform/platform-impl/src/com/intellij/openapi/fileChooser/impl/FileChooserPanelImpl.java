@@ -334,6 +334,9 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       var path = typedPath();
       return path != null ? List.of(path) : List.of();
     }
+    else if (myList.getSelectedObjects().isEmpty()) {
+      return myCurrentDirectory != null ? List.of(myCurrentDirectory) : List.of();
+    }
     else {
       return myList.getSelectedObjects().stream()
         .filter(r -> r.selectable)
@@ -755,8 +758,8 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     if (selection.get() != null) {
       myList.setSelection(List.of(selection.get()));
     }
-    else if (myModel.getRowCount() > 0) {
-      myList.setRowSelectionInterval(0, 0);
+    else {
+      myList.clearSelection();
     }
   }
 
