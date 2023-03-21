@@ -2,11 +2,11 @@
 
 package com.intellij.openapi.application.rw
 
-import com.intellij.concurrency.installThreadContext
 import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.progress.Cancellation
-import com.intellij.openapi.progress.executeWithJobAndCompleteIt
+import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.executeActionAndCompleteJob
 import com.intellij.openapi.progress.prepareThreadContext
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils.runActionAndCancelBeforeWrite
 import kotlinx.coroutines.Job
@@ -16,9 +16,7 @@ import kotlin.coroutines.cancellation.CancellationException
 
 internal fun <X> cancellableReadAction(action: () -> X): X = prepareThreadContext { ctx ->
   try {
-    installThreadContext(ctx).use {
-      cancellableReadActionInternal(ctx, action)
-    }
+    cancellableReadActionInternal(ctx, action)
   }
   catch (ce: CancellationException) {
     // One of two variants is thrown:
@@ -44,21 +42,25 @@ internal fun <X> cancellableReadAction(action: () -> X): X = prepareThreadContex
 internal fun <X> cancellableReadActionInternal(ctx: CoroutineContext, action: () -> X): X {
   // A child Job is started to be externally cancellable by a write action without cancelling the current Job.
   val readJob = Job(parent = ctx[Job])
-  var resultRef: Value<X>? = null
-  val application = ApplicationManagerEx.getApplicationEx()
-  runActionAndCancelBeforeWrite(application, readJob::cancelReadJob) {
-    readJob.ensureActive()
-    application.tryRunReadAction {
-      readJob.ensureActive()
-      resultRef = Value(executeWithJobAndCompleteIt(readJob, action))
+  return executeActionAndCompleteJob(readJob) {
+    blockingContext(ctx + readJob) {
+      var resultRef: Value<X>? = null
+      val application = ApplicationManagerEx.getApplicationEx()
+      runActionAndCancelBeforeWrite(application, readJob::cancelReadJob) {
+        readJob.ensureActive()
+        application.tryRunReadAction {
+          readJob.ensureActive()
+          resultRef = Value(action())
+        }
+      }
+      val result = resultRef
+      if (result == null) {
+        readJob.ensureActive()
+        error("read job must've been cancelled")
+      }
+      result.value
     }
   }
-  val result = resultRef
-  if (result == null) {
-    readJob.ensureActive()
-    error("read job must've been cancelled")
-  }
-  return result.value
 }
 
 private fun Job.cancelReadJob() {

@@ -12,7 +12,6 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.coroutines.cancellation.CancellationException
 
 fun <X> withCurrentJob(job: Job, action: () -> X): X = Cancellation.withCurrentJob(job, ThrowableComputable(action))
 
@@ -110,12 +109,12 @@ private fun cancelWithIndicator(job: Job, indicator: ProgressIndicator): Job {
  * @return action result
  */
 @Internal
-fun <X> executeWithJobAndCompleteIt(
+fun <X> executeActionAndCompleteJob(
   job: CompletableJob,
   action: () -> X,
 ): X {
   try {
-    val result: X = withCurrentJob(job, action)
+    val result: X = action()
     job.complete()
     return result
   }

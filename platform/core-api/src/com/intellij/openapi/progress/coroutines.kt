@@ -174,11 +174,25 @@ fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: su
  * @see com.intellij.concurrency.currentThreadContext
  */
 suspend fun <T> blockingContext(action: () -> T): T {
-  val currentContext = coroutineContext.minusKey(ContinuationInterceptor.Key)
-  return installThreadContext(currentContext).use {
-    // this will catch com.intellij.openapi.progress.JobCanceledException
-    // and throw original java.util.concurrent.CancellationException instead
-    withCurrentJob(currentContext.job, action)
+  val coroutineContext = coroutineContext
+  return blockingContext(coroutineContext, action)
+}
+
+@Internal
+fun <T> blockingContext(currentContext: CoroutineContext, action: () -> T): T {
+  val context = currentContext.minusKey(ContinuationInterceptor)
+  return installThreadContext(context).use {
+    try {
+      action()
+    }
+    catch (e: JobCanceledException) {
+      // This exception is thrown only from `Cancellation.checkCancelled`.
+      // If it's caught, then the job must've been cancelled.
+      if (!context.job.isCancelled) {
+        throw IllegalStateException("JobCanceledException must be thrown by ProgressManager.checkCanceled()", e)
+      }
+      throw CurrentJobCancellationException(e)
+    }
   }
 }
 
