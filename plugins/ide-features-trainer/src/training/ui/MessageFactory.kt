@@ -155,11 +155,11 @@ internal object MessageFactory {
             val keyStroke = KeyStroke.getKeyStroke(text) ?: error("Failed to parse key stroke, element: $element")
             this.shortcut(keyStroke)
           }
+          "code" -> this.code(text)
           "ide" -> LessonUtil.productName
 
           "icon" -> error("Need to return reflection-based icon processing")
           "illustration" -> error("Illustrations are not supported in Features Trainer GotIt tooltips for now")
-          "code" -> error("Code elements are not supported in GotIt tooltips for now")
           "shortcut" -> error("Use 'raw_shortcut' with providing key stroke instead, element: $element")
           else -> error("Unknown tag: ${content.name}")
         }

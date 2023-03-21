@@ -47,7 +47,7 @@ class ShowGotItDemoAction : DumbAwareAction() {
 
   private class GotItConfigurationDialog(private val project: Project, private val component: JComponent) : DialogWrapper(project, false) {
     private var text: String = """
-      This is Debug tool window. 
+      This is Debug tool window. Code element example: <code>cLodlpe ja</code>.
       Here, you can use various actions like <shortcut actionId="GotoAction"/>,
       <b>Resume</b> <icon src="AllIcons.Actions.Resume"/>, 
       and <b>Stop</b> <icon src="AllIcons.Actions.Suspend"/>.""".trimIndent()

@@ -1579,6 +1579,26 @@ public final class JBUI {
         return base;
       }
 
+      public static @NotNull Color codeForeground(boolean useContrastColors) {
+        return JBColor.namedColor("GotItTooltip.codeForeground", foreground(useContrastColors));
+      }
+
+      public static @NotNull Color codeBackground(boolean useContrastColors) {
+        Color base = background(useContrastColors);
+        if (useContrastColors) {
+          return base;
+        }
+        return JBColor.namedColor("GotItTooltip.codeBackground", base);
+      }
+
+      public static @NotNull Color codeBorderColor(boolean useContrastColors) {
+        Color base = JBColor.namedColor("GotItTooltip.codeBorderColor", shortcutBackground(useContrastColors));
+        if (useContrastColors) {
+          return JBColor.namedColor("Tooltip.Learning.codeBorderColor", base);
+        }
+        return base;
+      }
+
       public static @NotNull Color linkForeground() {
         return JBColor.namedColor("GotItTooltip.linkForeground", JBUI.CurrentTheme.Link.Foreground.ENABLED);
       }
