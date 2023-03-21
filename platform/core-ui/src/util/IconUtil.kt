@@ -425,7 +425,7 @@ object IconUtil {
     else {
       ScaleContext.create(ancestor)
     }
-    ctx.setScale(ScaleType.OBJ_SCALE.of(scale.toDouble()))
+    ctx.setScale(ScaleType.OBJ_SCALE.of(scale))
     return scale(icon = icon, scaleContext = ctx)
   }
 

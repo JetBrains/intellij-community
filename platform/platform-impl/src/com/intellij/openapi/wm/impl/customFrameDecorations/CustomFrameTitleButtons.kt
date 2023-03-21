@@ -32,7 +32,7 @@ internal open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
     }
 
     fun freezeIconUserSize(icon: Icon): Icon {
-      return IconUtil.overrideScale(IconUtil.deepCopy(icon, null), ScaleType.USR_SCALE.of(UISettings.defFontScale.toDouble()))
+      return IconUtil.overrideScale(IconUtil.deepCopy(icon, null), ScaleType.USR_SCALE.of(UISettings.defFontScale))
     }
   }
 

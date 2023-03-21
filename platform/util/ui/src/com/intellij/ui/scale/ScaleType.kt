@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.scale
 
+import org.jetbrains.annotations.ApiStatus.Internal
+
 /**
  * The IDE supports two different HiDPI modes:
  *
@@ -87,4 +89,7 @@ enum class ScaleType {
   OBJ_SCALE;
 
   fun of(value: Double): Scale = Scale.create(value = value, type = this)
+
+  @Internal
+  fun of(value: Float): Scale = Scale.create(value = value.toDouble(), type = this)
 }

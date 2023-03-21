@@ -27,8 +27,8 @@ fun isIconTooLargeForCache(icon: Icon): Boolean {
 }
 
 private fun key(context: ScaleContext): Long {
-  return (context.getScale(DerivedScaleType.EFF_USR_SCALE).toFloat().toBits().toLong() shl 32) or
-    (context.getScale(ScaleType.SYS_SCALE).toFloat().toBits().toLong() and 0xffffffffL)
+  return (context.getScale(DerivedScaleType.EFF_USR_SCALE).toBits() shl 32) or
+    (context.getScale(ScaleType.SYS_SCALE).toBits() and 0xffffffffL)
 }
 
 internal class ScaledIconCache {

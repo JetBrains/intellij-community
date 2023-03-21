@@ -189,7 +189,7 @@ open class CachedImageIcon protected constructor(
     }
     else {
       val effectiveScaleContext: ScaleContext = scaleContext.copy()
-      effectiveScaleContext.setScale(ScaleType.OBJ_SCALE.of(scale.toDouble()))
+      effectiveScaleContext.setScale(ScaleType.OBJ_SCALE.of(scale))
       return scaledIconCache.getOrScaleIcon(scale = scale, host = this, scaleContext = effectiveScaleContext) ?: this
     }
   }
@@ -200,7 +200,7 @@ open class CachedImageIcon protected constructor(
     }
 
     val scaleContext = if (ancestor == null) ScaleContext.create(scaleContext) else ScaleContext.create(ancestor)
-    scaleContext.setScale(ScaleType.OBJ_SCALE.of(scale.toDouble()))
+    scaleContext.setScale(ScaleType.OBJ_SCALE.of(scale))
     return scaledIconCache.getOrScaleIcon(scale = scale, host = this, scaleContext = scaleContext) ?: this
   }
 

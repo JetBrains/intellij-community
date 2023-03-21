@@ -226,7 +226,7 @@ private class SvgIconData(private val originalIcon: Icon?, userScaledSize: Int) 
       return emptyIcon()
     }
     if (originalIcon is ScaleContextAware) {
-      originalIcon.updateScaleContext(ScaleContext.create(ScaleType.SYS_SCALE.of(sysScale.toDouble())))
+      originalIcon.updateScaleContext(ScaleContext.create(ScaleType.SYS_SCALE.of(sysScale)))
     }
     val iconSize = max(originalIcon.iconWidth, originalIcon.iconHeight)
     return if (iconSize == userScaledSize)
