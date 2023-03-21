@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.JBPopupMenu
+import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
@@ -529,7 +530,7 @@ internal class SingleContentLayout(
       return true
     }
 
-    override fun showMorePopup() {
+    override fun showMorePopup(): JBPopup? {
       val contentToShow = labels
         .filter { it.bounds.width <= 0 }
         .map(MyContentTabLabel::getContent)
@@ -545,9 +546,10 @@ internal class SingleContentLayout(
         override fun getTextFor(value: SubContent) = value.displayName
       }
 
-      JBPopupFactory.getInstance()
+      val popup = JBPopupFactory.getInstance()
         .createListPopup(step)
-        .show(RelativePoint.getSouthWestOf(popupToolbar))
+      popup.show(RelativePoint.getSouthWestOf(popupToolbar))
+      return popup
     }
   }
 

@@ -32,7 +32,6 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBThinOverlappingScrollBar;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.hover.HoverListener;
-import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.ui.scale.JBUIScale;
@@ -211,8 +210,6 @@ public class JBTabsImpl extends JComponent
   private boolean myRemoveNotifyInProgress;
 
   private boolean mySingleRow = true;
-
-  private final PopupState myMorePopupState = PopupState.forPopup();
 
   protected JBTabsBorder createTabBorder() {
     return new JBDefaultTabsBorder(this);
@@ -957,22 +954,20 @@ public class JBTabsImpl extends JComponent
   }
 
   @Override
-  public void showMorePopup() {
-    if (myMorePopupState.isRecentlyHidden()) return;
-
+  public @Nullable JBPopup showMorePopup() {
     Rectangle rect = getMoreRect();
-    if (rect == null) return;
+    if (rect == null) return null;
 
     List<TabInfo> hiddenInfos = ContainerUtil.filter(getVisibleInfos(), tabInfo -> mySingleRowLayout.isTabHidden(tabInfo));
     if (ExperimentalUI.isNewUI()) {
-      showListPopup(rect, hiddenInfos);
+      return showListPopup(rect, hiddenInfos);
     }
     else {
-      showTabLabelsPopup(rect, hiddenInfos);
+      return showTabLabelsPopup(rect, hiddenInfos);
     }
   }
 
-  private void showListPopup(Rectangle rect, List<TabInfo> hiddenInfos) {
+  private JBPopup showListPopup(Rectangle rect, List<TabInfo> hiddenInfos) {
     int separatorIndex = ContainerUtil.indexOf(hiddenInfos, info -> {
       TabLabel label = myInfo2Label.get(info);
       return getPosition().isSide() ? label.getY() >= 0 : label.getX() >= 0;
@@ -1203,10 +1198,13 @@ public class JBTabsImpl extends JComponent
 
               JBPopup curPopup = PopupUtil.getPopupContainerFor(list);
               if (curPopup != null) {
+                Component button = PopupUtil.getPopupToggleComponent(curPopup);
                 curPopup.cancel();
-                myMorePopupState.isRecentlyHidden();
                 if (list.getModel().getSize() > 0) {
-                  showMorePopup();
+                  JBPopup newPopup = showMorePopup();
+                  if (newPopup != null) {
+                    PopupUtil.setPopupToggleComponent(newPopup, button);
+                  }
                 }
               }
             }
@@ -1223,7 +1221,6 @@ public class JBTabsImpl extends JComponent
       };
     });
 
-    myMorePopupState.prepareToShow(popup);
     popup.getContent().putClientProperty(MorePopupAware.class, Boolean.TRUE);
     popup.addListener(new JBPopupListener() {
       @Override
@@ -1234,6 +1231,7 @@ public class JBTabsImpl extends JComponent
       }
     });
     popup.show(new RelativePoint(this, new Point(rect.x, rect.y + rect.height)));
+    return popup;
   }
 
   // returns the icon that will be used in the hidden tabs list
@@ -1288,7 +1286,7 @@ public class JBTabsImpl extends JComponent
     }
   }
 
-  private void showTabLabelsPopup(Rectangle rect, List<TabInfo> hiddenInfos) {
+  private JBPopup showTabLabelsPopup(Rectangle rect, List<TabInfo> hiddenInfos) {
     JPanel gridPanel = new JPanel(new GridLayout(hiddenInfos.size(), 1));
     JScrollPane scrollPane = new JBScrollPane(gridPanel) {
       @Override
@@ -1333,9 +1331,9 @@ public class JBTabsImpl extends JComponent
       }
       gridPanel.add(label);
     }
-    myMorePopupState.prepareToShow(popup);
     popup.getContent().putClientProperty(MorePopupAware.class, Boolean.TRUE);
     popup.show(new RelativePoint(this, new Point(rect.x, rect.y + rect.height)));
+    return popup;
   }
 
   private @Nullable JComponent getToFocus() {

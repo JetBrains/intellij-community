@@ -5,6 +5,7 @@ import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.dnd.DnDSupport;
 import com.intellij.ide.dnd.DnDTarget;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.NlsActions;
@@ -122,16 +123,18 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
   }
 
   @Override
-  public void showMorePopup() {
+  public @Nullable JBPopup showMorePopup() {
     Rectangle rect = getMoreRect();
     if (rect == null) {
-      return;
+      return null;
     }
     List<? extends ContentTabLabel> tabs = ContainerUtil.filter(this.tabs, lastLayout.toDrop::contains);
     final List<Content> contentsToShow = ContainerUtil.map(tabs, ContentTabLabel::getContent);
     final SelectContentStep step = new SelectContentStep(contentsToShow);
     RelativePoint point = new RelativePoint(ui.getTabComponent(), new Point(rect.x, rect.y + rect.height));
-    JBPopupFactory.getInstance().createListPopup(step).show(point);
+    ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
+    popup.show(point);
+    return popup;
   }
 
   @Override
