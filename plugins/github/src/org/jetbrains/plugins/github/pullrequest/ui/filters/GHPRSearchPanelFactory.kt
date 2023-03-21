@@ -39,7 +39,10 @@ internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel, private val 
         showAsyncChooserPopup(
           point, popupState,
           itemsLoader = { vm.getAuthors() },
-          presenter = { PopupItemPresentation.Simple(it.shortName, avatarIconsProvider.getIcon(it.avatarUrl, Avatar.Sizes.BASE), it.name) }
+          presenter = { PopupItemPresentation.Simple(
+            it.shortName,
+            avatarIconsProvider.getIcon(it.avatarUrl, Avatar.Sizes.BASE),
+            it.name?.let { fullName -> "(${fullName})" }) }
         )?.login
       },
     DropDownComponentFactory(vm.labelFilterState)
@@ -55,7 +58,10 @@ internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel, private val 
         showAsyncChooserPopup(
           point, popupState,
           itemsLoader = { vm.getAssignees() },
-          presenter = { PopupItemPresentation.Simple(it.shortName, avatarIconsProvider.getIcon(it.avatarUrl, Avatar.Sizes.BASE), it.name) }
+          presenter = { PopupItemPresentation.Simple(
+            it.shortName,
+            avatarIconsProvider.getIcon(it.avatarUrl, Avatar.Sizes.BASE),
+            it.name?.let { fullName -> "($fullName)" }) }
         )?.login
       },
     DropDownComponentFactory(vm.reviewFilterState)

@@ -219,7 +219,7 @@ object ChooserPopupUtil {
       val fullText = presentation.fullText
       if (fullText != null) {
         append(" ")
-        append("($fullText)", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+        append("$fullText", SimpleTextAttributes.GRAYED_ATTRIBUTES)
       }
 
       // ColoredListCellRenderer sets null for a background in case of !selected, so it can't work with SelectablePanel
