@@ -20,7 +20,7 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.toJBEmptyBorder
 import com.intellij.util.asSafely
 import com.intellij.util.io.isDirectory
@@ -143,7 +143,7 @@ class RuntimeChooserDialog(
       border = JBUI.Borders.merge(JBUI.Borders.empty(10), customLine, true)
       background = if (ExperimentalUI.isNewUI()) JBUI.CurrentTheme.Banner.WARNING_BACKGROUND else JBUI.CurrentTheme.Notification.BACKGROUND
       foreground = JBUI.CurrentTheme.Notification.FOREGROUND
-      putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY)
+      putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
     }
   }
 
