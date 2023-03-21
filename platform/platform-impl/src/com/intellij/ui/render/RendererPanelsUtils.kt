@@ -4,7 +4,6 @@ package com.intellij.ui.render
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.gridLayout.Constraints
-import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
@@ -161,7 +160,7 @@ open class IconPanel : SelectablePanel() {
  */
 fun resetHorizontalInsets(vararg components: JComponent) {
   for (component in components) {
-    component.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY)
+    component.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
 
     val border = component.border
     if (border != null && (border.javaClass === EmptyBorder::class.java || border.javaClass === JBEmptyBorder::class.java)) {

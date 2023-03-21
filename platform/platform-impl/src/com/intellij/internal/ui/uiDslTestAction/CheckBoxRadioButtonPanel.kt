@@ -7,7 +7,7 @@ import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
@@ -102,6 +102,6 @@ private fun Cell<JToggleButton>.customize(background: Color, border: Border) {
     isOpaque = true
     this.background = background
     this.border = border
-    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY)
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
   }
 }
