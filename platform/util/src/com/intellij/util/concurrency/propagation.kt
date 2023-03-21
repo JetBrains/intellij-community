@@ -5,8 +5,6 @@
 
 package com.intellij.util.concurrency
 
-import com.intellij.concurrency.ContextCallable
-import com.intellij.concurrency.ContextRunnable
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.openapi.progress.CancellationCallable
 import com.intellij.openapi.progress.CancellationFutureTask

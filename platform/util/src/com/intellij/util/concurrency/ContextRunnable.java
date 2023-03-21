@@ -1,36 +1,35 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.concurrency;
+package com.intellij.util.concurrency;
 
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.application.AccessToken;
 import kotlin.coroutines.CoroutineContext;
-import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.Callable;
+final class ContextRunnable implements Runnable {
 
-@Internal
-public final class ContextCallable<V> implements Callable<V> {
-
-  /**
-   * Whether this callable is expected to be at the bottom of the stacktrace.
-   */
   private final boolean myRoot;
   private final @NotNull CoroutineContext myParentContext;
-  private final @NotNull Callable<? extends V> myCallable;
+  private final @NotNull Runnable myRunnable;
 
-  public ContextCallable(boolean root, @NotNull CoroutineContext context, @NotNull Callable<? extends V> callable) {
+  ContextRunnable(boolean root, @NotNull CoroutineContext context, @NotNull Runnable runnable) {
     myRoot = root;
     myParentContext = context;
-    myCallable = callable;
+    myRunnable = runnable;
   }
 
   @Override
-  public V call() throws Exception {
+  public void run() {
     if (myRoot) {
       ThreadContext.checkUninitializedThreadContext();
     }
     try (AccessToken ignored = ThreadContext.replaceThreadContext(myParentContext)) {
-      return myCallable.call();
+      myRunnable.run();
     }
+  }
+
+  @Override
+  public String toString() {
+    return myRunnable.toString();
   }
 }
