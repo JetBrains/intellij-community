@@ -13,7 +13,6 @@ import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.SchedulingWrapper.MyScheduledFutureTask
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -106,9 +105,9 @@ private fun capturePropagationContext(runnable: Runnable): Runnable {
 internal fun <V> capturePropagationAndCancellationContext(callable: Callable<V>): FutureTask<V> {
   if (isPropagateCancellation) {
     val currentJob = Cancellation.currentJob()
-    val childDeferred = CompletableDeferred<V>(currentJob)
-    val cancellationCallable = CancellationCallable(childDeferred, callable)
-    return CancellationFutureTask(childDeferred, capturePropagationContext(cancellationCallable))
+    val childJob = Job(currentJob)
+    val cancellationCallable = CancellationCallable(childJob, callable)
+    return CancellationFutureTask(childJob, capturePropagationContext(cancellationCallable))
   }
   return FutureTask(capturePropagationContext(callable))
 }
@@ -120,9 +119,9 @@ internal fun <V> capturePropagationAndCancellationContext(
 ): MyScheduledFutureTask<V> {
   if (isPropagateCancellation) {
     val currentJob = Cancellation.currentJob()
-    val childDeferred = CompletableDeferred<V>(currentJob)
-    val cancellationCallable = CancellationCallable(childDeferred, callable)
-    return CancellationScheduledFutureTask(wrapper, childDeferred, capturePropagationContext(cancellationCallable), ns)
+    val job = Job(currentJob)
+    val cancellationCallable = CancellationCallable(job, callable)
+    return CancellationScheduledFutureTask(wrapper, job, capturePropagationContext(cancellationCallable), ns)
   }
   return wrapper.MyScheduledFutureTask(capturePropagationContext(callable), ns)
 }

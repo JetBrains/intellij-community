@@ -1,7 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
-import kotlinx.coroutines.CompletableDeferred;
+import kotlinx.coroutines.CompletableJob;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,23 +19,23 @@ import static com.intellij.openapi.progress.Cancellation.withCurrentJob;
 @Internal
 public final class CancellationCallable<V> implements Callable<V> {
 
-  private final @NotNull CompletableDeferred<V> myDeferred;
+  private final @NotNull CompletableJob myJob;
   private final @NotNull Callable<? extends V> myCallable;
 
-  public CancellationCallable(@NotNull CompletableDeferred<V> deferred, @NotNull Callable<? extends V> callable) {
-    myDeferred = deferred;
+  public CancellationCallable(@NotNull CompletableJob job, @NotNull Callable<? extends V> callable) {
+    myJob = job;
     myCallable = callable;
   }
 
   @Override
   public V call() throws Exception {
     try {
-      V result = withCurrentJob(myDeferred, myCallable::call);
-      myDeferred.complete(result);
+      V result = withCurrentJob(myJob, myCallable::call);
+      myJob.complete();
       return result;
     }
     catch (Throwable e) {
-      myDeferred.completeExceptionally(e);
+      myJob.completeExceptionally(e);
       throw e;
     }
   }
