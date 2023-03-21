@@ -2,24 +2,12 @@
 package com.intellij.concurrency
 
 import org.junit.jupiter.api.Test
-import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertSame
 
 class ThreadContextTest {
-
-  private fun assertContextElements(context: CoroutineContext, vararg elements: CoroutineContext.Element) {
-    for (element in elements) {
-      assertSame(element, context[element.key])
-    }
-    val contextSize = context.fold(0) { acc, _ ->
-      acc + 1
-    }
-    assertEquals(elements.size, contextSize)
-  }
 
   @Test
   fun `reset context`() {
@@ -32,26 +20,6 @@ class ThreadContextTest {
       assertNotNull(currentThreadContextOrNull())
     }
     assertNull(currentThreadContextOrNull())
-  }
-
-  @Test
-  fun `withThreadContext updates context`() {
-    val outerElement1 = TestElement("outer1")
-    withThreadContext(outerElement1).use {
-      assertContextElements(currentThreadContext(), outerElement1)
-
-      val innerElement1 = TestElement("inner1")
-      withThreadContext(innerElement1).use {
-        assertContextElements(currentThreadContext(), innerElement1)
-      }
-      assertContextElements(currentThreadContext(), outerElement1)
-
-      val innerElement2 = TestElement2("inner2")
-      withThreadContext(innerElement2).use {
-        assertContextElements(currentThreadContext(), outerElement1, innerElement2)
-      }
-      assertContextElements(currentThreadContext(), outerElement1)
-    }
   }
 
   @Test

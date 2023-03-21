@@ -57,22 +57,6 @@ fun installThreadContext(coroutineContext: CoroutineContext, replace: Boolean = 
   }
 }
 
-/**
- * Updates the current thread context with [coroutineContext] as per [CoroutineContext.plus].
- *
- * @return handle to restore the previous thread context
- */
-fun withThreadContext(coroutineContext: CoroutineContext): AccessToken {
-  return updateThreadContext { current ->
-    if (current == null) {
-      coroutineContext
-    }
-    else {
-      current + coroutineContext
-    }
-  }
-}
-
 private fun updateThreadContext(
   update: (CoroutineContext?) -> CoroutineContext?
 ): AccessToken {
