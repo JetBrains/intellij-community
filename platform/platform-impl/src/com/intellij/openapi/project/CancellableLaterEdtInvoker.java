@@ -3,7 +3,7 @@ package com.intellij.openapi.project;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,8 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 final class CancellableLaterEdtInvoker {
   private final @NotNull Project myProject;
-
-  private volatile ModalityState myDumbStartModality;
+  private volatile @Nullable ModalityState myDumbStartModality;
   private final AtomicInteger myCancellationCounter = new AtomicInteger();
 
   CancellableLaterEdtInvoker(@NotNull Project project) {
@@ -23,25 +22,21 @@ final class CancellableLaterEdtInvoker {
     myCancellationCounter.incrementAndGet();
   }
 
-  void invokeLaterIfProjectNotDisposed(@NotNull Runnable runnable) {
-    new TrackedEdtActivity(runnable).invokeLaterWithModality(ModalityState.defaultModalityState());
+  void invokeLaterWithDefaultModality(@NotNull Runnable runnable, @Nullable Runnable onCancelRunnable) {
+    new TrackedEdtActivity(runnable, onCancelRunnable).invokeLaterWithModality(ModalityState.defaultModalityState());
   }
 
-  void invokeLaterAfterProjectInitialized(@NotNull Runnable runnable) {
-    TrackedEdtActivity activity = new TrackedEdtActivity(runnable);
-    StartupManager.getInstance(myProject)
-      .runAfterOpened(() -> activity.invokeLaterWithModality(myDumbStartModality));
+  void invokeLaterWithDumbStartModality(@NotNull Runnable runnable) {
+    ModalityState modality = myDumbStartModality;
+    if (modality != null) {
+      new TrackedEdtActivity(runnable).invokeLaterWithModality(modality);
+    }
+    else {
+      Logger.getInstance(CancellableLaterEdtInvoker.class).info("invokeLaterWithDumbStartModality does nothing, because modality is null");
+    }
   }
 
-  void submitTransaction(@NotNull Runnable runnable) {
-    submitTransaction(runnable, null);
-  }
-
-  void submitTransaction(@NotNull Runnable runnable, @Nullable Runnable onCancelRunnable) {
-    new TrackedEdtActivity(runnable, onCancelRunnable).invokeLaterWithModality(ModalityState.NON_MODAL);
-  }
-
-  void setDumbStartModality(@NotNull ModalityState modality) {
+  void setDumbStartModality(@Nullable ModalityState modality) {
     myDumbStartModality = modality;
   }
 

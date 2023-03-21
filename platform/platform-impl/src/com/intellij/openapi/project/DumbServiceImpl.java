@@ -89,11 +89,18 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     @Override
     public void afterLastTask(@Nullable SubmissionReceipt latestReceipt) {
-      myCancellableLaterEdtInvoker.invokeLaterAfterProjectInitialized(() -> {
+      // If modality is null, then there is no dumb mode already (e.g. because the queue was processed under modal progress indicator)
+      // There are no races: if DumbStartModality is about to change in myCancellableLaterEdtInvoker, we either observe:
+      //   - if null modality about to change to non-null (happens only on EDT). This means that myLatestReceipt will also increase (on EDT)
+      //   - if non-null modality about to change to null (happens only on EDT) then myState will also change to WAITING_FOR_FINISH (on EDT)
+      // Either way, we don't need to execute the runnable. In the first case it will not be scheduled,
+      // in the second case it will abort immediately on the EDT in the first "if" statement.
+      myCancellableLaterEdtInvoker.invokeLaterWithDumbStartModality(() -> {
         // dumb service may already set to smart state by completeJustSubmittedTasks.
         if (myLatestReceipt.equals(latestReceipt) && myState.compareAndSet(State.SCHEDULED_OR_RUNNING_TASKS, State.WAITING_FOR_FINISH)) {
           updateFinished();
         }
+        // latestReceipt may be null if the queue is suspended or internal error has happened
         LOG.assertTrue(latestReceipt == null || !latestReceipt.isAfter(myLatestReceipt),
                        "latestReceipt=" + latestReceipt + " must not be newer than the latest known myLatestReceipt=" + myLatestReceipt);
       });
@@ -126,6 +133,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     // any project starts in dumb mode (except default project which is always smart)
     // we assume that queueStartupActivitiesRequiredForSmartMode will be invoked to advance WAITING_FOR_FINISH > SMART
     myState = new AtomicReference<>(project.isDefault() ? State.SMART : State.WAITING_FOR_FINISH);
+
+    // the first dumb mode should end in non-modal context
+    myCancellableLaterEdtInvoker.setDumbStartModality(ModalityState.NON_MODAL);
   }
 
   void queueStartupActivitiesRequiredForSmartMode() {
@@ -136,7 +146,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       // invokeLaterAfterProjectInitialized(this::updateFinished) does not work well in synchronous environments (e.g. in unit tests): code
       // continues to execute without waiting for smart mode to start because of invoke*Later*. See, for example, DbSrcFileDialectTest
       myState.compareAndSet(State.WAITING_FOR_FINISH, State.SMART);
-      myCancellableLaterEdtInvoker.submitTransaction(myPublisher::exitDumbMode);
+      myCancellableLaterEdtInvoker.invokeLaterWithDumbStartModality(myPublisher::exitDumbMode);
     }
   }
 
@@ -257,7 +267,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       runnable.run(); // will log errors if not already in a write-safe context
     }
     else {
-      myCancellableLaterEdtInvoker.submitTransaction(runnable, () -> Disposer.dispose(task));
+      myCancellableLaterEdtInvoker.invokeLaterWithDefaultModality(runnable, () -> Disposer.dispose(task));
     }
   }
 
@@ -267,7 +277,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     // we want to invoke LATER. I.e. right now one can invoke completeJustSubmittedTasks and
     // drain the queue synchronously under modal progress
-    myCancellableLaterEdtInvoker.invokeLaterIfProjectNotDisposed(() -> {
+    myCancellableLaterEdtInvoker.invokeLaterWithDumbStartModality(() -> {
       try {
         myGuiDumbTaskRunner.startBackgroundProcess();
       }
@@ -311,6 +321,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     myDumbEnterTrace = null;
     myDumbStart = null;
     myModificationCount++;
+    myCancellableLaterEdtInvoker.setDumbStartModality(null);
     return !myProject.isDisposed();
   }
 
