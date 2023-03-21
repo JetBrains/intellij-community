@@ -297,11 +297,11 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
 
   private @Nullable Path typedPath() {
     var object = myPath.getEditor().getItem();
-    if (object instanceof PathWrapper) {
-      return ((PathWrapper)object).path;
+    if (object instanceof PathWrapper wrapper) {
+      return wrapper.path;
     }
-    if (object instanceof String && !((String)object).isBlank()) {
-      var path = findByPath(FileUtil.expandUserHome(((String)object).trim()));
+    if (object instanceof String str && !str.isBlank()) {
+      var path = findByPath(FileUtil.expandUserHome(str.trim()));
       if (path != null && path.isAbsolute()) {
         return path;
       }
@@ -788,7 +788,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
 
     @Override
     public boolean equals(Object o) {
-      return this == o || o instanceof FsItem && path.equals(((FsItem)o).path);
+      return this == o || o instanceof FsItem item && path.equals(item.path);
     }
 
     @Override
@@ -941,8 +941,8 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       super(FS, file, attrs);
       myParent = parent;
       myChildren = attrs.isDirectory() ? new HashMap<>() : null;
-      if (parent instanceof PreloadedDirectory) {
-        ((PreloadedDirectory)parent).myChildren.add(this);
+      if (parent instanceof PreloadedDirectory preloaded) {
+        preloaded.myChildren.add(this);
       }
     }
 
