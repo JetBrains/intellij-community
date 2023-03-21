@@ -36,9 +36,9 @@ public class TextToIconPaintTest extends CompositeIconPaintTestHelper {
 
   static {
     for (int[] scaleData : SCALES_TO_SIZE) {
-      CTX_TO_SIZE.put(ScaleContext.create(USR_SCALE.of(scaleData[0]),
-                                          SYS_SCALE.of(scaleData[1]),
-                                          OBJ_SCALE.of(scaleData[2])),
+      CTX_TO_SIZE.put(ScaleContext.Companion.create(USR_SCALE.of(scaleData[0]),
+                                                    SYS_SCALE.of(scaleData[1]),
+                                                    OBJ_SCALE.of(scaleData[2])),
                       scaleData[3]);
     }
   }

@@ -1,223 +1,192 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui.scale;
+package com.intellij.ui.scale
 
-import com.intellij.ui.JreHiDpiUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.awt.*;
-import java.lang.ref.WeakReference;
-import java.util.function.Function;
-
-import static com.intellij.ui.scale.DerivedScaleType.DEV_SCALE;
-import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
-import static com.intellij.ui.scale.ScaleType.USR_SCALE;
+import com.intellij.ui.JreHiDpiUtil
+import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.ui.scale.JBUIScale.sysScale
+import java.awt.Component
+import java.awt.Graphics2D
+import java.awt.GraphicsConfiguration
+import java.lang.ref.WeakReference
+import java.util.function.Function
 
 /**
- * Extends {@link UserScaleContext} with the system scale, and is thus used for raster-based painting.
- * The context is created via a context provider. If the provider is {@link Component}, the context's
- * system scale can be updated via a call to {@link #update()}, reflecting the current component's
+ * Extends [UserScaleContext] with the system scale, and is thus used for raster-based painting.
+ * The context is created via a context provider. If the provider is [Component], the context's
+ * system scale can be updated via a call to [.update], reflecting the current component's
  * system scale (which may change as the component moves b/w devices).
  *
  * @see ScaleContextAware
+ *
  * @author tav
  */
-@SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-public class ScaleContext extends UserScaleContext {
-  protected Scale sysScale = SYS_SCALE.of(JBUIScale.sysScale());
+class ScaleContext() : UserScaleContext() {
+  companion object {
+    /**
+     * Creates a context with all scale factors set to 1.
+     */
+    @JvmStatic
+    fun createIdentity(): ScaleContext = create(ScaleType.USR_SCALE.of(1.0), ScaleType.SYS_SCALE.of(1.0))
 
-  protected @Nullable WeakReference<Component> compRef;
-
-  protected ScaleContext() {
-    pixScale = derivePixScale();
-  }
-
-  protected ScaleContext(@NotNull Scale scale) {
-    this();
-    setScale(scale);
-  }
-
-  /**
-   * Creates a context with all scale factors set to 1.
-   */
-  public static @NotNull ScaleContext createIdentity() {
-    return create(USR_SCALE.of(1), SYS_SCALE.of(1));
-  }
-
-  /**
-   * Creates a context from the provided {@code ctx}.
-   */
-  public static @NotNull ScaleContext create(@Nullable UserScaleContext ctx) {
-    ScaleContext c = create();
-    c.update(ctx);
-    return c;
-  }
-
-  /**
-   * Creates a context based on the component's system scale and sticks to it via the {@link #update()} method.
-   */
-  public static @NotNull ScaleContext create(@Nullable Component component) {
-    ScaleContext context = new ScaleContext(SYS_SCALE.of(JBUIScale.sysScale(component)));
-    if (component != null) {
-      context.compRef = new WeakReference<>(component);
+    /**
+     * Creates a context from the provided `ctx`.
+     */
+    @JvmStatic
+    fun create(context: UserScaleContext?): ScaleContext {
+      val result = ScaleContext()
+      result.update(context)
+      return result
     }
-    return context;
+
+    /**
+     * Creates a context based on the component's system scale and sticks to it via the [.update] method.
+     */
+    @JvmStatic
+    fun create(component: Component?): ScaleContext {
+      val context = ScaleContext(ScaleType.SYS_SCALE.of(sysScale(component).toDouble()))
+      if (component != null) {
+        context.componentRef = WeakReference(component)
+      }
+      return context
+    }
+
+    /**
+     * Creates a context based on the GraphicsConfiguration's system scale
+     */
+    @JvmStatic
+    fun create(gc: GraphicsConfiguration?): ScaleContext = ScaleContext(ScaleType.SYS_SCALE.of(sysScale(gc).toDouble()))
+
+    /**
+     * Creates a context based on the g's system scale
+     */
+    @JvmStatic
+    fun create(g: Graphics2D?): ScaleContext = ScaleContext(ScaleType.SYS_SCALE.of(sysScale(g).toDouble()))
+
+    /**
+     * Creates a context with the provided scale
+     */
+    @JvmStatic
+    fun create(scale: Scale): ScaleContext = ScaleContext(scale)
+
+    /**
+     * Creates a context with the provided scale factors
+     */
+    fun create(vararg scales: Scale): ScaleContext {
+      val scaleContext = ScaleContext()
+      for (s in scales) {
+        scaleContext.setScale(s)
+      }
+      return scaleContext
+    }
+
+    /**
+     * Creates a default context with the default screen scale and the current user scale
+     */
+    @JvmStatic
+    fun create(): ScaleContext = ScaleContext()
   }
+
+  private var sysScale = ScaleType.SYS_SCALE.of(sysScale().toDouble())
+  private var componentRef: WeakReference<Component>? = null
+
+  init {
+    pixScale = derivePixScale()
+  }
+
+  private constructor(scale: Scale) : this() {
+    setScale(scale)
+  }
+
+  override fun derivePixScale(): Double = getScale(DerivedScaleType.DEV_SCALE) * super.derivePixScale()
 
   /**
-   * Creates a context based on the gc's system scale
+   * {@inheritDoc}
    */
-  public static @NotNull ScaleContext create(@Nullable GraphicsConfiguration gc) {
-    return new ScaleContext(SYS_SCALE.of(JBUIScale.sysScale(gc)));
+  override fun getScale(type: ScaleType): Double {
+    return if (type == ScaleType.SYS_SCALE) sysScale.value else super.getScale(type)
   }
 
-  /**
-   * Creates a context based on the g's system scale
-   */
-  public static @NotNull ScaleContext create(Graphics2D g) {
-    return new ScaleContext(SYS_SCALE.of(JBUIScale.sysScale(g)));
-  }
-
-  /**
-   * Creates a context with the provided scale
-   */
-  public static @NotNull ScaleContext create(@NotNull Scale scale) {
-    return new ScaleContext(scale);
-  }
-
-  /**
-   * Creates a context with the provided scale factors
-   */
-  public static @NotNull ScaleContext create(Scale @NotNull ... scales) {
-    ScaleContext ctx = create();
-    for (Scale s : scales) ctx.setScale(s);
-    return ctx;
-  }
-
-  /**
-   * Creates a default context with the default screen scale and the current user scale
-   */
-  public static @NotNull ScaleContext create() {
-    return new ScaleContext();
-  }
-
-  @Override
-  protected double derivePixScale() {
-    return getScale(DEV_SCALE) * super.derivePixScale();
+  override fun getScaleObject(type: ScaleType): Scale {
+    return if (type == ScaleType.SYS_SCALE) sysScale else super.getScaleObject(type)
   }
 
   /**
    * {@inheritDoc}
    */
-  @Override
-  public double getScale(@NotNull ScaleType type) {
-    return type == SYS_SCALE ? sysScale.value : super.getScale(type);
-  }
-
-  @Override
-  protected @NotNull Scale getScaleObject(@NotNull ScaleType type) {
-    return type == SYS_SCALE ? sysScale : super.getScaleObject(type);
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public double getScale(@NotNull DerivedScaleType type) {
-    return switch (type) {
-      case DEV_SCALE -> JreHiDpiUtil.isJreHiDPIEnabled() ? sysScale.value : 1;
-      case EFF_USR_SCALE -> usrScale.value * objScale.value;
-      case PIX_SCALE -> pixScale;
-    };
+  override fun getScale(type: DerivedScaleType): Double {
+    return when (type) {
+      DerivedScaleType.DEV_SCALE -> if (JreHiDpiUtil.isJreHiDPIEnabled()) sysScale.value else 1.0
+      DerivedScaleType.EFF_USR_SCALE -> usrScale.value * objScale.value
+      DerivedScaleType.PIX_SCALE -> pixScale
+    }
   }
 
   /**
    * {@inheritDoc}
    * Also updates the system scale (if the context was created from Component) if necessary.
    */
-  @Override
-  public boolean update() {
-    boolean updated = setScale(USR_SCALE.of(JBUIScale.scale(1f)));
-    if (compRef != null) {
-      Component component = compRef.get();
+  override fun update(): Boolean {
+    var updated = setScale(ScaleType.USR_SCALE.of(scale(1f).toDouble()))
+    if (componentRef != null) {
+      val component = componentRef!!.get()
       if (component != null) {
-        updated = setScale(SYS_SCALE.of(JBUIScale.sysScale(component.getGraphicsConfiguration()))) || updated;
+        updated = setScale(ScaleType.SYS_SCALE.of(sysScale(component.graphicsConfiguration).toDouble())) || updated
       }
     }
-    return onUpdated(updated);
+    return onUpdated(updated)
   }
 
   /**
    * {@inheritDoc}
    * Also includes the system scale.
    */
-  @Override
-  public boolean setScale(@NotNull Scale scale) {
+  override fun setScale(scale: Scale): Boolean {
     if (isScaleOverridden(scale)) {
-      return false;
+      return false
+    }
+    if (scale.type == ScaleType.SYS_SCALE) {
+      val updated = sysScale != scale
+      sysScale = scale
+      return onUpdated(updated)
+    }
+    return super.setScale(scale)
+  }
+
+  override fun <T : UserScaleContext> updateAll(scaleContext: T): Boolean {
+    val updated = super.updateAll(scaleContext)
+    if (scaleContext !is ScaleContext) {
+      return updated
     }
 
-    if (scale.type == SYS_SCALE) {
-      boolean updated = !sysScale.equals(scale);
-      sysScale = scale;
-      return onUpdated(updated);
+    componentRef?.clear()
+    componentRef = scaleContext.componentRef
+    return setScale(scaleContext.sysScale) || updated
+  }
+
+  override fun equals(other: Any?): Boolean {
+    return if (super.equals(other) && other is ScaleContext) {
+      other.sysScale.value == sysScale.value
     }
-    return super.setScale(scale);
+    else false
   }
 
-  @Override
-  protected <T extends UserScaleContext> boolean updateAll(@NotNull T scaleContext) {
-    boolean updated = super.updateAll(scaleContext);
-    if (!(scaleContext instanceof ScaleContext context)) {
-      return updated;
-    }
-
-    if (compRef != null) {
-      compRef.clear();
-    }
-    compRef = context.compRef;
-
-    return setScale(context.sysScale) || updated;
+  override fun hashCode(): Int {
+    return java.lang.Double.hashCode(sysScale.value) * 31 + super.hashCode()
   }
 
-  @Override
-  public boolean equals(Object obj) {
-    if (super.equals(obj) && obj instanceof ScaleContext that) {
-      return that.sysScale.value == sysScale.value;
-    }
-    return false;
+  override fun dispose() {
+    super.dispose()
+    componentRef?.clear()
   }
 
-  @Override
-  public int hashCode() {
-    return Double.hashCode(sysScale.value) * 31 + super.hashCode();
+  override fun <T : UserScaleContext> copy(): T {
+    val result = createIdentity()
+    result.updateAll(this)
+    @Suppress("UNCHECKED_CAST")
+    return result as T
   }
 
-  @Override
-  public void dispose() {
-    super.dispose();
-    if (compRef != null) {
-      compRef.clear();
-    }
-  }
+  override fun toString(): String = "$usrScale, $sysScale, $objScale, $pixScale"
 
-  @Override
-  public @NotNull <T extends UserScaleContext> T copy() {
-    ScaleContext ctx = createIdentity();
-    ctx.updateAll(this);
-    //noinspection unchecked
-    return (T)ctx;
-  }
-
-  @Override
-  public String toString() {
-    return usrScale + ", " + sysScale + ", " + objScale + ", " + pixScale;
-  }
-
-  @SuppressWarnings("ClassNameSameAsAncestorName")
-  public static class Cache<D> extends UserScaleContext.Cache<D, ScaleContext> {
-    public Cache(@NotNull Function<? super ScaleContext, ? extends D> dataProvider) {
-      super(dataProvider);
-    }
-  }
+  open class Cache<D>(dataProvider: Function<in ScaleContext, out D>) : UserScaleContext.Cache<D, ScaleContext>(dataProvider)
 }
