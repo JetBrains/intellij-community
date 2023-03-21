@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -47,7 +48,7 @@ internal class SymbolBasedKotlinMainFunctionDetector : KotlinMainFunctionDetecto
                         ?: return false
 
                     val parameterType = parameterTypeReference.getKtType()
-                    if (!parameterType.isSubTypeOf(buildMainParameterType())) {
+                    if (!parameterType.isResolvedClassType() || !parameterType.isSubTypeOf(buildMainParameterType())) {
                         return false
                     }
                 }
@@ -100,5 +101,11 @@ internal class SymbolBasedKotlinMainFunctionDetector : KotlinMainFunctionDetecto
             argument(argumentType, Variance.OUT_VARIANCE)
             nullability = KtTypeNullability.NULLABLE
         }
+    }
+
+    context(KtAnalysisSession)
+    private fun KtType.isResolvedClassType(): Boolean = when (this) {
+        is KtNonErrorClassType -> ownTypeArguments.mapNotNull { it.type }.all { it.isResolvedClassType() }
+        else -> false
     }
 }
