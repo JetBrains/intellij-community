@@ -15,7 +15,7 @@ class CurrentJobTest : CancellationTest() {
   fun context() {
     val job = Job()
     assertNull(Cancellation.currentJob())
-    withCurrentJob(job) {
+    blockingContext(job) {
       assertSame(job, Cancellation.currentJob())
     }
     assertNull(Cancellation.currentJob())
@@ -27,7 +27,7 @@ class CurrentJobTest : CancellationTest() {
     val t = object : Throwable() {}
     val ce = assertThrows<CurrentJobCancellationException> {
       val job = Job()
-      withCurrentJob<Unit>(job) {
+      blockingContext(job) {
         testNoExceptions()
         job.cancel("", t)
         testExceptionsAndNonCancellableSection()
@@ -41,7 +41,7 @@ class CurrentJobTest : CancellationTest() {
   @Test
   fun `checkCancelledEvenWithPCEDisabled checks job`() {
     val job = Job()
-    withCurrentJob(job) {
+    blockingContext(job) {
       assertDoesNotThrow {
         ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(null)
       }

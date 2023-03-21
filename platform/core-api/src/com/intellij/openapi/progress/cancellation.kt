@@ -6,14 +6,18 @@ package com.intellij.openapi.progress
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.ConcurrencyUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
-fun <X> withCurrentJob(job: Job, action: () -> X): X = Cancellation.withCurrentJob(job, ThrowableComputable(action))
+@Deprecated(
+  "This function is deprecated because it replaces the whole context. " +
+  "Instead, use blockingContext with full context.",
+  ReplaceWith("blockingContext(job, action)")
+)
+fun <X> withCurrentJob(job: Job, action: () -> X): X = blockingContext(job, action)
 
 @Deprecated(
   "Renamed to `withCurrentJob`",
@@ -22,7 +26,7 @@ fun <X> withCurrentJob(job: Job, action: () -> X): X = Cancellation.withCurrentJ
     "com.intellij.openapi.progress.withCurrentJob"
   )
 )
-fun <X> withJob(job: Job, action: () -> X): X = withCurrentJob(job, action)
+fun <X> withJob(job: Job, action: () -> X): X = blockingContext(job, action)
 
 /**
  * Ensures that the current thread has an [associated job][Cancellation.currentJob].

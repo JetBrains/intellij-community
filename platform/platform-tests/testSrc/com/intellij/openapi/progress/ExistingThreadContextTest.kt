@@ -42,7 +42,7 @@ class ExistingThreadContextTest : CancellationTest() {
   fun cancellation() {
     val t = object : Throwable() {}
     val ce = assertThrows<CurrentJobCancellationException> {
-      withCurrentJob<Unit>(Job()) {
+      blockingContext(Job()) {
         throw assertThrows<JobCanceledException> {
           prepareThreadContextTest { currentJob ->
             testNoExceptions()
@@ -69,7 +69,7 @@ class ExistingThreadContextTest : CancellationTest() {
     val job = Job()
     val t = Throwable()
     val ce = assertThrows<CurrentJobCancellationException> {
-      withCurrentJob<Unit>(job) {
+      blockingContext(job) {
         throw assertThrows<JobCanceledException> {
           prepareThreadContextTest { currentJob ->
             testNoExceptions()

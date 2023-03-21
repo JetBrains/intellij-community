@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.ApplicationManager
@@ -38,7 +38,7 @@ class CancellableReadActionWithJobTest : CancellableReadActionTests() {
   @Test
   fun cancellation() {
     val job = Job()
-    withCurrentJob(job) {
+    blockingContext(job) {
       assertThrows<CancellationException> {
         computeCancellable {
           testNoExceptions()

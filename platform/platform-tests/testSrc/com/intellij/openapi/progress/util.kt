@@ -146,7 +146,7 @@ fun loggedError(canThrow: Semaphore): Throwable {
 
 fun currentJobTest(test: (Job) -> Unit) {
   val job = Job()
-  withCurrentJob(job) {
+  blockingContext(job) {
     test(job)
   }
   assertTrue(job.isActive)
