@@ -38,7 +38,10 @@ class JBCefOsrComponent extends JPanel {
     setPreferredSize(JBCefBrowser.DEF_PREF_SIZE);
     setBackground(JBColor.background());
     addPropertyChangeListener("graphicsConfiguration",
-                              e -> myRenderHandler.updateScale(myScale.update(myRenderHandler.getDeviceScaleFactor(myBrowser))));
+                              e -> {
+                                myRenderHandler.updateScale(myScale.update(myRenderHandler.getDeviceScaleFactor(myBrowser)));
+                                myBrowser.notifyScreenInfoChanged();
+                              });
 
     enableEvents(AWTEvent.KEY_EVENT_MASK |
                  AWTEvent.MOUSE_EVENT_MASK |
