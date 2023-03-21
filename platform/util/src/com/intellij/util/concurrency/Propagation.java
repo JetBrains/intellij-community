@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
 import com.intellij.concurrency.ContextCallable;
@@ -164,26 +164,5 @@ public final class Propagation {
       return new ContextRunnable(false, runnable);
     }
     return runnable;
-  }
-
-  private static final class CancellationScheduledFutureTask<V> extends SchedulingWrapper.MyScheduledFutureTask<V> {
-    private final @NotNull Job myJob;
-
-    CancellationScheduledFutureTask(@NotNull SchedulingWrapper self, @NotNull Job job, @NotNull Callable<V> callable, long ns) {
-      self.super(callable, ns);
-      myJob = job;
-    }
-
-    CancellationScheduledFutureTask(@NotNull SchedulingWrapper self, @NotNull Job job, @NotNull Runnable r, long ns, long period) {
-      self.super(r, null, ns, period);
-      myJob = job;
-    }
-
-    @Override
-    public boolean cancel(boolean mayInterruptIfRunning) {
-      boolean result = super.cancel(mayInterruptIfRunning);
-      myJob.cancel(null);
-      return result;
-    }
   }
 }
