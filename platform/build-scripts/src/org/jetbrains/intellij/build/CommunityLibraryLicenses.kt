@@ -965,6 +965,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("tcServiceMessages"),
     jetbrainsLibrary("tips-idea-ce"),
     jetbrainsLibrary("tips-pycharm-community"),
+    jetbrainsLibrary("workspace-model-codegen"),
   )
 
   private fun androidDependency(name: String, libraryName: String = name) =

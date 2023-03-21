@@ -197,12 +197,11 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.devkit.intelliLang")
       spec.withModule("intellij.devkit.uiDesigner")
       spec.withModule("intellij.devkit.workspaceModel")
-      spec.withModule("intellij.platform.workspaceModel.codegen")
-      spec.withModule("intellij.platform.workspaceModel.codegen.impl")
       spec.withModule("intellij.java.devkit")
       spec.withModule("intellij.groovy.devkit")
       spec.withModule("intellij.kotlin.devkit")
       spec.withModule("intellij.devkit.jps")
+      spec.withProjectLibrary("workspace-model-codegen")
     },
     plugin("intellij.eclipse") { spec ->
       spec.withModule("intellij.eclipse.jps", "eclipse-jps.jar")

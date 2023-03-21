@@ -37,6 +37,6 @@ private class GenerateWorkspaceModelFix(psiElement: PsiElement) : LocalQuickFixO
   override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
     val projectFileIndex = ProjectRootManager.getInstance(project).fileIndex
     val module = projectFileIndex.getModuleForFile(file.virtualFile)
-    WorkspaceModelGenerator.generate(project, module!!)
+    WorkspaceModelGenerator.getInstance(project).generate(module!!)
   }
 }
