@@ -378,8 +378,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         // polls next dumb mode task
         myTrackedEdtActivityService.executeAllQueuedActivities();
         // cancels all scheduled and running tasks
-        myTaskQueue.cancelAllTasks();
-        myGuiDumbTaskRunner.getGuiSuspender().resumeProgressIfPossible();
+        myGuiDumbTaskRunner.cancelAllTasks();
       });
     }
   }

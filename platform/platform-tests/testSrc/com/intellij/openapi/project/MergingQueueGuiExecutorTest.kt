@@ -1,10 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.project.MergingQueueGuiExecutor.ExecutorStateListener
 import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt
 import com.intellij.openapi.project.MergingTaskQueueTest.LoggingTask
+import com.intellij.openapi.util.CheckedDisposable
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ProjectRule
 import com.intellij.util.SystemProperties
 import junit.framework.TestCase
@@ -23,7 +28,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.random.Random
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 
 private fun Phaser.arriveAndAwaitAdvanceWithTimeout() {
@@ -98,6 +105,7 @@ class MergingQueueGuiExecutorTest {
   private val ignoreHeadlessKey: String = "intellij.progress.task.ignoreHeadless"
   private var prevIgnoreHeadlessVal: String? = null
   private lateinit var project: Project
+  private lateinit var testDisposable: CheckedDisposable
 
   companion object{
     @ClassRule
@@ -109,11 +117,13 @@ class MergingQueueGuiExecutorTest {
   fun setUp() {
     prevIgnoreHeadlessVal = SystemProperties.setProperty(ignoreHeadlessKey, "true")
     project = p.project
+    testDisposable = Disposer.newCheckedDisposable()
   }
 
   @After
   fun tearDown() {
     SystemProperties.setProperty(ignoreHeadlessKey, prevIgnoreHeadlessVal)
+    Disposer.dispose(testDisposable)
   }
 
   @Test
@@ -171,6 +181,103 @@ class MergingQueueGuiExecutorTest {
     task.taskFinished.awaitOrThrow(5, "Wait for background task to finish")
     TestCase.assertEquals(1, executor.backgroundTasksSubmittedCount)
 
+    stopExecutor(executor)
+  }
+
+  @Test
+  fun `test cancelAllTasks cancels suspended task`() {
+    val exception = AtomicReference<Throwable?>()
+    val performLog = mutableListOf<Int>()
+    val disposeLog = mutableListOf<Int>()
+    val firstTaskPhaser = Phaser(2)
+    val exceptionRef = AtomicReference<Throwable>()
+    val listener = ValidatingListener(exceptionRef)
+    val queue = MergingTaskQueue<LoggingTask>()
+    val executor = MergingQueueGuiExecutor(
+      project, queue, listener, "title", "suspend"
+    )
+
+    queue.addTask(object : LoggingTask(1, performLog, disposeLog) {
+      override fun perform(indicator: ProgressIndicator) {
+        try {
+          super.perform(indicator) // let performLog know that tge task has started
+          firstTaskPhaser.arriveAndAwaitAdvanceWithTimeout() // 1
+          firstTaskPhaser.arriveAndAwaitAdvanceWithTimeout() // 2 progress suspended
+          assertTrue(ProgressSuspender.getSuspender(ProgressManager.getGlobalProgressIndicator()).isSuspended,
+                     "Progress indicator should now be suspended")
+
+          ProgressManager.checkCanceled() // this will suspend, and (unfortunately) will not throw PCE when unpause
+          ProgressManager.checkCanceled() // this will throw
+          fail("Should throw PCE")
+        }
+        catch (t: Throwable) {
+          exception.set(t)
+          throw t
+        }
+      }
+    })
+    queue.addTask(LoggingTask(2, performLog, disposeLog))
+
+    executor.startBackgroundProcess()
+    firstTaskPhaser.arriveAndAwaitAdvanceWithTimeout() // 1 background task started
+
+    executor.guiSuspender.suspendAndRun("Suspended in test to check cancellation") {
+      firstTaskPhaser.arriveAndAwaitAdvanceWithTimeout() // 2
+      Thread.sleep(10) // wait a bit to make sure that background thread suspends
+
+      queue.cancelAllTasks()
+      executor.guiSuspender.resumeProgressIfPossible()
+      waitForExecutorToCompleteSubmittedTasks(executor, 3)
+
+      assertEquals(1, performLog.size, "first task should start, second should not")
+      assertEquals(2, disposeLog.size, "two tasks should be disposed")
+      assertTrue(exception.get() is ProcessCanceledException, "PCE expected, but got: " + exception.get())
+    }
+
+    stopExecutor(executor)
+  }
+
+  @Test
+  fun `test cancelAllTasks cancels already running task`() {
+    val exception = AtomicReference<Throwable?>()
+    val performLog = mutableListOf<Int>()
+    val disposeLog = mutableListOf<Int>()
+    val firstTaskStarted = CountDownLatch(1)
+    val exceptionRef = AtomicReference<Throwable>()
+    val listener = ValidatingListener(exceptionRef)
+    val queue = MergingTaskQueue<LoggingTask>()
+    val executor = MergingQueueGuiExecutor(
+      project, queue, listener, "title", "suspend"
+    )
+
+    queue.addTask(object : LoggingTask(1, performLog, disposeLog) {
+      override fun perform(indicator: ProgressIndicator) {
+        super.perform(indicator) // let performLog know that tge task has started
+        firstTaskStarted.countDown()
+        try {
+          while (!testDisposable.isDisposed) {
+            ProgressManager.checkCanceled()
+            Thread.sleep(10)
+          }
+          fail("Should throw PCE")
+        }
+        catch (t: Throwable) {
+          exception.set(t)
+          throw t
+        }
+      }
+    })
+    queue.addTask(LoggingTask(2, performLog, disposeLog))
+
+    executor.startBackgroundProcess()
+    firstTaskStarted.awaitOrThrow(1, "first task didn't start after 1 second")
+
+    queue.cancelAllTasks()
+    waitForExecutorToCompleteSubmittedTasks(executor, 3)
+
+    assertEquals(1, performLog.size, "first task should start, second should not")
+    assertEquals(2, disposeLog.size, "two tasks should be disposed")
+    assertTrue(exception.get() is ProcessCanceledException, "PCE expected, but got: " + exception.get())
     stopExecutor(executor)
   }
 

@@ -281,7 +281,7 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
     }
   }
 
-  public final MergingQueueGuiSuspender getGuiSuspender() {
+  protected final MergingQueueGuiSuspender getGuiSuspender() {
     return myGuiSuspender;
   }
 
@@ -289,8 +289,13 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
     getGuiSuspender().suspendAndRun(activityName, activity);
   }
 
+  public void cancelAllTasks() {
+    myTaskQueue.cancelAllTasks();
+    getGuiSuspender().resumeProgressIfPossible();
+  }
+
   @TestOnly
-  int getBackgroundTasksSubmittedCount(){
+  int getBackgroundTasksSubmittedCount() {
     return backgroundTasksSubmitted.get();
   }
 }

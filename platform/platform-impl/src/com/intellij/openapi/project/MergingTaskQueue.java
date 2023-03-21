@@ -76,7 +76,9 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
     disposeSafe(disposeQueue);
   }
 
-  public void cancelAllTasks() {
+  // This method is not public because it cannot cancel tasks paused by ProgressSuspender.
+  // Use methods from appropriate executor instead (e.g. MergingQueueGuiExecutor#cancelAllTasks)
+  void cancelAllTasks() {
     List<ProgressIndicatorEx> tasks;
     synchronized (myLock) {
       tasks = new ArrayList<>(myProgresses.values());

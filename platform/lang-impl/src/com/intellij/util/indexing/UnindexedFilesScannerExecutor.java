@@ -1,10 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
-import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.PingProgress;
@@ -12,7 +10,6 @@ import com.intellij.openapi.project.*;
 import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -20,7 +17,6 @@ import java.util.concurrent.locks.LockSupport;
 
 @Service(Service.Level.PROJECT)
 public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor<UnindexedFilesScanner> implements Disposable {
-  private static final Logger LOG = Logger.getInstance(UnindexedFilesScannerExecutor.class);
   private final AtomicReference<ProgressIndicator> runningTask = new AtomicReference<>();
 
   @NotNull
@@ -59,8 +55,8 @@ public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor
     // So only in case the second one is a full check should the first one be cancelled.
     if (task.isFullIndexUpdate()) {
       // we don't want to execute any of the existing tasks - the only task we want to execute will be submitted few lines below
-      getTaskQueue().cancelAllTasks();
-      cancelRunningTask();
+      cancelAllTasks();
+      cancelRunningScannerTaskInDumbQueue();
     }
 
     if (UnindexedFilesScanner.shouldScanInSmartMode()) {
@@ -86,22 +82,7 @@ public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor
     return new UnindexedFilesScannerAsDumbModeTaskWrapper(task, runningTask);
   }
 
-  @Override
-  protected void runSingleTask(MergingTaskQueue.@NotNull QueuedTask<UnindexedFilesScanner> task, @Nullable StructuredIdeActivity activity) {
-    ProgressIndicator indicator = task.getIndicator();
-    ProgressIndicator old = runningTask.getAndSet(indicator);
-    try {
-      LOG.assertTrue(old == null, "Old = " + old);
-      runningTask.set(indicator);
-      super.runSingleTask(task, activity);
-    }
-    finally {
-      old = runningTask.getAndSet(null);
-      LOG.assertTrue(old == indicator, "Old = " + old);
-    }
-  }
-
-  private void cancelRunningTask() {
+  private void cancelRunningScannerTaskInDumbQueue() {
     ProgressIndicator indicator = runningTask.get();
     if (indicator != null) {
       indicator.cancel();
@@ -113,8 +94,7 @@ public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor
   }
 
   public void cancelAllTasksAndWait() {
-    getTaskQueue().cancelAllTasks();
-    cancelRunningTask();
+    cancelAllTasks(); // this also cancels running task even if they paused by ProgressSuspender
 
     while (isRunning()) {
       PingProgress.interactWithEdtProgress();
