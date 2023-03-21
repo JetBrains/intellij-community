@@ -113,6 +113,15 @@ private fun initLux() {
     error("JBR version 17.0.6b796 or later is required to run a remote-dev server with lux")
   }
 
+  if (System.getProperty("lux.fonts.disable.projector.font.manager", "false").toBoolean()) {
+    // disable PFontManager
+    System.setProperty("org.jetbrains.projector.server.enable.font.manager", "false")
+
+    // X11GraphicsEnvironment initializer is necessary for X11FontManager
+    // Do it before Projector sets its own PGraphicsEnvironment
+    GraphicsEnvironment.getLocalGraphicsEnvironment()
+  }
+
   initProjector()
 
   System.setProperty("awt.nativeDoubleBuffering", false.toString())
