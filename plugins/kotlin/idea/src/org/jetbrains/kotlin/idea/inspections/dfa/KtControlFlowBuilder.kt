@@ -147,6 +147,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val context = expr.analyze(BodyResolveMode.PARTIAL)
         val constant = ConstantExpressionEvaluator.getConstant(expr, context) as? TypedCompileTimeConstant<*> ?: return false
         val declaredType = expr.getKotlinType() ?: return false
+        // Unsigned type handling is not supported yet
+        if (declaredType.isUnsignedNumberType()) return false
         val value = constant.getValue(declaredType) ?: return false
         if (value !is Int && value !is Long && value !is Float && value !is Double && value !is String) return false
         val actualType = constant.type 
