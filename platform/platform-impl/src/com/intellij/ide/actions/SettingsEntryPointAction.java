@@ -128,12 +128,6 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
               getDelegate().update(e);
               e.getPresentation().setText(e.getPresentation().getText() + "…");
             }
-
-            @Override
-            public void actionPerformed(@NotNull AnActionEvent e) {
-              super.actionPerformed(new AnActionEvent(e.getInputEvent(), e.getDataContext(), e.getPlace(),
-                                                      e.getPresentation(), e.getActionManager(), e.getModifiers()));
-            }
           };
           button.setShortcut(child.getShortcutSet());
           group.add(button);
