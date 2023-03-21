@@ -9,6 +9,7 @@ package pkg;
  * {@snippet class='sub.Test' region="reg"}
  * {@snippet class=<error descr="Snippet file is not found">'sub.Test2'</error>}
  * {@snippet file="sub/test.txt"}
+ * {@snippet file="sub/test.txt" region=<error descr="Region is not found">"notfound"</error>}
  */
 public class SnippetRefs {
 }

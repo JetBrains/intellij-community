@@ -14,6 +14,8 @@ import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.FQNameCellRenderer;
 import com.intellij.java.JavaBundle;
+import com.intellij.model.Symbol;
+import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -27,6 +29,7 @@ import com.intellij.psi.javadoc.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -117,6 +120,13 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
           PsiElement resolved = ref.resolve();
           if (resolved == null) {
             holder.registerProblem(attributeValue, JavaBundle.message("inspection.message.snippet.file.not.found"));
+          }
+        }
+        PsiSymbolReference symRef = ContainerUtil.getOnlyItem(attributeValue.getOwnReferences());
+        if (symRef != null) {
+          Collection<? extends Symbol> target = symRef.resolveReference();
+          if (target.isEmpty()) {
+            holder.registerProblem(attributeValue, JavaBundle.message("inspection.message.snippet.region.not.found"));
           }
         }
       }
