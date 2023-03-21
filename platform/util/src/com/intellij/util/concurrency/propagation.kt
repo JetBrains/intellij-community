@@ -10,7 +10,6 @@ import com.intellij.concurrency.ContextRunnable
 import com.intellij.concurrency.captureThreadContext
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Condition
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.SchedulingWrapper.MyScheduledFutureTask
 import kotlinx.coroutines.CompletableDeferred
@@ -19,6 +18,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
 import java.util.concurrent.FutureTask
+import com.intellij.openapi.util.Pair as JBPair
 
 private object Holder {
   var propagateThreadContext: Boolean = Registry.`is`("ide.propagate.context")
@@ -68,7 +68,7 @@ internal fun capturePropagationAndCancellationContext(command: Runnable): Runnab
 fun capturePropagationAndCancellationContext(
   command: Runnable,
   expired: Condition<*>,
-): Pair<Runnable, Condition<*>> {
+): JBPair<Runnable, Condition<*>> {
   var command = command
   var expired = expired
   if (isPropagateCancellation) {
@@ -77,7 +77,7 @@ fun capturePropagationAndCancellationContext(
     expired = cancelIfExpired(expired, childJob)
     command = CancellationRunnable(childJob, command)
   }
-  return Pair.create(capturePropagationContext(command), expired)
+  return JBPair.create(capturePropagationContext(command), expired)
 }
 
 private fun <T> cancelIfExpired(expiredCondition: Condition<in T>, childJob: Job): Condition<T> {
