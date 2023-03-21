@@ -24,13 +24,11 @@ class PyTensorFlowImportResolver : PyImportResolver {
 
   private fun resolveImportReference(name: QualifiedName,
                                      context: PyQualifiedNameResolveContext,
-                                     pathConfig: Pair<Map<String, String>, String>): PsiElement? {
-    pathConfig.first.forEach { (module, path) ->
-      if (name.components[1] == module) {
-        return takeFirstResolvedInTensorFlow("$path.${name.removeHead(2)}", context)
-      }
+                                     pathConfig: Map<String, String>): PsiElement? {
+    val path = pathConfig[name.components[1]]
+    if (path != null) {
+      return takeFirstResolvedInTensorFlow("$path.${name.removeHead(2)}", context)
     }
-
-    return takeFirstResolvedInTensorFlow("${pathConfig.second}.${name.removeHead(1)}", context)
+    return takeFirstResolvedInTensorFlow("${pathConfig["*"]}.${name.removeHead(1)}", context)
   }
 }
