@@ -49,6 +49,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
@@ -282,6 +283,18 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     TableSpeedSearch.installOn(myList);
     myList.getActionMap().put(TableActions.Left.ID, myList.getActionMap().get(TableActions.CtrlHome.ID));
     myList.getActionMap().put(TableActions.Right.ID, myList.getActionMap().get(TableActions.CtrlEnd.ID));
+    myList.setTransferHandler(new TransferHandler(null) {
+      @Override
+      public int getSourceActions(JComponent c) {
+        return COPY;
+      }
+
+      @Override
+      protected Transferable createTransferable(JComponent c) {
+        var items = myList.getSelectedObjects();
+        return items.isEmpty() ? null : new TextTransferable(items.stream().map(item -> item.name).collect(Collectors.joining("\n")));
+      }
+    });
   }
 
   private @Nullable Path typedPath() {
