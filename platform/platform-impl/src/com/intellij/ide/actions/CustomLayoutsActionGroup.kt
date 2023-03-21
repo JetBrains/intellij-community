@@ -9,13 +9,17 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 
-class CustomLayoutsActionGroup : DefaultActionGroup(), DumbAware {
+class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
 
   private val childrenCache = NamedLayoutListBasedCache<AnAction> {
     CustomLayoutActionGroup(it)
   }
 
-  override fun getChildren(e: AnActionEvent?): Array<AnAction> = childrenCache.getCachedOrUpdatedArray(AnAction.EMPTY_ARRAY)
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> =
+    if (e == null)
+      AnAction.EMPTY_ARRAY
+    else
+      childrenCache.getCachedOrUpdatedArray(AnAction.EMPTY_ARRAY)
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
