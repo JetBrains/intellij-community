@@ -120,7 +120,10 @@ private fun <T> runBlockingCancellable(allowOrphan: Boolean, action: suspend Cor
     return indicatorRunBlockingCancellable(indicator, action)
   }
   assertBackgroundThreadOrWriteAction()
-  return prepareThreadContext(allowOrphan) { ctx ->
+  return prepareThreadContext { ctx ->
+    if (!allowOrphan && ctx[Job] == null) {
+      LOG.error(IllegalStateException("There is no ProgressIndicator or Job in this thread, the current job is not cancellable."))
+    }
     val context = currentThreadContext() +
                   ctx +
                   CoroutineName("job run blocking")

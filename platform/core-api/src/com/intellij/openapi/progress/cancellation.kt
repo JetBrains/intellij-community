@@ -5,15 +5,12 @@ package com.intellij.openapi.progress
 
 import com.intellij.concurrency.withThreadContext
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.ConcurrencyUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
-
-private val LOG: Logger = Logger.getInstance("#com.intellij.openapi.progress")
 
 fun <X> withCurrentJob(job: Job, action: () -> X): X = Cancellation.withCurrentJob(job, ThrowableComputable(action))
 
@@ -44,15 +41,6 @@ fun <X> withJob(job: Job, action: () -> X): X = withCurrentJob(job, action)
  */
 @Internal
 fun <T> prepareThreadContext(action: (CoroutineContext) -> T): T {
-  return prepareThreadContext(allowOrphan = false, action)
-}
-
-@Internal
-fun <T> prepareThreadContextAllowingOrphan(action: (CoroutineContext) -> T): T {
-  return prepareThreadContext(allowOrphan = true, action)
-}
-
-internal fun <T> prepareThreadContext(allowOrphan: Boolean, action: (CoroutineContext) -> T): T {
   val indicator = ProgressManager.getGlobalProgressIndicator()
   if (indicator != null) {
     return prepareIndicatorThreadContext(indicator, action)
@@ -60,9 +48,6 @@ internal fun <T> prepareThreadContext(allowOrphan: Boolean, action: (CoroutineCo
   val currentJob = Cancellation.currentJob()
   if (currentJob != null) {
     return action(currentJob)
-  }
-  if (!allowOrphan) {
-    LOG.error("There is no ProgressIndicator or Job in this thread, the current job is not cancellable.")
   }
   return action(EmptyCoroutineContext)
 }

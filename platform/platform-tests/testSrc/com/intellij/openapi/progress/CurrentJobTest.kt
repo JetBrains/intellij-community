@@ -5,7 +5,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
@@ -37,16 +36,6 @@ class CurrentJobTest : CancellationTest() {
     //suppressed until this one is fixed: https://youtrack.jetbrains.com/issue/KT-52379
     @Suppress("AssertBetweenInconvertibleTypes")
     assertSame(t, ce.cause.cause.cause)
-  }
-
-  @Disabled("an orphan job is created")
-  @Test
-  fun `ensureCurrentJob without current job or current indicator`() {
-    assertThrows<IllegalStateException> {
-      prepareThreadContextTest {
-        fail()
-      }
-    }
   }
 
   @Test

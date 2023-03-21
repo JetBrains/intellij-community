@@ -12,6 +12,15 @@ import org.junit.jupiter.api.assertThrows
 class RunBlockingCancellableTest : CancellationTest() {
 
   @Test
+  fun `without context`() {
+    assertLogThrows<IllegalStateException> {
+      runBlockingCancellable {
+        fail()
+      }
+    }
+  }
+
+  @Test
   fun `with current job context`() {
     currentJobTest { job ->
       assertNotNull(Cancellation.currentJob())
