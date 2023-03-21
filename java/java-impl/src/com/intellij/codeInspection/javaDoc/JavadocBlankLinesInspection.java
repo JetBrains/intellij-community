@@ -74,15 +74,22 @@ public class JavadocBlankLinesInspection extends LocalInspectionTool {
   }
 
   private static boolean isBeforeParagraphOrBlockTag(PsiElement element) {
-    PsiElement nextSibling = element.getNextSibling();
-    if (!(nextSibling instanceof PsiDocToken)) return true;
-    if (((PsiDocToken)nextSibling).getTokenType() != JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) return true;
-    nextSibling = nextSibling.getNextSibling();
+    PsiElement nextSibling = skipWhitespacesAndLeadingAsterisksForward(element);
     if (nextSibling == null) return true;
     String text = nextSibling.getText();
     return isNullOrBlockTag(nextSibling) ||
            startsWithHtmlBlockTag(text) ||
            isNullOrBlockTag(nextSibling.getNextSibling());
+  }
+
+  private static PsiElement skipWhitespacesAndLeadingAsterisksForward(PsiElement element) {
+    for (PsiElement e = element.getNextSibling(); e != null; e = e.getNextSibling()) {
+      if (!(e instanceof PsiWhiteSpace ||
+            e instanceof PsiDocToken docToken && docToken.getTokenType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS)) {
+        return e;
+      }
+    }
+    return null;
   }
 
   private static boolean startsWithHtmlBlockTag(String text) {
