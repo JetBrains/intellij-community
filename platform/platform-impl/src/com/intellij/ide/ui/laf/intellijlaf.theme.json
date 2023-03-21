@@ -302,7 +302,8 @@
       "borderColor": "grey05",
       "foreground": "foreground",
       "linkForeground": "linkForeground",
-      "shortcutForeground": "foreground"
+      "shortcutForeground": "foreground",
+      "codeBorderColor": "grey08"
     },
 
     "Group.disabledSeparatorColor": "border",
