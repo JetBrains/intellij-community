@@ -827,9 +827,16 @@ private fun logEssentialInfoAboutIde(log: Logger, appInfo: ApplicationInfo, args
     log.info("desktop: ${System.getenv("XDG_CURRENT_DESKTOP")}")
   }
 
-  ManagementFactory.getRuntimeMXBean().inputArguments?.let {
-    log.info("JVM options: ${it}")
+  // looks like exception here leads to deadlock on IDE start (happens from time to time in perf tests)
+  try {
+    ManagementFactory.getRuntimeMXBean().inputArguments?.let {
+      log.info("JVM options: ${it}")
+    }
   }
+  catch (e: Exception) {
+    log.error("Failed to get JVM options", e)
+  }
+
   log.info("args: ${args.joinToString(separator = " ")}")
   log.info("library path: ${System.getProperty("java.library.path")}")
   log.info("boot library path: ${System.getProperty("sun.boot.library.path")}")
