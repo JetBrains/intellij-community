@@ -1476,6 +1476,11 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
             runTest("testData/stepping/custom/smartStepIntoToLambdaParameterAfterSam.kt");
         }
 
+        @TestMetadata("smartStepIntoWithDelegateWithSameName.kt")
+        public void testSmartStepIntoWithDelegateWithSameName() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoWithDelegateWithSameName.kt");
+        }
+
         @TestMetadata("smartStepIntoWithDelegates.kt")
         public void testSmartStepIntoWithDelegates() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoWithDelegates.kt");

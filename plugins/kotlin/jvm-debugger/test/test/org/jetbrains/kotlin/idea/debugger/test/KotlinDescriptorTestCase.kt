@@ -399,6 +399,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
 
     protected fun getExpectedOutputFile(): File {
         val extensions = sequenceOf(
+            ".k2.out".takeIf { compileWithK2 },
             ".indy.out".takeIf { lambdasGenerationScheme() == JvmClosureGenerationScheme.INDY },
             ".ir.out".takeIf { useIrBackend() },
             ".out",
