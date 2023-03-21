@@ -144,12 +144,15 @@ class ScaleContext() : UserScaleContext() {
     if (isScaleOverridden(scale)) {
       return false
     }
+
     if (scale.type == ScaleType.SYS_SCALE) {
       val updated = sysScale != scale
       sysScale = scale
       return onUpdated(updated)
     }
-    return super.setScale(scale)
+    else {
+      return super.setScale(scale)
+    }
   }
 
   override fun <T : UserScaleContext> updateAll(scaleContext: T): Boolean {

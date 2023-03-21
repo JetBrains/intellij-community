@@ -38,34 +38,32 @@ public class UserScaleContext {
   /**
    * Creates a context with all scale factors set to 1.
    */
-  @NotNull
-  public static UserScaleContext createIdentity() {
+  public static @NotNull UserScaleContext createIdentity() {
     return create(USR_SCALE.of(1));
   }
 
   /**
    * Creates a context with the provided scale factors (system scale is ignored)
    */
-  @NotNull
-  public static UserScaleContext create(Scale @NotNull ... scales) {
+  public static @NotNull UserScaleContext create(Scale @NotNull ... scales) {
     UserScaleContext ctx = create();
-    for (Scale s : scales) ctx.setScale(s);
+    for (Scale s : scales) {
+      ctx.setScale(s);
+    }
     return ctx;
   }
 
   /**
    * Creates a default context with the current user scale
    */
-  @NotNull
-  public static UserScaleContext create() {
+  public static @NotNull UserScaleContext create() {
     return new UserScaleContext();
   }
 
   /**
    * Creates a context from the provided {@code ctx}.
    */
-  @NotNull
-  public static UserScaleContext create(@Nullable UserScaleContext ctx) {
+  public static @NotNull UserScaleContext create(@Nullable UserScaleContext ctx) {
     UserScaleContext c = createIdentity();
     c.update(ctx);
     return c;
@@ -128,7 +126,9 @@ public class UserScaleContext {
    * @see ScaleType#of(double)
    */
   public boolean setScale(@NotNull Scale scale) {
-    if (isScaleOverridden(scale)) return false;
+    if (isScaleOverridden(scale)) {
+      return false;
+    }
 
     boolean updated = false;
     switch (scale.type) {
@@ -158,8 +158,7 @@ public class UserScaleContext {
     };
   }
 
-  @NotNull
-  protected Scale getScaleObject(@NotNull ScaleType type) {
+  protected @NotNull Scale getScaleObject(@NotNull ScaleType type) {
     return switch (type) {
       case USR_SCALE -> usrScale;
       case SYS_SCALE -> SYS_SCALE.of(1d);
@@ -274,8 +273,7 @@ public class UserScaleContext {
     }
   }
 
-  @NotNull
-  public <T extends UserScaleContext> T copy() {
+  public @NotNull <T extends UserScaleContext> T copy() {
     UserScaleContext ctx = createIdentity();
     ctx.updateAll(this);
     //noinspection unchecked
@@ -308,8 +306,7 @@ public class UserScaleContext {
      * Returns the data object from the cache if it matches the {@code ctx},
      * otherwise provides the new data via the provider and caches it.
      */
-    @Nullable
-    public D getOrProvide(@NotNull S ctx) {
+    public @Nullable D getOrProvide(@NotNull S ctx) {
       Pair<Double, D> data = myData.get();
       double scale = ctx.getScale(DerivedScaleType.PIX_SCALE);
       if (data == null || Double.compare(scale, data.first) != 0) {
