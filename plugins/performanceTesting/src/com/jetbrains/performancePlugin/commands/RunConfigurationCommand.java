@@ -115,7 +115,7 @@ public final class RunConfigurationCommand extends AbstractCommand {
     return Promises.toPromise(actionCallback);
   }
 
-  private static RunConfiguration getConfigurationByName(RunManager runManager, String configurationName) {
+  public static RunConfiguration getConfigurationByName(RunManager runManager, String configurationName) {
     return ContainerUtil.find(runManager.getAllConfigurationsList(), configuration -> configurationName.equals(configuration.getName()));
   }
 
