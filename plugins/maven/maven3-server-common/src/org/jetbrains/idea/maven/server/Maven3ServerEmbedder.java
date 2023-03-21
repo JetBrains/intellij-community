@@ -437,12 +437,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
     throws RemoteException;
 
   protected static void warn(String message, Throwable e) {
-    try {
-      Maven3ServerGlobals.getLogger().warn(new RuntimeException(message, e));
-    }
-    catch (RemoteException e1) {
-      throw new RuntimeException(e1);
-    }
+    Maven3ServerGlobals.getLogger().warn(new RuntimeException(message, e));
   }
 
   @Override

@@ -743,12 +743,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
           methodSetModelVersionProcessor.invoke(interpolator, component);
         }
         catch (Exception e) {
-          try {
-            Maven3ServerGlobals.getLogger().error(e);
-          }
-          catch (RemoteException ex) {
-            throw new RuntimeException(ex);
-          }
+          Maven3ServerGlobals.getLogger().error(e);
         }
       }
 
