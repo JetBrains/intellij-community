@@ -24,6 +24,12 @@ interface GotItTextBuilder {
   fun shortcut(keyStroke: KeyStroke): String = """<shortcut raw="$keyStroke"/>"""
 
   /**
+   * Adds an inline code element.
+   * Text will be rendered using current editor font and surrounded by thin border.
+   */
+  fun code(text: String): String = """<code>$text</code>"""
+
+  /**
    * Adds an inline icon.
    *
    * [iconId] is the dot separated path for the icon from [com.intellij.icons.AllIcons].

@@ -537,6 +537,21 @@
       "description": "GotIt tooltip link foreground color if different from Link.activeForeground"
     },
     {
+      "key": "GotItTooltip.codeForeground",
+      "description": "GotIt tooltip inline code element foreground color if different from GotItTooltip.foreground",
+      "since": "2023.1.1"
+    },
+    {
+      "key": "GotItTooltip.codeBackground",
+      "description": "GotIt tooltip inline code element background color if different from GotItTooltip.background",
+      "since": "2023.1.1"
+    },
+    {
+      "key": "GotItTooltip.codeBorderColor",
+      "description": "GotIt tooltip inline code element border color if different from GotItTooltip.shortcutBackground",
+      "since": "2023.1.1"
+    },
+    {
       "key": "GotItTooltip.stepForeground",
       "description": "GotIt tooltip step number foreground color if different from GotItTooltip.foreground",
       "since": "2023.1"
@@ -1852,6 +1867,11 @@
       "key": "Tooltip.Learning.borderColor",
       "description": "Border color for tooltips used in lessons",
       "since": "2021.2"
+    },
+    {
+      "key": "Tooltip.Learning.codeBorderColor",
+      "description": "Inline code elements border color for tooltips used in lessons",
+      "since": "2023.1.1"
     },
     {
       "key": "Tooltip.Learning.spanBackground",

@@ -477,6 +477,9 @@
       "Header.foreground": "Grey14",
       "shortcutForeground": "Grey14",
       "shortcutBackground": "Grey5",
+      "codeForeground": "Grey14",
+      "codeBackground": "Grey3",
+      "codeBorderColor": "Grey7",
       "linkForeground": "Blue9",
       "Button": {
         "foreground": "Grey14",
@@ -590,7 +593,8 @@
       "spanBackground": "Blue4",
       "spanForeground": "Grey14",
       "foreground": "Grey14",
-      "stepNumberForeground": "Blue11"
+      "stepNumberForeground": "Blue11",
+      "codeBorderColor": "#FFFFFFBF"
     },
 
     "UnattendedHostStatus": {
