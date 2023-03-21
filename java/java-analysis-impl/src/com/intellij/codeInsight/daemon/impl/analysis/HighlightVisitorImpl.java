@@ -1936,8 +1936,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     // And even if the "case default" syntax was allowed not only in outdated preview versions of Java, using "case default:"
     // instead of "default:" looks weird. Therefore, for this case, we do not check the feature availability and do not
     // suggest increasing the language level.
-    if (element.getParent() instanceof PsiCaseLabelElementList labelElementList && labelElementList.getElementCount() == 1) return;
-    add(checkFeature(element, HighlightingFeature.PATTERNS_IN_SWITCH));
+    if (!(element.getParent() instanceof PsiCaseLabelElementList labelElementList) || labelElementList.getElementCount() != 1) {
+      add(checkFeature(element, HighlightingFeature.PATTERNS_IN_SWITCH));
+    }
   }
 
   @Override
