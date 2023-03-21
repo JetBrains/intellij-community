@@ -90,7 +90,7 @@ final class BackgroundHighlighter implements StartupActivity, DumbAware {
         TextRange oldRange = e.getOldRange();
         TextRange newRange = e.getNewRange();
         if (oldRange != null && newRange != null && oldRange.isEmpty() == newRange.isEmpty()) {
-          // Don't perform braces update in case of active/absent selection.
+          // Don't update braces in case of active/absent selection.
           return;
         }
         updateHighlighted(project, editor);
@@ -197,7 +197,7 @@ final class BackgroundHighlighter implements StartupActivity, DumbAware {
     ReadAction.nonBlocking(() -> {
         int textLength = newFile.getTextLength();
         if (textLength == -1) {
-          // sometime some crazy stuff is returned (EA-248725)
+          // sometimes some crazy stuff is returned (EA-248725)
           return null;
         }
         IdentifierHighlighterPass pass = new IdentifierHighlighterPassFactory().
@@ -208,8 +208,8 @@ final class BackgroundHighlighter implements StartupActivity, DumbAware {
         return pass;
       })
       .expireWhen(() -> !BackgroundHighlightingUtil.isValidEditor(editor) ||
-                        !newFile.isValid() ||
-                        offsetBefore != editor.getCaretModel().getOffset())
+                        editor.getCaretModel().getOffset() != offsetBefore ||
+                        !newFile.isValid())
       .coalesceBy(HighlightIdentifiersKey.class, editor)
       .finishOnUiThread(ModalityState.stateForComponent(editor.getComponent()), identifierHighlighterPass -> {
         if (identifierHighlighterPass != null) {
