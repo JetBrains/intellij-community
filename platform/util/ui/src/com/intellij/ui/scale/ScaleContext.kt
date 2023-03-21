@@ -52,7 +52,7 @@ class ScaleContext() : UserScaleContext() {
     /**
      * Creates a context based on the GraphicsConfiguration's system scale
      */
-    fun create(gc: GraphicsConfiguration): ScaleContext = ScaleContext(ScaleType.SYS_SCALE.of(JBUIScale.sysScale(gc)))
+    fun create(gc: GraphicsConfiguration?): ScaleContext = ScaleContext(ScaleType.SYS_SCALE.of(JBUIScale.sysScale(gc)))
 
     /**
      * Creates a context based on the g's system scale

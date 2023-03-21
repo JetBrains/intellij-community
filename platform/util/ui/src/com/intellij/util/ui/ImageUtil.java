@@ -4,7 +4,6 @@ package com.intellij.util.ui;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.icons.HiDPIImage;
 import com.intellij.ui.paint.PaintUtil;
-import com.intellij.ui.scale.Scale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.scale.ScaleType;
 import com.intellij.util.ImageLoader;
@@ -301,7 +300,7 @@ public final class ImageUtil {
       if (delegate == null) return doClipImage(scaledImage, clip);
       BufferedImage clippedImage = doClipImage(toBufferedImage(delegate), clip);
       return new JBHiDPIScaledImage(clippedImage,
-                                    ScaleContext.create(Scale.Companion.create(scaledImage.getScale(), ScaleType.SYS_SCALE)),
+                                    ScaleContext.create(ScaleType.SYS_SCALE.of(scaledImage.getScale())),
                                     scaledImage.getType());
     }
 

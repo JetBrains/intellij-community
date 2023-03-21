@@ -75,7 +75,6 @@ open class CachedImageIcon protected constructor(
 
   @Volatile
   private var darkVariant: CachedImageIcon? = null
-  private val lock = Any()
 
   @Volatile
   private var realIcon: ImageIcon? = null
@@ -137,7 +136,7 @@ open class CachedImageIcon protected constructor(
       return cachedIcon
     }
 
-    synchronized(lock) {
+    synchronized(scaledIconCache) {
       val updated = if (sysScale == -1.0) {
         scaleContext.update()
       }
@@ -162,7 +161,7 @@ open class CachedImageIcon protected constructor(
   }
 
   private fun checkPathTransform(): ImageIcon? {
-    synchronized(lock) {
+    synchronized(scaledIconCache) {
       if (pathTransformGlobalModCount.get() == pathTransformModCount) {
         return realIcon
       }
@@ -207,7 +206,7 @@ open class CachedImageIcon protected constructor(
   override fun getDarkIcon(isDark: Boolean): Icon {
     var result = if (isDark) darkVariant else null
     if (result == null) {
-      synchronized(lock) {
+      synchronized(scaledIconCache) {
         if (isDark) {
           result = darkVariant
         }
@@ -313,7 +312,7 @@ open class CachedImageIcon protected constructor(
       return true
     }
 
-    synchronized(lock) {
+    synchronized(scaledIconCache) {
       val resolver = this.resolver ?: return true
       if (!resolver.isMyClassLoader(loader)) {
         return false
