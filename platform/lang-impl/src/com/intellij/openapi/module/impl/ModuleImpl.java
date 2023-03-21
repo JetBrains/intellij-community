@@ -22,6 +22,7 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
 import com.intellij.openapi.roots.ProjectModelElement;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
+import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,7 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
+public class ModuleImpl extends ComponentManagerImpl implements ModuleEx, Queryable {
   private static final Logger LOG = Logger.getInstance(ModuleImpl.class);
 
   private final @NotNull Project myProject;
@@ -324,6 +325,12 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   public String toString() {
     if (myName == null) return "Module (not initialized)";
     return "Module: '" + getName() + "'" + (isDisposed() ? " (disposed)" : "");
+  }
+
+  @Override
+  public void putInfo(@NotNull Map<? super String, ? super String> info) {
+    info.put("id", "Module");
+    info.put("name", getName());
   }
 
   @ApiStatus.Internal
