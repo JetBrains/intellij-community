@@ -14,7 +14,7 @@ public final class CurrentJobCancellationException extends CancellationException
   }
 
   @Override
-  public @NotNull JobCanceledException getCause() {
+  public synchronized @NotNull JobCanceledException getCause() {
     return (JobCanceledException)super.getCause();
   }
 
