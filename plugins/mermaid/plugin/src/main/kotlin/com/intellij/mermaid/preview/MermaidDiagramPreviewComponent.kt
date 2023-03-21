@@ -18,11 +18,7 @@ internal class MermaidDiagramPreviewComponent: BorderLayoutPanel(), Disposable {
   suspend fun load() {
     val url = MermaidPreviewStaticServer.obtainStaticIndexUrl()
     with(browser) {
-      component.isVisible = false
       waitForPageLoad(url)
-      component.isVisible = true
-      // Revalidate, so that JCEF component can resize to the correct size
-      component.revalidate()
     }
   }
 
