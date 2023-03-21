@@ -5,6 +5,8 @@
 package com.intellij.concurrency
 
 import com.intellij.openapi.application.AccessToken
+import com.intellij.util.concurrency.captureCallableThreadContext
+import com.intellij.util.concurrency.captureRunnableThreadContext
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
@@ -138,12 +140,12 @@ fun <T> withThreadLocal(variable: ThreadLocal<T>, update: (value: T) -> T): Acce
  * Do not use this method with executors returned from [com.intellij.util.concurrency.AppExecutorUtil], they already capture the context.
  */
 fun captureThreadContext(runnable: Runnable): Runnable {
-  return ContextRunnable(true, currentThreadContext(), runnable)
+  return captureRunnableThreadContext(runnable)
 }
 
 /**
- * Same as [captureThreadContext] but for [Callable].
+ * Same as [captureCallableThreadContext] but for [Callable].
  */
 fun <V> captureThreadContext(callable: Callable<V>): Callable<V> {
-  return ContextCallable(true, currentThreadContext(), callable)
+  return captureCallableThreadContext(callable)
 }

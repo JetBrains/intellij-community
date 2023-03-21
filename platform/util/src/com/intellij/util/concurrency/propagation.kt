@@ -79,6 +79,22 @@ private fun createChildContext(): Pair<CoroutineContext, CompletableJob?> {
   return Pair(childContext, childJob)
 }
 
+internal fun captureRunnableThreadContext(command: Runnable): Runnable {
+  return capturePropagationAndCancellationContext(command)
+}
+
+internal fun <V> captureCallableThreadContext(callable: Callable<V>): Callable<V> {
+  val (childContext, childJob) = createChildContext()
+  var callable = callable
+  if (childContext != EmptyCoroutineContext) {
+    callable = ContextCallable(true, childContext, callable)
+  }
+  if (childJob != null) {
+    callable = CancellationCallable(childJob, callable)
+  }
+  return callable
+}
+
 internal fun capturePropagationAndCancellationContext(command: Runnable): Runnable {
   val (childContext, childJob) = createChildContext()
   var command = command
