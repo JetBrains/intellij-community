@@ -508,9 +508,6 @@
     <applicationService
       serviceInterface="com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory$Available"
       serviceImplementation="com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory$Available$Default"/>
-    <applicationService serviceInterface="com.intellij.toolWindow.DefaultToolWindowLayoutProvider"
-                        serviceImplementation="com.jetbrains.python.ui.PyCommToolWindowLayoutProvider"
-                        overrides="true"/>
   </extensions>
 
   <extensionPoints>
