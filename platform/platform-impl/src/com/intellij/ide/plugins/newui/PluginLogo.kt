@@ -41,7 +41,7 @@ import java.nio.file.NotDirectoryException
 import java.nio.file.Path
 import java.util.zip.ZipFile
 import javax.swing.Icon
-import kotlin.coroutines.coroutineContext
+import kotlin.coroutines.CoroutineContext
 
 private val iconCache = CollectionFactory.createConcurrentWeakValueMap<String, Pair<PluginLogoIconProvider?, PluginLogoIconProvider?>>()
 private val MISSING: Pair<PluginLogoIconProvider?, PluginLogoIconProvider?> = Pair(null, null)
@@ -173,59 +173,7 @@ private fun loadFileIcon(data: ByteArray): PluginLogoIconProvider? {
   }
 }
 
-private suspend fun loadPluginIcons(descriptor: IdeaPluginDescriptor, lazyIcon: LazyPluginLogoIcon) {
-  val idPlugin = getIdForKey(descriptor)
-  val path = descriptor.pluginPath
-  if (path != null) {
-    if (Files.isDirectory(path)) {
-      if (System.getProperty(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY) != null) {
-        if (tryLoadDirIcons(idPlugin = idPlugin, lazyIcon = lazyIcon, path = path.resolve("classes"))) {
-          return
-        }
-      }
-
-      if (tryLoadDirIcons(idPlugin = idPlugin, lazyIcon = lazyIcon, path = path)) {
-        return
-      }
-
-      val libFile = path.resolve("lib")
-      val files = try {
-        Files.newDirectoryStream(libFile).use { it.toList() }
-      }
-      catch (e: NoSuchFileException) {
-        null
-      }
-      catch (e: NotDirectoryException ) {
-        null
-      }
-      catch (e: Exception ) {
-        LOG.error(e)
-        null
-      }
-
-      if (files.isNullOrEmpty()) {
-        putMissingIcon(idPlugin = idPlugin)
-        return
-      }
-
-      for (file in files) {
-        if (tryLoadDirIcons(idPlugin = idPlugin, lazyIcon = lazyIcon, path = file)) {
-          return
-        }
-        if (tryLoadJarIcons(idPlugin = idPlugin, lazyIcon = lazyIcon, path = file, put = false)) {
-          return
-        }
-      }
-    }
-    else {
-      tryLoadJarIcons(idPlugin = idPlugin, lazyIcon = lazyIcon, path = path, put = true)
-      return
-    }
-
-    putMissingIcon(idPlugin = idPlugin)
-    return
-  }
-
+private fun loadPluginIconsFromUrl(idPlugin: String, lazyIcon: LazyPluginLogoIcon, coroutineContext: CoroutineContext) {
   val idFileName = sanitizeFileName(idPlugin)
   val cache = Path.of(PathManager.getPluginTempPath(), CACHE_DIR)
   val lightFile = cache.resolve("$idFileName.svg")
@@ -239,18 +187,70 @@ private suspend fun loadPluginIcons(descriptor: IdeaPluginDescriptor, lazyIcon: 
     }
   }
 
+  coroutineContext.ensureActive()
   try {
     downloadFile(idPlugin, lightFile, "")
     downloadFile(idPlugin, darkFile, "&theme=DARCULA")
   }
   catch (e: Exception) {
     LOG.warn(e)
+    putMissingIcon(idPlugin)
+    return
   }
 
   coroutineContext.ensureActive()
   val light = tryLoadIcon(lightFile)
   val dark = tryLoadIcon(darkFile)
   putIcon(idPlugin = idPlugin, lazyIcon = lazyIcon, light = light, dark = dark)
+}
+
+private fun loadPluginIconsFromFile(path: Path, idPlugin: String, lazyIcon: LazyPluginLogoIcon) {
+  if (Files.isDirectory(path)) {
+    if (System.getProperty(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY) != null) {
+      if (tryLoadDirIcons(idPlugin = idPlugin, lazyIcon = lazyIcon, path = path.resolve("classes"))) {
+        return
+      }
+    }
+
+    if (tryLoadDirIcons(idPlugin = idPlugin, lazyIcon = lazyIcon, path = path)) {
+      return
+    }
+
+    val libFile = path.resolve("lib")
+    val files = try {
+      Files.newDirectoryStream(libFile).use { it.toList() }
+    }
+    catch (e: NoSuchFileException) {
+      null
+    }
+    catch (e: NotDirectoryException) {
+      null
+    }
+    catch (e: Exception) {
+      LOG.error(e)
+      null
+    }
+
+    if (files.isNullOrEmpty()) {
+      putMissingIcon(idPlugin = idPlugin)
+      return
+    }
+
+    for (file in files) {
+      if (tryLoadDirIcons(idPlugin = idPlugin, lazyIcon = lazyIcon, path = file)) {
+        return
+      }
+      if (tryLoadJarIcons(idPlugin = idPlugin, lazyIcon = lazyIcon, path = file, put = false)) {
+        return
+      }
+    }
+  }
+  else {
+    tryLoadJarIcons(idPlugin = idPlugin, lazyIcon = lazyIcon, path = path, put = true)
+    return
+  }
+
+  putMissingIcon(idPlugin = idPlugin)
 }
 
 private fun tryLoadDirIcons(idPlugin: String, lazyIcon: LazyPluginLogoIcon, path: Path): Boolean {
@@ -381,7 +381,14 @@ private class PluginLogoLoader(private val coroutineScope: CoroutineScope) {
     coroutineScope.launch(Dispatchers.IO) {
       for (info in loadInfo) {
         launch {
-          loadPluginIcons(descriptor = info.first, lazyIcon = info.second)
+          val idPlugin = getIdForKey(descriptor = info.first)
+          val path = info.first.pluginPath
+          if (path == null) {
+            loadPluginIconsFromUrl(idPlugin = idPlugin, lazyIcon = info.second, coroutineContext = coroutineContext)
+          }
+          else {
+            loadPluginIconsFromFile(path = path, idPlugin = idPlugin, lazyIcon = info.second)
+          }
         }
       }
     }
