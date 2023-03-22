@@ -77,7 +77,7 @@ public final class NativeIconProvider extends IconProvider implements DumbAware 
       }
     }
 
-    return DeferredIconImpl.withoutReadAction(AllIcons.Nodes.NodePlaceholder, ioFile, file -> {
+    return DeferredIconImpl.Companion.withoutReadAction(AllIcons.Nodes.NodePlaceholder, ioFile, file -> {
       if (!Files.exists(file)) {
         return null;
       }

@@ -24,7 +24,7 @@ import java.util.function.Function;
 public final class IconDeferrerImpl extends IconDeferrer {
   private static final ThreadLocal<Boolean> evaluationIsInProgress = ThreadLocal.withInitial(() -> Boolean.FALSE);
   private final Object LOCK = new Object();
-  private final Map<Object, Icon> myIconsCache = new FixedHashMap<>(SystemProperties.getIntProperty("ide.icons.deferrerCacheSize", 1000)); // guarded by LOCK
+  private final Map<Object, Icon> iconCache = new FixedHashMap<>(SystemProperties.getIntProperty("ide.icons.deferrerCacheSize", 1000)); // guarded by LOCK
   private long myLastClearTimestamp; // guarded by LOCK
 
   public IconDeferrerImpl() {
@@ -50,7 +50,7 @@ public final class IconDeferrerImpl extends IconDeferrer {
   @Override
   public void clearCache() {
     synchronized (LOCK) {
-      myIconsCache.clear();
+      iconCache.clear();
       myLastClearTimestamp++;
     }
   }
@@ -62,7 +62,7 @@ public final class IconDeferrerImpl extends IconDeferrer {
     }
 
     synchronized (LOCK) {
-      Icon cached = myIconsCache.get(param);
+      Icon cached = iconCache.get(param);
       if (cached != null) {
         return cached;
       }
@@ -71,11 +71,11 @@ public final class IconDeferrerImpl extends IconDeferrer {
         synchronized (LOCK) {
           // check if our result is not outdated yet
           if (started == myLastClearTimestamp) {
-            myIconsCache.put(((DeferredIconImpl<?>)source).myParam, r);
+            iconCache.put(((DeferredIconImpl<?>)source).param, r);
           }
         }
       });
-      myIconsCache.put(param, result);
+      iconCache.put(param, result);
       return result;
     }
   }
@@ -92,6 +92,6 @@ public final class IconDeferrerImpl extends IconDeferrer {
 
   @Override
   public boolean equalIcons(Icon icon1, Icon icon2) {
-    return DeferredIconImpl.equalIcons(icon1, icon2);
+    return DeferredIconImpl.Companion.equalIcons(icon1, icon2);
   }
 }

@@ -1,448 +1,371 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui;
+package com.intellij.ui
 
-import com.intellij.codeWithMe.ClientId;
-import com.intellij.ide.PowerSaveMode;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.ScalableIcon;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.icons.RowIcon;
-import com.intellij.ui.icons.*;
-import com.intellij.ui.scale.ScaleType;
-import com.intellij.util.Function;
-import com.intellij.util.IconUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.EdtScheduledExecutorService;
-import com.intellij.util.ui.EDT;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBScalableIcon;
-import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
+import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.ClientId.Companion.withClientId
+import com.intellij.ide.PowerSaveMode
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
+import com.intellij.openapi.project.IndexNotReadyException
+import com.intellij.openapi.util.ScalableIcon
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.DeferredIconRepaintScheduler.RepaintRequest
+import com.intellij.ui.icons.*
+import com.intellij.ui.icons.RowIcon
+import com.intellij.ui.scale.ScaleType
+import com.intellij.util.IconUtil.scale
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.EdtScheduledExecutorService
+import com.intellij.util.ui.EDT
+import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.JBScalableIcon
+import com.intellij.util.ui.tree.TreeUtil
+import org.jetbrains.annotations.VisibleForTesting
+import java.awt.Component
+import java.awt.Graphics
+import java.util.*
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicLong
+import java.util.function.BiConsumer
+import java.util.function.Function
+import javax.swing.Icon
+import javax.swing.JTree
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.BiConsumer;
+private const val MIN_AUTO_UPDATE_MILLIS = 950
+private val ourRepaintScheduler = DeferredIconRepaintScheduler()
+private val EMPTY_ICON: Icon = EmptyIcon.create(16).withIconPreScaled(false)
+private val ourIconCalculatingExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("IconCalculating Pool", 1)
 
-public final class DeferredIconImpl<T> extends JBScalableIcon implements DeferredIcon, RetrievableIcon, IconWithToolTip, CopyableIcon {
-  private static final Logger LOG = Logger.getInstance(DeferredIconImpl.class);
-  private static final int MIN_AUTO_UPDATE_MILLIS = 950;
-  private static final DeferredIconRepaintScheduler ourRepaintScheduler = new DeferredIconRepaintScheduler();
+class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconWithToolTip, CopyableIcon {
+  companion object {
+    fun <T> withoutReadAction(baseIcon: Icon?, param: T, evaluator: Function<in T, out Icon>): DeferredIcon {
+      return DeferredIconImpl(baseIcon = baseIcon, param = param, needReadAction = false, evaluator = evaluator, listener = null)
+    }
 
-  private final @NotNull Icon myDelegateIcon;
+    fun equalIcons(icon1: Icon?, icon2: Icon?): Boolean {
+      return if (icon1 is DeferredIconImpl<*> && icon2 is DeferredIconImpl<*>) {
+        paramsEqual(icon1, icon2)
+      }
+      else icon1 == icon2
+    }
 
-  private volatile @NotNull Icon myScaledDelegateIcon;
-  private DeferredIconImpl<T> myScaledIconCache;
-
-  private java.util.function.Function<? super T, ? extends Icon> myEvaluator;
-  private Set<DeferredIconRepaintScheduler.RepaintRequest> myScheduledRepaints;
-  private volatile boolean myIsScheduled;
-  final T myParam;
-  private static final Icon EMPTY_ICON = EmptyIcon.create(16).withIconPreScaled(false);
-  private final boolean myNeedReadAction;
-  private boolean myDone;
-  private long myLastCalcTime;
-  private long myLastTimeSpent;
-
-  private AtomicLong myModificationCount = new AtomicLong(0);
-
-  private static final ExecutorService ourIconCalculatingExecutor =
-    AppExecutorUtil.createBoundedApplicationPoolExecutor("IconCalculating Pool", 1);
-
-  private final @Nullable BiConsumer<? super DeferredIcon, ? super Icon> myEvalListener;
-
-  private DeferredIconImpl(@NotNull DeferredIconImpl<T> icon) {
-    super(icon);
-    myDelegateIcon = icon.myDelegateIcon;
-    myScaledDelegateIcon = icon.myDelegateIcon;
-    myScaledIconCache = null;
-    myEvaluator = icon.myEvaluator;
-    myIsScheduled = icon.myIsScheduled;
-    myParam = icon.myParam;
-    myNeedReadAction = icon.myNeedReadAction;
-    myDone = icon.myDone;
-    myLastCalcTime = icon.myLastCalcTime;
-    myLastTimeSpent = icon.myLastTimeSpent;
-    myEvalListener = icon.myEvalListener;
-    myModificationCount = icon.myModificationCount;
+    private fun paramsEqual(icon1: DeferredIconImpl<*>, icon2: DeferredIconImpl<*>): Boolean {
+      return icon1.param == icon2.param && equalIcons(icon1.scaledDelegateIcon, icon2.scaledDelegateIcon)
+    }
   }
 
-  DeferredIconImpl(Icon baseIcon,
-                   T param,
-                   boolean needReadAction,
-                   @NotNull java.util.function.Function<? super T, ? extends Icon> evaluator,
-                   @Nullable BiConsumer<? super DeferredIcon, ? super Icon> listener) {
-    myParam = param;
-    myDelegateIcon = nonNull(baseIcon);
-    myScaledDelegateIcon = myDelegateIcon;
-    myScaledIconCache = null;
-    myEvaluator = evaluator;
-    myNeedReadAction = needReadAction;
-    myEvalListener = listener;
-    checkDelegationDepth();
+  private val delegateIcon: Icon
+
+  @Volatile
+  private var scaledDelegateIcon: Icon
+  private var myScaledIconCache: DeferredIconImpl<T>?
+  private var evaluator: Function<in T, out Icon>?
+  private var scheduledRepaints: MutableSet<RepaintRequest>? = null
+
+  @Volatile
+  private var myIsScheduled = false
+
+  @JvmField
+  val param: T
+
+  val isNeedReadAction: Boolean
+  var isDone = false
+    private set
+  private var lastCalcTime: Long = 0
+  private var lastTimeSpent: Long = 0
+  private var modificationCount = AtomicLong(0)
+  private val evalListener: BiConsumer<in DeferredIcon?, in Icon>?
+
+  private constructor(icon: DeferredIconImpl<T>) : super(icon) {
+    delegateIcon = icon.delegateIcon
+    scaledDelegateIcon = icon.delegateIcon
+    myScaledIconCache = null
+    evaluator = icon.evaluator
+    myIsScheduled = icon.myIsScheduled
+    param = icon.param
+    isNeedReadAction = icon.isNeedReadAction
+    isDone = icon.isDone
+    lastCalcTime = icon.lastCalcTime
+    lastTimeSpent = icon.lastTimeSpent
+    evalListener = icon.evalListener
+    modificationCount = icon.modificationCount
   }
 
-  public DeferredIconImpl(Icon baseIcon, T param, final boolean needReadAction, @NotNull Function<? super T, ? extends Icon> evaluator) {
-    this(baseIcon, param, needReadAction, t -> evaluator.fun(t), null);
+  internal constructor(baseIcon: Icon?,
+                       param: T,
+                       needReadAction: Boolean,
+                       evaluator: Function<in T, out Icon>,
+                       listener: BiConsumer<in DeferredIcon?, in Icon>?) {
+    this.param = param
+    delegateIcon = baseIcon ?: EMPTY_ICON
+    scaledDelegateIcon = delegateIcon
+    myScaledIconCache = null
+    this.evaluator = evaluator
+    isNeedReadAction = needReadAction
+    evalListener = listener
+    checkDelegationDepth()
   }
 
-  @Override
-  public long getModificationCount() {
-    return myModificationCount.get();
+  constructor(baseIcon: Icon?, param: T, needReadAction: Boolean, evaluator: com.intellij.util.Function<in T, out Icon>) :
+    this(baseIcon = baseIcon,
+         param = param,
+         needReadAction = needReadAction,
+         evaluator = Function<T, Icon> { t: T -> evaluator.`fun`(t) },
+         listener = null)
+
+  override fun getModificationCount(): Long = modificationCount.get()
+
+  override fun replaceBy(replacer: IconReplacer): Icon = DeferredIconAfterReplace(original = this, replacer = replacer)
+
+  override fun copy(): DeferredIconImpl<T> {
+    return DeferredIconImpl(this)
   }
 
-  @NotNull
-  @Override
-  public Icon replaceBy(@NotNull IconReplacer replacer) {
-    return new DeferredIconAfterReplace<>(this, replacer);
-  }
-
-  @Override
-  public @NotNull DeferredIconImpl<T> copy() {
-    return new DeferredIconImpl<>(this);
-  }
-
-  @NotNull
-  @Override
-  public DeferredIconImpl<T> scale(float scale) {
+  override fun scale(scale: Float): DeferredIconImpl<T> {
     if (getScale() == scale) {
-      return this;
+      return this
     }
-
-    DeferredIconImpl<T> icon = myScaledIconCache;
-    if (icon == null || icon.getScale() != scale) {
-      icon = new DeferredIconImpl<>(this);
-      icon.setScale(ScaleType.OBJ_SCALE.of(scale));
-      myScaledIconCache = icon;
+    var icon = myScaledIconCache
+    if (icon == null || icon.scale != scale) {
+      icon = DeferredIconImpl(this)
+      icon.setScale(ScaleType.OBJ_SCALE.of(scale))
+      myScaledIconCache = icon
     }
-    icon.myScaledDelegateIcon = IconUtil.scale(icon.myDelegateIcon, null, scale);
-    return icon;
+    icon.scaledDelegateIcon = scale(icon.delegateIcon, null, scale)
+    return icon
   }
 
-  public static <T> @NotNull DeferredIcon withoutReadAction(Icon baseIcon, T param, @NotNull java.util.function.Function<? super T, ? extends Icon> evaluator) {
-    return new DeferredIconImpl<>(baseIcon, param, false, evaluator, null);
+  override fun getBaseIcon(): Icon {
+    return delegateIcon
   }
 
-  @NotNull
-  @Override
-  public Icon getBaseIcon() {
-    return myDelegateIcon;
-  }
-
-  private void checkDelegationDepth() {
-    int depth = 0;
-    DeferredIconImpl<?> each = this;
-    while (each.myScaledDelegateIcon instanceof DeferredIconImpl && depth < 50) {
-      depth++;
-      each = (DeferredIconImpl<?>)each.myScaledDelegateIcon;
+  private fun checkDelegationDepth() {
+    var depth = 0
+    var each: DeferredIconImpl<*> = this
+    while (each.scaledDelegateIcon is DeferredIconImpl<*> && depth < 50) {
+      depth++
+      each = each.scaledDelegateIcon as DeferredIconImpl<*>
     }
     if (depth >= 50) {
-      LOG.error("Too deep deferred icon nesting");
+      logger<DeferredIconImpl<*>>().error("Too deep deferred icon nesting")
     }
   }
 
-  @NotNull
-  private static Icon nonNull(@Nullable Icon icon) {
-    return icon == null ? EMPTY_ICON : icon;
-  }
-
-  @Override
-  public void paintIcon(Component c, @NotNull Graphics g, int x, int y) {
-    Icon scaledDelegateIcon = myScaledDelegateIcon;
-    if (!(scaledDelegateIcon instanceof DeferredIconImpl &&
-          ((DeferredIconImpl<?>)scaledDelegateIcon).myScaledDelegateIcon instanceof DeferredIconImpl)) {
+  override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
+    val scaledDelegateIcon = scaledDelegateIcon
+    if (!(scaledDelegateIcon is DeferredIconImpl<*> &&
+          scaledDelegateIcon.scaledDelegateIcon is DeferredIconImpl<*>)) {
       //SOE protection
-      scaledDelegateIcon.paintIcon(c, g, x, y);
+      scaledDelegateIcon.paintIcon(c, g, x, y)
     }
-
     if (needScheduleEvaluation()) {
-      scheduleEvaluation(c, x, y);
+      scheduleEvaluation(c, x, y)
     }
   }
 
-  @Override
-  public void notifyPaint(@NotNull Component c, int x, int y) {
+  override fun notifyPaint(c: Component, x: Int, y: Int) {
     if (needScheduleEvaluation()) {
-      scheduleEvaluation(c, x, y);
+      scheduleEvaluation(c, x, y)
     }
   }
 
-  private boolean needScheduleEvaluation() {
-    if (isDone() || PowerSaveMode.isEnabled()) {
-      return false;
-    }
-    return true;
+  private fun needScheduleEvaluation(): Boolean {
+    return !(isDone || PowerSaveMode.isEnabled())
   }
 
   @VisibleForTesting
-  Future<?> scheduleEvaluation(Component c, int x, int y) {
+  fun scheduleEvaluation(c: Component?, x: Int, y: Int): Future<*>? {
     // It is important to extract the repaint target here:
     // the component may be a temporary component used by some list or tree to paint elements
-    DeferredIconRepaintScheduler.RepaintRequest repaintRequest = ourRepaintScheduler.createRepaintRequest(c, x, y);
-    AppUIUtil.invokeOnEdt(() -> {
-      if (isDone()) {
-        return;
+    val repaintRequest = ourRepaintScheduler.createRepaintRequest(c, x, y)
+    AppUIUtil.invokeOnEdt {
+      if (isDone) {
+        return@invokeOnEdt
       }
-      if (myScheduledRepaints == null) {
-        myScheduledRepaints = Collections.singleton(repaintRequest);
+
+      var scheduledRepaints = scheduledRepaints
+      if (scheduledRepaints == null) {
+        this.scheduledRepaints = mutableSetOf(repaintRequest)
       }
       else {
-        if (!myScheduledRepaints.contains(repaintRequest)) {
-          if (myScheduledRepaints.size() == 1) {
-            myScheduledRepaints = new HashSet<>(myScheduledRepaints);
+        if (!scheduledRepaints.contains(repaintRequest)) {
+          if (scheduledRepaints.size == 1) {
+            scheduledRepaints = HashSet(scheduledRepaints)
           }
-          myScheduledRepaints.add(repaintRequest);
+          scheduledRepaints.add(repaintRequest)
         }
       }
-    });
-
+    }
     if (myIsScheduled) {
-      return null;
+      return null
     }
-
-    myIsScheduled = true;
-
-    return ourIconCalculatingExecutor.submit(() -> {
-      int oldWidth = myScaledDelegateIcon.getIconWidth();
-      final Icon[] evaluated = new Icon[1];
-
-      boolean success = true;
-      if (myNeedReadAction) {
-        success = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
-          IconDeferrerImpl.evaluateDeferred(() -> evaluated[0] = evaluate());
-        });
+    myIsScheduled = true
+    return ourIconCalculatingExecutor.submit {
+      val oldWidth = scaledDelegateIcon.iconWidth
+      val evaluated = arrayOfNulls<Icon>(1)
+      var success = true
+      if (isNeedReadAction) {
+        success = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority { IconDeferrerImpl.evaluateDeferred { evaluated[0] = evaluate() } }
       }
       else {
-        IconDeferrerImpl.evaluateDeferred(() -> evaluated[0] = evaluate());
+        IconDeferrerImpl.evaluateDeferred { evaluated[0] = evaluate() }
       }
-      final Icon result = evaluated[0];
+      val result = evaluated[0]
       if (!success || result == null) {
-        myIsScheduled = false;
-        EdtScheduledExecutorService.getInstance().schedule(() -> {
-          if (needScheduleEvaluation()) {
-            scheduleEvaluation(c, x, y);
-          }
-        }, MIN_AUTO_UPDATE_MILLIS, TimeUnit.MILLISECONDS);
-        return;
+        myIsScheduled = false
+        EdtScheduledExecutorService.getInstance().schedule({
+                                                             if (needScheduleEvaluation()) {
+                                                               scheduleEvaluation(c, x, y)
+                                                             }
+                                                           }, MIN_AUTO_UPDATE_MILLIS.toLong(), TimeUnit.MILLISECONDS)
+        return@submit
       }
-
-      myScaledDelegateIcon = result;
-      myModificationCount.incrementAndGet();
-      checkDelegationDepth();
-
-      processRepaints(oldWidth, result);
-    });
-  }
-
-  private void processRepaints(int oldWidth, Icon result) {
-    boolean shouldRevalidate = Registry.is("ide.tree.deferred.icon.invalidates.cache") && myScaledDelegateIcon.getIconWidth() != oldWidth;
-    ApplicationManager.getApplication().invokeLater(() -> {
-      Set<DeferredIconRepaintScheduler.RepaintRequest> repaints = myScheduledRepaints;
-      setDone(result);
-      if (equalIcons(result, myDelegateIcon)) {
-        return;
-      }
-      for (DeferredIconRepaintScheduler.RepaintRequest repaintRequest : repaints) {
-        Component actualTarget = repaintRequest.getActualTarget();
-        if (actualTarget == null) {
-          continue;
-        }
-
-        // revalidate will not work: JTree caches size of nodes
-        if (shouldRevalidate && actualTarget instanceof JTree) {
-          TreeUtil.invalidateCacheAndRepaint(((JTree)actualTarget).getUI());
-        }
-
-        //System.err.println("Repaint rectangle " + repaintRequest.getPaintingParentRec());
-        ourRepaintScheduler.scheduleRepaint(repaintRequest, getIconWidth(), getIconHeight(), false);
-      }
-    }, ModalityState.any());
-  }
-
-  private void setDone(@NotNull Icon result) {
-    if (myEvalListener != null) {
-      myEvalListener.accept(this, result);
+      scaledDelegateIcon = result
+      modificationCount.incrementAndGet()
+      checkDelegationDepth()
+      processRepaints(oldWidth, result)
     }
-
-    myDone = true;
-    myEvaluator = null;
-    myScheduledRepaints = null;
   }
 
-  @NotNull
-  @Override
-  public Icon retrieveIcon() {
-    if (isDone()) {
-      return myScaledDelegateIcon;
+  private fun processRepaints(oldWidth: Int, result: Icon) {
+    val shouldRevalidate = Registry.`is`("ide.tree.deferred.icon.invalidates.cache") && scaledDelegateIcon.iconWidth != oldWidth
+    ApplicationManager.getApplication().invokeLater({
+                                                      val repaints = scheduledRepaints
+                                                      setDone(result)
+                                                      if (equalIcons(result, delegateIcon)) {
+                                                        return@invokeLater
+                                                      }
+                                                      for (repaintRequest in repaints!!) {
+                                                        val actualTarget = repaintRequest.getActualTarget() ?: continue
+
+                                                        // revalidate will not work: JTree caches size of nodes
+                                                        if (shouldRevalidate && actualTarget is JTree) {
+                                                          TreeUtil.invalidateCacheAndRepaint(actualTarget.ui)
+                                                        }
+
+                                                        //System.err.println("Repaint rectangle " + repaintRequest.getPaintingParentRec());
+                                                        ourRepaintScheduler.scheduleRepaint(repaintRequest, iconWidth, iconHeight, false)
+                                                      }
+                                                    }, ModalityState.any())
+  }
+
+  private fun setDone(result: Icon) {
+    evalListener?.accept(this, result)
+    isDone = true
+    evaluator = null
+    scheduledRepaints = null
+  }
+
+  override fun retrieveIcon(): Icon {
+    if (isDone) {
+      return scaledDelegateIcon
     }
-    if (EDT.isCurrentThreadEdt()) {
-      return myScaledDelegateIcon;
+    return if (EDT.isCurrentThreadEdt()) {
+      scaledDelegateIcon
     }
-    return evaluate();
+    else evaluate()
   }
 
-  public boolean isNeedReadAction() {
-    return myNeedReadAction;
-  }
-
-  @NotNull
-  @Override
-  public Icon evaluate() {
-    Icon result;
+  override fun evaluate(): Icon {
     // Icon evaluation is not something that should be related to any client
-    try (AccessToken ignored = ClientId.withClientId((ClientId)null)) {
-      result = nonNull(myEvaluator.apply(myParam));
-    }
-    catch (IndexNotReadyException e) {
-      result = EMPTY_ICON;
-    }
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      checkDoesntReferenceThis(result);
-    }
-
-    if (getScale() != 1f && result instanceof ScalableIcon) {
-      result = ((ScalableIcon)result).scale(getScale());
-    }
-    return result;
-  }
-
-  private void checkDoesntReferenceThis(final Icon icon) {
-    if (icon == this) {
-      throw new IllegalStateException("Loop in icons delegation");
-    }
-
-    if (icon instanceof DeferredIconImpl) {
-      checkDoesntReferenceThis(((DeferredIconImpl<?>)icon).myScaledDelegateIcon);
-    }
-    else if (icon instanceof LayeredIcon) {
-      for (Icon layer : ((LayeredIcon)icon).getAllLayers()) {
-        checkDoesntReferenceThis(layer);
+    val result = try {
+      withClientId(null as ClientId?).use {
+        evaluator?.apply(param) ?: EMPTY_ICON
       }
     }
-    else if (icon instanceof RowIcon rowIcon) {
-      final int count = rowIcon.getIconCount();
-      for (int i = 0; i < count; i++) {
-        checkDoesntReferenceThis(rowIcon.getIcon(i));
+    catch (e: IndexNotReadyException) {
+      EMPTY_ICON
+    }
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      checkDoesntReferenceThis(result)
+    }
+    return if (scale != 1f && result is ScalableIcon) result.scale(scale) else result
+  }
+
+  private fun checkDoesntReferenceThis(icon: Icon?) {
+    check(icon !== this) { "Loop in icons delegation" }
+    when (icon) {
+      is DeferredIconImpl<*> -> {
+        checkDoesntReferenceThis(icon.scaledDelegateIcon)
+      }
+      is LayeredIcon -> {
+        for (layer in icon.allLayers) {
+          checkDoesntReferenceThis(layer)
+        }
+      }
+      is RowIcon -> {
+        val count: Int = icon.iconCount
+        for (i in 0 until count) {
+          checkDoesntReferenceThis(icon.getIcon(i))
+        }
       }
     }
   }
 
-  @Override
-  public int getIconWidth() {
-    return myScaledDelegateIcon.getIconWidth();
+  override fun getIconWidth(): Int {
+    return scaledDelegateIcon.iconWidth
   }
 
-  @Override
-  public int getIconHeight() {
-    return myScaledDelegateIcon.getIconHeight();
+  override fun getIconHeight(): Int {
+    return scaledDelegateIcon.iconHeight
   }
 
-  @Override
-  public String getToolTip(boolean composite) {
-    if (myScaledDelegateIcon instanceof IconWithToolTip) {
-      return ((IconWithToolTip) myScaledDelegateIcon).getToolTip(composite);
+  override fun getToolTip(composite: Boolean): String? {
+    return if (scaledDelegateIcon is IconWithToolTip) {
+      (scaledDelegateIcon as IconWithToolTip).getToolTip(composite)
     }
-    return null;
+    else null
   }
 
-  public boolean isDone() {
-    return myDone;
+  override fun equals(other: Any?): Boolean {
+    return other is DeferredIconImpl<*> && paramsEqual(this, other)
   }
 
-  @Override
-  public boolean equals(Object obj) {
-    return obj instanceof DeferredIconImpl && paramsEqual(this, (DeferredIconImpl<?>)obj);
+  override fun hashCode(): Int {
+    return Objects.hash(param, scaledDelegateIcon)
   }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(myParam, myScaledDelegateIcon);
+  override fun toString(): String {
+    return "Deferred. Base=$scaledDelegateIcon"
   }
-
-  static boolean equalIcons(Icon icon1, Icon icon2) {
-    if (icon1 instanceof DeferredIconImpl && icon2 instanceof DeferredIconImpl) {
-      return paramsEqual((DeferredIconImpl<?>)icon1, (DeferredIconImpl<?>)icon2);
-    }
-    return Objects.equals(icon1, icon2);
-  }
-
-  private static boolean paramsEqual(@NotNull DeferredIconImpl<?> icon1, @NotNull DeferredIconImpl<?> icon2) {
-    return Comparing.equal(icon1.myParam, icon2.myParam) &&
-      equalIcons(icon1.myScaledDelegateIcon, icon2.myScaledDelegateIcon);
-  }
-
-  @Override
-  public String toString() {
-    return "Deferred. Base=" + myScaledDelegateIcon;
-  }
-
 
   /**
-   * Later it may be needed to implement more interfaces here. Ideally the same as in the DeferredIconImpl itself.
+   * Later, it may be needed to implement more interfaces here. Ideally, the same as in the DeferredIconImpl itself.
    */
-  private static class DeferredIconAfterReplace<T> implements ReplaceableIcon, UpdatableIcon {
-    private final @NotNull DeferredIconImpl<T> myOriginal;
-    private @NotNull Icon myOriginalEvaluatedIcon;
-    private final @NotNull IconReplacer myReplacer;
-    private @NotNull Icon myResultIcon;
+  private class DeferredIconAfterReplace<T>(private val original: DeferredIconImpl<T>,
+                                            private val replacer: IconReplacer) : ReplaceableIcon, UpdatableIcon {
+    private var originalEvaluatedIcon: Icon
+    private var resultIcon: Icon
 
-    DeferredIconAfterReplace(@NotNull DeferredIconImpl<T> original, @NotNull IconReplacer replacer) {
-      myOriginal = original;
-      myOriginalEvaluatedIcon = myOriginal.myScaledDelegateIcon;
-      myReplacer = replacer;
-      myResultIcon = myReplacer.replaceIcon(myOriginalEvaluatedIcon);
+    init {
+      originalEvaluatedIcon = original.scaledDelegateIcon
+      resultIcon = replacer.replaceIcon(originalEvaluatedIcon)
     }
 
-    @Override
-    public void paintIcon(Component c, Graphics g, int x, int y) {
-      if (myOriginal.needScheduleEvaluation()) {
-        myOriginal.scheduleEvaluation(c, x, y);
-      } else if (myOriginalEvaluatedIcon != myOriginal.myScaledDelegateIcon) {
-        myOriginalEvaluatedIcon = myOriginal.myScaledDelegateIcon;
-        myResultIcon = myReplacer.replaceIcon(myOriginalEvaluatedIcon);
+    override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
+      if (original.needScheduleEvaluation()) {
+        original.scheduleEvaluation(c, x, y)
       }
-      myResultIcon.paintIcon(c, g, x, y);
+      else if (originalEvaluatedIcon !== original.scaledDelegateIcon) {
+        originalEvaluatedIcon = original.scaledDelegateIcon
+        resultIcon = replacer.replaceIcon(originalEvaluatedIcon)
+      }
+      resultIcon.paintIcon(c, g, x, y)
     }
 
-    @Override
-    public int getIconWidth() {
-      return myResultIcon.getIconWidth();
-    }
+    override fun getIconWidth(): Int = resultIcon.iconWidth
 
-    @Override
-    public int getIconHeight() {
-      return myResultIcon.getIconHeight();
-    }
+    override fun getIconHeight(): Int = resultIcon.iconHeight
 
-    @Override
-    public @NotNull Icon replaceBy(@NotNull IconReplacer replacer) {
-      return replacer.replaceIcon(myOriginal);
-    }
+    override fun replaceBy(replacer: IconReplacer): Icon = replacer.replaceIcon(original)
 
-    @Override
-    public long getModificationCount() {
-      return myOriginal.getModificationCount();
-    }
+    override fun getModificationCount(): Long = original.getModificationCount()
 
-    @Override
-    public void notifyPaint(@NotNull Component c, int x, int y) {
-      myOriginal.notifyPaint(c, x, y);
+    override fun notifyPaint(c: Component, x: Int, y: Int) {
+      original.notifyPaint(c, x, y)
     }
   }
 }
