@@ -295,17 +295,25 @@ private fun renderImage(colorPatcher: SvgAttributePatcher?,
 }
 
 @ApiStatus.Internal
-fun loadWithScales(sizes: List<Int>, inputStream: InputStream): List<Image> {
-  val document = createJSvgDocument(inputStream)
+fun loadWithScales(sizes: List<Int>, data: ByteArray): List<Image> {
+  val svgCache = svgCache
   val scale = JBUIScale.sysScale()
+
+  val document by lazy(LazyThreadSafetyMode.NONE) { createJSvgDocument(data) }
   val isHiDpiNeeded = JreHiDpiUtil.isJreHiDPIEnabled() && JBUIScale.isHiDPI(scale.toDouble())
   return sizes.map { size ->
-    val result = renderSvgWithSize(document = document, width = (size * scale), height = (size * scale))
+    val compoundKey = SvgCacheClassifier(scale = scale, size = size)
+    var image = svgCache?.loadFromCache(imageBytes = data, themeKey = 0, compoundKey = compoundKey)
+    if (image == null) {
+      image = renderSvgWithSize(document = document, width = (size * scale), height = (size * scale))
+      svgCache?.storeLoadedImage(precomputedCacheKey = 0, themeKey = 0, imageBytes = data, compoundKey = compoundKey, image = image)
+    }
+
     if (isHiDpiNeeded) {
-      JBHiDPIScaledImage(result, scale.toDouble())
+      JBHiDPIScaledImage(image, scale.toDouble())
     }
     else {
-      result
+      image
     }
   }
 }

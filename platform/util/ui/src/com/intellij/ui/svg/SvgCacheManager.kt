@@ -25,10 +25,12 @@ import java.nio.file.Path
 @JvmInline
 @ApiStatus.Internal
 value class SvgCacheClassifier(internal val key: Int) {
-  constructor(scale: Float) : this(scale = scale, isDark = false, isStroke = false)
+  constructor(scale: Float) : this(scale.toBits())
 
   constructor(scale: Float, isDark: Boolean, isStroke: Boolean) :
     this((scale + (if (isDark) 1_000 else 0) + (if (isStroke) 1_100 else 0)).toBits())
+
+  constructor(scale: Float, size: Int) : this((scale + (10_000 + size)).toBits())
 }
 
 fun getSvgIconCacheFile(): Path = Path.of(PathManager.getSystemPath(), "icon-v8.db")
