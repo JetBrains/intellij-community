@@ -53,6 +53,7 @@ internal class ThreadingConcurrencyInspection(
 
     val checkMissingAnnotations = checkMissingAnnotations &&
                                   method.javaPsi.hasModifier(JvmModifier.PUBLIC)
+                                  && method.javaPsi.findSuperMethods().isEmpty()
     uastBody.accept(ThreadingVisitor(problemsHolder, method.getThreadingStatuses(), checkMissingAnnotations))
 
     return problemsHolder.resultsArray
@@ -129,7 +130,6 @@ internal class ThreadingConcurrencyInspection(
                                 threadingStatus: Set<ThreadingStatus>): Boolean {
       require(methodThreadingStatus.isNotEmpty())
       require(threadingStatus.isNotEmpty())
-
       if (checkViceVersa(node, EnumSet.of(ThreadingStatus.REQUIRES_EDT),
                          threadingStatus,
                          EnumSet.of(ThreadingStatus.REQUIRES_BGT))) {

@@ -84,6 +84,31 @@ class KtThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestB
     }
   }
 
+  fun testWithCheckUnannotatedMethodsNotInOverridingMethod() {
+    myFixture.addClass("""
+      public class Parent {
+        public void method() {}
+      }
+    """.trimIndent())
+
+    runWithCheckUnannotatedMethodsEnabled {
+      myFixture.configureByText("Subclass.kt", """
+        import com.intellij.util.concurrency.annotations.*
+
+        class Subclass : Parent() {
+          override fun method() {
+            edt();
+          }
+          
+          @RequiresEdt 
+          fun edt() {}
+        }
+      """.trimIndent())
+
+      myFixture.checkHighlighting()
+    }
+  }
+
   fun testWithCheckUnannotatedMethodCallsAnnotatedMethodFix() {
     runWithCheckUnannotatedMethodsEnabled {
       doTestHighlighting("""    

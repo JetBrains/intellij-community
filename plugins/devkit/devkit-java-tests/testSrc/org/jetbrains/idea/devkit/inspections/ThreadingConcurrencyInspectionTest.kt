@@ -86,6 +86,32 @@ class ThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestBas
     }
   }
 
+  fun testWithCheckUnannotatedMethodsNotInOverridingMethod() {
+    myFixture.addClass("""
+      public class Parent {
+        public void method() {}
+      }
+    """.trimIndent())
+
+    runWithCheckUnannotatedMethodsEnabled {
+      myFixture.configureByText("Subclass.java", """
+        import com.intellij.util.concurrency.annotations.*;
+
+        public class Subclass extends Parent {
+          @Override
+          public void method() {
+            edt();
+          }
+          
+          @RequiresEdt 
+          public void edt() {}
+        }
+      """.trimIndent())
+
+      myFixture.checkHighlighting()
+    }
+  }
+
   fun testWithCheckUnannotatedMethodCallsAnnotatedMethodFix() {
     runWithCheckUnannotatedMethodsEnabled {
       doTestHighlighting("""    
@@ -318,7 +344,7 @@ class ThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestBas
     }
     """.trimIndent())
 
-    myFixture.checkHighlighting(false,false,false)
+    myFixture.checkHighlighting(false, false, false)
   }
 
 }
