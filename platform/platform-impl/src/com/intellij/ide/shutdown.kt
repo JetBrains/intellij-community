@@ -37,7 +37,7 @@ internal fun joinBlocking(project: ProjectImpl) {
 }
 
 internal fun joinBlocking(containerScope: CoroutineScope, debugString: String, pumpEvents: (Job) -> Unit) {
-  if (!Registry.`is`("ide.await.scope.completion")) {
+  if (!Registry.`is`("ide.await.scope.completion", true)) {
     return
   }
   val containerJob = containerScope.coroutineContext.job
