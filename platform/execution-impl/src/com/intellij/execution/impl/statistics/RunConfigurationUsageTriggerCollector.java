@@ -32,7 +32,7 @@ import static com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesC
 
 public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCollector {
   public static final String GROUP_NAME = "run.configuration.exec";
-  private static final EventLogGroup GROUP = new EventLogGroup(GROUP_NAME, 69);
+  private static final EventLogGroup GROUP = new EventLogGroup(GROUP_NAME, 70);
   public static final IntEventField ALTERNATIVE_JRE_VERSION = EventFields.Int("alternative_jre_version");
   private static final ObjectEventField ADDITIONAL_FIELD = EventFields.createAdditionalDataField(GROUP_NAME, "started");
   private static final StringEventField EXECUTOR = EventFields.StringValidatedByCustomRule("executor",
