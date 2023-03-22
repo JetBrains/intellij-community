@@ -513,7 +513,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     fireOnNewPrintable(myState);
   }
 
-  public void setTestFailed(@NotNull String localizedMessage, @Nullable String stackTrace, boolean testError) {
+  public void setTestFailed(@Nullable String localizedMessage, @Nullable String stackTrace, boolean testError) {
     setStacktraceIfNotSet(stackTrace);
     myErrorMessage = localizedMessage;
     TestFailedState failedState = testError ? new TestErrorState(localizedMessage, stackTrace) 

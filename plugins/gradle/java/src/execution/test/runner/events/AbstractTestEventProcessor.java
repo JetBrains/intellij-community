@@ -6,7 +6,6 @@ import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleConsoleProperties;
@@ -93,36 +92,9 @@ public abstract class AbstractTestEventProcessor implements TestEventProcessor {
     var aDisplayName = customizer.getDisplayName();
     var locationProtocol = isSuite ? JavaTestLocator.SUITE_PROTOCOL : JavaTestLocator.TEST_PROTOCOL;
     var locationUrl = JavaTestLocator.createLocationUrl(locationProtocol, aClassName, aMethodName);
-    var testProxy = new GradleSMTestProxy(aDisplayName, isSuite, locationUrl, aClassName);
+    var testProxy = new GradleSMTestProxy(aDisplayName, isSuite, locationUrl);
     testProxy.setLocator(getExecutionConsole().getUrlProvider());
     testProxy.setParentId(parentTestId);
     return testProxy;
-  }
-
-  protected void setParentForAllNodesInTreePath(@NotNull GradleSMTestProxy node) {
-    while (node != null) {
-      var parentId = node.getParentId();
-      var parentNode = findParentTestProxy(parentId);
-      if (node.getParent() == null) {
-        parentNode.addChild(node);
-      }
-      if (!node.isInProgress()) {
-        node.setStarted();
-        getResultsViewer().onTestStarted(node);
-        getExecutionConsole().getEventPublisher().onTestStarted(node);
-      }
-      node = ObjectUtils.tryCast(parentNode, GradleSMTestProxy.class);
-    }
-  }
-
-  protected void setStartedForAllNodesInTreePath(@NotNull GradleSMTestProxy node) {
-    while (node != null) {
-      if (!node.isInProgress()) {
-        node.setStarted();
-        getResultsViewer().onTestStarted(node);
-        getExecutionConsole().getEventPublisher().onTestStarted(node);
-      }
-      node = ObjectUtils.tryCast(node.getParent(), GradleSMTestProxy.class);
-    }
   }
 }

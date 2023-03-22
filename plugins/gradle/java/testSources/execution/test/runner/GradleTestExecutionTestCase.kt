@@ -28,6 +28,7 @@ import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
 import com.intellij.util.LocalTimeCounter
 import com.intellij.util.ui.tree.TreeUtil
+import org.jetbrains.plugins.gradle.execution.test.runner.fixture.TestExecutionConsoleEventCounter
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isSupportedJUnit5
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
@@ -44,6 +45,8 @@ abstract class GradleTestExecutionTestCase : GradleProjectTestCase() {
   private var _testExecutionConsole: GradleTestsExecutionConsole? = null
   private lateinit var buildViewTestFixture: BuildViewTestFixture
 
+  lateinit var testEventCounter: TestExecutionConsoleEventCounter
+
   val testExecutionEnvironment get() = _testExecutionEnvironment!!
   val testExecutionConsole get() = _testExecutionConsole!!
 
@@ -53,6 +56,9 @@ abstract class GradleTestExecutionTestCase : GradleProjectTestCase() {
     testDisposable = Disposer.newDisposable()
 
     initExecutionConsoleHandler()
+
+    testEventCounter = TestExecutionConsoleEventCounter()
+    testEventCounter.install(project, testDisposable)
 
     buildViewTestFixture = BuildViewTestFixture(project)
     buildViewTestFixture.setUp()
@@ -67,16 +73,22 @@ abstract class GradleTestExecutionTestCase : GradleProjectTestCase() {
   }
 
   val jUnitTestAnnotationClass: String
-    get() = when (isSupportedJUnit5(gradleVersion)) {
+    get() = when (isSupportedJunit5()) {
       true -> "org.junit.jupiter.api.Test"
       else -> "org.junit.Test"
+    }
+
+  val jUnitIgnoreAnnotationClass: String
+    get() = when (isSupportedJunit5()) {
+      true -> "org.junit.jupiter.api.Disabled"
+      else -> "org.junit.Ignore"
     }
 
   /**
    * Call this method inside [setUp] to print events trace to console
    */
   @Suppress("unused")
-  private fun initTextNotificationEventsPrinter() {
+  fun initTextNotificationEventsPrinter() {
     val notificationManager = ExternalSystemProgressNotificationManager.getInstance()
     notificationManager.addNotificationListener(object : ExternalSystemTaskNotificationListenerAdapter() {
       override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {

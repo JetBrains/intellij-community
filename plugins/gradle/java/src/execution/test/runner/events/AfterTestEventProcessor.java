@@ -16,10 +16,12 @@
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.task.event.*;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
 
@@ -32,44 +34,54 @@ import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.parseCompa
  */
 public class AfterTestEventProcessor extends AbstractTestEventProcessor {
 
+  private static final Logger LOG = Logger.getInstance(AfterTestEventProcessor.class);
+
   public AfterTestEventProcessor(GradleTestsExecutionConsole executionConsole) {
     super(executionConsole);
   }
 
   @Override
   public void process(@NotNull ExternalSystemProgressEvent<? extends TestOperationDescriptor> testEvent) {
-    if (!(testEvent instanceof ExternalSystemFinishEvent)) {
+    var finishEvent = (ExternalSystemFinishEvent<? extends TestOperationDescriptor>)testEvent;
+
+    var testId = testEvent.getEventId();
+    var testProxy = findTestProxy(testId);
+    if (testProxy == null) {
+      LOG.error("Cannot find test proxy for: " + testId);
       return;
     }
-    final String testId = testEvent.getEventId();
 
-    final SMTestProxy testProxy = findTestProxy(testId);
-    if (testProxy == null) return;
+    var result = finishEvent.getOperationResult();
 
-    OperationResult result = ((ExternalSystemFinishEvent<? extends TestOperationDescriptor>)testEvent).getOperationResult();
-
-    long startTime = result.getStartTime();
-    long endTime = result.getEndTime();
+    var startTime = result.getStartTime();
+    var endTime = result.getEndTime();
 
     testProxy.setDuration(endTime - startTime);
 
     if (result instanceof SuccessResult) {
       testProxy.setFinished();
-      return;
+      getResultsViewer().onTestFinished(testProxy);
+      getExecutionConsole().getEventPublisher().onTestFinished(testProxy);
     }
-
-    if (result instanceof SkippedResult) {
+    else if (result instanceof SkippedResult) {
       testProxy.setTestIgnored(null, null);
       getResultsViewer().onTestIgnored(testProxy);
-      return;
+      getExecutionConsole().getEventPublisher().onTestIgnored(testProxy);
+      getResultsViewer().onTestFinished(testProxy);
+      getExecutionConsole().getEventPublisher().onTestFinished(testProxy);
     }
-
-    if (result instanceof FailureResult) {
-      Failure failure = ((FailureResult)result).getFailures().iterator().next();
-      String failureMessage = failure.getMessage();
-      final String exceptionMessage = failureMessage == null ? "" : failureMessage;
-      final String stackTrace = failure.getDescription();
+    else if (result instanceof FailureResult failureResult) {
+      var failure = ContainerUtil.getFirstItem(failureResult.getFailures());
+      var exceptionMessage = ObjectUtils.doIfNotNull(failure, it -> it.getMessage());
+      var stackTrace = ObjectUtils.doIfNotNull(failure, it -> it.getDescription());
       testProxy.setTestFailed(exceptionMessage, stackTrace, false);
+      getResultsViewer().onTestFailed(testProxy);
+      getExecutionConsole().getEventPublisher().onTestFailed(testProxy);
+      getResultsViewer().onTestFinished(testProxy);
+      getExecutionConsole().getEventPublisher().onTestFinished(testProxy);
+    }
+    else {
+      LOG.error("Undefined test result: " + result.getClass().getName());
     }
   }
 

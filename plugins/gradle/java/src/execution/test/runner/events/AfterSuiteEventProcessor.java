@@ -39,11 +39,9 @@ public class AfterSuiteEventProcessor extends AbstractTestEventProcessor {
 
   @Override
   public void process(@NotNull ExternalSystemProgressEvent<? extends TestOperationDescriptor> testEvent) {
-    if (!(testEvent instanceof ExternalSystemFinishEvent)) {
-      return;
-    }
-    final String testId = testEvent.getEventId();
-    TestEventResult result = TestEventResult.fromOperationResult(((ExternalSystemFinishEvent<?>)testEvent).getOperationResult());
+    var finishEvent = (ExternalSystemFinishEvent<? extends TestOperationDescriptor>)testEvent;
+    var testId = testEvent.getEventId();
+    var result = TestEventResult.fromOperationResult(finishEvent.getOperationResult());
 
     doProcess(testId, result);
   }

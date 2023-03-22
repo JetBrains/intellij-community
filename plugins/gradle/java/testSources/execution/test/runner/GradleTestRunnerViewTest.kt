@@ -181,6 +181,38 @@ class GradleTestRunnerViewTest : GradleTestRunnerViewTestCase() {
   }
 
   @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test test execution status`(gradleVersion: GradleVersion) {
+    testJavaProject(gradleVersion) {
+      writeText("src/test/java/org/example/TestCase.java", """
+        |package org.example;
+        |
+        |public class TestCase {
+        |
+        |  @$jUnitTestAnnotationClass
+        |  public void successTest() {}
+        |
+        |  @$jUnitTestAnnotationClass
+        |  public void failedTest() { 
+        |    throw new RuntimeException(); 
+        |  }
+        |
+        |  @$jUnitIgnoreAnnotationClass
+        |  @$jUnitTestAnnotationClass
+        |  public void ignoredTest() {}
+        |}
+      """.trimMargin())
+
+      executeTasks(":test")
+
+      testEventCounter.assertTestEvents("TestCase", 1, 1, 0, 0, 0, 0)
+      testEventCounter.assertTestEvents("successTest", 0, 0, 1, 1, 0, 0)
+      testEventCounter.assertTestEvents("failedTest", 0, 0, 1, 1, 1, 0)
+      testEventCounter.assertTestEvents("ignoredTest", 0, 0, 1, 1, 0, 1)
+    }
+  }
+
+  @ParameterizedTest
   @TargetVersions("5.6+")
   @AllGradleVersionsSource
   fun `navigation for unrolled spock 2 tests`(gradleVersion: GradleVersion) {
