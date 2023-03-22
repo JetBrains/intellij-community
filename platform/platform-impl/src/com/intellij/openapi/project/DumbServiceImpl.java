@@ -361,7 +361,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       // isRunning will be false eventually, because we are on EDT, and no new task can be queued outside the EDT
       // (we only wait for currently running task to terminate).
       myGuiDumbTaskRunner.cancelAllTasks();
-      while (myGuiDumbTaskRunner.isRunning() && !myProject.isDisposed()) {
+      while (myGuiDumbTaskRunner.isRunning().getValue() && !myProject.isDisposed()) {
         PingProgress.interactWithEdtProgress();
         LockSupport.parkNanos(50_000_000);
       }

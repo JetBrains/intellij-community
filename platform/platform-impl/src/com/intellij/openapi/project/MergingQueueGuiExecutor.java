@@ -17,6 +17,9 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import kotlinx.coroutines.flow.MutableStateFlow;
+import kotlinx.coroutines.flow.StateFlow;
+import kotlinx.coroutines.flow.StateFlowKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,6 +103,7 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
   private final @NlsContexts.ProgressTitle String myProgressTitle;
   private final @NlsContexts.ProgressText String mySuspendedText;
   private final AtomicInteger backgroundTasksSubmitted = new AtomicInteger(0);
+  private final MutableStateFlow<@NotNull Boolean> isRunning = StateFlowKt.MutableStateFlow(false);
 
   protected MergingQueueGuiExecutor(@NotNull Project project,
                                     @NotNull MergingTaskQueue<T> queue,
@@ -199,11 +203,13 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
   private void runWithCallbacks(Supplier<@Nullable SubmissionReceipt> runnable) {
     boolean shouldProcessQueue = myListener.beforeFirstTask();
     if (shouldProcessQueue) {
+      isRunning.setValue(true);
       SubmissionReceipt receipt = null;
       try {
         receipt = runnable.get();
       }
       finally {
+        isRunning.setValue(false);
         myListener.afterLastTask(receipt);
       }
     }
@@ -253,10 +259,10 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
   }
 
   /**
-   * @return true if some task is currently executed in background thread.
+   * @return state containing `true` if some task is currently executed in background thread.
    */
-  public final boolean isRunning() {
-    return mySingleTaskExecutor.isRunning();
+  public final StateFlow<@NotNull Boolean> isRunning() {
+    return isRunning;
   }
 
   /**

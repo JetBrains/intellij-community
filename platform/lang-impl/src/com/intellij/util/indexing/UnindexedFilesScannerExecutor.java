@@ -96,7 +96,7 @@ public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor
   public void cancelAllTasksAndWait() {
     cancelAllTasks(); // this also cancels running task even if they paused by ProgressSuspender
 
-    while (isRunning()) {
+    while (isRunning().getValue() && !getProject().isDisposed()) {
       PingProgress.interactWithEdtProgress();
       LockSupport.parkNanos(50_000_000);
     }

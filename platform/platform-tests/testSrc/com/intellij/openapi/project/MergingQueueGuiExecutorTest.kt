@@ -341,7 +341,7 @@ class MergingQueueGuiExecutorTest {
 
   private fun waitForExecutorToCompleteSubmittedTasks(executor: MergingQueueGuiExecutor<*>, seconds: Int): Boolean {
     for (i in 1..seconds * 1000 / 500) { // 10 seconds in sum
-      if (!executor.isRunning) return true
+      if (!executor.isRunning.value) return true
       Thread.sleep(500)
     }
     return false

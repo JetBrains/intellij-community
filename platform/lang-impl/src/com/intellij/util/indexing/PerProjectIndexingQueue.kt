@@ -290,7 +290,7 @@ class PerProjectIndexingQueue(private val project: Project) : Disposable {
       // also wait for all the other scanning tasks to complete before starting indexing tasks
       ProgressIndicatorUtils.awaitWithCheckCanceled {
         LockSupport.parkNanos(50_000_000)
-        return@awaitWithCheckCanceled !project.service<UnindexedFilesScannerExecutor>().isRunning
+        return@awaitWithCheckCanceled !project.service<UnindexedFilesScannerExecutor>().isRunning.value
       }
     }
 
