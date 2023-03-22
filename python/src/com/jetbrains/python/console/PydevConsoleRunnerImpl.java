@@ -611,10 +611,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     communicationServer.setPythonConsoleProcess(process);
     String commandLineString = StringUtil.join(targetedCommandLine.getCommandPresentation(targetEnvironment), " ");
     // TODO [Targets API] [major] Python debugger in Console for SSH and Docker interpreters is effectively lost here
-    KillableColoredProcessHandler processHandler = new KillableColoredProcessHandler(process, commandLineString);
-
     RemoteConsoleProcessData remoteConsoleProcessData = new RemoteConsoleProcessData(
-      processHandler, communicationServer, commandLineString, process, new PyRemoteSocketToLocalHostProviderStub()
+      communicationServer, commandLineString, process, new PyRemoteSocketToLocalHostProviderStub()
     );
     myRemoteConsoleProcessData = remoteConsoleProcessData;
     myPydevConsoleCommunication = remoteConsoleProcessData.getPydevConsoleCommunication();
