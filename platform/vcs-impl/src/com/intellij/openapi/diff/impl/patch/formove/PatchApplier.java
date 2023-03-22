@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SlowOperations;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -211,13 +210,11 @@ public final class PatchApplier {
 
       trigger.processIt();
 
-      AtomicBoolean doRollback = new AtomicBoolean();
+      boolean rollback = false;
       if (result == ApplyPatchStatus.FAILURE) {
-        ApplicationManager.getApplication().invokeAndWait(() -> {
-          doRollback.set(askToRollback(project, group));
-        });
+        rollback = askToRollback(project, group);
       }
-      if (result == ApplyPatchStatus.ABORT || doRollback.get()) {
+      if (result == ApplyPatchStatus.ABORT || rollback) {
         rollbackUnderProgressIfNeeded(project, beforeLabel);
       }
 
@@ -238,15 +235,18 @@ public final class PatchApplier {
     });
   }
 
-  @RequiresEdt
   private static boolean askToRollback(@NotNull Project project, @NotNull Collection<PatchApplier> group) {
     Collection<FilePatch> allFailed = ContainerUtil.concat(group, PatchApplier::getFailedPatches);
     boolean shouldInformAboutBinaries = ContainerUtil.exists(group, applier -> !applier.getBinaryPatches().isEmpty());
     List<FilePath> filePaths =
       ContainerUtil.map(allFailed, filePatch -> VcsUtil.getFilePath(chooseNotNull(filePatch.getAfterName(), filePatch.getBeforeName())));
 
-    final UndoApplyPatchDialog undoApplyPatchDialog = new UndoApplyPatchDialog(project, filePaths, shouldInformAboutBinaries);
-    return undoApplyPatchDialog.showAndGet();
+    AtomicBoolean doRollback = new AtomicBoolean();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      UndoApplyPatchDialog undoApplyPatchDialog = new UndoApplyPatchDialog(project, filePaths, shouldInformAboutBinaries);
+      doRollback.set(undoApplyPatchDialog.showAndGet());
+    });
+    return doRollback.get();
   }
 
   private static void rollbackUnderProgressIfNeeded(@NotNull final Project project, @NotNull final Label labelToRevert) {
