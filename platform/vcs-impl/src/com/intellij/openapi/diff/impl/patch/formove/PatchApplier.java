@@ -300,7 +300,7 @@ public final class PatchApplier {
     }
   }
 
-  @Nullable
+  @NotNull
   private ApplyPatchStatus executeWritable() {
     try (AccessToken ignore = SlowOperations.knownIssue("IDEA-305053, EA-659443")) {
       ReadonlyStatusHandler.OperationStatus readOnlyFilesStatus =
@@ -312,7 +312,8 @@ public final class PatchApplier {
     }
 
     myFailedPatches.addAll(myVerifier.filterBadFileTypePatches());
-    ApplyPatchStatus result = myFailedPatches.isEmpty() ? null : ApplyPatchStatus.FAILURE;
+    ApplyPatchStatus result = myFailedPatches.isEmpty() ? ApplyPatchStatus.SUCCESS : ApplyPatchStatus.FAILURE;
+
     List<PatchAndFile> textPatches = myVerifier.getTextPatches();
     try {
       markInternalOperation(textPatches, true);
@@ -361,13 +362,16 @@ public final class PatchApplier {
     vcsDirtyScopeManager.filesDirty(indirectlyAffected, null);
   }
 
-  private @Nullable ApplyPatchStatus actualApply(@NotNull List<PatchAndFile> textPatches,
-                                                 @NotNull List<PatchAndFile> binaryPatches,
-                                                 @Nullable CommitContext commitContext) {
+  private @NotNull ApplyPatchStatus actualApply(@NotNull List<PatchAndFile> textPatches,
+                                                @NotNull List<PatchAndFile> binaryPatches,
+                                                @Nullable CommitContext commitContext) {
     ApplyPatchContext context = new ApplyPatchContext(myBaseDirectory, 0, true, true);
     try {
-      ApplyPatchStatus status = applyList(textPatches, context, null, commitContext);
-      return status == ApplyPatchStatus.ABORT ? status : applyList(binaryPatches, context, status, commitContext);
+      ApplyPatchStatus textStatus = applyList(textPatches, context, commitContext);
+      if (textStatus == ApplyPatchStatus.ABORT) return textStatus;
+
+      ApplyPatchStatus binaryStatus = applyList(binaryPatches, context, commitContext);
+      return ApplyPatchStatus.and(textStatus, binaryStatus);
     }
     catch (IOException e) {
       showError(myProject, e.getMessage());
@@ -375,10 +379,10 @@ public final class PatchApplier {
     }
   }
 
-  private @Nullable ApplyPatchStatus applyList(@NotNull List<PatchAndFile> patches,
-                                               @NotNull ApplyPatchContext context,
-                                               @Nullable ApplyPatchStatus status,
-                                               @Nullable CommitContext commitContext) throws IOException {
+  private @NotNull ApplyPatchStatus applyList(@NotNull List<PatchAndFile> patches,
+                                              @NotNull ApplyPatchContext context,
+                                              @Nullable CommitContext commitContext) throws IOException {
+    ApplyPatchStatus status = ApplyPatchStatus.SUCCESS;
     for (PatchAndFile patch : patches) {
       ApplyFilePatchBase<?> applyFilePatch = patch.getApplyPatch();
       ApplyPatchStatus patchStatus = ApplyPatchAction.applyContent(myProject, applyFilePatch, context, patch.getFile(), commitContext,
