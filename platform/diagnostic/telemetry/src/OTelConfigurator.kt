@@ -24,7 +24,7 @@ class OTelConfigurator(private val mainScope: CoroutineScope, private val otelSd
   private val appInfo = ApplicationInfoImpl.getShadowInstance()
   private val serviceVersion = appInfo.build.asStringWithoutProductCode()
   private val serviceNamespace = appInfo.build.productCode
-  private val metricsReportingPath = System.getProperty("idea.diagnostic.opentelemetry.metrics.file", "open-telemetry-metrics.csv")
+  private val metricsReportingPath = MetricsExporterUtils.metricsReportingPath()
   private val resource = Resource.create(Attributes.of(
     ResourceAttributes.SERVICE_NAME, serviceName,
     ResourceAttributes.SERVICE_VERSION, serviceVersion,
@@ -105,6 +105,8 @@ class OTelConfigurator(private val mainScope: CoroutineScope, private val otelSd
   }
 
   private fun getDefaultMetricsExporters(): List<MetricExporter> {
+    metricsReportingPath?: return emptyList()
+
     val metricsExporters = mutableListOf<MetricExporter>()
     val writeMetricsTo = MetricsExporterUtils.generateFileForMetrics(metricsReportingPath)
     metricsExporters.add(FilteredMetricsExporter(CsvMetricsExporter(writeMetricsTo)) { metric ->
@@ -114,6 +116,6 @@ class OTelConfigurator(private val mainScope: CoroutineScope, private val otelSd
   }
 
   private fun metricsEnabled(): Boolean {
-    return !metricsReportingPath.isNullOrEmpty()
+    return metricsReportingPath != null
   }
 }

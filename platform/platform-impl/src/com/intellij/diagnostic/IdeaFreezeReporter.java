@@ -44,6 +44,14 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
   // common sub-stack contains more than the specified % samples
   private static final double COMMON_SUB_STACK_WEIGHT = 0.25;
 
+  /**
+   * Set DEBUG = true to enable freeze-detection regardless of other settings.<p/>
+   *
+   * By default, freeze detection is off for IDE running from sources -- to filter out freezes during development and especially
+   * during debugging. Freeze detection could also be disabled with sys('idea.force.freeze.reports') variable (see
+   * {@link #isEnabled(Application)} for details). DEBUG = true overrides all this, and enables freeze detection anyway
+   * -- useful e.g. while developing/debugging freeze detection code itself.
+   */
   @SuppressWarnings("FieldMayBeFinal")
   private static boolean DEBUG;
 

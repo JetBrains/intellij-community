@@ -1451,6 +1451,8 @@
     <interactiveCourseFactory implementation="com.intellij.openapi.wm.impl.welcomeScreen.learnIde.jbAcademy.JBAcademyInteractiveCourse"/>
 
     <cachesInvalidator implementation="com.intellij.ide.ui.IconCacheInvalidator"/>
+
+    <diagnostic.freezeProfiler implementation="com.intellij.diagnostic.opentelemetry.OTelMetricsFreezeProfiler"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

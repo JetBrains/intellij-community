@@ -3,6 +3,7 @@ package com.intellij.openapi.util.io;
 
 import org.assertj.core.api.Assertions;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -15,7 +16,9 @@ import java.text.SimpleDateFormat;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.*;
@@ -107,6 +110,53 @@ public class FileSetLimiterTest {
     }
   }
 
+
+  @Test
+  public void mostRecentFileIsIndeedMostRecent() throws IOException {
+    final Path dir = temporaryDirectory.newFolder().toPath();
+    final long nowMs = System.currentTimeMillis();
+
+    final FileSetLimiter fileSetLimiter = FileSetLimiter.inDirectory(dir)
+      .withBaseNameAndDateFormatSuffix("my-file.log", "yyyy-MM-dd-HH-mm-ss")
+      .withMaxFilesToKeep(MAX_FILES_TO_KEEP);
+
+    for (int filesCreated = 1; filesCreated <= 4 * MAX_FILES_TO_KEEP; filesCreated++) {
+      final Clock clock = clockPositionedAt(nowMs + SECONDS.toMillis(filesCreated));
+      final Path fileJustCreated = fileSetLimiter.createNewFile(clock);
+
+      assertEquals(
+        ".mostRecentFile() must be the file just created",
+        fileJustCreated,
+        fileSetLimiter.mostRecentFile().get()
+      );
+    }
+  }
+
+  @Test
+  @Ignore("Fails currently")
+  public void mostRecentFileIsIndeedMostRecentEvenWithinMillisecond() throws IOException {
+    final Path dir = temporaryDirectory.newFolder().toPath();
+    final long nowMs = System.currentTimeMillis();
+
+    final FileSetLimiter fileSetLimiter = FileSetLimiter.inDirectory(dir)
+      .withBaseNameAndDateFormatSuffix("my-file.log", "yyyy-MM-dd-HH-mm-ss")
+      .withMaxFilesToKeep(MAX_FILES_TO_KEEP);
+
+    for (int filesCreated = 1; filesCreated <= 4 * MAX_FILES_TO_KEEP; filesCreated++) {
+      final Clock clock = clockPositionedAt(nowMs + SECONDS.toMillis(filesCreated));
+      for (int subMillisAttempt = 0; subMillisAttempt < 2; subMillisAttempt++) {
+
+        final Path fileJustCreated = fileSetLimiter.createNewFile(clock);
+
+        assertEquals(
+          ".mostRecentFile() must be the file just created",
+          fileJustCreated,
+          fileSetLimiter.mostRecentFile().get()
+        );
+      }
+    }
+  }
+
   @Test
   public void uniqueFileNamesCreatedIfCalledMoreThanOnceInASecond() throws IOException, ParseException {
     final Path dir = temporaryDirectory.newFolder().toPath();
@@ -126,7 +176,7 @@ public class FileSetLimiterTest {
 
       Assertions.assertThat(path.getFileName().toString())
         .describedAs("Created file should have name [my-file." + dateAsString + ".<i>.log]")
-        .startsWith("my-file." + dateAsString+".log");
+        .startsWith("my-file." + dateAsString + ".log");
     }
   }
 
