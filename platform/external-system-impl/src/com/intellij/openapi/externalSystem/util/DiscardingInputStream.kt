@@ -21,22 +21,22 @@ class DiscardingInputStream(
   private val readWriteLock = ReentrantReadWriteLock()
 
   override fun read(): Int =
-    inputStreamReadAction(-1) {
+    inputStreamReadAction(discardResult = -1) {
       delegate.read()
     }
 
   override fun read(b: ByteArray): Int =
-    inputStreamReadAction(-1) {
+    inputStreamReadAction(discardResult = -1) {
       delegate.read(b)
     }
 
   override fun read(b: ByteArray, off: Int, len: Int): Int =
-    inputStreamReadAction(-1) {
+    inputStreamReadAction(discardResult = -1) {
       delegate.read(b, off, len)
     }
 
   override fun readNBytes(b: ByteArray?, off: Int, len: Int): Int =
-    inputStreamReadAction(0) {
+    inputStreamReadAction(discardResult = 0) {
       delegate.readNBytes(b, off, len)
     }
 
@@ -48,12 +48,12 @@ class DiscardingInputStream(
   }
 
   /**
-   * @param discardedResult is read result due to discard. Should be adjusted by 'read' contract.
+   * @param discardResult is read result due to discard. Should be adjusted by 'read' contract.
    */
-  private fun inputStreamReadAction(discardedResult: Int, action: () -> Int): Int {
+  private fun inputStreamReadAction(discardResult: Int, action: () -> Int): Int {
     return readWriteLock.read {
       when (isDiscardData) {
-        true -> discardedResult
+        true -> discardResult
         else -> action()
       }
     }
