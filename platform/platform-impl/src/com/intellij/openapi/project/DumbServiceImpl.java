@@ -194,7 +194,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public boolean isDumb() {
-    if (ALWAYS_SMART) return true;
+    if (ALWAYS_SMART) return false;
     if (!ApplicationManager.getApplication().isReadAccessAllowed() &&
         Registry.is("ide.check.is.dumb.contract")) {
       LOG.error("To avoid race conditions isDumb method should be used only under read action or in EDT thread.",
