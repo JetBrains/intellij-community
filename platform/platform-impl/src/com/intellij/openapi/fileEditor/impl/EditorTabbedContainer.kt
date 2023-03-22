@@ -262,7 +262,6 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
     val project = window.manager.project
     val tab = TabInfo(component)
       .setText(file.presentableName)
-      .setTabColor(EditorTabPresentationUtil.getEditorTabBackgroundColor(project, file))
       .setIcon(if (UISettings.getInstance().showFileIconInTabs) icon else null)
       .setTooltipText(tooltip)
       .setObject(file)
@@ -273,6 +272,12 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
       val title = readAction { EditorTabPresentationUtil.getEditorTabTitle(project, file) }
       withContext(Dispatchers.EDT) {
         tab.text = title
+      }
+    }
+    coroutineScope.launch {
+      val color = readAction { EditorTabPresentationUtil.getEditorTabBackgroundColor(project, file) }
+      withContext(Dispatchers.EDT) {
+        tab.tabColor = color
       }
     }
 
