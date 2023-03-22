@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency.annotations;
 
 import com.intellij.openapi.application.Application;
@@ -7,10 +6,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
 /**
  * Methods and constructors annotated with {@code RequiresReadLockAbsence} must be called without read lock held.
@@ -29,6 +25,7 @@ import java.lang.annotation.Target;
  * @see ReadAction#run(ThrowableRunnable)
  */
 @ApiStatus.Experimental
+@Documented
 @Retention(RetentionPolicy.CLASS)
 @Target({ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.PARAMETER})
 public @interface RequiresReadLockAbsence {
