@@ -100,10 +100,19 @@ object PluginLogo {
 
   internal fun getDefault(): PluginLogoIconProvider {
     if (Default == null) {
-      Default = HiDPIPluginLogoIcon(AllIcons.Plugins.PluginLogo,
-                                    AllIcons.Plugins.PluginLogoDisabled,
-                                    (AllIcons.Plugins.PluginLogo as CachedImageIcon).scale(PLUGIN_ICON_SIZE_SCALE),
-                                    (AllIcons.Plugins.PluginLogoDisabled as CachedImageIcon).scale(PLUGIN_ICON_SIZE_SCALE))
+      Default = if (AllIcons.Plugins.PluginLogo is CachedImageIcon) {
+        HiDPIPluginLogoIcon(AllIcons.Plugins.PluginLogo,
+                            AllIcons.Plugins.PluginLogoDisabled,
+                            (AllIcons.Plugins.PluginLogo as CachedImageIcon).scale(PLUGIN_ICON_SIZE_SCALE),
+                            (AllIcons.Plugins.PluginLogoDisabled as CachedImageIcon).scale(PLUGIN_ICON_SIZE_SCALE))
+      }
+      else {
+        // headless
+        HiDPIPluginLogoIcon(AllIcons.Plugins.PluginLogo,
+                            AllIcons.Plugins.PluginLogoDisabled,
+                            AllIcons.Plugins.PluginLogo,
+                            AllIcons.Plugins.PluginLogoDisabled)
+      }
     }
     return Default!!
   }
