@@ -35,8 +35,11 @@ public class JavaRefactoringElementDescriptionProvider implements ElementDescrip
     }
 
     if (element instanceof PsiClassInitializer initializer) {
-      String description = getElementDescription(initializer.getContainingClass(), RefactoringDescriptionLocation.WITHOUT_PARENT);
       boolean isStatic = initializer.hasModifierProperty(PsiModifier.STATIC);
+      if (!rdLocation.includeParent()) {
+        return JavaRefactoringBundle.message("class.initializer.description", isStatic ? 0 : 1);
+      }
+      String description = getElementDescription(initializer.getContainingClass(), RefactoringDescriptionLocation.WITHOUT_PARENT);
       return isStatic
              ? JavaRefactoringBundle.message("static.initializer.description", description)
              : JavaRefactoringBundle.message("instance.initializer.description", description);
