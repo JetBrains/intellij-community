@@ -33,11 +33,11 @@ public interface FileChooserPanel {
   void reload(@Nullable Path focusOn);
   void reloadAfter(@NotNull ThrowableComputable<@Nullable Path, IOException> task) throws IOException;
 
-  boolean showPathBar();
-  void showPathBar(boolean show);
+  boolean pathBar();
+  boolean togglePathBar();
 
-  boolean showHiddenFiles();
-  void showHiddenFiles(boolean show);
+  boolean hiddenFiles();
+  boolean toggleHiddenFiles();
 
   @Nullable Path currentDirectory();
   @NotNull List<Path> selectedPaths();

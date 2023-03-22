@@ -1,25 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-
-import static com.intellij.ui.speedSearch.SpeedSearchSupply.getSupply;
-import static com.intellij.util.ObjectUtils.tryCast;
 
 public abstract class TableActions extends SwingActionDelegate {
   private TableActions(String actionId) {
     super(actionId);
   }
 
-  @Nullable
   @Override
-  protected JTable getComponent(AnActionEvent event) {
-    JTable table = tryCast(super.getComponent(event), JTable.class);
-    return table == null || getSupply(table) != null ? null : table;
+  protected @Nullable JTable getComponent(AnActionEvent event) {
+    var component = super.getComponent(event);
+    return component instanceof JTable table && SpeedSearchSupply.getSupply(component) == null ? table : null;
   }
 
   public static final class CtrlHome extends TableActions {

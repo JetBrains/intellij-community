@@ -250,6 +250,20 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     });
   }
 
+  private @Nullable Path typedPath() {
+    var object = myPath.getEditor().getItem();
+    if (object instanceof PathWrapper wrapper) {
+      return wrapper.path;
+    }
+    if (object instanceof String str && !str.isBlank()) {
+      var path = findByPath(FileUtil.expandUserHome(str.trim()));
+      if (path != null && path.isAbsolute()) {
+        return path;
+      }
+    }
+    return null;
+  }
+
   private void setupDirectoryView() {
     myList.getTableHeader().setDefaultRenderer(new MyHeaderCellRenderer(myList.getTableHeader().getDefaultRenderer()));
     myList.setDefaultRenderer(Object.class, new MyTableCellRenderer(myList.getDefaultRenderer(Object.class)));
@@ -300,20 +314,6 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         return items.isEmpty() ? null : new TextTransferable(items.stream().map(item -> item.name).collect(Collectors.joining("\n")));
       }
     });
-  }
-
-  private @Nullable Path typedPath() {
-    var object = myPath.getEditor().getItem();
-    if (object instanceof PathWrapper wrapper) {
-      return wrapper.path;
-    }
-    if (object instanceof String str && !str.isBlank()) {
-      var path = findByPath(FileUtil.expandUserHome(str.trim()));
-      if (path != null && path.isAbsolute()) {
-        return path;
-      }
-    }
-    return null;
   }
 
   private void openSelectedRow() {
@@ -410,32 +410,34 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   }
 
   @Override
-  public boolean showPathBar() {
+  public boolean pathBar() {
     return myShowPathBar;
   }
 
   @Override
-  public void showPathBar(boolean show) {
-    myShowPathBar = show;
-    PropertiesComponent.getInstance().setValue(FILE_CHOOSER_SHOW_PATH_PROPERTY, Boolean.toString(show));
-    myPath.setVisible(show);
-    (show ? myPath : myList).requestFocusInWindow();
+  public boolean togglePathBar() {
+    myShowPathBar = !myShowPathBar;
+    PropertiesComponent.getInstance().setValue(FILE_CHOOSER_SHOW_PATH_PROPERTY, Boolean.toString(myShowPathBar));
+    myPath.setVisible(myShowPathBar);
+    (myShowPathBar ? myPath : myList).requestFocusInWindow();
+    return myShowPathBar;
   }
 
   @Override
-  public boolean showHiddenFiles() {
+  public boolean hiddenFiles() {
     return myShowHiddenFiles;
   }
 
   @Override
-  public void showHiddenFiles(boolean show) {
-    myShowHiddenFiles = show;
+  public boolean toggleHiddenFiles() {
     synchronized (myLock) {
+      myShowHiddenFiles = !myShowHiddenFiles;
       if (myCurrentDirectory != null) {
         var selection = myList.getSelectedObject();
-        myModel.setItems(show ? new ArrayList<>(myCurrentContent) : ContainerUtil.filter(myCurrentContent, item -> item.visible));
+        myModel.setItems(myShowHiddenFiles ? new ArrayList<>(myCurrentContent) : ContainerUtil.filter(myCurrentContent, item -> item.visible));
         myList.setSelection(selection != null ? List.of(selection) : List.of());
       }
+      return myShowHiddenFiles;
     }
   }
 
