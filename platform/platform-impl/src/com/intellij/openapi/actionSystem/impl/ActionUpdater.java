@@ -48,7 +48,10 @@ import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -68,8 +71,8 @@ final class ActionUpdater {
   private static final Executor ourCommonExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Common)", 2);
   private static final Executor ourFastTrackExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Fast)", 1);
 
-  private static final List<CancellablePromise<?>> ourPromises = new CopyOnWriteArrayList<>();
-  private static final List<CancellablePromise<?>> ourToolbarPromises = new CopyOnWriteArrayList<>();
+  private static final Set<CancellablePromise<?>> ourPromises = ContainerUtil.newConcurrentSet();
+  private static final Set<CancellablePromise<?>> ourToolbarPromises = ContainerUtil.newConcurrentSet();
   private static FList<String> ourInEDTActionOperationStack = FList.emptyList();
   private static boolean ourNoRulesInEDTSection;
 
@@ -381,7 +384,7 @@ final class ActionUpdater {
         return null;
       };
     };
-    List<CancellablePromise<?>> targetPromises = myToolbarAction ? ourToolbarPromises : ourPromises;
+    Set<CancellablePromise<?>> targetPromises = myToolbarAction ? ourToolbarPromises : ourPromises;
     targetPromises.add(promise);
     boolean isFastTrack = myLaterInvocator != null && SlowOperations.isInSection(SlowOperations.FAST_TRACK);
     Executor executor = isFastTrack ? ourFastTrackExecutor : ourCommonExecutor;
@@ -430,13 +433,12 @@ final class ActionUpdater {
     cancelPromises(ourPromises, adjusted);
   }
 
-  private static void cancelPromises(@NotNull List<CancellablePromise<?>> promises, @NotNull Object reason) {
+  private static void cancelPromises(@NotNull Collection<CancellablePromise<?>> promises, @NotNull Object reason) {
     if (promises.isEmpty()) return;
-    CancellablePromise<?>[] copy = promises.toArray(new CancellablePromise[0]);
-    promises.clear();
-    for (CancellablePromise<?> promise : copy) {
+    for (CancellablePromise<?> promise : promises) {
       cancelPromise(promise, reason);
     }
+    promises.clear();
   }
 
   static void waitForAllUpdatesToFinish() {
