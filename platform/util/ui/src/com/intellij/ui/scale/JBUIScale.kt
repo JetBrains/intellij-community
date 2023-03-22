@@ -13,6 +13,8 @@ import com.intellij.util.ui.JBScalableIcon
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.awt.*
+import java.awt.geom.AffineTransform
+import java.awt.geom.Point2D
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
 import java.util.function.Supplier
@@ -400,11 +402,24 @@ object JBUIScale {
     val gc = g.deviceConfiguration
     if (gc == null || gc.device.type == GraphicsDevice.TYPE_IMAGE_BUFFER || gc.device.type == GraphicsDevice.TYPE_PRINTER) {
       // in this case, gc doesn't provide a valid scale
-      return abs(g.transform.scaleX.toFloat())
+      return abs(getTransformScaleX(g.transform))
     }
     else {
       return gc.defaultTransform.scaleX.toFloat()
     }
+  }
+
+  /**
+   * Get scale for an arbitrary affine transform.
+   * This should not be necessary for [GraphicsConfiguration.getDefaultTransform], as it is expected to be a translation/uniform scale only.
+   *
+   * See javadoc [AffineTransform.getScaleX], it will return an arbitrary number (inc. negative ones)
+   * after [AffineTransform.rotate] or `AffineTransform.scale(-1, 1)` transforms.
+   */
+  private fun getTransformScaleX(transform: AffineTransform): Float {
+    val p = Point2D.Double(1.0, 0.0);
+    transform.deltaTransform(p, p)
+    return p.distance(0.0, 0.0).toFloat()
   }
 
   @JvmStatic

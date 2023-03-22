@@ -15,6 +15,7 @@ import java.awt.*
 import java.awt.event.AWTEventListener
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import java.awt.geom.AffineTransform
 import java.awt.image.BufferedImage
 import java.awt.image.BufferedImageOp
 import java.awt.image.ImageObserver
@@ -345,7 +346,8 @@ private fun doDrawHiDpi(userWidth: Int,
 
   val tx = (g1 as Graphics2D).transform
   var invG: Graphics2D? = null
-  if (abs(scale1 - tx.scaleX) <= delta) {
+  if ((tx.type and AffineTransform.TYPE_MASK_ROTATION) == 0 &&
+      abs(scale1 - tx.scaleX) <= delta) {
     scale1 = tx.scaleX
 
     // The image has the same original scale as the graphics scale. However, the real image
