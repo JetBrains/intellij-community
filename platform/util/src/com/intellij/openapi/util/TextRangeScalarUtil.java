@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
+import com.intellij.util.MathUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -21,8 +22,9 @@ public final class TextRangeScalarUtil {
   }
 
   public static long shift(long range, int deltaStart, int deltaEnd) {
-    int newStart = startOffset(range) + deltaStart;
-    int newEnd = endOffset(range) + deltaEnd;
+    int newEnd = Math.max(endOffset(range) + deltaEnd, 0);
+    int newStart = MathUtil.clamp(startOffset(range) + deltaStart, 0, newEnd);
+
     return toScalarRange(newStart, newEnd);
   }
 
