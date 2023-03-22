@@ -15,12 +15,16 @@ class DeferredIconRepaintScheduler {
   private val repaintScheduler = RepaintScheduler()
 
   @RequiresEdt
-  fun createRepaintRequest(c: Component?, x: Int, y: Int): RepaintRequest {
-    val target = getTarget(c)
-    val paintingParent: Component? = SwingUtilities.getAncestorOfClass(PaintingParent::class.java, c)
-    val paintingParentRec: Rectangle? = if (paintingParent == null) null else (paintingParent as PaintingParent).getChildRec(c!!)
-
-    return RepaintRequest(c, x, y, target, paintingParent, paintingParentRec)
+  fun createRepaintRequest(component: Component?, x: Int, y: Int): RepaintRequest {
+    val target = getTarget(component)
+    val paintingParent = SwingUtilities.getAncestorOfClass(PaintingParent::class.java, component)
+    val paintingParentRec = if (paintingParent == null) null else (paintingParent as PaintingParent).getChildRec(component!!)
+    return RepaintRequest(component = component,
+                          x = x,
+                          y = y,
+                          target = target,
+                          paintingParent = paintingParent,
+                          paintingParentRec = paintingParentRec)
   }
 
   @RequiresEdt
@@ -69,12 +73,12 @@ class DeferredIconRepaintScheduler {
   }
 
   data class RepaintRequest(
-    val component: Component?,
-    val x: Int,
-    val y: Int,
-    val target: Component?,
+    @JvmField internal val component: Component?,
+    @JvmField internal val x: Int,
+    @JvmField internal val y: Int,
+    @JvmField internal val target: Component?,
     private val paintingParent: Component?,
-    val paintingParentRec: Rectangle?
+    @JvmField internal val paintingParentRec: Rectangle?
   ) {
     fun getActualTarget(): Component? {
       if (target == null) {
@@ -91,15 +95,18 @@ class DeferredIconRepaintScheduler {
     }
   }
 
+  private data class RepaintSchedulerRequest(@JvmField val component: Component, @JvmField val rectangle: Rectangle?)
+
   private class RepaintScheduler {
-    private val myAlarm = Alarm()
-    private val myQueue = LinkedHashSet<RepaintSchedulerRequest>()
+    private val alarm = Alarm()
+    private val queue = LinkedHashSet<RepaintSchedulerRequest>()
 
     fun pushDirtyComponent(c: Component, rec: Rectangle?) {
-      ApplicationManager.getApplication().assertIsDispatchThread() // assert myQueue accessed from EDT only
-      myAlarm.cancelAllRequests()
-      myAlarm.addRequest({
-        for (each in myQueue) {
+      // assert myQueue accessed from EDT only
+      ApplicationManager.getApplication().assertIsDispatchThread()
+      alarm.cancelAllRequests()
+      alarm.addRequest({
+        for (each in queue) {
           val r = each.rectangle
           if (r == null) {
             each.component.repaint()
@@ -108,11 +115,9 @@ class DeferredIconRepaintScheduler {
             each.component.repaint(r.x, r.y, r.width, r.height)
           }
         }
-        myQueue.clear()
+        queue.clear()
       }, 50)
-      myQueue.add(RepaintSchedulerRequest(c, rec))
+      queue.add(RepaintSchedulerRequest(c, rec))
     }
   }
-
-  private data class RepaintSchedulerRequest(val component: Component, val rectangle: Rectangle?)
 }
