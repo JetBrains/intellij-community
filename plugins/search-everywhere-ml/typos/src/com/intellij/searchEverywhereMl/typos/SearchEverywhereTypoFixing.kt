@@ -1,4 +1,4 @@
-package com.intellij.ide.actions.searcheverywhere.ml.typos
+package com.intellij.searchEverywhereMl.typos
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.advanced.AdvancedSettings

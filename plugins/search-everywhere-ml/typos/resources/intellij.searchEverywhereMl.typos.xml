@@ -1,10 +1,10 @@
-<idea-plugin package="com.intellij.ide.actions.searcheverywhere.ml.typos">
+<idea-plugin package="com.intellij.searchEverywhereMl.typos">
 
   <resource-bundle>messages.searchEverywhereMlTyposBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
     <searchEverywhereSpellingCorrector
-      implementation="com.intellij.ide.actions.searcheverywhere.ml.typos.SearchEverywhereSpellingCorrectorFactoryImpl" />
+      implementation="com.intellij.searchEverywhereMl.typos.SearchEverywhereSpellingCorrectorFactoryImpl" />
 
     <advancedSetting default="true" id="searcheverywhere.ml.typos.enable"
                      groupKey="advanced.setting.searcheverywhere.ml.name"
@@ -19,8 +19,8 @@
                  defaultValue="false"/>
 
     <spellchecker.dictionary.runtimeDictionaryProvider
-      implementation="com.intellij.ide.actions.searcheverywhere.ml.typos.RuntimeActionsDictionaryProvider"/>
+      implementation="com.intellij.searchEverywhereMl.typos.RuntimeActionsDictionaryProvider"/>
 
-    <postStartupActivity implementation="com.intellij.ide.actions.searcheverywhere.ml.typos.ActionsLanguageModel$ModelComputationStarter"/>
+    <postStartupActivity implementation="com.intellij.searchEverywhereMl.typos.ActionsLanguageModel$ModelComputationStarter"/>
   </extensions>
 </idea-plugin>

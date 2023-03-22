@@ -1,4 +1,4 @@
-package com.intellij.ide.actions.searcheverywhere.ml.typos
+package com.intellij.searchEverywhereMl.typos
 
 import ai.grazie.spell.suggestion.ranker.FrequencySuggestionRanker
 import ai.grazie.spell.suggestion.ranker.JaroWinklerSuggestionRanker
