@@ -163,7 +163,7 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
 
     val psiFiles = mutableListOf<PsiFile>()
     for ((file, change) in changedFiles) {
-      val psiFile = runReadAction { PsiManager.getInstance(project).findFile(file) } ?: continue
+      val psiFile = runReadAction { if (file.isValid) PsiManager.getInstance(project).findFile(file) else null } ?: continue
       psiFile.putUserData(InspectionProfileWrapper.PSI_ELEMENTS_BEING_COMMITTED,
                           ConcurrentFactoryMap.createMap { clazz -> getBeingCommittedPsiElements(change, clazz, isPostCommit) })
       psiFiles += psiFile
