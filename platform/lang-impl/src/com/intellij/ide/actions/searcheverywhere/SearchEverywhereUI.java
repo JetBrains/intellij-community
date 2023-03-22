@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.accessibility.TextFieldWithListAccessibleContext;
@@ -66,7 +66,6 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -89,6 +88,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -110,7 +110,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   public static final int SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT = 30;
   public static final int MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT = 15;
 
-  private static final Icon getShowInFindToolWindowIcon() {
+  private static Icon getShowInFindToolWindowIcon() {
     return ExperimentalUI.isNewUI() ? ExpUiIcons.General.OpenInToolWindow : AllIcons.General.Pin_tab;
   }
 
@@ -317,7 +317,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   @Nullable
   private String getWarning(List<SearchEverywhereContributor<?>> contributors) {
     if (myProject != null && DumbService.isDumb(myProject)) {
-      boolean containsPSIContributors = contributors.stream().anyMatch(c -> c instanceof AbstractGotoSEContributor);
+      boolean containsPSIContributors = ContainerUtil.exists(contributors, c -> c instanceof AbstractGotoSEContributor);
       if (containsPSIContributors) {
         return IdeBundle.message("dumb.mode.results.might.be.incomplete");
       }
@@ -330,7 +330,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   @Nullable
   private static String getAdvertisement(List<? extends SearchEverywhereContributor<?>> contributors) {
 
-    boolean commandsSupported = contributors.stream().anyMatch(contributor -> !contributor.getSupportedCommands().isEmpty());
+    boolean commandsSupported = ContainerUtil.exists(contributors, contributor -> !contributor.getSupportedCommands().isEmpty());
     if (commandsSupported) {
       return IdeBundle.message("searcheverywhere.textfield.hint", SearchTopHitProvider.getTopHitAccelerator());
     }
@@ -784,7 +784,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   }
 
   private void registerAction(String actionID, Consumer<? super AnActionEvent> action) {
-    registerAction(actionID, () -> DumbAwareAction.create(action));
+    registerAction(actionID, () -> DumbAwareAction.create(action::accept));
   }
 
   // when user adds shortcut for "select item" we should add shortcuts
@@ -1197,7 +1197,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       }
 
       SETab selectedTab = myHeader != null ? myHeader.getSelectedTab() : null;
-      boolean enabled = selectedTab == null || selectedTab.getContributors().stream().anyMatch(c -> c.showInFindResults());
+      boolean enabled = selectedTab == null || ContainerUtil.exists(selectedTab.getContributors(), c -> c.showInFindResults());
       e.getPresentation().setEnabled(enabled);
       if (!ExperimentalUI.isNewUI()) {
         e.getPresentation()
@@ -1357,7 +1357,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       emptyStatus.appendLine(getNotFoundText());
 
       boolean showFindInFilesAction =
-        myHeader.getSelectedTab().getContributors().stream().anyMatch(contributor -> contributor.showInFindResults());
+        ContainerUtil.exists(myHeader.getSelectedTab().getContributors(), contributor -> contributor.showInFindResults());
       boolean showResetScope = myHeader.canResetScope();
       boolean showResetFilter = myHeader.getSelectedTab().canClearFilter();
       boolean anyActionAllowed = showFindInFilesAction || showResetScope || showResetFilter;
