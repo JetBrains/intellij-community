@@ -10,6 +10,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt;
@@ -281,44 +282,51 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   private void enterDumbModeIfSmart(@NotNull ModalityState modality, @NotNull Throwable trace) {
-    boolean wasSmart = !isDumb();
     boolean entered = WriteAction.compute(() -> {
-      State old = myState.getAndSet(State.DUMB);
-      if (old == State.DUMB) return false;
+      if (!myState.compareAndSet(State.SMART, State.DUMB)) {
+        return false;
+      }
       myDumbStart = trace;
       myCancellableLaterEdtInvoker.setDumbStartModality(modality);
       myModificationCount++;
-      return true;
+      return !myProject.isDisposed();
     });
 
-    if (entered && wasSmart) {
-      try {
-        myPublisher.enteredDumbMode();
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
+    if (entered) {
+      if (ApplicationManager.getApplication().isInternal()) LOG.info("entered dumb mode");
+      runCatching(myPublisher::enteredDumbMode);
     }
-  }
-
-  private boolean switchToSmartMode() {
-    if (!myState.compareAndSet(State.DUMB, State.SMART)) {
-      return false;
-    }
-
-    myDumbStart = null;
-    myModificationCount++;
-    myCancellableLaterEdtInvoker.setDumbStartModality(null);
-    return !myProject.isDisposed();
   }
 
   private void enterSmartModeIfDumb() {
-    if (!WriteAction.compute(this::switchToSmartMode)) return;
+    boolean entered = WriteAction.compute(() -> {
+      if (!myState.compareAndSet(State.DUMB, State.SMART)) {
+        return false;
+      }
 
-    if (ApplicationManager.getApplication().isInternal()) LOG.info("enterSmartModeIfDumb");
+      myDumbStart = null;
+      myModificationCount++;
+      myCancellableLaterEdtInvoker.setDumbStartModality(null);
+      return !myProject.isDisposed();
+    });
 
-    myPublisher.exitDumbMode();
-    FileEditorManagerEx.getInstanceEx(myProject).refreshIcons();
+    if (entered) {
+      if (ApplicationManager.getApplication().isInternal()) LOG.info("entered smart mode");
+      runCatching(myPublisher::exitDumbMode);
+      FileEditorManagerEx.getInstanceEx(myProject).refreshIcons();
+    }
+  }
+
+  private static void runCatching(@NotNull Runnable runnable) {
+    try {
+      runnable.run();
+    }
+    catch (ProcessCanceledException pce) {
+      throw pce;
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
   }
 
   @Override
