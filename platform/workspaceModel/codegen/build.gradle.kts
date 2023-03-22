@@ -19,6 +19,10 @@ repositories {
   }
 }
 
+kotlin {
+  jvmToolchain(17)
+}
+
 publishing {
   repositories {
     maven {

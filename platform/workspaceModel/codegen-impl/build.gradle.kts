@@ -15,8 +15,12 @@ repositories {
     url = uri("https://www.jetbrains.com/intellij-repository/releases")
   }
   maven {
-    url = uri("https://www.jetbrains.com/intellij-repository/nightly")
+    url = uri("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
   }
+}
+
+kotlin {
+  jvmToolchain(17)
 }
 
 publishing {
@@ -38,6 +42,6 @@ publishing {
 
 dependencies {
   implementation("org.jetbrains.kotlin:kotlin-reflect")
-  implementation("com.jetbrains.intellij.platform:workspace-model-codegen:LATEST-TRUNK-SNAPSHOT")
+  implementation("com.jetbrains.intellij.platform:workspace-model-codegen:0.0.1")
   implementation("com.jetbrains.intellij.platform:workspace-model-storage:223.8836.34")
 }

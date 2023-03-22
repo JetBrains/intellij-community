@@ -21,14 +21,14 @@ import java.util.*
 
 @Service(Service.Level.PROJECT)
 class CodegenJarLoader(val project: Project) {
-  private val classLoaderToVersion = mutableMapOf<Int, ClassLoader>()
+  private val classLoaderToVersion = mutableMapOf<String, ClassLoader>()
 
   suspend fun getClassLoader(): ClassLoader? {
-    val targetApiVersion = calculateTargetApiVersion() ?: return null
-    val result = classLoaderToVersion[targetApiVersion]
+    val artifactVersion = calculateArtifactVersion() ?: return null
+    val result = classLoaderToVersion[artifactVersion]
     return if (result == null) {
       val classLoader = loadJar() ?: return null
-      classLoaderToVersion[targetApiVersion] = classLoader
+      classLoaderToVersion[artifactVersion] = classLoader
       classLoader
     } else {
       result
@@ -36,10 +36,9 @@ class CodegenJarLoader(val project: Project) {
   }
 
   private suspend fun loadJar(): ClassLoader? {
-    val calculateTargetApiVersion = calculateTargetApiVersion()
-    thisLogger().debug("Calculated target API version: $calculateTargetApiVersion")
-    val codegenLibraryDescription = JpsMavenRepositoryLibraryDescriptor(GROUP_ID, ARTIFACT_ID,
-                                                                        VERSION, false, emptyList())
+    val artifactVersion = calculateArtifactVersion() ?: return null
+    val codegenLibraryDescription = JpsMavenRepositoryLibraryDescriptor(GROUP_ID, ARTIFACT_ID, artifactVersion,
+                                                                        false, emptyList())
 
     val promise = JarRepositoryManager.loadDependenciesAsync(project, codegenLibraryDescription, setOf(ArtifactKind.ARTIFACT),
                                                              listOf(INTELLIJ_DEPENDENCIES_DESCRIPTION), null)
@@ -51,12 +50,14 @@ class CodegenJarLoader(val project: Project) {
     return URLClassLoader(arrayOf(pathToJar), this.javaClass.classLoader)
   }
 
-  private fun calculateTargetApiVersion(): Int? {
+  private fun calculateArtifactVersion(): String? {
     val allScope = GlobalSearchScope.allScope(project)
     val generatorVersionsClass = JavaPsiFacade.getInstance(project).findClass(CodeGeneratorVersions::class.java.name, allScope) ?: return null
     thisLogger().debug("Reading generator version from: ${generatorVersionsClass.containingFile.containingDirectory}")
     val versionField = generatorVersionsClass.findFieldByName("API_VERSION_INTERNAL", false) ?: return null
-    return (versionField.initializer as? PsiLiteralExpression)?.value as? Int
+    val apiVersion = (versionField.initializer as? PsiLiteralExpression)?.value as? Int ?: return null
+    thisLogger().debug("Calculated target API version: $apiVersion")
+    return "$VERSION$apiVersion"
   }
 
   companion object {
@@ -64,11 +65,11 @@ class CodegenJarLoader(val project: Project) {
 
     private const val GROUP_ID = "com.jetbrains.intellij.platform"
     private const val ARTIFACT_ID = "workspace-model-codegen-impl"
-    private const val VERSION = "0.0.6"
+    private const val VERSION = "0.0."
     private val INTELLIJ_DEPENDENCIES_DESCRIPTION = RemoteRepositoryDescription(
       "intellij-dependencies",
       "Intellij Dependencies",
-      "https://packages.jetbrains.team/maven/p/ide-accessibility-assistant/codegen-test",
+      "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies",
     )
   }
 }
