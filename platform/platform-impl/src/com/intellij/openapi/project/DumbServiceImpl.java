@@ -9,7 +9,6 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.PingProgress;
@@ -313,7 +312,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     if (entered) {
       if (ApplicationManager.getApplication().isInternal()) LOG.info("entered smart mode");
       runCatching(myPublisher::exitDumbMode);
-      FileEditorManagerEx.getInstanceEx(myProject).refreshIcons();
     }
   }
 
