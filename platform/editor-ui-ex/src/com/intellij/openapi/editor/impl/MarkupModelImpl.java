@@ -76,11 +76,12 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
                                               @Nullable TextAttributes textAttributes,
                                               int lineNumber,
                                               int layer) {
-    if (isNotValidLine(lineNumber)) {
-      throw new IndexOutOfBoundsException("lineNumber:" + lineNumber + ". Must be in [0, " + (getDocument().getLineCount() - 1) + "]");
+    Document document = getDocument();
+    if (!DocumentUtil.isValidLine(lineNumber, document)) {
+      throw new IndexOutOfBoundsException("lineNumber:" + lineNumber + ". Must be in [0, " + (document.getLineCount() - 1) + "]");
     }
 
-    int offset = DocumentUtil.getFirstNonSpaceCharOffset(getDocument(), lineNumber);
+    int offset = DocumentUtil.getFirstNonSpaceCharOffset(document, lineNumber);
     HighlighterTargetArea area = HighlighterTargetArea.LINES_IN_RANGE;
     Consumer<RangeHighlighterEx> changeAction = textAttributes == null ? null : ex -> ex.setTextAttributes(textAttributes);
     return addRangeHighlighterAndChangeAttributes(textAttributesKey, offset, offset, layer, area, false, changeAction);
@@ -103,20 +104,17 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
                                                           @Nullable TextAttributes textAttributes,
                                                           int lineNumber,
                                                           int layer) {
-    if (isNotValidLine(lineNumber)) {
+    Document document = getDocument();
+    if (!DocumentUtil.isValidLine(lineNumber, document)) {
       return null;
     }
-    int offset = DocumentUtil.getFirstNonSpaceCharOffset(getDocument(), lineNumber);
+    int offset = DocumentUtil.getFirstNonSpaceCharOffset(document, lineNumber);
 
     Consumer<RangeHighlighterEx> changeAction = textAttributes == null ? null : ex -> ex.setTextAttributes(textAttributes);
 
     PersistentRangeHighlighterImpl rangeHighlighter = PersistentRangeHighlighterImpl.create(
       this, offset, layer, HighlighterTargetArea.LINES_IN_RANGE, textAttributesKey, false);
     return addRangeHighlighter(rangeHighlighter, changeAction);
-  }
-
-  private boolean isNotValidLine(int lineNumber) {
-    return lineNumber >= getDocument().getLineCount() || lineNumber < 0;
   }
 
   // NB: Can return invalid highlighters
