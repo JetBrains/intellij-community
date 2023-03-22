@@ -11,7 +11,7 @@ public final class Range {
   public final int end2;
 
   public Range(int start1, int end1, int start2, int end2) {
-    assert start1 <= end1 && start2 <= end2;
+    assert start1 <= end1 && start2 <= end2 : String.format("[%s, %s, %s, %s]", start1, end1, start2, end2);
     this.start1 = start1;
     this.end1 = end1;
     this.start2 = start2;
