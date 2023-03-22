@@ -62,7 +62,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   private volatile @Nullable Thread myWaitIntolerantThread;
 
-  // should only be accessed from EDT to avoid races between `queueTaskOnEDT` and `updateFinished` (invoked from `afterLastTask`)
+  // should only be accessed from EDT to avoid races between `queueTaskOnEDT` and `enterSmartModeIfDumb` (invoked from `afterLastTask`)
   private SubmissionReceipt myLatestReceipt;
 
   private class DumbTaskListener implements MergingQueueGuiExecutor.ExecutorStateListener {
@@ -86,11 +86,11 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       //   - if null modality about to change to non-null (happens only on EDT). This means that myLatestReceipt will also increase (on EDT)
       //   - if non-null modality about to change to null (happens only on EDT) then myState will also change to SMART (on EDT)
       // Either way, we don't need to execute the runnable. In the first case it will not be scheduled,
-      // in the second case updateFinished will do nothing.
+      // in the second case enterSmartModeIfDumb will do nothing.
       myCancellableLaterEdtInvoker.invokeLaterWithDumbStartModality(() -> {
-        // Dumb service may already have been set to SMART state by completeJustSubmittedTasks. In this case updateFinished does nothing.
+        // Note that dumb service may already have been set to SMART state by completeJustSubmittedTasks.
         if (myLatestReceipt.equals(latestReceipt)) {
-          updateFinished();
+          enterSmartModeIfDumb();
         }
         // latestReceipt may be null if the queue is suspended or internal error has happened
         LOG.assertTrue(latestReceipt == null || !latestReceipt.isAfter(myLatestReceipt),
@@ -134,9 +134,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     queueTask(new InitialDumbTaskRequiredForSmartMode(getProject()));
 
     if (isSynchronousTaskExecution()) {
-      // This is the same side effects as produced by updateFinished (except updating icons). We apply them synchronously, because
-      // invokeLaterAfterProjectInitialized(this::updateFinished) does not work well in synchronous environments (e.g. in unit tests): code
-      // continues to execute without waiting for smart mode to start because of invoke*Later*. See, for example, DbSrcFileDialectTest
+      // This is the same side effects as produced by enterSmartModeIfDumb (except updating icons). We apply them synchronously, because
+      // invokeLaterWithDumbStartModality(this::enterSmartModeIfDumb) does not work well in synchronous environments (e.g. in unit tests):
+      // code continues to execute without waiting for smart mode to start because of invoke*Later*. See, for example, DbSrcFileDialectTest
       myState.compareAndSet(State.DUMB, State.SMART);
       myCancellableLaterEdtInvoker.invokeLaterWithDumbStartModality(myPublisher::exitDumbMode);
     }
@@ -210,7 +210,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       myPublisher.enteredDumbMode();
     }
     else {
-      updateFinished();
+      enterSmartModeIfDumb();
     }
   }
 
@@ -275,7 +275,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       catch (Throwable t) {
         // There are no evidences that returning to smart mode is a good strategy. Let it be like this until the opposite is needed.
         LOG.error("Failed to start background queue processing. Return to smart mode even though some tasks are still in the queue", t);
-        updateFinished();
+        enterSmartModeIfDumb();
       }
     });
   }
@@ -312,10 +312,10 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     return !myProject.isDisposed();
   }
 
-  private void updateFinished() {
+  private void enterSmartModeIfDumb() {
     if (!WriteAction.compute(this::switchToSmartMode)) return;
 
-    if (ApplicationManager.getApplication().isInternal()) LOG.info("updateFinished");
+    if (ApplicationManager.getApplication().isInternal()) LOG.info("enterSmartModeIfDumb");
 
     myPublisher.exitDumbMode();
     FileEditorManagerEx.getInstanceEx(myProject).refreshIcons();
@@ -498,7 +498,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       }
       finally {
         if (myTaskQueue.isEmpty()) {
-          updateFinished();
+          enterSmartModeIfDumb();
         }
       }
     });
