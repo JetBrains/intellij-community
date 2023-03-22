@@ -5,7 +5,6 @@ import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.AbstractDependencyData
 import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData
-import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinBinaryDependency
