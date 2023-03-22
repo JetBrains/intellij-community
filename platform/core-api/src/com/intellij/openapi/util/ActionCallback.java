@@ -16,7 +16,6 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.OrderedSet;
 import org.jetbrains.annotations.NonNls;
@@ -24,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
+import java.util.function.Consumer;
 
 public class ActionCallback implements Disposable {
   public static final ActionCallback DONE = new Done();
@@ -120,7 +120,7 @@ public class ActionCallback implements Disposable {
 
   @NotNull
   public final ActionCallback doWhenRejected(@NotNull final Consumer<? super String> consumer) {
-    myRejected.doWhenExecuted(() -> consumer.consume(myError));
+    myRejected.doWhenExecuted(() -> consumer.accept(myError));
     return this;
   }
 
