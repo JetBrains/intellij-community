@@ -48,6 +48,7 @@ public final class FileBasedIndexScanUtil {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     NoAccessDuringPsiEvents.checkCallContext(indexId);
     ProgressManager.checkCanceled();
+    if (!IndexUpToDateCheckIn.isUpToDateCheckEnabled()) return;
     ((FileBasedIndexImpl)FileBasedIndex.getInstance()).getChangedFilesCollector().processFilesToUpdateInReadAction();
   }
 
