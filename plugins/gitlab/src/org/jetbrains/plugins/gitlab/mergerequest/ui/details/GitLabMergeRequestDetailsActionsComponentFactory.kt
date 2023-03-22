@@ -6,8 +6,8 @@ import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsActions
 import com.intellij.collaboration.ui.codereview.details.ReviewRole
 import com.intellij.collaboration.ui.codereview.details.ReviewState
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.collaboration.ui.util.bindContent
-import com.intellij.collaboration.ui.util.bindVisibility
+import com.intellij.collaboration.ui.util.bindContentIn
+import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.ui.util.toAnAction
 import com.intellij.ide.plugins.newui.InstallButton
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -45,7 +45,7 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
     val moreActionsGroup = DefaultActionGroup(GitLabBundle.message("merge.request.details.action.review.more.text"), true)
 
     return Wrapper().apply {
-      bindContent(scope, reviewFlowVm.role.map { role ->
+      bindContentIn(scope, reviewFlowVm.role.map { role ->
         val mainPanel = when (role) {
           ReviewRole.AUTHOR -> CodeReviewDetailsActionsComponentFactory.createActionsForAuthor(
             scope, reviewFlowVm.reviewState, reviewFlowVm.reviewers, reviewActions, moreActionsGroup
@@ -75,11 +75,11 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
       override fun setTextAndSize() {}
     }.apply {
       action = GitLabMergeRequestApproveAction(scope, reviewFlowVm)
-      bindVisibility(scope, reviewFlowVm.approvedBy.map { reviewFlowVm.currentUser !in it })
+      bindVisibilityIn(scope, reviewFlowVm.approvedBy.map { reviewFlowVm.currentUser !in it })
     }
     val resumeReviewButton = JButton(GitLabMergeRequestReviewResumeAction(scope, reviewFlowVm)).apply {
       isOpaque = false
-      bindVisibility(scope, reviewFlowVm.approvedBy.map { reviewFlowVm.currentUser in it })
+      bindVisibilityIn(scope, reviewFlowVm.approvedBy.map { reviewFlowVm.currentUser in it })
     }
 
     val moreActionsButton = CodeReviewDetailsActionsComponentFactory.createMoreButton(moreActionsGroup)

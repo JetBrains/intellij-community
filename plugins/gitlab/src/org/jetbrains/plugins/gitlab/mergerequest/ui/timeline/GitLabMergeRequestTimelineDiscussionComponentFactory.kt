@@ -58,7 +58,7 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
 
         val replyVm = vm.replyVm
         if (replyVm != null) {
-          bindChild(cs, replyVm.newNoteVm) { cs, newNoteVm ->
+          bindChildIn(cs, replyVm.newNoteVm) { cs, newNoteVm ->
             newNoteVm?.let {
               GitLabDiscussionComponentFactory.createReplyField(ComponentType.FULL_SECONDARY, project, cs, it, vm.resolveVm,
                                                                 avatarIconsProvider)
@@ -73,11 +73,11 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
         }
       }
     }.apply {
-      bindVisibility(cs, vm.repliesFolded.inverted())
+      bindVisibilityIn(cs, vm.repliesFolded.inverted())
     }
 
     val titlePanel = Wrapper().apply {
-      bindContent(cs, vm.mainNote) { titleCs, mainNote ->
+      bindContentIn(cs, vm.mainNote) { titleCs, mainNote ->
         createNoteTitleComponent(titleCs, mainNote)
       }
     }
@@ -104,7 +104,7 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
     val mainNoteVm = vm.mainNote
     val repliesActionsPanel = createRepliesActionsPanel(cs, avatarIconsProvider, vm).apply {
       border = JBUI.Borders.empty(Replies.ActionsFolded.VERTICAL_PADDING, 0)
-      bindVisibility(cs, vm.repliesFolded)
+      bindVisibilityIn(cs, vm.repliesFolded)
     }
     val textPanel = GitLabNoteComponentFactory.createTextPanel(cs, mainNoteVm.flatMapLatest { it.htmlBody }).let {
       collapseDiscussionTextIfNeeded(cs, vm, it)
@@ -134,7 +134,7 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
       contentPanel.add(textContentPanel, null, 0)
     }
     else {
-      contentPanel.bindChild(cs, vm.collapsed, index = 0) { _, collapsed ->
+      contentPanel.bindChildIn(cs, vm.collapsed, index = 0) { _, collapsed ->
         VerticalListPanel(4).apply {
           if (collapsed) {
             add(textContentPanel)
@@ -156,7 +156,7 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
     val diffVm = vm.diffVm ?: return null
     return TimelineDiffComponentFactory.createDiffWithHeader(cs, vm, diffVm.position.filePath, {}) {
       Wrapper().apply {
-        bindContent(it, diffVm.patchHunk) { _, hunkState ->
+        bindContentIn(it, diffVm.patchHunk) { _, hunkState ->
           when (hunkState) {
             GitLabDiscussionDiffViewModel.PatchHunkLoadingState.Loading -> {
               JLabel(animatedLoadingIcon)
@@ -203,14 +203,14 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
                                         avatarIconsProvider: IconsProvider<GitLabUserDTO>,
                                         vm: GitLabMergeRequestTimelineDiscussionViewModel): JComponent {
     val authorsLabel = JLabel().apply {
-      bindVisibility(cs, vm.replies.map { it.isNotEmpty() })
+      bindVisibilityIn(cs, vm.replies.map { it.isNotEmpty() })
 
       val repliesAuthors = vm.replies.map { replies ->
         val authors = LinkedHashSet<GitLabUserDTO>()
         replies.mapTo(authors) { it.author }
       }
 
-      bindIcon(cs, repliesAuthors.map { authors ->
+      bindIconIn(cs, repliesAuthors.map { authors ->
         authors.map {
           avatarIconsProvider.getIcon(it, ComponentType.COMPACT.iconSize)
         }.nullize()?.let {
@@ -224,8 +224,8 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
     val repliesLink = LinkLabel<Any>("", null, LinkListener { _, _ ->
       vm.setRepliesFolded(false)
     }).apply {
-      bindVisibility(cs, hasRepliesOrCanCreateNewFlow)
-      bindText(cs, vm.replies.map { replies ->
+      bindVisibilityIn(cs, hasRepliesOrCanCreateNewFlow)
+      bindTextIn(cs, vm.replies.map { replies ->
         val replyCount = replies.size
         if (replyCount == 0) {
           CollaborationToolsBundle.message("review.comments.reply.action")
@@ -239,8 +239,8 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
     val lastReplyDateLabel = JLabel().apply {
       foreground = UIUtil.getContextHelpForeground()
     }.apply {
-      bindVisibility(cs, vm.replies.map { it.isNotEmpty() })
-      bindText(cs, vm.replies.mapNotNull { replies ->
+      bindVisibilityIn(cs, vm.replies.map { it.isNotEmpty() })
+      bindTextIn(cs, vm.replies.mapNotNull { replies ->
         replies.lastOrNull()?.createdAt?.let { JBDateFormat.getFormatter().formatPrettyDateTime(it) }
       })
     }
@@ -250,7 +250,7 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
       add(repliesLink)
       add(lastReplyDateLabel)
     }.apply {
-      bindVisibility(cs, hasRepliesOrCanCreateNewFlow)
+      bindVisibilityIn(cs, hasRepliesOrCanCreateNewFlow)
     }
     return HorizontalListPanel(Replies.ActionsFolded.HORIZONTAL_GROUP_GAP).apply {
       add(repliesActions)

@@ -6,9 +6,9 @@ import com.intellij.collaboration.ui.codereview.CodeReviewTitleUIUtil
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.collaboration.ui.codereview.details.RequestState
 import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
-import com.intellij.collaboration.ui.util.bindText
-import com.intellij.collaboration.ui.util.bindTextHtml
-import com.intellij.collaboration.ui.util.bindVisibility
+import com.intellij.collaboration.ui.util.bindTextIn
+import com.intellij.collaboration.ui.util.bindTextHtmlIn
+import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.ui.util.emptyBorders
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
@@ -32,7 +32,7 @@ internal object GitLabMergeRequestTimelineTitleComponent {
     val titleLabel = SimpleHtmlPane().apply {
       name = "Review timeline title panel"
       font = JBFont.h2().asBold()
-      bindTextHtml(scope, mr.title.map { title ->
+      bindTextHtmlIn(scope, mr.title.map { title ->
         CodeReviewTitleUIUtil.createTitleText(
           title = title,
           reviewNumber = "!${mr.number}",
@@ -45,14 +45,14 @@ internal object GitLabMergeRequestTimelineTitleComponent {
       font = JBFont.small()
       foreground = UIUtil.getContextHelpForeground()
       border = JBUI.Borders.empty(0, 4)
-      bindText(scope, mr.requestState.map { requestState ->
+      bindTextIn(scope, mr.requestState.map { requestState ->
         ReviewDetailsUIUtil.getRequestStateText(requestState)
       })
     }.let {
       RoundedPanel(SingleComponentCenteringLayout(), 4).apply {
         border = JBUI.Borders.empty()
         background = UIUtil.getPanelBackground()
-        bindVisibility(scope, mr.requestState.map { mergeState ->
+        bindVisibilityIn(scope, mr.requestState.map { mergeState ->
           mergeState == RequestState.CLOSED || mergeState == RequestState.MERGED || mergeState == RequestState.DRAFT
         })
         add(it)

@@ -7,7 +7,7 @@ import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
 import com.intellij.collaboration.ui.util.DimensionRestrictions
 import com.intellij.collaboration.ui.util.JComponentOverlay
-import com.intellij.collaboration.ui.util.bindProgress
+import com.intellij.collaboration.ui.util.bindProgressIn
 import com.intellij.ide.ui.AntialiasingType
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
@@ -149,7 +149,7 @@ object CollaborationToolsUIUtil {
   @Internal
   fun wrapWithProgressStripe(scope: CoroutineScope, loadingFlow: Flow<Boolean>, component: JComponent): JComponent {
     return ProgressStripe(component, scope.nestedDisposable(), ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
-      bindProgress(scope, loadingFlow)
+      bindProgressIn(scope, loadingFlow)
     }
   }
 

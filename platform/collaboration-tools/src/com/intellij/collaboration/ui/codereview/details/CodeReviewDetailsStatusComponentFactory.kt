@@ -6,9 +6,9 @@ import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.Avatar
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewStatusViewModel
-import com.intellij.collaboration.ui.util.bindIcon
-import com.intellij.collaboration.ui.util.bindText
-import com.intellij.collaboration.ui.util.bindVisibility
+import com.intellij.collaboration.ui.util.bindIconIn
+import com.intellij.collaboration.ui.util.bindTextIn
+import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -37,7 +37,7 @@ object CodeReviewDetailsStatusComponentFactory {
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
       icon = AllIcons.RunConfigurations.TestError
       text = CollaborationToolsBundle.message("review.details.status.conflicts")
-      bindVisibility(scope, hasConflicts)
+      bindVisibilityIn(scope, hasConflicts)
     }
   }
 
@@ -46,7 +46,7 @@ object CodeReviewDetailsStatusComponentFactory {
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
       icon = AllIcons.RunConfigurations.TestError
       text = CollaborationToolsBundle.message("review.details.status.reviewer.missing")
-      bindVisibility(scope, reviewersReview.map { it.isEmpty() })
+      bindVisibilityIn(scope, reviewersReview.map { it.isEmpty() })
     }
   }
 
@@ -54,10 +54,10 @@ object CodeReviewDetailsStatusComponentFactory {
     return ReviewDetailsStatusLabel("Code review status: required reviews").apply {
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
       icon = AllIcons.RunConfigurations.TestError
-      bindVisibility(scope, combine(requiredApprovingReviewsCount, isDraft) { requiredApprovingReviewsCount, isDraft ->
+      bindVisibilityIn(scope, combine(requiredApprovingReviewsCount, isDraft) { requiredApprovingReviewsCount, isDraft ->
         requiredApprovingReviewsCount > 0 && !isDraft
       })
-      bindText(scope, requiredApprovingReviewsCount.map { requiredApprovingReviewsCount ->
+      bindTextIn(scope, requiredApprovingReviewsCount.map { requiredApprovingReviewsCount ->
         CollaborationToolsBundle.message("review.details.status.reviewer.required", requiredApprovingReviewsCount)
       })
     }
@@ -68,7 +68,7 @@ object CodeReviewDetailsStatusComponentFactory {
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
       icon = AllIcons.RunConfigurations.TestError
       text = CollaborationToolsBundle.message("review.details.status.not.authorized.to.merge")
-      bindVisibility(scope, combine(isRestricted, isDraft) { isRestricted, isDraft ->
+      bindVisibilityIn(scope, combine(isRestricted, isDraft) { isRestricted, isDraft ->
         isRestricted && !isDraft
       })
     }
@@ -76,17 +76,17 @@ object CodeReviewDetailsStatusComponentFactory {
 
   fun createCiComponent(scope: CoroutineScope, statusVm: CodeReviewStatusViewModel): JComponent {
     val checkStatus = ReviewDetailsStatusLabel("Code review status: CI status").apply {
-      bindIcon(scope, combine(statusVm.pendingCI, statusVm.failedCI) { pendingCI, failedCI ->
+      bindIconIn(scope, combine(statusVm.pendingCI, statusVm.failedCI) { pendingCI, failedCI ->
         getCheckStatusIcon(pendingCI, failedCI)
       })
-      bindText(scope, combine(statusVm.pendingCI, statusVm.failedCI) { pendingCI, failedCI ->
+      bindTextIn(scope, combine(statusVm.pendingCI, statusVm.failedCI) { pendingCI, failedCI ->
         getCheckStatusText(pendingCI, failedCI)
       })
     }
     val detailsLink = ActionLink(CollaborationToolsBundle.message("review.details.status.ci.link.details")) {
       BrowserUtil.browse(statusVm.urlCI)
     }.apply {
-      bindVisibility(scope, combine(statusVm.hasCI, statusVm.pendingCI, statusVm.failedCI) { hasCI, pendingCI, failedCI ->
+      bindVisibilityIn(scope, combine(statusVm.hasCI, statusVm.pendingCI, statusVm.failedCI) { hasCI, pendingCI, failedCI ->
         hasCI && (pendingCI != 0 || failedCI != 0)
       })
     }
@@ -94,7 +94,7 @@ object CodeReviewDetailsStatusComponentFactory {
     return HorizontalListPanel(CI_COMPONENTS_GAP).apply {
       name = "Code review status: CI"
       border = JBUI.Borders.empty(CI_COMPONENT_BORDER, 0)
-      bindVisibility(scope, statusVm.hasCI)
+      bindVisibilityIn(scope, statusVm.hasCI)
       add(checkStatus)
       add(detailsLink)
     }
@@ -111,7 +111,7 @@ object CodeReviewDetailsStatusComponentFactory {
     val panel = VerticalListPanel(STATUS_REVIEWER_GAP).apply {
       name = "Code review status: reviewers"
       border = JBUI.Borders.empty(1, 0)
-      bindVisibility(scope, reviewersReview.map { it.isNotEmpty() })
+      bindVisibilityIn(scope, reviewersReview.map { it.isNotEmpty() })
     }
 
     scope.launch {

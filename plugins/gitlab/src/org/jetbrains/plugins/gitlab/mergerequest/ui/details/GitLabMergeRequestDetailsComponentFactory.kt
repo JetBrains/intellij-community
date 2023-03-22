@@ -7,7 +7,7 @@ import com.intellij.collaboration.ui.LoadingLabel
 import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.codereview.details.*
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.collaboration.ui.util.bindContent
+import com.intellij.collaboration.ui.util.bindContentIn
 import com.intellij.collaboration.ui.util.emptyBorders
 import com.intellij.collaboration.ui.util.gap
 import com.intellij.ide.DataManager
@@ -42,7 +42,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
       isOpaque = false
       background = UIUtil.getListBackground()
 
-      bindContent(scope, detailsLoadingVm.mergeRequestLoadingFlow) { contentCs, loadingState ->
+      bindContentIn(scope, detailsLoadingVm.mergeRequestLoadingFlow) { contentCs, loadingState ->
         when (loadingState) {
           GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Loading -> LoadingLabel()
           is GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Error -> SimpleHtmlPane(loadingState.exception.localizedMessage)
@@ -59,7 +59,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
               }
             }
 
-            return@bindContent CollaborationToolsUIUtil.wrapWithProgressStripe(scope, detailsVm.isLoading, detailsPanel)
+            return@bindContentIn CollaborationToolsUIUtil.wrapWithProgressStripe(scope, detailsVm.isLoading, detailsPanel)
           }
         }
       }

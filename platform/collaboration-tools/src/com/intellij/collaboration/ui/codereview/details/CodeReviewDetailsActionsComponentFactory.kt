@@ -3,8 +3,8 @@ package com.intellij.collaboration.ui.codereview.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
-import com.intellij.collaboration.ui.util.bindContent
-import com.intellij.collaboration.ui.util.bindVisibility
+import com.intellij.collaboration.ui.util.bindContentIn
+import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.ui.util.toAnAction
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -39,13 +39,13 @@ object CodeReviewDetailsActionsComponentFactory {
   ): JComponent {
     val requestReviewButton = JButton(reviewActions.requestReviewAction).apply {
       isOpaque = false
-      bindVisibility(scope, combine(reviewState, requestedReviewers) { reviewState, requestedReviewers ->
+      bindVisibilityIn(scope, combine(reviewState, requestedReviewers) { reviewState, requestedReviewers ->
         reviewState == ReviewState.NEED_REVIEW || (reviewState == ReviewState.WAIT_FOR_UPDATES && requestedReviewers.isNotEmpty())
       })
     }
     val reRequestReviewButton = JButton(reviewActions.reRequestReviewAction).apply {
       isOpaque = false
-      bindVisibility(scope, combine(reviewState, requestedReviewers) { reviewState, requestedReviewers ->
+      bindVisibilityIn(scope, combine(reviewState, requestedReviewers) { reviewState, requestedReviewers ->
         reviewState == ReviewState.WAIT_FOR_UPDATES && requestedReviewers.isEmpty()
       })
     }
@@ -53,7 +53,7 @@ object CodeReviewDetailsActionsComponentFactory {
       reviewActions.mergeReviewAction,
       arrayOf(reviewActions.mergeSquashReviewAction, reviewActions.rebaseReviewAction)
     ).apply {
-      bindVisibility(scope, reviewState.map { it == ReviewState.ACCEPTED })
+      bindVisibilityIn(scope, reviewState.map { it == ReviewState.ACCEPTED })
     }
     val moreActionsButton = createMoreButton(moreActionsGroup)
     scope.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -107,7 +107,7 @@ object CodeReviewDetailsActionsComponentFactory {
     draftedStatePanel: JComponent
   ): JComponent {
     return Wrapper().apply {
-      bindContent(scope, requestState.map { requestState ->
+      bindContentIn(scope, requestState.map { requestState ->
         when (requestState) {
           RequestState.OPENED -> openedStatePanel
           RequestState.MERGED -> mergedStatePanel

@@ -4,9 +4,9 @@ package com.intellij.collaboration.ui.codereview.details
 import com.intellij.collaboration.ui.codereview.CodeReviewTitleUIUtil
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewDetailsViewModel
-import com.intellij.collaboration.ui.util.bindText
-import com.intellij.collaboration.ui.util.bindTextHtml
-import com.intellij.collaboration.ui.util.bindVisibility
+import com.intellij.collaboration.ui.util.bindTextIn
+import com.intellij.collaboration.ui.util.bindTextHtmlIn
+import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.ui.util.emptyBorders
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.ui.PopupHandler
@@ -37,7 +37,7 @@ object CodeReviewDetailsTitleComponentFactory {
     val titleLabel = htmlPaneFactory().apply {
       name = "Review details title panel"
       font = JBFont.h2().asBold()
-      bindTextHtml(scope, detailsVm.title.map { title ->
+      bindTextHtmlIn(scope, detailsVm.title.map { title ->
         CodeReviewTitleUIUtil.createTitleText(
           title = title,
           reviewNumber = detailsVm.number,
@@ -51,14 +51,14 @@ object CodeReviewDetailsTitleComponentFactory {
       font = JBFont.small()
       foreground = UIUtil.getContextHelpForeground()
       border = JBUI.Borders.empty(0, 4)
-      bindText(scope, detailsVm.requestState.map { requestState ->
+      bindTextIn(scope, detailsVm.requestState.map { requestState ->
         ReviewDetailsUIUtil.getRequestStateText(requestState)
       })
     }.let {
       RoundedPanel(SingleComponentCenteringLayout(), 4).apply {
         border = JBUI.Borders.empty()
         background = UIUtil.getPanelBackground()
-        bindVisibility(scope, detailsVm.requestState.map { mergeState ->
+        bindVisibilityIn(scope, detailsVm.requestState.map { mergeState ->
           mergeState == RequestState.CLOSED || mergeState == RequestState.MERGED || mergeState == RequestState.DRAFT
         })
         add(it)

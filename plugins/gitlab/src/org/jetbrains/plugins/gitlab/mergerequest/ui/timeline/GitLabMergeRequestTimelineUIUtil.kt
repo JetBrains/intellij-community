@@ -6,7 +6,7 @@ import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
-import com.intellij.collaboration.ui.util.bindChild
+import com.intellij.collaboration.ui.util.bindChildIn
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -34,7 +34,7 @@ object GitLabMergeRequestTimelineUIUtil {
       add(createTitleTextPane(noteVm.author, noteVm.createdAt))
 
       noteVm.resolveVm?.resolved?.let { resolvedFlow ->
-        bindChild(cs, resolvedFlow) { _, resolved ->
+        bindChildIn(cs, resolvedFlow) { _, resolved ->
           if (resolved) {
             CollaborationToolsUIUtil.createTagLabel(CollaborationToolsBundle.message("review.thread.resolved.tag"))
           }

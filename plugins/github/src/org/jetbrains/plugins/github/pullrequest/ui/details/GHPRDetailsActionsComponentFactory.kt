@@ -6,9 +6,9 @@ import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsActions
 import com.intellij.collaboration.ui.codereview.details.RequestState
 import com.intellij.collaboration.ui.codereview.details.ReviewRole
 import com.intellij.collaboration.ui.codereview.details.ReviewState
-import com.intellij.collaboration.ui.util.bindContent
-import com.intellij.collaboration.ui.util.bindText
-import com.intellij.collaboration.ui.util.bindVisibility
+import com.intellij.collaboration.ui.util.bindContentIn
+import com.intellij.collaboration.ui.util.bindTextIn
+import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.ui.util.toAnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -54,7 +54,7 @@ internal object GHPRDetailsActionsComponentFactory {
     val moreActionsGroup = DefaultActionGroup(GithubBundle.message("pull.request.merge.commit.action"), true)
 
     return Wrapper().apply {
-      bindContent(scope, reviewFlowVm.role.map { role ->
+      bindContentIn(scope, reviewFlowVm.role.map { role ->
         val mainPanel = when (role) {
           ReviewRole.AUTHOR -> CodeReviewDetailsActionsComponentFactory.createActionsForAuthor(
             scope, reviewFlowVm.reviewState, reviewFlowVm.requestedReviewers, reviewActions, moreActionsGroup
@@ -92,10 +92,10 @@ internal object GHPRDetailsActionsComponentFactory {
         val anActionEvent = AnActionEvent.createFromDataContext("github.review.details", presentation, dataContext)
         GHPRReviewSubmitAction().actionPerformed(anActionEvent)
       }
-      bindText(scope, reviewFlowVm.pendingComments.map { pendingComments ->
+      bindTextIn(scope, reviewFlowVm.pendingComments.map { pendingComments ->
         GithubBundle.message("pull.request.review.actions.submit", pendingComments)
       })
-      bindVisibility(scope, reviewFlowVm.reviewState.map {
+      bindVisibilityIn(scope, reviewFlowVm.reviewState.map {
         it == ReviewState.WAIT_FOR_UPDATES || it == ReviewState.NEED_REVIEW
       })
     }
@@ -103,7 +103,7 @@ internal object GHPRDetailsActionsComponentFactory {
       reviewActions.mergeReviewAction,
       arrayOf(reviewActions.mergeSquashReviewAction, reviewActions.rebaseReviewAction)
     ).apply {
-      bindVisibility(scope, reviewFlowVm.reviewState.map { it == ReviewState.ACCEPTED })
+      bindVisibilityIn(scope, reviewFlowVm.reviewState.map { it == ReviewState.ACCEPTED })
     }
 
     val moreActionsButton = CodeReviewDetailsActionsComponentFactory.createMoreButton(moreActionsGroup)

@@ -5,8 +5,8 @@ import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
 import com.intellij.collaboration.ui.toolwindow.ReviewListTabComponentDescriptor
 import com.intellij.collaboration.ui.toolwindow.ReviewTabsComponentFactory
-import com.intellij.collaboration.ui.util.bindDisabled
-import com.intellij.collaboration.ui.util.bindVisibility
+import com.intellij.collaboration.ui.util.bindDisabledIn
+import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.util.URIUtil
 import com.intellij.ide.DataManager
 import com.intellij.openapi.application.EDT
@@ -180,8 +180,8 @@ internal class GitLabReviewTabComponentFactory(
           vm.requestTokenLogin(false, true)
         }
 
-        bindDisabled(scope, vm.busyState)
-        bindVisibility(scope, vm.tokenLoginAvailableState)
+        bindDisabledIn(scope, vm.busyState)
+        bindVisibilityIn(scope, vm.tokenLoginAvailableState)
       }
     )
   }

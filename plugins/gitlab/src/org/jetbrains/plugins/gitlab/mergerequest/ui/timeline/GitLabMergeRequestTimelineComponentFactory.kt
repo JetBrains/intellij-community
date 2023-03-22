@@ -15,8 +15,8 @@ import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentF
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.collaboration.ui.util.bindChild
-import com.intellij.collaboration.ui.util.bindEnabled
+import com.intellij.collaboration.ui.util.bindChildIn
+import com.intellij.collaboration.ui.util.bindEnabledIn
 import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -81,7 +81,7 @@ object GitLabMergeRequestTimelineComponentFactory {
       add(timelinePanel)
     }
 
-    panel.bindChild(cs, vm.newNoteVm, null) { noteCs, editVm ->
+    panel.bindChildIn(cs, vm.newNoteVm, null) { noteCs, editVm ->
       editVm?.let { createNewNoteField(project, avatarIconsProvider, noteCs, it) }
     }
 
@@ -131,7 +131,7 @@ object GitLabMergeRequestTimelineComponentFactory {
     val submitAction = swingAction(CollaborationToolsBundle.message("review.comments.reply.action")) {
       editVm.submit()
     }.apply {
-      bindEnabled(noteCs, editVm.state.map { it != GitLabNoteEditingViewModel.SubmissionState.Loading })
+      bindEnabledIn(noteCs, editVm.state.map { it != GitLabNoteEditingViewModel.SubmissionState.Loading })
     }
 
     val actions = CommentInputActionsComponentFactory.Config(

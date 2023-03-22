@@ -3,8 +3,8 @@ package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsStatusComponentFactory
-import com.intellij.collaboration.ui.util.bindContent
-import com.intellij.collaboration.ui.util.bindText
+import com.intellij.collaboration.ui.util.bindContentIn
+import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.toAnAction
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -58,7 +58,7 @@ internal object GHPRStatusChecksComponentFactory {
 
     return Wrapper().apply {
       name = "Status check panel"
-      bindContent(scope, reviewStatusVm.mergeabilityState.map { mergeability ->
+      bindContentIn(scope, reviewStatusVm.mergeabilityState.map { mergeability ->
         if (mergeability == null) loadingPanel else checksPanel
       })
     }
@@ -96,7 +96,7 @@ internal object GHPRStatusChecksComponentFactory {
     return CodeReviewDetailsStatusComponentFactory.ReviewDetailsStatusLabel("Code review status: access denied").apply {
       border = JBUI.Borders.empty(5, 0)
       icon = AllIcons.RunConfigurations.TestError
-      bindText(scope, reviewStatusVm.isDraft.map { isDraft ->
+      bindTextIn(scope, reviewStatusVm.isDraft.map { isDraft ->
         when {
           !canClose -> GithubBundle.message("pull.request.repo.access.required")
           !canMarkReadyForReview && isDraft -> GithubBundle.message("pull.request.repo.write.access.required")

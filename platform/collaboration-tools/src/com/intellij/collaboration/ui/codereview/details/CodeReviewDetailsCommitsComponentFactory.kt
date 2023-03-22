@@ -6,9 +6,9 @@ import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModel
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 import com.intellij.collaboration.ui.codereview.list.search.PopupConfig
-import com.intellij.collaboration.ui.util.bindDisabled
-import com.intellij.collaboration.ui.util.bindText
-import com.intellij.collaboration.ui.util.bindVisibility
+import com.intellij.collaboration.ui.util.bindDisabledIn
+import com.intellij.collaboration.ui.util.bindTextIn
+import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.icons.AllIcons
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.ActionLink
@@ -33,7 +33,7 @@ object CodeReviewDetailsCommitsComponentFactory {
   fun <T> create(scope: CoroutineScope, changesVm: CodeReviewChangesViewModel<T>, commitPresenter: (T?) -> CommitPresenter): JComponent {
     val commitsPopupTitle = JLabel().apply {
       font = JBFont.regular().asBold()
-      bindText(scope, changesVm.reviewCommits.map { commits ->
+      bindTextIn(scope, changesVm.reviewCommits.map { commits ->
         CollaborationToolsBundle.message("review.details.commits.title.text", commits.size)
       })
     }
@@ -41,16 +41,16 @@ object CodeReviewDetailsCommitsComponentFactory {
     val nextCommitIcon = InlineIconButton(AllIcons.Chooser.Bottom).apply {
       withBackgroundHover = true
       actionListener = ActionListener { changesVm.selectNextCommit() }
-      bindVisibility(scope, changesVm.selectedCommit.map { it != null })
-      bindDisabled(scope, combine(changesVm.selectedCommitIndex, changesVm.reviewCommits) { selectedCommitIndex, commits ->
+      bindVisibilityIn(scope, changesVm.selectedCommit.map { it != null })
+      bindDisabledIn(scope, combine(changesVm.selectedCommitIndex, changesVm.reviewCommits) { selectedCommitIndex, commits ->
         selectedCommitIndex == commits.size - 1
       })
     }
     val previousCommitIcon = InlineIconButton(AllIcons.Chooser.Top).apply {
       withBackgroundHover = true
       actionListener = ActionListener { changesVm.selectPreviousCommit() }
-      bindVisibility(scope, changesVm.selectedCommit.map { it != null })
-      bindDisabled(scope, changesVm.selectedCommitIndex.map { it == 0 })
+      bindVisibilityIn(scope, changesVm.selectedCommit.map { it != null })
+      bindDisabledIn(scope, changesVm.selectedCommitIndex.map { it == 0 })
     }
 
     return HorizontalListPanel(COMPONENTS_GAP).apply {
@@ -69,7 +69,7 @@ object CodeReviewDetailsCommitsComponentFactory {
     return ActionLink().apply {
       horizontalAlignment = SwingConstants.RIGHT
       setDropDownLinkIcon()
-      bindText(scope, combine(changesVm.selectedCommit, changesVm.reviewCommits) { selectedCommit, commits ->
+      bindTextIn(scope, combine(changesVm.selectedCommit, changesVm.reviewCommits) { selectedCommit, commits ->
         if (selectedCommit != null) {
           val metrics = getFontMetrics(font)
           val commitHashWidth = calculateCommitHashWidth(metrics, commits, changesVm::commitHash)
@@ -81,7 +81,7 @@ object CodeReviewDetailsCommitsComponentFactory {
           return@combine CollaborationToolsBundle.message("review.details.commits.popup.text", commits.size)
         }
       })
-      bindDisabled(scope, changesVm.reviewCommits.map { commits ->
+      bindDisabledIn(scope, changesVm.reviewCommits.map { commits ->
         commits.size <= 1
       })
       addActionListener(createCommitPopupAction(scope, changesVm, commitPresenter))

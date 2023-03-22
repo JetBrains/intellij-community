@@ -5,8 +5,8 @@ import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.util.ActivatableCoroutineScopeProvider
-import com.intellij.collaboration.ui.util.bindChild
-import com.intellij.collaboration.ui.util.bindVisibility
+import com.intellij.collaboration.ui.util.bindChildIn
+import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.diff.util.DiffDrawUtil
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.TextDiffType
@@ -223,7 +223,7 @@ object TimelineDiffComponentFactory {
           }
         }
       }
-      bindVisibility(cs, collapseVm.collapsible)
+      bindVisibilityIn(cs, collapseVm.collapsible)
     }
 
 
@@ -234,8 +234,8 @@ object TimelineDiffComponentFactory {
         background = EditorColorsManager.getInstance().globalScheme.defaultBackground
       }
 
-      bindChild(cs, collapseVm.collapsed) { cs, collapsed ->
-        if (collapsed) return@bindChild null
+      bindChildIn(cs, collapseVm.collapsed) { cs, collapsed ->
+        if (collapsed) return@bindChildIn null
         diffComponentFactory(cs).apply {
           border = IdeBorderFactory.createBorder(SideBorder.TOP)
         }
@@ -258,7 +258,7 @@ object TimelineDiffComponentFactory {
     }
 
     scopeProvider.launchInScope {
-      expandCollapseButton.bindVisibility(this, collapsibleState)
+      expandCollapseButton.bindVisibilityIn(this, collapsibleState)
     }
 
     scopeProvider.launchInScope {
@@ -282,7 +282,7 @@ object TimelineDiffComponentFactory {
     diffComponent.border = IdeBorderFactory.createBorder(SideBorder.TOP)
 
     scopeProvider.launchInScope {
-      diffComponent.bindVisibility(this, collapsedState.map { !it })
+      diffComponent.bindVisibilityIn(this, collapsedState.map { !it })
     }
 
     return RoundedPanel(ListLayout.vertical(0), 8).apply {

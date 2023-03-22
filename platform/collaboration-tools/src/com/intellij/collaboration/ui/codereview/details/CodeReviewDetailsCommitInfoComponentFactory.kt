@@ -3,7 +3,7 @@ package com.intellij.collaboration.ui.codereview.details
 
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.setHtmlBody
-import com.intellij.collaboration.ui.util.bindVisibility
+import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.util.text.DateFormatUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -42,7 +42,7 @@ object CodeReviewDetailsCommitInfoComponentFactory {
 
     return VerticalListPanel(GAP).apply {
       name = "Commit details info"
-      bindVisibility(scope, commit.map { it != null })
+      bindVisibilityIn(scope, commit.map { it != null })
 
       add(title)
       add(info)

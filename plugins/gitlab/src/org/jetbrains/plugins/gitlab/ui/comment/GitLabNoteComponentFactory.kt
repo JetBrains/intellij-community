@@ -11,8 +11,8 @@ import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.Compone
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.collaboration.ui.util.bindDisabled
-import com.intellij.collaboration.ui.util.bindText
+import com.intellij.collaboration.ui.util.bindDisabledIn
+import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.UIUtil
@@ -60,10 +60,10 @@ object GitLabNoteComponentFactory {
           removeAll()
           coroutineScope {
             CodeReviewCommentUIUtil.createEditButton { _ -> it.startEditing() }.apply {
-              bindDisabled(this@coroutineScope, it.busy)
+              bindDisabledIn(this@coroutineScope, it.busy)
             }.also(::add)
             CodeReviewCommentUIUtil.createDeleteCommentIconButton { _ -> it.delete() }.apply {
-              bindDisabled(this@coroutineScope, it.busy)
+              bindDisabledIn(this@coroutineScope, it.busy)
             }.also(::add)
             repaint()
             revalidate()
@@ -78,7 +78,7 @@ object GitLabNoteComponentFactory {
   fun createTextPanel(cs: CoroutineScope, textFlow: Flow<@Nls String>): JComponent =
     SimpleHtmlPane().apply {
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
-      bindText(cs, textFlow)
+      bindTextIn(cs, textFlow)
     }
 
   fun createEditActionsConfig(actionsVm: GitLabNoteAdminActionsViewModel,
