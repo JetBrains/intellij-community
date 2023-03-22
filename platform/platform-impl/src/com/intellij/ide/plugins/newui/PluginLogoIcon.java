@@ -77,7 +77,7 @@ class PluginLogoIcon implements PluginLogoIconProvider {
   }
 
   protected @NotNull Icon getErrorLogo2x() {
-    return PluginLogo.reloadIcon(AllIcons.Plugins.ModifierInvalid, 20, 20);
+    return PluginLogoKt.reloadPluginIcon(AllIcons.Plugins.ModifierInvalid, 20, 20);
   }
 
   @Override

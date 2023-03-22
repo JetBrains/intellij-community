@@ -55,41 +55,37 @@ private const val PLUGIN_ICON_SIZE_SCALE = PLUGIN_ICON_SIZE_SCALED.toFloat() / P
 
 private val LOG = logger<PluginLogo>()
 
-/**
- * @author Alexander Lobas
- */
-object PluginLogo {
+private var Default: PluginLogoIconProvider? = null
+private var lafListenerAdded = false
 
-  private var Default: PluginLogoIconProvider? = null
-  private var lafListenerAdded = false
-
-  private fun initLafListener() {
-    if (!lafListenerAdded) {
-      lafListenerAdded = true
-      if (GraphicsEnvironment.isHeadless()) {
-        return
-      }
-      val application = ApplicationManager.getApplication()
-      application.messageBus.connect().subscribe(LafManagerListener.TOPIC, LafManagerListener {
-        Default = null
-        HiDPIPluginLogoIcon.clearCache()
-      })
-      UIThemeProvider.EP_NAME.addChangeListener({
-                                                  Default = null
-                                                  HiDPIPluginLogoIcon.clearCache()
-                                                }, application)
+private fun initLafListener() {
+  if (!lafListenerAdded) {
+    lafListenerAdded = true
+    if (GraphicsEnvironment.isHeadless()) {
+      return
     }
+    val application = ApplicationManager.getApplication()
+    application.messageBus.connect().subscribe(LafManagerListener.TOPIC, LafManagerListener {
+      Default = null
+      HiDPIPluginLogoIcon.clearCache()
+    })
+    UIThemeProvider.EP_NAME.addChangeListener({
+                                                Default = null
+                                                HiDPIPluginLogoIcon.clearCache()
+                                              }, application)
   }
+}
 
+private fun getIcon(descriptor: IdeaPluginDescriptor): PluginLogoIconProvider {
+  val icons = getOrLoadIcon(descriptor)
+  return if (icons == null) PluginLogo.getDefault() else if (JBColor.isBright()) icons.first!! else icons.second!!
+}
+
+object PluginLogo {
   @JvmStatic
   fun getIcon(descriptor: IdeaPluginDescriptor, big: Boolean, error: Boolean, disabled: Boolean): Icon {
     initLafListener()
     return getIcon(descriptor).getIcon(big, error, disabled)
-  }
-
-  private fun getIcon(descriptor: IdeaPluginDescriptor): PluginLogoIconProvider {
-    val icons = getOrLoadIcon(descriptor)
-    return if (icons == null) getDefault() else if (JBColor.isBright()) icons.first!! else icons.second!!
   }
 
   @JvmStatic
@@ -102,7 +98,6 @@ object PluginLogo {
     service<PluginLogoLoader>().endBatchMode()
   }
 
-  @JvmStatic
   internal fun getDefault(): PluginLogoIconProvider {
     if (Default == null) {
       Default = HiDPIPluginLogoIcon(AllIcons.Plugins.PluginLogo,
@@ -111,15 +106,6 @@ object PluginLogo {
                                     (AllIcons.Plugins.PluginLogoDisabled as CachedImageIcon).scale(PLUGIN_ICON_SIZE_SCALE))
     }
     return Default!!
-  }
-
-  @JvmStatic
-  fun reloadIcon(icon: Icon, width: Int, height: Int): Icon {
-    if (icon is CachedImageIcon) {
-      assert(width == height)
-      return icon.scale(width.toFloat() / icon.getIconWidth())
-    }
-    return icon
   }
 
   @JvmStatic
@@ -137,16 +123,23 @@ object PluginLogo {
     return null
   }
 
-  @JvmStatic
-  fun getIconFileName(light: Boolean): String = PluginManagerCore.META_INF + if (light) PLUGIN_ICON else PLUGIN_ICON_DARK
-
   fun height(): Int = PLUGIN_ICON_SIZE
 
   fun width(): Int = PLUGIN_ICON_SIZE
 }
 
+internal fun reloadPluginIcon(icon: Icon, width: Int, height: Int): Icon {
+  if (icon is CachedImageIcon) {
+    assert(width == height)
+    return icon.scale(width.toFloat() / icon.getIconWidth())
+  }
+  return icon
+}
+
+internal fun getPluginIconFileName(light: Boolean): String = PluginManagerCore.META_INF + if (light) PLUGIN_ICON else PLUGIN_ICON_DARK
+
 private fun tryLoadIcon(zipFile: com.intellij.util.lang.ZipFile, light: Boolean): PluginLogoIconProvider? {
-  val data = zipFile.getData(PluginLogo.getIconFileName(light))
+  val data = zipFile.getData(getPluginIconFileName(light))
   return if (data == null) null else loadFileIcon(data)
 }
 
@@ -339,7 +332,7 @@ private fun putMissingIcon(idPlugin: String) {
 }
 
 private fun tryLoadIcon(dirFile: Path, light: Boolean): PluginLogoIconProvider? {
-  return tryLoadIcon(dirFile.resolve(PluginLogo.getIconFileName(light)))
+  return tryLoadIcon(dirFile.resolve(getPluginIconFileName(light)))
 }
 
 private fun tryLoadIcon(iconFile: Path): PluginLogoIconProvider? {

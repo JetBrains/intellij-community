@@ -6,7 +6,7 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.WhatsNewAction
 import com.intellij.ide.nls.NlsMessages
-import com.intellij.ide.plugins.newui.PluginLogo
+import com.intellij.ide.plugins.newui.reloadPluginIcon
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -117,7 +117,7 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
         group(indent = false) {
           customizeSpacingConfiguration(EmptySpacingConfiguration()) {
             row {
-              icon(PluginLogo.reloadIcon(AllIcons.Nodes.Toolbox, 40, 40))
+              icon(reloadPluginIcon(AllIcons.Nodes.Toolbox, 40, 40))
                 .align(AlignY.TOP)
                 .customize(customGaps = UnscaledGaps(right = 10))
               panel {

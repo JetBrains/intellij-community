@@ -115,7 +115,7 @@ public final class PluginLogoApi {
 
   private @Nullable Icon tryLoadIcon(@NotNull Path dirFile, boolean light, int width, int height) {
     try {
-      Path iconFile = dirFile.resolve(PluginLogo.getIconFileName(light));
+      Path iconFile = dirFile.resolve(PluginLogoKt.getPluginIconFileName(light));
       return Files.size(iconFile) > 0 ? loadFileIcon(PluginLogo.toURL(iconFile), Files.newInputStream(iconFile), width, height) : null;
     }
     catch (NoSuchFileException ignore) {
@@ -130,7 +130,7 @@ public final class PluginLogoApi {
   }
 
   private static @Nullable Icon tryLoadIcon(@NotNull ZipFile zipFile, boolean light, int width, int height) throws IOException {
-    ZipEntry iconEntry = zipFile.getEntry(PluginLogo.getIconFileName(light));
+    ZipEntry iconEntry = zipFile.getEntry(PluginLogoKt.getPluginIconFileName(light));
     return iconEntry == null ? null : loadFileIcon(PluginLogo.toURL(zipFile), zipFile.getInputStream(iconEntry), width, height);
   }
 
@@ -139,6 +139,6 @@ public final class PluginLogoApi {
   }
 
   private static @NotNull Icon getDefaultIcon(int width, int height) {
-    return PluginLogo.reloadIcon(AllIcons.Plugins.PluginLogo, width, height);
+    return PluginLogoKt.reloadPluginIcon(AllIcons.Plugins.PluginLogo, width, height);
   }
 }
