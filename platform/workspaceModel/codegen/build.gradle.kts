@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "com.jetbrains.intellij.platform"
-version = "0.0.4"
+version = "0.0.1"
 
 repositories {
   mavenCentral()
@@ -22,7 +22,7 @@ repositories {
 publishing {
   repositories {
     maven {
-      url = uri("https://packages.jetbrains.team/maven/p/ide-accessibility-assistant/codegen-test")
+      url = uri(System.getProperty("intellij.dependencies.repo.url"))
       credentials {
         username = System.getProperty("intellij.workspace.codegen.repository.user")
         password = System.getProperty("intellij.workspace.codegen.repository.password")
