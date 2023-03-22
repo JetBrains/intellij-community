@@ -33,6 +33,29 @@ class TerminalCaretUpHandler(private val originalHandler: EditorActionHandler) :
   }
 }
 
+class TerminalCaretDownHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
+  override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
+    val promptController = editor.getUserData(TerminalPromptPanel.KEY)
+    if (promptController != null) {
+      val lookup = LookupManager.getActiveLookup(editor) as? LookupImpl
+      if (lookup != null && lookup.isAvailableToUser
+          && lookup.getUserData(CommandHistoryPresenter.IS_COMMAND_HISTORY_LOOKUP_KEY) == true) {
+        if (lookup.selectedIndex == lookup.list.model.size - 1) {
+          promptController.onCommandHistoryClosed()
+          lookup.hideLookup(true)
+          return
+        }
+      }
+    }
+    originalHandler.execute(editor, caret, dataContext)
+  }
+
+  override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
+    return editor.getUserData(TerminalPromptPanel.KEY) != null || originalHandler.isEnabled(editor, caret, dataContext)
+  }
+}
+
+
 class TerminalEscapeHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
   override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
     val promptPanel = editor.getUserData(TerminalPromptPanel.KEY)
