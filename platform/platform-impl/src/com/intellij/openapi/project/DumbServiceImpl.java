@@ -74,8 +74,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     @Override
     public boolean beforeFirstTask() {
       // if a queue has already been emptied by modal dumb progress, DumbServiceGuiExecutor will not invoke processing on empty queue
-      LOG.assertTrue(myState.get() == State.SCHEDULED_OR_RUNNING_TASKS,
-                     "State should be SCHEDULED_OR_RUNNING_TASKS, but was " + myState.get());
+      LOG.assertTrue(myState.get() == State.DUMB,
+                     "State should be DUMB, but was " + myState.get());
       return true;
     }
 
@@ -123,8 +123,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     myBalloon = new DumbServiceBalloon(project, this);
     myAlternativeResolveTracker = new DumbServiceAlternativeResolveTracker();
     // any project starts in dumb mode (except default project which is always smart)
-    // we assume that queueStartupActivitiesRequiredForSmartMode will be invoked to advance SCHEDULED_OR_RUNNING_TASKS > SMART
-    myState = new AtomicReference<>(project.isDefault() ? State.SMART : State.SCHEDULED_OR_RUNNING_TASKS);
+    // we assume that queueStartupActivitiesRequiredForSmartMode will be invoked to advance DUMB > SMART
+    myState = new AtomicReference<>(project.isDefault() ? State.SMART : State.DUMB);
 
     // the first dumb mode should end in non-modal context
     myCancellableLaterEdtInvoker.setDumbStartModality(ModalityState.NON_MODAL);
@@ -137,7 +137,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       // This is the same side effects as produced by updateFinished (except updating icons). We apply them synchronously, because
       // invokeLaterAfterProjectInitialized(this::updateFinished) does not work well in synchronous environments (e.g. in unit tests): code
       // continues to execute without waiting for smart mode to start because of invoke*Later*. See, for example, DbSrcFileDialectTest
-      myState.compareAndSet(State.SCHEDULED_OR_RUNNING_TASKS, State.SMART);
+      myState.compareAndSet(State.DUMB, State.SMART);
       myCancellableLaterEdtInvoker.invokeLaterWithDumbStartModality(myPublisher::exitDumbMode);
     }
   }
@@ -199,14 +199,14 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       LOG.error("To avoid race conditions isDumb method should be used only under read action or in EDT thread.",
                            new IllegalStateException());
     }
-    return myState.get() != State.SMART;
+    return myState.get() == State.DUMB;
   }
 
   @TestOnly
   public void setDumb(boolean dumb) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (dumb) {
-      myState.set(State.SCHEDULED_OR_RUNNING_TASKS);
+      myState.set(State.DUMB);
       myPublisher.enteredDumbMode();
     }
     else {
@@ -283,8 +283,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private void enterDumbModeIfSmart(@NotNull ModalityState modality, @NotNull Throwable trace) {
     boolean wasSmart = !isDumb();
     boolean entered = WriteAction.compute(() -> {
-      State old = myState.getAndSet(State.SCHEDULED_OR_RUNNING_TASKS);
-      if (old == State.SCHEDULED_OR_RUNNING_TASKS) return false;
+      State old = myState.getAndSet(State.DUMB);
+      if (old == State.DUMB) return false;
       myDumbStart = trace;
       myCancellableLaterEdtInvoker.setDumbStartModality(modality);
       myModificationCount++;
@@ -302,7 +302,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   private boolean switchToSmartMode() {
-    if (!myState.compareAndSet(State.SCHEDULED_OR_RUNNING_TASKS, State.SMART)) {
+    if (!myState.compareAndSet(State.DUMB, State.SMART)) {
       return false;
     }
 
@@ -468,7 +468,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     LOG.assertTrue(myProject.isInitialized(), "Project should have been initialized");
 
-    while (myState.get() == State.SCHEDULED_OR_RUNNING_TASKS) {
+    while (myState.get() == State.DUMB) {
       boolean queueProcessedUnderModalProgress = processQueueUnderModalProgress();
       if (!queueProcessedUnderModalProgress) {
         // processQueueUnderModalProgress did nothing (i.e. processing is being done under non-modal indicator)
@@ -524,13 +524,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     return myDumbStart;
   }
 
-  private enum State {
-    /** Non-dumb mode. For all other states, {@link #isDumb()} returns {@code true}. */
-    SMART,
-
-    /** Dumb mode. */
-    SCHEDULED_OR_RUNNING_TASKS,
-  }
+  private enum State {SMART, DUMB}
 
   public static boolean isSynchronousTaskExecution() {
     Application application = ApplicationManager.getApplication();
