@@ -104,6 +104,7 @@ internal class ContentEntryBridge(internal val model: ModuleRootModelBridge,
   override fun addExcludeFolder(file: VirtualFile): ExcludeFolder = throwReadonly()
   override fun addExcludeFolder(url: String): ExcludeFolder = throwReadonly()
   override fun addExcludeFolder(url: String, source: ProjectModelExternalSource?): ExcludeFolder = throwReadonly()
+  override fun addExcludeFolder(url: String, isAutomaticallyImported: Boolean): ExcludeFolder = throwReadonly()
   override fun removeExcludeFolder(excludeFolder: ExcludeFolder) = throwReadonly()
   override fun removeExcludeFolder(url: String): Boolean = throwReadonly()
   override fun clearExcludeFolders() = throwReadonly()
