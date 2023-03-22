@@ -73,7 +73,7 @@ open class JBHiDPIScaledImage : BufferedImage {
    * @param height the height in user coordinate space
    * @param type the type
    */
-  constructor(image: Image, width: Double, height: Double, type: Int) : super(1, 1, type) // a dummy wrapper
+  protected constructor(image: Image, width: Double, height: Double, type: Int) : super(1, 1, type) // a dummy wrapper
   {
     delegate = image
     userWidth = width
@@ -112,8 +112,8 @@ open class JBHiDPIScaledImage : BufferedImage {
    */
   fun scale(scaleFactor: Double): JBHiDPIScaledImage {
     val img = delegate ?: this
-    val w = (scaleFactor * getRealWidth(null)).toInt()
-    val h = (scaleFactor * getRealHeight(null)).toInt()
+    val w = (scaleFactor * getRealWidth()).toInt()
+    val h = (scaleFactor * (delegate?.getHeight(null) ?: super.getHeight(null))).toInt()
     if (w <= 0 || h <= 0) return this
     val scaled: Image = Scalr.resize(ImageUtil.toBufferedImage(img), Scalr.Method.QUALITY, w, h)
     val newUserWidth = w / scale
@@ -185,7 +185,7 @@ open class JBHiDPIScaledImage : BufferedImage {
    * @return the width
    */
   override fun getWidth(observer: ImageObserver?): Int {
-    return if (delegate == null) getRealWidth(observer) else getUserWidth(observer)
+    return if (delegate == null) super.getWidth(observer) else userWidth.roundToInt()
   }
 
   /**
@@ -195,7 +195,7 @@ open class JBHiDPIScaledImage : BufferedImage {
    * @return the height
    */
   override fun getHeight(observer: ImageObserver?): Int {
-    return if (delegate == null) getRealHeight(observer) else getUserHeight(observer)
+    return if (delegate == null) super.getHeight(observer) else userHeight.roundToInt()
   }
 
   /**
@@ -221,21 +221,10 @@ open class JBHiDPIScaledImage : BufferedImage {
   /**
    * Returns the real width.
    *
-   * @param observer the image observer
    * @return the width
    */
-  fun getRealWidth(observer: ImageObserver?): Int {
-    return delegate?.getWidth(observer) ?: super.getWidth(observer)
-  }
-
-  /**
-   * Returns the real height.
-   *
-   * @param observer the image observer
-   * @return the height
-   */
-  private fun getRealHeight(observer: ImageObserver?): Int {
-    return delegate?.getHeight(observer) ?: super.getHeight(observer)
+  fun getRealWidth(): Int {
+    return delegate?.getWidth(null) ?: super.getWidth(null)
   }
 
   override fun createGraphics(): Graphics2D {

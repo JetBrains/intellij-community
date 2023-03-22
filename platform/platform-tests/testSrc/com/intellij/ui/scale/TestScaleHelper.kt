@@ -151,7 +151,7 @@ object TestScaleHelper {
         return renderSvg(inputStream = inputStream, scale = scale, path = path)
       }
       else {
-        return loadPng(stream = file.inputStream(), scale = scale)
+        return loadPng(stream = inputStream)
       }
     }
   }

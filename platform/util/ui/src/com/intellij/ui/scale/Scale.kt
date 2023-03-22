@@ -34,7 +34,6 @@ import java.util.function.DoubleFunction
  *
  * @see com.intellij.ui.JreHiDpiUtil.isJreHiDPIEnabled
  * @see com.intellij.util.ui.UIUtil.isJreHiDPI
- * @see com.intellij.ui.JreHiDpiUtil.isJreHiDPI
  * @see JBUIScale.isUsrHiDPI
  * @see com.intellij.util.ui.UIUtil.drawImage
  * @see com.intellij.util.ui.ImageUtil.createImage

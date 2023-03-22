@@ -20,6 +20,11 @@ class HiDPIImage : JBHiDPIScaledImage {
                                                                         height = height.toDouble(),
                                                                         type = type)
 
+  constructor(image: Image, width: Double, height: Double, type: Int) : super(image = image,
+                                                                        width = width,
+                                                                        height = height,
+                                                                        type = type)
+
   /**
    * Creates a scaled HiDPI-aware BufferedImage, targeting the graphics scale.
    *

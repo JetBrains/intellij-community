@@ -1,10 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
+import com.intellij.ui.icons.toRetinaAwareIcon
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.svg.loadSvg
-import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Color
@@ -78,7 +78,7 @@ open class SpinningProgressIcon : AnimatedIcon() {
     for ((index, _) in iconCache.withIndex()) {
       val svg = generateSvgIcon(index)
       val image = loadSvg(data = svg, scale = scale)
-      iconCache[index] = IconUtil.toRetinaAwareIcon(image as BufferedImage)
+      iconCache[index] = toRetinaAwareIcon(image as BufferedImage)
     }
 
     iconCacheKey = getCacheKey()

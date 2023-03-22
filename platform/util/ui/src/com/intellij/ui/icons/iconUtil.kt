@@ -17,7 +17,6 @@ import com.intellij.util.lang.ByteBufferCleaner
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBImageIcon
-import com.intellij.util.ui.StartupUiUtil
 import org.imgscalr.Scalr
 import org.jetbrains.annotations.ApiStatus.Internal
 import sun.awt.image.SunWritableRaster
@@ -109,7 +108,8 @@ internal fun convertImage(image: Image,
     result = ImageLoader.scaleImage(result, scale.toDouble())
   }
   result = filterImage(image = result, filters = filters)
-  if (StartupUiUtil.isJreHiDPI(scaleContext)) {
+  val sysScale = scaleContext.getScale(ScaleType.SYS_SCALE)
+  if (isHiDPIEnabledAndApplicable(sysScale.toFloat())) {
     // The {originalUserSize} can contain calculation inaccuracy. If we use it to derive the HiDPI image scale
     // in JBHiDPIScaledImage, the derived scale will also be inaccurate and this will cause distortions
     // when the image is painted on a scaled (hidpi) screen graphics, see
@@ -118,7 +118,7 @@ internal fun convertImage(image: Image,
     // To avoid that, we instead directly use the provided ScaleContext which contains correct ScaleContext.SYS_SCALE,
     // the image user space size will then be derived by JBHiDPIScaledImage (it is assumed the derived size is equal to
     // {originalUserSize} * DerivedScaleType.EFF_USR_SCALE, taking into account calculation accuracy).
-    return JBHiDPIScaledImage(image = result, sysScale = scaleContext.getScale(ScaleType.SYS_SCALE))
+    return JBHiDPIScaledImage(image = result, sysScale = sysScale)
   }
   else {
     return result
@@ -138,9 +138,9 @@ fun filterImage(image: Image, filters: List<ImageFilter>): Image {
 }
 
 @Internal
-fun loadPngFromClassResource(path: String, classLoader: ClassLoader?, scale: Float, resourceClass: Class<*>? = null): BufferedImage? {
+fun loadPngFromClassResource(path: String, classLoader: ClassLoader?, resourceClass: Class<*>? = null): BufferedImage? {
   val data = getResourceData(path = path, resourceClass = resourceClass, classLoader = classLoader) ?: return null
-  return loadPng(stream = ByteArrayInputStream(data), scale = scale, originalUserSize = null)
+  return loadPng(stream = ByteArrayInputStream(data))
 }
 
 @Internal
@@ -170,7 +170,7 @@ internal fun getResourceData(path: String, resourceClass: Class<*>?, classLoader
 }
 
 @Internal
-fun loadPng(stream: InputStream, scale: Float, originalUserSize: ImageLoader.Dimension2DDouble? = null): BufferedImage {
+fun loadPng(stream: InputStream): BufferedImage {
   val start = StartUpMeasurer.getCurrentTimeIfEnabled()
   var image: BufferedImage
   val reader = ImageIO.getImageReadersByFormatName("png").next()
@@ -183,7 +183,6 @@ fun loadPng(stream: InputStream, scale: Float, originalUserSize: ImageLoader.Dim
   finally {
     reader.dispose()
   }
-  originalUserSize?.setSize((image.width / scale).toDouble(), (image.height / scale).toDouble())
   if (start != -1L) {
     IconLoadMeasurer.pngDecoding.end(start)
   }
@@ -322,7 +321,7 @@ fun loadImageForStartUp(requestedPath: String, scale: Float, classLoader: ClassL
         return renderSvg(data = data, scale = descriptor.scale)
       }
       else {
-        val image = loadPng(stream = ByteArrayInputStream(data), scale = descriptor.scale, originalUserSize = null)
+        val image = loadPng(stream = ByteArrayInputStream(data))
         // compensate the image original scale
         val effectiveScale = if (descriptor.scale > 1) scale / descriptor.scale else scale
         return doScaleImage(image, effectiveScale.toDouble()) as BufferedImage
@@ -358,7 +357,6 @@ internal fun doScaleImage(image: Image, scale: Double): Image {
 fun loadImageFromStream(stream: InputStream,
                         path: String?,
                         scale: Float,
-                        originalUserSize: ImageLoader.Dimension2DDouble? = null,
                         isDark: Boolean,
                         useSvg: Boolean): Image {
   stream.use {
@@ -367,7 +365,7 @@ fun loadImageFromStream(stream: InputStream,
       return loadSvg(path = path, stream = stream, scale = scale, compoundCacheKey = compoundCacheKey, colorPatcherProvider = null)
     }
     else {
-      return loadPng(stream = stream, scale = scale, originalUserSize = originalUserSize)
+      return loadPng(stream = stream)
     }
   }
 }
@@ -390,4 +388,9 @@ fun overrideIconScale(icon: Icon, scale: Scale?): Icon {
     icon.scaleContext.overrideScale(scale!!)
   }
   return icon
+}
+
+@Internal
+fun toRetinaAwareIcon(image: BufferedImage, sysScale: Float = JBUIScale.sysScale()): Icon {
+  return JBImageIcon(if (isHiDPIEnabledAndApplicable(sysScale)) JBHiDPIScaledImage(image, sysScale.toDouble()) else image)
 }

@@ -77,7 +77,7 @@ object StartupUiUtil {
    */
   @JvmStatic
   val isJreHiDPI: Boolean
-    get() = JreHiDpiUtil.isJreHiDPI(JBUIScale.sysScale())
+    get() = isHiDPIEnabledAndApplicable(JBUIScale.sysScale())
 
   /**
    * Returns whether the JRE-managed HiDPI mode is enabled and the provided component is tied to a HiDPI device.

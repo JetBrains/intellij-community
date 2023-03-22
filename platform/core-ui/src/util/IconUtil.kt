@@ -22,11 +22,9 @@ import com.intellij.openapi.vfs.WritingAccessProvider
 import com.intellij.ui.*
 import com.intellij.ui.RowIcon
 import com.intellij.ui.icons.*
-import com.intellij.ui.paint.alignToInt
 import com.intellij.ui.scale.*
 import com.intellij.ui.scale.JBUIScale.getFontScale
 import com.intellij.ui.scale.JBUIScale.scale
-import com.intellij.ui.scale.JBUIScale.sysScale
 import com.intellij.util.IconUtil.ICON_FLAG_IGNORE_MASK
 import com.intellij.util.SVGLoader.getStrokePatcher
 import com.intellij.util.SVGLoader.paintIconWithSelection
@@ -557,39 +555,6 @@ object IconUtil {
   @JvmStatic
   fun rowIcon(left: Icon?, right: Icon?): Icon? {
     return if (left != null && right != null) RowIcon(left, right) else left ?: right
-  }
-
-  @ApiStatus.Internal
-  @JvmStatic
-  fun toRetinaAwareIcon(image: BufferedImage): Icon = toRetinaAwareIcon(image, sysScale())
-
-  @ApiStatus.Internal
-  fun toRetinaAwareIcon(image: BufferedImage, sysScale: Float): Icon {
-    return object : Icon {
-      override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
-        if (isJreHiDPI) {
-          val newG = g.create(x, y, image.width, image.height) as Graphics2D
-          alignToInt(newG)
-          newG.scale(1.0 / sysScale, 1.0 / sysScale)
-          newG.drawImage(image, 0, 0, null)
-          newG.dispose()
-        }
-        else {
-          g.drawImage(image, x, y, null)
-        }
-      }
-
-      override fun getIconWidth(): Int = if (isJreHiDPI) (image.width / sysScale).toInt() else image.width
-
-      override fun getIconHeight(): Int = if (isJreHiDPI) (image.height / sysScale).toInt() else image.height
-
-      private val isJreHiDPI: Boolean
-        get() = JreHiDpiUtil.isJreHiDPI(sysScale)
-
-      override fun toString(): String {
-        return "IconUtil.toRetinaAwareIcon for $image"
-      }
-    }
   }
 
   fun toStrokeIcon(original: Icon, resultColor: Color): Icon {

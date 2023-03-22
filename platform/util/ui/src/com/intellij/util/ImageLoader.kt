@@ -83,17 +83,18 @@ object ImageLoader {
 
   @JvmStatic
   fun loadFromStream(inputStream: InputStream): Image? {
-    // for backward compatibility assume the image is hidpi-aware (includes default SYS_SCALE)
-    val scaleContext = ScaleContext.create()
     try {
       inputStream.use {
-        val originalUserSize = Dimension2DDouble(0.0, 0.0)
+        // for backward compatibility assume the image is hidpi-aware (includes default SYS_SCALE)
+        val scaleContext = ScaleContext.create()
         val scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
-        var image: Image? = loadPng(inputStream, scale, originalUserSize)
+        val image = loadPng(inputStream)
         if (StartupUiUtil.isJreHiDPI(scaleContext)) {
           val userScale = scaleContext.getScale(DerivedScaleType.EFF_USR_SCALE)
-          image = JBHiDPIScaledImage(image!!, originalUserSize.width * userScale, originalUserSize.height * userScale,
-                                     BufferedImage.TYPE_INT_ARGB)
+          return HiDPIImage(image = image,
+                            width = (image.width / scale) * userScale,
+                            height = (image.height / scale) * userScale,
+                            type = BufferedImage.TYPE_INT_ARGB)
         }
         return image
       }

@@ -8,17 +8,22 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.IconDeferrer
 import com.intellij.ui.JBColor
+import com.intellij.ui.icons.loadPng
+import com.intellij.ui.icons.toRetinaAwareIcon
 import com.intellij.ui.paint.withTxAndClipAligned
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.svg.loadWithSizes
 import com.intellij.util.IconUtil
-import com.intellij.util.ImageLoader
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.basicAttributesIfExists
 import com.intellij.util.ui.*
 import org.imgscalr.Scalr
 import org.jetbrains.annotations.SystemIndependent
-import java.awt.*
+import java.awt.Color
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.image.BufferedImage
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
@@ -203,7 +208,7 @@ private fun loadIconFile(file: Path): IconData {
       return SvgIconData(file = file, userScaledSize = userScaledProjectIconSize())
     }
     else {
-      return PngIconData(ImageLoader.loadFromUrl(file.toUri().toURL()), userScaledProjectIconSize())
+      return PngIconData(Files.newInputStream(file).use { loadPng(it) }, userScaledProjectIconSize())
     }
   }
   catch (e: Exception) {
@@ -214,8 +219,6 @@ private fun loadIconFile(file: Path): IconData {
 
 private sealed class IconData(protected val userScaledSize: Int) {
   abstract fun getScaledIcon(sysScale: Float): Icon
-
-  protected fun emptyIcon(): Icon = EmptyIcon.create(userScaledSize)
 }
 
 private class SvgIconData(private val file: Path, userScaledSize: Int) : IconData(userScaledSize) {
@@ -224,16 +227,10 @@ private class SvgIconData(private val file: Path, userScaledSize: Int) : IconDat
   }
 }
 
-private class PngIconData(private val originalImage: Image?, userScaledSize: Int) : IconData(userScaledSize) {
+private class PngIconData(private val sourceImage: BufferedImage, userScaledSize: Int) : IconData(userScaledSize) {
   override fun getScaledIcon(sysScale: Float): Icon {
-    if (originalImage == null) {
-      return emptyIcon()
-    }
     val targetSize = (userScaledSize * sysScale).toInt()
-    return IconUtil.toRetinaAwareIcon(
-      image = Scalr.resize(ImageUtil.toBufferedImage(originalImage), Scalr.Method.ULTRA_QUALITY, targetSize),
-      sysScale = sysScale
-    )
+    return toRetinaAwareIcon(image = Scalr.resize(sourceImage, Scalr.Method.ULTRA_QUALITY, targetSize), sysScale = sysScale)
   }
 }
 

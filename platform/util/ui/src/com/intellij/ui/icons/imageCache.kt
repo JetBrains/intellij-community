@@ -254,7 +254,7 @@ private fun doLoadByDescriptor(path: String,
                                     deprecatedColorPatcher = deprecatedColorPatcher) { stream.readAllBytes() }
       }
       else {
-        loadPng(stream = stream, scale = descriptor.scale, originalUserSize = null)
+        loadPng(stream = stream)
       }
     }
     if (start != -1L) {
@@ -272,10 +272,7 @@ private fun doLoadByDescriptor(path: String,
       }
     }
     else {
-      loadPngFromClassResource(path = path,
-                               resourceClass = resourceClass,
-                               classLoader = classLoader,
-                               scale = descriptor.scale)
+      loadPngFromClassResource(path = path, classLoader = classLoader, resourceClass = resourceClass)
     }
     if (start != -1L) {
       IconLoadMeasurer.loadFromResources.end(start)

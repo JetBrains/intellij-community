@@ -266,7 +266,7 @@ public final class ImageUtil {
       return null;
     }
     if (StartupUiUtil.isJreHiDPI(context)) {
-      return new JBHiDPIScaledImage(image, userWidth, userHeight, BufferedImage.TYPE_INT_ARGB);
+      return new HiDPIImage(image, userWidth, userHeight, BufferedImage.TYPE_INT_ARGB);
     }
     return image;
   }

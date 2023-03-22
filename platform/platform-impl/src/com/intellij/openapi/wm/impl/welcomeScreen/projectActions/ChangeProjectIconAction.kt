@@ -30,7 +30,7 @@ import java.awt.Dimension
 import java.awt.Graphics
 import java.io.File
 import java.nio.file.Files
-import java.nio.file.Paths
+import java.nio.file.Path
 import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.io.path.Path
@@ -82,8 +82,8 @@ internal class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase()
         FileUtil.delete(ui.pathToIcon())
         RecentProjectIconHelper.refreshProjectIcon(projectPath)
       }
-      // Actually we can try to drop the needed icon,
-      // but it is a very rare action and this whole cache drop will not have any performance impact
+      // Actually, we can try to drop the needed icon,
+      // but it is a very rare action and this whole cache drop will not have any performance impact.
       // Moreover, VCS changes will drop the cache also.
       IconDeferrer.getInstance().clearCache()
     }
@@ -103,7 +103,7 @@ private class ChangeProjectIcon(private val ui: ProjectIconUI) : AnAction() {
       }, null, null).choose(null)
     if (files.size == 1) {
       try {
-        val newIcon = createIcon(Paths.get(files[0].path))
+        val newIcon = createIcon(Path.of(files[0].path))
         ui.iconLabel.icon = newIcon
         ui.pathToIcon = files[0]
         ui.iconRemoved = false

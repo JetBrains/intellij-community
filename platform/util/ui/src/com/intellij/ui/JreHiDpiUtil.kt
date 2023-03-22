@@ -19,7 +19,7 @@ object JreHiDpiUtil {
    * (Analogue of [com.intellij.util.ui.UIUtil.isRetina] on macOS)
    */
   @JvmStatic
-  fun isJreHiDPI(gc: GraphicsConfiguration?): Boolean = isJreHiDPI(sysScale(gc))
+  fun isJreHiDPI(gc: GraphicsConfiguration?): Boolean = isHiDPIEnabledAndApplicable(sysScale(gc))
 
   /**
    * Returns whether the JRE-managed HiDPI mode is enabled and the specified scaling level corresponds to a HiDPI device.

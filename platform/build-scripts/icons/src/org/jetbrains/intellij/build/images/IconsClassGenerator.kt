@@ -470,7 +470,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
         javaDoc = "/** ${size.width.toInt()}x${size.height.toInt()} */ "
       }
       else {
-        val loadedImage = Files.newInputStream(file).use { loadPng(it, scale = 1f) }
+        val loadedImage = Files.newInputStream(file).use { loadPng(it) }
         key = 0
         javaDoc = "/** ${loadedImage.width}x${loadedImage.height} */ "
       }

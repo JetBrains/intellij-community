@@ -30,7 +30,7 @@ public final class RetinaImage {
     Component component = RetinaImage.component.get();
     int w = image.getWidth(component);
     int h = image.getHeight(component);
-    return new JBHiDPIScaledImage(image, w / (double)2, h / (double)2, BufferedImage.TYPE_INT_ARGB);
+    return new HiDPIImage(image, w / (double)2, h / (double)2, BufferedImage.TYPE_INT_ARGB);
   }
 
   /**
@@ -54,7 +54,7 @@ public final class RetinaImage {
   public static @NotNull Image createFrom(@NotNull Image image, double scale, ImageObserver observer) {
     int w = image.getWidth(observer);
     int h = image.getHeight(observer);
-    return new JBHiDPIScaledImage(image, w / scale, h / scale, BufferedImage.TYPE_INT_ARGB);
+    return new HiDPIImage(image, w / scale, h / scale, BufferedImage.TYPE_INT_ARGB);
   }
 
   public static @NotNull BufferedImage create(GraphicsConfiguration gc, double width, double height, int type, @NotNull RoundingMode rm) {

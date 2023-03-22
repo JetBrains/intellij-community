@@ -209,7 +209,7 @@ private fun loadRasterized(path: String,
     )
   }
   else {
-    loadPngFromClassResource(path = effectivePath, classLoader = classLoader, scale = nonSvgScale)
+    loadPngFromClassResource(path = effectivePath, classLoader = classLoader)
   }
 
   return convertImage(image = image ?: return null,
@@ -255,7 +255,7 @@ private fun loadPatched(name: String,
                                colorPatcherProvider = parameters.colorPatcher)
     }
     else {
-      loadPngFromClassResource(path = descriptor.name, classLoader = classLoader, scale = descriptor.scale)
+      loadPngFromClassResource(path = descriptor.name, classLoader = classLoader)
     }
 
     if (image != null) {
