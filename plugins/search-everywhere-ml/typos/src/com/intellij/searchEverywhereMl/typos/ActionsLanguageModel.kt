@@ -18,7 +18,9 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.spellchecker.dictionary.Dictionary
 import com.intellij.spellchecker.dictionary.RuntimeDictionaryProvider
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
 import kotlin.coroutines.EmptyCoroutineContext
 
 @Service(Service.Level.APP)
