@@ -90,7 +90,7 @@ infix fun ComponentPredicate.or(other: ComponentPredicate): ComponentPredicate {
   return OrPredicate(this, other)
 }
 
-fun ComponentPredicate.not() : ComponentPredicate {
+operator fun ComponentPredicate.not() : ComponentPredicate {
   return NotPredicate(this)
 }
 
