@@ -146,9 +146,9 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
     private const val NEW_API_DIR = "REPLACE_ME"
     private const val OLD_API_DIR = "REPLACE_ME"
 
-    private const val PREVIEW_JDK_HOME = "/home/me/.jdks/openjdk-18"
-    private const val JDK_HOME = "/home/me/.jdks/openjdk-18"
-    private val LANGUAGE_LEVEL = LanguageLevel.JDK_19
-    private const val SINCE_VERSION = "19"
+    private const val PREVIEW_JDK_HOME = "/home/me/.jdks/openjdk-20"
+    private const val JDK_HOME = "/home/me/.jdks/openjdk-20"
+    private val LANGUAGE_LEVEL = LanguageLevel.JDK_20
+    private const val SINCE_VERSION = "20"
   }
 }
