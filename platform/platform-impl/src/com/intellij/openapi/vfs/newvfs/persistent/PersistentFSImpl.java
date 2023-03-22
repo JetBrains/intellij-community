@@ -474,7 +474,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         return info;
       }
     }
-    //FIXME RC: above check is 'strict' only if nameId is unique identifier for a name. We're going to change that, hence
+    //FIXME RC: above check is 'strict' only if nameId is a unique identifier for a name. We're going to change that, hence
     //          the code below should be run not only for caseSensitive systems, but for all them, as 'slow path'
     // for case-sensitive systems, the above check is exhaustive in consistent state of VFS
     if (!parent.isCaseSensitive()) {
@@ -986,7 +986,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       if (liPrev == -1) break;
       String parentDir = path.substring(0, liPrev);
       if (files.containsKey(parentDir)) {
-        // conflicting event found for ancestor, stop
+        // conflicting event found for the ancestor, stop
         return true;
       }
       if (!middleDirs.add(parentDir)) break;  // all parents are already stored; stop
@@ -1050,7 +1050,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                               @NotNull List<? super Runnable> outApplyActions,
                               @NotNull Map<VirtualDirectoryImpl, Object> created) {
     if (!created.isEmpty()) {
-      // since the VCreateEvent.isValid() is extremely expensive, combine all creation events for the directory together
+      // since the VCreateEvent.isValid() is extremely expensive, combine all creation events for the directory
       // and use VirtualDirectoryImpl.validateChildrenToCreate() optimised for bulk validation
       boolean hasValidEvents = false;
       for (Map.Entry<VirtualDirectoryImpl, Object> entry : created.entrySet()) {
@@ -1259,7 +1259,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
   }
 
-  private void applyCreateEventsInDirectory(VirtualDirectoryImpl parent, Collection<VFileCreateEvent> createEvents) {
+  private void applyCreateEventsInDirectory(@NotNull VirtualDirectoryImpl parent, @NotNull Collection<? extends VFileCreateEvent> createEvents) {
     int parentId = getFileId(parent);
     NewVirtualFile vf = findFileById(parentId);
     if (!(vf instanceof VirtualDirectoryImpl)) return;
@@ -1285,7 +1285,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     saveScannedChildrenRecursively(createEvents, fs, parent.isCaseSensitive());
   }
 
-  private static void saveScannedChildrenRecursively(Collection<VFileCreateEvent> createEvents, NewVirtualFileSystem fs, boolean isCaseSensitive) {
+  private static void saveScannedChildrenRecursively(@NotNull Collection<? extends VFileCreateEvent> createEvents,
+                                                     @NotNull NewVirtualFileSystem fs,
+                                                     boolean isCaseSensitive) {
     for (VFileCreateEvent createEvent : createEvents) {
       ChildInfo[] children = createEvent.getChildren();
       if (children == null || !createEvent.isDirectory()) continue;
@@ -1539,8 +1541,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return "PersistentFS";
   }
 
-  private void executeCreateChild(VirtualFile parent,
-                                  String name,
+  private void executeCreateChild(@NotNull VirtualFile parent,
+                                  @NotNull String name,
                                   @Nullable FileAttributes attributes,
                                   @Nullable String symlinkTarget,
                                   boolean isEmptyDirectory) {
@@ -1572,12 +1574,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     incStructuralModificationCount();
   }
 
-  private static ChildInfo makeChildRecord(VirtualFile parentFile,
+  @NotNull
+  private static ChildInfo makeChildRecord(@NotNull VirtualFile parentFile,
                                            int parentId,
-                                           CharSequence name,
-                                           Pair<@NotNull FileAttributes, String> childData,
-                                           NewVirtualFileSystem fs,
-                                           ChildInfo @Nullable [] children) {
+                                           @NotNull CharSequence name,
+                                           @NotNull Pair<@NotNull FileAttributes, String> childData,
+                                           @NotNull NewVirtualFileSystem fs,
+                                           @NotNull ChildInfo @Nullable [] children) {
     FileAttributes attributes = childData.first;
 
     int childId = FSRecords.createRecord();
