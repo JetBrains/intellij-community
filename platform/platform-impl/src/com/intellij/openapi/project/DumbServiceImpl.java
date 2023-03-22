@@ -1,16 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
-import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.progress.ProgressManager;
@@ -26,7 +23,6 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.serviceContainer.NonInjectable;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.IndexingBundle;
@@ -35,9 +31,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -52,7 +45,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   private static final Logger LOG = Logger.getInstance(DumbServiceImpl.class);
   private final AtomicReference<State> myState;
-  private volatile Throwable myDumbEnterTrace;
   private volatile Throwable myDumbStart;
   private final DumbModeListener myPublisher;
   private long myModificationCount;
@@ -294,7 +286,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       State old = myState.getAndSet(State.SCHEDULED_OR_RUNNING_TASKS);
       if (old == State.SCHEDULED_OR_RUNNING_TASKS) return false;
       myDumbStart = trace;
-      myDumbEnterTrace = new Throwable();
       myCancellableLaterEdtInvoker.setDumbStartModality(modality);
       myModificationCount++;
       return true;
@@ -315,7 +306,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       return false;
     }
 
-    myDumbEnterTrace = null;
     myDumbStart = null;
     myModificationCount++;
     myCancellableLaterEdtInvoker.setDumbStartModality(null);
@@ -477,23 +467,22 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   public void completeJustSubmittedTasks() {
     ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     LOG.assertTrue(myProject.isInitialized(), "Project should have been initialized");
-    if (myState.get() != State.SCHEDULED_OR_RUNNING_TASKS) {
-      if (!isSynchronousTaskExecution()) {
-        // DumbServiceSyncTaskQueue does not respect threading policies: it can add tasks outside of EDT
-        // and process them without switching to dumb mode. This behavior has to be fixed, but for now just ignore
-        // it, because it has been working like this for years already.
-        // Reproducing in test: com.jetbrains.cidr.lang.refactoring.OCRenameMoveFileTest
-        LOG.assertTrue(myTaskQueue.isEmpty(), "Task queue is not empty. Current state is " + myState.get());
+
+    while (myState.get() == State.SCHEDULED_OR_RUNNING_TASKS) {
+      boolean queueProcessedUnderModalProgress = processQueueUnderModalProgress();
+      if (!queueProcessedUnderModalProgress) {
+        // processQueueUnderModalProgress did nothing (i.e. processing is being done under non-modal indicator)
+        break;
       }
-      return;
     }
 
-    boolean queueProcessedUnderModalProgress;
-    do {
-      assertState(State.SCHEDULED_OR_RUNNING_TASKS);
-      queueProcessedUnderModalProgress = processQueueUnderModalProgress();
-      // until we reach smart mode, or processQueueUnderModalProgress did nothing (i.e. processing is being done under non-modal indicator)
-    } while (isDumb() && queueProcessedUnderModalProgress);
+    if (myState.get() == State.SMART) { // we can reach this statement in dumb mode if queue is processed in background
+      // DumbServiceSyncTaskQueue does not respect threading policies: it can add tasks outside of EDT
+      // and process them without switching to dumb mode. This behavior has to be fixed, but for now just ignore
+      // it, because it has been working like this for years already.
+      // Reproducing in test: com.jetbrains.cidr.lang.refactoring.OCRenameMoveFileTest
+      LOG.assertTrue(isSynchronousTaskExecution() || myTaskQueue.isEmpty(), "Task queue is not empty. Current state is " + myState.get());
+    }
   }
 
   private boolean processQueueUnderModalProgress() {
@@ -513,20 +502,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         }
       }
     });
-  }
-
-  private void assertState(@NotNull State @NotNull ... expected) {
-    State state = myState.get();
-    if (!ArrayUtil.contains(state, expected)) {
-      List<Attachment> attachments = new ArrayList<>();
-      if (myDumbEnterTrace != null) {
-        attachments.add(new Attachment("indexingStart", myDumbEnterTrace));
-      }
-      attachments.add(new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
-      throw new RuntimeExceptionWithAttachments("Internal error, please include thread dump attachment. " +
-                                                "Expected " + Arrays.asList(expected) + ", but was " + state.toString(),
-                                                attachments.toArray(Attachment.EMPTY_ARRAY));
-    }
   }
 
   @Override
