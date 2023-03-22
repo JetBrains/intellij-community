@@ -171,7 +171,8 @@ public final class PatchApplier {
         result = ApplyPatchStatus.and(result, patchApplier.nonWriteActionPreCheck());
       }
 
-      final Label beforeLabel = LocalHistory.getInstance().putSystemLabel(project, VcsBundle.message("patch.apply.before.patch.label.text"));
+      final Label beforeLabel = LocalHistory.getInstance().putSystemLabel(project,
+                                                                          VcsBundle.message("patch.apply.before.patch.label.text"));
       final TriggerAdditionOrDeletion trigger = new TriggerAdditionOrDeletion(project);
 
       final Ref<ApplyPatchStatus> refStatus = new Ref<>(result);
@@ -265,7 +266,8 @@ public final class PatchApplier {
       }
     };
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(rollback, VcsBundle.message("patch.apply.rollback.progress.title"), true, project);
+      ProgressManager.getInstance()
+        .runProcessWithProgressSynchronously(rollback, VcsBundle.message("patch.apply.rollback.progress.title"), true, project);
     }
     else {
       progress(VcsBundle.message("patch.apply.rollback.progress"));
@@ -360,8 +362,8 @@ public final class PatchApplier {
   }
 
   private @Nullable ApplyPatchStatus actualApply(@NotNull List<PatchAndFile> textPatches,
-                                                @NotNull List<PatchAndFile> binaryPatches,
-                                                @Nullable CommitContext commitContext) {
+                                                 @NotNull List<PatchAndFile> binaryPatches,
+                                                 @Nullable CommitContext commitContext) {
     ApplyPatchContext context = new ApplyPatchContext(myBaseDirectory, 0, true, true);
     try {
       ApplyPatchStatus status = applyList(textPatches, context, null, commitContext);
@@ -374,9 +376,9 @@ public final class PatchApplier {
   }
 
   private @Nullable ApplyPatchStatus applyList(@NotNull List<PatchAndFile> patches,
-                                              @NotNull ApplyPatchContext context,
-                                              @Nullable ApplyPatchStatus status,
-                                              @Nullable CommitContext commitContext) throws IOException {
+                                               @NotNull ApplyPatchContext context,
+                                               @Nullable ApplyPatchStatus status,
+                                               @Nullable CommitContext commitContext) throws IOException {
     for (PatchAndFile patch : patches) {
       ApplyFilePatchBase<?> applyFilePatch = patch.getApplyPatch();
       ApplyPatchStatus patchStatus = ApplyPatchAction.applyContent(myProject, applyFilePatch, context, patch.getFile(), commitContext,
@@ -418,10 +420,12 @@ public final class PatchApplier {
   private static void showApplyStatus(@NotNull Project project, final ApplyPatchStatus status) {
     VcsNotifier vcsNotifier = VcsNotifier.getInstance(project);
     if (status == ApplyPatchStatus.ALREADY_APPLIED) {
-      vcsNotifier.notifyMinorInfo(PATCH_ALREADY_APPLIED, VcsBundle.message("patch.apply.notification.title"), VcsBundle.message("patch.apply.already.applied"));
+      vcsNotifier.notifyMinorInfo(PATCH_ALREADY_APPLIED, VcsBundle.message("patch.apply.notification.title"),
+                                  VcsBundle.message("patch.apply.already.applied"));
     }
     else if (status == ApplyPatchStatus.PARTIAL) {
-      vcsNotifier.notifyMinorInfo(PATCH_PARTIALLY_APPLIED, VcsBundle.message("patch.apply.notification.title"), VcsBundle.message("patch.apply.partially.applied"));
+      vcsNotifier.notifyMinorInfo(PATCH_PARTIALLY_APPLIED, VcsBundle.message("patch.apply.notification.title"),
+                                  VcsBundle.message("patch.apply.partially.applied"));
     }
     else if (status == ApplyPatchStatus.SUCCESS) {
       vcsNotifier.notifySuccess(PATCH_APPLY_SUCCESS, "",
