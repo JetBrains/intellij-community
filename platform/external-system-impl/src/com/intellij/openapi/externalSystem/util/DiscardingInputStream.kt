@@ -3,7 +3,6 @@ package com.intellij.openapi.externalSystem.util
 
 import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -17,7 +16,7 @@ class DiscardingInputStream(
   private val delegate: InputStream
 ) : InputStream() {
 
-  private val discardData = AtomicBoolean(false)
+  private var isDiscardData = false
 
   private val readWriteLock = ReentrantReadWriteLock()
 
@@ -43,7 +42,7 @@ class DiscardingInputStream(
 
   override fun close() {
     readWriteLock.write {
-      discardData.set(true)
+      isDiscardData = true
       delegate.close()
     }
   }
@@ -53,7 +52,7 @@ class DiscardingInputStream(
    */
   private fun inputStreamReadAction(discardedResult: Int, action: () -> Int): Int {
     return readWriteLock.read {
-      when (discardData.get()) {
+      when (isDiscardData) {
         true -> discardedResult
         else -> action()
       }
