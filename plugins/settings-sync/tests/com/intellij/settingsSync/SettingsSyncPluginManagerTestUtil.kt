@@ -24,8 +24,9 @@ class TestPluginDependency(private val idString: String, override val isOptional
 data class TestPluginDescriptor(
   val idString: String,
   var pluginDependencies: List<TestPluginDependency> = emptyList(),
-  val bundled: Boolean = false) : IdeaPluginDescriptor
-{
+  val bundled: Boolean = false,
+  private var essential: Boolean = false
+) : IdeaPluginDescriptor {
   private var _enabled = true
   private val _pluginId = PluginId.getId(idString)
 
@@ -35,6 +36,10 @@ data class TestPluginDescriptor(
 
   override fun getPluginPath(): Path {
     throw UnsupportedOperationException("Not supported")
+  }
+
+  fun isEssential(): Boolean {
+    return essential
   }
 
   override fun isBundled(): Boolean {
@@ -65,7 +70,12 @@ data class TestPluginDescriptor(
   override fun isEnabled(): Boolean = _enabled
 
   override fun setEnabled(enabled: Boolean) {
-    _enabled = enabled
+    this._enabled = enabled
+  }
+
+  fun withEnabled(enabled: Boolean): TestPluginDescriptor {
+    isEnabled = enabled
+    return this
   }
 
   override fun getDependencies(): MutableList<IdeaPluginDependency> = pluginDependencies.toMutableList()

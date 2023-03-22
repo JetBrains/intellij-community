@@ -33,12 +33,26 @@ internal class SettingsSyncPluginManager : Disposable {
 
   internal fun updateStateFromIdeOnStart(lastSavedPluginsState: SettingsSyncPluginsState?): SettingsSyncPluginsState {
     synchronized(LOCK) {
+      val currentIdePlugins = PluginManagerProxy.getInstance().getPlugins()
+      val currentIdePluginIds = currentIdePlugins.map { it.pluginId }.toSet()
+
       val oldPlugins = lastSavedPluginsState?.plugins ?: emptyMap()
       val newPlugins = oldPlugins.toMutableMap()
+      val removedPluginIds = newPlugins.keys - currentIdePluginIds
+      if (removedPluginIds.isNotEmpty()) {
+        LOG.info("Plugins ${removedPluginIds.joinToString()} have been deleted from disk. Will mark them as disabled in setting sync")
+        for (pluginId in removedPluginIds) {
+          newPlugins.computeIfPresent(pluginId) { _, data -> PluginData(enabled = false, data.category, data.dependencies) }
+        }
+      }
 
-      for (plugin in PluginManagerProxy.getInstance().getPlugins()) {
+      for (plugin in currentIdePlugins) {
         val id = plugin.pluginId
-        if (shouldSaveState(plugin)) {
+        if (PluginManagerProxy.getInstance().isEssential(id)) {
+          // don't change state of essential plugin (it will be enabled in the current IDE anyway)
+          // other IDEs will manage it themselves
+        }
+        else if (shouldSaveState(plugin)) {
           newPlugins[id] = getPluginData(plugin)
         }
         else {
@@ -63,8 +77,8 @@ internal class SettingsSyncPluginManager : Disposable {
       val oldData = oldPlugins[newKey]
       oldData != null && oldData.enabled != newData.enabled
     }
-    val pluginsWithNoChanges = newPlugins.filter {
-      (newKey, newData) -> oldPlugins[newKey] == newData
+    val pluginsWithNoChanges = newPlugins.filter { (newKey, newData) ->
+      oldPlugins[newKey] == newData
     }
     val pluginsWithOtherChanges = newPlugins.filter { (newKey, newData) ->
       val oldData = oldPlugins[newKey]
@@ -196,6 +210,8 @@ internal class SettingsSyncPluginManager : Disposable {
     isPluginSyncEnabled(plugin.pluginId, plugin.isBundled, SettingsSyncPluginCategoryFinder.getPluginCategory(plugin))
 
   private fun isPluginSyncEnabled(id: PluginId, isBundled: Boolean, category: SettingsCategory): Boolean {
+    if (PluginManagerProxy.getInstance().isEssential(id))
+      return false
     val settings = SettingsSyncSettings.getInstance()
     return settings.isCategoryEnabled(category) &&
            (category != SettingsCategory.PLUGINS ||
@@ -249,7 +265,8 @@ internal class SettingsSyncPluginManager : Disposable {
       synchronized(LOCK) {
         for (disabledPluginId in disabledIds) {
           LOG.info("Plugin ${disabledPluginId.idString} is disabled.")
-          if (!newPlugins.containsKey(disabledPluginId)) { // otherwise we'll handle this known plugin below while iterating through oldPlugins
+          if (!newPlugins.containsKey(
+              disabledPluginId)) { // otherwise we'll handle this known plugin below while iterating through oldPlugins
             val disabledPlugin = PluginManagerProxy.getInstance().findPlugin(disabledPluginId)
             if (disabledPlugin != null) {
               newPlugins[disabledPluginId] = getPluginData(disabledPlugin, explicitEnabled = false)

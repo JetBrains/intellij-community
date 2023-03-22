@@ -19,4 +19,6 @@ interface PluginManagerProxy {
 
   fun addDisablePluginListener(disabledListener: Runnable, parentDisposable: Disposable)
   fun getDisabledPluginIds(): Set<PluginId>
+
+  fun isEssential(pluginId: PluginId): Boolean
 }
