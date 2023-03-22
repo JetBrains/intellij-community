@@ -5,13 +5,15 @@ import com.intellij.openapi.util.IconLoader.getScaleToRenderIcon
 import com.intellij.openapi.util.IconLoader.renderFilteredIcon
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.fakeComponent
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
 import java.awt.Graphics
 import java.awt.image.RGBImageFilter
 import java.util.function.Supplier
 import javax.swing.Icon
 
-internal class FilteredIcon(private val baseIcon: Icon, private val filterSupplier: Supplier<RGBImageFilter?>) : ReplaceableIcon {
+@Internal
+class FilteredIcon(private val baseIcon: Icon, private val filterSupplier: Supplier<RGBImageFilter?>) : ReplaceableIcon {
   private var modificationCount: Long = -1
 
   // IconLoader.CachedImageIcon uses ScaledIconCache to support several scales simultaneously. Not sure, it is needed here.
