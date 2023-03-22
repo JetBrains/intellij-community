@@ -163,7 +163,10 @@ class EchoTeamCityMessages(object):
         return str(location)
 
     def pytest_collection_finish(self, session):
-        self.rootdir = str(session.config.rootdir)  # using pytest<6 rootdir
+        if hasattr(session.config, 'rootpath'):  # pytest>=6
+            self.rootdir = str(session.config.rootpath)
+        else:
+            self.rootdir = str(session.config.rootdir)
         self.teamcity.testCount(len(session.items))
 
     def pytest_runtest_logstart(self, nodeid, location):
