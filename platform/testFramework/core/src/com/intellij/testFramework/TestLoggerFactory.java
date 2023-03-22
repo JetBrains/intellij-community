@@ -469,22 +469,25 @@ public final class TestLoggerFactory implements Logger.Factory {
      * Calling {@link com.intellij.openapi.application.ex.ApplicationManagerEx#isInStressTest} reflectively to avoid dependency on a platform module
      */
     private static class Accessor {
-      private static final @Nullable MethodHandle isInStressTest = getMethodHandle();
+      @NotNull
+      private static final MethodHandle isInStressTest = getMethodHandle();
 
-      private static MethodHandle getMethodHandle() {
+      private static @NotNull MethodHandle getMethodHandle() {
         try {
           var clazz = Class.forName("com.intellij.openapi.application.ex.ApplicationManagerEx");
-          return MethodHandles.publicLookup().findStatic(clazz, "isInStressTest", MethodType.methodType(boolean.class));
+          MethodHandle handle = MethodHandles.privateLookupIn(clazz, MethodHandles.lookup()).findStatic(clazz, "isInStressTest", MethodType.methodType(boolean.class));
+          Object result = handle.invokeWithArguments();
+          assert result instanceof Boolean;
+          return handle;
         }
-        catch (ReflectiveOperationException e) {
-          e.printStackTrace();
-          return null;
+        catch (Throwable e) {
+          throw new RuntimeException(e);
         }
       }
 
       private static boolean isInStressTest() {
         try {
-          return isInStressTest != null && (boolean)isInStressTest.invokeExact();
+          return (boolean)isInStressTest.invokeWithArguments();
         }
         catch (Throwable ignored) {
           return false;

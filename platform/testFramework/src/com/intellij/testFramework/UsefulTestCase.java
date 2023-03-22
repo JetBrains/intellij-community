@@ -1012,13 +1012,7 @@ public abstract class UsefulTestCase extends TestCase {
   public final boolean isStressTest() {
     String testName = getName();
     String className = getClass().getSimpleName();
-    return TestFrameworkUtil.isPerformanceTest(testName, className) ||
-           containsStressWords(testName) ||
-           containsStressWords(className);
-  }
-
-  private static boolean containsStressWords(@Nullable String name) {
-    return name != null && (name.contains("Stress") || name.contains("Slow"));
+    return TestFrameworkUtil.isStressTest(testName, className);
   }
 
   public static void doPostponedFormatting(@NotNull Project project) {
