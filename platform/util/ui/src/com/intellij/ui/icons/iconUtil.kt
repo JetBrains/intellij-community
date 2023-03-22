@@ -6,9 +6,7 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.RetrievableIcon
-import com.intellij.ui.scale.DerivedScaleType
-import com.intellij.ui.scale.ScaleContext
-import com.intellij.ui.scale.ScaleType
+import com.intellij.ui.scale.*
 import com.intellij.ui.svg.SvgCacheClassifier
 import com.intellij.ui.svg.loadSvg
 import com.intellij.ui.svg.renderSvg
@@ -96,12 +94,11 @@ fun getMenuBarIcon(icon: Icon, dark: Boolean): Icon {
   return if (effectiveIcon is MenuBarIconProvider) effectiveIcon.getMenuBarIcon(dark) else effectiveIcon
 }
 
-@Internal
-fun convertImage(image: Image,
-                 filters: List<ImageFilter>,
-                 scaleContext: ScaleContext,
-                 isUpScaleNeeded: Boolean,
-                 imageScale: Float): Image {
+internal fun convertImage(image: Image,
+                          filters: List<ImageFilter>,
+                          scaleContext: ScaleContext,
+                          isUpScaleNeeded: Boolean,
+                          imageScale: Float): Image {
   var result = image
   if (isUpScaleNeeded) {
     var scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
@@ -373,4 +370,24 @@ fun loadImageFromStream(stream: InputStream,
       return loadPng(stream = stream, scale = scale, originalUserSize = originalUserSize)
     }
   }
+}
+
+/**
+ * Overrides the provided scale in the icon's scale context and in the composited icon's scale contexts (when applicable).
+ *
+ * @see UserScaleContext.overrideScale
+ */
+fun overrideIconScale(icon: Icon, scale: Scale?): Icon {
+  if (icon is CompositeIcon) {
+    for (i in 0 until icon.iconCount) {
+      val subIcon = icon.getIcon(i)
+      if (subIcon != null) {
+        overrideIconScale(icon = subIcon, scale = scale)
+      }
+    }
+  }
+  if (icon is ScaleContextAware) {
+    icon.scaleContext.overrideScale(scale!!)
+  }
+  return icon
 }

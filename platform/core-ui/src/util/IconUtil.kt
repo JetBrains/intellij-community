@@ -473,27 +473,6 @@ object IconUtil {
     return scaleByIcon(icon, ancestor, defaultIcon) { it.iconWidth }
   }
 
-  /**
-   * Overrides the provided scale in the icon's scale context and in the composited icon's scale contexts (when applicable).
-   *
-   * @see UserScaleContext.overrideScale
-   */
-  @JvmStatic
-  fun overrideScale(icon: Icon, scale: Scale?): Icon {
-    if (icon is CompositeIcon) {
-      for (i in 0 until icon.iconCount) {
-        val subIcon = icon.getIcon(i)
-        if (subIcon != null) {
-          overrideScale(icon = subIcon, scale = scale)
-        }
-      }
-    }
-    if (icon is ScaleContextAware) {
-      icon.scaleContext.overrideScale(scale!!)
-    }
-    return icon
-  }
-
   @JvmOverloads
   @JvmStatic
   fun colorize(source: Icon, color: Color, keepGray: Boolean = false): Icon {

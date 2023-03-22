@@ -319,8 +319,8 @@ object JBUIScale {
    * @return 'f' scaled by the user scale factor
    */
   @JvmStatic
-  fun scale(f: Float): Float {
-    return f * userScaleFactor.value
+  fun scale(value: Float): Float {
+    return value * userScaleFactor.value
   }
 
   /**
@@ -444,5 +444,5 @@ object JBUIScale {
    */
   @JvmStatic
   val isUsrHiDPI: Boolean
-    get() = isHiDPI(scale(1f).toDouble())
+    get() = isHiDPI(scale(1f))
 }

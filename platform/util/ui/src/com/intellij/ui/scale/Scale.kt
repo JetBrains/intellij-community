@@ -3,6 +3,7 @@
 
 package com.intellij.ui.scale
 
+import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.scale.ScaleType.*
 import it.unimi.dsi.fastutil.doubles.Double2ObjectMap
 import it.unimi.dsi.fastutil.doubles.Double2ObjectOpenHashMap
@@ -69,8 +70,6 @@ enum class ScaleType {
    *
    * In the JRE-managed HiDPI mode, the system scale defines the scale of the transform b/w the user
    * and the device coordinates spaces performed by the JRE.
-   *
-   * @see JBUIScale.sysScale
    */
   SYS_SCALE,
 
@@ -105,3 +104,11 @@ private fun scaleOf(value: Double, type: ScaleType): Scale {
     .computeIfAbsent(type) { Double2ObjectOpenHashMap() }
     .computeIfAbsent(value, DoubleFunction { Scale(value, type) })
 }
+
+// The scale below 1.0 is impractical.
+// It's rather accepted for debug purpose.
+// Treat it as "hidpi" to correctly manage images which have different users and real size
+// (for scale below 1.0 the real size will be smaller).
+internal fun isHiDPI(scale: Float): Boolean = scale != 1f
+
+internal fun isHiDPIEnabledAndApplicable(scale: Float): Boolean = isHiDPI(scale) && JreHiDpiUtil.isJreHiDPIEnabled()

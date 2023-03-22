@@ -6,10 +6,10 @@ package com.intellij.ui.svg
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.ui.icons.getResourceData
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.scale.isHiDPIEnabledAndApplicable
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.SVGLoader
 import com.intellij.util.text.CharSequenceReader
@@ -300,7 +300,7 @@ fun loadWithScales(sizes: List<Int>, data: ByteArray): List<Image> {
   val scale = JBUIScale.sysScale()
 
   val document by lazy(LazyThreadSafetyMode.NONE) { createJSvgDocument(data) }
-  val isHiDpiNeeded = JreHiDpiUtil.isJreHiDPIEnabled() && JBUIScale.isHiDPI(scale.toDouble())
+  val isHiDpiNeeded = isHiDPIEnabledAndApplicable(scale)
   return sizes.map { size ->
     val compoundKey = SvgCacheClassifier(scale = scale, size = size)
     var image = svgCache?.loadFromCache(imageBytes = data, themeKey = 0, compoundKey = compoundKey)

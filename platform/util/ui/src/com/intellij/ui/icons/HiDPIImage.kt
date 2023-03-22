@@ -4,6 +4,7 @@ package com.intellij.ui.icons
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.scale.ScaleType
 import com.intellij.util.JBHiDPIScaledImage
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics2D
@@ -51,9 +52,6 @@ class HiDPIImage : JBHiDPIScaledImage {
               roundingMode: PaintUtil.RoundingMode) : super(
     JBUIScale.sysScale(gc).toDouble(), width, height, type, roundingMode)
 
-  /**
-   * @see .JBHiDPIScaledImage
-   */
   constructor(gc: GraphicsConfiguration?, width: Int, height: Int, type: Int) :
     super(scale = JBUIScale.sysScale(gc = gc).toDouble(),
           width = width.toDouble(),
@@ -62,7 +60,7 @@ class HiDPIImage : JBHiDPIScaledImage {
           roundingMode = PaintUtil.RoundingMode.FLOOR)
 
   constructor(scaleContext: ScaleContext?, width: Double, height: Double, type: Int, roundingMode: PaintUtil.RoundingMode) :
-    super(scale = JBUIScale.sysScale(context = scaleContext),
+    super(scale = scaleContext?.getScale(ScaleType.SYS_SCALE) ?: JBUIScale.sysScale().toDouble(),
           width = width,
           height = height,
           type = type,

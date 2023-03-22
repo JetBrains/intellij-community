@@ -9,6 +9,8 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.scale.ScaleType
+import com.intellij.ui.scale.isHiDPIEnabledAndApplicable
 import com.intellij.util.JBHiDPIScaledImage
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
@@ -88,7 +90,7 @@ object StartupUiUtil {
    */
   @JvmStatic
   fun isJreHiDPI(scaleContext: ScaleContext?): Boolean {
-    return JreHiDpiUtil.isJreHiDPIEnabled() && JBUIScale.isHiDPI(JBUIScale.sysScale(scaleContext))
+    return isHiDPIEnabledAndApplicable(scaleContext?.getScale(ScaleType.SYS_SCALE)?.toFloat() ?: JBUIScale.sysScale())
   }
 
   @JvmStatic
