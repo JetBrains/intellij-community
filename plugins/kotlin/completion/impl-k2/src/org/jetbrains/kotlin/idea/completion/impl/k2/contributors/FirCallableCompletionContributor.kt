@@ -182,7 +182,10 @@ internal open class FirCallableCompletionContributor(
         }
 
         collectTopLevelExtensionsFromIndexAndResolveExtensionScope(implicitReceiversTypes, extensionChecker, visibilityChecker)
-            .forEach { yield(createCallableWithMetadata(it, CompletionSymbolOrigin.Index)) }
+            .forEach { (signature, applicabilityResult) ->
+                val extensionOptions = getExtensionOptions(signature, applicabilityResult) ?: return@forEach
+                yield(createCallableWithMetadata(signature, CompletionSymbolOrigin.Index, extensionOptions))
+            }
     }
 
     protected open fun KtAnalysisSession.collectDotCompletion(
@@ -312,12 +315,14 @@ internal open class FirCallableCompletionContributor(
         }
 
         collectTopLevelExtensionsFromIndexAndResolveExtensionScope(listOf(typeOfPossibleReceiver), extensionChecker, visibilityChecker)
-            .filter { filter(it.symbol) }
-            .forEach {
+            .filter { (signature, _) -> filter(signature.symbol) }
+            .forEach { (signature, applicabilityResult) ->
+                val extensionOptions = getExtensionOptions(signature, applicabilityResult) ?: return@forEach
                 val callableWithMetadata = createCallableWithMetadata(
-                    it,
+                    signature,
                     CompletionSymbolOrigin.Index,
-                    explicitReceiverTypeHint = explicitReceiverTypeHint,
+                    extensionOptions,
+                    explicitReceiverTypeHint = explicitReceiverTypeHint
                 )
                 yield(callableWithMetadata)
             }
