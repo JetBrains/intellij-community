@@ -396,7 +396,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       int gutterSeparatorX = getWhitespaceSeparatorOffset();
       Color caretRowColor = getCaretRowColor();
       paintBackground(g, clip, 0, gutterSeparatorX, backgroundColor, caretRowColor);
-      paintBackground(g, clip, gutterSeparatorX, getFoldingAreaWidth(), myEditor.getBackgroundColor(), caretRowColor);
+      paintBackground(g, clip, gutterSeparatorX, getWidth() - gutterSeparatorX, myEditor.getBackgroundColor(), caretRowColor);
 
       paintEditorBackgrounds(g, firstVisibleOffset, lastVisibleOffset);
 
