@@ -338,10 +338,12 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     return result;
   }
 
-  private static MavenExecutionResult handleException(Throwable e) {
-    if (e instanceof Error) throw (Error)e;
+  private static MavenExecutionResult handleException(Exception e) {
+    return new MavenExecutionResult(Collections.singletonList(e));
+  }
 
-    return new MavenExecutionResult(Collections.singletonList((Exception)e));
+  private static MavenExecutionResult handleException(MavenProject mavenProject, Exception e) {
+    return new MavenExecutionResult(mavenProject, Collections.singletonList(e));
   }
 
   private static Collection<String> collectActivatedProfiles(MavenProject mavenProject)
@@ -888,10 +890,15 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       return resolveMvn2CompatResult(project, exceptions, listeners, myLocalRepository);
     }
 
-    DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
-    Set<Artifact> artifacts = resolveArtifacts(dependencyResolutionResult, addUnresolved);
-    project.setArtifacts(artifacts);
-    return new MavenExecutionResult(project, dependencyResolutionResult, exceptions, modelProblems);
+    try {
+      DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
+      Set<Artifact> artifacts = resolveArtifacts(dependencyResolutionResult, addUnresolved);
+      project.setArtifacts(artifacts);
+      return new MavenExecutionResult(project, dependencyResolutionResult, exceptions, modelProblems);
+    }
+    catch (Exception e) {
+      return handleException(project, e);
+    }
   }
 
   /**
