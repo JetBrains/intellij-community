@@ -33,6 +33,7 @@ public final class ReplacePathToMacroMap extends PathMacroMap {
     List<String> protocols = new ArrayList<>();
     protocols.add("file");
     protocols.add("jar");
+    protocols.add("jrt");
     if (ApplicationManager.getApplication().getExtensionArea().hasExtensionPoint(PathMacroExpandableProtocolBean.EP_NAME)) {
       PathMacroExpandableProtocolBean.EP_NAME.forEachExtensionSafe(bean -> protocols.add(bean.protocol));
     }
