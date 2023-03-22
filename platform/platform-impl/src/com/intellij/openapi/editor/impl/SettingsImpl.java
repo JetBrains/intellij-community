@@ -17,12 +17,10 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
@@ -53,10 +51,7 @@ public class SettingsImpl implements EditorSettings {
   private boolean myAutoCodeFoldingEnabled = true;
 
   // These come from CodeStyleSettings.
-  private Integer myTabSize;
-  private Integer myCachedTabSize;
   private Boolean myUseTabCharacter;
-  private final Object myTabSizeLock = new Object();
 
   // These come from EditorSettingsExternalizable defaults.
   private Boolean myIsVirtualSpace;
@@ -107,6 +102,29 @@ public class SettingsImpl implements EditorSettings {
       return editor != null
              ? CodeStyle.getSettings(editor).getRightMargin(getLanguage())
              : CodeStyle.getProjectOrDefaultSettings(project).getRightMargin(getLanguage());
+    }
+  };
+
+  private final CacheableBackgroundComputable<Integer> myTabSize = new CacheableBackgroundComputable<>() {
+    @Override
+    protected Integer computeValue(@Nullable Project project, @Nullable Editor editor) {
+      int tabSize;
+      if (project == null) {
+        tabSize = CodeStyle.getDefaultSettings().getTabSize(null);
+      }
+      else {
+        VirtualFile file = getVirtualFile();
+        if (editor != null && editor.isViewer()) {
+          FileType fileType = file != null ? file.getFileType() : null;
+          tabSize = CodeStyle.getSettings(project).getIndentOptions(fileType).TAB_SIZE;
+        }
+        else {
+          tabSize = file != null ?
+                    CodeStyle.getIndentOptions(project, file).TAB_SIZE :
+                    CodeStyle.getSettings(project).getTabSize(null);
+        }
+      }
+      return Integer.valueOf(Math.max(1, tabSize));
     }
   };
 
@@ -371,10 +389,8 @@ public class SettingsImpl implements EditorSettings {
   public void reinitSettings() {
     mySoftMargins.resetCache();
     myRightMargin.resetCache();
-    synchronized (myTabSizeLock) {
-      myCachedTabSize = null;
-      reinitDocumentIndentOptions();
-    }
+    myTabSize.resetCache();
+    reinitDocumentIndentOptions();
   }
 
   private void reinitDocumentIndentOptions() {
@@ -396,38 +412,7 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public int getTabSize(Project project) {
-    synchronized (myTabSizeLock) { // getTabSize can be called from a background thread (e.g. from IndentsPass)
-      if (myTabSize != null) return myTabSize.intValue();
-      if (myCachedTabSize == null) {
-        int tabSize;
-        try {
-          if (project == null || project.isDisposed()) {
-            tabSize = CodeStyle.getDefaultSettings().getTabSize(null);
-          }
-          else {
-            VirtualFile file = getVirtualFile();
-            if (myEditor != null && myEditor.isViewer()) {
-              FileType fileType = file != null ? file.getFileType() : null;
-              tabSize = CodeStyle.getSettings(project).getIndentOptions(fileType).TAB_SIZE;
-            }
-            else {
-              tabSize = file != null ?
-                        CodeStyle.getIndentOptions(project, file).TAB_SIZE :
-                        CodeStyle.getSettings(project).getTabSize(null);
-            }
-          }
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Exception e) {
-          LOG.error("Error determining tab size", e);
-          tabSize = new CommonCodeStyleSettings.IndentOptions().TAB_SIZE;
-        }
-        myCachedTabSize = Integer.valueOf(Math.max(1, tabSize));
-      }
-      return myCachedTabSize;
-    }
+    return myTabSize.getValue(project, CodeStyleSettings.getDefaults().getIndentOptions().TAB_SIZE);
   }
 
   @Nullable
@@ -445,12 +430,7 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public void setTabSize(int tabSize) {
-    final Integer newValue = Integer.valueOf(Math.max(1, tabSize));
-    synchronized (myTabSizeLock) {
-      if (newValue.equals(myTabSize)) return;
-      myTabSize = newValue;
-    }
-    fireEditorRefresh();
+    myTabSize.setValue(tabSize);
   }
 
   @Override
