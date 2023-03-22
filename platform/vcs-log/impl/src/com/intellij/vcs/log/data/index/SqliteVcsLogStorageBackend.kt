@@ -101,6 +101,10 @@ private class ProjectLevelConnectionManager(project: Project, logId: String) : D
     connection = connect()
   }
 
+  fun runUnderConnection(runnable: (SqliteConnection) -> Unit) {
+    connect().use { connection -> runnable(connection) }
+  }
+
   private fun connect(): SqliteConnection {
     isFresh = !Files.exists(dbFile)
     val connection = SqliteConnection(dbFile)
@@ -397,25 +401,27 @@ internal class SqliteVcsLogStorageBackend(project: Project,
   }
 
   override fun iterateChangesInCommits(root: VirtualFile, path: FilePath, consumer: ObjIntConsumer<List<ChangeKind>>) {
-    val position = rootsToPosition.getInt(root)
-    val relativePath = LightFilePath(root, path).relativePath
-    val changesInCommit = Int2ObjectOpenHashMap<MutableList<ChangeKind>>()
-    val paramBinder = ObjectBinder(paramCount = 2)
-    connection.prepareStatement(
-      "select commitId, kind from path as p join path_change as c on p.rowid = c.pathId where p.position = ? and p.relativePath = ?",
-      paramBinder).use { statement ->
+    connectionManager.runUnderConnection { connection ->
+      val position = rootsToPosition.getInt(root)
+      val relativePath = LightFilePath(root, path).relativePath
+      val changesInCommit = Int2ObjectOpenHashMap<MutableList<ChangeKind>>()
+      val paramBinder = ObjectBinder(paramCount = 2)
+      connection.prepareStatement(
+        "select commitId, kind from path as p join path_change as c on p.rowid = c.pathId where p.position = ? and p.relativePath = ?",
+        paramBinder).use { statement ->
 
-      paramBinder.bindMultiple(position, relativePath)
+        paramBinder.bindMultiple(position, relativePath)
 
-      val rs = statement.executeQuery()
-      while (rs.next()) {
-        val changes = changesInCommit.getOrPut(rs.getInt(0)) { arrayListOf() }
-        changes.add(ChangeKind.getChangeKindById(rs.getInt(1).toByte()))
+        val rs = statement.executeQuery()
+        while (rs.next()) {
+          val changes = changesInCommit.getOrPut(rs.getInt(0)) { arrayListOf() }
+          changes.add(ChangeKind.getChangeKindById(rs.getInt(1).toByte()))
+        }
       }
-    }
 
-    for ((commitId, changes) in changesInCommit) {
-      consumer.accept(changes, commitId)
+      for ((commitId, changes) in changesInCommit) {
+        consumer.accept(changes, commitId)
+      }
     }
   }
 
@@ -583,16 +589,18 @@ internal class SqliteVcsLogStorageBackend(project: Project,
   }
 
   override fun iterateCommits(consumer: Predicate<in CommitId>) {
-    val paramBinder = IntBinder(paramCount = 0)
-    connection.prepareStatement("select position, hash from commit_hashes", paramBinder).use { statement ->
-      val rs = statement.executeQuery()
+    connectionManager.runUnderConnection { connection ->
+      val paramBinder = IntBinder(paramCount = 0)
+      connection.prepareStatement("select position, hash from commit_hashes", paramBinder).use { statement ->
+        val rs = statement.executeQuery()
 
-      while (rs.next()) {
-        val root = sortedRoots.get(rs.getInt(0))
-        val hash = rs.getString(1)!!.let(HashImpl::build)
+        while (rs.next()) {
+          val root = sortedRoots.get(rs.getInt(0))
+          val hash = rs.getString(1)!!.let(HashImpl::build)
 
-        if (!consumer.test(CommitId(hash, root))){
-          return
+          if (!consumer.test(CommitId(hash, root))) {
+            break
+          }
         }
       }
     }
