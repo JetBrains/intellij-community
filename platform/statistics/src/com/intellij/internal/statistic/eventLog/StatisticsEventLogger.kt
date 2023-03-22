@@ -152,7 +152,13 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
   }
 }
 
-internal abstract class StatisticsEventLoggerProviderExt(recorderId: String, version: Int, sendFrequencyMs: Long,
+/**
+ * For internal use only.
+ *
+ * Holds default implementation of StatisticsEventLoggerProvider.isLoggingAlwaysActive
+ * to connect logger with com.intellij.internal.statistic.eventLog.ExternalEventLogSettings
+ * */
+abstract class StatisticsEventLoggerProviderExt(recorderId: String, version: Int, sendFrequencyMs: Long,
                                                 maxFileSizeInBytes: Int, sendLogsOnIdeClose: Boolean = false) :
   StatisticsEventLoggerProvider(recorderId, version, sendFrequencyMs, maxFileSizeInBytes, sendLogsOnIdeClose) {
   override fun isLoggingAlwaysActive(): Boolean =
