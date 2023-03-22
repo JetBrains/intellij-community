@@ -164,6 +164,10 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
         conflicts.putValue(member, message);
       }
     }
+    else if (member instanceof PsiClassInitializer && targetClass.isInterface()) {
+      String message = JavaRefactoringBundle.message("dialog.message.static.class.initializers.are.not.allowed.in.interfaces");
+      conflicts.putValue(member, message);
+    }
 
     RefactoringConflictsUtilImpl.analyzeUsedElementsAfterMove(member, member, membersToMove, null, targetClass, targetClass, conflicts);
   }

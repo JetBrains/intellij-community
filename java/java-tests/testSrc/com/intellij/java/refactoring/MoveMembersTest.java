@@ -129,6 +129,19 @@ public class MoveMembersTest extends LightMultiFileTestCase {
     doTest("bar.B", "bar.A", 0);
   }
 
+  public void testStaticClassInitializer() {
+    doTest("B", "A", 0);
+  }
+
+  public void testStaticClassInitializerToInterface() {
+    try {
+      doTest("B", "A", 0);
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Static class initializers are not allowed in interfaces.", e.getMessage());
+    }
+  }
+
   public void testWritableField() {
     try {
       doTest("B", "A", 0);

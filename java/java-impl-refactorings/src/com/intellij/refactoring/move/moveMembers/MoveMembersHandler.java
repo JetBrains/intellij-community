@@ -47,7 +47,7 @@ public class MoveMembersHandler extends MoveHandlerDelegate {
   }
 
   private static boolean isMovableMember(PsiElement element) {
-    if (element instanceof PsiMethod || element instanceof PsiField) {
+    if (element instanceof PsiMethod || element instanceof PsiField || element instanceof PsiClassInitializer) {
       if (element instanceof SyntheticElement) return false;
       return ((PsiModifierListOwner) element).hasModifierProperty(PsiModifier.STATIC);
     }

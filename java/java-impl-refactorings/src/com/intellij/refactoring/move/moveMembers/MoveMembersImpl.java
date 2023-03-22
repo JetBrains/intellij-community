@@ -1,5 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -23,7 +22,7 @@ public final class MoveMembersImpl {
    * or PsiField of a non-anonymous PsiClass
    * or Inner PsiClass
    */
-  public static void doMove(final Project project, PsiElement[] elements, PsiElement targetContainer, MoveCallback moveCallback) {
+  public static void doMove(Project project, PsiElement[] elements, PsiElement targetContainer, MoveCallback moveCallback) {
     if (elements.length == 0) {
       return;
     }
@@ -38,11 +37,14 @@ public final class MoveMembersImpl {
 
     final Set<PsiMember> preselectMembers = new HashSet<>();
     for (PsiElement element : elements) {
-      if (element instanceof PsiMember && !sourceClass.equals(((PsiMember)element).getContainingClass())) {
-        String message = RefactoringBundle.getCannotRefactorMessage(
-          RefactoringBundle.message("members.to.be.moved.should.belong.to.the.same.class"));
-        CommonRefactoringUtil.showErrorMessage(getRefactoringName(), message, HelpID.MOVE_MEMBERS, project);
-        return;
+      if (element instanceof PsiMember member) {
+        preselectMembers.add(member);
+        if (!sourceClass.equals(((PsiMember)element).getContainingClass())) {
+          String message = RefactoringBundle.getCannotRefactorMessage(
+            RefactoringBundle.message("members.to.be.moved.should.belong.to.the.same.class"));
+          CommonRefactoringUtil.showErrorMessage(getRefactoringName(), message, HelpID.MOVE_MEMBERS, project);
+          return;
+        }
       }
       if (element instanceof PsiField field) {
         if (!field.hasModifierProperty(PsiModifier.STATIC)) {
@@ -55,7 +57,6 @@ public final class MoveMembersImpl {
           CommonRefactoringUtil.showErrorMessage(getRefactoringName(), message, HelpID.MOVE_MEMBERS, project);
           return;
         }
-        preselectMembers.add(field);
       }
       else if (element instanceof PsiMethod method) {
         String methodName = PsiFormatUtil.formatMethod(
@@ -74,7 +75,6 @@ public final class MoveMembersImpl {
           CommonRefactoringUtil.showErrorMessage(getRefactoringName(), message, HelpID.MOVE_MEMBERS, project);
           return;
         }
-        preselectMembers.add(method);
       }
       else if (element instanceof PsiClass aClass) {
         if (!aClass.hasModifierProperty(PsiModifier.STATIC)) {
@@ -83,7 +83,6 @@ public final class MoveMembersImpl {
           CommonRefactoringUtil.showErrorMessage(getRefactoringName(), message, HelpID.MOVE_MEMBERS, project);
           return;
         }
-        preselectMembers.add(aClass);
       }
     }
 
@@ -91,12 +90,7 @@ public final class MoveMembersImpl {
 
     final PsiClass initialTargerClass = targetContainer instanceof PsiClass? (PsiClass) targetContainer : null;
 
-    MoveMembersDialog dialog = new MoveMembersDialog(
-            project,
-            sourceClass,
-            initialTargerClass,
-            preselectMembers,
-            moveCallback);
+    MoveMembersDialog dialog = new MoveMembersDialog(project, sourceClass, initialTargerClass, preselectMembers, moveCallback);
     dialog.show();
   }
 
