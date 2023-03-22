@@ -939,11 +939,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void reinitSettings() {
-    reinitSettings(true);
+    reinitSettings(true, true);
   }
 
   @RequiresEdt
-  private void reinitSettings(boolean updateGutterSize) {
+  void reinitSettings(boolean updateGutterSize, boolean reinitSettings) {
     for (EditorColorsScheme scheme = myScheme;
          scheme instanceof DelegateColorScheme;
          scheme = ((DelegateColorScheme)scheme).getDelegate()) {
@@ -955,7 +955,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     boolean softWrapsUsedBefore = mySoftWrapModel.isSoftWrappingEnabled();
 
-    mySettings.reinitSettings();
+    if (reinitSettings) {
+      mySettings.reinitSettings();
+    }
     mySoftWrapModel.reinitSettings();
     myCaretModel.reinitSettings();
     mySelectionModel.reinitSettings();
@@ -5087,7 +5089,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       mySettings.reinitSettings();
       int newTabSize = EditorUtil.getTabSize(this);
       if (oldTabSize != newTabSize) {
-        reinitSettings(false);
+        reinitSettings(false, true);
       }
       else {
         // cover the case of right margin update

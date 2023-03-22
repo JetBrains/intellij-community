@@ -9,7 +9,10 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.NonBlockingReadAction;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorCoreUtil;
+import com.intellij.openapi.editor.EditorKind;
+import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -88,33 +91,35 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myShowIntentionBulb;
   private Boolean myShowingSpecialCharacters;
 
+  private final List<CacheableBackgroundComputable<?>> myComputableSettings = new ArrayList<>();
+
   private final CacheableBackgroundComputable<List<Integer>> mySoftMargins = new CacheableBackgroundComputable<>() {
     @Override
-    protected List<Integer> computeValue(@Nullable Project project, @Nullable Editor editor) {
-      if (editor == null) return Collections.emptyList();
-      return CodeStyle.getSettings(editor).getSoftMargins(getLanguage());
+    protected List<Integer> computeValue(@Nullable Project project) {
+      if(myEditor == null) return Collections.emptyList();
+      return CodeStyle.getSettings(myEditor).getSoftMargins(getLanguage());
     }
   };
 
   private final CacheableBackgroundComputable<Integer> myRightMargin = new CacheableBackgroundComputable<>() {
     @Override
-    protected Integer computeValue(@Nullable Project project, @Nullable Editor editor) {
-      return editor != null
-             ? CodeStyle.getSettings(editor).getRightMargin(getLanguage())
+    protected Integer computeValue(@Nullable Project project) {
+      return myEditor != null
+             ? CodeStyle.getSettings(myEditor).getRightMargin(getLanguage())
              : CodeStyle.getProjectOrDefaultSettings(project).getRightMargin(getLanguage());
     }
   };
 
   private final CacheableBackgroundComputable<Integer> myTabSize = new CacheableBackgroundComputable<>() {
     @Override
-    protected Integer computeValue(@Nullable Project project, @Nullable Editor editor) {
+    protected Integer computeValue(@Nullable Project project) {
       int tabSize;
       if (project == null) {
         tabSize = CodeStyle.getDefaultSettings().getTabSize(null);
       }
       else {
         VirtualFile file = getVirtualFile();
-        if (editor != null && editor.isViewer()) {
+        if (myEditor != null && myEditor.isViewer()) {
           FileType fileType = file != null ? file.getFileType() : null;
           tabSize = CodeStyle.getSettings(project).getIndentOptions(fileType).TAB_SIZE;
         }
@@ -387,9 +392,7 @@ public class SettingsImpl implements EditorSettings {
   }
 
   public void reinitSettings() {
-    mySoftMargins.resetCache();
-    myRightMargin.resetCache();
-    myTabSize.resetCache();
+    myComputableSettings.forEach(CacheableBackgroundComputable::resetCache);
     reinitDocumentIndentOptions();
   }
 
@@ -735,8 +738,12 @@ public class SettingsImpl implements EditorSettings {
   }
 
   private void fireEditorRefresh() {
+    fireEditorRefresh(true);
+  }
+
+  private void fireEditorRefresh(boolean reinitSettings) {
     if (myEditor != null) {
-      myEditor.reinitSettings();
+      myEditor.reinitSettings(true, reinitSettings);
     }
   }
 
@@ -803,6 +810,10 @@ public class SettingsImpl implements EditorSettings {
 
     private final static Object VALUE_LOCK = new Object();
 
+    private CacheableBackgroundComputable() {
+      myComputableSettings.add(this);
+    }
+
     private void setValue(@Nullable T overwrittenValue) {
       synchronized (VALUE_LOCK) {
         if (Objects.equals(myOverwrittenValue, overwrittenValue)) return;
@@ -825,13 +836,12 @@ public class SettingsImpl implements EditorSettings {
       }
     }
 
-    protected abstract T computeValue(@Nullable Project project, @Nullable Editor editor);
+    protected abstract T computeValue(@Nullable Project project);
 
     private @NotNull T getDefaultAndCompute(@Nullable Project project, @NotNull T defaultValue) {
-      Editor editor = myEditor;
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         try {
-          return computeValue(project, editor);
+          return computeValue(project);
         }
         catch (Exception e) {
           LOG.error(e);
@@ -840,7 +850,7 @@ public class SettingsImpl implements EditorSettings {
       else {
         if (myCurrentReadActionRef.get() == null) {
           NonBlockingReadAction<T> readAction = ReadAction
-            .nonBlocking(() -> computeValue(project, editor))
+            .nonBlocking(() -> computeValue(project))
             .finishOnUiThread(
               ModalityState.any(),
               result -> {
@@ -848,9 +858,10 @@ public class SettingsImpl implements EditorSettings {
                 synchronized (VALUE_LOCK) {
                   myCachedValue = result;
                 }
+                fireEditorRefresh(false);
               }
             )
-            .expireWhen(() -> editor != null && editor.isDisposed() || project != null && project.isDisposed());
+            .expireWhen(() -> myEditor != null && myEditor.isDisposed() || project != null && project.isDisposed());
           if (myCurrentReadActionRef.compareAndSet(null, readAction)) {
             readAction.submit(AppExecutorUtil.getAppExecutorService());
           }
