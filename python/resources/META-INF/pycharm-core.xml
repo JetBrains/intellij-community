@@ -18,9 +18,6 @@
 
     <renameHandler implementation="com.intellij.platform.renameProject.RenameProjectHandler"/>
     <renameHandler implementation="com.intellij.platform.renameProject.ProjectFolderRenameHandler"/>
-    <applicationService serviceInterface="com.intellij.toolWindow.DefaultToolWindowLayoutProvider"
-                        serviceImplementation="com.jetbrains.python.ui.PyToolWindowLayoutProvider"
-                        overrides="true"/>
   </extensions>
 
   <actions>
