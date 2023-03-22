@@ -37,13 +37,14 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.FutureResult;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public final class ExecutionHandler {
@@ -63,7 +64,7 @@ public final class ExecutionHandler {
     if (target == null) {
       return null;
     }
-    FutureResult<ProcessHandler> result = runBuildImpl(
+    Future<ProcessHandler> result = runBuildImpl(
       (AntBuildFileBase)target.getModel().getBuildFile(), target.getTargetNames(), null, dataContext, additionalProperties, antBuildListener, false
     );
     if (result != null) {
@@ -102,12 +103,12 @@ public final class ExecutionHandler {
    * @param antBuildListener should not be null. Use {@link AntBuildListener#NULL}
    */
   @Nullable
-  private static FutureResult<ProcessHandler> runBuildImpl(final AntBuildFileBase buildFile,
-                                                          List<@NlsSafe String> targets,
-                                                          @Nullable final AntBuildMessageView buildMessageViewToReuse,
-                                                          final DataContext dataContext,
-                                                          List<BuildFileProperty> additionalProperties,
-                                                          @NotNull final AntBuildListener antBuildListener, final boolean waitFor) {
+  private static Future<ProcessHandler> runBuildImpl(final AntBuildFileBase buildFile,
+                                                     List<@NlsSafe String> targets,
+                                                     @Nullable final AntBuildMessageView buildMessageViewToReuse,
+                                                     final DataContext dataContext,
+                                                     List<BuildFileProperty> additionalProperties,
+                                                     @NotNull final AntBuildListener antBuildListener, final boolean waitFor) {
     final AntBuildMessageView messageView;
     final TargetEnvironmentRequest request;
     final SimpleJavaParameters javaParameters;
@@ -155,7 +156,7 @@ public final class ExecutionHandler {
       LOG.error(e);
       return null;
     }
-    final FutureResult<ProcessHandler> future = new FutureResult<>();
+    CompletableFuture<ProcessHandler> future = new CompletableFuture<>();
     new Task.Backgroundable(buildFile.getProject(), AntBundle.message("ant.build.progress.dialog.title"), true) {
 
       @Override
@@ -173,7 +174,7 @@ public final class ExecutionHandler {
           messageView.setBuildCommandLine(commandLine.getCommandPresentation(environment));
 
           ProcessHandler handler = runBuild(indicator, messageView, buildFile, listenerWrapper, commandLine, environment);
-          future.set(handler);
+          future.complete(handler);
           if (waitFor && handler != null) {
             handler.waitFor();
           }
