@@ -123,9 +123,7 @@ private inline fun findUrl(path: String, urlProvider: (String) -> URL?): URL? {
   return urlProvider(effectivePath)
 }
 
-
-@ApiStatus.Internal
-class ImageDataByFilePathLoader(private val path: String) : PatchedImageDataLoader {
+internal class ImageDataByFilePathLoader(private val path: String) : PatchedImageDataLoader {
   override val url: URL
     get() = URL(path)
 
@@ -140,9 +138,7 @@ class ImageDataByFilePathLoader(private val path: String) : PatchedImageDataLoad
                      scaleContext = scaleContext)
   }
 
-  override fun toString(): String {
-    return "ImageDataByFilePathLoader(path=$path"
-  }
+  override fun toString(): String = "ImageDataByFilePathLoader(path=$path"
 }
 
 private fun createNewResolverIfNeeded(originalClassLoader: ClassLoader?,

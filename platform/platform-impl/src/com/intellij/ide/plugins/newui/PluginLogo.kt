@@ -18,7 +18,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.JBColor
 import com.intellij.ui.icons.CachedImageIcon
-import com.intellij.ui.svg.loadWithScales
+import com.intellij.ui.svg.loadWithSizes
 import com.intellij.util.Urls.newFromEncoded
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.io.HttpRequests
@@ -166,7 +166,7 @@ private fun getIdForKey(descriptor: IdeaPluginDescriptor): String {
 
 private fun loadFileIcon(data: ByteArray): PluginLogoIconProvider? {
   try {
-    val images = loadWithScales(listOf(PLUGIN_ICON_SIZE, PLUGIN_ICON_SIZE_SCALED), data)
+    val images = loadWithSizes(listOf(PLUGIN_ICON_SIZE, PLUGIN_ICON_SIZE_SCALED), data)
     return HiDPIPluginLogoIcon(JBImageIcon(images.get(0)), JBImageIcon(images.get(1)))
   }
   catch (e: IOException) {

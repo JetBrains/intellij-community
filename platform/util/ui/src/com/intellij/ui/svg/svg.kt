@@ -295,10 +295,8 @@ private fun renderImage(colorPatcher: SvgAttributePatcher?,
 }
 
 @ApiStatus.Internal
-fun loadWithScales(sizes: List<Int>, data: ByteArray): List<Image> {
+fun loadWithSizes(sizes: List<Int>, data: ByteArray, scale: Float = JBUIScale.sysScale()): List<Image> {
   val svgCache = svgCache
-  val scale = JBUIScale.sysScale()
-
   val document by lazy(LazyThreadSafetyMode.NONE) { createJSvgDocument(data) }
   val isHiDpiNeeded = isHiDPIEnabledAndApplicable(scale)
   return sizes.map { size ->

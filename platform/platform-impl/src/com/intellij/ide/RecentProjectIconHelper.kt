@@ -5,20 +5,16 @@ package com.intellij.ide
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.IconDeferrer
 import com.intellij.ui.JBColor
 import com.intellij.ui.paint.withTxAndClipAligned
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.ui.scale.ScaleContext
-import com.intellij.ui.scale.ScaleContextAware
-import com.intellij.ui.scale.ScaleType
+import com.intellij.ui.svg.loadWithSizes
 import com.intellij.util.IconUtil
 import com.intellij.util.ImageLoader
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.basicAttributesIfExists
-import com.intellij.util.io.isDirectory
 import com.intellij.util.ui.*
 import org.imgscalr.Scalr
 import org.jetbrains.annotations.SystemIndependent
@@ -28,7 +24,6 @@ import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.util.*
 import javax.swing.Icon
-import kotlin.math.max
 
 private val LOG = logger<RecentProjectIconHelper>()
 
@@ -39,15 +34,13 @@ private fun userScaledProjectIconSize() = JBUIScale.scale(unscaledProjectIconSiz
 private const val IDEA_DIR = Project.DIRECTORY_STORE_FOLDER
 
 private fun getDotIdeaPath(path: Path): Path {
-  if (path.isDirectory() || path.parent == null) {
+  if (Files.isDirectory(path) || path.parent == null) {
     return path.resolve(IDEA_DIR)
   }
 
   val fileName = path.fileName.toString()
-
   val dotIndex = fileName.lastIndexOf('.')
   val fileNameWithoutExt = if (dotIndex == -1) fileName else fileName.substring(0, dotIndex)
-
   return path.parent.resolve("$IDEA_DIR/$IDEA_DIR.$fileNameWithoutExt/$IDEA_DIR")
 }
 
@@ -70,8 +63,6 @@ internal class RecentProjectIconHelper {
       projectIconCache.remove(path)
     }
 
-    fun projectIconSize(): Int = userScaledProjectIconSize()
-
     fun generateProjectIcon(path: @SystemIndependent String, isProjectValid: Boolean): Icon {
       val projectManager = RecentProjectsManagerBase.getInstanceEx()
       val displayName = projectManager.getDisplayName(path)
@@ -86,7 +77,9 @@ internal class RecentProjectIconHelper {
         generatedProjectIcon = IconUtil.desaturate(generatedProjectIcon)
       }
 
-      projectIconCache[path] = ProjectIcon(generatedProjectIcon, isProjectValid, projectIconSize())
+      projectIconCache.put(path, ProjectIcon(icon = generatedProjectIcon,
+                                             isProjectValid = isProjectValid,
+                                             lastUsedProjectIconSize = userScaledProjectIconSize()))
 
       return generatedProjectIcon
     }
@@ -104,7 +97,7 @@ internal class RecentProjectIconHelper {
   }
 
   fun getProjectIcon(path: @SystemIndependent String, isProjectValid: Boolean = true): Icon {
-    val iconSize = projectIconSize()
+    val iconSize = userScaledProjectIconSize()
 
     if (!RecentProjectsManagerBase.isFileSystemPath(path)) {
       return EmptyIcon.create(iconSize)
@@ -136,7 +129,7 @@ private fun getCustomIcon(path: @SystemIndependent String, isProjectValid: Boole
 
   iconWrapper = ProjectIcon(icon = icon,
                             isProjectValid = isProjectValid,
-                            lastUsedProjectIconSize = RecentProjectIconHelper.projectIconSize(),
+                            lastUsedProjectIconSize = userScaledProjectIconSize(),
                             timestamp = timestamp)
   projectIconCache.put(path, iconWrapper)
   return iconWrapper.icon
@@ -151,7 +144,7 @@ private fun getGeneratedProjectIcon(path: @SystemIndependent String, isProjectVa
 }
 
 private fun isCachedIcon(icon: ProjectIcon, isProjectValid: Boolean, timestamp: Long? = null): Boolean {
-  val isCached = icon.isProjectValid == isProjectValid && icon.lastUsedProjectIconSize == RecentProjectIconHelper.projectIconSize()
+  val isCached = icon.isProjectValid == isProjectValid && icon.lastUsedProjectIconSize == userScaledProjectIconSize()
   return if (timestamp == null) isCached else isCached && icon.timestamp == timestamp
 }
 
@@ -176,19 +169,19 @@ private class ProjectFileIcon(
     val sysScale = JBUIScale.sysScale(g)
     val pixScale = JBUI.pixScale(g.deviceConfiguration)
     val cachedIcon = this.cachedIcon
-    val delegate = if (cachedIcon != null &&
-                       cachedIconSysScale == sysScale &&
-                       cachedIconPixScale == pixScale) {
-      cachedIcon
+    val delegate: Icon
+    if (cachedIcon != null &&
+                   cachedIconSysScale == sysScale &&
+                   cachedIconPixScale == pixScale) {
+      delegate = cachedIcon
     }
     else {
-      iconData.getScaledIcon(sysScale).also {
-        this.cachedIcon = it
-        this.cachedIconSysScale = sysScale
-        this.cachedIconPixScale = pixScale
-      }
+      delegate = iconData.getScaledIcon(sysScale)
+      this.cachedIcon = delegate
+      cachedIconSysScale = sysScale
+      cachedIconPixScale = pixScale
     }
-    withTxAndClipAligned(g, x, y, delegate.iconWidth, delegate.iconHeight) { ag ->
+    withTxAndClipAligned(g = g, x = x, y = y, width = delegate.iconWidth, height = delegate.iconHeight) { ag ->
       delegate.paintIcon(c, ag, 0, 0)
     }
   }
@@ -203,7 +196,7 @@ private class ProjectFileIcon(
 private fun loadIconFile(file: Path): IconData {
   try {
     if (file.toString().endsWith(".svg", ignoreCase = true)) {
-      return SvgIconData(IconLoader.findIcon(file.toUri().toURL(), false), userScaledProjectIconSize())
+      return SvgIconData(file = file, userScaledSize = userScaledProjectIconSize())
     }
     else {
       return PngIconData(ImageLoader.loadFromUrl(file.toUri().toURL()), userScaledProjectIconSize())
@@ -221,16 +214,9 @@ private sealed class IconData(protected val userScaledSize: Int) {
   protected fun emptyIcon(): Icon = EmptyIcon.create(userScaledSize)
 }
 
-private class SvgIconData(private val originalIcon: Icon?, userScaledSize: Int) : IconData(userScaledSize) {
+private class SvgIconData(private val file: Path, userScaledSize: Int) : IconData(userScaledSize) {
   override fun getScaledIcon(sysScale: Float): Icon {
-    if (originalIcon == null) {
-      return emptyIcon()
-    }
-    if (originalIcon is ScaleContextAware) {
-      originalIcon.updateScaleContext(ScaleContext.create(ScaleType.SYS_SCALE.of(sysScale)))
-    }
-    val iconSize = max(originalIcon.iconWidth, originalIcon.iconHeight)
-    return if (iconSize == userScaledSize) originalIcon else IconUtil.scale(originalIcon, null, userScaledSize.toFloat() / iconSize)
+    return JBImageIcon(loadWithSizes(sizes = listOf(unscaledProjectIconSize()), data = Files.readAllBytes(file), scale = sysScale).first())
   }
 }
 
