@@ -83,7 +83,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenSourcesGeneratedContext mySourcesGeneratedContext;
   protected MavenPluginResolvedContext myPluginResolvedContext;
 
-  private final Set<String> FAILED_IN_MASTER =
+  private static final Set<String> FAILED_IN_MASTER =
     Set.of("MavenProjectsManagerTest.testUpdatingProjectsWhenMovingModuleFile",
            "MavenProjectsManagerTest.testUpdatingProjectsWhenAbsentManagedProjectFileAppears",
            "MavenProjectsManagerTest.testAddingManagedFileAndChangingAggregation",
