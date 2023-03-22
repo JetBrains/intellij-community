@@ -369,7 +369,6 @@
       "feedbackRatingOn.svg": "ide/feedbackRatingOn.svg"
     },
     "image": {
-      "colorPicker_dark.svg": "ide/pipette.svg",
       "actualZoom.svg": "graph/actualZoom.svg",
       "colorPicker.svg": "ide/pipette.svg",
       "grid.svg": "graph/grid.svg",
