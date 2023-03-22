@@ -92,12 +92,12 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       // If modality is null, then there is no dumb mode already (e.g. because the queue was processed under modal progress indicator)
       // There are no races: if DumbStartModality is about to change in myCancellableLaterEdtInvoker, we either observe:
       //   - if null modality about to change to non-null (happens only on EDT). This means that myLatestReceipt will also increase (on EDT)
-      //   - if non-null modality about to change to null (happens only on EDT) then myState will also change to WAITING_FOR_FINISH (on EDT)
+      //   - if non-null modality about to change to null (happens only on EDT) then myState will also change to SMART (on EDT)
       // Either way, we don't need to execute the runnable. In the first case it will not be scheduled,
-      // in the second case it will abort immediately on the EDT in the first "if" statement.
+      // in the second case updateFinished will do nothing.
       myCancellableLaterEdtInvoker.invokeLaterWithDumbStartModality(() -> {
-        // dumb service may already set to smart state by completeJustSubmittedTasks.
-        if (myLatestReceipt.equals(latestReceipt) && myState.compareAndSet(State.SCHEDULED_OR_RUNNING_TASKS, State.WAITING_FOR_FINISH)) {
+        // Dumb service may already have been set to SMART state by completeJustSubmittedTasks. In this case updateFinished does nothing.
+        if (myLatestReceipt.equals(latestReceipt)) {
           updateFinished();
         }
         // latestReceipt may be null if the queue is suspended or internal error has happened
@@ -131,8 +131,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     myBalloon = new DumbServiceBalloon(project, this);
     myAlternativeResolveTracker = new DumbServiceAlternativeResolveTracker();
     // any project starts in dumb mode (except default project which is always smart)
-    // we assume that queueStartupActivitiesRequiredForSmartMode will be invoked to advance WAITING_FOR_FINISH > SMART
-    myState = new AtomicReference<>(project.isDefault() ? State.SMART : State.WAITING_FOR_FINISH);
+    // we assume that queueStartupActivitiesRequiredForSmartMode will be invoked to advance SCHEDULED_OR_RUNNING_TASKS > SMART
+    myState = new AtomicReference<>(project.isDefault() ? State.SMART : State.SCHEDULED_OR_RUNNING_TASKS);
 
     // the first dumb mode should end in non-modal context
     myCancellableLaterEdtInvoker.setDumbStartModality(ModalityState.NON_MODAL);
@@ -145,7 +145,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       // This is the same side effects as produced by updateFinished (except updating icons). We apply them synchronously, because
       // invokeLaterAfterProjectInitialized(this::updateFinished) does not work well in synchronous environments (e.g. in unit tests): code
       // continues to execute without waiting for smart mode to start because of invoke*Later*. See, for example, DbSrcFileDialectTest
-      myState.compareAndSet(State.WAITING_FOR_FINISH, State.SMART);
+      myState.compareAndSet(State.SCHEDULED_OR_RUNNING_TASKS, State.SMART);
       myCancellableLaterEdtInvoker.invokeLaterWithDumbStartModality(myPublisher::exitDumbMode);
     }
   }
@@ -218,7 +218,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       myPublisher.enteredDumbMode();
     }
     else {
-      myState.set(State.WAITING_FOR_FINISH);
       updateFinished();
     }
   }
@@ -284,9 +283,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       catch (Throwable t) {
         // There are no evidences that returning to smart mode is a good strategy. Let it be like this until the opposite is needed.
         LOG.error("Failed to start background queue processing. Return to smart mode even though some tasks are still in the queue", t);
-        if (myState.compareAndSet(State.SCHEDULED_OR_RUNNING_TASKS, State.WAITING_FOR_FINISH)) {
-          updateFinished();
-        }
+        updateFinished();
       }
     });
   }
@@ -314,7 +311,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   private boolean switchToSmartMode() {
-    if (!myState.compareAndSet(State.WAITING_FOR_FINISH, State.SMART)) {
+    if (!myState.compareAndSet(State.SCHEDULED_OR_RUNNING_TASKS, State.SMART)) {
       return false;
     }
 
@@ -512,7 +509,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       }
       finally {
         if (myTaskQueue.isEmpty()) {
-          myState.set(State.WAITING_FOR_FINISH);
           updateFinished();
         }
       }
@@ -557,28 +553,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     /** Non-dumb mode. For all other states, {@link #isDumb()} returns {@code true}. */
     SMART,
 
-    /**
-     * A state when dumb service is already dumb, but background processing may or may not start yet.
-     * In this state, it's possible to call {@link #completeJustSubmittedTasks()} and perform all the submitted tasks synchronously.
-     * This state can happen after {@link #SMART}, or {@link #WAITING_FOR_FINISH}.
-     * Followed by {@link #WAITING_FOR_FINISH}.
-     * <p>
-     * This state is not the same as checking `!myTaskQueue.isEmpty`, because myTaskQueue may become empty or non-empty without write action
-     * (however DumbService should not become dumb/smart while other read actions are in progress)
-     * <p>
-     * This state is not the same as checking `!myGuiDumbTaskRunner.isRunning`, because when task is queued on EDT, the service becomes
-     * dumb immediately, but background processing will be started via invokeLater (to give a chance for
-     * {@link #completeJustSubmittedTasks()} to process the queue under modal indicator)
-     */
+    /** Dumb mode. */
     SCHEDULED_OR_RUNNING_TASKS,
-
-    /**
-     * Set after background execution ({@link #SCHEDULED_OR_RUNNING_TASKS}) finishes, until the dumb mode can be exited
-     * (in a write-safe context on EDT when project is initialized). If new tasks are queued at this state, it's switched to {@link #SCHEDULED_OR_RUNNING_TASKS}.
-     * <p>
-     * This is also the initial state of the state machine in non-default project
-     */
-    WAITING_FOR_FINISH,
   }
 
   public static boolean isSynchronousTaskExecution() {
