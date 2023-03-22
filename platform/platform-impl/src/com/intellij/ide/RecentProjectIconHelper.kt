@@ -68,10 +68,14 @@ internal class RecentProjectIconHelper {
       val displayName = projectManager.getDisplayName(path)
       val name = when {
         displayName == null -> projectManager.getProjectName(path)
-        displayName.contains(",") -> iconTextForCommaSeparatedName(displayName)
+        displayName.contains(',') -> iconTextForCommaSeparatedName(displayName)
         else -> displayName
       }
-      var generatedProjectIcon: Icon = JBUIScale.scaleIcon(AvatarIcon(unscaledProjectIconSize(), 0.3, name, name, ProjectIconPalette))
+      var generatedProjectIcon: Icon = AvatarIcon(targetSize = unscaledProjectIconSize(),
+                                                  arcRatio = 0.3,
+                                                  gradientSeed = name,
+                                                  avatarName = name,
+                                                  palette = ProjectIconPalette).withIconPreScaled(false)
 
       if (!isProjectValid) {
         generatedProjectIcon = IconUtil.desaturate(generatedProjectIcon)
@@ -104,15 +108,15 @@ internal class RecentProjectIconHelper {
     }
 
     return IconDeferrer.getInstance().defer(EmptyIcon.create(iconSize), Triple(path, isProjectValid, iconSize)) {
-      return@defer getCustomIcon(path = it.first, isProjectValid = it.second)
-                   ?: getGeneratedProjectIcon(path = it.first, isProjectValid = it.second)
+      getCustomIcon(path = it.first, isProjectValid = it.second) ?: getGeneratedProjectIcon(path = it.first, isProjectValid = it.second)
     }
   }
 }
 
 private fun getCustomIcon(path: @SystemIndependent String, isProjectValid: Boolean): Icon? {
-  val lookup = sequenceOf("icon.svg", "icon.png")
-  val file = lookup.map { RecentProjectIconHelper.getDotIdeaPath(path)?.resolve(it) }.filterNotNull().firstOrNull { Files.exists(it) } ?: return null
+  val file = sequenceOf("icon.svg", "icon.png")
+               .mapNotNull { RecentProjectIconHelper.getDotIdeaPath(path)?.resolve(it) }
+               .firstOrNull { Files.exists(it) } ?: return null
 
   val fileInfo = file.basicAttributesIfExists() ?: return null
   val timestamp = fileInfo.lastModifiedTime().toMillis()
@@ -171,8 +175,8 @@ private class ProjectFileIcon(
     val cachedIcon = this.cachedIcon
     val delegate: Icon
     if (cachedIcon != null &&
-                   cachedIconSysScale == sysScale &&
-                   cachedIconPixScale == pixScale) {
+        cachedIconSysScale == sysScale &&
+        cachedIconPixScale == pixScale) {
       delegate = cachedIcon
     }
     else {
@@ -237,7 +241,7 @@ private class EmptyIconData(userScaledSize: Int) : IconData(userScaledSize) {
   override fun getScaledIcon(sysScale: Float): Icon = EmptyIcon.create(userScaledSize)
 }
 
-private object ProjectIconPalette : ColorPalette() {
+private object ProjectIconPalette : ColorPalette {
   override val gradients: Array<Pair<Color, Color>>
     get() {
       return arrayOf(

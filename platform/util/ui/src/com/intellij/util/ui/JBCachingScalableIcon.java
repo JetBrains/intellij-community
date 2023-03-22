@@ -14,7 +14,7 @@ import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
  * @author Aleksey Pivovarov
  */
 public abstract class JBCachingScalableIcon<T extends JBCachingScalableIcon> extends JBScalableIcon implements CopyableIcon {
-  private T myScaledIconCache;
+  private T scaledIconCache;
 
   protected JBCachingScalableIcon() {}
 
@@ -26,25 +26,23 @@ public abstract class JBCachingScalableIcon<T extends JBCachingScalableIcon> ext
    * @return a new scaled copy of this icon, or the cached instance of the provided scale
    */
   @Override
-  @NotNull
-  public T scale(float scale) {
+  public @NotNull T scale(float scale) {
     if (scale == getScale()) {
       //noinspection unchecked
       return (T)this;
     }
 
-    if (myScaledIconCache == null || myScaledIconCache.getScale() != scale) {
-      myScaledIconCache = copy();
-      myScaledIconCache.setScale(OBJ_SCALE.of(scale));
+    if (scaledIconCache == null || scaledIconCache.getScale() != scale) {
+      scaledIconCache = copy();
+      scaledIconCache.setScale(OBJ_SCALE.of(scale));
     }
-    return myScaledIconCache;
+    return scaledIconCache;
   }
 
   protected void clearCachedScaledValue() {
-    myScaledIconCache = null;
+    scaledIconCache = null;
   }
 
-  @NotNull
   @Override
-  public abstract T copy();
+  public abstract @NotNull T copy();
 }
