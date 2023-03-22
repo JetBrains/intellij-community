@@ -12,11 +12,13 @@ import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil.Thread.Replies.ActionsFolded
 import com.intellij.collaboration.ui.codereview.ToggleableContainer
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
+import com.intellij.collaboration.ui.codereview.timeline.CollapsibleTimelineItemViewModel
 import com.intellij.collaboration.ui.codereview.timeline.TimelineDiffComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.collaboration.ui.icon.OverlaidOffsetIconsIcon
+import com.intellij.collaboration.ui.util.ActivatableCoroutineScopeProvider
 import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.diff.util.LineRange
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
@@ -25,11 +27,15 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.containers.nullize
 import com.intellij.util.text.JBDateFormat
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -79,14 +85,43 @@ object GHPRReviewThreadComponent {
   fun createThreadDiff(project: Project,
                        thread: GHPRReviewThreadModel,
                        selectInToolWindowHelper: GHPRSelectInToolWindowHelper): JComponent {
+    val vm = object : CollapsibleTimelineItemViewModel {
+      override val collapsible = MutableStateFlow(false)
+
+      init {
+        thread.addAndInvokeStateChangeListener {
+          collapsible.value = thread.isResolved || thread.isOutdated
+        }
+      }
+
+      override val collapsed: Flow<Boolean> =
+        combine(thread.collapsedState, collapsible) { collapsed, collapsible ->
+          if (collapsible) collapsed else false
+        }.distinctUntilChanged()
+
+      override fun setCollapsed(collapsed: Boolean) {
+        thread.collapsedState.value = collapsed
+      }
+    }
+
+
+    val scopeProvider = ActivatableCoroutineScopeProvider()
+    return Wrapper().also {
+      scopeProvider.activateWith(it)
+
+      scopeProvider.doInScope {
+        val comp = TimelineDiffComponentFactory.createDiffWithHeader(this, vm, thread.filePath, {
+          selectInToolWindowHelper.selectChange(thread.commit?.oid, thread.filePath)
+        }) { createDiff(thread, project) }
+        it.setContent(comp)
+      }
+    }
+  }
+
+  private fun createDiff(thread: GHPRReviewThreadModel, project: Project): JComponent {
     val hunk = thread.patchHunk
     if (hunk == null || hunk.lines.isEmpty()) {
       return JLabel(CollaborationToolsBundle.message("review.thread.diff.not.loaded"))
-    }
-
-    val collapsibleState = MutableStateFlow(false)
-    thread.addAndInvokeStateChangeListener {
-      collapsibleState.value = thread.isResolved || thread.isOutdated
     }
 
     val anchorLocation = thread.originalLocation
@@ -103,11 +138,8 @@ object GHPRReviewThreadComponent {
     val truncatedHunk = PatchHunkUtil.truncateHunkBefore(hunk, hunk.lines.lastIndex - hunkLength)
 
     val anchorRange = LineRange(truncatedHunk.lines.lastIndex - anchorLength, truncatedHunk.lines.size)
-    val diffComponent = TimelineDiffComponentFactory
+    return TimelineDiffComponentFactory
       .createDiffComponent(project, EditorFactory.getInstance(), truncatedHunk, anchorRange)
-    return TimelineDiffComponentFactory.wrapWithHeader(diffComponent, thread.filePath, collapsibleState, thread.collapsedState) {
-      selectInToolWindowHelper.selectChange(thread.commit?.oid, thread.filePath)
-    }
   }
 
   private fun getThreadActionsComponent(

@@ -243,60 +243,6 @@ object TimelineDiffComponentFactory {
     }
   }
 
-  @Deprecated("deprecated in favor of a reactive solution")
-  fun wrapWithHeader(diffComponent: JComponent,
-                     filePath: @NonNls String,
-                     collapsibleState: StateFlow<Boolean>,
-                     collapsedState: MutableStateFlow<Boolean>,
-                     onFileClick: () -> Unit): JComponent {
-    val scopeProvider = ActivatableCoroutineScopeProvider()
-
-    val expandCollapseButton = InlineIconButton(EmptyIcon.ICON_16).apply {
-      actionListener = ActionListener {
-        collapsedState.update { !it }
-      }
-    }
-
-    scopeProvider.launchInScope {
-      expandCollapseButton.bindVisibilityIn(this, collapsibleState)
-    }
-
-    scopeProvider.launchInScope {
-      collapsedState.collect {
-        expandCollapseButton.icon = if (it) {
-          AllIcons.General.ExpandComponent
-        }
-        else {
-          AllIcons.General.CollapseComponent
-        }
-        expandCollapseButton.hoveredIcon = if (it) {
-          AllIcons.General.ExpandComponentHover
-        }
-        else {
-          AllIcons.General.CollapseComponentHover
-        }
-        //TODO: tooltip?
-      }
-    }
-
-    diffComponent.border = IdeBorderFactory.createBorder(SideBorder.TOP)
-
-    scopeProvider.launchInScope {
-      diffComponent.bindVisibilityIn(this, collapsedState.map { !it })
-    }
-
-    return RoundedPanel(ListLayout.vertical(0), 8).apply {
-      CollaborationToolsUIUtil.overrideUIDependentProperty(this) {
-        background = EditorColorsManager.getInstance().globalScheme.defaultBackground
-      }
-
-      add(createFileNameComponent(filePath, expandCollapseButton, onFileClick))
-      add(diffComponent)
-    }.also {
-      scopeProvider.activateWith(it)
-    }
-  }
-
   private fun createFileNameComponent(filePath: String, expandCollapseButton: JComponent, onFileClick: () -> Unit): JComponent {
     val name = PathUtil.getFileName(filePath)
     val path = PathUtil.getParentPath(filePath)
