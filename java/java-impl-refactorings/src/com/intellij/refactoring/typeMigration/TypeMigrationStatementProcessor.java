@@ -65,7 +65,8 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
         }
         return;
       }
-      if (binaryOperator == JavaTokenType.PLUS && !left.isChanged() && right.isChanged() && ltype.equalsToText("java.lang.String")) {
+      if (binaryOperator == JavaTokenType.PLUS && !left.isChanged() && right.isChanged() &&
+          ltype.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         return;
       }
     }
