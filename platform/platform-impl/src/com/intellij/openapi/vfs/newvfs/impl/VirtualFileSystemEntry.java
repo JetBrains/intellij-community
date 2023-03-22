@@ -41,7 +41,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     VfsData.markAllFilesAsUnindexed();
   }
 
-  protected static PersistentFS getPersistence() {
+  static PersistentFS getPersistence() {
     return PersistentFS.getInstance();
   }
 
@@ -162,17 +162,17 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public boolean isDirty() {
-    return getFlagInt(VfsDataFlags.DIRTY_FLAG) && !isOffline();
+    return getFlagInt(VfsDataFlags.DIRTY_FLAG) && !getFlagInt(VfsDataFlags.IS_OFFLINE);
   }
 
   @Override
   public boolean isOffline() {
-    if (getFlagInt(VfsDataFlags.IS_OFFLINE)) {
-      return true;
+    for (VirtualFileSystemEntry v = this; v != null; v = v.getParent()) {
+      if (v.getFlagInt(VfsDataFlags.IS_OFFLINE)) {
+        return true;
+      }
     }
-
-    VirtualDirectoryImpl parent = getParent();
-    return parent != null && parent.isOffline();
+    return false;
   }
 
   @Override
@@ -241,35 +241,52 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     }
   }
 
-  protected char @NotNull [] appendPathOnFileSystem(int accumulatedPathLength, int @NotNull [] positionRef) {
-    CharSequence name = getNameSequence();
-
-    char[] chars = getParent().appendPathOnFileSystem(accumulatedPathLength + 1 + name.length(), positionRef);
-    int i = positionRef[0];
-    chars[i] = '/';
-    positionRef[0] = copyString(chars, i + 1, name);
-
-    return chars;
+  private char @NotNull [] computePath(@NotNull String protocol, @NotNull String protoSeparator) {
+    int length = 0;
+    for (VirtualFileSystemEntry v = this; v != null; v = v.getParent()) {
+      if (length != 0) {
+        length++;
+      }
+      int nameLength = -v.appendMyName(null, 0);
+      length += nameLength;
+    }
+    int protocolLength = protocol.length();
+    length += protocolLength + protoSeparator.length();
+    char[] path = new char[length];
+    CharArrayUtil.getChars(protocol, path, 0);
+    CharArrayUtil.getChars(protoSeparator, path, protocolLength);
+    int i = length;
+    for (VirtualFileSystemEntry v = this; v != null; v = v.getParent()) {
+      if (i != length) {
+        // copy separator
+        path[--i] = '/';
+      }
+      i = v.appendMyName(path, i);
+    }
+    return path;
   }
 
-  private static int copyString(char @NotNull [] chars, int pos, @NotNull CharSequence s) {
-    int length = s.length();
-    CharArrayUtil.getChars(s, chars, 0, pos, length);
-    return pos + length;
+  // store my name in {@code buffer} (if not null) so that it will end at {@code endIndex}. return the start index where the name is stored.
+  @ApiStatus.Internal
+  protected int appendMyName(char @Nullable [] buffer, int endIndex) {
+    CharSequence name = getNameSequence();
+    int i = endIndex - name.length();
+    if (buffer != null) {
+      CharArrayUtil.getChars(name, buffer, i);
+    }
+    return i;
   }
 
   @Override
   public @NotNull String getUrl() {
     String protocol = getFileSystem().getProtocol();
-    int prefixLen = protocol.length() + "://".length();
-    char[] chars = appendPathOnFileSystem(prefixLen, new int[]{prefixLen});
-    copyString(chars, copyString(chars, 0, protocol), "://");
+    char[] chars = computePath(protocol, "://");
     return new String(chars);
   }
 
   @Override
   public @NotNull String getPath() {
-    return new String(appendPathOnFileSystem(0, new int[]{0}));
+    return new String(computePath("", ""));
   }
 
   @Override
@@ -507,21 +524,21 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   /**
-   * @return true if this file is symlink
+   * @return true, if this file is symlink
    */
   private boolean isSymlink() {
     return getFlagInt(VfsDataFlags.IS_SYMLINK_FLAG);
   }
 
   /**
-   * @return true if this file is "special"
+   * @return true, if this file is "special"
    */
   private boolean isSpecial() {
     return !isDirectory() && getFlagInt(VfsDataFlags.IS_SPECIAL_FLAG);
   }
 
   /**
-   * @return true if this file is a symlink or there is a symlink parent
+   * @return true, if this file is a symlink or there is a symlink parent
    */
   @ApiStatus.Internal
   public boolean thisOrParentHaveSymlink() {

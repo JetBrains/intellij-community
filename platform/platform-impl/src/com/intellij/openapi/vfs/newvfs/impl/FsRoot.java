@@ -10,6 +10,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class FsRoot extends VirtualDirectoryImpl {
   private final String myPathWithOneSlash;
@@ -36,12 +37,13 @@ public final class FsRoot extends VirtualDirectoryImpl {
   }
 
   @Override
-  protected char @NotNull [] appendPathOnFileSystem(int pathLength, int @NotNull [] position) {
+  protected int appendMyName(char @Nullable [] buffer, int endIndex) {
     int myLength = myPathWithOneSlash.length() - 1;
-    char[] chars = new char[pathLength + myLength];
-    CharArrayUtil.getChars(myPathWithOneSlash, chars, 0, position[0], myLength);
-    position[0] += myLength;
-    return chars;
+    int i = endIndex - myLength;
+    if (buffer != null) {
+      CharArrayUtil.getChars(myPathWithOneSlash, buffer, i, myLength);
+    }
+    return i;
   }
 
   @Override
