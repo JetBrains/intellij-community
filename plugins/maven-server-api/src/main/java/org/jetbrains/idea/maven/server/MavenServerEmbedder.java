@@ -33,7 +33,6 @@ public interface MavenServerEmbedder extends Remote {
 
   @Nullable
   MavenServerPullProgressIndicator customizeAndGetProgressIndicator(@Nullable MavenWorkspaceMap workspaceMap,
-                                                                    boolean failOnUnresolvedDependency,
                                                                     boolean alwaysUpdateSnapshots,
                                                                     @Nullable Properties userProperties, MavenToken token)
     throws RemoteException;

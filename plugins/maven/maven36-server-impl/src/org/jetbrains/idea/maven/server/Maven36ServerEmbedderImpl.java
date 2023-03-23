@@ -78,8 +78,8 @@ public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
   }
 
   @Override
-  protected void customizeComponents(@Nullable MavenWorkspaceMap workspaceMap, boolean failOnUnresolvedDependency) throws RemoteException {
-    super.customizeComponents(workspaceMap, failOnUnresolvedDependency);
+  protected void customizeComponents(@Nullable MavenWorkspaceMap workspaceMap) throws RemoteException {
+    super.customizeComponents(workspaceMap);
 
     //TODO: registry key to turn off
     customizeArtifactResolver();

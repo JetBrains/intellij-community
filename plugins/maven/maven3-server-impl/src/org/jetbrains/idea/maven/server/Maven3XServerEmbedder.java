@@ -655,14 +655,13 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   @Override
   public @NotNull
   MavenServerPullProgressIndicator customizeAndGetProgressIndicator(@Nullable MavenWorkspaceMap workspaceMap,
-                                                                    boolean failOnUnresolvedDependency,
                                                                     boolean alwaysUpdateSnapshots,
                                                                     @Nullable Properties userProperties, MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);
 
     try {
-      customizeComponents(workspaceMap, failOnUnresolvedDependency);
+      customizeComponents(workspaceMap);
 
       myWorkspaceMap = workspaceMap;
       myUserProperties = userProperties;
@@ -685,7 +684,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     }
   }
 
-  protected void customizeComponents(@Nullable MavenWorkspaceMap workspaceMap, boolean failOnUnresolvedDependency) throws RemoteException {
+  protected void customizeComponents(@Nullable MavenWorkspaceMap workspaceMap) throws RemoteException {
     // replace some plexus components
     if (VersionComparatorUtil.compare("3.7.0-SNAPSHOT", getMavenVersion()) < 0) {
       myContainer.addComponent(getComponent(ArtifactFactory.class, "ide"), ArtifactFactory.ROLE);
@@ -714,7 +713,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       ((CustomMaven3ArtifactFactory)artifactFactory).customize();
     }
 
-    ((CustomMaven3ArtifactResolver)getComponent(ArtifactResolver.class)).customize(workspaceMap, failOnUnresolvedDependency);
+    ((CustomMaven3ArtifactResolver)getComponent(ArtifactResolver.class)).customize(workspaceMap);
     ((CustomMaven3RepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).customize(workspaceMap);
   }
 

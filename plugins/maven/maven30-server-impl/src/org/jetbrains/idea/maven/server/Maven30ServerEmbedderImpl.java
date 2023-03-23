@@ -472,27 +472,11 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       throw new RuntimeException(e);
       // Legacy code.
     }
-    //ArtifactRepositoryLayout layout = getComponent(ArtifactRepositoryLayout.class, "default");
-    //ArtifactRepositoryFactory factory = getComponent(ArtifactRepositoryFactory.class);
-    //
-    //String url = myMavenSettings.getLocalRepository();
-    //if (!url.startsWith("file:")) url = "file://" + url;
-    //
-    //ArtifactRepository localRepository = factory.createArtifactRepository("local", url, layout, null, null);
-    //
-    //boolean snapshotPolicySet = myMavenSettings.isOffline();
-    //if (!snapshotPolicySet && snapshotUpdatePolicy == MavenServerSettings.UpdatePolicy.ALWAYS_UPDATE) {
-    //  factory.setGlobalUpdatePolicy(ArtifactRepositoryPolicy.UPDATE_POLICY_ALWAYS);
-    //}
-    //factory.setGlobalChecksumPolicy(ArtifactRepositoryPolicy.CHECKSUM_POLICY_WARN);
-    //
-    //return localRepository;
   }
 
   @NotNull
   @Override
   public MavenServerPullProgressIndicator customizeAndGetProgressIndicator(@Nullable MavenWorkspaceMap workspaceMap,
-                                                                           boolean failOnUnresolvedDependency,
                                                                            boolean alwaysUpdateSnapshots,
                                                                            @Nullable Properties userProperties,
                                                                            MavenToken token) throws RemoteException {
@@ -504,7 +488,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       if (artifactFactory instanceof CustomMaven3ArtifactFactory) {
         ((CustomMaven3ArtifactFactory)artifactFactory).customize();
       }
-      ((CustomMaven30ArtifactResolver)getComponent(ArtifactResolver.class)).customize(workspaceMap, failOnUnresolvedDependency);
+      ((CustomMaven30ArtifactResolver)getComponent(ArtifactResolver.class)).customize(workspaceMap, false);
       ((CustomMaven3RepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).customize(workspaceMap);
 
       myWorkspaceMap = workspaceMap;

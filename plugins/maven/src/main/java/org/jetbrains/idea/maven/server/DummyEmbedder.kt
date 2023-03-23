@@ -14,7 +14,6 @@ import java.util.*
 
 abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
   override fun customizeAndGetProgressIndicator(workspaceMap: MavenWorkspaceMap?,
-                                                failOnUnresolvedDependency: Boolean,
                                                 alwaysUpdateSnapshots: Boolean,
                                                 userProperties: Properties?,
                                                 token: MavenToken?): MavenServerPullProgressIndicator {
