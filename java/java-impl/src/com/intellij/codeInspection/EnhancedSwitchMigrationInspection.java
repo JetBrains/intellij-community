@@ -27,13 +27,13 @@ import static com.intellij.util.ObjectUtils.tryCast;
 
 public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean myWarnOnlyOnExpressionConversion = false;
-  public int myMaxNumberStatementsForExpression = 2;
+  public int myMaxNumberStatementsForBranch = 2;
 
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
       checkbox("myWarnOnlyOnExpressionConversion", JavaBundle.message("inspection.switch.expression.migration.warn.only.on.expression")),
-      number("myMaxNumberStatementsForExpression", JavaBundle.message("inspection.switch.expression.migration.expression.max.statements"),
+      number("myMaxNumberStatementsForBranch", JavaBundle.message("inspection.switch.expression.migration.expression.max.statements"),
              1, 20));
   }
 
@@ -57,11 +57,11 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
         if (switchKeyword == null) {
           return;
         }
-        List<SwitchReplacer> replacers = findSwitchReplacers(statement, myMaxNumberStatementsForExpression);
+        List<SwitchReplacer> replacers = findSwitchReplacers(statement, myMaxNumberStatementsForBranch);
         if (replacers.isEmpty()) return;
-        Optional<SwitchReplacer> replacerOptional = replacers.stream().filter(t -> isGenericOrWarning(t)).findFirst();
-        if (replacerOptional.isPresent()) {
-          SwitchReplacer replacer = replacerOptional.get();
+        Optional<SwitchReplacer> replacerWithWarningLevel = replacers.stream().filter(t -> isWarningLevel(t)).findFirst();
+        if (replacerWithWarningLevel.isPresent()) {
+          SwitchReplacer replacer = replacerWithWarningLevel.get();
           List<LocalQuickFix> fixes = new ArrayList<>();
           fixes.add(new ReplaceWithSwitchExpressionFix(replacer.getType()));
           if (!myWarnOnlyOnExpressionConversion && replacer.getType() == ReplacementType.Statement) {
@@ -69,10 +69,10 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
                                                  JavaBundle.message("inspection.switch.expression.migration.warn.only.on.expression"),
                                                  true));
           }
-          if (replacer.getType() == ReplacementType.Expression && replacer.getMaxLines() != null && replacer.getMaxLines() > 1) {
-            fixes.add(new SetInspectionOptionFix(EnhancedSwitchMigrationInspection.this, "myMaxNumberStatementsForExpression",
+          if (replacer.getType() == ReplacementType.Expression && replacer.getMaxNumberStatementsInBranch() != null && replacer.getMaxNumberStatementsInBranch() > 1) {
+            fixes.add(new SetInspectionOptionFix(EnhancedSwitchMigrationInspection.this, "myMaxNumberStatementsForBranch",
                                                  JavaBundle.message("inspection.switch.expression.migration.option.expression.max.statements"),
-                                                 replacer.getMaxLines() - 1));
+                                                 replacer.getMaxNumberStatementsInBranch() - 1));
           }
           holder.registerProblem(switchKeyword, JavaBundle.message("inspection.switch.expression.migration.inspection.switch.description"),
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
@@ -89,7 +89,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
                                ProblemHighlightType.INFORMATION, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
       }
 
-      private boolean isGenericOrWarning(@NotNull SwitchReplacer replacer) {
+      private boolean isWarningLevel(@NotNull SwitchReplacer replacer) {
         if (replacer.isInformLevel()) {
           return false;
         }
@@ -262,7 +262,9 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
 
     boolean isInformLevel();
 
-    Integer getMaxLines();
+    //if null, it is not applicable
+    @Nullable
+    Integer getMaxNumberStatementsInBranch();
   }
 
   private interface SwitchConversion {
@@ -312,25 +314,25 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     final @Nullable PsiReturnStatement myReturnToDelete;
     private final List<PsiStatement> myStatementsToDelete;
     private final boolean myIsInfo;
-    private final int myMaxLines;
+    private final int myMaxNumberStatementsInBranch;
 
     private ReturningSwitchReplacer(@NotNull PsiStatement statement,
                                     @NotNull List<SwitchBranch> newBranches,
                                     @Nullable PsiReturnStatement returnToDelete,
                                     @NotNull List<PsiStatement> statementsToDelete,
                                     boolean isInfo,
-                                    int maxLines) {
+                                    int maxNumberStatementsInBranch) {
       myStatement = statement;
       myNewBranches = newBranches;
       myReturnToDelete = returnToDelete;
       myStatementsToDelete = statementsToDelete;
       myIsInfo = isInfo;
-      myMaxLines = maxLines;
+      myMaxNumberStatementsInBranch = maxNumberStatementsInBranch;
     }
 
     @Override
-    public Integer getMaxLines() {
-      return myMaxLines;
+    public Integer getMaxNumberStatementsInBranch() {
+      return myMaxNumberStatementsInBranch;
     }
 
     @Override
@@ -416,7 +418,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
           result = new SwitchRuleExpressionResult(returnExpr);
         }
         else {
-          result = new SwitchStatementBranch(prepareWithYield(statements, returnExpr));
+          result = new SwitchStatementBranch(withLastStatementReplacedWithYield(statements, returnExpr));
         }
         hasReturningBranch = true;
       }
@@ -453,15 +455,15 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     return new ReturningSwitchReplacer(statement, newBranches, returnAfterSwitch, statementsToDelete, isInfo, maxLines);
   }
 
-  private static PsiStatement[] prepareWithYield(PsiStatement[] statements, @NotNull PsiExpression expr) {
+  private static PsiStatement[] withLastStatementReplacedWithYield(PsiStatement[] statements, @NotNull PsiExpression expr) {
     PsiStatement[] result = ArrayUtil.copyOf(statements);
-    PsiStatement yieldStatement = getYieldStatement(expr);
+    PsiStatement yieldStatement = createYieldStatement(expr);
     result[result.length - 1] = yieldStatement;
     return result;
   }
 
   @NotNull
-  private static PsiStatement getYieldStatement(@NotNull PsiExpression expr) {
+  private static PsiStatement createYieldStatement(@NotNull PsiExpression expr) {
     Project project = expr.getProject();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     return factory.createStatementFromText("yield " + StringUtil.trim(expr.getText())  + ";", expr);
@@ -473,25 +475,25 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     final List<SwitchBranch> myNewBranches;
     final boolean myIsRightAfterDeclaration;
     private final boolean myIsInfo;
-    private final int myMaxLines;
+    private final int myMaxNumberStatementsInBranch;
 
     private SwitchExistingVariableReplacer(@NotNull PsiVariable variableToAssign,
                                            @NotNull PsiStatement statement,
                                            List<SwitchBranch> newBranches,
                                            boolean isRightAfterDeclaration,
                                            boolean isInfo,
-                                           int maxLines) {
+                                           int maxNumberStatementsInBranch) {
       myVariableToAssign = variableToAssign;
       myStatement = statement;
       myNewBranches = newBranches;
       myIsRightAfterDeclaration = isRightAfterDeclaration;
       myIsInfo = isInfo;
-      myMaxLines = maxLines;
+      myMaxNumberStatementsInBranch = maxNumberStatementsInBranch;
     }
 
     @Override
-    public Integer getMaxLines() {
-      return myMaxLines;
+    public Integer getMaxNumberStatementsInBranch() {
+      return myMaxNumberStatementsInBranch;
     }
 
     @Override
@@ -557,7 +559,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     boolean hasAssignedBranch = false;
     boolean wasDefault = false;
     boolean isInfo = false;
-    int maxLines = 0;
+    int maxNumberStatementsInBranch = 0;
     for (int i = 0, size = branches.size(); i < size; i++) {
       OldSwitchStatementBranch branch = branches.get(i);
       if (!isConvertibleBranch(branch, i != size - 1)) return null;
@@ -566,8 +568,8 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       if (statements.length > maxNumberStatementsForExpression) {
         isInfo = true;
       }
-      if (maxLines < statements.length) {
-        maxLines = statements.length;
+      if (maxNumberStatementsInBranch < statements.length) {
+        maxNumberStatementsInBranch = statements.length;
       }
       PsiStatement last = statements[statements.length - 1];
       PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(last);
@@ -595,7 +597,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
           result = new SwitchRuleExpressionResult(rExpression);
         }
         else {
-          result = new SwitchStatementBranch(prepareWithYield(statements, rExpression));
+          result = new SwitchStatementBranch(withLastStatementReplacedWithYield(statements, rExpression));
         }
       }
       boolean isDefault = branch.isDefault();
@@ -618,7 +620,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
         return null;
       }
     }
-    return new SwitchExistingVariableReplacer(assignedVariable, statement, newBranches, isRightAfterDeclaration, isInfo, maxLines);
+    return new SwitchExistingVariableReplacer(assignedVariable, statement, newBranches, isRightAfterDeclaration, isInfo, maxNumberStatementsInBranch);
   }
 
   private static boolean existsDefaultLabelElement(@NotNull PsiSwitchLabelStatement statement) {
@@ -678,7 +680,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     }
 
     @Override
-    public Integer getMaxLines() {
+    public Integer getMaxNumberStatementsInBranch() {
       return null;
     }
 
