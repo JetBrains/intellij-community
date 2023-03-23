@@ -1,6 +1,6 @@
-package com.intellij.workspaceModel.codegen.writer.classes
+package com.intellij.workspaceModel.codegen.impl.writer.classes
 
-import com.intellij.workspaceModel.codegen.writer.LinesBuilder
+import com.intellij.workspaceModel.codegen.impl.writer.LinesBuilder
 
 internal fun LinesBuilder.lineWrapped(str: String) {
   line()

@@ -1,4 +1,4 @@
-package com.intellij.workspaceModel.codegen.writer
+package com.intellij.workspaceModel.codegen.impl.writer
 
 class LinesBuilder(
   val result: StringBuilder,

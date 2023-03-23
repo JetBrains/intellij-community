@@ -1,16 +1,16 @@
-package com.intellij.workspaceModel.codegen.writer.fields
+package com.intellij.workspaceModel.codegen.impl.writer.fields
 
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
-import com.intellij.workspaceModel.codegen.writer.getRefType
-import com.intellij.workspaceModel.codegen.writer.isRefType
-import com.intellij.workspaceModel.codegen.writer.refsFields
-import com.intellij.workspaceModel.codegen.writer.fqn1
-import com.intellij.workspaceModel.codegen.writer.fqn2
-import com.intellij.workspaceModel.codegen.writer.toQualifiedName
-import com.intellij.workspaceModel.codegen.writer.hasSetter
-import com.intellij.workspaceModel.codegen.writer.isOverride
-import com.intellij.workspaceModel.codegen.writer.javaName
+import com.intellij.workspaceModel.codegen.impl.writer.getRefType
+import com.intellij.workspaceModel.codegen.impl.writer.isRefType
+import com.intellij.workspaceModel.codegen.impl.writer.refsFields
+import com.intellij.workspaceModel.codegen.impl.writer.fqn1
+import com.intellij.workspaceModel.codegen.impl.writer.fqn2
+import com.intellij.workspaceModel.codegen.impl.writer.toQualifiedName
+import com.intellij.workspaceModel.codegen.impl.writer.hasSetter
+import com.intellij.workspaceModel.codegen.impl.writer.isOverride
+import com.intellij.workspaceModel.codegen.impl.writer.javaName
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.impl.*
 

@@ -1,15 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.workspaceModel.codegen.writer.classes
+package com.intellij.workspaceModel.codegen.impl.writer.classes
 
 import com.intellij.workspaceModel.codegen.*
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
-import com.intellij.workspaceModel.codegen.writer.fields.implWsDataFieldCode
-import com.intellij.workspaceModel.codegen.writer.fields.implWsDataFieldInitializedCode
-import com.intellij.workspaceModel.codegen.writer.fields.javaType
-import com.intellij.workspaceModel.codegen.writer.*
-import com.intellij.workspaceModel.codegen.writer.allFields
+import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsDataFieldCode
+import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsDataFieldInitializedCode
+import com.intellij.workspaceModel.codegen.impl.writer.fields.javaType
+import com.intellij.workspaceModel.codegen.impl.writer.*
+import com.intellij.workspaceModel.codegen.impl.writer.allFields
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
 import com.intellij.workspaceModel.storage.impl.UsedClassesCollector

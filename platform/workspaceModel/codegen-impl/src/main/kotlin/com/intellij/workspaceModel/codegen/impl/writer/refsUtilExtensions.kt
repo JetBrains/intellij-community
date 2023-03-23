@@ -1,9 +1,9 @@
-package com.intellij.workspaceModel.codegen.writer
+package com.intellij.workspaceModel.codegen.impl.writer
 
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.OwnProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
-import com.intellij.workspaceModel.codegen.writer.fields.javaType
+import com.intellij.workspaceModel.codegen.impl.writer.fields.javaType
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
 val ObjClass<*>.refsFields: List<OwnProperty<*, *>>

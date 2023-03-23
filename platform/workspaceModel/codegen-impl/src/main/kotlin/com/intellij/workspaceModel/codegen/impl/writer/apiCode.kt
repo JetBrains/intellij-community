@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.workspaceModel.codegen.writer
+package com.intellij.workspaceModel.codegen.impl.writer
 
-import com.intellij.workspaceModel.codegen.writer.classes.*
+import com.intellij.workspaceModel.codegen.impl.writer.classes.*
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.OwnProperty
@@ -10,13 +10,13 @@ import com.intellij.workspaceModel.codegen.engine.GenerationProblem
 import com.intellij.workspaceModel.codegen.engine.ProblemLocation
 import com.intellij.workspaceModel.codegen.engine.SKIPPED_TYPES
 import com.intellij.workspaceModel.codegen.engine.impl.ProblemReporter
-import com.intellij.workspaceModel.codegen.writer.fields.javaMutableType
-import com.intellij.workspaceModel.codegen.writer.fields.javaType
-import com.intellij.workspaceModel.codegen.writer.fields.wsCode
-import com.intellij.workspaceModel.codegen.writer.fqn
-import com.intellij.workspaceModel.codegen.writer.fqn7
-import com.intellij.workspaceModel.codegen.writer.lines
-import com.intellij.workspaceModel.codegen.writer.*
+import com.intellij.workspaceModel.codegen.impl.writer.fields.javaMutableType
+import com.intellij.workspaceModel.codegen.impl.writer.fields.javaType
+import com.intellij.workspaceModel.codegen.impl.writer.fields.wsCode
+import com.intellij.workspaceModel.codegen.impl.writer.fqn
+import com.intellij.workspaceModel.codegen.impl.writer.fqn7
+import com.intellij.workspaceModel.codegen.impl.writer.lines
+import com.intellij.workspaceModel.codegen.impl.writer.*
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet

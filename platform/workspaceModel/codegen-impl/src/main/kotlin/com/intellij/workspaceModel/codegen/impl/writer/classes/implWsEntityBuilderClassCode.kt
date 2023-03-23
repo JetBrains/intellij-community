@@ -1,10 +1,10 @@
-package com.intellij.workspaceModel.codegen.writer.classes
+package com.intellij.workspaceModel.codegen.impl.writer.classes
 
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
-import com.intellij.workspaceModel.codegen.writer.*
-import com.intellij.workspaceModel.codegen.writer.fields.implWsBuilderFieldCode
-import com.intellij.workspaceModel.codegen.writer.fields.implWsBuilderIsInitializedCode
+import com.intellij.workspaceModel.codegen.impl.writer.*
+import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsBuilderFieldCode
+import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsBuilderIsInitializedCode
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity

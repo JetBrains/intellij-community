@@ -1,4 +1,4 @@
-package com.intellij.workspaceModel.codegen.writer
+package com.intellij.workspaceModel.codegen.impl.writer
 
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage

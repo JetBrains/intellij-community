@@ -1,16 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.workspaceModel.codegen.writer.classes
+package com.intellij.workspaceModel.codegen.impl.writer.classes
 
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
-import com.intellij.workspaceModel.codegen.writer.fields.javaMutableType
-import com.intellij.workspaceModel.codegen.writer.isRefType
-import com.intellij.workspaceModel.codegen.writer.LinesBuilder
-import com.intellij.workspaceModel.codegen.writer.fqn
-import com.intellij.workspaceModel.codegen.writer.lines
-import com.intellij.workspaceModel.codegen.writer.toQualifiedName
-import com.intellij.workspaceModel.codegen.writer.allFields
+import com.intellij.workspaceModel.codegen.impl.writer.fields.javaMutableType
+import com.intellij.workspaceModel.codegen.impl.writer.isRefType
+import com.intellij.workspaceModel.codegen.impl.writer.LinesBuilder
+import com.intellij.workspaceModel.codegen.impl.writer.fqn
+import com.intellij.workspaceModel.codegen.impl.writer.lines
+import com.intellij.workspaceModel.codegen.impl.writer.toQualifiedName
+import com.intellij.workspaceModel.codegen.impl.writer.allFields
 import com.intellij.workspaceModel.storage.SymbolicEntityId
 import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
 

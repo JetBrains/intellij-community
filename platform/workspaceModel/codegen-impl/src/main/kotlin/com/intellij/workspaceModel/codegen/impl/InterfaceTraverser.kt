@@ -1,13 +1,20 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.workspaceModel.codegen
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("unused")
+package com.intellij.workspaceModel.codegen.impl
 
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.OwnProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
-import com.intellij.workspaceModel.codegen.writer.fields.javaType
-import com.intellij.workspaceModel.codegen.writer.LinesBuilder
-import com.intellij.workspaceModel.codegen.writer.isRefType
+import com.intellij.workspaceModel.codegen.impl.writer.fields.javaType
+import com.intellij.workspaceModel.codegen.impl.writer.LinesBuilder
+import com.intellij.workspaceModel.codegen.impl.writer.isRefType
 
+/**
+ * Functionality is unused for some time already. It was decided to remove the correspondent test
+ * to simplify migration to codegen as a JAR.
+ *
+ * Latest commit with the test class content: `da48f09a`
+ */
 class InterfaceTraverser {
   fun traverse(myInterface: ObjClass<*>, visitor: InterfaceVisitor): Boolean {
     for (field in myInterface.fields) {

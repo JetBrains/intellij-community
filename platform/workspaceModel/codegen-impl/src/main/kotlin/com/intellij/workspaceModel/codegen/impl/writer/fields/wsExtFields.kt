@@ -1,10 +1,10 @@
-package com.intellij.workspaceModel.codegen.writer.fields
+package com.intellij.workspaceModel.codegen.impl.writer.fields
 
 import com.intellij.workspaceModel.codegen.deft.meta.ExtProperty
-import com.intellij.workspaceModel.codegen.writer.getRefType
-import com.intellij.workspaceModel.codegen.writer.javaBuilderName
-import com.intellij.workspaceModel.codegen.writer.fqn
-import com.intellij.workspaceModel.codegen.writer.lines
+import com.intellij.workspaceModel.codegen.impl.writer.getRefType
+import com.intellij.workspaceModel.codegen.impl.writer.javaBuilderName
+import com.intellij.workspaceModel.codegen.impl.writer.fqn
+import com.intellij.workspaceModel.codegen.impl.writer.lines
 import org.jetbrains.deft.annotations.Child
 
 val ExtProperty<*, *>.wsCode: String
