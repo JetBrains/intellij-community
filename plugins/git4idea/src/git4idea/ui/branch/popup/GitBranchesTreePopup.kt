@@ -408,7 +408,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     accessibleContext.accessibleName = GitBundle.message("git.branches.popup.tree.accessible.name")
 
     ClientProperty.put(this, DefaultTreeUI.LARGE_MODEL_ALLOWED, true)
-    rowHeight = treeRowHeight
+    rowHeight = if (ExperimentalUI.isNewUI()) 0 else treeRowHeight // in the new UI we need variable height for separators
     isLargeModel = true
     expandsSelectedPaths = true
     SmartExpander.installOn(this)
@@ -739,8 +739,10 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     internal fun createTreeSeparator(text: @NlsContexts.Separator String? = null) =
       SeparatorWithText().apply {
         caption = text
-        border = JBUI.Borders.emptyTop(
-          if (text == null) treeRowHeight / 2 else JBUIScale.scale(SeparatorWithText.DEFAULT_H_GAP))
+        if (!ExperimentalUI.isNewUI()) { // the new UI uses variable height, no need to add extra space here, it's too large
+          border = JBUI.Borders.emptyTop(
+            if (text == null) treeRowHeight / 2 else JBUIScale.scale(SeparatorWithText.DEFAULT_H_GAP))
+        }
       }
 
     private fun uiScope(parent: Disposable) =
