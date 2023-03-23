@@ -49,7 +49,6 @@ import org.apache.maven.profiles.activation.OperatingSystemProfileActivator;
 import org.apache.maven.profiles.activation.ProfileActivator;
 import org.apache.maven.profiles.activation.SystemPropertyProfileActivator;
 import org.apache.maven.project.*;
-import org.apache.maven.project.artifact.InvalidDependencyVersionException;
 import org.apache.maven.project.inheritance.DefaultModelInheritanceAssembler;
 import org.apache.maven.project.interpolation.AbstractStringBasedModelInterpolator;
 import org.apache.maven.project.interpolation.ModelInterpolationException;
@@ -821,6 +820,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     request.setUpdateSnapshots(myAlwaysUpdateSnapshots);
 
     final Collection<MavenExecutionResult> executionResults = new ArrayList<>();
+    Map<ProjectBuildingResult, List<Exception>> buildingResultsToResolveDependencies = new HashMap<>();
 
     executeWithMavenSession(request, (Runnable)() -> {
       try {
@@ -844,10 +844,36 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
         boolean addUnresolved = System.getProperty("idea.maven.no.use.dependency.graph") == null;
 
+        for (ProjectBuildingResult buildingResult : buildingResults) {
+          MavenProject project = buildingResult.getProject();
+
+          if (project == null) {
+            List<Exception> exceptions = new ArrayList<>();
+            for (ModelProblem problem : buildingResult.getProblems()) {
+              exceptions.add(problem.getException());
+            }
+            executionResults.add(new MavenExecutionResult(buildingResult.getPomFile(), exceptions));
+            continue;
+          }
+
+          List<Exception> exceptions = new ArrayList<>();
+
+          loadExtensions(project, exceptions);
+
+          project.setDependencyArtifacts(project.createArtifacts(getComponent(ArtifactFactory.class), null, null));
+
+          if (USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING) {
+            executionResults.add(resolveMvn2CompatResult(project, exceptions, listeners, myLocalRepository));
+          }
+          else {
+            buildingResultsToResolveDependencies.put(buildingResult, exceptions);
+          }
+        }
+
         boolean runInParallel = canResolveDependenciesInParallel(forceResolveDependenciesSequentially);
         Collection<MavenExecutionResult> execResults =
-          MavenServerParallelRunner.execute(runInParallel, buildingResults, buildingResult ->
-            resolveBuildingResult(buildingResult, repositorySession, addUnresolved, listeners)
+          MavenServerParallelRunner.execute(runInParallel, buildingResultsToResolveDependencies.entrySet(), entry ->
+            resolveBuildingResult(repositorySession, addUnresolved, entry.getKey(), entry.getValue())
           );
 
         executionResults.addAll(execResults);
@@ -860,40 +886,23 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     return executionResults;
   }
 
-  private MavenExecutionResult resolveBuildingResult(ProjectBuildingResult buildingResult,
-                                                     RepositorySystemSession repositorySession,
+  @NotNull
+  private MavenExecutionResult resolveBuildingResult(RepositorySystemSession repositorySession,
                                                      boolean addUnresolved,
-                                                     List<ResolutionListener> listeners) throws InvalidDependencyVersionException {
+                                                     ProjectBuildingResult buildingResult,
+                                                     List<Exception> exceptions) {
     MavenProject project = buildingResult.getProject();
-
-    if (project == null) {
-      List<Exception> exceptions = new ArrayList<>();
-      for (ModelProblem problem : buildingResult.getProblems()) {
-        exceptions.add(problem.getException());
-      }
-      return new MavenExecutionResult(buildingResult.getPomFile(), exceptions);
-    }
-
-    List<ModelProblem> modelProblems = new ArrayList<>();
-
-    if (buildingResult.getProblems() != null) {
-      modelProblems.addAll(buildingResult.getProblems());
-    }
-
-    List<Exception> exceptions = new ArrayList<>();
-
-    loadExtensions(project, exceptions);
-
-    project.setDependencyArtifacts(project.createArtifacts(getComponent(ArtifactFactory.class), null, null));
-
-    if (USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING) {
-      return resolveMvn2CompatResult(project, exceptions, listeners, myLocalRepository);
-    }
-
     try {
+      List<ModelProblem> modelProblems = new ArrayList<>();
+
+      if (buildingResult.getProblems() != null) {
+        modelProblems.addAll(buildingResult.getProblems());
+      }
+
       DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
       Set<Artifact> artifacts = resolveArtifacts(dependencyResolutionResult, addUnresolved);
       project.setArtifacts(artifacts);
+
       return new MavenExecutionResult(project, dependencyResolutionResult, exceptions, modelProblems);
     }
     catch (Exception e) {
