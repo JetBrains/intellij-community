@@ -1,97 +1,97 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui;
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
-import com.intellij.ide.ui.VirtualFileAppearanceListener;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectCloseListener;
-import com.intellij.openapi.util.LowMemoryWatcher;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.FixedHashMap;
-import com.intellij.util.messages.MessageBusConnection;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.ui
 
-import javax.swing.*;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
+import com.intellij.ide.ui.VirtualFileAppearanceListener
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCloseListener
+import com.intellij.openapi.util.LowMemoryWatcher
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.util.SystemProperties
+import com.intellij.util.containers.FixedHashMap
+import java.util.function.Function
+import javax.swing.Icon
 
-public final class IconDeferrerImpl extends IconDeferrer {
-  private static final ThreadLocal<Boolean> evaluationIsInProgress = ThreadLocal.withInitial(() -> Boolean.FALSE);
-  private final Object LOCK = new Object();
-  private final Map<Object, Icon> iconCache = new FixedHashMap<>(SystemProperties.getIntProperty("ide.icons.deferrerCacheSize", 1000)); // guarded by LOCK
-  private long myLastClearTimestamp; // guarded by LOCK
+class IconDeferrerImpl internal constructor() : IconDeferrer() {
+  companion object {
+    private val evaluationIsInProgress = ThreadLocal.withInitial { false }
 
-  public IconDeferrerImpl() {
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
-    connection.subscribe(PsiModificationTracker.TOPIC, this::clearCache);
+    fun evaluateDeferred(runnable: Runnable) {
+      try {
+        evaluationIsInProgress.set(true)
+        runnable.run()
+      }
+      finally {
+        evaluationIsInProgress.set(false)
+      }
+    }
+  }
+
+  private val LOCK = Any()
+
+  // guarded by LOCK
+  private val iconCache = FixedHashMap<Any, Icon>(SystemProperties.getIntProperty("ide.icons.deferrerCacheSize", 1000))
+
+  // guarded by LOCK
+  private var lastClearTimestamp: Long = 0
+
+  init {
+    val connection = ApplicationManager.getApplication().messageBus.connect()
+    connection.subscribe(PsiModificationTracker.TOPIC, PsiModificationTracker.Listener { clearCache() })
     // update "locked" icon
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-      @Override
-      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
-        clearCache();
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+      override fun after(events: List<VFileEvent>) {
+        clearCache()
       }
-    });
-    connection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
-      @Override
-      public void projectClosed(@NotNull Project project) {
-        clearCache();
+    })
+    connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
+      override fun projectClosed(project: Project) {
+        clearCache()
       }
-    });
-    connection.subscribe(VirtualFileAppearanceListener.TOPIC, __ -> clearCache());
-    LowMemoryWatcher.register(this::clearCache, connection);
+    })
+    connection.subscribe(VirtualFileAppearanceListener.TOPIC, VirtualFileAppearanceListener { clearCache() })
+    LowMemoryWatcher.register({ clearCache() }, connection)
   }
 
-  @Override
-  public void clearCache() {
-    synchronized (LOCK) {
-      iconCache.clear();
-      myLastClearTimestamp++;
+  override fun clearCache() {
+    synchronized(LOCK) {
+      iconCache.clear()
+      lastClearTimestamp++
     }
   }
 
-  @Override
-  public <T> @NotNull Icon defer(@Nullable Icon base, T param, @NotNull Function<? super T, ? extends Icon> evaluator) {
-    if (evaluationIsInProgress.get().booleanValue()) {
-      return evaluator.apply(param);
+  override fun <T> defer(base: Icon?, param: T, evaluator: Function<in T, out Icon>): Icon {
+    if (evaluationIsInProgress.get()) {
+      return evaluator.apply(param)
     }
 
-    synchronized (LOCK) {
-      Icon cached = iconCache.get(param);
+    synchronized(LOCK) {
+      val cached = iconCache.get(param)
       if (cached != null) {
-        return cached;
+        return cached
       }
-      long started = myLastClearTimestamp;
-      Icon result = new DeferredIconImpl<>(base, param, true, evaluator, (DeferredIcon source, Icon r) -> {
-        synchronized (LOCK) {
+
+      val started = lastClearTimestamp
+      val result = DeferredIconImpl(baseIcon = base,
+                                    param = param,
+                                    needReadAction = true,
+                                    evaluator = evaluator) { source, r ->
+        synchronized(LOCK) {
           // check if our result is not outdated yet
-          if (started == myLastClearTimestamp) {
-            iconCache.put(((DeferredIconImpl<?>)source).param, r);
+          if (started == lastClearTimestamp) {
+            iconCache.put((source as DeferredIconImpl<*>?)!!.param!!, r)
           }
         }
-      });
-      iconCache.put(param, result);
-      return result;
+      }
+      iconCache.put(param, result)
+      return result
     }
   }
 
-  static void evaluateDeferred(@NotNull Runnable runnable) {
-    try {
-      evaluationIsInProgress.set(Boolean.TRUE);
-      runnable.run();
-    }
-    finally {
-      evaluationIsInProgress.set(Boolean.FALSE);
-    }
-  }
-
-  @Override
-  public boolean equalIcons(Icon icon1, Icon icon2) {
-    return DeferredIconImpl.Companion.equalIcons(icon1, icon2);
-  }
+  override fun equalIcons(icon1: Icon, icon2: Icon): Boolean = DeferredIconImpl.equalIcons(icon1, icon2)
 }
