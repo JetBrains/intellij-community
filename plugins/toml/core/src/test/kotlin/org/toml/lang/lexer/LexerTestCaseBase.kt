@@ -27,7 +27,7 @@ abstract class LexerTestCaseBase : LexerTestCase(), TestCase {
 
     // NOTE(matkad): this is basically a copy-paste of doFileTest.
     // The only difference is that encoding is set to utf-8
-    protected fun doTest(lexer: Lexer = createLexer()) {
+    protected fun doTest() {
         val filePath = pathToSourceTestFile()
         var text = ""
         try {
@@ -36,7 +36,7 @@ abstract class LexerTestCaseBase : LexerTestCase(), TestCase {
         } catch (e: IOException) {
             fail("can't load file " + filePath + ": " + e.message)
         }
-        doTest(text, null, lexer)
+        doTest(text, null)
     }
 
     override fun doTest(@NonNls text: String, expected: String?, lexer: Lexer) {
