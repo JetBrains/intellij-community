@@ -569,7 +569,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
       rnd.nextInt(),
       rnd.nextInt(1, Integer.MAX_VALUE),//nameId should be >0
       rnd.nextInt(),
-      rnd.nextInt(),
+      rnd.nextInt(0, Integer.MAX_VALUE),//attributeRecordId should be >=0
       rnd.nextInt(),
       //rnd.nextBoolean() ? System.currentTimeMillis() : Long.MAX_VALUE,
       System.currentTimeMillis(),
