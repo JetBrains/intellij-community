@@ -224,7 +224,7 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
 
   private val mainPanel = MyMainPanel()
 
-  override fun getTreeCellRendererComponent(tree: JTree?,
+  override fun getTreeCellRendererComponent(tree: JTree,
                                             value: Any?,
                                             selected: Boolean,
                                             expanded: Boolean,
@@ -257,7 +257,7 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
     }
 
     val (inOutIcon, inOutTooltip) = getIncomingOutgoingIconWithTooltip(userObject)
-    tree?.toolTipText = inOutTooltip
+    tree.toolTipText = inOutTooltip
 
     incomingOutgoingLabel.apply {
       icon = inOutIcon
@@ -286,7 +286,7 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
       }
     }
 
-    if (tree != null && value != null && userObject !is PopupFactoryImpl.ActionItem) {
+    if (value != null && userObject !is PopupFactoryImpl.ActionItem) {
       SpeedSearchUtil.applySpeedSearchHighlightingFiltered(tree, value, mainTextComponent, true, selected)
     }
 
@@ -294,7 +294,7 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
       mainPanel.preferredSize = mainPanel.preferredSize.apply { height = GitBranchesTreePopup.treeRowHeight }
     }
     else if (updateScaleHelper.saveScaleAndUpdateUIIfChanged(mainPanel)) {
-      tree?.rowHeight = GitBranchesTreePopup.treeRowHeight
+      tree.rowHeight = GitBranchesTreePopup.treeRowHeight
     }
 
     return mainPanel
