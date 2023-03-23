@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.codegen.writer
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.OwnProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
+import com.intellij.workspaceModel.codegen.writer.fields.javaType
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
 val ObjClass<*>.refsFields: List<OwnProperty<*, *>>
@@ -18,7 +19,7 @@ fun ValueType<*>.getRefType(): ValueType.ObjRef<*> = when (this) {
   is ValueType.ObjRef<*> -> this
   is ValueType.Optional<*> -> type.getRefType()
   is ValueType.Collection<*, *> -> elementType.getRefType()
-  else -> error("Unsupported type of requester, should be called only if `isRefType` is true")
+  else -> error("${this.javaType} isn't a reference type. The method has to be called only for the reference type of fields")
 }
 
 fun ValueType<*>.isRefType(): Boolean = when (this) {

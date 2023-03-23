@@ -6,15 +6,14 @@ import com.intellij.workspaceModel.codegen.engine.CodeGenerator
 import com.intellij.workspaceModel.codegen.engine.GeneratedCode
 import com.intellij.workspaceModel.codegen.engine.GenerationProblem
 import com.intellij.workspaceModel.codegen.engine.GenerationResult
-import com.intellij.workspaceModel.codegen.writer.generateBuilderCode
-import com.intellij.workspaceModel.codegen.writer.generateCompanionObject
-import com.intellij.workspaceModel.codegen.writer.generateExtensionCode
-import com.intellij.workspaceModel.codegen.writer.implWsCode
+import com.intellij.workspaceModel.codegen.writer.*
 
 class CodeGeneratorImpl : CodeGenerator {
   override fun generate(module: CompiledObjModule): GenerationResult {
     val problems = ArrayList<GenerationProblem>()
     val reporter = ProblemReporter { problems.add(it) }
+
+    checkExtensionFields(module, reporter)
     val objClassToBuilderInterface = module.types.associateWith {
       val builderInterface = it.generateBuilderCode(reporter)
       builderInterface
