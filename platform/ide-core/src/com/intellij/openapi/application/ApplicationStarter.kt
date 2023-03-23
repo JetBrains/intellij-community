@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.intellij.ide.CliResult
@@ -51,7 +51,7 @@ interface ApplicationStarter {
 
   /**
    * Command-line switch to start with this runner.
-   * For example, return `"inspect"` if you'd like to start an app with `"idea.exe inspect ..."` command.
+   * For example, return `"inspect"` if you would like to start an app with `"idea.exe inspect ..."` command.
    */
   @Deprecated("Specify it as `id` for extension definition in a plugin descriptor")
   val commandName: String?
@@ -81,13 +81,11 @@ interface ApplicationStarter {
 
   /**
    * Applications that are capable of processing command-line arguments within a running IDE instance
-   * should return `true` from this method and implement [.processExternalCommandLineAsync].
-   *
-   * @see .processExternalCommandLineAsync
+   * should return `true` from this method and implement [processExternalCommandLine].
    */
   fun canProcessExternalCommandLine(): Boolean = false
 
-  /** @see .canProcessExternalCommandLine */
+  /** @see [canProcessExternalCommandLine] */
   suspend fun processExternalCommandLine(args: List<String>, currentDirectory: String?): CliResult =
     throw UnsupportedOperationException("Class ${javaClass.name} must implement `processExternalCommandLineAsync()`")
 }

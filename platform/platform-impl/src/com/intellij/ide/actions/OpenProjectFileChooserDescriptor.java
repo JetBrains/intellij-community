@@ -70,13 +70,11 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
     return true;
   }
 
-  private static Icon getImporterIcon(VirtualFile file) {
-    ProjectOpenProcessor provider = ProjectOpenProcessor.getImportProvider(file);
-    if (provider != null) {
-      return file.isDirectory() && provider.lookForProjectsInDirectory() ? ProductIcons.getInstance().getProjectNodeIcon()
-                                                                         : provider.getIcon(file);
-    }
-    return null;
+  private static @Nullable Icon getImporterIcon(VirtualFile file) {
+    var provider = ProjectOpenProcessor.getImportProvider(file);
+    return provider == null ? null :
+           file.isDirectory() && provider.lookForProjectsInDirectory() ? ProductIcons.getInstance().getProjectNodeIcon() :
+           provider.getIcon(file);
   }
 
   public static boolean isProjectFile(@NotNull VirtualFile file) {

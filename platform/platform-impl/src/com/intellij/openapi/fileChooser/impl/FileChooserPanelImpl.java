@@ -777,7 +777,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   private void update(int id, Runnable whenActive, Runnable whenCancelled) {
     UIUtil.invokeLaterIfNeeded(() -> {
       synchronized (myLock) {
-        boolean active = myCurrentTask.first == id && !myCurrentTask.second.isCancelled();
+        var active = myCurrentTask.first == id && !myCurrentTask.second.isCancelled();
         (active ? whenActive : whenCancelled).run();
       }
     });
@@ -882,12 +882,12 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean focused, int row, int column) {
       var component = myDelegate.getTableCellRendererComponent(table, value, selected, false, row, column);
       if (component instanceof JLabel label) {
-        customizeComponent(row, column, label);
+        customizeComponent(table, row, column, label);
       }
       return component;
     }
 
-    protected abstract void customizeComponent(int row, int column, JLabel label);
+    protected abstract void customizeComponent(JTable table, int row, int column, JLabel label);
   }
 
   private static final class MyHeaderCellRenderer extends MyDelegatingTableCellRenderer {
@@ -896,19 +896,19 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     }
 
     @Override
-    protected void customizeComponent(int row, int column, JLabel label) {
+    protected void customizeComponent(JTable table, int row, int column, JLabel label) {
       label.setHorizontalAlignment(column == 0 ? SwingConstants.LEFT : SwingConstants.RIGHT);
     }
   }
 
-  private final class MyTableCellRenderer extends MyDelegatingTableCellRenderer {
+  private static final class MyTableCellRenderer extends MyDelegatingTableCellRenderer {
     private MyTableCellRenderer(TableCellRenderer delegate) {
       super(delegate);
     }
 
     @Override
-    protected void customizeComponent(int row, int column, JLabel label) {
-      var item = myList.getRow(row);
+    protected void customizeComponent(JTable table, int row, int column, JLabel label) {
+      @SuppressWarnings("unchecked") var item = ((TableView<FsItem>)table).getRow(row);
       label.setIcon(column == 0 ? item.icon : null);
       label.setHorizontalAlignment(column == 0 ? SwingConstants.LEFT : SwingConstants.RIGHT);
       label.setToolTipText(column == 2 ? DateFormatUtil.formatDateTime(item.lastUpdated) : null);
