@@ -7,6 +7,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
@@ -150,7 +151,9 @@ public final class GraphTableModel extends AbstractTableModel {
   }
 
   public @Nullable CommitId getCommitId(int row) {
-    return myLogData.getCommitId(getIdAtRow(row));
+    VcsCommitMetadata metadata = getCommitMetadata(row);
+    if (metadata instanceof LoadingDetails) return null;
+    return new CommitId(metadata.getId(), metadata.getRoot());
   }
 
   public @NotNull VcsLogCommitSelection createSelection(int[] rows) {
