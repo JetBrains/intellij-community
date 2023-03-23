@@ -21,19 +21,18 @@ public final class GradleTestsExecutionConsoleOutputProcessor {
   public static void onOutput(@NotNull GradleTestsExecutionConsole executionConsole,
                               @NotNull String text,
                               @NotNull Key<?> processOutputType) {
-    String eventMessage = getEventMessage(executionConsole, text, processOutputType);
+    var eventMessage = getEventMessage(executionConsole, text, processOutputType);
     if (eventMessage == null) return;
 
     try {
-      final TestEventXmlView xml = new TestEventXPPXmlView(eventMessage);
-
-      final TestEventType eventType = TestEventType.fromValue(xml.getTestEventType());
+      var xml = new TestEventXPPXmlView(eventMessage);
+      var eventType = TestEventType.fromValue(xml.getTestEventType());
       var testEventProcessor = createTestEventProcessor(eventType, executionConsole);
       if (testEventProcessor != null) {
         testEventProcessor.process(xml);
       }
     }
-    catch (TestEventXmlView.XmlParserException e) {
+    catch (TestEventXmlView.XmlParserException | NumberFormatException e) {
       LOG.error("Gradle test events parser error", e);
     }
   }

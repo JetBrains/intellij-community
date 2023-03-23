@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface TestEventProcessor {
 
-  void process(@NotNull final TestEventXmlView eventXml) throws TestEventXmlView.XmlParserException;
+  void process(@NotNull final TestEventXmlView eventXml) throws TestEventXmlView.XmlParserException, NumberFormatException;
 
   void process(@NotNull final ExternalSystemProgressEvent<? extends TestOperationDescriptor> testEvent);
 }

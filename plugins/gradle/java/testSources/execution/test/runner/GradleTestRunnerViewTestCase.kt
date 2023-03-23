@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.execution.test.runner
 
 import com.intellij.execution.testframework.AbstractTestProxy
-import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod

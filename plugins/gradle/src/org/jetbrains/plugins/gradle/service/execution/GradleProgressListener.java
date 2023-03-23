@@ -69,7 +69,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
   public void statusChanged(ProgressEvent event) {
     sendProgressToOutputIfNeeded(event);
 
-    var progressBuildEvent = GradleProgressEventConverter.createProgressBuildEvent(myTaskId, myTaskId, event);
+    var progressBuildEvent = GradleProgressEventConverter.convertProgressBuildEvent(myTaskId, myTaskId, event);
     if (progressBuildEvent != null) {
       if (event instanceof StatusEvent) {
         // update IDE progress determinate indicator
@@ -91,13 +91,13 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
   public void statusChanged(org.gradle.tooling.ProgressEvent event) {
     var eventDescription = event.getDescription();
     if (!maybeReportModelBuilderMessage(eventDescription)) {
-      var progressBuildEvent = GradleProgressEventConverter.legacyCreateProgressBuildEvent(myTaskId, myTaskId, eventDescription);
+      var progressBuildEvent = GradleProgressEventConverter.legacyConvertProgressBuildEvent(myTaskId, myTaskId, eventDescription);
       if (progressBuildEvent != null && !progressBuildEvent.equals(myLastStatusChange)) {
         myListener.onStatusChange(progressBuildEvent);
         myLastStatusChange = progressBuildEvent;
       }
 
-      var taskNotificationEvent = GradleProgressEventConverter.legacyCreateTaskNotificationEvent(myTaskId, eventDescription);
+      var taskNotificationEvent = GradleProgressEventConverter.legacyConvertTaskNotificationEvent(myTaskId, eventDescription);
       myListener.onStatusChange(taskNotificationEvent);
 
       reportGradleDaemonStartingEvent(eventDescription);
