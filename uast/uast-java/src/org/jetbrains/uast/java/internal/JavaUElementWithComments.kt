@@ -15,9 +15,7 @@
  */
 package org.jetbrains.uast.java.internal
 
-import com.intellij.psi.PsiComment
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.*
 import org.jetbrains.uast.UComment
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
@@ -38,9 +36,15 @@ interface JavaUElementWithComments : UElement {
 
   private fun PsiElement.nearestCommentSibling(forward: Boolean): PsiComment? {
     var sibling = if (forward) nextSibling else prevSibling
-    while (sibling is PsiWhiteSpace && !sibling.text.contains('\n')) {
+    while ((sibling is PsiWhiteSpace || sibling.isSemicolon()) && !sibling.text.contains('\n')) {
       sibling = if (forward) sibling.nextSibling else sibling.prevSibling
     }
     return sibling as? PsiComment
+  }
+
+  private fun PsiElement?.isSemicolon(): Boolean {
+    if (this !is PsiJavaToken) return false
+
+    return tokenType == JavaTokenType.SEMICOLON
   }
 }

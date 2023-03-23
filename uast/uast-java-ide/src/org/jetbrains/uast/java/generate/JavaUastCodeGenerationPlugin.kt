@@ -69,14 +69,13 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
     val newPsi = newElement.sourcePsi ?: return null
 
     adjustChainStyleToMethodCalls(oldPsi, newPsi)
-
     val factory = JavaPsiFacade.getElementFactory(oldPsi.project)
     val updOldPsi = when {
       (newPsi is PsiBlockStatement || newPsi is PsiCodeBlock) && oldPsi.parent is PsiExpressionStatement -> oldPsi.parent
       else -> oldPsi
     }
     val updNewPsi = when {
-      updOldPsi is PsiStatement && newPsi is PsiExpression -> factory.createExpressionStatement(newPsi) ?: return null
+      updOldPsi is PsiStatement && newPsi is PsiExpression -> factory.createExpressionStatement(newPsi, oldElement) ?: return null
       updOldPsi is PsiCodeBlock && newPsi is PsiBlockStatement -> newPsi.codeBlock
       else -> newPsi
     }
@@ -137,10 +136,20 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
   override fun changeLabel(returnExpression: UReturnExpression, context: PsiElement): UReturnExpression = returnExpression
 }
 
-private fun PsiElementFactory.createExpressionStatement(expression: PsiExpression): PsiStatement? {
-  val statement = createStatementFromText("x;", null) as? PsiExpressionStatement ?: return null
+private fun PsiElementFactory.createExpressionStatement(expression: PsiExpression, oldElement: UElement? = null): PsiStatement? {
+  val comments = oldElement?.comments
+  val textStatement = if (comments.isNullOrEmpty()) "x;" else createStatementTextWithComment(comments)
+  
+  val statement = createStatementFromText(textStatement, null) as? PsiExpressionStatement ?: return null
+
   statement.expression.replace(expression)
   return statement
+}
+
+private fun createStatementTextWithComment(comments: List<UComment>): String {
+  val comment = comments.joinToString(separator = " ") { it.text }
+  
+  return "x; $comment"
 }
 
 class JavaUastElementFactory(private val project: Project) : UastElementFactory {
@@ -397,7 +406,7 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
       }
 
       expression.sourcePsi?.let { psi ->
-        psi as? PsiStatement ?: (psi as? PsiExpression)?.let { psiFactory.createExpressionStatement(it) }
+        psi as? PsiStatement ?: (psi as? PsiExpression)?.let { psiFactory.createExpressionStatement(it, expression) }
       }?.let { blockStatement.codeBlock.add(it) } ?: return null
     }
 
