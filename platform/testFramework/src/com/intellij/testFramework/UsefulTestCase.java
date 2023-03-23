@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -76,6 +76,8 @@ import static org.junit.Assume.assumeTrue;
  * <p>
  * To use JUnit 4, annotate your test subclass with {@code @RunWith(JUnit4.class)} or any other (like {@code Parametrized.class}),
  * and you are all set.
+ * If you're looking for JUnit 4 for Assume support and still have JUnit 3 tests,
+ * consider using {@code @RunWith(JUnit38AssumeSupportRunner.class)}.
  * <p>
  * Don't annotate the JUnit 3 {@linkplain #setUp()}/{@linkplain #tearDown()} methods as {@code @Before}/{@code @After},
  * and don't call them from other {@code @Before}/{@code @After} methods.
