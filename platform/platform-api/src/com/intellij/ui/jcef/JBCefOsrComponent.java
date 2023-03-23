@@ -184,7 +184,17 @@ class JBCefOsrComponent extends JPanel {
   @Override
   protected void processKeyEvent(KeyEvent e) {
     super.processKeyEvent(e);
+
+    // Vladimir.Kharitonov@jetbrains.com:
+    // This substitution of characters is a quick fix for JBR-5297.
+    // To be removed after updating JBR to 829.6+
+    char c = e.getKeyChar();
+    if (c == '\n') {
+      e.setKeyChar('\r');
+    }
     myBrowser.sendKeyEvent(e);
+
+    e.setKeyChar(c);
   }
 
   static class MyScale {
