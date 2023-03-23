@@ -1202,30 +1202,6 @@ public final class UIUtil {
     return SystemInfoRt.isMac ? mouseEvent.isMetaDown() : mouseEvent.isControlDown();
   }
 
-  public static String @NotNull [] getValidFontNames(final boolean familyName) {
-    Set<String> result = new TreeSet<>();
-
-    // adds fonts that can display symbols at [A, Z] + [a, z] + [0, 9]
-    for (Font font : GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts()) {
-      try {
-        if (FontUtil.isValidFont(font)) {
-          result.add(familyName ? font.getFamily() : font.getName());
-        }
-      }
-      catch (Exception ignore) {
-        // JRE has problems working with the font. Just skip.
-      }
-    }
-
-    // add label font (if isn't listed among above)
-    Font labelFont = StartupUiUtil.getLabelFont();
-    if (labelFont != null && FontUtil.isValidFont(labelFont)) {
-      result.add(familyName ? labelFont.getFamily() : labelFont.getName());
-    }
-
-    return ArrayUtilRt.toStringArray(result);
-  }
-
   public static String @NotNull [] getStandardFontSizes() {
     return STANDARD_FONT_SIZES;
   }
@@ -1568,10 +1544,6 @@ public final class UIUtil {
 
   public static void addParentChangeListener(@NotNull Component component, @NotNull PropertyChangeListener listener) {
     component.addPropertyChangeListener("ancestor", listener);
-  }
-
-  public static void removeParentChangeListener(@NotNull Component component, @NotNull PropertyChangeListener listener) {
-    component.removePropertyChangeListener("ancestor", listener);
   }
 
   public static void drawVDottedLine(@NotNull Graphics2D g, int lineX, int startY, int endY, final @Nullable Color bgColor, final Color fgColor) {
@@ -2067,8 +2039,8 @@ public final class UIUtil {
   public static @NotNull @NlsSafe String toHtml(@NotNull @Nls String html, final int hPadding) {
     final @NlsSafe String withClosedTag = CLOSE_TAG_PATTERN.matcher(html).replaceAll("<$1$2></$1>");
     Font font = StartupUiUtil.getLabelFont();
-    @NonNls String family = font != null ? font.getFamily() : "Tahoma";
-    int size = font != null ? font.getSize() : JBUIScale.scale(11);
+    @NonNls String family = font.getFamily();
+    int size = font.getSize();
     return "<html><style>body { font-family: "
            + family + "; font-size: "
            + size + ";} ul li {list-style-type:circle;}</style>"

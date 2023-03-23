@@ -19,8 +19,7 @@ import java.util.function.Consumer;
 /**
  * @author Alexander Lobas
  */
-public class MultiSelectionEventHandler extends EventHandler {
-
+public final class MultiSelectionEventHandler extends EventHandler {
   private PluginsGroupComponent myContainer;
   private PagePluginLayout myLayout;
   private List<ListPluginComponent> myComponents;
@@ -190,7 +189,7 @@ public class MultiSelectionEventHandler extends EventHandler {
         }
       }
 
-      private boolean contains(@Nullable ShortcutSet shortcutSet, @NotNull KeyStroke keyStroke) {
+      private static boolean contains(@Nullable ShortcutSet shortcutSet, @NotNull KeyStroke keyStroke) {
         for (Shortcut shortcut : shortcutSet != null ? shortcutSet.getShortcuts() : Shortcut.EMPTY_ARRAY) {
           if (shortcut instanceof KeyboardShortcut &&
               ((KeyboardShortcut)shortcut).getFirstKeyStroke().equals(keyStroke)) {
@@ -283,7 +282,7 @@ public class MultiSelectionEventHandler extends EventHandler {
   }
 
   @Override
-  public final @NotNull List<? extends ListPluginComponent> getSelection() {
+  public final @NotNull List<ListPluginComponent> getSelection() {
     return myComponents.stream()
       .filter(component -> component.getSelection() == SelectionType.SELECTION).toList();
   }
@@ -502,7 +501,7 @@ public class MultiSelectionEventHandler extends EventHandler {
   }
 
   @Override
-  public void setSelection(@NotNull List<? extends ListPluginComponent> components) {
+  public void setSelection(@NotNull List<ListPluginComponent> components) {
     clearSelectionWithout(-1);
     mySelectionIndex = -1;
     mySelectionLength = components.size();

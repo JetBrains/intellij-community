@@ -161,13 +161,12 @@ public final class NotificationsUtil {
     return StringUtil.isEmpty(fontName) ? null : "font-family:" + fontName + ";";
   }
 
-  public static @Nullable Float getFontSize() {
+  public static @NotNull Float getFontSize() {
     UISettings uiSettings = UISettings.getInstance();
     if (uiSettings.getOverrideLafFonts()) {
       return uiSettings.getFontSize2D();
     }
-    Font font = StartupUiUtil.getLabelFont();
-    return font == null ? null : font.getSize2D();
+    return StartupUiUtil.getLabelFont().getSize2D();
   }
 
   public static @Nullable String getFontName() {
@@ -175,8 +174,7 @@ public final class NotificationsUtil {
     if (uiSettings.getOverrideLafFonts()) {
       return uiSettings.getFontFace();
     }
-    Font font = StartupUiUtil.getLabelFont();
-    return font == null ? null : font.getName();
+    return StartupUiUtil.getLabelFont().getName();
   }
 
   public static @Nullable HyperlinkListener wrapListener(final @NotNull Notification notification) {

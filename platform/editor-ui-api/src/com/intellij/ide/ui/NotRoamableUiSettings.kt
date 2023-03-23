@@ -4,7 +4,6 @@ package com.intellij.ide.ui
 import com.intellij.openapi.components.*
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.FontUtil
-import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.SerializationFilter
 import com.intellij.util.xmlb.annotations.Property
@@ -54,7 +53,7 @@ class NotRoamableUiSettings : PersistentStateComponent<NotRoamableUiOptions> {
       // 2. If all preferred fonts are not valid in current environment
       // we have to find first valid font (if any)
       if (!fontIsValid) {
-        val fontNames = UIUtil.getValidFontNames(false)
+        val fontNames = FontUtil.getValidFontNames(false)
         if (fontNames.isNotEmpty()) {
           state.fontFace = fontNames[0]
         }
