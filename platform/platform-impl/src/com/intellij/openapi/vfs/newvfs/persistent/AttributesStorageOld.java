@@ -83,6 +83,9 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
       if (attrRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
         return null;
       }
+      else if (attrRecordId < NON_EXISTENT_ATTR_RECORD_ID) {
+        throw new IllegalStateException("file[id: " + fileId + "]: attributeRecordId[=" + attrRecordId + "] is negative, must be >=0");
+      }
       final int encodedAttrId = connection.getAttributeId(attribute.getId());
 
       int page = 0;

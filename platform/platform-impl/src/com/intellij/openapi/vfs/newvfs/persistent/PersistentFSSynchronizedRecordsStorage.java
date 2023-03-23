@@ -216,6 +216,9 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
 
   @Override
   public void setAttributeRecordId(int id, int value) throws IOException {
+    if (value < NULL_ID) {
+      throw new IllegalArgumentException("file[id: " + id + "].attributeRecordId(=" + value + ") must be >=0");
+    }
     putRecordInt(id, ATTR_REF_OFFSET, value);
   }
 

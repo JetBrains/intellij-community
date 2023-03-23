@@ -80,6 +80,9 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
       if (attributeRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
         return null;
       }
+      else if (attributeRecordId < NON_EXISTENT_ATTR_RECORD_ID) {
+        throw new IllegalStateException("file[id: " + fileId + "]: attributeRecordId[=" + attributeRecordId + "] is negative, must be >=0");
+      }
       final int encodedAttributeId = connection.getAttributeId(attribute.getId());
 
       final byte[] attributeValueBytes = readAttributeValue(
@@ -110,6 +113,9 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
       final int attributeRecordId = connection.getRecords().getAttributeRecordId(fileId);
       if (attributeRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
         return null;
+      }
+      if (attributeRecordId < 0) {
+        throw new IllegalStateException("file[id: " + fileId + "]: attributeRecordId[=" + attributeRecordId + "] is negative, must be >=0");
       }
       final int encodedAttributeId = connection.getAttributeId(attribute.getId());
 

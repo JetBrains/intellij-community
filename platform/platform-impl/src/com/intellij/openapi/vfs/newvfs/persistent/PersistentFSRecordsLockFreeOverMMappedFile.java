@@ -220,6 +220,9 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
 
     @Override
     public void setAttributeRecordId(final int attributeRecordId) {
+      if (attributeRecordId < NULL_ID) {
+        throw new IllegalArgumentException("file[id: " + recordId + "].attributeRecordId(=" + attributeRecordId + ") must be >=0");
+      }
       setIntField(ATTR_REF_OFFSET, attributeRecordId);
     }
 
@@ -340,6 +343,9 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
   @Override
   public void setAttributeRecordId(final int recordId,
                                    final int recordRef) throws IOException {
+    if (recordRef < NULL_ID) {
+      throw new IllegalArgumentException("file[id: " + recordId + "].attributeRecordId(=" + recordRef + ") must be >=0");
+    }
     setIntField(recordId, ATTR_REF_OFFSET, recordRef);
   }
 
