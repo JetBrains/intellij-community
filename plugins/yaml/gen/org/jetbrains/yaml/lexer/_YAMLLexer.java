@@ -625,7 +625,6 @@ public class _YAMLLexer implements FlexLexer, YAMLTokenTypes {
   public boolean isCleanState() {
     return yystate() == YYINITIAL
            && myBraceCount == 0
-           && yycolumn == 0
            && myPrevElementIndent == 0
            && !myPossiblePlainTextScalarContinue;
   }

@@ -1,15 +1,22 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.lexer;
 
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.testFramework.LexerTestCase;
+import org.jetbrains.annotations.Nullable;
 
 public class YAMLLexerTest extends LexerTestCase {
   @Override
   protected Lexer createLexer() {
     return new YAMLFlexLexer();
+  }
+
+  @Override
+  protected void doTest(String text, @Nullable String expected) {
+    super.doTest(text, expected);
+    checkCorrectRestart(text);
   }
 
   @Override
