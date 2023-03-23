@@ -110,7 +110,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     myCancellableLaterEdtInvoker = new CancellableLaterEdtInvoker(project);
     myTaskQueue = new DumbServiceMergingTaskQueue();
     myGuiDumbTaskRunner = new DumbServiceGuiExecutor(myProject, myTaskQueue, new DumbTaskListener());
-    mySyncDumbTaskRunner = new DumbServiceSyncTaskQueue(myTaskQueue);
+    mySyncDumbTaskRunner = new DumbServiceSyncTaskQueue(myProject, myTaskQueue);
 
     myPublisher = publisher;
 
