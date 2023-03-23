@@ -1072,25 +1072,27 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     if (!lifecycleParticipants.isEmpty()) {
       LegacySupport legacySupport = getComponent(LegacySupport.class);
       MavenSession session = legacySupport.getSession();
-      session.setCurrentProject(project);
-      try {
-        // the method can be removed
-        session.setAllProjects(Collections.singletonList(project));
-      }
-      catch (NoSuchMethodError ignore) {
-      }
-      session.setProjects(Collections.singletonList(project));
-
-      for (AbstractMavenLifecycleParticipant listener : lifecycleParticipants) {
-        Thread.currentThread().setContextClassLoader(listener.getClass().getClassLoader());
+      if (null != session) {
+        session.setCurrentProject(project);
         try {
-          listener.afterProjectsRead(session);
+          // the method can be removed
+          session.setAllProjects(Collections.singletonList(project));
         }
-        catch (Exception e) {
-          exceptions.add(e);
+        catch (NoSuchMethodError ignore) {
         }
-        finally {
-          Thread.currentThread().setContextClassLoader(originalClassLoader);
+        session.setProjects(Collections.singletonList(project));
+
+        for (AbstractMavenLifecycleParticipant listener : lifecycleParticipants) {
+          Thread.currentThread().setContextClassLoader(listener.getClass().getClassLoader());
+          try {
+            listener.afterProjectsRead(session);
+          }
+          catch (Exception e) {
+            exceptions.add(e);
+          }
+          finally {
+            Thread.currentThread().setContextClassLoader(originalClassLoader);
+          }
         }
       }
     }
