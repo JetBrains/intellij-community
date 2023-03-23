@@ -74,6 +74,7 @@
     <ignoredFileProvider implementation="com.jetbrains.python.sdk.configuration.PyTemporarilyIgnoredFileProvider"/>
 
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector"/>
+    <defaultToolWindowLayout implementation="com.jetbrains.python.PyToolWindowLayoutProvider" order="last"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
