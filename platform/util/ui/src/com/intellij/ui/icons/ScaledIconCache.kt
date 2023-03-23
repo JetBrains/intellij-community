@@ -17,7 +17,6 @@ import java.awt.Component
 import java.awt.Graphics
 import java.awt.Image
 import javax.swing.Icon
-import javax.swing.ImageIcon
 
 private const val SCALED_ICONS_CACHE_LIMIT = 5
 
@@ -34,13 +33,13 @@ private fun key(context: ScaleContext): Long {
 }
 
 internal class ScaledIconCache {
-  private val cache = Long2ObjectLinkedOpenHashMap<SoftReference<ImageIcon>>(SCALED_ICONS_CACHE_LIMIT)
+  private val cache = Long2ObjectLinkedOpenHashMap<SoftReference<Icon>>(SCALED_ICONS_CACHE_LIMIT)
 
   /**
    * Retrieves the orig icon scaled by the provided scale.
    */
   @Synchronized
-  fun getOrScaleIcon(scale: Float, host: CachedImageIcon, scaleContext: ScaleContext): ImageIcon? {
+  fun getOrScaleIcon(scale: Float, host: CachedImageIcon, scaleContext: ScaleContext): Icon? {
     val cacheKey = key(scaleContext)
     // don't worry that empty ref in the map, we compute and put a new icon by the same key, so no need to remove invalid entry
     cache.getAndMoveToFirst(cacheKey)?.get()?.let {
@@ -73,11 +72,19 @@ internal class ScaledIconCache {
   }
 }
 
-private class ScaledResultIcon(image: Image,
-                               private val original: CachedImageIcon,
-                               private val scale: Float) : ImageIcon(image), ReplaceableIcon {
+internal class ScaledResultIcon(@JvmField internal val image: Image,
+                                private val original: CachedImageIcon,
+                                private val scale: Float) : Icon, ReplaceableIcon {
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
-    drawImage(g = g, image = image, x = x, y = y, sourceBounds = null, op = null, observer = imageObserver ?: c)
+    drawImage(g = g, image = image, x = x, y = y, sourceBounds = null, op = null, observer = c)
+  }
+
+  override fun getIconWidth(): Int {
+    return image.getWidth(null)
+  }
+
+  override fun getIconHeight(): Int {
+    return image.getHeight(null)
   }
 
   override fun replaceBy(replacer: IconReplacer): Icon {

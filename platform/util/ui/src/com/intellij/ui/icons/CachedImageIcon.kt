@@ -75,7 +75,7 @@ open class CachedImageIcon protected constructor(
   private var darkVariant: CachedImageIcon? = null
 
   @Volatile
-  private var realIcon: ImageIcon? = null
+  private var realIcon: Icon? = null
 
   constructor(url: URL, useCacheOnLoad: Boolean) : this(originalPath = null,
                                                         resolver = ImageDataByUrlLoader(url = url,
@@ -121,9 +121,12 @@ open class CachedImageIcon protected constructor(
   final override fun getScale(): Float = 1.0f
 
   @ApiStatus.Internal
-  fun getRealIcon(): ImageIcon = resolveActualIcon(sysScale = -1.0)
+  fun getRealIcon(): Icon = resolveActualIcon(sysScale = -1.0)
 
-  internal fun resolveActualIcon(sysScale: Double): ImageIcon {
+  @ApiStatus.Internal
+  fun getRealImage(): Image? = (resolveActualIcon(sysScale = -1.0) as? ScaledResultIcon)?.image
+
+  internal fun resolveActualIcon(sysScale: Double): Icon {
     val resolver = resolver
     if (resolver == null || !isIconActivated) {
       return EMPTY_ICON
@@ -158,7 +161,7 @@ open class CachedImageIcon protected constructor(
     return EMPTY_ICON
   }
 
-  private fun checkPathTransform(): ImageIcon? {
+  private fun checkPathTransform(): Icon? {
     synchronized(scaledIconCache) {
       if (pathTransformGlobalModCount.get() == pathTransformModCount) {
         return realIcon
