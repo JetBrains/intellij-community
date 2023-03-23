@@ -1,6 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.uast.test.kotlin.comparison;
+package org.jetbrains.fir.uast.test;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
@@ -14,82 +14,82 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("uast/uast-kotlin/tests")
+@TestRoot("uast/uast-kotlin-fir/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../uast-kotlin-fir/tests/testData/type")
-public class FE1UastTypesTestGenerated extends AbstractFE1UastTypesTest {
+@TestMetadata("testData/type")
+public class FirUastTypesTestGenerated extends AbstractFirUastTypesTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
     @TestMetadata("accessArrayOfInlineClass.kt")
     public void testAccessArrayOfInlineClass() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/type/accessArrayOfInlineClass.kt");
+        runTest("testData/type/accessArrayOfInlineClass.kt");
     }
 
     @TestMetadata("arrayConstructorsSimple.kt")
     public void testArrayConstructorsSimple() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/type/arrayConstructorsSimple.kt");
+        runTest("testData/type/arrayConstructorsSimple.kt");
     }
 
     @TestMetadata("arrayGetAssignMultiIndex.kt")
     public void testArrayGetAssignMultiIndex() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/type/arrayGetAssignMultiIndex.kt");
+        runTest("testData/type/arrayGetAssignMultiIndex.kt");
     }
 
     @TestMetadata("classLiteral.kt")
     public void testClassLiteral() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/type/classLiteral.kt");
+        runTest("testData/type/classLiteral.kt");
     }
 
     @TestMetadata("jvmInlineParameter.kt")
     public void testJvmInlineParameter() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/type/jvmInlineParameter.kt");
+        runTest("testData/type/jvmInlineParameter.kt");
     }
 
     @TestMetadata("nonNullCompanion.kt")
     public void testNonNullCompanion() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/type/nonNullCompanion.kt");
+        runTest("testData/type/nonNullCompanion.kt");
     }
 
     @TestMetadata("nonNullablePair.kt")
     public void testNonNullablePair() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/type/nonNullablePair.kt");
+        runTest("testData/type/nonNullablePair.kt");
     }
 
     @TestMetadata("nullnessInVarargs.kt")
     public void testNullnessInVarargs() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/type/nullnessInVarargs.kt");
+        runTest("testData/type/nullnessInVarargs.kt");
     }
 
     @TestMetadata("objectLiteral.kt")
     public void testObjectLiteral() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/type/objectLiteral.kt");
+        runTest("testData/type/objectLiteral.kt");
     }
 
     @TestMetadata("threadSafe.kt")
     public void testThreadSafe() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/type/threadSafe.kt");
+        runTest("testData/type/threadSafe.kt");
     }
 
     @TestMetadata("typeCast.kt")
     public void testTypeCast() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/type/typeCast.kt");
+        runTest("testData/type/typeCast.kt");
     }
 
     @TestMetadata("typeCheck.kt")
     public void testTypeCheck() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/type/typeCheck.kt");
+        runTest("testData/type/typeCheck.kt");
     }
 
     @TestMetadata("unresolved.kt")
     public void testUnresolved() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/type/unresolved.kt");
+        runTest("testData/type/unresolved.kt");
     }
 
     @TestMetadata("withGeneric.kt")
     public void testWithGeneric() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/type/withGeneric.kt");
+        runTest("testData/type/withGeneric.kt");
     }
 }
