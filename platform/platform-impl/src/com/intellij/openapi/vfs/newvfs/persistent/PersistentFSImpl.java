@@ -853,7 +853,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     BulkFileListener publisher = getPublisher();
     if (jarDeleteEvents.isEmpty() && outApplyActions.isEmpty()) {
       // optimisation: skip all groupings
-      Suppressions.runSuppressing(
+      runSuppressing(
         () -> fireBeforeEvents(publisher, outValidatedEvents),
         () -> applyEvent(event),
         () -> fireAfterEvents(publisher, outValidatedEvents)
@@ -867,6 +867,41 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         outValidatedEvents.add(jarDeleteEvent);
       }
       applyMultipleEvents(publisher, outApplyActions, outValidatedEvents, false);
+    }
+  }
+
+  private static void runSuppressing(@NotNull Runnable r1, @NotNull Runnable r2, @NotNull Runnable r3) {
+    Throwable t = null;
+    try {
+      r1.run();
+    }
+    catch (Throwable e) {
+      t = e;
+    }
+    try {
+      r2.run();
+    }
+    catch (Throwable e) {
+      if (t == null) {
+        t = e;
+      }
+      else {
+        t.addSuppressed(e);
+      }
+    }
+    try {
+      r3.run();
+    }
+    catch (Throwable e) {
+      if (t == null) {
+        t = e;
+      }
+      else {
+        t.addSuppressed(e);
+      }
+    }
+    if (t != null) {
+      ExceptionUtilRt.rethrowUnchecked(t);
     }
   }
 
@@ -1207,14 +1242,15 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private static void fireBeforeEvents(@NotNull BulkFileListener publisher, @NotNull List<? extends VFileEvent> toSend) {
-    Suppressions.runSuppressing(
+    runSuppressing(
       () -> publisher.before(toSend),
-      () -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).before(toSend)
+      () -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).before(toSend),
+      ()->{}
     );
   }
 
   private static void fireAfterEvents(@NotNull BulkFileListener publisher, @NotNull List<? extends VFileEvent> toSend) {
-    Suppressions.runSuppressing(
+    runSuppressing(
       () -> CachedFileType.clearCache(),
       () -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).after(toSend),
       () -> publisher.after(toSend)
