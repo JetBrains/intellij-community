@@ -31,11 +31,11 @@ public abstract class AbstractTestEventProcessor implements TestEventProcessor {
   }
 
   protected SMTestRunnerResultsForm getResultsViewer() {
-    return myExecutionConsole.getResultsViewer();
+    return getExecutionConsole().getResultsViewer();
   }
 
   protected Project getProject() {
-    return myExecutionConsole.getProperties().getProject();
+    return getProperties().getProject();
   }
 
   protected GradleConsoleProperties getProperties() {
@@ -63,7 +63,7 @@ public abstract class AbstractTestEventProcessor implements TestEventProcessor {
   }
 
   protected void registerTestProxy(final String proxyId, SMTestProxy testProxy) {
-    myExecutionConsole.getTestsMap().put(proxyId, testProxy);
+    getExecutionConsole().getTestsMap().put(proxyId, testProxy);
   }
 
   protected String decode(String s) {
@@ -84,12 +84,10 @@ public abstract class AbstractTestEventProcessor implements TestEventProcessor {
     var project = getProject();
     var isSuite = isSuite();
     var parentTestProxy = findParentTestProxy(parentTestId);
-    var customizer = GradleTestEventConverter.getInstance(
-      project, parentTestProxy, isSuite, suiteName, className, methodName, displayName
-    );
-    var aClassName = customizer.getClassName();
-    var aMethodName = customizer.getMethodName();
-    var aDisplayName = customizer.getDisplayName();
+    var eventConverter = new GradleTestEventConverter(project, parentTestProxy, isSuite, suiteName, className, methodName, displayName);
+    var aClassName = eventConverter.getConvertedClassName();
+    var aMethodName = eventConverter.getConvertedMethodName();
+    var aDisplayName = eventConverter.getConvertedDisplayName();
     var locationProtocol = isSuite ? JavaTestLocator.SUITE_PROTOCOL : JavaTestLocator.TEST_PROTOCOL;
     var locationUrl = JavaTestLocator.createLocationUrl(locationProtocol, aClassName, aMethodName);
     var testProxy = new GradleSMTestProxy(aDisplayName, isSuite, locationUrl);

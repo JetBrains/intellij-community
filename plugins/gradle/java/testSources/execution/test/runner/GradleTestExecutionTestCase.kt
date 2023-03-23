@@ -8,9 +8,11 @@ import com.intellij.execution.impl.ConsoleViewImpl
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
+import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.execution.testframework.TestConsoleProperties
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask
@@ -21,7 +23,6 @@ import com.intellij.openapi.externalSystem.service.notification.ExternalSystemPr
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RunAll.Companion.runAll
@@ -33,6 +34,7 @@ import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isSupportedJUni
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.testFramework.GradleProjectTestCase
+import org.jetbrains.plugins.gradle.testFramework.util.tree.*
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.waitForTaskExecution
 import org.junit.jupiter.api.AssertionFailureBuilder
@@ -117,7 +119,7 @@ abstract class GradleTestExecutionTestCase : GradleProjectTestCase() {
   }
 
   private fun getTestExecutionTreeString(): String {
-    val treeString = invokeAndWaitIfNeeded {
+    return invokeAndWaitIfNeeded {
       val tree = testExecutionConsole.resultsViewer.treeView!!
         .also { PlatformTestUtil.waitWhileBusy(it) }
       TestConsoleProperties.HIDE_PASSED_TESTS.set(testExecutionConsole.properties, false)
@@ -126,29 +128,6 @@ abstract class GradleTestExecutionTestCase : GradleProjectTestCase() {
         .also { PlatformTestUtil.waitWhileBusy(tree) }
       PlatformTestUtil.print(tree, false)
         .also { PlatformTestUtil.waitWhileBusy(tree) }
-    }
-    val flattenTree = treeString.split("\n").toMutableList()
-    for (range in partitionLeaves(flattenTree)) {
-      val leaves = flattenTree.subList(range.first, range.last + 1)
-      leaves.sortWith(NaturalComparator.INSTANCE)
-    }
-    return flattenTree.joinToString("\n")
-  }
-
-  private fun partitionLeaves(flattenTree: List<String>) = sequence {
-    var left = -1
-    for ((i, node) in flattenTree.withIndex()) {
-      val isLeaf = !node.trim().startsWith("-")
-      if (isLeaf && left == -1) {
-        left = i
-      }
-      else if (!isLeaf && left != -1) {
-        yield(left until i)
-        left = -1
-      }
-    }
-    if (left != -1) {
-      yield(left until flattenTree.size)
     }
   }
 
@@ -190,7 +169,7 @@ abstract class GradleTestExecutionTestCase : GradleProjectTestCase() {
     }
   }
 
-  private fun isSupportedTestLauncher(): Boolean {
+  fun isSupportedTestLauncher(): Boolean {
     return isGradleAtLeast("7.6")
   }
 
@@ -198,59 +177,50 @@ abstract class GradleTestExecutionTestCase : GradleProjectTestCase() {
     return isSupportedJUnit5(gradleVersion)
   }
 
-  fun assertBuildExecutionTree(testLauncher: String, junit: String) {
-    when {
-      isSupportedTestLauncher() ->
-        buildViewTestFixture.assertBuildViewTreeEquals(testLauncher)
-      else ->
-        buildViewTestFixture.assertBuildViewTreeEquals(junit)
+  fun assertBuildExecutionTree(assert: TreeAssertion<Nothing?>.() -> Unit) {
+    buildViewTestFixture.assertBuildViewTreeEquals { treeString ->
+      val tree = buildTree(treeString!!)
+      TreeAssertion.assertTree(tree, assert)
     }
   }
 
-  fun assertBuildExecutionTreeContains(testLauncher: String, junit: String) {
-    when {
-      isSupportedTestLauncher() ->
-        assertBuildExecutionTreeContains(testLauncher)
-      else ->
-        assertBuildExecutionTreeContains(junit)
-    }
-  }
-
-  private fun assertBuildExecutionTreeContains(expected: String) {
-    buildViewTestFixture.assertBuildViewTreeEquals { actual ->
-      if (actual == null || expected !in actual) {
-        AssertionFailureBuilder.assertionFailure()
-          .message("Build execution tree doesn't contain")
-          .expected(expected)
-          .actual(actual)
-          .buildAndThrow()
-      }
+  fun assertBuildExecutionTreeContains(assert: TreeAssertion<Nothing?>.() -> Unit) {
+    buildViewTestFixture.assertBuildViewTreeEquals { treeString ->
+      val tree = buildTree(treeString!!)
+      TreeAssertion.assertMatchesTree(tree, assert)
     }
   }
 
   fun assertTestExecutionConsoleContains(expected: String) {
     val actual = getTestExecutionConsoleString()
     if (expected !in actual) {
-      AssertionFailureBuilder.assertionFailure()
+      throw AssertionFailureBuilder.assertionFailure()
         .message("Test execution console doesn't contain")
         .expected(expected)
         .actual(actual)
-        .buildAndThrow()
+        .build()
     }
   }
 
   fun assertTestExecutionTree(expected: String) {
-    Assertions.assertEquals(expected, getTestExecutionTreeString())
+    val treeString = getTestExecutionTreeString()
+    val tree = buildTree(treeString)
+    Assertions.assertEquals(expected, tree.sortedTree().getTreeString())
   }
 
-  fun assertTestDisplayName(actual: String, testLauncher: String, junit5: String, junit4: String) {
-    when {
-      isSupportedTestLauncher() ->
-        Assertions.assertEquals(testLauncher, actual)
-      isSupportedJunit5() ->
-        Assertions.assertEquals(junit5, actual)
-      else ->
-        Assertions.assertEquals(junit4, actual)
+  fun assertTestExecutionTree(assert: TreeAssertion<Nothing?>.() -> Unit) {
+    val treeString = getTestExecutionTreeString()
+    val tree = buildTree(treeString)
+    TreeAssertion.assertTree(tree.sortedTree(), assert)
+  }
+
+  fun assertSMTestProxyTree(assert: TreeAssertion<AbstractTestProxy>.() -> Unit) {
+    val treeView = testExecutionConsole.resultsViewer.treeView!!
+    invokeAndWaitIfNeeded { PlatformTestUtil.waitWhileBusy(treeView) }
+    val roots = testExecutionConsole.resultsViewer.root.children
+    val tree = buildTree(roots, { name }, { children })
+    runReadAction { // all navigation tests requires read action
+      TreeAssertion.assertTree(tree.sortedTree(), assert)
     }
   }
 }

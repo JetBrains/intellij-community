@@ -10,14 +10,18 @@ import org.junit.jupiter.api.Assertions
 
 abstract class GradleTestRunnerViewTestCase : GradleTestExecutionTestCase() {
 
-  val AbstractTestProxy.psiClass get() = getPsiElement<PsiClass>()
-  val AbstractTestProxy.psiMethod get() = getPsiElement<PsiMethod>()
+  val PsiMethod.psiClass
+    get() = containingClass!!
+
+  val AbstractTestProxy.psiClass
+    get() = getPsiElement<PsiClass>()
+
+  val AbstractTestProxy.psiMethod
+    get() = getPsiElement<PsiMethod>()
 
   private inline fun <reified T : PsiElement> AbstractTestProxy.getPsiElement(): T {
-    return runReadAction {
-      val location = getLocation(project, GlobalSearchScope.allScope(project))
-      Assertions.assertNotNull(location) { "Cannot resolve location for $locationUrl" }
-      location.psiElement as T
-    }
+    val location = getLocation(project, GlobalSearchScope.allScope(project))
+    Assertions.assertNotNull(location) { "Cannot resolve location for $locationUrl" }
+    return location.psiElement as T
   }
 }

@@ -31,8 +31,6 @@
                     dynamic="true"/>
     <extensionPoint name="testTasksProvider" interface="org.jetbrains.plugins.gradle.execution.test.runner.GradleTestTasksProvider"
                     dynamic="true"/>
-    <extensionPoint name="testEventConverter" interface="org.jetbrains.plugins.gradle.execution.test.runner.events.GradleTestEventConverter$Factory"
-                    dynamic="true"/>
     <extensionPoint name="externallyHandledExtensions" interface="org.jetbrains.plugins.gradle.service.resolve.GradleVersionCatalogHandler"
                     dynamic="true"/>
     <extensionPoint name="dslInspectionProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
