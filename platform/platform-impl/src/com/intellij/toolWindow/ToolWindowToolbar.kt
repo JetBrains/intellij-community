@@ -2,10 +2,6 @@
 
 package com.intellij.toolWindow
 
-import com.intellij.openapi.actionSystem.ActionPlaces.TOOLWINDOW_TOOLBAR_BAR
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
@@ -71,10 +67,6 @@ internal abstract class ToolWindowToolbar : JBPanel<ToolWindowToolbar>() {
     return null
   }
 
-  fun removeStripeButton(toolWindow: ToolWindow, anchor: ToolWindowAnchor) {
-    remove(getStripeFor(anchor), toolWindow)
-  }
-
   fun hasButtons() = topStripe.getButtons().isNotEmpty() || bottomStripe.getButtons().isNotEmpty()
 
   fun reset() {
@@ -112,10 +104,6 @@ internal abstract class ToolWindowToolbar : JBPanel<ToolWindowToolbar>() {
       panel.revalidate()
       panel.repaint()
     }
-  }
-
-  open class ToolwindowActionToolbar(val panel: JComponent) : ActionToolbarImpl(TOOLWINDOW_TOOLBAR_BAR, DefaultActionGroup(), false) {
-    override fun actionsUpdated(forced: Boolean, newVisibleActions: List<AnAction>) = updateButtons(panel)
   }
 
   internal class StripeV2(private val toolBar: ToolWindowToolbar,
