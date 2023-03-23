@@ -41,7 +41,6 @@ class OTelConfigurator(private val mainScope: CoroutineScope, private val otelSd
 
     getCustomOTelProviders().forEach { provider: OTelExportersProvider ->
       spanExporters.addAll(provider.getSpanExporters())
-      registerSpanExporters(spanExporters)
       val metrics = provider.getMetricsExporters()
       val duration = provider.getReadsInterval()
       metricsExporters.add(MetricsExporterEntry(metrics, duration))
