@@ -36,7 +36,6 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.AstLoadingFilter;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -292,14 +291,13 @@ public class IdentifierHighlighterPass {
 
     List<HighlightInfo> result = new ArrayList<>(myReadAccessRanges.size() + myWriteAccessRanges.size() + myCodeBlockMarkerRanges.size());
     for (TextRange range: myReadAccessRanges) {
-      ContainerUtil.addIfNotNull(result, createHighlightInfo(range, HighlightInfoType.ELEMENT_UNDER_CARET_READ, existingMarkupTooltips));
+      result.add(createHighlightInfo(range, HighlightInfoType.ELEMENT_UNDER_CARET_READ, existingMarkupTooltips));
     }
     for (TextRange range: myWriteAccessRanges) {
-      ContainerUtil.addIfNotNull(result, createHighlightInfo(range, HighlightInfoType.ELEMENT_UNDER_CARET_WRITE, existingMarkupTooltips));
+      result.add(createHighlightInfo(range, HighlightInfoType.ELEMENT_UNDER_CARET_WRITE, existingMarkupTooltips));
     }
     if (CodeInsightSettings.getInstance().HIGHLIGHT_BRACES) {
-      myCodeBlockMarkerRanges.forEach(
-        it -> ContainerUtil.addIfNotNull(result, createHighlightInfo(it, ELEMENT_UNDER_CARET_STRUCTURAL, existingMarkupTooltips)));
+      myCodeBlockMarkerRanges.forEach(range -> result.add(createHighlightInfo(range, ELEMENT_UNDER_CARET_STRUCTURAL, existingMarkupTooltips)));
     }
 
     return result;
