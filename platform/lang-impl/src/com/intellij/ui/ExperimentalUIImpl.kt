@@ -9,7 +9,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
-import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -63,7 +62,7 @@ private class ExperimentalUIImpl : ExperimentalUI() {
 
 
         if (result == Messages.YES) {
-          ApplicationManagerEx.getApplicationEx().restart(true);
+          ApplicationManagerEx.getApplicationEx().restart(true)
         }
       }
     }
@@ -81,20 +80,7 @@ private class ExperimentalUIImpl : ExperimentalUI() {
     setRegistryKeyIfNecessary(key = "ide.experimental.ui", value = true, registryManager = registryManager)
     setRegistryKeyIfNecessary(key = "debugger.new.tool.window.layout", value = true, registryManager = registryManager)
     UISettings.getInstance().hideToolStripes = false
-    val name = if (JBColor.isBright()) "Light" else "Dark"
-    val lafManager = LafManager.getInstance()
-    val laf = lafManager.installedLookAndFeels.firstOrNull { it.name == name }
-    if (laf != null) {
-      lafManager.currentLookAndFeel = laf
-      if (lafManager.autodetect) {
-        if (JBColor.isBright()) {
-          lafManager.setPreferredLightLaf(laf)
-        }
-        else {
-          lafManager.setPreferredDarkLaf(laf)
-        }
-      }
-    }
+    resetLafSettingsToDefault()
   }
 
   override fun onExpUIDisabled(suggestRestart: Boolean) {
@@ -108,18 +94,21 @@ private class ExperimentalUIImpl : ExperimentalUI() {
     val registryManager = RegistryManager.getInstance()
     setRegistryKeyIfNecessary(key = "ide.experimental.ui", value = false, registryManager = registryManager)
     setRegistryKeyIfNecessary(key = "debugger.new.tool.window.layout", value = false, registryManager = registryManager)
-    val lafManager = LafManager.getInstance() as LafManagerImpl
-    val currentLafName = lafManager.currentLookAndFeel?.name
-    if (currentLafName == "Dark" || currentLafName == "Light") {
-      val laf = if (JBColor.isBright()) lafManager.defaultLightLaf!! else lafManager.getDefaultDarkLaf()
-      lafManager.setCurrentLookAndFeel(laf)
-      if (lafManager.autodetect) {
-        if (JBColor.isBright()) {
-          lafManager.setPreferredLightLaf(laf)
-        } else {
-          lafManager.setPreferredDarkLaf(laf)
-        }
-      }
+    resetLafSettingsToDefault()
+  }
+
+  private fun resetLafSettingsToDefault() {
+    val lafManager = LafManager.getInstance()
+    val defaultLightLaf = lafManager.defaultLightLaf
+    val defaultDarkLaf = lafManager.defaultDarkLaf
+    if (defaultLightLaf == null || defaultDarkLaf == null) {
+      return
+    }
+    val laf = if (JBColor.isBright()) defaultLightLaf else defaultDarkLaf
+    lafManager.currentLookAndFeel = laf
+    if (lafManager.autodetect) {
+      lafManager.setPreferredLightLaf(defaultLightLaf)
+      lafManager.setPreferredDarkLaf(defaultDarkLaf)
     }
   }
 }
