@@ -100,7 +100,9 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private XmlElement myFeedbackForm;
 
   private String myDefaultLightLaf;
+  private String myDefaultClassicLightLaf;
   private String myDefaultDarkLaf;
+  private String myDefaultClassicDarkLaf;
 
   private static final Logger LOG = Logger.getInstance(ApplicationInfoImpl.class);
 
@@ -316,9 +318,19 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
             myDefaultLightLaf = laf.trim();
           }
 
+          laf = getAttributeValue(child, "light-classic");
+          if (laf != null) {
+            myDefaultClassicLightLaf = laf.trim();
+          }
+
           laf = getAttributeValue(child, "dark");
           if (laf != null) {
             myDefaultDarkLaf = laf.trim();
+          }
+
+          laf = getAttributeValue(child, "dark-classic");
+          if (laf != null) {
+            myDefaultClassicDarkLaf = laf.trim();
           }
         }
 
@@ -840,8 +852,18 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
+  public @Nullable String getDefaultClassicLightLaf() {
+    return myDefaultClassicLightLaf;
+  }
+
+  @Override
   public @Nullable String getDefaultDarkLaf() {
     return myDefaultDarkLaf;
+  }
+
+  @Override
+  public @Nullable String getDefaultClassicDarkLaf() {
+    return myDefaultClassicDarkLaf;
   }
 
   public @Nullable ZenDeskForm getFeedbackForm() {

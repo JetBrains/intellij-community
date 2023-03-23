@@ -110,4 +110,10 @@ public abstract class LafManager {
       return Objects.hash(name, className, themeId);
     }
   }
+
+  @Nullable
+  public abstract UIManager.LookAndFeelInfo getDefaultLightLaf();
+
+  @Nullable
+  public abstract UIManager.LookAndFeelInfo getDefaultDarkLaf();
 }

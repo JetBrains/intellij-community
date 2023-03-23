@@ -8,7 +8,6 @@ import com.intellij.ui.ExperimentalUI
 import javax.swing.UIManager
 
 class ThemesListProviderImpl : ThemesListProvider {
-
   override fun getShownThemes(): List<List<UIManager.LookAndFeelInfo>> {
     val lmi = LafManager.getInstance() as? LafManagerImpl ?: return listOf()
     val result = mutableListOf<List<UIManager.LookAndFeelInfo>>()
