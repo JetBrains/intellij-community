@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.icons;
 
 import com.intellij.ui.IconManager;
@@ -90,6 +91,16 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon ToggleSkipTestsMode = load("expui/build/toggleSkipTestsMode.svg", 1261577164, 2);
   }
 
+  public static final class CodeWithMe {
+    /** 16x16 */ public static final @NotNull Icon CwmAccess = load("expui/codeWithMe/cwmAccess.svg", -1531517233, 2);
+    /** 20x20 */ public static final @NotNull Icon CwmAccess_20x20 = load("expui/codeWithMe/cwmAccess@20x20.svg", 1640559593, 2);
+    /** 16x16 */ public static final @NotNull Icon CwmDisableCall = load("expui/codeWithMe/cwmDisableCall.svg", 727368584, 2);
+    /** 16x16 */ public static final @NotNull Icon CwmEnableCall = load("expui/codeWithMe/cwmEnableCall.svg", -668249336, 2);
+    /** 16x16 */ public static final @NotNull Icon CwmInvite = load("expui/codeWithMe/cwmInvite.svg", -999603502, 2);
+    /** 16x16 */ public static final @NotNull Icon CwmUsers = load("expui/codeWithMe/cwmUsers.svg", 2035020273, 2);
+    /** 20x20 */ public static final @NotNull Icon CwmUsers_20x20 = load("expui/codeWithMe/cwmUsers@20x20.svg", -3430046, 2);
+  }
+
   public static final class Diff {
     /** 16x16 */ public static final @NotNull Icon ApplyNotConflicts = load("expui/diff/applyNotConflicts.svg", -1187501383, 2);
     /** 16x16 */ public static final @NotNull Icon ApplyNotConflictsLeft = load("expui/diff/applyNotConflictsLeft.svg", 1014858948, 2);
@@ -155,10 +166,10 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon Idl = load("expui/fileTypes/idl.svg", -1825093426, 2);
     /** 16x16 */ public static final @NotNull Icon Ignored = load("expui/fileTypes/ignored.svg", -761759532, 2);
     /** 16x16 */ public static final @NotNull Icon Java = load("expui/fileTypes/java.svg", 1134450036, 2);
-    /** 16x16 */ public static final @NotNull Icon Javascript = load("expui/fileTypes/javascript.svg", -699718601, 2);
+    /** 16x16 */ public static final @NotNull Icon Javascript = load("expui/fileTypes/javascript.svg", 477764978, 2);
     /** 16x16 */ public static final @NotNull Icon Jest = load("expui/fileTypes/jest.svg", 1606594406, 0);
     /** 16x16 */ public static final @NotNull Icon Jfr = load("expui/fileTypes/jfr.svg", -1383678205, 2);
-    /** 16x16 */ public static final @NotNull Icon Jshint = load("expui/fileTypes/jshint.svg", -2137975221, 2);
+    /** 16x16 */ public static final @NotNull Icon Jshint = load("expui/fileTypes/jshint.svg", -534034799, 2);
     /** 16x16 */ public static final @NotNull Icon Json = load("expui/fileTypes/json.svg", 1787157101, 2);
     /** 16x16 */ public static final @NotNull Icon Jsp = load("expui/fileTypes/jsp.svg", 1184869391, 2);
     /** 16x16 */ public static final @NotNull Icon Jspx = load("expui/fileTypes/jspx.svg", -363820549, 2);
@@ -170,7 +181,6 @@ public final class ExpUiIcons {
     /** 13x13 */ public static final @NotNull Icon Modified = load("expui/fileTypes/modified.svg", -1075220704, 2);
     /** 16x16 */ public static final @NotNull Icon Patch = load("expui/fileTypes/patch.svg", -146855827, 2);
     /** 16x16 */ public static final @NotNull Icon Perl = load("expui/fileTypes/perl.svg", -309100353, 2);
-    /** 16x16 */ public static final @NotNull Icon Php = load("expui/fileTypes/php.svg", 1932147366, 2);
     /** 16x16 */ public static final @NotNull Icon Properties = load("expui/fileTypes/properties.svg", -1802639038, 2);
     /** 16x16 */ public static final @NotNull Icon Protobuf = load("expui/fileTypes/protobuf.svg", -2063488110, 0);
     /** 16x16 */ public static final @NotNull Icon Python = load("expui/fileTypes/python.svg", -1676234959, 0);
@@ -185,7 +195,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon SourceMap = load("expui/fileTypes/sourceMap.svg", -2057527747, 2);
     /** 16x16 */ public static final @NotNull Icon Sql = load("expui/fileTypes/sql.svg", -1827630402, 2);
     /** 16x16 */ public static final @NotNull Icon Text = load("expui/fileTypes/text.svg", -1983399172, 2);
-    /** 16x16 */ public static final @NotNull Icon Typescript = load("expui/fileTypes/typescript.svg", 928891815, 2);
+    /** 16x16 */ public static final @NotNull Icon Typescript = load("expui/fileTypes/typescript.svg", -1531126991, 2);
     /** 16x16 */ public static final @NotNull Icon Unknown = load("expui/fileTypes/unknown.svg", 457271887, 2);
     /** 16x16 */ public static final @NotNull Icon Velocity = load("expui/fileTypes/velocity.svg", 1868901396, 2);
     /** 16x16 */ public static final @NotNull Icon VueJs = load("expui/fileTypes/vueJs.svg", -1305585615, 0);
@@ -199,8 +209,6 @@ public final class ExpUiIcons {
 
   public static final class General {
     /** 16x16 */ public static final @NotNull Icon Add = load("expui/general/add.svg", 2138731609, 2);
-    /** 16x16 */ public static final @NotNull Icon AddAccount = load("expui/general/addAccount.svg", 484949963, 2);
-    /** 20x20 */ public static final @NotNull Icon AddAccount_20x20 = load("expui/general/addAccount@20x20.svg", -1994243974, 2);
     /** 16x16 */ public static final @NotNull Icon ChevronDown = load("expui/general/chevronDown.svg", 1796037843, 2);
     /** 16x16 */ public static final @NotNull Icon ChevronDownLarge = load("expui/general/chevronDownLarge.svg", -919754914, 2);
     /** 16x16 */ public static final @NotNull Icon ChevronDownLargeWhite = load("expui/general/chevronDownLargeWhite.svg", 427573164, 0);
@@ -430,13 +438,6 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon UnloadedModule = load("expui/nodes/unloadedModule.svg", -999377918, 2);
     /** 16x16 */ public static final @NotNull Icon Variable = load("expui/nodes/variable.svg", 2118389389, 2);
     /** 16x16 */ public static final @NotNull Icon WarningIntroduction = load("expui/nodes/warningIntroduction.svg", 1544041499, 2);
-  }
-
-  public static final class Php {
-    /** 16x16 */ public static final @NotNull Icon PhpHttpRequest = load("expui/php/phpHttpRequest.svg", -965795954, 2);
-    /** 16x16 */ public static final @NotNull Icon PhpLocal = load("expui/php/phpLocal.svg", -1666093507, 2);
-    /** 16x16 */ public static final @NotNull Icon PhpRemote = load("expui/php/phpRemote.svg", -341955947, 2);
-    /** 16x16 */ public static final @NotNull Icon PhpWeb = load("expui/php/phpWeb.svg", -433485524, 2);
   }
 
   public static final class Profiler {
