@@ -36,8 +36,6 @@ public class JBFont extends Font {
   }
 
   private void refreshScaledFont() {
-    if (this instanceof UIResource) return;
-
     myScaleUpdateHelper.saveScaleAndRunIfChanged(() -> {
       myScaledFont = myFontScaler.scaledFont();
       size = myScaledFont.getSize();
@@ -47,25 +45,21 @@ public class JBFont extends Font {
 
   @Override
   public float getSize2D() {
-    if (this instanceof UIResource) return super.getSize2D();
     return getScaledFont().getSize2D();
   }
 
   @Override
   public int getSize() {
-    if (this instanceof UIResource) return super.getSize();
     return getScaledFont().getSize();
   }
 
   @Override
   public int hashCode() {
-    if (this instanceof UIResource) return super.hashCode();
     return getScaledFont().hashCode();
   }
 
   @Override
   public boolean equals(Object obj) {
-    if (this instanceof UIResource) return super.equals(obj);
     if (obj instanceof JBFont) return getScaledFont().equals(((JBFont)obj).getScaledFont());
     return super.equals(obj);
   }
@@ -95,10 +89,6 @@ public class JBFont extends Font {
     Font scaled = font;
     if (tryToScale) {
       scaled = font.deriveFont(font.getSize() * JBUIScale.scale(1f));
-    }
-
-    if (font instanceof UIResource) {
-      return new JBFontUIResource(scaled);
     }
 
     return new JBFont(scaled);
