@@ -119,8 +119,41 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     get() = lafMap.value.keys
 
   private val defaultDarkLaf = SynchronizedClearableLazy {
-    val lafInfoFQN = ApplicationInfoEx.getInstanceEx().defaultDarkLaf
-    (if (lafInfoFQN == null) null else createLafInfo(lafInfoFQN)) ?: DarculaLookAndFeelInfo()
+    val name = ApplicationInfoEx.getInstanceEx().defaultDarkLaf
+    if (name == null) {
+      findLafByName("Dark") ?: error("Default dark LookAndFeel 'Dark' not found")
+    } else {
+      findLafByName(name) ?: error("Default dark LookAndFeel '$name' not found")
+    }
+  }
+
+  private val defaultClassicDarkLaf = SynchronizedClearableLazy {
+    val name = ApplicationInfoEx.getInstanceEx().defaultClassicDarkLaf
+    if (name == null) {
+      DarculaLookAndFeelInfo()
+    }
+    else {
+      findLafByName(name) ?: error("Default classic dark LookAndFeel '$name' not found")
+    }
+  }
+
+  private val defaultLightLaf = SynchronizedClearableLazy {
+    val name = ApplicationInfoEx.getInstanceEx().defaultLightLaf
+    if (name == null) {
+      findLafByName("Light") ?: error("Default light LookAndFeel 'Light' not found")
+    } else {
+      findLafByName(name) ?: error("Default light LookAndFeel '$name' not found")
+    }
+  }
+
+  private val defaultClassicLightLaf = SynchronizedClearableLazy {
+    val name = ApplicationInfoEx.getInstanceEx().defaultClassicLightLaf
+    if (name == null) {
+      UiThemeProviderListManager.getInstance().findJetBrainsLightTheme() ?: error("JetBrains light theme not found")
+    }
+    else {
+      findLafByName(name) ?: error("Default light LookAndFeel '$name' not found")
+    }
   }
 
   private val ourDefaults: Map<Any, Any> = UIManager.getDefaults().clone() as UIDefaults
@@ -144,10 +177,21 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   private var themeIdBeforePluginUpdate: String? = null
   private var autodetect = false
 
-  val defaultLightLaf: LookAndFeelInfo?
-    get() = UiThemeProviderListManager.getInstance().findJetBrainsLightTheme()
+  override fun getDefaultLightLaf(): LookAndFeelInfo {
+    return if (ExperimentalUI.isNewUI()) {
+      defaultLightLaf.value
+    } else {
+      defaultClassicLightLaf.value
+    }
+  }
 
-  fun getDefaultDarkLaf(): LookAndFeelInfo = defaultDarkLaf.value
+  override fun getDefaultDarkLaf(): LookAndFeelInfo {
+    return if (ExperimentalUI.isNewUI()) {
+      defaultDarkLaf.value
+    } else {
+      defaultClassicDarkLaf.value
+    }
+  }
 
   val defaultFont: Font
     get() {
@@ -160,14 +204,6 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     }
 
   companion object {
-    @Suppress("unused")
-    var lafNameOrder: Map<String, Int>
-      // allowing other plugins to change the order of the LaFs (used by Rider)
-      get() = UiThemeProviderListManager.lafNameOrder
-      set(value) {
-        UiThemeProviderListManager.lafNameOrder = value
-      }
-
     @JvmStatic
     @Suppress("SpellCheckingInspection")
     fun installMacOSXFonts(defaults: UIDefaults) {
@@ -210,9 +246,9 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     }
   }
 
-  private fun computeLafMap(): SortedMap<LookAndFeelInfo, TargetUIType> {
-    val map = TreeMap<LookAndFeelInfo, TargetUIType>(UiThemeProviderListManager.themesSortingComparator)
-    map.put(defaultDarkLaf.value, TargetUIType.CLASSIC)
+  private fun computeLafMap(): Map<LookAndFeelInfo, TargetUIType> {
+    val map = mutableMapOf<LookAndFeelInfo, TargetUIType>()
+    map.put(DarculaLookAndFeelInfo(), TargetUIType.CLASSIC)
     if (!SystemInfoRt.isMac) {
       for (laf in UIManager.getInstalledLookAndFeels()) {
         val name = laf.name
@@ -310,24 +346,18 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     var expectedLaf: LookAndFeelInfo?
     if (systemIsDark) {
       expectedLaf = preferredDarkLaf
-      if (expectedLaf == null && ExperimentalUI.isNewUI()) {
-        expectedLaf = findLafByName("Dark")
-      }
       if (expectedLaf == null) {
         expectedLaf = getDefaultDarkLaf()
       }
     }
     else {
       expectedLaf = preferredLightLaf
-      if (expectedLaf == null && ExperimentalUI.isNewUI()) {
-        expectedLaf = findLafByName("Light")
-      }
       if (expectedLaf == null) {
-        expectedLaf = defaultLightLaf
+        expectedLaf = getDefaultLightLaf()
       }
     }
     if (currentIsDark != systemIsDark || myCurrentLaf !== expectedLaf) {
-      QuickChangeLookAndFeel.switchLafAndUpdateUI(this, expectedLaf!!, true)
+      QuickChangeLookAndFeel.switchLafAndUpdateUI(this, expectedLaf, true)
     }
   }
 
@@ -372,7 +402,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   private fun findLaf(suggestedLafClassName: String?, themeId: String?): LookAndFeelInfo? {
     var lafClassName = suggestedLafClassName
     if ("JetBrainsLightTheme" == themeId) {
-      return defaultLightLaf
+      return UiThemeProviderListManager.getInstance().findJetBrainsLightTheme()
     }
     if (lafClassName != null && ourLafClassesAliases.containsKey(lafClassName)) {
       lafClassName = ourLafClassesAliases.get(lafClassName)
@@ -380,7 +410,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
 
     @Suppress("SpellCheckingInspection")
     if (lafClassName == "com.sun.java.swing.plaf.windows.WindowsLookAndFeel") {
-      return defaultLightLaf
+      return UiThemeProviderListManager.getInstance().findJetBrainsLightTheme()
     }
 
     if (themeId != null) {
@@ -396,7 +426,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     }
 
     if (laf == null && ("com.intellij.laf.win10.WinIntelliJLaf" == lafClassName || "com.intellij.laf.macos.MacIntelliJLaf" == lafClassName)) {
-      return defaultLightLaf
+      return UiThemeProviderListManager.getInstance().findJetBrainsLightTheme()
     }
     else {
       return laf
@@ -414,10 +444,10 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     val element = Element("state")
     element.setAttribute(ATTRIBUTE_AUTODETECT, java.lang.Boolean.toString(autodetect))
     getLafState(element, ELEMENT_LAF, currentLookAndFeel)
-    if (preferredLightLaf != null && preferredLightLaf !== defaultLightLaf) {
+    if (preferredLightLaf != null && preferredLightLaf !== getDefaultLightLaf()) {
       getLafState(element, ELEMENT_PREFERRED_LIGHT_LAF, preferredLightLaf)
     }
-    if (preferredDarkLaf != null && preferredDarkLaf !== defaultDarkLaf.value) {
+    if (preferredDarkLaf != null && preferredDarkLaf !== getDefaultDarkLaf()) {
       getLafState(element, ELEMENT_PREFERRED_DARK_LAF, preferredDarkLaf)
     }
     return element
@@ -495,10 +525,9 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   private fun findLafByName(name: String): LookAndFeelInfo? = installedLookAndFeels.firstOrNull { name == it.name }
 
   private fun findLaf(className: String): LookAndFeelInfo? {
-    val defaultLightLaf = defaultLightLaf
     return when {
-      defaultLightLaf!!.className == className -> defaultLightLaf
-      defaultDarkLaf.value.className == className -> defaultDarkLaf.value
+      getDefaultLightLaf().className == className -> getDefaultLightLaf()
+      getDefaultDarkLaf().className == className -> getDefaultDarkLaf()
       else -> {
         for (l in lafList) {
           if (l !is UIThemeBasedLookAndFeelInfo && className == l.className) {
@@ -834,9 +863,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     if (uiSettings.overrideLafFonts || currentScale != 1f) {
       storeOriginalFontDefaults(uiDefaults)
       val fontFace = if (uiSettings.overrideLafFonts) uiSettings.fontFace else defaultFont.family
-      val fontSize = (if (uiSettings.overrideLafFonts) uiSettings.fontSize2D else defaultFont.size2D).let{
-        it * currentScale
-      }
+      val fontSize = (if (uiSettings.overrideLafFonts) uiSettings.fontSize2D else defaultFont.size2D) * currentScale
       StartupUiUtil.initFontDefaults(uiDefaults, StartupUiUtil.getFontWithFallback(fontFace, Font.PLAIN, fontSize))
       val userScaleFactor = if (useInterFont()) fontSize / INTER_SIZE else getFontScale(fontSize)
       setUserScaleFactor(userScaleFactor)
@@ -921,14 +948,6 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     if (autodetect) {
       detectAndSyncLaf()
     }
-    else if (ExperimentalUI.isNewUI()) {
-      if ("Light" == myCurrentLaf!!.name && myCurrentLaf === preferredLightLaf) {
-        preferredLightLaf = null
-      }
-      else if ("Dark" == myCurrentLaf!!.name && myCurrentLaf === preferredDarkLaf) {
-        preferredDarkLaf = null
-      }
-    }
   }
 
   override fun getAutodetectSupported(): Boolean {
@@ -958,7 +977,8 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     override fun extensionAdded(extension: UIThemeProvider, pluginDescriptor: PluginDescriptor) {
       val newLaF = UiThemeProviderListManager.getInstance().themeProviderAdded(extension) ?: return
       val oldLaFsMap = lafMap.value
-      val newLaFsMap = TreeMap(oldLaFsMap)
+      val newLaFsMap = mutableMapOf<LookAndFeelInfo, TargetUIType>()
+      newLaFsMap.putAll(oldLaFsMap)
       newLaFsMap.put(newLaF, extension.targetUI)
       lafMap.value = newLaFsMap
       updateLafComboboxModel()
@@ -982,12 +1002,12 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       oldTheme.setProviderClassLoader(null)
       val isDark = oldTheme.isDark
       val defaultLaF = if (oldLaF === currentLookAndFeel) {
-        if (isDark) defaultDarkLaf.value else defaultLightLaf
+        if (isDark) getDefaultDarkLaf() else getDefaultLightLaf()
       }
       else {
         null
       }
-      val newLaFs = TreeMap<LookAndFeelInfo, TargetUIType>(lafMap.value.comparator())
+      val newLaFs = mutableMapOf<LookAndFeelInfo, TargetUIType>()
       for (laf in lafMap.value) {
         if (laf.key !== oldLaF) {
           newLaFs.put(laf.key, laf.value)
@@ -997,7 +1017,11 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       updateLafComboboxModel()
       if (defaultLaF != null) {
         setLookAndFeelImpl(defaultLaF, true, true)
-        JBColor.setDark(defaultDarkLaf.isInitialized() && isDark)
+        if (ExperimentalUI.isNewUI()) {
+          JBColor.setDark(defaultDarkLaf.isInitialized() && isDark)
+        } else {
+          JBColor.setDark(defaultClassicDarkLaf.isInitialized() && isDark)
+        }
         updateUI()
       }
     }
@@ -1060,17 +1084,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
 
     private val lafGroups: ActionGroup
       get() {
-        val allLaFs =
-          if (ExperimentalUI.isNewUI()) {
-            getLafListForTargetUI(TargetUIType.NEW) +
-            getLafListForTargetUI(TargetUIType.CLASSIC) +
-            getLafListForTargetUI(TargetUIType.UNSPECIFIED)
-          }
-          else{
-            getLafListForTargetUI(TargetUIType.CLASSIC) +
-            getLafListForTargetUI(TargetUIType.UNSPECIFIED)
-          }
-
+        val allLaFs = ThemesListProvider.getInstance().getShownThemes().flatten()
         val lightLaFs = ArrayList<LookAndFeelInfo>()
         val darkLaFs = ArrayList<LookAndFeelInfo>()
         for (lafInfo in allLaFs) {
@@ -1106,19 +1120,31 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
                                       private val lafInfo: LookAndFeelInfo,
                                       private val isDark: Boolean) : ToggleAction(name) {
     override fun isSelected(e: AnActionEvent): Boolean {
-      return if (isDark) lafInfo === preferredDarkLaf else lafInfo === preferredLightLaf
+      return if (isDark) {
+        (preferredDarkLaf?.name ?: getDefaultDarkLaf().name) == lafInfo.name
+      } else {
+        (preferredLightLaf?.name ?: getDefaultLightLaf().name) == lafInfo.name
+      }
     }
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       if (isDark) {
-        if (preferredDarkLaf !== lafInfo) {
-          preferredDarkLaf = lafInfo
+        if (preferredDarkLaf?.name != lafInfo.name) {
+          if (lafInfo.name == getDefaultDarkLaf().name) {
+            preferredDarkLaf = null
+          } else {
+            preferredDarkLaf = lafInfo
+          }
           detectAndSyncLaf()
         }
       }
       else {
-        if (preferredLightLaf !== lafInfo) {
-          preferredLightLaf = lafInfo
+        if (preferredLightLaf?.name != lafInfo.name) {
+          if (lafInfo.name == getDefaultLightLaf().name) {
+            preferredLightLaf = null
+          } else {
+            preferredLightLaf = lafInfo
+          }
           detectAndSyncLaf()
         }
       }
@@ -1249,16 +1275,6 @@ private class OurPopupFactory(private val delegate: PopupFactory) : PopupFactory
       }
     }
     return popup
-  }
-}
-
-private fun createLafInfo(fqn: String): LookAndFeelInfo? {
-  try {
-    val lafInfoClass = Class.forName(fqn)
-    return lafInfoClass.getDeclaredConstructor().newInstance() as LookAndFeelInfo
-  }
-  catch (e: Throwable) {
-    return null
   }
 }
 

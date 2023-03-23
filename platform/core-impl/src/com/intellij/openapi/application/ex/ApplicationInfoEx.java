@@ -135,12 +135,11 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract @NotNull List<PluginId> getEssentialPluginsIds();
 
-  /**
-   * @deprecated Not used anymore.
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
   public abstract @Nullable String getDefaultLightLaf();
 
+  public abstract @Nullable String getDefaultClassicLightLaf();
+
   public abstract @Nullable String getDefaultDarkLaf();
+
+  public abstract @Nullable String getDefaultClassicDarkLaf();
 }
