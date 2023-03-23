@@ -14,6 +14,8 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.SystemProperties
+import kotlinx.coroutines.asContextElement
+import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.LongAdder
 import java.util.function.Function
 import javax.swing.Icon
@@ -22,10 +24,12 @@ internal class IconDeferrerImpl private constructor() : IconDeferrer() {
   companion object {
     private val isEvaluationInProgress = ThreadLocal.withInitial { false }
 
-    fun evaluateDeferred(runnable: Runnable) {
+    suspend inline fun <T> evaluateDeferred(crossinline runnable: () -> T): T {
       try {
         isEvaluationInProgress.set(true)
-        runnable.run()
+        return withContext(isEvaluationInProgress.asContextElement()) {
+          runnable()
+        }
       }
       finally {
         isEvaluationInProgress.set(false)
@@ -67,7 +71,7 @@ internal class IconDeferrerImpl private constructor() : IconDeferrer() {
       return evaluator.apply(param)
     }
 
-    return iconCache.get(this) {
+    return iconCache.get(param) {
       val started = lastClearTimestamp.sum()
       DeferredIconImpl(baseIcon = base,
                        param = param,

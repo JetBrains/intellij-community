@@ -1,8 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui
 
-import com.intellij.codeWithMe.ClientId
-import com.intellij.codeWithMe.ClientId.Companion.withClientId
 import com.intellij.ide.PowerSaveMode
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.Service
@@ -30,12 +28,9 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Function
 import javax.swing.Icon
 import javax.swing.JTree
-import kotlin.time.Duration.Companion.milliseconds
-
-private val MIN_AUTO_UPDATE = 950.milliseconds
 
 private val repaintScheduler = DeferredIconRepaintScheduler()
-private val EMPTY_ICON: Icon = EmptyIcon.create(16).withIconPreScaled(false)
+private val EMPTY_ICON: Icon by lazy { EmptyIcon.create(16).withIconPreScaled(false) }
 
 class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconWithToolTip, CopyableIcon {
   companion object {
@@ -43,11 +38,8 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
       return DeferredIconImpl(baseIcon = baseIcon, param = param, needReadAction = false, evaluator = evaluator, listener = null)
     }
 
-    fun equalIcons(icon1: Icon?, icon2: Icon?): Boolean {
-      return if (icon1 is DeferredIconImpl<*> && icon2 is DeferredIconImpl<*>) {
-        paramsEqual(icon1, icon2)
-      }
-      else icon1 == icon2
+    internal fun equalIcons(icon1: Icon?, icon2: Icon?): Boolean {
+      return if (icon1 is DeferredIconImpl<*> && icon2 is DeferredIconImpl<*>) paramsEqual(icon1, icon2) else icon1 == icon2
     }
 
     private fun paramsEqual(icon1: DeferredIconImpl<*>, icon2: DeferredIconImpl<*>): Boolean {
@@ -61,7 +53,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
   private var scaledDelegateIcon: Icon
   private var cachedScaledIcon: DeferredIconImpl<T>?
   private var evaluator: Function<in T, out Icon>?
-  private var scheduledRepaints: MutableSet<RepaintRequest>? = null
+  private var scheduledRepaints: Set<RepaintRequest>? = null
 
   @Volatile
   private var isScheduled = false
@@ -182,14 +174,14 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     if (!isDone) {
       var scheduledRepaints = scheduledRepaints
       if (scheduledRepaints == null) {
-        this@DeferredIconImpl.scheduledRepaints = mutableSetOf(repaintRequest)
+        this@DeferredIconImpl.scheduledRepaints = setOf(repaintRequest)
       }
       else {
         if (!scheduledRepaints.contains(repaintRequest)) {
           if (scheduledRepaints.size == 1) {
             scheduledRepaints = HashSet(scheduledRepaints)
           }
-          scheduledRepaints.add(repaintRequest)
+          (scheduledRepaints as MutableSet<RepaintRequest>).add(repaintRequest)
         }
       }
     }
@@ -199,27 +191,15 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     }
     isScheduled = true
 
-    return iconCalculatingService.coroutineScope.launch(ModalityState.current().asContextElement()) {
+    return iconCalculatingService.coroutineScope.launch {
       val oldWidth = scaledDelegateIcon.iconWidth
-      var evaluated: Icon? = null
-      if (isNeedReadAction) {
-        runReadAction { IconDeferrerImpl.evaluateDeferred { evaluated = evaluate() } }
-      }
-      else {
-        IconDeferrerImpl.evaluateDeferred { evaluated = evaluate() }
-      }
-      val result = evaluated
-      if (result == null) {
-        isScheduled = false
-        iconCalculatingService.coroutineScope.launch {
-          delay(MIN_AUTO_UPDATE)
-          withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-            if (needScheduleEvaluation()) {
-              scheduleEvaluation(component = component, x = x, y = y)
-            }
-          }
+      val result = IconDeferrerImpl.evaluateDeferred {
+        if (isNeedReadAction) {
+          runReadAction { evaluate() }
         }
-        return@launch
+        else {
+          evaluate()
+        }
       }
 
       scaledDelegateIcon = result
@@ -266,15 +246,13 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
   }
 
   override fun evaluate(): Icon {
-    // Icon evaluation is not something that should be related to any client
     val result = try {
-      withClientId(null as ClientId?).use {
-        evaluator?.apply(param) ?: EMPTY_ICON
-      }
+      evaluator?.apply(param) ?: EMPTY_ICON
     }
     catch (e: IndexNotReadyException) {
       EMPTY_ICON
     }
+
     if (ApplicationManager.getApplication().isUnitTestMode) {
       checkDoesntReferenceThis(result)
     }
