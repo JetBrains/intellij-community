@@ -82,4 +82,3 @@ suspend fun main() {
 }
 
 // IGNORE_K2
-// IGNORE_FOR_K2_CODE

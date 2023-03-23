@@ -33,6 +33,8 @@ abstract class KotlinDescriptorTestCaseWithStackFrames : KotlinDescriptorTestCas
 
     private val agentList = mutableListOf<JpsMavenRepositoryLibraryDescriptor>()
 
+    override fun useIrBackend(): Boolean = true
+
     private fun out(frame: XStackFrame) {
         out(INDENT_FRAME, frame.javaClass.simpleName + " FRAME:" + XDebuggerTestUtil.getFramePresentation(frame))
         outVariables(frame)

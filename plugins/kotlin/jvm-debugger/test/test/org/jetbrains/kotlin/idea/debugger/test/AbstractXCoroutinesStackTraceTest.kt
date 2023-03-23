@@ -15,6 +15,4 @@ abstract class AbstractK1IdeK2CodeXCoroutinesStackTraceTest : AbstractXCoroutine
     override val compileWithK2 = true
 
     override fun lambdasGenerationScheme() = JvmClosureGenerationScheme.INDY
-
-    override fun useIrBackend() = true
 }
