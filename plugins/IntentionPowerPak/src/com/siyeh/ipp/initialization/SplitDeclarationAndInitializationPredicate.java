@@ -38,7 +38,7 @@ class SplitDeclarationAndInitializationPredicate
       return false;
     }
     final PsiClass containingClass = field.getContainingClass();
-    if (containingClass == null || containingClass.isInterface()) {
+    if (containingClass == null || containingClass.isInterface() || containingClass.isRecord()) {
       return false;
     }
     return !ErrorUtil.containsError(field);
