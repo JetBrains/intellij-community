@@ -11,6 +11,9 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
+import java.awt.geom.AffineTransform;
+import java.text.AttributedCharacterIterator;
+import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
@@ -28,10 +31,18 @@ public class JBFont extends Font {
   }
 
   private Font getScaledFont() {
+    refreshScaledFont();
+    return myScaledFont;
+  }
+
+  private void refreshScaledFont() {
+    if (this instanceof UIResource) return;
+
     myScaleUpdateHelper.saveScaleAndRunIfChanged(() -> {
       myScaledFont = myFontScaler.scaledFont();
+      size = myScaledFont.getSize();
+      pointSize = myScaledFont.getSize2D();
     });
-    return myScaledFont;
   }
 
   @Override
@@ -55,7 +66,7 @@ public class JBFont extends Font {
   @Override
   public boolean equals(Object obj) {
     if (this instanceof UIResource) return super.equals(obj);
-    if (obj instanceof JBFont) return myScaledFont.equals(((JBFont)obj).getScaledFont());
+    if (obj instanceof JBFont) return getScaledFont().equals(((JBFont)obj).getScaledFont());
     return super.equals(obj);
   }
 
@@ -107,13 +118,38 @@ public class JBFont extends Font {
 
   @Override
   public JBFont deriveFont(int style, float size) {
-    Font font = super.deriveFont(style, size);
-    return this instanceof JBFontUIResource ? new JBFontUIResource(font) : new JBFont(font);
+    refreshScaledFont();
+    return create(super.deriveFont(style, size), false);
   }
 
   @Override
   public JBFont deriveFont(float size) {
+    refreshScaledFont();
     return deriveFont(getStyle(), size);
+  }
+
+  @Override
+  public Font deriveFont(int style) {
+    refreshScaledFont();
+    return create(super.deriveFont(style, pointSize), false);
+  }
+
+  @Override
+  public Font deriveFont(Map<? extends AttributedCharacterIterator.Attribute, ?> attributes) {
+    refreshScaledFont();
+    return create(super.deriveFont(attributes).deriveFont(pointSize), false);
+  }
+
+  @Override
+  public Font deriveFont(AffineTransform trans) {
+    refreshScaledFont();
+    return create(super.deriveFont(trans).deriveFont(pointSize), false);
+  }
+
+  @Override
+  public Font deriveFont(int style, AffineTransform trans) {
+    refreshScaledFont();
+    return create(super.deriveFont(style, trans).deriveFont(pointSize), false);
   }
 
   public JBFont biggerOn(float size) {
