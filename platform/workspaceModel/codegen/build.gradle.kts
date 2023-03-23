@@ -1,8 +1,6 @@
 plugins {
   id("maven-publish")
-  // Java support
   id("java")
-  // Kotlin support
   id("org.jetbrains.kotlin.jvm") version "1.8.0"
 }
 
@@ -26,7 +24,7 @@ kotlin {
 publishing {
   repositories {
     maven {
-      url = uri(System.getProperty("intellij.dependencies.repo.url"))
+      url = uri(System.getProperty("intellij.dependencies.repo.url") ?: "")
       credentials {
         username = System.getProperty("intellij.workspace.codegen.repository.user")
         password = System.getProperty("intellij.workspace.codegen.repository.password")

@@ -7,15 +7,16 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.toNioPath
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiLiteralExpression
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.PathUtil
+import com.intellij.util.lang.UrlClassLoader
 import com.intellij.workspaceModel.storage.CodeGeneratorVersions
 import org.jetbrains.concurrency.await
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
-import java.io.File
-import java.net.URLClassLoader
 import java.util.*
 
 
@@ -39,15 +40,17 @@ class CodegenJarLoader(val project: Project) {
     val artifactVersion = calculateArtifactVersion() ?: return null
     val codegenLibraryDescription = JpsMavenRepositoryLibraryDescriptor(GROUP_ID, ARTIFACT_ID, artifactVersion,
                                                                         false, emptyList())
+    val roots = try {
+      JarRepositoryManager.loadDependenciesAsync(project, codegenLibraryDescription, setOf(ArtifactKind.ARTIFACT),
+                                                 listOf(INTELLIJ_DEPENDENCIES_DESCRIPTION), null).await()
+    } catch (ex: Exception) {
+      thisLogger().warn("Exception at codegen version $artifactVersion loading ", ex)
+      return null
+    }
 
-    val promise = JarRepositoryManager.loadDependenciesAsync(project, codegenLibraryDescription, setOf(ArtifactKind.ARTIFACT),
-                                                             listOf(INTELLIJ_DEPENDENCIES_DESCRIPTION), null)
-    val roots = promise.await()
-    val orderRoot = roots.firstOrNull() ?: return null
-
-    val pathToJar = File(orderRoot.file.path.removeSuffix("!/")).toURI().toURL()
+    val pathToJar = PathUtil.getLocalPath(roots.firstOrNull()?.file)?.toNioPath() ?: return null
     thisLogger().info("Path to jar: $pathToJar")
-    return URLClassLoader(arrayOf(pathToJar), this.javaClass.classLoader)
+    return UrlClassLoader.build().files(listOf(pathToJar)).parent(this.javaClass.classLoader).get()
   }
 
   private fun calculateArtifactVersion(): String? {
