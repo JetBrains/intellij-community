@@ -132,7 +132,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return VfsImplUtil.refreshAndFindFileByPath(this, path);
   }
 
-  protected static @NotNull String toIoPath(@NotNull VirtualFile file) {
+  static @NotNull String toIoPath(@NotNull VirtualFile file) {
     String path = file.getPath();
     if (path.length() == 2 && SystemInfo.isWindows && OSAgnosticPathUtil.startsWithWindowsDrive(path)) {
       // makes 'C:' resolve to a root directory of the drive C:, not the current directory on that drive
@@ -269,7 +269,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   private static void refreshFiles(boolean async,
                                    boolean recursive,
-                                   List<? extends VirtualFile> virtualFiles,
+                                   @NotNull List<? extends VirtualFile> virtualFiles,
                                    @Nullable Runnable onFinish) {
     VirtualFileManagerEx manager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
 
@@ -787,14 +787,14 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     PersistentFS.getInstance().clearIdCache();
   }
 
-  private static @Nullable FileAttributes getAttributesWithCustomTimestamp(VirtualFile file) {
+  private static @Nullable FileAttributes getAttributesWithCustomTimestamp(@NotNull VirtualFile file) {
     var pathStr = FileUtilRt.toSystemDependentName(file.getPath());
     if (pathStr.length() == 2 && pathStr.charAt(1) == ':') pathStr += '\\';
     var attributes = FileSystemUtil.getAttributes(pathStr);
     return copyWithCustomTimestamp(file, attributes);
   }
 
-  private static @Nullable FileAttributes copyWithCustomTimestamp(VirtualFile file, @Nullable FileAttributes attributes) {
+  private static @Nullable FileAttributes copyWithCustomTimestamp(@NotNull VirtualFile file, @Nullable FileAttributes attributes) {
     if (attributes != null) {
       for (LocalFileSystemTimestampEvaluator provider : LocalFileSystemTimestampEvaluator.EP_NAME.getExtensionList()) {
         Long custom = provider.getTimestamp(file);
