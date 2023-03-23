@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -194,26 +193,6 @@ public abstract class ExperimentalUI {
     if (UISettings.getInstance().getOverrideLafFonts()) {
       //todo[kb] add RunOnce
       UISettings.getInstance().setOverrideLafFonts(false);
-    }
-  }
-
-  public static final class Icons {
-    public static final class Gutter {
-      public static final Icon Fold = loadIcon("expui/gutter/fold.svg");
-      public static final Icon FoldBottom = loadIcon("expui/gutter/foldBottom.svg");
-      public static final Icon Unfold = loadIcon("expui/gutter/unfold.svg");
-    }
-
-    public static final class General {
-      public static final Icon Search = loadIcon("expui/general/search.svg");
-    }
-
-    public static final class ToolWindow {
-      public static final Icon MeetNewUi = loadIcon("expui/toolwindow/meetNewUi.svg");
-    }
-
-    private static Icon loadIcon(String path) {
-      return IconLoader.getIcon(path, AllIcons.class.getClassLoader());
     }
   }
 }

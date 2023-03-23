@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.welcomeScreen
 
 import com.intellij.icons.AllIcons
+import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.RecentProjectsManager
@@ -162,7 +163,7 @@ class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScre
 
     val projectSearch = recentProjectTree.installSearchField()
     if (ExperimentalUI.isNewUI()) {
-      projectSearch.textEditor.putClientProperty("JTextField.Search.Icon", ExperimentalUI.Icons.General.Search)
+      projectSearch.textEditor.putClientProperty("JTextField.Search.Icon", ExpUiIcons.General.Search)
     }
     val northPanel: JPanel = JBUI.Panels.simplePanel()
       .andTransparent()

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.experimental.meetNewUi
 
+import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.project.DumbAware
@@ -12,8 +13,7 @@ import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.ExperimentalUI
 
-class MeetNewUiToolWindowFactory : ToolWindowFactory, DumbAware {
-
+private class MeetNewUiToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun isApplicable(project: Project): Boolean {
     return ExperimentalUI.isNewUI() && Registry.`is`("ide.experimental.ui.meetNewUi")
   }
@@ -28,7 +28,7 @@ class MeetNewUiToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   override fun init(toolWindow: ToolWindow) {
-    toolWindow.setIcon(ExperimentalUI.Icons.ToolWindow.MeetNewUi)
+    toolWindow.setIcon(ExpUiIcons.Toolwindow.MeetNewUi)
 
     val project = toolWindow.project
     val propertiesComponent = PropertiesComponent.getInstance()
