@@ -2,22 +2,19 @@
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.ui.components.JBList;
-import com.intellij.util.PathUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitIcons;
 
-public abstract class ExtensionPluginDescriptorDeclarationRelatedItemLineMarkerProviderTestBase extends JavaCodeInsightFixtureTestCase {
+public abstract class ExtensionPluginDescriptorDeclarationRelatedItemLineMarkerProviderTestBase
+  extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
-    moduleBuilder.addLibrary("platform-extensions", PathUtil.getJarPathForClass(ExtensionPointName.class));
-    moduleBuilder.addLibrary("platform-ide", PathUtil.getJarPathForClass(JBList.class));
+  protected void setUp() throws Exception {
+    super.setUp();
+    myFixture.addClass("package com.intellij.ui.components; public class JBList {}");
   }
 
   protected void doTestExtension(@NotNull String file, @NotNull String xmlDeclarationText) {
