@@ -24,4 +24,3 @@ fun main() {
 }
 
 // STEP_OVER: 10
-// IGNORE_FOR_K2_CODE
