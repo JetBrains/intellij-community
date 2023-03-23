@@ -34,7 +34,7 @@ private val LOG = logger<AbstractCommitWorkflowHandler<*, *>>()
 
 // Need to support '_' for mnemonics as it is supported in DialogWrapper internally
 @Nls
-private fun String.fixUnderscoreMnemonic() = replace('_', '&')
+fun String.fixUnderscoreMnemonic() = replace('_', '&')
 
 internal fun CommitWorkflowUi.getDisplayedPaths(): List<FilePath> =
   getDisplayedChanges().map { getFilePath(it) } + getDisplayedUnversionedFiles()

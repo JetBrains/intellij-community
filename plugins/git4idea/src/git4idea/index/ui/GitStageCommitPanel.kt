@@ -4,6 +4,9 @@ package git4idea.index.ui
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.Change
@@ -20,11 +23,19 @@ import git4idea.index.GitStageTracker
 import git4idea.index.createChange
 import kotlin.properties.Delegates.observable
 
+internal val isCommitAllProperty = Registry.get("git.stage.enable.commit.all")
+
 private fun GitStageTracker.State.getStaged(): Set<GitFileStatus> =
   rootStates.values.flatMapTo(mutableSetOf()) { it.getStaged() }
 
 private fun GitStageTracker.RootState.getStaged(): Set<GitFileStatus> =
   statuses.values.filterTo(mutableSetOf()) { it.getStagedStatus() != null }
+
+private fun GitStageTracker.State.getChanged(): Set<GitFileStatus> =
+  rootStates.values.flatMapTo(mutableSetOf()) { it.getChanged() }
+
+private fun GitStageTracker.RootState.getChanged(): Set<GitFileStatus> =
+  statuses.values.filterTo(mutableSetOf()) { it.getStagedStatus() != null || it.getUnStagedStatus() != null }
 
 private fun GitStageTracker.RootState.getStagedChanges(project: Project): List<Change> =
   getStaged().mapNotNull { createChange(project, root, it, ContentVersion.HEAD, ContentVersion.STAGED) }
@@ -40,6 +51,8 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
   val includedRoots get() = state.includedRoots
   val conflictedRoots get() = state.conflictedRoots
 
+  val isCommitAll get() = state.isCommitAll
+
   private val editedCommitListeners = DisposableWrapperList<() -> Unit>()
   override var editedCommit: EditedCommitDetails? by observable(null) { _, _, _ ->
     editedCommitListeners.forEach { it() }
@@ -54,6 +67,12 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
     bottomPanel.add(progressPanel.component)
     bottomPanel.add(commitAuthorComponent.apply { border = empty(0, 5, 4, 0) })
     bottomPanel.add(commitActionsPanel)
+
+    isCommitAllProperty.addListener(object : RegistryValueListener {
+      override fun afterValueChanged(value: RegistryValue) {
+        fireInclusionChanged()
+      }
+    }, this)
   }
 
   fun setIncludedRoots(includedRoots: Collection<VirtualFile>) {
@@ -86,16 +105,28 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
 
   private inner class InclusionState(val includedRoots: Set<VirtualFile>, val trackerState: GitStageTracker.State) {
     private val stagedStatuses: Set<GitFileStatus> = trackerState.getStaged()
+
+    private val changedRoots: Set<VirtualFile> = trackerState.changedRoots
     val conflictedRoots: Set<VirtualFile> = trackerState.conflictedRoots
+
     val stagedChanges by lazy {
       trackerState.rootStates.filterKeys {
         includedRoots.contains(it)
       }.values.flatMap { it.getStagedChanges(project) }
     }
-    val rootsToCommit get() = trackerState.stagedRoots.intersect(includedRoots)
+    val isCommitAll = isCommitAllProperty.asBoolean() && trackerState.stagedRoots.isEmpty()
+    val rootsToCommit: Set<VirtualFile>
+      get() {
+        if (isCommitAll) {
+          return trackerState.changedRoots.intersect(includedRoots)
+        }
+        return trackerState.stagedRoots.intersect(includedRoots)
+      }
 
     fun isInclusionChangedFrom(other: InclusionState): Boolean {
       if (includedRoots != other.includedRoots || conflictedRoots != other.conflictedRoots) return true
+      if (isCommitAll != other.isCommitAll) return true
+      if (isCommitAll && changedRoots != other.changedRoots) return true
       return stagedStatuses != other.stagedStatuses
     }
   }
@@ -104,6 +135,7 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
 class GitStageCommitProgressPanel : CommitProgressPanel() {
   var isEmptyRoots by stateFlag()
   var isUnmerged by stateFlag()
+  var isCommitAll by stateFlag()
 
   override fun clearError() {
     super.clearError()
@@ -115,7 +147,9 @@ class GitStageCommitProgressPanel : CommitProgressPanel() {
     when {
       isEmptyRoots -> GitBundle.message("error.no.selected.roots.to.commit")
       isUnmerged -> GitBundle.message("error.unresolved.conflicts")
+      isEmptyChanges && isCommitAll && isEmptyMessage -> GitBundle.message("error.no.changed.files.no.commit.message")
       isEmptyChanges && isEmptyMessage -> GitBundle.message("error.no.staged.changes.no.commit.message")
+      isEmptyChanges && isCommitAll -> GitBundle.message("error.no.changed.files.to.commit")
       isEmptyChanges -> GitBundle.message("error.no.staged.changes.to.commit")
       isEmptyMessage -> VcsBundle.message("error.no.commit.message")
       else -> null

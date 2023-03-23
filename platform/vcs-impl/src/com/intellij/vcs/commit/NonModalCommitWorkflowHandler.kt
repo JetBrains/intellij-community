@@ -108,9 +108,11 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   override fun executionEnded() = updateDefaultCommitActionEnabled()
 
   override fun updateDefaultCommitActionName() {
-    val isAmend = amendCommitHandler.isAmendCommitMode
-    val isSkipCommitChecks = willSkipCommitChecks()
-    ui.defaultCommitActionName = getDefaultCommitActionName(workflow.vcses, isAmend, isSkipCommitChecks)
+    ui.defaultCommitActionName = getDefaultCommitActionName(amendCommitHandler.isAmendCommitMode, willSkipCommitChecks())
+  }
+
+  protected open fun getDefaultCommitActionName(isAmend: Boolean, isSkipCommitChecks: Boolean): @Nls String {
+    return getDefaultCommitActionName(workflow.vcses, isAmend, isSkipCommitChecks)
   }
 
   private fun getCommitActionTextForNotification(
