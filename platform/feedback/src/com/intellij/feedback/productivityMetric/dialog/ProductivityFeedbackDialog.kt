@@ -33,7 +33,6 @@ class ProductivityFeedbackDialog(
   override val feedbackJsonVersion = COMMON_FEEDBACK_SYSTEM_INFO_VERSION
 
   override val feedbackReportId = "productivity_metric_feedback"
-  override val feedbackPrivacyConsentType = "productivity_metric_feedback_consent"
 
   private val systemInfoData: Lazy<CommonFeedbackSystemInfoData> = lazy { CommonFeedbackSystemInfoData.getCurrentData() }
 
