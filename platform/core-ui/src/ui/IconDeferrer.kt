@@ -1,28 +1,24 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui;
+package com.intellij.ui
 
-import com.intellij.openapi.application.ApplicationManager;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
+import java.util.function.Function
+import javax.swing.Icon
 
-import javax.swing.*;
-import java.util.Objects;
-import java.util.function.Function;
-
-public abstract class IconDeferrer {
-  public static IconDeferrer getInstance() {
-    return ApplicationManager.getApplication().getService(IconDeferrer.class);
+abstract class IconDeferrer {
+  companion object {
+    @JvmStatic
+    fun getInstance(): IconDeferrer = ApplicationManager.getApplication().service<IconDeferrer>()
   }
 
   /**
    * @param param Unique key that WILL BE USED to cache the icon instance.
-   *              Prefer passing unique objects over {@link String} or {@link Integer} to avoid accidental clashes with another module.
+   * Prefer passing unique objects over [String] or [Integer] to avoid accidental clashes with another module.
    */
-  public abstract <T> @NotNull Icon defer(@Nullable Icon base, T param, @NotNull Function<? super T, ? extends Icon> f);
+  abstract fun <T> defer(base: Icon?, param: T, f: Function<in T, out Icon?>): Icon
 
-  public abstract void clearCache();
+  abstract fun clearCache()
 
-  public boolean equalIcons(Icon icon1, Icon icon2) {
-    return Objects.equals(icon1, icon2);
-  }
+  open fun equalIcons(icon1: Icon?, icon2: Icon?): Boolean = icon1 == icon2
 }
