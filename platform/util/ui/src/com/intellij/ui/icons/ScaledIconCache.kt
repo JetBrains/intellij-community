@@ -79,13 +79,9 @@ internal class ScaledResultIcon(@JvmField internal val image: Image,
     drawImage(g = g, image = image, x = x, y = y, sourceBounds = null, op = null, observer = c)
   }
 
-  override fun getIconWidth(): Int {
-    return image.getWidth(null)
-  }
+  override fun getIconWidth(): Int = image.getWidth(null)
 
-  override fun getIconHeight(): Int {
-    return image.getHeight(null)
-  }
+  override fun getIconHeight(): Int = image.getHeight(null)
 
   override fun replaceBy(replacer: IconReplacer): Icon {
     val originalReplaced = replacer.replaceIcon(original)

@@ -77,7 +77,8 @@ internal fun loadImage(path: String,
                        filters: List<ImageFilter> = emptyList(),
                        useCache: Boolean = true): Image? {
   val start = StartUpMeasurer.getCurrentTimeIfEnabled()
-  val descriptors = createImageDescriptorList(path = path, isDark = isDark,
+  val descriptors = createImageDescriptorList(path = path,
+                                              isDark = isDark,
                                               pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat())
 
   val lastDotIndex = path.lastIndexOf('.')

@@ -163,15 +163,10 @@ private fun createNewResolverIfNeeded(originalClassLoader: ClassLoader?,
 }
 
 private class FinalImageDataLoader(private val path: String, classLoader: ClassLoader) : PatchedImageDataLoader {
-  private val classLoaderRef: WeakReference<ClassLoader>
-
-  init {
-    classLoaderRef = WeakReference(classLoader)
-  }
+  private val classLoaderRef = WeakReference(classLoader)
 
   override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image? {
     val classLoader = classLoaderRef.get() ?: return null
-    // do not use cache
     return loadImage(path = path,
                      useCache = false,
                      isDark = parameters.isDark,
