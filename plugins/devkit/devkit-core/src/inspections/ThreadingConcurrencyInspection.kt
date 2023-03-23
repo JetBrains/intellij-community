@@ -11,9 +11,12 @@ import com.intellij.lang.jvm.actions.annotationRequest
 import com.intellij.lang.jvm.actions.createAddAnnotationActions
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiMethod
+import com.intellij.util.EventDispatcher
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.*
 import com.intellij.util.containers.map2Array
+import com.siyeh.ig.callMatcher.CallMatcher
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.uast.*
@@ -52,8 +55,8 @@ internal class ThreadingConcurrencyInspection(
     val problemsHolder = createProblemsHolder(method, manager, isOnTheFly)
 
     val checkMissingAnnotations = checkMissingAnnotations &&
-                                  method.javaPsi.hasModifier(JvmModifier.PUBLIC)
-                                  && method.javaPsi.findSuperMethods().isEmpty()
+                                  method.javaPsi.hasModifier(JvmModifier.PUBLIC) &&
+                                  method.javaPsi.findSuperMethods().isEmpty()
     uastBody.accept(ThreadingVisitor(problemsHolder, method.getThreadingStatuses(), checkMissingAnnotations))
 
     return problemsHolder.resultsArray
@@ -83,6 +86,10 @@ internal class ThreadingConcurrencyInspection(
 
       // check violations, skip missing if found
       if (!methodThreadingStatus.isEmpty()) {
+        if (skipCallExpression(node)) {
+          return true
+        }
+
         if (checkViolations(node, threadingStatus)) {
           return true
         }
@@ -94,6 +101,17 @@ internal class ThreadingConcurrencyInspection(
       }
 
       return false
+    }
+
+    private val EVENT_DISPATCHER = CallMatcher.instanceCall(EventDispatcher::class.java.canonicalName,
+                                                            "getMulticaster")
+
+    private fun skipCallExpression(uCallExpression: UCallExpression): Boolean {
+      val receiver = uCallExpression.receiver as? UQualifiedReferenceExpression ?: return false
+
+      val selector = receiver.selector as? UResolvable ?: return false
+      val psiMethod = selector.resolve() as? PsiMethod ?: return false
+      return EVENT_DISPATCHER.methodMatches(psiMethod)
     }
 
     private fun checkMissingAnnotations(node: UCallExpression,

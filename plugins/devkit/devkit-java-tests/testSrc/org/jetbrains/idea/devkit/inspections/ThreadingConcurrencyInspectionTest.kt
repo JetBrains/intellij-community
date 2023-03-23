@@ -222,6 +222,29 @@ class ThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestBas
     """.trimIndent())
   }
 
+  fun testDoNotCheckEventDispatcherMulticaster() {
+    addEventDispatcherClass()
+
+    doTestHighlighting("""
+      @RequiresBackgroundThread
+      public void testEventDispatcher() {
+        com.intellij.util.EventDispatcher<MyListener> dispatcher = new com.intellij.util.EventDispatcher<>();
+        dispatcher.getMulticaster().myCallback();
+        
+        MyListener listener = new MyListener() {
+          public void myCallback() {};
+        };
+        listener.<error descr="Method annotated with '@RequiresEdt' must not be called from method annotated with '@RequiresBackgroundThread'">myCallback</error>();
+      }
+      
+      public interface MyListener extends java.util.EventListener {
+        
+        @RequiresEdt
+        void myCallback();
+      }
+    """.trimIndent())
+  }
+
   fun testMayCallRequiresEdtCalledFromRequiresEdtMethod() {
     doTestHighlighting("""
       @RequiresEdt

@@ -217,6 +217,25 @@ class KtThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestB
     """.trimIndent())
   }
 
+  fun testDoNotCheckEventDispatcherMulticaster() {
+    addEventDispatcherClass()
+
+    doTestHighlighting("""
+      @RequiresBackgroundThread
+      fun testEventDispatcher() {
+        val dispatcher: com.intellij.util.EventDispatcher<MyListener> = com.intellij.util.EventDispatcher()
+        dispatcher.getMulticaster().myCallback()
+        dispatcher.multicaster.myCallback()
+      }
+      
+      interface MyListener : java.util.EventListener {
+        
+        @RequiresEdt
+        fun myCallback();
+      }
+    """.trimIndent())
+  }
+
   fun testMayCallRequiresEdtCalledFromRequiresEdtMethod() {
     doTestHighlighting("""
       @RequiresEdt

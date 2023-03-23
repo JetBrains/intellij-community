@@ -63,4 +63,14 @@ abstract class ThreadingConcurrencyInspectionTestBase : LightDevKitInspectionFix
     """.trimIndent())
   }
 
+  protected fun addEventDispatcherClass() {
+    myFixture.addClass("""
+        package com.intellij.util;
+        
+        public final class EventDispatcher<T extends java.util.EventListener> {
+            public T getMulticaster() { return null;}
+        } 
+      """.trimIndent())
+  }
+
 }
