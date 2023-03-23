@@ -104,17 +104,15 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
       toUpdate = Collections.singletonList(Pair.create(file, true));
     }
     Application application = ApplicationManager.getApplication();
-    Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
-    if (editor != null && !application.isUnitTestMode()) {
+    Editor selectedEditor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
+    PsiFile selectedFile = selectedEditor == null ? null : PsiDocumentManager.getInstance(myProject).getCachedPsiFile(selectedEditor.getDocument());
+    if (selectedFile != null && !application.isUnitTestMode()) {
       application.invokeLater(() -> {
-        if (!editor.isDisposed()) {
-          EditorMarkupModel markupModel = (EditorMarkupModel)editor.getMarkupModel();
-          PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-          if (file != null) {
-            ErrorStripeUpdateManager.getInstance(myProject).setOrRefreshErrorStripeRenderer(markupModel, file);
-          }
+        if (!selectedEditor.isDisposed()) {
+          EditorMarkupModel markupModel = (EditorMarkupModel)selectedEditor.getMarkupModel();
+          ErrorStripeUpdateManager.getInstance(myProject).setOrRefreshErrorStripeRenderer(markupModel, selectedFile);
         }
-      }, ModalityState.stateForComponent(editor.getComponent()), myProject.getDisposed());
+      }, ModalityState.stateForComponent(selectedEditor.getComponent()), myProject.getDisposed());
     }
 
     for (Pair<PsiElement, Boolean> changedElement : toUpdate) {
