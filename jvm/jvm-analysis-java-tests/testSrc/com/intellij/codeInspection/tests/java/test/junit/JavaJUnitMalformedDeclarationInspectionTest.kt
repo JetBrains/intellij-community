@@ -1025,7 +1025,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
       }
     """.trimIndent())
   }
-  fun `test malformed test with parameter resolver`() {
+  fun `test no highlighting malformed test with parameter resolver`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.junit.jupiter.api.extension.*;
       import org.junit.jupiter.api.Test;
@@ -1066,6 +1066,36 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
       }
     """.trimIndent())
   }
+  fun `test no highlighting malformed test with nested parameter resolver`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import org.junit.jupiter.api.extension.*;
+      import org.junit.jupiter.api.Nested;
+      import org.junit.jupiter.api.Test;
+      
+      class MyResolver implements ParameterResolver {
+        @Override
+        public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+          return true;
+        }
+           
+        @Override
+        public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException { 
+          return null;
+        }
+      }
+      
+      @ExtendWith(MyResolver.class)
+      class Foo {
+        @Nested
+        class Bar {
+          @Test
+          void parametersExample(String a, String b) { }
+        }
+      }
+    """.trimIndent())
+  }
+
+
 
   // Unconstructable test case
   fun testPlain() {

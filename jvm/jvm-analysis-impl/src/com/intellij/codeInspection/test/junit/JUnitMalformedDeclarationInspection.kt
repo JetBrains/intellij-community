@@ -33,10 +33,7 @@ import com.intellij.psi.CommonClassNames.*
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
 import com.intellij.psi.impl.source.tree.java.PsiNameValuePairImpl
 import com.intellij.psi.search.searches.ClassInheritorsSearch
-import com.intellij.psi.util.InheritanceUtil
-import com.intellij.psi.util.PsiUtil
-import com.intellij.psi.util.TypeConversionUtil
-import com.intellij.psi.util.isAncestor
+import com.intellij.psi.util.*
 import com.intellij.uast.UastHintedVisitorAdapter
 import com.intellij.util.asSafely
 import com.siyeh.ig.junit.JUnitCommonClassNames.*
@@ -152,13 +149,13 @@ private class JUnitMalformedSignatureVisitor(
     validVisibility = ::notPrivate,
     validParameters = { method ->
       if (method.uastParameters.isEmpty()) emptyList()
-      else if (method.hasParameterResolver()) method.uastParameters
+      else if (method.inParameterResolverContext()) method.uastParameters
       else method.uastParameters.filter { param ->
         param.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_INFO
         || param.type.canonicalText == ORG_JUNIT_JUPITER_API_REPETITION_INFO
         || param.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_REPORTER
         || MetaAnnotationUtil.isMetaAnnotated(param, ignorableAnnotations)
-        || param.hasParameterResolver()
+        || param.inParameterResolverContext()
       }
     }
   )
@@ -179,11 +176,11 @@ private class JUnitMalformedSignatureVisitor(
     validVisibility = ::notPrivate,
     validParameters = { method ->
       if (method.uastParameters.isEmpty()) emptyList()
-      else if (method.hasParameterResolver()) method.uastParameters
+      else if (method.inParameterResolverContext()) method.uastParameters
       else method.uastParameters.filter { param ->
         param.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_INFO
         || MetaAnnotationUtil.isMetaAnnotated(param, ignorableAnnotations)
-        || param.hasParameterResolver()
+        || param.inParameterResolverContext()
       }
     }
   )
@@ -204,12 +201,12 @@ private class JUnitMalformedSignatureVisitor(
     validParameters = { method ->
       if (method.uastParameters.isEmpty()) emptyList()
       else if (MetaAnnotationUtil.isMetaAnnotated(method.javaPsi, listOf(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE))) null // handled in parameterized test check
-      else if (method.hasParameterResolver()) method.uastParameters
+      else if (method.inParameterResolverContext()) method.uastParameters
       else method.uastParameters.filter { param ->
         param.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_INFO
         || param.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_REPORTER
         || MetaAnnotationUtil.isMetaAnnotated(param, ignorableAnnotations)
-        || param.hasParameterResolver()
+        || param.inParameterResolverContext()
       }
     }
   )
@@ -219,15 +216,15 @@ private class JUnitMalformedSignatureVisitor(
   private fun notPrivate(method: UDeclaration): UastVisibility? =
     if (method.visibility == UastVisibility.PRIVATE) UastVisibility.PUBLIC else null
 
-  private fun UParameter.hasParameterResolver(): Boolean = uAnnotations.any { ann -> ann.resolve()?.hasParameterResolver() == true }
+  private fun UParameter.inParameterResolverContext(): Boolean = uAnnotations.any { ann -> ann.resolve()?.inParameterResolverContext() == true }
 
-  private fun UMethod.hasParameterResolver(): Boolean {
+  private fun UMethod.inParameterResolverContext(): Boolean {
     val sourcePsi = this.sourcePsi ?: return false
     val alternatives = UastFacade.convertToAlternatives(sourcePsi, arrayOf(UMethod::class.java))
-    return alternatives.any { it.javaPsi.containingClass?.hasParameterResolver() == true || it.javaPsi.hasParameterResolver() }
+    return alternatives.any { it.javaPsi.inParameterResolverContext() }
   }
 
-  private fun PsiModifierListOwner.hasParameterResolver(): Boolean {
+  private fun PsiModifierListOwner.inParameterResolverContext(): Boolean {
     val annotation = MetaAnnotationUtil.findMetaAnnotationsInHierarchy(this, listOf(ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH))
       .asSequence()
       .firstOrNull()
@@ -240,6 +237,7 @@ private class JUnitMalformedSignatureVisitor(
         it is UClassLiteralExpression && InheritanceUtil.isInheritor(it.type, ORG_JUNIT_JUPITER_API_EXTENSION_PARAMETER_RESOLVER)
       }
     }
+    if (parentOfType<PsiModifierListOwner>(withSelf = false)?.inParameterResolverContext() == true) return true
     return hasPotentialAutomaticParameterResolver(this)
   }
 
@@ -617,7 +615,7 @@ private class JUnitMalformedSignatureVisitor(
       !InheritanceUtil.isInheritor(param.type, ORG_JUNIT_JUPITER_API_TEST_INFO) &&
       !InheritanceUtil.isInheritor(param.type, ORG_JUNIT_JUPITER_API_TEST_REPORTER) &&
       !MetaAnnotationUtil.isMetaAnnotated(param, ignorableAnnotations)
-    } > 1 && !containingClass.hasParameterResolver()
+    } > 1 && !containingClass.inParameterResolverContext()
   }
   
   private fun getPassedParameter(method: PsiMethod): PsiParameter? {
