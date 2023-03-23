@@ -1,6 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.uast.test.kotlin.comparison;
+package org.jetbrains.fir.uast.test;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
@@ -14,22 +14,22 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("uast/uast-kotlin/tests")
+@TestRoot("uast/uast-kotlin-fir/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../uast-kotlin-fir/tests/testData/value")
-public class FE1UastValuesTestGenerated extends AbstractFE1UastValuesTest {
+@TestMetadata("testData/value")
+public class FirUastValuesTestGenerated extends AbstractFirUastValuesTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
     @TestMetadata("parametersWithDefaultValue.kt")
     public void testParametersWithDefaultValue() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/value/parametersWithDefaultValue.kt");
+        runTest("testData/value/parametersWithDefaultValue.kt");
     }
 
     @TestMetadata("topLevelConstant.kt")
     public void testTopLevelConstant() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/value/topLevelConstant.kt");
+        runTest("testData/value/topLevelConstant.kt");
     }
 }

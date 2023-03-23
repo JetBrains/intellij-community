@@ -1,6 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.uast.test.kotlin.comparison;
+package org.jetbrains.fir.uast.test;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
@@ -14,107 +14,107 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("uast/uast-kotlin/tests")
+@TestRoot("uast/uast-kotlin-fir/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../uast-kotlin-fir/tests/testData/declaration")
-public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationTest {
+@TestMetadata("testData/declaration")
+public class FirUastDeclarationTestGenerated extends AbstractFirUastDeclarationTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
     @TestMetadata("annotationOnElvis.kt")
     public void testAnnotationOnElvis() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/declaration/annotationOnElvis.kt");
+        runTest("testData/declaration/annotationOnElvis.kt");
     }
 
     @TestMetadata("commentsOnDataClass.kt")
     public void testCommentsOnDataClass() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/declaration/commentsOnDataClass.kt");
+        runTest("testData/declaration/commentsOnDataClass.kt");
     }
 
     @TestMetadata("commentsOnProperties.kt")
     public void testCommentsOnProperties() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/declaration/commentsOnProperties.kt");
+        runTest("testData/declaration/commentsOnProperties.kt");
     }
 
     @TestMetadata("companionInAnnotation.kt")
     public void testCompanionInAnnotation() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/declaration/companionInAnnotation.kt");
+        runTest("testData/declaration/companionInAnnotation.kt");
     }
 
     @TestMetadata("constructorProperties.kt")
     public void testConstructorProperties() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/declaration/constructorProperties.kt");
+        runTest("testData/declaration/constructorProperties.kt");
     }
 
     @TestMetadata("constructorWithJvmOverloads.kt")
     public void testConstructorWithJvmOverloads() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/declaration/constructorWithJvmOverloads.kt");
+        runTest("testData/declaration/constructorWithJvmOverloads.kt");
     }
 
     @TestMetadata("doWhile.kt")
     public void testDoWhile() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/declaration/doWhile.kt");
+        runTest("testData/declaration/doWhile.kt");
     }
 
     @TestMetadata("facade.kt")
     public void testFacade() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/declaration/facade.kt");
+        runTest("testData/declaration/facade.kt");
     }
 
     @TestMetadata("if.kt")
     public void testIf() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/declaration/if.kt");
+        runTest("testData/declaration/if.kt");
     }
 
     @TestMetadata("importOnDemand.kt")
     public void testImportOnDemand() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/declaration/importOnDemand.kt");
+        runTest("testData/declaration/importOnDemand.kt");
     }
 
     @TestMetadata("init.kt")
     public void testInit() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/declaration/init.kt");
+        runTest("testData/declaration/init.kt");
     }
 
     @TestMetadata("interfaceCompanionObject.kt")
     public void testInterfaceCompanionObject() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/declaration/interfaceCompanionObject.kt");
+        runTest("testData/declaration/interfaceCompanionObject.kt");
     }
 
     @TestMetadata("labeledExpression.kt")
     public void testLabeledExpression() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/declaration/labeledExpression.kt");
+        runTest("testData/declaration/labeledExpression.kt");
     }
 
     @TestMetadata("mangling.kt")
     public void testMangling() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/declaration/mangling.kt");
+        runTest("testData/declaration/mangling.kt");
     }
 
     @TestMetadata("objects.kt")
     public void testObjects() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/declaration/objects.kt");
+        runTest("testData/declaration/objects.kt");
     }
 
     @TestMetadata("overriddenYetDeprecated.kt")
     public void testOverriddenYetDeprecated() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/declaration/overriddenYetDeprecated.kt");
+        runTest("testData/declaration/overriddenYetDeprecated.kt");
     }
 
     @TestMetadata("reflectKclassExperimental.kt")
     public void testReflectKclassExperimental() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/declaration/reflectKclassExperimental.kt");
+        runTest("testData/declaration/reflectKclassExperimental.kt");
     }
 
     @TestMetadata("retention.kt")
     public void testRetention() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/declaration/retention.kt");
+        runTest("testData/declaration/retention.kt");
     }
 
     @TestMetadata("returns.kt")
     public void testReturns() throws Exception {
-        runTest("../../uast-kotlin-fir/tests/testData/declaration/returns.kt");
+        runTest("testData/declaration/returns.kt");
     }
 }
