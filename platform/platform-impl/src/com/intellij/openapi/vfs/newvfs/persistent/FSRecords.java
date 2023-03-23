@@ -77,8 +77,7 @@ public final class FSRecords {
   public static final String IDE_USE_FS_ROOTS_DATA_LOADER = "idea.fs.roots.data.loader";
 
   public static final boolean USE_FAST_NAMES_IMPLEMENTATION = SystemProperties.getBooleanProperty("idea.vfs.use-fast-names-storage", false);
-  public static final boolean USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION =
-    SystemProperties.getBooleanProperty("vfs.use-streamlined-attributes-storage", false);
+  public static final boolean USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION = SystemProperties.getBooleanProperty("vfs.use-streamlined-attributes-storage", false);
 
   /**
    * Initially record=0 was used as a storage header record, hence fileId=0 was reserved.
@@ -537,8 +536,21 @@ public final class FSRecords {
   static @Nullable String readSymlinkTarget(int id) {
     try (DataInputStream stream = readAttribute(id, ourSymlinkTargetAttr)) {
       if (stream != null) {
-        String result = StringUtil.nullize(IOUtil.readUTF(stream));
-        return result == null ? null : FileUtil.toSystemIndependentName(result);
+        try {
+          String result = StringUtil.nullize(IOUtil.readUTF(stream));
+          return result == null ? null : FileUtil.toSystemIndependentName(result);
+        }
+        catch (EOFException eof) {
+          //EA-822669: collect detailed info for debug (TODO: remove after root cause found)
+          try (DataInputStream attrStream = readAttribute(id, ourSymlinkTargetAttr)) {
+            final int size = attrStream.available();
+            final byte[] content = new byte[size];
+            attrStream.readFully(content);
+            throw handleError(
+              new IOException("Can't read symLink from attribute[fileId:" + id + "][=" + IOUtil.toHexString(content) + "]", eof)
+            );
+          }
+        }
       }
       return null;
     }

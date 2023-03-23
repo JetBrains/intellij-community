@@ -79,6 +79,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
               : ConcurrentCollectionFactory.createConcurrentMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount(),
                                                                 HashingStrategy.caseInsensitive());
 
+    //PersistentFSImpl is an application service, and generally disposed as such, via .dispose().
+    // But to be on the safe side -- add a shutdown task also:
     ShutDownTracker.getInstance().registerShutdownTask(this::disconnect);
     LowMemoryWatcher.register(this::clearIdCache, this);
 
