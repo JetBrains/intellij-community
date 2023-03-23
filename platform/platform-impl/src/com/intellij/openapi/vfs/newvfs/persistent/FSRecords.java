@@ -271,10 +271,20 @@ public final class FSRecords {
   }
 
   private static void markAsDeletedRecursively(int id) throws IOException {
-    for (int subRecord : listIds(id)) {
-      markAsDeletedRecursively(subRecord);
+    int[] childIds = listIds(id);
+    doMarkDeleted(id);
+    if (childIds.length != 0) {
+      IntArrayList stack = new IntArrayList(childIds);
+      while (!stack.isEmpty()) {
+        int childId = stack.popInt();
+        int[] grandIds = listIds(childId);
+        stack.addElements(stack.size(), grandIds, 0, grandIds.length);
+        doMarkDeleted(childId);
+      }
     }
+  }
 
+  private static void doMarkDeleted(int id) throws IOException {
     int nameId = getConnectionOrFail().getRecords().getNameId(id);
     if (PersistentFS.isDirectory(getFlags(id))) {
       ourTreeAccessor.deleteDirectoryRecord(id);
@@ -382,7 +392,7 @@ public final class FSRecords {
     }
   }
 
-  public static @NotNull List<CharSequence> listNames(int parentId) {
+  public static @NotNull @Unmodifiable List<CharSequence> listNames(int parentId) {
     return ContainerUtil.map(list(parentId).children, c -> c.getName());
   }
 

@@ -33,9 +33,11 @@ import com.intellij.openapi.vfs.newvfs.impl.*;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.*;
+import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.*;
 import com.intellij.util.io.ReplicatorInputStream;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
@@ -1665,17 +1667,26 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private static void invalidateSubtree(@NotNull VirtualFile file, @NotNull Object source, @NotNull Object reason) {
-    VirtualFileSystemEntry impl = (VirtualFileSystemEntry)file;
+    VirtualFileSystemEntry root = (VirtualFileSystemEntry)file;
+    if (root.isDirectory()) {
+      Stack<VirtualFileSystemEntry> stack = new Stack<>((Collection)root.getCachedChildren());
+      while (!stack.isEmpty()) {
+        VirtualFileSystemEntry child = stack.pop();
+        stack.addAll((Collection)child.getCachedChildren());
+        doInvalidate(child, source, reason);
+      }
+    }
+    doInvalidate(root, source, reason);
+  }
+
+  private static void doInvalidate(@NotNull VirtualFileSystemEntry file, @NotNull Object source, @NotNull Object reason) {
     if (file.is(VFileProperty.SYMLINK)) {
       VirtualFileSystem fs = file.getFileSystem();
       if (fs instanceof LocalFileSystemImpl) {
-        ((LocalFileSystemImpl)fs).symlinkRemoved(impl.getId());
+        ((LocalFileSystemImpl)fs).symlinkRemoved(file.getId());
       }
     }
-    impl.invalidate(source, reason);
-    for (VirtualFile child : impl.getCachedChildren()) {
-      invalidateSubtree(child, source, reason);
-    }
+    file.invalidate(source, reason);
   }
 
   private static void removeIdFromChildren(@NotNull VirtualFile parent, int parentId, int childId) {
@@ -1780,20 +1791,16 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @TestOnly
   public void cleanPersistedContents() {
-    int[] roots = FSRecords.listRoots();
-    for (int root : roots) {
-      markForContentReloadRecursively(root);
-    }
-  }
-
-  private void markForContentReloadRecursively(int id) {
-    if (isDirectory(getFileAttributes(id))) {
-      for (int child : FSRecords.listIds(id)) {
-        markForContentReloadRecursively(child);
+    IntArrayList ids = new IntArrayList(FSRecords.listRoots());
+    while (!ids.isEmpty()) {
+      int id = ids.popInt();
+      if (isDirectory(getFileAttributes(id))) {
+        int[] children = FSRecords.listIds(id);
+        ids.addElements(ids.size(), children, 0, children.length);
       }
-    }
-    else {
-      doCleanPersistedContent(id);
+      else {
+        doCleanPersistedContent(id);
+      }
     }
   }
 
