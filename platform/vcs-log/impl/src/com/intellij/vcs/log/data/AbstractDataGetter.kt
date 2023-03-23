@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data
 
 import com.intellij.openapi.Disposable
@@ -76,7 +76,7 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails> internal constructo
   @Throws(VcsException::class)
   fun loadCommitsDataSynchronously(commits: Iterable<Int>,
                                    indicator: ProgressIndicator,
-                                   consumer: Consumer<in T>) {
+                                   consumer: (Int, T) -> Unit) {
     val toLoad = IntOpenHashSet()
     for (id in commits) {
       val details = getCommitDataIfAvailable(id)
@@ -84,14 +84,15 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails> internal constructo
         toLoad.add(id)
       }
       else {
-        consumer.consume(details)
+        consumer(id, details)
       }
     }
     if (!toLoad.isEmpty()) {
       indicator.checkCanceled()
       doLoadCommitsData(toLoad) { details ->
-        saveInCache(details)
-        consumer.consume(details)
+        val commitIndex = storage.getCommitIndex(details.id, details.root)
+        saveInCache(commitIndex, details)
+        consumer(commitIndex, details)
       }
       notifyLoaded()
     }
@@ -116,7 +117,6 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails> internal constructo
   protected abstract fun getCommitDataIfAvailable(commits: List<Int>): Int2ObjectMap<T>
 
   protected abstract fun saveInCache(commit: Int, details: T)
-  protected fun saveInCache(details: T) = saveInCache(storage.getCommitIndex(details.id, details.root), details)
 
   protected open fun cacheCommits(commits: IntOpenHashSet) = Unit
 
@@ -155,8 +155,9 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails> internal constructo
     @JvmStatic
     fun <T : VcsShortCommitDetails> AbstractDataGetter<T>.getCommitDetails(commits: List<Int>): List<T> {
       val commitToDetailsMap = Int2ObjectOpenHashMap<T>()
-      loadCommitsDataSynchronously(commits, ProgressManager.getGlobalProgressIndicator() ?: EmptyProgressIndicator()) { details ->
-        commitToDetailsMap[storage.getCommitIndex(details.id, details.root)] = details
+      loadCommitsDataSynchronously(commits,
+                                   ProgressManager.getGlobalProgressIndicator() ?: EmptyProgressIndicator()) { commitIndex, details ->
+        commitToDetailsMap[commitIndex] = details
       }
       return commits.mapNotNull { commitToDetailsMap[it] }
     }
