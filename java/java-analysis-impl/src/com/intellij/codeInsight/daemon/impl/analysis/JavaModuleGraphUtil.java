@@ -163,9 +163,9 @@ public final class JavaModuleGraphUtil {
           return Result.create(result, manifestPsi, ProjectRootModificationTracker.getInstance(project));
         });
       }
-      List<VirtualFile> nonTestSourceRoots = rootManager.getSourceRoots(JavaSourceRootType.SOURCE);
-      if (virtualAutoModuleName != null && !nonTestSourceRoots.isEmpty()) {
-        return LightJavaModule.create(PsiManager.getInstance(project), nonTestSourceRoots.get(0), virtualAutoModuleName);
+      List<VirtualFile> sourceSourceRoots = rootManager.getSourceRoots(JavaSourceRootType.SOURCE);
+      if (virtualAutoModuleName != null && !sourceSourceRoots.isEmpty()) {
+        return LightJavaModule.create(PsiManager.getInstance(project), sourceSourceRoots.get(0), virtualAutoModuleName);
       }
     }
 
