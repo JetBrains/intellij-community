@@ -1,12 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.devkit.module
 
 import com.intellij.ide.starters.local.StarterModuleBuilder.Companion.setupTestModule
 import com.intellij.ide.starters.shared.JAVA_STARTER_LANGUAGE
 import com.intellij.ide.starters.shared.KOTLIN_STARTER_LANGUAGE
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_11
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase4
-import org.jetbrains.idea.devkit.module.IdePluginModuleBuilder
 import org.jetbrains.idea.devkit.module.IdePluginModuleBuilder.PluginType
 import org.junit.Assert.assertFalse
 import org.junit.Test
