@@ -10,11 +10,9 @@ import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
-import java.awt.Dimension
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Function
@@ -60,12 +58,6 @@ abstract class AsyncChangesTree : ChangesTree {
     scope.cancel()
   }
 
-  override fun getPreferredSize(): Dimension {
-    val size = super.getPreferredSize()
-    size.width = Math.max(size.width, JBUI.scale(400))
-    size.height = Math.max(size.height, JBUI.scale(500))
-    return size
-  }
 
   override fun shouldShowBusyIconIfNeeded(): Boolean = true
 
