@@ -327,7 +327,6 @@ final class MavenServerManagerImpl implements MavenServerManager {
       values = new ArrayList<>(myMultimoduleDirToConnectorMap.values());
     }
 
-
     shutdownConnector(myIndexingConnector, wait);
     values.forEach(c -> shutdownConnector(c, wait));
   }
@@ -396,9 +395,6 @@ final class MavenServerManagerImpl implements MavenServerManager {
     String localRepository = settings.getEffectiveLocalRepository().toPath().toAbsolutePath().toString();
 
     result.setLocalRepositoryPath(transformer.toRemotePath(localRepository));
-    result.setPluginUpdatePolicy(settings.getPluginUpdatePolicy().getServerPolicy());
-    result.setSnapshotUpdatePolicy(
-      settings.isAlwaysUpdateSnapshots() ? MavenServerSettings.UpdatePolicy.ALWAYS_UPDATE : MavenServerSettings.UpdatePolicy.DO_NOT_UPDATE);
     return result;
   }
 

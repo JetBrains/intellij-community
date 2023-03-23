@@ -40,7 +40,6 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
   private final DefaultComboBoxModel outputLevelComboModel = new DefaultComboBoxModel();
   private final DefaultComboBoxModel checksumPolicyComboModel = new DefaultComboBoxModel();
   private final DefaultComboBoxModel failPolicyComboModel = new DefaultComboBoxModel();
-  private final DefaultComboBoxModel pluginUpdatePolicyComboModel = new DefaultComboBoxModel();
   private JComponent anchor;
 
   private JCheckBox showDialogWithAdvancedSettingsCheckBox;
@@ -105,7 +104,6 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
     data.setOutputLevel((MavenExecutionOptions.LoggingLevel)ComboBoxUtil.getSelectedValue(outputLevelComboModel));
     data.setChecksumPolicy((MavenExecutionOptions.ChecksumPolicy)ComboBoxUtil.getSelectedValue(checksumPolicyComboModel));
     data.setFailureBehavior((MavenExecutionOptions.FailureMode)ComboBoxUtil.getSelectedValue(failPolicyComboModel));
-    data.setPluginUpdatePolicy((MavenExecutionOptions.PluginUpdatePolicy)ComboBoxUtil.getSelectedValue(pluginUpdatePolicyComboModel));
     data.setAlwaysUpdateSnapshots(alwaysUpdateSnapshotsCheckBox.isSelected());
     data.setThreads(threadsEditor.getText());
 
@@ -133,7 +131,6 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
     ComboBoxUtil.select(outputLevelComboModel, data.getOutputLevel());
     ComboBoxUtil.select(checksumPolicyComboModel, data.getChecksumPolicy());
     ComboBoxUtil.select(failPolicyComboModel, data.getFailureBehavior());
-    ComboBoxUtil.select(pluginUpdatePolicyComboModel, data.getPluginUpdatePolicy());
 
     showDialogWithAdvancedSettingsCheckBox.setSelected(data.isShowDialogWithAdvancedSettings());
     useMavenConfigCheckBox.setSelected(data.isUseMavenConfig());

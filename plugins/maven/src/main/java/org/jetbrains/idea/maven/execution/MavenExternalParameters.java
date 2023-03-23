@@ -532,16 +532,6 @@ public final class MavenExternalParameters {
       cmdList.add("--offline");
     }
 
-    boolean atLeastMaven3 = MavenUtil.isMaven3(mavenHome);
-
-    if (!atLeastMaven3) {
-      addIfNotEmpty(cmdList, coreSettings.getPluginUpdatePolicy().getCommandLineOption());
-
-      if (!coreSettings.isUsePluginRegistry()) {
-        cmdList.add("--no-plugin-registry");
-      }
-    }
-
     if (coreSettings.getOutputLevel() == MavenExecutionOptions.LoggingLevel.DEBUG) {
       cmdList.add("--debug");
     }

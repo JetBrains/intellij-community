@@ -48,7 +48,6 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
     usages.add(USE_PLUGIN_REGISTRY.metric(generalSettings.isUsePluginRegistry))
     usages.add(WORK_OFFLINE.metric(generalSettings.isWorkOffline))
     usages.add(OUTPUT_LEVEL.metric(generalSettings.outputLevel))
-    usages.add(PLUGIN_UPDATE_POLICY.metric(generalSettings.pluginUpdatePolicy))
     @Suppress("DEPRECATION")
     usages.add(LOGGING_LEVEL.metric(generalSettings.loggingLevel))
     try {
@@ -154,7 +153,6 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
     private val CHECKSUM_POLICY = GROUP.registerEvent("checksumPolicy", EventFields.Enum("value", MavenExecutionOptions.ChecksumPolicy::class.java) { it.name.lowercase() })
     private val FAILURE_BEHAVIOR = GROUP.registerEvent("failureBehavior", EventFields.Enum("value", MavenExecutionOptions.FailureMode::class.java) { it.name.lowercase() })
     private val OUTPUT_LEVEL = GROUP.registerEvent("outputLevel", EventFields.Enum("value", MavenExecutionOptions.LoggingLevel::class.java) { it.name.lowercase() })
-    private val PLUGIN_UPDATE_POLICY = GROUP.registerEvent("pluginUpdatePolicy", EventFields.Enum("value", MavenExecutionOptions.PluginUpdatePolicy::class.java) { it.name.lowercase() })
     private val LOGGING_LEVEL = GROUP.registerEvent("loggingLevel", EventFields.Enum("value", MavenExecutionOptions.LoggingLevel::class.java) { it.name.lowercase() })
     private val MAVEN_VERSION = GROUP.registerEvent("mavenVersion", VERSION_FIELD)
     private val GENERATED_SOURCES_FOLDER = GROUP.registerEvent("generatedSourcesFolder", EventFields.Enum("value", GeneratedSourcesFolder::class.java) { it.name.lowercase() })

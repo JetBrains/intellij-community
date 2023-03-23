@@ -47,7 +47,6 @@ public class MavenGeneralSettings implements Cloneable {
   private MavenExecutionOptions.LoggingLevel outputLevel = MavenExecutionOptions.LoggingLevel.INFO;
   MavenExecutionOptions.ChecksumPolicy checksumPolicy = MavenExecutionOptions.ChecksumPolicy.NOT_SET;
   private MavenExecutionOptions.FailureMode failureBehavior = MavenExecutionOptions.FailureMode.NOT_SET;
-  private MavenExecutionOptions.PluginUpdatePolicy pluginUpdatePolicy = MavenExecutionOptions.PluginUpdatePolicy.DEFAULT;
 
   private transient File myEffectiveLocalRepositoryCache;
   private transient File myEffectiveLocalHomeCache;
@@ -88,18 +87,6 @@ public class MavenGeneralSettings implements Cloneable {
     myEffectiveSuperPomCache = null;
     mavenConfigCache = null;
     fireChanged();
-  }
-
-  @Property
-  @NotNull
-  public MavenExecutionOptions.PluginUpdatePolicy getPluginUpdatePolicy() {
-    return pluginUpdatePolicy;
-  }
-
-  public void setPluginUpdatePolicy(MavenExecutionOptions.PluginUpdatePolicy value) {
-    if (value == null) return; // null may come from deserializer
-    this.pluginUpdatePolicy = value;
-    changed();
   }
 
   @Property
@@ -407,7 +394,6 @@ public class MavenGeneralSettings implements Cloneable {
 
     if (nonRecursive != that.nonRecursive) return false;
     if (outputLevel != that.outputLevel) return false;
-    if (pluginUpdatePolicy != that.pluginUpdatePolicy) return false;
     if (alwaysUpdateSnapshots != that.alwaysUpdateSnapshots) return false;
     if (showDialogWithAdvancedSettings != that.showDialogWithAdvancedSettings) return false;
     if (printErrorStackTraces != that.printErrorStackTraces) return false;
@@ -438,7 +424,6 @@ public class MavenGeneralSettings implements Cloneable {
     result = 31 * result + outputLevel.hashCode();
     result = 31 * result + checksumPolicy.hashCode();
     result = 31 * result + failureBehavior.hashCode();
-    result = 31 * result + pluginUpdatePolicy.hashCode();
     result = 31 * result + (emulateTerminal ? 1 : 0);
     return result;
   }
