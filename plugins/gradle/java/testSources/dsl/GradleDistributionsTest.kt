@@ -141,9 +141,9 @@ class GradleDistributionsTest : GradleCodeInsightTestCase() {
 
   companion object {
 
-    private val FIXTURE_BUILDER = GradleTestFixtureBuilder.create("distribution-plugin-project") { gradleVersion ->
+    private val FIXTURE_BUILDER = GradleTestFixtureBuilder.create("GradleDistributionsTest") { gradleVersion ->
       withSettingsFile {
-        setProjectName("distribution-plugin-project")
+        setProjectName("GradleDistributionsTest")
       }
       withBuildFile(gradleVersion) {
         withPlugin("distribution")

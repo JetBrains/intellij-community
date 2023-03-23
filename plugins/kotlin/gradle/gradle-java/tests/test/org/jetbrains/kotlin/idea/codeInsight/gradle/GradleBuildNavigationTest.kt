@@ -34,18 +34,18 @@ class GradleBuildNavigationTest: GradleCodeInsightTestCase() {
 
     companion object {
 
-        private val KOTLIN_PLUGIN_FIXTURE = GradleTestFixtureBuilder.create("kotlin-plugin-project") { gradleVersion ->
+        private val KOTLIN_PLUGIN_FIXTURE = GradleTestFixtureBuilder.create("GradleBuildNavigationTest") { gradleVersion ->
             withSettingsFile {
-                setProjectName("kotlin-plugin-project")
+                setProjectName("GradleBuildNavigationTest")
             }
             withBuildFile(gradleVersion) {
                 withPlugin("org.jetbrains.kotlin.multiplatform", "1.7.0")
-                    .withMavenCentral()
-                    .addPostfix("""
-                        |kotlin {
-                        |    jvm()
-                        |}
-                    """.trimMargin())
+                withMavenCentral()
+                withPostfix {
+                    call("kotlin") {
+                        call("jvm")
+                    }
+                }
             }
         }
     }

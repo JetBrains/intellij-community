@@ -34,9 +34,9 @@ class GradlePublishingTest : GradleCodeInsightTestCase() {
 
   companion object {
 
-    private val FIXTURE_BUILDER = GradleTestFixtureBuilder.create("maven-publish-plugin-project") { gradleVersion ->
+    private val FIXTURE_BUILDER = GradleTestFixtureBuilder.create("GradlePublishingTest") { gradleVersion ->
       withSettingsFile {
-        setProjectName("maven-publish-plugin-project")
+        setProjectName("GradlePublishingTest")
       }
       withBuildFile(gradleVersion) {
         withPlugin("maven-publish")

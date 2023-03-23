@@ -252,9 +252,9 @@ class GradleTestRunnerViewTest : GradleTestRunnerViewTestCase() {
 
   companion object {
 
-    private val GROOVY_SPOCK_FIXTURE = GradleTestFixtureBuilder.create("groovy-spock-junit-fixture") { gradleVersion ->
+    private val GROOVY_SPOCK_FIXTURE = GradleTestFixtureBuilder.create("GradleTestRunnerViewTest-groovy-spock") { gradleVersion ->
       withSettingsFile {
-        setProjectName("groovy-spock-junit-fixture")
+        setProjectName("GradleTestRunnerViewTest-groovy-spock")
       }
       withBuildFile(gradleVersion) {
         withGroovyPlugin("3.0.0")
