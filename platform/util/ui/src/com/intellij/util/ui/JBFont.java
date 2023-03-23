@@ -150,6 +150,11 @@ public class JBFont extends Font {
     return deriveFont(getSize() - JBUIScale.scale(size));
   }
 
+  public JBFont asUIResource() {
+    if (this instanceof UIResource) return this;
+    return new JBFontUIResource(this);
+  }
+
   static final class JBFontUIResource extends JBFont implements UIResource {
      JBFontUIResource(Font font) {
       super(font);
