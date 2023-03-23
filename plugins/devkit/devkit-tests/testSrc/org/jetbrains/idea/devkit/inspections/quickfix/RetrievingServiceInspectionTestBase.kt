@@ -3,7 +3,7 @@ package org.jetbrains.idea.devkit.inspections.quickfix
 
 import org.jetbrains.idea.devkit.inspections.RetrievingServiceInspection
 
-abstract class RetrievingServiceInspectionTestBase : DevKitInspectionFixTestBase() {
+abstract class RetrievingServiceInspectionTestBase : LightDevKitInspectionFixTestBase() {
 
   override fun setUp() {
     super.setUp()
