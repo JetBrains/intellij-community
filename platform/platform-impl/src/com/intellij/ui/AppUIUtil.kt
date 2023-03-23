@@ -1,450 +1,432 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui;
+package com.intellij.ui
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.gdpr.Consent;
-import com.intellij.ide.gdpr.ConsentOptions;
-import com.intellij.ide.gdpr.ConsentSettingsUi;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.ui.AppIcon.MacAppIcon;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.scale.ScaleContext;
-import com.intellij.ui.scale.ScaleContextAware;
-import com.intellij.util.IconUtil;
-import com.intellij.util.ImageLoader;
-import com.intellij.util.JBHiDPIScaledImage;
-import com.intellij.util.PlatformUtils;
-import com.intellij.util.io.URLUtil;
-import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.JBImageIcon;
-import kotlin.Pair;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import sun.awt.AWTAccessor;
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.gdpr.Consent
+import com.intellij.ide.gdpr.ConsentOptions
+import com.intellij.ide.gdpr.ConsentSettingsUi
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.IconLoader.findIcon
+import com.intellij.openapi.util.IconLoader.setUseDarkIcons
+import com.intellij.openapi.util.IconLoader.toImage
+import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.wm.IdeFrame
+import com.intellij.ui.AppIcon.MacAppIcon
+import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.ui.scale.JBUIScale.sysScale
+import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.scale.ScaleContext.Companion.create
+import com.intellij.ui.scale.ScaleContextAware
+import com.intellij.util.IconUtil.scale
+import com.intellij.util.ImageLoader.loadFromResource
+import com.intellij.util.JBHiDPIScaledImage
+import com.intellij.util.PlatformUtils
+import com.intellij.util.io.URLUtil
+import com.intellij.util.ui.ImageUtil
+import com.intellij.util.ui.JBImageIcon
+import org.jetbrains.annotations.Contract
+import sun.awt.AWTAccessor
+import java.awt.*
+import java.awt.event.ActionEvent
+import java.io.File
+import java.lang.reflect.InvocationTargetException
+import java.util.function.Predicate
+import javax.swing.Action
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.border.Border
 
-import javax.swing.*;
-import javax.swing.border.Border;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.io.File;
-import java.lang.reflect.InvocationTargetException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.function.Predicate;
+private const val VENDOR_PREFIX = "jetbrains-"
+private var ourIcons: MutableList<Image?>? = null
 
-public final class AppUIUtil {
-  private static final String VENDOR_PREFIX = "jetbrains-";
-  private static List<Image> ourIcons = null;
-  private static volatile boolean ourMacDocIconSet = false;
+@Volatile
+private var ourMacDocIconSet = false
 
-  private static @NotNull Logger getLogger() {
-    return Logger.getInstance(AppUIUtil.class);
-  }
+private val LOG: Logger
+  get() = logger<AppUIUtil>()
 
-  public static void updateWindowIcon(@NotNull Window window) {
-    if (isWindowIconAlreadyExternallySet()) {
-      return;
+object AppUIUtil {
+  fun updateWindowIcon(window: Window) {
+    if (isWindowIconAlreadyExternallySet) {
+      return
     }
 
-    List<Image> images = ourIcons;
+    var images = ourIcons
     if (images == null) {
-      ourIcons = images = new ArrayList<>(3);
-
-      ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-      String svgIconUrl = appInfo.getApplicationSvgIconUrl();
-      String smallSvgIconUrl = appInfo.getSmallApplicationSvgIconUrl();
-      ScaleContext scaleContext = ScaleContext.create(window);
-
+      images = ArrayList(3)
+      ourIcons = images
+      val appInfo = ApplicationInfoImpl.getShadowInstance()
+      val svgIconUrl = appInfo.applicationSvgIconUrl
+      val smallSvgIconUrl = appInfo.smallApplicationSvgIconUrl
+      val scaleContext = create(window)
       if (SystemInfoRt.isUnix) {
-        Image image = loadApplicationIconImage(svgIconUrl, scaleContext, 128, null);
+        val image = loadApplicationIconImage(svgIconUrl, scaleContext, 128, null)
         if (image != null) {
-          images.add(image);
+          images.add(image)
         }
       }
-
-      Image element = loadApplicationIconImage(smallSvgIconUrl, scaleContext, 32, null);
+      val element = loadApplicationIconImage(smallSvgIconUrl, scaleContext, 32, null)
       if (element != null) {
-        images.add(element);
+        images.add(element)
       }
-
       if (SystemInfoRt.isWindows) {
-        @SuppressWarnings("deprecation") Image image = loadApplicationIconImage(smallSvgIconUrl, scaleContext, 16, appInfo.getSmallIconUrl());
-        images.add(image);
+        @Suppress("DEPRECATION")
+        val image = loadApplicationIconImage(smallSvgIconUrl, scaleContext, 16, appInfo.smallIconUrl)
+        images.add(image)
       }
-
-      for (int i = 0; i < images.size(); i++) {
-        Image image = images.get(i);
-        if (image instanceof JBHiDPIScaledImage) {
-          images.set(i, ((JBHiDPIScaledImage)image).getDelegate());
+      for (i in images.indices) {
+        val image = images[i]
+        if (image is JBHiDPIScaledImage) {
+          images[i] = image.delegate
         }
       }
     }
-
     if (!images.isEmpty()) {
       if (!SystemInfoRt.isMac) {
-        window.setIconImages(images);
+        window.iconImages = images
       }
       else if (!ourMacDocIconSet) {
-        MacAppIcon.setDockIcon(ImageUtil.toBufferedImage(images.get(0)));
-        ourMacDocIconSet = true;
+        MacAppIcon.setDockIcon(ImageUtil.toBufferedImage(images[0]!!))
+        ourMacDocIconSet = true
       }
     }
   }
 
-  public static boolean isWindowIconAlreadyExternallySet() {
-    if (SystemInfoRt.isMac) {
-      return ourMacDocIconSet || (!PlatformUtils.isJetBrainsClient() && !PluginManagerCore.isRunningFromSources());
+  @Suppress("MemberVisibilityCanBePrivate")
+  val isWindowIconAlreadyExternallySet: Boolean
+    get() {
+      if (SystemInfoRt.isMac) {
+        return ourMacDocIconSet || !PlatformUtils.isJetBrainsClient() && !PluginManagerCore.isRunningFromSources()
+      }
+      else {
+        return SystemInfoRt.isWindows && java.lang.Boolean.getBoolean("ide.native.launcher") && SystemInfo.isJetBrainsJvm
+      }
     }
 
-    // todo[tav] JBR supports loading icon resource (id=2000) from the exe launcher, remove when OpenJDK supports it as well
-    return SystemInfoRt.isWindows && Boolean.getBoolean("ide.native.launcher") && SystemInfo.isJetBrainsJvm;
+  // todo[tav] JBR supports loading icon resource (id=2000) from the exe launcher, remove when OpenJDK supports it as well
+  @JvmOverloads
+  fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int = 16): Icon {
+    return loadSmallApplicationIcon(scaleContext, size, !ApplicationInfoImpl.getShadowInstance().isEAP)
   }
 
-  public static @NotNull Icon loadSmallApplicationIcon(@NotNull ScaleContext scaleContext) {
-    return loadSmallApplicationIcon(scaleContext, 16);
+  fun loadSmallApplicationIconForRelease(scaleContext: ScaleContext, size: Int): Icon {
+    return loadSmallApplicationIcon(scaleContext, size, true)
   }
 
-  public static @NotNull Icon loadSmallApplicationIcon(@NotNull ScaleContext scaleContext, int size) {
-    return loadSmallApplicationIcon(scaleContext, size, !ApplicationInfoImpl.getShadowInstance().isEAP());
-  }
-
-  public static @NotNull Icon loadSmallApplicationIconForRelease(@NotNull ScaleContext scaleContext, int size) {
-    return loadSmallApplicationIcon(scaleContext, size, true);
-  }
-
-  private static @NotNull Icon loadSmallApplicationIcon(@NotNull ScaleContext scaleContext, int size, boolean isReleaseIcon) {
-    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-    String smallIconUrl = appInfo.getSmallApplicationSvgIconUrl();
-
-    if (isReleaseIcon && appInfo.isEAP() && appInfo instanceof ApplicationInfoImpl) {
+  private fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int, isReleaseIcon: Boolean): Icon {
+    val appInfo = ApplicationInfoImpl.getShadowInstance()
+    var smallIconUrl = appInfo.smallApplicationSvgIconUrl
+    if (isReleaseIcon && appInfo.isEAP && appInfo is ApplicationInfoImpl) {
       // This is the way to load the release icon in EAP. Needed for some actions.
-      smallIconUrl = ((ApplicationInfoImpl)appInfo).getSmallApplicationSvgIconUrl(false);
+      smallIconUrl = appInfo.getSmallApplicationSvgIconUrl(false)
     }
-
-    Icon icon = smallIconUrl == null ? null : loadApplicationIcon(smallIconUrl, scaleContext, size);
+    var icon = if (smallIconUrl == null) null else loadApplicationIcon(smallIconUrl, scaleContext, size)
     if (icon != null) {
-      return icon;
+      return icon
     }
-
-    @SuppressWarnings("deprecation") String fallbackSmallIconUrl = appInfo.getSmallIconUrl();
-    Image image = ImageLoader.loadFromResource(fallbackSmallIconUrl, AppUIUtil.class);
-    assert image != null : "Can't load '" + fallbackSmallIconUrl + "'";
-    icon = new JBImageIcon(image);
-    return scaleIconToSize(icon, size);
+    @Suppress("DEPRECATION")
+    val fallbackSmallIconUrl = appInfo.smallIconUrl
+    val image = loadFromResource(fallbackSmallIconUrl, AppUIUtil::class.java) ?: error(
+      "Can't load '$fallbackSmallIconUrl'")
+    icon = JBImageIcon(image)
+    return scaleIconToSize(icon, size)
   }
 
-  public static @Nullable Icon loadApplicationIcon(@NotNull ScaleContext ctx, int size) {
-    String url = ApplicationInfoImpl.getShadowInstance().getApplicationSvgIconUrl();
-    return url == null ? null : loadApplicationIcon(url, ctx, size);
+  fun loadApplicationIcon(ctx: ScaleContext, size: Int): Icon? {
+    val url = ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl
+    return if (url == null) null else loadApplicationIcon(url, ctx, size)
   }
 
   /**
    * Returns a hidpi-aware image.
    */
   @Contract("_, _, _, !null -> !null")
-  private static @Nullable Image loadApplicationIconImage(@Nullable String svgPath, ScaleContext scaleContext, int size, @Nullable String fallbackPath) {
-    Icon icon = svgPath == null ? null : loadApplicationIcon(svgPath, scaleContext, size);
+  private fun loadApplicationIconImage(svgPath: String?, scaleContext: ScaleContext, size: Int, fallbackPath: String?): Image? {
+    val icon = if (svgPath == null) null else loadApplicationIcon(svgPath, scaleContext, size)
     if (icon != null) {
-      return IconLoader.toImage(icon, scaleContext);
+      return toImage(icon, scaleContext)
     }
-
-    if (fallbackPath != null) {
-      return ImageLoader.loadFromResource(fallbackPath, AppUIUtil.class);
+    return if (fallbackPath != null) {
+      loadFromResource(fallbackPath, AppUIUtil::class.java)
     }
-    return null;
+    else null
   }
 
-  private static @Nullable Icon loadApplicationIcon(@NotNull String svgPath, ScaleContext scaleContext, int size) {
-    Icon icon = IconLoader.findIcon(svgPath, AppUIUtil.class.getClassLoader());
+  private fun loadApplicationIcon(svgPath: String, scaleContext: ScaleContext, size: Int): Icon? {
+    val icon = findIcon(svgPath, AppUIUtil::class.java.classLoader)
     if (icon == null) {
-      getLogger().info("Cannot load SVG application icon from " + svgPath);
-      return null;
+      LOG.info("Cannot load SVG application icon from $svgPath")
+      return null
     }
-
-    if (icon instanceof ScaleContextAware) {
-      ((ScaleContextAware)icon).updateScaleContext(scaleContext);
+    if (icon is ScaleContextAware) {
+      (icon as ScaleContextAware).updateScaleContext(scaleContext)
     }
-    return scaleIconToSize(icon, size);
+    return scaleIconToSize(icon, size)
   }
 
-  private static @NotNull Icon scaleIconToSize(Icon icon, int size) {
-    int width = icon.getIconWidth();
-    if (width == size) return icon;
-
-    float scale = size / (float)width;
-    icon = IconUtil.scale(icon, null, scale);
-    return icon;
+  private fun scaleIconToSize(icon: Icon, size: Int): Icon {
+    var icon = icon
+    val width = icon.iconWidth
+    if (width == size) return icon
+    val scale = size / width.toFloat()
+    icon = scale(icon, null, scale)
+    return icon
   }
 
-  public static void invokeLaterIfProjectAlive(@NotNull Project project, @NotNull Runnable runnable) {
-    Application application = ApplicationManager.getApplication();
-    if (application.isDispatchThread()) {
-      if (project.isOpen() && !project.isDisposed()) {
-        runnable.run();
+  @JvmStatic
+  fun invokeLaterIfProjectAlive(project: Project, runnable: Runnable) {
+    val application = ApplicationManager.getApplication()
+    if (application.isDispatchThread) {
+      if (project.isOpen && !project.isDisposed) {
+        runnable.run()
       }
     }
     else {
-      application.invokeLater(runnable, __ -> !project.isOpen() || project.isDisposed());
+      application.invokeLater(runnable) { !project.isOpen || project.isDisposed }
     }
   }
 
-  public static void invokeOnEdt(Runnable runnable) {
-    invokeOnEdt(runnable, null);
+  @JvmStatic
+  fun invokeOnEdt(runnable: Runnable) {
+    @Suppress("DEPRECATION")
+    invokeOnEdt(runnable = runnable, expired = null)
   }
 
-  /**
-   * @deprecated Use {@link com.intellij.openapi.application.AppUIExecutor#expireWith(Disposable)}
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  public static void invokeOnEdt(@NotNull Runnable runnable, @Nullable Condition<?> expired) {
-    Application application = ApplicationManager.getApplication();
-    if (application.isDispatchThread()) {
+  @JvmStatic
+  @Deprecated("Use {@link com.intellij.openapi.application.AppUIExecutor#expireWith(Disposable)}")
+  fun invokeOnEdt(runnable: Runnable, expired: Condition<*>?) {
+    val application = ApplicationManager.getApplication()
+    if (application.isDispatchThread) {
       if (expired == null || !expired.value(null)) {
-        runnable.run();
+        runnable.run()
       }
     }
     else if (expired == null) {
-      application.invokeLater(runnable);
+      application.invokeLater(runnable)
     }
     else {
-      application.invokeLater(runnable, expired);
+      application.invokeLater(runnable, expired)
     }
   }
 
-  // keep in sync with LinuxDistributionBuilder#getFrameClass
-  public static String getFrameClass() {
-    String name = ApplicationNamesInfo.getInstance().getFullProductNameWithEdition().toLowerCase(Locale.ENGLISH)
+  @JvmStatic
+  fun getFrameClass(): String {
+    val name = ApplicationNamesInfo.getInstance().fullProductNameWithEdition.lowercase()
       .replace(' ', '-')
-      .replace("intellij-idea", "idea").replace("android-studio", "studio")  // backward compatibility
-      .replace("-community-edition", "-ce").replace("-ultimate-edition", "").replace("-professional-edition", "");
-    String wmClass = name.startsWith(VENDOR_PREFIX) ? name : VENDOR_PREFIX + name;
-    if (PluginManagerCore.isRunningFromSources()) wmClass += "-debug";
-    return wmClass;
+      .replace("intellij-idea", "idea").replace("android-studio", "studio") // backward compatibility
+      .replace("-community-edition", "-ce").replace("-ultimate-edition", "").replace("-professional-edition", "")
+    var wmClass = if (name.startsWith(VENDOR_PREFIX)) name else VENDOR_PREFIX + name
+    if (PluginManagerCore.isRunningFromSources()) wmClass += "-debug"
+    return wmClass
   }
 
-  public static @Nullable String findIcon() {
-    String binPath = PathManager.getBinPath();
-    String[] binFiles = new File(binPath).list();
-
+  fun findIcon(): String? {
+    val binPath = PathManager.getBinPath()
+    val binFiles = File(binPath).list()
     if (binFiles != null) {
-      for (String child : binFiles) {
+      for (child in binFiles) {
         if (child.endsWith(".svg")) {
-          return binPath + '/' + child;
+          return "$binPath/$child"
         }
       }
     }
-
-    String svgIconUrl = ApplicationInfoImpl.getShadowInstance().getApplicationSvgIconUrl();
+    val svgIconUrl = ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl
     if (svgIconUrl != null) {
-      URL url = ApplicationInfoEx.class.getResource(svgIconUrl);
-      if (url != null && URLUtil.FILE_PROTOCOL.equals(url.getProtocol())) {
-        return URLUtil.urlToFile(url).getAbsolutePath();
+      val url = ApplicationInfoEx::class.java.getResource(svgIconUrl)
+      if (url != null && URLUtil.FILE_PROTOCOL == url.protocol) {
+        return URLUtil.urlToFile(url).absolutePath
       }
     }
-
-    return null;
+    return null
   }
 
-  public static boolean showConsentsAgreementIfNeeded(@NotNull Logger log, @NotNull Predicate<? super Consent> filter) {
-    Pair<List<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents(filter);
-    if (!consentsToShow.getSecond()) {
-      return false;
+  fun showConsentsAgreementIfNeeded(log: Logger, filter: Predicate<in Consent?>): Boolean {
+    val (first, second) = ConsentOptions.getInstance().getConsents(filter)
+    return if (!second) {
+      false
     }
     else if (EventQueue.isDispatchThread()) {
-      return confirmConsentOptions(consentsToShow.getFirst());
+      confirmConsentOptions(first)
     }
     else {
-      Ref<Boolean> result = new Ref<>(Boolean.FALSE);
+      val result = Ref(false)
       try {
-        EventQueue.invokeAndWait(() -> result.set(confirmConsentOptions(consentsToShow.getFirst())));
+        EventQueue.invokeAndWait { result.set(confirmConsentOptions(first)) }
       }
-      catch (InterruptedException | InvocationTargetException e) {
-        log.warn(e);
+      catch (e: InterruptedException) {
+        log.warn(e)
       }
-      return result.get();
+      catch (e: InvocationTargetException) {
+        log.warn(e)
+      }
+      result.get()
     }
   }
 
-  public static void updateForDarcula(boolean isDarcula) {
-    JBColor.setDark(isDarcula);
-    IconLoader.setUseDarkIcons(isDarcula);
+  @JvmStatic
+  fun updateForDarcula(isDarcula: Boolean) {
+    JBColor.setDark(isDarcula)
+    setUseDarkIcons(isDarcula)
   }
 
-  public static boolean confirmConsentOptions(@NotNull List<Consent> consents) {
+  fun confirmConsentOptions(consents: List<Consent>): Boolean {
     if (consents.isEmpty()) {
-      return false;
+      return false
     }
-
-    ConsentSettingsUi ui = new ConsentSettingsUi(false);
-    DialogWrapper dialog = new DialogWrapper(true) {
-      @Override
-      protected @Nullable Border createContentPaneBorder() {
-        return null;
+    val ui = ConsentSettingsUi(false)
+    val dialog: DialogWrapper = object : DialogWrapper(true) {
+      override fun createContentPaneBorder(): Border? {
+        return null
       }
 
-      @Override
-      protected @Nullable JComponent createSouthPanel() {
-        JComponent southPanel = super.createSouthPanel();
+      override fun createSouthPanel(): JComponent? {
+        val southPanel = super.createSouthPanel()
         if (southPanel != null) {
-          southPanel.setBorder(createDefaultBorder());
+          southPanel.border = createDefaultBorder()
         }
-        return southPanel;
+        return southPanel
       }
 
-      @Override
-      protected JComponent createCenterPanel() {
-        return ui.getComponent();
-      }
+      override fun createCenterPanel() = ui.component
 
-      @Override
-      protected Action @NotNull [] createActions() {
-        if (consents.size() > 1) {
-          Action[] actions = super.createActions();
-          setOKButtonText(IdeBundle.message("button.save"));
-          setCancelButtonText(IdeBundle.message("button.skip"));
-          return actions;
+      override fun createActions(): Array<Action> {
+        if (consents.size > 1) {
+          val actions = super.createActions()
+          setOKButtonText(IdeBundle.message("button.save"))
+          setCancelButtonText(IdeBundle.message("button.skip"))
+          return actions
         }
-        setOKButtonText(consents.iterator().next().getName());
-        return new Action[]{getOKAction(), new DialogWrapperAction(IdeBundle.message("button.do.not.send")) {
-          @Override
-          protected void doAction(ActionEvent e) {
-            close(NEXT_USER_EXIT_CODE);
+        setOKButtonText(consents.iterator().next().name)
+        return arrayOf(okAction, object : DialogWrapperAction(IdeBundle.message("button.do.not.send")) {
+          override fun doAction(e: ActionEvent) {
+            close(NEXT_USER_EXIT_CODE)
           }
-        }};
+        })
       }
 
-      @Override
-      protected void createDefaultActions() {
-        super.createDefaultActions();
-        init();
-        setAutoAdjustable(false);
+      override fun createDefaultActions() {
+        super.createDefaultActions()
+        init()
+        isAutoAdjustable = false
       }
-    };
-    ui.reset(consents);
-    dialog.setModal(true);
-    dialog.setTitle(IdeBundle.message("dialog.title.data.sharing"));
-    dialog.pack();
-    if (consents.size() < 2) {
-      dialog.setSize(dialog.getWindow().getWidth(), dialog.getWindow().getHeight() + JBUIScale.scale(75));
     }
-    dialog.show();
-
-    int exitCode = dialog.getExitCode();
+    ui.reset(consents)
+    dialog.isModal = true
+    dialog.title = IdeBundle.message("dialog.title.data.sharing")
+    dialog.pack()
+    if (consents.size < 2) {
+      dialog.setSize(dialog.window.width, dialog.window.height + scale(75))
+    }
+    dialog.show()
+    val exitCode = dialog.exitCode
     if (exitCode == DialogWrapper.CANCEL_EXIT_CODE) {
-      return false;  // don't save any changes in this case: a user hasn't made a choice
+      return false // don't save any changes in this case: a user hasn't made a choice
     }
-
-    List<Consent> result;
-    if (consents.size() == 1) {
-      result = Collections.singletonList(consents.iterator().next().derive(exitCode == DialogWrapper.OK_EXIT_CODE));
+    val result: List<Consent>
+    if (consents.size == 1) {
+      result = listOf(consents.iterator().next().derive(exitCode == DialogWrapper.OK_EXIT_CODE))
     }
     else {
-      result = new ArrayList<>();
-      ui.apply(result);
+      result = ArrayList()
+      ui.apply(result)
     }
-    saveConsents(result);
-    return true;
+    saveConsents(result)
+    return true
   }
 
-  public static List<Consent> loadConsentsForEditing() {
-    ConsentOptions options = ConsentOptions.getInstance();
-    List<Consent> result = options.getConsents().getFirst();
-    if (options.isEAP()) {
-      Consent statConsent = options.getDefaultUsageStatsConsent();
+  fun loadConsentsForEditing(): List<Consent> {
+    val options = ConsentOptions.getInstance()
+    var result = options.consents.first
+    if (options.isEAP) {
+      val statConsent = options.defaultUsageStatsConsent
       if (statConsent != null) {
         // init stats consent for EAP from the dedicated location
-        List<Consent> consents = result;
-        result = new ArrayList<>();
-        result.add(statConsent.derive(UsageStatisticsPersistenceComponent.getInstance().isAllowed()));
-        result.addAll(consents);
+        val consents = result
+        result = ArrayList()
+        result.add(statConsent.derive(UsageStatisticsPersistenceComponent.getInstance().isAllowed))
+        result.addAll(consents)
       }
     }
-    return result;
+    return result
   }
 
-  public static void saveConsents(List<Consent> consents) {
+  fun saveConsents(consents: List<Consent>) {
     if (consents.isEmpty()) {
-      return;
+      return
     }
-
-    ConsentOptions options = ConsentOptions.getInstance();
-    if (ApplicationManager.getApplication() != null && options.isEAP()) {
-      Predicate<Consent> isUsageStats = ConsentOptions.condUsageStatsConsent();
-      int saved = 0;
-      for (Consent consent : consents) {
+    val options = ConsentOptions.getInstance()
+    if (ApplicationManager.getApplication() != null && options.isEAP) {
+      val isUsageStats = ConsentOptions.condUsageStatsConsent()
+      var saved = 0
+      for (consent in consents) {
         if (isUsageStats.test(consent)) {
-          UsageStatisticsPersistenceComponent.getInstance().setAllowed(consent.isAccepted());
-          saved++;
+          UsageStatisticsPersistenceComponent.getInstance().isAllowed = consent.isAccepted
+          saved++
         }
       }
-      if (consents.size() - saved > 0) {
-        List<Consent> list = new ArrayList<>();
-        for (Consent consent : consents) {
+      if (consents.size - saved > 0) {
+        val list: MutableList<Consent> = ArrayList()
+        for (consent in consents) {
           if (!isUsageStats.test(consent)) {
-            list.add(consent);
+            list.add(consent)
           }
         }
-        options.setConsents(list);
+        options.setConsents(list)
       }
     }
     else {
-      options.setConsents(consents);
+      options.setConsents(consents)
     }
   }
 
   /**
    * Targets the component to a (screen) device before showing. In case the component is already a part of UI hierarchy
    * (and is thus bound to a device), the method does nothing.
-   * <p>
+   *
+   *
    * The prior targeting to a device is required when there's a need to calculate the preferred size of a compound component
-   * (such as {@code JEditorPane}, for instance) which is not yet added to a hierarchy.
+   * (such as `JEditorPane`, for instance) which is not yet added to a hierarchy.
    * The calculation in that case may involve device-dependent metrics (such as font metrics)
    * and thus should refer to a particular device in multi-monitor env.
-   * <p>
+   *
+   *
    * Note that if after calling this method the component is added to another hierarchy bound to a different device,
-   * AWT will throw {@code IllegalArgumentException}.
-   * To avoid that, the device should be reset by calling {@code targetToDevice(comp, null)}.
+   * AWT will throw `IllegalArgumentException`.
+   * To avoid that, the device should be reset by calling `targetToDevice(comp, null)`.
    *
    * @param target the component representing the UI hierarchy and the target device
    * @param comp the component to target
    */
-  public static void targetToDevice(@NotNull Component comp, @Nullable Component target) {
-    if (comp.isShowing()) {
-      return;
+  fun targetToDevice(comp: Component, target: Component?) {
+    if (comp.isShowing) {
+      return
     }
-    GraphicsConfiguration gc = target != null ? target.getGraphicsConfiguration() : null;
-    AWTAccessor.getComponentAccessor().setGraphicsConfiguration(comp, gc);
+    val gc = target?.graphicsConfiguration
+    AWTAccessor.getComponentAccessor().setGraphicsConfiguration(comp, gc)
   }
 
-  public static boolean isInFullScreen(@Nullable Window window) {
-    return window instanceof IdeFrame && ((IdeFrame)window).isInFullScreen();
+  fun isInFullScreen(window: Window?): Boolean {
+    return window is IdeFrame && (window as IdeFrame).isInFullScreen
   }
 
-  public static Object adjustFractionalMetrics(Object defaultValue) {
+  fun adjustFractionalMetrics(defaultValue: Any): Any {
     if (!SystemInfoRt.isMac || GraphicsEnvironment.isHeadless()) {
-      return defaultValue;
+      return defaultValue
     }
-
-    GraphicsConfiguration gc =
-      GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
-    return (JBUIScale.sysScale(gc) == 1.0f)? RenderingHints.VALUE_FRACTIONALMETRICS_OFF : defaultValue;
+    val gc = GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.defaultConfiguration
+    return if (sysScale(gc) == 1.0f) RenderingHints.VALUE_FRACTIONALMETRICS_OFF else defaultValue
   }
 }
