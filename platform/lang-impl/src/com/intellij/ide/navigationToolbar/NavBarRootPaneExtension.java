@@ -253,6 +253,9 @@ final class MyNavBarWrapperPanel extends NavBarRootPaneExtension.NavBarWrapperPa
     boolean show = ExperimentalUI.isNewUI() ?
                    settings.getShowNavigationBar() && settings.getNavBarLocation() == NavBarLocation.TOP :
                    NavBarIdeUtil.isNavbarShown(settings);
+    if (show == isNavBarVisible()) {
+      return;
+    }
     if (show) {
       ApplicationManager.getApplication().invokeLater(() -> {
         add(getNavBarPanel(), BorderLayout.CENTER);
@@ -268,6 +271,10 @@ final class MyNavBarWrapperPanel extends NavBarRootPaneExtension.NavBarWrapperPa
 
     updateScrollBarFlippedState(settings.getNavBarLocation());
     setVisible(show);
+  }
+
+  private boolean isNavBarVisible() {
+    return ((BorderLayout)getLayout()).getLayoutComponent(BorderLayout.CENTER) == getNavBarPanel();
   }
 
   private void toggleRunPanel(boolean show) {
