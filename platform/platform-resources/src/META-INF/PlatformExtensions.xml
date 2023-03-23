@@ -1270,7 +1270,7 @@
     <applicationService serviceInterface="com.intellij.ui.ToolbarService"
                         serviceImplementation="com.intellij.ui.ToolbarServiceImpl" client="local"/>
 
-    <applicationService serviceImplementation="com.intellij.ui.WindowDeactivationManager" client="local"/>
+    <applicationService serviceImplementation="com.intellij.ui.WindowDeactivationManager" client="all"/>
 
     <applicationService serviceInterface="com.intellij.ui.AutoScrollToSourceTaskManager"
                         serviceImplementation="com.intellij.ui.AutoScrollToSourceTaskManagerImpl"/>
