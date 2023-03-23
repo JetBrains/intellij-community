@@ -16,8 +16,10 @@ import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.compiled.InnerClassSourceStrategy;
 import com.intellij.psi.impl.compiled.StubBuildingVisitor;
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightIdeaTestCase;
 import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,6 +62,21 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   public void testInheritFromDollar() { doTest(); }
   public void testInheritFromDollar$1() { doTest(); }
   public void testSealed() { doTest(); }
+  public void testSealedWithNonSealed() {
+    VirtualFile vFile = StandardFileSystems.local().refreshAndFindFileByPath(getTestDataDir() + "pkg/" + getTestName(false) + ".class");
+    PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(vFile);
+    PsiClass baseClass = PsiTreeUtil.getChildOfType(psiFile, PsiClass.class);
+    PsiClass[] children = PsiTreeUtil.getChildrenOfType(baseClass, PsiClass.class);
+    Assert.assertEquals(2, children.length);
+    for (PsiClass child : children) {
+      if (child.getName().equals("ANonSealed")) {
+        assertTrue(child.hasModifierProperty(PsiModifier.NON_SEALED));
+      }
+      else {
+        assertFalse(child.hasModifierProperty(PsiModifier.NON_SEALED));
+      }
+    }
+  }
 
   public void testTextPsiMismatch() {
     CommonCodeStyleSettings.IndentOptions options = CodeStyle.getSettings(getProject()).getIndentOptions(JavaFileType.INSTANCE);
