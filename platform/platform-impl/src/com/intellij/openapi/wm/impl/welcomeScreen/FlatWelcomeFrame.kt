@@ -210,7 +210,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     UIUtil.decorateWindowHeader(getRootPane())
     title = ""
     title = welcomeFrameTitle
-    AppUIUtil.updateWindowIcon(this)
+    updateAppWindowIcon(this)
   }
 
   override fun addNotify() {

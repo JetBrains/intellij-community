@@ -321,7 +321,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
   @Override
   public void setAppIcons() {
-    AppUIUtil.updateWindowIcon(getWindow());
+    AppUIUtilKt.updateAppWindowIcon(getWindow());
   }
 
   @Override

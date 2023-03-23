@@ -34,7 +34,7 @@ import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.AppUIUtilKt;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.Restarter;
@@ -357,7 +357,7 @@ public final class ConfigImportHelper {
 
     ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(guessedOldConfigDirs, ConfigImportHelper::findConfigDirectoryByPath);
     dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
-    AppUIUtil.updateWindowIcon(dialog);
+    AppUIUtilKt.updateAppWindowIcon(dialog);
 
     hideSplash();
     dialog.setVisible(true);
@@ -976,7 +976,7 @@ public final class ConfigImportHelper {
 
       ConfigImportProgressDialog dialog = new ConfigImportProgressDialog();
       dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
-      AppUIUtil.updateWindowIcon(dialog);
+      AppUIUtilKt.updateAppWindowIcon(dialog);
       hideSplash();
       PluginDownloader.runSynchronouslyInBackground(() -> {
         downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, dialog.getIndicator());

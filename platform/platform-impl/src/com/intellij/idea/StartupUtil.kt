@@ -38,6 +38,7 @@ import com.intellij.ui.icons.CoreIconManager
 import com.intellij.ui.mac.MacOSApplicationProvider
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.*
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.lang.ZipFilePool
@@ -582,9 +583,9 @@ private fun CoroutineScope.updateFrameClassAndWindowIconAndPreloadSystemFonts(in
 
     launch(CoroutineName("update window icon")) {
       // `updateWindowIcon` should be called after `initUiJob`, because it uses computed system font data for scale context
-      if (!AppUIUtil.isWindowIconAlreadyExternallySet() && !PluginManagerCore.isRunningFromSources()) {
+      if (!AppUIUtil.isWindowIconAlreadyExternallySet && !PluginManagerCore.isRunningFromSources()) {
         // most of the time is consumed by loading SVG and can be done in parallel
-        AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
+        updateAppWindowIcon(JOptionPane.getRootFrame())
       }
     }
 

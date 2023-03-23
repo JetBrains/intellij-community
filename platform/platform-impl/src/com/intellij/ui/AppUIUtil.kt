@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "ReplaceGetOrSet")
+
 package com.intellij.ui
 
 import com.intellij.ide.IdeBundle
@@ -20,7 +22,6 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.IconLoader.findIcon
 import com.intellij.openapi.util.IconLoader.setUseDarkIcons
 import com.intellij.openapi.util.IconLoader.toImage
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeFrame
@@ -37,7 +38,6 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.io.URLUtil
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBImageIcon
-import org.jetbrains.annotations.Contract
 import sun.awt.AWTAccessor
 import java.awt.*
 import java.awt.event.ActionEvent
@@ -53,63 +53,139 @@ private const val VENDOR_PREFIX = "jetbrains-"
 private var ourIcons: MutableList<Image?>? = null
 
 @Volatile
-private var ourMacDocIconSet = false
+private var isMacDocIconSet = false
 
 private val LOG: Logger
   get() = logger<AppUIUtil>()
 
-object AppUIUtil {
-  fun updateWindowIcon(window: Window) {
-    if (isWindowIconAlreadyExternallySet) {
-      return
-    }
+fun updateAppWindowIcon(window: Window) {
+  if (AppUIUtil.isWindowIconAlreadyExternallySet) {
+    return
+  }
 
-    var images = ourIcons
-    if (images == null) {
-      images = ArrayList(3)
-      ourIcons = images
-      val appInfo = ApplicationInfoImpl.getShadowInstance()
-      val svgIconUrl = appInfo.applicationSvgIconUrl
-      val smallSvgIconUrl = appInfo.smallApplicationSvgIconUrl
-      val scaleContext = create(window)
-      if (SystemInfoRt.isUnix) {
-        val image = loadApplicationIconImage(svgIconUrl, scaleContext, 128, null)
-        if (image != null) {
-          images.add(image)
-        }
-      }
-      val element = loadApplicationIconImage(smallSvgIconUrl, scaleContext, 32, null)
-      if (element != null) {
-        images.add(element)
-      }
-      if (SystemInfoRt.isWindows) {
-        @Suppress("DEPRECATION")
-        val image = loadApplicationIconImage(smallSvgIconUrl, scaleContext, 16, appInfo.smallIconUrl)
+  var images = ourIcons
+  if (images == null) {
+    images = ArrayList(3)
+    ourIcons = images
+    val appInfo = ApplicationInfoImpl.getShadowInstance()
+    val svgIconUrl = appInfo.applicationSvgIconUrl
+    val smallSvgIconUrl = appInfo.smallApplicationSvgIconUrl
+    val scaleContext = create(window)
+    if (SystemInfoRt.isUnix) {
+      val image = loadApplicationIconImage(svgPath = svgIconUrl, scaleContext = scaleContext, size = 128)
+      if (image != null) {
         images.add(image)
       }
-      for (i in images.indices) {
-        val image = images[i]
-        if (image is JBHiDPIScaledImage) {
-          images[i] = image.delegate
-        }
-      }
     }
-    if (!images.isEmpty()) {
-      if (!SystemInfoRt.isMac) {
-        window.iconImages = images
-      }
-      else if (!ourMacDocIconSet) {
-        MacAppIcon.setDockIcon(ImageUtil.toBufferedImage(images[0]!!))
-        ourMacDocIconSet = true
+    val element = loadApplicationIconImage(svgPath = smallSvgIconUrl, scaleContext = scaleContext, size = 32)
+    if (element != null) {
+      images.add(element)
+    }
+    if (SystemInfoRt.isWindows) {
+      @Suppress("DEPRECATION")
+      val image = loadApplicationIconImage(svgPath = smallSvgIconUrl,
+                                           scaleContext = scaleContext,
+                                           size = 16,
+                                           fallbackPath = appInfo.smallIconUrl)
+      images.add(image)
+    }
+    for (i in images.indices) {
+      val image = images[i]
+      if (image is JBHiDPIScaledImage) {
+        images.set(i, image.delegate)
       }
     }
   }
+  if (!images.isEmpty()) {
+    if (!SystemInfoRt.isMac) {
+      window.iconImages = images
+    }
+    else if (!isMacDocIconSet) {
+      MacAppIcon.setDockIcon(ImageUtil.toBufferedImage(images.first()!!))
+      isMacDocIconSet = true
+    }
+  }
+}
 
+/**
+ * Returns a hidpi-aware image.
+ */
+private fun loadApplicationIconImage(svgPath: String?, scaleContext: ScaleContext, size: Int, fallbackPath: String? = null): Image? {
+  val icon = if (svgPath == null) null else loadApplicationIcon(svgPath, scaleContext, size)
+  if (icon == null) {
+    return if (fallbackPath == null) null else loadFromResource(fallbackPath, AppUIUtil::class.java)
+  }
+  else {
+    return toImage(icon, scaleContext)
+  }
+}
+
+private fun loadApplicationIcon(svgPath: String, scaleContext: ScaleContext, size: Int): Icon? {
+  val icon = findIcon(svgPath, AppUIUtil::class.java.classLoader)
+  if (icon == null) {
+    LOG.info("Cannot load SVG application icon from $svgPath")
+    return null
+  }
+  if (icon is ScaleContextAware) {
+    icon.updateScaleContext(scaleContext)
+  }
+  return scaleIconToSize(icon, size)
+}
+
+private fun scaleIconToSize(icon: Icon, size: Int): Icon {
+  val width = icon.iconWidth
+  if (width == size) {
+    return icon
+  }
+  val scale = size / width.toFloat()
+  return scale(icon = icon, ancestor = null, scale = scale)
+}
+
+fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int = 16, isReleaseIcon: Boolean = !ApplicationInfoImpl.getShadowInstance().isEAP): Icon {
+  val appInfo = ApplicationInfoImpl.getShadowInstance()
+  var smallIconUrl = appInfo.smallApplicationSvgIconUrl
+  if (isReleaseIcon && appInfo.isEAP && appInfo is ApplicationInfoImpl) {
+    // This is the way to load the release icon in EAP. Needed for some actions.
+    smallIconUrl = appInfo.getSmallApplicationSvgIconUrl(false)
+  }
+
+  val icon = if (smallIconUrl == null) null else loadApplicationIcon(smallIconUrl, scaleContext, size)
+  if (icon != null) {
+    return icon
+  }
+
+  @Suppress("DEPRECATION")
+  val fallbackSmallIconUrl = appInfo.smallIconUrl
+  val image = loadFromResource(fallbackSmallIconUrl, AppUIUtil::class.java) ?: error("Can't load '$fallbackSmallIconUrl'")
+  return scaleIconToSize(JBImageIcon(image), size)
+}
+
+fun findAppIcon(): String? {
+  val binPath = PathManager.getBinPath()
+  val binFiles = File(binPath).list()
+  if (binFiles != null) {
+    for (child in binFiles) {
+      if (child.endsWith(".svg")) {
+        return "$binPath/$child"
+      }
+    }
+  }
+  val svgIconUrl = ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl
+  if (svgIconUrl != null) {
+    val url = ApplicationInfoEx::class.java.getResource(svgIconUrl)
+    if (url != null && URLUtil.FILE_PROTOCOL == url.protocol) {
+      return URLUtil.urlToFile(url).absolutePath
+    }
+  }
+  return null
+}
+
+object AppUIUtil {
   @Suppress("MemberVisibilityCanBePrivate")
   val isWindowIconAlreadyExternallySet: Boolean
     get() {
       if (SystemInfoRt.isMac) {
-        return ourMacDocIconSet || !PlatformUtils.isJetBrainsClient() && !PluginManagerCore.isRunningFromSources()
+        return isMacDocIconSet || !PlatformUtils.isJetBrainsClient() && !PluginManagerCore.isRunningFromSources()
       }
       else {
         return SystemInfoRt.isWindows && java.lang.Boolean.getBoolean("ide.native.launcher") && SystemInfo.isJetBrainsJvm
@@ -118,72 +194,17 @@ object AppUIUtil {
 
   // todo[tav] JBR supports loading icon resource (id=2000) from the exe launcher, remove when OpenJDK supports it as well
   @JvmOverloads
+  @JvmStatic
   fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int = 16): Icon {
-    return loadSmallApplicationIcon(scaleContext, size, !ApplicationInfoImpl.getShadowInstance().isEAP)
+    return loadSmallApplicationIcon(scaleContext = scaleContext,
+                                    size = size,
+                                    isReleaseIcon = !ApplicationInfoImpl.getShadowInstance().isEAP)
   }
 
-  fun loadSmallApplicationIconForRelease(scaleContext: ScaleContext, size: Int): Icon {
-    return loadSmallApplicationIcon(scaleContext, size, true)
-  }
-
-  private fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int, isReleaseIcon: Boolean): Icon {
-    val appInfo = ApplicationInfoImpl.getShadowInstance()
-    var smallIconUrl = appInfo.smallApplicationSvgIconUrl
-    if (isReleaseIcon && appInfo.isEAP && appInfo is ApplicationInfoImpl) {
-      // This is the way to load the release icon in EAP. Needed for some actions.
-      smallIconUrl = appInfo.getSmallApplicationSvgIconUrl(false)
-    }
-    var icon = if (smallIconUrl == null) null else loadApplicationIcon(smallIconUrl, scaleContext, size)
-    if (icon != null) {
-      return icon
-    }
-    @Suppress("DEPRECATION")
-    val fallbackSmallIconUrl = appInfo.smallIconUrl
-    val image = loadFromResource(fallbackSmallIconUrl, AppUIUtil::class.java) ?: error(
-      "Can't load '$fallbackSmallIconUrl'")
-    icon = JBImageIcon(image)
-    return scaleIconToSize(icon, size)
-  }
-
+  @JvmStatic
   fun loadApplicationIcon(ctx: ScaleContext, size: Int): Icon? {
     val url = ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl
     return if (url == null) null else loadApplicationIcon(url, ctx, size)
-  }
-
-  /**
-   * Returns a hidpi-aware image.
-   */
-  @Contract("_, _, _, !null -> !null")
-  private fun loadApplicationIconImage(svgPath: String?, scaleContext: ScaleContext, size: Int, fallbackPath: String?): Image? {
-    val icon = if (svgPath == null) null else loadApplicationIcon(svgPath, scaleContext, size)
-    if (icon != null) {
-      return toImage(icon, scaleContext)
-    }
-    return if (fallbackPath != null) {
-      loadFromResource(fallbackPath, AppUIUtil::class.java)
-    }
-    else null
-  }
-
-  private fun loadApplicationIcon(svgPath: String, scaleContext: ScaleContext, size: Int): Icon? {
-    val icon = findIcon(svgPath, AppUIUtil::class.java.classLoader)
-    if (icon == null) {
-      LOG.info("Cannot load SVG application icon from $svgPath")
-      return null
-    }
-    if (icon is ScaleContextAware) {
-      (icon as ScaleContextAware).updateScaleContext(scaleContext)
-    }
-    return scaleIconToSize(icon, size)
-  }
-
-  private fun scaleIconToSize(icon: Icon, size: Int): Icon {
-    var icon = icon
-    val width = icon.iconWidth
-    if (width == size) return icon
-    val scale = size / width.toFloat()
-    icon = scale(icon, null, scale)
-    return icon
   }
 
   @JvmStatic
@@ -233,38 +254,19 @@ object AppUIUtil {
     return wmClass
   }
 
-  fun findIcon(): String? {
-    val binPath = PathManager.getBinPath()
-    val binFiles = File(binPath).list()
-    if (binFiles != null) {
-      for (child in binFiles) {
-        if (child.endsWith(".svg")) {
-          return "$binPath/$child"
-        }
-      }
-    }
-    val svgIconUrl = ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl
-    if (svgIconUrl != null) {
-      val url = ApplicationInfoEx::class.java.getResource(svgIconUrl)
-      if (url != null && URLUtil.FILE_PROTOCOL == url.protocol) {
-        return URLUtil.urlToFile(url).absolutePath
-      }
-    }
-    return null
-  }
-
+  @JvmStatic
   fun showConsentsAgreementIfNeeded(log: Logger, filter: Predicate<in Consent?>): Boolean {
     val (first, second) = ConsentOptions.getInstance().getConsents(filter)
-    return if (!second) {
-      false
+    if (!second) {
+      return false
     }
     else if (EventQueue.isDispatchThread()) {
-      confirmConsentOptions(first)
+      return confirmConsentOptions(first)
     }
     else {
-      val result = Ref(false)
+      var result = false
       try {
-        EventQueue.invokeAndWait { result.set(confirmConsentOptions(first)) }
+        EventQueue.invokeAndWait { result = confirmConsentOptions(first) }
       }
       catch (e: InterruptedException) {
         log.warn(e)
@@ -272,7 +274,7 @@ object AppUIUtil {
       catch (e: InvocationTargetException) {
         log.warn(e)
       }
-      result.get()
+      return result
     }
   }
 
@@ -282,15 +284,15 @@ object AppUIUtil {
     setUseDarkIcons(isDarcula)
   }
 
+  @JvmStatic
   fun confirmConsentOptions(consents: List<Consent>): Boolean {
     if (consents.isEmpty()) {
       return false
     }
+
     val ui = ConsentSettingsUi(false)
-    val dialog: DialogWrapper = object : DialogWrapper(true) {
-      override fun createContentPaneBorder(): Border? {
-        return null
-      }
+    val dialog = object : DialogWrapper(true) {
+      override fun createContentPaneBorder(): Border? = null
 
       override fun createSouthPanel(): JComponent? {
         val southPanel = super.createSouthPanel()
@@ -347,6 +349,7 @@ object AppUIUtil {
     return true
   }
 
+  @JvmStatic
   fun loadConsentsForEditing(): List<Consent> {
     val options = ConsentOptions.getInstance()
     var result = options.consents.first
@@ -363,10 +366,12 @@ object AppUIUtil {
     return result
   }
 
+  @JvmStatic
   fun saveConsents(consents: List<Consent>) {
     if (consents.isEmpty()) {
       return
     }
+
     val options = ConsentOptions.getInstance()
     if (ApplicationManager.getApplication() != null && options.isEAP) {
       val isUsageStats = ConsentOptions.condUsageStatsConsent()
@@ -378,13 +383,7 @@ object AppUIUtil {
         }
       }
       if (consents.size - saved > 0) {
-        val list: MutableList<Consent> = ArrayList()
-        for (consent in consents) {
-          if (!isUsageStats.test(consent)) {
-            list.add(consent)
-          }
-        }
-        options.setConsents(list)
+        options.setConsents(consents.filter { !isUsageStats.test(it) })
       }
     }
     else {
@@ -393,15 +392,13 @@ object AppUIUtil {
   }
 
   /**
-   * Targets the component to a (screen) device before showing. In case the component is already a part of UI hierarchy
-   * (and is thus bound to a device), the method does nothing.
-   *
+   * Targets the component to a (screen) device before showing.
+   * In case the component is already a part of the UI hierarchy (and is thus bound to a device), the method does nothing.
    *
    * The prior targeting to a device is required when there's a need to calculate the preferred size of a compound component
    * (such as `JEditorPane`, for instance) which is not yet added to a hierarchy.
    * The calculation in that case may involve device-dependent metrics (such as font metrics)
    * and thus should refer to a particular device in multi-monitor env.
-   *
    *
    * Note that if after calling this method the component is added to another hierarchy bound to a different device,
    * AWT will throw `IllegalArgumentException`.
@@ -410,6 +407,7 @@ object AppUIUtil {
    * @param target the component representing the UI hierarchy and the target device
    * @param comp the component to target
    */
+  @JvmStatic
   fun targetToDevice(comp: Component, target: Component?) {
     if (comp.isShowing) {
       return
@@ -418,9 +416,8 @@ object AppUIUtil {
     AWTAccessor.getComponentAccessor().setGraphicsConfiguration(comp, gc)
   }
 
-  fun isInFullScreen(window: Window?): Boolean {
-    return window is IdeFrame && (window as IdeFrame).isInFullScreen
-  }
+  @JvmStatic
+  fun isInFullScreen(window: Window?): Boolean = window is IdeFrame && (window as IdeFrame).isInFullScreen
 
   fun adjustFractionalMetrics(defaultValue: Any): Any {
     if (!SystemInfoRt.isMac || GraphicsEnvironment.isHeadless()) {

@@ -139,7 +139,7 @@ open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
     }
 
     if (images.isEmpty()) {
-      AppUIUtil.updateWindowIcon(frame)
+      updateAppWindowIcon(frame)
     }
     else {
       // unwrap the image before setting as frame's icon

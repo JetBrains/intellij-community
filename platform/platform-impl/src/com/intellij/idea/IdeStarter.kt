@@ -31,8 +31,8 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
-import com.intellij.ui.AppUIUtil
 import com.intellij.ui.mac.touchbar.TouchbarSupport
+import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.io.URLUtil.SCHEME_SEPARATOR
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
@@ -213,7 +213,7 @@ private suspend fun loadProjectFromExternalCommandLine(commandLineArgs: List<Str
 
 private fun CoroutineScope.postOpenUiTasks() {
   if (PluginManagerCore.isRunningFromSources()) {
-    AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
+    updateAppWindowIcon(JOptionPane.getRootFrame())
   }
 
   if (SystemInfoRt.isMac) {
