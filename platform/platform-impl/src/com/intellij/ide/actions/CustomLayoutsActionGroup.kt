@@ -16,10 +16,12 @@ class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> =
-    if (e == null)
+    if (e == null) {
       AnAction.EMPTY_ARRAY
-    else
+    }
+    else {
       childrenCache.getCachedOrUpdatedArray(AnAction.EMPTY_ARRAY)
+    }
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
