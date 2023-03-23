@@ -72,6 +72,7 @@ import static java.awt.GridBagConstraints.*;
 
 final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implements FileChooserPanel, Disposable {
   private static final Logger LOG = Logger.getInstance(FileChooserPanelImpl.class);
+  private static final String PROJECT_DIR_DETECTION_PROPERTY = "idea.chooser.lookup.for.project.dirs";
   private static final String SEPARATOR = "!/";
   private static final CoreLocalFileSystem FS = new CoreLocalFileSystem();
   private static final String OPEN = "open";
@@ -89,6 +90,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   private boolean myShowPathBar;
   private boolean myPathBarActive;
   private volatile boolean myShowHiddenFiles;
+  private volatile boolean myDetectProjectDirectories;
 
   private final Object myLock = new String("file.chooser.panel.lock");
   private int myCounter = 0;
@@ -116,6 +118,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
 
     myShowHiddenFiles = descriptor.isShowHiddenFiles();
     myShowPathBar = PropertiesComponent.getInstance().getBoolean(FILE_CHOOSER_SHOW_PATH_PROPERTY, true);
+    myDetectProjectDirectories= PropertiesComponent.getInstance().getBoolean(PROJECT_DIR_DETECTION_PROPERTY, true);
 
     var label = new JLabel(descriptor.getDescription());
 
@@ -442,6 +445,20 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   }
 
   @Override
+  public boolean projectDetection() {
+    return myDetectProjectDirectories;
+  }
+
+  @Override
+  public boolean toggleProjectDetection() {
+    var newState = !myDetectProjectDirectories;
+    myDetectProjectDirectories = newState;
+    PropertiesComponent.getInstance().setValue(PROJECT_DIR_DETECTION_PROPERTY, newState);
+    reload(null);
+    return newState;
+  }
+
+  @Override
   public @Nullable Path currentDirectory() {
     return myCurrentDirectory;
   }
@@ -594,7 +611,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         }
         var visible = myDescriptor.isFileVisible(virtualFile, false);
         var selectable = myDescriptor.isFileSelectable(virtualFile);
-        var icon = myDescriptor.getIcon(virtualFile);
+        var icon = myDetectProjectDirectories || !virtualFile.isDirectory() ? myDescriptor.getIcon(virtualFile) : AllIcons.Nodes.Folder;
         var item = new FsItem(file, file.getFileName().toString(), attrs, visible, selectable, icon);
         update(id, cancelled, () -> {
           myCurrentContent.add(item);

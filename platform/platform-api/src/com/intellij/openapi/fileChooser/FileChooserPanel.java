@@ -39,6 +39,9 @@ public interface FileChooserPanel {
   boolean hiddenFiles();
   boolean toggleHiddenFiles();
 
+  boolean projectDetection();
+  boolean toggleProjectDetection();
+
   @Nullable Path currentDirectory();
   @NotNull List<Path> selectedPaths();
 }
