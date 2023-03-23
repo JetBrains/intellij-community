@@ -119,15 +119,6 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
     return testScriptExecution;
   }
 
-  @Override
-  protected @Nullable Function<TargetEnvironment, String> getPythonExecutionWorkingDir(@NotNull TargetEnvironmentRequest request) {
-    Function<TargetEnvironment, String> workingDir = super.getPythonExecutionWorkingDir(request);
-    if (workingDir != null) {
-      return workingDir;
-    }
-    return TargetEnvironmentFunctions.targetPath(Path.of(myConfiguration.getWorkingDirectorySafe()));
-  }
-
   protected void setWorkingDirectory(@NotNull final GeneralCommandLine cmd) {
     String workingDirectory = myConfiguration.getWorkingDirectory();
     if (StringUtil.isEmptyOrSpaces(workingDirectory)) {

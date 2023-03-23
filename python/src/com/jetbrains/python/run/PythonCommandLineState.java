@@ -372,13 +372,11 @@ public abstract class PythonCommandLineState extends CommandLineState {
    * @param targetEnvironmentRequest the environment to explore for the working directory upload
    * @return the promise to the working directory path
    */
-  protected @Nullable Function<TargetEnvironment, String> getPythonExecutionWorkingDir(@NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
+  @NotNull
+  protected Function<TargetEnvironment, String> getPythonExecutionWorkingDir(@NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
     // the following working directory is located on the local machine
-    String workingDir = myConfig.getWorkingDirectory();
-    if (!StringUtil.isEmptyOrSpaces(workingDir)) {
-      return getTargetPath(targetEnvironmentRequest, Path.of(workingDir));
-    }
-    return null;
+    String workingDir = myConfig.getWorkingDirectorySafe();
+    return getTargetPath(targetEnvironmentRequest, Path.of(workingDir));
   }
 
   /**
