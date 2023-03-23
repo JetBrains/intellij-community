@@ -200,11 +200,17 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
 
   private fun createCallExpressionTemplateRespectingChainStyle(receiver: UExpression?): String {
     if (receiver == null) return "a()"
-    val siblings = receiver.sourcePsi?.siblings(withSelf = false) ?: return "a.b()"
 
-    (siblings.firstOrNull() as? PsiWhiteSpace)?.let { whitespace ->
-      return "a${whitespace.text}.b()"
+    val siblings = receiver.sourcePsi?.siblings(withSelf = false) ?: return "a.b()"
+    val initialSpace = (siblings.firstOrNull() as? PsiWhiteSpace)?.text
+
+    if (receiver.comments.isNotEmpty()) {
+      val comments = receiver.comments.joinToString(prefix = initialSpace ?: " ", separator = "") { it.text }
+
+      return "a${comments}\n.b()"
     }
+
+    initialSpace?.let { whitespace -> return "a${whitespace}.b()" }
 
     if (siblings.firstOrNull()?.elementType == ElementType.DOT) {
       (siblings.elementAt(2) as? PsiWhiteSpace)?.let { whitespace ->

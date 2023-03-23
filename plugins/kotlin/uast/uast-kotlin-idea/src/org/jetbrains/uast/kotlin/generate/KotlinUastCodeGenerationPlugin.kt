@@ -194,6 +194,11 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
                     (receiver.sourcePsi?.nextSibling as? PsiWhiteSpace)?.let { whitespaces ->
                         append(whitespaces.text)
                     }
+
+                    receiver.comments.takeIf { it.isNotEmpty() }?.let {
+                        append(receiver.comments.joinToString { it.text })
+                        append("\n")
+                    }
                     append(".")
                 }
                 append(name)
