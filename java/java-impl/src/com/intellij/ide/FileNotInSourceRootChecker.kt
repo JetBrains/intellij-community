@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
@@ -69,7 +70,7 @@ class FileNotInSourceRootService(val project: Project) : Disposable {
         root = VfsUtil.findRelativeFile(root, *packageName.split('.').toTypedArray()) ?: root
       }
       if (root.findChild(virtualFile.name) != null) return@run
-      val moveFileFix = MoveFileFix(virtualFile, root, JavaBundle.message("fix.move.to.source.root"))
+      val moveFileFix = MoveFileToSourceRootFix(virtualFile, root)
       val info = HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING)
         .range(psiFile)
         .description(JavaBundle.message("warning.java.file.outside.source.root"))
@@ -85,6 +86,10 @@ class FileNotInSourceRootService(val project: Project) : Disposable {
 
   override fun dispose() {
   }
+
+  // Separate fix to differentiate in statistics  
+  class MoveFileToSourceRootFix(virtualFile: VirtualFile, root: VirtualFile): 
+    MoveFileFix(virtualFile, root, JavaBundle.message("fix.move.to.source.root"))
 
   class DismissFix: IntentionAction {
     override fun startInWriteAction(): Boolean = false
