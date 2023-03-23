@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.internal.KotlinFakeUElement
@@ -40,8 +41,24 @@ val identifiersTokens = setOf(
 )
 
 fun UElement.toSourcePsiFakeAware(): List<PsiElement> {
-    if (this is KotlinFakeUElement) return this.unwrapToSourcePsi()
-    return listOfNotNull(this.sourcePsi)
+    return if (this is KotlinFakeUElement) this.unwrapToSourcePsi() else listOfNotNull(this.sourcePsi)
+}
+
+fun UElement.toSourcePsiFakeAndCommentsAware(): List<PsiElement> {
+    val sourcePsi = toSourcePsiFakeAware()
+
+    val commentsPsi = comments.map { it.sourcePsi }
+    if (commentsPsi.isEmpty() || sourcePsi.isEmpty()) return sourcePsi
+
+    val siblings = sourcePsi.first().siblings(withItself = false)
+    val lastComment = commentsPsi.last()
+    val siblingsBeforeLastComment = siblings.takeWhile { it != lastComment }.toList()
+    val firstSourcePsi = sourcePsi.first()
+
+    siblingsBeforeLastComment.forEach { firstSourcePsi.add(it)  }
+    firstSourcePsi.add(lastComment)
+
+    return sourcePsi
 }
 
 fun wrapExpressionBody(function: UElement, bodyExpression: KtExpression): UExpression? = when (bodyExpression) {

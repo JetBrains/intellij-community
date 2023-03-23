@@ -442,7 +442,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
     }
 
     override fun createBlockExpression(expressions: List<UExpression>, context: PsiElement?): UBlockExpression {
-        val sourceExpressions = expressions.flatMap { it.toSourcePsiFakeAware() }
+        val sourceExpressions = expressions.flatMap { it.toSourcePsiFakeAndCommentsAware() }
         val block = psiFactory(context).createBlock(
             sourceExpressions.joinToString(separator = "\n") { "println()" }
         )
