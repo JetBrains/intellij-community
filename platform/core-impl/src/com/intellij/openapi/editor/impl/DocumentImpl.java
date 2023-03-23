@@ -829,9 +829,9 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   private final class DelayedExceptions {
-    Throwable myException;
+    private Throwable myException;
 
-    void register(Throwable e) {
+    void register(@NotNull Throwable e) {
       if (myException == null) {
         myException = e;
       }
