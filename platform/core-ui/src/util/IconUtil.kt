@@ -67,7 +67,7 @@ private fun wasEverInitialized(project: Project): Boolean {
   return was
 }
 
-private val ICON_NULLABLE_FUNCTION = java.util.function.Function { key: FileIconKey ->
+private val ICON_NULLABLE_FUNCTION = { key: FileIconKey ->
   IconUtil.computeFileIcon(file = key.file, flags = key.flags, project = key.project)
 }
 

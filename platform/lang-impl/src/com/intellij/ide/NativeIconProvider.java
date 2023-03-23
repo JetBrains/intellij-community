@@ -83,7 +83,9 @@ public final class NativeIconProvider extends IconProvider implements DumbAware 
       }
 
       // we should have no read access here, to avoid deadlock with EDT needed to init component
-      if (ApplicationManager.getApplication().isReadAccessAllowed()) return null;
+      if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+        return null;
+      }
 
       Icon icon;
       try {

@@ -25,7 +25,6 @@ import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.Paint
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.Icon
 
@@ -114,8 +113,8 @@ class CoreIconManager : IconManager, CoreAwareIconManager {
 
   override fun createEmptyIcon(icon: Icon): Icon = EmptyIcon.create(icon)
 
-  override fun <T> createDeferredIcon(base: Icon?, param: T, iconProducer: Function<in T, out Icon>): Icon {
-    return IconDeferrer.getInstance().defer(base, param, iconProducer)
+  override fun <T> createDeferredIcon(base: Icon?, param: T, iconProducer: (T) -> Icon?): Icon {
+    return IconDeferrer.getInstance().defer(base = base, param = param, evaluator = iconProducer)
   }
 
   override fun registerIconLayer(flagMask: Int, icon: Icon) {

@@ -17,7 +17,6 @@ import com.intellij.util.SystemProperties
 import kotlinx.coroutines.asContextElement
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.LongAdder
-import java.util.function.Function
 import javax.swing.Icon
 
 internal class IconDeferrerImpl private constructor() : IconDeferrer() {
@@ -45,7 +44,7 @@ internal class IconDeferrerImpl private constructor() : IconDeferrer() {
 
   init {
     val connection = ApplicationManager.getApplication().messageBus.connect()
-    connection.subscribe(PsiModificationTracker.TOPIC, PsiModificationTracker.Listener { clearCache() })
+    connection.subscribe(PsiModificationTracker.TOPIC, PsiModificationTracker.Listener(::clearCache))
     // update "locked" icon
     connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: List<VFileEvent>) {
@@ -58,7 +57,7 @@ internal class IconDeferrerImpl private constructor() : IconDeferrer() {
       }
     })
     connection.subscribe(VirtualFileAppearanceListener.TOPIC, VirtualFileAppearanceListener { clearCache() })
-    LowMemoryWatcher.register({ clearCache() }, connection)
+    LowMemoryWatcher.register(::clearCache, connection)
   }
 
   override fun clearCache() {
@@ -66,9 +65,9 @@ internal class IconDeferrerImpl private constructor() : IconDeferrer() {
     lastClearTimestamp.increment()
   }
 
-  override fun <T> defer(base: Icon?, param: T, evaluator: Function<in T, out Icon>): Icon {
+  override fun <T> defer(base: Icon?, param: T, evaluator: (T) -> Icon?): Icon {
     if (isEvaluationInProgress.get()) {
-      return evaluator.apply(param)
+      return evaluator(param) ?: DeferredIconImpl.EMPTY_ICON
     }
 
     return iconCache.get(param) {
@@ -85,5 +84,5 @@ internal class IconDeferrerImpl private constructor() : IconDeferrer() {
     }
   }
 
-  override fun equalIcons(icon1: Icon, icon2: Icon): Boolean = DeferredIconImpl.equalIcons(icon1, icon2)
+  override fun equalIcons(icon1: Icon?, icon2: Icon?): Boolean = DeferredIconImpl.equalIcons(icon1, icon2)
 }

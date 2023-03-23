@@ -15,7 +15,6 @@ import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.function.Function
 import javax.swing.Icon
 
 interface IconManager {
@@ -75,7 +74,7 @@ interface IconManager {
    * @param param Unique key that WILL BE USED to cache the icon instance.
    * Prefer passing unique objects over [String] or [Integer] to avoid accidental clashes with another module.
    */
-  fun <T> createDeferredIcon(base: Icon?, param: T, iconProducer: Function<in T, out Icon?>): Icon
+  fun <T> createDeferredIcon(base: Icon?, param: T, iconProducer: (T) -> Icon?): Icon
 
   fun createLayeredIcon(instance: Iconable, icon: Icon, flags: Int): RowIcon
 
@@ -99,6 +98,7 @@ interface IconManager {
 private object DummyIconManager : IconManager {
   override fun getPlatformIcon(id: PlatformIcons): Icon = DummyIconImpl(id.testId ?: id.name)
 
+  @Suppress("OVERRIDE_DEPRECATION")
   override fun getIcon(path: String, aClass: Class<*>): Icon = DummyIconImpl(path)
 
   override fun getIcon(path: String, classLoader: ClassLoader): Icon = DummyIconImpl(path)
@@ -116,7 +116,7 @@ private object DummyIconManager : IconManager {
 
   override fun tooltipOnlyIfComposite(icon: Icon): Icon = icon
 
-  override fun <T> createDeferredIcon(base: Icon?, param: T, iconProducer: Function<in T, out Icon?>): Icon = base!!
+  override fun <T> createDeferredIcon(base: Icon?, param: T, iconProducer: (T) -> Icon?): Icon = base!!
 
   override fun createRowIcon(iconCount: Int, alignment: RowIcon.Alignment): RowIcon = DummyRowIcon(iconCount)
 

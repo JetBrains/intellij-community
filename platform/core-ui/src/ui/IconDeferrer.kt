@@ -3,7 +3,6 @@ package com.intellij.ui
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
-import java.util.function.Function
 import javax.swing.Icon
 
 abstract class IconDeferrer {
@@ -16,7 +15,7 @@ abstract class IconDeferrer {
    * @param param Unique key that WILL BE USED to cache the icon instance.
    * Prefer passing unique objects over [String] or [Integer] to avoid accidental clashes with another module.
    */
-  abstract fun <T> defer(base: Icon?, param: T, f: Function<in T, out Icon?>): Icon
+  abstract fun <T> defer(base: Icon?, param: T, evaluator: (T) -> Icon?): Icon
 
   abstract fun clearCache()
 

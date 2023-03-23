@@ -26,19 +26,21 @@ import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.BitUtil;
 import com.intellij.util.PsiIconUtil;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.function.Function;
 
 public abstract class ElementBase extends UserDataHolderBase implements Iconable {
   private static final Logger LOG = Logger.getInstance(ElementBase.class);
 
   public static final int FLAGS_LOCKED = 0x800;
-  private static final Function<ElementIconRequest,Icon> ICON_COMPUTE = request -> {
+  private static final Function1<ElementIconRequest,Icon> ICON_COMPUTE = request -> {
     PsiElement element = request.myPointer.getElement();
-    if (element == null) return null;
+    if (element == null) {
+      return null;
+    }
 
     Icon icon = computeIconNow(element, request.myFlags);
     LastComputedIconCache.put(element, icon, request.myFlags);
@@ -77,7 +79,12 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       if (baseIcon == null) {
         baseIcon = AstLoadingFilter.disallowTreeLoading(() -> computeBaseIcon(flags));
       }
-      return baseIcon == null ? null : IconManager.getInstance().createDeferredIcon(baseIcon, new ElementIconRequest(psiElement, psiElement.getProject(), flags), ICON_COMPUTE);
+      if (baseIcon == null) {
+        return null;
+      }
+      return IconManager.getInstance().createDeferredIcon(baseIcon,
+                                                          new ElementIconRequest(psiElement, psiElement.getProject(), flags),
+                                                          ICON_COMPUTE);
     }
 
     return computeIconNow(psiElement, flags);

@@ -25,16 +25,16 @@ import java.awt.Component
 import java.awt.Graphics
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
-import java.util.function.Function
 import javax.swing.Icon
 import javax.swing.JTree
 
 private val repaintScheduler = DeferredIconRepaintScheduler()
-private val EMPTY_ICON: Icon by lazy { EmptyIcon.create(16).withIconPreScaled(false) }
 
 class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconWithToolTip, CopyableIcon {
   companion object {
-    fun <T> withoutReadAction(baseIcon: Icon?, param: T, evaluator: Function<in T, out Icon>): DeferredIcon {
+    internal val EMPTY_ICON: Icon by lazy { EmptyIcon.create(16).withIconPreScaled(false) }
+
+    fun <T> withoutReadAction(baseIcon: Icon?, param: T, evaluator: (T) -> Icon?): DeferredIcon {
       return DeferredIconImpl(baseIcon = baseIcon, param = param, needReadAction = false, evaluator = evaluator, listener = null)
     }
 
@@ -52,7 +52,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
   @Volatile
   private var scaledDelegateIcon: Icon
   private var cachedScaledIcon: DeferredIconImpl<T>?
-  private var evaluator: Function<in T, out Icon>?
+  private var evaluator: ((T) -> Icon?)?
   private var scheduledRepaints: Set<RepaintRequest>? = null
 
   @Volatile
@@ -90,8 +90,8 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
   internal constructor(baseIcon: Icon?,
                        param: T,
                        needReadAction: Boolean,
-                       evaluator: Function<in T, out Icon>,
-                       listener: ((DeferredIconImpl<T>, Icon) -> Unit)?) {
+                       evaluator: (T) -> Icon?,
+                       listener: ((DeferredIconImpl<T>, Icon?) -> Unit)?) {
     this.param = param
     delegateIcon = baseIcon ?: EMPTY_ICON
     scaledDelegateIcon = delegateIcon
@@ -106,7 +106,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     this(baseIcon = baseIcon,
          param = param,
          needReadAction = needReadAction,
-         evaluator = Function<T, Icon> { t: T -> evaluator.`fun`(t) },
+         evaluator = { evaluator.`fun`(it) },
          listener = null)
 
   override fun getModificationCount(): Long = modificationCount.get()
@@ -247,7 +247,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
 
   override fun evaluate(): Icon {
     val result = try {
-      evaluator?.apply(param) ?: EMPTY_ICON
+      evaluator?.invoke(param) ?: EMPTY_ICON
     }
     catch (e: IndexNotReadyException) {
       EMPTY_ICON
