@@ -8,6 +8,7 @@ import com.intellij.settingsSync.SettingsSnapshotZipSerializer.deserializeSettin
 import com.intellij.settingsSync.SettingsSnapshotZipSerializer.serializeSettingsProviders
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsStateMerger.mergePluginStates
+import com.intellij.ui.JBAccountInfoService
 import com.intellij.util.io.createFile
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
@@ -26,6 +27,7 @@ import org.eclipse.jgit.revwalk.filter.RevFilter
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.transport.CredentialsProvider
 import org.eclipse.jgit.treewalk.TreeWalk
+import org.jetbrains.annotations.VisibleForTesting
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.time.Instant
@@ -38,10 +40,12 @@ import kotlin.io.path.exists
 internal class GitSettingsLog(private val settingsSyncStorage: Path,
                               private val rootConfigPath: Path,
                               parentDisposable: Disposable,
+                              private val userDataProvider: () -> JBAccountInfoService.JBAData?,
                               private val initialSnapshotProvider: (SettingsSnapshot) -> SettingsSnapshot
 ) : SettingsLog, Disposable {
 
   private lateinit var repository: Repository
+
   private lateinit var git: Git
 
   private val master: Ref get() = repository.findRef(MASTER_REF_NAME)!!
@@ -200,13 +204,17 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     try {
       // Don't allow empty commit: sometimes the stream provider can notify about changes but there are no actual changes on disk
       val mockGpgConfig = GpgConfig("", GpgConfig.GpgFormat.OPENPGP, "")
-      val commit = git.commit()
+      val commitData = git.commit()
         .setMessage(message)
         .setAllowEmpty(allowEmpty)
         .setNoVerify(true)
         .setSign(false)
         .setGpgConfig(mockGpgConfig)
-        .call()
+
+      userDataProvider()?.let {
+        commitData.author = PersonIdent(it.loginName, it.email)
+      }
+      val commit = commitData.call()
 
       if (dateCreated != null) {
         recordCreationDate(commit, dateCreated)
@@ -512,11 +520,6 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     git.reset().setMode(ResetCommand.ResetType.HARD).call()
   }
 
-  private fun Repository.headCommit(): RevCommit {
-    val ref = this.findRef(Constants.HEAD)
-    return this.parseCommit(ref.objectId)
-  }
-
   private val Ref.short get() = this.name.removePrefix(R_HEADS)
 
   private val ObjectId.short get() = this.name.substring(0, 8)
@@ -546,4 +549,9 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
       return false
     }
   }
+}
+
+internal fun Repository.headCommit(): RevCommit {
+  val ref = this.findRef(Constants.HEAD)
+  return this.parseCommit(ref.objectId)
 }
