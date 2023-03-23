@@ -26,6 +26,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets
 import java.awt.*
+import java.beans.PropertyChangeListener
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -143,6 +144,8 @@ private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: Layout
       component.foreground = JBColor.namedColor("MainToolbar.foreground", component.foreground)
     }
 
+    adjustIcons(presentation)
+
     if (action is ComboBoxAction) {
       findComboButton(component)?.apply {
         setUI(MainToolbarComboBoxButtonUI())
@@ -150,6 +153,28 @@ private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: Layout
       }
     }
     return component
+  }
+
+  private fun adjustIcons(presentation: Presentation) {
+    HeaderIconUpdater("icon",
+                      { it.icon },
+                      { pst, icn -> pst.icon = icn}
+    ).updateIcon(presentation).subscribeTo(presentation)
+
+    HeaderIconUpdater("selectedIcon",
+                      { it.selectedIcon },
+                      { pst, icn -> pst.selectedIcon = icn}
+    ).updateIcon(presentation).subscribeTo(presentation)
+
+    HeaderIconUpdater("hoveredIcon",
+                      { it.hoveredIcon },
+                      { pst, icn -> pst.hoveredIcon = icn}
+    ).updateIcon(presentation).subscribeTo(presentation)
+
+    HeaderIconUpdater("disabledIcon",
+                      { it.disabledIcon },
+                      { pst, icn -> pst.disabledIcon = icn}
+    ).updateIcon(presentation).subscribeTo(presentation)
   }
 
   override fun getSeparatorColor(): Color {
@@ -194,3 +219,27 @@ internal fun isToolbarInHeader(settings: UISettings = UISettings.shadowInstance)
 internal fun isDarkHeader(): Boolean = ColorUtil.isDark(JBColor.namedColor("MainToolbar.background"))
 
 fun adjustIconForHeader(icon: Icon) = if (isDarkHeader()) IconLoader.getDarkIcon(icon, true) else icon
+
+private class HeaderIconUpdater(val propName: String, val getter: (Presentation) -> Icon?, val setter: (Presentation, Icon) -> Unit) {
+  private val iconsCache = HashMap<Icon, Icon>()
+
+  fun updateIcon(p: Presentation): HeaderIconUpdater {
+    if (!isDarkHeader()) return this
+
+    getter(p)?.let { icon ->
+      val replaceIcon = iconsCache.computeIfAbsent(icon) { adjustIconForHeader(it) }
+      setter(p, replaceIcon) }
+
+    return this
+  }
+
+  fun subscribeTo(presentation: Presentation): HeaderIconUpdater {
+    presentation.addPropertyChangeListener(PropertyChangeListener { evt ->
+      if (evt.propertyName != propName) return@PropertyChangeListener
+      if (evt.newValue in iconsCache.values) return@PropertyChangeListener
+      updateIcon(presentation)
+    })
+
+    return this
+  }
+}
