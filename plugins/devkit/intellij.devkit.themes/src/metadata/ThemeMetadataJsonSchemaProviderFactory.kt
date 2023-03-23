@@ -12,7 +12,7 @@ import org.jetbrains.idea.devkit.themes.DevKitThemesBundle
 import java.util.*
 
 @NonNls
-internal const val EXTENSION = "themeMetadata.json"
+internal const val THEME_METADATA_JSON_EXTENSION = "themeMetadata.json"
 
 internal class ThemeMetadataJsonSchemaProviderFactory : JsonSchemaProviderFactory {
 
@@ -29,7 +29,7 @@ internal class ThemeMetadataJsonSchemaProviderFactory : JsonSchemaProviderFactor
   }
 
   @NonNls
-  private val DOT_EXTENSION = ".$EXTENSION"
+  private val DOT_EXTENSION = ".$THEME_METADATA_JSON_EXTENSION"
 
   @NonNls
   private val THEME_METADATA_SCHEMA = "/schemes/themeMetadata.schema.json"

@@ -114,7 +114,7 @@ public class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
         @Override
         public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
           final Collection<VirtualFile> metadataFiles =
-            FilenameIndex.getAllFilesByExt(project, ThemeMetadataJsonSchemaProviderFactoryKt.EXTENSION);
+            FilenameIndex.getAllFilesByExt(project, ThemeMetadataJsonSchemaProviderFactoryKt.THEME_METADATA_JSON_EXTENSION);
           if (metadataFiles.isEmpty()) return;
 
           final PsiFile[] psiFiles =
