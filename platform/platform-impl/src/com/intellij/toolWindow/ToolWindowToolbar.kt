@@ -15,6 +15,7 @@ import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.LayoutData
 import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.ui.ComponentUtil
+import com.intellij.ui.components.JBPanel
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.Color
@@ -24,7 +25,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.border.Border
 
-internal abstract class ToolWindowToolbar : JPanel() {
+internal abstract class ToolWindowToolbar : JBPanel<ToolWindowToolbar>() {
   lateinit var defaults: List<String>
 
   abstract val bottomStripe: StripeV2
