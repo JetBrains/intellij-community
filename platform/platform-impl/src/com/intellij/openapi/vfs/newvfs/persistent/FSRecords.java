@@ -40,6 +40,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.*;
 
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
@@ -76,7 +77,8 @@ public final class FSRecords {
   public static final String IDE_USE_FS_ROOTS_DATA_LOADER = "idea.fs.roots.data.loader";
 
   public static final boolean USE_FAST_NAMES_IMPLEMENTATION = SystemProperties.getBooleanProperty("idea.vfs.use-fast-names-storage", false);
-  public static final boolean USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION = SystemProperties.getBooleanProperty("vfs.use-streamlined-attributes-storage", false);
+  public static final boolean USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION =
+    SystemProperties.getBooleanProperty("vfs.use-streamlined-attributes-storage", false);
 
   /**
    * Initially record=0 was used as a storage header record, hence fileId=0 was reserved.
@@ -103,6 +105,8 @@ public final class FSRecords {
   private static volatile int ourCurrentVersion;
 
   private static final AtomicLong ourNamesIndexModCount = new AtomicLong();
+
+  private static volatile Exception ourDisconnectLocation;
 
   private static int nextMask(int value, int bits, int prevMask) {
     assert value < (1 << bits) && value >= 0 : value;
@@ -184,6 +188,8 @@ public final class FSRecords {
       ourAttributeAccessor = null;
       ourTreeAccessor = null;
       ourRecordAccessor = null;
+
+      ourDisconnectLocation = new Exception("VFS dispose stacktrace");
     }
   }
 
@@ -191,7 +197,7 @@ public final class FSRecords {
   private static PersistentFSConnection getConnectionOrFail() {
     PersistentFSConnection connection = ourConnection;
     if (connection == null) {
-      throw new AlreadyDisposedException("VFS is already disposed");
+      throw alreadyDisposed();
     }
     return connection;
   }
@@ -1064,5 +1070,14 @@ public final class FSRecords {
   @TestOnly
   public static void checkFilenameIndexConsistency() {
     InvertedNameIndex.checkConsistency();
+  }
+
+  @NotNull
+  private static AlreadyDisposedException alreadyDisposed() {
+    final AlreadyDisposedException alreadyDisposed = new AlreadyDisposedException("VFS is already disposed");
+    if (ourDisconnectLocation != null) {
+      alreadyDisposed.addSuppressed(ourDisconnectLocation);
+    }
+    return alreadyDisposed;
   }
 }
