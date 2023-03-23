@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.concurrency.JobSchedulerImpl;
@@ -1311,7 +1311,7 @@ public class UsageViewImpl implements UsageViewEx {
 
   void drainQueuedUsageNodes() {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    UIUtil.invokeAndWaitIfNeeded((Runnable)this::fireEvents);
+    UIUtil.invokeAndWaitIfNeeded(this::fireEvents);
   }
 
   @Override

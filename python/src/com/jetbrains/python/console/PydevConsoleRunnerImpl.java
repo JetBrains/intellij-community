@@ -335,7 +335,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
           }
           catch (final Exception e) {
             LOG.warn("Error running console", e);
-            UIUtil.invokeAndWaitIfNeeded((Runnable)() -> showErrorsInConsole(e));
+            UIUtil.invokeAndWaitIfNeeded(() -> showErrorsInConsole(e));
           }
         }
       })
@@ -769,7 +769,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       commandLineProcess = createProcess(sdk);
     }
     final Process process = commandLineProcess.getProcess();
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    UIUtil.invokeAndWaitIfNeeded(() -> {
       // Init console view
       myConsoleView = createConsoleView(sdk);
       myConsoleView.setRunner(this);
@@ -1115,7 +1115,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         if (myProcessHandler != null) {
-          UIUtil.invokeAndWaitIfNeeded((Runnable)() -> closeCommunication());
+          UIUtil.invokeAndWaitIfNeeded(() -> closeCommunication());
 
           boolean processStopped = myProcessHandler.waitFor(WAIT_BEFORE_FORCED_CLOSE_MILLIS);
           if (!processStopped && myProcessHandler.canKillProcess()) {

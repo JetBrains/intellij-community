@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.remote;
 
 import com.google.common.collect.Lists;
@@ -71,7 +71,7 @@ public final class PyRemoteInterpreterUtil {
 
     if (!ProgressManager.getInstance().hasProgressIndicator()) {
 
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> ProgressManager.getInstance().run(task));
+      UIUtil.invokeAndWaitIfNeeded(() -> ProgressManager.getInstance().run(task));
     }
     else {
       task.run(ProgressManager.getInstance().getProgressIndicator());

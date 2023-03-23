@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.maven;
 
@@ -91,7 +91,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
             getMavenGeneralSettings().setMavenHome(home);
         }
 
-        UIUtil.invokeAndWaitIfNeeded((Runnable) () -> {
+        UIUtil.invokeAndWaitIfNeeded(() -> {
             try {
                 restoreSettingsFile();
             }
@@ -132,7 +132,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
                 () -> MavenServerManager.getInstance().shutdown(true),
                 () -> MavenArtifactDownloader.awaitQuiescence(100, TimeUnit.SECONDS),
                 () -> myProject = null,
-                () -> UIUtil.invokeAndWaitIfNeeded((Runnable) () -> {
+                () -> UIUtil.invokeAndWaitIfNeeded(() -> {
                     try {
                         tearDownFixtures();
                     }

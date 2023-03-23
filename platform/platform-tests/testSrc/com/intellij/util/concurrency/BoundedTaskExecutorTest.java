@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
 import com.intellij.diagnostic.ThreadDumper;
@@ -254,7 +254,7 @@ public class BoundedTaskExecutorTest extends CatchLogErrorsInAllThreadsTestCase 
         assertTrue(waitCompleted.await(1, TimeUnit.MINUTES));
         assertTrue(future.isDone());
       }
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      UIUtil.invokeAndWaitIfNeeded(() -> {
         try {
           ((BoundedTaskExecutor)executor).waitAllTasksExecuted(1, TimeUnit.MINUTES);
         }

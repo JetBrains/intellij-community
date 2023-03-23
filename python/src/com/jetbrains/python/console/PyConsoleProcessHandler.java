@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console;
 
 import com.intellij.execution.process.ProcessEvent;
@@ -67,7 +67,7 @@ public class PyConsoleProcessHandler extends PythonProcessHandler {
   private void doCloseCommunication() {
     if (myPydevConsoleCommunication != null) {
 
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      UIUtil.invokeAndWaitIfNeeded(() -> {
         try {
           myPydevConsoleCommunication.close();
           Thread.sleep(300);
