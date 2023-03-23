@@ -78,7 +78,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
   private var lastCalcTime: Long = 0
   private var lastTimeSpent: Long = 0
   private var modificationCount = AtomicLong(0)
-  private val evalListener: ((DeferredIcon?, Icon) -> Unit)?
+  private val evalListener: ((DeferredIconImpl<T>, Icon) -> Unit)?
 
   private constructor(icon: DeferredIconImpl<T>) : super(icon) {
     delegateIcon = icon.delegateIcon
@@ -99,7 +99,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
                        param: T,
                        needReadAction: Boolean,
                        evaluator: Function<in T, out Icon>,
-                       listener: ((DeferredIcon?, Icon) -> Unit)?) {
+                       listener: ((DeferredIconImpl<T>, Icon) -> Unit)?) {
     this.param = param
     delegateIcon = baseIcon ?: EMPTY_ICON
     scaledDelegateIcon = delegateIcon

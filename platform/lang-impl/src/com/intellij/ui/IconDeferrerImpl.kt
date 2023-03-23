@@ -3,6 +3,7 @@
 
 package com.intellij.ui
 
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.ide.ui.VirtualFileAppearanceListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
@@ -13,32 +14,30 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.SystemProperties
-import com.intellij.util.containers.FixedHashMap
+import java.util.concurrent.atomic.LongAdder
 import java.util.function.Function
 import javax.swing.Icon
 
-class IconDeferrerImpl internal constructor() : IconDeferrer() {
+internal class IconDeferrerImpl private constructor() : IconDeferrer() {
   companion object {
-    private val evaluationIsInProgress = ThreadLocal.withInitial { false }
+    private val isEvaluationInProgress = ThreadLocal.withInitial { false }
 
     fun evaluateDeferred(runnable: Runnable) {
       try {
-        evaluationIsInProgress.set(true)
+        isEvaluationInProgress.set(true)
         runnable.run()
       }
       finally {
-        evaluationIsInProgress.set(false)
+        isEvaluationInProgress.set(false)
       }
     }
   }
 
-  private val LOCK = Any()
+  private val iconCache = Caffeine.newBuilder()
+    .maximumSize(SystemProperties.getLongProperty("ide.icons.deferrerCacheSize", 1000))
+    .build<Any, Icon>()
 
-  // guarded by LOCK
-  private val iconCache = FixedHashMap<Any, Icon>(SystemProperties.getIntProperty("ide.icons.deferrerCacheSize", 1000))
-
-  // guarded by LOCK
-  private var lastClearTimestamp: Long = 0
+  private var lastClearTimestamp = LongAdder()
 
   init {
     val connection = ApplicationManager.getApplication().messageBus.connect()
@@ -59,37 +58,26 @@ class IconDeferrerImpl internal constructor() : IconDeferrer() {
   }
 
   override fun clearCache() {
-    synchronized(LOCK) {
-      iconCache.clear()
-      lastClearTimestamp++
-    }
+    iconCache.invalidateAll()
+    lastClearTimestamp.increment()
   }
 
   override fun <T> defer(base: Icon?, param: T, evaluator: Function<in T, out Icon>): Icon {
-    if (evaluationIsInProgress.get()) {
+    if (isEvaluationInProgress.get()) {
       return evaluator.apply(param)
     }
 
-    synchronized(LOCK) {
-      val cached = iconCache.get(param)
-      if (cached != null) {
-        return cached
-      }
-
-      val started = lastClearTimestamp
-      val result = DeferredIconImpl(baseIcon = base,
-                                    param = param,
-                                    needReadAction = true,
-                                    evaluator = evaluator) { source, r ->
-        synchronized(LOCK) {
-          // check if our result is not outdated yet
-          if (started == lastClearTimestamp) {
-            iconCache.put((source as DeferredIconImpl<*>?)!!.param!!, r)
-          }
+    return iconCache.get(this) {
+      val started = lastClearTimestamp.sum()
+      DeferredIconImpl(baseIcon = base,
+                       param = param,
+                       needReadAction = true,
+                       evaluator = evaluator) { source, icon ->
+        // check if our result is not outdated yet
+        if (started == lastClearTimestamp.sum()) {
+          iconCache.put(source.param!!, icon)
         }
       }
-      iconCache.put(param, result)
-      return result
     }
   }
 
