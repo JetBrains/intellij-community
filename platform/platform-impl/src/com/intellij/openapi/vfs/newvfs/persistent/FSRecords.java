@@ -358,9 +358,9 @@ public final class FSRecords {
 
   //========== directory/children manipulation: ========================================
 
-  static void loadDirectoryData(int id, @NotNull String path, @NotNull NewVirtualFileSystem fs) {
+  static void loadDirectoryData(int id, @NotNull VirtualFile parent, @NotNull CharSequence childName, @NotNull NewVirtualFileSystem fs) {
     try {
-      ourTreeAccessor.loadDirectoryData(id, path, fs);
+      ourTreeAccessor.loadDirectoryData(id, parent, childName, fs);
     }
     catch (IOException e) {
       throw handleError(e);

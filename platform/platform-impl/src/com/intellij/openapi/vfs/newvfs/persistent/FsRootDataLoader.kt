@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent
 
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
@@ -23,7 +24,7 @@ interface FsRootDataLoader {
   fun loadRootData(storage: Path, id: Int, path: String, fs: NewVirtualFileSystem)
 
   @Throws(IOException::class)
-  fun loadDirectoryData(storage: Path, id: Int, path: String, fs: NewVirtualFileSystem)
+  fun loadDirectoryData(storage: Path, id: Int, parent: VirtualFile, childName: CharSequence, fs: NewVirtualFileSystem)
 }
 
 class EmptyFsRootDataLoader : FsRootDataLoader {
@@ -37,5 +38,5 @@ class EmptyFsRootDataLoader : FsRootDataLoader {
 
   override fun loadRootData(storage: Path, id: Int, path: String, fs: NewVirtualFileSystem) = Unit
 
-  override fun loadDirectoryData(storage: Path, id: Int, path: String, fs: NewVirtualFileSystem) = Unit
+  override fun loadDirectoryData(storage: Path, id: Int, parent: VirtualFile, childName: CharSequence, fs: NewVirtualFileSystem) = Unit
 }

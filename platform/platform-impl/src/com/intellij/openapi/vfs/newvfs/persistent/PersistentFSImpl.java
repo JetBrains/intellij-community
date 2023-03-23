@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.*;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -1468,7 +1467,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return VfsUtilCore.toVirtualFileArray(roots);
   }
 
-  @SuppressWarnings("deprecation")
   private void applyEvent(@NotNull VFileEvent event) {
     SlowOperations.allowSlowOperations(() -> doApplyEvent(event));
   }
@@ -1590,18 +1588,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     assert childId > 0 : childId;
     if (attributes.isDirectory()) {
-      FSRecords.loadDirectoryData(childId, childPath(parentFile, name), fs);
+      FSRecords.loadDirectoryData(childId, parentFile, name, fs);
     }
     return new ChildInfoImpl(childId, nameId, attributes, children, childData.second);
-  }
-
-  private static @NotNull String childPath(@NotNull VirtualFile parentFile, @NotNull CharSequence name) {
-    final StringBuilder sb = new StringBuilder(parentFile.getPath());
-    if (!StringUtil.endsWithChar(sb, '/')) {
-      sb.append('/');
-    }
-    sb.append(name);
-    return sb.toString();
   }
 
   public static void moveChildrenRecords(int fromParentId, int toParentId) {

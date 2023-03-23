@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
@@ -199,11 +200,11 @@ class PersistentFSTreeAccessor {
     }
   }
 
-  void loadDirectoryData(int id, @NotNull String path, @NotNull NewVirtualFileSystem fs) throws IOException {
+  void loadDirectoryData(int id, @NotNull VirtualFile parent, @NotNull CharSequence childName, @NotNull NewVirtualFileSystem fs) throws IOException {
     if (myFsRootDataLoader != null) {
       myRootsAccessLock.lock();
       try {
-        myFsRootDataLoader.loadDirectoryData(getRootsStoragePath(myFsRootDataLoader), id, path, fs);
+        myFsRootDataLoader.loadDirectoryData(getRootsStoragePath(myFsRootDataLoader), id, parent, childName, fs);
       }
       finally {
         myRootsAccessLock.unlock();
