@@ -8,7 +8,6 @@ abstract class BaseFeedbackDialog(project: Project?) : DialogWrapper(project) {
 
   protected abstract val feedbackJsonVersion: Int
   protected abstract val feedbackReportId: String
-  protected abstract val feedbackPrivacyConsentType: String
 
   init {
     isResizable = false

@@ -39,7 +39,6 @@ class LocalizationFeedbackDialog(
 ) : BaseFeedbackDialog(project) {
   override val feedbackJsonVersion = COMMON_FEEDBACK_SYSTEM_INFO_VERSION + 0 // different version for the form itself
   override val feedbackReportId = "localization_feedback"
-  override val feedbackPrivacyConsentType = "${feedbackReportId}_consent"
 
   private var ratingComponent: RatingComponent? = null
   private var missingRatingTooltip: JComponent? = null
