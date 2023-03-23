@@ -36,7 +36,6 @@ import com.intellij.ui.border.CustomLineBorder
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.launch
 import java.awt.BorderLayout
@@ -58,7 +57,7 @@ internal class ProjectsTabFactory : WelcomeTabFactory {
   override fun createWelcomeTab(parentDisposable: Disposable): WelcomeScreenTab = ProjectsTab(parentDisposable)
 }
 
-class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScreenTab(
+internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScreenTab(
   IdeBundle.message("welcome.screen.projects.title"),
   WelcomeScreenEventCollector.TabType.TabNavProject
 ) {
@@ -231,10 +230,7 @@ class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScre
 
   private fun createButtonWrapper(action: AnAction): ToolbarTextButtonWrapper {
     if (action is ActionGroup) {
-      val actions = ContainerUtil.map(action.getChildren(null)) { a: AnAction? ->
-        ActionGroupPanelWrapper.wrapGroups(
-          a!!, parentDisposable)
-      }
+      val actions = action.getChildren(null).map { ActionGroupPanelWrapper.wrapGroups(it, parentDisposable) }
       return ToolbarTextButtonWrapper.wrapAsOptionButton(actions)
     }
     return ToolbarTextButtonWrapper.wrapAsTextButton(action)
