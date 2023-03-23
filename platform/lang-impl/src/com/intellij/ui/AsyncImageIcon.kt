@@ -121,7 +121,7 @@ private class RepaintScheduler {
   // We collect repaintRequests for the icon to understand which Components should be repainted when icon is loaded
   // We can receive paintIcon few times for the same component but with different x, y
   // Only the last request should be scheduled
-  private val repaintRequests = mutableMapOf<Component, DeferredIconRepaintScheduler.RepaintRequest>()
+  private val repaintRequests = mutableMapOf<Component, RepaintRequest>()
 
   fun requestRepaint(c: Component, x: Int, y: Int) {
     repaintRequests[c] = repaintScheduler.createRepaintRequest(c, x, y)

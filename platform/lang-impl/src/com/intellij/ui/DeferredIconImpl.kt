@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.ui.DeferredIconRepaintScheduler.RepaintRequest
 import com.intellij.ui.icons.*
 import com.intellij.ui.icons.RowIcon
 import com.intellij.ui.scale.ScaleType
@@ -144,7 +143,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     }
   }
 
-  override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
+  override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     val scaledDelegateIcon = scaledDelegateIcon
     if (!(scaledDelegateIcon is DeferredIconImpl<*> && scaledDelegateIcon.scaledDelegateIcon is DeferredIconImpl<*>)) {
       //SOE protection
@@ -304,7 +303,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
       resultIcon = replacer.replaceIcon(originalEvaluatedIcon)
     }
 
-    override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
+    override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
       if (original.needScheduleEvaluation()) {
         original.scheduleEvaluation(c, x, y)
       }
