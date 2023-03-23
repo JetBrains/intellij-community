@@ -329,4 +329,4 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
 }
 
 @Service(Service.Level.APP)
-private class IconCalculatingService(@JvmField val coroutineScope: CoroutineScope)
+internal class IconCalculatingService(@JvmField val coroutineScope: CoroutineScope)

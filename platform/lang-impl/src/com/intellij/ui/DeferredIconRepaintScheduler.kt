@@ -1,18 +1,22 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui
 
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
 import com.intellij.ui.tabs.impl.TabLabel
-import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Rectangle
 import javax.swing.*
+import kotlin.time.Duration.Companion.milliseconds
 
 @ApiStatus.Internal
 class DeferredIconRepaintScheduler {
-  private val alarm = Alarm()
-  private val queue = LinkedHashSet<RepaintSchedulerRequest>()
+  private var job: Job? = null
+  private val queue = ObjectLinkedOpenHashSet<RepaintSchedulerRequest>()
 
   @RequiresEdt
   fun createRepaintRequest(component: Component?, x: Int, y: Int): RepaintRequest {
@@ -35,20 +39,28 @@ class DeferredIconRepaintScheduler {
       component.repaint(request.x, request.y, iconWidth, iconHeight)
     }
     else {
-      alarm.cancelAllRequests()
-      alarm.addRequest({
-                         for (each in queue) {
-                           val r = each.rectangle
-                           if (r == null) {
-                             each.component.repaint()
-                           }
-                           else {
-                             each.component.repaint(r.x, r.y, r.width, r.height)
-                           }
-                         }
-                         queue.clear()
-                       }, 50)
+      job?.cancel()
       queue.add(RepaintSchedulerRequest(actualTarget, request.paintingParentRec))
+      job = schedule()
+    }
+  }
+
+  private fun schedule(): Job {
+    return service<IconCalculatingService>().coroutineScope.launch {
+      delay(50.milliseconds)
+      withContext(Dispatchers.EDT) {
+        while (!queue.isEmpty()) {
+          ensureActive()
+          val request = queue.removeFirst()
+          val rectangle = request.rectangle
+          if (rectangle == null) {
+            request.component.repaint()
+          }
+          else {
+            request.component.repaint(rectangle.x, rectangle.y, rectangle.width, rectangle.height)
+          }
+        }
+      }
     }
   }
 
