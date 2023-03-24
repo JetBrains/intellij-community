@@ -499,7 +499,7 @@ public class GradleExecutionHelper {
     // workaround for https://github.com/gradle/gradle/issues/19340
     // when using TAPI, user-defined log level option in gradle.properties is ignored by Gradle.
     // try to read this file manually and apply log level explicitly
-    if (buildEnvironment == null) {
+    if (buildEnvironment == null || !isRootDirAvailable(buildEnvironment)) {
       return;
     }
     GradleProperties properties = GradlePropertiesFile.INSTANCE.getProperties(settings.getServiceDirectory(),
@@ -529,6 +529,15 @@ public class GradleExecutionHelper {
         settings.withArgument("--info");
       }
     }
+  }
+
+  private static boolean isRootDirAvailable(@NotNull BuildEnvironment environment) {
+    try {
+      environment.getBuildIdentifier().getRootDir();
+    } catch (UnsupportedMethodException e) {
+      return false;
+    }
+    return true;
   }
 
   @Nullable
@@ -746,9 +755,12 @@ public class GradleExecutionHelper {
       buildEnvironment = modelBuilder.get();
       if (LOG.isDebugEnabled()) {
         try {
-          LOG.debug("Gradle version: " + buildEnvironment.getGradle().getGradleVersion());
-          LOG.debug("Gradle java home: " + buildEnvironment.getJava().getJavaHome());
-          LOG.debug("Gradle jvm arguments: " + buildEnvironment.getJava().getJvmArguments());
+          String version = buildEnvironment.getGradle().getGradleVersion();
+          LOG.debug("Gradle version: " + version);
+          if (GradleVersion.version(version).compareTo(GradleVersion.version("2.6")) >= 0) {
+            LOG.debug("Gradle java home: " + buildEnvironment.getJava().getJavaHome());
+            LOG.debug("Gradle jvm arguments: " + buildEnvironment.getJava().getJvmArguments());
+          }
         }
         catch (Throwable t) {
           LOG.debug(t);
