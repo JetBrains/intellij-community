@@ -476,14 +476,17 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       info.append(DiagnosticBundle.message("error.list.message.blame.jbr.crash"));
     }
     else if (t instanceof KotlinCompilerCrash) {
-      info.append(DiagnosticBundle.message("error.list.message.blame.kotlin.crash") + " " + ((KotlinCompilerCrash)t).getVersion());
-    } else {
+      info.append(DiagnosticBundle.message("error.list.message.blame.kotlin.crash")).append(' ').append(((KotlinCompilerCrash)t).getVersion());
+    }
+    else {
       info.append(DiagnosticBundle.message("error.list.message.blame.core", ApplicationNamesInfo.getInstance().getProductName()));
     }
 
     if (pluginId != null && !ApplicationInfoEx.getInstanceEx().isEssentialPlugin(pluginId)) {
-      info.append(' ').append("<a style=\"white-space: nowrap;\" href=\"" + DISABLE_PLUGIN_URL + "\">")
-        .append(DiagnosticBundle.message("error.list.disable.plugin")).append("</a>");
+      info.append(' ')
+        .append("<a style=\"white-space: nowrap;\" href=\"" + DISABLE_PLUGIN_URL + "\">")
+        .append(DiagnosticBundle.message("error.list.disable.plugin"))
+        .append("</a>");
     }
 
     if (message.isSubmitting()) {
