@@ -15,12 +15,13 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -120,19 +121,16 @@ public class CStyleArrayDeclarationInspection extends BaseInspection implements 
     }
 
     private void highlightBrackets(@NotNull PsiElement problemElement, PsiElement anchor) {
-      PsiJavaToken first = null;
-      PsiJavaToken last = null;
+      PsiElement start = null;
+      PsiElement end = null;
       while (anchor != null) {
-        if (anchor instanceof PsiJavaToken token) {
-          final IElementType tokenType = token.getTokenType();
-          if (JavaTokenType.LBRACKET.equals(tokenType) || JavaTokenType.RBRACKET.equals(tokenType)) {
-            if (first == null) first = token;
-            last = token;
-          }
+        if (PsiUtil.isJavaToken(anchor, HighlightUtil.BRACKET_TOKENS)) {
+          if (start == null) start = anchor;
+          end = anchor;
         }
         anchor = anchor.getNextSibling();
       }
-      if (first != null) registerErrorAtRange(first, last, problemElement);
+      if (start != null) registerErrorAtRange(start, end, problemElement);
     }
   }
 }
