@@ -217,6 +217,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   protected void revalidateAndRepaint() {
+    firePropertyChange("state", null, this);
     if (myAutoInvalidate) {
       revalidate();
     }
