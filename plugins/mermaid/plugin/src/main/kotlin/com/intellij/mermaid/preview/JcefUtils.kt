@@ -4,6 +4,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.jcef.JBCefBrowser
 import com.intellij.ui.jcef.JBCefClient
+import com.intellij.ui.jcef.JBCefJSQuery
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
@@ -60,4 +61,18 @@ internal suspend fun JBCefBrowser.waitForPageLoad(url: String) {
   waitForLoad {
     loadURL(url)
   }
+}
+
+internal fun queryHandler(handler: (String?) -> Unit): (String?) -> JBCefJSQuery.Response? {
+  return {
+    handler.invoke(it)
+    JBCefJSQuery.Response("")
+  }
+}
+
+internal fun JBCefJSQuery.addVoidHandler(handler: (String?) -> Unit): (String?) -> JBCefJSQuery.Response? {
+  @Suppress("NAME_SHADOWING")
+  val handler = queryHandler(handler)
+  addHandler(handler)
+  return handler
 }

@@ -55,7 +55,7 @@ internal class MermaidPreviewEditor(
   }
 
   private fun createComponent(): MermaidDiagramPreviewComponent {
-    val component = MermaidDiagramPreviewComponent()
+    val component = MermaidDiagramPreviewComponent(project)
     Disposer.register(this, component)
     runBlocking {
       coroutineScope.launch(context = Dispatchers.Default) {

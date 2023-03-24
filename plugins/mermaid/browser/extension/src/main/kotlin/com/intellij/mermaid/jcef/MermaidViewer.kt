@@ -6,11 +6,33 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import org.w3c.dom.Element
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.events.Event
 import org.w3c.dom.events.EventTarget
 
+private fun configureLinks() {
+  window.addEventListener("click") { event: Event ->
+    val element = event.target as? Element ?: return@addEventListener
+    val elements = element.parents(withSelf = true)
+    val link = elements.firstOrNull { it.tagName.lowercase() == "a" } ?: return@addEventListener
+    val target = link.obtainLinkAttributeValue() ?: return@addEventListener
+    try {
+      console.log(target)
+      window.asDynamic().openLink(target)
+    } catch (exception: Throwable) {
+      console.error(exception)
+    }
+    event.preventDefault()
+  }
+}
+
+private fun Element.obtainLinkAttributeValue(): String? {
+  return getAttribute("href") ?: getAttribute("xlink:href")
+}
+
 suspend fun viewerMain() {
+  configureLinks()
   window.asDynamic()["updateMermaidDiagramContent"] = ::updateView
   window.updateViewRequests().onEach { performViewUpdate(it.content) }.collect()
 }

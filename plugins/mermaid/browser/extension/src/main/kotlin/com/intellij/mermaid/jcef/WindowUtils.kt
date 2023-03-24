@@ -3,6 +3,7 @@ package com.intellij.mermaid.jcef
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import org.w3c.dom.Element
 import org.w3c.dom.events.Event
 import org.w3c.dom.events.EventTarget
 import kotlin.js.Console
@@ -30,5 +31,18 @@ fun <T: Event> EventTarget.eventFlowOf(type: String): Flow<T> {
       trySend(event.unsafeCast<T>())
     }
     awaitCancellation()
+  }
+}
+
+internal fun Element.parents(withSelf: Boolean): Sequence<Element> {
+  return sequence {
+    if (withSelf) {
+      yield(this@parents)
+    }
+    var parent = parentElement
+    while (parent != null && parent != undefined) {
+      yield(parent)
+      parent = parent.parentElement
+    }
   }
 }

@@ -72,13 +72,6 @@ internal suspend fun executeCancellableJsCall(browser: JBCefBrowser, @Language("
   }
 }
 
-private fun queryHandler(handler: (String?) -> Unit): (String?) -> JBCefJSQuery.Response? {
-  return {
-    handler.invoke(it)
-    JBCefJSQuery.Response("")
-  }
-}
-
 @Suppress("JSVoidFunctionReturnValueUsed")
 @Language("JavaScript")
 private fun wrapWithErrorHandling(
