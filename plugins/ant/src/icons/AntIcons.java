@@ -14,11 +14,11 @@ public final class AntIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, AntIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon AntBuildXml = load("icons/AntBuildXml.svg", -2103296749, 2);
-  /** 16x16 */ public static final @NotNull Icon Build = load("icons/build.svg", -1227449654, 0);
-  /** 16x16 */ public static final @NotNull Icon LogDebug = load("icons/logDebug.svg", 995433824, 0);
-  /** 16x16 */ public static final @NotNull Icon LogVerbose = load("icons/logVerbose.svg", 767848628, 0);
-  /** 16x16 */ public static final @NotNull Icon MetaTarget = load("icons/metaTarget.svg", 1209805317, 0);
-  /** 16x16 */ public static final @NotNull Icon Task = load("icons/task.svg", 2099517587, 0);
-  /** 16x16 */ public static final @NotNull Icon Verbose = load("icons/verbose.svg", -526709663, 2);
+  /** 16x16 */ public static final @NotNull Icon AntBuildXml = load("icons/AntBuildXml.svg", 923995624, 2);
+  /** 16x16 */ public static final @NotNull Icon Build = load("icons/build.svg", 299668575, 0);
+  /** 16x16 */ public static final @NotNull Icon LogDebug = load("icons/logDebug.svg", -1586032692, 0);
+  /** 16x16 */ public static final @NotNull Icon LogVerbose = load("icons/logVerbose.svg", 100263285, 0);
+  /** 16x16 */ public static final @NotNull Icon MetaTarget = load("icons/metaTarget.svg", 1263455855, 0);
+  /** 16x16 */ public static final @NotNull Icon Task = load("icons/task.svg", -355712087, 0);
+  /** 16x16 */ public static final @NotNull Icon Verbose = load("icons/verbose.svg", -295545225, 2);
 }

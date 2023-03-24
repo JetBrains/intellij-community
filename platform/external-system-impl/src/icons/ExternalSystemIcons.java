@@ -14,5 +14,5 @@ public final class ExternalSystemIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, ExternalSystemIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon Task = load("icons/task.svg", -739389303, 0);
+  /** 16x16 */ public static final @NotNull Icon Task = load("icons/task.svg", -829050388, 0);
 }

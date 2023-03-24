@@ -13,8 +13,8 @@ public final class GrazieIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, GrazieIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon GrammarError = load("icons/grammarError.svg", 1537560550, 2);
-  /** 16x16 */ public static final @NotNull Icon StyleError = load("icons/styleError.svg", -1011821769, 2);
-  /** 16x16 */ public static final @NotNull Icon StyleSuggestion = load("icons/styleSuggestion.svg", 330197679, 2);
-  /** 16x16 */ public static final @NotNull Icon StyleWarning = load("icons/styleWarning.svg", 1051954547, 2);
+  /** 16x16 */ public static final @NotNull Icon GrammarError = load("icons/grammarError.svg", -610980404, 2);
+  /** 16x16 */ public static final @NotNull Icon StyleError = load("icons/styleError.svg", 158441361, 2);
+  /** 16x16 */ public static final @NotNull Icon StyleSuggestion = load("icons/styleSuggestion.svg", -15883209, 2);
+  /** 16x16 */ public static final @NotNull Icon StyleWarning = load("icons/styleWarning.svg", 340773154, 2);
 }

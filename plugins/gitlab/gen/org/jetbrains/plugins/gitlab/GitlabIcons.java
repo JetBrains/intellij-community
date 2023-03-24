@@ -14,5 +14,5 @@ public final class GitlabIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, GitlabIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon GitLabLogo = load("org.jetbrains.plugins.gitlab.ui/gitLabLogo.svg", 751561938, 0);
+  /** 16x16 */ public static final @NotNull Icon GitLabLogo = load("org.jetbrains.plugins.gitlab.ui/gitLabLogo.svg", 1910543253, 0);
 }

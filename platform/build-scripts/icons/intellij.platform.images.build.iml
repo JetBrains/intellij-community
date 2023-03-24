@@ -42,5 +42,6 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="library" name="hash4j" level="project" />
   </component>
 </module>
