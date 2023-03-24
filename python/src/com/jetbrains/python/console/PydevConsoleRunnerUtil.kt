@@ -5,7 +5,10 @@ package com.jetbrains.python.console
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.target.TargetEnvironment
-import com.intellij.execution.target.value.*
+import com.intellij.execution.target.value.TargetEnvironmentFunction
+import com.intellij.execution.target.value.TraceableTargetEnvironmentFunction
+import com.intellij.execution.target.value.andThenJoinToString
+import com.intellij.execution.target.value.toLinkedSetFunction
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -14,6 +17,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
+import com.intellij.remote.RemoteMappingsManager
 import com.jetbrains.python.console.PyConsoleOptions.PyConsoleSettings
 import com.jetbrains.python.console.completion.PydevConsoleElement
 import com.jetbrains.python.console.pydev.ConsoleCommunication
@@ -22,7 +26,6 @@ import com.jetbrains.python.remote.PyRemotePathMapper
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager
 import com.jetbrains.python.run.PythonCommandLineState
-import com.jetbrains.python.run.target.getPathMapper
 import com.jetbrains.python.run.toStringLiteral
 import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.PythonSdkUtil
@@ -38,6 +41,29 @@ fun getPathMapper(project: Project,
     is PyRemoteSdkAdditionalDataBase -> getPathMapper(project, consoleSettings, sdkAdditionalData)
     else -> null
   }
+}
+
+private fun getPathMapper(project: Project, consoleSettings: PyConsoleSettings, data: PyTargetAwareAdditionalData): PyRemotePathMapper {
+  val remotePathMapper = appendBasicMappings(project, null, data)
+  consoleSettings.mappingSettings?.let { mappingSettings ->
+    remotePathMapper.addAll(mappingSettings.pathMappings, PyRemotePathMapper.PyPathMappingType.USER_DEFINED)
+  }
+  return remotePathMapper
+}
+
+private fun appendBasicMappings(project: Project?,
+                                pathMapper: PyRemotePathMapper?,
+                                data: PyTargetAwareAdditionalData): PyRemotePathMapper {
+  val newPathMapper = PyRemotePathMapper.cloneMapper(pathMapper)
+  PythonRemoteInterpreterManager.addHelpersMapping(data, newPathMapper)
+  newPathMapper.addAll(data.pathMappings.pathMappings, PyRemotePathMapper.PyPathMappingType.SYS_PATH)
+  if (project != null) {
+    val mappings = RemoteMappingsManager.getInstance(project).getForServer(PythonRemoteInterpreterManager.PYTHON_PREFIX, data.sdkId)
+    if (mappings != null) {
+      newPathMapper.addAll(mappings.settings, PyRemotePathMapper.PyPathMappingType.USER_DEFINED)
+    }
+  }
+  return newPathMapper
 }
 
 fun getPathMapper(project: Project,
@@ -144,7 +170,7 @@ class ReplaceSubstringsFunction(private val s: String,
     return res
   }
 
-  override fun toString(): String = "ReplaceSubstringsFunction(s='$s', oldValues=${replaces.map{it.first}}, newValues=${replaces.map{it.second}})"
+  override fun toString(): String = "ReplaceSubstringsFunction(s='$s', oldValues=${replaces.map { it.first }}, newValues=${replaces.map { it.second }})"
 }
 
 fun addDefaultEnvironments(sdk: Sdk,
