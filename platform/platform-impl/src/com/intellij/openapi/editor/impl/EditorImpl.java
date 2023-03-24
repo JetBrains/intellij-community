@@ -4709,6 +4709,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private void updateGlobalScheme() {
+      for (
+        EditorColorsScheme scheme = this;
+        scheme instanceof DelegateColorScheme delegateColorScheme;
+        scheme = delegateColorScheme.getDelegate()
+      ) {
+        if (scheme instanceof MyColorSchemeDelegate myColorSchemeDelegate) {
+          myColorSchemeDelegate.updateDelegate();
+        }
+      }
+    }
+
+    private void updateDelegate() {
       setDelegate(myCustomGlobalScheme == null ? EditorColorsManager.getInstance().getGlobalScheme() : myCustomGlobalScheme);
     }
 
