@@ -33,6 +33,10 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.IntPredicate;
 
+/**
+ * This class is just an 'instance holder' -- actual implementation is an {@link FSRecordsImpl} instance,
+ * all methods delegate to it.
+ */
 @ApiStatus.Internal
 public final class FSRecords {
   static final Logger LOG = Logger.getInstance(FSRecords.class);
@@ -60,9 +64,11 @@ public final class FSRecords {
   static final int MIN_REGULAR_FILE_ID = ROOT_FILE_ID + 1;
 
 
-
   /** singleton instance */
   private static volatile FSRecordsImpl impl;
+
+  /** Holds stacktrace of the disconnect call */
+  private static volatile Exception disconnectLocationStackTrace;
 
 
   /** @return path to the directory there all VFS files are located */
@@ -75,7 +81,7 @@ public final class FSRecords {
     throw new AssertionError("Not for instantiation");
   }
 
-  //========== lifecycle: ========================================
+  //========== lifecycle: =====================================================
 
   static synchronized void connect(final @NotNull VfsLog vfsLog) throws UncheckedIOException {
     impl = FSRecordsImpl.connect(Path.of(getCachesDir()), vfsLog);
@@ -86,7 +92,7 @@ public final class FSRecords {
     if (impl != null) {
       impl.dispose();
       FSRecords.impl = null;
-      ourDisconnectLocation = new Exception("VFS dispose stacktrace");
+      disconnectLocationStackTrace = new Exception("VFS dispose stacktrace");
     }
   }
 
@@ -101,7 +107,7 @@ public final class FSRecords {
   }
 
 
-  //========== general FS records properties: ========================================
+  //========== FS records-as-a-whole properties: ==============================
 
   public static int getVersion() {
     return implOrFail().getVersion();
@@ -140,7 +146,7 @@ public final class FSRecords {
   }
 
 
-  //========== record allocations: ========================================
+  //========== record allocation/deletion: ====================================
 
   public static int createRecord() {
     return implOrFail().createRecord();
@@ -189,12 +195,13 @@ public final class FSRecords {
   }
 
 
-  //========== directory/children manipulation: ========================================
+  //========== directory/children manipulation: =============================
 
   static void loadDirectoryData(final int id,
-                                final @NotNull String path,
+                                final @NotNull VirtualFile parent,
+                                final @NotNull CharSequence path,
                                 final @NotNull NewVirtualFileSystem fs) {
-    implOrFail().loadDirectoryData(id, path, fs);
+    implOrFail().loadDirectoryData(id, parent, path, fs);
   }
 
   public static int @NotNull [] listIds(final int fileId) {
@@ -255,7 +262,7 @@ public final class FSRecords {
         int currentId = fileId;
         while (true) {
           final int parentId = impl.getParent(currentId);
-          if( path != null && (path.size() % 128 == 0 && path.contains(parentId))) {
+          if (path != null && (path.size() % 128 == 0 && path.contains(parentId))) {
             //circularity check is expensive: do it only once-in-a-while, as path became deep enough
             //  to start to suspect something may be wrong.
             LOG.error("Cyclic parent-child relations in the database: fileId = " + fileId + ": path=" + path);
@@ -350,7 +357,7 @@ public final class FSRecords {
   }
 
 
-  //========== file record fields accessors: ========================================
+  //========== file record fields accessors: ================================
 
   public static int getParent(final int fileId) {
     return implOrFail().getParent(fileId);
@@ -434,7 +441,7 @@ public final class FSRecords {
     return impl.getModCount(fileId);
   }
 
-  //========== file attributes accessors: ========================================
+  //========== file attributes accessors: ===================================
 
   public static @Nullable AttributeInputStream readAttributeWithLock(final int fileId,
                                                                      final @NotNull FileAttribute attribute) {
@@ -466,7 +473,7 @@ public final class FSRecords {
     implOrFail().writeAttributeRaw(fileId, attribute, writer);
   }
 
-  //========== file content accessors: ========================================
+  //========== file content accessors: ======================================
 
   static int acquireFileContent(final int fileId) {
     return implOrFail().acquireFileContent(fileId);
@@ -508,7 +515,7 @@ public final class FSRecords {
     return implOrFail().storeUnlinkedContent(bytes);
   }
 
-  //========== aux: ========================================
+  //========== aux: ========================================================
 
   public static void invalidateCaches() {
     implOrFail().invalidateCaches();
@@ -533,7 +540,7 @@ public final class FSRecords {
     return implOrFail().handleError(e);
   }
 
-  //========== diagnostic, sanity checks: ========================================
+  //========== diagnostic, sanity checks: ==================================
 
 
   static void checkSanity() {
@@ -551,7 +558,7 @@ public final class FSRecords {
   @TestOnly
   public static void checkFilenameIndexConsistency() {
     final FSRecordsImpl _impl = impl;
-    if(_impl != null && !_impl.isDisposed()) {
+    if (_impl != null && !_impl.isDisposed()) {
       _impl.checkFilenameIndexConsistency();
     }
   }
@@ -559,8 +566,8 @@ public final class FSRecords {
   @NotNull
   private static AlreadyDisposedException alreadyDisposed() {
     final AlreadyDisposedException alreadyDisposed = new AlreadyDisposedException("VFS is already disposed");
-    if (ourDisconnectLocation != null) {
-      alreadyDisposed.addSuppressed(ourDisconnectLocation);
+    if (disconnectLocationStackTrace != null) {
+      alreadyDisposed.addSuppressed(disconnectLocationStackTrace);
     }
     return alreadyDisposed;
   }

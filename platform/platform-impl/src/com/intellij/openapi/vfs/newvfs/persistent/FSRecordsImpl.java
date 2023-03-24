@@ -112,6 +112,9 @@ public final class FSRecordsImpl {
 
   private volatile boolean disposed = false;
 
+  /** Keep stacktrace of {@link #dispose()} call -- for better diagnostics of unexpected dispose */
+  private volatile Exception disposedStackTrace = null;
+
   private static int nextMask(final int value,
                               final int bits,
                               final int prevMask) {
@@ -216,6 +219,7 @@ public final class FSRecordsImpl {
       PersistentFSConnector.disconnect(connection);
       invertedNameIndex.clear();
       disposed = true;
+      disposedStackTrace = new Exception("FSRecordsImpl dispose stacktrace");
     }
   }
 
@@ -225,7 +229,11 @@ public final class FSRecordsImpl {
 
   private void checkNotDisposed() {
     if (disposed) {
-      throw new AlreadyDisposedException("VFS is already disposed");
+      final AlreadyDisposedException alreadyDisposed = new AlreadyDisposedException("VFS is already disposed");
+      if (disposedStackTrace != null) {
+        alreadyDisposed.addSuppressed(disposedStackTrace);
+      }
+      throw alreadyDisposed;
     }
   }
 
@@ -382,10 +390,12 @@ public final class FSRecordsImpl {
 
   //========== directory/children manipulation: ========================================
 
-  void loadDirectoryData(final int id, @NotNull String path,
+  void loadDirectoryData(final int id,
+                         final @NotNull VirtualFile parent,
+                         final @NotNull CharSequence path,
                          final @NotNull NewVirtualFileSystem fs) {
     try {
-      treeAccessor.loadDirectoryData(id, path, fs);
+      treeAccessor.loadDirectoryData(id, parent, path, fs);
     }
     catch (IOException e) {
       throw handleError(e);
@@ -423,8 +433,8 @@ public final class FSRecordsImpl {
     }
   }
 
-  public @NotNull List<CharSequence> listNames(final int parentId) {
-    return ContainerUtil.map(list(parentId).children, c -> c.getName());
+  public @NotNull @Unmodifiable List<CharSequence> listNames(final int parentId) {
+    return ContainerUtil.map(list(parentId).children, ChildInfo::getName);
   }
 
   boolean wereChildrenAccessed(final int fileId) {
@@ -1026,18 +1036,23 @@ public final class FSRecordsImpl {
    *  ...
    * }
    * catch(Throwable t){
-   *   throw handeError(e);
+   *   throw handleError(e);
    * }
    * </pre>
-   * i.e. in a 'throw' statement -- to make clear, it will throw an exception. Method made return
-   * RuntimeException specifically for that purpose: to be used in a 'throw' statement, so compiler
-   * understands it is as a method exit point.
+   * i.e. in a 'throw' statement -- to make clear, it will throw an exception. Method returns
+   * RuntimeException specifically for that purpose: to be used in a 'throw' statement, so the
+   * javac understands it is as a method exit point.
    */
   @Contract("_->fail")
   public RuntimeException handleError(final Throwable e) throws RuntimeException, Error {
     if (e instanceof ClosedStorageException) {
       // no connection means IDE is closing...
-      throw new AlreadyDisposedException("VFS already disposed" /*TODO: add cause? e */);
+      final AlreadyDisposedException alreadyDisposed = new AlreadyDisposedException("VFS already disposed");
+      alreadyDisposed.addSuppressed(e);
+      if (disposed && disposedStackTrace != null) {
+        alreadyDisposed.addSuppressed(disposedStackTrace);
+      }
+      throw alreadyDisposed;
     }
     if (e instanceof ProcessCanceledException) {
       throw (ProcessCanceledException)e;
