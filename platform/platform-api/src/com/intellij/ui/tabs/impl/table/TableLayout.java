@@ -10,7 +10,6 @@ import com.intellij.ui.tabs.impl.LayoutPassInfo;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.ui.tabs.impl.TabLayout;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +23,6 @@ import java.util.Set;
 
 public class TableLayout extends TabLayout {
   private int myScrollOffset = 0;
-  private boolean myScrollSelectionInViewPending = false;
 
   final JBTabsImpl myTabs;
 
@@ -46,6 +44,8 @@ public class TableLayout extends TabLayout {
     if (myTabs.isHideTabs()) {
       return data;
     }
+    doScrollToSelectedTab(myLastTableLayout);
+
     boolean singleRow = myTabs.isSingleRow();
     boolean showPinnedTabsSeparately = showPinnedTabsSeparately();
     boolean scrollable = UISettings.getInstance().getHideTabsIfNeeded() && singleRow;
@@ -136,10 +136,8 @@ public class TableLayout extends TabLayout {
       }
       eachTableRow.add(eachInfo, eachLabel.getWidth());
     }
-    if (myScrollSelectionInViewPending) {
-      myScrollSelectionInViewPending = false;
-      doScrollSelectionInView(data);
-    }
+
+    doScrollToSelectedTab(data);
     clampScrollOffsetToBounds(data);
     return data;
   }
@@ -431,12 +429,7 @@ public class TableLayout extends TabLayout {
     return 10;
   }
 
-  public void scrollSelectionInView() {
-    myScrollSelectionInViewPending = true;
-    doScrollSelectionInView(myLastTableLayout);
-  }
-
-  private void doScrollSelectionInView(TablePassInfo data) {
+  private void doScrollToSelectedTab(TablePassInfo data) {
     if (myTabs.isMouseInsideTabsArea()
         || data == null
         || data.lengths.isEmpty()

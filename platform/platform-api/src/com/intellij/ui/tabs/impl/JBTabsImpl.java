@@ -2157,7 +2157,6 @@ public class JBTabsImpl extends JComponent
       }
 
       if (myLayout instanceof SingleRowLayout) {
-        mySingleRowLayout.scrollSelectionInView();
         myLastLayoutPass = mySingleRowLayout.layoutSingleRow(visible);
 
         Rectangle titleRect = getTitleRect();
@@ -2186,7 +2185,6 @@ public class JBTabsImpl extends JComponent
         }
       }
       else {
-        myTableLayout.scrollSelectionInView();
         myLastLayoutPass = myTableLayout.layoutTable(visible);
         mySingleRowLayout.myLastSingRowLayout = null;
       }
@@ -2813,13 +2811,6 @@ public class JBTabsImpl extends JComponent
     }
 
     updateEntryPointToolbar();
-
-    if (myLayout == mySingleRowLayout) {
-      mySingleRowLayout.scrollSelectionInView();
-    }
-    else if (myLayout == myTableLayout) {
-      myTableLayout.scrollSelectionInView();
-    }
     relayout(forced, layoutNow);
   }
 

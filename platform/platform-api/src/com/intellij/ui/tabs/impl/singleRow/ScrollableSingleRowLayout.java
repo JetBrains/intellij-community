@@ -14,7 +14,6 @@ import java.awt.*;
 public class ScrollableSingleRowLayout extends SingleRowLayout {
   public static final int DEADZONE_FOR_DECLARE_TAB_HIDDEN = 10;
   private int myScrollOffset = 0;
-  private boolean myScrollSelectionInViewPending = false;
   private final boolean myWithScrollBar;
 
   public ScrollableSingleRowLayout(final JBTabsImpl tabs) {
@@ -39,10 +38,7 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
 
   @Override
   protected boolean checkLayoutLabels(SingleRowPassInfo data) {
-    if (myScrollSelectionInViewPending) {
-      return true;
-    }
-    return super.checkLayoutLabels(data);
+    return true;
   }
 
   private void clampScrollOffsetToBounds(@Nullable SingleRowPassInfo data) {
@@ -61,12 +57,7 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
     }
   }
 
-  @Override
-  public void scrollSelectionInView() {
-    myScrollSelectionInViewPending = true;
-  }
-
-  private void doScrollSelectionInView(SingleRowPassInfo passInfo) {
+  private void doScrollToSelectedTab(SingleRowPassInfo passInfo) {
     if (myTabs.isMouseInsideTabsArea()) {
       return;
     }
@@ -102,11 +93,8 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
   protected void recomputeToLayout(SingleRowPassInfo data) {
     calculateRequiredLength(data);
     clampScrollOffsetToBounds(data);
-    if (myScrollSelectionInViewPending || myLastSingRowLayout == null || !data.layoutSize.equals(myLastSingRowLayout.layoutSize)) {
-      myScrollSelectionInViewPending = false;
-      doScrollSelectionInView(data);
-      clampScrollOffsetToBounds(data);
-    }
+    doScrollToSelectedTab(data);
+    clampScrollOffsetToBounds(data);
   }
 
   @Override

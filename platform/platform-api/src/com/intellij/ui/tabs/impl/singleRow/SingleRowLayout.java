@@ -81,9 +81,6 @@ public abstract class SingleRowLayout extends TabLayout {
     return layoutLabels;
   }
 
-  public void scrollSelectionInView() {
-  }
-
   public LayoutPassInfo layoutSingleRow(List<TabInfo> visibleInfos)  {
     SingleRowPassInfo data = new SingleRowPassInfo(this, visibleInfos);
 
