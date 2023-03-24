@@ -304,7 +304,7 @@ private memberAttrWord ::= ATTRIBUTE_WORD
   | OPEN_ANGLE | CLOSE_ANGLE
   | PLUS | MINUS | POUND | TILDA | STAR | DOLLAR | COMMA | DOT
 
-generic ::= TILDA genericTypeId TILDA
+generic ::= TILDA genericTypeId [generic] TILDA
 genericTypeId ::= GENERIC_TYPE {
     mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
 }

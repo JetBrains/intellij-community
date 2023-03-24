@@ -490,6 +490,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 }
 <generic> {
   "~" { yypopstate(); return TILDA; }
+  "~"/[^\s~{:] { yypushstate(generic); return TILDA; }
   [^\s~]* { return ClassDiagram.GENERIC_TYPE; }
   [^\S\n\r]+ { return WHITE_SPACE; }
 
