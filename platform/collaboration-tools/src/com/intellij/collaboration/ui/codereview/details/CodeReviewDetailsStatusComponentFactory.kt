@@ -5,16 +5,17 @@ import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.Avatar
+import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJob
+import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJobState
 import com.intellij.collaboration.ui.codereview.details.data.ReviewState
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewStatusViewModel
-import com.intellij.collaboration.ui.util.bindIconIn
-import com.intellij.collaboration.ui.util.bindTextIn
-import com.intellij.collaboration.ui.util.bindVisibilityIn
+import com.intellij.collaboration.ui.util.*
 import com.intellij.icons.AllIcons
-import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.ui.PopupHandler
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.ui.*
 import com.intellij.ui.components.ActionLink
+import com.intellij.ui.components.JBList
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JLabelUtil
 import kotlinx.coroutines.CoroutineScope
@@ -22,16 +23,20 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import javax.swing.Icon
-import javax.swing.JComponent
-import javax.swing.JLabel
+import org.jetbrains.annotations.Nls
+import java.awt.Component
+import java.awt.Point
+import javax.swing.*
 
 object CodeReviewDetailsStatusComponentFactory {
   private const val STATUS_COMPONENT_BORDER = 5
   private const val STATUS_REVIEWER_COMPONENT_GAP = 8
   private const val STATUS_REVIEWER_GAP = 10
+
   private const val CI_COMPONENTS_GAP = 8
-  private const val CI_COMPONENT_BORDER = 5
+  private const val CI_COMPONENT_BORDER_TOP_BOTTOM = 4
+  private const val CI_COMPONENT_BORDER_LEFT = 8
+  private const val CI_COMPONENT_BORDER_RIGHT = 20
 
   fun createConflictsComponent(scope: CoroutineScope, hasConflicts: Flow<Boolean>): JComponent {
     return ReviewDetailsStatusLabel("Code review status: review has conflicts").apply {
@@ -76,27 +81,44 @@ object CodeReviewDetailsStatusComponentFactory {
   }
 
   fun createCiComponent(scope: CoroutineScope, statusVm: CodeReviewStatusViewModel): JComponent {
-    val checkStatus = ReviewDetailsStatusLabel("Code review status: CI status").apply {
-      bindIconIn(scope, combine(statusVm.pendingCI, statusVm.failedCI) { pendingCI, failedCI ->
-        getCheckStatusIcon(pendingCI, failedCI)
-      })
-      bindTextIn(scope, combine(statusVm.pendingCI, statusVm.failedCI) { pendingCI, failedCI ->
-        getCheckStatusText(pendingCI, failedCI)
-      })
+    val ciJobs = statusVm.ciJobs
+    val listModel = CollectionListModel<CodeReviewCIJob>(emptyList())
+    val jobsList = createJobsList(listModel)
+    scope.launch {
+      ciJobs.collect { jobs ->
+        listModel.removeAll()
+        jobs.forEach { job -> listModel.add(job) }
+      }
     }
+
+    val title = JLabel().apply {
+      bindIconIn(scope, ciJobs.map { jobs -> ciJobIcon(jobs) })
+      bindTextIn(scope, ciJobs.map { jobs -> ciJobText(jobs) })
+    }
+
     val detailsLink = ActionLink(CollaborationToolsBundle.message("review.details.status.ci.link.details")) {
-      BrowserUtil.browse(statusVm.urlCI)
+      val parentComponent = it.source as JComponent
+      val scrollPane = ScrollPaneFactory.createScrollPane(jobsList, true).apply {
+        horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+        verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
+        isOpaque = false
+        viewport.isOpaque = false
+      }
+      JBPopupFactory.getInstance()
+        .createComponentPopupBuilder(scrollPane, null)
+        .setResizable(true)
+        .createPopup()
+        .showUnderneathOf(parentComponent)
     }.apply {
-      bindVisibilityIn(scope, combine(statusVm.hasCI, statusVm.pendingCI, statusVm.failedCI) { hasCI, pendingCI, failedCI ->
-        hasCI && (pendingCI != 0 || failedCI != 0)
-      })
+      bindVisibilityIn(scope, ciJobs.map { jobs -> !jobs.all { it.status == CodeReviewCIJobState.SUCCESS } })
     }
 
     return HorizontalListPanel(CI_COMPONENTS_GAP).apply {
       name = "Code review status: CI"
-      border = JBUI.Borders.empty(CI_COMPONENT_BORDER, 0)
-      bindVisibilityIn(scope, statusVm.hasCI)
-      add(checkStatus)
+      border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
+      bindVisibilityIn(scope, ciJobs.map { it.isNotEmpty() })
+
+      add(title)
       add(detailsLink)
     }
   }
@@ -157,20 +179,36 @@ object CodeReviewDetailsStatusComponentFactory {
     }
   }
 
-  private fun getCheckStatusIcon(pendingCI: Int, failedCI: Int): Icon {
+  private fun createJobsList(listModel: ListModel<CodeReviewCIJob>): JBList<CodeReviewCIJob> {
+    return JBList(listModel).apply {
+      val renderer = CodeReviewCIJobRenderer()
+      LinkMouseListener(renderer).installOn(this)
+
+      border = JBUI.Borders.empty(CI_COMPONENT_BORDER_TOP_BOTTOM, CI_COMPONENT_BORDER_LEFT,
+                                  CI_COMPONENT_BORDER_TOP_BOTTOM, CI_COMPONENT_BORDER_RIGHT)
+      visibleRowCount = 7
+      cellRenderer = renderer
+    }
+  }
+
+  private fun ciJobIcon(jobs: List<CodeReviewCIJob>): Icon {
+    val failed = jobs.count { it.status == CodeReviewCIJobState.FAILED }
+    val pending = jobs.count { it.status == CodeReviewCIJobState.PENDING }
     return when {
-      pendingCI != 0 && failedCI != 0 -> AllIcons.RunConfigurations.TestCustom
-      pendingCI == 0 && failedCI == 0 -> AllIcons.RunConfigurations.TestPassed
-      pendingCI != 0 -> AllIcons.RunConfigurations.TestNotRan
+      jobs.all { it.status == CodeReviewCIJobState.SUCCESS } -> AllIcons.RunConfigurations.TestPassed
+      pending != 0 && failed != 0 -> AllIcons.RunConfigurations.TestCustom
+      pending != 0 -> AllIcons.RunConfigurations.TestNotRan
       else -> AllIcons.RunConfigurations.TestError
     }
   }
 
-  private fun getCheckStatusText(pendingCI: Int, failedCI: Int): String {
+  private fun ciJobText(jobs: List<CodeReviewCIJob>): @Nls String {
+    val failed = jobs.count { it.status == CodeReviewCIJobState.FAILED }
+    val pending = jobs.count { it.status == CodeReviewCIJobState.PENDING }
     return when {
-      pendingCI != 0 && failedCI != 0 -> CollaborationToolsBundle.message("review.details.status.ci.progress.and.failed")
-      pendingCI == 0 && failedCI == 0 -> CollaborationToolsBundle.message("review.details.status.ci.passed")
-      pendingCI != 0 -> CollaborationToolsBundle.message("review.details.status.ci.progress")
+      jobs.all { it.status == CodeReviewCIJobState.SUCCESS } -> CollaborationToolsBundle.message("review.details.status.ci.passed")
+      pending != 0 && failed != 0 -> CollaborationToolsBundle.message("review.details.status.ci.progress.and.failed")
+      pending != 0 -> CollaborationToolsBundle.message("review.details.status.ci.progress")
       else -> CollaborationToolsBundle.message("review.details.status.ci.failed")
     }
   }
@@ -181,5 +219,32 @@ object CodeReviewDetailsStatusComponentFactory {
       isOpaque = false
       JLabelUtil.setTrimOverflow(this, trim = true)
     }
+  }
+
+  private class CodeReviewCIJobRenderer : ClickableCellRenderer<CodeReviewCIJob> {
+    private val component = SimpleColoredComponent().apply {
+      iconTextGap = JBUI.scale(4)
+      border = JBUI.Borders.empty(CI_COMPONENT_BORDER_TOP_BOTTOM, 0)
+    }
+
+    override fun getListCellRendererComponent(list: JList<out CodeReviewCIJob>?,
+                                              value: CodeReviewCIJob,
+                                              index: Int,
+                                              isSelected: Boolean,
+                                              cellHasFocus: Boolean): Component {
+      component.apply {
+        clear()
+        append(value.name, SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, SimpleColoredComponent.BrowserLauncherTag(value.detailsUrl))
+      }
+      component.icon = when (value.status) {
+        CodeReviewCIJobState.SUCCESS -> AllIcons.RunConfigurations.TestPassed
+        CodeReviewCIJobState.PENDING -> AllIcons.RunConfigurations.TestNotRan
+        CodeReviewCIJobState.FAILED -> AllIcons.RunConfigurations.TestError
+      }
+
+      return component
+    }
+
+    override fun getTagAt(point: Point): Any? = component.getFragmentTagAt(point.x)
   }
 }

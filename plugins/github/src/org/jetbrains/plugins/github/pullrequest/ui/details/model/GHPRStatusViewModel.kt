@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details.model
 
+import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJob
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewStatusViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,11 +15,10 @@ interface GHPRStatusViewModel : CodeReviewStatusViewModel {
   val isDraft: Flow<Boolean>
   val mergeabilityState: Flow<GHPRMergeabilityState?>
   val isRestricted: Flow<Boolean>
-  val checksState: Flow<GHPRMergeabilityState.ChecksState>
   val requiredApprovingReviewsCount: Flow<Int>
 }
 
-class GHPRStatusViewModelImpl(detailsModel: GHPRDetailsModel, stateModel: GHPRStateModel) : GHPRStatusViewModel {
+class GHPRStatusViewModelImpl(stateModel: GHPRStateModel) : GHPRStatusViewModel {
   override val viewerDidAuthor: Boolean = stateModel.viewerDidAuthor
 
   private val _isDraftState: MutableStateFlow<Boolean> = MutableStateFlow(stateModel.isDraft)
@@ -30,23 +30,15 @@ class GHPRStatusViewModelImpl(detailsModel: GHPRDetailsModel, stateModel: GHPRSt
   override val hasConflicts: Flow<Boolean> = _mergeabilityState.map { mergeability ->
     mergeability?.hasConflicts ?: false
   }
+  override val ciJobs: Flow<List<CodeReviewCIJob>> = _mergeabilityState.map { it?.ciJobs ?: emptyList<CodeReviewCIJob>() }
 
   override val isRestricted: Flow<Boolean> = _mergeabilityState.map { mergeability ->
     mergeability?.isRestricted ?: false
   }
 
-  override val checksState: Flow<GHPRMergeabilityState.ChecksState> = _mergeabilityState.map { mergeability ->
-    mergeability?.checksState ?: GHPRMergeabilityState.ChecksState.NONE
-  }
-
   override val requiredApprovingReviewsCount: Flow<Int> = _mergeabilityState.map { mergeability ->
     mergeability?.requiredApprovingReviewsCount ?: 0
   }
-
-  override val hasCI: Flow<Boolean> = _mergeabilityState.map { it != null }
-  override val pendingCI: Flow<Int> = _mergeabilityState.map { it?.pendingChecks ?: 0 }
-  override val failedCI: Flow<Int> = _mergeabilityState.map { it?.failedChecks ?: 0 }
-  override val urlCI: String = "${detailsModel.url}/checks"
 
   init {
     stateModel.addAndInvokeMergeabilityStateLoadingResultListener {
