@@ -364,13 +364,6 @@ public final class CodeStyle {
     return CodeStyleSettingsManager.getInstance(project).USE_PER_PROJECT_SETTINGS;
   }
 
-  @ApiStatus.Internal
-  public static void updateDocumentIndentOptions(@NotNull Project project, @NotNull VirtualFile virtualFile, @NotNull Document document) {
-    CommonCodeStyleSettings.IndentOptions indentOptions = ProjectLocator.computeWithPreferredProject(virtualFile, project, () ->
-      getSettings(project, virtualFile).getIndentOptionsByFile(project, virtualFile, null, true, null));
-    indentOptions.associateWithDocument(document);
-  }
-
   /**
    * Assign main project-wide code style settings and force the project to use its own code style instead of a global (application) one.
    *

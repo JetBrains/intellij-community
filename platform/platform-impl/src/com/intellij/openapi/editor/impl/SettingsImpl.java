@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
@@ -406,14 +407,32 @@ public class SettingsImpl implements EditorSettings {
 
     if (project == null || project.isDisposed()) return;
 
-    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+    VirtualFile file = getVirtualFile();
     if (file == null) return;
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("reinitDocumentIndentOptions, file " + file.getName());
     }
 
-    CodeStyle.updateDocumentIndentOptions(project, file, document);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      computeIndentOptions(project, file).associateWithDocument(document);
+    }
+    else {
+      ReadAction.nonBlocking(
+        () -> computeIndentOptions(project, file)
+      ).expireWhen(
+        () -> myEditor.isDisposed() || project.isDisposed()
+      ).finishOnUiThread(
+        ModalityState.any(),
+        result -> result.associateWithDocument(document)
+      ).submit(myExecutor);
+    }
+  }
+
+  private static @NotNull CommonCodeStyleSettings.IndentOptions computeIndentOptions(@NotNull Project project, @NotNull VirtualFile file) {
+    return CodeStyle
+      .getSettings(project, file)
+      .getIndentOptionsByFile(project, file, null, true, null);
   }
 
   @Override
