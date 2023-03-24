@@ -27,6 +27,7 @@ import org.jetbrains.annotations.*;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -315,7 +316,7 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
 
       return list;
     }
-    catch (AccessDeniedException e) { LOG.debug(e); }
+    catch (AccessDeniedException | NoSuchFileException e) { LOG.debug(e); }
     catch (IOException | RuntimeException e) { LOG.warn(e); }
     return Map.of();
   }
