@@ -289,7 +289,7 @@ public class WslFileWatcher extends PluggableFileWatcher {
           watcherOp = WatcherOp.valueOf(line);
         }
         catch (IllegalArgumentException e) {
-          // wsl.exe own error messages are coming in UTF16LE, accompanied by a couple of short tails (decoding artifacts)
+          // `wsl.exe` own error messages are coming in UTF16LE, accompanied by a couple of short tails (decoding artifacts)
           byte[] raw = line.getBytes(StandardCharsets.UTF_8);
           if (raw.length > 3 && raw[0] != 0 && raw[2] != 0 && raw[1] + raw[3] == 0) {
             myVm.logger.warn(new String(raw, StandardCharsets.UTF_16LE));

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.Disposable;
@@ -132,8 +132,8 @@ final class WatchRootsManager {
       synchronized (myLock) {
         if (!myWatcherRequiresUpdate) return null;
         myWatcherRequiresUpdate = false;
-        return createCanonicalPathMap(myFlatWatchRoots.navigableKeySet(), myOptimizedRecursiveWatchRoots,
-                                      myPathMappings, File.separatorChar == '\\');
+        var convert = File.separatorChar == '\\';
+        return createCanonicalPathMap(myFlatWatchRoots.navigableKeySet(), myOptimizedRecursiveWatchRoots, myPathMappings, convert);
       }
     });
   }

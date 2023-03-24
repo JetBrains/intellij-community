@@ -137,10 +137,6 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
    * Subclasses should override this method to provide a custom binary to run.
    */
   protected @Nullable Path getExecutable() {
-    return getFSNotifierExecutable();
-  }
-
-  public static @Nullable Path getFSNotifierExecutable() {
     String customPath = System.getProperty(PROPERTY_WATCHER_EXECUTABLE_PATH);
     if (customPath != null) {
       Path customFile = PathManager.findBinFile(customPath);
@@ -449,8 +445,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   }
 
   protected boolean isRepetition(String path) {
-    // collapse subsequent change file change notifications that happen once we copy a large file,
-    // this allows reduction of path checks at least 20% for Windows
+    // debouncing subsequent notifications (happen e.g. on copying of large files); this reduces path checks at least 20% on Windows
     synchronized (myLastChangedPaths) {
       for (int i = 0; i < myLastChangedPaths.length; ++i) {
         int last = myLastChangedPathIndex - i - 1;
