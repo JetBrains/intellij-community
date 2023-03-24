@@ -545,6 +545,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
                                   @Nullable NativeMavenProjectHolder nativeMavenProject) {
         forceUpdateSnapshots = false;
         if (nativeMavenProject != null) {
+          var project = projectWithChanges.first;
           if (shouldScheduleProject(projectWithChanges)) {
             scheduleForNextImport(projectWithChanges);
 
@@ -553,15 +554,17 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
             importingSettings = ReadAction.compute(() -> myProject.isDisposed() ? null : getImportingSettings());
             if (importingSettings == null) return;
 
-            scheduleArtifactsDownloading(Collections.singleton(projectWithChanges.first),
+            scheduleArtifactsDownloading(Collections.singleton(project),
                                          null,
                                          importingSettings.isDownloadSourcesAutomatically(),
                                          importingSettings.isDownloadDocsAutomatically(),
                                          null);
           }
 
-          if (!projectWithChanges.first.hasReadingProblems() && projectWithChanges.first.hasUnresolvedPlugins()) {
-            schedulePluginsResolve(projectWithChanges.first, nativeMavenProject);
+          if (!project.hasReadingProblems() && project.hasUnresolvedPlugins()) {
+            runWhenFullyOpen(() -> myPluginsResolvingProcessor
+              .scheduleTask(new MavenProjectsProcessorPluginsResolvingTask(
+                project, nativeMavenProject, myProjectsTree, myMavenProjectResolver, false)));
           }
         }
       }
@@ -1178,12 +1181,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   public void scheduleFoldersResolveForAllProjects() {
     scheduleFoldersResolve(getProjects());
-  }
-
-  private void schedulePluginsResolve(final MavenProject project, final NativeMavenProjectHolder nativeMavenProject) {
-    runWhenFullyOpen(() -> myPluginsResolvingProcessor
-      .scheduleTask(new MavenProjectsProcessorPluginsResolvingTask(project, nativeMavenProject, myProjectsTree, myMavenProjectResolver,
-                                                                   forceUpdateSnapshots)));
   }
 
   public void scheduleArtifactsDownloading(final Collection<MavenProject> projects,
