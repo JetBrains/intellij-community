@@ -37,6 +37,7 @@ abstract class LoggingInspectionTestBase : JvmInspectionTestBase() {
       public interface Logger {
         boolean isDebugEnabled();
         boolean isInfoEnabled();
+        boolean isWarnEnabled();
         void info(String message, Object... params);
         void debug(String message, Object... params);
         void warn(String message, Object... params);
@@ -51,6 +52,7 @@ abstract class LoggingInspectionTestBase : JvmInspectionTestBase() {
         LogBuilder atWarn();
         LogBuilder atFatal();
         LogBuilder atError();
+        boolean isInfoEnabled(){return true;}
       }
     """.trimIndent())
     myFixture.addClass("""
@@ -78,6 +80,23 @@ abstract class LoggingInspectionTestBase : JvmInspectionTestBase() {
         void log(String format, Object p0);
         void log(String format, Object... params);
         void log(String format, Supplier<?>... params);
+      }
+    """.trimIndent())
+    myFixture.addClass("""
+      package java.util.logging;
+      public class Logger {
+        public static Logger getLogger(String name) {
+          return null;
+        }
+        public void warning(String msg) {}
+        public boolean isLoggable(Level level) {}
+      }
+    """.trimIndent())
+    myFixture.addClass("""
+      package java.util.logging;
+      public class Level {
+        public static final Level FINE = new Level();
+        public static final Level WARNING = new Level();
       }
     """.trimIndent())
   }

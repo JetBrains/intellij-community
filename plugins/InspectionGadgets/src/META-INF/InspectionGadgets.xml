@@ -1415,10 +1415,6 @@
     <localInspection groupPath="Java" language="JAVA" shortName="ClassWithoutLogger" bundle="messages.InspectionGadgetsBundle" key="no.logger.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.logging.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.logging.ClassWithoutLoggerInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="LoggingConditionDisagreesWithLogStatement" bundle="messages.InspectionGadgetsBundle"
-                     key="logging.condition.disagrees.with.log.statement.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.logging.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.logging.LoggingConditionDisagreesWithLogStatementInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="LoggerInitializedWithForeignClass" bundle="messages.InspectionGadgetsBundle"
                      key="logger.initialized.with.foreign.class.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.logging.issues" enabledByDefault="false" level="WARNING"

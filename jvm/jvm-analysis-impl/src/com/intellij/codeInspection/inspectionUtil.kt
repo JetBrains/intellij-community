@@ -8,10 +8,7 @@ import com.intellij.lang.jvm.actions.createModifierActions
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.asSafely
-import org.jetbrains.uast.UAnchorOwner
-import org.jetbrains.uast.UCallExpression
-import org.jetbrains.uast.UDeclaration
-import org.jetbrains.uast.toUElement
+import org.jetbrains.uast.*
 
 fun ProblemsHolder.registerUProblem(element: UCallExpression, descriptionTemplate: @InspectionMessage String, vararg fixes: LocalQuickFix) {
   val anchor = element.methodIdentifier?.sourcePsi ?: return
@@ -25,6 +22,11 @@ fun ProblemsHolder.registerUProblem(element: UAnchorOwner, descriptionTemplate: 
 
 fun ProblemsHolder.registerUProblem(element: UDeclaration, descriptionTemplate: @InspectionMessage String, vararg fixes: LocalQuickFix) {
   val anchor = element.uastAnchor?.sourcePsi ?: return
+  registerProblem(anchor, descriptionTemplate, *fixes)
+}
+
+fun ProblemsHolder.registerUProblem(element: UReferenceExpression, descriptionTemplate: @InspectionMessage String, vararg fixes: LocalQuickFix) {
+  val anchor = element.referenceNameElement?.sourcePsi ?: return
   registerProblem(anchor, descriptionTemplate, *fixes)
 }
 

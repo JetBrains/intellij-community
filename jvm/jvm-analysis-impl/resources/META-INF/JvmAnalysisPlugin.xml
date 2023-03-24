@@ -101,6 +101,12 @@
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.logging.frameworks.group.name"
                      key="jvm.inspection.logging.string.template.as.argument.display.name"
                      implementationClass="com.intellij.codeInspection.logging.LoggingStringTemplateAsArgumentInspection"/>
+    <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="LoggingConditionDisagreesWithLogLevelStatement"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.logging.frameworks.group.name"
+                     key="jvm.inspection.logging.condition.disagrees.with.log.statement.display.name"
+                     implementationClass="com.intellij.codeInspection.logging.LoggingConditionDisagreesWithLogLevelStatementInspection"/>
+    <inspectionElementsMerger implementation="com.intellij.codeInspection.logging.LoggingConditionDisagreesWithLogLevelStatementInspectionMerger"/>
 
 
     <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="UnstableApiUsage"
