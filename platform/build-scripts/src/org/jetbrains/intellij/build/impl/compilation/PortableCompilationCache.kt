@@ -61,6 +61,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
     val isStale: Boolean get() = !downloader.availableForHeadCommit
     val shouldBeDownloaded: Boolean get() = !forceRebuild && !isLocalCacheUsed()
     val shouldBeUploaded by lazy { bool(UPLOAD_PROPERTY) }
+    val shouldBeSyncedToS3 by lazy { !bool("jps.caches.aws.sync.skip") }
   }
 
   private var forceDownload = bool(FORCE_DOWNLOAD_PROPERTY)
