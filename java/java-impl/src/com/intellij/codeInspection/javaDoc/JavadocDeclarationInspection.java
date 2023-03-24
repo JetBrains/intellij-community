@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.javadoc.SnippetMarkup;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
@@ -26,12 +27,12 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.codeInspection.javaDoc.MissingJavadocInspection.isDeprecated;
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class JavadocDeclarationInspection extends LocalInspectionTool {
   public static final String SHORT_NAME = "JavadocDeclaration";
@@ -61,8 +62,14 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
   }
 
   @Override
-  public @Nullable JComponent createOptionsPanel() {
-    return JavadocUIUtil.INSTANCE.javadocDeclarationOptions(this);
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      expandableString("ADDITIONAL_TAGS", JavaBundle.message("inspection.javadoc.label.text"), ","),
+      checkbox("IGNORE_THROWS_DUPLICATE", JavaBundle.message("inspection.javadoc.option.ignore.throws")),
+      checkbox("IGNORE_PERIOD_PROBLEM", JavaBundle.message("inspection.javadoc.option.ignore.period")),
+      checkbox("IGNORE_SELF_REFS", JavaBundle.message("inspection.javadoc.option.ignore.self.ref")),
+      checkbox("IGNORE_DEPRECATED_ELEMENTS", JavaBundle.message("inspection.javadoc.option.ignore.deprecated"))
+    );
   }
 
   @NotNull

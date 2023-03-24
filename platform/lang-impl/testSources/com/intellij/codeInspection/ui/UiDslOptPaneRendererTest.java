@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -6,10 +6,14 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.options.OptDropdown;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.PlainMessage;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.SeparatorComponent;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +24,7 @@ import javax.swing.*;
 import static com.intellij.codeInspection.options.OptPane.*;
 import static org.junit.jupiter.api.Assertions.*;
 
+@TestApplication
 public class UiDslOptPaneRendererTest {
   private static class MyInspection extends LocalInspectionTool {
     public int myInt = 7;
@@ -233,5 +238,23 @@ public class UiDslOptPaneRendererTest {
     // Split label support
     var labels = UIUtil.findComponentsOfType(component, JLabel.class);
     assertEquals(2, labels.size());
+  }
+
+  private static class MyExpandableFieldInspection extends LocalInspectionTool {
+    public String str = "hello,world";
+
+    @Override
+    public @NotNull OptPane getOptionsPane() {
+      return pane(expandableString("str", "Enter str", ","));
+    }
+  }
+  
+  @Test
+  public void testExpandableField() {
+    MyExpandableFieldInspection inspection = new MyExpandableFieldInspection();
+    JComponent component = render(inspection);
+    ExpandableTextField field = UIUtil.findComponentOfType(component, ExpandableTextField.class);
+    String text = field.getText();
+    assertEquals("hello,world", text);
   }
 }

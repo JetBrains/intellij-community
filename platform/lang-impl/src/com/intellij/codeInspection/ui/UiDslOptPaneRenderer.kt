@@ -236,6 +236,19 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
             }
         }
 
+        is OptExpandableString -> {
+          expandableTextField({s -> s.split(component.separator).toMutableList()}, 
+                              {list -> list.joinToString(component.separator)})
+            .applyToComponent {
+              columns = 40 // TODO: expand to the whole width 
+              text = context.getOption(component.bindId) as String? ?: ""
+            }
+            .onChanged {
+              context.setOption(component.bindId, it.text)
+            }
+            .comment(component.description?.toString(), 50)
+        }
+
         is OptNumber -> {
           val value = context.getOption(component.bindId)
           if (value is Double) {
@@ -414,6 +427,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
 
   private val OptComponent.splitLabel: LocMessage.PrefixSuffix?
     get() = when (this) {
+      is OptExpandableString -> LocMessage.PrefixSuffix(label.label(), "") // TODO: display label above the control instead?
       is OptString -> splitLabel.splitLabel()
       is OptNumber -> splitLabel.splitLabel()
       is OptDropdown -> splitLabel.splitLabel()

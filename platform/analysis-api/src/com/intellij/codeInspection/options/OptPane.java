@@ -226,6 +226,19 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
   }
 
   /**
+   * @param bindId    identifier of binding variable used by inspection; the corresponding variable is expected to be string
+   * @param label     label to display around the control
+   * @param separator separator to split the string by in multi-line mode
+   * @return an expandable edit box to enter a string; in expanded mode the string is being split by separator
+   */
+  @Contract(pure = true)
+  public static OptExpandableString expandableString(@Language("jvm-field-name") @NotNull String bindId,
+                                                     @NotNull @NlsContexts.Label String label,
+                                                     @NotNull String separator) {
+    return new OptExpandableString(bindId, new PlainMessage(label), separator, null);
+  }
+
+  /**
    * @param bindId     identifier of binding variable used by inspection; the corresponding variable is expected to be a string, int or enum
    * @param splitLabel label to display around the control
    * @param options    drop-down options
