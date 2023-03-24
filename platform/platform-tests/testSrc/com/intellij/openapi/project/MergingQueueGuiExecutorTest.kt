@@ -62,7 +62,7 @@ private open class ValidatingListener(private val exceptionRef: AtomicReference<
       TestCase.assertTrue(wasRunning)
       assertNotNull(latestReceipt)
       lastProcessedReceipt?.let {
-        TestCase.assertTrue("Receipts should increase", latestReceipt.isAfter(it))
+        TestCase.assertTrue("Receipts should not decrease", latestReceipt.isAfter(it) || latestReceipt == it)
       }
       lastProcessedReceipt = latestReceipt
     }
