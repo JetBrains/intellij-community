@@ -7,8 +7,10 @@ import com.github.benmanes.caffeine.cache.Weigher
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.ui.hasher
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.seededHasher
 import com.intellij.ui.svg.SvgAttributePatcher
 import com.intellij.ui.svg.loadSvgAndCacheIfApplicable
 import com.intellij.util.ArrayUtilRt
@@ -18,7 +20,6 @@ import com.intellij.util.io.URLUtil
 import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.xxh3.Xxh3
 import java.awt.Image
 import java.awt.image.BufferedImage
 import java.awt.image.ImageFilter
@@ -216,7 +217,7 @@ private fun loadByDescriptor(rawPathWithoutExt: String,
       @Suppress("DEPRECATION")
       deprecatedColorPatcher = colorPatcherProvider.forPath(path)
       if (deprecatedColorPatcher != null) {
-        digest = deprecatedColorPatcher.digest()?.let { longArrayOf(Xxh3.hash(it), Xxh3.seededHash(it, 4849512324275L)) }
+        digest = deprecatedColorPatcher.digest()?.let { longArrayOf(hasher.hashBytesToLong(it), seededHasher.hashBytesToLong(it)) }
         if (digest == null) {
           tmpPatcher = true
         }

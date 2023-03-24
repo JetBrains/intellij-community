@@ -6,6 +6,7 @@ package com.intellij.ui.svg
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.hasher
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.ui.icons.getResourceData
 import com.intellij.ui.scale.JBUIScale
@@ -15,7 +16,6 @@ import com.intellij.util.SVGLoader
 import com.intellij.util.text.CharSequenceReader
 import com.intellij.util.xml.dom.createXmlStreamReader
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.xxh3.Xxh3
 import java.awt.Image
 import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
@@ -79,7 +79,8 @@ internal fun loadSvg(path: String?,
   }!!
 }
 
-fun newSvgPatcher(digest: LongArray?, newPalette: Map<String, String>, alphas: Map<String, Int>): SvgAttributePatcher? {
+@ApiStatus.Internal
+fun newSvgPatcher(digest: LongArray?, newPalette: Map<String, String>, alphaProvider: (String) -> Int?): SvgAttributePatcher? {
   if (newPalette.isEmpty()) {
     return null
   }
@@ -114,7 +115,7 @@ fun newSvgPatcher(digest: LongArray?, newPalette: Map<String, String>, alphas: M
       }
       if (newColor != null) {
         attributes.put(attributeName, newColor)
-        alphas.get(newColor)?.let {
+        alphaProvider(newColor)?.let {
           attributes.put("$attributeName-opacity", (it.toFloat() / 255f).toString())
         }
       }
@@ -193,7 +194,7 @@ private inline fun loadAndCacheIfApplicable(path: String?,
                                             colorPatcher: SvgAttributePatcher?,
                                             deprecatedColorPatcher: SVGLoader.SvgElementColorPatcher?,
                                             dataProvider: () -> ByteArray?): BufferedImage? {
-  val colorPatcherDigest = colorPatcher?.digest() ?: deprecatedColorPatcher?.digest()?.let { longArrayOf(Xxh3.hash(it)) }
+  val colorPatcherDigest = colorPatcher?.digest() ?: deprecatedColorPatcher?.digest()?.let { longArrayOf(hasher.hashBytesToLong(it)) }
   val svgCache = svgCache
   if (svgCache == null || !svgCache.isActive() ||
       (colorPatcherDigest == null && (colorPatcher != null || deprecatedColorPatcher != null)) ||

@@ -9,21 +9,21 @@ class InsecureHashBuilderTest {
   fun `empty map`() {
     val builder = InsecureHashBuilder()
     builder.stringMap(mapOf())
-    assertThat(builder.build()).isEqualTo(longArrayOf(5238470482016868669L))
+    assertThat(builder.build()).isEqualTo(longArrayOf(204526195655617521L))
   }
 
   @Test
   fun `string map`() {
     val builder = InsecureHashBuilder()
     builder.stringMap(mapOf("foo" to "bar"))
-    assertThat(builder.build()).isEqualTo(longArrayOf(-2665511616818817272L, -4484417689633454546L, -3459221722170984053L))
+    assertThat(builder.build()).isEqualTo(longArrayOf(5110489462189080232L))
   }
 
   @Test
   fun `string int map`() {
     val builder = InsecureHashBuilder()
     builder.stringIntMap(mapOf("foo" to 123, "bar" to 543))
-    assertThat(builder.build()).isEqualTo(longArrayOf(8139571457004014537L, 3354812099852591849L, 3303764292165953682L))
+    assertThat(builder.build()).isEqualTo(longArrayOf(8624971787684361546L))
   }
 
   @Test
@@ -31,6 +31,6 @@ class InsecureHashBuilderTest {
     val builder = InsecureHashBuilder()
     builder.stringMap(mapOf("foo" to "bar"))
     builder.stringIntMap(mapOf("foo" to 123, "bar" to 543))
-    assertThat(builder.build()).isEqualTo(longArrayOf(-2665511616818817272L, -4484417689633454546L, -3459221722170984053L, 8139571457004014537L, 3354812099852591849L, 3303764292165953682L))
+    assertThat(builder.build()).isEqualTo(longArrayOf(5110489462189080232L, 8624971787684361546L))
   }
 }

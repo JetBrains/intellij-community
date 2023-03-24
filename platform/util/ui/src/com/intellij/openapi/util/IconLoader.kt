@@ -24,7 +24,6 @@ import com.intellij.util.ui.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.xxh3.Xxh3
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.awt.image.ImageFilter
@@ -295,7 +294,9 @@ object IconLoader {
   }
 
   @Internal
-  fun patchColorsInCacheImageIcon(imageIcon: com.intellij.ui.icons.CachedImageIcon, colorPatcher: SvgElementColorPatcherProvider, isDark: Boolean?): Icon {
+  fun patchColorsInCacheImageIcon(imageIcon: com.intellij.ui.icons.CachedImageIcon,
+                                  colorPatcher: SvgElementColorPatcherProvider,
+                                  isDark: Boolean?): Icon {
     var result = imageIcon
     if (isDark != null) {
       val variant = result.getDarkIcon(isDark)
@@ -309,7 +310,7 @@ object IconLoader {
       @Suppress("DEPRECATION")
       val bytes = colorPatcher.wholeDigest()
       if (bytes != null) {
-        digest = longArrayOf(Xxh3.hash(bytes), Xxh3.seededHash(bytes, 5238470482016868669L))
+        digest = longArrayOf(hasher.hashBytesToLong(bytes), seededHasher.hashBytesToLong(bytes))
       }
     }
 

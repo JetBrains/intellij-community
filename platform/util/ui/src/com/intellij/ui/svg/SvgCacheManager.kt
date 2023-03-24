@@ -6,12 +6,13 @@ package com.intellij.ui.svg
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.ui.hasher
 import com.intellij.ui.icons.IconLoadMeasurer
+import com.intellij.ui.seededHasher
 import com.intellij.util.SVGLoader
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.sqlite.*
-import org.jetbrains.xxh3.Xxh3
 import sun.awt.image.SunWritableRaster
 import java.awt.Point
 import java.awt.Transparency
@@ -33,7 +34,7 @@ value class SvgCacheClassifier(internal val key: Int) {
   constructor(scale: Float, size: Int) : this((scale + (10_000 + size)).toBits())
 }
 
-fun getSvgIconCacheFile(): Path = Path.of(PathManager.getSystemPath(), "icon-v8.db")
+fun getSvgIconCacheFile(): Path = Path.of(PathManager.getSystemPath(), "icon-v9.db")
 
 fun getSvgIconCacheInvalidMarkerFile(file: Path): Path = file.parent.resolve("${file.fileName}.invalidated")
 
@@ -128,8 +129,8 @@ class SvgCacheManager(dbFile: Path) {
     val start = StartUpMeasurer.getCurrentTimeIfEnabled()
     return selectStatementPool.use { statement, binder ->
       val kind = compoundKey.key.toLong()
-      binder.bind(v1 = Xxh3.hash(imageBytes), v2 = Xxh3.seededHash(imageBytes, SEED), v3 = kind, v4 = themeKey)
 
+      binder.bind(v1 = hasher.hashBytesToLong(imageBytes), v2 = seededHasher.hashBytesToLong(imageBytes), v3 = kind, v4 = themeKey)
       val result = readImage(statement)
       IconLoadMeasurer.svgCacheRead.end(start)
       result
@@ -143,8 +144,8 @@ class SvgCacheManager(dbFile: Path) {
                        image: BufferedImage) {
     val data = writeImage(image)
     if (precomputedCacheKey == 0) {
-      val key1 = Xxh3.hash(imageBytes)
-      val key2 = Xxh3.seededHash(imageBytes, SEED)
+      val key1 = hasher.hashBytesToLong(imageBytes)
+      val key2 = seededHasher.hashBytesToLong(imageBytes)
       insertStatementPool.use { statement, binder ->
         binder.bind(v1 = key1,
                     v2 = key2,
@@ -170,7 +171,7 @@ internal fun themeDigestToCacheKey(themeDigest: LongArray): Long {
   return when (themeDigest.size) {
     0 -> 0
     1 -> themeDigest.first()
-    else -> Xxh3.hashLongs(themeDigest)
+    else -> hasher.hashStream().putLongArray(themeDigest).asLong
   }
 }
 
@@ -186,8 +187,6 @@ private val colorModel = ComponentColorModel(
 )
 
 private val ZERO_POINT = Point(0, 0)
-
-private const val SEED = 4812324275L
 
 private fun writeImage(image: BufferedImage): ByteArray {
   val w = image.width

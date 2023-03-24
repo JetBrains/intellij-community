@@ -134,6 +134,7 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "Apache Commons Discovery", libraryName = "commons-discovery",
                    url = "https://commons.apache.org/dormant/commons-discovery/")
       .apache("https://commons.apache.org/dormant/commons-discovery/license.html"),
+
     LibraryLicense(name = "Apache Commons HTTPClient", libraryName = "http-client-3.1", version = "3.1&nbsp; (with patch by JetBrains)",
                    url = "https://hc.apache.org/httpclient-3.x").apache(),
     LibraryLicense(name = "Apache Commons Imaging (JetBrains's fork)", libraryName = "commons-imaging",
@@ -351,6 +352,10 @@ object CommunityLibraryLicenses {
       .apache("https://raw.githubusercontent.com/google/guava/master/LICENSE"),
     LibraryLicense(name = "Hamcrest", libraryName = "hamcrest", url = "https://hamcrest.org/")
       .newBsd("https://github.com/hamcrest/JavaHamcrest/blob/master/LICENSE.txt"),
+
+    LibraryLicense(libraryName = "hash4j", url = "https://github.com/dynatrace-oss/hash4j")
+      .apache("https://github.com/dynatrace-oss/hash4j/blob/main/LICENSE"),
+
     LibraryLicense(name = "HDR Histogram", libraryName = "HdrHistogram", license = "CC0 1.0 Universal",
                    url = "https://github.com/HdrHistogram/HdrHistogram",
                    licenseUrl = "https://github.com/HdrHistogram/HdrHistogram/blob/master/LICENSE.txt"),

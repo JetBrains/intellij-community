@@ -10,6 +10,7 @@ import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.svg.*
 import com.intellij.util.ui.ImageUtil
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.annotations.ApiStatus
 import org.w3c.dom.Element
 import java.awt.*
@@ -101,20 +102,25 @@ object SVGLoader {
                        backgroundColors: List<String> = emptyList()): SvgElementColorPatcherProvider {
     val fg = ColorUtil.toHtmlColor(resultColor)
     val map = strokeColors.associateWith { fg }
-    val alpha = HashMap<String, Int>(map.size)
+    val alpha = Object2IntOpenHashMap<String>(map.size)
+    alpha.defaultReturnValue(Int.MIN_VALUE)
     for (s in map.values) {
       alpha.put(s, resultColor.alpha)
     }
 
-    val hash = InsecureHashBuilder()
-    hash.stringList(strokeColors)
-    hash.stringList(backgroundColors)
-    hash.update(fg)
-    hash.update(resultColor.alpha)
-    val digest = hash.build()
+    val digest = InsecureHashBuilder()
+      .stringList(strokeColors)
+      .stringList(backgroundColors)
+      .update(fg)
+      .update(resultColor.alpha)
+      .build()
     return object : SvgElementColorPatcherProvider {
       override fun attributeForPath(path: String?): SvgAttributePatcher? {
-        return newSvgPatcher(digest = digest, newPalette = map + backgroundColors.associateWith { "#00000000" }, alphas = alpha)
+        return newSvgPatcher(digest = digest,
+                             newPalette = map + backgroundColors.associateWith { "#00000000" },
+                             alphaProvider = { color ->
+                               alpha.getInt(color).takeIf { it != Int.MIN_VALUE }
+                             })
       }
 
       override fun digest() = digest

@@ -229,23 +229,24 @@ public final class UITheme {
     initializeNamedColors(theme);
     PaletteScopeManager paletteScopeManager = new PaletteScopeManager();
 
-    if (theme.iconColorsOnSelection != null && !theme.iconColorsOnSelection.isEmpty()) {
-      Map<String, String> colors = new TreeMap<>();
-      for (Map.Entry<String, Object> entry : theme.iconColorsOnSelection.entrySet()) {
-        colors.put(entry.getKey(), entry.getValue().toString());
+    Map<String, Object> colorsOnSelection = theme.iconColorsOnSelection;
+    if (colorsOnSelection != null && !colorsOnSelection.isEmpty()) {
+      Map<String, String> colors = new HashMap<>(colorsOnSelection.size());
+      Set<String> alphaColors = new HashSet<>(colorsOnSelection.size());
+      for (Map.Entry<String, Object> entry : colorsOnSelection.entrySet()) {
+        String value = entry.getValue().toString();
+        colors.put(entry.getKey(), value);
+        alphaColors.add(value);
       }
 
-      Map<String, Integer> alpha = new TreeMap<>();
-      colors.forEach((key, value) -> alpha.put(value, 255));
       theme.selectionColorPatcher = new SVGLoader.SvgElementColorPatcherProvider() {
         @Override
         public @Nullable SvgAttributePatcher attributeForPath(@Nullable String path) {
           PaletteScope scope = paletteScopeManager.getScopeByPath(path);
           InsecureHashBuilder hash = new InsecureHashBuilder()
             .stringMap(colors)
-            .stringIntMap(alpha)
             .update(scope == null ? ArrayUtilRt.EMPTY_LONG_ARRAY : scope.digest());
-          return SvgKt.newSvgPatcher(hash.build(), colors, alpha);
+          return SvgKt.newSvgPatcher(hash.build(), colors, color -> alphaColors.contains(color) ? 255 : null);
         }
       };
     }
@@ -318,11 +319,10 @@ public final class UITheme {
         }
 
         theme.colorPatcher = new SVGLoader.SvgElementColorPatcherProvider() {
-          @Nullable
           @Override
-          public SvgAttributePatcher attributeForPath(@Nullable String path) {
+          public @Nullable SvgAttributePatcher attributeForPath(@Nullable String path) {
             PaletteScope scope = paletteScopeManager.getScopeByPath(path);
-            return scope == null ? null : SvgKt.newSvgPatcher(scope.digest(), scope.newPalette, scope.alphas);
+            return scope == null ? null : SvgKt.newSvgPatcher(scope.digest(), scope.newPalette, scope.alphas::get);
           }
         };
       }
