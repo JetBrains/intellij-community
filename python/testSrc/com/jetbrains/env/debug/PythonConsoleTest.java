@@ -314,7 +314,7 @@ public class PythonConsoleTest extends PyEnvTestCase {
         exec("print(\"Hi\")");
         waitForOutput("Hi");
         addTextToEditor("getenv()");
-        ApplicationManager.getApplication().invokeAndWait(() -> {
+        ApplicationManager.getApplication().runReadAction(() -> {
           checkParameters(7, getConsoleFile(), "key, default=None", new String[]{"key, "});
         });
       }
