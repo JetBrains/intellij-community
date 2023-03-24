@@ -1,89 +1,121 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
+import com.intellij.util.text.VersionComparatorUtil;
+import org.apache.maven.project.DefaultProjectDependenciesResolver;
+import org.apache.maven.project.ProjectDependenciesResolver;
 import org.apache.maven.repository.internal.DefaultArtifactDescriptorReader;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.impl.ArtifactDescriptorReader;
 import org.eclipse.aether.impl.ArtifactResolver;
 import org.eclipse.aether.impl.DependencyCollector;
 import org.eclipse.aether.internal.impl.DefaultRepositorySystem;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.model.MavenWorkspaceMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.server.embedder.CustomMaven36ArtifactDescriptorReader;
 import org.jetbrains.idea.maven.server.embedder.CustomMaven36ArtifactResolver;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.rmi.RemoteException;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
-  private CustomMaven36ArtifactResolver enhancedArtifactResolver;
-  private CustomMaven36ArtifactDescriptorReader enhancedArtifactDescriptorReader;
+  private final AtomicReference<ArtifactResolver> myArtifactResolver = new AtomicReference<>();
+  private final AtomicReference<ArtifactDescriptorReader> myArtifactDescriptorReader = new AtomicReference<>();
 
   public Maven36ServerEmbedderImpl(MavenEmbedderSettings settings) throws RemoteException {
     super(settings);
   }
 
-  private synchronized void customizeArtifactResolver() {
-    if (null == enhancedArtifactResolver) {
-      ArtifactResolver defaultArtifactResolver = getComponent(ArtifactResolver.class);
-      enhancedArtifactResolver = new CustomMaven36ArtifactResolver(defaultArtifactResolver);
-
-      ArtifactDescriptorReader artifactDescriptorReader = getComponent(ArtifactDescriptorReader.class);
-      if (artifactDescriptorReader instanceof DefaultArtifactDescriptorReader) {
-        ((DefaultArtifactDescriptorReader)artifactDescriptorReader).setArtifactResolver(enhancedArtifactResolver);
-      }
-
-      RepositorySystem repositorySystem = getComponent(RepositorySystem.class);
-      if (repositorySystem instanceof DefaultRepositorySystem) {
-        ((DefaultRepositorySystem)repositorySystem).setArtifactResolver(enhancedArtifactResolver);
-      }
-    }
+  @NotNull
+  private ArtifactResolver createArtifactResolver() {
+    ArtifactResolver artifactResolver = getComponent(ArtifactResolver.class);
+    return new CustomMaven36ArtifactResolver(artifactResolver);
   }
 
-  private synchronized void customizeArtifactDescriptorReader() throws RemoteException {
-    if (null == enhancedArtifactDescriptorReader) {
-      ArtifactDescriptorReader artifactDescriptorReader = getComponent(ArtifactDescriptorReader.class);
-      enhancedArtifactDescriptorReader = new CustomMaven36ArtifactDescriptorReader(artifactDescriptorReader);
-
-      RepositorySystem repositorySystem = getComponent(RepositorySystem.class);
-      if (repositorySystem instanceof DefaultRepositorySystem) {
-        ((DefaultRepositorySystem)repositorySystem).setArtifactDescriptorReader(enhancedArtifactDescriptorReader);
-      }
-
-      // depth-first dependency collector, available since maven 3.9.0
-      DependencyCollector dependencyCollector = getComponentIfExists(DependencyCollector.class, "df");
-      if (null != dependencyCollector) {
-        // DependencyCollectorDelegate.setArtifactDescriptorReader
-        try {
-          Method method = dependencyCollector.getClass().getMethod("setArtifactDescriptorReader", ArtifactDescriptorReader.class);
-          method.invoke(dependencyCollector, enhancedArtifactDescriptorReader);
-        }
-        catch (Throwable e) {
-          Maven3ServerGlobals.getLogger().warn(e);
-        }
-      }
-    }
+  @NotNull
+  private ArtifactResolver getArtifactResolver() {
+    ArtifactResolver artifactResolver = myArtifactResolver.get();
+    if (artifactResolver != null) return artifactResolver;
+    return myArtifactResolver.updateAndGet(value -> value == null ? createArtifactResolver() : value);
   }
 
-  private synchronized void resetArtifactResolver() {
-    if (null != enhancedArtifactResolver) {
-      enhancedArtifactResolver.reset();
+  @NotNull
+  private ArtifactDescriptorReader createArtifactDescriptorReader() {
+    ArtifactDescriptorReader artifactDescriptorReader = getComponent(ArtifactDescriptorReader.class);
+    if (artifactDescriptorReader instanceof DefaultArtifactDescriptorReader) {
+      ((DefaultArtifactDescriptorReader)artifactDescriptorReader).setArtifactResolver(getArtifactResolver());
     }
+    return new CustomMaven36ArtifactDescriptorReader(artifactDescriptorReader);
   }
 
-  private synchronized void resetArtifactDescriptorReader() {
-    if (null != enhancedArtifactDescriptorReader) {
-      enhancedArtifactDescriptorReader.reset();
-    }
+  @NotNull
+  private ArtifactDescriptorReader getArtifactDescriptorReader() {
+    ArtifactDescriptorReader artifactDescriptorReader = myArtifactDescriptorReader.get();
+    if (artifactDescriptorReader != null) return artifactDescriptorReader;
+    return myArtifactDescriptorReader.updateAndGet(value -> value == null ? createArtifactDescriptorReader() : value);
   }
 
   @Override
-  protected void customizeComponents(@Nullable MavenWorkspaceMap workspaceMap) throws RemoteException {
-    super.customizeComponents(workspaceMap);
+  @NotNull
+  protected ProjectDependenciesResolver createDependenciesResolver() {
+    ProjectDependenciesResolver dependenciesResolver = getComponent(ProjectDependenciesResolver.class);
 
     //TODO: registry key to turn off
-    customizeArtifactResolver();
-    customizeArtifactDescriptorReader();
+
+    RepositorySystem repositorySystem = getComponent(RepositorySystem.class);
+    if (repositorySystem instanceof DefaultRepositorySystem) {
+      DefaultRepositorySystem defaultRepositorySystem = (DefaultRepositorySystem)repositorySystem;
+      defaultRepositorySystem.setArtifactResolver(getArtifactResolver());
+
+      ArtifactDescriptorReader artifactDescriptorReader = getArtifactDescriptorReader();
+      defaultRepositorySystem.setArtifactDescriptorReader(artifactDescriptorReader);
+
+      DependencyCollector dependencyCollector;
+      if (VersionComparatorUtil.compare(getMavenVersion(), "3.9.0") >= 0) {
+        // depth-first dependency collector, available since maven 3.9.0
+        dependencyCollector = getComponentIfExists(DependencyCollector.class, "df");
+      }
+      else {
+        // default dependency collector, maven 3.8
+        dependencyCollector = getComponentIfExists(DependencyCollector.class);
+      }
+      try {
+        Method method = dependencyCollector.getClass().getMethod("setArtifactDescriptorReader", ArtifactDescriptorReader.class);
+        method.invoke(dependencyCollector, artifactDescriptorReader);
+        defaultRepositorySystem.setDependencyCollector(dependencyCollector);
+      }
+      catch (Throwable e) {
+        Maven3ServerGlobals.getLogger().warn(e);
+      }
+    }
+
+    if (dependenciesResolver instanceof DefaultProjectDependenciesResolver) {
+      try {
+        DefaultProjectDependenciesResolver defaultResolver = (DefaultProjectDependenciesResolver)dependenciesResolver;
+        Field repoSystemField = defaultResolver.getClass().getDeclaredField("repoSystem");
+        repoSystemField.setAccessible(true);
+        repoSystemField.set(defaultResolver, repositorySystem);
+      } catch (Exception e) {
+        Maven3ServerGlobals.getLogger().warn(e);
+      }
+    }
+
+    return dependenciesResolver;
+  }
+
+  private void resetArtifactResolver() {
+    ArtifactResolver artifactResolver = myArtifactResolver.get();
+    if (artifactResolver instanceof CustomMaven36ArtifactResolver) {
+      ((CustomMaven36ArtifactResolver)artifactResolver).reset();
+    }
+  }
+
+  private void resetArtifactDescriptorReader() {
+    ArtifactDescriptorReader artifactDescriptorReader = myArtifactDescriptorReader.get();
+    if (artifactDescriptorReader instanceof CustomMaven36ArtifactDescriptorReader) {
+      ((CustomMaven36ArtifactDescriptorReader)artifactDescriptorReader).reset();
+    }
   }
 
   @Override

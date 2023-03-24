@@ -100,6 +100,7 @@ import java.lang.reflect.Method;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Overridden maven components:
@@ -140,6 +141,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   @NotNull private final RepositorySystem myRepositorySystem;
 
   @NotNull private final MavenImporterSpy myImporterSpy;
+
+  private final AtomicReference<ProjectDependenciesResolver> myDependenciesResolver = new AtomicReference<>();
 
   public Maven3XServerEmbedder(MavenEmbedderSettings settings) throws RemoteException {
     super(settings.getSettings());
@@ -684,7 +687,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     }
   }
 
-  protected void customizeComponents(@Nullable MavenWorkspaceMap workspaceMap) throws RemoteException {
+  private void customizeComponents(@Nullable MavenWorkspaceMap workspaceMap) throws RemoteException {
     // replace some plexus components
     if (VersionComparatorUtil.compare("3.7.0-SNAPSHOT", getMavenVersion()) < 0) {
       myContainer.addComponent(getComponent(ArtifactFactory.class, "ide"), ArtifactFactory.ROLE);
@@ -1027,6 +1030,17 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     return true;
   }
 
+  @NotNull
+  private ProjectDependenciesResolver getDependenciesResolver() {
+    ProjectDependenciesResolver dependenciesResolver = myDependenciesResolver.get();
+    if (dependenciesResolver != null) return dependenciesResolver;
+    return myDependenciesResolver.updateAndGet(value -> value == null ? createDependenciesResolver() : value);
+  }
+
+  protected ProjectDependenciesResolver createDependenciesResolver() {
+    return getComponent(ProjectDependenciesResolver.class);
+  }
+
   /**
    * copied from {@link DefaultProjectBuilder#resolveDependencies(MavenProject, RepositorySystemSession)}
    */
@@ -1034,7 +1048,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     DependencyResolutionResult resolutionResult;
 
     try {
-      ProjectDependenciesResolver dependencyResolver = getComponent(ProjectDependenciesResolver.class);
+      ProjectDependenciesResolver dependencyResolver = getDependenciesResolver();
       DefaultDependencyResolutionRequest resolution = new DefaultDependencyResolutionRequest(project, session);
       resolutionResult = dependencyResolver.resolve(resolution);
     }
