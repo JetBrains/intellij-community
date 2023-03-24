@@ -186,13 +186,14 @@ class DumbServiceImplTest {
       override fun performInDumbMode(indicator: ProgressIndicator) {
         ApplicationManager.getApplication().assertIsNonDispatchThread()
         phaser.awaitAdvanceInterruptibly(phaser.arrive(), 5, TimeUnit.SECONDS) //1
+        phaser.awaitAdvanceInterruptibly(phaser.arrive(), 5, TimeUnit.SECONDS) //2
 
         runInEdtAndWait {
           dumbService.runWhenSmart {
             application.assertIsDispatchThread()
             assertFalse(application.isWriteAccessAllowed)
             invocations++
-            phaser.arriveAndDeregister() //2
+            phaser.arriveAndDeregister() //3
           }
         }
       }
@@ -201,7 +202,9 @@ class DumbServiceImplTest {
     assertTrue(dumbService.isDumb)
     assertEquals(0,invocations)
     phaser.awaitAdvanceInterruptibly(phaser.arrive(), 5, TimeUnit.SECONDS) //2
+    phaser.awaitAdvanceInterruptibly(phaser.arrive(), 5, TimeUnit.SECONDS) //3
     assertEquals(1, invocations)
+    phaser.arriveAndDeregister()
   }
 
   private val dumbService by lazy { DumbServiceImpl.getInstance(project) }
