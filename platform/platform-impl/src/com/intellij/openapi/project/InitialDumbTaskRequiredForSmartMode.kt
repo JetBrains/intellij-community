@@ -4,7 +4,7 @@ package com.intellij.openapi.project
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.DumbServiceImpl.REQUIRED_FOR_SMART_MODE_STARTUP_ACTIVITY
+import com.intellij.openapi.project.DumbServiceImpl.Companion.REQUIRED_FOR_SMART_MODE_STARTUP_ACTIVITY
 
 
 class InitialDumbTaskRequiredForSmartMode(private val project: Project) : DumbModeTask() {
