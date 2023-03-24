@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -92,6 +93,8 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myShowingSpecialCharacters;
 
   private final List<CacheableBackgroundComputable<?>> myComputableSettings = new ArrayList<>();
+
+  private final ExecutorService myExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("EditorSettings", 3);
 
   private final CacheableBackgroundComputable<List<Integer>> mySoftMargins = new CacheableBackgroundComputable<>() {
     @Override
@@ -863,7 +866,7 @@ public class SettingsImpl implements EditorSettings {
             )
             .expireWhen(() -> myEditor != null && myEditor.isDisposed() || project != null && project.isDisposed());
           if (myCurrentReadActionRef.compareAndSet(null, readAction)) {
-            readAction.submit(AppExecutorUtil.getAppExecutorService());
+            readAction.submit(myExecutor);
           }
         }
       }
