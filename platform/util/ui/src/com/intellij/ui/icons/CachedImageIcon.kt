@@ -13,11 +13,13 @@ import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.ui.MultiResolutionImageProvider
 import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.awt.image.ImageFilter
 import java.awt.image.RGBImageFilter
 import java.net.URL
+import java.nio.file.Path
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -48,6 +50,13 @@ internal val pathTransform: AtomicReference<IconTransform> = AtomicReference(
 
 @JvmField
 internal val iconToStrokeIcon: ConcurrentMap<CachedImageIcon, CachedImageIcon> = CollectionFactory.createConcurrentWeakKeyWeakValueMap<CachedImageIcon, CachedImageIcon>()
+
+@TestOnly
+@ApiStatus.Internal
+fun createCachedIcon(file: Path): CachedImageIcon {
+  val path = file.toUri().toString()
+  return CachedImageIcon(originalPath = path, resolver = ImageDataByFilePathLoader(path), toolTip = null)
+}
 
 @ApiStatus.Internal
 @ApiStatus.NonExtendable

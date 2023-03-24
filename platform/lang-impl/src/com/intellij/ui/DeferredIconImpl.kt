@@ -4,7 +4,7 @@ package com.intellij.ui
 import com.intellij.ide.PowerSaveMode
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.util.ScalableIcon
@@ -169,7 +169,6 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     // the component may be a temporary component used by some list or tree to paint elements
     val repaintRequest = repaintScheduler.createRepaintRequest(component, x, y)
 
-    val iconCalculatingService = service<IconCalculatingService>()
     if (!isDone) {
       var scheduledRepaints = scheduledRepaints
       if (scheduledRepaints == null) {
@@ -190,7 +189,9 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     }
     isScheduled = true
 
-    return iconCalculatingService.coroutineScope.launch {
+    @Suppress("OPT_IN_USAGE")
+    val coroutineScope = serviceOrNull<IconCalculatingService>()?.coroutineScope ?: GlobalScope
+    return coroutineScope.launch {
       val oldWidth = scaledDelegateIcon.iconWidth
       val result = IconDeferrerImpl.evaluateDeferred {
         if (isNeedReadAction) {
@@ -252,7 +253,8 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
       EMPTY_ICON
     }
 
-    if (ApplicationManager.getApplication().isUnitTestMode) {
+    val app = ApplicationManager.getApplication()
+    if (app != null && app.isUnitTestMode) {
       checkDoesntReferenceThis(result)
     }
     return if (scale != 1f && result is ScalableIcon) result.scale(scale) else result

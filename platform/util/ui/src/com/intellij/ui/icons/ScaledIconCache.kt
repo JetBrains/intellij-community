@@ -9,10 +9,12 @@ import com.intellij.reference.SoftReference
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
+import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.drawImage
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.awt.Component
 import java.awt.Graphics
 import java.awt.Image
@@ -70,6 +72,13 @@ internal class ScaledIconCache {
   fun clear() {
     cache.clear()
   }
+}
+
+@TestOnly
+@ApiStatus.Internal
+fun getRealImage(icon: Icon): Image {
+  val image = (icon as ScaledResultIcon).image
+  return (image as? JBHiDPIScaledImage)?.delegate ?: image
 }
 
 internal class ScaledResultIcon(@JvmField internal val image: Image,

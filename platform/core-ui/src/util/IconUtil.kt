@@ -19,12 +19,16 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VFileProperty
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.WritingAccessProvider
-import com.intellij.ui.*
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.IconManager
+import com.intellij.ui.LayeredIcon
 import com.intellij.ui.RowIcon
 import com.intellij.ui.icons.*
-import com.intellij.ui.scale.*
 import com.intellij.ui.scale.JBUIScale.getFontScale
 import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.scale.ScaleContextAware
+import com.intellij.ui.scale.ScaleType
 import com.intellij.util.IconUtil.ICON_FLAG_IGNORE_MASK
 import com.intellij.util.SVGLoader.getStrokePatcher
 import com.intellij.util.SVGLoader.paintIconWithSelection
@@ -116,13 +120,13 @@ object IconUtil {
   }
 
   @JvmStatic
-  fun cropIcon(icon: Icon, area: Rectangle): Icon =
-    if (!Rectangle(icon.iconWidth, icon.iconHeight).contains(area)) icon
-    else CropIcon(icon, area)
+  fun cropIcon(icon: Icon, area: Rectangle): Icon {
+    return if (!Rectangle(icon.iconWidth, icon.iconHeight).contains(area)) icon else CropIcon(icon, area)
+  }
 
   @JvmStatic
-  fun flip(icon: Icon, horizontal: Boolean): Icon =
-    object : Icon {
+  fun flip(icon: Icon, horizontal: Boolean): Icon {
+    return object : Icon {
       override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
         val g2d = g.create() as Graphics2D
         try {
@@ -139,9 +143,12 @@ object IconUtil {
       }
 
       override fun getIconWidth(): Int = icon.iconWidth
+
       override fun getIconHeight(): Int = icon.iconHeight
+
       override fun toString(): String = "IconUtil.flip for $icon"
     }
+  }
 
   /**
    * @return a deferred icon for the file, taking into account [FileIconProvider] and [FileIconPatcher] extensions.
@@ -208,8 +215,9 @@ object IconUtil {
     return icon ?: getEmptyIcon(false)
   }
 
-  private fun getProviderIcon(file: VirtualFile, @IconFlags flags: Int, project: Project?): Icon? =
-    FileIconProvider.EP_NAME.extensionList.firstNotNullOfOrNull { it.getIcon(file, flags, project) }
+  private fun getProviderIcon(file: VirtualFile, @IconFlags flags: Int, project: Project?): Icon? {
+    return FileIconProvider.EP_NAME.extensionList.firstNotNullOfOrNull { it.getIcon(file, flags, project) }
+  }
 
   @JvmStatic
   fun getEmptyIcon(showVisibility: Boolean): Icon {
@@ -224,8 +232,9 @@ object IconUtil {
   @JvmOverloads
   @JvmStatic
   @Suppress("UndesirableClassUsage")
-  fun toImage(icon: Icon, context: ScaleContext? = null): Image =
-    IconLoader.toImage(icon = icon, ctx = context) ?: BufferedImage(1, 0, BufferedImage.TYPE_INT_ARGB)
+  fun toImage(icon: Icon, context: ScaleContext? = null): Image {
+    return IconLoader.toImage(icon = icon, ctx = context) ?: BufferedImage(1, 0, BufferedImage.TYPE_INT_ARGB)
+  }
 
   @JvmOverloads
   @JvmStatic
@@ -309,17 +318,23 @@ object IconUtil {
   @ApiStatus.Internal
   @Contract("null -> null; !null -> !null")
   @JvmStatic
-  fun wrapToSelectionAwareIcon(iconUnderSelection: Icon?): Icon? =
-    if (iconUnderSelection == null) null
-    else object : Icon {
+  fun wrapToSelectionAwareIcon(iconUnderSelection: Icon?): Icon? {
+    if (iconUnderSelection == null) {
+      return null
+    }
+
+    return object : Icon {
       override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
         paintIconWithSelection(icon = iconUnderSelection, c = c, g = g, x = x, y = y)
       }
 
       override fun getIconWidth(): Int = iconUnderSelection.iconWidth
+
       override fun getIconHeight(): Int = iconUnderSelection.iconHeight
+
       override fun toString(): String = "IconUtil.wrapToSelectionAwareIcon for $iconUnderSelection"
     }
+  }
 
   @Deprecated("use {@link #scale(Icon, Component, float)}")
   @JvmStatic
@@ -516,8 +531,9 @@ object IconUtil {
 
   @JvmStatic
   @Deprecated("Please use `IconLoader.filterIcon` instead", replaceWith = ReplaceWith("IconLoader.filterIcon", "com.intellij.openapi.util.IconLoader"))
-  fun filterIcon(icon: Icon, filterSupplier: Supplier<out RGBImageFilter>, @Suppress("UNUSED_PARAMETER") ancestor: Component?): Icon =
-    filterIcon(icon = icon, filterSupplier = filterSupplier::get)
+  fun filterIcon(icon: Icon, filterSupplier: Supplier<out RGBImageFilter>, @Suppress("UNUSED_PARAMETER") ancestor: Component?): Icon {
+    return filterIcon(icon = icon, filterSupplier = filterSupplier::get)
+  }
 
   /**
    * This method works with compound icons like RowIcon or LayeredIcon

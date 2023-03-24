@@ -147,12 +147,13 @@ fun loadPngFromClassResource(path: String, classLoader: ClassLoader?, resourceCl
 internal fun getResourceData(path: String, resourceClass: Class<*>?, classLoader: ClassLoader?): ByteArray? {
   assert(resourceClass != null || classLoader != null || path.startsWith("file://"))
   if (classLoader != null) {
-    val isAbsolute = path.startsWith("/")
+    val isAbsolute = path.startsWith('/')
     val data = ResourceUtil.getResourceAsBytes(if (isAbsolute) path.substring(1) else path, classLoader, true)
     if (data != null || isAbsolute) {
       return data
     }
   }
+
   resourceClass?.getResourceAsStream(path)?.use { stream -> return stream.readAllBytes() }
   if (path.startsWith("file:/")) {
     val nioPath = Path.of(URI.create(path))

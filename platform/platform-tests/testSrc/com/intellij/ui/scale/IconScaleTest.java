@@ -157,8 +157,7 @@ public class IconScaleTest extends BareTestFixtureTestCase {
     assertIcon(iconC, contextC, scales.first, scales.second, "Test (C) scale icon");
 
     // Additionally, check that the original image hasn't changed after scaling
-    Pair<BufferedImage, Graphics2D> pair =
-      createImageAndGraphics(iconContext.getScale(DEV_SCALE), icon.getIconWidth(), icon.getIconHeight());
+    var pair = createImageAndGraphics(iconContext.getScale(DEV_SCALE), icon.getIconWidth(), icon.getIconHeight());
     BufferedImage iconImage = pair.first;
     Graphics2D g2d = pair.second;
 
