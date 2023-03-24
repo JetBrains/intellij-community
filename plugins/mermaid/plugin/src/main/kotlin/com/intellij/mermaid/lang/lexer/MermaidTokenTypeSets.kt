@@ -16,6 +16,7 @@ object MermaidTokenTypeSets {
     MermaidElements.JOURNEY_SECTION_INNER_STATEMENT,
     MermaidElements.FLOWCHART_STATEMENT,
     MermaidElements.SEQUENCE_STATEMENT,
+    MermaidElements.ACTOR_STATEMENT,
     MermaidElements.CLASS_DIAGRAM_STATEMENT,
     MermaidElements.CLASS_MEMBER_STATEMENT,
     MermaidElements.STATE_DIAGRAM_STATEMENT,
