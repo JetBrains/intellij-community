@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.cache.ModifierFlags;
@@ -24,9 +23,6 @@ import com.intellij.psi.impl.java.stubs.PsiModifierListStub;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,31 +38,7 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
 
   @Override
   public boolean hasModifierProperty(@NotNull String name) {
-    return (PsiModifier.NON_SEALED.equals(name) && PsiUtil.getLanguageLevel(this).isAtLeast(LanguageLevel.JDK_17) && isNonSealed()) ||
-           ModifierFlags.hasModifierProperty(name, getStub().getModifiersMask());
-  }
-
-  private boolean isNonSealed() {
-    return CachedValuesManager.getProjectPsiDependentCache(this, __ -> calcIsNonSealed());
-  }
-
-  private Boolean calcIsNonSealed() {
-    if (hasModifierProperty(PsiModifier.FINAL) || hasModifierProperty(PsiModifier.SEALED)) {
-      return false;
-    }
-    PsiClass containingClass = PsiTreeUtil.getParentOfType(this, PsiClass.class);
-    if (containingClass == null) {
-      return false;
-    }
-    for (PsiClassType psiSuperType : containingClass.getSuperTypes()) {
-      PsiClass superClass = PsiUtil.resolveClassInClassTypeOnly(psiSuperType);
-      if (superClass != null) {
-        if (superClass.hasModifierProperty(PsiModifier.SEALED)) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return ModifierFlags.hasModifierProperty(name, getStub().getModifiersMask());
   }
 
   @Override
