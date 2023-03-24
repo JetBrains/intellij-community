@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
   private final AtomicReference<ArtifactResolver> myArtifactResolver = new AtomicReference<>();
   private final AtomicReference<ArtifactDescriptorReader> myArtifactDescriptorReader = new AtomicReference<>();
+  private final AtomicReference<RepositorySystem> myRepositorySystem = new AtomicReference<>();
 
   public Maven36ServerEmbedderImpl(MavenEmbedderSettings settings) throws RemoteException {
     super(settings);
@@ -56,13 +57,8 @@ public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
     return myArtifactDescriptorReader.updateAndGet(value -> value == null ? createArtifactDescriptorReader() : value);
   }
 
-  @Override
   @NotNull
-  protected ProjectDependenciesResolver createDependenciesResolver() {
-    ProjectDependenciesResolver dependenciesResolver = getComponent(ProjectDependenciesResolver.class);
-
-    //TODO: registry key to turn off
-
+  private RepositorySystem createRepositorySystem() {
     RepositorySystem repositorySystem = getComponent(RepositorySystem.class);
     if (repositorySystem instanceof DefaultRepositorySystem) {
       DefaultRepositorySystem defaultRepositorySystem = (DefaultRepositorySystem)repositorySystem;
@@ -89,13 +85,29 @@ public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
         Maven3ServerGlobals.getLogger().warn(e);
       }
     }
+    return repositorySystem;
+  }
+
+  @NotNull
+  private RepositorySystem getRepositorySystem() {
+    RepositorySystem artifactDescriptorReader = myRepositorySystem.get();
+    if (artifactDescriptorReader != null) return artifactDescriptorReader;
+    return myRepositorySystem.updateAndGet(value -> value == null ? createRepositorySystem() : value);
+  }
+
+  @Override
+  @NotNull
+  protected ProjectDependenciesResolver createDependenciesResolver() {
+    ProjectDependenciesResolver dependenciesResolver = getComponent(ProjectDependenciesResolver.class);
+
+    //TODO: registry key to turn off
 
     if (dependenciesResolver instanceof DefaultProjectDependenciesResolver) {
       try {
         DefaultProjectDependenciesResolver defaultResolver = (DefaultProjectDependenciesResolver)dependenciesResolver;
         Field repoSystemField = defaultResolver.getClass().getDeclaredField("repoSystem");
         repoSystemField.setAccessible(true);
-        repoSystemField.set(defaultResolver, repositorySystem);
+        repoSystemField.set(defaultResolver, getRepositorySystem());
       } catch (Exception e) {
         Maven3ServerGlobals.getLogger().warn(e);
       }
