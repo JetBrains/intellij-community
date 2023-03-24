@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.inspectionProfile
 
+import org.yaml.snakeyaml.DumperOptions
+import org.yaml.snakeyaml.LoaderOptions
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.constructor.CustomClassLoaderConstructor
 import org.yaml.snakeyaml.introspector.BeanAccess
@@ -34,9 +36,9 @@ class YamlInspectionConfigRaw(
 
 fun readConfig(reader: Reader, includeReaders: (Path) -> Reader): YamlInspectionProfileRaw {
   val merged = readRaw(reader, includeReaders)
-  val representer = Representer()
+  val representer = Representer(DumperOptions())
   representer.propertyUtils.isSkipMissingProperties = true
-  val constr = CustomClassLoaderConstructor(YamlInspectionProfileRaw::class.java, YamlInspectionProfileRaw::class.java.classLoader)
+  val constr = CustomClassLoaderConstructor(YamlInspectionProfileRaw::class.java, YamlInspectionProfileRaw::class.java.classLoader, LoaderOptions())
   val yaml = Yaml(constr, representer)
   yaml.setBeanAccess(BeanAccess.FIELD)
 

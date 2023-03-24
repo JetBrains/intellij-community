@@ -1,6 +1,5 @@
 package com.intellij.configurationScript
 
-import com.intellij.configurationScript.yaml.LightScalarResolver
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -19,6 +18,7 @@ import org.snakeyaml.engine.v2.nodes.MappingNode
 import org.snakeyaml.engine.v2.nodes.NodeTuple
 import org.snakeyaml.engine.v2.parser.ParserImpl
 import org.snakeyaml.engine.v2.scanner.StreamReader
+import org.snakeyaml.engine.v2.schema.FailsafeSchema
 import java.io.Reader
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -99,10 +99,10 @@ internal fun doRead(reader: Reader): MappingNode? {
   reader.use {
     val settings = LoadSettings.builder()
       .setUseMarks(false)
-      .setScalarResolver(LightScalarResolver())
+      .setSchema(FailsafeSchema())
       .build()
-    val parser = ParserImpl(StreamReader(it, settings), settings)
-    return Composer(parser, settings).singleNode.orElse(null) as? MappingNode
+    val parser = ParserImpl(settings, StreamReader(settings, it))
+    return Composer(settings, parser).singleNode.orElse(null) as? MappingNode
   }
 }
 

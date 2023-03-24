@@ -43,7 +43,7 @@ fun dumpData(data: Any): String {
   return yaml.dump(data)
 }
 
-private class DumpRepresenter : Representer() {
+private class DumpRepresenter : Representer(DumperOptions()) {
   init {
     representers.put(Pattern::class.java, RepresentDump())
   }
