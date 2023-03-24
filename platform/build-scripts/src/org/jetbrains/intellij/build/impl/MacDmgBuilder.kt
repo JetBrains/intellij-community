@@ -59,6 +59,10 @@ internal suspend fun signAndBuildDmg(builder: MacDistributionBuilder,
       staple = notarize,
       customizer, context
     )
+    // for testing, to be removed
+    val tempDir = Files.createTempDirectory(sitFile.nameWithoutExtension)
+    val entrypoint = prepareDmgBuildScripts(context, customizer, tempDir, staple = notarize)
+    publishDmgBuildScripts(context, entrypoint, tempDir)
   }
   else {
     buildLocally(sitFile = sitFile, targetName = targetName, notarize = useNotaryXcodeApi, customizer = customizer, context = context)
