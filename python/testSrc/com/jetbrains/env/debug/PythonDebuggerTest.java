@@ -11,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebugValue;
@@ -1223,6 +1224,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
+  @EnvTestTagsRequired(tags = "-python3.11")
   @Test
   public void testExecutableScriptDebug() {
 
