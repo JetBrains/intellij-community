@@ -49,14 +49,14 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
 
   public LocalFileSystemImpl() {
     myManagingFS = ManagingFS.getInstance();
-    myWatcher = new FileWatcher(myManagingFS, () ->
+    myWatcher = new FileWatcher(myManagingFS, () -> {
       AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> {
           if (!ApplicationManager.getApplication().isDisposed()) {
             storeRefreshStatusToFiles();
           }
         },
-        STATUS_UPDATE_PERIOD, STATUS_UPDATE_PERIOD, TimeUnit.MILLISECONDS)
-    );
+        STATUS_UPDATE_PERIOD, STATUS_UPDATE_PERIOD, TimeUnit.MILLISECONDS);
+    });
 
     for (PluggableLocalFileSystemContentLoader contentLoader : PLUGGABLE_CONTENT_LOADER_EP_NAME.getExtensionList()) {
       try {
@@ -85,10 +85,10 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
 
   private void storeRefreshStatusToFiles() {
     if (myWatcher.isOperational()) {
-      FileWatcher.DirtyPaths dirtyPaths = myWatcher.getDirtyPaths();
-      boolean marked = markPathsDirty(dirtyPaths.dirtyPaths) |
-                       markFlatDirsDirty(dirtyPaths.dirtyDirectories) |
-                       markRecursiveDirsDirty(dirtyPaths.dirtyPathsRecursive);
+      var dirtyPaths = myWatcher.getDirtyPaths();
+      var marked = markPathsDirty(dirtyPaths.dirtyPaths) |
+                   markFlatDirsDirty(dirtyPaths.dirtyDirectories) |
+                   markRecursiveDirsDirty(dirtyPaths.dirtyPathsRecursive);
       if (marked) {
         statusRefreshed();
       }
@@ -97,10 +97,10 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
 
   protected void statusRefreshed() { }
 
-  private boolean markPathsDirty(@NotNull Iterable<String> dirtyPaths) {
-    boolean marked = false;
-    for (String dirtyPath : dirtyPaths) {
-      VirtualFile file = findFileByPathIfCached(dirtyPath);
+  private boolean markPathsDirty(Iterable<String> dirtyPaths) {
+    var marked = false;
+    for (var dirtyPath : dirtyPaths) {
+      var file = findFileByPathIfCached(dirtyPath);
       if (file instanceof NewVirtualFile nvf) {
         nvf.markDirty();
         marked = true;
@@ -109,13 +109,13 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
     return marked;
   }
 
-  private boolean markFlatDirsDirty(@NotNull Iterable<String> dirtyPaths) {
-    boolean marked = false;
-    for (String dirtyPath : dirtyPaths) {
-      Pair<NewVirtualFile, NewVirtualFile> exactOrParent = VfsImplUtil.findCachedFileByPath(this, dirtyPath);
+  private boolean markFlatDirsDirty(Iterable<String> dirtyPaths) {
+    var marked = false;
+    for (var dirtyPath : dirtyPaths) {
+      var exactOrParent = VfsImplUtil.findCachedFileByPath(this, dirtyPath);
       if (exactOrParent.first != null) {
         exactOrParent.first.markDirty();
-        for (VirtualFile child : exactOrParent.first.getCachedChildren()) {
+        for (var child : exactOrParent.first.getCachedChildren()) {
           ((NewVirtualFile)child).markDirty();
           marked = true;
         }
@@ -128,10 +128,10 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
     return marked;
   }
 
-  private boolean markRecursiveDirsDirty(@NotNull Iterable<String> dirtyPaths) {
-    boolean marked = false;
-    for (String dirtyPath : dirtyPaths) {
-      Pair<NewVirtualFile, NewVirtualFile> exactOrParent = VfsImplUtil.findCachedFileByPath(this, dirtyPath);
+  private boolean markRecursiveDirsDirty(Iterable<String> dirtyPaths) {
+    var marked = false;
+    for (var dirtyPath : dirtyPaths) {
+      var exactOrParent = VfsImplUtil.findCachedFileByPath(this, dirtyPath);
       if (exactOrParent.first != null) {
         exactOrParent.first.markDirtyRecursively();
         marked = true;
@@ -186,7 +186,7 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
                                                         @Nullable Collection<String> flatRootsToAdd) {
     if (myDisposed) return Collections.emptySet();
 
-    List<WatchRequest> nonNullWatchRequestsToRemove = ContainerUtil.skipNulls(watchRequestsToRemove);
+    var nonNullWatchRequestsToRemove = ContainerUtil.skipNulls(watchRequestsToRemove);
     LOG.assertTrue(nonNullWatchRequestsToRemove.size() == watchRequestsToRemove.size(), "watch requests collection should not contain `null` elements");
 
     if ((recursiveRootsToAdd != null || flatRootsToAdd != null) && WATCH_ROOTS_LOG.isTraceEnabled()) {
@@ -240,7 +240,7 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
     myWatchRootsManager.clear();
   }
 
-  private static boolean isRecursiveOrCircularSymlink(@Nullable VirtualFile parent, @NotNull CharSequence name, @NotNull String symlinkTarget) {
+  private static boolean isRecursiveOrCircularSymlink(@Nullable VirtualFile parent, CharSequence name, String symlinkTarget) {
     if (startsWith(parent, name, symlinkTarget)) return true;
     if (!(parent instanceof VirtualFileSystemEntry)) return false;
     // check if it's circular - any symlink above resolves to my target too
@@ -255,7 +255,7 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
     return false;
   }
 
-  private static boolean startsWith(@Nullable VirtualFile parent, @NotNull CharSequence name, @NotNull String symlinkTarget) {
+  private static boolean startsWith(@Nullable VirtualFile parent, CharSequence name, String symlinkTarget) {
     // parent == null means name is root
     //noinspection StaticMethodReferencedViaSubclass
     return parent != null ? VfsUtilCore.isAncestorOrSelf(StringUtil.trimEnd(symlinkTarget, "/" + name), parent)
@@ -298,19 +298,16 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
     return super.getAttributes(file);
   }
 
-  @NotNull
   private static Map<String, FileAttributes> listWithAttributes(VirtualFile dir) {
     try {
-      Map<String, FileAttributes> list = CollectionFactory.createFilePathMap(10, dir.isCaseSensitive());
+      var list = CollectionFactory.<FileAttributes>createFilePathMap(10, dir.isCaseSensitive());
 
       PlatformNioHelper.visitDirectory(Path.of(toIoPath(dir)), (file, result) -> {
         try {
-          FileAttributes attrs = copyWithCustomTimestamp(file, FileAttributes.fromNio(file, result.get()));
+          var attrs = copyWithCustomTimestamp(file, FileAttributes.fromNio(file, result.get()));
           list.put(file.getFileName().toString(), attrs);
         }
-        catch (Exception e) {
-          LOG.warn(e);
-        }
+        catch (Exception e) { LOG.warn(e); }
         return true;
       });
 
@@ -321,8 +318,7 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
     return Map.of();
   }
 
-  @NotNull
-  private static FileAttributes copyWithCustomTimestamp(@NotNull Path file, @NotNull FileAttributes attributes) {
+  private static @Nullable FileAttributes copyWithCustomTimestamp(Path file, FileAttributes attributes) {
     for (LocalFileSystemTimestampEvaluator provider : LocalFileSystemTimestampEvaluator.EP_NAME.getExtensionList()) {
       Long custom = provider.getTimestamp(file);
       if (custom != null) {
