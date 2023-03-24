@@ -170,7 +170,6 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = "-python3.11")
   @Test
   public void testSmartStepInto2() {
     runPythonTest(new PySmartStepIntoDebuggerTask("/debug", "test3.py") {
@@ -195,6 +194,11 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
         eval("a.z").hasValue("1");
         resume();
         waitForTerminate();
+      }
+
+      @Override
+      public @NotNull Set<String> getTags() {
+        return ImmutableSet.of("-python3.9", "-python3.10", "-python3.11");
       }
     });
   }
