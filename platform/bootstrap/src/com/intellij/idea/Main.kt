@@ -97,10 +97,10 @@ private fun initProjector() {
     error("JBR version 17.0.5b653.12 or later is required to run a remote-dev server")
   }
 
-  JBR.getProjectorUtils().setLocalGraphicsEnvironmentProvider {
-    val projectorEnvClass = AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.awt.image.PGraphicsEnvironment")
-    projectorEnvClass.getDeclaredMethod("getInstance").invoke(null) as GraphicsEnvironment
-  }
+  // JBR.getProjectorUtils().setLocalGraphicsEnvironmentProvider {
+  //   val projectorEnvClass = AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.awt.image.PGraphicsEnvironment")
+  //   projectorEnvClass.getDeclaredMethod("getInstance").invoke(null) as GraphicsEnvironment
+  // }
 
   val projectorMainClass = AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.server.ProjectorLauncher\$Starter")
   MethodHandles.privateLookupIn(projectorMainClass, MethodHandles.lookup()).findStatic(
