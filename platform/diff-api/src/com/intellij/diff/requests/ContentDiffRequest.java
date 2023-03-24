@@ -25,6 +25,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
+ * Request to compare two or three files with each other.
+ * Supported by the default tools, ex: {@link com.intellij.diff.tools.simple.SimpleDiffTool}.
+ * <p>
  * 2 contents: left - right (before - after)
  * 3 contents: left - middle - right (local - base - server)
  */
