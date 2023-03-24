@@ -644,11 +644,11 @@ public class PopupFactoryImpl extends JBPopupFactory {
     JLabel label = new JLabel();
     final JPanel content = new NonOpaquePanel(new BorderLayout((int)(label.getIconTextGap() * 1.5), (int)(label.getIconTextGap() * 1.5)));
 
-    final NonOpaquePanel textWrapper = new NonOpaquePanel(new GridBagLayout());
+    final NonOpaquePanel textWrapper = new NonOpaquePanel(new BorderLayout());
     JScrollPane scrolledText = ScrollPaneFactory.createScrollPane(text, true);
     scrolledText.setBackground(fillColor);
     scrolledText.getViewport().setBackground(fillColor);
-    textWrapper.add(scrolledText);
+    textWrapper.add(scrolledText, BorderLayout.CENTER);
     content.add(textWrapper, BorderLayout.CENTER);
     if (icon != null) {
       final NonOpaquePanel north = new NonOpaquePanel(new BorderLayout());
