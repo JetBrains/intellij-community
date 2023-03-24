@@ -252,31 +252,29 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
              : ErrorDiffTool.INSTANCE;
     }
 
-    List<FrameDiffTool> tools = filterFittedTools(myToolOrder);
+    List<FrameDiffTool> tools = filterFittedTools(myToolOrder, myContext, myActiveRequest);
     FrameDiffTool tool = tools.isEmpty() ? ErrorDiffTool.INSTANCE : tools.get(0);
 
     if (applySubstitutor) {
-      FrameDiffTool substitutor = findToolSubstitutor(tool);
+      FrameDiffTool substitutor = findToolSubstitutor(tool, myContext, myActiveRequest);
       if (substitutor != null) return substitutor;
     }
 
     return tool;
   }
 
-  private @NotNull List<FrameDiffTool> getAvailableFittedTools() {
-    return filterFittedTools(getAvailableTools());
-  }
-
-  private @NotNull List<FrameDiffTool> filterFittedTools(@NotNull List<? extends DiffTool> tools) {
+  private static @NotNull List<FrameDiffTool> filterFittedTools(@NotNull List<? extends DiffTool> tools,
+                                                                @NotNull DiffContext diffContext,
+                                                                @NotNull DiffRequest diffRequest) {
     List<FrameDiffTool> result = new ArrayList<>();
     for (DiffTool tool : tools) {
       try {
         if (tool instanceof FrameDiffTool) {
-          if (tool.canShow(myContext, myActiveRequest)) {
+          if (tool.canShow(diffContext, diffRequest)) {
             result.add((FrameDiffTool)tool);
           }
           else {
-            FrameDiffTool substitutor = findToolSubstitutor(tool);
+            FrameDiffTool substitutor = findToolSubstitutor(tool, diffContext, diffRequest);
             if (substitutor != null) {
               result.add((FrameDiffTool)tool);
             }
@@ -294,18 +292,20 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     return DiffUtil.filterSuppressedTools(result);
   }
 
-  private FrameDiffTool findToolSubstitutor(@NotNull DiffTool tool) {
-    DiffTool substitutor = DiffUtil.findToolSubstitutor(tool, myContext, myActiveRequest);
+  private static @Nullable FrameDiffTool findToolSubstitutor(@NotNull DiffTool tool,
+                                                             @NotNull DiffContext diffContext,
+                                                             @NotNull DiffRequest diffRequest) {
+    DiffTool substitutor = DiffUtil.findToolSubstitutor(tool, diffContext, diffRequest);
     return substitutor instanceof FrameDiffTool ? (FrameDiffTool)substitutor : null;
   }
 
-  private static @NotNull List<DiffTool> getAvailableTools() {
+  private static @NotNull List<DiffTool> getAllKnownTools() {
     return DiffManagerEx.getInstance().getDiffTools();
   }
 
   @RequiresEdt
   private void readToolOrderFromSettings() {
-    myToolOrder = getToolOrderFromSettings(getAvailableTools());
+    myToolOrder = getToolOrderFromSettings(getAllKnownTools());
   }
 
   private void moveToolOnTop(@NotNull DiffTool tool) {
@@ -586,8 +586,8 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     myPopupActionGroup.removeAll();
 
     List<AnAction> selectToolActions = new ArrayList<>();
-    for (DiffTool tool : getAvailableFittedTools()) {
-      FrameDiffTool substitutor = findToolSubstitutor(tool);
+    for (DiffTool tool : filterFittedTools(getAllKnownTools(), myContext, myActiveRequest)) {
+      FrameDiffTool substitutor = findToolSubstitutor(tool, myContext, myActiveRequest);
       if (tool == myState.getActiveTool() || substitutor == myState.getActiveTool()) continue;
       selectToolActions.add(new DiffToolToggleAction(tool));
     }
@@ -762,7 +762,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
 
     @Override
     public @NotNull List<DiffTool> getTools() {
-      return new ArrayList<>(getAvailableFittedTools());
+      return new ArrayList<>(filterFittedTools(getAllKnownTools(), myContext, myActiveRequest));
     }
 
     @Override
@@ -796,7 +796,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
         return;
       }
 
-      for (DiffTool tool : getAvailableFittedTools()) {
+      for (DiffTool tool : filterFittedTools(getAllKnownTools(), myContext, myActiveRequest)) {
         if (tool != activeTool) {
           presentation.setEnabledAndVisible(true);
           return;
@@ -809,7 +809,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     @Override
     protected @NotNull DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
       DefaultActionGroup group = new DefaultActionGroup();
-      for (DiffTool tool : getAvailableFittedTools()) {
+      for (DiffTool tool : filterFittedTools(getAllKnownTools(), myContext, myActiveRequest)) {
         group.add(new DiffToolToggleAction(tool));
       }
 
