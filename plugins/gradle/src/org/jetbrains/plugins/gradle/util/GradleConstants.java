@@ -46,6 +46,9 @@ public final class GradleConstants {
   public static final Key<Boolean> FORCE_TEST_EXECUTION = Key.create("plugins.gradle.force.test.execution");
   @NonNls public static final String BUILD_SRC_NAME = "buildSrc";
 
+  @NonNls public static final String MINIMAL_SUPPORTED_GRADLE_VERSION = "3.0";
+  @NonNls public static final String MINIMAL_RECOMMENDED_GRADLE_VERSION = "3.0";
+
   private GradleConstants() {
   }
 }
