@@ -1836,13 +1836,11 @@ public class JBTabsImpl extends JComponent
     return super.isOpaque() && !myVisibleInfos.isEmpty();
   }
 
-  protected void revalidateAndRepaint(final boolean layoutNow) {
-    if (myVisibleInfos.isEmpty()) {
-      Component nonOpaque = UIUtil.findUltimateParent(this);
-      if (getParent() != null) {
-        final Rectangle toRepaint = SwingUtilities.convertRectangle(getParent(), getBounds(), nonOpaque);
-        nonOpaque.repaint(toRepaint.x, toRepaint.y, toRepaint.width, toRepaint.height);
-      }
+  protected void revalidateAndRepaint(boolean layoutNow) {
+    if (myVisibleInfos.isEmpty() && getParent() != null) {
+      Component nonOpaque = ComponentUtil.findUltimateParent(this);
+      Rectangle toRepaint = SwingUtilities.convertRectangle(getParent(), getBounds(), nonOpaque);
+      nonOpaque.repaint(toRepaint.x, toRepaint.y, toRepaint.width, toRepaint.height);
     }
 
     if (layoutNow) {
@@ -1853,7 +1851,6 @@ public class JBTabsImpl extends JComponent
     }
     repaint();
   }
-
 
   private void updateAttraction(final TabInfo tabInfo, boolean start) {
     if (start) {
