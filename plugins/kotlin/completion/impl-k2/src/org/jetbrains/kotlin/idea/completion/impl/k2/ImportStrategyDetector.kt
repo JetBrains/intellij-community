@@ -34,7 +34,8 @@ class ImportStrategyDetector(originalKtFile: KtFile, project: Project) {
 
     context(KtAnalysisSession)
     private fun detectImportStrategyForCallableSymbol(symbol: KtCallableSymbol): ImportStrategy {
-        if (symbol.symbolKind == KtSymbolKind.CLASS_MEMBER) return ImportStrategy.DoNothing
+        val containingClassIsObject = symbol.originalContainingClassForOverride?.classKind?.isObject == true
+        if (symbol.symbolKind == KtSymbolKind.CLASS_MEMBER && !containingClassIsObject) return ImportStrategy.DoNothing
 
         val callableId = symbol.callableIdIfNonLocal?.asSingleFqName() ?: return ImportStrategy.DoNothing
         if (callableId.isAlreadyImported()) return ImportStrategy.DoNothing

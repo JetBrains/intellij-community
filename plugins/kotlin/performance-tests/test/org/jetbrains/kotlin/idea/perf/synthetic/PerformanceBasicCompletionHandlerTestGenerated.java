@@ -684,6 +684,11 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             runTest("../completion/testData/handlers/basic/staticMembers/ImportFromCompanionObject.kt");
         }
 
+        @TestMetadata("importFromObject.kt")
+        public void testImportFromObject() throws Exception {
+            runTest("../completion/testData/handlers/basic/staticMembers/importFromObject.kt");
+        }
+
         @TestMetadata("ImportJavaStaticMethod.kt")
         public void testImportJavaStaticMethod() throws Exception {
             runTest("../completion/testData/handlers/basic/staticMembers/ImportJavaStaticMethod.kt");
@@ -1127,6 +1132,16 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
         @TestMetadata("GetOperator.kt")
         public void testGetOperator() throws Exception {
             runTest("../completion/testData/handlers/basic/GetOperator.kt");
+        }
+
+        @TestMetadata("InsertImportedWithObjectName.kt")
+        public void testInsertImportedWithObjectName() throws Exception {
+            runTest("../completion/testData/handlers/basic/InsertImportedWithObjectName.kt");
+        }
+
+        @TestMetadata("InsertImportedWithPackageName.kt")
+        public void testInsertImportedWithPackageName() throws Exception {
+            runTest("../completion/testData/handlers/basic/InsertImportedWithPackageName.kt");
         }
 
         @TestMetadata("InterfaceNameBeforeRunBug.kt")
