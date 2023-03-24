@@ -43,7 +43,7 @@ interface PythonConsoleRemoteProcessCreator<T> {
 }
 
 data class RemoteConsoleProcessData(val pydevConsoleCommunication: PydevConsoleCommunication,
-                                    val commandLine: String?,
+                                    val commandLine: String,
                                     val process: Process,
                                     val socketProvider: PyRemoteSocketToLocalHostProvider)
 
