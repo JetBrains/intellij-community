@@ -426,13 +426,15 @@ final class MavenServerManagerImpl implements MavenServerManager {
         settings.setProjectJdk(sdkPath);
 
         var forceResolveDependenciesSequentially = Registry.is("maven.server.force.resolve.dependencies.sequentially");
+        var useCustomDependenciesResolver = Registry.is("maven.server.use.custom.dependencies.resolver");
 
         myConnector = MavenServerManagerImpl.this.getConnector(project, multiModuleProjectDirectory);
         return myConnector.createEmbedder(new MavenEmbedderSettings(
           settings,
           workingDirectory == null ? null : transformer.toRemotePath(workingDirectory),
           transformer.toRemotePath(multiModuleProjectDirectory),
-          forceResolveDependenciesSequentially
+          forceResolveDependenciesSequentially,
+          useCustomDependenciesResolver
         ));
       }
 

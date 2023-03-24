@@ -102,16 +102,17 @@ public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
   protected ProjectDependenciesResolver createDependenciesResolver() {
     ProjectDependenciesResolver dependenciesResolver = getComponent(ProjectDependenciesResolver.class);
 
-    //TODO: registry key to turn off
-
-    if (dependenciesResolver instanceof DefaultProjectDependenciesResolver) {
-      try {
-        DefaultProjectDependenciesResolver defaultResolver = (DefaultProjectDependenciesResolver)dependenciesResolver;
-        Field repoSystemField = defaultResolver.getClass().getDeclaredField("repoSystem");
-        repoSystemField.setAccessible(true);
-        repoSystemField.set(defaultResolver, getRepositorySystem());
-      } catch (Exception e) {
-        Maven3ServerGlobals.getLogger().warn(e);
+    if (myEmbedderSettings.useCustomDependenciesResolver()) {
+      if (dependenciesResolver instanceof DefaultProjectDependenciesResolver) {
+        try {
+          DefaultProjectDependenciesResolver defaultResolver = (DefaultProjectDependenciesResolver)dependenciesResolver;
+          Field repoSystemField = defaultResolver.getClass().getDeclaredField("repoSystem");
+          repoSystemField.setAccessible(true);
+          repoSystemField.set(defaultResolver, getRepositorySystem());
+        }
+        catch (Exception e) {
+          Maven3ServerGlobals.getLogger().warn(e);
+        }
       }
     }
 
@@ -123,16 +124,17 @@ public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
   protected PluginDependenciesResolver createPluginDependenciesResolver() {
     PluginDependenciesResolver dependenciesResolver = getComponent(PluginDependenciesResolver.class);
 
-    //TODO: registry key to turn off
-
-    if (dependenciesResolver instanceof DefaultPluginDependenciesResolver) {
-      try {
-        DefaultPluginDependenciesResolver defaultResolver = (DefaultPluginDependenciesResolver)dependenciesResolver;
-        Field repoSystemField = defaultResolver.getClass().getDeclaredField("repoSystem");
-        repoSystemField.setAccessible(true);
-        repoSystemField.set(defaultResolver, getRepositorySystem());
-      } catch (Exception e) {
-        Maven3ServerGlobals.getLogger().warn(e);
+    if (myEmbedderSettings.useCustomDependenciesResolver()) {
+      if (dependenciesResolver instanceof DefaultPluginDependenciesResolver) {
+        try {
+          DefaultPluginDependenciesResolver defaultResolver = (DefaultPluginDependenciesResolver)dependenciesResolver;
+          Field repoSystemField = defaultResolver.getClass().getDeclaredField("repoSystem");
+          repoSystemField.setAccessible(true);
+          repoSystemField.set(defaultResolver, getRepositorySystem());
+        }
+        catch (Exception e) {
+          Maven3ServerGlobals.getLogger().warn(e);
+        }
       }
     }
 

@@ -146,12 +146,12 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   private final AtomicReference<PluginDependenciesResolver> myPluginDependenciesResolver = new AtomicReference<>();
 
-  private final boolean forceResolveDependenciesSequentially;
+  @NotNull protected final MavenEmbedderSettings myEmbedderSettings;
 
   public Maven3XServerEmbedder(MavenEmbedderSettings settings) throws RemoteException {
     super(settings.getSettings());
 
-    forceResolveDependenciesSequentially = settings.forceResolveDependenciesSequentially();
+    myEmbedderSettings = settings;
 
     if (settings.getWorkingDirectory() != null) {
       System.setProperty("user.dir", settings.getWorkingDirectory());
@@ -923,7 +923,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
    * @return true if dependencies can be resolved in parallel for better performance
    */
   private boolean canResolveDependenciesInParallel() {
-    if (forceResolveDependenciesSequentially) {
+    if (myEmbedderSettings.forceResolveDependenciesSequentially()) {
       return false;
     }
     String mavenVersion = System.getProperty(MAVEN_EMBEDDER_VERSION);

@@ -31,19 +31,22 @@ public class MavenEmbedderSettings implements Serializable {
   @Nullable
   private final String multiModuleProjectDirectory;
   private final boolean forceResolveDependenciesSequentially;
+  private final boolean useCustomDependenciesResolver;
 
   public MavenEmbedderSettings(@NotNull MavenServerSettings settings) {
-    this(settings, null, null, false);
+    this(settings, null, null, false, true);
   }
 
   public MavenEmbedderSettings(@NotNull MavenServerSettings settings,
                                @Nullable String workingDirectory,
                                @Nullable String multiModuleProjectDirectory,
-                               boolean forceResolveDependenciesSequentially) {
+                               boolean forceResolveDependenciesSequentially,
+                               boolean useCustomDependenciesResolver) {
     this.settings = settings;
     this.workingDirectory = workingDirectory;
     this.multiModuleProjectDirectory = multiModuleProjectDirectory;
     this.forceResolveDependenciesSequentially = forceResolveDependenciesSequentially;
+    this.useCustomDependenciesResolver = useCustomDependenciesResolver;
   }
 
   @NotNull
@@ -63,5 +66,9 @@ public class MavenEmbedderSettings implements Serializable {
 
   public boolean forceResolveDependenciesSequentially() {
     return forceResolveDependenciesSequentially;
+  }
+
+  public boolean useCustomDependenciesResolver() {
+    return useCustomDependenciesResolver;
   }
 }
