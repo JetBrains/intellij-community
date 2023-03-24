@@ -8,8 +8,6 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.util.IconLoader.getReflectiveIcon
-import com.intellij.openapi.util.IconLoader.isReflectivePath
 import com.intellij.ui.*
 import com.intellij.ui.icons.*
 import com.intellij.ui.paint.PaintUtil
@@ -31,7 +29,6 @@ import java.awt.*
 import java.awt.image.BufferedImage
 import java.awt.image.ImageFilter
 import java.awt.image.RGBImageFilter
-import java.lang.invoke.MethodHandles
 import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
@@ -44,8 +41,6 @@ import kotlin.Pair
 
 private val LOG: Logger
   get() = logger<IconLoader>()
-
-private val LOOKUP = MethodHandles.lookup()
 
 private val iconCache = Caffeine.newBuilder()
   .expireAfterAccess(1, TimeUnit.HOURS)
@@ -134,41 +129,6 @@ object IconLoader {
     return getIcon(path = path, aClass = ReflectionUtil.getGrandCallerClass() ?: error(path))
   }
 
-  @JvmStatic
-  fun getReflectiveIcon(path: String, classLoader: ClassLoader): Icon? {
-    try {
-      var dotIndex = path.lastIndexOf('.')
-      val fieldName = path.substring(dotIndex + 1)
-      val builder = StringBuilder(path.length + 20)
-      builder.append(path, 0, dotIndex)
-      var separatorIndex = -1
-      do {
-        dotIndex = path.lastIndexOf('.', dotIndex - 1)
-        // if starts with a lower case, char - it is a package name
-        if (dotIndex == -1 || Character.isLowerCase(path[dotIndex + 1])) {
-          break
-        }
-        if (separatorIndex != -1) {
-          builder.setCharAt(separatorIndex, '$')
-        }
-        separatorIndex = dotIndex
-      }
-      while (true)
-      if (!Character.isLowerCase(builder[0])) {
-        if (separatorIndex != -1) {
-          builder.setCharAt(separatorIndex, '$')
-        }
-        builder.insert(0, if (path.startsWith("AllIcons.")) "com.intellij.icons." else "icons.")
-      }
-      val aClass = classLoader.loadClass(builder.toString())
-      return LOOKUP.findStaticGetter(aClass, fieldName, Icon::class.java).invoke() as Icon
-    }
-    catch (e: Throwable) {
-      LOG.warn("Cannot get reflective icon (path=$path)", e)
-      return null
-    }
-  }
-
   @Deprecated("Use {@link #findIcon(String, ClassLoader)}.", level = DeprecationLevel.ERROR)
   @JvmStatic
   fun findIcon(path: @NonNls String): Icon? {
@@ -213,10 +173,6 @@ object IconLoader {
   @JvmStatic
   fun findIcon(path: String, aClass: Class<*>, deferUrlResolve: Boolean, strict: Boolean): Icon? {
     return findIcon(originalPath = path, aClass = aClass, classLoader = aClass.classLoader, strict, deferUrlResolve = deferUrlResolve)
-  }
-
-  fun isReflectivePath(path: String): Boolean {
-    return !path.startsWith('/') && path.contains("Icons.")
   }
 
   @JvmStatic

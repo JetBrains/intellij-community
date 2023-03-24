@@ -79,7 +79,7 @@ private val toolbarDecoratorIconsFolder: @NonNls String
   get() = "toolbarDecorator/${if (SystemInfoRt.isMac) "mac/" else ""}"
 
 object IconUtil {
-  val ICON_FLAG_IGNORE_MASK = Key<Int>("ICON_FLAG_IGNORE_MASK")
+  val ICON_FLAG_IGNORE_MASK: Key<Int> = Key<Int>("ICON_FLAG_IGNORE_MASK")
 
   @JvmStatic
   fun cropIcon(icon: Icon, maxWidth: Int, maxHeight: Int): Icon {
@@ -338,8 +338,8 @@ object IconUtil {
 
   @Deprecated("use {@link #scale(Icon, Component, float)}")
   @JvmStatic
-  fun scale(source: Icon, scale: Double): Icon =
-    object : Icon {
+  fun scale(source: Icon, scale: Double): Icon {
+    return object : Icon {
       private val clampedScale = clampScale(scale)
 
       override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
@@ -350,10 +350,11 @@ object IconUtil {
       override fun getIconHeight(): Int = (source.iconHeight * clampedScale).toInt()
       override fun toString(): String = "IconUtil.scale for $source"
     }
+  }
 
   @JvmStatic
-  fun resizeSquared(source: Icon, size: Int): Icon =
-    object : Icon {
+  fun resizeSquared(source: Icon, size: Int): Icon {
+    return object : Icon {
       private val sizeValue = JBUI.uiIntValue("ResizedIcon", size)
 
       override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
@@ -365,6 +366,7 @@ object IconUtil {
       override fun getIconHeight(): Int = sizeValue.get()
       override fun toString(): String = "IconUtil.resizeSquared for $source"
     }
+  }
 
   /**
    * Returns a copy of the provided icon.

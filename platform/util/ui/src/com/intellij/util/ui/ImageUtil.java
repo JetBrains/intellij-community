@@ -88,8 +88,7 @@ public final class ImageUtil {
    * @return a HiDPI-aware BufferedImage in the graphics scale
    * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
    */
-  @NotNull
-  public static BufferedImage createImage(Graphics g, int width, int height, int type) {
+  public static @NotNull BufferedImage createImage(Graphics g, int width, int height, int type) {
     return createImage(g, width, height, type, PaintUtil.RoundingMode.FLOOR);
   }
 
@@ -97,8 +96,7 @@ public final class ImageUtil {
    * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
    * @see #createImage(GraphicsConfiguration, int, int, int)
    */
-  @NotNull
-  public static BufferedImage createImage(Graphics g, double width, double height, int type, @NotNull PaintUtil.RoundingMode rm) {
+  public static @NotNull BufferedImage createImage(Graphics g, double width, double height, int type, @NotNull PaintUtil.RoundingMode rm) {
     if (g instanceof Graphics2D g2d) {
       if (JreHiDpiUtil.isJreHiDPI(g2d)) {
         return new HiDPIImage(g2d, width, height, type, rm);
@@ -109,18 +107,15 @@ public final class ImageUtil {
     return createImage(rm.round(width), rm.round(height), type);
   }
 
-  @NotNull
-  public static BufferedImage toBufferedImage(@NotNull Image image) {
+  public static @NotNull BufferedImage toBufferedImage(@NotNull Image image) {
     return toBufferedImage(image, false, false);
   }
 
-  @NotNull
-  public static BufferedImage toBufferedImage(@NotNull Image image, boolean inUserSize) {
+  public static @NotNull BufferedImage toBufferedImage(@NotNull Image image, boolean inUserSize) {
     return toBufferedImage(image, inUserSize, false);
   }
 
-  @NotNull
-  public static BufferedImage toBufferedImage(@NotNull Image image, boolean inUserSize, boolean ensureOneComponent) {
+  public static @NotNull BufferedImage toBufferedImage(@NotNull Image image, boolean inUserSize, boolean ensureOneComponent) {
     if (image instanceof JBHiDPIScaledImage jbImage) {
       Image delegate = jbImage.getDelegate();
       if (delegate != null) image = delegate;
@@ -278,23 +273,20 @@ public final class ImageUtil {
     return scaleImage(hidpiImage, scaledSize, scaledSize);
   }
 
-  @NotNull
-  public static BufferedImage createCircleImage(@NotNull BufferedImage image) {
+  public static @NotNull BufferedImage createCircleImage(@NotNull BufferedImage image) {
     int size = min(image.getWidth(), image.getHeight());
     Area avatarOvalArea = new Area(new Ellipse2D.Double(0.0, 0.0, size, size));
 
     return clipImage(image, avatarOvalArea);
   }
 
-  @NotNull
-  public static BufferedImage createRoundedImage(@NotNull BufferedImage image, double arc) {
+  public static @NotNull BufferedImage createRoundedImage(@NotNull BufferedImage image, double arc) {
     int size = min(image.getWidth(), image.getHeight());
     Area avatarOvalArea = new Area(new RoundRectangle2D.Double(0.0, 0.0, size, size, arc, arc));
     return clipImage(image, avatarOvalArea);
   }
 
-  @NotNull
-  public static BufferedImage clipImage(@NotNull BufferedImage image, @NotNull Shape clip) {
+  public static @NotNull BufferedImage clipImage(@NotNull BufferedImage image, @NotNull Shape clip) {
     if (image instanceof JBHiDPIScaledImage scaledImage) {
       Image delegate = scaledImage.getDelegate();
       if (delegate == null) return doClipImage(scaledImage, clip);

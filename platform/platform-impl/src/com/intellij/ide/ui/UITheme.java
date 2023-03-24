@@ -4,13 +4,13 @@ package com.intellij.ide.ui;
 import com.fasterxml.jackson.jr.ob.JSON;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.ColorHexUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.Gray;
 import com.intellij.ui.icons.ImageDataByPathLoader;
+import com.intellij.ui.icons.ImageDataByPathLoaderKt;
 import com.intellij.ui.svg.SvgAttributePatcher;
 import com.intellij.ui.svg.SvgKt;
 import com.intellij.util.ArrayUtilRt;
@@ -647,7 +647,7 @@ public final class UITheme {
         return parseGrayFilter(value);
       }
       else if (value.startsWith("AllIcons.")) {
-        return IconLoader.getReflectiveIcon(value, UITheme.class.getClassLoader());
+        return ImageDataByPathLoaderKt.getReflectiveIcon(value, UITheme.class.getClassLoader());
       }
       else if (!value.startsWith("#") && getIntegerOrFloat(value, null) != null) {
         return getIntegerOrFloat(value, key);

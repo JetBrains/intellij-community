@@ -12,6 +12,7 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.svg.SvgAttributePatcher
 import com.intellij.ui.svg.loadSvgAndCacheIfApplicable
 import com.intellij.util.ArrayUtilRt
+import com.intellij.util.ResourceUtil
 import com.intellij.util.SVGLoader
 import com.intellij.util.io.URLUtil
 import com.intellij.util.ui.StartupUiUtil
@@ -66,6 +67,28 @@ fun loadImageFromUrlWithoutCache(path: String): Image? {
   // We can't check all 3rd party plugins and convince the authors to add @2x icons.
   // In IDE-managed HiDPI mode with a scale > 1.0 we scale images manually - pass isUpScaleNeeded = true
   return loadImage(path = path, useCache = false, classLoader = null)
+}
+
+@ApiStatus.Internal
+fun findSvgData(path: String, classLoader: ClassLoader, pixScale: Float, isDark: Boolean = StartupUiUtil.isUnderDarcula): ByteArray? {
+  val loadingStart = StartUpMeasurer.getCurrentTimeIfEnabled()
+  val descriptors = createImageDescriptorList(path = path, isDark = isDark, pixScale = pixScale)
+  val ext = "svg"
+  val rawPathWithoutExt = path.substring(if (path.startsWith('/')) 1 else 0, path.lastIndexOf('.'))
+  for (descriptor in descriptors) {
+    val transformedPath = descriptor.pathTransform(rawPathWithoutExt, ext)
+    val resourceLoadStart = StartUpMeasurer.getCurrentTimeIfEnabled()
+    val data = ResourceUtil.getResourceAsBytes(transformedPath, classLoader, true) ?: continue
+    if (resourceLoadStart != -1L) {
+      IconLoadMeasurer.loadFromResources.end(resourceLoadStart)
+    }
+    if (loadingStart != -1L) {
+      IconLoadMeasurer.addLoading(isSvg = descriptor.isSvg, start = loadingStart)
+    }
+
+    return data
+  }
+  return null
 }
 
 internal fun loadImage(path: String,

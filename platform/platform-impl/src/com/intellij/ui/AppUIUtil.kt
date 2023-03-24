@@ -18,20 +18,17 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.util.Condition
-import com.intellij.openapi.util.IconLoader.findIcon
+import com.intellij.openapi.util.*
 import com.intellij.openapi.util.IconLoader.setUseDarkIcons
-import com.intellij.openapi.util.IconLoader.toImage
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.ui.AppIcon.MacAppIcon
+import com.intellij.ui.icons.findSvgData
+import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.scale.JBUIScale.sysScale
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.ui.scale.ScaleContext.Companion.create
-import com.intellij.ui.scale.ScaleContextAware
-import com.intellij.util.IconUtil.scale
+import com.intellij.ui.svg.loadWithSizes
+import com.intellij.util.IconUtil
 import com.intellij.util.ImageLoader.loadFromResource
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.PlatformUtils
@@ -66,15 +63,13 @@ fun updateAppWindowIcon(window: Window) {
   var images = ourIcons
   if (images == null) {
     images = ArrayList(3)
-    ourIcons = images
     val appInfo = ApplicationInfoImpl.getShadowInstance()
     val svgIconUrl = appInfo.applicationSvgIconUrl
     val smallSvgIconUrl = appInfo.smallApplicationSvgIconUrl
-    val scaleContext = create(window)
+    val scaleContext = ScaleContext.create(window)
     if (SystemInfoRt.isUnix) {
-      val image = loadApplicationIconImage(svgPath = svgIconUrl, scaleContext = scaleContext, size = 128)
-      if (image != null) {
-        images.add(image)
+      loadApplicationIconImage(svgPath = svgIconUrl, scaleContext = scaleContext, size = 128)?.let {
+        images.add(it)
       }
     }
     val element = loadApplicationIconImage(svgPath = smallSvgIconUrl, scaleContext = scaleContext, size = 32)
@@ -83,11 +78,12 @@ fun updateAppWindowIcon(window: Window) {
     }
     if (SystemInfoRt.isWindows) {
       @Suppress("DEPRECATION")
-      val image = loadApplicationIconImage(svgPath = smallSvgIconUrl,
-                                           scaleContext = scaleContext,
-                                           size = 16,
-                                           fallbackPath = appInfo.smallIconUrl)
-      images.add(image)
+      loadApplicationIconImage(svgPath = smallSvgIconUrl,
+                               scaleContext = scaleContext,
+                               size = 16,
+                               fallbackPath = appInfo.smallIconUrl)?.let {
+        images.add(it)
+      }
     }
     for (i in images.indices) {
       val image = images[i]
@@ -95,7 +91,10 @@ fun updateAppWindowIcon(window: Window) {
         images.set(i, image.delegate)
       }
     }
+
+    ourIcons = images
   }
+
   if (!images.isEmpty()) {
     if (!SystemInfoRt.isMac) {
       window.iconImages = images
@@ -111,37 +110,23 @@ fun updateAppWindowIcon(window: Window) {
  * Returns a hidpi-aware image.
  */
 private fun loadApplicationIconImage(svgPath: String?, scaleContext: ScaleContext, size: Int, fallbackPath: String? = null): Image? {
-  val icon = if (svgPath == null) null else loadApplicationIcon(svgPath, scaleContext, size)
-  if (icon == null) {
-    return if (fallbackPath == null) null else loadFromResource(fallbackPath, AppUIUtil::class.java)
-  }
-  else {
-    return toImage(icon, scaleContext)
-  }
+  val image = if (svgPath == null) null else loadAppIconImage(svgPath, scaleContext, size)
+  return image ?: loadFromResource(path = fallbackPath ?: return null, aClass = AppUIUtil::class.java)
 }
 
-private fun loadApplicationIcon(svgPath: String, scaleContext: ScaleContext, size: Int): Icon? {
-  val icon = findIcon(svgPath, AppUIUtil::class.java.classLoader)
-  if (icon == null) {
-    LOG.info("Cannot load SVG application icon from $svgPath")
+private fun loadAppIconImage(svgPath: String, scaleContext: ScaleContext, size: Int): Image? {
+  val pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
+  val svgData = findSvgData(path = svgPath, classLoader = AppUIUtil::class.java.classLoader, pixScale = pixScale)
+  if (svgData == null) {
+    LOG.warn("Cannot load SVG application icon from $svgPath")
     return null
   }
-  if (icon is ScaleContextAware) {
-    icon.updateScaleContext(scaleContext)
-  }
-  return scaleIconToSize(icon, size)
+  return loadWithSizes(sizes = listOf(size), data = svgData, scale = pixScale).first()
 }
 
-private fun scaleIconToSize(icon: Icon, size: Int): Icon {
-  val width = icon.iconWidth
-  if (width == size) {
-    return icon
-  }
-  val scale = size / width.toFloat()
-  return scale(icon = icon, ancestor = null, scale = scale)
-}
-
-fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int = 16, isReleaseIcon: Boolean = !ApplicationInfoImpl.getShadowInstance().isEAP): Icon {
+fun loadSmallApplicationIcon(scaleContext: ScaleContext,
+                             size: Int = 16,
+                             isReleaseIcon: Boolean = !ApplicationInfoImpl.getShadowInstance().isEAP): Icon {
   val appInfo = ApplicationInfoImpl.getShadowInstance()
   var smallIconUrl = appInfo.smallApplicationSvgIconUrl
   if (isReleaseIcon && appInfo.isEAP && appInfo is ApplicationInfoImpl) {
@@ -149,15 +134,23 @@ fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int = 16, isRelea
     smallIconUrl = appInfo.getSmallApplicationSvgIconUrl(false)
   }
 
-  val icon = if (smallIconUrl == null) null else loadApplicationIcon(smallIconUrl, scaleContext, size)
-  if (icon != null) {
-    return icon
+  var image = if (smallIconUrl == null) null else loadAppIconImage(smallIconUrl, scaleContext, size)
+  if (image != null) {
+    return JBImageIcon(image)
   }
 
   @Suppress("DEPRECATION")
   val fallbackSmallIconUrl = appInfo.smallIconUrl
-  val image = loadFromResource(fallbackSmallIconUrl, AppUIUtil::class.java) ?: error("Can't load '$fallbackSmallIconUrl'")
-  return scaleIconToSize(JBImageIcon(image), size)
+  image = loadFromResource(fallbackSmallIconUrl, AppUIUtil::class.java) ?: error("Can't load '$fallbackSmallIconUrl'")
+
+  val icon = JBImageIcon(image)
+  val width = icon.iconWidth
+  if (width == size) {
+    return icon
+  }
+
+  val scale = size / width.toFloat()
+  return IconUtil.scale(icon = icon, ancestor = null, scale = scale)
 }
 
 fun findAppIcon(): String? {
@@ -204,7 +197,7 @@ object AppUIUtil {
   @JvmStatic
   fun loadApplicationIcon(ctx: ScaleContext, size: Int): Icon? {
     val url = ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl
-    return if (url == null) null else loadApplicationIcon(url, ctx, size)
+    return if (url == null) null else loadAppIconImage(url, ctx, size)?.let { JBImageIcon(it) }
   }
 
   @JvmStatic
