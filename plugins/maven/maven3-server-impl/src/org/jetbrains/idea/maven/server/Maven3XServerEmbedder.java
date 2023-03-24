@@ -1572,9 +1572,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   @Override
   public Collection<MavenArtifact> resolvePlugin(@NotNull final MavenPlugin mavenPlugin,
-                                                 @NotNull final List<MavenRemoteRepository> repositories,
-                                                 int nativeMavenProjectId,
-                                                 final boolean transitive, MavenToken token)
+                                                 int nativeMavenProjectId, MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);
     try {

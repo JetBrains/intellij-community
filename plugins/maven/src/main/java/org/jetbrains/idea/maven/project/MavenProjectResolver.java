@@ -224,7 +224,7 @@ public class MavenProjectResolver {
         process.checkCanceled();
 
         MavenResolvedPluginsCache.PluginResolvedResult result =
-          myCacheResolver.resolveCached(embedder, each, mavenProject.getRemoteRepositories(), nativeMavenProject);
+          myCacheResolver.resolveCached(embedder, each, nativeMavenProject);
         if (!result.fromCache()) {
           for (MavenArtifact artifact : result.artifacts()) {
             Path pluginJar = artifact.getFile().toPath();

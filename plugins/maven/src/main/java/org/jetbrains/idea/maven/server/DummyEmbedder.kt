@@ -62,9 +62,7 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
   }
 
   override fun resolvePlugin(plugin: MavenPlugin,
-                             repositories: List<MavenRemoteRepository>,
                              nativeMavenProjectId: Int,
-                             transitive: Boolean,
                              token: MavenToken?): Collection<MavenArtifact> {
     return emptyList()
   }

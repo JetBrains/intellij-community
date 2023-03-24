@@ -224,9 +224,8 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   }
 
   public Collection<MavenArtifact> resolvePlugin(@NotNull final MavenPlugin plugin,
-                                                 @NotNull final List<MavenRemoteRepository> repositories,
-                                                 @NotNull final NativeMavenProjectHolder nativeMavenProject,
-                                                 final boolean transitive) throws MavenProcessCanceledException {
+                                                 @NotNull final NativeMavenProjectHolder nativeMavenProject)
+    throws MavenProcessCanceledException {
     int id;
     try {
       id = nativeMavenProject.getId();
@@ -237,7 +236,7 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     }
 
     try {
-      return getOrCreateWrappee().resolvePlugin(plugin, repositories, id, transitive, ourToken);
+      return getOrCreateWrappee().resolvePlugin(plugin, id, ourToken);
     }
     catch (RemoteException e) {
       // do not try to reconnect here since we have lost NativeMavenProjectHolder anyway.
