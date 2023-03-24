@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.execution.process.OSProcessHandler;
@@ -115,8 +115,13 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   }
 
   @Override
-  public void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat) {
-    setWatchRoots(recursive, flat, false);
+  public void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat, boolean shuttingDown) {
+    if (shuttingDown) {
+      myIsShuttingDown = true;
+    }
+    else {
+      doSetWatchRoots(recursive, flat, false);
+    }
   }
 
   /**
@@ -194,7 +199,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       List<String> recursive = myRecursiveWatchRoots;
       List<String> flat = myFlatWatchRoots;
       if (recursive.size() + flat.size() > 0) {
-        setWatchRoots(recursive, flat, true);
+        doSetWatchRoots(recursive, flat, true);
       }
     }
   }
@@ -225,11 +230,9 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
   }
 
-  private void setWatchRoots(List<String> recursive, List<String> flat, boolean restart) {
-    if (myProcessHandler == null || myProcessHandler.isProcessTerminated()) return;
-
-    if (ApplicationManager.getApplication().isDisposed()) {
-      recursive = flat = Collections.emptyList();
+  private void doSetWatchRoots(List<String> recursive, List<String> flat, boolean restart) {
+    if (myProcessHandler == null || myProcessHandler.isProcessTerminated() || myIsShuttingDown) {
+      return;
     }
 
     if (!restart && myRecursiveWatchRoots.equals(recursive) && myFlatWatchRoots.equals(flat)) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.wsl;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
@@ -90,7 +90,8 @@ public class WslFileWatcher extends PluggableFileWatcher {
   }
 
   @Override
-  public void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat) {
+  public void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat, boolean shuttingDown) {
+    if (shuttingDown) myShuttingDown = true;
     if (myShuttingDown) return;
 
     Map<String, VmData> newVMs = new HashMap<>();
