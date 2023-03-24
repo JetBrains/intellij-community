@@ -12,7 +12,6 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,7 +72,7 @@ public final class GoToChangePopupBuilder {
 
       InputEvent event = e.getInputEvent();
       if (event instanceof MouseEvent) {
-        popup.show(new RelativePoint((MouseEvent)event));
+        popup.showUnderneathOf(event.getComponent());
       }
       else {
         popup.showInBestPositionFor(e.getDataContext());
