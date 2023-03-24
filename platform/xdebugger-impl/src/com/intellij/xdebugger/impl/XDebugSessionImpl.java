@@ -657,7 +657,6 @@ public final class XDebugSessionImpl implements XDebugSession {
       myExecutionPointManager.setExecutionPoint(executionPoint);
       myExecutionPointManager.setActiveSourceKind(myCurrentSourceKind);
       updateExecutionPointGutterIconRenderer();
-      myExecutionPointManager.showExecutionPosition();
     }
   }
 
