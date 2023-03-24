@@ -18,7 +18,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.module.ModuleManager;
@@ -491,7 +490,16 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     LocalHistoryAction action = LocalHistory.getInstance().startAction(commandName);
 
     final UsageInfo[] writableUsageInfos = usageInfoSet.toArray(UsageInfo.EMPTY_ARRAY);
+    final String refactoringId = getRefactoringId();
     try {
+      if (refactoringId != null) {
+        RefactoringEventData data = getBeforeData();
+        if (data != null) {
+          data.addUsages(Arrays.asList(writableUsageInfos));
+        }
+        myProject.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(refactoringId, data);
+      }
+
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       RefactoringListenerManagerImpl listenerManager = (RefactoringListenerManagerImpl)RefactoringListenerManager.getInstance(myProject);
       myTransaction = listenerManager.startTransaction();
@@ -509,18 +517,21 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(prepareHelpersRunnable,
                                                                         RefactoringBundle.message("refactoring.prepare.progress"), false, myProject);
 
+      if (refactoringId != null) {
+        UndoManager.getInstance(myProject).undoableActionPerformed(new UndoRefactoringAction(myProject, refactoringId));
+      }
+
       ApplicationEx app = ApplicationManagerEx.getApplicationEx();
       boolean inBranch = Registry.is("run.refactorings.in.model.branch") && canPerformRefactoringInBranch();
       if (inBranch) {
-        callPerformRefactoring(writableUsageInfos, () -> performInBranch(writableUsageInfos));
+        performInBranch(writableUsageInfos);
       }
       else if (Registry.is("run.refactorings.under.progress")) {
         app.runWriteActionWithNonCancellableProgressInDispatchThread(commandName, myProject, null,
-                                                                     indicator -> callPerformRefactoring(writableUsageInfos,
-                                                                                                         () -> performRefactoring(writableUsageInfos)));
+                                                                     indicator -> performRefactoring(writableUsageInfos));
       }
       else {
-        app.runWriteAction(() -> callPerformRefactoring(writableUsageInfos, () -> performRefactoring(writableUsageInfos)));
+        app.runWriteAction(() -> performRefactoring(writableUsageInfos));
       }
 
       DumbService.getInstance(myProject).completeJustSubmittedTasks();
@@ -540,6 +551,10 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       }
     }
     finally {
+      if (refactoringId != null) {
+        myProject.getMessageBus()
+          .syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(refactoringId, getAfterData(writableUsageInfos));
+      }
       action.finish();
       myUsageView = null;
     }
@@ -551,32 +566,6 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     else {
       if (!isPreviewUsages(writableUsageInfos)) {
         RefactoringUiService.getInstance().setStatusBarInfo(myProject, RefactoringBundle.message("statusBar.noUsages"));
-      }
-    }
-  }
-
-  private void callPerformRefactoring(UsageInfo[] usageInfos, Runnable perform) {
-    final String refactoringId = getRefactoringId();
-    if (refactoringId != null) {
-      RefactoringEventData data = getBeforeData();
-      if (data != null) {
-        data.addUsages(Arrays.asList(usageInfos));
-      }
-      myProject.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(refactoringId, data);
-    }
-
-    try {
-      if (refactoringId != null) {
-        UndoableAction action1 = new UndoRefactoringAction(myProject, refactoringId);
-        UndoManager.getInstance(myProject).undoableActionPerformed(action1);
-      }
-
-      perform.run();
-    }
-    finally {
-      if (refactoringId != null) {
-        myProject.getMessageBus()
-          .syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(refactoringId, getAfterData(usageInfos));
       }
     }
   }
