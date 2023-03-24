@@ -65,7 +65,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
 
   @NotNull
   @Override
-  protected final String getSuppressId() {
+  public final String getSuppressId() {
     return getID();
   }
 

@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class GlobalInspectionTool extends InspectionProfileEntry {
   @NotNull
   @Override
-  protected final String getSuppressId() {
+  public final String getSuppressId() {
     return super.getSuppressId();
   }
 
