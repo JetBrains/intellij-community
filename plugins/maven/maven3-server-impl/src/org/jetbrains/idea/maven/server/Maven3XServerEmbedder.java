@@ -1571,22 +1571,22 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   @Override
-  public Collection<MavenArtifact> resolvePlugin(@NotNull final MavenPlugin plugin,
+  public Collection<MavenArtifact> resolvePlugin(@NotNull final MavenPlugin mavenPlugin,
                                                  @NotNull final List<MavenRemoteRepository> repositories,
                                                  int nativeMavenProjectId,
                                                  final boolean transitive, MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);
     try {
-      Plugin mavenPlugin = new Plugin();
-      mavenPlugin.setGroupId(plugin.getGroupId());
-      mavenPlugin.setArtifactId(plugin.getArtifactId());
-      mavenPlugin.setVersion(plugin.getVersion());
+      Plugin plugin = new Plugin();
+      plugin.setGroupId(mavenPlugin.getGroupId());
+      plugin.setArtifactId(mavenPlugin.getArtifactId());
+      plugin.setVersion(mavenPlugin.getVersion());
       MavenProject project = RemoteNativeMavenProjectHolder.findProjectById(nativeMavenProjectId);
 
-      Plugin pluginFromProject = project.getBuild().getPluginsAsMap().get(plugin.getGroupId() + ':' + plugin.getArtifactId());
+      Plugin pluginFromProject = project.getBuild().getPluginsAsMap().get(mavenPlugin.getGroupId() + ':' + mavenPlugin.getArtifactId());
       if (pluginFromProject != null) {
-        mavenPlugin.setDependencies(pluginFromProject.getDependencies());
+        plugin.setDependencies(pluginFromProject.getDependencies());
       }
 
       final MavenExecutionRequest request =
@@ -1599,10 +1599,10 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       PluginDependenciesResolver pluginDependenciesResolver = getPluginDependenciesResolver();
 
       org.eclipse.aether.artifact.Artifact pluginArtifact =
-        pluginDependenciesResolver.resolve(mavenPlugin, project.getRemotePluginRepositories(), repositorySystemSession);
+        pluginDependenciesResolver.resolve(plugin, project.getRemotePluginRepositories(), repositorySystemSession);
 
       org.eclipse.aether.graph.DependencyNode node = pluginDependenciesResolver
-        .resolve(mavenPlugin, pluginArtifact, null, project.getRemotePluginRepositories(), repositorySystemSession);
+        .resolve(plugin, pluginArtifact, null, project.getRemotePluginRepositories(), repositorySystemSession);
 
       PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
       node.accept(nlg);
@@ -1610,8 +1610,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       List<MavenArtifact> res = new ArrayList<MavenArtifact>();
 
       for (org.eclipse.aether.artifact.Artifact artifact : nlg.getArtifacts(true)) {
-        if (!Objects.equals(artifact.getArtifactId(), plugin.getArtifactId()) ||
-            !Objects.equals(artifact.getGroupId(), plugin.getGroupId())) {
+        if (!Objects.equals(artifact.getArtifactId(), mavenPlugin.getArtifactId()) ||
+            !Objects.equals(artifact.getGroupId(), mavenPlugin.getGroupId())) {
           res.add(MavenModelConverter.convertArtifact(RepositoryUtils.toArtifact(artifact), getLocalRepositoryFile()));
         }
       }
