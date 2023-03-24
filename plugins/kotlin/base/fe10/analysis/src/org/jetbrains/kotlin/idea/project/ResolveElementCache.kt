@@ -11,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.SLRUCache
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analyzer.ModuleInfo
+import org.jetbrains.kotlin.base.fe10.analysis.DaemonCodeAnalyzerStatusService
 import org.jetbrains.kotlin.cfg.ControlFlowInformationProviderImpl
 import org.jetbrains.kotlin.container.get
 import org.jetbrains.kotlin.context.SimpleGlobalContext
@@ -19,7 +20,6 @@ import org.jetbrains.kotlin.context.withProject
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.frontend.di.createContainerForBodyResolve
-import org.jetbrains.kotlin.base.fe10.analysis.DaemonCodeAnalyzerStatusService
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
@@ -798,11 +798,16 @@ class ResolveElementCache(
         return trace
     }
 
-    private fun forceResolveAnnotationsInside(element: KtElement) {
-        element.forEachDescendantOfType<KtAnnotationEntry>(canGoInside = { it !is KtBlockExpression }) { entry ->
+    private fun forceResolveAnnotationsInside(element: KtAnnotated) {
+        val action: (KtAnnotationEntry) -> Unit = { entry ->
             resolveSession.bindingContext[BindingContext.ANNOTATION, entry]?.let {
                 ForceResolveUtil.forceResolveAllContents(it)
             }
+        }
+        if (element.containingKtFile.isCompiled) {
+            element.annotationEntries.forEach(action)
+        } else {
+            element.forEachDescendantOfType<KtAnnotationEntry>(canGoInside = { it !is KtBlockExpression }, action = action)
         }
     }
 
