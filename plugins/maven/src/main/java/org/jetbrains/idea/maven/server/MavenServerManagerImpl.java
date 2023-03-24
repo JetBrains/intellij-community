@@ -424,11 +424,16 @@ final class MavenServerManagerImpl implements MavenServerManager {
           sdkPath = transformer.toRemotePath(sdkPath);
         }
         settings.setProjectJdk(sdkPath);
-        myConnector = MavenServerManagerImpl.this.getConnector(project, multiModuleProjectDirectory);
 
-        return myConnector.createEmbedder(
-          new MavenEmbedderSettings(settings, workingDirectory == null ? null : transformer.toRemotePath(workingDirectory),
-                                    transformer.toRemotePath(multiModuleProjectDirectory)));
+        var forceResolveDependenciesSequentially = Registry.is("maven.server.force.resolve.dependencies.sequentially");
+
+        myConnector = MavenServerManagerImpl.this.getConnector(project, multiModuleProjectDirectory);
+        return myConnector.createEmbedder(new MavenEmbedderSettings(
+          settings,
+          workingDirectory == null ? null : transformer.toRemotePath(workingDirectory),
+          transformer.toRemotePath(multiModuleProjectDirectory),
+          forceResolveDependenciesSequentially
+        ));
       }
 
       @Override

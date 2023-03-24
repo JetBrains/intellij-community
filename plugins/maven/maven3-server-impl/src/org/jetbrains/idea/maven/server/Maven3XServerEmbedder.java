@@ -146,8 +146,12 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   private final AtomicReference<PluginDependenciesResolver> myPluginDependenciesResolver = new AtomicReference<>();
 
+  private final boolean forceResolveDependenciesSequentially;
+
   public Maven3XServerEmbedder(MavenEmbedderSettings settings) throws RemoteException {
     super(settings.getSettings());
+
+    forceResolveDependenciesSequentially = settings.forceResolveDependenciesSequentially();
 
     if (settings.getWorkingDirectory() != null) {
       System.setProperty("user.dir", settings.getWorkingDirectory());
@@ -784,8 +788,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   @Override
   public Collection<MavenServerExecutionResult> resolveProject(@NotNull Collection<File> files,
                                                                @NotNull Collection<String> activeProfiles,
-                                                               @NotNull Collection<String> inactiveProfiles,
-                                                               boolean forceResolveDependenciesSequentially, MavenToken token)
+                                                               @NotNull Collection<String> inactiveProfiles, MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);
     try {
@@ -795,8 +798,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         files,
         new ArrayList<>(activeProfiles),
         new ArrayList<>(inactiveProfiles),
-        Collections.singletonList(listener),
-        forceResolveDependenciesSequentially);
+        Collections.singletonList(listener)
+      );
 
       return ContainerUtilRt.map2List(results, result -> {
         try {
@@ -816,8 +819,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   private Collection<MavenExecutionResult> doResolveProject(@NotNull final Collection<File> files,
                                                             @NotNull final List<String> activeProfiles,
                                                             @NotNull final List<String> inactiveProfiles,
-                                                            final List<ResolutionListener> listeners,
-                                                            boolean forceResolveDependenciesSequentially) throws RemoteException {
+                                                            final List<ResolutionListener> listeners) throws RemoteException {
     final File file = !files.isEmpty() ? files.iterator().next() : null;
     final MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, null);
 
@@ -874,7 +876,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
           }
         }
 
-        boolean runInParallel = canResolveDependenciesInParallel(forceResolveDependenciesSequentially);
+        boolean runInParallel = canResolveDependenciesInParallel();
         Collection<MavenExecutionResult> execResults =
           MavenServerParallelRunner.execute(runInParallel, buildingResultsToResolveDependencies.entrySet(), entry ->
             resolveBuildingResult(repositorySession, addUnresolved, entry.getKey(), entry.getValue())
@@ -920,7 +922,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
    *
    * @return true if dependencies can be resolved in parallel for better performance
    */
-  private static boolean canResolveDependenciesInParallel(boolean forceResolveDependenciesSequentially) {
+  private boolean canResolveDependenciesInParallel() {
     if (forceResolveDependenciesSequentially) {
       return false;
     }
