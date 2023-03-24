@@ -241,7 +241,4 @@ public abstract class JavaTestFramework implements JvmTestFramework {
     return isTestMethod(element, true);
   }
 
-  public boolean isMyConfigurationType(ConfigurationType type) {
-    return false;
-  }
 }
