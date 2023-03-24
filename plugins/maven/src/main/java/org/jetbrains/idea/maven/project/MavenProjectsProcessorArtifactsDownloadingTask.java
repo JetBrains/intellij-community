@@ -71,7 +71,7 @@ public final class MavenProjectsProcessorArtifactsDownloadingTask implements Mav
     }
 
     ApplicationManager.getApplication().invokeLater(() -> {
-      VirtualFileManager.getInstance().asyncRefresh(null);
+      VirtualFileManager.getInstance().asyncRefresh();
     }, project.getDisposed());
   }
 }

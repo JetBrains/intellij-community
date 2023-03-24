@@ -5,7 +5,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import kotlinx.coroutines.*
 
 suspend fun refreshVFSAsync() {
-  val sessionId = VirtualFileManager.getInstance().asyncRefresh(null)
+  val sessionId = VirtualFileManager.getInstance().asyncRefresh()
   val refreshQueueImpl = RefreshQueue.getInstance() as? RefreshQueueImpl
   val session = refreshQueueImpl?.getSession(sessionId) ?: return
   try {

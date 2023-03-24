@@ -1375,7 +1375,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       if (myProject.isDisposed()) return;
 
       MavenProjectImporter.tryUpdateTargetFolders(myProject);
-      VirtualFileManager.getInstance().asyncRefresh(null);
+      VirtualFileManager.getInstance().asyncRefresh();
     });
   }
 
@@ -1433,7 +1433,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       ApplicationManager.getApplication().invokeAndWait(() -> fm.syncRefresh());
     }
     else {
-      fm.asyncRefresh(null);
+      fm.asyncRefresh();
     }
 
     if (postTasks.get() != null /*may be null if importing is cancelled*/) {

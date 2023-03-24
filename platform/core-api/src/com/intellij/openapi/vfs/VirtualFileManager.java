@@ -67,6 +67,10 @@ public abstract class VirtualFileManager implements ModificationTracker {
    */
   public abstract long asyncRefresh(@Nullable Runnable postAction);
 
+  public final long asyncRefresh() {
+    return asyncRefresh(null);
+  }
+
   public abstract void refreshWithoutFileWatcher(boolean asynchronous);
 
   /**
