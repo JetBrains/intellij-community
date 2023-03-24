@@ -88,10 +88,10 @@ public final class FSRecords {
   }
 
   static synchronized void dispose() {
-    final FSRecordsImpl impl = FSRecords.impl;
-    if (impl != null) {
-      impl.dispose();
-      FSRecords.impl = null;
+    final FSRecordsImpl _impl = impl;
+    if (_impl != null) {
+      _impl.dispose();
+      impl = null;
       disconnectLocationStackTrace = new Exception("VFS dispose stacktrace");
     }
   }
@@ -237,7 +237,6 @@ public final class FSRecords {
                                     final @NotNull Function<? super ListResult, ListResult> childrenConvertor) {
     SlowOperations.assertSlowOperationsAreAllowed();
     return implOrFail().update(parent, parentId, childrenConvertor);
-      }
   }
 
   static void moveChildren(final int fromParentId,

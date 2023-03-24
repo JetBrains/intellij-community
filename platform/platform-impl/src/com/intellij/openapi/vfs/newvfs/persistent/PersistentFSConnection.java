@@ -43,10 +43,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 @ApiStatus.Internal
 public final class PersistentFSConnection {
@@ -113,7 +112,7 @@ public final class PersistentFSConnection {
     myEnumeratedAttributes = enumeratedAttributes;
 
     if (FSRecords.BACKGROUND_VFS_FLUSH) {
-      //TODO RC: this all better to be moved up, to FSRecords
+      //MAYBE RC: move the flushing up, to FSRecordsImpl?
       final ScheduledExecutorService scheduler = AppExecutorUtil.getAppScheduledExecutorService();
       flushingTask = USE_GENTLE_FLUSHER ?
                      new GentleVFSFlusher(scheduler) :

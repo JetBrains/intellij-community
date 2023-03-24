@@ -68,15 +68,6 @@ public final class IndexingStamp {
   }
 
   public static void setFileIndexedStateUnindexed(int fileId, @NotNull ID<?, ?> id) {
-    //TODO RC: this method should finish silently (without exceptions) if fileId is not exists
-    //         Such a scenario happens if VFS is rebuild -- indexes are still used old fileIds,
-    //         and this is OK in this circumstances -- but now such a scenario marks VFS as
-    //         'corrupted' and asks for another rebuild, which is dummy.
-    //         Currently, it is not straightforward to do so, though: there are pretty good reason
-    //         why in most of the cases invalid fileId means VFS is corrupted and can't be trusted
-    //         anymore -- and the only one scenario is stale indexes update.
-    //         Really, I think, better solution would be to claim all indexes are invalid if VFS is
-    //         under rebuild -- instead of trying to re-validate all the indexes entry-by-entry?
     update(fileId, id, HAS_NO_INDEXED_DATA_STAMP);
   }
 

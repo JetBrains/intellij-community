@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.DataEnumeratorEx;
 import it.unimi.dsi.fastutil.ints.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
@@ -29,6 +30,7 @@ import java.util.function.IntPredicate;
  *
  * @see InvertedNameIndex#checkConsistency
  */
+@ApiStatus.Internal
 public final class InvertedNameIndex {
   /**
    * id=0 used as NULL (i.e. absent) value
