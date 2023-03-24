@@ -102,6 +102,36 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
     });
   }
 
+
+  @Test
+  public void testExit() {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/exit", SdkCreationType.EMPTY_SDK) {
+
+      @NotNull
+      @Override
+      protected PyTestTestProcessRunner createProcessRunner() {
+        var runner = new PyTestTestProcessRunner("test_test.py", 0);
+        runner.setSkipExitCodeAssertion(true);
+        return runner;
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all,
+                                      int exitCode) {
+
+        assertEquals("Test must be skipped", """
+          Test tree:
+          [root](~)
+          .test_test(~)
+          ..test_(~)
+          """, runner.getFormattedTestTree());
+      }
+    });
+  }
+
   @Test
   public void testDiff() {
     runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/diff", SdkCreationType.EMPTY_SDK) {
