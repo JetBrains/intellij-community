@@ -13,9 +13,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.logger
@@ -545,7 +543,7 @@ open class EditorsSplitters internal constructor(
       EditorTabPresentationUtil.getEditorTabBackgroundColor(manager.project, file)
     }
 
-    withContext(Dispatchers.EDT) {
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       for (window in windows) {
         val index = window.findFileIndex(file)
         if (index != -1) {
