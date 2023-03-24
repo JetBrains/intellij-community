@@ -33,6 +33,25 @@ import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import java.util.function.Function
 
+/**
+ * Creates [PyRemotePathMapper] for Python Console execution on a target.
+ *
+ * @param project the project Python Console is started for
+ * @param sdk Python SDK that Python Console is started with
+ * @param consoleSettings Python Console settings
+ * @param targetEnvironment the target environment to add upload volumes to the result path mapper
+ */
+fun createTargetEnvironmentPathMapper(project: Project,
+                                      sdk: Sdk,
+                                      consoleSettings: PyConsoleSettings,
+                                      targetEnvironment: TargetEnvironment): PyRemotePathMapper {
+  val pathMapper = getPathMapper(project, sdk, consoleSettings) ?: PyRemotePathMapper()
+  for (volume in targetEnvironment.uploadVolumes.values) {
+    pathMapper.addMapping(volume.localRoot.toString(), volume.targetRoot, PyRemotePathMapper.PyPathMappingType.USER_DEFINED)
+  }
+  return pathMapper
+}
+
 fun getPathMapper(project: Project,
                   sdk: Sdk?,
                   consoleSettings: PyConsoleSettings): PyRemotePathMapper? {
