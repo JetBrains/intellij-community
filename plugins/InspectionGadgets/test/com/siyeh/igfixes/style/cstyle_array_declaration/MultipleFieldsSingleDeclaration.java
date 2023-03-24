@@ -1,6 +1,6 @@
 class X {
 
-    int[] array, <caret>array2[], array3[][];
+    int[] array, array2<caret>[], array3[][];
 
     int @Preliminary [] arr1 @Required @Preliminary [], arr2 @Preliminary @Required [] = new int[0][2], arr3 @Preliminary @Required [] = new int[0][3]; // same dimensions and annotations
 

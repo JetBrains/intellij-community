@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,15 +39,16 @@ public class CStyleArrayDeclarationInspection extends BaseInspection implements 
   @NotNull
   protected String buildErrorString(Object... infos) {
     final Object info = infos[0];
-    if (info instanceof PsiMethod) {
-      return InspectionGadgetsBundle.message("cstyle.array.method.declaration.problem.descriptor");
+    if (info instanceof PsiMethod method) {
+      return InspectionGadgetsBundle.message("cstyle.array.method.declaration.problem.descriptor", method.getName());
     }
     final int choice;
     if (info instanceof PsiField) choice = 1;
     else if (info instanceof PsiParameter) choice = 2;
-    else if (info instanceof PsiRecordComponent)choice = 3;
+    else if (info instanceof PsiRecordComponent) choice = 3;
     else choice = 4;
-    return InspectionGadgetsBundle.message("cstyle.array.variable.declaration.problem.descriptor", Integer.valueOf(choice));
+    return InspectionGadgetsBundle.message("cstyle.array.variable.declaration.problem.descriptor",
+                                           Integer.valueOf(choice), ((PsiVariable)info).getName());
   }
 
   @Override
@@ -71,12 +72,14 @@ public class CStyleArrayDeclarationInspection extends BaseInspection implements 
     @Override
     public void visitVariable(@NotNull PsiVariable variable) {
       super.visitVariable(variable);
-      if (ignoreVariables) {
+      if (ignoreVariables || variable instanceof PsiRecordComponent) {
+        // C-style array declaration in records was accepted by Java 15 (Preview) javac
+        // This was fixed in Java 16 (https://bugs.openjdk.org/browse/JDK-8250629)
         return;
       }
       final PsiTypeElement typeElement = variable.getTypeElement();
       if (typeElement == null || typeElement.isInferredType()) {
-        return; // Could be true for enum constants or lambda parameters
+        return; // true for enum constants or lambda parameters
       }
       final PsiType declaredType = variable.getType();
       if (declaredType.getArrayDimensions() == 0) {
@@ -87,7 +90,7 @@ public class CStyleArrayDeclarationInspection extends BaseInspection implements 
         return;
       }
       if (isVisibleHighlight(variable)) {
-        registerVariableError(variable, variable);
+        highlightBrackets(variable, variable.getNameIdentifier());
       }
       else {
         registerError(variable, variable);
@@ -111,22 +114,25 @@ public class CStyleArrayDeclarationInspection extends BaseInspection implements 
       }
       if (InspectionProjectProfileManager.isInformationLevel(getShortName(), method)) {
         registerError(typeElement, method);
-        PsiElement child = method.getParameterList();
-        PsiJavaToken first = null;
-        PsiJavaToken last = null;
-        while (!(child instanceof PsiCodeBlock)) {
-          if (child instanceof PsiJavaToken token) {
-            final IElementType tokenType = token.getTokenType();
-            if (JavaTokenType.LBRACKET.equals(tokenType) || JavaTokenType.RBRACKET.equals(tokenType)) {
-              if (first == null) first = token;
-              last = token;
-            }
-          }
-          child = child.getNextSibling();
-        }
-        if (first != null) registerErrorAtRange(first, last, method);
+        registerMethodError(method, method);
       }
-      registerMethodError(method, method);
+      highlightBrackets(method, method.getParameterList());
+    }
+
+    private void highlightBrackets(@NotNull PsiElement problemElement, PsiElement anchor) {
+      PsiJavaToken first = null;
+      PsiJavaToken last = null;
+      while (anchor != null) {
+        if (anchor instanceof PsiJavaToken token) {
+          final IElementType tokenType = token.getTokenType();
+          if (JavaTokenType.LBRACKET.equals(tokenType) || JavaTokenType.RBRACKET.equals(tokenType)) {
+            if (first == null) first = token;
+            last = token;
+          }
+        }
+        anchor = anchor.getNextSibling();
+      }
+      if (first != null) registerErrorAtRange(first, last, problemElement);
     }
   }
 }

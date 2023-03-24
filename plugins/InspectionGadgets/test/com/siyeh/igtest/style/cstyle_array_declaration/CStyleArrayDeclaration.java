@@ -3,7 +3,7 @@ package com.siyeh.igtest.style;
 public class CStyleArrayDeclaration
 {
     private int[] m_foo;
-    private int <warning descr="C-style array declaration of field 'm_bar'">m_bar</warning>[];
+    private int m_bar<warning descr="Field 'm_bar' has C-style array type declaration"><caret>[]</warning>;
 
     public CStyleArrayDeclaration(int[] bar, int[] foo)
     {
@@ -18,7 +18,7 @@ public class CStyleArrayDeclaration
 
     public void foo()
     {
-        final int <warning descr="C-style array declaration of local variable 'foo'">foo</warning>[] = new int[3];
+        final int foo<warning descr="Local variable 'foo' has C-style array type declaration">[]</warning> = new int[3];
         final int[] bar = new int[3];
 
         for(int i = 0; i < bar.length; i++)
@@ -27,15 +27,17 @@ public class CStyleArrayDeclaration
         }
     }
 
-    public void bar(int <warning descr="C-style array declaration of parameter 'foo'">foo</warning>[], int[] bar)
+    public void bar(int foo<warning descr="Parameter 'foo' has C-style array type declaration">[]</warning>, int[] bar)
     {
 
     }
 
-    String <warning descr="C-style array declaration of the return type of method 'ohGod()'">ohGod</warning>(String[] a)[] {
+    String ohGod(String[] a)<warning descr="Method 'ohGod()' has C-style array return type declaration">[]</warning> {
         return a;
     }
 
-    record Record(int <warning descr="C-style array declaration of record component 'x'">x</warning><error descr="C-style record component declaration is not allowed">[]</error>) {
+    record Record(int x<error descr="C-style record component declaration is not allowed">[]</error>) {
     }
+
+    int methodWithoutBody()<warning descr="Method 'methodWithoutBody()' has C-style array return type declaration">[][]</warning><EOLError descr="'{' or ';' expected"></EOLError>
 }
