@@ -47,7 +47,9 @@ class KotlinFirLookupElementFactory {
                 expectedType,
             )
 
-            is KtClassLikeSymbol -> with(classLookupElementFactory) { createLookup(symbol, importingStrategy ?: importStrategyDetector.detectImportStrategy(symbol)) }
+            is KtClassLikeSymbol -> with(classLookupElementFactory) {
+                createLookup(symbol, importingStrategy ?: importStrategyDetector.detectImportStrategyForClassifierSymbol(symbol))
+            }
             is KtTypeParameterSymbol -> with(typeParameterLookupElementFactory) { createLookup(symbol) }
             else -> throw IllegalArgumentException("Cannot create a lookup element for $symbol")
         }

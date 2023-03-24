@@ -90,7 +90,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         symbol: KtClassifierSymbol,
         context: WeighingContext,
         symbolOrigin: CompletionSymbolOrigin,
-        importingStrategy: ImportStrategy = importStrategyDetector.detectImportStrategy(symbol),
+        importingStrategy: ImportStrategy = importStrategyDetector.detectImportStrategyForClassifierSymbol(symbol),
     ) {
         if (symbol !is KtNamedSymbol) return
         // Don't offer any deprecated items that could leads to compile errors.

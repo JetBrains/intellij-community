@@ -60,19 +60,23 @@ internal open class FirCallableCompletionContributor(
     protected fun KtAnalysisSession.getOptions(
         signature: KtCallableSignature<*>,
         noImportRequired: Boolean = false
-    ): CallableInsertionOptions = CallableInsertionOptions(
-        if (noImportRequired) ImportStrategy.DoNothing else importStrategyDetector.detectImportStrategy(signature.symbol),
-        getInsertionStrategy(signature)
-    )
+    ): CallableInsertionOptions {
+        val importStrategy = when {
+            noImportRequired -> ImportStrategy.DoNothing
+            else -> importStrategyDetector.detectImportStrategyForCallableSymbol(signature.symbol)
+        }
+        return CallableInsertionOptions(importStrategy, getInsertionStrategy(signature))
+    }
 
     private fun KtAnalysisSession.getExtensionOptions(
         signature: KtCallableSignature<*>,
         applicability: KtExtensionApplicabilityResult
-    ): CallableInsertionOptions? =
-        getInsertionStrategyForExtensionFunction(
-            signature,
-            applicability
-        )?.let { CallableInsertionOptions(importStrategyDetector.detectImportStrategy(signature.symbol), it) }
+    ): CallableInsertionOptions? {
+        val insertionStrategy = getInsertionStrategyForExtensionFunction(signature, applicability) ?: return null
+        val isFunctionalVariableCall = applicability is KtExtensionApplicabilityResult.ApplicableAsFunctionalVariableCall
+        val importStrategy = importStrategyDetector.detectImportStrategyForCallableSymbol(signature.symbol, isFunctionalVariableCall)
+        return CallableInsertionOptions(importStrategy, insertionStrategy)
+    }
 
     protected open fun KtAnalysisSession.filter(symbol: KtCallableSymbol): Boolean = true
 
@@ -255,7 +259,7 @@ internal open class FirCallableCompletionContributor(
             .map { callable ->
                 val callableSignature = callable.asSignature()
                 val options = CallableInsertionOptions(ImportStrategy.DoNothing, getInsertionStrategy(callableSignature))
-                createCallableWithMetadata(callableSignature, packageScopeKind, options)
+                createCallableWithMetadata(callableSignature, packageScopeKind, options = options)
             }
     }
 

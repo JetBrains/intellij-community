@@ -125,7 +125,7 @@ internal class FirSuperMemberCompletionContributor(
                 context,
                 callableInfo.signature,
                 CallableInsertionOptions(
-                    importStrategyDetector.detectImportStrategy(callableInfo.signature.symbol),
+                    importStrategyDetector.detectImportStrategyForCallableSymbol(callableInfo.signature.symbol),
                     wrapWithDisambiguationIfNeeded(
                         getInsertionStrategy(callableInfo.signature),
                         callableInfo.type,
@@ -198,7 +198,7 @@ internal class FirSuperMemberCompletionContributor(
                 context,
                 signature,
                 CallableInsertionOptions(
-                    importStrategyDetector.detectImportStrategy(signature.symbol),
+                    importStrategyDetector.detectImportStrategyForCallableSymbol(callableInfo.signature.symbol),
                     wrapWithDisambiguationIfNeeded(
                         CallableInsertionStrategy.WithCallArgs(args),
                         callableInfo.type,

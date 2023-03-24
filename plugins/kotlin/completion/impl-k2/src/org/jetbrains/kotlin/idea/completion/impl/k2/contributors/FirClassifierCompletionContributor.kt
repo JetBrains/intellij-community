@@ -24,7 +24,7 @@ internal open class FirClassifierCompletionContributor(
     protected open fun KtAnalysisSession.filterClassifiers(classifierSymbol: KtClassifierSymbol): Boolean = true
 
     protected open fun KtAnalysisSession.getImportingStrategy(classifierSymbol: KtClassifierSymbol): ImportStrategy =
-        importStrategyDetector.detectImportStrategy(classifierSymbol)
+        importStrategyDetector.detectImportStrategyForClassifierSymbol(classifierSymbol)
 
     override fun KtAnalysisSession.complete(positionContext: FirNameReferencePositionContext, weighingContext: WeighingContext) {
         val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)

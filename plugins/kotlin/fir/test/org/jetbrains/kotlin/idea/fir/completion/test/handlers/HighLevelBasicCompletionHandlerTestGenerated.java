@@ -1121,6 +1121,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
                 runTest("../completion/testData/handlers/basic/FirstTypeArgument.kt");
             }
 
+            @TestMetadata("FunctionVariableCall.kt")
+            public void testFunctionVariableCall() throws Exception {
+                runTest("../completion/testData/handlers/basic/FunctionVariableCall.kt");
+            }
+
             @TestMetadata("GenericFunctionWithTab.kt")
             public void testGenericFunctionWithTab() throws Exception {
                 runTest("../completion/testData/handlers/basic/GenericFunctionWithTab.kt");
