@@ -498,8 +498,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
       pathMappingSettings.addAll(sdkPathMappings);
     }
     PyTargetPathMapper consolidatedPathMappings = new PyTargetPathMapper(targetEnvironment, pathMappingSettings);
-    return new ProcessHandlerWithPyPositionConverter(process, commandLineString, commandLine.getCharset(),
-                                                     consolidatedPathMappings);
+    return PyCustomProcessHandlerProvider.createProcessHandler(process, commandLineString, commandLine.getCharset(),
+                                                               consolidatedPathMappings);
   }
 
   private @Nullable PathMappingSettings getSdkPathMappings() {
