@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.remote.RemoteMappingsManager
+import com.intellij.remote.RemoteSdkProperties
 import com.jetbrains.python.console.PyConsoleOptions.PyConsoleSettings
 import com.jetbrains.python.console.completion.PydevConsoleElement
 import com.jetbrains.python.console.pydev.ConsoleCommunication
@@ -44,26 +45,22 @@ fun getPathMapper(project: Project,
 }
 
 private fun getPathMapper(project: Project, consoleSettings: PyConsoleSettings, data: PyTargetAwareAdditionalData): PyRemotePathMapper {
-  val remotePathMapper = appendBasicMappings(project, null, data)
+  val remotePathMapper = appendBasicMappings(project, data)
   consoleSettings.mappingSettings?.let { mappingSettings ->
     remotePathMapper.addAll(mappingSettings.pathMappings, PyRemotePathMapper.PyPathMappingType.USER_DEFINED)
   }
   return remotePathMapper
 }
 
-private fun appendBasicMappings(project: Project?,
-                                pathMapper: PyRemotePathMapper?,
-                                data: PyTargetAwareAdditionalData): PyRemotePathMapper {
-  val newPathMapper = PyRemotePathMapper.cloneMapper(pathMapper)
-  PythonRemoteInterpreterManager.addHelpersMapping(data, newPathMapper)
-  newPathMapper.addAll(data.pathMappings.pathMappings, PyRemotePathMapper.PyPathMappingType.SYS_PATH)
-  if (project != null) {
-    val mappings = RemoteMappingsManager.getInstance(project).getForServer(PythonRemoteInterpreterManager.PYTHON_PREFIX, data.sdkId)
-    if (mappings != null) {
-      newPathMapper.addAll(mappings.settings, PyRemotePathMapper.PyPathMappingType.USER_DEFINED)
-    }
+private fun appendBasicMappings(project: Project, data: RemoteSdkProperties): PyRemotePathMapper {
+  val pathMapper = PyRemotePathMapper()
+  PythonRemoteInterpreterManager.addHelpersMapping(data, pathMapper)
+  pathMapper.addAll(data.pathMappings.pathMappings, PyRemotePathMapper.PyPathMappingType.SYS_PATH)
+  val mappings = RemoteMappingsManager.getInstance(project).getForServer(PythonRemoteInterpreterManager.PYTHON_PREFIX, data.sdkId)
+  if (mappings != null) {
+    pathMapper.addAll(mappings.settings, PyRemotePathMapper.PyPathMappingType.USER_DEFINED)
   }
-  return newPathMapper
+  return pathMapper
 }
 
 fun getPathMapper(project: Project,
