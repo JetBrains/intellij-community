@@ -562,9 +562,12 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
           }
 
           if (!project.hasReadingProblems() && project.hasUnresolvedPlugins()) {
-            runWhenFullyOpen(() -> myPluginsResolvingProcessor
-              .scheduleTask(new MavenProjectsProcessorPluginsResolvingTask(
-                project, nativeMavenProject, myProjectsTree, myMavenProjectResolver, false)));
+            schedulePluginResolution(new MavenProjectsProcessorPluginsResolvingTask(
+              project,
+              nativeMavenProject,
+              myProjectsTree,
+              myMavenProjectResolver,
+              false));
           }
         }
       }
@@ -580,6 +583,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         return !projectWithChanges.first.hasReadingProblems() && projectWithChanges.second.hasChanges();
       }
     }, this);
+  }
+
+  @ApiStatus.Internal
+  public void schedulePluginResolution(MavenProjectsProcessorPluginsResolvingTask task) {
+    runWhenFullyOpen(() -> myPluginsResolvingProcessor.scheduleTask(task));
   }
 
   public void listenForExternalChanges() {
