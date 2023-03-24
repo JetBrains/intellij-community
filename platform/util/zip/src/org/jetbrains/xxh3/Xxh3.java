@@ -10,7 +10,6 @@ import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
-import java.util.function.IntUnaryOperator;
 
 /**
  * Characters are encoded using UTF-8. Not optimized for non-ASCII string.
@@ -19,10 +18,6 @@ import java.util.function.IntUnaryOperator;
 @ApiStatus.Internal
 @ApiStatus.Experimental
 public final class Xxh3 {
-  private static final IntUnaryOperator H2LE = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN
-                                               ? IntUnaryOperator.identity()
-                                               : Integer::reverseBytes;
-
   public static long hash(byte[] input) {
     return Xxh3Impl.hash(input, ByteArrayAccess.INSTANCE, 0, input.length, 0);
   }
@@ -48,42 +43,16 @@ public final class Xxh3 {
     }
   }
 
-  public static int hash32(byte[] input) {
-    // https://github.com/Cyan4973/xxHash/issues/453#issuecomment-696838445
-    // grab the lower 32-bit
-    return (int)hash(input);
-  }
-
   /**
    * Characters are encoded using UTF-8.
    */
   public static long hash(String input) {
-    return stringLongHash(input, 0);
-  }
-
-  // secret is shared - seeded hash only for universal hashing
-  public static long seededHash(String input, long seed) {
-    return stringLongHash(input, seed);
-  }
-
-  public static long seededHash(byte[] input, long seed) {
-    return Xxh3Impl.hash(input, ByteArrayAccess.INSTANCE, 0, input.length, seed);
-  }
-
-  public static int hash32(String input) {
-    return (int)hash(input);
+    byte[] data = input.getBytes(StandardCharsets.UTF_8);
+    return Xxh3Impl.hash(data, ByteArrayAccess.INSTANCE, 0, data.length, 0);
   }
 
   public static long hashUnencodedChars(CharSequence input) {
-    return hashUnencodedChars(input, 0);
-  }
-
-  public static long hashUnencodedChars(CharSequence input, long seed) {
-    return Xxh3Impl.hash(input, CharSequenceAccess.INSTANCE, 0, input.length() * 2, seed);
-  }
-
-  public static int hashUnencodedChars32(CharSequence input) {
-    return (int)hashUnencodedChars(input);
+    return Xxh3Impl.hash(input, CharSequenceAccess.INSTANCE, 0, input.length() * 2, 0);
   }
 
   public static long hashLongs(long[] input) {
@@ -92,20 +61,6 @@ public final class Xxh3 {
 
   public static long hashLongs(long[] input, long seed) {
     return Xxh3Impl.hash(input, LongArrayAccessForLongs.INSTANCE, 0, input.length * Long.BYTES, seed);
-  }
-
-  public static long hashInt(int input) {
-    return hashInt(input, 0);
-  }
-
-  public static long hashInt(int input, final long seed) {
-    input = H2LE.applyAsInt(input);
-    long s = seed ^ Long.reverseBytes(seed & 0xFFFFFFFFL);
-    // see https://github.com/OpenHFT/Zero-Allocation-Hashing/blob/fb8f9d40b9a2e10e83c74884d8945e0051164ed2/src/main/java/net/openhft/hashing/XXH3.java#L710
-    // about this magic number - unsafeLE.i64(XXH3.XXH3_kSecret, 8+BYTE_BASE) ^ unsafeLE.i64(XXH3.XXH3_kSecret, 16+BYTE_BASE)
-    long bitFlip = -4090762196417718878L - s;
-    long keyed = ((input & 0xFFFFFFFFL) + (((long)input) << 32)) ^ bitFlip;
-    return Xxh3Impl.rrmxmx(keyed, 4);
   }
 
   private static final class ByteBufferAccess implements Access<ByteBuffer> {
@@ -159,9 +114,4 @@ public final class Xxh3 {
   //  byte[] data = s.substring(offset, offset + length).getBytes(StandardCharsets.UTF_8);
   //  return Xxh3Impl.hash(data, ByteArrayAccess.INSTANCE, 0, data.length, 0);
   //}
-
-  private static long stringLongHash(String s, long seed) {
-    byte[] data = s.getBytes(StandardCharsets.UTF_8);
-    return Xxh3Impl.hash(data, ByteArrayAccess.INSTANCE, 0, data.length, seed);
-  }
 }
