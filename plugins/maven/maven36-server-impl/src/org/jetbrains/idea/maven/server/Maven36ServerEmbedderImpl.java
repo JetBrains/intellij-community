@@ -2,6 +2,8 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.util.text.VersionComparatorUtil;
+import org.apache.maven.plugin.internal.DefaultPluginDependenciesResolver;
+import org.apache.maven.plugin.internal.PluginDependenciesResolver;
 import org.apache.maven.project.DefaultProjectDependenciesResolver;
 import org.apache.maven.project.ProjectDependenciesResolver;
 import org.apache.maven.repository.internal.DefaultArtifactDescriptorReader;
@@ -105,6 +107,27 @@ public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
     if (dependenciesResolver instanceof DefaultProjectDependenciesResolver) {
       try {
         DefaultProjectDependenciesResolver defaultResolver = (DefaultProjectDependenciesResolver)dependenciesResolver;
+        Field repoSystemField = defaultResolver.getClass().getDeclaredField("repoSystem");
+        repoSystemField.setAccessible(true);
+        repoSystemField.set(defaultResolver, getRepositorySystem());
+      } catch (Exception e) {
+        Maven3ServerGlobals.getLogger().warn(e);
+      }
+    }
+
+    return dependenciesResolver;
+  }
+
+  @Override
+  @NotNull
+  protected PluginDependenciesResolver createPluginDependenciesResolver() {
+    PluginDependenciesResolver dependenciesResolver = getComponent(PluginDependenciesResolver.class);
+
+    //TODO: registry key to turn off
+
+    if (dependenciesResolver instanceof DefaultPluginDependenciesResolver) {
+      try {
+        DefaultPluginDependenciesResolver defaultResolver = (DefaultPluginDependenciesResolver)dependenciesResolver;
         Field repoSystemField = defaultResolver.getClass().getDeclaredField("repoSystem");
         repoSystemField.setAccessible(true);
         repoSystemField.set(defaultResolver, getRepositorySystem());
