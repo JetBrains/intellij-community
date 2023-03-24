@@ -12,52 +12,57 @@ import com.intellij.psi.formatter.FormatterUtil
 import org.toml.ide.formatter.impl.computeIndent
 import org.toml.ide.formatter.impl.computeSpacing
 import org.toml.ide.formatter.impl.isWhitespaceOrEmpty
+import org.toml.lang.psi.TomlElementTypes
 import org.toml.lang.psi.TomlElementTypes.ARRAY
 
 class TomlFmtBlock(
-    private val node: ASTNode,
-    private val alignment: Alignment?,
-    private val indent: Indent?,
-    private val wrap: Wrap?,
-    private val ctx: TomlFmtContext
+  private val node: ASTNode,
+  private val alignment: Alignment?,
+  private val indent: Indent?,
+  private val wrap: Wrap?,
+  private val ctx: TomlFmtContext
 ) : ASTBlock {
-    override fun getNode(): ASTNode = node
-    override fun getTextRange(): TextRange = node.textRange
-    override fun getAlignment(): Alignment? = alignment
-    override fun getIndent(): Indent? = indent
-    override fun getWrap(): Wrap? = wrap
+  override fun getNode(): ASTNode = node
+  override fun getTextRange(): TextRange = node.textRange
+  override fun getAlignment(): Alignment? = alignment
+  override fun getIndent(): Indent? = indent
+  override fun getWrap(): Wrap? = wrap
 
-    override fun getSubBlocks(): List<Block> = mySubBlocks
-    private val mySubBlocks: List<Block> by lazy { buildChildren() }
+  override fun getSubBlocks(): List<Block> = mySubBlocks
+  private val mySubBlocks: List<Block> by lazy { buildChildren() }
 
-    private fun buildChildren(): List<Block> {
-        return node.getChildren(null)
-            .filter { !it.isWhitespaceOrEmpty() }
-            .map { childNode: ASTNode ->
-                TomlFormattingModelBuilder.createBlock(
-                    node = childNode,
-                    alignment = null,
-                    indent = computeIndent(childNode),
-                    wrap = null,
-                    ctx = ctx
-                )
-            }
-    }
+  private fun buildChildren(): List<Block> {
+    return node.getChildren(null)
+      .filter { !it.isWhitespaceOrEmpty() }
+      .map { childNode: ASTNode ->
+        TomlFormattingModelBuilder.createBlock(
+          node = childNode,
+          alignment = null,
+          indent = computeIndent(childNode, ctx.tomlSettings),
+          wrap = null,
+          ctx = ctx
+        )
+      }
+  }
 
-    override fun getSpacing(child1: Block?, child2: Block): Spacing? = computeSpacing(child1, child2, ctx)
+  override fun getSpacing(child1: Block?, child2: Block): Spacing? = computeSpacing(child1, child2, ctx)
 
-    override fun getChildAttributes(newChildIndex: Int): ChildAttributes {
-        val indent = when (node.elementType) {
-            ARRAY -> Indent.getNormalIndent()
-            else -> Indent.getNoneIndent()
-        }
-        return ChildAttributes(indent, null)
-    }
+  override fun getChildAttributes(newChildIndex: Int): ChildAttributes {
+    val subBlocks = subBlocks
+    val indent = when {
+                   node.elementType == ARRAY -> Indent.getNormalIndent()
+                   ctx.tomlSettings.INDENT_TABLE_KEYS &&
+                   (subBlocks.getOrNull(newChildIndex - 1) as? TomlFmtBlock)?.node?.elementType
+                   in listOf(TomlElementTypes.TABLE, TomlElementTypes.ARRAY_TABLE) ->  Indent.getNormalIndent()
+                   else -> null
+                 } ?: Indent.getNoneIndent()
+    return ChildAttributes(indent, null)
+  }
 
-    override fun isLeaf(): Boolean = node.firstChildNode == null
+  override fun isLeaf(): Boolean = node.firstChildNode == null
 
-    override fun isIncomplete(): Boolean = myIsIncomplete
-    private val myIsIncomplete: Boolean by lazy { FormatterUtil.isIncomplete(node) }
+  override fun isIncomplete(): Boolean = myIsIncomplete
+  private val myIsIncomplete: Boolean by lazy { FormatterUtil.isIncomplete(node) }
 
-    override fun toString() = "${node.text} $textRange"
+  override fun toString() = "${node.text} $textRange"
 }

@@ -5,19 +5,42 @@
 
 package org.toml.ide.formatter
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.codeStyle.CodeStyleSettings
 import org.intellij.lang.annotations.Language
 import org.toml.TomlTestBase
+import kotlin.reflect.KMutableProperty0
 
 abstract class TomlFormatterTestBase : TomlTestBase() {
-    protected fun doTest(@Language("TOML") before: String, @Language("TOML") after: String) {
-        checkByText(before.trimIndent(), after.trimIndent()) {
-            WriteCommandAction.runWriteCommandAction(project) {
-                val file = myFixture.file
-                CodeStyleManager.getInstance(project)
-                    .reformatText(file, file.textRange.startOffset, file.textRange.endOffset)
-            }
-        }
+  protected fun doTest(@Language("TOML") before: String, @Language("TOML") after: String) {
+    checkByText(before.trimIndent(), after.trimIndent()) {
+      WriteCommandAction.runWriteCommandAction(project) {
+        val file = myFixture.file
+        CodeStyleManager.getInstance(project)
+          .reformatText(file, file.textRange.startOffset, file.textRange.endOffset)
+      }
     }
+  }
+
+  protected fun doOptionTest(
+    optionProperty: KMutableProperty0<Boolean>,
+    @Language("TOML") before: String,
+    @Language("TOML") afterOn: String = before,
+    @Language("TOML") afterOff: String = before
+  ) {
+    val initialValue = optionProperty.get()
+    optionProperty.set(true)
+    try {
+      doTest(before.trimIndent(), afterOn.trimIndent())
+      optionProperty.set(false)
+      doTest(before.trimIndent(), afterOff.trimIndent())
+    } finally {
+      optionProperty.set(initialValue)
+    }
+  }
+
+  private fun commonSettings(): CodeStyleSettings = CodeStyle.getSettings(project)
+  protected fun tomlSettings() = commonSettings().toml
 }
