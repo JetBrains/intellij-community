@@ -62,6 +62,12 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
 
   @Override
   protected void processDragOut(@NotNull MouseEvent event, @NotNull Point dragToScreenPoint, @NotNull Point startScreenPoint, boolean justStarted) {
+    if (!MouseDragHelper.checkModifiers(event)) {
+      if (myDragOutSource != null) {
+        processDragOutCancel();
+      }
+      return;
+    }
     TabInfo.DragOutDelegate delegate = myDragOutSource.getDragOutDelegate();
     if (justStarted) {
       delegate.dragOutStarted(event, myDragOutSource);
@@ -72,6 +78,12 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
 
   @Override
   protected void processDragOutFinish(@NotNull MouseEvent event) {
+    if (!MouseDragHelper.checkModifiers(event)) {
+      if (myDragOutSource != null) {
+        processDragOutCancel();
+      }
+      return;
+    }
     super.processDragOutFinish(event);
     boolean wasSorted = prepareDisableSorting();
     try {
@@ -291,10 +303,14 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
 
   @Override
   protected void processDragFinish(@NotNull MouseEvent event, boolean willDragOutStart) {
+    boolean checkModifiers = MouseDragHelper.checkModifiers(event);
+    if (!checkModifiers && myDragSource == null) {
+      return;
+    }
     super.processDragFinish(event, willDragOutStart);
     boolean wasSorted = !willDragOutStart && prepareDisableSorting();
     try {
-      endDrag(willDragOutStart);
+      endDrag(willDragOutStart && checkModifiers);
     } finally {
       disableSortingIfNeed(event, wasSorted);
     }
