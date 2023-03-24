@@ -23,6 +23,7 @@ import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 
 public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleView, PythonConsoleView> implements PyCodeExecutor {
@@ -124,5 +125,14 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
 
   public void initialized() {
     myDebugConsoleInitialized = true;
+  }
+
+  @Override
+  public JComponent getPreferredFocusableComponent() {
+    var console = getPydevConsoleView();
+    if (console.isVisible()) {
+      return console.getConsoleEditor().getContentComponent();
+    }
+    return this;
   }
 }
