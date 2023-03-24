@@ -1,7 +1,7 @@
 <problems>
   <problem>
     <file>Test.java</file>
-    <line>10</line>
+    <line>9</line>
     <module>light_idea_test_case</module>
     <package>sample</package>
     <entry_point TYPE="method" FQNAME="sample.Test void mustReport()" />
@@ -14,7 +14,7 @@
   </problem>
   <problem>
     <file>Test.java</file>
-    <line>11</line>
+    <line>10</line>
     <module>light_idea_test_case</module>
     <package>sample</package>
     <entry_point TYPE="method" FQNAME="sample.Test void mustReport()" />
@@ -27,7 +27,7 @@
   </problem>
   <problem>
     <file>Test.java</file>
-    <line>12</line>
+    <line>11</line>
     <module>light_idea_test_case</module>
     <package>sample</package>
     <entry_point TYPE="method" FQNAME="sample.Test void mustReport()" />
@@ -40,7 +40,7 @@
   </problem>
   <problem>
     <file>Test.java</file>
-    <line>13</line>
+    <line>12</line>
     <module>light_idea_test_case</module>
     <package>sample</package>
     <entry_point TYPE="method" FQNAME="sample.Test void mustReport()" />
@@ -53,7 +53,7 @@
   </problem>
   <problem>
     <file>Test.java</file>
-    <line>24</line>
+    <line>22</line>
     <module>light_idea_test_case</module>
     <package>sample</package>
     <entry_point TYPE="method" FQNAME="sample.Test void doesntCompileSoItDoesntMatterWhetherToReportOrNot()" />
