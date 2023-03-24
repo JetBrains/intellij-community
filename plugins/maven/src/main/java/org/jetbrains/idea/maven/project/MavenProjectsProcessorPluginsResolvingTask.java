@@ -20,17 +20,19 @@ import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
-public class MavenProjectsProcessorPluginsResolvingTask extends MavenProjectsProcessorBasicTask {
+public class MavenProjectsProcessorPluginsResolvingTask implements MavenProjectsProcessorTask {
+  private final MavenProject myMavenProject;
   private final NativeMavenProjectHolder myNativeMavenProject;
+  private final MavenProjectResolver myResolver;
   private final boolean forceUpdateSnapshots;
 
   public MavenProjectsProcessorPluginsResolvingTask(MavenProject project,
                                                     NativeMavenProjectHolder nativeMavenProject,
-                                                    MavenProjectsTree tree,
                                                     MavenProjectResolver resolver,
                                                     boolean forceUpdateSnapshots) {
-    super(project, tree, resolver);
+    myMavenProject = project;
     myNativeMavenProject = nativeMavenProject;
+    myResolver = resolver;
     this.forceUpdateSnapshots = forceUpdateSnapshots;
   }
 
