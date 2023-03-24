@@ -20,8 +20,9 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.JavaCompletionUtil.JavaLookupElementHighlighter;
 import com.intellij.codeInsight.completion.impl.BetterPrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
-import com.intellij.codeInsight.lookup.*;
-import com.intellij.java.JavaBundle;
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -38,7 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
@@ -110,7 +110,7 @@ public class JavaNoVariantsDelegator extends CompletionContributor implements Du
         suggestNonImportedClasses(parameters, result, session);
         return;
       }
-      if (parameters.getInvocationCount() <= 1) {
+      if (parameters.getInvocationCount() <= 1) { //case with >=2 in JavaCompletionContributor.fillCompletionVariants
         suggestTagCalls(parameters, result, position);
       }
       suggestChainedCalls(parameters, result, position);
@@ -140,14 +140,14 @@ public class JavaNoVariantsDelegator extends CompletionContributor implements Du
       //there is no reason to check it one more time
       return;
     }
-    TagMatcher tagMatcher = new TagMatcher(prefixMatcher);
+    MethodTags.TagMatcher tagMatcher = new MethodTags.TagMatcher(prefixMatcher);
     CompletionResultSet tagResultSet = result.withPrefixMatcher(tagMatcher);
     tagResultSet.runRemainingContributors(parameters, new Consumer<>() {
       @Override
       public void consume(CompletionResult result) {
         LookupElement element = result.getLookupElement();
         if (element != null && !prefixMatcher.prefixMatches(element) && tagMatcher.prefixMatches(element)) {
-          LookupElement lookupElement = wrapLookup(element, prefixMatcher);
+          LookupElement lookupElement = MethodTags.wrapLookupWithTags(element, prefixMatcher::prefixMatches);
           if (lookupElement == null) {
             return;
           }
@@ -157,24 +157,6 @@ public class JavaNoVariantsDelegator extends CompletionContributor implements Du
             tagResultSet.passResult(wrapped);
           }
         }
-      }
-
-      @Nullable
-      private static LookupElement wrapLookup(@NotNull LookupElement element, @NotNull PrefixMatcher matcher) {
-        String lookupString = element.getLookupString();
-        PsiElement psiElement = element.getPsiElement();
-        if (!(psiElement instanceof PsiMember psiMember)) {
-          return null;
-        }
-        PsiClass psiClass = psiMember.getContainingClass();
-        Set<String> tags = MethodTags.tags(lookupString).stream()
-          .filter(t -> matcher.prefixMatches(t.getName()) && t.getMatcher().test(psiClass))
-          .map(t -> t.getName())
-          .collect(Collectors.toSet());
-        if (tags.isEmpty()) {
-          return null;
-        }
-        return new TagLookupElementDecorator(element, tags);
       }
     });
   }
@@ -319,78 +301,6 @@ public class JavaNoVariantsDelegator extends CompletionContributor implements Du
       session.registerClassFrom(element);
 
       betterMatcher = betterMatcher.improve(plainResult);
-    }
-  }
-
-  private static class TagMatcher extends PrefixMatcher {
-    @NotNull
-    private final PrefixMatcher myMatcher;
-
-    protected TagMatcher(@NotNull PrefixMatcher matcher) {
-      super(matcher.getPrefix());
-      myMatcher = matcher;
-    }
-
-    @Override
-    public boolean prefixMatches(@NotNull String name) {
-      if (myMatcher.prefixMatches(name)) {
-        return true;
-      }
-      Set<MethodTags.Tag> tags = MethodTags.tags(name);
-      for (MethodTags.Tag tag : tags) {
-        if (myMatcher.prefixMatches(tag.getName())) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    @Override
-    public @NotNull PrefixMatcher cloneWithPrefix(@NotNull String prefix) {
-      PrefixMatcher matcher = myMatcher.cloneWithPrefix(prefix);
-      return new TagMatcher(matcher);
-    }
-  }
-
-  static class TagLookupElementDecorator extends LookupElementDecorator<LookupElement> {
-
-    @NotNull
-    private final Set<String> myTags;
-
-    protected TagLookupElementDecorator(@NotNull LookupElement delegate, @NotNull Set<String> tags) {
-      super(delegate);
-      myTags = tags;
-    }
-
-    @NotNull
-    public Set<String> getTags() {
-      return myTags;
-    }
-
-    @Override
-    public Set<String> getAllLookupStrings() {
-      Set<String> all = new HashSet<>(super.getAllLookupStrings());
-      all.addAll(myTags);
-      return all;
-    }
-
-    @Override
-    public void renderElement(@NotNull LookupElementPresentation presentation) {
-      super.renderElement(presentation);
-      if (myTags.size()==1) {
-        presentation.appendTailText(" " + JavaBundle.message("java.completion.tag", myTags.size()) + " ", true);
-        presentation.appendMatchHighlightedTailText(myTags.iterator().next(), true);
-      }
-      else if (myTags.size() > 1) {
-        presentation.appendTailText(" " + JavaBundle.message("java.completion.tag", myTags.size()) + " ", true);
-        Iterator<String> iterator = myTags.iterator();
-        String firstTag = iterator.next();
-        presentation.appendMatchHighlightedTailText(firstTag, true);
-        while (iterator.hasNext()) {
-          presentation.appendTailText(", ", true);
-          presentation.appendMatchHighlightedTailText(iterator.next(), true);
-        }
-      }
     }
   }
 }

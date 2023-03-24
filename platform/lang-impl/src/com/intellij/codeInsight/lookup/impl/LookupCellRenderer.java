@@ -44,10 +44,8 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Stream;
 
 import static com.intellij.codeInsight.lookup.Lookup.LOOKUP_COLOR;
@@ -289,29 +287,10 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
       String trimmed = trimLabelText(fragment.text, allowedWidth, fontMetrics);
       @SimpleTextAttributes.StyleAttributeConstant int fragmentStyle = fragment.isItalic() ? style | SimpleTextAttributes.STYLE_ITALIC : style;
       SimpleTextAttributes baseAttributes = new SimpleTextAttributes(fragmentStyle, getTailTextColor(isSelected, fragment, foreground, nonFocusedSelection));
-      if (fragment.isMatchHighlighted()) {
-        highlightTail(item, trimmed, fragmentStyle, baseAttributes);
-      }
-      else {
-        myTailComponent.append(trimmed, baseAttributes);
-      }
+      myTailComponent.append(trimmed, baseAttributes);
       allowedWidth -= getStringWidth(trimmed, fontMetrics);
     }
-  }
-
-  private void highlightTail(@NotNull LookupElement item, @NlsSafe String text, int fragmentStyle, @NotNull SimpleTextAttributes baseAttributes) {
-    final String prefix = item instanceof EmptyLookupItem ? "" : myLookup.itemPattern(item);
-    if (prefix.isEmpty()) {
-      myTailComponent.append(text, baseAttributes);
-      return;
-    }
-    Iterable<TextRange> ranges = getMatchingFragments(prefix, text);
-    if (ranges == null) {
-      myTailComponent.append(text, baseAttributes);
-      return;
-    }
-    SimpleTextAttributes highlighted = new SimpleTextAttributes(fragmentStyle, MATCHED_FOREGROUND_COLOR);
-    SpeedSearchUtil.appendColoredFragments(myTailComponent, text, ranges, baseAttributes, highlighted);
+    renderItemNameDecoration(myTailComponent, presentation.getItemTailDecorations(), item);
   }
 
   @NlsSafe
@@ -382,7 +361,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     final String name = trimLabelText(presentation.getItemText(), allowedWidth, metrics);
     int used = getStringWidth(name, metrics);
 
-    renderItemName(item, foreground, style, name, myNameComponent, presentation.getItemDecorations());
+    renderItemName(item, foreground, style, name, myNameComponent, presentation.getItemNameDecorations());
     return used;
   }
 
@@ -424,20 +403,21 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
       if (ranges != null) {
         SimpleTextAttributes highlighted = new SimpleTextAttributes(style, MATCHED_FOREGROUND_COLOR);
         SpeedSearchUtil.appendColoredFragments(nameComponent, name, ranges, base, highlighted);
-        renderItemNameDecoration(nameComponent, itemNameDecorations);
+        renderItemNameDecoration(nameComponent, itemNameDecorations, item);
         return;
       }
     }
     nameComponent.append(name, base);
-    renderItemNameDecoration(nameComponent, itemNameDecorations);
+    renderItemNameDecoration(nameComponent, itemNameDecorations, item);
   }
 
   /**
    * Splits the nameComponent into fragments based on the offsets of the decorated text ranges,
    * then applies the appropriate decorations to each fragment.
    */
-  private static void renderItemNameDecoration(SimpleColoredComponent nameComponent,
-                                               @NotNull List<LookupElementPresentation.DecoratedTextRange> itemNameDecorations) {
+  private void renderItemNameDecoration(SimpleColoredComponent nameComponent,
+                                               @NotNull List<LookupElementPresentation.DecoratedTextRange> itemNameDecorations,
+                                               @NotNull LookupElement item) {
     if (nameComponent.getFragmentCount() == 0 || itemNameDecorations.isEmpty()) {
       return;
     }
@@ -461,14 +441,31 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
       if (decorations.isEmpty()) {
         continue;
       }
-      TextAttributes newAttributes = iterator.getTextAttributes().toTextAttributes();
       for (LookupElementPresentation.LookupItemDecoration decoration : decorations) {
+        TextAttributes newAttributes = iterator.getTextAttributes().toTextAttributes();
         if (decoration == LookupElementPresentation.LookupItemDecoration.ERROR) {
           Color color = editorColorsScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES).getEffectColor();
           TextAttributesEffectsBuilder.create().coverWith(EffectType.WAVE_UNDERSCORE, color).applyTo(newAttributes);
+          iterator.setTextAttributes(SimpleTextAttributes.fromTextAttributes(newAttributes));
+        }
+
+        //must be last
+        if (decoration == LookupElementPresentation.LookupItemDecoration.HIGHLIGHT_MATCHED) {
+          final String prefix = item instanceof EmptyLookupItem ? "" : myLookup.itemPattern(item);
+          String fragment = iterator.getFragment();
+          Iterable<TextRange> ranges = getMatchingFragments(prefix, fragment);
+          if (ranges != null) {
+            SimpleTextAttributes highlighted = new SimpleTextAttributes(iterator.getTextAttributes().getStyle(), MATCHED_FOREGROUND_COLOR);
+            int nextStartPoint = 0;
+            for (TextRange nextHighlightedRange : ranges) {
+              iterator.split(nextHighlightedRange.getStartOffset() - nextStartPoint, iterator.getTextAttributes());
+              nextStartPoint = nextHighlightedRange.getStartOffset();
+              iterator.split(nextHighlightedRange.getEndOffset() - nextStartPoint, highlighted);
+              nextStartPoint = nextHighlightedRange.getEndOffset();
+            }
+          }
         }
       }
-      iterator.setTextAttributes(SimpleTextAttributes.fromTextAttributes(newAttributes));
     }
   }
 

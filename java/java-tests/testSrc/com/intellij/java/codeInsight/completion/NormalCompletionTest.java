@@ -2906,4 +2906,25 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
                             }
                             """);
   }
+
+  @NeedsIndex.Full
+  public void testTagAddInvocationCount2() {
+    Registry.get("java.completion.methods.use.tags").setValue(true);
+    myFixture.configureByText("Test.java", """
+      import java.util.HashSet;
+                                        
+      public abstract class SuperClass {
+            
+          void run() {
+              HashSet<Object> objects = new HashSet<>();
+              objects.le<caret>;
+          }
+      }
+      """);
+    LookupElement[] lookupElements = myFixture.complete(CompletionType.BASIC, 1);
+    assertFalse(ContainerUtil.exists(lookupElements, t -> t.getLookupString().equals("size")));
+
+    lookupElements = myFixture.complete(CompletionType.BASIC, 2);
+    assertTrue(ContainerUtil.exists(lookupElements, t -> t.getLookupString().equals("size")));
+  }
 }

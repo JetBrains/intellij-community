@@ -5,6 +5,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +58,7 @@ public class LookupElementPresentation {
   }
 
   /**
-   * Adds a decoration to a lookup item at a specified text range.
+   * Adds a decoration to a lookup item at a specified text range. It will be applied to the name component
    */
   @ApiStatus.Internal
   public void decorateItemTextRange(@NotNull TextRange textRange, @NotNull LookupItemDecoration decoration) {
@@ -66,6 +67,18 @@ public class LookupElementPresentation {
       myItemDecorations = new SmartList<>();
     }
     myItemDecorations.add(new DecoratedTextRange(textRange, decoration));
+  }
+
+  /**
+   * Adds a decoration to a lookup item at a specified text range. It will be applied to the tail component
+   */
+  @ApiStatus.Internal
+  public void decorateTailItemTextRange(@NotNull TextRange textRange, @NotNull LookupItemDecoration decoration) {
+    ensureMutable();
+    if (myItemDecorations == null) {
+      myItemDecorations = new SmartList<>();
+    }
+    myItemDecorations.add(new DecoratedTextRange(textRange, decoration, true));
   }
 
   public void setTailText(@Nullable String text) {
@@ -78,15 +91,11 @@ public class LookupElementPresentation {
   }
 
   public void appendTailText(@NotNull String text, boolean grayed) {
-    appendTailText(new TextFragment(text, grayed, false, false, null));
-  }
-
-  public void appendMatchHighlightedTailText(@NotNull String text, boolean grayed) {
-    appendTailText(new TextFragment(text, grayed, false, true, null));
+    appendTailText(new TextFragment(text, grayed, false, null));
   }
 
   public void appendTailTextItalic(@NotNull String text, boolean grayed) {
-    appendTailText(new TextFragment(text, grayed, true, false, null));
+    appendTailText(new TextFragment(text, grayed, true, null));
   }
 
   private void appendTailText(@NotNull TextFragment fragment) {
@@ -102,14 +111,14 @@ public class LookupElementPresentation {
   public void setTailText(@Nullable String text, boolean grayed) {
     clearTail();
     if (text != null) {
-      appendTailText(new TextFragment(text, grayed, false, false, null));
+      appendTailText(new TextFragment(text, grayed, false, null));
     }
   }
 
   public void setTailText(@Nullable String text, @Nullable Color foreground) {
     clearTail();
     if (text != null) {
-      appendTailText(new TextFragment(text, false, false, false, foreground));
+      appendTailText(new TextFragment(text, false, false, foreground));
     }
   }
 
@@ -149,8 +158,17 @@ public class LookupElementPresentation {
 
   @ApiStatus.Internal
   @NotNull
-  public List<DecoratedTextRange> getItemDecorations() {
-    return myItemDecorations == null ? Collections.emptyList() : Collections.unmodifiableList(myItemDecorations);
+  public List<DecoratedTextRange> getItemNameDecorations() {
+    return myItemDecorations == null ? Collections.emptyList() : ContainerUtil.filter(myItemDecorations, t -> !t.isTail);
+  }
+
+  /**
+   * @return decorators for tail
+   */
+  @ApiStatus.Internal
+  @NotNull
+  public List<DecoratedTextRange> getItemTailDecorations() {
+    return myItemDecorations == null ? Collections.emptyList() : ContainerUtil.filter(myItemDecorations, t -> t.isTail);
   }
 
   @NotNull
@@ -269,16 +287,13 @@ public class LookupElementPresentation {
     public final String text;
     private final boolean myGrayed;
     private final boolean myItalic;
-
-    private final boolean myHighlightedMatched;
     @Nullable private final Color myFgColor;
 
-    private TextFragment(String text, boolean grayed, boolean italic, boolean highlightMatched, @Nullable Color fgColor) {
+    private TextFragment(String text, boolean grayed, boolean italic, @Nullable Color fgColor) {
       this.text = text;
       myGrayed = grayed;
       myItalic = italic;
       myFgColor = fgColor;
-      myHighlightedMatched = highlightMatched;
     }
 
     @Override
@@ -297,10 +312,6 @@ public class LookupElementPresentation {
 
     public boolean isItalic() {
       return myItalic;
-    }
-
-    public boolean isMatchHighlighted() {
-      return myHighlightedMatched;
     }
 
     @Nullable
@@ -333,7 +344,7 @@ public class LookupElementPresentation {
     /**
      * Indicates that the corresponding part of the item text will not be compilable right upon the insertion.
      */
-    ERROR
+    ERROR, HIGHLIGHT_MATCHED
     // Additional decorations may be added in the future
   }
 
@@ -341,6 +352,9 @@ public class LookupElementPresentation {
    * Range of text with an associated decoration {@link LookupItemDecoration}.
    */
   @ApiStatus.Internal
-  public record DecoratedTextRange(TextRange textRange, LookupItemDecoration decoration) {
+  public record DecoratedTextRange(TextRange textRange, LookupItemDecoration decoration, boolean isTail) {
+    public DecoratedTextRange(TextRange textRange, LookupItemDecoration decoration) {
+      this(textRange, decoration, false);
+    }
   }
 }
