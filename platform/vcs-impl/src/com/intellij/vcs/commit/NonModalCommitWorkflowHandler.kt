@@ -18,7 +18,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.DumbModeListener
-import com.intellij.openapi.project.DumbService.isDumb
+import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry

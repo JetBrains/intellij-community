@@ -142,18 +142,18 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
 
                   final Ref<Boolean> includeTests = new Ref<>(true); // use the biggest scope by default
                   if (configuration instanceof JavaRunConfigurationBase) {
-                    try {
-                      // use more fine-grained compilation scope avoiding compiling classes, not relevant for running this configuration
-                      final JavaRunConfigurationBase conf = (JavaRunConfigurationBase)configuration;
-                      final String runClass = conf.getRunClass();
-                      final JavaRunConfigurationModule confModule = conf.getConfigurationModule();
-                      if (runClass != null && confModule != null) {
-                        DumbService.getInstance(confModule.getProject()).runWithAlternativeResolveEnabled(
-                          () -> includeTests.set((JavaParametersUtil.getClasspathType(confModule, runClass, false, true) & JavaParameters.TESTS_ONLY) != 0)
-                        );
-                      }
-                    }
-                    catch (CantRunException ignored) {
+                    // use more fine-grained compilation scope avoiding compiling classes, not relevant for running this configuration
+                    final JavaRunConfigurationBase conf = (JavaRunConfigurationBase)configuration;
+                    final String runClass = conf.getRunClass();
+                    final JavaRunConfigurationModule confModule = conf.getConfigurationModule();
+                    if (runClass != null && confModule != null) {
+                      DumbService.getInstance(confModule.getProject()).runWithAlternativeResolveEnabled(() -> {
+                        try {
+                          includeTests.set((JavaParametersUtil.getClasspathType(confModule, runClass, false, true) & JavaParameters.TESTS_ONLY) != 0);
+                        }
+                        catch (CantRunException ignored) {
+                        }
+                      });
                     }
                   }
 

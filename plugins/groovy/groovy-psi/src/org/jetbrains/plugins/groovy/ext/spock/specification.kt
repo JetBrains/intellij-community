@@ -10,10 +10,11 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getContextClass
 fun GroovyPsiElement.isInsideSpecification(): Boolean {
   val clazz = getContextClass(this) ?: return false
   return DumbService.getInstance(clazz.project).computeWithAlternativeResolveEnabled<Boolean, Throwable> {
+    var defaultProjectValue: Boolean? = null
     if (project.isDefault) {
-      return@computeWithAlternativeResolveEnabled clazz.superClass?.qualifiedName?.equals(SpockUtils.SPEC_CLASS_NAME)
+      defaultProjectValue = clazz.superClass?.qualifiedName?.equals(SpockUtils.SPEC_CLASS_NAME)
     }
-    clazz.isSpockSpecification()
+    defaultProjectValue ?: clazz.isSpockSpecification()
   }
 }
 

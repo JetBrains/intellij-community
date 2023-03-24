@@ -20,7 +20,7 @@ open class CodeFragmentFromPsiBuilder(private val project: Project, val language
   open fun getVisitors(): List<CompletionEvaluationVisitor> = CompletionEvaluationVisitor.EP_NAME.extensions.toList()
 
   override fun build(file: VirtualFile, rootProcessor: EvaluationRootProcessor): CodeFragment {
-    val psi = dumbService.runReadActionInSmartMode<PsiFile> {
+    val psi = dumbService.runReadActionInSmartMode<PsiFile?> {
       PsiManager.getInstance(project).findFile(file)
     } ?: throw PsiConverterException("Cannot get PSI of file ${file.path}")
 

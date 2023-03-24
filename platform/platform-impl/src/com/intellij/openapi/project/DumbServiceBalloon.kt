@@ -26,7 +26,7 @@ class DumbServiceBalloon(private val myProject: Project,
 
   /// a workaround, it should not depend from DumbServiceImpl/DumbService and be a part of DumbServiceImpl
   interface Service {
-    fun isDumb(): Boolean
+    val isDumb: Boolean
     fun runWhenSmart(runnable: Runnable)
   }
 
@@ -40,7 +40,7 @@ class DumbServiceBalloon(private val myProject: Project,
                                 runWhenSmartAndBalloonStillShowing: Runnable) {
     if (LightEdit.owns(myProject)) return
     ApplicationManager.getApplication().assertIsDispatchThread()
-    if (!myService.isDumb()) {
+    if (!myService.isDumb) {
       DumbModeBalloonWasNotNeeded.log(myProject)
       runWhenSmartAndBalloonStillShowing.run()
       return
@@ -77,7 +77,7 @@ class DumbServiceBalloon(private val myProject: Project,
       balloon.hide()
     }
     DataManager.getInstance().dataContextFromFocusAsync.onSuccess { context: DataContext ->
-      if (!myService.isDumb()) {
+      if (!myService.isDumb) {
         return@onSuccess
       }
       if (myBalloon == null) {

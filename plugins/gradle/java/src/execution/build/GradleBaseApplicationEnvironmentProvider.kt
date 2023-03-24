@@ -149,7 +149,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     private fun findJavaModuleName(sdk: Sdk, module: JavaRunConfigurationModule, mainClass: PsiClass): String? {
       return if (JavaSdkUtil.isJdkAtLeast(sdk, JavaSdkVersion.JDK_1_9)) {
         runReadAction {
-          DumbService.getInstance(module.project).computeWithAlternativeResolveEnabled<PsiJavaModule, RuntimeException> {
+          DumbService.getInstance(module.project).computeWithAlternativeResolveEnabled<PsiJavaModule?, RuntimeException> {
             JavaModuleGraphUtil.findDescriptorByElement(module.findClass(mainClass.qualifiedName))
           }?.name
         } ?: return null

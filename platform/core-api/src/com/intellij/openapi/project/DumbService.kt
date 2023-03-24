@@ -1,105 +1,70 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.project;
+package com.intellij.openapi.project
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.ProjectExtensionPointName;
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.NlsContexts.PopupContent;
-import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.util.*;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.AccessToken
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.ProjectExtensionPointName
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.*
+import com.intellij.util.ThrowableRunnable
+import com.intellij.util.messages.Topic
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Contract
+import java.util.*
+import javax.swing.JComponent
+import kotlin.jvm.Throws
 
 /**
  * A service managing the IDE's 'dumb' mode: when indexes are updated in the background, and the functionality is very much limited.
- * Only the explicitly allowed functionality is available. Usually, it's allowed by implementing {@link DumbAware} interface.
- * <p>
- * "Dumb" mode starts and ends in a {@link com.intellij.openapi.application.WriteAction}, so if you're inside a {@link ReadAction}
+ * Only the explicitly allowed functionality is available. Usually, it's allowed by implementing [DumbAware] interface.
+ *
+ *
+ * "Dumb" mode starts and ends in a [com.intellij.openapi.application.WriteAction], so if you're inside a [ReadAction]
  * on a background thread, it won't suddenly begin in the middle of your operation. But note that whenever you start
  * a top-level read action on a background thread, you should be prepared to anything being changed, including "dumb"
- * mode being suddenly on and off. To avoid executing a read action in "dumb" mode, please use {@link #runReadActionInSmartMode} or
- * {@link com.intellij.openapi.application.NonBlockingReadAction#inSmartMode}.
- * <p>
- * More information about dumb mode could be found here: {@link IndexNotReadyException}
+ * mode being suddenly on and off. To avoid executing a read action in "dumb" mode, please use [runReadActionInSmartMode] or
+ * [com.intellij.openapi.application.NonBlockingReadAction.inSmartMode].
+ *
+ *
+ * More information about dumb mode could be found here: [IndexNotReadyException]
  */
-public abstract class DumbService {
-  @Topic.ProjectLevel
-  public static final Topic<DumbModeListener> DUMB_MODE = new Topic<>("dumb mode", DumbModeListener.class, Topic.BroadcastDirection.NONE);
-
+abstract class DumbService {
   /**
    * The tracker is advanced each time we enter/exit from dumb mode.
    */
-  public abstract ModificationTracker getModificationTracker();
+  abstract val modificationTracker: ModificationTracker
 
   /**
-   * To avoid race conditions use it only in EDT thread or inside read-action. See documentation for this class {@link DumbService}
+   * To avoid race conditions use it only in EDT thread or inside read-action. See documentation for this class [DumbService]
    *
    * @return whether the IDE is in dumb mode, which means that right now indexes are updated in the background.
    * The IDE offers only limited functionality at such times, e.g., plain text file editing and version control operations.
    */
-  public abstract boolean isDumb();
-
-  public static boolean isDumb(@NotNull Project project) {
-    return getInstance(project).isDumb();
-  }
-
-  public static @NotNull <T> List<T> getDumbAwareExtensions(@NotNull Project project, @NotNull ExtensionPointName<T> extensionPoint) {
-    ExtensionPoint<T> point = extensionPoint.getPoint();
-    int size = point.size();
-    if (size == 0) {
-      return Collections.emptyList();
-    }
-
-    if (!getInstance(project).isDumb()) {
-      return point.getExtensionList();
-    }
-
-    List<T> result = new ArrayList<>(size);
-    for (T element : (ExtensionPointImpl<T>)point) {
-      if (isDumbAware(element)) {
-        result.add(element);
-      }
-    }
-    return result;
-  }
-
-  public static @NotNull <T> List<T> getDumbAwareExtensions(@NotNull Project project, @NotNull ProjectExtensionPointName<T> extensionPoint) {
-    DumbService dumbService = getInstance(project);
-    return dumbService.filterByDumbAwareness(extensionPoint.getExtensions(project));
-  }
+  abstract val isDumb: Boolean
 
   /**
    * Executes the runnable as soon as possible on AWT Event Dispatch when:
-   * <ul>
-   * <li>project is initialized</li>
-   * <li>and there's no dumb mode in progress</li>
-   * </ul>
+   *  * project is initialized
+   *  * and there's no dumb mode in progress
+   *
    * This may also happen immediately if these conditions are already met.
-   * <p>
+   *
    * Note that it's not guaranteed that the dumb mode won't start again during this runnable execution, it should manage that situation explicitly.
    */
-  public abstract void runWhenSmart(@NotNull Runnable runnable);
+  abstract fun runWhenSmart(runnable: Runnable)
 
   /**
    * Pause the current thread until dumb mode ends and then continue execution.
    * NOTE: there are no guarantees that a new dumb mode won't begin before the next statement.
-   * Hence: use with care. Consider using {@link #runWhenSmart(Runnable)} or {@link #runReadActionInSmartMode(Runnable)} instead
+   * Hence: use with care. Consider using [runWhenSmart] or [runReadActionInSmartMode] instead
    */
-  public abstract void waitForSmartMode();
+  abstract fun waitForSmartMode()
 
   /**
    * Pause the current thread until dumb mode ends, and then run the read action. Indexes are guaranteed to be available inside that read action,
@@ -107,26 +72,24 @@ public abstract class DumbService {
    *
    * @throws ProcessCanceledException if the project is closed during dumb mode
    */
-  public <T> T runReadActionInSmartMode(final @NotNull Computable<T> r) {
-    final Ref<T> result = new Ref<>();
-    runReadActionInSmartMode(() -> result.set(r.compute()));
-    return result.get();
+  fun <T> runReadActionInSmartMode(r: Computable<T>): T {
+    val result = Ref<T>()
+    runReadActionInSmartMode { result.set(r.compute()) }
+    return result.get()
   }
 
-  public @Nullable <T> T tryRunReadActionInSmartMode(@NotNull Computable<T> task, @Nullable @PopupContent String notification) {
-    if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+  fun <T> tryRunReadActionInSmartMode(task: Computable<T>, notification: @NlsContexts.PopupContent String?): T? {
+    return if (ApplicationManager.getApplication().isReadAccessAllowed) {
       try {
-        return task.compute();
+        task.compute()
       }
-      catch (IndexNotReadyException e) {
-        if (notification != null) {
-          showDumbModeNotification(notification);
-        }
-        return null;
+      catch (e: IndexNotReadyException) {
+        notification?.let { showDumbModeNotification(it) }
+        null
       }
     }
     else {
-      return runReadActionInSmartMode(task);
+      runReadActionInSmartMode(task)
     }
   }
 
@@ -136,28 +99,27 @@ public abstract class DumbService {
    *
    * @throws ProcessCanceledException if the project is closed during dumb mode
    */
-  public void runReadActionInSmartMode(@NotNull Runnable r) {
-    if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+  fun runReadActionInSmartMode(r: Runnable) {
+    if (ApplicationManager.getApplication().isReadAccessAllowed) {
       // we can't wait for smart mode to begin (it'd result in a deadlock),
       // so let's just pretend it's already smart and fail with IndexNotReadyException if not
-      r.run();
-      return;
+      r.run()
+      return
     }
-
     while (true) {
-      waitForSmartMode();
-      boolean success = ReadAction.compute(() -> {
-        if (getProject().isDisposed()) {
-          throw new ProcessCanceledException();
+      waitForSmartMode()
+      val success = ReadAction.compute<Boolean, RuntimeException> {
+        if (project.isDisposed) {
+          throw ProcessCanceledException()
         }
-        if (isDumb()) {
-          return false;
+        if (isDumb) {
+          return@compute false
         }
-        r.run();
-        return true;
-      });
+        r.run()
+        true
+      }
       if (success) {
-        break;
+        break
       }
     }
   }
@@ -165,19 +127,17 @@ public abstract class DumbService {
   /**
    * Pause the current thread until dumb mode ends, and then attempt to execute the runnable. If it fails due to another dumb mode having started,
    * try again until the runnable can complete successfully.
-   *
-   * @deprecated This method provides no guarantees and should be avoided, please use {@link #runReadActionInSmartMode} instead.
    */
-  @Deprecated
   @ApiStatus.ScheduledForRemoval
-  public void repeatUntilPassesInSmartMode(final @NotNull Runnable r) {
+  @Deprecated("This method provides no guarantees and should be avoided, please use [#runReadActionInSmartMode] instead.")
+  fun repeatUntilPassesInSmartMode(r: Runnable) {
     while (true) {
-      waitForSmartMode();
+      waitForSmartMode()
       try {
-        r.run();
-        return;
+        r.run()
+        return
       }
-      catch (IndexNotReadyException ignored) {
+      catch (ignored: IndexNotReadyException) {
       }
     }
   }
@@ -186,90 +146,85 @@ public abstract class DumbService {
    * Invoke the runnable later on EventDispatchThread AND when IDE isn't in dumb mode.
    * The runnable won't be invoked if the project is disposed during dumb mode.
    */
-  public abstract void smartInvokeLater(@NotNull Runnable runnable);
+  abstract fun smartInvokeLater(runnable: Runnable)
 
   /**
    * Invoke the runnable later on EventDispatchThread with the given modality state AND when IDE isn't in dumb mode.
    * The runnable won't be invoked if the project is disposed during dumb mode.
    */
-  public abstract void smartInvokeLater(@NotNull Runnable runnable, @NotNull ModalityState modalityState);
-
-  public static DumbService getInstance(@NotNull Project project) {
-    return project.getService(DumbService.class);
-  }
+  abstract fun smartInvokeLater(runnable: Runnable, modalityState: ModalityState)
 
   /**
-   * @return all the elements of the given array if there's no dumb mode currently, or the dumb-aware ones if {@link #isDumb()} is {@code true}.
-   * @see #isDumbAware(Object)
+   * @return all the elements of the given array if there's no dumb mode currently, or the dumb-aware ones if [isDumb] is `true`.
+   * @see isDumbAware
    */
-  public @NotNull <T> List<T> filterByDumbAwareness(T @NotNull [] array) {
-    return filterByDumbAwareness(Arrays.asList(array));
+  fun <T> filterByDumbAwareness(array: Array<T>): List<T> {
+    return filterByDumbAwareness(listOf(*array))
   }
 
   /**
-   * @return all the elements of the given collection if there's no dumb mode currently, or the dumb-aware ones if {@link #isDumb()} is true.
-   * @see #isDumbAware(Object)
+   * @return all the elements of the given collection if there's no dumb mode currently, or the dumb-aware ones if [isDumb] is true.
+   * @see isDumbAware
    */
   @Contract(pure = true)
-  public @NotNull <T> List<T> filterByDumbAwareness(@NotNull Collection<? extends T> collection) {
-    if (isDumb()) {
-      List<T> result = new ArrayList<>(collection.size());
-      for (T element : collection) {
+  fun <T> filterByDumbAwareness(collection: Collection<T>): List<T> {
+    if (isDumb) {
+      val result: MutableList<T> = ArrayList(collection.size)
+      for (element in collection) {
         if (isDumbAware(element)) {
-          result.add(element);
+          result.add(element)
         }
       }
-      return result;
+      return result
     }
-
-    //noinspection unchecked
-    return collection instanceof List ? (List<T>)collection : new ArrayList<>(collection);
+    return if (collection is List<*>) collection as List<T> else ArrayList(collection)
   }
 
   /**
    * Queues a task to be executed in "dumb mode", where access to indices is forbidden. Tasks are executed sequentially
-   * in background unless {@link #completeJustSubmittedTasks()} is called in the same dispatch thread activity.
-   * <p>
-   * Tasks can specify custom "equality" policy via @{link {@link DumbModeTask#tryMergeWith(DumbModeTask)}}.
+   * in background unless [completeJustSubmittedTasks] is called in the same dispatch thread activity.
+   *
+   *
+   * Tasks can specify custom "equality" policy via [DumbModeTask.tryMergeWith].
    * Calling this method has no effect if an "equal" task is already enqueued (but not yet running).
    *
-   * Alternatively one may call a short-cut {@link DumbModeTask#queue(Project)} instead.
+   * Alternatively one may call a short-cut [DumbModeTask.queue] instead.
    */
-  public abstract void queueTask(@NotNull DumbModeTask task);
+  abstract fun queueTask(task: DumbModeTask)
 
   /**
    * Cancels the given task. If it's in the queue, it won't be executed. If it's already running, its
-   * {@link com.intellij.openapi.progress.ProgressIndicator} is canceled, so the next {@link ProgressManager#checkCanceled()} call
-   * will throw {@link ProcessCanceledException}.
+   * [com.intellij.openapi.progress.ProgressIndicator] is canceled, so the next [ProgressManager.checkCanceled] call
+   * will throw [ProcessCanceledException].
    */
-  public abstract void cancelTask(@NotNull DumbModeTask task);
+  abstract fun cancelTask(task: DumbModeTask)
 
   /**
    * Cancels all tasks and wait when their execution is finished. Should be called on write thread.
    */
   @ApiStatus.Internal
-  public abstract void cancelAllTasksAndWait();
+  abstract fun cancelAllTasksAndWait()
 
   /**
    * Runs the "just submitted" tasks under a modal dialog. "Just submitted" means that tasks were queued for execution
    * earlier within the same Swing event dispatch thread event processing, and there were no other tasks already running at that moment.
    * Otherwise, this method does nothing.
-   * <p>
+   *
    * This functionality can be useful in refactorings (invoked in "smart mode"), when after VFS or root changes
    * (which could start "dumb mode") some references need to be resolved (which again requires "smart mode").
-   * <p>
+   *
    * Should be invoked on dispatch thread.
    * It's the caller's responsibility to invoke this method only when the model is in internally consistent state,
    * so that background threads with read actions don't see half-baked PSI/VFS/etc.
    */
-  public abstract void completeJustSubmittedTasks();
+  abstract fun completeJustSubmittedTasks()
 
   /**
    * Replaces given component temporarily with "Not available until indices are built" label during dumb mode.
    *
    * @return Wrapped component.
    */
-  public abstract JComponent wrapGently(@NotNull JComponent dumbUnawareContent, @NotNull Disposable parentDisposable);
+  abstract fun wrapGently(dumbUnawareContent: JComponent, parentDisposable: Disposable): JComponent
 
   /**
    * Adds a "Results might be incomplete during indexing." decorator to a given component during dumb mode.
@@ -279,132 +234,105 @@ public abstract class DumbService {
    *
    * @return Wrapped component.
    */
-  public abstract JComponent wrapWithSpoiler(@NotNull JComponent dumbAwareContent, @NotNull Runnable updateRunnable, @NotNull Disposable parentDisposable);
+  abstract fun wrapWithSpoiler(dumbAwareContent: JComponent, updateRunnable: Runnable, parentDisposable: Disposable): JComponent
 
   /**
    * Disables given component temporarily during dumb mode.
    */
-  public void makeDumbAware(final @NotNull JComponent componentToDisable, @NotNull Disposable parentDisposable) {
-    componentToDisable.setEnabled(!isDumb());
-    getProject().getMessageBus().connect(parentDisposable).subscribe(DUMB_MODE, new DumbModeListener() {
-      @Override
-      public void enteredDumbMode() {
-        componentToDisable.setEnabled(false);
+  fun makeDumbAware(componentToDisable: JComponent, parentDisposable: Disposable) {
+    componentToDisable.isEnabled = !isDumb
+    project.messageBus.connect(parentDisposable).subscribe(DUMB_MODE, object : DumbModeListener {
+      override fun enteredDumbMode() {
+        componentToDisable.isEnabled = false
       }
 
-      @Override
-      public void exitDumbMode() {
-        componentToDisable.setEnabled(true);
+      override fun exitDumbMode() {
+        componentToDisable.isEnabled = true
       }
-    });
+    })
   }
 
   /**
    * Show a notification when given action is not available during dumb mode.
    */
-  public abstract void showDumbModeNotification(@NotNull @PopupContent String message);
+  abstract fun showDumbModeNotification(message: @NlsContexts.PopupContent String)
 
   /**
    * Shows balloon about indexing blocking those actions until it is hidden (by key input, mouse event, etc.) or indexing stops.
    * @param runWhenSmartAndBalloonStillShowing will be executed in smart mode on EDT, balloon won't be dismissed by user's actions
    */
-  public abstract void showDumbModeActionBalloon(@NotNull @PopupContent String balloonText,
-                                                 @NotNull Runnable runWhenSmartAndBalloonStillShowing);
+  abstract fun showDumbModeActionBalloon(balloonText: @NlsContexts.PopupContent String,
+                                         runWhenSmartAndBalloonStillShowing: Runnable)
 
-  public abstract Project getProject();
+  abstract val project: Project
 
-  @Contract(value = "null -> false", pure = true)
-  public static boolean isDumbAware(Object o) {
-    if (o instanceof PossiblyDumbAware) {
-      return ((PossiblyDumbAware)o).isDumbAware();
+  /**
+   * Invokes the given runnable with alternative resolve set to true if dumb mode is enabled.
+   *
+   * @see isAlternativeResolveEnabled
+   */
+  fun withAlternativeResolveEnabled(runnable: Runnable) {
+    val isDumb = isDumb
+    if (isDumb) isAlternativeResolveEnabled = true
+    try {
+      runnable.run()
     }
-    //noinspection SSBasedInspection
-    return o instanceof DumbAware;
+    finally {
+      if (isDumb) isAlternativeResolveEnabled = false
+    }
+  }
+
+  /**
+   * Invokes the given computable with alternative resolve set to `true` if dumb mode is enabled.
+   *
+   * @see isAlternativeResolveEnabled
+   */
+  fun <T, E : Throwable?> computeWithAlternativeResolveEnabled(runnable: ThrowableComputable<T, E>): T {
+    val isDumb = isDumb
+    if (isDumb) isAlternativeResolveEnabled = true
+    return try {
+      runnable.compute()
+    }
+    finally {
+      if (isDumb) isAlternativeResolveEnabled = false
+    }
+  }
+
+  /**
+   * Invokes the given runnable with alternative resolve set to `true` if dumb mode is enabled.
+   *
+   * @see isAlternativeResolveEnabled
+   */
+  fun <E : Throwable?> runWithAlternativeResolveEnabled(runnable: ThrowableRunnable<E>) {
+    val isDumb = isDumb
+    if (isDumb) isAlternativeResolveEnabled = true
+    try {
+      runnable.run()
+    }
+    finally {
+      if (isDumb) isAlternativeResolveEnabled = false
+    }
   }
 
   /**
    * Enables or disables alternative resolve strategies for the current thread.
-   * <p>
+   *
    * Normally reference resolution uses indexes, and hence is not available in dumb mode. In some cases, alternative ways
    * of performing resolve are available, although much slower. It's impractical to always use these ways because it'll
    * lead to overloaded CPU (especially given there's also indexing in progress). But for some explicit user actions
    * (e.g., explicit Goto Declaration) turning on these slower methods is beneficial.
-   * <p>
-   * NOTE: even with alternative resolution enabled, methods like resolve(), findClass() etc. may still throw
-   * {@link IndexNotReadyException}. So alternative resolve is not a panacea, it might help provide navigation in some cases
+   *
+   * NOTE: even with alternative resolution enabled, methods like `resolve()`, `findClass()` etc. may still throw
+   * [IndexNotReadyException]. So alternative resolve is not a panacea, it might help provide navigation in some cases
    * but not in all.
-   * <p>
-   * A typical usage would involve {@code try-finally}, where the alternative resolution is first enabled, then an action is performed,
-   * and then alternative resolution is turned off in the {@code finally} block.
-   * @deprecated Use {@link #runWithAlternativeResolveEnabled(ThrowableRunnable)} or {@link #computeWithAlternativeResolveEnabled(ThrowableComputable)}
-   * or {@link #withAlternativeResolveEnabled(Runnable)} instead
-   */
-  @Deprecated
-  public abstract void setAlternativeResolveEnabled(boolean enabled);
-
-  /**
-   * Invokes the given runnable with alternative resolve set to true if dumb mode is enabled.
    *
-   * @see #setAlternativeResolveEnabled(boolean)
+   * A typical usage would involve `try-finally`, where the alternative resolution is first enabled, then an action is performed,
+   * and then alternative resolution is turned off in the `finally` block.
    */
-  public void withAlternativeResolveEnabled(@NotNull Runnable runnable) {
-    boolean isDumb = isDumb();
-    if (isDumb) setAlternativeResolveEnabled(true);
-    try {
-      runnable.run();
-    }
-    finally {
-      if (isDumb) setAlternativeResolveEnabled(false);
-    }
-  }
-
-  /**
-   * Invokes the given computable with alternative resolve set to true if dumb mode is enabled.
-   *
-   * @see #setAlternativeResolveEnabled(boolean)
-   */
-  public <T, E extends Throwable> T computeWithAlternativeResolveEnabled(@NotNull ThrowableComputable<T, E> runnable) throws E {
-    boolean isDumb = isDumb();
-    if (isDumb) setAlternativeResolveEnabled(true);
-    try {
-      return runnable.compute();
-    }
-    finally {
-      if (isDumb) setAlternativeResolveEnabled(false);
-    }
-  }
-
-  /**
-   * Invokes the given runnable with alternative resolve set to true if dumb mode is enabled.
-   *
-   * @see #setAlternativeResolveEnabled(boolean)
-   */
-  public <E extends Throwable> void runWithAlternativeResolveEnabled(@NotNull ThrowableRunnable<E> runnable) throws E {
-    boolean isDumb = isDumb();
-    if (isDumb) setAlternativeResolveEnabled(true);
-    try {
-      runnable.run();
-    }
-    finally {
-      if (isDumb) setAlternativeResolveEnabled(false);
-    }
-  }
-
-  /**
-   * @return whether alternative resolution is enabled for the current thread.
-   * @see #setAlternativeResolveEnabled(boolean)
-   */
-  public abstract boolean isAlternativeResolveEnabled();
-
-  /**
-   * @see #completeJustSubmittedTasks()
-   * @deprecated Obsolete, does nothing, just executes the passed runnable.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static void allowStartingDumbModeInside(@NotNull DumbModePermission permission, @NotNull Runnable runnable) {
-    runnable.run();
-  }
+  @set:Deprecated(
+    """Use [#runWithAlternativeResolveEnabled(ThrowableRunnable)] or [#computeWithAlternativeResolveEnabled(ThrowableComputable)]
+    or [#withAlternativeResolveEnabled(Runnable)] instead""")
+  abstract var isAlternativeResolveEnabled: Boolean
 
   /**
    * Runs a heavy activity and suspends indexing (if any) for this time. The user still can manually pause and resume the indexing.
@@ -412,26 +340,88 @@ public abstract class DumbService {
    *
    * @param activityName the text (a noun phrase) to display as a reason for the indexing being paused
    */
-  public abstract void suspendIndexingAndRun(@NotNull @NlsContexts.ProgressText String activityName, @NotNull Runnable activity);
+  abstract fun suspendIndexingAndRun(activityName: @NlsContexts.ProgressText String, activity: Runnable)
 
   @ApiStatus.Internal
-  public abstract AccessToken runWithWaitForSmartModeDisabled();
+  abstract fun runWithWaitForSmartModeDisabled(): AccessToken
 
   /**
-   * @see #DUMB_MODE
+   * @see [DUMB_MODE]
    */
-  public interface DumbModeListener {
+  interface DumbModeListener {
     /**
      * The event arrives on EDT.
      */
-    default void enteredDumbMode() {}
+    @JvmDefault
+    fun enteredDumbMode() {}
 
     /**
      * The event arrives on EDT.
      */
-    default void exitDumbMode() {}
+    @JvmDefault
+    fun exitDumbMode() {}
   }
 
   @ApiStatus.Internal
-  public abstract void unsafeRunWhenSmart(@NotNull Runnable runnable);
+  abstract fun unsafeRunWhenSmart(runnable: Runnable)
+
+  companion object {
+    @JvmField
+    @Topic.ProjectLevel
+    val DUMB_MODE = Topic("dumb mode", DumbModeListener::class.java, Topic.BroadcastDirection.NONE)
+
+    @JvmStatic
+    fun isDumb(project: Project): Boolean {
+      return getInstance(project).isDumb
+    }
+
+    @JvmStatic
+    fun <T: Any> getDumbAwareExtensions(project: Project, extensionPoint: ExtensionPointName<T>): List<T> {
+      val point = extensionPoint.point
+      val size = point.size()
+      if (size == 0) {
+        return emptyList()
+      }
+      if (!getInstance(project).isDumb) {
+        return point.extensionList
+      }
+      val result: MutableList<T> = ArrayList(size)
+      for (element in point as ExtensionPointImpl<T>) {
+        if (isDumbAware(element)) {
+          result.add(element!!)
+        }
+      }
+      return result
+    }
+
+    @JvmStatic
+    fun <T: Any> getDumbAwareExtensions(project: Project, extensionPoint: ProjectExtensionPointName<T>): List<T> {
+      val dumbService = getInstance(project)
+      return dumbService.filterByDumbAwareness(extensionPoint.getExtensions(project))
+    }
+
+    @JvmStatic
+    fun getInstance(project: Project): DumbService {
+      return project.getService(DumbService::class.java)
+    }
+
+    @JvmStatic
+    @Contract("null -> false", pure = true)
+    fun isDumbAware(o: Any?): Boolean {
+      return if (o is PossiblyDumbAware) {
+        o.isDumbAware
+      }
+      else o is DumbAware
+    }
+
+    /**
+     * @see completeJustSubmittedTasks
+     */
+    @JvmStatic
+    @ApiStatus.ScheduledForRemoval
+    @Deprecated("Obsolete, does nothing, just executes the passed runnable.", ReplaceWith("runnable.run()"))
+    fun allowStartingDumbModeInside(permission: DumbModePermission, runnable: Runnable) {
+      runnable.run()
+    }
+  }
 }

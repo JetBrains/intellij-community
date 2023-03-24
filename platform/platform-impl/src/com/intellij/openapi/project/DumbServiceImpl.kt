@@ -47,6 +47,15 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
                                                                          publisher: DumbModeListener) : DumbService(), Disposable, ModificationTracker, DumbServiceBalloon.Service {
   private val myState: AtomicReference<State>
 
+  override val project: Project = myProject
+  override var isAlternativeResolveEnabled: Boolean
+    get() = myAlternativeResolveTracker.isAlternativeResolveEnabled
+    set(enabled) {
+      myAlternativeResolveTracker.isAlternativeResolveEnabled = enabled
+    }
+
+  override val modificationTracker: ModificationTracker = this
+
   @Volatile
   var dumbModeStartTrace: Throwable? = null
     private set
@@ -146,15 +155,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     myTaskQueue.disposePendingTasks()
   }
 
-  override fun getProject(): Project {
-    return myProject
-  }
-
-  override fun isAlternativeResolveEnabled(): Boolean {
-    return myAlternativeResolveTracker.isAlternativeResolveEnabled
-  }
-
-  override fun suspendIndexingAndRun(activityName: String, activity: Runnable) {
+  override fun suspendIndexingAndRun(activityName: @NlsContexts.ProgressText String, activity: Runnable) {
     myGuiDumbTaskRunner.suspendAndRun(activityName, activity)
   }
 
@@ -162,36 +163,25 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     // non-public dangerous API. Use suspendIndexingAndRun instead
     get() = myGuiDumbTaskRunner.guiSuspender
 
-  @Deprecated("Deprecated in Java")
-  override fun setAlternativeResolveEnabled(enabled: Boolean) {
-    myAlternativeResolveTracker.isAlternativeResolveEnabled = enabled
-  }
-
-  override fun getModificationTracker(): ModificationTracker {
-    return this
-  }
-
-  override fun isDumb(): Boolean {
-    if (ALWAYS_SMART) return false
-    if (!ApplicationManager.getApplication().isReadAccessAllowed &&
-        Registry.`is`("ide.check.is.dumb.contract")) {
-      LOG.error("To avoid race conditions isDumb method should be used only under read action or in EDT thread.",
-                IllegalStateException())
+  override var isDumb: Boolean
+    get() {
+      if (ALWAYS_SMART) return false
+      if (!ApplicationManager.getApplication().isReadAccessAllowed && Registry.`is`("ide.check.is.dumb.contract")) {
+        LOG.error("To avoid race conditions isDumb method should be used only under read action or in EDT thread.",
+                  IllegalStateException())
+      }
+      return myState.get() == State.DUMB
     }
-    return myState.get() == State.DUMB
-  }
-
-  @TestOnly
-  fun setDumb(dumb: Boolean) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    if (dumb) {
-      myState.set(State.DUMB)
-      myPublisher.enteredDumbMode()
+    @TestOnly set(dumb) {
+      ApplicationManager.getApplication().assertIsDispatchThread()
+      if (dumb) {
+        myState.set(State.DUMB)
+        myPublisher.enteredDumbMode()
+      }
+      else {
+        enterSmartModeIfDumb()
+      }
     }
-    else {
-      enterSmartModeIfDumb()
-    }
-  }
 
   @TestOnly
   fun runInDumbMode(runnable: Runnable) {

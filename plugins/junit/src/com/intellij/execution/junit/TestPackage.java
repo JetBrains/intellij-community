@@ -139,15 +139,17 @@ public class TestPackage extends TestObject {
 
   @Nullable
   private TestClassFilter computeFilter(JUnitConfiguration.Data data) throws CantRunException {
-    final TestClassFilter classFilter;
     try {
-      classFilter =
-        DumbService.getInstance(getConfiguration().getProject()).computeWithAlternativeResolveEnabled(() -> getClassFilter(data));
-      LOG.assertTrue(classFilter.getBase() != null);
-      return classFilter;
-    }
-    catch (JUnitUtil.NoJUnitException e) {
-      return null;
+      return DumbService.getInstance(getConfiguration().getProject()).computeWithAlternativeResolveEnabled(() -> {
+        try {
+          TestClassFilter classFilter = getClassFilter(data);
+          LOG.assertTrue(classFilter.getBase() != null);
+          return classFilter;
+        }
+        catch (JUnitUtil.NoJUnitException e) {
+          return null;
+        }
+      });
     }
     catch (IndexNotReadyException e) {
       throw new CantRunException(JUnitBundle.message("running.tests.disabled.during.index.update.error.message"));
