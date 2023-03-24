@@ -21,8 +21,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 public class PyEnvTaskRunner {
   private static final Logger LOG = Logger.getInstance(PyEnvTaskRunner.class);
@@ -63,7 +65,7 @@ public class PyEnvTaskRunner {
       final boolean suitableForTask = isSuitableForTask(envTags, requiredTags);
       final boolean shouldRun = shouldRun(root, testTask);
       if (!suitableForTask || !shouldRun) {
-        LOG.warn(String.format("Skipping %s (compatible with tags: %s, should run:%s)", root, suitableForTask, shouldRun));
+        LOG.warn(String.format("Skipping %s (compatible with tags: %s, should run: %s)", root, suitableForTask, shouldRun));
         continue;
       }
 
@@ -139,7 +141,7 @@ public class PyEnvTaskRunner {
     }
 
     if (!wasExecuted) {
-      throw new RuntimeException("test" +
+      throw new RuntimeException("test " +
                                  testName +
                                  " was not executed.\n" +
                                  joinStrings(myRoots, "All roots: ") +
