@@ -35,8 +35,8 @@ import com.intellij.ui.RetrievableIcon
 import com.intellij.ui.icons.IconReplacer
 import com.intellij.ui.icons.TextHoledIcon
 import com.intellij.ui.icons.TextIcon
+import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.IconUtil
 import com.intellij.util.ui.*
 import java.awt.*
 import java.awt.event.InputEvent
@@ -243,7 +243,7 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
       return super.getDisabledIcon(icon)
     }
     return PreparedIcon(icon.iconWidth, icon.iconHeight) {
-      IconUtil.toStrokeIcon(icon, JBUI.CurrentTheme.RunWidget.DISABLED_FOREGROUND)
+      toStrokeIcon(icon, JBUI.CurrentTheme.RunWidget.DISABLED_FOREGROUND)
     }
   }
 
@@ -282,7 +282,7 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
       else {
         JBUI.CurrentTheme.RunWidget.FOREGROUND
       }
-      resultIcon = IconUtil.toStrokeIcon(resultIcon, resultColor)
+      resultIcon = toStrokeIcon(resultIcon, resultColor)
     }
 
     super.paintIcon(g, actionButton, resultIcon, x, y)

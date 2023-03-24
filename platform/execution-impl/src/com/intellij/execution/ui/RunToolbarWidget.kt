@@ -38,17 +38,20 @@ import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.ui.popup.KeepingPopupOpenAction
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.PopupState
 import com.intellij.ui.popup.WizardPopup
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import com.intellij.util.xmlb.annotations.*
+import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.util.xmlb.annotations.OptionTag
+import com.intellij.util.xmlb.annotations.Tag
+import com.intellij.util.xmlb.annotations.XCollection
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.*
@@ -320,7 +323,7 @@ class StopWithDropDownAction : AnAction(), CustomComponentAction, DumbAware {
     e.presentation.isEnabled = activeProcesses > 0
     // presentations should be visible because it has to take some fixed space
     //e.presentation.isVisible = activeProcesses > 0
-    e.presentation.icon = IconUtil.toStrokeIcon(AllIcons.Actions.Suspend, JBUI.CurrentTheme.RunWidget.FOREGROUND)
+    e.presentation.icon = toStrokeIcon(AllIcons.Actions.Suspend, JBUI.CurrentTheme.RunWidget.FOREGROUND)
     if (activeProcesses == 1) {
       val first = running.first()
       getConfigurations(manger, first)

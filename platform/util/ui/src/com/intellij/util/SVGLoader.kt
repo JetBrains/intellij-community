@@ -5,12 +5,10 @@ package com.intellij.util
 
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.ui.ColorUtil
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.svg.*
 import com.intellij.util.ui.ImageUtil
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.annotations.ApiStatus
 import org.w3c.dom.Element
 import java.awt.*
@@ -94,37 +92,6 @@ object SVGLoader {
     val iconMaxSize = iconMaxSize
     val scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE)
     return (iconMaxSize / (size.width * scale)).coerceAtMost(iconMaxSize / (size.height * scale))
-  }
-
-  @ApiStatus.Internal
-  fun getStrokePatcher(resultColor: Color,
-                       strokeColors: List<String>,
-                       backgroundColors: List<String> = emptyList()): SvgElementColorPatcherProvider {
-    val fg = ColorUtil.toHtmlColor(resultColor)
-    val map = strokeColors.associateWith { fg }
-    val alpha = Object2IntOpenHashMap<String>(map.size)
-    alpha.defaultReturnValue(Int.MIN_VALUE)
-    for (s in map.values) {
-      alpha.put(s, resultColor.alpha)
-    }
-
-    val digest = InsecureHashBuilder()
-      .stringList(strokeColors)
-      .stringList(backgroundColors)
-      .update(fg)
-      .update(resultColor.alpha)
-      .build()
-    return object : SvgElementColorPatcherProvider {
-      override fun attributeForPath(path: String?): SvgAttributePatcher? {
-        return newSvgPatcher(digest = digest,
-                             newPalette = map + backgroundColors.associateWith { "#00000000" },
-                             alphaProvider = { color ->
-                               alpha.getInt(color).takeIf { it != Int.MIN_VALUE }
-                             })
-      }
-
-      override fun digest() = digest
-    }
   }
 
   @JvmStatic

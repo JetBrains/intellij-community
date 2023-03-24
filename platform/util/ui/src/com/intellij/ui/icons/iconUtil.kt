@@ -5,6 +5,8 @@ package com.intellij.ui.icons
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.DummyIcon
+import com.intellij.openapi.util.LazyIcon
 import com.intellij.ui.RetrievableIcon
 import com.intellij.ui.scale.*
 import com.intellij.ui.svg.SvgCacheClassifier
@@ -394,4 +396,31 @@ fun overrideIconScale(icon: Icon, scale: Scale?): Icon {
 @Internal
 fun toRetinaAwareIcon(image: BufferedImage, sysScale: Float = JBUIScale.sysScale()): Icon {
   return JBImageIcon(if (isHiDPIEnabledAndApplicable(sysScale)) JBHiDPIScaledImage(image, sysScale.toDouble()) else image)
+}
+
+/**
+ * Creates a new icon with the low-level CachedImageIcon changing
+ */
+internal fun replaceCachedImageIcons(icon: Icon, cachedImageIconReplacer: (CachedImageIcon) -> Icon): Icon? {
+  val replacer: IconReplacer = object : IconReplacer {
+    override fun replaceIcon(icon: Icon?): Icon? {
+      return when {
+        icon == null || icon is DummyIcon || icon is EmptyIcon -> icon
+        icon is LazyIcon -> replaceIcon(icon.getOrComputeIcon())
+        icon is ReplaceableIcon -> icon.replaceBy(this)
+        !checkIconSize(icon) -> EMPTY_ICON
+        icon is CachedImageIcon -> cachedImageIconReplacer(icon)
+        else -> icon
+      }
+    }
+  }
+  return replacer.replaceIcon(icon)
+}
+
+internal fun checkIconSize(icon: Icon): Boolean {
+  if (icon.iconWidth <= 0 || icon.iconHeight <= 0) {
+    LOG.error("Icon $icon has incorrect size: ${icon.iconWidth}x${icon.iconHeight}")
+    return false
+  }
+  return true
 }

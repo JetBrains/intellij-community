@@ -12,8 +12,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.IconLoader.filterIcon
 import com.intellij.openapi.util.IconLoader.getIcon
-import com.intellij.openapi.util.IconLoader.patchColorsInCacheImageIcon
-import com.intellij.openapi.util.IconLoader.replaceCachedImageIcons
 import com.intellij.openapi.util.Iconable.IconFlags
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VFileProperty
@@ -23,14 +21,16 @@ import com.intellij.ui.ColorUtil
 import com.intellij.ui.IconManager
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.RowIcon
-import com.intellij.ui.icons.*
+import com.intellij.ui.icons.CachedImageIcon
+import com.intellij.ui.icons.CopyableIcon
+import com.intellij.ui.icons.TextIcon
+import com.intellij.ui.icons.copyIcon
 import com.intellij.ui.scale.JBUIScale.getFontScale
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleContextAware
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.IconUtil.ICON_FLAG_IGNORE_MASK
-import com.intellij.util.SVGLoader.getStrokePatcher
 import com.intellij.util.SVGLoader.paintIconWithSelection
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.ImageUtil
@@ -574,46 +574,7 @@ object IconUtil {
   fun rowIcon(left: Icon?, right: Icon?): Icon? {
     return if (left != null && right != null) RowIcon(left, right) else left ?: right
   }
-
-  fun toStrokeIcon(original: Icon, resultColor: Color): Icon {
-    val palettePatcher = getStrokePatcher(resultColor, strokeColors, backgroundColors)
-    val strokeReplacer = getStrokePatcher(resultColor = resultColor, strokeColors = listOf("white", "#ffffff"), backgroundColors = listOf())
-    return replaceCachedImageIcons(icon = original) { cachedImageIcon ->
-      var icon = cachedImageIcon
-      var patcher = palettePatcher
-      val flags = icon.imageFlags
-      if (flags and ImageDescriptor.HAS_STROKE == ImageDescriptor.HAS_STROKE) {
-        val strokeIcon = icon.createStrokeIcon()
-        @Suppress("UseJBColor")
-        if (resultColor == Color.WHITE) {
-          // will be nothing to patch actually
-          return@replaceCachedImageIcons strokeIcon
-        }
-
-        if (strokeIcon is CachedImageIcon) {
-          icon = strokeIcon
-          patcher = strokeReplacer
-        }
-      }
-      patchColorsInCacheImageIcon(imageIcon = icon, colorPatcher = patcher, isDark = false)
-    }!!
-  }
 }
-
-@Suppress("SpellCheckingInspection")
-private val backgroundColors = listOf("#ebecf0", "#e7effd", "#dff2e0", "#f2fcf3", "#ffe8e8", "#fff5f5", "#fff8e3", "#fff4eb", "#eee0ff")
-private val strokeColors = listOf("black", "#000000",
-                                  "white", "#ffffff",
-                                  "#818594",
-                                  "#6c707e",
-                                  "#3574f0",
-                                  "#5fb865",
-                                  "#e35252",
-                                  "#eb7171",
-                                  "#e3ae4d",
-                                  "#fcc75b",
-                                  "#f28c35",
-                                  "#955ae0")
 
 private class IconSizeWrapper(private val icon: Icon?, private val width: Int, private val height: Int) : Icon {
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {

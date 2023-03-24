@@ -259,9 +259,7 @@ object IconLoader {
   }
 
   @JvmStatic
-  fun isGoodSize(icon: Icon): Boolean {
-    return icon.iconWidth > 0 && icon.iconHeight > 0
-  }
+  fun isGoodSize(icon: Icon): Boolean = icon.iconWidth > 0 && icon.iconHeight > 0
 
   /**
    * Gets (creates if necessary) disabled icon based on the passed one.
@@ -269,9 +267,7 @@ object IconLoader {
    * @return `ImageIcon` constructed from disabled image of passed icon.
    */
   @JvmStatic
-  fun getDisabledIcon(icon: Icon): Icon {
-    return getDisabledIcon(icon = icon, disableFilter = null)
-  }
+  fun getDisabledIcon(icon: Icon): Icon = getDisabledIcon(icon = icon, disableFilter = null)
 
   @Internal
   fun getDisabledIcon(icon: Icon, disableFilter: (() -> RGBImageFilter)?): Icon {
@@ -330,28 +326,6 @@ object IconLoader {
   }
 
   /**
-   * Creates a new icon with the low-level CachedImageIcon changing
-   */
-  @Internal
-  fun replaceCachedImageIcons(icon: Icon, cachedImageIconReplacer: (com.intellij.ui.icons.CachedImageIcon) -> Icon): Icon? {
-    val replacer: IconReplacer = object : IconReplacer {
-      override fun replaceIcon(icon: Icon?): Icon? {
-        return when {
-          icon == null || icon is DummyIcon || icon is EmptyIcon -> icon
-          icon is LazyIcon -> replaceIcon(icon.getOrComputeIcon())
-          icon is ReplaceableIcon -> icon.replaceBy(this)
-          !checkIconSize(icon) -> {
-            EMPTY_ICON
-          }
-          icon is com.intellij.ui.icons.CachedImageIcon -> cachedImageIconReplacer(icon)
-          else -> icon
-        }
-      }
-    }
-    return replacer.replaceIcon(icon)
-  }
-
-  /**
    * Creates a new icon with the filter applied.
    */
   fun filterIcon(icon: Icon, filterSupplier: () -> RGBImageFilter): Icon {
@@ -367,13 +341,6 @@ object IconLoader {
     }
   }
 
-  private fun checkIconSize(icon: Icon): Boolean {
-    if (!isGoodSize(icon)) {
-      LOG.error("Icon $icon has incorrect size: ${icon.iconWidth}x${icon.iconHeight}")
-      return false
-    }
-    return true
-  }
 
   fun getScaleToRenderIcon(icon: Icon, ancestor: Component?): Float {
     val ctxSupport = getScaleContextSupport(icon)
@@ -586,7 +553,7 @@ fun findIconUsingDeprecatedImplementation(originalPath: String,
   return icon
 }
 
-private abstract class LazyIcon : ScaleContextSupport(), CopyableIcon, RetrievableIcon {
+internal abstract class LazyIcon : ScaleContextSupport(), CopyableIcon, RetrievableIcon {
   private var wasComputed = false
 
   @Volatile
