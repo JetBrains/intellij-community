@@ -249,6 +249,16 @@
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.NonFinalOrNonInternalExtensionClassInspection"
                      key="inspection.extension.class.display.name"/>
+    <localInspection language="XML" applyToDialects="false" shortName="LightServiceMigrationXML"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.LightServiceMigrationXMLInspection"
+                     key="inspection.light.service.migration.display.name"/>
+    <localInspection language="JVM" shortName="LightServiceMigrationCode"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.LightServiceMigrationCodeInspection"
+                     key="inspection.light.service.migration.display.name"/>
     <localInspection language="UAST" shortName="NonDefaultConstructor"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="ERROR"

@@ -1,0 +1,8 @@
+<idea-plugin>
+  <id>com.example.demo</id>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <<warning descr="A service not going to be overridden does not need to be registered in plugin.xml.
+Instead, annotate service class with '@Service'. Project-level services must specify '@Service(Service.Level.PROJECT)'">projectService</warning> serviceImplementation="com.example.demo.MyService"/>
+  </extensions>
+</idea-plugin>

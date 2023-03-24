@@ -1,0 +1,8 @@
+<idea-plugin>
+  <id>com.example.demo</id>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.example.demo.MyService"
+                        serviceImplementation="com.example.demo.MyServiceImpl"/>
+  </extensions>
+</idea-plugin>
