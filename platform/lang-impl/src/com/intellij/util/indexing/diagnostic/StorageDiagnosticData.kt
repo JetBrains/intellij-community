@@ -287,8 +287,9 @@ object StorageDiagnosticData {
     val directBufferAllocatorMisses = otelMeter.counterBuilder("DirectByteBufferAllocator.misses").buildObserver()
     val directBufferAllocatorReclaimed = otelMeter.counterBuilder("DirectByteBufferAllocator.reclaimed").buildObserver()
     val directBufferAllocatorDisposed = otelMeter.counterBuilder("DirectByteBufferAllocator.disposed").buildObserver()
-    val directBufferAllocatorTotalSizeCached = otelMeter.counterBuilder(
-      "DirectByteBufferAllocator.totalSizeOfBuffersCachedInBytes").buildObserver()
+    val directBufferAllocatorTotalSizeCached = otelMeter.gaugeBuilder("DirectByteBufferAllocator.totalSizeOfBuffersCachedInBytes")
+      .ofLongs()
+      .buildObserver()
 
     otelMeter.batchCallback(
       {
