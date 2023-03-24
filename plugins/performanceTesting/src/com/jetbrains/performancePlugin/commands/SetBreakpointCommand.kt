@@ -16,7 +16,7 @@ import java.io.IOException
 
 class SetBreakpointCommand(text: String, line: Int) : AbstractCallbackBasedCommand(text, line, true) {
   override fun execute(callback: ActionCallback, context: PlaybackContext) {
-    val lineNumber = extractCommandArgument(PREFIX).toInt() - 1
+    val lineNumber = extractCommandArgument(PREFIX).toInt()
     val project = context.project
     val selectedEditor = FileEditorManager.getInstance(project).selectedEditor
     if (selectedEditor == null) {
@@ -25,17 +25,17 @@ class SetBreakpointCommand(text: String, line: Int) : AbstractCallbackBasedComma
     }
     val filePath = "file://" + selectedEditor.file.path
     val breakpointTypes = XBreakpointUtil
-      .getAvailableLineBreakpointTypes(project, XDebuggerUtilImpl().createPosition(selectedEditor.file, lineNumber)!!, null)
+      .getAvailableLineBreakpointTypes(project, XDebuggerUtilImpl().createPosition(selectedEditor.file, lineNumber - 1)!!, null)
     if (breakpointTypes.isEmpty()) {
-      callback.reject("Impossible to set breakpoint on line ${lineNumber + 1}")
+      callback.reject("Impossible to set breakpoint on line ${lineNumber}")
       return
     }
     WriteAction.runAndWait<IOException> {
       val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
       VirtualFileManager.getInstance().refreshAndFindFileByUrl(filePath)
       val breakpointType = breakpointTypes[0]
-      val breakpoint = breakpointManager.addLineBreakpoint(breakpointType, filePath, lineNumber,
-                                                           breakpointType.createBreakpointProperties(selectedEditor.file, lineNumber))
+      val breakpoint = breakpointManager.addLineBreakpoint(breakpointType, filePath, lineNumber - 1,
+                                                           breakpointType.createBreakpointProperties(selectedEditor.file, lineNumber - 1))
       breakpointManager.updateBreakpointPresentation(breakpoint, null, null)
     }
     callback.setDone()
