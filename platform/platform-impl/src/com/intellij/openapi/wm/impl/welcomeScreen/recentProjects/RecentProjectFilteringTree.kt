@@ -376,6 +376,7 @@ internal class RecentProjectFilteringTree(
         add(projectNameLabel)
         add(projectPathLabel)
       }
+      private val updateScaleHelper = UpdateScaleHelper()
 
       init {
         border = JBUI.Borders.empty(RENDERER_BORDER_SIZE)
@@ -388,6 +389,7 @@ internal class RecentProjectFilteringTree(
       }
 
       fun customizeComponent(item: RecentProjectItem, rowHovered: Boolean): JComponent {
+        updateScaleHelper.saveScaleAndUpdateUIIfChanged(this)
         val isPathValid = isProjectPathValid(item.projectPath)
         projectNameLabel.apply {
           text = item.displayName

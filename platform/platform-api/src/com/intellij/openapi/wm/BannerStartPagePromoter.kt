@@ -9,10 +9,7 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.BackgroundRoundedPanel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.StartupUiUtil
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Dimension
@@ -85,21 +82,28 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
   }
 
   private fun buttonPixelHunting(button: JButton): JPanel {
+    val buttonPlace = object: JPanel() {
+      override fun updateUI() {
+        super.updateUI()
 
-    val buttonSizeWithoutInsets = Dimension(button.preferredSize.width - button.insets.left - button.insets.right,
-                                            button.preferredSize.height - button.insets.top - button.insets.bottom)
+        val buttonSizeWithoutInsets = Dimension(button.preferredSize.width - button.insets.left - button.insets.right,
+                                                button.preferredSize.height - button.insets.top - button.insets.bottom)
 
-    val buttonPlace = JPanel().apply {
-      layout = null
-      maximumSize = buttonSizeWithoutInsets
-      preferredSize = buttonSizeWithoutInsets
-      minimumSize = buttonSizeWithoutInsets
-      isOpaque = false
-      alignmentX = JPanel.LEFT_ALIGNMENT
+        apply {
+          layout = null
+          maximumSize = buttonSizeWithoutInsets
+          preferredSize = buttonSizeWithoutInsets
+          minimumSize = buttonSizeWithoutInsets
+          isOpaque = false
+          alignmentX = LEFT_ALIGNMENT
+        }
+
+        button.bounds = Rectangle(-button.insets.left, -button.insets.top, button.preferredSize.width, button.preferredSize.height)
+      }
     }
 
     buttonPlace.add(button)
-    button.bounds = Rectangle(-button.insets.left, -button.insets.top, button.preferredSize.width, button.preferredSize.height)
+    buttonPlace.updateUI()
 
     return buttonPlace
   }
@@ -127,7 +131,7 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
   protected open fun createHeader(): JLabel {
     val result = JLabel(headerLabel)
     val labelFont = StartupUiUtil.labelFont
-    result.font = labelFont.deriveFont(Font.BOLD).deriveFont(labelFont.size2D + JBUI.scale(2))
+    result.font = JBFont.create(labelFont).deriveFont(Font.BOLD).deriveFont(labelFont.size2D + JBUI.scale(2))
     return result
   }
 }
