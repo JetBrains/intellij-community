@@ -402,7 +402,7 @@ fun toRetinaAwareIcon(image: BufferedImage, sysScale: Float = JBUIScale.sysScale
  * Creates a new icon with the low-level CachedImageIcon changing
  */
 internal fun replaceCachedImageIcons(icon: Icon, cachedImageIconReplacer: (CachedImageIcon) -> Icon): Icon? {
-  val replacer: IconReplacer = object : IconReplacer {
+  return object : IconReplacer {
     override fun replaceIcon(icon: Icon?): Icon? {
       return when {
         icon == null || icon is DummyIcon || icon is EmptyIcon -> icon
@@ -413,8 +413,7 @@ internal fun replaceCachedImageIcons(icon: Icon, cachedImageIconReplacer: (Cache
         else -> icon
       }
     }
-  }
-  return replacer.replaceIcon(icon)
+  }.replaceIcon(icon)
 }
 
 internal fun checkIconSize(icon: Icon): Boolean {
