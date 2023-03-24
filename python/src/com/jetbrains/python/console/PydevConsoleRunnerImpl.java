@@ -1147,18 +1147,18 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     @NotNull
     private final Process myProcess;
 
-    @Nullable
+    @NotNull
     private final String myCommandLine;
 
     private final @Nullable TargetEnvironment myTargetEnvironment;
 
-    private CommandLineProcess(@NotNull Process process, @Nullable String commandLine) {
+    private CommandLineProcess(@NotNull Process process, @NotNull String commandLine) {
       myProcess = process;
       myCommandLine = commandLine;
       myTargetEnvironment = null;
     }
 
-    private CommandLineProcess(@NotNull Process process, @Nullable String commandLine, @NotNull TargetEnvironment targetEnvironment) {
+    private CommandLineProcess(@NotNull Process process, @NotNull String commandLine, @NotNull TargetEnvironment targetEnvironment) {
       myProcess = process;
       myCommandLine = commandLine;
       myTargetEnvironment = targetEnvironment;
@@ -1169,7 +1169,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       return myProcess;
     }
 
-    @Nullable
+    @NotNull
     public String getCommandLine() {
       return myCommandLine;
     }
