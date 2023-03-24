@@ -117,5 +117,19 @@ interface Foo {
       E e = (E) i;
     }
   }
-  
+
+  static class CastWithNonSealed {
+
+    protected interface ReferenceInt{}
+    sealed class SealedA permits FinalB, NonSealedC, SealedD{
+    }
+    final class FinalB extends SealedA{}
+    non-sealed class NonSealedC extends SealedA{}
+    sealed class SealedD extends SealedA permits finalF{}
+    final class finalF extends SealedD{}
+
+    public void castToInt(SealedA sealedA){
+      ReferenceInt referenceInt = (ReferenceInt) sealedA;
+    }
+  }
 }
