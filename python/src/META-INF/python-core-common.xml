@@ -616,6 +616,10 @@
     <extensionPoint qualifiedName="Pythonid.pythonPackageManagerProvider"
                     interface="com.jetbrains.python.packaging.management.PythonPackageManagerProvider"
                     dynamic="true"/>
+
+    <extensionPoint qualifiedName="Pythonid.customProcessHandlerProvider"
+                    interface="com.jetbrains.python.run.PyCustomProcessHandlerProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">

@@ -8,8 +8,11 @@ import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.CommandLineState;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType;
+import com.intellij.execution.configurations.ParametersList;
+import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.filters.UrlFilter;
@@ -497,8 +500,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
       pathMappingSettings.addAll(sdkPathMappings);
     }
     PyTargetPathMapper consolidatedPathMappings = new PyTargetPathMapper(targetEnvironment, pathMappingSettings);
-    return new ProcessHandlerWithPyPositionConverter(process, commandLineString, commandLine.getCharset(),
-                                                     consolidatedPathMappings);
+    return PyCustomProcessHandlerProvider.createProcessHandler(process, commandLineString, commandLine.getCharset(),
+                                                               consolidatedPathMappings);
   }
 
   private @Nullable PathMappingSettings getSdkPathMappings() {
