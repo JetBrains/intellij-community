@@ -543,7 +543,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     boolean oldToolbar = !myIsNewToolbar;
     List<AnAction> navigationActions = new ArrayList<>(getNavigationActions());
     if (oldToolbar) {
-      navigationActions.add(new MyChangeDiffToolAction());
+      navigationActions.add(new MyChangeDiffToolComboBoxAction());
     }
     else {
       myRightToolbarGroup.add(new MyDiffToolChooser());
@@ -585,13 +585,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
   protected void collectPopupActions(@Nullable List<? extends AnAction> viewerActions) {
     myPopupActionGroup.removeAll();
 
-    List<AnAction> selectToolActions = new ArrayList<>();
-    for (DiffTool tool : filterFittedTools(getAllKnownTools(), myContext, myActiveRequest)) {
-      FrameDiffTool substitutor = findToolSubstitutor(tool, myContext, myActiveRequest);
-      if (tool == myState.getActiveTool() || substitutor == myState.getActiveTool()) continue;
-      selectToolActions.add(new DiffToolToggleAction(tool));
-    }
-    DiffUtil.addActionBlock(myPopupActionGroup, selectToolActions);
+    DiffUtil.addActionBlock(myPopupActionGroup, new MyChangeDiffToolActionGroup());
 
     DiffUtil.addActionBlock(myPopupActionGroup, viewerActions);
   }
@@ -776,7 +770,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     }
   }
 
-  private class MyChangeDiffToolAction extends ComboBoxAction implements DumbAware {
+  private class MyChangeDiffToolComboBoxAction extends ComboBoxAction implements DumbAware {
     // TODO: add icons for diff tools, show only icon in toolbar - to reduce jumping on change ?
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -814,6 +808,26 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
       }
 
       return group;
+    }
+  }
+
+  private class MyChangeDiffToolActionGroup extends ActionGroup implements DumbAware {
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+      if (e == null) return AnAction.EMPTY_ARRAY;
+
+      List<AnAction> actions = new ArrayList<>();
+      for (DiffTool tool : filterFittedTools(getAllKnownTools(), myContext, myActiveRequest)) {
+        FrameDiffTool substitutor = findToolSubstitutor(tool, myContext, myActiveRequest);
+        if (tool == myState.getActiveTool() || substitutor == myState.getActiveTool()) continue;
+        actions.add(new DiffToolToggleAction(tool));
+      }
+      return actions.toArray(AnAction.EMPTY_ARRAY);
     }
   }
 
