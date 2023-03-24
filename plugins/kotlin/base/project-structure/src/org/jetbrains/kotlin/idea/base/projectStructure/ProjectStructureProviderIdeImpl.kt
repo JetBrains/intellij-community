@@ -4,12 +4,14 @@ package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.idea.base.util.getOutsiderFileOrigin
 import org.jetbrains.kotlin.psi.KtFile
 
 @ApiStatus.Internal
@@ -20,6 +22,12 @@ interface KtModuleFactory {
     }
 
     fun createModule(moduleInfo: ModuleInfo): KtModule?
+
+    fun createModuleWithNonOriginalFile(
+        moduleInfo: ModuleInfo,
+        fakeFile: VirtualFile,
+        originalFile: VirtualFile,
+    ): KtModule? = createModule(moduleInfo)
 }
 
 @ApiStatus.Internal
@@ -39,6 +47,18 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : P
         val moduleInfo = ModuleInfoProvider.getInstance(element.project).firstOrNull(element, config)
             ?: NotUnderContentRootModuleInfo(project, element.containingFile as? KtFile)
 
+        val virtualFile = element.containingFile?.virtualFile
+        val originalFile = virtualFile?.let { getOutsiderFileOrigin(project, it) }
+        if (originalFile != null) {
+            forEachModuleFactory {
+                createModuleWithNonOriginalFile(
+                    moduleInfo = moduleInfo,
+                    fakeFile = virtualFile,
+                    originalFile = originalFile,
+                )?.let { return it }
+            }
+        }
+
         return getKtModuleByModuleInfo(moduleInfo)
     }
 
@@ -47,8 +67,8 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : P
         createKtModuleByModuleInfo(moduleInfo)
 
     private fun createKtModuleByModuleInfo(moduleInfo: ModuleInfo): KtModule {
-        for (extension in KtModuleFactory.EP_NAME.extensions) {
-            return extension.createModule(moduleInfo) ?: continue
+        forEachModuleFactory {
+            createModule(moduleInfo)?.let { return it }
         }
 
         return when (moduleInfo) {
@@ -65,5 +85,11 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : P
         fun getInstance(project: Project): ProjectStructureProviderIdeImpl {
             return project.getService(ProjectStructureProvider::class.java) as ProjectStructureProviderIdeImpl
         }
+    }
+}
+
+private inline fun forEachModuleFactory(action: KtModuleFactory.() -> Unit) {
+    for (extension in KtModuleFactory.EP_NAME.extensions) {
+        extension.action()
     }
 }
