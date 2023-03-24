@@ -258,7 +258,7 @@ public class UnindexedFilesScanner implements FilesScanningTask {
     boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     if (myOnProjectOpen && !isUnitTestMode && !skipInitialRefresh) {
       // the full VFS refresh makes sense only after it's loaded, i.e. after scanning files to index is finished
-      scheduleInitialVfsRefresh();
+      InitialRefreshKt.scheduleInitialVfsRefresh(myProject, LOG);
     }
 
     if (shouldScanInSmartMode()) {
@@ -502,42 +502,6 @@ public class UnindexedFilesScanner implements FilesScanningTask {
       }
       scanningStatistics.addScanningTime(System.nanoTime() - scanningStart);
     }
-  }
-
-  private void scheduleInitialVfsRefresh() {
-    var projectId = myProject.getLocationHash();
-    LOG.info(projectId + ": marking roots for initial VFS refresh");
-    ProjectRootManagerEx.getInstanceEx(myProject).markRootsForRefresh();
-
-    LOG.info(projectId + ": starting initial VFS refresh");
-    var app = ApplicationManager.getApplication();
-    var t = System.nanoTime();
-    if (!app.isCommandLine() || CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()) {
-      var sessionId = VirtualFileManager.getInstance().asyncRefresh(() -> timeInitialVfsRefresh(t));
-      var connection = app.getMessageBus().connect();
-      connection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
-        @Override
-        public void projectClosed(@NotNull Project project) {
-          if (project == myProject) {
-            LOG.info(projectId + ": cancelling initial VFS refresh");
-            RefreshQueue.getInstance().cancelSession(sessionId);
-            connection.disconnect();
-          }
-        }
-      });
-    }
-    else {
-      ApplicationManager.getApplication().invokeAndWait(() -> {
-        VirtualFileManager.getInstance().syncRefresh();
-        timeInitialVfsRefresh(t);
-      });
-    }
-  }
-
-  private void timeInitialVfsRefresh(long t) {
-    var duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t);
-    LOG.info(myProject.getLocationHash() + ": initial VFS refresh finished " + duration + " ms");
-    VfsUsageCollector.logInitialRefresh(myProject, duration);
   }
 
   @Override

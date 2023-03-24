@@ -9,12 +9,16 @@ suspend fun refreshVFSAsync() {
   val refreshQueueImpl = RefreshQueue.getInstance() as? RefreshQueueImpl
   val session = refreshQueueImpl?.getSession(sessionId) ?: return
   try {
-    runInterruptible(Dispatchers.IO) {
-      session.waitFor()
+    while (!wait(session)) {
+      yield()
     }
   }
   catch (t: Throwable) {
     refreshQueueImpl.cancelSession(sessionId)
     throw t
   }
+}
+
+private suspend fun wait(session: RefreshSessionImpl) = runInterruptible(Dispatchers.IO) {
+  session.waitFor(100L)
 }
