@@ -1259,6 +1259,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             runTest("../testData/handlers/basic/NoTailFromSmart.kt");
         }
 
+        @TestMetadata("NonExtensionMember.kt")
+        public void testNonExtensionMember() throws Exception {
+            runTest("../testData/handlers/basic/NonExtensionMember.kt");
+        }
+
         @TestMetadata("PreferClassToConstructor.kt")
         public void testPreferClassToConstructor() throws Exception {
             runTest("../testData/handlers/basic/PreferClassToConstructor.kt");

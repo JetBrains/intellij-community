@@ -57,8 +57,13 @@ internal open class FirCallableCompletionContributor(
         is KtExtensionApplicabilityResult.NonApplicable -> null
     }
 
-    protected fun KtAnalysisSession.getOptions(signature: KtCallableSignature<*>): CallableInsertionOptions =
-        CallableInsertionOptions(importStrategyDetector.detectImportStrategy(signature.symbol), getInsertionStrategy(signature))
+    protected fun KtAnalysisSession.getOptions(
+        signature: KtCallableSignature<*>,
+        noImportRequired: Boolean = false
+    ): CallableInsertionOptions = CallableInsertionOptions(
+        if (noImportRequired) ImportStrategy.DoNothing else importStrategyDetector.detectImportStrategy(signature.symbol),
+        getInsertionStrategy(signature)
+    )
 
     private fun KtAnalysisSession.getExtensionOptions(
         signature: KtCallableSignature<*>,
@@ -163,7 +168,7 @@ internal open class FirCallableCompletionContributor(
         extensionsWhichCanBeCalled.forEach { (signatureWithScopeKind, applicabilityResult) ->
             val signature = signatureWithScopeKind.signature
             getExtensionOptions(signature, applicabilityResult)?.let {
-                yield(createCallableWithMetadata(signature, signatureWithScopeKind.scopeKind, it))
+                yield(createCallableWithMetadata(signature, signatureWithScopeKind.scopeKind, options = it))
             }
         }
 
@@ -215,7 +220,8 @@ internal open class FirCallableCompletionContributor(
 
                 nonExtensions.forEach { member ->
                     val options = CallableInsertionOptions(ImportStrategy.DoNothing, getInsertionStrategy(member))
-                    yield(createCallableWithMetadata(member, staticScopeKind, options)) }
+                    yield(createCallableWithMetadata(member, staticScopeKind, options = options))
+                }
             }
 
             symbol is KtNamedClassOrObjectSymbol && !symbol.canBeUsedAsReceiver -> {
@@ -303,14 +309,21 @@ internal open class FirCallableCompletionContributor(
         ) { filter(it) }
         val extensionNonMembers = collectSuitableExtensions(scopeContext, extensionChecker, visibilityChecker, typeOfPossibleReceiver)
 
-        nonExtensionMembers.forEach {
-            yield(createCallableWithMetadata(it.signature, it.scopeKind, explicitReceiverTypeHint = explicitReceiverTypeHint))
+        nonExtensionMembers.forEach { signatureWithScopeKind ->
+            val callableWithMetadata = createCallableWithMetadata(
+                signatureWithScopeKind.signature,
+                signatureWithScopeKind.scopeKind,
+                noImportRequired = true,
+                explicitReceiverTypeHint = explicitReceiverTypeHint
+            )
+            yield(callableWithMetadata)
         }
 
         extensionNonMembers.forEach { (signatureWithScopeKind, applicabilityResult) ->
             val signature = signatureWithScopeKind.signature
+            val scopeKind = signatureWithScopeKind.scopeKind
             getExtensionOptions(signature, applicabilityResult)?.let {
-                yield(createCallableWithMetadata(signature, signatureWithScopeKind.scopeKind, it, explicitReceiverTypeHint))
+                yield(createCallableWithMetadata(signature, scopeKind, noImportRequired = false, options = it, explicitReceiverTypeHint))
             }
         }
 
@@ -401,7 +414,8 @@ internal open class FirCallableCompletionContributor(
     protected fun createCallableWithMetadata(
         signature: KtCallableSignature<*>,
         scopeKind: KtScopeKind,
-        options: CallableInsertionOptions = getOptions(signature),
+        noImportRequired: Boolean = false,
+        options: CallableInsertionOptions = getOptions(signature, noImportRequired),
         explicitReceiverTypeHint: KtType? = null,
         withExpectedType: Boolean = true,
     ): CallableWithMetadataForCompletion {
@@ -519,7 +533,7 @@ internal class FirCallableReferenceCompletionContributor(
                 ) { filter(it) }.map { KtCallableSignatureWithContainingScopeKind(it, staticScopeKind) }
 
                 (nonExtensionMembers + staticMembers).forEach {
-                    yield(createCallableWithMetadata(it.signature, it.scopeKind, withExpectedType = false))
+                    yield(createCallableWithMetadata(it.signature, it.scopeKind, noImportRequired = true, withExpectedType = false))
                 }
             }
 

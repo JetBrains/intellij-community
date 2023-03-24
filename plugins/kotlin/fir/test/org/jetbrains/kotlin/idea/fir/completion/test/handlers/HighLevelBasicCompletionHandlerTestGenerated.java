@@ -1261,6 +1261,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
                 runTest("../completion/testData/handlers/basic/NoTailFromSmart.kt");
             }
 
+            @TestMetadata("NonExtensionMember.kt")
+            public void testNonExtensionMember() throws Exception {
+                runTest("../completion/testData/handlers/basic/NonExtensionMember.kt");
+            }
+
             @TestMetadata("PreferClassToConstructor.kt")
             public void testPreferClassToConstructor() throws Exception {
                 runTest("../completion/testData/handlers/basic/PreferClassToConstructor.kt");
