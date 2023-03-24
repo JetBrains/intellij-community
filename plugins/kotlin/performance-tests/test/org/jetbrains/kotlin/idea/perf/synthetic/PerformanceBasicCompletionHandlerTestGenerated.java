@@ -1011,6 +1011,16 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             runTest("../completion/testData/handlers/basic/AddLabelToReturn.kt");
         }
 
+        @TestMetadata("AfterPackageName.kt")
+        public void testAfterPackageName() throws Exception {
+            runTest("../completion/testData/handlers/basic/AfterPackageName.kt");
+        }
+
+        @TestMetadata("AfterPackageName2.kt")
+        public void testAfterPackageName2() throws Exception {
+            runTest("../completion/testData/handlers/basic/AfterPackageName2.kt");
+        }
+
         @TestMetadata("AmbiguousSuperMethod.kt")
         public void testAmbiguousSuperMethod() throws Exception {
             runTest("../completion/testData/handlers/basic/AmbiguousSuperMethod.kt");

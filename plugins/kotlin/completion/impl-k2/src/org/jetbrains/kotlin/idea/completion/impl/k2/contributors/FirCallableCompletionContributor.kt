@@ -222,7 +222,8 @@ internal open class FirCallableCompletionContributor(
             .filter { visibilityChecker.isVisible(it) }
             .filter { filter(it) }
             .forEach { callable ->
-                addCallableSymbolToCompletion(context, callable, getOptions(callable), scopeKind = null)
+                val options = CallableInsertionOptions(ImportStrategy.DoNothing, getInsertionStrategy(callable))
+                addCallableSymbolToCompletion(context, callable, options, scopeKind = null)
             }
     }
 
