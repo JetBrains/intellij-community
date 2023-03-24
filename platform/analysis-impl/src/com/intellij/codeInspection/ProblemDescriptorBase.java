@@ -56,9 +56,9 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     if (startElement != endElement) assertPhysical(endElement);
 
     TextRange startElementRange = getAnnotationRange(startElement);
-    LOG.assertTrue(startElement instanceof ExternallyAnnotated || startElementRange != null, startElement);
+    LOG.assertTrue(startElement instanceof ExternallyAnnotated || startElement instanceof PsiBinaryFile || startElementRange != null, startElement);
     TextRange endElementRange = startElement == endElement ? startElementRange : getAnnotationRange(endElement);
-    LOG.assertTrue(endElement instanceof ExternallyAnnotated || endElementRange != null, endElement);
+    LOG.assertTrue(endElement instanceof ExternallyAnnotated || endElement instanceof PsiBinaryFile || endElementRange != null, endElement);
     if (startElementRange != null
         && endElementRange != null
         && startElementRange.getStartOffset() >= endElementRange.getEndOffset()) {
