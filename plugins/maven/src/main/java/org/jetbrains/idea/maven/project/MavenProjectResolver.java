@@ -228,6 +228,20 @@ public class MavenProjectResolver {
                                          @NotNull MavenProgressIndicator process,
                                          boolean reportUnresolvedToSyncConsole,
                                          boolean forceUpdateSnapshots) throws MavenProcessCanceledException {
+    return resolvePluginsFromCache(mavenProjects,
+                                   embeddersManager,
+                                   console,
+                                   process,
+                                   reportUnresolvedToSyncConsole,
+                                   forceUpdateSnapshots);
+  }
+
+  private Set<MavenPlugin> resolvePluginsFromCache(@NotNull Collection<Pair<MavenProject, NativeMavenProjectHolder>> mavenProjects,
+                                                   @NotNull MavenEmbeddersManager embeddersManager,
+                                                   @NotNull MavenConsole console,
+                                                   @NotNull MavenProgressIndicator process,
+                                                   boolean reportUnresolvedToSyncConsole,
+                                                   boolean forceUpdateSnapshots) throws MavenProcessCanceledException {
     Set<MavenPlugin> unresolvedPlugins = new HashSet<>();
 
     for (var projectData : mavenProjects) {
