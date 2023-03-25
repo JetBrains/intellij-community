@@ -208,6 +208,36 @@ TOML File
     PsiWhiteSpace(' ')
     TomlLiteral
       PsiElement(NUMBER)('9_224_617.445_991_228_313')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      TomlKeySegment
+        PsiElement(BARE_KEY)('flt9')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(NUMBER)('1e9')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      TomlKeySegment
+        PsiElement(BARE_KEY)('flt10')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(NUMBER)('1e+010')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      TomlKeySegment
+        PsiElement(BARE_KEY)('flt11')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(NUMBER)('1e-0011')
   PsiWhiteSpace('\n\n')
   TomlKeyValue
     TomlKey
