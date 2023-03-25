@@ -32,6 +32,7 @@ import org.jetbrains.idea.maven.utils.*;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
 public class MavenProjectResolver {
@@ -158,9 +159,11 @@ public class MavenProjectResolver {
     var artifactIdToMavenProjects = mavenProjects.stream()
       .filter(mavenProject -> null != mavenProject.getMavenId().getArtifactId())
       .collect(Collectors.groupingBy(mavenProject -> mavenProject.getMavenId().getArtifactId()));
+    var pluginResolutionRequests = new ConcurrentLinkedQueue<Pair<MavenProject, NativeMavenProjectHolder>>();
     ParallelRunner.<MavenProjectReaderResult, MavenProcessCanceledException>runInParallelRethrow(results, result -> {
-        doResolve(project, result, artifactIdToMavenProjects, generalSettings, embedder, context);
+      doResolve(project, result, artifactIdToMavenProjects, generalSettings, embedder, context, pluginResolutionRequests);
     });
+    schedulePluginResolution(pluginResolutionRequests);
   }
 
   private void doResolve(@NotNull Project project,
@@ -168,7 +171,9 @@ public class MavenProjectResolver {
                          @NotNull Map<String, List<MavenProject>> artifactIdToMavenProjects,
                          @NotNull MavenGeneralSettings generalSettings,
                          @NotNull MavenEmbedderWrapper embedder,
-                         @NotNull ResolveContext context) throws MavenProcessCanceledException {
+                         @NotNull ResolveContext context,
+                         @NotNull ConcurrentLinkedQueue<Pair<MavenProject, NativeMavenProjectHolder>> pluginResolutionRequests)
+    throws MavenProcessCanceledException {
     var mavenId = result.mavenModel.getMavenId();
     var artifactId = mavenId.getArtifactId();
 
@@ -191,24 +196,30 @@ public class MavenProjectResolver {
     MavenProject.Snapshot snapshot = mavenProjectCandidate.getSnapshot();
     var resetArtifacts = MavenProjectReaderResult.shouldResetDependenciesAndFolders(result);
     mavenProjectCandidate.set(result, generalSettings, false, resetArtifacts, false);
-    if (result.nativeMavenProject != null) {
+    NativeMavenProjectHolder nativeMavenProject = result.nativeMavenProject;
+    if (nativeMavenProject != null) {
       PluginFeatureEnabler.getInstance(myProject).scheduleEnableSuggested();
 
       for (MavenImporter eachImporter : MavenImporter.getSuitableImporters(mavenProjectCandidate)) {
-        eachImporter.resolve(project, mavenProjectCandidate, result.nativeMavenProject, embedder, context);
+        eachImporter.resolve(project, mavenProjectCandidate, nativeMavenProject, embedder, context);
       }
     }
     // project may be modified by MavenImporters, so we need to collect the changes after them:
     MavenProjectChanges changes = mavenProjectCandidate.getChangesSinceSnapshot(snapshot);
 
     mavenProjectCandidate.getProblems(); // need for fill problem cache
-    myTree.fireProjectResolved(Pair.create(mavenProjectCandidate, changes), result.nativeMavenProject);
-    schedulePluginResolution(mavenProjectCandidate, result.nativeMavenProject);
+    myTree.fireProjectResolved(Pair.create(mavenProjectCandidate, changes), nativeMavenProject);
+
+    if (null != nativeMavenProject) {
+      pluginResolutionRequests.add(Pair.create(mavenProjectCandidate, nativeMavenProject));
+    }
   }
 
-  private void schedulePluginResolution(@NotNull MavenProject mavenProject, NativeMavenProjectHolder nativeMavenProject) {
-    if (nativeMavenProject != null) {
-      var projectsManager = MavenProjectsManager.getInstance(myProject);
+  private void schedulePluginResolution(@NotNull Collection<Pair<MavenProject, NativeMavenProjectHolder>> pluginResolutionRequests) {
+    var projectsManager = MavenProjectsManager.getInstance(myProject);
+    for (var request : pluginResolutionRequests) {
+      var mavenProject = request.first;
+      var nativeMavenProject = request.second;
       if (!mavenProject.hasReadingProblems() && mavenProject.hasUnresolvedPlugins()) {
         projectsManager.schedulePluginResolution(new MavenProjectsProcessorPluginsResolvingTask(
           mavenProject,
