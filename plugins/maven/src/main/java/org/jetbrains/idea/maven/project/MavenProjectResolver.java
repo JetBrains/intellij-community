@@ -203,16 +203,15 @@ public class MavenProjectResolver {
 
     mavenProjectCandidate.getProblems(); // need for fill problem cache
     myTree.fireProjectResolved(Pair.create(mavenProjectCandidate, changes), result.nativeMavenProject);
-    schedulePluginResolution(Pair.create(mavenProjectCandidate, changes), result.nativeMavenProject);
+    schedulePluginResolution(mavenProjectCandidate, result.nativeMavenProject);
   }
 
-  private void schedulePluginResolution(Pair<MavenProject, MavenProjectChanges> projectWithChanges, NativeMavenProjectHolder nativeMavenProject) {
+  private void schedulePluginResolution(MavenProject mavenProject, NativeMavenProjectHolder nativeMavenProject) {
     if (nativeMavenProject != null) {
       var projectsManager = MavenProjectsManager.getInstance(myProject);
-      var project = projectWithChanges.first;
-      if (!project.hasReadingProblems() && project.hasUnresolvedPlugins()) {
+      if (!mavenProject.hasReadingProblems() && mavenProject.hasUnresolvedPlugins()) {
         projectsManager.schedulePluginResolution(new MavenProjectsProcessorPluginsResolvingTask(
-          project,
+          mavenProject,
           nativeMavenProject,
           this
         ));
