@@ -25,6 +25,8 @@
 //    skip the hash calculation step.
 //  -f FILTER
 //    filters the files using the given FILTER. May be specified multiple times.
+//  -s
+//    report files for stubbing e.g. files that exists, but were filtered out (explicitly or implicitly).
 //
 // Description:
 //   Calculate hashes (unless `-n`) for all files in the given DIR.
@@ -47,10 +49,11 @@
 //   Filters within each OPERATOR group are processed in the order of appearance in the command line.
 //
 // Output format:
-//   [FILE_PATH]:[HASH]
+//   [FILE_PATH]\0[HASH]
 //     where HASH is little-endian 8 byte (64 bit) integer
-//   [FILE_PATH];[LINK_LEN][LINK]
+//   [LINK_PATH]\1[LINK_LEN][LINK]
 //     where LINK_LEN is 4 byte (32 bit) signed int
+//   [STUB_PATH]\2
 
 //#define WSLHASH_DEBUG 1
 #ifdef WSLHASH_DEBUG
@@ -69,6 +72,9 @@
 #define FLT_NAME_LEN_MAX (1 + FLT_MATCHER_LEN_MAX + FLT_PATTERN_LEN_MAX + 2) // OPERATOR + MATCHER + PATTERN + delims
 #define FLT_SCAN_FMT "%c:%" STRINGIFY(FLT_MATCHER_LEN_MAX) "s:%" STRINGIFY(FLT_PATTERN_LEN_MAX) "s"
 
+#define FILE_SEPARATOR 0
+#define LINK_SEPARATOR 1
+#define STUB_SEPARATOR 2
 
 struct wslhash_filter_t {
     char name[FLT_NAME_LEN_MAX + 1]; // full filter name (OPERATOR:MATCHER:PATTERN).
@@ -93,6 +99,7 @@ struct wslhash_options_t {
     size_t includes_len;
 
     int skip_hash;
+    int report_stubs;
 };
 
 
@@ -148,8 +155,8 @@ static int is_dir(const char *path) {
     return S_ISDIR(stat_info.st_mode);
 }
 
-static const char * filename(const char* fpath) {
-    const char* last_slash = strrchr(fpath, '/');
+static const char *filename(const char *fpath) {
+    const char *last_slash = strrchr(fpath, '/');
     return (last_slash != NULL) ? last_slash + 1 : fpath;
 }
 
@@ -158,16 +165,20 @@ static int
 process_file(const char *fpath, const struct stat *sb, int tflag, __attribute__((unused)) struct FTW *ftwbuf) {
     DEBUG_PRINTF("Processing file: %s\n", fpath);
     if (tflag != FTW_F && tflag != FTW_SL) {
-        DEBUG_PRINTF("Skipping file: %s\n", fpath);
+        DEBUG_PRINTF("Skipping: %s\n", fpath);
         return 0; // Not a file
-    }
-    if (tflag == FTW_F && !is_filename_ok(filename(fpath))) {
-        DEBUG_PRINTF("Excluding file: %s\n", fpath);
-        return 0;
     }
     const char *fpath_relative = fpath + g_options.root_dir_len + 1; // remove first "/"
     if (tflag == FTW_F) {
-        printf("%s:", fpath_relative);
+        if (!is_filename_ok(filename(fpath))) {
+            DEBUG_PRINTF("Excluding file: %s\n", fpath);
+            if (g_options.report_stubs) {
+                printf("%s%c", fpath_relative, STUB_SEPARATOR);
+            }
+            return 0;
+        }
+
+        printf("%s%c", fpath_relative, FILE_SEPARATOR);
         if (sb->st_size == 0 || g_options.skip_hash) {
             // No need to calculate hash for empty file
             fwrite(EMPTY, sizeof(EMPTY), 1, stdout);
@@ -196,7 +207,7 @@ process_file(const char *fpath, const struct stat *sb, int tflag, __attribute__(
     } else {
         char real_path[PATH_MAX] = {0};
         if (realpath(fpath, real_path) != NULL && is_dir(real_path)) {
-            printf("%s;", fpath_relative);
+            printf("%s%c", fpath_relative, LINK_SEPARATOR);
             const int32_t len = (int32_t) strlen(real_path);
             fwrite(&len, sizeof(int32_t), 1, stdout);
             fputs(real_path, stdout);
@@ -283,8 +294,11 @@ static void parse_filter(const char *arg) {
 
 static void parse_args(int argc, char *argv[]) {
     int c;
-    while ((c = getopt(argc, argv, "nf:")) != -1) {
+    while ((c = getopt(argc, argv, "nsf:")) != -1) {
         switch (c) {
+            case 's':
+                g_options.report_stubs = 1;
+                break;
             case 'n':
                 g_options.skip_hash = 1;
                 break;

@@ -25,36 +25,38 @@ private const val MIN_CHUNK_SIZE = 1000
 private val LOGGER = Logger.getInstance(WslSync::class.java)
 
 class WslSync<SourceFile, DestFile> private constructor(private val source: FileStorage<SourceFile, DestFile>,
-                                                        private val dest: FileStorage<DestFile, SourceFile>) {
-
+                                                        private val dest: FileStorage<DestFile, SourceFile>,
+                                                        private val filters: WslHashFilters,
+                                                        private val useStubs: Boolean) {
 
   companion object {
 
     /**
-     * Makes [windowsDir] reflect [linuxDir] (or vice versa depending on [linToWinCopy]) on [distribution] much like rsync.
-     * Redundant files deleted, new/changed files copied.
-     * Set [onlyExtensions] if you only care about certain extensions.
-     * Direction depends on [linToWinCopy]
+     * Synchronizes the given [windowsDir] and [linuxDir] (inside [distro]).
+     * [linToWinCopy] determines the sync direction.
+     * [filters] allow you to specify which files to include/exclude.
+     * [useStubs] dictates whether empty stubs should be created for filtered out files.
      */
     @JvmOverloads
     fun syncWslFolders(linuxDir: String,
                        windowsDir: Path,
-                       distribution: AbstractWslDistribution,
+                       distro: AbstractWslDistribution,
                        linToWinCopy: Boolean = true,
-                       filters: WslHashFilters = EMPTY_FILTERS) {
+                       filters: WslHashFilters = EMPTY_FILTERS,
+                       useStubs: Boolean = false) {
       LOGGER.info("Sync " + if (linToWinCopy) "$linuxDir -> $windowsDir" else "$windowsDir -> $linuxDir")
-      val win = WindowsFileStorage(windowsDir, distribution, filters)
-      val lin = LinuxFileStorage(linuxDir, distribution, filters)
+      val win = WindowsFileStorage(windowsDir, distro)
+      val lin = LinuxFileStorage(linuxDir, distro)
       if (linToWinCopy) {
-        WslSync(lin, win)
+        WslSync(lin, win, filters, useStubs)
       }
       else {
-        WslSync(win, lin)
+        WslSync(win, lin, filters, useStubs)
         val execFile = windowsDir.resolve("exec.txt")
         if (execFile.exists()) {
           // TODO: Support non top level files
-          for(fileToMarkExec in execFile.readText().split(Regex("\\s+")).map { it.trim() }) {
-              lin.markExec(fileToMarkExec)
+          for (fileToMarkExec in execFile.readText().split(Regex("\\s+")).map { it.trim() }) {
+            lin.markExec(fileToMarkExec)
           }
         }
       }
@@ -64,37 +66,48 @@ class WslSync<SourceFile, DestFile> private constructor(private val source: File
   init {
     if (dest.isEmpty()) { //Shortcut: no need to sync anything, just copy everything
       LOGGER.info("Destination folder is empty, will copy all files")
-      val hashesAndLinks = source.getHashesAndLinks(true)
-      copyFilesInParallel(hashesAndLinks.first.map { it.file })
-      copyAllLinks(hashesAndLinks.second)
+      val syncData = source.calculateSyncData(filters, true, useStubs)
+      copyFilesInParallel(syncData.hashes.map { it.file })
+      syncLinks(syncData.links)
+      syncStubs(syncData.stubs)
     }
     else {
       syncFoldersInternal()
     }
   }
 
-  private fun copyAllLinks(toCreate: Map<FilePathRelativeToDir, FilePathRelativeToDir>,
-                           current: Map<FilePathRelativeToDir, FilePathRelativeToDir> = emptyMap()) {
-    val linksToCreate = toCreate.filterNot { current[it.key] == it.value }
-    val linksToRemove = current.filterNot { toCreate[it.key] == it.value }.keys
+  private fun syncLinks(sourceLinks: Map<FilePathRelativeToDir, FilePathRelativeToDir>,
+                        destStubs: Map<FilePathRelativeToDir, FilePathRelativeToDir> = emptyMap()) {
+    val linksToCreate = sourceLinks.filterNot { destStubs[it.key] == it.value }
+    val linksToRemove = destStubs.filterNot { sourceLinks[it.key] == it.value }.keys
 
     LOGGER.info("Will create ${linksToCreate.size} links and remove ${linksToRemove.size}")
     dest.removeLinks(*linksToRemove.toTypedArray())
     dest.createSymLinks(linksToCreate)
   }
 
-  private fun syncFoldersInternal() {
-    val sourceHashesFuture = supplyAsync({
-                                           source.getHashesAndLinks(false)
-                                         }, ProcessIOExecutorService.INSTANCE)
-    val destHashesFuture = supplyAsync({
-                                         dest.getHashesAndLinks(false)
-                                       }, ProcessIOExecutorService.INSTANCE)
+  private fun syncStubs(sourceStubs: Set<FilePathRelativeToDir>,
+                        destStubs: Set<FilePathRelativeToDir> = emptySet()) {
+    val stubsToCreate = sourceStubs.minus(destStubs)
+    val stubsToRemove = destStubs.minus(sourceStubs)
 
-    val sourceHashAndLinks = sourceHashesFuture.get()
-    val sourceHashes: MutableMap<FilePathRelativeToDir, WslHashRecord> = sourceHashAndLinks.first.associateBy { it.fileLowerCase }.toMutableMap()
-    val destHashAndLinks = destHashesFuture.get()
-    val destHashes: List<WslHashRecord> = destHashAndLinks.first
+    LOGGER.info("Will create ${stubsToCreate.size} links and remove ${stubsToRemove.size}")
+    dest.createStubs(stubsToCreate)
+    dest.removeFiles(stubsToRemove)
+  }
+
+  private fun syncFoldersInternal() {
+    val sourceSyncDataFuture = supplyAsync({
+                                             source.calculateSyncData(filters, false, useStubs)
+                                           }, ProcessIOExecutorService.INSTANCE)
+    val destSyncDataFuture = supplyAsync({
+                                           dest.calculateSyncData(filters, false, useStubs)
+                                         }, ProcessIOExecutorService.INSTANCE)
+
+    val sourceSyncData = sourceSyncDataFuture.get()
+    val sourceHashes = sourceSyncData.hashes.associateBy { it.fileLowerCase }.toMutableMap()
+    val destSyncData = destSyncDataFuture.get()
+    val destHashes = destSyncData.hashes
 
     val destFilesToRemove = ArrayList<FilePathRelativeToDir>(AVG_NUM_FILES)
     for (destRecord in destHashes) {
@@ -113,7 +126,8 @@ class WslSync<SourceFile, DestFile> private constructor(private val source: File
 
     copyFilesInParallel(sourceHashes.values.map { it.file })
     dest.removeFiles(destFilesToRemove)
-    copyAllLinks(sourceHashAndLinks.second, destHashAndLinks.second)
+    syncLinks(sourceSyncData.links, destSyncData.links)
+    syncStubs(sourceSyncData.stubs, destSyncData.stubs)
   }
 
   /**
