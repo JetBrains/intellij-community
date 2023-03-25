@@ -312,6 +312,11 @@ private suspend fun restoreEditors(project: Project, deferredProjectFrameHelper:
 
   coroutineScope {
     launch(Dispatchers.EDT) {
+      if (editorState != null) {
+        runActivity(StartUpMeasurer.Activities.EDITOR_RESTORING) {
+          editorComponent.restoreEditors(state = editorState, onStartup = true)
+        }
+      }
       deferredProjectFrameHelper.await().rootPane.getToolWindowPane().setDocumentComponent(editorComponent)
     }
 
@@ -319,12 +324,6 @@ private suspend fun restoreEditors(project: Project, deferredProjectFrameHelper:
     launch {
       project.serviceAsync<WolfTheProblemSolver>().join()
       project.serviceAsync<DaemonCodeAnalyzer>().join()
-    }
-
-    if (editorState != null) {
-      runActivity(StartUpMeasurer.Activities.EDITOR_RESTORING) {
-        editorComponent.restoreEditors(state = editorState, onStartup = true)
-      }
     }
   }
 
