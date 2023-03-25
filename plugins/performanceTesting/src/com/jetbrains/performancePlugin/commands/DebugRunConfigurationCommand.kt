@@ -7,7 +7,6 @@ import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.impl.RunManagerImpl.Companion.getInstanceImpl
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.xdebugger.XDebugProcess
@@ -27,12 +26,16 @@ class DebugRunConfigurationCommand(text: String, line: Int) : AbstractCallbackBa
 
   override fun execute(callback: ActionCallback, context: PlaybackContext) {
     val arguments = extractCommandList(PREFIX, ",")
+    if (arguments.size < 2) {
+      callback.reject("Usage %debugStep <configuration_name> <timeout_in_seconds>")
+      return
+    }
     val configurationNameToRun = arguments[0]
     val timeoutInSeconds = arguments[1].toLong()
 
     val breakpointManager = XDebuggerManager.getInstance(context.project).breakpointManager
-    val notDefaultBreakpoints = breakpointManager.allBreakpoints.filter { !breakpointManager.isDefaultBreakpoint(it) }
-    if (notDefaultBreakpoints.isEmpty()) {
+    val nonDefaultBreakpoints = breakpointManager.allBreakpoints.filter { !breakpointManager.isDefaultBreakpoint(it) }
+    if (nonDefaultBreakpoints.isEmpty()) {
       callback.reject("Breakpoint for this project were not found")
       return
     }
@@ -49,7 +52,8 @@ class DebugRunConfigurationCommand(text: String, line: Int) : AbstractCallbackBa
       override fun processStarted(debugProcess: XDebugProcess) {
         job = CoroutineScope(Dispatchers.IO).launch {
           if (!Waiter.checkCondition { callback.isDone || callback.isRejected }.await(timeoutInSeconds, TimeUnit.SECONDS)) {
-            callback.reject("Debug run configuration $configurationNameToRun was started $timeoutInSeconds seconds ago but was not paused by any breakpoint yet")
+            callback.reject(
+              "Debug run configuration $configurationNameToRun was started $timeoutInSeconds seconds ago but was not paused by any breakpoint yet")
             connection.disconnect()
           }
         }
@@ -66,16 +70,14 @@ class DebugRunConfigurationCommand(text: String, line: Int) : AbstractCallbackBa
     })
 
     WriteAction.runAndWait<IOException> {
-      val executor = DefaultDebugExecutor()
-      val target = DefaultExecutionTarget.INSTANCE
       val runnerAndConfigurationSettings = RunnerAndConfigurationSettingsImpl(runManager, configurationToRun)
-      ExecutionManager.getInstance(context.project).restartRunProfile(context.project, executor, target, runnerAndConfigurationSettings,
+      ExecutionManager.getInstance(context.project).restartRunProfile(context.project, DefaultDebugExecutor(),
+                                                                      DefaultExecutionTarget.INSTANCE, runnerAndConfigurationSettings,
                                                                       null)
     }
   }
 
   companion object {
-    private val LOG = Logger.getInstance(SetBreakpointCommand::class.java)
     const val PREFIX: @NonNls String = CMD_PREFIX + "debugRunConfiguration"
   }
 }

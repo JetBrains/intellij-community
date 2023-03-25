@@ -1,7 +1,6 @@
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.xdebugger.XDebugSessionListener
@@ -18,8 +17,12 @@ class DebugStepCommand(text: String, line: Int) : AbstractCallbackBasedCommand(t
       callback.reject("Debug process was not started")
       return
     }
+    if (debugSessions.size > 1) {
+      callback.reject("Currently running ${debugSessions.size} debug processes")
+      return
+    }
 
-    debugSessions[0].debugProcess.session.addSessionListener(object : XDebugSessionListener {
+    debugSessions.first().debugProcess.session.addSessionListener(object : XDebugSessionListener {
       override fun sessionPaused() {
         super.sessionPaused()
         callback.setDone()
@@ -31,12 +34,14 @@ class DebugStepCommand(text: String, line: Int) : AbstractCallbackBasedCommand(t
         "OVER" -> debugSessions[0].stepOver(false)
         "INTO" -> debugSessions[0].stepInto()
         "OUT" -> debugSessions[0].stepOut()
+        else -> {
+          callback.reject("Unknown special character. Please use: OVER, INTO or OUT")
+        }
       }
     }
   }
 
   companion object {
-    private val LOG = Logger.getInstance(DebugStepCommand::class.java)
     const val PREFIX: @NonNls String = CMD_PREFIX + "debugStep"
   }
 }
