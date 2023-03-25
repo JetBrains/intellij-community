@@ -1456,6 +1456,9 @@
     <cachesInvalidator implementation="com.intellij.ide.ui.IconCacheInvalidator"/>
 
     <diagnostic.freezeProfiler implementation="com.intellij.diagnostic.opentelemetry.OTelMetricsFreezeProfiler"/>
+
+    <backgroundPostStartupActivity implementation="com.intellij.diagnostic.opentelemetry.JVMStatsToOTelReporter"/>
+
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

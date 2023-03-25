@@ -29,7 +29,7 @@ public class ReentrantReadWriteLockUsageMonitor implements AutoCloseable {
   public static final int DEFAULT_SAMPLING_INTERVAL_MS =
     SystemProperties.getIntProperty("ReentrantReadWriteLockUsageMonitor.DEFAULT_SAMPLING_INTERVAL_MS", 500);
 
-  private final Supplier<ReentrantReadWriteLock> lockToMonitor;
+  private final @NotNull Supplier<? extends ReentrantReadWriteLock> lockToMonitor;
 
   private final ScheduledFuture<?> scheduledSamplerHandle;
 
@@ -47,7 +47,7 @@ public class ReentrantReadWriteLockUsageMonitor implements AutoCloseable {
     this(() -> toMonitor, measurementName, otelMeter);
   }
 
-  public ReentrantReadWriteLockUsageMonitor(final @NotNull Supplier<ReentrantReadWriteLock> toMonitor,
+  public ReentrantReadWriteLockUsageMonitor(final @NotNull Supplier<? extends ReentrantReadWriteLock> toMonitor,
                                             final @NotNull String measurementName,
                                             final @NotNull Meter otelMeter) {
     lockToMonitor = toMonitor;

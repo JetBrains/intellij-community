@@ -27,9 +27,7 @@ class OTelMetricsFreezeProfiler : FreezeProfiler {
 
   override fun stop() = Unit
 
-  override fun getAttachments(reportDir: File): List<Attachment> {
-    return collectOpenTelemetryReports()
-  }
+  override fun getAttachments(reportDir: File): List<Attachment> = collectOpenTelemetryReports()
 
   companion object {
     /**
