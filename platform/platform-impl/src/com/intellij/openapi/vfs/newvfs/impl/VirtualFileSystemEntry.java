@@ -561,6 +561,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
           return getFlagInt(VfsDataFlags.IS_SYMLINK_FLAG);
         }
 
+        setFlagInt(VfsDataFlags.IS_SYMLINK_FLAG, isSymlinkForPath.get(path));
         return isSymlinkForPath.get(path);
       }
     }
