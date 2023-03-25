@@ -4,14 +4,14 @@ package org.jetbrains.idea.devkit
 import com.intellij.ide.starters.local.StarterModuleBuilder.Companion.setupTestModule
 import com.intellij.ide.starters.shared.JAVA_STARTER_LANGUAGE
 import com.intellij.ide.starters.shared.KOTLIN_STARTER_LANGUAGE
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_11
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_17
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase4
 import org.jetbrains.idea.devkit.module.IdePluginModuleBuilder
 import org.jetbrains.idea.devkit.module.IdePluginModuleBuilder.PluginType
 import org.junit.Assert.assertFalse
 import org.junit.Test
 
-class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
+class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_17) {
   @Test
   fun pluginKotlinProject() {
     IdePluginModuleBuilder().setupTestModule(fixture.module) {
