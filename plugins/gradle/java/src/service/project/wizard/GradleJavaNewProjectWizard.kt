@@ -87,7 +87,9 @@ internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
   ) : AssetsJavaNewProjectWizardStep(parent) {
 
     override fun setupAssets(project: Project) {
-      addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
+      if (context.isCreatingNewProject) {
+        addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
+      }
       if (parent.addSampleCode) {
         withJavaSampleCodeAsset("src/main/java", parent.groupId, parent.generateOnboardingTips)
       }

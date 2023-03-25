@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemT
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType.GradleKotlinDsl
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
 
-
 internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
 
     override val name = GRADLE
@@ -85,7 +84,9 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
 
         override fun setupAssets(project: Project) {
             addAssets(StandardAssetsProvider().getGradlewAssets())
-            addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
+            if (context.isCreatingNewProject) {
+                addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
+            }
         }
     }
 }
