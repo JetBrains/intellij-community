@@ -403,7 +403,6 @@ final class MavenServerManagerImpl implements MavenServerManager {
   @NotNull
   public MavenEmbedderWrapper createEmbedder(final Project project,
                                              final boolean alwaysOnline,
-                                             @Nullable String workingDirectory,
                                              @NotNull String multiModuleProjectDirectory) {
 
     return new MavenEmbedderWrapper(project, null) {
@@ -431,7 +430,7 @@ final class MavenServerManagerImpl implements MavenServerManager {
         myConnector = MavenServerManagerImpl.this.getConnector(project, multiModuleProjectDirectory);
         return myConnector.createEmbedder(new MavenEmbedderSettings(
           settings,
-          workingDirectory == null ? null : transformer.toRemotePath(workingDirectory),
+          transformer.toRemotePath(multiModuleProjectDirectory),
           transformer.toRemotePath(multiModuleProjectDirectory),
           forceResolveDependenciesSequentially,
           useCustomDependenciesResolver

@@ -53,13 +53,13 @@ public class MavenEmbeddersManager {
     boolean alwaysOnline = kind == FOR_DOWNLOAD;
 
     if (result == null) {
-      result = MavenServerManager.getInstance().createEmbedder(myProject, alwaysOnline, multiModuleProjectDirectory, multiModuleProjectDirectory);
+      result = MavenServerManager.getInstance().createEmbedder(myProject, alwaysOnline, multiModuleProjectDirectory);
       myPool.put(key, result);
     }
 
     if (myEmbeddersInUse.contains(result)) {
       MavenLog.LOG.warn("embedder " + key + " is already used");
-      return MavenServerManager.getInstance().createEmbedder(myProject, alwaysOnline, multiModuleProjectDirectory, multiModuleProjectDirectory);
+      return MavenServerManager.getInstance().createEmbedder(myProject, alwaysOnline, multiModuleProjectDirectory);
     }
 
     myEmbeddersInUse.add(result);
