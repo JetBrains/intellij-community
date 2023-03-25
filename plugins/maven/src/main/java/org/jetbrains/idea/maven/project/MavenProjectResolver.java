@@ -211,22 +211,20 @@ public class MavenProjectResolver {
     myTree.fireProjectResolved(Pair.create(mavenProjectCandidate, changes), nativeMavenProject);
 
     if (null != nativeMavenProject) {
-      pluginResolutionRequests.add(Pair.create(mavenProjectCandidate, nativeMavenProject));
+      if (!mavenProjectCandidate.hasReadingProblems() && mavenProjectCandidate.hasUnresolvedPlugins()) {
+        pluginResolutionRequests.add(Pair.create(mavenProjectCandidate, nativeMavenProject));
+      }
     }
   }
 
   private void schedulePluginResolution(@NotNull Collection<Pair<MavenProject, NativeMavenProjectHolder>> pluginResolutionRequests) {
     var projectsManager = MavenProjectsManager.getInstance(myProject);
     for (var request : pluginResolutionRequests) {
-      var mavenProject = request.first;
-      var nativeMavenProject = request.second;
-      if (!mavenProject.hasReadingProblems() && mavenProject.hasUnresolvedPlugins()) {
-        projectsManager.schedulePluginResolution(new MavenProjectsProcessorPluginsResolvingTask(
-          mavenProject,
-          nativeMavenProject,
-          this
-        ));
-      }
+      projectsManager.schedulePluginResolution(new MavenProjectsProcessorPluginsResolvingTask(
+        request.first,
+        request.second,
+        this
+      ));
     }
   }
 
