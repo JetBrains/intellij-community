@@ -1037,7 +1037,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/toml/intellij.toml.iml" filepath="$PROJECT_DIR$/plugins/toml/intellij.toml.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/toml/core/intellij.toml.core.iml" filepath="$PROJECT_DIR$/plugins/toml/core/intellij.toml.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/toml/json/intellij.toml.json.iml" filepath="$PROJECT_DIR$/plugins/toml/json/intellij.toml.json.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/toml/core/src/test/intellij.toml.tests.iml" filepath="$PROJECT_DIR$/plugins/toml/core/src/test/intellij.toml.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/toml/tests/intellij.toml.tests.iml" filepath="$PROJECT_DIR$/plugins/toml/tests/intellij.toml.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps/antLayout/intellij.tools.jps.antTasks.iml" filepath="$PROJECT_DIR$/jps/antLayout/intellij.tools.jps.antTasks.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps/standalone-builder/intellij.tools.jps.build.standalone.iml" filepath="$PROJECT_DIR$/jps/standalone-builder/intellij.tools.jps.build.standalone.iml" />
       <module fileurl="file://$PROJECT_DIR$/tools/launcher-generator/intellij.tools.launcherGenerator.iml" filepath="$PROJECT_DIR$/tools/launcher-generator/intellij.tools.launcherGenerator.iml" />

@@ -26,7 +26,7 @@ interface TestCase {
 }
 
 fun getTomlTestsResourcesPath(): Path =
-    Path.of(PlatformTestUtil.getCommunityPath(), "plugins/toml/core/src/test", TestCase.testResourcesPath)
+    Path.of(PlatformTestUtil.getCommunityPath(), "plugins/toml/tests/src/test", TestCase.testResourcesPath)
 
 fun TestCase.pathToSourceTestFile(): Path =
     getTomlTestsResourcesPath().resolve("${getTestDataPath()}/${getTestName(true)}.$testFileExtension")
