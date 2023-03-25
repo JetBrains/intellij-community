@@ -22,7 +22,6 @@ public class MavenEmbeddersManager {
   public static final Key FOR_PLUGINS_RESOLVE = Key.create(MavenEmbeddersManager.class + ".FOR_PLUGINS_RESOLVE");
   public static final Key FOR_FOLDERS_RESOLVE = Key.create(MavenEmbeddersManager.class + ".FOR_FOLDERS_RESOLVE");
   public static final Key FOR_POST_PROCESSING = Key.create(MavenEmbeddersManager.class + ".FOR_POST_PROCESSING");
-  public static final Key FOR_GET_VERSIONS = Key.create(MavenEmbeddersManager.class + ".FOR_GET_VERSIONS");
   public static final Key FOR_MODEL_READ = Key.create(MavenEmbeddersManager.class + ".FOR_MODEL_READ");
 
   // will always regardless to 'work offline' setting
@@ -73,7 +72,7 @@ public class MavenEmbeddersManager {
   @Deprecated
   @NotNull
   // used in third-party plugins
-  public synchronized MavenEmbedderWrapper getEmbedder(Key kind, String workingDirectory, @NotNull String multiModuleProjectDirectory) {
+  public synchronized MavenEmbedderWrapper getEmbedder(Key kind, String ignoredWorkingDirectory, @NotNull String multiModuleProjectDirectory) {
     return getEmbedder(kind, multiModuleProjectDirectory);
   }
 
