@@ -196,7 +196,7 @@ public class MavenArchetypeManager {
     if (!projects.isEmpty()) {
       baseDir = MavenUtil.getBaseDir(projects.get(0).getDirectoryFile()).toString();
     }
-    MavenEmbedderWrapper mavenEmbedderWrapper = manager.getEmbedder(FOR_POST_PROCESSING, baseDir, baseDir);
+    MavenEmbedderWrapper mavenEmbedderWrapper = manager.getEmbedder(FOR_POST_PROCESSING, baseDir);
     try {
       return function.apply(mavenEmbedderWrapper);
     }
@@ -208,7 +208,7 @@ public class MavenArchetypeManager {
   @Nullable
   private <R> R executeWithMavenEmbedderWrapperNullable(Function<MavenEmbedderWrapper, R> function) {
     MavenEmbeddersManager manager = MavenProjectsManager.getInstance(myProject).getEmbeddersManager();
-    MavenEmbedderWrapper mavenEmbedderWrapper = manager.getEmbedder(FOR_POST_PROCESSING, EMPTY, EMPTY);
+    MavenEmbedderWrapper mavenEmbedderWrapper = manager.getEmbedder(FOR_POST_PROCESSING, EMPTY);
     try {
       return function.apply(mavenEmbedderWrapper);
     }

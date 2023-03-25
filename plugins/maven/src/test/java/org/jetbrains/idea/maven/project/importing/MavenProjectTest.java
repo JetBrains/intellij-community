@@ -744,7 +744,7 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
 
     Set<MavenRemoteRepository> repositories = myProjectsManager.getRemoteRepositories();
     MavenEmbeddersManager embeddersManager = myProjectsManager.getEmbeddersManager();
-    MavenEmbedderWrapper mavenEmbedderWrapper = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, "", "");
+    MavenEmbedderWrapper mavenEmbedderWrapper = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, "");
 
     Set<String> repoIds = mavenEmbedderWrapper.resolveRepositories(repositories).stream()
       .map(r -> r.getId())

@@ -70,7 +70,7 @@ public class MavenProjectResolver {
 
     for (Map.Entry<Path, Collection<MavenProject>> entry : projectMultiMap.entrySet()) {
       String baseDir = entry.getKey().toString();
-      MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, baseDir, baseDir);
+      MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, baseDir);
       try {
         Properties userProperties = new Properties();
         for (MavenProject mavenProject : mavenProjects) {
@@ -357,7 +357,7 @@ public class MavenProjectResolver {
     MavenArtifactDownloader.DownloadResult result = new MavenArtifactDownloader.DownloadResult();
     for (Map.Entry<Path, Collection<MavenProject>> entry : projectMultiMap.entrySet()) {
       String baseDir = entry.getKey().toString();
-      MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD, baseDir, baseDir);
+      MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD, baseDir);
       try {
         embedder.customizeForResolve(console, process);
         MavenArtifactDownloader.DownloadResult result1 =
