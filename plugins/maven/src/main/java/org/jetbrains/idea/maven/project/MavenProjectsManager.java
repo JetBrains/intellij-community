@@ -565,8 +565,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
             schedulePluginResolution(new MavenProjectsProcessorPluginsResolvingTask(
               project,
               nativeMavenProject,
-              myMavenProjectResolver,
-              false));
+              myMavenProjectResolver
+            ));
           }
         }
       }

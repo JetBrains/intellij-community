@@ -24,21 +24,18 @@ public class MavenProjectsProcessorPluginsResolvingTask implements MavenProjects
   private final MavenProject myMavenProject;
   private final NativeMavenProjectHolder myNativeMavenProject;
   private final MavenProjectResolver myResolver;
-  private final boolean forceUpdateSnapshots;
 
   public MavenProjectsProcessorPluginsResolvingTask(MavenProject project,
                                                     NativeMavenProjectHolder nativeMavenProject,
-                                                    MavenProjectResolver resolver,
-                                                    boolean forceUpdateSnapshots) {
+                                                    MavenProjectResolver resolver) {
     myMavenProject = project;
     myNativeMavenProject = nativeMavenProject;
     myResolver = resolver;
-    this.forceUpdateSnapshots = forceUpdateSnapshots;
   }
 
   @Override
   public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
-    myResolver.resolvePlugins(myMavenProject, myNativeMavenProject, embeddersManager, console, indicator, true, forceUpdateSnapshots);
+    myResolver.resolvePlugins(myMavenProject, myNativeMavenProject, embeddersManager, console, indicator, true, false);
   }
 }
