@@ -560,14 +560,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
                                          importingSettings.isDownloadDocsAutomatically(),
                                          null);
           }
-
-          if (!project.hasReadingProblems() && project.hasUnresolvedPlugins()) {
-            schedulePluginResolution(new MavenProjectsProcessorPluginsResolvingTask(
-              project,
-              nativeMavenProject,
-              myMavenProjectResolver
-            ));
-          }
         }
       }
 
