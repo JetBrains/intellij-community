@@ -16,18 +16,19 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 public class MavenProjectsProcessorPluginsResolvingTask implements MavenProjectsProcessorTask {
-  private final MavenProject myMavenProject;
-  private final NativeMavenProjectHolder myNativeMavenProject;
-  private final MavenProjectResolver myResolver;
+  private final @NotNull MavenProject myMavenProject;
+  private final @NotNull NativeMavenProjectHolder myNativeMavenProject;
+  private final @NotNull MavenProjectResolver myResolver;
 
-  public MavenProjectsProcessorPluginsResolvingTask(MavenProject project,
-                                                    NativeMavenProjectHolder nativeMavenProject,
-                                                    MavenProjectResolver resolver) {
+  public MavenProjectsProcessorPluginsResolvingTask(@NotNull MavenProject project,
+                                                    @NotNull NativeMavenProjectHolder nativeMavenProject,
+                                                    @NotNull MavenProjectResolver resolver) {
     myMavenProject = project;
     myNativeMavenProject = nativeMavenProject;
     myResolver = resolver;

@@ -206,7 +206,7 @@ public class MavenProjectResolver {
     schedulePluginResolution(mavenProjectCandidate, result.nativeMavenProject);
   }
 
-  private void schedulePluginResolution(MavenProject mavenProject, NativeMavenProjectHolder nativeMavenProject) {
+  private void schedulePluginResolution(@NotNull MavenProject mavenProject, NativeMavenProjectHolder nativeMavenProject) {
     if (nativeMavenProject != null) {
       var projectsManager = MavenProjectsManager.getInstance(myProject);
       if (!mavenProject.hasReadingProblems() && mavenProject.hasUnresolvedPlugins()) {
