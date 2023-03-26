@@ -11,6 +11,7 @@ import com.intellij.codeWithMe.ClientId.Companion.isLocal
 import com.intellij.codeWithMe.ClientId.Companion.withClientId
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.runActivity
+import com.intellij.diagnostic.subtask
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
@@ -2026,28 +2027,26 @@ open class FileEditorManagerImpl(
     }
 
     val window = windowDeferred.await()
-    val opened: (() -> Unit)? = withContext(Dispatchers.EDT) {
-      runActivity("file opening in EDT") {
-        if (!file.isValid) {
-          return@withContext null
-        }
-
-        val splitters = window.owner
-        splitters.insideChange++
-        val (_, opened) = try {
-          doOpenInEdtImpl(window = window,
-                          file = file,
-                          entry = entry,
-                          options = options,
-                          newProviders = newProviders,
-                          builders = builders,
-                          isReopeningOnStartup = true)
-        }
-        finally {
-          splitters.insideChange--
-        }
-        opened
+    val opened: (() -> Unit)? = subtask("file opening in EDT", Dispatchers.EDT) {
+      if (!file.isValid) {
+        return@subtask null
       }
+
+      val splitters = window.owner
+      splitters.insideChange++
+      val (_, opened) = try {
+        doOpenInEdtImpl(window = window,
+                        file = file,
+                        entry = entry,
+                        options = options,
+                        newProviders = newProviders,
+                        builders = builders,
+                        isReopeningOnStartup = true)
+      }
+      finally {
+        splitters.insideChange--
+      }
+      opened
     }
 
     if (opened != null) {
