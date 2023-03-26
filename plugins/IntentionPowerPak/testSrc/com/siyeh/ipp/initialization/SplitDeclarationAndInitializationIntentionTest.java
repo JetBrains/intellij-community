@@ -18,6 +18,7 @@ public class SplitDeclarationAndInitializationIntentionTest extends IPPTestCase 
   public void testMultipleFieldsSingleDeclaration2() { doTest(); }
   public void testMultipleFieldsSingleDeclaration3() { doTest(); }
   public void testNotInsideCodeBlock() { doTest(); }
+  public void testRecordStaticField() { doTest(); }
   public void testInsideCodeBlock() { assertIntentionNotAvailable(); }
   public void testRecord() { assertIntentionNotAvailable(); }
 
