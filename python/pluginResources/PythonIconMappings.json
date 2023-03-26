@@ -5,6 +5,7 @@
         "python": {
           "expui": {
             "python.svg": "icons/com/jetbrains/python/python.svg",
+            "pythonConsole.svg": "icons/com/jetbrains/python/pythonConsole.svg",
             "pythonConsoleToolWindow.svg": "icons/com/jetbrains/python/pythonConsoleToolWindow.svg",
             "pythonPackages.svg": "icons/com/jetbrains/python/pythonPackages.svg",
             "commandQueue.svg": "icons/com/jetbrains/python/commandQueue.svg",
