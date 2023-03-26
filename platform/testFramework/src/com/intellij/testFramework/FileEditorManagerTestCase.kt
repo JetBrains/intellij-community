@@ -77,7 +77,7 @@ abstract class FileEditorManagerTestCase : BasePlatformTestCase() {
     map.addMacroExpand(PathMacroUtil.PROJECT_DIR_MACRO_NAME, testDataPath)
     map.substitute(rootElement, true, true)
     runBlockingModalWithRawProgressReporter(project, "") {
-      manager!!.mainSplitters.restoreEditors(EditorSplitterState(rootElement), onStartup = false)
+      manager!!.mainSplitters.restoreEditors(EditorSplitterState(rootElement))
     }
   }
 }
