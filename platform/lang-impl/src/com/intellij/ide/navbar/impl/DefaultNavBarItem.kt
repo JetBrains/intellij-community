@@ -88,7 +88,7 @@ internal class ProjectNavBarItem(data: Project) : DefaultNavBarItem<Project>(dat
   override fun getIcon() = AllIcons.Nodes.Project
 
   override fun getTextAttributes(selected: Boolean): SimpleTextAttributes {
-    val problemSolver = WolfTheProblemSolver.getInstance(data)
+    val problemSolver = WolfTheProblemSolver.getInstanceIfCreated(data) ?: return REGULAR_ATTRIBUTES
     val hasProblems = ModuleManager.getInstance(data)
       .modules
       .any(problemSolver::hasProblemFilesBeneath)

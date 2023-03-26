@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -17,6 +18,10 @@ public abstract class WolfTheProblemSolver {
 
   public static WolfTheProblemSolver getInstance(Project project) {
     return project.getService(WolfTheProblemSolver.class);
+  }
+
+  public static @Nullable WolfTheProblemSolver getInstanceIfCreated(Project project) {
+    return project.getServiceIfCreated(WolfTheProblemSolver.class);
   }
 
   public abstract boolean isProblemFile(@NotNull VirtualFile virtualFile);
