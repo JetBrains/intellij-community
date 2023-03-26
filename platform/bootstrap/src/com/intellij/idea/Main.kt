@@ -83,7 +83,7 @@ private fun initRemoteDevIfNeeded(args: List<String>) {
   }
 
   runActivity("cwm host init") {
-    if (System.getProperty("lux.enabled", "true").toBoolean()) {
+    if (isLuxEnabled()) {
       initLux()
     }
     else {
@@ -92,15 +92,19 @@ private fun initRemoteDevIfNeeded(args: List<String>) {
   }
 }
 
+private fun isLuxEnabled() = System.getProperty("lux.enabled", "true").toBoolean()
+
 private fun initProjector() {
   if (!JBR.isProjectorUtilsSupported()) {
     error("JBR version 17.0.5b653.12 or later is required to run a remote-dev server")
   }
 
-  // JBR.getProjectorUtils().setLocalGraphicsEnvironmentProvider {
-  //   val projectorEnvClass = AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.awt.image.PGraphicsEnvironment")
-  //   projectorEnvClass.getDeclaredMethod("getInstance").invoke(null) as GraphicsEnvironment
-  // }
+  if (!isLuxEnabled()) {
+    JBR.getProjectorUtils().setLocalGraphicsEnvironmentProvider {
+      val projectorEnvClass = AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.awt.image.PGraphicsEnvironment")
+      projectorEnvClass.getDeclaredMethod("getInstance").invoke(null) as GraphicsEnvironment
+    }
+  }
 
   val projectorMainClass = AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.server.ProjectorLauncher\$Starter")
   MethodHandles.privateLookupIn(projectorMainClass, MethodHandles.lookup()).findStatic(
@@ -116,10 +120,11 @@ private fun initLux() {
   if (System.getProperty("lux.fonts.disable.projector.font.manager", "false").toBoolean()) {
     // disable PFontManager
     System.setProperty("org.jetbrains.projector.server.enable.font.manager", "false")
+  }
 
-    // X11GraphicsEnvironment initializer is necessary for X11FontManager
-    // Do it before Projector sets its own PGraphicsEnvironment
-    GraphicsEnvironment.getLocalGraphicsEnvironment()
+  JBR.getProjectorUtils().setLocalGraphicsEnvironmentProvider {
+    val luxGraphicsEnvClass = AppStarter::class.java.classLoader.loadClass("com.jetbrains.rdserver.lux.toolkit.LuxGraphicsEnvironment")
+    luxGraphicsEnvClass.getDeclaredMethod("getInstance").invoke(null) as GraphicsEnvironment
   }
 
   initProjector()
