@@ -520,6 +520,12 @@
       "variable.svg": "nodes/variable.svg",
       "warningIntroduction.svg": "nodes/warningIntroduction.svg"
     },
+    "objectBrowser": {
+      "sortAlphabetically.svg": "objectBrowser/sorted.svg",
+      "sortByType.svg": "objectBrowser/sortByType.svg",
+      "sortByUsage.svg": "objectBrowser/sortedByUsage.svg",
+      "sortByVisibility.svg": "objectBrowser/visibilitySort.svg"
+    },
     "profiler": {
       "collapseNode.svg": "profiler/collapseNode.svg",
       "expandNode.svg": "profiler/expandNode.svg"
@@ -604,6 +610,7 @@
       "javaScriptRemote.svg": "icons/JavaScript_remote_debug_configuration.svg",
       "junit.svg": "runConfigurations/junit.svg",
       "junitTestMark.svg": "runConfigurations/testMark.svg",
+      "sortByDuration.svg": "runConfigurations/sortbyDuration.svg",
       "webApp.svg": "runConfigurations/web_app.svg"
     },
     "status": {
