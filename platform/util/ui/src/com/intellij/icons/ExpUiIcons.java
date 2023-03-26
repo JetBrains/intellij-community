@@ -101,6 +101,10 @@ public final class ExpUiIcons {
     /** 20x20 */ public static final @NotNull Icon CwmUsers_20x20 = load("expui/codeWithMe/cwmUsers@20x20.svg", -1417807985, 2);
   }
 
+  public static final class Debugger {
+    /** 16x16 */ public static final @NotNull Icon Watch = load("expui/debugger/watch.svg", 841387117, 2);
+  }
+
   public static final class Diff {
     /** 16x16 */ public static final @NotNull Icon ApplyNotConflicts = load("expui/diff/applyNotConflicts.svg", 513856768, 2);
     /** 16x16 */ public static final @NotNull Icon ApplyNotConflictsLeft = load("expui/diff/applyNotConflictsLeft.svg", 1949281176, 2);
@@ -209,8 +213,8 @@ public final class ExpUiIcons {
 
   public static final class General {
     /** 16x16 */ public static final @NotNull Icon Add = load("expui/general/add.svg", -570298403, 2);
-    /** 16x16 */ public static final @NotNull Icon AutoscrollFromSource = load("expui/general/autoscrollFromSource.svg", 2133524509, 2);
-    /** 16x16 */ public static final @NotNull Icon AutoscrollToSource = load("expui/general/autoscrollToSource.svg", -836479033, 2);
+    /** 16x16 */ public static final @NotNull Icon AutoscrollFromSource = load("expui/general/autoscrollFromSource.svg", 596620456, 2);
+    /** 16x16 */ public static final @NotNull Icon AutoscrollToSource = load("expui/general/autoscrollToSource.svg", 1728968132, 2);
     /** 16x16 */ public static final @NotNull Icon ChevronDown = load("expui/general/chevronDown.svg", -1257183788, 2);
     /** 16x16 */ public static final @NotNull Icon ChevronDownLarge = load("expui/general/chevronDownLarge.svg", -1315922370, 2);
     /** 16x16 */ public static final @NotNull Icon ChevronDownLargeWhite = load("expui/general/chevronDownLargeWhite.svg", -359402244, 0);

@@ -75,6 +75,9 @@
       "cwmInvite.svg": "codeWithMe/cwmInvite.svg",
       "cwmUsers.svg": "users.svg"
     },
+    "debugger": {
+      "watch.svg": "debugger/watch.svg"
+    },
     "diff": {
       "applyNotConflicts.svg": "diff/applyNotConflicts.svg",
       "applyNotConflictsLeft.svg": "diff/applyNotConflictsLeft.svg",
