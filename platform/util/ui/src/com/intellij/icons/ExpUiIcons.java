@@ -209,6 +209,8 @@ public final class ExpUiIcons {
 
   public static final class General {
     /** 16x16 */ public static final @NotNull Icon Add = load("expui/general/add.svg", -570298403, 2);
+    /** 16x16 */ public static final @NotNull Icon AutoscrollFromSource = load("expui/general/autoscrollFromSource.svg", 2133524509, 2);
+    /** 16x16 */ public static final @NotNull Icon AutoscrollToSource = load("expui/general/autoscrollToSource.svg", -836479033, 2);
     /** 16x16 */ public static final @NotNull Icon ChevronDown = load("expui/general/chevronDown.svg", -1257183788, 2);
     /** 16x16 */ public static final @NotNull Icon ChevronDownLarge = load("expui/general/chevronDownLarge.svg", -1315922370, 2);
     /** 16x16 */ public static final @NotNull Icon ChevronDownLargeWhite = load("expui/general/chevronDownLargeWhite.svg", -359402244, 0);

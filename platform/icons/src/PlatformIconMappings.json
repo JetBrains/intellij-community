@@ -224,6 +224,8 @@
         "general/add.svg",
         "actions/AddMulticaret.svg"
       ],
+      "autoscrollFromSource.svg": "general/autoscrollFromSource.svg",
+      "autoscrollToSource.svg": "general/autoscrollToSource.svg",
       "user.svg": "general/user.svg",
       "chevronDown.svg": [
         "actions/findAndShowNextMatches.svg",
