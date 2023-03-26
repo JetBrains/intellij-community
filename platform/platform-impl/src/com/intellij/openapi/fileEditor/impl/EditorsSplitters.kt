@@ -8,7 +8,6 @@ import com.intellij.codeWithMe.ClientId.Companion.isLocal
 import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.diagnostic.runActivity
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
@@ -960,13 +959,11 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
         try {
           file.putUserData(OPENED_IN_BULK, true)
 
-          val newProviders = async {
-            runActivity("editor provider computing") {
-              FileEditorProviderManager.getInstance().getProvidersAsync(fileEditorManager.project, file)
-            }
+          val newProviders = async(CoroutineName("editor provider computing")) {
+            FileEditorProviderManager.getInstance().getProvidersAsync(fileEditorManager.project, file)
           }
 
-          val document = readAction {
+          val document = readActionBlocking {
             fileDocumentManager.getDocument(file)
           }
 
