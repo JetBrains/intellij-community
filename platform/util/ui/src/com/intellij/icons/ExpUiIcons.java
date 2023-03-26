@@ -447,10 +447,10 @@ public final class ExpUiIcons {
   }
 
   public static final class ObjectBrowser {
-    /** 16x16 */ public static final @NotNull Icon SortAlphabetically = load("expui/objectBrowser/sortAlphabetically.svg", -863614919, 2);
-    /** 16x16 */ public static final @NotNull Icon SortByType = load("expui/objectBrowser/sortByType.svg", -133195036, 2);
-    /** 16x16 */ public static final @NotNull Icon SortByUsage = load("expui/objectBrowser/sortByUsage.svg", 128375768, 2);
-    /** 16x16 */ public static final @NotNull Icon SortByVisibility = load("expui/objectBrowser/sortByVisibility.svg", -388552900, 2);
+    /** 16x16 */ public static final @NotNull Icon SortAlphabetically = load("expui/objectBrowser/sortAlphabetically.svg", 1247380512, 2);
+    /** 16x16 */ public static final @NotNull Icon SortByType = load("expui/objectBrowser/sortByType.svg", 1497149393, 2);
+    /** 16x16 */ public static final @NotNull Icon SortByUsage = load("expui/objectBrowser/sortByUsage.svg", -1742523752, 2);
+    /** 16x16 */ public static final @NotNull Icon SortByVisibility = load("expui/objectBrowser/sortByVisibility.svg", -1820487510, 2);
   }
 
   public static final class Profiler {
@@ -524,7 +524,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon JavaScriptRemote = load("expui/runConfigurations/javaScriptRemote.svg", 1436811019, 2);
     /** 16x16 */ public static final @NotNull Icon Junit = load("expui/runConfigurations/junit.svg", 641483285, 2);
     /** 16x16 */ public static final @NotNull Icon JunitTestMark = load("expui/runConfigurations/junitTestMark.svg", -1504238884, 2);
-    /** 16x16 */ public static final @NotNull Icon SortByDuration = load("expui/runConfigurations/sortByDuration.svg", 1510406667, 2);
+    /** 16x16 */ public static final @NotNull Icon SortByDuration = load("expui/runConfigurations/sortByDuration.svg", 1220758684, 2);
     /** 16x16 */ public static final @NotNull Icon WebApp = load("expui/runConfigurations/webApp.svg", 1945144694, 2);
   }
 
