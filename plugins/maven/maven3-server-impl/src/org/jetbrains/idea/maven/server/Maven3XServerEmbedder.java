@@ -153,12 +153,10 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
     myEmbedderSettings = settings;
 
-    if (settings.getWorkingDirectory() != null) {
-      System.setProperty("user.dir", settings.getWorkingDirectory());
-    }
-
-    if (settings.getMultiModuleProjectDirectory() != null) {
-      System.setProperty("maven.multiModuleProjectDirectory", settings.getMultiModuleProjectDirectory());
+    String multiModuleProjectDirectory = settings.getMultiModuleProjectDirectory();
+    if (multiModuleProjectDirectory != null) {
+      System.setProperty("user.dir", multiModuleProjectDirectory);
+      System.setProperty("maven.multiModuleProjectDirectory", multiModuleProjectDirectory);
     }
     else {
       // initialize maven.multiModuleProjectDirectory property to avoid failure in org.apache.maven.cli.MavenCli#initialize method
@@ -239,7 +237,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     catch (Exception e) {
       ParseException cause = ExceptionUtilRt.findCause(e, ParseException.class);
       if (cause != null) {
-        String workingDir = settings.getWorkingDirectory();
+        String workingDir = settings.getMultiModuleProjectDirectory();
         if (workingDir == null) {
           workingDir = System.getProperty("user.dir");
         }

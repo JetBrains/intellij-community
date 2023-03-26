@@ -431,7 +431,6 @@ final class MavenServerManagerImpl implements MavenServerManager {
         return myConnector.createEmbedder(new MavenEmbedderSettings(
           settings,
           transformer.toRemotePath(multiModuleProjectDirectory),
-          transformer.toRemotePath(multiModuleProjectDirectory),
           forceResolveDependenciesSequentially,
           useCustomDependenciesResolver
         ));
