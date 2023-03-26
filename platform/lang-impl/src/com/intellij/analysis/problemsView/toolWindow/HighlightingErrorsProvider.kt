@@ -22,7 +22,7 @@ open class HighlightingErrorsProvider(final override val project: Project) : Hig
 
   init {
     project.messageBus.connect(this).subscribe(ProblemListener.TOPIC, this)
-    (WolfTheProblemSolver.getInstance(project) as? WolfTheProblemSolverImpl)?.processProblemFiles {
+    (WolfTheProblemSolver.getInstanceIfCreated(project) as? WolfTheProblemSolverImpl)?.processProblemFiles {
       problemsAppeared(it)
       true
     }
