@@ -205,7 +205,7 @@ private fun collectParentOfLambdaExpression(element: PyExpression, callInnerRefe
 
 fun proceedPyValueChildrenNames(childrenNodes: Set<String>, ignoreML: Boolean = false): List<LookupElement> {
   return childrenNodes.map {
-    val lookupElement = LookupElementBuilder.create(it).withTypeText("New runtime")
+    val lookupElement = LookupElementBuilder.create(it).withTypeText(PyBundle.message("runtime.completion.type.text"))
     when (ignoreML) {
       true -> PrioritizedLookupElement.withPriority(lookupElement, RUNTIME_COMPLETION_PRIORITY).asMLIgnorable()
       false -> PrioritizedLookupElement.withPriority(lookupElement, RUNTIME_COMPLETION_PRIORITY)
