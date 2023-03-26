@@ -291,7 +291,12 @@
       "filter.svg": "general/filter.svg",
       "help.svg": "actions/help.svg",
       "hide.svg": "general/hideToolWindow.svg",
-      "history.svg": "vcs/history.svg",
+      "history.svg": [
+        "vcs/history.svg",
+        "vcs/historyInline.svg",
+        "vcs/historyInlineHovered.svg"
+
+      ],
       "ideUpdate.svg": "ide/notification/ideUpdate.svg",
       "pluginUpdate.svg": "ide/notification/pluginUpdate.svg",
       "import.svg": "toolbarDecorator/import.svg",
