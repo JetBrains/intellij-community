@@ -52,21 +52,6 @@ abstract class ConfigureKotlinInProjectAction : AnAction() {
     }
 }
 
-
-class ConfigureKotlinJsInProjectAction : ConfigureKotlinInProjectAction() {
-    override fun getApplicableConfigurators(project: Project) = getAbleToRunConfigurators(project).filter {
-        it.targetPlatform.isJs()
-    }
-
-    override fun getActionUpdateThread() = ActionUpdateThread.BGT
-
-    override fun update(e: AnActionEvent) {
-        val project = e.project
-        e.presentation.isEnabledAndVisible = PlatformUtils.isIntelliJ()
-                || !(project == null || project.modules.asList().all { it.buildSystemType != BuildSystemType.JPS })
-    }
-}
-
 class ConfigureKotlinJavaInProjectAction : ConfigureKotlinInProjectAction() {
     override fun getApplicableConfigurators(project: Project) = getAbleToRunConfigurators(project).filter {
         it.targetPlatform.isJvm()
