@@ -1572,6 +1572,14 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   public Collection<MavenArtifact> resolvePlugins(@NotNull Collection<PluginResolutionRequest> pluginResolutionRequests, MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);
+
+    MavenExecutionRequest request = createRequest(null, null, null, null);
+    request.setTransferListener(new TransferListenerAdapter(myCurrentIndicator));
+
+    DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
+    RepositorySystemSession repositorySystemSession = maven.newRepositorySession(request);
+    myImporterSpy.setIndicator(myCurrentIndicator);
+
     Set<MavenArtifact> resolvedArtifacts = new HashSet<>();
 
     for (PluginResolutionRequest pluginResolutionRequest : pluginResolutionRequests) {
@@ -1593,13 +1601,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         if (pluginFromProject != null) {
           plugin.setDependencies(pluginFromProject.getDependencies());
         }
-
-        MavenExecutionRequest request = createRequest(null, null, null, null);
-        request.setTransferListener(new TransferListenerAdapter(myCurrentIndicator));
-
-        DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
-        RepositorySystemSession repositorySystemSession = maven.newRepositorySession(request);
-        myImporterSpy.setIndicator(myCurrentIndicator);
 
         List<MavenArtifact> artifacts = resolvePlugin(plugin, remotePluginRepositories, repositorySystemSession);
         resolvedArtifacts.addAll(artifacts);
