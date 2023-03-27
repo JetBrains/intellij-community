@@ -10,14 +10,7 @@ import java.text.SimpleDateFormat
 internal class GHPRSearchQuery(private val terms: List<Term<*>>) {
   fun buildApiSearchQuery(searchQueryBuilder: GithubApiSearchQueryBuilder) {
     for (term in terms) {
-      when (term) {
-        is Term.QueryPart -> {
-          searchQueryBuilder.query(term.apiValue)
-        }
-        is Term.Qualifier -> {
-          searchQueryBuilder.qualifier(term.apiName, term.apiValue)
-        }
-      }
+      searchQueryBuilder.qualifier(term.toString())
     }
   }
 

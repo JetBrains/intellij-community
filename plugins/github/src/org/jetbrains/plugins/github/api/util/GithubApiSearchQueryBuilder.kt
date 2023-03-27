@@ -12,6 +12,10 @@ class GithubApiSearchQueryBuilder {
     if (value != null) append("$name:$value")
   }
 
+  fun qualifier(term: String) {
+    append(term)
+  }
+
   fun query(value: String?) {
     if (value != null) append(value)
   }
