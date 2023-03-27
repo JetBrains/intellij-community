@@ -2,7 +2,9 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.project.DumbModeTask;
+import com.intellij.openapi.project.FilesScanningTaskAsDumbModeTaskWrapper;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.UnindexedFilesScannerExecutor;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;

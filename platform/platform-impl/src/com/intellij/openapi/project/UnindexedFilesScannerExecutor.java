@@ -1,20 +1,23 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util.indexing;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.project;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.PingProgress;
-import com.intellij.openapi.project.*;
 import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.indexing.IndexingBundle;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 
+@Internal
 @Service(Service.Level.PROJECT)
 public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor<FilesScanningTask> implements Disposable {
   private final AtomicReference<ProgressIndicator> runningTask = new AtomicReference<>();
@@ -59,7 +62,7 @@ public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor
       cancelRunningScannerTaskInDumbQueue();
     }
 
-    if (UnindexedFilesScanner.shouldScanInSmartMode()) {
+    if (shouldScanInSmartMode()) {
       startTaskInSmartMode(task);
     }
     else {
@@ -78,7 +81,7 @@ public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor
 
   @NotNull
   @VisibleForTesting
-  DumbModeTask wrapAsDumbTask(@NotNull FilesScanningTask task) {
+  public DumbModeTask wrapAsDumbTask(@NotNull FilesScanningTask task) {
     return new FilesScanningTaskAsDumbModeTaskWrapper(getProject(), task, runningTask);
   }
 
@@ -115,5 +118,9 @@ public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor
     suspendAndRun(activityName, () -> {
       DumbService.getInstance(getProject()).suspendIndexingAndRun(activityName, runnable);
     });
+  }
+
+  public static boolean shouldScanInSmartMode() {
+    return !DumbServiceImpl.isSynchronousTaskExecution() && Registry.is("scanning.in.smart.mode", true);
   }
 }

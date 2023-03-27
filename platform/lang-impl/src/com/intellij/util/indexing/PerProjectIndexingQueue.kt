@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.util.PingProgress
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbModeTask
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
@@ -136,7 +137,7 @@ class PerProjectIndexingQueue(private val project: Project) : Disposable {
   }
 
   private val sinkFactory = PerProviderSinkFactory(object : PerProviderSinkFactory.UncommittedFilesListener {
-    private val shouldScanInSmartMode = UnindexedFilesScanner.shouldScanInSmartMode()
+    private val shouldScanInSmartMode = UnindexedFilesScannerExecutor.shouldScanInSmartMode()
 
     override fun onUncommittedCountChanged(cntDirty: Int) {
       if (shouldScanInSmartMode) startOrStopDumbModeIfManyOrFewFilesAreDirty(cntDirty)

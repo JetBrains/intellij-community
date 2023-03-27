@@ -43,7 +43,7 @@ import com.intellij.psi.search.ExecutionSearchScopes;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Function;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.indexing.UnindexedFilesScannerExecutor;
+import com.intellij.openapi.project.UnindexedFilesScannerExecutor;
 import com.intellij.util.messages.MessageBusConnection;
 import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
