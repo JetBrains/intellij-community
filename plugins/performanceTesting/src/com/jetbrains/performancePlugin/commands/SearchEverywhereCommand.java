@@ -125,8 +125,8 @@ public class SearchEverywhereCommand extends AbstractCommand {
     Future<List<Object>> elements = ui.findElementsForPattern(insertText);
     ApplicationManager.getApplication().executeOnPooledThread(Context.current().wrap((Callable<Object>)() -> {
       insertSpan.setAttribute("text", insertText);
-      insertSpan.end();
       List<Object> result = elements.get();
+      insertSpan.end();
       insertSpan.setAttribute("number", result.size());
       typingSemaphore.release();
       return result;
