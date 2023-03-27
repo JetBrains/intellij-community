@@ -234,7 +234,7 @@ public abstract class SingleRowLayoutStrategy {
         if (hToolbar != null) {
           final Rectangle compBounds = myTabs.layoutComp(x, y, comp, 0, 0);
           if (myTabs.isSideComponentOnTabs()) {
-            int toolbarX = (data.moreRect != null ? (int)data.moreRect.getMaxX() : data.position) + myTabs.getToolbarInset();
+            int toolbarX = (!data.moreRect.isEmpty() ? (int)data.moreRect.getMaxX() : data.position) + myTabs.getToolbarInset();
             final Rectangle rec =
               new Rectangle(toolbarX, data.insets.top, myTabs.getSize().width - data.insets.left - toolbarX, myTabs.myHeaderFitSize.height);
             myTabs.layout(hToolbar, rec);
@@ -392,7 +392,7 @@ public abstract class SingleRowLayoutStrategy {
       if (!ExperimentalUI.isNewUI()) {
         return baseRect;
       }
-      Rectangle rect = myTabs.myMoreToolbar.getComponent().isVisible() && data.moreRect != null
+      Rectangle rect = myTabs.myMoreToolbar.getComponent().isVisible() && !data.moreRect.isEmpty()
                                      ? data.moreRect : data.entryPointRect;
       Rectangle leftmostButtonRect = new Rectangle(rect.x - myTabs.getActionsInsets().left, rect.y, rect.width, rect.height);
       Rectangle intersection = baseRect.intersection(leftmostButtonRect);

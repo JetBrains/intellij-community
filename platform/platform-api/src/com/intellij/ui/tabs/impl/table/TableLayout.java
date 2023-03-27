@@ -10,6 +10,7 @@ import com.intellij.ui.tabs.impl.LayoutPassInfo;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.ui.tabs.impl.TabLayout;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -299,6 +300,14 @@ public class TableLayout extends TabLayout {
     }
     myLastTableLayout = data;
     return data;
+  }
+
+  @Override
+  public boolean isTabHidden(@NotNull TabInfo info) {
+    TabLabel label = myTabs.myInfo2Label.get(info);
+    Rectangle bounds = label.getBounds();
+    int deadzone = JBUI.scale(DEADZONE_FOR_DECLARE_TAB_HIDDEN);
+    return bounds.x < -deadzone || bounds.width < label.getPreferredSize().width - deadzone;
   }
 
   @Override

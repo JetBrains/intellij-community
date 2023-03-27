@@ -226,8 +226,9 @@ public abstract class SingleRowLayout extends TabLayout {
   }
 
 
-  public boolean isTabHidden(TabInfo tabInfo) {
-    return myLastSingRowLayout != null && myLastSingRowLayout.toDrop.contains(tabInfo);
+  @Override
+  public boolean isTabHidden(@NotNull TabInfo info) {
+    return myLastSingRowLayout != null && myLastSingRowLayout.toDrop.contains(info);
   }
 
   @Override

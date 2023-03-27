@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl.singleRow;
 
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.LayoutPassInfo;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SingleRowPassInfo extends LayoutPassInfo {
+  private final JBTabsImpl tabs;
   final Dimension layoutSize;
   final int contentCount;
   int position;
@@ -21,9 +23,6 @@ public class SingleRowPassInfo extends LayoutPassInfo {
   public final List<TabInfo> toDrop;
   final int entryPointAxisSize;
   final int moreRectAxisSize;
-  public Rectangle entryPointRect;
-  public Rectangle moreRect;
-  public Rectangle titleRect;
 
   public WeakReference<JComponent> hToolbar;
   public WeakReference<JComponent> vToolbar;
@@ -37,7 +36,7 @@ public class SingleRowPassInfo extends LayoutPassInfo {
 
   public SingleRowPassInfo(SingleRowLayout layout, List<TabInfo> visibleInfos) {
     super(visibleInfos);
-    JBTabsImpl tabs = layout.myTabs;
+    tabs = layout.myTabs;
     layoutSize = tabs.getSize();
     contentCount = tabs.getTabCount();
     toLayout = new ArrayList<>();
@@ -60,5 +59,22 @@ public class SingleRowPassInfo extends LayoutPassInfo {
   @Override
   public int getRequiredLength() {
     return requiredLength;
+  }
+
+  @Override
+  public int getScrollExtent() {
+    if (tabs.isHorizontalTabs()) {
+      return !moreRect.isEmpty() ? moreRect.x - tabs.getActionsInsets().left
+             : !entryPointRect.isEmpty() ? entryPointRect.x - tabs.getActionsInsets().left
+             : layoutSize.width;
+    }
+    else {
+      if (ExperimentalUI.isNewUI()) {
+        return layoutSize.height;
+      }
+      return !moreRect.isEmpty() ? moreRect.y - tabs.getActionsInsets().top
+             : !entryPointRect.isEmpty() ? entryPointRect.y - - tabs.getActionsInsets().top
+             : layoutSize.height;
+    }
   }
 }

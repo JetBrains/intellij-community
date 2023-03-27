@@ -6,6 +6,8 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.ui.tabs.impl.TabLayout;
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -50,6 +52,9 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
     }
     else {
       int max = data.requiredLength - data.toFitLength + getMoreRectAxisSize();
+      Insets actionInsets = myTabs.getActionsInsets();
+      max += myTabs.isHorizontalTabs() ? actionInsets.left + actionInsets.right
+                                       : actionInsets.top + actionInsets.bottom;
       if (!ExperimentalUI.isNewUI() && getStrategy() instanceof SingleRowLayoutStrategy.Vertical) {
         max += data.entryPointAxisSize;
       }
@@ -128,12 +133,13 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
   }
 
   @Override
-  public boolean isTabHidden(TabInfo tabInfo) {
-    final TabLabel label = myTabs.myInfo2Label.get(tabInfo);
-    final Rectangle bounds = label.getBounds();
-    return getStrategy().getMinPosition(bounds) < -DEADZONE_FOR_DECLARE_TAB_HIDDEN
-           || bounds.width < label.getPreferredSize().width - DEADZONE_FOR_DECLARE_TAB_HIDDEN
-           || bounds.height < label.getPreferredSize().height - DEADZONE_FOR_DECLARE_TAB_HIDDEN;
+  public boolean isTabHidden(@NotNull TabInfo info) {
+    TabLabel label = myTabs.myInfo2Label.get(info);
+    Rectangle bounds = label.getBounds();
+    int deadzone = JBUI.scale(DEADZONE_FOR_DECLARE_TAB_HIDDEN);
+    return getStrategy().getMinPosition(bounds) < -deadzone
+           || bounds.width < label.getPreferredSize().width - deadzone
+           || bounds.height < label.getPreferredSize().height - deadzone;
   }
 
   @Nullable
