@@ -2,7 +2,6 @@
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.daemon.impl.quickfix.MethodReturnTypeFix;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -15,8 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.DataProvider;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -24,16 +21,6 @@ import java.util.Map;
  */
 public class DataProviderReturnTypeInspection extends AbstractBaseJavaLocalInspectionTool {
   private final static Logger LOG = Logger.getInstance(DataProviderReturnTypeInspection.class);
-  private static final String[] KNOWN_RETURN_TYPES = {
-    CommonClassNames.JAVA_UTIL_ITERATOR + "<" + CommonClassNames.JAVA_LANG_OBJECT + "[]>",
-    CommonClassNames.JAVA_LANG_OBJECT + "[][]"
-  };
-  private static final String[] KNOWN_WITH_ONE_DIMENSIONAL_RETURN_TYPES = {
-    CommonClassNames.JAVA_UTIL_ITERATOR + "<" + CommonClassNames.JAVA_LANG_OBJECT + "[]>",
-    CommonClassNames.JAVA_LANG_OBJECT + "[][]",
-    CommonClassNames.JAVA_UTIL_ITERATOR + "<" + CommonClassNames.JAVA_LANG_OBJECT + ">",
-    CommonClassNames.JAVA_LANG_OBJECT + "[]"
-  };
 
   @Override
   public ProblemDescriptor @Nullable [] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
@@ -53,26 +40,16 @@ public class DataProviderReturnTypeInspection extends AbstractBaseJavaLocalInspe
         } else {
           message = TestngBundle.message("inspection.data.provider.return.type.multi.check");
         }
-        return new ProblemDescriptor[]{manager.createProblemDescriptor(returnTypeElement,
-                                                                       message,
-                                                                       isOnTheFly,
-                                                                       createFixes(supportOneDimensional, method),
-                                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
+        return new ProblemDescriptor[]{manager.createProblemDescriptor(
+          returnTypeElement,
+          message,
+          isOnTheFly,
+          LocalQuickFix.EMPTY_ARRAY,
+          ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+        )};
       }
     }
     return null;
-  }
-
-  private static LocalQuickFix[] createFixes(boolean supportOneDimensional, final @NotNull PsiMethod method) {
-    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(method.getProject());
-    List<LocalQuickFix> fixes = new ArrayList<>();
-
-    String[] applicableReturnTypes = supportOneDimensional ? KNOWN_WITH_ONE_DIMENSIONAL_RETURN_TYPES : KNOWN_RETURN_TYPES;
-    for (String typeText : applicableReturnTypes) {
-      fixes.add(new MethodReturnTypeFix(method, elementFactory.createTypeFromText(typeText, method), false));
-    }
-
-    return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   private static boolean isSuitableReturnType(@NotNull PsiType type, @NotNull PsiAnnotation annotation) {
