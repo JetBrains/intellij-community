@@ -12,7 +12,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.DumbModeProgressTitle;
+import com.intellij.openapi.project.DumbServiceImpl;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectCloseListener;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
@@ -61,7 +64,7 @@ import static com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl.ge
 import static com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl.getModuleImmediateValues;
 
 @ApiStatus.Internal
-public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesScanner> {
+public class UnindexedFilesScanner implements FilesScanningTask {
   @VisibleForTesting
   public static final Key<Boolean> INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY = new Key<>("INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY");
 
@@ -108,7 +111,8 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
     }
   }
 
-  protected boolean isFullIndexUpdate() {
+  @Override
+  public boolean isFullIndexUpdate() {
     return myPredefinedIndexableFilesIterators == null;
   }
 
@@ -118,9 +122,11 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
   }
 
   @Override
-  public @Nullable UnindexedFilesScanner tryMergeWith(@NotNull UnindexedFilesScanner oldTask) {
-    if (oldTask.getClass() != getClass()) return null;
-    if (!myProject.equals(oldTask.myProject)) return null;
+  public @Nullable UnindexedFilesScanner tryMergeWith(@NotNull FilesScanningTask _oldTask) {
+    LOG.assertTrue(_oldTask.getClass() == getClass());
+    UnindexedFilesScanner oldTask = (UnindexedFilesScanner)_oldTask;
+
+    LOG.assertTrue(myProject.equals(oldTask.myProject));
     String reason;
     if (oldTask.isFullIndexUpdate()) {
       reason = oldTask.myIndexingReason;

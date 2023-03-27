@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 
 @Service(Service.Level.PROJECT)
-public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor<UnindexedFilesScanner> implements Disposable {
+public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor<FilesScanningTask> implements Disposable {
   private final AtomicReference<ProgressIndicator> runningTask = new AtomicReference<>();
 
   @NotNull
@@ -48,7 +48,7 @@ public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor
           IndexingBundle.message("progress.indexing.scanning"), IndexingBundle.message("progress.indexing.scanning.paused"));
   }
 
-  public void submitTask(UnindexedFilesScanner task) {
+  public void submitTask(FilesScanningTask task) {
     // Two tasks with limited checks should be just run one after another.
     // A case of a full check followed by a limited change cancelling first one and making a full check anew results
     // in endless restart of full checks on Windows with empty Maven cache.
@@ -67,19 +67,19 @@ public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor
     }
   }
 
-  private void startTaskInSmartMode(@NotNull UnindexedFilesScanner task) {
+  private void startTaskInSmartMode(@NotNull FilesScanningTask task) {
     getTaskQueue().addTask(task);
     startBackgroundProcess();
   }
 
-  private void startTaskInDumbMode(@NotNull UnindexedFilesScanner task) {
+  private void startTaskInDumbMode(@NotNull FilesScanningTask task) {
     wrapAsDumbTask(task).queue(getProject());
   }
 
   @NotNull
   @VisibleForTesting
-  DumbModeTask wrapAsDumbTask(@NotNull UnindexedFilesScanner task) {
-    return new FilesScanningTaskAsDumbModeTaskWrapper(task, runningTask);
+  DumbModeTask wrapAsDumbTask(@NotNull FilesScanningTask task) {
+    return new FilesScanningTaskAsDumbModeTaskWrapper(getProject(), task, runningTask);
   }
 
   private void cancelRunningScannerTaskInDumbQueue() {

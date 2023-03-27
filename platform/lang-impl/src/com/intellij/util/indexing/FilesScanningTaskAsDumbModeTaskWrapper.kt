@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbModeTask
 import com.intellij.openapi.project.FilesScanningListener
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
@@ -12,7 +13,8 @@ import java.util.concurrent.atomic.AtomicReference
 
 @Internal
 @VisibleForTesting // Should be package-private, but kotlin does not have this visibility. This is not public API
-class FilesScanningTaskAsDumbModeTaskWrapper(@VisibleForTesting val task: UnindexedFilesScanner,
+class FilesScanningTaskAsDumbModeTaskWrapper(private val project: Project,
+                                             @VisibleForTesting val task: FilesScanningTask,
                                              private val runningTask: AtomicReference<ProgressIndicator>) : DumbModeTask() {
 
   companion object {
@@ -20,7 +22,7 @@ class FilesScanningTaskAsDumbModeTaskWrapper(@VisibleForTesting val task: Uninde
   }
 
   override fun performInDumbMode(indicator: ProgressIndicator) {
-    val publisher = task.myProject.messageBus.syncPublisher<FilesScanningListener>(FilesScanningListener.TOPIC)
+    val publisher = project.messageBus.syncPublisher<FilesScanningListener>(FilesScanningListener.TOPIC)
     try {
       publisher.filesScanningStarted()
       try {
@@ -43,7 +45,8 @@ class FilesScanningTaskAsDumbModeTaskWrapper(@VisibleForTesting val task: Uninde
       val scanningTaskFromQueue = taskFromQueue.task
       val merged = task.tryMergeWith(scanningTaskFromQueue)
       LOG.assertTrue(taskFromQueue.runningTask === runningTask, "Should be the same object: ${runningTask}, ${taskFromQueue.runningTask}")
-      return merged?.let { FilesScanningTaskAsDumbModeTaskWrapper(it, runningTask) }
+      LOG.assertTrue(taskFromQueue.project == project, "Should be the same project: ${project}, ${taskFromQueue.project}")
+      return merged?.let { FilesScanningTaskAsDumbModeTaskWrapper(project, it, runningTask) }
     }
     else {
       return super.tryMergeWith(taskFromQueue)
