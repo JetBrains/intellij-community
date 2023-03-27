@@ -37,4 +37,12 @@ public class PluginResolutionRequest implements Serializable {
   public int hashCode() {
     return Objects.hash(myMavenPlugin, nativeMavenProjectId);
   }
+
+  @Override
+  public String toString() {
+    return "PluginResolutionRequest{" +
+           "plugin=" + myMavenPlugin +
+           ", nativeMavenProjectId=" + nativeMavenProjectId +
+           '}';
+  }
 }
