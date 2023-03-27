@@ -65,8 +65,12 @@ internal class ExecutionPointVmImpl(
   }
 
   override fun navigateTo(navigationMode: NavigationMode, sourceKind: XSourceKind?) {
-    val positionVm = positionVmFor(sourceKind ?: activeSourceKind)
-    positionVm?.navigateTo(navigationMode)
+    val openSourceKind = sourceKind ?: activeSourceKind
+    val syncSourceKind = if (openSourceKind == XSourceKind.MAIN) XSourceKind.ALTERNATIVE else XSourceKind.MAIN
+    val openPositionVm = positionVmFor(openSourceKind)
+    val syncPositionVm = positionVmFor(syncSourceKind)
+    syncPositionVm?.navigateTo(navigationMode.coerceAtMost(NavigationMode.SCROLL))
+    openPositionVm?.navigateTo(navigationMode)
   }
 
   private fun positionVmFor(sourceKind: XSourceKind): ExecutionPositionVm? {
