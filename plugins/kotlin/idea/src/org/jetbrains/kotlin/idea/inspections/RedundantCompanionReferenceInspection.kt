@@ -7,7 +7,9 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
@@ -98,6 +100,8 @@ class RedundantCompanionReferenceInspection : AbstractKotlinInspection() {
             if (descriptor?.isOperator == true) return false
         }
 
+        if (qualifiedExpression.willCauseEnumEntriesWarningAfterReplacement(containingClass, context)) return false
+
         return true
     }
 
@@ -106,6 +110,28 @@ class RedundantCompanionReferenceInspection : AbstractKotlinInspection() {
      */
     private fun KtDotQualifiedExpression.isReferenceToBuildInEnumFunctionInEnumClass(containingClass: KtClass): Boolean {
         return containingClass.isEnum() && this.canBeReferenceToBuiltInEnumFunction()
+    }
+
+    /**
+     * Companion Enum Entries Warning have been added since the 1.8.20 compiler version, it doesn't depend on the language version.
+     * Check has been added to preserve the same logic of the compiler and inspection.
+     * See KTIJ-25040 for details.
+     */
+    private fun KtDotQualifiedExpression.willCauseEnumEntriesWarningAfterReplacement(
+        containingClass: KtClass,
+        context: BindingContext
+    ): Boolean {
+        val selectorExpressionName = (this.selectorExpression as? KtSimpleNameExpression)?.getReferencedNameAsName()
+        if (!(containingClass.isEnum() && selectorExpressionName == StandardNames.ENUM_ENTRIES)) return false
+
+        val classReceiverExpression = (this.receiverExpression as? KtDotQualifiedExpression)?.receiverExpression ?: return false
+        val updatedQualifiedExpression =
+            KtPsiFactory(containingClass.project).createExpression("${classReceiverExpression.text}.$selectorExpressionName")
+        val updatedContext = updatedQualifiedExpression.analyzeAsReplacement(this, context)
+
+        val enumEntriesWarning = updatedContext.diagnostics.noSuppression()
+            .find { it.factoryName == Errors.DEPRECATED_ACCESS_TO_ENUM_ENTRY_COMPANION_PROPERTY.name }
+        return enumEntriesWarning != null
     }
 
     private fun KtElement?.isReferenceToClassOrObject(context: BindingContext): Boolean {
