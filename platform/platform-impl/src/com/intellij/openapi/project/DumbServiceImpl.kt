@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -116,7 +117,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     mySyncDumbTaskRunner = DumbServiceSyncTaskQueue(myProject, myTaskQueue)
     myPublisher = publisher
     if (Registry.`is`("scanning.should.pause.dumb.queue", false)) {
-      myProject.messageBus.connect(this).subscribe(FilesScanningListener.TOPIC, DumbServiceScanningListener(myProject))
+      myProject.service<DumbServiceScanningListener>().subscribe()
     }
     if (Registry.`is`("vfs.refresh.should.pause.dumb.queue", true)) {
       DumbServiceVfsBatchListener(myProject, myGuiDumbTaskRunner.guiSuspender)
