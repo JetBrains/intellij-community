@@ -37,6 +37,7 @@ import java.nio.file.Path;
 import java.text.Normalizer;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class NativeFileWatcherImpl extends PluggableFileWatcher {
@@ -47,6 +48,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   private static final String ROOTS_COMMAND = "ROOTS";
   private static final String EXIT_COMMAND = "EXIT";
   private static final int MAX_PROCESS_LAUNCH_ATTEMPT_COUNT = 10;
+  private static final int EXIT_TIMEOUT_MS = 500;
 
   private FileWatcherNotificationSink myNotificationSink;
   private Path myExecutable;
@@ -101,7 +103,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   @Override
   public void dispose() {
     myIsShuttingDown = true;
-    shutdownProcess();
+    shutdownProcess(true);
   }
 
   @Override
@@ -118,6 +120,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   public void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat, boolean shuttingDown) {
     if (shuttingDown) {
       myIsShuttingDown = true;
+      shutdownProcess(false);
     }
     else {
       doSetWatchRoots(recursive, flat, false);
@@ -183,7 +186,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
 
     if (restart) {
-      shutdownProcess();
+      shutdownProcess(true);
     }
 
     LOG.info("Starting file watcher: " + myExecutable);
@@ -200,28 +203,26 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
   }
 
-  private void shutdownProcess() {
-    OSProcessHandler processHandler = myProcessHandler;
-    if (processHandler != null) {
-      if (!processHandler.isProcessTerminated()) {
-        try { writeLine(EXIT_COMMAND); }
-        catch (IOException ignore) { }
-        if (!processHandler.waitFor(10)) {
-          Runnable r = () -> {
-            if (!processHandler.waitFor(500)) {
-              LOG.warn("File watcher is still alive, doing a force quit.");
-              processHandler.destroyProcess();
-            }
-          };
-          if (myIsShuttingDown) {
-            new Thread(r, "fsnotifier shutdown").start();
-          }
-          else {
-            ApplicationManager.getApplication().executeOnPooledThread(r);
-          }
-        }
-      }
+  private void shutdownProcess(boolean await) {
+    var processHandler = myProcessHandler;
+    if (processHandler == null || processHandler.isProcessTerminated()) {
+      myProcessHandler = null;
+      return;
+    }
 
+    try { writeLine(EXIT_COMMAND); }
+    catch (IOException ignore) { }
+
+    if (await) {
+      var timeout = TimeUnit.MILLISECONDS.toNanos(EXIT_TIMEOUT_MS) + System.nanoTime();
+      while (!processHandler.isProcessTerminated()) {
+        if (System.nanoTime() > timeout) {
+          LOG.warn("File watcher is still alive, doing a force quit.");
+          processHandler.destroyProcess();
+          break;
+        }
+        processHandler.waitFor(10);
+      }
       myProcessHandler = null;
     }
   }
@@ -338,7 +339,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
         startupProcess(true);
       }
       catch (IOException e) {
-        shutdownProcess();
+        shutdownProcess(true);
         LOG.warn("Watcher terminated and attempt to restart has failed. Exiting watching thread.", e);
       }
     }
@@ -484,7 +485,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     MyProcessHandler processHandler = myProcessHandler;
     if (processHandler != null) {
       myIsShuttingDown = true;
-      shutdownProcess();
+      shutdownProcess(true);
 
       long t = System.currentTimeMillis();
       while (!processHandler.isProcessTerminated()) {

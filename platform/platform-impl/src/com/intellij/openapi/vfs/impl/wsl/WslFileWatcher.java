@@ -35,6 +35,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class WslFileWatcher extends PluggableFileWatcher {
@@ -46,6 +47,7 @@ public class WslFileWatcher extends PluggableFileWatcher {
   private static final String ROOTS_COMMAND = "ROOTS";
   private static final String EXIT_COMMAND = "EXIT";
   private static final int MAX_PROCESS_LAUNCH_ATTEMPT_COUNT = 10;
+  private static final int EXIT_TIMEOUT_MS = 500;
 
   private FileWatcherNotificationSink myNotificationSink;
   private Path myExecutable;
@@ -73,7 +75,7 @@ public class WslFileWatcher extends PluggableFileWatcher {
   public void dispose() {
     myShuttingDown = true;
     for (Map.Entry<String, VmData> entry : myVMs.entrySet()) {
-      shutdownProcess(entry.getValue());
+      shutdownProcess(entry.getValue(), true);
     }
   }
 
@@ -91,7 +93,12 @@ public class WslFileWatcher extends PluggableFileWatcher {
 
   @Override
   public void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat, boolean shuttingDown) {
-    if (shuttingDown) myShuttingDown = true;
+    if (shuttingDown) {
+      myShuttingDown = true;
+      for (Map.Entry<String, VmData> entry : myVMs.entrySet()) {
+        shutdownProcess(entry.getValue(), false);
+      }
+    }
     if (myShuttingDown) return;
 
     Map<String, VmData> newVMs = new HashMap<>();
@@ -119,7 +126,7 @@ public class WslFileWatcher extends PluggableFileWatcher {
       Map.Entry<String, VmData> entry = iterator.next();
       if (!newVMs.containsKey(entry.getKey())) {
         iterator.remove();
-        shutdownProcess(entry.getValue());
+        shutdownProcess(entry.getValue(), true);
       }
     }
   }
@@ -174,32 +181,29 @@ public class WslFileWatcher extends PluggableFileWatcher {
     }
   }
 
-  private void shutdownProcess(VmData vm) {
-    MyProcessHandler processHandler = vm.handler;
-
-    if (processHandler != null && !processHandler.isProcessTerminated()) {
-      vm.shuttingDown = true;
-
-      try { processHandler.writeLine(EXIT_COMMAND); }
-      catch (IOException ignore) { }
-
-      if (!processHandler.waitFor(10)) {
-        Runnable r = () -> {
-          if (!processHandler.waitFor(500)) {
-            vm.logger.warn("WSL file watcher is still alive, doing a force quit.");
-            processHandler.destroyProcess();
-          }
-        };
-        if (myShuttingDown) {
-          new Thread(r, FSNOTIFIER_WSL + " shutdown").start();
-        }
-        else {
-          ApplicationManager.getApplication().executeOnPooledThread(r);
-        }
-      }
+  private static void shutdownProcess(VmData vm, boolean await) {
+    var processHandler = vm.handler;
+    if (processHandler == null || processHandler.isProcessTerminated()) {
+      vm.handler = null;
+      return;
     }
 
-    vm.handler = null;
+    vm.shuttingDown = true;
+    try { processHandler.writeLine(EXIT_COMMAND); }
+    catch (IOException ignore) { }
+
+    if (await) {
+      var timeout = TimeUnit.MILLISECONDS.toNanos(EXIT_TIMEOUT_MS) + System.nanoTime();
+      while (!processHandler.isProcessTerminated()) {
+        if (System.nanoTime() > timeout) {
+          vm.logger.warn("WSL file watcher is still alive, doing a force quit.");
+          processHandler.destroyProcess();
+          break;
+        }
+        processHandler.waitFor(10);
+      }
+      vm.handler = null;
+    }
   }
 
   private static final class VmData {
@@ -372,7 +376,7 @@ public class WslFileWatcher extends PluggableFileWatcher {
     if (app == null || !app.isUnitTestMode()) throw new IllegalStateException();
     myTestStarted = false;
     myShuttingDown = true;
-    myVMs.forEach((key, value) -> shutdownProcess(value));
+    myVMs.forEach((__, vm) -> shutdownProcess(vm, true));
     myVMs.clear();
   }
   //</editor-fold>
