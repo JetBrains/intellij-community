@@ -7,6 +7,6 @@ class ParserDefinitionWithIllegalTokenSetInCompanionObject : ParserDefinition {
     return COMMENTS
   }
   companion object {
-    val <warning descr="TokenSet in ParserDefinition references non-core classes">COMMENTS</warning> = TokenSet.create(MyLangTokenTypes.COMMENT)
+    val <warning descr="TokenSet in ParserDefinition references non-platform classes">COMMENTS</warning> = TokenSet.create(MyLangTokenTypes.COMMENT)
   }
 }
