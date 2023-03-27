@@ -41,8 +41,8 @@ public final class MethodTags {
     }
     PsiClass psiClass = psiMember.getContainingClass();
     Set<String> tags = tags(lookupString).stream()
-      .filter(t -> matcher.value(t.getName()) && t.getMatcher().test(psiClass))
-      .map(t -> t.getName())
+      .filter(t -> matcher.value(t.name()) && t.matcher().test(psiClass))
+      .map(t -> t.name())
       .collect(Collectors.toSet());
     if (tags.isEmpty()) {
       return null;
@@ -128,7 +128,7 @@ public final class MethodTags {
       }
       Set<MethodTags.Tag> tags = tags(name);
       for (MethodTags.Tag tag : tags) {
-        if (myMatcher.prefixMatches(tag.getName())) {
+        if (myMatcher.prefixMatches(tag.name())) {
           return true;
         }
       }
@@ -214,29 +214,7 @@ public final class MethodTags {
     };
   }
 
-  static class Tag {
-
-    @NotNull
-    private final String name;
-
-    @NotNull
-    private final Predicate<PsiClass> matcher;
-
-    private Tag(@NotNull String name, @NotNull Predicate<PsiClass> matcher) {
-      this.name = name;
-      this.matcher = matcher;
-    }
-
-    @NotNull
-    String getName() {
-      return name;
-    }
-
-    @NotNull
-    Predicate<PsiClass> getMatcher() {
-      return matcher;
-    }
-
+  record Tag (@NotNull String name, @NotNull Predicate<PsiClass> matcher) {
     static Tag of(@NotNull String name, @NotNull Predicate<PsiClass> matcher) {
       return new Tag(name, matcher);
     }

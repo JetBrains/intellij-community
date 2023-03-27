@@ -2880,7 +2880,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   }
   @NeedsIndex.Full
   public void testTagAdd() {
-    Registry.get("java.completion.methods.use.tags").setValue(true);
+    Registry.get("java.completion.methods.use.tags").setValue(true, getTestRootDisposable());
     myFixture.configureByText("Test.java", """
       import java.util.HashSet;
                                         
@@ -2909,7 +2909,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
 
   @NeedsIndex.Full
   public void testTagAddInvocationCount2() {
-    Registry.get("java.completion.methods.use.tags").setValue(true);
+    Registry.get("java.completion.methods.use.tags").setValue(true, getTestRootDisposable());
     myFixture.configureByText("Test.java", """
       import java.util.HashSet;
                                         

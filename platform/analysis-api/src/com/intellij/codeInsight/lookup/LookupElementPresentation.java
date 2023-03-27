@@ -5,7 +5,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +26,8 @@ public class LookupElementPresentation {
   private boolean myItemTextBold;
   private boolean myItemTextUnderlined;
   private boolean myItemTextItalic;
-  @Nullable private List<DecoratedTextRange> myItemDecorations;
+  @Nullable private List<DecoratedTextRange> myItemNameDecorations;
+  @Nullable private List<DecoratedTextRange> myItemTailDecorations;
   private boolean myTypeGrayed;
   @Nullable private List<TextFragment> myTail;
   private volatile boolean myFrozen;
@@ -63,10 +63,10 @@ public class LookupElementPresentation {
   @ApiStatus.Internal
   public void decorateItemTextRange(@NotNull TextRange textRange, @NotNull LookupItemDecoration decoration) {
     ensureMutable();
-    if (myItemDecorations == null) {
-      myItemDecorations = new SmartList<>();
+    if (myItemNameDecorations == null) {
+      myItemNameDecorations = new SmartList<>();
     }
-    myItemDecorations.add(new DecoratedTextRange(textRange, decoration));
+    myItemNameDecorations.add(new DecoratedTextRange(textRange, decoration));
   }
 
   /**
@@ -75,10 +75,10 @@ public class LookupElementPresentation {
   @ApiStatus.Internal
   public void decorateTailItemTextRange(@NotNull TextRange textRange, @NotNull LookupItemDecoration decoration) {
     ensureMutable();
-    if (myItemDecorations == null) {
-      myItemDecorations = new SmartList<>();
+    if (myItemTailDecorations == null) {
+      myItemTailDecorations = new SmartList<>();
     }
-    myItemDecorations.add(new DecoratedTextRange(textRange, decoration, true));
+    myItemTailDecorations.add(new DecoratedTextRange(textRange, decoration));
   }
 
   public void setTailText(@Nullable String text) {
@@ -159,7 +159,7 @@ public class LookupElementPresentation {
   @ApiStatus.Internal
   @NotNull
   public List<DecoratedTextRange> getItemNameDecorations() {
-    return myItemDecorations == null ? Collections.emptyList() : ContainerUtil.filter(myItemDecorations, t -> !t.isTail);
+    return myItemNameDecorations == null ? Collections.emptyList() : Collections.unmodifiableList(myItemNameDecorations);
   }
 
   /**
@@ -168,7 +168,7 @@ public class LookupElementPresentation {
   @ApiStatus.Internal
   @NotNull
   public List<DecoratedTextRange> getItemTailDecorations() {
-    return myItemDecorations == null ? Collections.emptyList() : ContainerUtil.filter(myItemDecorations, t -> t.isTail);
+    return myItemTailDecorations == null ? Collections.emptyList() : Collections.unmodifiableList(myItemTailDecorations);
   }
 
   @NotNull
@@ -222,8 +222,11 @@ public class LookupElementPresentation {
     myTypeIcon = presentation.myTypeIcon;
     myItemText = presentation.myItemText;
 
-    List<DecoratedTextRange> thatDecoration = presentation.myItemDecorations;
-    myItemDecorations = thatDecoration == null ? null : new SmartList<>(thatDecoration);
+    List<DecoratedTextRange> thatNameDecoration = presentation.myItemNameDecorations;
+    myItemNameDecorations = thatNameDecoration == null ? null : new SmartList<>(thatNameDecoration);
+
+    List<DecoratedTextRange> thatTailDecoration = presentation.myItemTailDecorations;
+    myItemTailDecorations = thatTailDecoration == null ? null : new SmartList<>(thatTailDecoration);
 
     List<TextFragment> thatTail = presentation.myTail;
     myTail = thatTail == null ? null : new SmartList<>(thatTail);
@@ -344,17 +347,17 @@ public class LookupElementPresentation {
     /**
      * Indicates that the corresponding part of the item text will not be compilable right upon the insertion.
      */
-    ERROR, HIGHLIGHT_MATCHED
-    // Additional decorations may be added in the future
+    ERROR,
+    /**
+     * Indicates that some parts of the specified range will be highlighted according to an item pattern.
+     */
+    HIGHLIGHT_MATCHED
   }
 
   /**
    * Range of text with an associated decoration {@link LookupItemDecoration}.
    */
   @ApiStatus.Internal
-  public record DecoratedTextRange(TextRange textRange, LookupItemDecoration decoration, boolean isTail) {
-    public DecoratedTextRange(TextRange textRange, LookupItemDecoration decoration) {
-      this(textRange, decoration, false);
-    }
+  public record DecoratedTextRange(TextRange textRange, LookupItemDecoration decoration) {
   }
 }
