@@ -591,7 +591,7 @@ public final class ExpUiIcons {
     /** 20x20 */ public static final @NotNull Icon Task_20x20 = load("expui/toolwindow/task@20x20.svg", 549058450, 2);
     /** 16x16 */ public static final @NotNull Icon Todo = load("expui/toolwindow/todo.svg", -409662455, 2);
     /** 20x20 */ public static final @NotNull Icon Todo_20x20 = load("expui/toolwindow/todo@20x20.svg", 879983555, 2);
-    /** 16x16 */ public static final @NotNull Icon Vcs = load("expui/toolwindow/vcs.svg", -154963767, 2);
+    /** 16x16 */ public static final @NotNull Icon Vcs = load("expui/toolwindow/vcs.svg", -1757085440, 2);
     /** 20x20 */ public static final @NotNull Icon Vcs_20x20 = load("expui/toolwindow/vcs@20x20.svg", 347868977, 2);
     /** 16x16 */ public static final @NotNull Icon Web = load("expui/toolwindow/web.svg", 395417429, 2);
     /** 20x20 */ public static final @NotNull Icon Web_20x20 = load("expui/toolwindow/web@20x20.svg", -82432260, 2);
@@ -616,7 +616,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon Stash = load("expui/vcs/stash.svg", 65438119, 2);
     /** 16x16 */ public static final @NotNull Icon Unshelve = load("expui/vcs/unshelve.svg", 1048110187, 2);
     /** 16x16 */ public static final @NotNull Icon Update = load("expui/vcs/update.svg", -440669641, 2);
-    /** 16x16 */ public static final @NotNull Icon Vcs = load("expui/vcs/vcs.svg", -154963767, 2);
+    /** 16x16 */ public static final @NotNull Icon Vcs = load("expui/vcs/vcs.svg", -1757085440, 2);
   }
 
   public static final class Welcome {
