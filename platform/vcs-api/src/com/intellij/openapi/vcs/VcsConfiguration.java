@@ -128,7 +128,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   @Property(surroundWithTag = false)
   @XCollection(elementName = "MESSAGE")
   public List<String> myLastCommitMessages = new ArrayList<>();
-  public String LAST_COMMIT_MESSAGE = null;
+  public @Nullable String LAST_COMMIT_MESSAGE = null;
   public boolean MAKE_NEW_CHANGELIST_ACTIVE = false;
   public boolean PRESELECT_EXISTING_CHANGELIST = false;
 

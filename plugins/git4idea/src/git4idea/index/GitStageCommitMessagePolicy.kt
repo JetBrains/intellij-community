@@ -32,5 +32,6 @@ class GitStageCommitMessagePolicy(project: Project,
     val defaultChangeList = ChangeListManager.getInstance(project).defaultChangeList // always blank, required for 'CommitMessageProvider'
     return getCommitMessageFromProvider(defaultChangeList)
            ?: vcsConfiguration.LAST_COMMIT_MESSAGE
+           ?: ""
   }
 }
