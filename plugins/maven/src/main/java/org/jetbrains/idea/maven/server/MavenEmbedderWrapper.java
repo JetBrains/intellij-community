@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -223,20 +224,22 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     return performCancelable(() -> getOrCreateWrappee().resolveArtifactTransitively(artifacts, remoteRepositories, ourToken));
   }
 
-  public Collection<MavenArtifact> resolvePlugin(@NotNull final MavenPlugin plugin,
-                                                 @NotNull final NativeMavenProjectHolder nativeMavenProject)
+  public Collection<MavenArtifact> resolvePlugins(@NotNull Collection<Pair<MavenPlugin, NativeMavenProjectHolder>> mavenPlugins)
     throws MavenProcessCanceledException {
-    int id;
-    try {
-      id = nativeMavenProject.getId();
-    }
-    catch (RemoteException e) {
-      // do not call handleRemoteError here since this error occurred because of previous remote error
-      return Collections.emptyList();
+    var pluginResolutionRequests = new ArrayList<PluginResolutionRequest>();
+    for (var mavenPlugin : mavenPlugins) {
+      try {
+        var id = mavenPlugin.second.getId();
+        pluginResolutionRequests.add(new PluginResolutionRequest(mavenPlugin.first, id));
+      }
+      catch (RemoteException e) {
+        // do not call handleRemoteError here since this error occurred because of previous remote error
+        MavenLog.LOG.warn("Cannot resolve plugin: " + mavenPlugin.first);
+      }
     }
 
     try {
-      return getOrCreateWrappee().resolvePlugins(List.of(new PluginResolutionRequest(plugin, id)), ourToken);
+      return getOrCreateWrappee().resolvePlugins(pluginResolutionRequests, ourToken);
     }
     catch (RemoteException e) {
       // do not try to reconnect here since we have lost NativeMavenProjectHolder anyway.
@@ -246,6 +249,12 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     catch (MavenServerProcessCanceledException e) {
       throw new MavenProcessCanceledException();
     }
+  }
+
+  public Collection<MavenArtifact> resolvePlugin(@NotNull final MavenPlugin plugin,
+                                                 @NotNull final NativeMavenProjectHolder nativeMavenProject)
+    throws MavenProcessCanceledException {
+    return resolvePlugins(List.of(Pair.create(plugin, nativeMavenProject)));
   }
 
   public MavenModel readModel(final File file) throws MavenProcessCanceledException {
