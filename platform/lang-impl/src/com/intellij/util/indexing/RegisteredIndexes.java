@@ -4,6 +4,7 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
@@ -69,6 +70,9 @@ public final class RegisteredIndexes {
     if (state == null) {
       try {
         myState = state = ProgressIndicatorUtils.awaitWithCheckCanceled(myStateFuture);
+      }
+      catch (ProcessCanceledException ex) {
+        throw ex;
       }
       catch (Throwable t) {
         throw new RuntimeException(t);
