@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.jsonUtils.getString
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.junit.Assert
 import java.io.File
@@ -57,9 +58,11 @@ abstract class AbstractMultiFileIntentionTest : KotlinLightCodeInsightFixtureTes
                 }
 
                 if (isApplicableExpected) {
-                    project.executeWriteCommand(intentionAction.text) {
-                        intentionAction.invoke(project, editor, mainFile)
-                    }
+                    val action = { intentionAction.invoke(project, editor, mainFile) }
+                    if (intentionAction.startInWriteAction())
+                        project.executeWriteCommand(intentionAction.text, action)
+                    else
+                        project.executeCommand(intentionAction.text, null, action)
                 }
 
                 assert(conflictFile == null) { "Conflict file $conflictFile should not exist" }
