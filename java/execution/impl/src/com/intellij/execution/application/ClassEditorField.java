@@ -42,7 +42,7 @@ public final class ClassEditorField extends EditorTextField {
     String qName = getQName(className);
     myLastName = qName;
     setText(qName);
-    myJvmNames.put(className, qName);
+    myJvmNames.put(qName, className);
   }
 
   public String getClassName() {
