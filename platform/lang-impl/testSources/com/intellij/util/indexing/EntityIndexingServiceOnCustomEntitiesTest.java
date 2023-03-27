@@ -29,10 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -116,34 +113,62 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
     });
   }
 
- public void testRemovingExcludedRootFromCustomWorkspaceEntity() throws Exception {
-   registerWorkspaceFileIndexContributor((entity, registrar) -> {
-     for (VirtualFileUrl root : entity.getRoots()) {
-       registrar.registerFileSet(root, WorkspaceFileKind.EXTERNAL, entity, null);
-     }
-     for (VirtualFileUrl root : entity.getExcludedRoots()) {
-       registrar.registerExcludedRoot(root, entity);
-     }
-   });
-   File root = createTempDir("customRoot");
-   VirtualFile virtualRoot = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(root.toPath()));
-   VirtualFile excluded = WriteAction.compute(() -> virtualRoot.createChildDirectory(this, "excluded"));
-   IndexingTestEntity createdEntity =
-     WriteAction.compute(() -> createAndRegisterEntity(getUrls(virtualRoot), getUrls(excluded), myProject));
+  public void testRemovingExcludedRootFromCustomWorkspaceEntity() throws Exception {
+    registerWorkspaceFileIndexContributor((entity, registrar) -> {
+      for (VirtualFileUrl root : entity.getRoots()) {
+        registrar.registerFileSet(root, WorkspaceFileKind.EXTERNAL, entity, null);
+      }
+      for (VirtualFileUrl root : entity.getExcludedRoots()) {
+        registrar.registerExcludedRoot(root, entity);
+      }
+    });
+    File root = createTempDir("customRoot");
+    VirtualFile virtualRoot = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(root.toPath()));
+    VirtualFile excluded = WriteAction.compute(() -> virtualRoot.createChildDirectory(this, "excluded"));
+    IndexingTestEntity createdEntity =
+      WriteAction.compute(() -> createAndRegisterEntity(getUrls(virtualRoot), getUrls(excluded), myProject));
 
-   doTest(() -> {
-     editWorkspaceModel(myProject, builder -> {
-       IndexingTestEntity existingEntity = SequencesKt.first(builder.entities(IndexingTestEntity.class));
-       builder.modifyEntity(IndexingTestEntity.Builder.class, existingEntity, entityBuilder -> {
-         entityBuilder.getExcludedRoots().clear();
-         return Unit.INSTANCE;
-       });
-     });
-     return createdEntity;
-   }, (entity) -> {
-     return INSTANCE.createExternalEntityIterators(entity.createReference(), Collections.singletonList(excluded), Collections.emptyList());
-   });
- }
+    doTest(() -> {
+      editSingleWorkspaceEntity(myProject, builder -> {
+        builder.getExcludedRoots().clear();
+      });
+      return createdEntity;
+    }, (entity) -> {
+      return INSTANCE.createExternalEntityIterators(entity.createReference(), Collections.singletonList(excluded), Collections.emptyList());
+    });
+  }
+
+  public void testChangingExcludedRootsInCustomWorkspaceEntity() throws Exception {
+    registerWorkspaceFileIndexContributor((entity, registrar) -> {
+      for (VirtualFileUrl root : entity.getRoots()) {
+        registrar.registerFileSet(root, WorkspaceFileKind.EXTERNAL, entity, null);
+      }
+      for (VirtualFileUrl root : entity.getExcludedRoots()) {
+        registrar.registerExcludedRoot(root, entity);
+      }
+    });
+    File root = createTempDir("customRoot");
+    VirtualFile virtualRoot = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(root.toPath()));
+    VirtualFile excludedBefore = WriteAction.compute(() -> virtualRoot.createChildDirectory(this, "excludedBefore"));
+    VirtualFile excludedAfter = WriteAction.compute(() -> virtualRoot.createChildDirectory(this, "excludedAfter"));
+    VirtualFile excludedAlways = WriteAction.compute(() -> virtualRoot.createChildDirectory(this, "excludedAlways"));
+    IndexingTestEntity createdEntity =
+      WriteAction.compute(() -> createAndRegisterEntity(getUrls(virtualRoot),
+                                                        Arrays.asList(getUrl(excludedBefore), getUrl(excludedAlways)),
+                                                        myProject));
+
+    doTest(() -> {
+      editSingleWorkspaceEntity(myProject, entityBuilder -> {
+        entityBuilder.getExcludedRoots().remove(getUrl(excludedBefore));
+        entityBuilder.getExcludedRoots().add(getUrl(excludedAfter));
+      });
+      return createdEntity;
+    }, (entity) -> {
+      return INSTANCE.createExternalEntityIterators(entity.createReference(),
+                                                    Collections.singletonList(excludedBefore),
+                                                    Collections.emptyList());
+    });
+  }
 
   public void testRemovingCustomWorkspaceEntityWithExcludedRoot() throws Exception {
     registerWorkspaceFileIndexContributor((entity, registrar) -> {
@@ -190,6 +215,17 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
     IndexingTestEntity entity = IndexingTestEntity.create(roots, excludedRoots, ENTITY_SOURCE);
     editWorkspaceModel(project, builder -> builder.addEntity(entity));
     return entity;
+  }
+
+  static void editSingleWorkspaceEntity(@NotNull Project project,
+                                        @NotNull Consumer<? super IndexingTestEntity.Builder> modification) {
+    editWorkspaceModel(project, builder -> {
+      IndexingTestEntity existingEntity = SequencesKt.first(builder.entities(IndexingTestEntity.class));
+      builder.modifyEntity(IndexingTestEntity.Builder.class, existingEntity, entityBuilder -> {
+        modification.accept(entityBuilder);
+        return Unit.INSTANCE;
+      });
+    });
   }
 
   static void editWorkspaceModel(@NotNull Project project, @NotNull Consumer<MutableEntityStorage> consumer) {
