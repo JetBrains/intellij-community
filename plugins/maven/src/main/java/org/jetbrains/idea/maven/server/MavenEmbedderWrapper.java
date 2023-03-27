@@ -224,7 +224,7 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     return performCancelable(() -> getOrCreateWrappee().resolveArtifactTransitively(artifacts, remoteRepositories, ourToken));
   }
 
-  public Collection<MavenArtifact> resolvePlugins(@NotNull Collection<Pair<MavenId, NativeMavenProjectHolder>> mavenPluginRequests)
+  public Map<MavenId, Collection<MavenArtifact>> resolvePlugins(@NotNull Collection<Pair<MavenId, NativeMavenProjectHolder>> mavenPluginRequests)
     throws MavenProcessCanceledException {
     var pluginResolutionRequests = new ArrayList<PluginResolutionRequest>();
     for (var mavenPluginRequest : mavenPluginRequests) {
@@ -245,7 +245,7 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     catch (RemoteException e) {
       // do not try to reconnect here since we have lost NativeMavenProjectHolder anyway.
       handleRemoteError(e);
-      return Collections.emptyList();
+      return Collections.emptyMap();
     }
     catch (MavenServerProcessCanceledException e) {
       throw new MavenProcessCanceledException();
@@ -255,7 +255,8 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   public Collection<MavenArtifact> resolvePlugin(@NotNull final MavenPlugin plugin,
                                                  @NotNull final NativeMavenProjectHolder nativeMavenProject)
     throws MavenProcessCanceledException {
-    return resolvePlugins(List.of(Pair.create(plugin.getMavenId(), nativeMavenProject)));
+    MavenId mavenId = plugin.getMavenId();
+    return resolvePlugins(List.of(Pair.create(mavenId, nativeMavenProject))).get(mavenId);
   }
 
   public MavenModel readModel(final File file) throws MavenProcessCanceledException {

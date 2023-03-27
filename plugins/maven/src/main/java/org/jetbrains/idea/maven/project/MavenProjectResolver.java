@@ -274,7 +274,8 @@ public class MavenProjectResolver {
 
     try {
       var mavenPluginIdsToResolve = collectMavenPluginIdsToResolve(mavenProjects);
-      var artifacts = embedder.resolvePlugins(mavenPluginIdsToResolve);
+      var resolutionResults = embedder.resolvePlugins(mavenPluginIdsToResolve);
+      var artifacts = resolutionResults.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
 
       for (MavenArtifact artifact : artifacts) {
         Path pluginJar = artifact.getFile().toPath();
@@ -284,7 +285,10 @@ public class MavenProjectResolver {
         }
       }
 
-      unresolvedPluginIds = collectUnresolvedPlugins(mavenPluginIdsToResolve, artifacts);
+      unresolvedPluginIds = mavenPluginIdsToResolve.stream()
+        .map(pair -> pair.first)
+        .filter(mavenPluginId -> !resolutionResults.containsKey(mavenPluginId))
+        .collect(Collectors.toSet());
       if (reportUnresolvedToSyncConsole && myProject != null) {
         reportUnresolvedPlugins(unresolvedPluginIds);
       }
@@ -332,19 +336,6 @@ public class MavenProjectResolver {
       }
     }
     return mavenPluginIdsToResolve;
-  }
-
-  private static Set<MavenId> collectUnresolvedPlugins(Collection<Pair<MavenId, NativeMavenProjectHolder>> mavenPluginsIdsToResolve,
-                                                       Collection<MavenArtifact> resolvedArtifacts) {
-    var resolvedIds = resolvedArtifacts.stream()
-      .map(artifact -> Pair.create(artifact.getGroupId(), artifact.getArtifactId()))
-      .collect(Collectors.toSet());
-
-    return mavenPluginsIdsToResolve.stream()
-      .map(pair -> pair.first)
-      .distinct()
-      .filter(mavenPluginId -> !resolvedIds.contains(Pair.create(mavenPluginId.getGroupId(), mavenPluginId.getArtifactId())))
-      .collect(Collectors.toSet());
   }
 
   private void resolvePluginsFromCache(@NotNull Collection<Pair<MavenProject, NativeMavenProjectHolder>> mavenProjects,

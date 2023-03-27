@@ -989,12 +989,13 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   }
 
   @Override
-  public Collection<MavenArtifact> resolvePlugins(@NotNull Collection<PluginResolutionRequest> pluginResolutionRequests, MavenToken token)
+  public Map<MavenId, Collection<MavenArtifact>> resolvePlugins(@NotNull Collection<PluginResolutionRequest> pluginResolutionRequests, MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);
-    Set<MavenArtifact> resolvedPlugins = new HashSet<>();
+    Map<MavenId, Collection<MavenArtifact>> resolvedPlugins = new HashMap<>();
     for (PluginResolutionRequest pluginResolutionRequest : pluginResolutionRequests) {
-      resolvedPlugins.addAll(resolvePlugin(pluginResolutionRequest.getMavenPluginId(), pluginResolutionRequest.getNativeMavenProjectId()));
+      MavenId mavenPluginId = pluginResolutionRequest.getMavenPluginId();
+      resolvedPlugins.put(mavenPluginId, resolvePlugin(mavenPluginId, pluginResolutionRequest.getNativeMavenProjectId()));
     }
     return resolvedPlugins;
   }

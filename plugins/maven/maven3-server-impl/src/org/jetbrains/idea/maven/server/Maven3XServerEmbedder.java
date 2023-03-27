@@ -1569,7 +1569,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   @Override
-  public Collection<MavenArtifact> resolvePlugins(@NotNull Collection<PluginResolutionRequest> pluginResolutionRequests, MavenToken token)
+  public Map<MavenId, Collection<MavenArtifact>> resolvePlugins(@NotNull Collection<PluginResolutionRequest> pluginResolutionRequests, MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);
 
@@ -1580,7 +1580,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     RepositorySystemSession repositorySystemSession = maven.newRepositorySession(request);
     myImporterSpy.setIndicator(myCurrentIndicator);
 
-    Set<MavenArtifact> resolvedArtifacts = new HashSet<>();
+    Map<MavenId, Collection<MavenArtifact>> resolvedArtifacts = new HashMap<>();
 
     for (PluginResolutionRequest pluginResolutionRequest : pluginResolutionRequests) {
       MavenId mavenPluginId = pluginResolutionRequest.getMavenPluginId();
@@ -1603,7 +1603,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         }
 
         List<MavenArtifact> artifacts = resolvePlugin(plugin, remotePluginRepositories, repositorySystemSession);
-        resolvedArtifacts.addAll(artifacts);
+        resolvedArtifacts.put(mavenPluginId, artifacts);
       }
       catch (Exception e) {
         Maven3ServerGlobals.getLogger().warn(e);
