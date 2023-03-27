@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.codegen.inline.INLINE_TRANSFORMATION_SUFFIX
 import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.core.CONTEXT_RECEIVER_PREFIX
+import org.jetbrains.kotlin.idea.debugger.core.CONTEXT_RECEIVER_PREFIX_OLD
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.InlineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParameter
@@ -92,6 +93,7 @@ class VariableFinder(val context: ExecutionContext) {
         class ContextReceiver(asmType: AsmType) : VariableKind(asmType) {
             override fun capturedNameMatches(name: String) =
                 name.startsWith(CONTEXT_RECEIVER_PREFIX) || name.startsWith(AsmUtil.CAPTURED_PREFIX + CONTEXT_RECEIVER_PREFIX)
+                        || name.startsWith(CONTEXT_RECEIVER_PREFIX_OLD) || name.startsWith(AsmUtil.CAPTURED_PREFIX + CONTEXT_RECEIVER_PREFIX_OLD)
         }
     }
 
