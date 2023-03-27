@@ -82,7 +82,8 @@ public class DataProviderReturnTypeInspection extends AbstractBaseJavaLocalInspe
     return true;
   }
 
+  // see https://github.com/cbeust/testng/issues/1139
   private static boolean supportOneDimensional(@NotNull Module module) {
-    return TestNGUtil.isVersionOrGreaterThan(module.getProject(), module, 6, 11, 0);
+    return TestNGUtil.isVersionOrGreaterThan(module.getProject(), module, 6, 10, 0);
   }
 }
