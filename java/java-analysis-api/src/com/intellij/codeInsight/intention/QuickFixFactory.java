@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -370,7 +370,7 @@ public abstract class QuickFixFactory {
                                                                             @NotNull PsiTypeElement checkTypeElement);
 
   @NotNull
-  public abstract IntentionAction createMakeVarargParameterLastFix(@NotNull PsiParameter parameter);
+  public abstract IntentionAction createMakeVarargParameterLastFix(@NotNull PsiVariable parameter);
 
   @NotNull
   public abstract IntentionAction createMakeReceiverParameterFirstFix(@NotNull PsiReceiverParameter parameter);

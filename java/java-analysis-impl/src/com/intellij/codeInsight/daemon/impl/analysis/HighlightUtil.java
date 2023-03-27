@@ -1789,8 +1789,11 @@ public final class HighlightUtil {
 
   static HighlightInfo.Builder checkRecordComponentVarArg(@NotNull PsiRecordComponent recordComponent) {
     if (recordComponent.isVarArgs() && PsiTreeUtil.getNextSiblingOfType(recordComponent, PsiRecordComponent.class) != null) {
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(recordComponent)
+      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(recordComponent)
         .descriptionAndTooltip(JavaErrorBundle.message("record.component.vararg.not.last"));
+      IntentionAction action = getFixFactory().createMakeVarargParameterLastFix(recordComponent);
+      info.registerFix(action, null, null, null, null);
+      return info;
     }
     return null;
   }

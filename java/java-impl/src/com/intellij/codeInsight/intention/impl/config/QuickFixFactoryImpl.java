@@ -662,7 +662,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createMakeVarargParameterLastFix(@NotNull PsiParameter parameter) {
+  public IntentionAction createMakeVarargParameterLastFix(@NotNull PsiVariable parameter) {
     return new MakeVarargParameterLastFix(parameter);
   }
 
