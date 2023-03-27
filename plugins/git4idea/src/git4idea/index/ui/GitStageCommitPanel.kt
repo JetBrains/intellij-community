@@ -66,8 +66,9 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
 
   private fun setState(includedRoots: Set<VirtualFile>, trackerState: GitStageTracker.State) {
     val newState = InclusionState(includedRoots, trackerState)
-    if (state != newState) {
-      state = newState
+    val inclusionChanged = newState.isInclusionChangedFrom(state)
+    state = newState
+    if (inclusionChanged) {
       fireInclusionChanged()
     }
   }
@@ -93,24 +94,9 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
     }
     val rootsToCommit get() = trackerState.stagedRoots.intersect(includedRoots)
 
-    override fun equals(other: Any?): Boolean {
-      if (this === other) return true
-      if (javaClass != other?.javaClass) return false
-
-      other as InclusionState
-
-      if (includedRoots != other.includedRoots) return false
-      if (stagedStatuses != other.stagedStatuses) return false
-      if (conflictedRoots != other.conflictedRoots) return false
-
-      return true
-    }
-
-    override fun hashCode(): Int {
-      var result = includedRoots.hashCode()
-      result = 31 * result + stagedStatuses.hashCode()
-      result = 31 * result + conflictedRoots.hashCode()
-      return result
+    fun isInclusionChangedFrom(other: InclusionState): Boolean {
+      if (includedRoots != other.includedRoots || conflictedRoots != other.conflictedRoots) return true
+      return stagedStatuses != other.stagedStatuses
     }
   }
 }
