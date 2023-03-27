@@ -1,0 +1,347 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.execution.filters;
+
+import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.codeInsight.navigation.PsiTargetNavigator;
+import com.intellij.ide.util.EditSourceUtil;
+import com.intellij.java.JavaBundle;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.navigation.TargetPresentation;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.Navigatable;
+import com.intellij.psi.*;
+import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
+
+import javax.swing.*;
+import java.util.*;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
+import static com.intellij.openapi.util.text.StringUtil.getShortName;
+
+final public class FindDivergedExceptionLineHandler extends AnAction {
+
+  private static final String LAMBDA_KEYWORD = "lambda$";
+  private final PsiFile myPsiFile;
+  private final MetaInfo myMetaInfo;
+  private final ExceptionLineRefiner myRefiner;
+  private final Editor myEditor;
+
+  private FindDivergedExceptionLineHandler(@NotNull PsiFile file,
+                                           @NotNull MetaInfo metaInfo,
+                                           @NotNull ExceptionLineRefiner refiner,
+                                           @NotNull Editor targetEditor) {
+
+    super(null, JavaBundle.message("action.find.similar.stack.call.diverged", getShortName(metaInfo.className), metaInfo.methodName), null);
+    this.myPsiFile = file;
+    this.myMetaInfo = metaInfo;
+    this.myRefiner = refiner;
+    this.myEditor = targetEditor;
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Document document = PsiDocumentManager.getInstance(myPsiFile.getProject()).getDocument(myPsiFile);
+    if (document == null) {
+      return;
+    }
+    boolean found = new PsiTargetNavigator<>(collector())
+      .presentationProvider(element -> {
+        String text;
+        @NonNls String containerText;
+        int lineNumber = document.getLineNumber(element.getTextRange().getEndOffset());
+        if (element instanceof PsiMethod psiMethod) {
+          text = psiMethod.getName();
+          containerText = getShortName(myMetaInfo.className) + ": " + (lineNumber + 1);
+        }
+        else {
+          PsiExpression expression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
+          PsiElement textElement = expression != null ? expression : element;
+          TextRange textRange = textElement.getTextRange()
+            .intersection(new TextRange(document.getLineStartOffset(lineNumber), document.getLineEndOffset(lineNumber)));
+          if (textRange == null) {
+            textRange = element.getTextRange();
+          }
+          text = document.getText(textRange).strip();
+          containerText = getShortName(myMetaInfo.className) + "." + myMetaInfo.methodName + "()" +
+                          ": " + (lineNumber + 1);
+        }
+        return TargetPresentation
+          .builder(text)
+          .containerText(containerText)
+          .presentation();
+      })
+      .elementsConsumer((elements, navigator) -> {
+        if (elements.isEmpty()) {
+          return;
+        }
+        PsiElement next = elements.iterator().next();
+        String message;
+        if (next instanceof PsiMethod) {
+          message = JavaBundle.message("action.find.similar.stack.call.methods", getShortName(myMetaInfo.className), myMetaInfo.methodName);
+        }
+        else {
+          message =
+            JavaBundle.message("action.find.similar.stack.call.similar.calls", getShortName(myMetaInfo.className), myMetaInfo.methodName);
+        }
+        navigator.title(message);
+        navigator.tabTitle(message);
+      })
+      .navigate(myEditor, null, element -> EditSourceUtil.navigateToPsiElement(element));
+    if (!found) {
+      RelativePoint popupLocation = JBPopupFactory.getInstance().guessBestPopupLocation(myEditor);
+      String message =
+        JavaBundle.message("action.find.similar.stack.call.methods.not.found", getShortName(myMetaInfo.className), myMetaInfo.methodName);
+      final JComponent label = HintUtil.createErrorLabel(message.replace("<", "&lt;").replace(">", "&gt;"));
+      label.setBorder(JBUI.Borders.empty(2, 7));
+      JBPopupFactory.getInstance().createBalloonBuilder(label)
+        .setFadeoutTime(4000)
+        .setFillColor(HintUtil.getErrorColor())
+        .createBalloon()
+        .show(popupLocation, Balloon.Position.above);
+    }
+  }
+
+  @VisibleForTesting
+  @NotNull
+  public Supplier<Collection<PsiElement>> collector() {
+    return () -> {
+      Set<PsiElement> result = new HashSet<>();
+      List<PsiElement> startPoints = new ArrayList<>();
+      JavaRecursiveElementVisitor fileVisitor = new JavaRecursiveElementVisitor() {
+
+        @Override
+        public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
+          if (myMetaInfo.isStaticInit) {
+            startPoints.add(initializer);
+          }
+        }
+
+        @Override
+        public void visitField(@NotNull PsiField field) {
+          if (myMetaInfo.isStaticInit && field.hasModifierProperty(PsiModifier.STATIC)) {
+            startPoints.add(field);
+          }
+          if (myMetaInfo.isNonStaticInit && !field.hasModifier(JvmModifier.STATIC)) {
+            startPoints.add(field);
+          }
+        }
+
+        @Override
+        public void visitMethod(@NotNull PsiMethod method) {
+          ProgressManager.checkCanceled();
+          if (!myMetaInfo.isLambda && placeMatch(method, myMetaInfo)) {
+            startPoints.add(method);
+          }
+
+          if (myMetaInfo.isLambda) {
+            super.visitMethod(method);
+          }
+        }
+
+        @Override
+        public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
+          ProgressManager.checkCanceled();
+          if (myMetaInfo.isLambda) {
+            PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
+            if (method != null && placeMatch(method, myMetaInfo)) {
+              startPoints.add(expression);
+            }
+          }
+        }
+      };
+      myPsiFile.acceptChildren(fileVisitor);
+      for (PsiElement startPoint : startPoints) {
+        PsiTreeUtil.processElements(startPoint, new PsiElementProcessor<>() {
+          @Override
+          public boolean execute(@NotNull PsiElement element) {
+            ProgressManager.checkCanceled();
+            PsiElement matchedElement = myRefiner.matchElement(element);
+            if (matchedElement instanceof Navigatable) {
+              PsiMethod matchedElementMethod = PsiTreeUtil.getParentOfType(matchedElement, PsiMethod.class);
+              if (matchedElementMethod != null && placeMatch(matchedElementMethod, myMetaInfo)) {
+                result.add(matchedElement);
+              }
+              if (matchedElementMethod == null && (myMetaInfo.isStaticInit || myMetaInfo.isNonStaticInit)) {
+                result.add(matchedElement);
+              }
+            }
+            return true;
+          }
+        });
+      }
+      if (result.isEmpty()) {
+        result.addAll(startPoints);
+      }
+      return result.stream().sorted(Comparator.comparing(element -> element.getTextOffset())).collect(Collectors.toList());
+    };
+  }
+
+  private static boolean placeMatch(@NotNull PsiElement element,
+                                    @NotNull MetaInfo metaInfo) {
+    PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+    if (psiClass == null) return false;
+    if (!metaInfo.className.equals(psiClass.getQualifiedName())) return false;
+    if (element instanceof PsiMethod psiMethod) {
+      return (metaInfo.methodName.equals(psiMethod.getName()) || (metaInfo.isNonStaticInit && psiMethod.isConstructor()));
+    }
+    return metaInfo.isNonStaticInit || metaInfo.isStaticInit;
+  }
+
+  static ExceptionLineParserImpl.@Nullable LinkInfo createLinkInfo(@Nullable PsiFile file,
+                                                                   @Nullable String className,
+                                                                   @Nullable String methodName,
+                                                                   @Nullable ExceptionLineRefiner refiner,
+                                                                   int lineStart, int lineEnd,
+                                                                   @Nullable Editor targetEditor) {
+    if (file == null) return null;
+    FindDivergedExceptionLineHandler methodHandler =
+      getFindMethodHandler(file, className, methodName, refiner, lineStart, lineEnd, targetEditor);
+    if (methodHandler == null) return null;
+    return new ExceptionLineParserImpl.LinkInfo(file, null, methodHandler, finder -> {
+    });
+  }
+
+  @Nullable
+  public static FindDivergedExceptionLineHandler getFindMethodHandler(@Nullable PsiFile file,
+                                                                      @Nullable String className,
+                                                                      @Nullable String methodName,
+                                                                      @Nullable ExceptionLineRefiner refiner,
+                                                                      int lineStart,
+                                                                      int lineEnd,
+                                                                      @Nullable Editor targetEditor) {
+
+    //it can be ambiguous to find lambda anonymous classes
+    if (file == null || className == null || methodName == null || refiner == null || targetEditor == null) {
+      return null;
+    }
+
+    if (!file.getLanguage().is(JavaLanguage.INSTANCE)) {
+      return null;
+    }
+
+    if (canBeBridge(file, lineStart, lineEnd, methodName)) {
+      return null;
+    }
+
+    if (hasAnonymousClass(className)) return null;
+
+    className = className.replaceAll("\\$", ".");
+
+    boolean isLambda = false;
+    if (methodName.contains("$")) {
+      int lambdaIndex = methodName.indexOf(LAMBDA_KEYWORD);
+      if (lambdaIndex != -1) {
+        isLambda = true;
+        methodName = methodName.substring(lambdaIndex + LAMBDA_KEYWORD.length());
+        int nextDelimiter = methodName.indexOf("$");
+        if (nextDelimiter != -1) {
+          methodName = methodName.substring(0, nextDelimiter);
+          if (methodName.contains("$")) return null;
+        }
+      }
+      else {
+        return null;
+      }
+      if (methodName.isEmpty()) {
+        return null;
+      }
+    }
+
+
+    MetaInfo metaInfo = new MetaInfo(className, methodName, isLambda, isNonStaticInit(methodName), isStaticInit(methodName));
+
+    if (skipByRefiner(file, refiner, lineStart, lineEnd)) return null;
+
+    if (DumbService.isDumb(file.getProject())) {
+      return null;
+    }
+    return new FindDivergedExceptionLineHandler(file, metaInfo, refiner, targetEditor);
+  }
+
+  private static boolean skipByRefiner(@NotNull PsiFile file,
+                                       @NotNull ExceptionLineRefiner refiner,
+                                       int lineStart,
+                                       int lineEnd) {
+    if (refiner.getExceptionInfo() != null) {
+      PsiElement element = file.findElementAt(lineStart);
+      Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+      if (document == null) {
+        return true;
+      }
+      while (element != null && element.getTextRange().getStartOffset() < lineEnd) {
+        PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiStatement.class, PsiField.class);
+        if (parent != null) {
+          int lineNumberStart = document.getLineNumber(parent.getTextOffset());
+          int lineNumberEnd = document.getLineNumber(parent.getTextOffset() + parent.getTextLength());
+          if (lineNumberStart != lineNumberEnd) {
+            return true;
+          }
+        }
+        element = PsiTreeUtil.nextLeaf(element);
+      }
+    }
+    return false;
+  }
+
+  private static boolean canBeBridge(PsiFile file, int lineStart, int lineEnd, String methodName) {
+    if (!file.isValid()) return false;
+    PsiElement element = file.findElementAt(lineStart);
+    while (element != null && element.getTextRange().getStartOffset() < lineEnd) {
+      PsiElement finalElement = element;
+      if (finalElement instanceof PsiKeyword keyword && keyword.getTokenType().equals(JavaTokenType.CLASS_KEYWORD)) {
+        PsiElement parent = finalElement.getParent();
+        if (parent instanceof PsiClass targetClass &&
+            (targetClass.getExtendsListTypes().length > 0 || targetClass.getImplementsListTypes().length > 0) &&
+            ContainerUtil.exists(targetClass.getMethods(), psiMethod -> methodName.equals(psiMethod.getName()))) {
+          return true;
+        }
+      }
+      element = PsiTreeUtil.nextLeaf(element);
+    }
+    return false;
+  }
+
+  private static boolean isNonStaticInit(String name) {
+    return "<init>".equals(name);
+  }
+
+  private static boolean isStaticInit(String name) {
+    return "<clinit>".equals(name);
+  }
+
+  private static boolean hasAnonymousClass(@NotNull String className) {
+    int classAdditionalInfoIndex = className.indexOf("$");
+    if (classAdditionalInfoIndex != -1) {
+      String shortName = getShortName(className, '$');
+      if (shortName.length() == 0) {
+        return true;
+      }
+      if (Character.isDigit(shortName.charAt(0))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private record MetaInfo(@NonNls String className, @NonNls String methodName, boolean isLambda, boolean isNonStaticInit,
+                          boolean isStaticInit) {
+  }
+}

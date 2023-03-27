@@ -32,6 +32,16 @@ public class ExceptionInfo {
   }
 
   /**
+   * @param element element to check
+   * @return element to position caret to if element matches; null if it doesn't match, check elements before according to a stacktrace result
+   */
+
+  @Nullable PsiElement matchSpecificExceptionElementBefore(@NotNull PsiElement element) {
+    return null;
+  }
+
+
+  /**
    * @return a predicate that matches an element within the source line that is likely an exception source
    */
   @NotNull

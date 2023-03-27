@@ -19,10 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -254,13 +251,7 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
         targetEditor.getCaretModel().moveToOffset(range.getStartOffset());
       }
 
-      //test only
-      if (ApplicationManager.getApplication().isUnitTestMode() && info.myAction instanceof FindMethodHandler action) {
-        action.actionPerformed(AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, DataContext.EMPTY_CONTEXT));
-        return;
-      }
-
-      if (info.myAction != null) {
+      if (info.myAction != null && !ApplicationManager.getApplication().isUnitTestMode()) {
         displayAnalysisAction(project, info, targetEditor);
       }
     }
@@ -273,9 +264,9 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
                                                @Nullable Editor originalEditor) {
       PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
       if (psiFile == null) return null;
-      PsiElement target = getExceptionOrigin(psiFile, lineStart, lineEnd);
-      if (target == null || !validate(target, myMethod, myClassName)) {
-        return FindMethodHandler.createLinkInfo(psiFile, myClassName, myMethod, myElementMatcher, targetEditor);
+      PsiElement target = getExceptionOriginAndReason(psiFile, lineStart, lineEnd);
+      if (target == null) {
+        return FindDivergedExceptionLineHandler.createLinkInfo(psiFile, myClassName, myMethod, myElementMatcher, lineStart, lineEnd, targetEditor);
       }
       else {
         AnAction action = findAnalysisAction(project, target, originalEditor);
@@ -283,30 +274,7 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
       }
     }
 
-    private static boolean validate(@Nullable PsiElement target,
-                                    @Nullable String methodName,
-                                    @Nullable String className) {
-      if (methodName == null || className == null ||
-          methodName.contains("$") ||
-          methodName.contains("<init>") ||
-          className.contains("$")) {
-        return true;
-      }
-      if (target == null) {
-        return false;
-      }
-      PsiMethod method = PsiTreeUtil.getParentOfType(target, PsiMethod.class);
-      if (method == null || !methodName.equals(method.getName())) {
-        return false;
-      }
-      PsiClass psiClass = PsiTreeUtil.getParentOfType(method, PsiClass.class);
-      if (psiClass == null || !className.equals(psiClass.getQualifiedName())) {
-        return false;
-      }
-      return true;
-    }
-
-    private @Nullable PsiElement getExceptionOrigin(@NotNull PsiFile file, int lineStart, int lineEnd) {
+    private @Nullable PsiElement getExceptionOriginAndReason(@NotNull PsiFile file, int lineStart, int lineEnd) {
       if (!file.isValid()) return null;
       PsiElement element = file.findElementAt(lineStart);
       List<PsiElement> candidates = new ArrayList<>();
