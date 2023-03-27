@@ -141,7 +141,7 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
       mergedDumb.getClass(), dumb1.getClass()
     );
 
-    return ((UnindexedFilesScannerAsDumbModeTaskWrapper)mergedDumb).getTask();
+    return ((FilesScanningTaskAsDumbModeTaskWrapper)mergedDumb).getTask();
   }
 
   @NotNull

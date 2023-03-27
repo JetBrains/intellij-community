@@ -79,7 +79,7 @@ public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor
   @NotNull
   @VisibleForTesting
   DumbModeTask wrapAsDumbTask(@NotNull UnindexedFilesScanner task) {
-    return new UnindexedFilesScannerAsDumbModeTaskWrapper(task, runningTask);
+    return new FilesScanningTaskAsDumbModeTaskWrapper(task, runningTask);
   }
 
   private void cancelRunningScannerTaskInDumbQueue() {

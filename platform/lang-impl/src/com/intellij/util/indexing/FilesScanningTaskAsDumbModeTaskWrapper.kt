@@ -12,8 +12,8 @@ import java.util.concurrent.atomic.AtomicReference
 
 @Internal
 @VisibleForTesting // Should be package-private, but kotlin does not have this visibility. This is not public API
-class UnindexedFilesScannerAsDumbModeTaskWrapper(@VisibleForTesting val task: UnindexedFilesScanner,
-                                                 private val runningTask: AtomicReference<ProgressIndicator>) : DumbModeTask() {
+class FilesScanningTaskAsDumbModeTaskWrapper(@VisibleForTesting val task: UnindexedFilesScanner,
+                                             private val runningTask: AtomicReference<ProgressIndicator>) : DumbModeTask() {
 
   companion object {
     private val LOG = logger<UnindexedFilesScannerExecutor>()
@@ -39,11 +39,11 @@ class UnindexedFilesScannerAsDumbModeTaskWrapper(@VisibleForTesting val task: Un
   }
 
   override fun tryMergeWith(taskFromQueue: DumbModeTask): DumbModeTask? {
-    if (taskFromQueue is UnindexedFilesScannerAsDumbModeTaskWrapper) {
+    if (taskFromQueue is FilesScanningTaskAsDumbModeTaskWrapper) {
       val scanningTaskFromQueue = taskFromQueue.task
       val merged = task.tryMergeWith(scanningTaskFromQueue)
       LOG.assertTrue(taskFromQueue.runningTask === runningTask, "Should be the same object: ${runningTask}, ${taskFromQueue.runningTask}")
-      return merged?.let { UnindexedFilesScannerAsDumbModeTaskWrapper(it, runningTask) }
+      return merged?.let { FilesScanningTaskAsDumbModeTaskWrapper(it, runningTask) }
     }
     else {
       return super.tryMergeWith(taskFromQueue)
