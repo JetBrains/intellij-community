@@ -23,7 +23,7 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.gradle.testFramework.configuration.TestFilesConfigurationImpl
 import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 import org.jetbrains.plugins.gradle.testFramework.util.onFailureCatching
-import org.jetbrains.plugins.gradle.testFramework.util.refreshAndWait
+import org.jetbrains.plugins.gradle.testFramework.util.refreshAndAwait
 import org.jetbrains.plugins.gradle.testFramework.util.withSuppressedErrors
 import java.nio.file.Path
 import java.util.*
@@ -158,7 +158,7 @@ internal class FileTestFixtureImpl(
         invalidateFixtureCaches()
         configuration.createFiles(root)
       }
-      root.refreshAndWait()
+      root.refreshAndAwait()
     }
       .onFailureCatching { invalidateFixtureCaches() }
       .getOrThrow()
@@ -173,7 +173,7 @@ internal class FileTestFixtureImpl(
   }
 
   private fun getErrors(): List<Throwable> {
-    runBlocking { root.refreshAndWait() }
+    runBlocking { root.refreshAndAwait() }
     return errors
   }
 

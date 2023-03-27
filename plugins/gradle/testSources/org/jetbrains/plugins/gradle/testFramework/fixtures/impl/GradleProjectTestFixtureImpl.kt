@@ -24,7 +24,7 @@ import org.jetbrains.plugins.gradle.service.project.wizard.util.generateGradleWr
 import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleProjectTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
-import org.jetbrains.plugins.gradle.testFramework.util.refreshAndWait
+import org.jetbrains.plugins.gradle.testFramework.util.refreshAndAwait
 import org.jetbrains.plugins.gradle.util.awaitProjectReload
 import org.jetbrains.plugins.gradle.util.getGradleReloadOperation
 import kotlin.time.Duration.Companion.minutes
@@ -74,7 +74,7 @@ internal class GradleProjectTestFixtureImpl private constructor(
 
   override fun tearDown() {
     runAll(
-      { runBlocking { fileFixture.root.refreshAndWait() } },
+      { runBlocking { fileFixture.root.refreshAndAwait() } },
       { projectOperations.waitForOperationCompletionAndPumpEdt(1.minutes) },
       { if (_project.isInitialized) runBlocking { _project.closeProjectAsync() } },
       { Disposer.dispose(testDisposable) },
@@ -114,7 +114,7 @@ internal class GradleProjectTestFixtureImpl private constructor(
         }
       }
       try {
-        projectRoot.refreshAndWait()
+        projectRoot.refreshAndAwait()
       }
       finally {
         project.closeProjectAsync(save = true)
