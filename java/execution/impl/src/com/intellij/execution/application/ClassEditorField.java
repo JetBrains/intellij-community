@@ -20,7 +20,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ExtendableEditorSupport;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
-import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +35,7 @@ import java.util.Objects;
 
 public final class ClassEditorField extends EditorTextField {
 
-  private final Map<String, String> myJvmNames = FactoryMap.create(className -> getJvmName(className));
+  private final Map<String, String> myJvmNames = ConcurrentFactoryMap.createMap(className -> getJvmName(className));
   private @Nullable String myLastName;
 
   public void setClassName(String className) {
