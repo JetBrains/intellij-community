@@ -2,11 +2,9 @@
 package com.intellij.navigation;
 
 import com.intellij.model.Pointer;
-import com.intellij.pom.Navigatable;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus.Experimental;
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,14 +54,4 @@ public interface NavigationTarget {
 
   @Override
   int hashCode();
-
-  /**
-   * @deprecated This method is not used by the platform. Implement {@link #navigationRequest()} instead.
-   * Please define your own interface if you need this method in your implementation.
-   */
-  @Deprecated
-  @ScheduledForRemoval
-  default @NotNull Navigatable getNavigatable() {
-    return EmptyNavigatable.INSTANCE;
-  }
 }
