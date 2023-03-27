@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.ui
 
 import com.intellij.openapi.Disposable
@@ -57,14 +57,14 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
   }
 
   fun setIncludedRoots(includedRoots: Collection<VirtualFile>) {
-    setState(includedRoots, state.trackerState)
+    setState(includedRoots.toSet(), state.trackerState)
   }
 
   fun setTrackerState(trackerState: GitStageTracker.State) {
     setState(state.includedRoots, trackerState)
   }
 
-  private fun setState(includedRoots: Collection<VirtualFile>, trackerState: GitStageTracker.State) {
+  private fun setState(includedRoots: Set<VirtualFile>, trackerState: GitStageTracker.State) {
     val newState = InclusionState(includedRoots, trackerState)
     if (state != newState) {
       state = newState
@@ -83,7 +83,7 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
   override fun getDisplayedUnversionedFiles(): List<FilePath> = emptyList()
   override fun getIncludedUnversionedFiles(): List<FilePath> = emptyList()
 
-  private inner class InclusionState(val includedRoots: Collection<VirtualFile>, val trackerState: GitStageTracker.State) {
+  private inner class InclusionState(val includedRoots: Set<VirtualFile>, val trackerState: GitStageTracker.State) {
     private val stagedStatuses: Set<GitFileStatus> = trackerState.getStaged()
     val conflictedRoots: Set<VirtualFile> = trackerState.rootStates.filter { it.value.hasConflictedFiles() }.keys
     val stagedChanges by lazy {
