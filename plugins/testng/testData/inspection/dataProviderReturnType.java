@@ -44,7 +44,7 @@ class MyTest {
   }
 
   @DataProvider
-  public <warning descr="Data provider must return Object[][]/Object[] or Iterator<Object[]>/Iterator<Object>">Object</warning> someTestData7() {return null;}
+  public <warning descr="Data provider must return either an array or iterator">Object</warning> someTestData7() {return null;}
 }
 
 

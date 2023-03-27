@@ -47,9 +47,12 @@ public class DataProviderReturnTypeInspection extends AbstractBaseJavaLocalInspe
         Module module = ModuleUtilCore.findModuleForPsiElement(annotation);
         if (module == null) return null;
         boolean supportOneDimensional = supportOneDimensional(module);
-        String message = TestngBundle.message("inspection.data.provider.return.type.check",
-                                              supportOneDimensional ? "Object[][]/Object[] or Iterator<Object[]>/Iterator<Object>"
-                                                                    : "Object[][] or Iterator<Object[]>");
+        String message;
+        if (supportOneDimensional) {
+          message = TestngBundle.message("inspection.data.provider.return.type.check");
+        } else {
+          message = TestngBundle.message("inspection.data.provider.return.type.multi.check");
+        }
         return new ProblemDescriptor[]{manager.createProblemDescriptor(returnTypeElement,
                                                                        message,
                                                                        isOnTheFly,
