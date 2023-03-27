@@ -23,12 +23,15 @@ function buildDmg() {
       cp "$buildFile" "$buildDir"
     fi
   done
+  echo "Extracting $sit.."
+  unzip -q -o "$sit" -d "$buildDir/$explodedSitDir"
   (
     cd "$buildDir"
-    unzip -q -o "../$sit" -d $explodedSitDir
-    bash ./staple.sh $explodedSitDir "$staple"
-    bash ./makedmg.sh "$dmgName" "$appName" "$dmg" $explodedSitDir $cleanUpExploded "$contentSigned"
-    mv "$dmg" "../$dmg"
+    trap 'cd .. && rm -rf "$buildDir"' EXIT
+    # set -e doesn't have any effect in here
+    bash ./staple.sh $explodedSitDir "$staple" &&
+      bash ./makedmg.sh "$dmgName" "$appName" "$dmg" $explodedSitDir $cleanUpExploded "$contentSigned" &&
+      mv "$dmg" "../$dmg"
   )
 }
 

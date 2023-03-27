@@ -44,6 +44,19 @@ log "BUILD_NAME is $BUILD_NAME"
 VOLNAME="${BUILD_NAME%.app}"
 log "VOLNAME is $VOLNAME"
 
+function generate_DS_Store() {
+  if ! python3 --version; then
+    log "python3 is required for DMG/DS_Store generation"
+    exit 1
+  fi
+  log "ds_store library is required for DMG/DS_Store generation, installing in a Python virtual environment"
+  python3 -m venv .
+  ./bin/pip3 install mac-alias==2.2.0 ds-store==1.3.0
+  ./bin/python3 makedmg.py "$VOLNAME" "$BG_PIC" "$1"
+  log "DMG/DS_Store is generated"
+  rm -rf "/Volumes/$1/.fseventsd"
+}
+
 mkdir "${EXPLODED}/.background"
 if [ -f "${BG_PIC}" ]; then
   mv "${BG_PIC}" "${EXPLODED}/.background"
@@ -98,17 +111,8 @@ find "/Volumes/$1" -maxdepth 1
 log "Updating $VOLNAME disk image styles..."
 stat "/Volumes/$1/DSStorePlaceHolder"
 rm "/Volumes/$1/DSStorePlaceHolder"
-if ! python3 --version; then
-  log "python3 is required for DMG/DS_Store generation"
-  exit 1
-elif ! python3 -c "import ds_store; import mac_alias;" >/dev/null 2>/dev/null; then
-  log "ds_store library is required for DMG/DS_Store generation, installing"
-  pip3 install mac-alias==2.2.0 --user
-  pip3 install ds-store==1.3.0 --user
-fi
-python3 makedmg.py "$VOLNAME" "$BG_PIC" "$1"
-log "DMG/DS_Store is generated"
-rm -rf "/Volumes/$1/.fseventsd"
+
+generate_DS_Store "$1"
 
 if [[ -n ${SOURCE_DATE_EPOCH+x} ]]; then
   timestamp=$(date -r "$SOURCE_DATE_EPOCH" +%Y%m%d%H%m)
