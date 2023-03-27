@@ -9,6 +9,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
+import com.intellij.openapi.project.DumbServiceImpl.Companion.IDEA_FORCE_DUMB_QUEUE_TASKS
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -61,12 +62,12 @@ class DumbServiceImplTest {
     @BeforeClass
     @JvmStatic
     fun beforeAll() {
-      val prevDumbQueueTasks = System.setProperty("idea.force.dumb.queue.tasks", "true")
+      val prevDumbQueueTasks = System.setProperty(IDEA_FORCE_DUMB_QUEUE_TASKS, "true")
       val prevIgnoreHeadless = System.setProperty("intellij.progress.task.ignoreHeadless", "true")
 
       testClassDisposable = Disposer.newDisposable("DumbServiceImplTest")
       Disposer.register(testClassDisposable) {
-        SystemProperties.setProperty("idea.force.dumb.queue.tasks", prevDumbQueueTasks)
+        SystemProperties.setProperty(IDEA_FORCE_DUMB_QUEUE_TASKS, prevDumbQueueTasks)
         SystemProperties.setProperty("intellij.progress.task.ignoreHeadless", prevIgnoreHeadless)
       }
     }
