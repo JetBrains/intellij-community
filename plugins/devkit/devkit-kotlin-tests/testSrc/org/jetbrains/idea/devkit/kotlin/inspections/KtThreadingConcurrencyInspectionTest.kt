@@ -97,7 +97,7 @@ class KtThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestB
 
         class Subclass : Parent() {
           override fun method() {
-            edt();
+            edt()
           }
           
           @RequiresEdt 
@@ -205,9 +205,9 @@ class KtThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestB
       fun edt() {
         object: MyRunnable() {
           override fun run() {
-            bgt();
+            bgt()
           }
-        };
+        }
       }
 
       abstract class MyRunnable: Runnable {}
@@ -226,12 +226,18 @@ class KtThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestB
         val dispatcher: com.intellij.util.EventDispatcher<MyListener> = com.intellij.util.EventDispatcher()
         dispatcher.getMulticaster().myCallback()
         dispatcher.multicaster.myCallback()
+        
+        val listener = object : MyListener {
+          @RequiresEdt // TODO necessary?!
+          override fun myCallback() {}
+        }
+        listener.<error descr="Method annotated with '@RequiresEdt' must not be called from method annotated with '@RequiresBackgroundThread'">myCallback</error>()
       }
       
       interface MyListener : java.util.EventListener {
         
         @RequiresEdt
-        fun myCallback();
+        fun myCallback()
       }
     """.trimIndent())
   }
