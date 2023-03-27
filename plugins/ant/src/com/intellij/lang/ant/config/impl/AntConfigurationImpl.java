@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
@@ -39,7 +40,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ModalityUiUtil;
-import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.ValueProperty;
@@ -360,12 +360,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     if (myInitializationState.compareAndSet(InitializationState.FAILED_TO_INITIALIZE, InitializationState.IN_PROGRESS)) {
       queueInitialization();
     }
-
-    int attemptCount = 0; // need this in order to make sure we will not block swing thread forever
-    while (!isInitialized() && attemptCount < 6000) {
-      TimeoutUtil.sleep(10);
-      attemptCount++;
-    }
+    ProgressIndicatorUtils.awaitWithCheckCanceled(this::isInitialized);
   }
 
   private enum InitializationState { NOT_LOADED, IN_PROGRESS, FAILED_TO_INITIALIZE, INITIALIZED}
