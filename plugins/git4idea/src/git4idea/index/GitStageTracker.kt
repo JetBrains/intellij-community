@@ -213,6 +213,8 @@ open class GitStageTracker(val project: Project) : Disposable {
       get() = rootStates.filterValues(RootState::hasStagedFiles).keys
     val changedRoots: Set<VirtualFile>
       get() = rootStates.filterValues(RootState::hasChangedFiles).keys
+    val conflictedRoots: Set<VirtualFile>
+      get() = rootStates.filterValues(RootState::hasConflictedFiles).keys
 
     internal fun updatedWith(root: VirtualFile, newState: RootState): State {
       val result = mutableMapOf<VirtualFile, RootState>()

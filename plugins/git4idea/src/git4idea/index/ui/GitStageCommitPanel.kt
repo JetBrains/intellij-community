@@ -85,7 +85,7 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
 
   private inner class InclusionState(val includedRoots: Set<VirtualFile>, val trackerState: GitStageTracker.State) {
     private val stagedStatuses: Set<GitFileStatus> = trackerState.getStaged()
-    val conflictedRoots: Set<VirtualFile> = trackerState.rootStates.filter { it.value.hasConflictedFiles() }.keys
+    val conflictedRoots: Set<VirtualFile> = trackerState.conflictedRoots
     val stagedChanges by lazy {
       trackerState.rootStates.filterKeys {
         includedRoots.contains(it)
