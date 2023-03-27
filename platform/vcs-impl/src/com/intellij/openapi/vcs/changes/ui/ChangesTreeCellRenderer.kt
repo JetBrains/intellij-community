@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes.ui
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.ui.CellRendererPanel
 import com.intellij.util.ui.ThreeStateCheckBox
+import com.intellij.util.ui.UpdateScaleHelper
 import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu
 import java.awt.*
 import javax.accessibility.AccessibleContext
@@ -12,6 +13,8 @@ import javax.swing.JTree
 import javax.swing.tree.TreeCellRenderer
 
 open class ChangesTreeCellRenderer(protected val textRenderer: ChangesBrowserNodeRenderer) : CellRendererPanel(), TreeCellRenderer {
+  private val updateScaleHelper: UpdateScaleHelper = UpdateScaleHelper()
+
   private val checkBox = ThreeStateCheckBox()
 
   init {
@@ -62,6 +65,8 @@ open class ChangesTreeCellRenderer(protected val textRenderer: ChangesBrowserNod
         isEnabled = false
       }
     }
+
+    updateScaleHelper.saveScaleAndUpdateUIIfChanged(checkBox)
 
     return this
   }
