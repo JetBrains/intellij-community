@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -129,7 +130,7 @@ public final class ColoredOutputTypeRegistryImpl extends ColoredOutputTypeRegist
   }
 
   private static Color getColorByKey(TextAttributesKey colorKey) {
-    return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(colorKey).getForegroundColor();
+    return JBColor.lazy(() -> EditorColorsManager.getInstance().getGlobalScheme().getAttributes(colorKey).getForegroundColor());
   }
 
   private static @NotNull Color getDefaultForegroundColor() {
@@ -310,6 +311,6 @@ public final class ColoredOutputTypeRegistryImpl extends ColoredOutputTypeRegist
       return enforcedColor;
     }
 
-    return colorIndex != -1 ? getAnsiColor(colorIndex) : getDefaultColor.get();
+    return colorIndex != -1 ? getAnsiColor(colorIndex) : JBColor.lazy(getDefaultColor);
   }
 }
