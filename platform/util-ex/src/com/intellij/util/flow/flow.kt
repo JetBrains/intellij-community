@@ -6,6 +6,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.jetbrains.annotations.ApiStatus
 import kotlin.time.Duration
 
 /**
@@ -156,4 +157,18 @@ fun <T> Flow<T>.debounceBatch(duration: Duration) = channelFlow {
       }
     }
   }
+}
+
+
+/**
+ * Returns a state flow started in the given coroutine scope and containing the result of applying
+ * the given [transform] function to the initial value of the original state flow and each its update.
+ */
+@ApiStatus.Experimental
+fun <T, M> StateFlow<T>.mapStateIn(
+  coroutineScope: CoroutineScope,
+  started: SharingStarted = SharingStarted.Eagerly,
+  transform: (value: T) -> M
+): StateFlow<M> {
+  return map(transform).stateIn(coroutineScope, started = started, initialValue = transform(value))
 }

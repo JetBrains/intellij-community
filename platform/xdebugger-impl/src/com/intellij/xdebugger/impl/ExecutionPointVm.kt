@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.asSafely
+import com.intellij.util.flow.mapStateIn
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter
 import kotlinx.coroutines.CoroutineScope
@@ -108,13 +109,4 @@ internal class ExecutionPositionVmImpl(
   override fun navigateTo(navigationMode: ExecutionPositionNavigationMode) {
     navigator.navigateTo(navigationMode)
   }
-}
-
-
-internal fun <T, M> StateFlow<T>.mapStateIn(
-  coroutineScope: CoroutineScope,
-  started: SharingStarted = SharingStarted.Eagerly,
-  transform: (value: T) -> M
-): StateFlow<M> {
-  return map(transform).stateIn(coroutineScope, started = started, initialValue = transform(value))
 }
