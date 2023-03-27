@@ -680,12 +680,12 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   @Override
   public void dispose() {
     super.dispose();
-    if (PyConsoleUtil.isCommandQueueEnabled(getProject())) {
-      ConsoleCommunication communication = getFile().getCopyableUserData(CONSOLE_COMMUNICATION_KEY);
-      if (communication != null) {
-        ApplicationManager.getApplication().getService(CommandQueueForPythonConsoleService.class).removeListener(communication);
-      }
+
+    ConsoleCommunication communication = getFile().getCopyableUserData(CONSOLE_COMMUNICATION_KEY);
+    if (communication != null) {
+      ApplicationManager.getApplication().getService(CommandQueueForPythonConsoleService.class).removeListener(communication);
     }
+
     var editor = myCommandQueuePanel.getQueueEditor();
     commandQueueDimension = null;
     if (!editor.isDisposed()) {
