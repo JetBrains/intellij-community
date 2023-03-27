@@ -287,7 +287,7 @@ class JarPackager private constructor(private val outputDir: Path, private val c
 
       val library = element.library!!
       val libraryName = getLibraryFileName(library)
-      if (excluded.contains(libraryName) || layout.includedModuleLibraries.any { it.libraryName == libraryName }) {
+      if (excluded.contains(libraryName) || alreadyHasLibrary(layout, libraryName)) {
         continue
       }
 
@@ -308,6 +308,10 @@ class JarPackager private constructor(private val outputDir: Path, private val c
         })
       }
     }
+  }
+
+  private fun alreadyHasLibrary(layout: BaseLayout, libraryName: String): Boolean {
+    return layout.includedModuleLibraries.any { it.libraryName == libraryName && !it.extraCopy }
   }
 
   private fun mergeLibsByPredicate(jarName: String,

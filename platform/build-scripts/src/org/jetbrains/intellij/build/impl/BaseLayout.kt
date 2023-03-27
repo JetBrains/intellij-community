@@ -165,11 +165,12 @@ sealed class BaseLayout {
    * their module libraries are included in the layout automatically.
    * @param relativeOutputPath target path relative to 'lib' directory
    */
-  fun withModuleLibrary(libraryName: String, moduleName: String, relativeOutputPath: String) {
+  fun withModuleLibrary(libraryName: String, moduleName: String, relativeOutputPath: String, extraCopy: Boolean = false) {
     includedModuleLibraries.add(ModuleLibraryData(
       moduleName = moduleName,
       libraryName = libraryName,
       relativeOutputPath = relativeOutputPath,
+      extraCopy = extraCopy
     ))
   }
 
@@ -189,6 +190,7 @@ data class ModuleLibraryData(
   @JvmField val moduleName: String,
   @JvmField val libraryName: String,
   @JvmField val relativeOutputPath: String = "",
+  @JvmField val extraCopy: Boolean = false // set to true to have library both packed to plugin and copied to plugin as additional JAR
 )
 
 class ModuleItem(
