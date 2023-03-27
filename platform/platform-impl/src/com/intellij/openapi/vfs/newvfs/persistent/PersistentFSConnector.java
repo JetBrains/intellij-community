@@ -128,15 +128,7 @@ final class PersistentFSConnector {
         throw new IOException("Corruption marker file found");
       }
 
-      boolean traceNumeratorOps = ApplicationManager.getApplication().isUnitTestMode() && PlatformUtils.isFleetBackend();
-      if (traceNumeratorOps) {
-        try (Stream<Path> files = Files.list(basePath)) {
-          List<Path> nameEnumeratorFiles =
-            files.filter(p -> p.getFileName().toString().startsWith(namesFile.getFileName().toString())).toList();
-          LOG.info("Existing name enumerator files: " + nameEnumeratorFiles);
-        }
-      }
-
+      logNameEnumeratorFiles(basePath, namesFile);
 
       namesStorage = createFileNamesEnumerator(namesFile);
 
@@ -160,7 +152,7 @@ final class PersistentFSConnector {
 
       //TODO RC: since we bump FSRecords version anyway, I'd like to have completely new Enumerator here:
       //         1. Without legacy issues with null vs 'null' strings
-      //         2. With explicit id in file
+      //         2. With explicit 'id' stored in a file (instead of implicit id=row num)
       //         3. With CopyOnWrite concurrent strategy (hence very cheap .enumerate() for already enumerated values)
       final SimpleStringPersistentEnumerator attributesEnumerator = new SimpleStringPersistentEnumerator(enumeratedAttributesFile);
 
@@ -170,12 +162,26 @@ final class PersistentFSConnector {
       final boolean needInitialization = (recordsStorage.recordsCount() == 0);
 
       if (needInitialization) {
+        final int recordsVersion = recordsStorage.getVersion();
+        if (recordsVersion != 0 && recordsVersion != expectedVersion) {
+          //If records is fresh new => records.version must not be assigned yet => must be 0 then.
+          // If (records.version!=0) && (recordsCount=0) => suspicious case, likely recordsCount=0 not
+          // because storage is fresh new, but because storage format was changed, and recordsCount
+          // was calculated incorrectly => check records format version against expected one, if they are
+          // not equal => throw error, so VFS is rebuild from scratch:
+          throw new IOException(
+            "FS repository detected version(=" + recordsVersion + ") != current version(=" + expectedVersion + ") -> must rebuild VFS");
+        }
         // Create root record:
         final int rootRecordId = recordsStorage.allocateRecord();
-        assert (rootRecordId == FSRecords.ROOT_FILE_ID)
-          : "First record created must have id=" + FSRecords.ROOT_FILE_ID + " but " + rootRecordId + " got";
+        if (rootRecordId != FSRecords.ROOT_FILE_ID) {
+          throw new AssertionError("First record created must have id=" + FSRecords.ROOT_FILE_ID + " but " + rootRecordId + " got instead");
+        }
         recordsStorage.cleanRecord(rootRecordId);
-
+        //TODO RC: if recordsStorage is created anew, but attributes/contentsStorages are not new -> they must be
+        // re-created also, because their current content is stale. But here we don't do it: instead we silently
+        // bump both storages version to the current one, making them _look like_ they are actual, which is
+        // misleading!
         setCurrentVersion(recordsStorage, attributesStorage, contentsStorage, expectedVersion);
       }
       final int version = getVersion(recordsStorage, attributesStorage, contentsStorage);
@@ -340,5 +346,20 @@ final class PersistentFSConnector {
     attributes.setVersion(version);
     contents.setVersion(version);
     records.setConnectionStatus(PersistentFSHeaders.SAFELY_CLOSED_MAGIC);
+  }
+
+  private static void logNameEnumeratorFiles(final Path basePath,
+                                             final Path namesFile) throws IOException {
+    final boolean traceNumeratorOps = ApplicationManager.getApplication().isUnitTestMode()
+                                      && PlatformUtils.isFleetBackend();
+    if (traceNumeratorOps) {
+      final String namesFilePrefix = namesFile.getFileName().toString();
+      try (Stream<Path> files = Files.list(basePath)) {
+        List<Path> nameEnumeratorFiles = files
+          .filter(p -> p.getFileName().toString().startsWith(namesFilePrefix))
+          .toList();
+        LOG.info("Existing name enumerator files: " + nameEnumeratorFiles);
+      }
+    }
   }
 }
