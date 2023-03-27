@@ -156,7 +156,6 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon Csv = load("expui/fileTypes/csv.svg", 1212336484, 2);
     /** 16x16 */ public static final @NotNull Icon Cucumber = load("expui/fileTypes/cucumber.svg", -2118315201, 0);
     /** 16x16 */ public static final @NotNull Icon Diagram = load("expui/fileTypes/diagram.svg", -1430918201, 2);
-    /** 16x16 */ public static final @NotNull Icon Docker = load("expui/fileTypes/docker.svg", -9147095, 0);
     /** 16x16 */ public static final @NotNull Icon Eclipse = load("expui/fileTypes/eclipse.svg", -221390934, 0);
     /** 16x16 */ public static final @NotNull Icon EditorConfig = load("expui/fileTypes/editorConfig.svg", 816356865, 2);
     /** 16x16 */ public static final @NotNull Icon Font = load("expui/fileTypes/font.svg", -609936513, 2);
