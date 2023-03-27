@@ -1,0 +1,50 @@
+<?xml version='1.0'?>
+<list>
+  <option name="MERMAID_DIAGRAM_NAME">
+    <value>
+      <option name="FOREGROUND" value="0033B3"/>
+      <option name="FONT_TYPE" value="3"/>
+    </value>
+  </option>
+  <option name="MERMAID_KEYWORD">
+    <value>
+      <option name="FOREGROUND" value="174AD4"/>
+      <option name="FONT_TYPE" value="2"/>
+    </value>
+  </option>
+  <option name="MERMAID_IDENTIFIER">
+    <value>
+      <option name="FOREGROUND" value="94558D"/>
+    </value>
+  </option>
+  <option name="MERMAID_CONSTANT">
+    <value>
+      <option name="FOREGROUND" value="660099"/>
+    </value>
+  </option>
+  <option name="MERMAID_EDGE">
+    <value>
+      <option name="FOREGROUND" value="008080"/>
+    </value>
+  </option>
+  <option name="MERMAID_NOTE">
+    <value>
+      <option name="BACKGROUND" value="EDFCED"/>
+    </value>
+  </option>
+  <option name="MERMAID_GENERIC">
+    <value>
+      <option name="FOREGROUND" value="007E8A"/>
+    </value>
+  </option>
+  <option name="MERMAID_TITLE">
+    <value>
+      <option name="FOREGROUND" value="007E8A"/>
+    </value>
+  </option>
+  <option name="MERMAID_FRONTMATTER_DELIMITER">
+    <value>
+      <option name="FOREGROUND" value="871094"/>
+    </value>
+  </option>
+</list>

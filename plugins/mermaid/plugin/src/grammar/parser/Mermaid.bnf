@@ -149,7 +149,7 @@ private linkStyleTarget ::= STYLE_TARGET (COMMA STYLE_TARGET)* | DEFAULT
 
 classDefStatement ::= CLASS_DEF (STYLE_TARGET | DEFAULT) styleOptions
 
-flowchartClassStatement ::= CLASS ID (COMMA ID)* STYLE_TARGET
+flowchartClassStatement ::= CLASS CLASS_ID_STYLE (COMMA CLASS_ID_STYLE)* STYLE_TARGET
 
 styleOptions ::= STYLE_OPT COLON STYLE_VAL (COMMA STYLE_OPT COLON STYLE_VAL)*
 
@@ -194,28 +194,28 @@ signalType ::= SOLID_OPEN_ARROW
   | DOTTED_POINT
 
 loopStatement ::= loopHeader EOL+ [sequenceBody] END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
-loopHeader ::= LOOP [complexMessage]
+loopHeader ::= LOOP [complexControlId]
 
 rectStatement ::= rectHeader EOL+ [sequenceBody] END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
-rectHeader ::= RECT [complexMessage]
+rectHeader ::= RECT [complexControlId]
 
 optStatement ::= optHeader EOL+ [sequenceBody] END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
-optHeader ::= OPT [complexMessage]
+optHeader ::= OPT [complexControlId]
 
 breakStatement ::= breakHeader EOL+ [sequenceBody] END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
-breakHeader ::= BREAK [complexMessage]
+breakHeader ::= BREAK [complexControlId]
 
 altStatement ::= altHeader EOL+ [sequenceBody] [EOL* elseSections] END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
-altHeader ::= ALT [complexMessage]
+altHeader ::= ALT [complexControlId]
 
 parStatement ::= parHeader EOL+ [sequenceBody] [EOL* andSections] END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
-parHeader ::= PAR [complexMessage]
+parHeader ::= PAR [complexControlId]
 
 criticalStatement ::= criticalHeader EOL+ [sequenceBody] [EOL* optionSections] END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
-criticalHeader ::= CRITICAL [complexMessage]
+criticalHeader ::= CRITICAL [complexControlId]
 
 boxStatement ::= boxHeader EOL+ [boxBlock] END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
-boxHeader ::= BOX [complexMessage]
+boxHeader ::= BOX [complexControlId]
 boxBlock ::= boxLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
 private boxLines ::= (boxLine | IGNORED) [boxLines]
 private boxLine ::= actorStatement [separator] | separator
@@ -231,17 +231,18 @@ linkStatement ::= LINK complexIdentifier COLON complexMessage
 
 private elseSections ::= elseSection [EOL* elseSections]
 private elseSection ::= elseHeader EOL+ [sequenceBody]
-elseHeader ::= ELSE [complexMessage]
+elseHeader ::= ELSE [complexControlId]
 
 private andSections ::= andSection [EOL* andSections]
 private andSection ::= andHeader EOL+ [sequenceBody]
-andHeader ::= AND [complexMessage]
+andHeader ::= AND [complexControlId]
 
 private optionSections ::= optionSection [EOL* optionSections]
 private optionSection ::= optionHeader EOL+ [sequenceBody]
-optionHeader ::= OPTION [complexMessage]
+optionHeader ::= OPTION [complexControlId]
 
 complexMessage ::= MESSAGE+
+complexControlId ::= CONTROL_ID+
 
 
 classDiagramHeader ::= CLASS_DIAGRAM

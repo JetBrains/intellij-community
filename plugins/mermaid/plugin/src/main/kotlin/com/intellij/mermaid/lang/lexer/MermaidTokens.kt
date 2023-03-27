@@ -339,6 +339,9 @@ object MermaidTokens {
     val STYLE_TARGET = MermaidToken("Flowchart.STYLE_TARGET")
 
     @JvmField
+    val CLASS_ID_STYLE = MermaidToken("Flowchart.CLASS_ID_STYLE")
+
+    @JvmField
     val STYLE_OPT = MermaidToken("Flowchart.STYLE_OPT")
 
     @JvmField
@@ -432,6 +435,9 @@ object MermaidTokens {
 
     @JvmField
     val BOX = MermaidToken("Sequence.BOX")
+
+    @JvmField
+    val CONTROL_ID = MermaidToken("Sequence.CONTROL_ID")
   }
 
   object ClassDiagram {

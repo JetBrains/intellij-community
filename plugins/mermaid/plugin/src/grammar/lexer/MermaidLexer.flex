@@ -55,7 +55,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
 %states flowchart, flowchart_body, node_text, node_quoted_text, link_text, link_quoted_text, direction_value, style, link_style, link_style_target, style_opt, style_value, flowchart_class, flowchart_class_target, flowchart_class_val
 
-%states sequence, sequence_id, sequence_alias, sequence_message, sequence_links, sequence_links_values, autonumbers
+%states sequence, sequence_id, sequence_alias, sequence_message, sequence_control_id, sequence_links, sequence_links_values, autonumbers
 
 %states class_diagram, struct, generic, simple_direction_value, annotation, class_name, class_in_relation, description, class_style_id, class_member
 
@@ -342,7 +342,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [^\S\n\r]+ { yybegin(flowchart_class_target); return WHITE_SPACE; }
 }
 <flowchart_class_target> {
-  [^\s\n\r,;\[({><\^\|]+ { return ID; }
+  [^\s\n\r,;\[({><\^\|]+ { return Flowchart.CLASS_ID_STYLE; }
   "," { return COMMA; }
 
   [^\S\n\r]+ { yybegin(flowchart_class_val); return WHITE_SPACE; }
@@ -364,17 +364,17 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "right of" { return RIGHT_OF; }
   "left of" { return LEFT_OF; }
   "over" { return Sequence.OVER; }
-  "loop" { yybegin(sequence_message); return Sequence.LOOP; }
-  "alt" { yybegin(sequence_message); return Sequence.ALT; }
-  "else" { yybegin(sequence_message); return Sequence.ELSE; }
-  "opt" { yybegin(sequence_message); return Sequence.OPT; }
-  "par" { yybegin(sequence_message); return Sequence.PAR; }
-  "and" { yybegin(sequence_message); return Sequence.AND; }
-  "rect" { yybegin(sequence_message); return Sequence.RECT; }
-  "critical" { yybegin(sequence_message); return Sequence.CRITICAL; }
-  "option" { yybegin(sequence_message); return Sequence.OPTION; }
-  "break" { yybegin(sequence_message); return Sequence.BREAK; }
-  "box"	{ yybegin(sequence_message); return Sequence.BOX; }
+  "loop" { yybegin(sequence_control_id); return Sequence.LOOP; }
+  "alt" { yybegin(sequence_control_id); return Sequence.ALT; }
+  "else" { yybegin(sequence_control_id); return Sequence.ELSE; }
+  "opt" { yybegin(sequence_control_id); return Sequence.OPT; }
+  "par" { yybegin(sequence_control_id); return Sequence.PAR; }
+  "and" { yybegin(sequence_control_id); return Sequence.AND; }
+  "rect" { yybegin(sequence_control_id); return Sequence.RECT; }
+  "critical" { yybegin(sequence_control_id); return Sequence.CRITICAL; }
+  "option" { yybegin(sequence_control_id); return Sequence.OPTION; }
+  "break" { yybegin(sequence_control_id); return Sequence.BREAK; }
+  "box"	{ yybegin(sequence_control_id); return Sequence.BOX; }
   "end" { return END; }
   "autonumber" { yypushstate(autonumbers); return Sequence.AUTONUMBER; }
   "link" { return LINK; }
@@ -404,7 +404,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [\n\r] { yypopstate(); return EOL; }
   \S+ { return BAD_CHARACTER; }
 }
-<sequence_id, sequence_alias, sequence_message, sequence> {
+<sequence_id, sequence_alias, sequence_message, sequence, sequence_control_id> {
   \s?(#[^\n\r]*)/[\n\r]? { yybegin(sequence); return IGNORED; }
   [\n\r] { yybegin(sequence); return EOL; }
   ";" { yybegin(sequence); return SEMICOLON; }
@@ -421,6 +421,10 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 <sequence_message> {
   [^\S\n\r]+ { return WHITE_SPACE; }
   [^#\s;]* { return Sequence.MESSAGE; }
+}
+<sequence_control_id> {
+  [^\S\n\r]+ { return WHITE_SPACE; }
+  [^#\s;]* { return Sequence.CONTROL_ID; }
 }
 <sequence_links> {
   [^\+\->:\s,;]([\-]*[^\+\->:\s,;]+)? { return ID; }

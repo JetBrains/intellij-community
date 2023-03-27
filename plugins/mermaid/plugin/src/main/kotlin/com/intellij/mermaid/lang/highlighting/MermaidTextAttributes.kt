@@ -5,9 +5,15 @@ import com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributes
 
 object MermaidTextAttributes {
   val keyword = createTextAttributesKey("MERMAID_KEYWORD", DefaultLanguageHighlighterColors.KEYWORD)
+  val diagram_name = createTextAttributesKey("MERMAID_DIAGRAM_NAME", keyword)
   val string = createTextAttributesKey("MERMAID_STRING", DefaultLanguageHighlighterColors.STRING)
   val comment = createTextAttributesKey("MERMAID_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT)
   val identifier = createTextAttributesKey("MERMAID_IDENTIFIER", DefaultLanguageHighlighterColors.IDENTIFIER)
   val constant = createTextAttributesKey("MERMAID_CONSTANT", DefaultLanguageHighlighterColors.CONSTANT)
-  val operationSign = createTextAttributesKey("MERMAID_OPERATION_SIGN", DefaultLanguageHighlighterColors.OPERATION_SIGN)
+  val operator = createTextAttributesKey("MERMAID_OPERATOR", DefaultLanguageHighlighterColors.OPERATION_SIGN)
+  val edge = createTextAttributesKey("MERMAID_EDGE", operator)
+  val note = createTextAttributesKey("MERMAID_NOTE", string)
+  val generic = createTextAttributesKey("MERMAID_GENERIC", DefaultLanguageHighlighterColors.IDENTIFIER)
+  val title = createTextAttributesKey("MERMAID_TITLE", string)
+  val frontmatter_delimiter = createTextAttributesKey("MERMAID_FRONTMATTER_DELIMITER", string)
 }

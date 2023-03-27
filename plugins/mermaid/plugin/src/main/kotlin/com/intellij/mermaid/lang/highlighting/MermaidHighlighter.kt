@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 import com.intellij.psi.tree.IElementType
 
-class MermaidHighlighter: SyntaxHighlighterBase() {
+class MermaidHighlighter : SyntaxHighlighterBase() {
   override fun getHighlightingLexer(): Lexer {
     return MermaidLexer()
   }
@@ -42,33 +42,35 @@ class MermaidHighlighter: SyntaxHighlighterBase() {
 
     //region Details
     private fun addPieHighlights(holder: MutableMap<IElementType, TextAttributesKey>) {
-      fillMap(holder, MermaidTextAttributes.keyword, MermaidTokens.Pie.PIE, MermaidTokens.Pie.SHOW_DATA)
+      holder[MermaidTokens.Pie.PIE] = MermaidTextAttributes.diagram_name
+      holder[MermaidTokens.Pie.SHOW_DATA] = MermaidTextAttributes.keyword
     }
 
     private fun addJourneyHighlights(holder: MutableMap<IElementType, TextAttributesKey>) {
-      holder[MermaidTokens.Journey.JOURNEY] = MermaidTextAttributes.keyword
+      holder[MermaidTokens.Journey.JOURNEY] = MermaidTextAttributes.diagram_name
     }
 
     private fun addFlowchartHighlights(holder: MutableMap<IElementType, TextAttributesKey>) {
+      holder[MermaidTokens.Flowchart.FLOWCHART] = MermaidTextAttributes.diagram_name
       fillMap(
         holder,
         MermaidTextAttributes.keyword,
-        MermaidTokens.Flowchart.FLOWCHART,
         MermaidTokens.Flowchart.SUBGRAPH,
         MermaidTokens.Flowchart.STYLE,
         MermaidTokens.Flowchart.STYLE_OPT,
         MermaidTokens.CLASS_DEF
       )
-      holder[MermaidTokens.Flowchart.START_ARROW] = MermaidTextAttributes.operationSign
+      holder[MermaidTokens.Flowchart.START_ARROW] = MermaidTextAttributes.edge
       holder[MermaidTokens.Flowchart.STYLE_VAL] = MermaidTextAttributes.string
       holder[MermaidTokens.Flowchart.STYLE_TARGET] = MermaidTextAttributes.identifier
+      holder[MermaidTokens.Flowchart.LINK_TEXT] = MermaidTextAttributes.note
     }
 
     private fun addSequenceHighlights(holder: MutableMap<IElementType, TextAttributesKey>) {
+      holder[MermaidTokens.Sequence.SEQUENCE] = MermaidTextAttributes.diagram_name
       fillMap(
         holder,
         MermaidTextAttributes.keyword,
-        MermaidTokens.Sequence.SEQUENCE,
         MermaidTokens.Sequence.PARTICIPANT,
         MermaidTokens.Sequence.ACTOR,
         MermaidTokens.Sequence.ACTIVATE,
@@ -91,7 +93,7 @@ class MermaidHighlighter: SyntaxHighlighterBase() {
       )
       fillMap(
         holder,
-        MermaidTextAttributes.operationSign,
+        MermaidTextAttributes.edge,
         MermaidTokens.Sequence.SOLID_ARROW,
         MermaidTokens.Sequence.DOTTED_ARROW,
         MermaidTokens.Sequence.SOLID_OPEN_ARROW,
@@ -101,19 +103,18 @@ class MermaidHighlighter: SyntaxHighlighterBase() {
         MermaidTokens.Sequence.SOLID_POINT,
         MermaidTokens.Sequence.DOTTED_POINT
       )
-      holder[MermaidTokens.Sequence.MESSAGE] = MermaidTextAttributes.string
+      holder[MermaidTokens.Sequence.MESSAGE] = MermaidTextAttributes.note
     }
 
     private fun addClassDiagramHighlights(holder: MutableMap<IElementType, TextAttributesKey>) {
+      holder[MermaidTokens.ClassDiagram.CLASS_DIAGRAM] = MermaidTextAttributes.diagram_name
+      holder[MermaidTokens.ClassDiagram.CLASS_ID] = MermaidTextAttributes.identifier
+      holder[MermaidTokens.ClassDiagram.NOTE_FOR] = MermaidTextAttributes.keyword
+      holder[MermaidTokens.ClassDiagram.GENERIC_TYPE] = MermaidTextAttributes.generic
+
       fillMap(
         holder,
-        MermaidTextAttributes.keyword,
-        MermaidTokens.ClassDiagram.CLASS_DIAGRAM,
-        MermaidTokens.ClassDiagram.CLASS_ID
-      )
-      fillMap(
-        holder,
-        MermaidTextAttributes.operationSign,
+        MermaidTextAttributes.edge,
         MermaidTokens.ClassDiagram.EXTENSION_START,
         MermaidTokens.ClassDiagram.EXTENSION_END,
         MermaidTokens.ClassDiagram.DEPENDENCY_START,
@@ -127,19 +128,15 @@ class MermaidHighlighter: SyntaxHighlighterBase() {
     }
 
     private fun addStateDiagramHighlights(holder: MutableMap<IElementType, TextAttributesKey>) {
-      fillMap(
-        holder,
-        MermaidTextAttributes.keyword,
-        MermaidTokens.StateDiagram.STATE_DIAGRAM,
-        MermaidTokens.StateDiagram.STATE
-      )
+      holder[MermaidTokens.StateDiagram.STATE_DIAGRAM] = MermaidTextAttributes.diagram_name
+      holder[MermaidTokens.StateDiagram.STATE] = MermaidTextAttributes.keyword
     }
 
     private fun addEntityRelationshipHighlights(holder: MutableMap<IElementType, TextAttributesKey>) {
-      holder[MermaidTokens.EntityRelationship.ENTITY_RELATIONSHIP] = MermaidTextAttributes.keyword
+      holder[MermaidTokens.EntityRelationship.ENTITY_RELATIONSHIP] = MermaidTextAttributes.diagram_name
       fillMap(
         holder,
-        MermaidTextAttributes.operationSign,
+        MermaidTextAttributes.edge,
         MermaidTokens.EntityRelationship.ZERO_OR_ONE,
         MermaidTokens.EntityRelationship.ONE_OR_MORE,
         MermaidTokens.EntityRelationship.ZERO_OR_MORE,
@@ -151,14 +148,14 @@ class MermaidHighlighter: SyntaxHighlighterBase() {
     }
 
     private fun addGantDiagramHighlights(holder: MutableMap<IElementType, TextAttributesKey>) {
-      holder[MermaidTokens.Gantt.GANTT] = MermaidTextAttributes.keyword
+      holder[MermaidTokens.Gantt.GANTT] = MermaidTextAttributes.diagram_name
     }
 
     private fun addRequirementDiagramHighlights(holder: MutableMap<IElementType, TextAttributesKey>) {
+      holder[MermaidTokens.Requirement.REQUIREMENT_DIAGRAM] = MermaidTextAttributes.diagram_name
       fillMap(
         holder,
         MermaidTextAttributes.keyword,
-        MermaidTokens.Requirement.REQUIREMENT_DIAGRAM,
         MermaidTokens.Requirement.REQUIREMENT,
         MermaidTokens.Requirement.FUNCTIONAL_REQUIREMENT,
         MermaidTokens.Requirement.INTERFACE_REQUIREMENT,
@@ -191,7 +188,7 @@ class MermaidHighlighter: SyntaxHighlighterBase() {
       )
       fillMap(
         holder,
-        MermaidTextAttributes.operationSign,
+        MermaidTextAttributes.edge,
         MermaidTokens.Requirement.ARROW_LEFT,
         MermaidTokens.Requirement.ARROW_RIGHT,
         MermaidTokens.Requirement.REQ_LINE
@@ -199,21 +196,18 @@ class MermaidHighlighter: SyntaxHighlighterBase() {
     }
 
     private fun addGitGraphHighlights(holder: MutableMap<IElementType, TextAttributesKey>) {
+      holder[MermaidTokens.GitGraph.GIT_GRAPH] = MermaidTextAttributes.diagram_name
       fillMap(
         holder,
         MermaidTextAttributes.keyword,
-        MermaidTokens.Requirement.REQUIREMENT_DIAGRAM,
-        MermaidTokens.Requirement.REQUIREMENT,
-        MermaidTokens.Requirement.FUNCTIONAL_REQUIREMENT,
-        MermaidTokens.Requirement.INTERFACE_REQUIREMENT,
-        MermaidTokens.Requirement.PERFORMANCE_REQUIREMENT,
-        MermaidTokens.Requirement.PHYSICAL_REQUIREMENT,
-        MermaidTokens.Requirement.DESIGN_CONSTRAINT,
-        MermaidTokens.Requirement.ELEMENT,
-        MermaidTokens.Requirement.TEXT,
-        MermaidTokens.Requirement.RISK,
-        MermaidTokens.Requirement.VERIFY_METHOD,
-        MermaidTokens.Requirement.DOCREF
+        MermaidTokens.GitGraph.COMMIT,
+        MermaidTokens.GitGraph.BRANCH,
+        MermaidTokens.GitGraph.CHECKOUT,
+        MermaidTokens.GitGraph.MERGE,
+        MermaidTokens.GitGraph.TAG,
+        MermaidTokens.GitGraph.MSG,
+        MermaidTokens.GitGraph.CHERRY_PICK,
+        MermaidTokens.GitGraph.ORDER
       )
       fillMap(
         holder,
@@ -227,12 +221,16 @@ class MermaidHighlighter: SyntaxHighlighterBase() {
     private fun addC4Highlights(holder: MutableMap<IElementType, TextAttributesKey>) {
       fillMap(
         holder,
-        MermaidTextAttributes.keyword,
+        MermaidTextAttributes.diagram_name,
         MermaidTokens.C4.C4_CONTEXT,
         MermaidTokens.C4.C4_CONTAINER,
         MermaidTokens.C4.C4_COMPONENT,
         MermaidTokens.C4.C4_DYNAMIC,
-        MermaidTokens.C4.C4_DEPLOYMENT,
+        MermaidTokens.C4.C4_DEPLOYMENT
+      )
+      fillMap(
+        holder,
+        MermaidTextAttributes.keyword,
         MermaidTokens.C4.PERSON_EXT,
         MermaidTokens.C4.PERSON,
         MermaidTokens.C4.SYSTEM_EXT_QUEUE,
@@ -273,11 +271,11 @@ class MermaidHighlighter: SyntaxHighlighterBase() {
         MermaidTokens.C4.UPDATE_LAYOUT_CONFIG
       )
       holder[MermaidTokens.C4.C4_ATTRIBUTE] = MermaidTextAttributes.identifier
-      holder[MermaidTokens.C4.EQUALITY] = MermaidTextAttributes.operationSign
+      holder[MermaidTokens.C4.EQUALITY] = MermaidTextAttributes.operator
     }
 
     private fun addMindmapHighlights(holder: MutableMap<IElementType, TextAttributesKey>) {
-      holder[MermaidTokens.Mindmap.MINDMAP] = MermaidTextAttributes.keyword
+      holder[MermaidTokens.Mindmap.MINDMAP] = MermaidTextAttributes.diagram_name
       fillMap(
         holder,
         MermaidTextAttributes.string,
@@ -286,7 +284,7 @@ class MermaidHighlighter: SyntaxHighlighterBase() {
       )
       fillMap(
         holder,
-        MermaidTextAttributes.operationSign,
+        MermaidTextAttributes.operator,
         MermaidTokens.Mindmap.NODE_DESCR_START,
         MermaidTokens.Mindmap.NODE_DESCR_END,
         MermaidTokens.Mindmap.OPEN_ICON,
@@ -295,7 +293,7 @@ class MermaidHighlighter: SyntaxHighlighterBase() {
     }
 
     private fun addTimelineHighlights(holder: MutableMap<IElementType, TextAttributesKey>) {
-      holder[MermaidTokens.Timeline.TIMELINE] = MermaidTextAttributes.keyword
+      holder[MermaidTokens.Timeline.TIMELINE] = MermaidTextAttributes.diagram_name
     }
 
     private fun addBaseHighlights(holder: MutableMap<IElementType, TextAttributesKey>) {
@@ -320,16 +318,18 @@ class MermaidHighlighter: SyntaxHighlighterBase() {
       fillMap(
         holder,
         MermaidTextAttributes.string,
-        MermaidTokens.TITLE_VALUE,
         MermaidTokens.DOUBLE_QUOTE,
         MermaidTokens.STRING_VALUE,
         MermaidTokens.ALIAS,
         MermaidTokens.LABEL,
-        MermaidTokens.SECTION_TITLE,
         MermaidTokens.TASK_NAME,
         MermaidTokens.ACC_TITLE_VALUE,
+        MermaidTokens.ACC_DESCR_VALUE,
         MermaidTokens.ACC_DESCR_MULTILINE_VALUE
       )
+
+      holder[MermaidTokens.TITLE_VALUE] = MermaidTextAttributes.title
+      holder[MermaidTokens.NOTE_CONTENT] = MermaidTextAttributes.note
       fillMap(
         holder,
         MermaidTextAttributes.comment,
@@ -340,20 +340,21 @@ class MermaidHighlighter: SyntaxHighlighterBase() {
         holder,
         MermaidTextAttributes.identifier,
         MermaidTokens.ID,
-        MermaidTokens.ATTRIBUTE_WORD
+        MermaidTokens.SECTION_TITLE,
       )
       fillMap(
         holder,
-        MermaidTextAttributes.operationSign,
+        MermaidTextAttributes.operator,
         MermaidTokens.PLUS,
         MermaidTokens.MINUS,
         MermaidTokens.TILDA,
         MermaidTokens.STAR,
         MermaidTokens.POUND,
         MermaidTokens.DOLLAR,
-        MermaidTokens.STYLE_SEPARATOR,
-        MermaidTokens.ARROW
+        MermaidTokens.STYLE_SEPARATOR
       )
+
+      holder[MermaidTokens.ARROW] = MermaidTextAttributes.edge
       fillMap(
         holder,
         MermaidTextAttributes.constant,
@@ -361,6 +362,12 @@ class MermaidHighlighter: SyntaxHighlighterBase() {
         MermaidTokens.ANNOTATION_START,
         MermaidTokens.ANNOTATION_VALUE,
         MermaidTokens.ANNOTATION_END
+      )
+      fillMap(
+        holder,
+        MermaidTextAttributes.frontmatter_delimiter,
+        MermaidTokens.Frontmatter.FRONTMATTER_START,
+        MermaidTokens.Frontmatter.FRONTMATTER_END,
       )
     }
     //endregion

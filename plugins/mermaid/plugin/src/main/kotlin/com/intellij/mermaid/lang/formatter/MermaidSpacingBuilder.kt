@@ -99,6 +99,8 @@ internal object MermaidSpacingBuilder {
 
     return SpacingBuilder(settings, MermaidLanguage)
       // Direction / common
+      .between(MermaidTokens.COMMA, MermaidTokens.Flowchart.STYLE_TARGET).spaceIf(false)
+      .between(MermaidTokens.COMMA, MermaidTokens.Flowchart.CLASS_ID_STYLE).spaceIf(false)
       .before(MermaidTokens.OPEN_CURLY).spaces(1)
       .before(MermaidTokens.COMMA).spaceIf(false)
       .after(MermaidTokens.COMMA).spaceIf(true)
@@ -132,6 +134,7 @@ internal object MermaidSpacingBuilder {
       .before(MermaidTokens.Flowchart.SEP).spaceIf(false)
       // Sequence
       .around(MermaidTokens.Sequence.MESSAGE).spaces(1)
+      .around(MermaidTokens.Sequence.CONTROL_ID).spaces(1)
       .after(SEQUENCE_KEYWORDS_SPACE_AFTER).spaces(1)
       .before(SEQUENCE_KEYWORDS_SPACE_BEFORE).spaces(1)
       .around(MermaidElements.SIGNAL).spaces(1)
