@@ -159,38 +159,22 @@ final class PersistentFSConnector {
 
       recordsStorage = PersistentFSRecordsStorageFactory.createStorage(recordsFile);
 
+      ensureConsistentVersion(expectedVersion, attributesStorage, contentsStorage, recordsStorage);
+
       final boolean needInitialization = (recordsStorage.recordsCount() == 0);
 
       if (needInitialization) {
-        final int recordsVersion = recordsStorage.getVersion();
-        if (recordsVersion != 0 && recordsVersion != expectedVersion) {
-          //If records is fresh new => records.version must not be assigned yet => must be 0 then.
-          // If (records.version!=0) && (recordsCount=0) => suspicious case, likely recordsCount=0 not
-          // because storage is fresh new, but because storage format was changed, and recordsCount
-          // was calculated incorrectly => check records format version against expected one, if they are
-          // not equal => throw error, so VFS is rebuild from scratch:
-          throw new IOException(
-            "FS repository detected version(=" + recordsVersion + ") != current version(=" + expectedVersion + ") -> must rebuild VFS");
-        }
         // Create root record:
         final int rootRecordId = recordsStorage.allocateRecord();
         if (rootRecordId != FSRecords.ROOT_FILE_ID) {
           throw new AssertionError("First record created must have id=" + FSRecords.ROOT_FILE_ID + " but " + rootRecordId + " got instead");
         }
         recordsStorage.cleanRecord(rootRecordId);
-        //TODO RC: if recordsStorage is created anew, but attributes/contentsStorages are not new -> they must be
-        // re-created also, because their current content is stale. But here we don't do it: instead we silently
-        // bump both storages version to the current one, making them _look like_ they are actual, which is
-        // misleading!
-        setCurrentVersion(recordsStorage, attributesStorage, contentsStorage, expectedVersion);
       }
-      final int version = getVersion(recordsStorage, attributesStorage, contentsStorage);
-      if (version != expectedVersion) {
-        throw new IOException("FS repository version mismatch: actual=" + version + " expected=" + expectedVersion);
-      }
-
-      if (recordsStorage.getConnectionStatus() != PersistentFSHeaders.SAFELY_CLOSED_MAGIC) {
-        throw new IOException("FS repository wasn't safely shut down");
+      else {
+        if (recordsStorage.getConnectionStatus() != PersistentFSHeaders.SAFELY_CLOSED_MAGIC) {
+          throw new IOException("FS repository wasn't safely shut down");
+        }
       }
 
       final IntList freeRecords = new IntArrayList();
@@ -244,6 +228,32 @@ final class PersistentFSConnector {
       }
 
       throw e;
+    }
+  }
+
+  private static void ensureConsistentVersion(final int currentImplVersion,
+                                              final @NotNull AbstractAttributesStorage attributesStorage,
+                                              final @NotNull RefCountingContentStorage contentsStorage,
+                                              final @NotNull PersistentFSRecordsStorage recordsStorage) throws IOException {
+    if (currentImplVersion == 0) {
+      throw new IllegalArgumentException("currentImplVersion(=" + currentImplVersion + ") must be != 0");
+    }
+    //Versions of different storages should be either all set, and all == currentImplementationVersion,
+    // or none set at all (& storages are all fresh & empty) -- everything but that is a version mismatch
+    // and a trigger for VFS rebuild:
+
+    final int commonVersion = commonVersionIfExists(recordsStorage, attributesStorage, contentsStorage);
+
+    if (commonVersion != currentImplVersion) {
+      //MAYBE RC: better check !empty not only recordsStorage, but attributesStorage & contentsStorage as well
+      final boolean storageIsEmpty = (recordsStorage.recordsCount() == 0);
+      if (commonVersion == 0 && storageIsEmpty) {
+        //all storages are fresh new => assign their versions to the current one:
+        setCurrentVersion(recordsStorage, attributesStorage, contentsStorage, currentImplVersion);
+        return;
+      }
+      throw new IOException(
+        "FS repository detected version(=" + commonVersion + ") != current version(=" + currentImplVersion + ") -> VFS needs rebuild");
     }
   }
 
@@ -315,7 +325,8 @@ final class PersistentFSConnector {
 
   private static void loadFreeRecordsAndInvertedNameIndex(final @NotNull PersistentFSRecordsStorage records,
                                                           final @NotNull /*OutParam*/ IntList freeFileIds,
-                                                          final @NotNull /*OutParam*/ InvertedNameIndex invertedNameIndexToFill) throws IOException {
+                                                          final @NotNull /*OutParam*/ InvertedNameIndex invertedNameIndexToFill)
+    throws IOException {
     final long startedAtNs = System.nanoTime();
     records.processAllRecords((fileId, nameId, flags, parentId, corrupted) -> {
       if (hasDeletedFlag(flags)) {
@@ -328,10 +339,10 @@ final class PersistentFSConnector {
     LOG.info(TimeoutUtil.getDurationMillis(startedAtNs) + " ms to load free records and inverted name index");
   }
 
-  /** @return consistent version of all 3 storages, or -1, if their versions are differ (i.e. inconsistent) */
-  private static int getVersion(final @NotNull PersistentFSRecordsStorage records,
-                                final @NotNull AbstractAttributesStorage attributes,
-                                final @NotNull RefCountingContentStorage contents) throws IOException {
+  /** @return common version of all 3 storages, or -1, if their versions are differ (i.e. inconsistent) */
+  private static int commonVersionIfExists(final @NotNull PersistentFSRecordsStorage records,
+                                           final @NotNull AbstractAttributesStorage attributes,
+                                           final @NotNull RefCountingContentStorage contents) throws IOException {
     final int recordsVersion = records.getVersion();
     if (attributes.getVersion() != recordsVersion || contents.getVersion() != recordsVersion) return -1;
 
