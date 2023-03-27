@@ -31,7 +31,7 @@ class DebugRunConfigurationCommand(text: String, line: Int) : AbstractCallbackBa
   override fun execute(callback: ActionCallback, context: PlaybackContext) {
     val arguments = extractCommandList(PREFIX, ",")
     if (arguments.size < 2) {
-      callback.reject("Usage %debugStep <configuration_name> <timeout_in_seconds>")
+      callback.reject("Usage %debugStep &lt;configuration_name&gt; &lt;timeout_in_seconds&gt;")
       return
     }
     val configurationNameToRun = arguments[0]
