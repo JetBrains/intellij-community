@@ -9,11 +9,15 @@ import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.util.ActionCallback
+import com.intellij.openapi.util.Ref
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerManagerListener
+import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.utils.AbstractCallbackBasedCommand
+import io.opentelemetry.api.trace.Span
+import io.opentelemetry.context.Scope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -46,6 +50,10 @@ class DebugRunConfigurationCommand(text: String, line: Int) : AbstractCallbackBa
       return
     }
 
+    val spanBuilder = PerformanceTestSpan.TRACER.spanBuilder(DebugStepCommand.SPAN_NAME).setParent(PerformanceTestSpan.getContext())
+    val spanRef = Ref<Span>()
+    val scopeRef = Ref<Scope>()
+
     val connection = context.project.messageBus.connect()
     var job: Job
     connection.subscribe(XDebuggerManager.TOPIC, object : XDebuggerManagerListener {
@@ -62,6 +70,8 @@ class DebugRunConfigurationCommand(text: String, line: Int) : AbstractCallbackBa
           override fun sessionPaused() {
             super.sessionPaused()
             callback.setDone()
+            spanRef.get().end()
+            scopeRef.get().close()
             connection.disconnect()
             job.cancel()
           }
@@ -71,6 +81,8 @@ class DebugRunConfigurationCommand(text: String, line: Int) : AbstractCallbackBa
 
     WriteAction.runAndWait<IOException> {
       val runnerAndConfigurationSettings = RunnerAndConfigurationSettingsImpl(runManager, configurationToRun)
+      spanRef.set(spanBuilder.startSpan())
+      scopeRef.set(spanRef.get().makeCurrent())
       ExecutionManager.getInstance(context.project).restartRunProfile(context.project, DefaultDebugExecutor(),
                                                                       DefaultExecutionTarget.INSTANCE, runnerAndConfigurationSettings,
                                                                       null)
@@ -79,5 +91,6 @@ class DebugRunConfigurationCommand(text: String, line: Int) : AbstractCallbackBa
 
   companion object {
     const val PREFIX: @NonNls String = CMD_PREFIX + "debugRunConfiguration"
+    const val SPAN_NAME: @NonNls String = "debugRunConfiguration"
   }
 }

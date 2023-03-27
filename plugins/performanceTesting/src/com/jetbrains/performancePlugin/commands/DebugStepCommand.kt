@@ -3,9 +3,13 @@ package com.jetbrains.performancePlugin.commands
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.util.ActionCallback
+import com.intellij.openapi.util.Ref
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.XDebuggerManager
+import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.utils.AbstractCallbackBasedCommand
+import io.opentelemetry.api.trace.Span
+import io.opentelemetry.context.Scope
 import org.jetbrains.annotations.NonNls
 import java.io.IOException
 
@@ -13,6 +17,12 @@ class DebugStepCommand(text: String, line: Int) : AbstractCallbackBasedCommand(t
   override fun execute(callback: ActionCallback, context: PlaybackContext) {
     val debugStepType = extractCommandArgument(PREFIX)
     val debugSessions = XDebuggerManager.getInstance(context.project).debugSessions
+
+    val spanBuilder = PerformanceTestSpan.TRACER.spanBuilder(SPAN_NAME + "_" + debugStepType.lowercase()).setParent(
+      PerformanceTestSpan.getContext())
+    val spanRef = Ref<Span>()
+    val scopeRef = Ref<Scope>()
+
     if (debugSessions.isEmpty()) {
       callback.reject("Debug process was not started")
       return
@@ -26,16 +36,31 @@ class DebugStepCommand(text: String, line: Int) : AbstractCallbackBasedCommand(t
       override fun sessionPaused() {
         super.sessionPaused()
         callback.setDone()
+        spanRef.get().end()
+        scopeRef.get().close()
       }
     })
 
     WriteAction.runAndWait<IOException> {
       when (debugStepType) {
-        "OVER" -> debugSessions[0].stepOver(false)
-        "INTO" -> debugSessions[0].stepInto()
-        "OUT" -> debugSessions[0].stepOut()
+        "OVER" -> {
+          spanRef.set(spanBuilder.startSpan())
+          scopeRef.set(spanRef.get().makeCurrent())
+          debugSessions[0].stepOver(false)
+        }
+        "INTO" -> {
+          spanRef.set(spanBuilder.startSpan())
+          scopeRef.set(spanRef.get().makeCurrent())
+          debugSessions[0].stepInto()
+        }
+        "OUT" -> {
+          spanRef.set(spanBuilder.startSpan())
+          scopeRef.set(spanRef.get().makeCurrent())
+          debugSessions[0].stepOut()
+        }
         else -> {
           callback.reject("Unknown special character. Please use: OVER, INTO or OUT")
+          return@runAndWait
         }
       }
     }
@@ -43,5 +68,6 @@ class DebugStepCommand(text: String, line: Int) : AbstractCallbackBasedCommand(t
 
   companion object {
     const val PREFIX: @NonNls String = CMD_PREFIX + "debugStep"
+    const val SPAN_NAME: @NonNls String = "debugStep"
   }
 }
