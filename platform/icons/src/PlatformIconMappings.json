@@ -160,7 +160,6 @@
       "patch.svg": "vcs/patch_file.svg",
       "properties.svg": "fileTypes/properties.svg",
       "protobuf.svg": "protoFile.png",
-      "python.svg": "icons/com/jetbrains/python/pythonFile.svg",
       "react.svg": "org/jetbrains/kotlin/idea/icons/wizard/react.svg",
       "scala.svg": "org/jetbrains/plugins/scala/images/scala16.png",
       "scratch.svg": "actions/scratch.svg",
@@ -623,8 +622,7 @@
       "debug.svg": "toolwindows/toolWindowDebugger.svg",
       "dependencies.svg": [
         "icons/artifact.svg",
-        "icons/artifactSmall.svg",
-        "icons/com/jetbrains/python/pythonPackages.svg"
+        "icons/artifactSmall.svg"
       ],
       "documentation.svg": "toolwindows/documentation.svg",
       "find.svg": "toolwindows/toolWindowFind.svg",
