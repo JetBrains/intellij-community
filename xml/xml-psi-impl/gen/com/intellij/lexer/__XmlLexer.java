@@ -293,12 +293,13 @@ public class __XmlLexer implements FlexLexer {
     "\1\3\1\10\4\11\1\12\1\13\1\14\1\13\1\15"+
     "\1\16\1\17\1\20\1\17\1\21\1\17\1\22\1\17"+
     "\1\23\1\24\2\23\1\14\3\23\2\3\1\25\2\12"+
-    "\1\3\2\1\4\26\1\13\1\26\1\27\10\0\1\30"+
-    "\1\31\1\32\1\6\1\0\1\10\1\33\1\10\1\12"+
-    "\2\0\1\16\6\0\2\12\2\0\1\34\1\0\1\35"+
-    "\1\36\3\0\1\37\10\0\1\40\1\41\1\42\1\43"+
-    "\1\44\2\12\1\45\1\46\2\0\1\47\2\0\2\12"+
-    "\2\0\2\12\2\0\1\50\1\51\4\0\1\52\1\53";
+    "\1\3\2\1\4\26\1\13\1\26\1\27\1\30\7\0"+
+    "\1\31\1\32\1\33\1\6\1\0\1\10\1\34\1\10"+
+    "\1\12\2\0\1\16\1\35\1\0\1\35\3\0\2\12"+
+    "\2\0\1\36\1\0\1\37\1\30\3\0\1\40\10\0"+
+    "\1\41\1\42\1\43\1\35\1\44\2\12\1\45\1\46"+
+    "\2\0\1\47\2\0\2\12\2\0\2\12\2\0\1\50"+
+    "\1\51\4\0\1\52\1\53";
 
   private static int [] zzUnpackAction() {
     int [] result = new int[147];
@@ -504,11 +505,11 @@ public class __XmlLexer implements FlexLexer {
     "\1\1\16\0\7\1\1\11\4\1\1\11\3\1\1\11"+
     "\4\1\1\11\2\1\1\11\1\1\2\11\1\1\1\11"+
     "\1\1\1\11\1\1\2\11\10\1\1\11\3\1\1\11"+
-    "\1\1\1\11\5\1\1\11\10\0\3\11\1\1\1\0"+
-    "\1\1\1\11\2\1\2\0\1\1\6\0\2\1\2\0"+
-    "\1\11\1\0\2\11\3\0\1\11\10\0\1\1\4\11"+
-    "\2\1\2\11\2\0\1\11\2\0\2\1\2\0\2\1"+
-    "\2\0\2\1\4\0\2\11";
+    "\1\1\1\11\5\1\1\11\1\1\7\0\3\11\1\1"+
+    "\1\0\1\1\1\11\2\1\2\0\2\1\1\0\1\1"+
+    "\3\0\2\1\2\0\1\11\1\0\2\11\3\0\1\11"+
+    "\10\0\1\1\4\11\2\1\2\11\2\0\1\11\2\0"+
+    "\2\1\2\0\2\1\2\0\2\1\4\0\2\11";
 
   private static int [] zzUnpackAttribute() {
     int [] result = new int[147];
@@ -977,65 +978,65 @@ public class __XmlLexer implements FlexLexer {
           // fall through
           case 66: break;
           case 24:
-            { yybegin(END_TAG); return XmlTokenType.XML_END_TAG_START;
+            { return elTokenType;
             }
           // fall through
           case 67: break;
           case 25:
-            { yybegin(PROCESSING_INSTRUCTION); return XmlTokenType.XML_PI_START;
+            { yybegin(END_TAG); return XmlTokenType.XML_END_TAG_START;
             }
           // fall through
           case 68: break;
           case 26:
-            { yybegin(YYINITIAL); return XmlTokenType.XML_EMPTY_ELEMENT_END;
+            { yybegin(PROCESSING_INSTRUCTION); return XmlTokenType.XML_PI_START;
             }
           // fall through
           case 69: break;
           case 27:
-            { yybegin(YYINITIAL); return XmlTokenType.XML_PI_END;
+            { yybegin(YYINITIAL); return XmlTokenType.XML_EMPTY_ELEMENT_END;
             }
           // fall through
           case 70: break;
           case 28:
-            { return XmlElementType.XML_MARKUP_DECL;
+            { yybegin(YYINITIAL); return XmlTokenType.XML_PI_END;
             }
           // fall through
           case 71: break;
           case 29:
-            { yybegin(COMMENT); return XmlTokenType.XML_CONDITIONAL_COMMENT_START_END;
+            { return elTokenType2;
             }
           // fall through
           case 72: break;
           case 30:
-            { return elTokenType;
+            { return XmlElementType.XML_MARKUP_DECL;
             }
           // fall through
           case 73: break;
           case 31:
-            { return XmlTokenType.XML_ENTITY_REF_TOKEN;
+            { yybegin(COMMENT); return XmlTokenType.XML_CONDITIONAL_COMMENT_START_END;
             }
           // fall through
           case 74: break;
           case 32:
-            { yybegin(ATTR_LIST); pushState(PROCESSING_INSTRUCTION); return XmlTokenType.XML_NAME;
+            { return XmlTokenType.XML_ENTITY_REF_TOKEN;
             }
           // fall through
           case 75: break;
           case 33:
-            { yybegin(YYINITIAL); return XmlTokenType.XML_COMMENT_END;
+            { yybegin(ATTR_LIST); pushState(PROCESSING_INSTRUCTION); return XmlTokenType.XML_NAME;
             }
           // fall through
           case 76: break;
           case 34:
-            { if (myConditionalCommentsSupport) {
-    yybegin(C_COMMENT_END);
-    return XmlTokenType.XML_CONDITIONAL_COMMENT_END_START;
-  } else return XmlTokenType.XML_COMMENT_CHARACTERS;
+            { yybegin(YYINITIAL); return XmlTokenType.XML_COMMENT_END;
             }
           // fall through
           case 77: break;
           case 35:
-            { return elTokenType2;
+            { if (myConditionalCommentsSupport) {
+    yybegin(C_COMMENT_END);
+    return XmlTokenType.XML_CONDITIONAL_COMMENT_END_START;
+  } else return XmlTokenType.XML_COMMENT_CHARACTERS;
             }
           // fall through
           case 78: break;

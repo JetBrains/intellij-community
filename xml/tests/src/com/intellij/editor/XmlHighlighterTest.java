@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.editor;
 
 import com.intellij.ide.highlighter.XHtmlFileType;
@@ -19,6 +19,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.propertyBased.CheckHighlighterConsistency;
 
 import java.util.List;
 
@@ -69,6 +70,19 @@ public class XmlHighlighterTest extends LightJavaCodeInsightTestCase {
                        "</html:form>", XHtmlFileType.INSTANCE);
 
     runTest(() -> doc.insertString(offset, "\n"));
+  }
+
+  public void testWrappedWithEL() {
+    // Found by XmlCodeInsightSanityTest.testIncrementalHighlighterUpdate
+    configure("<idea-plugin><name>Remote", " Interpreter</name></idea-plugin>", XmlFileType.INSTANCE);
+
+    Runnable action = () -> {
+      // Wrapping ' Interpreter'. Note space in front
+      doc.insertString(offset, "${");
+      doc.insertString(offset + 14, "}");
+    };
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(action), "", null);
+    CheckHighlighterConsistency.performCheck(editor);
   }
 
   public void testUnclosedCommentAtEnd() {

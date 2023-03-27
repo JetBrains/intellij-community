@@ -131,7 +131,7 @@ CONDITIONAL_COMMENT_CONDITION=({ALPHA})({ALPHA}|{S}|{DIGIT}|"."|"("|")"|"|"|"!"|
 <PI_ANY> {S} { return XmlTokenType.XML_WHITE_SPACE; }
 <PI_ANY> [^] { return XmlTokenType.XML_TAG_CHARACTERS; }
 
-<YYINITIAL> {EL_EMBEDMENT_START} [^<\}]* "}" {
+<YYINITIAL> {EL_EMBEDMENT_START} [^<\}]* "}"? {
   return elTokenType;
 }
 
@@ -153,7 +153,7 @@ CONDITIONAL_COMMENT_CONDITION=({ALPHA})({ALPHA}|{S}|{DIGIT}|"."|"("|")"|"|"|"!"|
 <ATTR_VALUE_DQ>{
   "\"" { yybegin(ATTR_LIST); return XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER;}
   "&" { return XmlTokenType.XML_BAD_CHARACTER; }
-  {EL_EMBEDMENT_START} [^\}\"]* "}" { return elTokenType2; }
+  {EL_EMBEDMENT_START} [^\}\"]* "}"? { return elTokenType2; }
   "%=" [^%\"]* "%" { return javaEmbeddedTokenType; }
   [^] { return XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN;}
 }
@@ -161,7 +161,7 @@ CONDITIONAL_COMMENT_CONDITION=({ALPHA})({ALPHA}|{S}|{DIGIT}|"."|"("|")"|"|"|"!"|
 <ATTR_VALUE_SQ>{
   "&" { return XmlTokenType.XML_BAD_CHARACTER; }
   "'" { yybegin(ATTR_LIST); return XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER;}
-  {EL_EMBEDMENT_START} [^\}\']* "}" { return elTokenType2; }
+  {EL_EMBEDMENT_START} [^\}\']* "}"? { return elTokenType2; }
   "%=" [^%\']* "%" { return javaEmbeddedTokenType; }
   [^] { return XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN;}
 }
