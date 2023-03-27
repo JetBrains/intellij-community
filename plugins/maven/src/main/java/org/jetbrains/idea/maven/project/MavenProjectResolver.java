@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -242,7 +243,7 @@ public class MavenProjectResolver {
     if (mavenProjects.isEmpty()) return;
 
 
-    var baseDir = MavenUtil.getBaseDir(sortAndGetFirst(mavenProjects).getDirectoryFile()).toString();
+    var baseDir = MavenUtil.getBaseDir(sortAndGetFirst(mavenProjects).first.getDirectoryFile()).toString();
 
     resolvePluginsBulk(baseDir,
                        mavenProjects,
@@ -263,7 +264,7 @@ public class MavenProjectResolver {
     if (mavenProjects.isEmpty()) return;
 
 
-    process.setText(MavenProjectBundle.message("maven.downloading.pom.plugins", sortAndGetFirst(mavenProjects).getDisplayName()));
+    process.setText(MavenProjectBundle.message("maven.downloading.pom.plugins", sortAndGetFirst(mavenProjects).first.getDisplayName()));
 
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_PLUGINS_RESOLVE, baseDir);
     embedder.customizeForResolve(console, process, forceUpdateSnapshots);
@@ -306,12 +307,28 @@ public class MavenProjectResolver {
     @NotNull Collection<Pair<MavenProject, NativeMavenProjectHolder>> mavenProjects
   ) {
     var mavenPluginIdsToResolve = new HashSet<Pair<MavenId, NativeMavenProjectHolder>>();
-    for (var projectData : mavenProjects) {
-      var mavenProject = projectData.first;
-      var nativeMavenProject = projectData.second;
 
-      for (MavenPlugin mavenPlugin : mavenProject.getDeclaredPlugins()) {
-        mavenPluginIdsToResolve.add(Pair.create(mavenPlugin.getMavenId(), nativeMavenProject));
+    if (Registry.is("maven.plugins.use.cache")) {
+      var pluginIdsToProjects = new HashMap<MavenId, List<Pair<MavenProject, NativeMavenProjectHolder>>>();
+      for (var projectData : mavenProjects) {
+        var mavenProject = projectData.first;
+        for (MavenPlugin mavenPlugin : mavenProject.getDeclaredPlugins()) {
+          var mavenPluginId = mavenPlugin.getMavenId();
+          pluginIdsToProjects.putIfAbsent(mavenPluginId, new ArrayList<>());
+          pluginIdsToProjects.get(mavenPluginId).add(projectData);
+        }
+      }
+      for (var entry : pluginIdsToProjects.entrySet()) {
+        mavenPluginIdsToResolve.add(Pair.create(entry.getKey(), sortAndGetFirst(entry.getValue()).second));
+      }
+    }
+    else {
+      for (var projectData : mavenProjects) {
+        var mavenProject = projectData.first;
+        var nativeMavenProject = projectData.second;
+        for (MavenPlugin mavenPlugin : mavenProject.getDeclaredPlugins()) {
+          mavenPluginIdsToResolve.add(Pair.create(mavenPlugin.getMavenId(), nativeMavenProject));
+        }
       }
     }
     return mavenPluginIdsToResolve;
@@ -405,10 +422,9 @@ public class MavenProjectResolver {
     }
   }
 
-  private static MavenProject sortAndGetFirst(@NotNull Collection<Pair<MavenProject, NativeMavenProjectHolder>> mavenProjects) {
+  private static Pair<MavenProject, NativeMavenProjectHolder> sortAndGetFirst(@NotNull Collection<Pair<MavenProject, NativeMavenProjectHolder>> mavenProjects) {
     return mavenProjects.stream()
-      .map(pair -> pair.first)
-      .min(Comparator.comparing(p -> p.getDirectoryFile().getPath()))
+      .min(Comparator.comparing(p -> p.first.getDirectoryFile().getPath()))
       .orElse(null);
   }
 
