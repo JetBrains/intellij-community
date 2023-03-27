@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.MethodReturnTypeFix;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -15,12 +16,8 @@ import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.DataProvider;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-
-import static com.theoryinpractice.testng.util.TestNGUtil.TEST_ANNOTATION_FQN;
 
 /**
  * @author Dmitry Batkovich
@@ -44,10 +41,12 @@ public class DataProviderReturnTypeInspection extends AbstractBaseJavaLocalInspe
     final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, dataProviderFqn);
     if (annotation != null) {
       final PsiType returnType = method.getReturnType();
-      if (returnType != null && !isSuitableReturnType(method, returnType, annotation)) {
+      if (returnType != null && !isSuitableReturnType(returnType, annotation)) {
         final PsiTypeElement returnTypeElement = method.getReturnTypeElement();
         LOG.assertTrue(returnTypeElement != null);
-        boolean supportOneDimensional = supportOneDimensional(method);
+        Module module = ModuleUtilCore.findModuleForPsiElement(annotation);
+        if (module == null) return null;
+        boolean supportOneDimensional = supportOneDimensional(module);
         String message = TestngBundle.message("inspection.data.provider.return.type.check",
                                               supportOneDimensional ? "Object[][]/Object[] or Iterator<Object[]>/Iterator<Object>"
                                                                     : "Object[][] or Iterator<Object[]>");
@@ -59,32 +58,6 @@ public class DataProviderReturnTypeInspection extends AbstractBaseJavaLocalInspe
       }
     }
     return null;
-  }
-
-  private static boolean isAppropriateType(PsiType returnType, @NotNull PsiAnnotation annotation) {
-    PsiAnnotationMemberValue nameValue = annotation.findAttributeValue("name");
-    ArrayList<PsiReference> references = new ArrayList<>();
-    if (nameValue != null) {
-      PsiReference[] refs = nameValue.getReferences();
-      if (refs.length != 0) {
-        references.addAll(Arrays.asList(refs));
-      }
-    }
-    PsiMethod resolvedMethod = null;
-    if (references.size() > 0) {
-      for (PsiReference ref : references) {
-        PsiElement resolve = ref.resolve();
-        if (resolve instanceof PsiMethod && AnnotationUtil.findAnnotation((PsiMethod)resolve, TEST_ANNOTATION_FQN) != null) {
-          resolvedMethod = (PsiMethod)resolve;
-        }
-      }
-    }
-    if (resolvedMethod == null) return false;
-    PsiParameter[] parameters;
-    parameters = resolvedMethod.getParameterList().getParameters();
-    ArrayList<PsiType> appropriateTypes = Arrays.stream(parameters).map(PsiParameter::getType).map(PsiType::getDeepComponentType)
-      .collect(Collectors.toCollection(ArrayList::new));
-    return appropriateTypes.contains(returnType.getDeepComponentType());
   }
 
   private static LocalQuickFix[] createFixes(boolean supportOneDimensional, final @NotNull PsiMethod method) {
@@ -99,45 +72,37 @@ public class DataProviderReturnTypeInspection extends AbstractBaseJavaLocalInspe
     return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
-  private static boolean isSuitableReturnType(PsiMethod method, final @NotNull PsiType type, @NotNull PsiAnnotation annotation) {
+  private static boolean isSuitableReturnType(@NotNull PsiType type, @NotNull PsiAnnotation annotation) {
     if (type instanceof PsiArrayType) {
-      return isAppropriateTypeArray(method, ((PsiArrayType)type).getComponentType(), annotation);
+      return isSuitableInnerType(((PsiArrayType)type).getComponentType(), annotation);
     }
-    else if (type instanceof PsiClassType) {
+    if (type instanceof PsiClassType) {
       final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
       final PsiClass resolvedClass = resolveResult.getElement();
-      if (resolvedClass == null || !CommonClassNames.JAVA_UTIL_ITERATOR.equals(resolvedClass.getQualifiedName())) {
-        return false;
-      }
+      if (resolvedClass == null || !CommonClassNames.JAVA_UTIL_ITERATOR.equals(resolvedClass.getQualifiedName())) return false;
       final Map<PsiTypeParameter, PsiType> substitutionMap = resolveResult.getSubstitutor().getSubstitutionMap();
-      if (substitutionMap.size() != 1) {
-        return false;
-      }
+      if (substitutionMap.size() != 1) return false;
       final PsiType genericType = ContainerUtil.getFirstItem(substitutionMap.values());
-      if (genericType == null) {
-        return false;
-      }
-      return isAppropriateTypeArray(method, genericType, annotation);
+      if (genericType == null) return false;
+      return isSuitableInnerType(genericType, annotation);
     }
     return false;
   }
 
-  private static boolean supportOneDimensional(PsiMethod method) {
-    return TestNGUtil.isVersionOrGreaterThan(method.getProject(), ModuleUtilCore.findModuleForPsiElement(method), 6, 11, 0);
-  }
-
-  private static boolean isAppropriateTypeArray(PsiMethod method, final @NotNull PsiType type, @NotNull PsiAnnotation annotation) {
+  private static boolean isSuitableInnerType(@NotNull PsiType type, @NotNull PsiAnnotation annotation) {
     if (!(type instanceof PsiArrayType)) {
-      return supportOneDimensional(method) && (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || isAppropriateType(type, annotation));
+      Module module = ModuleUtilCore.findModuleForPsiElement(annotation);
+      if (module == null) return false;
+      return supportOneDimensional(module);
     }
     final PsiType componentType = type.getDeepComponentType();
-    if (!(componentType instanceof PsiClassType)) {
-      return false;
-    }
+    if (!(componentType instanceof PsiClassType)) return false;
     final PsiClass resolvedClass = ((PsiClassType)componentType).resolve();
-    if (resolvedClass == null) {
-      return false;
-    }
-    return CommonClassNames.JAVA_LANG_OBJECT.equals(resolvedClass.getQualifiedName()) || isAppropriateType(type, annotation);
+    if (resolvedClass == null) return false;
+    return true;
+  }
+
+  private static boolean supportOneDimensional(@NotNull Module module) {
+    return TestNGUtil.isVersionOrGreaterThan(module.getProject(), module, 6, 11, 0);
   }
 }
