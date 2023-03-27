@@ -324,7 +324,7 @@ class MergingQueueGuiExecutorTest {
 
     phaser.arriveAndDeregister()
     threadsRunning.awaitOrThrow(20, "Wait for write all threads to finish")
-    waitForExecutorToCompleteSubmittedTasks(executor, 5)
+    waitForExecutorToCompleteSubmittedTasks(executor, 10)
 
     TestCase.assertEquals(repeatCount * writeThreadsCount, performLog.size)
     TestCase.assertEquals(repeatCount * writeThreadsCount, disposeLog.size)
@@ -335,16 +335,15 @@ class MergingQueueGuiExecutorTest {
 
   private fun stopExecutor(executor: MergingQueueGuiExecutor<*>) {
     executor.suspendQueue()
-    if (waitForExecutorToCompleteSubmittedTasks(executor, 10)) return
-    fail("Executor didn't finish in 10 seconds")
+    waitForExecutorToCompleteSubmittedTasks(executor, 10)
   }
 
-  private fun waitForExecutorToCompleteSubmittedTasks(executor: MergingQueueGuiExecutor<*>, seconds: Int): Boolean {
+  private fun waitForExecutorToCompleteSubmittedTasks(executor: MergingQueueGuiExecutor<*>, seconds: Int) {
     for (i in 1..seconds * 1000 / 500) { // 10 seconds in sum
-      if (!executor.isRunning.value) return true
+      if (!executor.isRunning.value) return
       Thread.sleep(500)
     }
-    return false
+    fail("Executor didn't finish in $seconds seconds")
   }
 
   private fun CountDownLatch.awaitOrThrow(seconds: Long, message: String) {
