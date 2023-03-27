@@ -77,7 +77,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
     ApplicationManager.getApplication().invokeLater(this::updateHighlighters, o -> myDisposableFlag.isDisposed());
 
     myPropertiesListener = new MyVcsLogUiPropertiesListener();
-    myUiProperties.addChangeListener(myPropertiesListener);
+    myUiProperties.addChangeListener(myPropertiesListener, this);
 
     myHistory = VcsLogUiUtil.installNavigationHistory(this);
 
@@ -197,7 +197,6 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
 
   @Override
   public void dispose() {
-    myUiProperties.removeChangeListener(myPropertiesListener);
     super.dispose();
   }
 

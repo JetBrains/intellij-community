@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table.column
 
 import com.intellij.openapi.util.Disposer
@@ -199,10 +199,7 @@ private fun doOnPropertyChange(graphTable: VcsLogGraphTable, listener: (VcsLogUi
       listener(property)
     }
   }
-  graphTable.properties.addChangeListener(propertiesChangeListener)
-  Disposer.register(graphTable) {
-    graphTable.properties.removeChangeListener(propertiesChangeListener)
-  }
+  graphTable.properties.addChangeListener(propertiesChangeListener, graphTable)
 }
 
 @ApiStatus.Internal

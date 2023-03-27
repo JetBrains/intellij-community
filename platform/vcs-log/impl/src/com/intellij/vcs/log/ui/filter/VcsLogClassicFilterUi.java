@@ -546,8 +546,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
           }
         }
       };
-      properties.addChangeListener(listener);
-      Disposer.register(parentDisposable, () -> properties.removeChangeListener(listener));
+      properties.addChangeListener(listener, parentDisposable);
     }
 
     @Override

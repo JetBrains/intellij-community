@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -19,6 +20,9 @@ public interface VcsLogUiProperties {
 
   @RequiresEdt
   void addChangeListener(@NotNull PropertiesChangeListener listener);
+
+  @RequiresEdt
+  void addChangeListener(@NotNull PropertiesChangeListener listener, @NotNull Disposable parent);
 
   @RequiresEdt
   void removeChangeListener(@NotNull PropertiesChangeListener listener);

@@ -49,7 +49,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   private final @NotNull FileHistoryUiProperties myUiProperties;
   private final @NotNull FileHistoryFilterUi myFilterUi;
   private final @NotNull FileHistoryPanel myFileHistoryPanel;
-  private final @NotNull MyPropertiesChangeListener myPropertiesChangeListener;
   private final @NotNull History myHistory;
 
   public FileHistoryUi(@NotNull VcsLogData logData,
@@ -87,8 +86,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       getTable().addHighlighter(LOG_HIGHLIGHTER_FACTORY_EP.findExtensionOrFail(CurrentBranchHighlighter.Factory.class).createHighlighter(getLogData(), this));
     }
 
-    myPropertiesChangeListener = new MyPropertiesChangeListener();
-    myUiProperties.addChangeListener(myPropertiesChangeListener);
+    myUiProperties.addChangeListener(new MyPropertiesChangeListener(), this);
 
     myHistory = VcsLogUiUtil.installNavigationHistory(this);
   }
@@ -186,7 +184,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
 
   @Override
   public void dispose() {
-    myUiProperties.removeChangeListener(myPropertiesChangeListener);
     super.dispose();
   }
 
