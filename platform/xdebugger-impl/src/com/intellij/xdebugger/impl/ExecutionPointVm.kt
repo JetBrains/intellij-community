@@ -27,7 +27,7 @@ interface ExecutionPositionVm {
   val isTopFrame: Boolean
   val isActiveSourceKindState: StateFlow<Boolean>
   val gutterVm: ExecutionPositionGutterVm
-  val updatesFlow: Flow<Boolean>
+  val invalidationUpdateFlow: Flow<Unit>
 
   fun navigateTo(navigationMode: ExecutionPositionNavigationMode)
 }
@@ -94,15 +94,16 @@ internal class ExecutionPositionVmImpl(
 
   override val exactRange: TextRange? get() = sourcePosition.asSafely<ExecutionPointHighlighter.HighlighterProvider>()?.highlightRange
 
-  override val updatesFlow: Flow<Boolean> = run {
+  private val navigationAwareUpdateFlow: Flow<Boolean> = run {
     val externalUpdateFlow = updateRequestFlow.filter { it.file == file }.map { it.isToScrollToPosition }
     val positionUpdateFlow = sourcePosition.asSafely<XSourcePositionEx>()?.positionUpdateFlow ?: emptyFlow()
 
     merge(externalUpdateFlow, positionUpdateFlow)
       .shareIn(coroutineScope, SharingStarted.Eagerly, replay = 1)
   }
+  private val navigator = ExecutionPositionNavigator(project, coroutineScope, sourcePosition, isTopFrame, navigationAwareUpdateFlow)
 
-  private val navigator = ExecutionPositionNavigator(project, coroutineScope, sourcePosition, isTopFrame, updatesFlow)
+  override val invalidationUpdateFlow: Flow<Unit> = navigationAwareUpdateFlow.map { }
 
   override fun navigateTo(navigationMode: ExecutionPositionNavigationMode) {
     navigator.navigateTo(navigationMode)

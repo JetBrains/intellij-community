@@ -79,7 +79,7 @@ internal class ExecutionPositionUi private constructor(
 
   companion object {
     suspend fun showUntilCancelled(project: Project, vm: ExecutionPositionVm): Nothing {
-      vm.updatesFlow.onStart { emit(false) }.collectLatest {
+      vm.invalidationUpdateFlow.onStart { emit(Unit) }.collectLatest {
         coroutineScope {
           create(this, project, vm).use {
             awaitCancellation()

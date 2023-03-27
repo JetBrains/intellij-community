@@ -24,14 +24,14 @@ internal class ExecutionPositionNavigator(
   coroutineScope: CoroutineScope,
   private val sourcePosition: XSourcePosition,
   private val isTopFrame: Boolean,
-  updatesFlow: Flow<Boolean>,
+  updateFlow: Flow<Boolean>,
 ) {
   private var openedEditor: Editor? = null
   private var openFileDescriptor: OpenFileDescriptor? = null
 
   init {
     coroutineScope.launch {
-      updatesFlow.collect { isToScrollToPosition ->
+      updateFlow.collect { isToScrollToPosition ->
         invalidate()
         if (isToScrollToPosition) {
           navigateTo(ExecutionPositionNavigationMode.SCROLL)
