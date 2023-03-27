@@ -218,6 +218,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       uiDensity = if (value) UIDensity.COMPACT else UIDensity.DEFAULT
     }
 
+  var differentiateProjects: Boolean
+    get() = state.differentiateProjects
+    set(value) {
+      state.differentiateProjects = value
+    }
+
   var uiDensity: UIDensity
     get() = state.uiDensity
     set(value) {

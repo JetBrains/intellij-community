@@ -2,6 +2,7 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ProjectWindowCustomizerService;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.ToolbarComboWidget;
@@ -91,6 +92,7 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
     c.setForeground(JBColor.namedColor("MainToolbar.Dropdown.foreground", JBColor.foreground()));
     c.setBackground(JBColor.namedColor("MainToolbar.Dropdown.background", JBColor.background()));
     c.setHoverBackground(JBColor.namedColor("MainToolbar.Dropdown.hoverBackground", JBColor.background()));
+    c.setTransparentHoverBackground(JBColor.namedColor("MainToolbar.Dropdown.transparentHoverBackground", c.getHoverBackground()));
 
     Insets insets = JBUI.CurrentTheme.MainToolbar.Dropdown.borderInsets();
     JBEmptyBorder border = JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right);
@@ -179,7 +181,8 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
       }
 
       Rectangle hoverRect = hoverTracker.getHoverRect();
-      Color hoverBackground = c.getHoverBackground();
+      Color hoverBackground = ProjectWindowCustomizerService.getInstance().isActive()
+                              ? c.getTransparentHoverBackground() : c.getHoverBackground();
       if (hoverRect != null && hoverBackground != null) {
         g2.setColor(hoverBackground);
         g2.fillRect(hoverRect.x, hoverRect.y, hoverRect.width, hoverRect.height);

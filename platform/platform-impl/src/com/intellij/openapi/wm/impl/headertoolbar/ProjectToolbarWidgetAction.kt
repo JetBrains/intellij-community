@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.headertoolbar
 import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.ReopenProjectAction
+import com.intellij.ide.*
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI
@@ -64,6 +65,22 @@ class ProjectToolbarWidgetAction : ExpandableComboAction() {
     (widget.ui as? ToolbarComboWidgetUI)?.setMaxWidth(500)
     widget.text = presentation.text
     widget.toolTipText = presentation.description
+    val customizer = ProjectWindowCustomizerService.getInstance()
+    if (customizer.isActive()) {
+      val projectBasePath = presentation.getClientProperty(projectKey)?.basePath
+      if (projectBasePath != null) {
+        widget.leftIcons = listOf(RecentProjectsManagerBase.getInstanceEx().getProjectIcon(projectBasePath, true))
+      }
+      if (customizer.shouldShowGotIt()) {
+        val project = presentation.getClientProperty(projectKey)
+        if (project != null) {
+          customizer.showGotIt(project, widget)
+        }
+      }
+    }
+    else {
+      widget.leftIcons = emptyList()
+    }
   }
 
   override fun update(e: AnActionEvent) {

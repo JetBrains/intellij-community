@@ -120,6 +120,9 @@ class UISettingsState : BaseState() {
   @get:OptionTag("UI_DENSITY")
   var uiDensity by enum(UIDensity.DEFAULT)
 
+  @get:OptionTag("DIFFERENTIATE_PROJECTS")
+  var differentiateProjects by property(true)
+
   @get:OptionTag("SORT_TABS_ALPHABETICALLY")
   var sortTabsAlphabetically by property(false)
   @get:OptionTag("KEEP_TABS_ALPHABETICALLY_SORTED")

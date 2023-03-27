@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
+import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.actions.ToggleDistractionFreeModeAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
@@ -54,6 +55,7 @@ internal class ToolbarFrameHeader(frame: JFrame) : FrameHeader(frame), UISetting
   private val toolbarHeaderTitle = SimpleCustomDecorationPath(frame).apply {
     isOpaque = false
   }
+  private val customizer get() = ProjectWindowCustomizerService.getInstance()
 
   private fun createToolbarPlaceholder(): JPanel {
     val panel = JPanel(CardLayout())
@@ -101,6 +103,11 @@ internal class ToolbarFrameHeader(frame: JFrame) : FrameHeader(frame), UISetting
 
     setCustomFrameTopBorder({ false }, {true})
     updateToolbarAppearanceFromMode()
+
+    customizer.addListener(this, true) {
+      isOpaque = !it
+      revalidate()
+    }
   }
 
   private fun wrap(comp: JComponent) = object : NonOpaquePanel(comp) {
@@ -114,6 +121,11 @@ internal class ToolbarFrameHeader(frame: JFrame) : FrameHeader(frame), UISetting
 
   override fun updateToolbar() {
     doUpdateToolbar(MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()))
+  }
+
+  override fun paint(g: Graphics?) {
+    customizer.paint(frame, this, g)
+    super.paint(g)
   }
 
   @RequiresEdt

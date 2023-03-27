@@ -564,6 +564,7 @@
         "foreground": "Grey12",
         "background": "Grey2",
         "hoverBackground": "Grey3",
+        "transparentHoverBackground": "#FFFFFF1A",
         "pressedBackground": "Grey3",
         "maxWidth": 350
       }
@@ -654,6 +655,72 @@
       },
       "PackageTagSelected.background": "Blue8",
       "PackageTagSelected.foreground": "Grey14"
+    },
+
+    "RecentProject": {
+      "Color1": {
+        "MainToolbarGradientStart": "#CE443C",
+        "Avatar": {
+          "Start": "#DB3D3C",
+          "End": "#FF8E42"
+        }
+      },
+      "Color2": {
+        "MainToolbarGradientStart": "#E27237",
+        "Avatar": {
+          "Start": "#F57236",
+          "End": "#FCBA3F"
+        }
+      },
+      "Color3": {
+        "MainToolbarGradientStart": "#2DBCAD",
+        "Avatar": {
+          "Start": "#2BC8BB",
+          "End": "#36EBAE"
+        }
+      },
+      "Color4": {
+        "MainToolbarGradientStart": "#3895E1",
+        "Avatar": {
+          "Start": "#359AF2",
+          "End": "#57DBFF"
+        }
+      },
+      "Color5": {
+        "MainToolbarGradientStart": "#7B75E8",
+        "Avatar": {
+          "Start": "#8379FB",
+          "End": "#85A8FF"
+        }
+      },
+      "Color6": {
+        "MainToolbarGradientStart": "#7854AD",
+        "Avatar": {
+          "Start": "#7E54B5",
+          "End": "#9486FF"
+        }
+      },
+      "Color7": {
+        "MainToolbarGradientStart": "#8F4593",
+        "Avatar": {
+          "Start": "#D63CC8",
+          "End": "#F582B9"
+        }
+      },
+      "Color8": {
+        "MainToolbarGradientStart": "#C840B9",
+        "Avatar": {
+          "Start": "#954294",
+          "End": "#C87DFF"
+        }
+      },
+      "Color9": {
+        "MainToolbarGradientStart": "#D75370",
+        "Avatar": {
+          "Start": "#E75371",
+          "End": "#FF78B5"
+        }
+      }
     },
 
     "UnattendedHostStatus": {

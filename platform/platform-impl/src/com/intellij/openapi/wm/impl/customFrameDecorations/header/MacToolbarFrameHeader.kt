@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
+import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.actions.ToggleDistractionFreeModeAction
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
@@ -21,6 +22,7 @@ import com.jetbrains.CustomWindowDecoration
 import com.jetbrains.JBR
 import java.awt.CardLayout
 import java.awt.Component
+import java.awt.Graphics
 import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
@@ -42,6 +44,8 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
   private val TOOLBAR_CARD = "TOOLBAR_CARD"
   private val PATH_CARD = "PATH_CARD"
 
+  private val customizer get() = ProjectWindowCustomizerService.getInstance()
+
   init {
     layout = AdjustableSizeCardLayout()
     root.addPropertyChangeListener(MacMainFrameDecorator.FULL_SCREEN, PropertyChangeListener { updateBorders() })
@@ -60,6 +64,11 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
         MacFullScreenControlsManager.updateColors(frame)
       }
     })
+
+    customizer.addListener(this, true) {
+      isOpaque = !it
+      revalidate()
+    }
   }
 
   private fun createToolBar(): MainToolbar {
@@ -74,6 +83,11 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
     })
     add(toolbar, TOOLBAR_CARD)
     return toolbar
+  }
+
+  override fun paint(g: Graphics?) {
+    ProjectWindowCustomizerService.getInstance().paint(frame, this, g)
+    super.paint(g)
   }
 
   private fun addHeaderTitle() {

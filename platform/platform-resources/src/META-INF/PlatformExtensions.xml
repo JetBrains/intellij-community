@@ -509,6 +509,8 @@
     <applicationService serviceInterface="com.intellij.ide.PlatformIdeService"
                         serviceImplementation="com.intellij.ide.PlatformIdeServiceImpl"/>
 
+    <postStartupActivity implementation="com.intellij.ide.ProjectWindowCustomizerListener" order="last"/>
+
     <applicationService serviceInterface="com.intellij.openapi.options.advanced.AdvancedSettings"
                         serviceImplementation="com.intellij.openapi.options.advanced.AdvancedSettingsImpl"/>
 
@@ -1516,6 +1518,8 @@
     <listener class="com.intellij.ide.plugins.advertiser.OnDemandDependencyFeatureCollector"
               topic="com.intellij.ide.AppLifecycleListener" activeInHeadlessMode="false" activeInTestMode="false"/>
     <listener class="com.intellij.ide.actions.IdeScaleSettingsListener" activeInHeadlessMode="false" activeInTestMode="false"
+              topic="com.intellij.ide.ui.UISettingsListener"/>
+    <listener class="com.intellij.ide.ProjectWindowCustomizerListener"
               topic="com.intellij.ide.ui.UISettingsListener"/>
   </applicationListeners>
 
