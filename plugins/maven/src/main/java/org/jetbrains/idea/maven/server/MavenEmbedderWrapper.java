@@ -236,7 +236,7 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     }
 
     try {
-      return getOrCreateWrappee().resolvePlugin(plugin, id, ourToken);
+      return getOrCreateWrappee().resolvePlugins(List.of(new PluginResolutionRequest(plugin, id)), ourToken);
     }
     catch (RemoteException e) {
       // do not try to reconnect here since we have lost NativeMavenProjectHolder anyway.

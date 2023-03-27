@@ -55,6 +55,7 @@ public interface MavenServerEmbedder extends Remote {
   MavenArtifact resolve(@NotNull MavenArtifactInfo info,
                         @NotNull List<MavenRemoteRepository> remoteRepositories, MavenToken token) throws RemoteException,
                                                                                                           MavenServerProcessCanceledException;
+
   /**
    * @deprecated use {@link Maven3XServerEmbedder#resolveArtifactTransitively()}
    */
@@ -65,8 +66,8 @@ public interface MavenServerEmbedder extends Remote {
                                                                                                                      RemoteException,
                                                                                                                      MavenServerProcessCanceledException;
 
-  Collection<MavenArtifact> resolvePlugin(@NotNull MavenPlugin plugin,
-                                          int nativeMavenProjectId, MavenToken token) throws RemoteException, MavenServerProcessCanceledException;
+  Collection<MavenArtifact> resolvePlugins(@NotNull Collection<PluginResolutionRequest> pluginResolutionRequests, MavenToken token)
+    throws RemoteException, MavenServerProcessCanceledException;
 
   @NotNull
   MavenServerExecutionResult execute(@NotNull File file,
