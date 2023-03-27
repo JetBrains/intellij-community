@@ -88,7 +88,7 @@ public final class ClassUtil {
     }
     else {
       String simpleName = object.getClass().getSimpleName();
-      return !simpleName.equals("EmptyMap") && !simpleName.equals("UnmodifiableMap");
+      return !simpleName.equals("EmptyMap") && !simpleName.equals("UnmodifiableMap") && !simpleName.equals("ImmutableMap");
     }
   }
 
