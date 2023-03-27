@@ -90,6 +90,7 @@ public final class VcsLogChangesBrowser extends AsyncChangesBrowserBase implemen
         updateUiSettings();
         if (SHOW_CHANGES_FROM_PARENTS.equals(property) || SHOW_ONLY_AFFECTED_CHANGES.equals(property)) {
           myViewer.rebuildTree();
+          updateStatusText();
         }
       }
     };
