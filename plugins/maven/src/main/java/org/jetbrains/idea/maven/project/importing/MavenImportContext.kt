@@ -4,12 +4,10 @@ package org.jetbrains.idea.maven.project.importing
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
-import org.jetbrains.idea.maven.model.MavenPlugin
 import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
@@ -69,7 +67,6 @@ class MavenResolvedContext internal constructor(project: Project,
 }
 
 class MavenPluginResolvedContext internal constructor(project: Project,
-                                                      val unresolvedPlugins: Set<MavenPlugin>,
                                                       private val resolvedContext: MavenResolvedContext) : MavenImportContext(project) {
   override val indicator = resolvedContext.indicator
 }

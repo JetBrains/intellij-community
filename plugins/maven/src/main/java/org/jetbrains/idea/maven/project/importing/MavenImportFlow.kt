@@ -215,7 +215,7 @@ class MavenImportFlow {
     val consoleToBeRemoved = BTWMavenConsole(context.project, context.initialContext.generalSettings.outputLevel,
                                              context.initialContext.generalSettings.isPrintErrorStackTraces)
 
-    val unresolvedPlugins = resolver.resolvePlugins(
+    resolver.resolvePlugins(
       context.nativeProjectHolder.map { Pair.create(it.first, it.second) },
       embeddersManager,
       consoleToBeRemoved,
@@ -223,7 +223,7 @@ class MavenImportFlow {
       false,
       projectManager.forceUpdateSnapshots)
 
-    return MavenPluginResolvedContext(context.project, unresolvedPlugins, context)
+    return MavenPluginResolvedContext(context.project, context)
   }
 
   fun downloadArtifacts(context: MavenResolvedContext, sources: Boolean, javadocs: Boolean): MavenArtifactDownloader.DownloadResult {

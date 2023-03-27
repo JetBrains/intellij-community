@@ -224,17 +224,18 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     return performCancelable(() -> getOrCreateWrappee().resolveArtifactTransitively(artifacts, remoteRepositories, ourToken));
   }
 
-  public Collection<MavenArtifact> resolvePlugins(@NotNull Collection<Pair<MavenPlugin, NativeMavenProjectHolder>> mavenPlugins)
+  public Collection<MavenArtifact> resolvePlugins(@NotNull Collection<Pair<MavenId, NativeMavenProjectHolder>> mavenPluginRequests)
     throws MavenProcessCanceledException {
     var pluginResolutionRequests = new ArrayList<PluginResolutionRequest>();
-    for (var mavenPlugin : mavenPlugins) {
+    for (var mavenPluginRequest : mavenPluginRequests) {
+      var mavenPluginId = mavenPluginRequest.first;
       try {
-        var id = mavenPlugin.second.getId();
-        pluginResolutionRequests.add(new PluginResolutionRequest(mavenPlugin.first.getMavenId(), id));
+        var id = mavenPluginRequest.second.getId();
+        pluginResolutionRequests.add(new PluginResolutionRequest(mavenPluginId, id));
       }
       catch (RemoteException e) {
         // do not call handleRemoteError here since this error occurred because of previous remote error
-        MavenLog.LOG.warn("Cannot resolve plugin: " + mavenPlugin.first);
+        MavenLog.LOG.warn("Cannot resolve plugin: " + mavenPluginId);
       }
     }
 
@@ -254,7 +255,7 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   public Collection<MavenArtifact> resolvePlugin(@NotNull final MavenPlugin plugin,
                                                  @NotNull final NativeMavenProjectHolder nativeMavenProject)
     throws MavenProcessCanceledException {
-    return resolvePlugins(List.of(Pair.create(plugin, nativeMavenProject)));
+    return resolvePlugins(List.of(Pair.create(plugin.getMavenId(), nativeMavenProject)));
   }
 
   public MavenModel readModel(final File file) throws MavenProcessCanceledException {
