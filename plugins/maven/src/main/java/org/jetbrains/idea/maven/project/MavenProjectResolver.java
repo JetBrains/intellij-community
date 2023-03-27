@@ -246,25 +246,15 @@ public class MavenProjectResolver {
       return Set.of();
     }
 
-    var projectsGroupedByBaseDir = mavenProjects.stream()
-      .collect(Collectors.groupingBy(pair -> MavenUtil.getBaseDir(pair.first.getDirectoryFile()).toString()));
+    var baseDir = MavenUtil.getBaseDir(mavenProjects.iterator().next().first.getDirectoryFile()).toString();
 
-    var unresolvedPlugins = new HashSet<MavenPlugin>();
-
-    for (var projectGroup : projectsGroupedByBaseDir.entrySet()) {
-      var baseDir = projectGroup.getKey();
-      var mavenProjectsForBaseDir = projectGroup.getValue();
-      var unresolvedPluginsForBaseDir = resolvePluginsBulk(baseDir,
-                                                           mavenProjectsForBaseDir,
-                                                           embeddersManager,
-                                                           console,
-                                                           process,
-                                                           reportUnresolvedToSyncConsole,
-                                                           forceUpdateSnapshots);
-      unresolvedPlugins.addAll(unresolvedPluginsForBaseDir);
-    }
-
-    return unresolvedPlugins;
+    return resolvePluginsBulk(baseDir,
+                              mavenProjects,
+                              embeddersManager,
+                              console,
+                              process,
+                              reportUnresolvedToSyncConsole,
+                              forceUpdateSnapshots);
   }
 
   private Set<MavenPlugin> resolvePluginsBulk(@NotNull String baseDir,
