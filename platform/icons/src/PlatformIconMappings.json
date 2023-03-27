@@ -62,8 +62,6 @@
     "build": {
       "build.svg": "actions/compile.svg",
       "dependencyAnalyzer.svg": "actions/dependencyAnalyzer.svg",
-      "gradleLoadChanges.svg": "icons/gradleLoadChanges.svg",
-      "gradleNavigate.svg": "icons/gradleNavigate.svg",
       "task.svg": "icons/task.svg",
       "taskGroup.svg": "nodes/configFolder.svg",
       "toggleOfflineMode.svg": "actions/offlineMode.svg"
@@ -146,10 +144,6 @@
       "editorConfig.svg": "nodes/editorconfig.svg",
       "diagram.svg": "fileTypes/diagram.svg",
       "freemaker.svg": "icons/freemarker-icon.svg",
-      "gradle.svg": [
-        "icons/gradle.svg",
-        "icons/gradleFile.svg"
-      ],
       "html.svg": "fileTypes/html.svg",
       "ideaModule.svg": "nodes/ideaModule.svg",
       "idl.svg": "fileTypes/idl.svg",
@@ -653,7 +647,6 @@
       ],
       "documentation.svg": "toolwindows/documentation.svg",
       "find.svg": "toolwindows/toolWindowFind.svg",
-      "gradle.svg": "icons/toolWindowGradle.svg",
       "hierarchy.svg": "toolwindows/toolWindowHierarchy.svg",
       "messages.svg": "toolwindows/toolWindowMessages.svg",
       "notifications.svg": "toolwindows/notifications.svg",

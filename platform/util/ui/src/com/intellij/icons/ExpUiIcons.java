@@ -83,8 +83,6 @@ public final class ExpUiIcons {
   public static final class Build {
     /** 16x16 */ public static final @NotNull Icon Build = load("expui/build/build.svg", -1200896256, 2);
     /** 16x16 */ public static final @NotNull Icon DependencyAnalyzer = load("expui/build/dependencyAnalyzer.svg", -1465404169, 2);
-    /** 16x16 */ public static final @NotNull Icon GradleLoadChanges = load("expui/build/gradleLoadChanges.svg", -597267260, 2);
-    /** 16x16 */ public static final @NotNull Icon GradleNavigate = load("expui/build/gradleNavigate.svg", -46934598, 2);
     /** 16x16 */ public static final @NotNull Icon Task = load("expui/build/task.svg", -1280157137, 2);
     /** 16x16 */ public static final @NotNull Icon TaskGroup = load("expui/build/taskGroup.svg", -1553400582, 2);
     /** 16x16 */ public static final @NotNull Icon ToggleOfflineMode = load("expui/build/toggleOfflineMode.svg", -439130582, 2);
@@ -164,7 +162,6 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon Font = load("expui/fileTypes/font.svg", -609936513, 2);
     /** 16x16 */ public static final @NotNull Icon Freemaker = load("expui/fileTypes/freemaker.svg", -1397637110, 2);
     /** 16x16 */ public static final @NotNull Icon Gitignore = load("expui/fileTypes/gitignore.svg", 1645422088, 0);
-    /** 16x16 */ public static final @NotNull Icon Gradle = load("expui/fileTypes/gradle.svg", 1864662052, 2);
     /** 16x16 */ public static final @NotNull Icon Html = load("expui/fileTypes/html.svg", -1156693432, 2);
     /** 16x16 */ public static final @NotNull Icon IdeaModule = load("expui/fileTypes/ideaModule.svg", 1417127557, 2);
     /** 16x16 */ public static final @NotNull Icon Idl = load("expui/fileTypes/idl.svg", -1553952385, 2);
@@ -572,8 +569,6 @@ public final class ExpUiIcons {
     /** 20x20 */ public static final @NotNull Icon Documentation_20x20 = load("expui/toolwindow/documentation@20x20.svg", 1529081957, 2);
     /** 16x16 */ public static final @NotNull Icon Find = load("expui/toolwindow/find.svg", -46530637, 2);
     /** 20x20 */ public static final @NotNull Icon Find_20x20 = load("expui/toolwindow/find@20x20.svg", 78283479, 2);
-    /** 16x16 */ public static final @NotNull Icon Gradle = load("expui/toolwindow/gradle.svg", 1864662052, 2);
-    /** 20x20 */ public static final @NotNull Icon Gradle_20x20 = load("expui/toolwindow/gradle@20x20.svg", 2020048868, 2);
     /** 16x16 */ public static final @NotNull Icon Hierarchy = load("expui/toolwindow/hierarchy.svg", -1159286980, 2);
     /** 20x20 */ public static final @NotNull Icon Hierarchy_20x20 = load("expui/toolwindow/hierarchy@20x20.svg", 1031525667, 2);
     /** 16x16 */ public static final @NotNull Icon MeetNewUi = load("expui/toolwindow/meetNewUi.svg", -1996769209, 2);
