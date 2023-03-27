@@ -246,7 +246,7 @@ public class MavenProjectResolver {
       return Set.of();
     }
 
-    var baseDir = MavenUtil.getBaseDir(mavenProjects.iterator().next().first.getDirectoryFile()).toString();
+    var baseDir = MavenUtil.getBaseDir(sortAndGetFirst(mavenProjects).getDirectoryFile()).toString();
 
     return resolvePluginsBulk(baseDir,
                               mavenProjects,
@@ -268,7 +268,7 @@ public class MavenProjectResolver {
       return Set.of();
     }
 
-    process.setText(MavenProjectBundle.message("maven.downloading.pom.plugins", mavenProjects.iterator().next().first.getDisplayName()));
+    process.setText(MavenProjectBundle.message("maven.downloading.pom.plugins", sortAndGetFirst(mavenProjects).getDisplayName()));
 
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_PLUGINS_RESOLVE, baseDir);
     embedder.customizeForResolve(console, process, forceUpdateSnapshots);
@@ -411,6 +411,13 @@ public class MavenProjectResolver {
           .showArtifactBuildIssue(mavenPlugin.getMavenId().getKey(), null);
       }
     }
+  }
+
+  private static MavenProject sortAndGetFirst(@NotNull Collection<Pair<MavenProject, NativeMavenProjectHolder>> mavenProjects) {
+    return mavenProjects.stream()
+      .map(pair -> pair.first)
+      .min(Comparator.comparing(p -> p.getDirectoryFile().getPath()))
+      .orElse(null);
   }
 
   public void resolveFolders(@NotNull final MavenProject mavenProject,
