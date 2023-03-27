@@ -299,7 +299,7 @@ public class FileSetLimiter {
       return new Pair<>(path, fileCreatedAt);
     }
     catch (ParseException e) {
-      return new Pair<>(path, (Date)null);
+      return new Pair<>(path, null);
     }
   }
 

@@ -53,12 +53,11 @@ class FileNotInSourceRootService(val project: Project) : Disposable {
   private fun checkEditor(editor: Editor) {
     if (editor.project !== project) return
     if (PropertiesComponent.getInstance(project).getBoolean(JAVA_DONT_CHECK_OUT_OF_SOURCE_FILES, false)) return
-    val virtualFile = editor.virtualFile
-    if (virtualFile == null) return
+    val virtualFile = editor.virtualFile ?: return
     ReadAction.run<RuntimeException> {
       val fileIndex = ProjectFileIndex.getInstance(project)
       if (fileIndex.isInSource(virtualFile) || fileIndex.isExcluded(virtualFile) || fileIndex.isUnderIgnored(virtualFile)) return@run
-      if (!fileIndex.getOrderEntriesForFile(virtualFile).isEmpty()) return@run
+      if (fileIndex.getOrderEntriesForFile(virtualFile).isNotEmpty()) return@run
       val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) as? PsiJavaFile ?: return@run
       val packageName = psiFile.packageName
       val module = fileIndex.getModuleForFile(virtualFile) ?: return@run
