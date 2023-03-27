@@ -3,20 +3,48 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
+import com.intellij.workspaceModel.ide.VirtualFileUrlManagerUtil;
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
 import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.storage.VersionedStorageChange;
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 public abstract class EntityIndexingServiceTestBase extends HeavyPlatformTestCase {
+
+  private VirtualFileUrlManager fileUrlManager;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    fileUrlManager = VirtualFileUrlManagerUtil.getInstance(VirtualFileUrlManager.Companion, myProject);
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    fileUrlManager = null;
+    super.tearDown();
+  }
+
+  @NotNull
+  protected VirtualFileUrl getUrl(@NotNull VirtualFile file) {
+    return fileUrlManager.fromUrl(file.getUrl());
+  }
+
+  @NotNull
+  protected List<VirtualFileUrl> getUrls(@NotNull VirtualFile file) {
+    return Collections.singletonList(getUrl(file));
+  }
 
   protected <T> void doTest(ThrowableComputable<? extends T, ? extends Exception> generator,
                             ThrowableConsumer<? super T, ? extends Exception> remover,
