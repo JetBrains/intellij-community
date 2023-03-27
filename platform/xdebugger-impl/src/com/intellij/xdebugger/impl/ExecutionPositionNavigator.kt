@@ -11,57 +11,89 @@ import com.intellij.util.asSafely
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.XSourcePositionEx.NavigationMode
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 
 
 internal class ExecutionPositionNavigator(
-  private val openFileDescriptor: OpenFileDescriptor,
+  private val project: Project,
+  coroutineScope: CoroutineScope,
+  private val sourcePosition: XSourcePosition,
+  private val isTopFrame: Boolean,
+  updatesFlow: Flow<NavigationMode>,
 ) {
-  var isActiveSourceKind: Boolean = false
-
   private var openedEditor: Editor? = null
+  private var openFileDescriptor: OpenFileDescriptor? = null
+
+  init {
+    coroutineScope.launch {
+      updatesFlow.collect {
+        invalidate()
+        navigateTo(it)
+      }
+    }
+  }
 
   fun navigateTo(navigationMode: NavigationMode) {
-    if (navigationMode == NavigationMode.NONE) return
+    val descriptor = getDescriptor()
+    navigateTo(descriptor, navigationMode)
+  }
 
-    if (navigationMode == NavigationMode.OPEN && isActiveSourceKind) {
-      openedEditor = XDebuggerUtilImpl.createEditor(openFileDescriptor)
+  private fun invalidate() {
+    synchronized(this) {
+      openFileDescriptor?.dispose()
+    }
+  }
+
+  private fun getDescriptor(): OpenFileDescriptor {
+    synchronized(this) {
+      var descriptor = openFileDescriptor
+      if (descriptor == null || descriptor.rangeMarker?.isValid == false) {
+        openFileDescriptor?.dispose()
+        descriptor = createOpenFileDescriptor()
+        openFileDescriptor = descriptor
+      }
+      return descriptor
+    }
+  }
+
+  private fun navigateTo(openFileDescriptor: OpenFileDescriptor, navigationMode: NavigationMode) {
+    when (navigationMode) {
+      NavigationMode.OPEN -> {
+        openedEditor = XDebuggerUtilImpl.createEditor(openFileDescriptor)
+      }
+      NavigationMode.SCROLL -> {
+        val fileEditorManager = FileEditorManager.getInstance(openFileDescriptor.project)
+        val editor = openedEditor?.takeUnless { it.isDisposed }
+                     ?: fileEditorManager.getSelectedEditor(openFileDescriptor.file).asSafely<TextEditor>()?.editor
+                     ?: return
+        openFileDescriptor.navigateIn(editor)
+      }
+      NavigationMode.NONE -> return
+    }
+  }
+
+  private fun createOpenFileDescriptor(): OpenFileDescriptor {
+    return createPositionNavigatable().apply {
+      isUseCurrentWindow = false //see IDEA-125645 and IDEA-63459
+      isUsePreviewTab = true
+      setScrollType(scrollType())
+    }
+  }
+
+  private fun createPositionNavigatable(): OpenFileDescriptor {
+    val navigatable = sourcePosition.createNavigatable(project)
+    return if (navigatable is OpenFileDescriptor) {
+      navigatable
     }
     else {
-      val fileEditorManager = FileEditorManager.getInstance(openFileDescriptor.project)
-      val editor = openedEditor?.takeUnless { it.isDisposed }
-                   ?: fileEditorManager.getSelectedEditor(openFileDescriptor.file).asSafely<TextEditor>()?.editor
-                   ?: return
-      openFileDescriptor.navigateIn(editor)
+      XDebuggerUtilImpl.createOpenFileDescriptor(project, sourcePosition)
     }
   }
 
-  fun disposeDescriptor() {
-    openFileDescriptor.dispose()
-  }
-
-  companion object {
-    fun create(project: Project, sourcePosition: XSourcePosition, isTopFrame: Boolean): ExecutionPositionNavigator {
-      val openFileDescriptor = createOpenFileDescriptor(project, sourcePosition).apply {
-        isUseCurrentWindow = false //see IDEA-125645 and IDEA-63459
-        isUsePreviewTab = true
-        setScrollType(scrollType(isTopFrame))
-      }
-      return ExecutionPositionNavigator(openFileDescriptor)
-    }
-
-    private fun createOpenFileDescriptor(project: Project, position: XSourcePosition): OpenFileDescriptor {
-      val navigatable = position.createNavigatable(project)
-      return if (navigatable is OpenFileDescriptor) {
-        navigatable
-      }
-      else {
-        XDebuggerUtilImpl.createOpenFileDescriptor(project, position)
-      }
-    }
-
-    private fun scrollType(isTopFrame: Boolean): ScrollType {
-      if (XDebuggerSettingManagerImpl.getInstanceImpl().generalSettings.isScrollToCenter) return ScrollType.CENTER
-      return if (isTopFrame) ScrollType.MAKE_VISIBLE else ScrollType.CENTER
-    }
+  private fun scrollType(): ScrollType {
+    if (XDebuggerSettingManagerImpl.getInstanceImpl().generalSettings.isScrollToCenter) return ScrollType.CENTER
+    return if (isTopFrame) ScrollType.MAKE_VISIBLE else ScrollType.CENTER
   }
 }

@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl
 
 import com.intellij.openapi.editor.markup.GutterIconRenderer
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.asSafely
@@ -16,6 +17,8 @@ interface ExecutionPointVm {
   val isTopFrame: Boolean
   val mainPositionVm: ExecutionPositionVm?
   val alternativePositionVm: ExecutionPositionVm?
+
+  fun navigateTo(navigationMode: NavigationMode, sourceKind: XSourceKind? = null)
 }
 
 interface ExecutionPositionVm {
@@ -25,13 +28,16 @@ interface ExecutionPositionVm {
   val isTopFrame: Boolean
   val isActiveSourceKindState: StateFlow<Boolean>
   val gutterVm: ExecutionPositionGutterVm
-  val updatesFlow: SharedFlow<NavigationMode>
+  val updatesFlow: Flow<NavigationMode>
+
+  fun navigateTo(navigationMode: NavigationMode)
 }
 
 class ExecutionPositionGutterVm(val gutterIconRendererState: StateFlow<GutterIconRenderer?>)
 
 
 internal class ExecutionPointVmImpl(
+  project: Project,
   coroutineScope: CoroutineScope,
   executionPoint: ExecutionPoint,
   activeSourceKindState: StateFlow<XSourceKind>,
@@ -43,23 +49,38 @@ internal class ExecutionPointVmImpl(
   override val mainPositionVm: ExecutionPositionVm?
   override val alternativePositionVm: ExecutionPositionVm?
 
+  private val activeSourceKind: XSourceKind by activeSourceKindState::value
+
   init {
     val gutterVm = ExecutionPositionGutterVm(gutterIconRendererState)
 
     fun createPositionVm(sourceKind: XSourceKind): ExecutionPositionVmImpl? {
       val sourcePosition = executionPoint.getSourcePosition(sourceKind) ?: return null
       val isActiveSourceKindState = activeSourceKindState.mapStateIn(coroutineScope) { it == sourceKind }
-      return ExecutionPositionVmImpl(coroutineScope, sourcePosition, isTopFrame, isActiveSourceKindState, gutterVm, updateRequestFlow)
+      return ExecutionPositionVmImpl(project, coroutineScope, sourcePosition, isTopFrame, isActiveSourceKindState, gutterVm, updateRequestFlow)
     }
 
     mainPositionVm = createPositionVm(XSourceKind.MAIN)
     alternativePositionVm = createPositionVm(XSourceKind.ALTERNATIVE)
   }
+
+  override fun navigateTo(navigationMode: NavigationMode, sourceKind: XSourceKind?) {
+    val positionVm = positionVmFor(sourceKind ?: activeSourceKind)
+    positionVm?.navigateTo(navigationMode)
+  }
+
+  private fun positionVmFor(sourceKind: XSourceKind): ExecutionPositionVm? {
+    return when (sourceKind) {
+      XSourceKind.MAIN -> mainPositionVm
+      XSourceKind.ALTERNATIVE -> alternativePositionVm
+    }
+  }
 }
 
 internal class ExecutionPositionVmImpl(
-  coroutineScope: CoroutineScope,
-  sourcePosition: XSourcePosition,
+  project: Project,
+  private val coroutineScope: CoroutineScope,
+  private val sourcePosition: XSourcePosition,
   override val isTopFrame: Boolean,
   override val isActiveSourceKindState: StateFlow<Boolean>,
   override val gutterVm: ExecutionPositionGutterVm,
@@ -68,17 +89,20 @@ internal class ExecutionPositionVmImpl(
   override val file: VirtualFile by sourcePosition::file
   override val line: Int by sourcePosition::line
 
-  private val highlighterProvider = sourcePosition.asSafely<ExecutionPointHighlighter.HighlighterProvider>()
-  override val exactRange: TextRange? get() = highlighterProvider?.highlightRange
+  override val exactRange: TextRange? get() = sourcePosition.asSafely<ExecutionPointHighlighter.HighlighterProvider>()?.highlightRange
 
-  override val updatesFlow: SharedFlow<NavigationMode>
-
-  init {
+  override val updatesFlow: Flow<NavigationMode> = run {
     val externalUpdateFlow = updateRequestFlow.filter { it.file == file }.map { it.navigationMode }
     val positionUpdateFlow = sourcePosition.asSafely<XSourcePositionEx>()?.positionUpdateFlow ?: emptyFlow()
 
-    updatesFlow = merge(externalUpdateFlow, positionUpdateFlow)
-      .shareIn(coroutineScope, SharingStarted.Eagerly)
+    merge(externalUpdateFlow, positionUpdateFlow)
+      .shareIn(coroutineScope, SharingStarted.Eagerly, replay = 1)
+  }
+
+  private val navigator = ExecutionPositionNavigator(project, coroutineScope, sourcePosition, isTopFrame, updatesFlow)
+
+  override fun navigateTo(navigationMode: NavigationMode) {
+    navigator.navigateTo(navigationMode)
   }
 }
 

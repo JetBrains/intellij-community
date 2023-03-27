@@ -30,7 +30,6 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
   private val coroutineScope: CoroutineScope = parentScope.childScope(Dispatchers.EDT + CoroutineName(javaClass.simpleName))
 
   private val updateRequestFlow = MutableSharedFlow<ExecutionPositionUpdateRequest>(extraBufferCapacity = 1, onBufferOverflow = DROP_OLDEST)
-  private val navigationRequestFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = DROP_OLDEST)
 
   private val _executionPointState = MutableStateFlow<ExecutionPoint?>(null)
   private val executionPointState: StateFlow<ExecutionPoint?> = _executionPointState.asStateFlow()
@@ -44,26 +43,35 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
   private val gutterIconRendererState: StateFlow<GutterIconRenderer?> = _gutterIconRendererState.asStateFlow()
   var gutterIconRenderer: GutterIconRenderer? by _gutterIconRendererState::value
 
-  init {
-    val executionPointVmStateFlow: StateFlow<ExecutionPointVm?> = executionPointState
-      .onCompletion { emit(null) }
-      .map { executionPoint ->
-        kotlin.runCatching {
-          executionPoint?.let {
-            ExecutionPointVmImpl(coroutineScope, it,
-                                 activeSourceKindState,
-                                 gutterIconRendererState,
-                                 updateRequestFlow)
-          }
-        }.getOrLogException(LOG)
-      }.stateIn(coroutineScope, SharingStarted.Eagerly, initialValue = null)
+  private val executionPointVmState: StateFlow<ExecutionPointVm?> = executionPointState
+    .onCompletion { emit(null) }
+    .map { executionPoint ->
+      kotlin.runCatching {
+        executionPoint?.let {
+          ExecutionPointVmImpl(project,
+                               coroutineScope, it,
+                               activeSourceKindState,
+                               gutterIconRendererState,
+                               updateRequestFlow)
+        }
+      }.getOrLogException(LOG)
+    }.stateIn(coroutineScope, SharingStarted.Eagerly, initialValue = null)
+  private val executionPointVm: ExecutionPointVm? by executionPointVmState::value
 
+  init {
     val uiScope = coroutineScope.childScope(CoroutineName("${javaClass.simpleName}/UI"))
-    showExecutionPointUi(project, uiScope, executionPointVmStateFlow)
+    showExecutionPointUi(project, uiScope, executionPointVmState)
+
+    // navigate when execution point changes
+    uiScope.launch {
+      executionPointVmState.filterNotNull().collect {
+        it.navigateTo(NavigationMode.OPEN)
+      }
+    }
 
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       uiScope.launch {
-        executionPointVmStateFlow
+        executionPointVmState
           .map { it != null }.distinctUntilChanged()
           .dropWhile { !it }  // ignore initial 'false' value
           .collect { hasHighlight ->
@@ -98,7 +106,7 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
   }
 
   fun showExecutionPosition() {
-    navigationRequestFlow.tryEmit(Unit).also { check(it) }
+    executionPointVm?.navigateTo(NavigationMode.OPEN)
   }
 }
 
