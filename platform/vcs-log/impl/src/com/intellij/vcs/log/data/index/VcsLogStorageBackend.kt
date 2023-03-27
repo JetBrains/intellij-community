@@ -25,11 +25,25 @@ internal interface VcsLogStorageBackend {
 
   fun getMessage(commitId: Int): String?
 
+  fun getMessages(commitIds: Collection<Int>): Map<Int, String> {
+    return commitIds.mapNotNull { commitId -> getMessage(commitId)?.let { message -> commitId to message } }.toMap()
+  }
+
   fun getCommitterOrAuthor(commitId: Int, getUserById: IntFunction<VcsUser>, getAuthorForCommit: IntFunction<VcsUser>): VcsUser?
 
   fun getTimestamp(commitId: Int): LongArray?
 
+  fun getAuthorTime(commitIds: Collection<Int>): Map<Int, Long> {
+    return commitIds.mapNotNull { getTimestamp(it)?.let { times -> it to times[0] } }.toMap()
+  }
+
+  fun getCommitTime(commitIds: Collection<Int>): Map<Int, Long> {
+    return commitIds.mapNotNull { getTimestamp(it)?.let { times -> it to times[1] } }.toMap()
+  }
+
   fun getParent(commitId: Int): IntArray?
+
+  fun getParents(commitIds: Collection<Int>): Map<Int, List<Hash>> = emptyMap()
 
   @Throws(IOException::class)
   fun containsCommit(commitId: Int): Boolean

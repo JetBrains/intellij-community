@@ -122,16 +122,11 @@ class MiniDetailsGetter internal constructor(project: Project,
       super.doLoadCommitsData(commits) { data -> consumer(storage.getCommitIndex(data.id, data.root), data) }
       return
     }
-    val notIndexed = IntOpenHashSet()
-    commits.forEach(IntConsumer { commit: Int ->
-      val metadata = IndexedDetails.createMetadata(commit, dataGetter, storage, factory)
-      if (metadata == null) {
-        notIndexed.add(commit)
-      }
-      else {
-        consumer(commit, metadata)
-      }
-    })
+
+    val metadata = IndexedDetails.createMetadata(commits, dataGetter, storage, factory)
+    metadata.forEach { (commit, metadata) -> consumer(commit, metadata) }
+    val notIndexed = commits - metadata.keys
+
     if (!notIndexed.isEmpty()) {
       super.doLoadCommitsData(notIndexed) { data -> consumer(storage.getCommitIndex(data.id, data.root), data) }
     }
@@ -195,5 +190,11 @@ class MiniDetailsGetter internal constructor(project: Project,
       }
       return result
     }
+
+    private operator fun IntSet.minus(other: IntSet): IntSet {
+      if (other.isEmpty()) return IntSets.emptySet()
+      return filterNotTo(IntOpenHashSet()) { it in other }
+    }
   }
 }
+

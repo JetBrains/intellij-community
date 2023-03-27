@@ -13,6 +13,12 @@ internal interface VcsLogUserBiMap {
 
   fun getAuthorForCommit(commitId: Int): VcsUser?
 
+  fun getAuthorForCommits(commitIds: Iterable<Int>): Map<Int, VcsUser> {
+    return commitIds.mapNotNull { commitId -> getAuthorForCommit(commitId)?.let { user -> commitId to user } }.toMap()
+  }
+
+  fun getCommitterForCommits(commitIds: Iterable<Int>): Map<Int, VcsUser> = emptyMap()
+
   fun getUserId(commitId: Int, user: VcsUser): Int
 
   fun getUserById(id: Int): VcsUser?

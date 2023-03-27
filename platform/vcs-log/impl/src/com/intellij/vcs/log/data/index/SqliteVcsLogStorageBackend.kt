@@ -186,6 +186,23 @@ internal class SqliteVcsLogStorageBackend(project: Project,
     return connection.selectString("select message from log where commitId = ?", commitId)
   }
 
+  override fun getMessages(commitIds: Collection<Int>): Map<Int, String> {
+    val result = hashMapOf<Int, String>()
+    val paramBinder = ObjectBinder(paramCount = 0)
+    val inClause = commitIds.toInClause()
+    val sql = "select commitId, message from log where commitId in $inClause"
+
+    connection.prepareStatement(sql, paramBinder).use { statement ->
+      val rs = statement.executeQuery()
+      while (rs.next()) {
+        val commitId = rs.getInt(0)
+        result.put(commitId, rs.getString(1)!!)
+      }
+    }
+
+    return result
+  }
+
   override fun getCommitterOrAuthor(commitId: Int, getUserById: IntFunction<VcsUser>, getAuthorForCommit: IntFunction<VcsUser>): VcsUser? {
     val batch = IntBinder(paramCount = 1)
     connection.prepareStatement("select isCommitter from log where commitId = ?", batch).use { statement ->
@@ -212,12 +229,55 @@ internal class SqliteVcsLogStorageBackend(project: Project,
     }
   }
 
+  override fun getAuthorTime(commitIds: Collection<Int>): Map<Int, Long> {
+    return getTime(commitIds, true)
+  }
+
+  override fun getCommitTime(commitIds: Collection<Int>): Map<Int, Long> {
+    return getTime(commitIds, false)
+  }
+
+  private fun getTime(commitIds: Collection<Int>, isAuthorTime: Boolean): Map<Int, Long> {
+    val result = hashMapOf<Int, Long>()
+    val paramBinder = ObjectBinder(paramCount = 0)
+    val inClause = commitIds.toInClause()
+    val sql = "select commitId, ${if (isAuthorTime) "authorTime" else "commitTime"}  from log where commitId in $inClause"
+
+    connection.prepareStatement(sql, paramBinder).use { statement ->
+      val rs = statement.executeQuery()
+      while (rs.next()) {
+        val commitId = rs.getInt(0)
+        result.put(commitId, rs.getLong(1))
+      }
+    }
+
+    return result
+  }
+
   override fun getParent(commitId: Int): IntArray {
     val batch = IntBinder(paramCount = 1)
     connection.prepareStatement("select parent from parent where commitId = ?", batch).use { statement ->
       batch.bind(commitId)
       return readIntArray(statement)
     }
+  }
+
+  override fun getParents(commitIds: Collection<Int>): Map<Int, List<Hash>> {
+    val result = hashMapOf<Int, MutableList<Hash>>()
+    val paramBinder = ObjectBinder(paramCount = 0)
+    val inClause = commitIds.toInClause()
+    val sql = "select c.rowid, c.hash from commit_hashes c inner join parent p on p.parent = c.rowid where p.commitId in $inClause"
+
+    connection.prepareStatement(sql, paramBinder).use { statement ->
+      val rs = statement.executeQuery()
+      while (rs.next()) {
+        val commitId = rs.getInt(0)
+        val hashes = result.getOrPut(commitId) { mutableListOf() }
+        hashes.add(rs.getString(1)!!.let(HashImpl::build))
+      }
+    }
+
+    return result
   }
 
   override fun processMessages(processor: (Int, String) -> Boolean) {
@@ -337,6 +397,31 @@ internal class SqliteVcsLogStorageBackend(project: Project,
 
       return userRegistry.createUser(rs.getString(0)!!, rs.getString(1)!!)
     }
+  }
+
+  override fun getAuthorForCommits(commitIds: Iterable<Int>): Map<Int, VcsUser> {
+    return getAuthorOrCommitter(commitIds, true)
+  }
+
+  override fun getCommitterForCommits(commitIds: Iterable<Int>): Map<Int, VcsUser> {
+    return getAuthorOrCommitter(commitIds, false)
+  }
+
+  private fun getAuthorOrCommitter(commitIds: Iterable<Int>, isAuthor: Boolean): Map<Int, VcsUser> {
+    val result = hashMapOf<Int, VcsUser>()
+    val paramBinder = ObjectBinder(paramCount = 0)
+    val inClause = commitIds.toInClause()
+    val isCommitter = if (isAuthor) 0 else 1
+    val sql = "select commitId, name, email from user where isCommitter = $isCommitter and commitId in $inClause"
+
+    connection.prepareStatement(sql, paramBinder).use { statement ->
+      val rs = statement.executeQuery()
+      while (rs.next()) {
+        val commitId = rs.getInt(0)
+        result.put(commitId, userRegistry.createUser(rs.getString(1)!!, rs.getString(2)!!))
+      }
+    }
+    return result
   }
 
   override fun getCommitsForUsers(users: Set<VcsUser>): IntSet {
@@ -522,6 +607,25 @@ internal class SqliteVcsLogStorageBackend(project: Project,
       }
     }
     return null
+  }
+
+  override fun getCommitIds(commitIds: Collection<Int>): Map<Int, CommitId> {
+    val paramBinder = ObjectBinder(paramCount = 0)
+    val result = Int2ObjectOpenHashMap<CommitId>()
+    val inClause = commitIds.toInClause()
+    val sql = "select rowid, position, hash from commit_hashes where rowid in $inClause"
+
+    connection.prepareStatement(sql, paramBinder).use { statement ->
+        val rs = statement.executeQuery()
+        while (rs.next()) {
+          val commitId = rs.getInt(0)
+          val root = sortedRoots.get(rs.getInt(1))
+          val hash = rs.getString(2)!!.let(HashImpl::build)
+          result.put(commitId, CommitId(hash, root))
+        }
+      }
+
+    return result
   }
 
   override fun getCommitId(commitIndex: Int): CommitId? {
@@ -762,3 +866,5 @@ private fun readIntArray(statement: SqlitePreparedStatement<IntBinder>): IntArra
   while (resultSet.next())
   return result.toIntArray()
 }
+
+private fun Iterable<Int>.toInClause() = "(" + joinToString(separator = ",") { "'$it'" } + ")"

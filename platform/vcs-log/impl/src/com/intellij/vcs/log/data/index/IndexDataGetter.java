@@ -74,12 +74,20 @@ public final class IndexDataGetter {
     return executeAndCatch(() -> myIndexStorage.users.getAuthorForCommit(commit));
   }
 
+  public @Nullable Map<Integer, VcsUser> getAuthor(@NotNull Collection<Integer> commitIds) {
+    return executeAndCatch(() -> myIndexStorage.users.getAuthorForCommits(commitIds));
+  }
+
   public @Nullable VcsUser getCommitter(int commit) {
     return executeAndCatch(() -> {
       return myIndexStorage.store.getCommitterOrAuthor(commit,
                                                        myIndexStorage.users::getUserById,
                                                        myIndexStorage.users::getAuthorForCommit);
     });
+  }
+
+  public @NotNull Map<Integer, VcsUser> getCommitter(@NotNull Collection<Integer> commitIds) {
+    return executeAndCatch(() -> myIndexStorage.users.getCommitterForCommits(commitIds), Collections.emptyMap());
   }
 
   public @Nullable Long getAuthorTime(int commit) {
@@ -89,6 +97,10 @@ public final class IndexDataGetter {
     });
   }
 
+  public @Nullable Map<Integer, Long> getAuthorTime(@NotNull Collection<Integer> commitIds) {
+    return executeAndCatch(() -> myIndexStorage.store.getAuthorTime(commitIds));
+  }
+
   public @Nullable Long getCommitTime(int commit) {
     return executeAndCatch(() -> {
       long[] time = myIndexStorage.store.getTimestamp(commit);
@@ -96,8 +108,16 @@ public final class IndexDataGetter {
     });
   }
 
+  public @Nullable Map<Integer, Long> getCommitTime(@NotNull Collection<Integer> commitIds) {
+    return executeAndCatch(() -> myIndexStorage.store.getCommitTime(commitIds));
+  }
+
   public @Nullable String getFullMessage(int index) {
     return executeAndCatch(() -> myIndexStorage.store.getMessage(index));
+  }
+
+  public @Nullable Map<Integer, String> getFullMessage(@NotNull Collection<Integer> commitIds) {
+    return executeAndCatch(() -> myIndexStorage.store.getMessages(commitIds));
   }
 
   public @Nullable List<Hash> getParents(int index) {
@@ -117,6 +137,10 @@ public final class IndexDataGetter {
       }
       return result;
     });
+  }
+
+  public @Nullable Map<Integer, List<Hash>> getParents(@NotNull Collection<Integer> commitIds) {
+    return executeAndCatch(() -> myIndexStorage.store.getParents(commitIds));
   }
 
   //
