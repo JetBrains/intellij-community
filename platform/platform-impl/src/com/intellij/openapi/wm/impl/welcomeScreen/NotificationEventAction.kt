@@ -58,7 +58,8 @@ internal class NotificationEventAction(parentDisposable: Disposable) : DumbAware
       hideListenerInstalled = true
     }
 
-    if (balloonLayout.locationComponent == null) {
+    val locationComponent = balloonLayout.locationComponent
+    if (locationComponent == null || locationComponent.parent == null) {
       balloonLayout.locationComponent = getComponent(e)
     }
 
