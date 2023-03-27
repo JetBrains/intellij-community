@@ -839,7 +839,6 @@ public final class Utils {
         LOG.error(ex);
       }
       else if (rethrowCancellation) {
-        pce.fillInStackTrace();
         throw pce;
       }
     }
