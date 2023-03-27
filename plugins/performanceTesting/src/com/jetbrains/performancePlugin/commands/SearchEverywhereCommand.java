@@ -126,8 +126,10 @@ public class SearchEverywhereCommand extends AbstractCommand {
     ApplicationManager.getApplication().executeOnPooledThread(Context.current().wrap((Callable<Object>)() -> {
       insertSpan.setAttribute("text", insertText);
       insertSpan.end();
+      List<Object> result = elements.get();
+      insertSpan.setAttribute("number", result.size());
       typingSemaphore.release();
-      return elements.get();
+      return result;
     }));
   }
 
