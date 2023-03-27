@@ -363,7 +363,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       int maxSize = VcsLogUtil.getMaxSize(detailsList);
       if (maxSize > VcsLogUtil.getShownChangesLimit()) {
         String sizeText = VcsLogUtil.getSizeText(maxSize);
-        myChangesBrowser.showText(statusText -> {
+        myChangesBrowser.setEmptyWithText(statusText -> {
           statusText.setText(VcsLogBundle.message("vcs.log.changes.too.many.status", detailsList.size(), sizeText));
           statusText.appendSecondaryText(VcsLogBundle.message("vcs.log.changes.too.many.show.anyway.status.action"),
                                          SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
@@ -377,7 +377,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     @Override
     protected int @NotNull [] onSelection(int @NotNull [] selection) {
-      myChangesBrowser.resetSelectedDetails();
+      myChangesBrowser.setEmpty();
       return selection;
     }
 
@@ -404,7 +404,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     @Override
     protected void onError(@NotNull Throwable error) {
-      myChangesBrowser.showText(statusText -> statusText.setText(VcsLogBundle.message("vcs.log.error.loading.status")));
+      myChangesBrowser.setEmptyWithText(statusText -> statusText.setText(VcsLogBundle.message("vcs.log.error.loading.status")));
     }
   }
 

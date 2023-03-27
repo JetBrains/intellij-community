@@ -26,7 +26,6 @@ import com.intellij.ui.ScrollableContentBorder.Companion.setup
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.util.EventDispatcher
-import com.intellij.util.Function
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.JBIterable
 import com.intellij.util.ui.StatusText
@@ -56,16 +55,17 @@ import javax.swing.tree.DefaultTreeModel
  */
 class VcsLogChangesBrowser internal constructor(project: Project,
                                                 private val uiProperties: MainVcsLogUiProperties,
-                                                private val dataGetter: Function<in CommitId, out VcsShortCommitDetails>,
+                                                private val dataGetter: (CommitId) -> VcsShortCommitDetails,
                                                 isWithEditorDiffPreview: Boolean,
                                                 parent: Disposable) : AsyncChangesBrowserBase(project, false, false), Disposable {
+  private val eventDispatcher = EventDispatcher.create(Listener::class.java)
+  private val toolbarWrapper: Wrapper
+
   private var commitModel = CommitModel.createEmpty()
   private var isShowChangesFromParents = false
   private var isShowOnlyAffectedSelected = false
 
   private var affectedPaths: Collection<FilePath>? = null
-  private val toolbarWrapper: Wrapper
-  private val eventDispatcher = EventDispatcher.create(Listener::class.java)
   private var editorDiffPreviewController: DiffPreviewController? = null
 
   init {
@@ -83,9 +83,10 @@ class VcsLogChangesBrowser internal constructor(project: Project,
 
     Disposer.register(parent, this)
 
-    val toolbarComponent = toolbar.component
-    toolbarWrapper = Wrapper(toolbarComponent)
-    GuiUtils.installVisibilityReferent(toolbarWrapper, toolbarComponent)
+    toolbar.component.also { toolbarComponent ->
+      toolbarWrapper = Wrapper(toolbarComponent)
+      GuiUtils.installVisibilityReferent(toolbarWrapper, toolbarComponent)
+    }
 
     init()
 
@@ -120,10 +121,6 @@ class VcsLogChangesBrowser internal constructor(project: Project,
     eventDispatcher.addListener(listener, disposable)
   }
 
-  override fun dispose() {
-    shutdown()
-  }
-
   override fun createToolbarActions(): List<AnAction> {
     return ContainerUtil.append(
       super.createToolbarActions(),
@@ -138,16 +135,16 @@ class VcsLogChangesBrowser internal constructor(project: Project,
     )
   }
 
-  private fun updateModel() {
-    updateStatusText()
-    viewer.requestRefresh { eventDispatcher.multicaster.onModelUpdated() }
+  fun setSelectedDetails(detailsList: List<VcsFullCommitDetails>) {
+    commitModel = createCommitModel(detailsList)
+    updateModel()
   }
 
-  fun resetSelectedDetails() {
-    showText { text: StatusText -> text.setText("") }
+  fun setEmpty() {
+    setEmptyWithText { it.setText("") }
   }
 
-  fun showText(statusTextConsumer: Consumer<in StatusText>) {
+  fun setEmptyWithText(statusTextConsumer: Consumer<in StatusText>) {
     commitModel = CommitModel.createText(statusTextConsumer)
     updateModel()
   }
@@ -158,9 +155,9 @@ class VcsLogChangesBrowser internal constructor(project: Project,
     myViewer.rebuildTree()
   }
 
-  fun setSelectedDetails(detailsList: List<VcsFullCommitDetails>) {
-    commitModel = createCommitModel(detailsList)
-    updateModel()
+  private fun updateModel() {
+    updateStatusText()
+    viewer.requestRefresh { eventDispatcher.multicaster.onModelUpdated() }
   }
 
   private fun updateStatusText() {
@@ -195,18 +192,21 @@ class VcsLogChangesBrowser internal constructor(project: Project,
   override val changesTreeModel: AsyncChangesTreeModel
     get() = MyVcsLogAsyncChangesTreeModel()
 
+  override fun dispose() = shutdown()
+
   private inner class MyVcsLogAsyncChangesTreeModel : SimpleAsyncChangesTreeModel() {
     override fun buildTreeModelSync(grouping: ChangesGroupingPolicyFactory): DefaultTreeModel {
-      val model = commitModel
-      val paths = affectedPaths
-      val showOnlyAffectedSelected = isShowOnlyAffectedSelected
-      val showChangesFromParents = isShowChangesFromParents
+      return buildTreeModelSync(commitModel, affectedPaths, isShowOnlyAffectedSelected, isShowChangesFromParents, grouping)
+    }
 
-      val changes = collectAffectedChanges(model.changes, paths, showOnlyAffectedSelected)
-
-      val changesToParents: MutableMap<CommitId, Collection<Change>> = LinkedHashMap()
-      for ((key, value) in model.changesToParents) {
-        changesToParents[key] = collectAffectedChanges(value, paths, showOnlyAffectedSelected)
+    private fun buildTreeModelSync(commitModel: CommitModel,
+                                   affectedPaths: Collection<FilePath>?,
+                                   showOnlyAffectedSelected: Boolean,
+                                   showChangesFromParents: Boolean,
+                                   grouping: ChangesGroupingPolicyFactory): DefaultTreeModel {
+      val changes = collectAffectedChanges(commitModel.changes, affectedPaths, showOnlyAffectedSelected)
+      val changesToParents = commitModel.changesToParents.mapValues {
+        collectAffectedChanges(it.value, affectedPaths, showOnlyAffectedSelected)
       }
 
       val builder = TreeModelBuilder(myProject, grouping)
@@ -216,15 +216,14 @@ class VcsLogChangesBrowser internal constructor(project: Project,
         if (changes.isEmpty()) {
           builder.createTagNode(VcsLogBundle.message("vcs.log.changes.no.merge.conflicts.node"))
         }
-        for (commitId in changesToParents.keys) {
-          val changesFromParent = changesToParents[commitId]!!
-          if (!changesFromParent.isEmpty()) {
-            val parentNode: ChangesBrowserNode<*> = TagChangesBrowserNode(ParentTag(commitId.hash, getText(commitId)),
-                                                                          SimpleTextAttributes.REGULAR_ATTRIBUTES, false)
-            parentNode.markAsHelperNode()
-            builder.insertSubtreeRoot(parentNode)
-            builder.insertChanges(changesFromParent, parentNode)
-          }
+        for ((commitId, changesFromParent) in changesToParents) {
+          if (changesFromParent.isEmpty()) continue
+
+          val parentNode: ChangesBrowserNode<*> = TagChangesBrowserNode(ParentTag(commitId.hash, getText(commitId)),
+                                                                        SimpleTextAttributes.REGULAR_ATTRIBUTES, false)
+          parentNode.markAsHelperNode()
+          builder.insertSubtreeRoot(parentNode)
+          builder.insertChanges(changesFromParent, parentNode)
         }
       }
       return builder.build()
@@ -248,11 +247,10 @@ class VcsLogChangesBrowser internal constructor(project: Project,
       return affectedPaths != null
     }
     if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.`is`(dataId)) {
-      val roots: Set<VirtualFile> = HashSet(commitModel.roots)
+      val roots = HashSet(commitModel.roots)
       val selectedData = VcsTreeModelData.selected(myViewer)
       val superProvider = super.getData(dataId) as DataProvider?
-      return CompositeDataProvider.compose(
-        { slowId: String -> getSlowData(slowId, roots, selectedData) }, superProvider)
+      return CompositeDataProvider.compose({ slowId -> getSlowData(slowId, roots, selectedData) }, superProvider)
     }
     else if (QuickActionProvider.KEY.`is`(dataId)) {
       return object : QuickActionProvider {
@@ -300,7 +298,9 @@ class VcsLogChangesBrowser internal constructor(project: Project,
     if (userObject !is Change) return null
     val context: MutableMap<Key<*>, Any> = HashMap()
     if (userObject !is MergedChange) {
-      putRootTagIntoChangeContext(userObject, context)
+      getTag(userObject)?.let { tag ->
+        context[ChangeDiffRequestProducer.TAG_KEY] = tag
+      }
     }
     return createDiffRequestProducer(myProject, userObject, context, forDiffPreview)
   }
@@ -336,26 +336,13 @@ class VcsLogChangesBrowser internal constructor(project: Project,
 
   fun getTag(change: Change): ChangesBrowserNode.Tag? {
     val changesToParents = commitModel.changesToParents
-    var parentId: CommitId? = null
-    for (commitId in changesToParents.keys) {
-      if (changesToParents[commitId]!!.contains(change)) {
-        parentId = commitId
-        break
-      }
-    }
-    return if (parentId == null) null else ParentTag(parentId.hash, getText(parentId))
-  }
-
-  private fun putRootTagIntoChangeContext(change: Change, context: MutableMap<Key<*>, Any>) {
-    val tag = getTag(change)
-    if (tag != null) {
-      context[ChangeDiffRequestProducer.TAG_KEY] = tag
-    }
+    val parentId = changesToParents.entries.firstOrNull { it.value.contains(change) }?.key ?: return null
+    return ParentTag(parentId.hash, getText(parentId))
   }
 
   private fun getText(commitId: CommitId): @Nls String {
     var text = VcsLogBundle.message("vcs.log.changes.changes.to.parent.node", commitId.hash.toShortString())
-    val detail = dataGetter.`fun`(commitId)
+    val detail = dataGetter(commitId)
     if (detail !is LoadingDetails || detail is IndexedDetails) {
       text += " " + StringUtil.shortenTextWithEllipsis(detail.subject, 50, 0)
     }
@@ -400,37 +387,36 @@ class VcsLogChangesBrowser internal constructor(project: Project,
 
     private fun createCommitModel(detailsList: List<VcsFullCommitDetails>): CommitModel {
       if (detailsList.isEmpty()) return CommitModel.createEmpty()
-      val roots = ContainerUtil.map2Set(detailsList) { detail: VcsFullCommitDetails -> detail.root }
-      val changes: MutableList<Change> = ArrayList()
-      val changesToParents: MutableMap<CommitId, Set<Change>> = LinkedHashMap()
-      if (detailsList.size == 1) {
-        val detail = Objects.requireNonNull(ContainerUtil.getFirstItem(detailsList))
-        changes.addAll(detail.changes)
-        if (detail.parents.size > 1) {
-          for (i in detail.parents.indices) {
-            val changesSet: Set<Change> = ReferenceOpenHashSet(detail.getChanges(i))
-            changesToParents[CommitId(detail.parents[i], detail.root)] = changesSet
-          }
+
+      val roots = detailsList.map(VcsFullCommitDetails::getRoot).toSet()
+
+      val singleCommitDetail = detailsList.singleOrNull()
+      if (singleCommitDetail == null) {
+        return CommitModel(roots, VcsLogUtil.collectChanges(detailsList) { it.changes }, emptyMap(), null)
+      }
+
+      val changesToParents = if (singleCommitDetail.parents.size > 1) {
+        singleCommitDetail.parents.indices.associate { i ->
+          CommitId(singleCommitDetail.parents[i], singleCommitDetail.root) to ReferenceOpenHashSet(singleCommitDetail.getChanges(i))
         }
       }
-      else {
-        changes.addAll(VcsLogUtil.collectChanges(detailsList) { obj: VcsFullCommitDetails -> obj.changes })
-      }
-      return CommitModel(roots, changes, changesToParents, null)
+      else emptyMap()
+
+      return CommitModel(roots, singleCommitDetail.changes.toList(), changesToParents, null)
     }
 
     private fun collectAffectedChanges(changes: Collection<Change>,
                                        affectedPaths: Collection<FilePath>?,
                                        showOnlyAffectedSelected: Boolean): List<Change> {
       return if (!showOnlyAffectedSelected || affectedPaths == null) ArrayList(changes)
-      else ContainerUtil.filter(changes) { change: Change? ->
-        ContainerUtil.or(affectedPaths) { filePath: FilePath ->
+      else changes.filter { change: Change ->
+        affectedPaths.any { filePath: FilePath ->
           if (filePath.isDirectory) {
-            return@or FileHistoryUtil.affectsDirectory(change!!, filePath)
+            return@any FileHistoryUtil.affectsDirectory(change, filePath)
           }
           else {
-            return@or FileHistoryUtil.affectsFile(change!!, filePath, false) ||
-                      FileHistoryUtil.affectsFile(change, filePath, true)
+            return@any FileHistoryUtil.affectsFile(change, filePath, false) ||
+                       FileHistoryUtil.affectsFile(change, filePath, true)
           }
         }
       }
