@@ -40,9 +40,10 @@ internal class ExecutionPositionNavigator(
     }
   }
 
-  fun navigateTo(navigationMode: ExecutionPositionNavigationMode) {
+  fun navigateTo(navigationMode: ExecutionPositionNavigationMode, isActiveSourceKind: Boolean = true) {
+    val effectiveNavigationMode = if (isActiveSourceKind) navigationMode else ExecutionPositionNavigationMode.SCROLL
     val descriptor = getDescriptor()
-    navigateTo(descriptor, navigationMode)
+    navigateTo(descriptor, effectiveNavigationMode)
   }
 
   private fun invalidate() {

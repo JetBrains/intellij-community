@@ -30,7 +30,7 @@ interface ExecutionPositionVm {
   val gutterVm: ExecutionPositionGutterVm
   val invalidationUpdateFlow: Flow<Unit>
 
-  fun navigateTo(navigationMode: ExecutionPositionNavigationMode)
+  fun navigateTo(navigationMode: ExecutionPositionNavigationMode, isActiveSourceKind: Boolean)
 }
 
 class ExecutionPositionGutterVm(val gutterIconRendererState: StateFlow<GutterIconRenderer?>)
@@ -65,19 +65,9 @@ internal class ExecutionPointVmImpl(
   }
 
   override fun navigateTo(navigationMode: ExecutionPositionNavigationMode, sourceKind: XSourceKind?) {
-    val openSourceKind = sourceKind ?: activeSourceKind
-    val syncSourceKind = if (openSourceKind == XSourceKind.MAIN) XSourceKind.ALTERNATIVE else XSourceKind.MAIN
-    val openPositionVm = positionVmFor(openSourceKind)
-    val syncPositionVm = positionVmFor(syncSourceKind)
-    syncPositionVm?.navigateTo(navigationMode.coerceAtMost(ExecutionPositionNavigationMode.SCROLL))
-    openPositionVm?.navigateTo(navigationMode)
-  }
-
-  private fun positionVmFor(sourceKind: XSourceKind): ExecutionPositionVm? {
-    return when (sourceKind) {
-      XSourceKind.MAIN -> mainPositionVm
-      XSourceKind.ALTERNATIVE -> alternativePositionVm
-    }
+    val effectiveSourceKind = sourceKind ?: activeSourceKind
+    mainPositionVm?.navigateTo(navigationMode, isActiveSourceKind = effectiveSourceKind == XSourceKind.MAIN)
+    alternativePositionVm?.navigateTo(navigationMode, isActiveSourceKind = effectiveSourceKind == XSourceKind.ALTERNATIVE)
   }
 }
 
@@ -106,7 +96,7 @@ internal class ExecutionPositionVmImpl(
 
   override val invalidationUpdateFlow: Flow<Unit> = navigationAwareUpdateFlow.map { }
 
-  override fun navigateTo(navigationMode: ExecutionPositionNavigationMode) {
-    navigator.navigateTo(navigationMode)
+  override fun navigateTo(navigationMode: ExecutionPositionNavigationMode, isActiveSourceKind: Boolean) {
+    navigator.navigateTo(navigationMode, isActiveSourceKind)
   }
 }
