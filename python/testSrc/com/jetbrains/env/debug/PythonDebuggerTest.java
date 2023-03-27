@@ -776,7 +776,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-iron", "-python3.8"); // PY-38604
+        return ImmutableSet.of("-iron", "-python3.8", "-python3.9", "-python3.10", "-python3.11"); // PY-38604
       }
     });
   }
