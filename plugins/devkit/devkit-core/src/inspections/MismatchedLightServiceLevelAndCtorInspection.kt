@@ -76,11 +76,11 @@ internal class MismatchedLightServiceLevelAndCtorInspection : DevKitJvmInspectio
               .filterIsInstance<JvmAnnotationConstantValue>()
               .map { it.constantValue }
               .filterIsInstance<Pair<*, *>>()
-              .filter { (first, second) ->
-                first.toString() == Service.Level::class.java.name.replace('.', '/').replace('$', '.') &&
-                second.toString() in listOf(Service.Level.APP.name, Service.Level.PROJECT.name)
+              .filter { (classId, name) ->
+                classId.toString() == Service.Level::class.java.name.replace('.', '/').replace('$', '.') &&
+                name.toString() in listOf(Service.Level.APP.name, Service.Level.PROJECT.name)
               }
-              .map { (_, second) -> second.toString() }
+              .map { (_, name) -> name.toString() }
             kotlinLevels.ifEmpty {
               attributeValue.values
                 .filterIsInstance<JvmAnnotationEnumFieldValue>()
