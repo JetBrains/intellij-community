@@ -1,553 +1,470 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.log.ui.frame;
+package com.intellij.vcs.log.ui.frame
 
-import com.intellij.ide.ui.customization.CustomActionsSchema;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.SimpleToolWindowPanel;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
-import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreview;
-import com.intellij.openapi.vcs.changes.ui.*;
-import com.intellij.openapi.vcs.history.VcsDiffUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
-import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.ui.switcher.QuickActionProvider;
-import com.intellij.util.EventDispatcher;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
-import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.LoadingDetails;
-import com.intellij.vcs.log.data.index.IndexedDetails;
-import com.intellij.vcs.log.history.FileHistoryUtil;
-import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
-import com.intellij.vcs.log.impl.MergedChange;
-import com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider;
-import com.intellij.vcs.log.impl.VcsLogUiProperties;
-import com.intellij.vcs.log.ui.VcsLogActionIds;
-import com.intellij.vcs.log.util.VcsLogUiUtil;
-import com.intellij.vcs.log.util.VcsLogUtil;
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import javax.swing.tree.DefaultTreeModel;
-import java.util.*;
-import java.util.function.Consumer;
-
-import static com.intellij.diff.util.DiffUserDataKeysEx.*;
-import static com.intellij.openapi.vcs.history.VcsDiffUtil.getRevisionTitle;
-import static com.intellij.util.containers.ContainerUtil.getFirstItem;
-import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS;
-import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES;
+import com.intellij.diff.util.DiffUserDataKeysEx
+import com.intellij.ide.ui.customization.CustomActionsSchema.Companion.getInstance
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.SimpleToolWindowPanel
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsDataKeys
+import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager.Companion.getInstance
+import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
+import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreview
+import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.ValueTag
+import com.intellij.openapi.vcs.history.VcsDiffUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.*
+import com.intellij.ui.ScrollableContentBorder.Companion.setup
+import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.switcher.QuickActionProvider
+import com.intellij.util.EventDispatcher
+import com.intellij.util.Function
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.JBIterable
+import com.intellij.util.ui.StatusText
+import com.intellij.util.ui.UIUtil
+import com.intellij.vcs.log.*
+import com.intellij.vcs.log.data.LoadingDetails
+import com.intellij.vcs.log.data.index.IndexedDetails
+import com.intellij.vcs.log.history.FileHistoryUtil
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties
+import com.intellij.vcs.log.impl.MergedChange
+import com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider
+import com.intellij.vcs.log.impl.VcsLogUiProperties.PropertiesChangeListener
+import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
+import com.intellij.vcs.log.ui.VcsLogActionIds
+import com.intellij.vcs.log.util.VcsLogUiUtil
+import com.intellij.vcs.log.util.VcsLogUtil
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
+import org.jetbrains.annotations.Nls
+import java.util.*
+import java.util.function.Consumer
+import javax.swing.JComponent
+import javax.swing.JScrollPane
+import javax.swing.tree.DefaultTreeModel
 
 /**
  * Change browser for commits in the Log. For merge commits, can display changes to the commits parents in separate groups.
  */
-public final class VcsLogChangesBrowser extends AsyncChangesBrowserBase implements Disposable {
-  public static final @NotNull DataKey<Boolean> HAS_AFFECTED_FILES = DataKey.create("VcsLogChangesBrowser.HasAffectedFiles");
-  private final @NotNull MainVcsLogUiProperties myUiProperties;
-  private final @NotNull Function<? super CommitId, ? extends VcsShortCommitDetails> myDataGetter;
+class VcsLogChangesBrowser internal constructor(project: Project,
+                                                private val uiProperties: MainVcsLogUiProperties,
+                                                private val dataGetter: Function<in CommitId, out VcsShortCommitDetails>,
+                                                isWithEditorDiffPreview: Boolean,
+                                                parent: Disposable) : AsyncChangesBrowserBase(project, false, false), Disposable {
+  private var commitModel = CommitModel.createEmpty()
+  private var isShowChangesFromParents = false
+  private var isShowOnlyAffectedSelected = false
 
-  @NotNull private CommitModel myCommitModel = CommitModel.createEmpty();
-  private boolean myShowChangesFromParents = false;
-  private boolean myShowOnlyAffectedSelected = false;
+  private var affectedPaths: Collection<FilePath>? = null
+  private val toolbarWrapper: Wrapper
+  private val eventDispatcher = EventDispatcher.create(Listener::class.java)
+  private var editorDiffPreviewController: DiffPreviewController? = null
 
-  private @Nullable Collection<? extends FilePath> myAffectedPaths;
-  private final @NotNull Wrapper myToolbarWrapper;
-  private final @NotNull EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
-  private @Nullable DiffPreviewController myEditorDiffPreviewController;
-
-  VcsLogChangesBrowser(@NotNull Project project,
-                       @NotNull MainVcsLogUiProperties uiProperties,
-                       @NotNull Function<? super CommitId, ? extends VcsShortCommitDetails> getter,
-                       boolean isWithEditorDiffPreview,
-                       @NotNull Disposable parent) {
-    super(project, false, false);
-    myUiProperties = uiProperties;
-    myDataGetter = getter;
-
-    VcsLogUiProperties.PropertiesChangeListener propertiesChangeListener = new VcsLogUiProperties.PropertiesChangeListener() {
-      @Override
-      public <T> void onPropertyChanged(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
-        updateUiSettings();
-        if (SHOW_CHANGES_FROM_PARENTS.equals(property) || SHOW_ONLY_AFFECTED_CHANGES.equals(property)) {
-          myViewer.rebuildTree();
-          updateStatusText();
+  init {
+    val propertiesChangeListener = object : PropertiesChangeListener {
+      override fun <T> onPropertyChanged(property: VcsLogUiProperty<T>) {
+        updateUiSettings()
+        if (MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS == property || MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES == property) {
+          myViewer.rebuildTree()
+          updateStatusText()
         }
       }
-    };
-    myUiProperties.addChangeListener(propertiesChangeListener, this);
-    updateUiSettings();
+    }
+    uiProperties.addChangeListener(propertiesChangeListener, this)
+    updateUiSettings()
 
-    Disposer.register(parent, this);
+    Disposer.register(parent, this)
 
-    JComponent toolbarComponent = getToolbar().getComponent();
-    myToolbarWrapper = new Wrapper(toolbarComponent);
-    GuiUtils.installVisibilityReferent(myToolbarWrapper, toolbarComponent);
+    val toolbarComponent = toolbar.component
+    toolbarWrapper = Wrapper(toolbarComponent)
+    GuiUtils.installVisibilityReferent(toolbarWrapper, toolbarComponent)
 
-    init();
+    init()
 
     if (isWithEditorDiffPreview) {
-      setEditorDiffPreview();
-      EditorTabDiffPreviewManager.getInstance(myProject).subscribeToPreviewVisibilityChange(this, this::setEditorDiffPreview);
+      setEditorDiffPreview()
+      getInstance(myProject).subscribeToPreviewVisibilityChange(this) { setEditorDiffPreview() }
     }
 
-    hideViewerBorder();
-    JScrollPane scrollPane = getViewerScrollPane();
-    ScrollableContentBorder.setup(scrollPane, Side.TOP);
+    hideViewerBorder()
+    setup(viewerScrollPane, Side.TOP)
 
-    myViewer.setEmptyText(VcsLogBundle.message("vcs.log.changes.select.commits.to.view.changes.status"));
-    myViewer.rebuildTree();
+    myViewer.setEmptyText(VcsLogBundle.message("vcs.log.changes.select.commits.to.view.changes.status"))
+    myViewer.rebuildTree()
   }
 
-  @Override
-  protected @NotNull JComponent createToolbarComponent() {
-    return myToolbarWrapper;
-  }
+  override fun createToolbarComponent(): JComponent = toolbarWrapper
 
-  @Override
-  protected @NotNull JComponent createCenterPanel() {
-    JComponent centerPanel = super.createCenterPanel();
-    JScrollPane scrollPane = UIUtil.findComponentOfType(centerPanel, JScrollPane.class);
+  override fun createCenterPanel(): JComponent {
+    val centerPanel = super.createCenterPanel()
+    val scrollPane = UIUtil.findComponentOfType(centerPanel, JScrollPane::class.java)
     if (scrollPane != null) {
-      ClientProperty.put(scrollPane, UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);
+      ClientProperty.put(scrollPane, UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP)
     }
-    return centerPanel;
+    return centerPanel
   }
 
-  public void setToolbarHeightReferent(@NotNull JComponent referent) {
-    myToolbarWrapper.setVerticalSizeReferent(referent);
+  fun setToolbarHeightReferent(referent: JComponent) {
+    toolbarWrapper.setVerticalSizeReferent(referent)
   }
 
-  public void addListener(@NotNull Listener listener, @NotNull Disposable disposable) {
-    myDispatcher.addListener(listener, disposable);
+  fun addListener(listener: Listener, disposable: Disposable) {
+    eventDispatcher.addListener(listener, disposable)
   }
 
-  @Override
-  public void dispose() {
-    shutdown();
+  override fun dispose() {
+    shutdown()
   }
 
-  @Override
-  protected @NotNull List<AnAction> createToolbarActions() {
+  override fun createToolbarActions(): List<AnAction> {
     return ContainerUtil.append(
       super.createToolbarActions(),
-      CustomActionsSchema.getInstance().getCorrectedAction(VcsLogActionIds.CHANGES_BROWSER_TOOLBAR_ACTION_GROUP)
-    );
+      getInstance().getCorrectedAction(VcsLogActionIds.CHANGES_BROWSER_TOOLBAR_ACTION_GROUP)
+    )
   }
 
-  @Override
-  protected @NotNull List<AnAction> createPopupMenuActions() {
+  override fun createPopupMenuActions(): List<AnAction> {
     return ContainerUtil.append(
       super.createPopupMenuActions(),
       ActionManager.getInstance().getAction(VcsLogActionIds.CHANGES_BROWSER_POPUP_ACTION_GROUP)
-    );
+    )
   }
 
-  private void updateModel() {
-    updateStatusText();
-    getViewer().requestRefresh(() -> {
-      myDispatcher.getMulticaster().onModelUpdated();
-    });
+  private fun updateModel() {
+    updateStatusText()
+    viewer.requestRefresh { eventDispatcher.multicaster.onModelUpdated() }
   }
 
-  public void resetSelectedDetails() {
-    showText(text -> text.setText(""));
+  fun resetSelectedDetails() {
+    showText { text: StatusText -> text.setText("") }
   }
 
-  public void showText(@NotNull Consumer<? super StatusText> statusTextConsumer) {
-    myCommitModel = CommitModel.createText(statusTextConsumer);
-    updateModel();
+  fun showText(statusTextConsumer: Consumer<in StatusText>) {
+    commitModel = CommitModel.createText(statusTextConsumer)
+    updateModel()
   }
 
-  public void setAffectedPaths(@Nullable Collection<? extends FilePath> paths) {
-    myAffectedPaths = paths;
-    updateStatusText();
-    myViewer.rebuildTree();
+  fun setAffectedPaths(paths: Collection<FilePath>?) {
+    affectedPaths = paths
+    updateStatusText()
+    myViewer.rebuildTree()
   }
 
-  public void setSelectedDetails(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
-    myCommitModel = createCommitModel(detailsList);
-    updateModel();
+  fun setSelectedDetails(detailsList: List<VcsFullCommitDetails>) {
+    commitModel = createCommitModel(detailsList)
+    updateModel()
   }
 
-  @NotNull
-  private static CommitModel createCommitModel(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
-    if (detailsList.isEmpty()) return CommitModel.createEmpty();
+  private fun updateStatusText() {
+    val emptyText = myViewer.emptyText
+    val model = commitModel
 
-    Set<VirtualFile> roots = ContainerUtil.map2Set(detailsList, detail -> detail.getRoot());
-
-    List<Change> changes = new ArrayList<>();
-    Map<CommitId, Set<Change>> changesToParents = new LinkedHashMap<>();
-    if (detailsList.size() == 1) {
-      VcsFullCommitDetails detail = Objects.requireNonNull(getFirstItem(detailsList));
-      changes.addAll(detail.getChanges());
-
-      if (detail.getParents().size() > 1) {
-        for (int i = 0; i < detail.getParents().size(); i++) {
-          Set<Change> changesSet = new ReferenceOpenHashSet<>(detail.getChanges(i));
-          changesToParents.put(new CommitId(detail.getParents().get(i), detail.getRoot()), changesSet);
-        }
-      }
-    }
-    else {
-      changes.addAll(VcsLogUtil.collectChanges(detailsList, VcsFullCommitDetails::getChanges));
-    }
-
-    return new CommitModel(roots, changes, changesToParents, null);
-  }
-
-  private void updateStatusText() {
-    StatusText emptyText = myViewer.getEmptyText();
-    CommitModel commitModel = myCommitModel;
-
-    Consumer<? super StatusText> customStatus = commitModel.myCustomEmptyTextStatus;
+    val customStatus = model.customEmptyTextStatus
     if (customStatus != null) {
-      customStatus.accept(emptyText);
-      return;
+      customStatus.accept(emptyText)
+      return
     }
-
-    if (commitModel.myRoots.isEmpty()) {
-      emptyText.setText(VcsLogBundle.message("vcs.log.changes.select.commits.to.view.changes.status"));
+    if (model.roots.isEmpty()) {
+      emptyText.setText(VcsLogBundle.message("vcs.log.changes.select.commits.to.view.changes.status"))
     }
-    else if (!commitModel.myChangesToParents.isEmpty()) {
-      emptyText.setText(VcsLogBundle.message("vcs.log.changes.no.merge.conflicts.status")).
-        appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.changes.to.parents.status.action"),
-                            SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
-                            e -> myUiProperties.set(SHOW_CHANGES_FROM_PARENTS, true));
+    else if (!model.changesToParents.isEmpty()) {
+      emptyText.setText(VcsLogBundle.message("vcs.log.changes.no.merge.conflicts.status")).appendSecondaryText(
+        VcsLogBundle.message("vcs.log.changes.show.changes.to.parents.status.action"),
+        SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
+      ) { uiProperties.set(MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS, true) }
     }
-    else if (myShowOnlyAffectedSelected && myAffectedPaths != null) {
+    else if (isShowOnlyAffectedSelected && affectedPaths != null) {
       emptyText.setText(VcsLogBundle.message("vcs.log.changes.no.changes.that.affect.selected.paths.status"))
         .appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.all.paths.status.action"),
-                             SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
-                             e -> myUiProperties.set(SHOW_ONLY_AFFECTED_CHANGES, false));
+                             SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
+        ) { uiProperties.set(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES, false) }
     }
     else {
-      emptyText.setText("");
+      emptyText.setText("")
     }
   }
 
-  @NotNull
-  @Override
-  protected AsyncChangesTreeModel getChangesTreeModel() {
-    return new MyVcsLogAsyncChangesTreeModel();
-  }
+  override val changesTreeModel: AsyncChangesTreeModel
+    get() = MyVcsLogAsyncChangesTreeModel()
 
-  private class MyVcsLogAsyncChangesTreeModel extends SimpleAsyncChangesTreeModel {
-    @NotNull
-    @Override
-    public DefaultTreeModel buildTreeModelSync(@NotNull ChangesGroupingPolicyFactory grouping) {
-      CommitModel commitModel = myCommitModel;
-      Collection<? extends FilePath> affectedPaths = myAffectedPaths;
-      boolean showOnlyAffectedSelected = myShowOnlyAffectedSelected;
-      boolean showChangesFromParents = myShowChangesFromParents;
+  private inner class MyVcsLogAsyncChangesTreeModel : SimpleAsyncChangesTreeModel() {
+    override fun buildTreeModelSync(grouping: ChangesGroupingPolicyFactory): DefaultTreeModel {
+      val model = commitModel
+      val paths = affectedPaths
+      val showOnlyAffectedSelected = isShowOnlyAffectedSelected
+      val showChangesFromParents = isShowChangesFromParents
 
-      List<Change> changes = collectAffectedChanges(commitModel.myChanges, affectedPaths, showOnlyAffectedSelected);
+      val changes = collectAffectedChanges(model.changes, paths, showOnlyAffectedSelected)
 
-      Map<CommitId, Collection<Change>> changesToParents = new LinkedHashMap<>();
-      for (Map.Entry<CommitId, Set<Change>> entry : commitModel.myChangesToParents.entrySet()) {
-        changesToParents.put(entry.getKey(), collectAffectedChanges(entry.getValue(), affectedPaths, showOnlyAffectedSelected));
+      val changesToParents: MutableMap<CommitId, Collection<Change>> = LinkedHashMap()
+      for ((key, value) in model.changesToParents) {
+        changesToParents[key] = collectAffectedChanges(value, paths, showOnlyAffectedSelected)
       }
 
-      TreeModelBuilder builder = new TreeModelBuilder(myProject, grouping);
-      builder.setChanges(changes, null);
+      val builder = TreeModelBuilder(myProject, grouping)
+      builder.setChanges(changes, null)
 
       if (showChangesFromParents && !changesToParents.isEmpty()) {
         if (changes.isEmpty()) {
-          builder.createTagNode(VcsLogBundle.message("vcs.log.changes.no.merge.conflicts.node"));
+          builder.createTagNode(VcsLogBundle.message("vcs.log.changes.no.merge.conflicts.node"))
         }
-        for (CommitId commitId : changesToParents.keySet()) {
-          Collection<Change> changesFromParent = changesToParents.get(commitId);
+        for (commitId in changesToParents.keys) {
+          val changesFromParent = changesToParents[commitId]!!
           if (!changesFromParent.isEmpty()) {
-            ChangesBrowserNode<?> parentNode = new TagChangesBrowserNode(new ParentTag(commitId.getHash(), getText(commitId)),
-                                                                         SimpleTextAttributes.REGULAR_ATTRIBUTES, false);
-            parentNode.markAsHelperNode();
-
-            builder.insertSubtreeRoot(parentNode);
-            builder.insertChanges(changesFromParent, parentNode);
+            val parentNode: ChangesBrowserNode<*> = TagChangesBrowserNode(ParentTag(commitId.hash, getText(commitId)),
+                                                                          SimpleTextAttributes.REGULAR_ATTRIBUTES, false)
+            parentNode.markAsHelperNode()
+            builder.insertSubtreeRoot(parentNode)
+            builder.insertChanges(changesFromParent, parentNode)
           }
         }
       }
-
-      return builder.build();
+      return builder.build()
     }
   }
 
-  private static @NotNull List<Change> collectAffectedChanges(@NotNull Collection<? extends Change> changes,
-                                                              Collection<? extends FilePath> affectedPaths,
-                                                              boolean showOnlyAffectedSelected) {
-    if (!showOnlyAffectedSelected || affectedPaths == null) return new ArrayList<>(changes);
-    return ContainerUtil.filter(changes, change -> ContainerUtil.or(affectedPaths, filePath -> {
-      if (filePath.isDirectory()) {
-        return FileHistoryUtil.affectsDirectory(change, filePath);
+  private fun updateUiSettings() {
+    isShowChangesFromParents = uiProperties.exists(MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS) &&
+                               uiProperties.get(MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS)
+    isShowOnlyAffectedSelected = uiProperties.exists(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES) &&
+                                 uiProperties.get(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES)
+  }
+
+  val directChanges: List<Change>
+    get() = commitModel.changes
+  val selectedChanges: List<Change>
+    get() = VcsTreeModelData.selected(myViewer).userObjects(Change::class.java)
+
+  override fun getData(dataId: String): Any? {
+    if (HAS_AFFECTED_FILES.`is`(dataId)) {
+      return affectedPaths != null
+    }
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.`is`(dataId)) {
+      val roots: Set<VirtualFile> = HashSet(commitModel.roots)
+      val selectedData = VcsTreeModelData.selected(myViewer)
+      val superProvider = super.getData(dataId) as DataProvider?
+      return CompositeDataProvider.compose(
+        { slowId: String -> getSlowData(slowId, roots, selectedData) }, superProvider)
+    }
+    else if (QuickActionProvider.KEY.`is`(dataId)) {
+      return object : QuickActionProvider {
+        override fun getActions(originalProvider: Boolean): List<AnAction> {
+          return SimpleToolWindowPanel.collectActions(this@VcsLogChangesBrowser)
+        }
+
+        override fun getComponent() = this@VcsLogChangesBrowser
+        override fun getName() = null
+      }
+    }
+    return super.getData(dataId)
+  }
+
+  private fun getSlowData(dataId: String,
+                          roots: Set<VirtualFile>,
+                          selectedData: VcsTreeModelData): Any? {
+    if (VcsDataKeys.VCS.`is`(dataId)) {
+      val rootsVcs = JBIterable.from(roots)
+        .map { root: VirtualFile? -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root) }
+        .filterNotNull()
+        .unique()
+        .single()
+      if (rootsVcs != null) return rootsVcs.keyInstanceMethod
+
+      val selectionVcs = selectedData.iterateUserObjects(Change::class.java)
+        .map { change: Change? ->
+          ChangesUtil.getFilePath(
+            change!!)
+        }
+        .map { root: FilePath? -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root) }
+        .filterNotNull()
+        .unique()
+        .single()
+      return selectionVcs?.keyInstanceMethod
+    }
+    return null
+  }
+
+  public override fun getDiffRequestProducer(userObject: Any): ChangeDiffRequestChain.Producer? {
+    return getDiffRequestProducer(userObject, false)
+  }
+
+  fun getDiffRequestProducer(userObject: Any, forDiffPreview: Boolean): ChangeDiffRequestChain.Producer? {
+    if (userObject !is Change) return null
+    val context: MutableMap<Key<*>, Any> = HashMap()
+    if (userObject !is MergedChange) {
+      putRootTagIntoChangeContext(userObject, context)
+    }
+    return createDiffRequestProducer(myProject, userObject, context, forDiffPreview)
+  }
+
+  private fun setEditorDiffPreview() {
+    val diffPreviewController = editorDiffPreviewController
+    val isWithEditorDiffPreview = VcsLogUiUtil.isDiffPreviewInEditor(myProject)
+    if (isWithEditorDiffPreview && diffPreviewController == null) {
+      editorDiffPreviewController = VcsLogChangesBrowserDiffPreviewController()
+    }
+    else if (!isWithEditorDiffPreview && diffPreviewController != null) {
+      diffPreviewController.activePreview.closePreview()
+      editorDiffPreviewController = null
+    }
+  }
+
+  fun createChangeProcessor(isInEditor: Boolean): VcsLogChangeProcessor {
+    return VcsLogChangeProcessor(myProject, this, isInEditor, this)
+  }
+
+  override fun getShowDiffActionPreview(): DiffPreview? {
+    val editorDiffPreviewController = editorDiffPreviewController
+    return editorDiffPreviewController?.activePreview
+  }
+
+  fun selectChange(userObject: Any, tag: ChangesBrowserNode.Tag?) {
+    viewer.invokeAfterRefresh { selectObjectWithTag(myViewer, userObject, tag) }
+  }
+
+  fun selectFile(toSelect: FilePath?) {
+    viewer.invokeAfterRefresh { viewer.selectFile(toSelect) }
+  }
+
+  fun getTag(change: Change): ChangesBrowserNode.Tag? {
+    val changesToParents = commitModel.changesToParents
+    var parentId: CommitId? = null
+    for (commitId in changesToParents.keys) {
+      if (changesToParents[commitId]!!.contains(change)) {
+        parentId = commitId
+        break
+      }
+    }
+    return if (parentId == null) null else ParentTag(parentId.hash, getText(parentId))
+  }
+
+  private fun putRootTagIntoChangeContext(change: Change, context: MutableMap<Key<*>, Any>) {
+    val tag = getTag(change)
+    if (tag != null) {
+      context[ChangeDiffRequestProducer.TAG_KEY] = tag
+    }
+  }
+
+  private fun getText(commitId: CommitId): @Nls String {
+    var text = VcsLogBundle.message("vcs.log.changes.changes.to.parent.node", commitId.hash.toShortString())
+    val detail = dataGetter.`fun`(commitId)
+    if (detail !is LoadingDetails || detail is IndexedDetails) {
+      text += " " + StringUtil.shortenTextWithEllipsis(detail.subject, 50, 0)
+    }
+    return text
+  }
+
+  fun interface Listener : EventListener {
+    fun onModelUpdated()
+  }
+
+  private inner class VcsLogChangesBrowserDiffPreviewController : DiffPreviewControllerBase() {
+    override val simplePreview: DiffPreview
+      get() = VcsLogEditorDiffPreview(myProject, this@VcsLogChangesBrowser)
+
+    override fun createCombinedDiffPreview(): CombinedDiffPreview {
+      return VcsLogCombinedDiffPreview(this@VcsLogChangesBrowser)
+    }
+  }
+
+  private class ParentTag(commit: Hash, private val text: @Nls String) : ValueTag<Hash>(commit) {
+    override fun toString() = text
+  }
+
+  private class CommitModel(val roots: Set<VirtualFile>,
+                            val changes: List<Change>,
+                            val changesToParents: Map<CommitId, Set<Change>>,
+                            val customEmptyTextStatus: Consumer<in StatusText>?) {
+    companion object {
+      fun createEmpty(): CommitModel {
+        return CommitModel(emptySet(), emptyList(), emptyMap(), null)
+      }
+
+      fun createText(statusTextConsumer: Consumer<in StatusText>?): CommitModel {
+        return CommitModel(emptySet(), emptyList(), emptyMap(), statusTextConsumer)
+      }
+    }
+  }
+
+  companion object {
+    @JvmField
+    val HAS_AFFECTED_FILES = DataKey.create<Boolean>("VcsLogChangesBrowser.HasAffectedFiles")
+
+    private fun createCommitModel(detailsList: List<VcsFullCommitDetails>): CommitModel {
+      if (detailsList.isEmpty()) return CommitModel.createEmpty()
+      val roots = ContainerUtil.map2Set(detailsList) { detail: VcsFullCommitDetails -> detail.root }
+      val changes: MutableList<Change> = ArrayList()
+      val changesToParents: MutableMap<CommitId, Set<Change>> = LinkedHashMap()
+      if (detailsList.size == 1) {
+        val detail = Objects.requireNonNull(ContainerUtil.getFirstItem(detailsList))
+        changes.addAll(detail.changes)
+        if (detail.parents.size > 1) {
+          for (i in detail.parents.indices) {
+            val changesSet: Set<Change> = ReferenceOpenHashSet(detail.getChanges(i))
+            changesToParents[CommitId(detail.parents[i], detail.root)] = changesSet
+          }
+        }
       }
       else {
-        return FileHistoryUtil.affectsFile(change, filePath, false) ||
-               FileHistoryUtil.affectsFile(change, filePath, true);
+        changes.addAll(VcsLogUtil.collectChanges(detailsList) { obj: VcsFullCommitDetails -> obj.changes })
       }
-    }));
-  }
-
-  private void updateUiSettings() {
-    myShowChangesFromParents = myUiProperties.exists(SHOW_CHANGES_FROM_PARENTS) &&
-                               myUiProperties.get(SHOW_CHANGES_FROM_PARENTS);
-    myShowOnlyAffectedSelected = myUiProperties.exists(SHOW_ONLY_AFFECTED_CHANGES) &&
-                                 myUiProperties.get(SHOW_ONLY_AFFECTED_CHANGES);
-  }
-
-  public @NotNull List<Change> getDirectChanges() {
-    return myCommitModel.myChanges;
-  }
-
-  public @NotNull List<Change> getSelectedChanges() {
-    return VcsTreeModelData.selected(myViewer).userObjects(Change.class);
-  }
-
-  @Override
-  public @Nullable Object getData(@NotNull String dataId) {
-    if (HAS_AFFECTED_FILES.is(dataId)) {
-      return myAffectedPaths != null;
+      return CommitModel(roots, changes, changesToParents, null)
     }
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      Set<VirtualFile> roots = new HashSet<>(myCommitModel.myRoots);
-      VcsTreeModelData selectedData = VcsTreeModelData.selected(myViewer);
-      DataProvider superProvider = (DataProvider)super.getData(dataId);
-      return CompositeDataProvider.compose(slowId -> getSlowData(slowId, roots, selectedData), superProvider);
-    }
-    else if (QuickActionProvider.KEY.is(dataId)) {
-      return new QuickActionProvider() {
-        @Override
-        public @NotNull List<AnAction> getActions(boolean originalProvider) {
-          return SimpleToolWindowPanel.collectActions(VcsLogChangesBrowser.this);
+
+    private fun collectAffectedChanges(changes: Collection<Change>,
+                                       affectedPaths: Collection<FilePath>?,
+                                       showOnlyAffectedSelected: Boolean): List<Change> {
+      return if (!showOnlyAffectedSelected || affectedPaths == null) ArrayList(changes)
+      else ContainerUtil.filter(changes) { change: Change? ->
+        ContainerUtil.or(affectedPaths) { filePath: FilePath ->
+          if (filePath.isDirectory) {
+            return@or FileHistoryUtil.affectsDirectory(change!!, filePath)
+          }
+          else {
+            return@or FileHistoryUtil.affectsFile(change!!, filePath, false) ||
+                      FileHistoryUtil.affectsFile(change, filePath, true)
+          }
         }
-
-        @Override
-        public JComponent getComponent() {
-          return VcsLogChangesBrowser.this;
-        }
-
-        @Override
-        public @NlsActions.ActionText @Nullable String getName() {
-          return null;
-        }
-      };
-    }
-    return super.getData(dataId);
-  }
-
-  private @Nullable Object getSlowData(@NotNull String dataId,
-                                       @NotNull Set<? extends VirtualFile> roots,
-                                       @NotNull VcsTreeModelData selectedData) {
-    if (VcsDataKeys.VCS.is(dataId)) {
-      AbstractVcs rootsVcs = JBIterable.from(roots)
-        .map(root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root))
-        .filterNotNull()
-        .unique()
-        .single();
-      if (rootsVcs != null) return rootsVcs.getKeyInstanceMethod();
-
-      AbstractVcs selectionVcs = selectedData.iterateUserObjects(Change.class)
-        .map(change -> ChangesUtil.getFilePath(change))
-        .map(root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root))
-        .filterNotNull()
-        .unique()
-        .single();
-      if (selectionVcs != null) return selectionVcs.getKeyInstanceMethod();
-
-      return null;
-    }
-    return null;
-  }
-
-  @Override
-  public ChangeDiffRequestChain.Producer getDiffRequestProducer(@NotNull Object userObject) {
-    return getDiffRequestProducer(userObject, false);
-  }
-
-  public @Nullable ChangeDiffRequestChain.Producer getDiffRequestProducer(@NotNull Object userObject, boolean forDiffPreview) {
-    if (!(userObject instanceof Change change)) return null;
-
-    Map<Key<?>, Object> context = new HashMap<>();
-    if (!(change instanceof MergedChange)) {
-      putRootTagIntoChangeContext(change, context);
-    }
-    return createDiffRequestProducer(myProject, change, context, forDiffPreview);
-  }
-
-  public static @Nullable ChangeDiffRequestChain.Producer createDiffRequestProducer(@NotNull Project project,
-                                                                                    @NotNull Change change,
-                                                                                    @NotNull Map<Key<?>, Object> context,
-                                                                                    boolean forDiffPreview) {
-    if (change instanceof MergedChange mergedChange) {
-      if (mergedChange.getSourceChanges().size() == 2) {
-        if (forDiffPreview) {
-          putFilePathsIntoMergedChangeContext(mergedChange, context);
-        }
-        return new MergedChangeDiffRequestProvider.MyProducer(project, mergedChange, context);
       }
     }
 
-    if (forDiffPreview) {
-      VcsDiffUtil.putFilePathsIntoChangeContext(change, context);
-    }
-
-    return ChangeDiffRequestProducer.create(project, change, context);
-  }
-
-  private void setEditorDiffPreview() {
-
-    DiffPreviewController editorDiffPreviewController = myEditorDiffPreviewController;
-
-    boolean isWithEditorDiffPreview = VcsLogUiUtil.isDiffPreviewInEditor(myProject);
-
-    if (isWithEditorDiffPreview && editorDiffPreviewController == null) {
-      myEditorDiffPreviewController = new VcsLogChangesBrowserDiffPreviewController();
-    }
-    else if (!isWithEditorDiffPreview && editorDiffPreviewController != null) {
-      editorDiffPreviewController.getActivePreview().closePreview();
-      myEditorDiffPreviewController = null;
-    }
-  }
-
-  public @NotNull VcsLogChangeProcessor createChangeProcessor(boolean isInEditor) {
-    return new VcsLogChangeProcessor(myProject, this, isInEditor, this);
-  }
-
-  @Override
-  protected @Nullable DiffPreview getShowDiffActionPreview() {
-    DiffPreviewController editorDiffPreviewController = myEditorDiffPreviewController;
-    return editorDiffPreviewController != null ? editorDiffPreviewController.getActivePreview() : null;
-  }
-
-  public void selectChange(@NotNull Object userObject, @Nullable ChangesBrowserNode.Tag tag) {
-    getViewer().invokeAfterRefresh(() -> {
-      selectObjectWithTag(myViewer, userObject, tag);
-    });
-  }
-
-  public void selectFile(@Nullable FilePath toSelect) {
-    getViewer().invokeAfterRefresh(() -> {
-      getViewer().selectFile(toSelect);
-    });
-  }
-
-  public @Nullable ChangesBrowserNode.Tag getTag(@NotNull Change change) {
-    Map<CommitId, Set<Change>> changesToParents = myCommitModel.myChangesToParents;
-
-    CommitId parentId = null;
-    for (CommitId commitId : changesToParents.keySet()) {
-      if (changesToParents.get(commitId).contains(change)) {
-        parentId = commitId;
-        break;
+    fun createDiffRequestProducer(project: Project,
+                                  change: Change,
+                                  context: MutableMap<Key<*>, Any>,
+                                  forDiffPreview: Boolean): ChangeDiffRequestChain.Producer? {
+      if (change is MergedChange) {
+        if (change.sourceChanges.size == 2) {
+          if (forDiffPreview) {
+            putFilePathsIntoMergedChangeContext(change, context)
+          }
+          return MergedChangeDiffRequestProvider.MyProducer(project, change, context)
+        }
       }
+      if (forDiffPreview) {
+        VcsDiffUtil.putFilePathsIntoChangeContext(change, context)
+      }
+      return ChangeDiffRequestProducer.create(project, change, context)
     }
 
-    if (parentId == null) return null;
-    return new ParentTag(parentId.getHash(), getText(parentId));
-  }
-
-  private void putRootTagIntoChangeContext(@NotNull Change change, @NotNull Map<Key<?>, Object> context) {
-    ChangesBrowserNode.Tag tag = getTag(change);
-    if (tag != null) {
-      context.put(ChangeDiffRequestProducer.TAG_KEY, tag);
-    }
-  }
-
-  private static void putFilePathsIntoMergedChangeContext(@NotNull MergedChange change, @NotNull Map<Key<?>, Object> context) {
-    ContentRevision centerRevision = change.getAfterRevision();
-    ContentRevision leftRevision = change.getSourceChanges().get(0).getBeforeRevision();
-    ContentRevision rightRevision = change.getSourceChanges().get(1).getBeforeRevision();
-    FilePath centerFile = centerRevision == null ? null : centerRevision.getFile();
-    FilePath leftFile = leftRevision == null ? null : leftRevision.getFile();
-    FilePath rightFile = rightRevision == null ? null : rightRevision.getFile();
-    context.put(VCS_DIFF_CENTER_CONTENT_TITLE, getRevisionTitle(centerRevision, centerFile, null));
-    context.put(VCS_DIFF_RIGHT_CONTENT_TITLE, getRevisionTitle(rightRevision, rightFile, centerFile));
-    context.put(VCS_DIFF_LEFT_CONTENT_TITLE, getRevisionTitle(leftRevision, leftFile, centerFile == null ? rightFile : centerFile));
-  }
-
-  private @NotNull @Nls String getText(@NotNull CommitId commitId) {
-    String text = VcsLogBundle.message("vcs.log.changes.changes.to.parent.node", commitId.getHash().toShortString());
-    VcsShortCommitDetails detail = myDataGetter.fun(commitId);
-    if (!(detail instanceof LoadingDetails) || (detail instanceof IndexedDetails)) {
-      text += " " + StringUtil.shortenTextWithEllipsis(detail.getSubject(), 50, 0);
-    }
-    return text;
-  }
-
-  public interface Listener extends EventListener {
-    void onModelUpdated();
-  }
-
-  private class VcsLogChangesBrowserDiffPreviewController extends DiffPreviewControllerBase {
-    @Override
-    protected @NotNull DiffPreview getSimplePreview() {
-      return new VcsLogEditorDiffPreview(myProject, VcsLogChangesBrowser.this);
-    }
-
-    @Override
-    protected @NotNull CombinedDiffPreview createCombinedDiffPreview() {
-      return new VcsLogCombinedDiffPreview(VcsLogChangesBrowser.this);
-    }
-  }
-
-  private static class ParentTag extends ChangesBrowserNode.ValueTag<Hash> {
-    private final @NotNull @Nls String myText;
-
-    ParentTag(@NotNull Hash commit, @NotNull @Nls String text) {
-      super(commit);
-      myText = text;
-    }
-
-    @Override
-    public String toString() {
-      return myText;
-    }
-  }
-
-  private static class CommitModel {
-    public static CommitModel createEmpty() {
-      return new CommitModel(Collections.emptySet(),
-                             Collections.emptyList(),
-                             Collections.emptyMap(),
-                             null);
-    }
-
-    public static CommitModel createText(@Nullable Consumer<? super StatusText> statusTextConsumer) {
-      return new CommitModel(Collections.emptySet(),
-                             Collections.emptyList(),
-                             Collections.emptyMap(),
-                             statusTextConsumer);
-    }
-
-    private final @NotNull Set<VirtualFile> myRoots;
-    private final @NotNull List<Change> myChanges;
-    private final @NotNull Map<CommitId, Set<Change>> myChangesToParents;
-    private final @Nullable Consumer<? super StatusText> myCustomEmptyTextStatus;
-
-    private CommitModel(@NotNull Set<VirtualFile> roots,
-                        @NotNull List<Change> changes,
-                        @NotNull Map<CommitId, Set<Change>> changesToParents,
-                        @Nullable Consumer<? super StatusText> status) {
-      myRoots = roots;
-      myChanges = changes;
-      myChangesToParents = changesToParents;
-      myCustomEmptyTextStatus = status;
+    private fun putFilePathsIntoMergedChangeContext(change: MergedChange, context: MutableMap<Key<*>, Any>) {
+      val centerRevision = change.afterRevision
+      val leftRevision = change.sourceChanges[0].beforeRevision
+      val rightRevision = change.sourceChanges[1].beforeRevision
+      val centerFile = centerRevision?.file
+      val leftFile = leftRevision?.file
+      val rightFile = rightRevision?.file
+      context[DiffUserDataKeysEx.VCS_DIFF_CENTER_CONTENT_TITLE] = VcsDiffUtil.getRevisionTitle(centerRevision, centerFile, null)
+      context[DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE] = VcsDiffUtil.getRevisionTitle(rightRevision, rightFile, centerFile)
+      context[DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE] = VcsDiffUtil.getRevisionTitle(leftRevision, leftFile,
+                                                                                             centerFile ?: rightFile)
     }
   }
 }
