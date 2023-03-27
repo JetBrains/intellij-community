@@ -139,7 +139,8 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   @Override
   boolean isSpecificallyModified() {
     return myComponent != null && myComponent.myRCStorageUi != null && myComponent.myRCStorageUi.isModified() ||
-           myRunOnTargetPanel.isModified();
+           myRunOnTargetPanel.isModified() ||
+           getEditor().isSpecificallyModified();
   }
 
   @Override

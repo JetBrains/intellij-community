@@ -103,6 +103,11 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
   protected void initFragments(Collection<? extends SettingsEditorFragment<Settings, ?>> fragments) {
   }
 
+  @Override
+  public boolean isSpecificallyModified() {
+    return ContainerUtil.exists(getFragments(), fragment -> fragment.isSpecificallyModified());
+  }
+
   private void installFragmentsAligner() {
     installFragmentsAligner(this);
     for (SettingsEditorFragment<Settings, ?> fragment : getFragments()) {

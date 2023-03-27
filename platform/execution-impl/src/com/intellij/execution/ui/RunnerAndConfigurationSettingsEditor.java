@@ -53,12 +53,9 @@ public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerA
     myConfigurationEditor.targetChanged(targetName);
   }
 
+  @Override
   public boolean isSpecificallyModified() {
-    if (myRCStorageUi != null) {
-      return myRCStorageUi.isModified();
-    }
-
-    return false;
+    return myRCStorageUi != null && myRCStorageUi.isModified() || myConfigurationEditor.isSpecificallyModified();
   }
 
   @Override

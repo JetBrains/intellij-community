@@ -149,4 +149,8 @@ public abstract class SettingsEditor<Settings> implements Disposable {
       listener.stateChanged(this);
     }
   }
+
+  public boolean isSpecificallyModified() {
+    return false;
+  }
 }

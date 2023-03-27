@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.application;
 
+import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.ui.ClassBrowser;
 import com.intellij.icons.AllIcons;
@@ -15,9 +16,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ExtendableEditorSupport;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
+import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.indexing.DumbModeAccessType;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,8 +30,29 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.Map;
+import java.util.Objects;
 
 public final class ClassEditorField extends EditorTextField {
+
+  private final Map<String, String> myJvmNames = FactoryMap.create(className -> getJvmName(className));
+  private @Nullable String myLastName;
+
+  public void setClassName(String className) {
+    String qName = getQName(className);
+    myLastName = qName;
+    setText(qName);
+    myJvmNames.put(className, qName);
+  }
+
+  public String getClassName() {
+    String text = getText();
+    return myJvmNames.get(text);
+  }
+
+  public boolean isModified() {
+    return !Objects.equals(myLastName, getText());
+  }
 
   public static ClassEditorField createClassField(Project project,
                                                   Computable<? extends Module> moduleSelector,
@@ -81,5 +107,20 @@ public final class ClassEditorField extends EditorTextField {
   }
 
   private ClassEditorField() {
+  }
+
+  private static String getQName(@Nullable String className) {
+    if (className == null) return className;
+    return className.replace('$', '.');
+  }
+
+  @Nullable
+  private String getJvmName(@Nullable String className) {
+    if (className == null) return null;
+
+    return FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
+      PsiClass aClass = JavaPsiFacade.getInstance(getProject()).findClass(className, GlobalSearchScope.allScope(getProject()));
+      return aClass != null ? JavaExecutionUtil.getRuntimeQualifiedName(aClass) : className;
+    });
   }
 }
