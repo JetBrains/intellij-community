@@ -453,7 +453,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     return true;
   }
 
-  private void performActionOnElement(IntroduceOperation operation) {
+  public void performActionOnElement(IntroduceOperation operation) {
     if (!checkEnabled(operation)) {
       showCanNotIntroduceErrorHint(operation.getProject(), operation.getEditor());
       return;
