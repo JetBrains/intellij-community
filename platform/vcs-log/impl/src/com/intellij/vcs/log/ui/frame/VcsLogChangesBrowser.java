@@ -194,7 +194,6 @@ public final class VcsLogChangesBrowser extends AsyncChangesBrowserBase implemen
     if (detailsList.isEmpty()) return CommitModel.createEmpty();
 
     Set<VirtualFile> roots = ContainerUtil.map2Set(detailsList, detail -> detail.getRoot());
-    boolean hasMergeCommits = ContainerUtil.exists(detailsList, detail -> detail.getParents().size() > 1);
 
     List<Change> changes = new ArrayList<>();
     Map<CommitId, Set<Change>> changesToParents = new LinkedHashMap<>();
@@ -213,7 +212,7 @@ public final class VcsLogChangesBrowser extends AsyncChangesBrowserBase implemen
       changes.addAll(VcsLogUtil.collectChanges(detailsList, VcsFullCommitDetails::getChanges));
     }
 
-    return new CommitModel(roots, changes, changesToParents, null, hasMergeCommits);
+    return new CommitModel(roots, changes, changesToParents, null);
   }
 
   private void updateStatusText() {
@@ -528,34 +527,29 @@ public final class VcsLogChangesBrowser extends AsyncChangesBrowserBase implemen
       return new CommitModel(Collections.emptySet(),
                              Collections.emptyList(),
                              Collections.emptyMap(),
-                             null,
-                             false);
+                             null);
     }
 
     public static CommitModel createText(@Nullable Consumer<? super StatusText> statusTextConsumer) {
       return new CommitModel(Collections.emptySet(),
                              Collections.emptyList(),
                              Collections.emptyMap(),
-                             statusTextConsumer,
-                             false);
+                             statusTextConsumer);
     }
 
     private final @NotNull Set<VirtualFile> myRoots;
     private final @NotNull List<Change> myChanges;
     private final @NotNull Map<CommitId, Set<Change>> myChangesToParents;
     private final @Nullable Consumer<? super StatusText> myCustomEmptyTextStatus;
-    private final boolean myHasMergeCommits;
 
     private CommitModel(@NotNull Set<VirtualFile> roots,
                         @NotNull List<Change> changes,
                         @NotNull Map<CommitId, Set<Change>> changesToParents,
-                        @Nullable Consumer<? super StatusText> status,
-                        boolean hasMergeCommits) {
+                        @Nullable Consumer<? super StatusText> status) {
       myRoots = roots;
       myChanges = changes;
       myChangesToParents = changesToParents;
       myCustomEmptyTextStatus = status;
-      myHasMergeCommits = hasMergeCommits;
     }
   }
 }
