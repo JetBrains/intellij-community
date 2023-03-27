@@ -10211,7 +10211,6 @@ org/jetbrains/kotlin/idea/migration/CodeMigrationToggleAction.class:plugins/Kotl
 org/jetbrains/kotlin/console/actions/RunKotlinConsoleAction.class:plugins/Kotlin/lib/kotlin-plugin.jar
 org/jetbrains/kotlin/idea/actions/ConfigureKotlinInProjectAction.class:plugins/Kotlin/lib/kotlin-plugin.jar
 org/jetbrains/kotlin/idea/actions/ConfigureKotlinJavaInProjectAction.class:plugins/Kotlin/lib/kotlin-plugin.jar
-org/jetbrains/kotlin/idea/actions/ConfigureKotlinJsInProjectAction.class:plugins/Kotlin/lib/kotlin-plugin.jar
 org/jetbrains/kotlin/idea/actions/ShowKotlinBytecodeAction.class:plugins/Kotlin/lib/kotlin-plugin.jar
 org/jetbrains/kotlin/idea/jvmDecompiler/DecompileKotlinToJavaAction.class:plugins/Kotlin/lib/kotlin-plugin.jar
 org/jetbrains/kotlin/idea/jvmDecompiler/KotlinJvmDecompilerBundle.class:plugins/Kotlin/lib/kotlin-plugin.jar

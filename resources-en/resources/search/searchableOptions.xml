@@ -2541,11 +2541,6 @@
     <option name="configure" path="ActionManager" hit="Configure Helm Parameters" />
     <option name="helm" path="ActionManager" hit="Configure Helm Parameters" />
     <option name="parameters" path="ActionManager" hit="Configure Helm Parameters" />
-    <option name="configure" path="ActionManager" hit="Configure Kotlin (JavaScript) in Project" />
-    <option name="in" path="ActionManager" hit="Configure Kotlin (JavaScript) in Project" />
-    <option name="javascript" path="ActionManager" hit="Configure Kotlin (JavaScript) in Project" />
-    <option name="kotlin" path="ActionManager" hit="Configure Kotlin (JavaScript) in Project" />
-    <option name="project" path="ActionManager" hit="Configure Kotlin (JavaScript) in Project" />
     <option name="configure" path="ActionManager" hit="Configure Kotlin Plugin Updates" />
     <option name="kotlin" path="ActionManager" hit="Configure Kotlin Plugin Updates" />
     <option name="plugin" path="ActionManager" hit="Configure Kotlin Plugin Updates" />
