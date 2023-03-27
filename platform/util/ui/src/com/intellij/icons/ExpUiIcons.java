@@ -185,7 +185,6 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon Protobuf = load("expui/fileTypes/protobuf.svg", -1238043383, 0);
     /** 16x16 */ public static final @NotNull Icon Python = load("expui/fileTypes/python.svg", 850199093, 0);
     /** 16x16 */ public static final @NotNull Icon React = load("expui/fileTypes/react.svg", 2030919111, 2);
-    /** 16x16 */ public static final @NotNull Icon Ruby = load("expui/fileTypes/ruby.svg", 236878841, 2);
     /** 16x16 */ public static final @NotNull Icon Sbt = load("expui/fileTypes/sbt.svg", 554912296, 2);
     /** 16x16 */ public static final @NotNull Icon Scala = load("expui/fileTypes/scala.svg", -905171609, 2);
     /** 16x16 */ public static final @NotNull Icon Scratch = load("expui/fileTypes/scratch.svg", -529729899, 2);

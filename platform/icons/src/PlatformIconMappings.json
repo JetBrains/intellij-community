@@ -166,10 +166,6 @@
       "protobuf.svg": "protoFile.png",
       "python.svg": "icons/com/jetbrains/python/pythonFile.svg",
       "react.svg": "org/jetbrains/kotlin/idea/icons/wizard/react.svg",
-      "ruby.svg": [
-        "icons/ruby/ruby.svg",
-        "icons/ruby/ruby_file.svg"
-      ],
       "scala.svg": "org/jetbrains/plugins/scala/images/scala16.png",
       "scratch.svg": "actions/scratch.svg",
       "scratches.svg": "scope/scratches.svg",
