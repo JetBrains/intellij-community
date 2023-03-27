@@ -101,6 +101,7 @@ internal object MermaidSpacingBuilder {
       // Direction / common
       .between(MermaidTokens.COMMA, MermaidTokens.Flowchart.STYLE_TARGET).spaceIf(false)
       .between(MermaidTokens.COMMA, MermaidTokens.Flowchart.CLASS_ID_STYLE).spaceIf(false)
+      .around(MermaidTokens.STYLE_SEPARATOR).spaceIf(false)
       .before(MermaidTokens.OPEN_CURLY).spaces(1)
       .before(MermaidTokens.COMMA).spaceIf(false)
       .after(MermaidTokens.COMMA).spaceIf(true)
@@ -142,7 +143,6 @@ internal object MermaidSpacingBuilder {
       // Class diagram
       .around(MermaidElements.GENERIC_TYPE_ID).spaceIf(false)
       .around(MermaidElements.GENERIC).spacing(0, 1, 0, false, 0)
-      .around(MermaidTokens.STYLE_SEPARATOR).spaceIf(false)
       .around(MermaidTokens.ANNOTATION_VALUE).spaceIf(false)
       .between(MermaidTokens.ATTRIBUTE_WORD, MermaidTokens.OPEN_ROUND).spaceIf(false)
       .between(MermaidTokens.OPEN_ROUND, MermaidTokens.ATTRIBUTE_WORD).spaceIf(false)
