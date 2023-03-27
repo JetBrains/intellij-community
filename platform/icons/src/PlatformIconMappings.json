@@ -615,10 +615,7 @@
       "unknown.svg": "toolbar/unknown.svg"
     },
     "toolwindow": {
-      "ant.svg": [
-        "toolwindows/toolWindowAnt.svg",
-        "icons/build.svg"
-      ],
+      "ant.svg": "toolwindows/toolWindowAnt.svg",
       "bookmarks.svg": "toolwindows/toolWindowBookmarks.svg",
       "build.svg": "toolwindows/toolWindowBuild.svg",
       "commit.svg": "toolwindows/toolWindowCommit.svg",
