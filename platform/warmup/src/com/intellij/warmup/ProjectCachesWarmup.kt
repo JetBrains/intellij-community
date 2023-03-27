@@ -38,6 +38,11 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
 
     SystemProperties.setProperty("compile.parallel", true.toString())
 
+    /*
+     * An attempt to make warmup run close to usual UI run
+     */
+    SystemProperties.setProperty("ide.async.headless.mode", true.toString())
+
     // to avoid sync progress task execution as it works in test mode
     SystemProperties.setProperty("intellij.progress.task.ignoreHeadless", true.toString())
 
