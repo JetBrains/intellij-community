@@ -11,8 +11,8 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.yaml.YAMLElementGenerator
 import org.jetbrains.yaml.psi.YAMLQuotedText
 
-class YAMLAddQuoteQuickFix(scalarOrGoTemplate: PsiElement, private val quickFixText: @Nls String) :
-  LocalQuickFixAndIntentionActionOnPsiElement(scalarOrGoTemplate) {
+class YAMLAddQuoteQuickFix(scalarOrTemplate: PsiElement, private val quickFixText: @Nls String) :
+  LocalQuickFixAndIntentionActionOnPsiElement(scalarOrTemplate) {
   override fun getText(): @Nls String = quickFixText
 
   override fun getFamilyName(): @Nls String = text
