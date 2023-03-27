@@ -45,7 +45,7 @@ if(USE_CEF_SANDBOX)
   # Setup linking with CEF sandbox library
   include("DownloadCEF.cmake")
   if(NOT DEFINED CEF_VERSION)
-    set(CEF_VERSION "110.0.26+g732747f+chromium-110.0.5481.97")
+    set(CEF_VERSION "111.2.1+g870da30+chromium-111.0.5563.64")
   endif()
 
   include(CheckSymbolExists)
@@ -72,6 +72,7 @@ if(USE_CEF_SANDBOX)
       Advapi32.lib
       dbghelp.lib
       Delayimp.lib
+      ntdll.lib
       OleAut32.lib
       PowrProf.lib
       Propsys.lib
