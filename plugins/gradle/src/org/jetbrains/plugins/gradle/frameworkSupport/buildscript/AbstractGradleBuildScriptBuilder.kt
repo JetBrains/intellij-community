@@ -186,6 +186,7 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
       }
       else -> {
         addTestImplementationDependency("org.junit.jupiter:junit-jupiter-api:$junit5Version")
+        addTestImplementationDependency("org.junit.jupiter:junit-jupiter-params:$junit5Version")
         addTestRuntimeOnlyDependency("org.junit.jupiter:junit-jupiter-engine:$junit5Version")
       }
     }
