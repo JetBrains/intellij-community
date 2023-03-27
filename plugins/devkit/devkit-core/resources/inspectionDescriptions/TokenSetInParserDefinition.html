@@ -1,9 +1,9 @@
 <html>
 <body>
-Reports <code>TokenSet</code> field declarations referencing non-core element types in <code>ParserDefinition</code> classes.
+Reports <code>TokenSet</code> field declarations referencing non-platform element types in <code>ParserDefinition</code> classes.
 <p>
   All languages <code>ParserDefinition</code> are created on the application startup.
-  Declaring a <code>TokenSet</code> referencing non-core language element types may cause creating and registering
+  Declaring a <code>TokenSet</code> referencing non-platform language element types may cause creating and registering
   all the language element types in the holder class of the referenced type, even if a project doesn't contain any files in this language.
 </p>
 
@@ -21,7 +21,7 @@ public interface MyLangTokenTypes {
 // bad:
 
 public class MyLangParserDefinition implements ParserDefinition {
-  // this field causes initalizing and registering all the types from MyLangTokenTypes:
+  // this field causes initializing and registering all the types from MyLangTokenTypes:
   private static final TokenSet COMMENTS = TokenSet.create(MyLangTokenTypes.COMMENT);
 
   @NotNull
@@ -64,9 +64,9 @@ class MyLangParserDefinition : ParserDefinition {
 // good:
 
 public class MyLangParserDefinition implements ParserDefinition {
-  // allowed core TokenSet:
+  // allowed platform TokenSet:
   private static final TokenSet COMMENTS1 = TokenSet.EMPTY;
-  // allowed core TokenType:
+  // allowed platform TokenType:
   private static final TokenSet COMMENTS2 = TokenSet.create(TokenType.WHITE_SPACE);
 
   @NotNull

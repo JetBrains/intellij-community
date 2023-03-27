@@ -15,12 +15,12 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 internal class TokenSetInParserDefinitionInspection : DevKitUastInspectionBase(UClass::class.java) {
 
-  override fun checkClass(aClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor> {
-    if (!InheritanceUtil.isInheritor(aClass.javaPsi, ParserDefinition::class.java.name)) return ProblemDescriptor.EMPTY_ARRAY
+  override fun checkClass(uClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor> {
+    if (!InheritanceUtil.isInheritor(uClass.javaPsi, ParserDefinition::class.java.name)) return ProblemDescriptor.EMPTY_ARRAY
 
-    val problemsHolder = createProblemsHolder(aClass, manager, isOnTheFly)
-    aClass.fields
-      .filter { it.isTokenSetField() && it.isIllegal(aClass) }
+    val problemsHolder = createProblemsHolder(uClass, manager, isOnTheFly)
+    uClass.fields
+      .filter { it.isTokenSetField() && it.isIllegal(uClass) }
       .forEach { reportField(it, problemsHolder) }
 
     return problemsHolder.resultsArray
@@ -31,16 +31,16 @@ internal class TokenSetInParserDefinitionInspection : DevKitUastInspectionBase(U
     return fieldType.qualifiedName == TokenSet::class.java.name
   }
 
-  private fun UField.isIllegal(aClass: UClass): Boolean {
+  private fun UField.isIllegal(uClass: UClass): Boolean {
     val initializer = this.uastInitializer
     if (initializer != null) {
       return initializer.containsIllegalReferences()
     }
     else {
-      val constructors = aClass.methods.filter { it.isConstructor }
+      val constructors = uClass.methods.filter { it.isConstructor }
       return constructors.any { it.containsFieldAssignmentWithIllegalReferences(this) } ||
-             aClass.initializers.any { it.containsFieldAssignmentWithIllegalReferences(this) } ||
-             companionObjectInitBlockContainsIllegalUsage(aClass)
+             uClass.initializers.any { it.containsFieldAssignmentWithIllegalReferences(this) } ||
+             companionObjectInitBlockContainsIllegalUsage(uClass)
     }
   }
 
@@ -53,7 +53,7 @@ internal class TokenSetInParserDefinitionInspection : DevKitUastInspectionBase(U
           return resolved.getContainingUClass()?.qualifiedName != TokenSet::class.java.name
         }
         is UMethod -> {
-          // check if assignment contains any non-core class usage
+          // check if the assignment contains any non-platform class usage
           val nonCoreApiFinder = NonCoreApiFinder()
           this.accept(nonCoreApiFinder)
           return nonCoreApiFinder.nonCoreApiUsed
@@ -86,8 +86,8 @@ internal class TokenSetInParserDefinitionInspection : DevKitUastInspectionBase(U
     return containsIllegalAssignment
   }
 
-  private fun UField.companionObjectInitBlockContainsIllegalUsage(aClass: UClass): Boolean {
-    val companionInitBlock = aClass.innerClasses.firstOrNull { it.javaPsi.name == "Companion" }
+  private fun UField.companionObjectInitBlockContainsIllegalUsage(uClass: UClass): Boolean {
+    val companionInitBlock = uClass.innerClasses.firstOrNull { it.javaPsi.name == "Companion" }
       ?.methods?.firstOrNull { it.javaPsi.name == "Companion" }
     return companionInitBlock?.containsFieldAssignmentWithIllegalReferences(this) == true
   }
