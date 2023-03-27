@@ -221,7 +221,7 @@ class MergingQueueGuiExecutorTest {
     executor.startBackgroundProcess()
     firstTaskPhaser.arriveAndAwaitAdvanceWithTimeout() // 1 background task started
 
-    executor.guiSuspender.suspendAndRun("Suspended in test to check cancellation") {
+    executor.guiSuspender.suspendAndRun("Suspended in test to check cancellation", Runnable {
       firstTaskPhaser.arriveAndAwaitAdvanceWithTimeout() // 2
       Thread.sleep(10) // wait a bit to make sure that background thread suspends
 
@@ -232,7 +232,7 @@ class MergingQueueGuiExecutorTest {
       assertEquals(1, performLog.size, "first task should start, second should not")
       assertEquals(2, disposeLog.size, "two tasks should be disposed")
       assertTrue(exception.get() is ProcessCanceledException, "PCE expected, but got: " + exception.get())
-    }
+    })
 
     stopExecutor(executor)
   }

@@ -15,8 +15,13 @@ class MergingQueueGuiSuspender {
   @Volatile
   private var myCurrentSuspender: ProgressSuspender? = null
   private val myRequestedSuspensions: MutableList<@NlsContexts.ProgressText String> = ContainerUtil.createEmptyCOWList()
+
   fun suspendAndRun(activityName: @NlsContexts.ProgressText String, activity: Runnable) {
     heavyActivityStarted(activityName).use { activity.run() }
+  }
+
+  suspend fun suspendAndRun(activityName: @NlsContexts.ProgressText String, activity: suspend () -> Unit) {
+    heavyActivityStarted(activityName).use { activity() }
   }
 
   fun heavyActivityStarted(activityName: @NlsContexts.ProgressText String): AccessToken {

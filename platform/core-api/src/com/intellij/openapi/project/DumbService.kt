@@ -15,6 +15,7 @@ import com.intellij.openapi.util.*
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.Contract
 import java.util.*
 import javax.swing.JComponent
@@ -335,12 +336,21 @@ abstract class DumbService {
   abstract var isAlternativeResolveEnabled: Boolean
 
   /**
-   * Runs a heavy activity and suspends indexing (if any) for this time. The user still can manually pause and resume the indexing.
+   * Runs a heavy activity and pauses indexing (if any) for this time. The user still can manually pause and resume the indexing.
    * In that case, indexing won't be resumed automatically after the activity finishes.
    *
    * @param activityName the text (a noun phrase) to display as a reason for the indexing being paused
    */
   abstract fun suspendIndexingAndRun(activityName: @NlsContexts.ProgressText String, activity: Runnable)
+
+  /**
+   * Runs a heavy activity and pauses indexing (if any) for this time. The user still can manually pause and resume the indexing.
+   * In that case, indexing won't be resumed automatically after the activity finishes.
+   *
+   * @param activityName the text (a noun phrase) to display as a reason for the indexing being paused
+   */
+  @Experimental
+  abstract suspend fun suspendIndexingAndRun(activityName: @NlsContexts.ProgressText String, activity: suspend () -> Unit)
 
   @ApiStatus.Internal
   abstract fun runWithWaitForSmartModeDisabled(): AccessToken

@@ -160,9 +160,9 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     myGuiDumbTaskRunner.suspendAndRun(activityName, activity)
   }
 
-  val guiSuspender: MergingQueueGuiSuspender
-    // non-public dangerous API. Use suspendIndexingAndRun instead
-    get() = myGuiDumbTaskRunner.guiSuspender
+  override suspend fun suspendIndexingAndRun(activityName: @NlsContexts.ProgressText String, activity: suspend () -> Unit) {
+    myGuiDumbTaskRunner.guiSuspender.suspendAndRun(activityName, activity)
+  }
 
   override var isDumb: Boolean
     get() {
