@@ -56,6 +56,7 @@ import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleBuildParticipant;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleModuleDataKt;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -130,9 +131,11 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       final String ideProjectPath = settings == null ? null : settings.getIdeProjectPath();
       final String mainModuleFileDirectoryPath = ideProjectPath == null ? projectPath : ideProjectPath;
 
+      ModuleData moduleData = new ModuleData(projectName, GradleConstants.SYSTEM_ID, getDefaultModuleTypeId(),
+                                       projectName, mainModuleFileDirectoryPath, projectPath);
+      GradleModuleDataKt.setGradleIdentityPath(moduleData, ":");
       projectDataNode
-        .createChild(ProjectKeys.MODULE, new ModuleData(projectName, GradleConstants.SYSTEM_ID, getDefaultModuleTypeId(),
-                                                        projectName, mainModuleFileDirectoryPath, projectPath))
+        .createChild(ProjectKeys.MODULE, moduleData)
         .createChild(ProjectKeys.CONTENT_ROOT, new ContentRootData(GradleConstants.SYSTEM_ID, projectPath));
       return projectDataNode;
     }
