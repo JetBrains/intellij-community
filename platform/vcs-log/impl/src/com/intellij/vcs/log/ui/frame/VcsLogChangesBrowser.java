@@ -64,8 +64,6 @@ public final class VcsLogChangesBrowser extends AsyncChangesBrowserBase implemen
   private final @NotNull MainVcsLogUiProperties myUiProperties;
   private final @NotNull Function<? super CommitId, ? extends VcsShortCommitDetails> myDataGetter;
 
-  private final @NotNull VcsLogUiProperties.PropertiesChangeListener myListener;
-
   @NotNull private CommitModel myCommitModel = CommitModel.createEmpty();
   private boolean myShowChangesFromParents = false;
   private boolean myShowOnlyAffectedSelected = false;
@@ -84,7 +82,7 @@ public final class VcsLogChangesBrowser extends AsyncChangesBrowserBase implemen
     myUiProperties = uiProperties;
     myDataGetter = getter;
 
-    myListener = new VcsLogUiProperties.PropertiesChangeListener() {
+    VcsLogUiProperties.PropertiesChangeListener propertiesChangeListener = new VcsLogUiProperties.PropertiesChangeListener() {
       @Override
       public <T> void onPropertyChanged(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
         updateUiSettings();
@@ -94,7 +92,7 @@ public final class VcsLogChangesBrowser extends AsyncChangesBrowserBase implemen
         }
       }
     };
-    myUiProperties.addChangeListener(myListener);
+    myUiProperties.addChangeListener(propertiesChangeListener, this);
     updateUiSettings();
 
     Disposer.register(parent, this);
@@ -144,7 +142,6 @@ public final class VcsLogChangesBrowser extends AsyncChangesBrowserBase implemen
   @Override
   public void dispose() {
     shutdown();
-    myUiProperties.removeChangeListener(myListener);
   }
 
   @Override
