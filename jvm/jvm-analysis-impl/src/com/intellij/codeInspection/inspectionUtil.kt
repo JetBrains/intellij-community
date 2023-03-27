@@ -3,7 +3,9 @@ package com.intellij.codeInspection
 
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.lang.jvm.JvmModifiersOwner
+import com.intellij.lang.jvm.actions.AnnotationRequest
 import com.intellij.lang.jvm.actions.ChangeModifierRequest
+import com.intellij.lang.jvm.actions.createAddAnnotationActions
 import com.intellij.lang.jvm.actions.createModifierActions
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
@@ -30,8 +32,13 @@ fun ProblemsHolder.registerUProblem(element: UReferenceExpression, descriptionTe
   registerProblem(anchor, descriptionTemplate, *fixes)
 }
 
-fun createModifierQuickfixes(target: UDeclaration, request: ChangeModifierRequest): Array<LocalQuickFix>? {
-  val containingFile = target.sourcePsi?.containingFile ?: return null
+fun createAddAnnotationQuickfixes(target: UDeclaration, request: AnnotationRequest): Array<LocalQuickFix> {
+  val containingFile = target.sourcePsi?.containingFile ?: return emptyArray()
+  return IntentionWrapper.wrapToQuickFixes(createAddAnnotationActions(target, request).toTypedArray(), containingFile)
+}
+
+fun createModifierQuickfixes(target: UDeclaration, request: ChangeModifierRequest): Array<LocalQuickFix> {
+  val containingFile = target.sourcePsi?.containingFile ?: return emptyArray()
   return IntentionWrapper.wrapToQuickFixes(createModifierActions(target, request).toTypedArray(), containingFile)
 }
 
