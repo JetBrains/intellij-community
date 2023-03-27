@@ -113,4 +113,12 @@ class UnsupportedGradleVersionIssue(gradleVersionUsed: GradleVersion?,
     quickFixes = quickFixes1
   }
   override fun getNavigatable(project: Project): Navigatable? = null
+
+  companion object {
+    private val minimalSupportedVersion: GradleVersion = GradleVersion.version(MINIMAL_SUPPORTED_GRADLE_VERSION)
+    @JvmStatic
+    fun isUnsupported(gradleVersion: GradleVersion): Boolean {
+      return gradleVersion < minimalSupportedVersion
+    }
+  }
 }

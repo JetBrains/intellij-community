@@ -44,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.target.TargetBuildLauncher;
 import org.jetbrains.plugins.gradle.issue.DeprecatedGradleVersionIssue;
+import org.jetbrains.plugins.gradle.issue.UnsupportedGradleVersionIssue;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
@@ -216,6 +217,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       resolverCtx.setBuildEnvironment(buildEnvironment);
       if (!isCustomSerializationSupported(resolverCtx, gradleVersion, isCompositeBuildsSupported)) {
         useCustomSerialization = false;
+      }
+      if (UnsupportedGradleVersionIssue.isUnsupported(gradleVersion)) {
+        throw new IllegalStateException("Unsupported Gradle version");
       }
     }
     final ProjectImportAction projectImportAction =
