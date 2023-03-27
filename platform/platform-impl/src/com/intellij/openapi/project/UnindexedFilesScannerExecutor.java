@@ -28,26 +28,18 @@ public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor
   }
 
   private static class TaskQueueListener implements ExecutorStateListener {
-    private final FilesScanningListener projectLevelEventPublisher;
-
-    private TaskQueueListener(Project project) {
-      this.projectLevelEventPublisher = project.getMessageBus().syncPublisher(FilesScanningListener.TOPIC);
-    }
-
     @Override
     public boolean beforeFirstTask() {
-      projectLevelEventPublisher.filesScanningStarted();
       return true;
     }
 
     @Override
     public void afterLastTask(SubmissionReceipt latestReceipt) {
-      projectLevelEventPublisher.filesScanningFinished();
     }
   }
 
   public UnindexedFilesScannerExecutor(Project project) {
-    super(project, new MergingTaskQueue<>(), new TaskQueueListener(project),
+    super(project, new MergingTaskQueue<>(), new TaskQueueListener(),
           IndexingBundle.message("progress.indexing.scanning"), IndexingBundle.message("progress.indexing.scanning.paused"));
   }
 
