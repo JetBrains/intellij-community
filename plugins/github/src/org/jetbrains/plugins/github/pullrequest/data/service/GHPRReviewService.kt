@@ -51,12 +51,17 @@ interface GHPRReviewService {
                  reviewId: String,
                  replyToCommentId: String,
                  body: String)
-    : CompletableFuture<GHPullRequestReviewCommentWithPendingReview>
+    : CompletableFuture<GHPullRequestReviewNewCommentDTO>
 
   @CalledInAny
   fun addComment(progressIndicator: ProgressIndicator, reviewId: String,
                  body: String, commitSha: String, fileName: String, diffLine: Int)
-    : CompletableFuture<GHPullRequestReviewCommentWithPendingReview>
+    : CompletableFuture<GHPullRequestReviewNewCommentDTO>
+
+  @CalledInAny
+  fun addThread(progressIndicator: ProgressIndicator, reviewId: String,
+                body: String, line: Int, side: Side, startLine: Int, fileName: String)
+    : CompletableFuture<GHPullRequestReviewThread>
 
   @CalledInAny
   fun deleteComment(progressIndicator: ProgressIndicator,
@@ -66,11 +71,6 @@ interface GHPRReviewService {
   @CalledInAny
   fun updateComment(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier, commentId: String, newText: String)
     : CompletableFuture<GHPullRequestReviewComment>
-
-  @CalledInAny
-  fun addThread(progressIndicator: ProgressIndicator, reviewId: String,
-                body: String, line: Int, side: Side, startLine: Int, fileName: String)
-    : CompletableFuture<GHPullRequestReviewThread>
 
   @CalledInAny
   fun resolveThread(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier, id: String)

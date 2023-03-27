@@ -1,0 +1,10 @@
+fragment pullRequestReviewNewComment on PullRequestReviewComment {
+  ...pullRequestReviewComment
+  pullRequestReview {
+    ...pullRequestPendingReview
+  }
+  line
+  originalLine
+  startLine
+  originalStartLine
+}

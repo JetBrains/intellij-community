@@ -310,26 +310,26 @@ object GHGQLRequests {
       fun addComment(server: GithubServerPath,
                      reviewId: String,
                      body: String, commitSha: String, fileName: String, diffLine: Int)
-        : GQLQuery<GHPullRequestReviewCommentWithPendingReview> =
+        : GQLQuery<GHPullRequestReviewNewCommentDTO> =
         GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.addReviewComment,
                                  mapOf("reviewId" to reviewId,
                                        "body" to body,
                                        "commit" to commitSha,
                                        "file" to fileName,
                                        "position" to diffLine),
-                                 GHPullRequestReviewCommentWithPendingReview::class.java,
+                                 GHPullRequestReviewNewCommentDTO::class.java,
                                  "addPullRequestReviewComment", "comment")
 
       fun addComment(server: GithubServerPath,
                      reviewId: String,
                      inReplyTo: String,
                      body: String)
-        : GQLQuery<GHPullRequestReviewCommentWithPendingReview> =
+        : GQLQuery<GHPullRequestReviewNewCommentDTO> =
         GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.addReviewComment,
                                  mapOf("reviewId" to reviewId,
                                        "inReplyTo" to inReplyTo,
                                        "body" to body),
-                                 GHPullRequestReviewCommentWithPendingReview::class.java,
+                                 GHPullRequestReviewNewCommentDTO::class.java,
                                  "addPullRequestReviewComment", "comment")
 
       fun deleteComment(server: GithubServerPath, commentId: String): GQLQuery<GHPullRequestPendingReview> =

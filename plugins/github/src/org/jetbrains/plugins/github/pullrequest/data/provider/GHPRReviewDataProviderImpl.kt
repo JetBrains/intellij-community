@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.collaboration.api.dto.GraphQLNodesDTO
+import com.intellij.collaboration.async.CompletableFutureUtil
 import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
@@ -98,12 +99,13 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
                           side: Side,
                           line: Int): CompletableFuture<out GHPullRequestReviewComment> {
     val future = changesProvider.loadPatchFromMergeBase(progressIndicator, commitSha, fileName)
-      .thenComposeAsync({ patch ->
-                          check(patch != null && patch is TextFilePatch) { "Cannot find diff between $commitSha and merge base" }
-                          val position = PatchHunkUtil.findDiffFileLineIndex(patch, side to line)
-                                         ?: error("Can't map file line to diff")
-                          reviewService.addComment(progressIndicator, reviewId, body, commitSha, fileName, position)
-                        }, ProcessIOExecutorService.INSTANCE)
+      .thenComposeAsync(
+        { patch ->
+          check(patch != null && patch is TextFilePatch) { "Cannot find diff between $commitSha and merge base" }
+          val position = PatchHunkUtil.findDiffFileLineIndex(patch, side to line)
+                         ?: error("Can't map file line to diff")
+          reviewService.addComment(progressIndicator, reviewId, body, commitSha, fileName, position)
+        }, ProcessIOExecutorService.INSTANCE)
     pendingReviewRequestValue.overrideProcess(future.successOnEdt { it.pullRequestReview })
     return future.dropReviews().notifyReviews()
   }
@@ -120,14 +122,14 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
               .thenApply {
                 comment
               }
-          }.dropReviews().notifyReviews()
+          }
         }
       }
       else {
-        val future = reviewService.addComment(progressIndicator, pullRequestId, reviewId, replyToCommentId, body)
-        pendingReviewRequestValue.overrideProcess(future.successOnEdt { it.pullRequestReview })
-        future.dropReviews().notifyReviews()
-      }
+        reviewService.addComment(progressIndicator, pullRequestId, reviewId, replyToCommentId, body).also {
+          pendingReviewRequestValue.overrideProcess(it.successOnEdt { it.pullRequestReview })
+        }
+      }.dropReviews().notifyReviews()
     }
   }
 
@@ -199,7 +201,7 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
                             reviewId: String?, body: String, line: Int, side: Side, startLine: Int, fileName: String)
     : CompletableFuture<GHPullRequestReviewThread> {
 
-    return if (reviewId == null) {
+    val future = if (reviewId == null) {
       createReview(progressIndicator).thenCompose { review ->
         reviewService.addThread(progressIndicator, review.id, body, line, side, startLine, fileName).thenCompose { thread ->
           submitReview(progressIndicator, review.id, GHPullRequestReviewEvent.COMMENT, null).thenApply {
@@ -210,9 +212,16 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
     }
     else {
       reviewService.addThread(progressIndicator, reviewId, body, line, side, startLine, fileName)
-    }.completionOnEdt {
+    }.thenApplyAsync(
+      {
+        val stubThreadFuture = CompletableFuture.completedFuture(it)
+        reviewThreadsRequestValue.combineResult(stubThreadFuture) { threads, thread -> threads + thread }
+        it
+      }, CompletableFutureUtil.getEDTExecutor())
+
+    return future.completionOnEdt {
       pendingReviewRequestValue.drop()
-    }.dropReviews().notifyReviews()
+    }.notifyReviews()
   }
 
   override fun resolveThread(progressIndicator: ProgressIndicator, id: String): CompletableFuture<GHPullRequestReviewThread> {
