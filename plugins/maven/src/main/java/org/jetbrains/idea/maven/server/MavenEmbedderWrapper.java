@@ -230,7 +230,7 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     for (var mavenPlugin : mavenPlugins) {
       try {
         var id = mavenPlugin.second.getId();
-        pluginResolutionRequests.add(new PluginResolutionRequest(mavenPlugin.first, id));
+        pluginResolutionRequests.add(new PluginResolutionRequest(mavenPlugin.first.getMavenId(), id));
       }
       catch (RemoteException e) {
         // do not call handleRemoteError here since this error occurred because of previous remote error

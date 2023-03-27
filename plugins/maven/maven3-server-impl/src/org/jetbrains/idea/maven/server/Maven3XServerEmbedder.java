@@ -1574,21 +1574,21 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     MavenServerUtil.checkToken(token);
     Set<MavenArtifact> resolvedPlugins = new HashSet<>();
     for (PluginResolutionRequest pluginResolutionRequest : pluginResolutionRequests) {
-      resolvedPlugins.addAll(resolvePlugin(pluginResolutionRequest.getMavenPlugin(), pluginResolutionRequest.getNativeMavenProjectId()));
+      resolvedPlugins.addAll(resolvePlugin(pluginResolutionRequest.getMavenPluginId(), pluginResolutionRequest.getNativeMavenProjectId()));
     }
     return resolvedPlugins;
   }
 
-  private Collection<MavenArtifact> resolvePlugin(@NotNull final MavenPlugin mavenPlugin, int nativeMavenProjectId)
+  private Collection<MavenArtifact> resolvePlugin(@NotNull final MavenId mavenPluginId, int nativeMavenProjectId)
     throws RemoteException {
     try {
-      String groupId = mavenPlugin.getGroupId();
-      String artifactId = mavenPlugin.getArtifactId();
+      String groupId = mavenPluginId.getGroupId();
+      String artifactId = mavenPluginId.getArtifactId();
 
       Plugin plugin = new Plugin();
       plugin.setGroupId(groupId);
       plugin.setArtifactId(artifactId);
-      plugin.setVersion(mavenPlugin.getVersion());
+      plugin.setVersion(mavenPluginId.getVersion());
       MavenProject project = RemoteNativeMavenProjectHolder.findProjectById(nativeMavenProjectId);
       List<RemoteRepository> remotePluginRepositories = project.getRemotePluginRepositories();
 

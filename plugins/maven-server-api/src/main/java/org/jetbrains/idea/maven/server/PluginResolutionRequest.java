@@ -2,23 +2,23 @@
 package org.jetbrains.idea.maven.server;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.model.MavenPlugin;
+import org.jetbrains.idea.maven.model.MavenId;
 
 import java.io.Serializable;
 import java.util.Objects;
 
 public class PluginResolutionRequest implements Serializable {
-  private final @NotNull MavenPlugin myMavenPlugin;
+  private final @NotNull MavenId myMavenPluginId;
   private final int nativeMavenProjectId;
 
-  public PluginResolutionRequest(@NotNull MavenPlugin mavenPlugin, int nativeMavenProjectId) {
-    myMavenPlugin = mavenPlugin;
+  public PluginResolutionRequest(@NotNull MavenId mavenPluginId, int nativeMavenProjectId) {
+    myMavenPluginId = mavenPluginId;
     this.nativeMavenProjectId = nativeMavenProjectId;
   }
 
   @NotNull
-  public MavenPlugin getMavenPlugin() {
-    return myMavenPlugin;
+  public MavenId getMavenPluginId() {
+    return myMavenPluginId;
   }
 
   public int getNativeMavenProjectId() {
@@ -30,18 +30,18 @@ public class PluginResolutionRequest implements Serializable {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     PluginResolutionRequest request = (PluginResolutionRequest)o;
-    return nativeMavenProjectId == request.nativeMavenProjectId && myMavenPlugin.equals(request.myMavenPlugin);
+    return nativeMavenProjectId == request.nativeMavenProjectId && myMavenPluginId.equals(request.myMavenPluginId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myMavenPlugin, nativeMavenProjectId);
+    return Objects.hash(myMavenPluginId, nativeMavenProjectId);
   }
 
   @Override
   public String toString() {
     return "PluginResolutionRequest{" +
-           "plugin=" + myMavenPlugin +
+           "pluginId=" + myMavenPluginId +
            ", nativeMavenProjectId=" + nativeMavenProjectId +
            '}';
   }

@@ -994,21 +994,21 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     MavenServerUtil.checkToken(token);
     Set<MavenArtifact> resolvedPlugins = new HashSet<>();
     for (PluginResolutionRequest pluginResolutionRequest : pluginResolutionRequests) {
-      resolvedPlugins.addAll(resolvePlugin(pluginResolutionRequest.getMavenPlugin(), pluginResolutionRequest.getNativeMavenProjectId()));
+      resolvedPlugins.addAll(resolvePlugin(pluginResolutionRequest.getMavenPluginId(), pluginResolutionRequest.getNativeMavenProjectId()));
     }
     return resolvedPlugins;
   }
 
-  private Collection<MavenArtifact> resolvePlugin(@NotNull final MavenPlugin plugin, int nativeMavenProjectId)
+  private Collection<MavenArtifact> resolvePlugin(@NotNull final MavenId pluginId, int nativeMavenProjectId)
     throws RemoteException {
     try {
       Plugin mavenPlugin = new Plugin();
-      mavenPlugin.setGroupId(plugin.getGroupId());
-      mavenPlugin.setArtifactId(plugin.getArtifactId());
-      mavenPlugin.setVersion(plugin.getVersion());
+      mavenPlugin.setGroupId(pluginId.getGroupId());
+      mavenPlugin.setArtifactId(pluginId.getArtifactId());
+      mavenPlugin.setVersion(pluginId.getVersion());
       MavenProject project = RemoteNativeMavenProjectHolder.findProjectById(nativeMavenProjectId);
 
-      Plugin pluginFromProject = project.getBuild().getPluginsAsMap().get(plugin.getGroupId() + ':' + plugin.getArtifactId());
+      Plugin pluginFromProject = project.getBuild().getPluginsAsMap().get(pluginId.getGroupId() + ':' + pluginId.getArtifactId());
       if (pluginFromProject != null) {
         mavenPlugin.setDependencies(pluginFromProject.getDependencies());
       }
@@ -1033,8 +1033,8 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       List<MavenArtifact> res = new ArrayList<MavenArtifact>();
 
       for (org.sonatype.aether.artifact.Artifact artifact : nlg.getArtifacts(true)) {
-        if (!Objects.equals(artifact.getArtifactId(), plugin.getArtifactId()) ||
-            !Objects.equals(artifact.getGroupId(), plugin.getGroupId())) {
+        if (!Objects.equals(artifact.getArtifactId(), pluginId.getArtifactId()) ||
+            !Objects.equals(artifact.getGroupId(), pluginId.getGroupId())) {
           res.add(MavenModelConverter.convertArtifact(RepositoryUtils.toArtifact(artifact), getLocalRepositoryFile()));
         }
       }
