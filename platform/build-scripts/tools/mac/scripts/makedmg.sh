@@ -69,9 +69,9 @@ if [ -d "/Volumes/$1" ]; then
   do
     log "/Volumes/$1 - the image is already mounted.  This build will wait for unmount for 1 min (up to 5 times)."
     sleep 60;
-    let "attempt += 1"
+    ((attempt++))
     if [ -d "/Volumes/$1" ]; then
-      if [ $attempt -ge $limit ]; then
+      if [ "$attempt" -ge $limit ]; then
         log "/Volumes/$1 - the image is still mounted. By the reason the build will be stopped."
         if [ "$CLEANUP_EXPLODED" = "true" ]; then
           rm -rf "$EXPLODED"
