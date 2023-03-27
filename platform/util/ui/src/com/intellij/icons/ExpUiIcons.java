@@ -167,7 +167,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon Idl = load("expui/fileTypes/idl.svg", -1553952385, 2);
     /** 16x16 */ public static final @NotNull Icon Ignored = load("expui/fileTypes/ignored.svg", -676991736, 2);
     /** 16x16 */ public static final @NotNull Icon Java = load("expui/fileTypes/java.svg", 1155678562, 2);
-    /** 16x16 */ public static final @NotNull Icon Javascript = load("expui/fileTypes/javascript.svg", 1930299050, 2);
+    /** 16x16 */ public static final @NotNull Icon JavaScript = load("expui/fileTypes/javaScript.svg", 390154029, 2);
     /** 16x16 */ public static final @NotNull Icon Jest = load("expui/fileTypes/jest.svg", -2044269766, 0);
     /** 16x16 */ public static final @NotNull Icon Jfr = load("expui/fileTypes/jfr.svg", 356707592, 2);
     /** 16x16 */ public static final @NotNull Icon Jshint = load("expui/fileTypes/jshint.svg", -606359860, 2);
@@ -178,7 +178,6 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon Lombok = load("expui/fileTypes/lombok.svg", -832267598, 2);
     /** 16x16 */ public static final @NotNull Icon LombokConfig = load("expui/fileTypes/lombokConfig.svg", -117734795, 2);
     /** 16x16 */ public static final @NotNull Icon Manifest = load("expui/fileTypes/manifest.svg", 319455039, 2);
-    /** 16x16 */ public static final @NotNull Icon Maven = load("expui/fileTypes/maven.svg", -1610355134, 2);
     /** 13x13 */ public static final @NotNull Icon Modified = load("expui/fileTypes/modified.svg", 461406716, 2);
     /** 16x16 */ public static final @NotNull Icon Patch = load("expui/fileTypes/patch.svg", -1961474998, 2);
     /** 16x16 */ public static final @NotNull Icon Perl = load("expui/fileTypes/perl.svg", 967590846, 2);
@@ -196,7 +195,6 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon SourceMap = load("expui/fileTypes/sourceMap.svg", -422512501, 2);
     /** 16x16 */ public static final @NotNull Icon Sql = load("expui/fileTypes/sql.svg", 1386593241, 2);
     /** 16x16 */ public static final @NotNull Icon Text = load("expui/fileTypes/text.svg", -1189613783, 2);
-    /** 16x16 */ public static final @NotNull Icon Typescript = load("expui/fileTypes/typescript.svg", 1885261372, 2);
     /** 16x16 */ public static final @NotNull Icon Unknown = load("expui/fileTypes/unknown.svg", -877766617, 2);
     /** 16x16 */ public static final @NotNull Icon Velocity = load("expui/fileTypes/velocity.svg", -1348763819, 2);
     /** 16x16 */ public static final @NotNull Icon VueJs = load("expui/fileTypes/vueJs.svg", 29321613, 0);
@@ -518,7 +516,6 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon ApplicationRemote = load("expui/runConfigurations/applicationRemote.svg", -510803353, 2);
     /** 16x16 */ public static final @NotNull Icon Compound = load("expui/runConfigurations/compound.svg", 1941202416, 2);
     /** 16x16 */ public static final @NotNull Icon InvalidConfigurationLayer = load("expui/runConfigurations/invalidConfigurationLayer.svg", -595949794, 2);
-    /** 16x16 */ public static final @NotNull Icon JavaScriptRemote = load("expui/runConfigurations/javaScriptRemote.svg", 1436811019, 2);
     /** 16x16 */ public static final @NotNull Icon Junit = load("expui/runConfigurations/junit.svg", 641483285, 2);
     /** 16x16 */ public static final @NotNull Icon JunitTestMark = load("expui/runConfigurations/junitTestMark.svg", -1504238884, 2);
     /** 16x16 */ public static final @NotNull Icon SortByDuration = load("expui/runConfigurations/sortByDuration.svg", 1220758684, 2);
