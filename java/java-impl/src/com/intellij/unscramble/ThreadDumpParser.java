@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.unscramble;
 
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +37,15 @@ public final class ThreadDumpParser {
     ThreadState lastThreadState = null;
     boolean expectingThreadState = false;
     boolean haveNonEmptyStackTrace = false;
+    StringBuilder coroutineDump = null;
     for(@NonNls String line: StringUtil.tokenize(threadDump, "\r\n")) {
+      if (ThreadDumper.isCoroutineDumpHeader(line)) {
+        coroutineDump = new StringBuilder();
+      }
+      if (coroutineDump != null) {
+        coroutineDump.append(line).append("\n");
+        continue;
+      }
       if (line.startsWith("============") || line.contains("Java-level deadlock")) {
         break;
       }
@@ -84,6 +93,11 @@ public final class ThreadDumpParser {
       }
     }
     sortThreads(result);
+    if (coroutineDump != null) {
+      ThreadState coroutineState = new ThreadState("Coroutine dump", "undefined");
+      coroutineState.setStackTrace(coroutineDump.toString(), false);
+      result.add(coroutineState);
+    }
     return result;
   }
 

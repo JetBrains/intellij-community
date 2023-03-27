@@ -19,6 +19,10 @@ import java.util.Comparator;
 import java.util.List;
 
 public final class ThreadDumper {
+
+  private static final @NonNls String COROUTINE_DUMP_HEADER = "---------- Coroutine dump ----------";
+  private static final @NonNls String COROUTINE_DUMP_HEADER_STRIPPED = "---------- Coroutine dump (stripped) ----------";
+
   private ThreadDumper() {
   }
 
@@ -55,10 +59,10 @@ public final class ThreadDumper {
     String coroutineDump = CoroutineDumperKt.dumpCoroutines(null, stripCoroutineDump);
     if (coroutineDump != null) {
       if (stripCoroutineDump) {
-        writer.write("\n---------- Coroutine dump (stripped) ----------\n");
+        writer.write("\n" + COROUTINE_DUMP_HEADER_STRIPPED + "\n");
       }
       else {
-        writer.write("\n---------- Coroutine dump ----------\n");
+        writer.write("\n" + COROUTINE_DUMP_HEADER + "\n");
       }
       writer.write(coroutineDump);
     }
@@ -246,5 +250,11 @@ public final class ThreadDumper {
       case TERMINATED: return "terminated";
     }
     return null;
+  }
+
+  @Internal
+  public static boolean isCoroutineDumpHeader(@NotNull String line) {
+    return line.equals(COROUTINE_DUMP_HEADER) ||
+           line.equals(COROUTINE_DUMP_HEADER_STRIPPED);
   }
 }
