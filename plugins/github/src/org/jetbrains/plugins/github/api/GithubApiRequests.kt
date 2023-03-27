@@ -9,6 +9,7 @@ import org.jetbrains.plugins.github.api.util.GHSchemaPreview
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder
 import org.jetbrains.plugins.github.api.util.GithubApiUrlQueryBuilder
+import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery
 import java.awt.image.BufferedImage
 
 /**
@@ -412,9 +413,9 @@ object GithubApiRequests {
         get(getUrl(server, Search.urlSuffix, urlSuffix,
                    GithubApiUrlQueryBuilder.urlQuery {
                      param("q", GithubApiSearchQueryBuilder.searchQuery {
-                       qualifier("repo", repoPath?.toString().orEmpty())
-                       qualifier("state", state)
-                       qualifier("assignee", assignee)
+                       term(GHPRSearchQuery.QualifierName.repo.createTerm(repoPath?.toString().orEmpty()))
+                       term(GHPRSearchQuery.QualifierName.state.createTerm(state.orEmpty()))
+                       term(GHPRSearchQuery.QualifierName.assignee.createTerm(assignee.orEmpty()))
                        query(query)
                      })
                      param(pagination)

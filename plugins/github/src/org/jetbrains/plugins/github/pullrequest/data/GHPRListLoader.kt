@@ -39,8 +39,8 @@ internal class GHPRListLoader(
   companion object {
     private fun buildQuery(repoPath: GHRepositoryPath, searchQuery: GHPRSearchQuery?): String {
       return GithubApiSearchQueryBuilder.searchQuery {
-        qualifier("type", GithubIssueSearchType.pr.name)
-        qualifier("repo", repoPath.toString())
+        term(GHPRSearchQuery.QualifierName.type.createTerm(GithubIssueSearchType.pr.name))
+        term(GHPRSearchQuery.QualifierName.repo.createTerm(repoPath.toString()))
         searchQuery?.buildApiSearchQuery(this)
       }
     }
