@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
@@ -75,7 +76,7 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
   public @Nullable AttributeInputStream readAttribute(final @NotNull PersistentFSConnection connection,
                                                       final int fileId,
                                                       final @NotNull FileAttribute attribute) throws IOException {
-    lock.readLock().lock();
+    ProgressIndicatorUtils.awaitWithCheckCanceled(lock.readLock());
     try {
       PersistentFSConnection.ensureIdIsValid(fileId);
 
