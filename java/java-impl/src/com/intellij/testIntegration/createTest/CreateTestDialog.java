@@ -361,12 +361,9 @@ public class CreateTestDialog extends DialogWrapper {
     TestFramework defaultDescriptor = null;
 
     final DefaultComboBoxModel<TestFramework> model = (DefaultComboBoxModel<TestFramework>)myLibrariesCombo.getModel();
-    final List<TestFramework> descriptors = ContainerUtil.sorted(
-      ContainerUtil.filter(TestFramework.EXTENSION_NAME.getExtensionList(), framework ->
-        framework.getLanguage() == myTargetClass.getLanguage()
-      ),
-      (d1, d2) -> Comparing.compare(d1.getName(), d2.getName())
-    );
+    TreeSet<TestFramework> frameworkSet = new TreeSet<>((d1, d2) -> Comparing.compare(d1.getName(), d2.getName()));
+    frameworkSet.addAll(TestFramework.EXTENSION_NAME.getExtensionList());
+    List<TestFramework> descriptors = new ArrayList<>(frameworkSet);
     for (final TestFramework descriptor : descriptors) {
       model.addElement(descriptor);
       if (hasTestRoots && descriptor.isLibraryAttached(myTargetModule)) {
