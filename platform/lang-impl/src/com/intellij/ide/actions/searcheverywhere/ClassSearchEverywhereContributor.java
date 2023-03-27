@@ -14,7 +14,6 @@ import com.intellij.ide.util.gotoByName.LanguageRef;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.PsiStructureViewFactory;
-import com.intellij.navigation.AnonymousElementProvider;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -33,7 +32,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,7 +43,6 @@ import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersS
  */
 public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor {
 
-  private static final Pattern ourPatternToDetectAnonymousClasses = Pattern.compile("([.\\w]+)((\\$[\\d]+)*(\\$)?)");
   private static final Pattern ourPatternToDetectMembers = Pattern.compile("(.+)(#)(.*)");
 
   private final PersistentSearchEverywhereContributorFilter<LanguageRef> myFilter;
@@ -110,15 +107,6 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
     return super.getElementPriority(element, searchPattern) + 5;
   }
 
-  @Override
-  protected PsiElement preparePsi(PsiElement psiElement, int modifiers, String searchText) {
-    String path = pathToAnonymousClass(searchText);
-    if (path != null) {
-      psiElement = getElement(psiElement, path);
-    }
-    return super.preparePsi(psiElement, modifiers, searchText);
-  }
-
   @Nullable
   @Override
   protected Navigatable createExtendedNavigatable(PsiElement psi, String searchText, int modifiers) {
@@ -154,10 +142,6 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
     }
 
     return null;
-  }
-
-  private static String pathToAnonymousClass(String searchedText) {
-    return pathToAnonymousClass(ourPatternToDetectAnonymousClasses.matcher(searchedText));
   }
 
   @Nullable
@@ -247,42 +231,6 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
       }
     }
     return null;
-  }
-
-  @NotNull
-  public static PsiElement getElement(@NotNull PsiElement element, @NotNull String path) {
-    final String[] classes = path.split("\\$");
-    List<Integer> indexes = new ArrayList<>();
-    for (String cls : classes) {
-      if (cls.isEmpty()) continue;
-      try {
-        indexes.add(Integer.parseInt(cls) - 1);
-      }
-      catch (Exception e) {
-        return element;
-      }
-    }
-    PsiElement current = element;
-    for (int index : indexes) {
-      final PsiElement[] anonymousClasses = getAnonymousClasses(current);
-      if (index >= 0 && index < anonymousClasses.length) {
-        current = anonymousClasses[index];
-      }
-      else {
-        return current;
-      }
-    }
-    return current;
-  }
-
-  private static PsiElement @NotNull [] getAnonymousClasses(@NotNull PsiElement element) {
-    for (AnonymousElementProvider provider : AnonymousElementProvider.EP_NAME.getExtensionList()) {
-      final PsiElement[] elements = provider.getAnonymousElements(element);
-      if (elements.length > 0) {
-        return elements;
-      }
-    }
-    return PsiElement.EMPTY_ARRAY;
   }
 
   public static class Factory implements SearchEverywhereContributorFactory<Object> {

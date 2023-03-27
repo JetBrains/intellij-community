@@ -13,6 +13,7 @@ import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.ide.util.scopeChooser.ScopeModel;
+import com.intellij.navigation.AnonymousElementProvider;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.actionSystem.*;
@@ -52,6 +53,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public abstract class AbstractGotoSEContributor implements WeightedSearchEverywhereContributor<Object>, ScopeSupporting {
+  protected static final Pattern ourPatternToDetectAnonymousClasses = Pattern.compile("([.\\w]+)((\\$[\\d]+)*(\\$)?)");
   private static final Logger LOG = Logger.getInstance(AbstractGotoSEContributor.class);
   private static final Key<Map<String, String>> SE_SELECTED_SCOPES = Key.create("SE_SELECTED_SCOPES");
 
@@ -419,6 +421,10 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
   }
 
   protected PsiElement preparePsi(PsiElement psiElement, int modifiers, String searchText) {
+    String path = pathToAnonymousClass(searchText);
+    if (path != null) {
+      psiElement = getElement(psiElement, path);
+    }
     return psiElement.getNavigationElement();
   }
 
@@ -447,6 +453,46 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
     }
 
     return -1;
+  }
+
+  private static String pathToAnonymousClass(String searchedText) {
+    return ClassSearchEverywhereContributor.pathToAnonymousClass(ourPatternToDetectAnonymousClasses.matcher(searchedText));
+  }
+
+  @NotNull
+  public static PsiElement getElement(@NotNull PsiElement element, @NotNull String path) {
+    final String[] classes = path.split("\\$");
+    List<Integer> indexes = new ArrayList<>();
+    for (String cls : classes) {
+      if (cls.isEmpty()) continue;
+      try {
+        indexes.add(Integer.parseInt(cls) - 1);
+      }
+      catch (Exception e) {
+        return element;
+      }
+    }
+    PsiElement current = element;
+    for (int index : indexes) {
+      final PsiElement[] anonymousClasses = getAnonymousClasses(current);
+      if (index >= 0 && index < anonymousClasses.length) {
+        current = anonymousClasses[index];
+      }
+      else {
+        return current;
+      }
+    }
+    return current;
+  }
+
+  private static PsiElement @NotNull [] getAnonymousClasses(@NotNull PsiElement element) {
+    for (AnonymousElementProvider provider : AnonymousElementProvider.EP_NAME.getExtensionList()) {
+      final PsiElement[] elements = provider.getAnonymousElements(element);
+      if (elements.length > 0) {
+        return elements;
+      }
+    }
+    return PsiElement.EMPTY_ARRAY;
   }
 
   private static final class MyViewModel implements ChooseByNameViewModel {
