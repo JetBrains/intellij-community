@@ -23,6 +23,7 @@ import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<MavenServerEmbedder> {
   private Customization myCustomization;
@@ -224,7 +225,7 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     return performCancelable(() -> getOrCreateWrappee().resolveArtifactTransitively(artifacts, remoteRepositories, ourToken));
   }
 
-  public Map<MavenId, Collection<MavenArtifact>> resolvePlugins(@NotNull Collection<Pair<MavenId, NativeMavenProjectHolder>> mavenPluginRequests)
+  public List<PluginResolutionResponse> resolvePlugins(@NotNull Collection<Pair<MavenId, NativeMavenProjectHolder>> mavenPluginRequests)
     throws MavenProcessCanceledException {
     var pluginResolutionRequests = new ArrayList<PluginResolutionRequest>();
     for (var mavenPluginRequest : mavenPluginRequests) {
@@ -245,7 +246,7 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     catch (RemoteException e) {
       // do not try to reconnect here since we have lost NativeMavenProjectHolder anyway.
       handleRemoteError(e);
-      return Collections.emptyMap();
+      return ContainerUtil.map(mavenPluginRequests, request -> new PluginResolutionResponse(request.first, false, List.of()));
     }
     catch (MavenServerProcessCanceledException e) {
       throw new MavenProcessCanceledException();
@@ -256,7 +257,9 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
                                                  @NotNull final NativeMavenProjectHolder nativeMavenProject)
     throws MavenProcessCanceledException {
     MavenId mavenId = plugin.getMavenId();
-    return resolvePlugins(List.of(Pair.create(mavenId, nativeMavenProject))).get(mavenId);
+    return resolvePlugins(List.of(Pair.create(mavenId, nativeMavenProject))).stream()
+      .flatMap(resolutionResult -> resolutionResult.getArtifacts().stream())
+      .collect(Collectors.toSet());
   }
 
   public MavenModel readModel(final File file) throws MavenProcessCanceledException {

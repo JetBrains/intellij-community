@@ -275,7 +275,9 @@ public class MavenProjectResolver {
     try {
       var mavenPluginIdsToResolve = collectMavenPluginIdsToResolve(mavenProjects);
       var resolutionResults = embedder.resolvePlugins(mavenPluginIdsToResolve);
-      var artifacts = resolutionResults.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
+      var artifacts = resolutionResults.stream()
+        .flatMap(resolutionResult -> resolutionResult.getArtifacts().stream())
+        .collect(Collectors.toSet());
 
       for (MavenArtifact artifact : artifacts) {
         Path pluginJar = artifact.getFile().toPath();
@@ -285,10 +287,11 @@ public class MavenProjectResolver {
         }
       }
 
-      unresolvedPluginIds = mavenPluginIdsToResolve.stream()
-        .map(pair -> pair.first)
-        .filter(mavenPluginId -> !resolutionResults.containsKey(mavenPluginId))
+      unresolvedPluginIds = resolutionResults.stream()
+        .filter(resolutionResult -> !resolutionResult.isResolved())
+        .map(resolutionResult -> resolutionResult.getMavenPluginId())
         .collect(Collectors.toSet());
+
       if (reportUnresolvedToSyncConsole && myProject != null) {
         reportUnresolvedPlugins(unresolvedPluginIds);
       }

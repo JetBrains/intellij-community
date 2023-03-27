@@ -989,19 +989,22 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   }
 
   @Override
-  public Map<MavenId, Collection<MavenArtifact>> resolvePlugins(@NotNull Collection<PluginResolutionRequest> pluginResolutionRequests, MavenToken token)
+  public List<PluginResolutionResponse> resolvePlugins(@NotNull Collection<PluginResolutionRequest> pluginResolutionRequests,
+                                                       MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);
-    Map<MavenId, Collection<MavenArtifact>> resolvedPlugins = new HashMap<>();
+    List<PluginResolutionResponse> resolvedPlugins = new ArrayList<>();
     for (PluginResolutionRequest pluginResolutionRequest : pluginResolutionRequests) {
       MavenId mavenPluginId = pluginResolutionRequest.getMavenPluginId();
-      resolvedPlugins.put(mavenPluginId, resolvePlugin(mavenPluginId, pluginResolutionRequest.getNativeMavenProjectId()));
+      resolvedPlugins.add(resolvePlugin(mavenPluginId, pluginResolutionRequest.getNativeMavenProjectId()));
     }
     return resolvedPlugins;
   }
 
-  private Collection<MavenArtifact> resolvePlugin(@NotNull final MavenId pluginId, int nativeMavenProjectId)
+  private PluginResolutionResponse resolvePlugin(@NotNull final MavenId pluginId, int nativeMavenProjectId)
     throws RemoteException {
+    List<MavenArtifact> artifacts = new ArrayList<MavenArtifact>();
+
     try {
       Plugin mavenPlugin = new Plugin();
       mavenPlugin.setGroupId(pluginId.getGroupId());
@@ -1031,20 +1034,18 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
       node.accept(nlg);
 
-      List<MavenArtifact> res = new ArrayList<MavenArtifact>();
-
       for (org.sonatype.aether.artifact.Artifact artifact : nlg.getArtifacts(true)) {
         if (!Objects.equals(artifact.getArtifactId(), pluginId.getArtifactId()) ||
             !Objects.equals(artifact.getGroupId(), pluginId.getGroupId())) {
-          res.add(MavenModelConverter.convertArtifact(RepositoryUtils.toArtifact(artifact), getLocalRepositoryFile()));
+          artifacts.add(MavenModelConverter.convertArtifact(RepositoryUtils.toArtifact(artifact), getLocalRepositoryFile()));
         }
       }
 
-      return res;
+      return new PluginResolutionResponse(pluginId, true, artifacts);
     }
     catch (Exception e) {
       Maven3ServerGlobals.getLogger().info(e);
-      return Collections.emptyList();
+      return new PluginResolutionResponse(pluginId, false, artifacts);
     }
   }
 

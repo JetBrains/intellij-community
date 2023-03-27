@@ -1569,7 +1569,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   @Override
-  public Map<MavenId, Collection<MavenArtifact>> resolvePlugins(@NotNull Collection<PluginResolutionRequest> pluginResolutionRequests, MavenToken token)
+  public List<PluginResolutionResponse> resolvePlugins(@NotNull Collection<PluginResolutionRequest> pluginResolutionRequests,
+                                                       MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);
 
@@ -1577,72 +1578,71 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     request.setTransferListener(new TransferListenerAdapter(myCurrentIndicator));
 
     DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
-    RepositorySystemSession repositorySystemSession = maven.newRepositorySession(request);
+    RepositorySystemSession session = maven.newRepositorySession(request);
     myImporterSpy.setIndicator(myCurrentIndicator);
 
-    Map<MavenId, Collection<MavenArtifact>> resolvedArtifacts = new HashMap<>();
+    List<PluginResolutionResponse> results = new ArrayList<>();
 
     for (PluginResolutionRequest pluginResolutionRequest : pluginResolutionRequests) {
       MavenId mavenPluginId = pluginResolutionRequest.getMavenPluginId();
       int nativeMavenProjectId = pluginResolutionRequest.getNativeMavenProjectId();
 
-      try {
-        String groupId = mavenPluginId.getGroupId();
-        String artifactId = mavenPluginId.getArtifactId();
+      String groupId = mavenPluginId.getGroupId();
+      String artifactId = mavenPluginId.getArtifactId();
 
-        Plugin plugin = new Plugin();
-        plugin.setGroupId(groupId);
-        plugin.setArtifactId(artifactId);
-        plugin.setVersion(mavenPluginId.getVersion());
-        MavenProject project = RemoteNativeMavenProjectHolder.findProjectById(nativeMavenProjectId);
-        List<RemoteRepository> remotePluginRepositories = project.getRemotePluginRepositories();
+      MavenProject project = RemoteNativeMavenProjectHolder.findProjectById(nativeMavenProjectId);
+      List<RemoteRepository> remoteRepos = project.getRemotePluginRepositories();
 
-        Plugin pluginFromProject = project.getBuild().getPluginsAsMap().get(groupId + ':' + artifactId);
-        if (pluginFromProject != null) {
-          plugin.setDependencies(pluginFromProject.getDependencies());
-        }
+      Plugin pluginFromProject = project.getBuild().getPluginsAsMap().get(groupId + ':' + artifactId);
+      List<org.apache.maven.model.Dependency> pluginDependencies =
+        null == pluginFromProject ? Collections.emptyList() : pluginFromProject.getDependencies();
 
-        List<MavenArtifact> artifacts = resolvePlugin(plugin, remotePluginRepositories, repositorySystemSession);
-        resolvedArtifacts.put(mavenPluginId, artifacts);
-      }
-      catch (Exception e) {
-        Maven3ServerGlobals.getLogger().warn(e);
-      }
+      PluginResolutionResponse result = resolvePlugin(mavenPluginId, pluginDependencies, remoteRepos, session);
+
+      results.add(result);
     }
 
-    return resolvedArtifacts;
+    return results;
   }
 
   @NotNull
-  private List<MavenArtifact> resolvePlugin(Plugin plugin,
-                                            List<RemoteRepository> remotePluginRepositories,
-                                            RepositorySystemSession repositorySystemSession) {
+  private PluginResolutionResponse resolvePlugin(MavenId mavenPluginId,
+                                                 List<org.apache.maven.model.Dependency> pluginDependencies,
+                                                 List<RemoteRepository> remoteRepos,
+                                                 RepositorySystemSession session) {
+    List<MavenArtifact> artifacts = new ArrayList<>();
+
     try {
+      Plugin plugin = new Plugin();
+      plugin.setGroupId(mavenPluginId.getGroupId());
+      plugin.setArtifactId(mavenPluginId.getArtifactId());
+      plugin.setVersion(mavenPluginId.getVersion());
+      plugin.setDependencies(pluginDependencies);
+
       PluginDependenciesResolver pluginDependenciesResolver = getPluginDependenciesResolver();
 
       org.eclipse.aether.artifact.Artifact pluginArtifact =
-        pluginDependenciesResolver.resolve(plugin, remotePluginRepositories, repositorySystemSession);
+        pluginDependenciesResolver.resolve(plugin, remoteRepos, session);
 
       org.eclipse.aether.graph.DependencyNode node = pluginDependenciesResolver
-        .resolve(plugin, pluginArtifact, null, remotePluginRepositories, repositorySystemSession);
+        .resolve(plugin, pluginArtifact, null, remoteRepos, session);
 
       PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
       node.accept(nlg);
 
-      List<MavenArtifact> res = new ArrayList<>();
 
       for (org.eclipse.aether.artifact.Artifact artifact : nlg.getArtifacts(true)) {
         if (!Objects.equals(artifact.getArtifactId(), plugin.getArtifactId()) ||
             !Objects.equals(artifact.getGroupId(), plugin.getGroupId())) {
-          res.add(MavenModelConverter.convertArtifact(RepositoryUtils.toArtifact(artifact), getLocalRepositoryFile()));
+          artifacts.add(MavenModelConverter.convertArtifact(RepositoryUtils.toArtifact(artifact), getLocalRepositoryFile()));
         }
       }
 
-      return res;
+      return new PluginResolutionResponse(mavenPluginId, true, artifacts);
     }
     catch (Exception e) {
       Maven3ServerGlobals.getLogger().warn(e);
-      return Collections.emptyList();
+      return new PluginResolutionResponse(mavenPluginId, false, artifacts);
     }
   }
 
