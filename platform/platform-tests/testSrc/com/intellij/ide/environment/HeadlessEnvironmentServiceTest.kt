@@ -29,7 +29,7 @@ class HeadlessEnvironmentServiceTest : LightPlatformTestCase() {
 
   private suspend fun getExistingKey(key: EnvironmentKey): String {
     val value1 = service<EnvironmentService>().requestEnvironmentValue(key)
-    val value2 = service<EnvironmentService>().getEnvironmentValueOrNull(key)
+    val value2 = service<EnvironmentService>().getEnvironmentValue(key)
     TestCase.assertEquals(value1!!, value2)
     return value1
   }
@@ -115,7 +115,7 @@ class HeadlessEnvironmentServiceTest : LightPlatformTestCase() {
 
   fun testAbsentKey() = runTestWithValues(null, null) {
     try {
-      assertNull(service<EnvironmentService>().getEnvironmentValueOrNull(dummyKey))
+      assertNull(service<EnvironmentService>().getEnvironmentValue(dummyKey))
       service<EnvironmentService>().requestEnvironmentValue(dummyKey)
       fail("should throw")
     } catch (e : HeadlessEnvironmentService.MissingEnvironmentKeyException) {
@@ -135,7 +135,7 @@ class HeadlessEnvironmentServiceTest : LightPlatformTestCase() {
 
   fun testUnknownKey() = runTestWithValues(null, null) {
     try {
-      assertNull(service<EnvironmentService>().getEnvironmentValueOrNull(dummyKey))
+      assertNull(service<EnvironmentService>().getEnvironmentValue(dummyKey))
       service<EnvironmentService>().requestEnvironmentValue(notRegisteredDummyKey)
       // the warning in log is intentional
       fail("should throw")
@@ -147,7 +147,7 @@ class HeadlessEnvironmentServiceTest : LightPlatformTestCase() {
 
 private val dummyKey: EnvironmentKey = EnvironmentKey.create("my.dummy.test.key", { "My dummy test key\nWith a long description" })
 private val notRegisteredDummyKey: EnvironmentKey = EnvironmentKey.create("not.registered.dummy.key", { "My dummy test key" })
-private val dummyKeyWithDefaultValue: EnvironmentKey = EnvironmentKey.create("my.dummy.test.key.with.default.value", { "My dummy test key with default value"}, "Foo")
+private val dummyKeyWithDefaultValue: DefaultedEnvironmentKey = EnvironmentKey.createWithDefaultValue("my.dummy.test.key.with.default.value", { "My dummy test key with default value"}, "Foo")
 
 fun getJsonContents(value1: String?, value2: String?) : String =
 """[

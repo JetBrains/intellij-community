@@ -31,10 +31,6 @@ class HeadlessEnvironmentService(scope: CoroutineScope) : BaseEnvironmentService
       return valueFromConfigurationFile
     }
 
-    val valueAsDefault = key.defaultValue.ifEmpty { null }
-    if (valueAsDefault != null) {
-      return valueAsDefault
-    }
     return onError()
   }
 
@@ -42,7 +38,7 @@ class HeadlessEnvironmentService(scope: CoroutineScope) : BaseEnvironmentService
     throw MissingEnvironmentKeyException(key)
   }
 
-  override suspend fun getEnvironmentValueOrNull(key: EnvironmentKey): String? = scanForEnvironmentValue(key) {
+  override suspend fun getEnvironmentValue(key: EnvironmentKey): String? = scanForEnvironmentValue(key) {
     null
   }
 

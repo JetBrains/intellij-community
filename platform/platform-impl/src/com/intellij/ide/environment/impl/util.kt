@@ -3,6 +3,7 @@ package com.intellij.ide.environment.impl
 
 import com.intellij.ide.CommandLineInspectionProgressReporter
 import com.intellij.ide.CommandLineInspectionProjectConfigurator
+import com.intellij.ide.environment.DefaultedEnvironmentKey
 import com.intellij.ide.environment.EnvironmentKey
 import com.intellij.ide.warmup.WarmupConfigurator
 import com.intellij.openapi.diagnostic.logger
@@ -19,6 +20,7 @@ class EnvironmentConfiguration(private val map: Map<EnvironmentKey, String>) {
     val EMPTY : EnvironmentConfiguration = EnvironmentConfiguration(emptyMap())
   }
   fun get(key: EnvironmentKey) : String? = map[key]
+  fun get(key: DefaultedEnvironmentKey) : String = get(key as EnvironmentKey) ?: key.defaultValue
 }
 
 suspend fun produceConfigurationContext(projectDir: Path?): CommandLineInspectionProjectConfigurator.ConfiguratorContext {

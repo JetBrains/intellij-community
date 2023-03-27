@@ -11,9 +11,9 @@ class DefaultEnvironmentService : BaseEnvironmentService() {
       LOG.warn("Access to UI is not allowed in the headless environment")
     }
     checkKeyRegistered(key)
-    return key.defaultValue.ifEmpty { null }
+    return null
   }
 
-  override suspend fun getEnvironmentValueOrNull(key: EnvironmentKey): String? = requestEnvironmentValue(key)
+  override suspend fun getEnvironmentValue(key: EnvironmentKey): String? = requestEnvironmentValue(key)
 
 }

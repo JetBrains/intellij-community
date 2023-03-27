@@ -27,27 +27,35 @@ sealed interface EnvironmentKey {
    */
   val description: Supplier<@EnvironmentKeyDescription String>
 
-  /**
-   * The default value for a key.
-   * If [defaultValue] for a key is empty, then the key has **no** default value,
-   * and [EnvironmentService.requestEnvironmentValue] enters in its error handling state.
-   */
-  val defaultValue: @NonNls String
-
   companion object {
 
     @JvmStatic
-    @JvmOverloads
-    fun create(id: @NonNls String, description: Supplier<@EnvironmentKeyDescription String>, defaultValue: @NonNls String = ""): EnvironmentKey {
-      return EnvironmentKeyImpl(id, description, defaultValue)
+    fun create(id: @NonNls String, description: Supplier<@EnvironmentKeyDescription String>): EnvironmentKey {
+      return EnvironmentKeyImpl(id, description)
     }
 
-    private class EnvironmentKeyImpl(override val id: @NonNls String,
-                                     override val description: Supplier<@Nls String>,
-                                     override val defaultValue: @NonNls String) : EnvironmentKey {
+    @JvmStatic
+    fun createWithDefaultValue(id: @NonNls String, description: Supplier<@EnvironmentKeyDescription String>, defaultValue: @NonNls String): DefaultedEnvironmentKey {
+      require(defaultValue.isNotEmpty()) {
+        "Empty strings as default values are not supported."
+      }
+      return DefaultEnvironmentKeyImpl(id, description, defaultValue)
+    }
+
+    private open class EnvironmentKeyImpl(
+      override val id: @NonNls String,
+      override val description: Supplier<@Nls String>) : EnvironmentKey {
       override fun equals(other: Any?): Boolean = other is EnvironmentKeyImpl && other.id == this.id
 
       override fun hashCode(): Int = id.hashCode()
+    }
+
+    private class DefaultEnvironmentKeyImpl(
+      id: String,
+      description: Supplier<@EnvironmentKeyDescription String>,
+      override val defaultValue: @NonNls String): EnvironmentKeyImpl(id, description), DefaultedEnvironmentKey {
+      override fun equals(other: Any?): Boolean = super.equals(other)
+      override fun hashCode(): Int = super.hashCode()
     }
 
     @NlsContext(prefix = "environment.key.description")
@@ -56,6 +64,14 @@ sealed interface EnvironmentKey {
             AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER, AnnotationTarget.VALUE_PARAMETER)
     private annotation class EnvironmentKeyDescription
   }
+}
+
+interface DefaultedEnvironmentKey : EnvironmentKey {
+  /**
+   * The default value for a key.
+   * The default value **must be non-empty**.
+   */
+  val defaultValue: @NonNls String
 }
 
 

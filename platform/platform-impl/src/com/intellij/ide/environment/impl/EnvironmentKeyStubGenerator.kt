@@ -82,7 +82,7 @@ private suspend fun generateKeyConfig(generateDescriptions: Boolean, configurati
         writeEndArray()
       }
       writeStringField("key", key.id)
-      val value = configuration.get(key) ?: key.defaultValue
+      val value = configuration.get(key) ?: ""
       writeStringField("value", value)
       writeEndObject()
     }

@@ -22,7 +22,7 @@ class CheckKeysStartupActivity : ProjectActivity {
     var exceptionOccurred = false
     for (registry in blockingContext { EnvironmentKeyProvider.EP_NAME.extensionList }) {
       for (requiredKey in registry.getRequiredKeys(project)) {
-        val value = environmentService.getEnvironmentValueOrNull(requiredKey)
+        val value = environmentService.getEnvironmentValue(requiredKey)
         if (value == null) {
           exceptionOccurred = true
           messageBuilder.appendLine(HeadlessEnvironmentService.MissingEnvironmentKeyException(requiredKey).message)

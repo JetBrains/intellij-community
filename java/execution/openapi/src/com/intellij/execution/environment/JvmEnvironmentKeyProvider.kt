@@ -10,8 +10,9 @@ class JvmEnvironmentKeyProvider : EnvironmentKeyProvider {
 
   companion object {
     val JDK_KEY = EnvironmentKey.create("project.jdk", JavaBundle.messagePointer("environment.key.description.project.jdk"))
+    val JDK_NAME = EnvironmentKey.createWithDefaultValue("project.jdk.name", JavaBundle.messagePointer("environment.key.description.project.jdk.name"), "warmup_jdk")
   }
-  override fun getAllKeys(): List<EnvironmentKey> = listOf(JDK_KEY)
+  override fun getAllKeys(): List<EnvironmentKey> = listOf(JDK_KEY, JDK_NAME)
 
   override suspend fun getRequiredKeys(project: Project): List<EnvironmentKey> = listOf()
 }
