@@ -149,10 +149,7 @@
       "idl.svg": "fileTypes/idl.svg",
       "ignored.svg": "vcs/ignore_file.svg",
       "java.svg": "fileTypes/java.svg",
-      "javascript.svg": [
-        "fileTypes/javaScript.svg",
-        "icons/JavaScript_debug_configuration.svg"
-      ],
+      "javaScript.svg": "fileTypes/javaScript.svg",
       "jest.svg": "icons/fileTypes/jestSnapshot.svg",
       "jfr.svg": "fileTypes/jfr.svg",
       "jshint.svg": "icons/fileTypes/jsHint.svg",
@@ -188,7 +185,6 @@
         "fileTypes/custom.svg",
         "fileTypes/text.svg"
       ],
-      "typescript.svg": "icons/fileTypes/TypeScriptFile.svg",
       "unknown.svg": "fileTypes/unknown.svg",
       "velocity.svg": "icons/velocity.svg",
       "vueJs.svg": "icons/vue.svg",
@@ -289,7 +285,6 @@
         "vcs/history.svg",
         "vcs/historyInline.svg",
         "vcs/historyInlineHovered.svg"
-
       ],
       "ideUpdate.svg": "ide/notification/ideUpdate.svg",
       "pluginUpdate.svg": "ide/notification/pluginUpdate.svg",
@@ -606,7 +601,6 @@
       "applicationRemote.svg": "runConfigurations/remote.svg",
       "compound.svg": "runConfigurations/compound.svg",
       "invalidConfigurationLayer.svg": "runConfigurations/invalidConfigurationLayer.svg",
-      "javaScriptRemote.svg": "icons/JavaScript_remote_debug_configuration.svg",
       "junit.svg": "runConfigurations/junit.svg",
       "junitTestMark.svg": "runConfigurations/testMark.svg",
       "sortByDuration.svg": "runConfigurations/sortbyDuration.svg",
