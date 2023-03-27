@@ -268,22 +268,11 @@ public class MavenProjectResolver {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_PLUGINS_RESOLVE, baseDir);
     embedder.customizeForResolve(console, process, forceUpdateSnapshots);
 
-    var mavenProjectsToResolve = new HashSet<MavenProject>();
-    var mavenPluginIdsToResolve = new HashSet<Pair<MavenId, NativeMavenProjectHolder>>();
     Set<MavenId> unresolvedPluginIds;
     Set<Path> filesToRefresh = new HashSet<>();
 
     try {
-      for (var projectData : mavenProjects) {
-        var mavenProject = projectData.first;
-        var nativeMavenProject = projectData.second;
-
-        for (MavenPlugin mavenPlugin : mavenProject.getDeclaredPlugins()) {
-          mavenPluginIdsToResolve.add(Pair.create(mavenPlugin.getMavenId(), nativeMavenProject));
-          mavenProjectsToResolve.add(mavenProject);
-        }
-      }
-
+      var mavenPluginIdsToResolve = collectMavenPluginIdsToResolve(mavenProjects);
       var artifacts = embedder.resolvePlugins(mavenPluginIdsToResolve);
 
       for (MavenArtifact artifact : artifacts) {
@@ -299,7 +288,8 @@ public class MavenProjectResolver {
         reportUnresolvedPlugins(unresolvedPluginIds);
       }
 
-      for (var mavenProject : mavenProjectsToResolve) {
+      var updatedMavenProjects = mavenProjects.stream().map(pair -> pair.first).collect(Collectors.toSet());
+      for (var mavenProject : updatedMavenProjects) {
         mavenProject.resetCache();
         myTree.firePluginsResolved(mavenProject);
       }
@@ -312,8 +302,23 @@ public class MavenProjectResolver {
     }
   }
 
-  private static Set<MavenId> collectUnresolvedPlugins(Set<Pair<MavenId, NativeMavenProjectHolder>> mavenPluginsIdsToResolve,
-                                                           Collection<MavenArtifact> resolvedArtifacts) {
+  private static Collection<Pair<MavenId, NativeMavenProjectHolder>> collectMavenPluginIdsToResolve(
+    @NotNull Collection<Pair<MavenProject, NativeMavenProjectHolder>> mavenProjects
+  ) {
+    var mavenPluginIdsToResolve = new HashSet<Pair<MavenId, NativeMavenProjectHolder>>();
+    for (var projectData : mavenProjects) {
+      var mavenProject = projectData.first;
+      var nativeMavenProject = projectData.second;
+
+      for (MavenPlugin mavenPlugin : mavenProject.getDeclaredPlugins()) {
+        mavenPluginIdsToResolve.add(Pair.create(mavenPlugin.getMavenId(), nativeMavenProject));
+      }
+    }
+    return mavenPluginIdsToResolve;
+  }
+
+  private static Set<MavenId> collectUnresolvedPlugins(Collection<Pair<MavenId, NativeMavenProjectHolder>> mavenPluginsIdsToResolve,
+                                                       Collection<MavenArtifact> resolvedArtifacts) {
     var resolvedIds = resolvedArtifacts.stream()
       .map(artifact -> Pair.create(artifact.getGroupId(), artifact.getArtifactId()))
       .collect(Collectors.toSet());
