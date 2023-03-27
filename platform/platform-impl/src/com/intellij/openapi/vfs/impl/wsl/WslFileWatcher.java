@@ -281,7 +281,7 @@ public class WslFileWatcher extends PluggableFileWatcher {
       if (outputType == ProcessOutputTypes.STDERR) {
         myVm.logger.warn(line);
       }
-      if (outputType != ProcessOutputTypes.STDOUT) {
+      if (outputType != ProcessOutputTypes.STDOUT || myShuttingDown) {
         return;
       }
 

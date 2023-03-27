@@ -349,7 +349,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       if (outputType == ProcessOutputTypes.STDERR) {
         LOG.warn(line);
       }
-      if (outputType != ProcessOutputTypes.STDOUT) {
+      if (outputType != ProcessOutputTypes.STDOUT || myIsShuttingDown) {
         return;
       }
 
