@@ -496,7 +496,6 @@
       "static.svg": "nodes/static.svg",
       "test.svg": "nodes/test.svg",
       "testIgnored.svg": "nodes/testIgnored.svg",
-      "testResources.svg": "nodes/testSourceFolder.svg",
       "testResourcesRoot.svg": "modules/testResourcesRoot.svg",
       "testRoot.svg": "modules/testRoot.svg",
       "testSourceFolder.svg": "nodes/testSourceFolder.svg",

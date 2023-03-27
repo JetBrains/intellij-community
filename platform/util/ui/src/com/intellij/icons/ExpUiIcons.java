@@ -429,7 +429,6 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon Static = load("expui/nodes/static.svg", -1980903685, 2);
     /** 16x16 */ public static final @NotNull Icon Test = load("expui/nodes/test.svg", 1491357703, 2);
     /** 16x16 */ public static final @NotNull Icon TestIgnored = load("expui/nodes/testIgnored.svg", 1689504572, 2);
-    /** 16x16 */ public static final @NotNull Icon TestResources = load("expui/nodes/testResources.svg", -2045088373, 2);
     /** 16x16 */ public static final @NotNull Icon TestResourcesRoot = load("expui/nodes/testResourcesRoot.svg", -1873090168, 2);
     /** 16x16 */ public static final @NotNull Icon TestRoot = load("expui/nodes/testRoot.svg", -304560286, 2);
     /** 16x16 */ public static final @NotNull Icon TestSourceFolder = load("expui/nodes/testSourceFolder.svg", 1411666511, 2);
