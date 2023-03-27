@@ -236,6 +236,112 @@ public class MavenProjectResolver {
                                    forceUpdateSnapshots);
   }
 
+  private Set<MavenPlugin> resolvePluginsBulk(@NotNull Collection<Pair<MavenProject, NativeMavenProjectHolder>> mavenProjects,
+                                              @NotNull MavenEmbeddersManager embeddersManager,
+                                              @NotNull MavenConsole console,
+                                              @NotNull MavenProgressIndicator process,
+                                              boolean reportUnresolvedToSyncConsole,
+                                              boolean forceUpdateSnapshots) throws MavenProcessCanceledException {
+    if (mavenProjects.isEmpty()) {
+      return Set.of();
+    }
+
+    var projectsGroupedByBaseDir = mavenProjects.stream()
+      .collect(Collectors.groupingBy(pair -> MavenUtil.getBaseDir(pair.first.getDirectoryFile()).toString()));
+
+    var unresolvedPlugins = new HashSet<MavenPlugin>();
+
+    for (var projectGroup : projectsGroupedByBaseDir.entrySet()) {
+      var baseDir = projectGroup.getKey();
+      var mavenProjectsForBaseDir = projectGroup.getValue();
+      var unresolvedPluginsForBaseDir = resolvePluginsBulk(baseDir,
+                                                           mavenProjectsForBaseDir,
+                                                           embeddersManager,
+                                                           console,
+                                                           process,
+                                                           reportUnresolvedToSyncConsole,
+                                                           forceUpdateSnapshots);
+      unresolvedPlugins.addAll(unresolvedPluginsForBaseDir);
+    }
+
+    return unresolvedPlugins;
+  }
+
+  private Set<MavenPlugin> resolvePluginsBulk(@NotNull String baseDir,
+                                              @NotNull Collection<Pair<MavenProject, NativeMavenProjectHolder>> mavenProjects,
+                                              @NotNull MavenEmbeddersManager embeddersManager,
+                                              @NotNull MavenConsole console,
+                                              @NotNull MavenProgressIndicator process,
+                                              boolean reportUnresolvedToSyncConsole,
+                                              boolean forceUpdateSnapshots) throws MavenProcessCanceledException {
+    if (mavenProjects.isEmpty()) {
+      return Set.of();
+    }
+
+    process.setText(MavenProjectBundle.message("maven.downloading.pom.plugins", mavenProjects.iterator().next().first.getDisplayName()));
+
+    MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_PLUGINS_RESOLVE, baseDir);
+    embedder.customizeForResolve(console, process, forceUpdateSnapshots);
+
+    var mavenProjectsToResolve = new HashSet<MavenProject>();
+    var mavenPluginsToResolve = new HashSet<Pair<MavenPlugin, NativeMavenProjectHolder>>();
+    Set<MavenPlugin> unresolvedPlugins;
+    Set<Path> filesToRefresh = new HashSet<>();
+
+    try {
+      for (var projectData : mavenProjects) {
+        var mavenProject = projectData.first;
+        var nativeMavenProject = projectData.second;
+
+        for (MavenPlugin mavenPlugin : mavenProject.getDeclaredPlugins()) {
+          mavenPluginsToResolve.add(Pair.create(mavenPlugin, nativeMavenProject));
+          mavenProjectsToResolve.add(mavenProject);
+        }
+      }
+
+      var artifacts = embedder.resolvePlugins(mavenPluginsToResolve);
+
+      for (MavenArtifact artifact : artifacts) {
+        Path pluginJar = artifact.getFile().toPath();
+        Path pluginDir = pluginJar.getParent();
+        if (pluginDir != null) {
+          filesToRefresh.add(pluginDir); // Refresh both *.pom and *.jar files.
+        }
+      }
+
+      unresolvedPlugins = collectUnresolvedPlugins(mavenPluginsToResolve, artifacts);
+      if (reportUnresolvedToSyncConsole && myProject != null) {
+        reportUnresolvedPlugins(unresolvedPlugins);
+      }
+
+      for (var mavenProject : mavenProjectsToResolve) {
+        mavenProject.resetCache();
+        myTree.firePluginsResolved(mavenProject);
+      }
+
+      return unresolvedPlugins;
+    }
+    finally {
+      if (filesToRefresh.size() > 0) {
+        LocalFileSystem.getInstance().refreshNioFiles(filesToRefresh);
+      }
+      embeddersManager.release(embedder);
+    }
+  }
+
+  private static Set<MavenPlugin> collectUnresolvedPlugins(Set<Pair<MavenPlugin, NativeMavenProjectHolder>> mavenPluginsToResolve,
+                                                           Collection<MavenArtifact> resolvedArtifacts) {
+    var resolvedIds = resolvedArtifacts.stream()
+      .map(artifact -> Pair.create(artifact.getGroupId(), artifact.getArtifactId()))
+      .collect(Collectors.toSet());
+
+    return mavenPluginsToResolve.stream()
+      .map(pair -> pair.first)
+      .distinct()
+      .filter(mavenPlugin -> !resolvedIds.contains(Pair.create(mavenPlugin.getGroupId(), mavenPlugin.getArtifactId())))
+      .collect(Collectors.toSet());
+  }
+
   private Set<MavenPlugin> resolvePluginsFromCache(@NotNull Collection<Pair<MavenProject, NativeMavenProjectHolder>> mavenProjects,
                                                    @NotNull MavenEmbeddersManager embeddersManager,
                                                    @NotNull MavenConsole console,
