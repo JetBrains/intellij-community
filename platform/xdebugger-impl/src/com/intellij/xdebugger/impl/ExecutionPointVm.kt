@@ -7,7 +7,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.asSafely
 import com.intellij.xdebugger.XSourcePosition
-import com.intellij.xdebugger.impl.XSourcePositionEx.NavigationMode
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
@@ -18,7 +17,7 @@ interface ExecutionPointVm {
   val mainPositionVm: ExecutionPositionVm?
   val alternativePositionVm: ExecutionPositionVm?
 
-  fun navigateTo(navigationMode: NavigationMode, sourceKind: XSourceKind? = null)
+  fun navigateTo(navigationMode: ExecutionPositionNavigationMode, sourceKind: XSourceKind? = null)
 }
 
 interface ExecutionPositionVm {
@@ -28,9 +27,9 @@ interface ExecutionPositionVm {
   val isTopFrame: Boolean
   val isActiveSourceKindState: StateFlow<Boolean>
   val gutterVm: ExecutionPositionGutterVm
-  val updatesFlow: Flow<NavigationMode>
+  val updatesFlow: Flow<Boolean>
 
-  fun navigateTo(navigationMode: NavigationMode)
+  fun navigateTo(navigationMode: ExecutionPositionNavigationMode)
 }
 
 class ExecutionPositionGutterVm(val gutterIconRendererState: StateFlow<GutterIconRenderer?>)
@@ -64,12 +63,12 @@ internal class ExecutionPointVmImpl(
     alternativePositionVm = createPositionVm(XSourceKind.ALTERNATIVE)
   }
 
-  override fun navigateTo(navigationMode: NavigationMode, sourceKind: XSourceKind?) {
+  override fun navigateTo(navigationMode: ExecutionPositionNavigationMode, sourceKind: XSourceKind?) {
     val openSourceKind = sourceKind ?: activeSourceKind
     val syncSourceKind = if (openSourceKind == XSourceKind.MAIN) XSourceKind.ALTERNATIVE else XSourceKind.MAIN
     val openPositionVm = positionVmFor(openSourceKind)
     val syncPositionVm = positionVmFor(syncSourceKind)
-    syncPositionVm?.navigateTo(navigationMode.coerceAtMost(NavigationMode.SCROLL))
+    syncPositionVm?.navigateTo(navigationMode.coerceAtMost(ExecutionPositionNavigationMode.SCROLL))
     openPositionVm?.navigateTo(navigationMode)
   }
 
@@ -95,8 +94,8 @@ internal class ExecutionPositionVmImpl(
 
   override val exactRange: TextRange? get() = sourcePosition.asSafely<ExecutionPointHighlighter.HighlighterProvider>()?.highlightRange
 
-  override val updatesFlow: Flow<NavigationMode> = run {
-    val externalUpdateFlow = updateRequestFlow.filter { it.file == file }.map { it.navigationMode }
+  override val updatesFlow: Flow<Boolean> = run {
+    val externalUpdateFlow = updateRequestFlow.filter { it.file == file }.map { it.isToScrollToPosition }
     val positionUpdateFlow = sourcePosition.asSafely<XSourcePositionEx>()?.positionUpdateFlow ?: emptyFlow()
 
     merge(externalUpdateFlow, positionUpdateFlow)
@@ -105,7 +104,7 @@ internal class ExecutionPositionVmImpl(
 
   private val navigator = ExecutionPositionNavigator(project, coroutineScope, sourcePosition, isTopFrame, updatesFlow)
 
-  override fun navigateTo(navigationMode: NavigationMode) {
+  override fun navigateTo(navigationMode: ExecutionPositionNavigationMode) {
     navigator.navigateTo(navigationMode)
   }
 }

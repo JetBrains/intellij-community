@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.xdebugger.XSourcePosition
-import com.intellij.xdebugger.impl.XSourcePositionEx.NavigationMode
 import com.intellij.xdebugger.impl.ui.ExecutionPositionUi
 import com.intellij.xdebugger.impl.ui.showExecutionPointUi
 import kotlinx.coroutines.CoroutineName
@@ -65,7 +64,7 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
     // navigate when execution point changes
     uiScope.launch {
       executionPointVmState.filterNotNull().collect {
-        it.navigateTo(NavigationMode.OPEN)
+        it.navigateTo(ExecutionPositionNavigationMode.OPEN)
       }
     }
 
@@ -99,14 +98,13 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
 
   fun updateExecutionPosition(file: VirtualFile, toNavigate: Boolean) {
     if (isCurrentFile(file)) {
-      val navigationMode = if (toNavigate) NavigationMode.OPEN else NavigationMode.NONE
-      val updateRequest = ExecutionPositionUpdateRequest(file, navigationMode)
+      val updateRequest = ExecutionPositionUpdateRequest(file, toNavigate)
       updateRequestFlow.tryEmit(updateRequest).also { check(it) }
     }
   }
 
   fun showExecutionPosition() {
-    executionPointVm?.navigateTo(NavigationMode.OPEN)
+    executionPointVm?.navigateTo(ExecutionPositionNavigationMode.OPEN)
   }
 }
 
@@ -131,4 +129,4 @@ internal class ExecutionPoint private constructor(
   }
 }
 
-internal data class ExecutionPositionUpdateRequest(val file: VirtualFile, val navigationMode: NavigationMode)
+internal data class ExecutionPositionUpdateRequest(val file: VirtualFile, val isToScrollToPosition: Boolean)

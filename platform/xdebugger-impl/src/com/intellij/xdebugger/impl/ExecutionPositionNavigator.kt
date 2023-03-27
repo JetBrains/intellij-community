@@ -9,33 +9,38 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.util.asSafely
 import com.intellij.xdebugger.XSourcePosition
-import com.intellij.xdebugger.impl.XSourcePositionEx.NavigationMode
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
 
+enum class ExecutionPositionNavigationMode {
+  SCROLL, OPEN,
+}
+
 internal class ExecutionPositionNavigator(
   private val project: Project,
   coroutineScope: CoroutineScope,
   private val sourcePosition: XSourcePosition,
   private val isTopFrame: Boolean,
-  updatesFlow: Flow<NavigationMode>,
+  updatesFlow: Flow<Boolean>,
 ) {
   private var openedEditor: Editor? = null
   private var openFileDescriptor: OpenFileDescriptor? = null
 
   init {
     coroutineScope.launch {
-      updatesFlow.collect {
+      updatesFlow.collect { isToScrollToPosition ->
         invalidate()
-        navigateTo(it)
+        if (isToScrollToPosition) {
+          navigateTo(ExecutionPositionNavigationMode.SCROLL)
+        }
       }
     }
   }
 
-  fun navigateTo(navigationMode: NavigationMode) {
+  fun navigateTo(navigationMode: ExecutionPositionNavigationMode) {
     val descriptor = getDescriptor()
     navigateTo(descriptor, navigationMode)
   }
@@ -58,19 +63,18 @@ internal class ExecutionPositionNavigator(
     }
   }
 
-  private fun navigateTo(openFileDescriptor: OpenFileDescriptor, navigationMode: NavigationMode) {
+  private fun navigateTo(openFileDescriptor: OpenFileDescriptor, navigationMode: ExecutionPositionNavigationMode) {
     when (navigationMode) {
-      NavigationMode.OPEN -> {
+      ExecutionPositionNavigationMode.OPEN -> {
         openedEditor = XDebuggerUtilImpl.createEditor(openFileDescriptor)
       }
-      NavigationMode.SCROLL -> {
+      ExecutionPositionNavigationMode.SCROLL -> {
         val fileEditorManager = FileEditorManager.getInstance(openFileDescriptor.project)
         val editor = openedEditor?.takeUnless { it.isDisposed }
                      ?: fileEditorManager.getSelectedEditor(openFileDescriptor.file).asSafely<TextEditor>()?.editor
                      ?: return
         openFileDescriptor.navigateIn(editor)
       }
-      NavigationMode.NONE -> return
     }
   }
 
