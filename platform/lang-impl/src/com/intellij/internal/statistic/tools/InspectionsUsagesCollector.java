@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.tools;
 
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.InspectionUsageStorage;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
@@ -120,6 +121,12 @@ public final class InspectionsUsagesCollector extends ProjectUsagesCollector {
                               SEVERITY_FIELD,
                               EventFields.PluginInfo);
 
+  private static final StringListEventField INSPECTION_IDS_REPORTING_PROBLEMS_FIELD = EventFields.StringListValidatedByCustomRule(
+    "inspectionIds", InspectionToolValidator.class);
+
+  private static final EventId1<List<? extends String>> INSPECTION_IDS_REPORTING_PROBLEMS = GROUP.registerEvent("inspections.reporting.problems",
+                                                                                  INSPECTION_IDS_REPORTING_PROBLEMS_FIELD);
+
   @Override
   public EventLogGroup getGroup() {
     return GROUP;
@@ -155,7 +162,15 @@ public final class InspectionsUsagesCollector extends ProjectUsagesCollector {
       final MetricEvent scopeAndSeverityEvent = getChangedScopeAndSeverityEvent(state, pluginInfo);
       if (scopeAndSeverityEvent != null) result.add(scopeAndSeverityEvent);
     }
+
+    result.add(getInspectionsReportingProblemsEvent(project));
+
     return result;
+  }
+
+  private static MetricEvent getInspectionsReportingProblemsEvent(@NotNull Project project) {
+    InspectionUsageStorage.Report report = InspectionUsageStorage.getInstance(project).collectHighligtingReport();
+    return INSPECTION_IDS_REPORTING_PROBLEMS.metric(report.inspectionsReportingProblems().stream().toList());
   }
 
   private static Collection<MetricEvent> getChangedSettingsEvents(InspectionToolWrapper<?, ?> tool,

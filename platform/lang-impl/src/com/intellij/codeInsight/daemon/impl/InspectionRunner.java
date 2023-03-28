@@ -137,6 +137,8 @@ class InspectionRunner {
       };
       visitElements(init, outside, false, finalPriorityRange, TOMB_STONE, afterOutside, foundInjected, injectedContexts,
                     toolWrappers, empty(), enabledToolsPredicate);
+      reportIdsOfInspectionsReportedAnyProblem(init);
+
       boolean isWholeFileInspectionsPass = !init.isEmpty() && init.get(0).tool.runForWholeFile();
       if (myIsOnTheFly && !isWholeFileInspectionsPass) {
         // do not save stats for batch process, there could be too many files
@@ -148,6 +150,18 @@ class InspectionRunner {
     });
 
     return ContainerUtil.concat(init, redundantContexts, injectedContexts);
+  }
+
+  private void reportIdsOfInspectionsReportedAnyProblem(List<InspectionContext> init) {
+    Set<String> inspectionIdsReportedProblems = new HashSet<>();
+    InspectionProblemHolder holder;
+    for (InspectionContext context : init) {
+      holder = context.holder;
+      if (holder.anyProblemWasReported) {
+        inspectionIdsReportedProblems.add(context.tool.getID());
+      }
+    }
+    InspectionUsageStorage.getInstance(myPsiFile.getProject()).reportInspectionsWhichReportedProblems(inspectionIdsReportedProblems);
   }
 
   private static long finalPriorityRange(@NotNull TextRange priorityRange, @NotNull List<? extends Divider.DividedElements> allDivided) {
@@ -423,6 +437,7 @@ class InspectionRunner {
     long otherStamp; // nano-stamp of the first info/weak warn/etc. created
     final long initTimeStamp = System.nanoTime();
     volatile long finishTimeStamp;
+    boolean anyProblemWasReported = false;
 
     InspectionProblemHolder(@NotNull PsiFile file,
                             @NotNull LocalInspectionToolWrapper toolWrapper,
@@ -442,6 +457,7 @@ class InspectionRunner {
         return;
       }
       super.registerProblem(descriptor);
+      anyProblemWasReported = true;
       HighlightSeverity severity = myProfileWrapper.getErrorLevel(myToolWrapper.getDisplayKey(), getFile()).getSeverity();
       if (severity.compareTo(HighlightSeverity.ERROR) >= 0) {
         if (errorStamp == 0) {
