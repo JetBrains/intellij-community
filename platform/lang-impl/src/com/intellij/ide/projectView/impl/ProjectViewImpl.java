@@ -1178,12 +1178,19 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     return myCurrentViewId;
   }
 
-  private SelectInTarget getCurrentSelectInTarget() {
+  private @Nullable SelectInTarget getCurrentSelectInTarget() {
     return getSelectInTarget(getCurrentViewId());
   }
 
-  private SelectInTarget getSelectInTarget(String id) {
-    return mySelectInTargets.get(id).target();
+  private @Nullable SelectInTarget getSelectInTarget(String id) {
+    if (id == null) {
+      return null;
+    }
+    MySelectInTarget target = mySelectInTargets.get(id);
+    if (target == null) {
+      return null;
+    }
+    return target.target();
   }
 
   private ProjectViewSelectInTarget getProjectViewSelectInTarget(AbstractProjectViewPane pane) {
