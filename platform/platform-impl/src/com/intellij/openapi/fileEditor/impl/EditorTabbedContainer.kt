@@ -51,6 +51,7 @@ import com.intellij.ui.tabs.impl.*
 import com.intellij.ui.tabs.impl.singleRow.CompressibleSingleRowLayout
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout
+import com.intellij.ui.tabs.impl.table.TableLayout
 import com.intellij.util.concurrency.EdtScheduledExecutorService
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.TimedDeadzone
@@ -567,13 +568,24 @@ private class EditorTabs(
 
   override fun getEditorWindow(): EditorWindow = window
 
-  override fun supportsTableLayoutAsSingleRow(): Boolean = true
+  override fun useMultiRowLayout(): Boolean {
+    return !isSingleRow || (tabsPosition == JBTabsPosition.top && TabLayout.showPinnedTabsSeparately())
+  }
 
   override fun createSingleRowLayout(): SingleRowLayout {
     return if (!UISettings.getInstance().hideTabsIfNeeded && supportsCompression()) {
       CompressibleSingleRowLayout(this)
     }
     else ScrollableSingleRowLayout(this, ExperimentalUI.isEditorTabsWithScrollBar())
+  }
+
+  override fun createTableLayout(): TableLayout {
+    val isWithScrollBar = ExperimentalUI.isEditorTabsWithScrollBar()
+                          && isSingleRow
+                          && tabsPosition == JBTabsPosition.top
+                          && TabLayout.showPinnedTabsSeparately()
+                          && (!supportsCompression() || UISettings.getInstance().hideTabsIfNeeded)
+    return TableLayout(this, isWithScrollBar)
   }
 
   override fun paintChildren(g: Graphics) {

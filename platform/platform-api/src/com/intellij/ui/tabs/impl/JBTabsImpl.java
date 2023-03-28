@@ -514,28 +514,26 @@ public class JBTabsImpl extends JComponent
     if (getTabsPosition() != JBTabsPosition.top) {
       mySingleRow = true;
     }
-    boolean forceTableLayout = getTabsPosition() == JBTabsPosition.top
-                               && supportsTableLayoutAsSingleRow()
-                               && TabLayout.showPinnedTabsSeparately();
-    boolean useTableLayout = !isSingleRow() || forceTableLayout;
-    TabLayout layout = useTableLayout ? createTableLayout() : createSingleRowLayout();
+    TabLayout layout = useMultiRowLayout() ? createTableLayout() : createSingleRowLayout();
     layout.scroll(getScrollBarModel().getValue()); // set current scroll value to new layout
     setLayout(layout);
     relayout(true, true);
   }
 
+  protected boolean useMultiRowLayout() {
+    return !isSingleRow();
+  }
+
+  /**
+   * @deprecated override {@link JBTabsImpl#useMultiRowLayout()} to configure whether to use multirow layout
+   */
+  @Deprecated(forRemoval = true)
   protected boolean supportsTableLayoutAsSingleRow() {
     return false;
   }
 
   protected TableLayout createTableLayout() {
-    boolean isWithScrollBar = ExperimentalUI.isEditorTabsWithScrollBar()
-                              && isSingleRow()
-                              && getTabsPosition() == JBTabsPosition.top
-                              && supportsTableLayoutAsSingleRow()
-                              && TabLayout.showPinnedTabsSeparately()
-                              && (!supportsCompression() || UISettings.getInstance().getHideTabsIfNeeded());
-    return new TableLayout(this, isWithScrollBar);
+    return new TableLayout(this);
   }
 
   protected SingleRowLayout createSingleRowLayout() {
