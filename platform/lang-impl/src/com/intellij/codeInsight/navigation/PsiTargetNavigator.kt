@@ -4,7 +4,6 @@ package com.intellij.codeInsight.navigation
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.find.FindUtil
 import com.intellij.ide.util.EditSourceUtil
-import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Editor
@@ -16,6 +15,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.PopupTitle
 import com.intellij.openapi.util.NlsContexts.TabTitle
 import com.intellij.openapi.util.Ref
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer

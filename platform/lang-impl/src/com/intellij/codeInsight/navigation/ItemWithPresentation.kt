@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.navigation
 
 import com.intellij.model.Pointer
-import com.intellij.navigation.TargetPresentation
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 import java.util.function.Function

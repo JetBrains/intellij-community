@@ -5,10 +5,10 @@ import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrappe
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
-import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiNamedElement
 import org.jetbrains.annotations.ApiStatus
 

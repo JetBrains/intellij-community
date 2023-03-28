@@ -1,9 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation.impl
 
-import com.intellij.navigation.TargetPresentation
-import com.intellij.navigation.TargetPresentationBuilder
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.platform.backend.presentation.TargetPresentation
+import com.intellij.platform.backend.presentation.TargetPresentationBuilder
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import javax.swing.Icon
