@@ -7,9 +7,9 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.customizingIteration.ModuleUnawareContentEntityIterator;
-import com.intellij.util.indexing.roots.origin.ModuleUnawareContentEntityOrigin;
-import com.intellij.util.indexing.roots.origin.ModuleUnawareContentEntityOriginImpl;
+import com.intellij.util.indexing.customizingIteration.GenericContentEntityIterator;
+import com.intellij.util.indexing.roots.origin.GenericContentEntityOrigin;
+import com.intellij.util.indexing.roots.origin.GenericContentEntityOriginImpl;
 import com.intellij.workspaceModel.storage.EntityReference;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +21,7 @@ import java.util.Set;
 
 import static com.intellij.util.indexing.roots.ExternalEntityIndexableIteratorImpl.getRootsDebugStr;
 
-public class ModuleUnawareContentEntityIteratorImpl implements ModuleUnawareContentEntityIterator {
+public class GenericContentEntityIteratorImpl implements GenericContentEntityIterator {
 
   private final EntityReference<?> entityReference;
   private final Collection<? extends VirtualFile> roots;
@@ -32,16 +32,16 @@ public class ModuleUnawareContentEntityIteratorImpl implements ModuleUnawareCont
   @Nullable @NonNls
   private final String debugName;
 
-  public ModuleUnawareContentEntityIteratorImpl(@NotNull EntityReference<?> entityReference,
-                                                @NotNull Collection<? extends VirtualFile> roots) {
+  public GenericContentEntityIteratorImpl(@NotNull EntityReference<?> entityReference,
+                                          @NotNull Collection<? extends VirtualFile> roots) {
     this(entityReference, roots, null, null, null);
   }
 
-  public ModuleUnawareContentEntityIteratorImpl(@NotNull EntityReference<?> entityReference,
-                                                @NotNull Collection<? extends VirtualFile> roots,
-                                                @Nullable @NlsContexts.ProgressText String scanningProgressText,
-                                                @Nullable @NlsContexts.ProgressText String indexingProgressText,
-                                                @Nullable @NonNls String debugName) {
+  public GenericContentEntityIteratorImpl(@NotNull EntityReference<?> entityReference,
+                                          @NotNull Collection<? extends VirtualFile> roots,
+                                          @Nullable @NlsContexts.ProgressText String scanningProgressText,
+                                          @Nullable @NlsContexts.ProgressText String indexingProgressText,
+                                          @Nullable @NonNls String debugName) {
     this.entityReference = entityReference;
     this.roots = List.copyOf(roots);
     this.indexingProgressText = indexingProgressText;
@@ -58,19 +58,19 @@ public class ModuleUnawareContentEntityIteratorImpl implements ModuleUnawareCont
   @NlsContexts.ProgressText
   @Override
   public String getIndexingProgressText() {
-    return indexingProgressText != null ? indexingProgressText : ModuleUnawareContentEntityIterator.super.getIndexingProgressText();
+    return indexingProgressText != null ? indexingProgressText : GenericContentEntityIterator.super.getIndexingProgressText();
   }
 
   @NlsContexts.ProgressText
   @Override
   public String getRootsScanningProgressText() {
-    return scanningProgressText != null ? scanningProgressText : ModuleUnawareContentEntityIterator.super.getRootsScanningProgressText();
+    return scanningProgressText != null ? scanningProgressText : GenericContentEntityIterator.super.getRootsScanningProgressText();
   }
 
   @NotNull
   @Override
-  public ModuleUnawareContentEntityOrigin getOrigin() {
-    return new ModuleUnawareContentEntityOriginImpl(entityReference, roots);
+  public GenericContentEntityOrigin getOrigin() {
+    return new GenericContentEntityOriginImpl(entityReference, roots);
   }
 
   @Override

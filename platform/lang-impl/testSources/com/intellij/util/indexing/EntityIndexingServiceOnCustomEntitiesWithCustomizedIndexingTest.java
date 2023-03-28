@@ -13,8 +13,8 @@ import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.customizingIteration.ExternalEntityIndexableIterator;
+import com.intellij.util.indexing.customizingIteration.GenericContentEntityIterator;
 import com.intellij.util.indexing.customizingIteration.ModuleAwareContentEntityIterator;
-import com.intellij.util.indexing.customizingIteration.ModuleUnawareContentEntityIterator;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.origin.ModuleAwareContentEntityOrigin;
 import com.intellij.util.indexing.testEntities.IndexingTestEntity;
@@ -127,10 +127,10 @@ public class EntityIndexingServiceOnCustomEntitiesWithCustomizedIndexingTest ext
     }
 
     @Override
-    public @NotNull Collection<? extends ModuleUnawareContentEntityIterator> createModuleUnawareContentIterators(@NotNull EntityReference<IndexingTestEntity> reference,
-                                                                                                                 @NotNull Collection<? extends VirtualFile> roots,
-                                                                                                                 @Nullable Void customization) {
-      throw new IllegalStateException("createModuleUnawareContentIterators shouldn't be called");
+    public @NotNull Collection<? extends GenericContentEntityIterator> createGenericContentIterators(@NotNull EntityReference<IndexingTestEntity> reference,
+                                                                                                     @NotNull Collection<? extends VirtualFile> roots,
+                                                                                                     @Nullable Void customization) {
+      throw new IllegalStateException("createGenericContentIterators shouldn't be called");
     }
 
     @Override

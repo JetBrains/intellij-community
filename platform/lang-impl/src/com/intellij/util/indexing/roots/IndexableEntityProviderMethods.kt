@@ -88,10 +88,10 @@ object IndexableEntityProviderMethods {
     return listOf(ExternalEntityIndexableIteratorImpl(reference, roots, sourceRoots))
   }
 
-  fun createModuleUnawareContentEntityIterators(reference: EntityReference<*>,
-                                                roots: Collection<VirtualFile>): Collection<IndexableFilesIterator> {
+  fun createGenericContentEntityIterators(reference: EntityReference<*>,
+                                          roots: Collection<VirtualFile>): Collection<IndexableFilesIterator> {
     if (roots.isEmpty()) return emptyList()
-    return listOf(ModuleUnawareContentEntityIteratorImpl(reference, roots))
+    return listOf(GenericContentEntityIteratorImpl(reference, roots))
   }
 
   fun createModuleAwareContentEntityIterators(module: Module,

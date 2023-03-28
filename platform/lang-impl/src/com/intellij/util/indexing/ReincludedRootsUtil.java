@@ -213,8 +213,7 @@ public final class ReincludedRootsUtil {
       public @NotNull Collection<IndexableIteratorBuilder> createBuilders(Map<EntityReference<?>, WorkspaceEntity> referenceMap,
                                                                           Map<Class<WorkspaceEntity>, CustomizingIndexingContributor<?, ?>> contributorMap) {
         IndexingContributorCustomization<E, ?> customization = findCustomization(entityReference, referenceMap, contributorMap);
-        return IndexableIteratorBuilders.INSTANCE.forModuleUnawareContentEntity(entityReference, Collections.singletonList(file),
-                                                                                customization);
+        return IndexableIteratorBuilders.INSTANCE.forGenericContentEntity(entityReference, Collections.singletonList(file), customization);
       }
     }
 

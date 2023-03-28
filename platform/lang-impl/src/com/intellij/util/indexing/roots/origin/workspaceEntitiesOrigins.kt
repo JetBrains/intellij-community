@@ -12,7 +12,7 @@ interface ModuleAwareContentEntityOrigin : IndexableSetOrigin {
   val roots: Collection<VirtualFile>
 }
 
-interface ModuleUnawareContentEntityOrigin : IndexableSetOrigin {
+interface GenericContentEntityOrigin : IndexableSetOrigin {
   val reference: EntityReference<*>
   val roots: Collection<VirtualFile>
 }

@@ -55,7 +55,7 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
     VirtualFile virtualRoot = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(root.toPath()));
 
     doTest(() -> createAndRegisterEntity(getUrls(virtualRoot), Collections.emptyList(), myProject), (entity) -> {
-      return INSTANCE.createModuleUnawareContentEntityIterators(entity.createReference(), Collections.singletonList(virtualRoot));
+      return INSTANCE.createGenericContentEntityIterators(entity.createReference(), Collections.singletonList(virtualRoot));
     });
   }
 

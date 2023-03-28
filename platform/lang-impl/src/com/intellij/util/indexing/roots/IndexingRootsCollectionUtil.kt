@@ -16,15 +16,15 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.util.indexing.CustomizingIndexingContributor
 import com.intellij.util.indexing.ReincludedRootsUtil
 import com.intellij.util.indexing.customizingIteration.ModuleAwareContentEntityIterator
-import com.intellij.util.indexing.customizingIteration.ModuleUnawareContentEntityIterator
+import com.intellij.util.indexing.customizingIteration.GenericContentEntityIterator
 import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder
-import com.intellij.util.indexing.roots.IndexableEntityProviderMethods.createModuleUnawareContentEntityIterators
+import com.intellij.util.indexing.roots.IndexableEntityProviderMethods.createGenericContentEntityIterators
 import com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl.Companion.createIterator
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forExternalEntity
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forLibraryEntity
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forModuleAwareCustomizedContentEntity
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forModuleRootsFileBased
-import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forModuleUnawareContentEntity
+import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forGenericContentEntity
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.core.fileIndex.impl.LibraryRootFileIndexContributor
@@ -110,9 +110,9 @@ internal data class IndexingContributorCustomization<E : WorkspaceEntity, D>(val
     return customizingContributor.createModuleAwareContentIterators(module, entityReference, roots, value)
   }
 
-  fun createModuleUnawareContentIterators(entityReference: EntityReference<E>,
-                                          roots: Collection<VirtualFile>): Collection<ModuleUnawareContentEntityIterator> {
-    return customizingContributor.createModuleUnawareContentIterators(entityReference, roots, value)
+  fun createGenericContentIterators(entityReference: EntityReference<E>,
+                                    roots: Collection<VirtualFile>): Collection<GenericContentEntityIterator> {
+    return customizingContributor.createGenericContentIterators(entityReference, roots, value)
   }
 
   fun createExternalEntityIterators(entityReference: EntityReference<E>,
@@ -135,15 +135,15 @@ internal data class EntityContentRootsCustomizedModuleAwareDescription<E : Works
   }
 }
 
-internal data class EntityContentRootsModuleUnawareDescription<E : WorkspaceEntity>(val entityReference: EntityReference<E>,
-                                                                                    val roots: Collection<VirtualFile>,
-                                                                                    val customization: IndexingContributorCustomization<E, *>?) : IndexingRootsDescription {
+internal data class EntityGenericContentRootsDescription<E : WorkspaceEntity>(val entityReference: EntityReference<E>,
+                                                                              val roots: Collection<VirtualFile>,
+                                                                              val customization: IndexingContributorCustomization<E, *>?) : IndexingRootsDescription {
   override fun createBuilders(): Collection<IndexableIteratorBuilder> {
-    return forModuleUnawareContentEntity(entityReference, roots, customization)
+    return forGenericContentEntity(entityReference, roots, customization)
   }
 
   fun createIterators(): Collection<IndexableFilesIterator> {
-    return customization?.createModuleUnawareContentIterators(entityReference, roots) ?: createModuleUnawareContentEntityIterators(
+    return customization?.createGenericContentIterators(entityReference, roots) ?: createGenericContentEntityIterators(
       entityReference, roots)
   }
 }
@@ -249,7 +249,7 @@ internal class WorkspaceIndexingRootsBuilder {
     }
 
     for (entry in rootData.contentRoots.entrySet()) {
-      descriptions.add(EntityContentRootsModuleUnawareDescription(entry.key, entry.value, customization.apply(entry.key)))
+      descriptions.add(EntityGenericContentRootsDescription(entry.key, entry.value, customization.apply(entry.key)))
     }
 
     for ((libraryEntity, roots) in rootData.libraryRoots.entrySet()) {
@@ -296,7 +296,7 @@ internal class WorkspaceIndexingRootsBuilder {
     for (description in descriptions) {
       when (description) {
         is EntityContentRootsCustomizedModuleAwareDescription<*> -> iterators.addAll(description.createIterators())
-        is EntityContentRootsModuleUnawareDescription<*> -> iterators.addAll(description.createIterators())
+        is EntityGenericContentRootsDescription<*> -> iterators.addAll(description.createIterators())
         is LibraryRootsDescription -> {
           description.createIterators(storage).forEach { iterator ->
             if (libraryOriginsToFilterDuplicates.add(iterator.origin)) {
@@ -324,7 +324,7 @@ internal class WorkspaceIndexingRootsBuilder {
 
   fun forEachContentEntitiesRoots(consumer: Consumer<Collection<VirtualFile>>) {
     for (description in descriptions) {
-      if (description is EntityContentRootsModuleUnawareDescription<*>) {
+      if (description is EntityGenericContentRootsDescription<*>) {
         consumer.accept(description.roots)
       }
     }

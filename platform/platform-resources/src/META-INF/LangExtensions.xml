@@ -1653,7 +1653,7 @@
     <indexableIteratorBuilderHandler implementation="com.intellij.util.indexing.roots.builders.SyntheticLibraryIndexableIteratorHandler"/>
     <indexableIteratorBuilderHandler implementation="com.intellij.util.indexing.roots.builders.ExternalEntityIndexableIteratorHandler"/>
     <indexableIteratorBuilderHandler
-      implementation="com.intellij.util.indexing.roots.builders.ModuleUnawareContentEntityIndexableIteratorHandler"/>
+      implementation="com.intellij.util.indexing.roots.builders.GenericContentEntityIndexableIteratorHandler"/>
     <indexableIteratorBuilderHandler
       implementation="com.intellij.util.indexing.roots.builders.IndexableSetContributorIndexableIteratorHandler"/>
 

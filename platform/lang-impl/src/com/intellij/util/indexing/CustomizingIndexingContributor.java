@@ -4,8 +4,8 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.customizingIteration.ExternalEntityIndexableIterator;
+import com.intellij.util.indexing.customizingIteration.GenericContentEntityIterator;
 import com.intellij.util.indexing.customizingIteration.ModuleAwareContentEntityIterator;
-import com.intellij.util.indexing.customizingIteration.ModuleUnawareContentEntityIterator;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor;
 import com.intellij.workspaceModel.storage.EntityReference;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
@@ -26,9 +26,9 @@ public interface CustomizingIndexingContributor<E extends WorkspaceEntity, D> ex
                                                                                            @Nullable D customization);
 
   @NotNull
-  Collection<? extends ModuleUnawareContentEntityIterator> createModuleUnawareContentIterators(@NotNull EntityReference<E> reference,
-                                                                                               @NotNull Collection<? extends VirtualFile> roots,
-                                                                                               @Nullable D customization);
+  Collection<? extends GenericContentEntityIterator> createGenericContentIterators(@NotNull EntityReference<E> reference,
+                                                                                   @NotNull Collection<? extends VirtualFile> roots,
+                                                                                   @Nullable D customization);
 
   Collection<? extends ExternalEntityIndexableIterator> createExternalEntityIterators(@NotNull EntityReference<E> reference,
                                                                                       @NotNull Collection<? extends VirtualFile> roots,

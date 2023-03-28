@@ -30,8 +30,8 @@ internal data class ModuleAwareContentEntityOriginImpl(override val module: Modu
                                                        override val reference: EntityReference<*>,
                                                        override val roots: Collection<VirtualFile>) : ModuleAwareContentEntityOrigin
 
-internal data class ModuleUnawareContentEntityOriginImpl(override val reference: EntityReference<*>,
-                                                         override val roots: Collection<VirtualFile>) : ModuleUnawareContentEntityOrigin
+internal data class GenericContentEntityOriginImpl(override val reference: EntityReference<*>,
+                                                   override val roots: Collection<VirtualFile>) : GenericContentEntityOrigin
 
 internal data class ExternalEntityOriginImpl(override val reference: EntityReference<*>,
                                              override val roots: Collection<VirtualFile>,
