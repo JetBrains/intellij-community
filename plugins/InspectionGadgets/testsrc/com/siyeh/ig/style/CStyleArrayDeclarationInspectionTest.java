@@ -3,14 +3,21 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.LightJavaInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 
 public class CStyleArrayDeclarationInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return LightJavaInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/style/cstyle_array_declaration";
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_16;
   }
 
   private void doTest() {

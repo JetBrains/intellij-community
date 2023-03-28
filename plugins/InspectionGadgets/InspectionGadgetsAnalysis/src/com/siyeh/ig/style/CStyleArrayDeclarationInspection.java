@@ -124,13 +124,16 @@ public class CStyleArrayDeclarationInspection extends BaseInspection implements 
       PsiElement start = null;
       PsiElement end = null;
       while (anchor != null) {
-        if (PsiUtil.isJavaToken(anchor, HighlightUtil.BRACKET_TOKENS)) {
+        if (anchor instanceof PsiAnnotation) {
+          if (start == null) start = anchor;
+        }
+        else if (PsiUtil.isJavaToken(anchor, HighlightUtil.BRACKET_TOKENS)) {
           if (start == null) start = anchor;
           end = anchor;
         }
         anchor = anchor.getNextSibling();
       }
-      if (start != null) registerErrorAtRange(start, end, problemElement);
+      if (start != null && end != null) registerErrorAtRange(start, end, problemElement);
     }
   }
 }

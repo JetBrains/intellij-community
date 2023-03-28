@@ -1,5 +1,7 @@
 package com.siyeh.igtest.style;
 
+import java.lang.annotation.*;
+
 public class CStyleArrayDeclaration
 {
     private int[] m_foo;
@@ -40,4 +42,12 @@ public class CStyleArrayDeclaration
     }
 
     int[][] methodWithoutBody()
+
+
+    void annotation() {
+      String @Anno [] split = null;
+    }
+
+    @Target(ElementType.TYPE_USE)
+    public @interface Anno {}
 }

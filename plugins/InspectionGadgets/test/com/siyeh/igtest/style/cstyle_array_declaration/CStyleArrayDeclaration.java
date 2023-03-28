@@ -1,5 +1,7 @@
 package com.siyeh.igtest.style;
 
+import java.lang.annotation.*;
+
 public class CStyleArrayDeclaration
 {
     private int[] m_foo;
@@ -40,4 +42,12 @@ public class CStyleArrayDeclaration
     }
 
     int methodWithoutBody()<warning descr="Method 'methodWithoutBody()' has C-style array return type declaration">[][]</warning><EOLError descr="'{' or ';' expected"></EOLError>
+
+
+    void annotation() {
+      String split <warning descr="Local variable 'split' has C-style array type declaration">@Anno []</warning> = null;
+    }
+
+    @Target(ElementType.TYPE_USE)
+    public @interface Anno {}
 }
