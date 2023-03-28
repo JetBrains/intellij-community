@@ -270,21 +270,7 @@ object PyCollectionTypeUtil {
     return visitor.elementTypes
   }
 
-  fun getTypedDictTypeByModificationsForDictConstructor(qualifiedName: String,
-                                                        element: PsiElement,
-                                                        context: TypeEvalContext): Pair<Boolean, PyTypedDictType?> {
-    if (qualifiedName == DICT_CONSTRUCTOR) {
-      val owner = ScopeUtil.getScopeOwner(element)
-      if (owner != null) {
-        val visitor = PyTypedDictTypeVisitor(element, context)
-        owner.accept(visitor)
-        return Pair(visitor.hasAllStrKeys, visitor.typedDictType)
-      }
-    }
-    return Pair(true, null)
-  }
-
-  fun getCollectionTypeByModifications(qualifiedName: String, element: PsiElement, context: TypeEvalContext): List<PyType?> {
+  fun getCollectionTypeByModifications(qualifiedName: String, element: PyTargetExpression, context: TypeEvalContext): List<PyType?> {
     val owner = ScopeUtil.getScopeOwner(element)
     if (owner != null) {
       val typeVisitor = getVisitorForQualifiedName(qualifiedName, element, context)
@@ -297,7 +283,7 @@ object PyCollectionTypeUtil {
   }
 
   private fun getVisitorForSequence(sequence: PySequenceExpression,
-                                    element: PsiElement,
+                                    element: PyTargetExpression,
                                     context: TypeEvalContext): PyCollectionTypeVisitor? {
     return when (sequence) {
       is PyListLiteralExpression -> PyListTypeVisitor(element, context)
@@ -307,7 +293,7 @@ object PyCollectionTypeUtil {
     }
   }
 
-  private fun getVisitorForQualifiedName(qualifiedName: String, element: PsiElement, context: TypeEvalContext): PyCollectionTypeVisitor? {
+  private fun getVisitorForQualifiedName(qualifiedName: String, element: PyTargetExpression, context: TypeEvalContext): PyCollectionTypeVisitor? {
     return when (qualifiedName) {
       LIST_CONSTRUCTOR, RANGE_CONSTRUCTOR -> PyListTypeVisitor(element, context)
       DICT_CONSTRUCTOR -> PyDictTypeVisitor(element, context)
@@ -316,10 +302,9 @@ object PyCollectionTypeUtil {
     }
   }
 
-  fun getTargetForValueInAssignment(value: PyExpression): PyExpression? {
-    val assignmentStatement = PsiTreeUtil.getParentOfType(value, PyAssignmentStatement::class.java, true, ScopeOwner::class.java)
-    assignmentStatement?.targetsToValuesMapping?.filter { it.second === value }?.forEach { return it.first }
-    return null
+  fun getTargetForValueInAssignment(value: PyExpression): PyTargetExpression? {
+    val assignment = PsiTreeUtil.getParentOfType(value, PyAssignmentStatement::class.java, true, ScopeOwner::class.java) ?: return null
+    return assignment.targetsToValuesMapping.firstOrNull { it.second === value }?.first as? PyTargetExpression
   }
 
   private fun getTypeForArgument(arguments: Array<PyExpression>, argumentIndex: Int, typeEvalContext: TypeEvalContext): PyType? {
@@ -434,7 +419,7 @@ object PyCollectionTypeUtil {
     return if (isModificationExist) Pair(keyTypes, valueTypes) else null
   }
 
-  private abstract class PyCollectionTypeVisitor(protected val myElement: PsiElement,
+  private abstract class PyCollectionTypeVisitor(protected val myElement: PyTargetExpression,
                                                  protected val myTypeEvalContext: TypeEvalContext) : PyRecursiveElementVisitor() {
     protected val scopeOwner: ScopeOwner? = ScopeUtil.getScopeOwner(myElement)
     protected open var isModificationExist = false
@@ -459,7 +444,7 @@ object PyCollectionTypeUtil {
     }
   }
 
-  private class PyListTypeVisitor(element: PsiElement,
+  private class PyListTypeVisitor(element: PyTargetExpression,
                                   typeEvalContext: TypeEvalContext) : PyCollectionTypeVisitor(element, typeEvalContext) {
     private val modificationMethods: Map<String, (Array<PyExpression>) -> List<PyType?>>
     private val valueTypes: MutableList<PyType?>
@@ -510,7 +495,7 @@ object PyCollectionTypeUtil {
     }
   }
 
-  private class PyDictTypeVisitor(element: PsiElement,
+  private class PyDictTypeVisitor(element: PyTargetExpression,
                                   typeEvalContext: TypeEvalContext) : PyCollectionTypeVisitor(element, typeEvalContext) {
     private val modificationMethods: Map<String, (Array<PyExpression>) -> List<PyType?>>
     private val keyTypes: MutableList<PyType?>
@@ -581,7 +566,7 @@ object PyCollectionTypeUtil {
     }
   }
 
-  private class PyTypedDictTypeVisitor(element: PsiElement,
+  private class PyTypedDictTypeVisitor(element: PyTargetExpression,
                                        typeEvalContext: TypeEvalContext) : PyCollectionTypeVisitor(element, typeEvalContext) {
     private val modificationMethods: Map<String, (Array<PyExpression>) -> List<PyType?>>
     var hasAllStrKeys = true
@@ -663,7 +648,7 @@ object PyCollectionTypeUtil {
     }
   }
 
-  private class PySetTypeVisitor(element: PsiElement,
+  private class PySetTypeVisitor(element: PyTargetExpression,
                                  typeEvalContext: TypeEvalContext) : PyCollectionTypeVisitor(element, typeEvalContext) {
     private val modificationMethods: Map<String, (Array<PyExpression>) -> List<PyType?>>
     private val valueTypes: MutableList<PyType?>
