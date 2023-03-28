@@ -13,11 +13,6 @@ import java.util.*
 import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.TimeUnit
 
-/**
- * Pass comma-separated names of build steps (see below) to this system property to skip them.
- */
-private const val BUILD_STEPS_TO_SKIP_PROPERTY = "intellij.build.skip.build.steps"
-
 class BuildOptions(
   @ApiStatus.Internal
   @JvmField
@@ -189,6 +184,11 @@ class BuildOptions(
     const val TARGET_OS_PROPERTY = "intellij.build.target.os"
 
     /**
+     * If `true` the project modules will be compiled incrementally
+     */
+    const val INTELLIJ_BUILD_INCREMENTAL_COMPILATION = "intellij.build.incremental.compilation"
+
+    /**
      * Allows override version isEap flag in ApplicationInfo.xml
      * @see {@link org.jetbrains.intellij.build.ApplicationInfoPropertiesImpl}
      */
@@ -199,6 +199,21 @@ class BuildOptions(
      * @see {@link org.jetbrains.intellij.build.ApplicationInfoPropertiesImpl}
      */
     const val INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_SUFFIX = "intellij.build.override.application.version.suffix"
+    /**
+     * Pass comma-separated names of build steps (see below) to this system property to skip them.
+     */
+    const val BUILD_STEPS_TO_SKIP_PROPERTY = "intellij.build.skip.build.steps"
+
+    /**
+     * By default, build process produces temporary and resulting files under projectHome/out/productName directory, use this property to
+     * change the output directory.
+     */
+    const val INTELLIJ_BUILD_OUTPUT_ROOT = "intellij.build.output.root"
+
+    /**
+     * Path to a zip file containing 'production' and 'test' directories with compiled classes of the project modules inside.
+     */
+    const val INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE = "intellij.build.compiled.classes.archive"
 
     private val currentBuildTimeInSeconds = System.currentTimeMillis() / 1000
   }
@@ -264,7 +279,7 @@ class BuildOptions(
   /**
    * Path to a zip file containing 'production' and 'test' directories with compiled classes of the project modules inside.
    */
-  var pathToCompiledClassesArchive: Path? = System.getProperty("intellij.build.compiled.classes.archive")?.let { Path.of(it) }
+  var pathToCompiledClassesArchive: Path? = System.getProperty(INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE)?.let { Path.of(it) }
 
   /**
    * Path to a metadata file containing urls with compiled classes of the project modules inside.
@@ -275,7 +290,7 @@ class BuildOptions(
   /**
    * If `true` the project modules will be compiled incrementally
    */
-  var incrementalCompilation = SystemProperties.getBooleanProperty("intellij.build.incremental.compilation", false)
+  var incrementalCompilation = SystemProperties.getBooleanProperty(INTELLIJ_BUILD_INCREMENTAL_COMPILATION, false)
 
   /**
    * If `true`, and the incremental compilation fails, fallback to downloading Portable Compilation Cache and full rebuild.
@@ -293,7 +308,7 @@ class BuildOptions(
    * By default, build process produces temporary and resulting files under projectHome/out/productName directory, use this property to
    * change the output directory.
    */
-  var outputRootPath: Path? = System.getProperty("intellij.build.output.root")?.let { Path.of(it).toAbsolutePath().normalize() }
+  var outputRootPath: Path? = System.getProperty(INTELLIJ_BUILD_OUTPUT_ROOT)?.let { Path.of(it).toAbsolutePath().normalize() }
 
   var logPath: String? = System.getProperty("intellij.build.log.root")
 
