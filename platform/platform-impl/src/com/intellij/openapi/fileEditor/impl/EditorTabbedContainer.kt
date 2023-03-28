@@ -48,10 +48,12 @@ import com.intellij.ui.tabs.*
 import com.intellij.ui.tabs.TabInfo.DragOutDelegate
 import com.intellij.ui.tabs.UiDecorator.UiDecoration
 import com.intellij.ui.tabs.impl.*
-import com.intellij.ui.tabs.impl.singleRow.CompressibleSingleRowLayout
+import com.intellij.ui.tabs.impl.multiRow.CompressibleMultiRowLayout
+import com.intellij.ui.tabs.impl.multiRow.MultiRowLayout
+import com.intellij.ui.tabs.impl.multiRow.ScrollableMultiRowLayout
+import com.intellij.ui.tabs.impl.multiRow.WrapMultiRowLayout
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout
-import com.intellij.ui.tabs.impl.table.TableLayout
 import com.intellij.util.concurrency.EdtScheduledExecutorService
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.TimedDeadzone
@@ -569,23 +571,20 @@ private class EditorTabs(
   override fun getEditorWindow(): EditorWindow = window
 
   override fun useMultiRowLayout(): Boolean {
-    return !isSingleRow || (tabsPosition == JBTabsPosition.top && TabLayout.showPinnedTabsSeparately())
+    return !isSingleRow || (isHorizontalTabs && (TabLayout.showPinnedTabsSeparately() || !UISettings.getInstance().hideTabsIfNeeded))
   }
 
   override fun createSingleRowLayout(): SingleRowLayout {
-    return if (!UISettings.getInstance().hideTabsIfNeeded && supportsCompression()) {
-      CompressibleSingleRowLayout(this)
-    }
-    else ScrollableSingleRowLayout(this, ExperimentalUI.isEditorTabsWithScrollBar())
+    return ScrollableSingleRowLayout(this, ExperimentalUI.isEditorTabsWithScrollBar())
   }
 
-  override fun createTableLayout(): TableLayout {
-    val isWithScrollBar = ExperimentalUI.isEditorTabsWithScrollBar()
-                          && isSingleRow
-                          && tabsPosition == JBTabsPosition.top
-                          && TabLayout.showPinnedTabsSeparately()
-                          && (!supportsCompression() || UISettings.getInstance().hideTabsIfNeeded)
-    return TableLayout(this, isWithScrollBar)
+  override fun createMultiRowLayout(): MultiRowLayout {
+    return when {
+      !isSingleRow -> WrapMultiRowLayout(this, TabLayout.showPinnedTabsSeparately())
+      UISettings.getInstance().hideTabsIfNeeded -> ScrollableMultiRowLayout(this, showPinnedTabsSeparately = true,
+                                                                            ExperimentalUI.isEditorTabsWithScrollBar())
+      else -> CompressibleMultiRowLayout(this, TabLayout.showPinnedTabsSeparately())
+    }
   }
 
   override fun paintChildren(g: Graphics) {

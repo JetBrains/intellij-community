@@ -37,6 +37,8 @@ import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.tabs.*;
+import com.intellij.ui.tabs.impl.multiRow.MultiRowLayout;
+import com.intellij.ui.tabs.impl.multiRow.WrapMultiRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowPassInfo;
@@ -514,7 +516,7 @@ public class JBTabsImpl extends JComponent
     if (getTabsPosition() != JBTabsPosition.top) {
       mySingleRow = true;
     }
-    TabLayout layout = useMultiRowLayout() ? createTableLayout() : createSingleRowLayout();
+    TabLayout layout = useMultiRowLayout() ? createMultiRowLayout() : createSingleRowLayout();
     layout.scroll(getScrollBarModel().getValue()); // set current scroll value to new layout
     setLayout(layout);
     relayout(true, true);
@@ -524,20 +526,28 @@ public class JBTabsImpl extends JComponent
     return !isSingleRow();
   }
 
+  protected MultiRowLayout createMultiRowLayout() {
+    return new WrapMultiRowLayout(this, false);
+  }
+
+  protected SingleRowLayout createSingleRowLayout() {
+    return new ScrollableSingleRowLayout(this);
+  }
+
+  /**
+   * @deprecated override {@link JBTabsImpl#createMultiRowLayout()} instead
+   */
+  @Deprecated(forRemoval = true)
+  protected TableLayout createTableLayout() {
+    return createMultiRowLayout();
+  }
+
   /**
    * @deprecated override {@link JBTabsImpl#useMultiRowLayout()} to configure whether to use multirow layout
    */
   @Deprecated(forRemoval = true)
   protected boolean supportsTableLayoutAsSingleRow() {
     return false;
-  }
-
-  protected TableLayout createTableLayout() {
-    return new TableLayout(this);
-  }
-
-  protected SingleRowLayout createSingleRowLayout() {
-    return new ScrollableSingleRowLayout(this);
   }
 
   @Override
