@@ -226,12 +226,12 @@ public class MavenProjectResolver {
                              @NotNull MavenProgressIndicator process,
                              boolean reportUnresolvedToSyncConsole,
                              boolean forceUpdateSnapshots) throws MavenProcessCanceledException {
-    resolvePluginsFromCache(mavenProjects,
-                            embeddersManager,
-                            console,
-                            process,
-                            reportUnresolvedToSyncConsole,
-                            forceUpdateSnapshots);
+    resolvePluginsBulk(mavenProjects,
+                       embeddersManager,
+                       console,
+                       process,
+                       reportUnresolvedToSyncConsole,
+                       forceUpdateSnapshots);
   }
 
   private void resolvePluginsBulk(@NotNull Collection<Pair<MavenProject, NativeMavenProjectHolder>> mavenProjects,
