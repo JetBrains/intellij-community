@@ -5,7 +5,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Progressive
 import com.intellij.openapi.util.EmptyRunnable
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 
@@ -101,8 +102,18 @@ internal class SingleTaskExecutor(private val task: Progressive) {
     shouldContinueBackgroundProcessing.set(false)
   }
 
-  val isRunning: Boolean
-    get() = runState.value != RunState.STOPPED
+  // At the moment there is no better way to map StateFlow to StateFlow
+  // see https://github.com/Kotlin/kotlinx.coroutines/issues/2631
+  private class IsRunningStateFlow(private val runState: StateFlow<RunState>) : StateFlow<Boolean> {
+    private fun converter(state: RunState) = (state != RunState.STOPPED)
+    override val replayCache: List<Boolean> = listOf(value)
+    override val value: Boolean get() = converter(runState.value)
+    override suspend fun collect(collector: FlowCollector<Boolean>): Nothing {
+      coroutineScope { runState.map(::converter).stateIn(this).collect(collector) }
+    }
+  }
+
+  val isRunning: StateFlow<Boolean> = IsRunningStateFlow(runState)
 
   companion object {
     private val LOG = Logger.getInstance(SingleTaskExecutor::class.java)

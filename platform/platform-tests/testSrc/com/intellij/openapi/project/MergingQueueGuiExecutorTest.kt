@@ -13,14 +13,17 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ProjectRule
 import com.intellij.util.SystemProperties
 import junit.framework.TestCase
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.time.withTimeoutOrNull
 import org.junit.After
 import org.junit.Before
 import org.junit.ClassRule
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.jupiter.api.fail
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.time.Duration
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Phaser
@@ -283,7 +286,6 @@ class MergingQueueGuiExecutorTest {
   }
 
   @Test
-  @Ignore("Bug in MergingQueueGuiExecutor")
   fun `test executor is running immediately after startBackgroundProcess`() {
     val exceptionRef = AtomicReference<Throwable>()
     val queue = MergingTaskQueue<LoggingTask>()
@@ -293,7 +295,7 @@ class MergingQueueGuiExecutorTest {
       project, queue, listener, "title", "suspend"
     )
 
-    repeat(100) {
+    repeat(500) {
       val endTask = CountDownLatch(1)
       waitForExecutorToCompleteSubmittedTasks(executor, 1)
       TestCase.assertFalse(executor.isRunning.value)
@@ -310,7 +312,7 @@ class MergingQueueGuiExecutorTest {
           }
         }
       })
-      executor.startBackgroundProcess();
+      executor.startBackgroundProcess()
       TestCase.assertTrue(executor.isRunning.value)
       endTask.countDown()
       TestCase.assertNull(exceptionRef.get())
@@ -374,16 +376,15 @@ class MergingQueueGuiExecutorTest {
   }
 
   private fun stopExecutor(executor: MergingQueueGuiExecutor<*>) {
-    executor.suspendQueue()
     waitForExecutorToCompleteSubmittedTasks(executor, 10)
   }
 
-  private fun waitForExecutorToCompleteSubmittedTasks(executor: MergingQueueGuiExecutor<*>, seconds: Int) {
-    for (i in 1..seconds * 1000 / 500) { // 10 seconds in sum
-      if (!executor.isRunning.value) return
-      Thread.sleep(500)
+  private fun waitForExecutorToCompleteSubmittedTasks(executor: MergingQueueGuiExecutor<*>, seconds: Long) {
+    runBlocking {
+      withTimeoutOrNull(Duration.ofSeconds(seconds)) {
+        executor.isRunning.first { !it }
+      } ?: fail("Executor didn't finish in $seconds seconds")
     }
-    fail("Executor didn't finish in $seconds seconds")
   }
 
   private fun CountDownLatch.awaitOrThrow(seconds: Long, message: String) {
