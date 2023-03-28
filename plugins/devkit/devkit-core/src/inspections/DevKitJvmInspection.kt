@@ -5,6 +5,15 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.lang.jvm.inspection.JvmLocalInspection
 import com.intellij.psi.PsiElementVisitor
 
+/**
+ * Base class for JVM API (declaration-based) DevKit inspections.
+ *
+ * Override [isAllowed] to add additional constraints (e.g., required class in scope via [DevKitInspectionUtil.isClassAvailable])
+ * to skip running inspection completely whenever possible.
+ *
+ * @see DevKitInspectionUtil
+ * @see DevKitUastInspectionBase
+ */
 abstract class DevKitJvmInspection : JvmLocalInspection() {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
