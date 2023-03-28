@@ -92,6 +92,7 @@ public final class ExceptionUtil extends ExceptionUtilRt {
     return result;
   }
 
+  @NlsSafe
   public static @Nullable String getMessage(@NotNull Throwable e) {
     String result = e.getMessage();
     String exceptionPattern = "Exception: ";
