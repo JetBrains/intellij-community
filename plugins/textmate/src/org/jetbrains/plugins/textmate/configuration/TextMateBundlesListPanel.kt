@@ -1,184 +1,149 @@
-package org.jetbrains.plugins.textmate.configuration;
+package org.jetbrains.plugins.textmate.configuration
 
-import com.intellij.CommonBundle;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
-import com.intellij.openapi.fileChooser.FileChooserFactory;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.ui.MessageDialogBuilder;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.textmate.TextMateBundle;
-import org.jetbrains.plugins.textmate.TextMateService;
-import org.jetbrains.plugins.textmate.TextMateServiceImpl;
-import org.jetbrains.plugins.textmate.bundles.TextMateBundleReader;
+import com.intellij.CommonBundle
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.fileChooser.FileChooserFactory
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.NaturalComparator
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.ui.*
+import com.intellij.util.PathUtil
+import com.intellij.util.ui.UIUtil
+import org.jetbrains.plugins.textmate.TextMateBundle
+import org.jetbrains.plugins.textmate.TextMateService
+import org.jetbrains.plugins.textmate.bundles.TextMateBundleReader
+import javax.swing.JCheckBox
+import javax.swing.JPanel
+import javax.swing.ListSelectionModel
 
-import javax.swing.*;
-import java.util.*;
+data class TextMateConfigurableBundle(@NlsSafe val name: String, val path: String, val enabled: Boolean, val builtin: Boolean)
 
-public final class TextMateBundlesListPanel implements Disposable {
-  private static final String TEXTMATE_LAST_ADDED_BUNDLE = "textmate.last.added.bundle";
+class TextMateBundlesListPanel : Disposable {
+  private val myBundlesList: CheckBoxList<TextMateConfigurableBundle>
 
-  private final CheckBoxList<BundleConfigBean> myBundlesList;
-  private Collection<TextMateBundlesChangeStateListener> myListeners = new ArrayList<>();
+  init {
+    myBundlesList = object : CheckBoxList<TextMateConfigurableBundle>() {
+      init {
+        selectionMode = ListSelectionModel.MULTIPLE_INTERVAL_SELECTION
+        ListSpeedSearch.installOn(this) { box: JCheckBox -> box.text }
+      }
 
-  public TextMateBundlesListPanel() {
-    myBundlesList = new CheckBoxList<>() {
-      @Override
-      protected @Nullable String getSecondaryText(int index) {
-        BundleConfigBean bean = myBundlesList.getItemAt(index);
-        if (isBuiltin(bean)) {
-          return TextMateBundle.message("title.built.in");
+      override fun getSecondaryText(index: Int): String? {
+        return getItemAt(index)?.let { bundle ->
+          if (bundle.builtin) {
+            TextMateBundle.message("title.built.in")
+          }
+          else {
+            PathUtil.toSystemDependentName(bundle.path)
+          }
         }
-        return bean != null ? FileUtil.toSystemDependentName(bean.getPath()) : null;
       }
-    };
-    myBundlesList.setCheckBoxListListener((index, value) -> {
-      BundleConfigBean itemAt = myBundlesList.getItemAt(index);
-      if (itemAt != null) {
-        itemAt.setEnabled(value);
-      }
-    });
-    myBundlesList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-    ListSpeedSearch.installOn(myBundlesList, box -> box.getText());
-  }
-
-  private static boolean isBuiltin(BundleConfigBean bean) {
-    String path = bean != null ? bean.getPath() : null;
-    return path != null && path.startsWith(TextMateServiceImpl.getBundledBundlePath());
-  }
-
-  public @NotNull Collection<BundleConfigBean> getState() {
-    Set<BundleConfigBean> result = new HashSet<>();
-    for (int i = 0; i < myBundlesList.getItemsCount(); i++) {
-      result.add(myBundlesList.getItemAt(i));
-    }
-    return result;
-  }
-
-  public void setState(@NotNull Collection<BundleConfigBean> configBeans) {
-    myBundlesList.clear();
-    for (BundleConfigBean bean : ContainerUtil.sorted(configBeans, Comparator.comparing(BundleConfigBean::getName))) {
-      myBundlesList.addItem(bean.copy(), bean.getName(), bean.isEnabled());
     }
   }
 
-  public JPanel createMainComponent() {
+  fun getState(): Set<TextMateConfigurableBundle> {
+    val result: MutableSet<TextMateConfigurableBundle> = HashSet()
+    for (i in 0 until myBundlesList.itemsCount) {
+      result.add(myBundlesList.getItemAt(i)!!.copy(enabled = myBundlesList.isItemSelected(i)))
+    }
+    return result
+  }
+
+  fun setState(bundles: Collection<TextMateConfigurableBundle>) {
+    myBundlesList.clear()
+    for (bean in bundles.sortedWith(compareBy(NaturalComparator.INSTANCE, TextMateConfigurableBundle::name))) {
+      myBundlesList.addItem(bean, bean.name, bean.enabled)
+    }
+  }
+
+  fun createMainComponent(): JPanel {
     return ToolbarDecorator.createDecorator(myBundlesList)
-      .setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          List<JCheckBox> bundlesToDelete = ContainerUtil.findAll(myBundlesList.getSelectedValuesList(), JCheckBox.class);
-          if (bundlesToDelete.isEmpty()) {
-            return;
-          }
-          String message = StringUtil.join(bundlesToDelete, JCheckBox::getText, "\n");
-          if (MessageDialogBuilder.yesNo(TextMateBundle.message("textmate.remove.title", bundlesToDelete.size()), message)
-            .yesText(CommonBundle.message("button.remove"))
-            .noText(CommonBundle.getCancelButtonText())
-            .icon(null)
-            .ask(myBundlesList)) {
-            ListUtil.removeSelectedItems(myBundlesList);
-            fireStateChanged();
+      .setRemoveAction(AnActionButtonRunnable {
+        val bundlesToDelete = myBundlesList.selectedValuesList.filterIsInstance(JCheckBox::class.java)
+        if (bundlesToDelete.isNotEmpty()) {
+          val message = bundlesToDelete.joinToString(separator = "\n") { it.text }
+          if (yesNo(TextMateBundle.message("textmate.remove.title", bundlesToDelete.size), message)
+              .yesText(CommonBundle.message("button.remove"))
+              .noText(CommonBundle.getCancelButtonText())
+              .icon(null)
+              .ask(myBundlesList)) {
+            ListUtil.removeSelectedItems(myBundlesList)
           }
         }
       })
-      .setAddAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          FileChooserDescriptor chooserDescriptor = new FileChooserDescriptor(true, true, false, false, false, true)
-            .withFileFilter(file -> false);
-          FileChooserDialog fileChooser = FileChooserFactory.getInstance().createFileChooser(chooserDescriptor, null, myBundlesList);
-
-          VirtualFile fileToSelect = null;
-          int itemsCount = myBundlesList.getItemsCount();
-          if (itemsCount > 0) {
-            String lastAddedBundle = PropertiesComponent.getInstance().getValue(TEXTMATE_LAST_ADDED_BUNDLE);
-            if (StringUtil.isNotEmpty(lastAddedBundle)) {
-              fileToSelect = LocalFileSystem.getInstance().findFileByPath(lastAddedBundle);
+      .setAddAction {
+        val chooserDescriptor = FileChooserDescriptor(true, true, false, false, false, true).withFileFilter { false }
+        val fileChooser = FileChooserFactory.getInstance().createFileChooser(chooserDescriptor, null, myBundlesList)
+        val fileToSelect = PropertiesComponent.getInstance().getValue(TEXTMATE_LAST_ADDED_BUNDLE)?.let { lastAddedBundlePath ->
+          LocalFileSystem.getInstance().findFileByPath(lastAddedBundlePath)
+        }
+        val bundleDirectories = fileChooser.choose(null, fileToSelect)
+        if (bundleDirectories.isNotEmpty()) {
+          var errorMessage: String? = null
+          for (bundleDirectory in bundleDirectories) {
+            PropertiesComponent.getInstance().setValue(TEXTMATE_LAST_ADDED_BUNDLE, bundleDirectory.path)
+            val readBundleProcess = ThrowableComputable<TextMateBundleReader?, Exception> {
+              TextMateService.getInstance().readBundle(bundleDirectory)
             }
-          }
-
-          VirtualFile[] bundleDirectories = fileChooser.choose(null, fileToSelect);
-          if (bundleDirectories.length > 0) {
-            String errorMessage = null;
-            for (VirtualFile bundleDirectory : bundleDirectories) {
-              PropertiesComponent.getInstance().setValue(TEXTMATE_LAST_ADDED_BUNDLE, bundleDirectory.getPath());
-              ThrowableComputable<TextMateBundleReader, Exception> readBundleProcess = () -> TextMateService.getInstance().readBundle(bundleDirectory);
-              TextMateBundleReader bundleReader = null;
-              try {
-                bundleReader = ProgressManager.getInstance().runProcessWithProgressSynchronously(readBundleProcess, TextMateBundle.message("button.add.bundle"), true, null);
-              }
-              catch (Exception ignore) { }
-              final String bundleDirectoryPath = bundleDirectory.getPath();
-              if (bundleReader != null) {
-                boolean alreadyAdded = false;
-                for (int i = 0; i < myBundlesList.getItemsCount(); i++) {
-                  BundleConfigBean item = myBundlesList.getItemAt(i);
-                  if (item != null && FileUtil.toSystemIndependentName(bundleDirectoryPath).equals(item.getPath())) {
-                    myBundlesList.clearSelection();
-                    myBundlesList.setSelectedIndex(i);
-                    UIUtil.scrollListToVisibleIfNeeded(myBundlesList);
-                    alreadyAdded = true;
-                    break;
-                  }
-                }
-                if (!alreadyAdded) {
-                  BundleConfigBean item = new BundleConfigBean(bundleReader.getBundleName(), bundleDirectoryPath, true);
-                  myBundlesList.addItem(item, item.getName(), true);
-                  fireStateChanged();
+            val bundleReader = runCatching {
+              ProgressManager.getInstance()
+                .runProcessWithProgressSynchronously(readBundleProcess, TextMateBundle.message("button.add.bundle"), true, null)
+            }.getOrNull()
+            if (bundleReader != null) {
+              val bundleDirectoryPath = bundleDirectory.path
+              var alreadyAdded = false
+              for (i in 0 until myBundlesList.itemsCount) {
+                val item = myBundlesList.getItemAt(i)
+                if (item != null && FileUtil.toSystemIndependentName(bundleDirectoryPath) == item.path) {
+                  myBundlesList.clearSelection()
+                  myBundlesList.selectedIndex = i
+                  UIUtil.scrollListToVisibleIfNeeded(myBundlesList)
+                  alreadyAdded = true
+                  break
                 }
               }
-              else {
-                errorMessage = TextMateBundle.message("message.textmate.bundle.error", bundleDirectory.getPresentableUrl());
+              if (!alreadyAdded) {
+                val item = TextMateConfigurableBundle(bundleReader.bundleName, bundleDirectoryPath, enabled = true, builtin = false)
+                myBundlesList.addItem(item, item.name, true)
               }
             }
-            if (errorMessage != null) {
-              Messages.showErrorDialog(errorMessage, TextMateBundle.message("title.textmate.bundle.error"));
+            else {
+              errorMessage = TextMateBundle.message("message.textmate.bundle.error", bundleDirectory.presentableUrl)
             }
           }
-        }
-      })
-      .setRemoveActionUpdater(e -> {
-        for (int index : myBundlesList.getSelectedIndices()) {
-          if (isBuiltin(myBundlesList.getItemAt(index))) {
-            return false;
+          if (errorMessage != null) {
+            Messages.showErrorDialog(errorMessage, TextMateBundle.message("title.textmate.bundle.error"))
           }
         }
-        return true;
-      })
+      }
+      .setRemoveActionUpdater {
+        for (index in myBundlesList.selectedIndices) {
+          val bean = myBundlesList.getItemAt(index)
+          if (bean!!.builtin) {
+            return@setRemoveActionUpdater false
+          }
+        }
+        true
+      }
       .disableUpDownActions()
-      .createPanel();
+      .createPanel()
   }
 
-  private void fireStateChanged() {
-    for (TextMateBundlesChangeStateListener listener : myListeners) {
-      listener.stateChanged();
-    }
+  fun isModified(bundles: Set<TextMateConfigurableBundle>): Boolean {
+    return getState() != bundles
   }
 
-  public boolean isModified(@NotNull Collection<BundleConfigBean> bundles) {
-    return !getState().equals(new HashSet<>(bundles));
+  companion object {
+    private const val TEXTMATE_LAST_ADDED_BUNDLE = "textmate.last.added.bundle"
   }
 
-  @Override
-  public void dispose() {
-    myListeners.clear();
-    myListeners = null;
-  }
-
-  interface TextMateBundlesChangeStateListener {
-    void stateChanged();
+  override fun dispose() {
   }
 }

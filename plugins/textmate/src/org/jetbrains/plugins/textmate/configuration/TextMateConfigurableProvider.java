@@ -12,11 +12,11 @@ public class TextMateConfigurableProvider extends ConfigurableProvider {
   public Configurable createConfigurable() {
     return SimpleConfigurable
       .create("reference.settingsdialog.textmate.bundles", IdeBundle.message("configurable.TextMateConfigurableProvider.display.name"),
-              TextMateSettingsUI.class, TextMateSettings::getInstance);
+              TextMateConfigurableUi.class, TextMateConfigurableData::getInstance);
   }
 
   @Override
   public boolean canCreateConfigurable() {
-    return TextMateSettings.getInstance() != null;
+    return TextMateConfigurableData.getInstance() != null;
   }
 }

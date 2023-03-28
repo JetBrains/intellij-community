@@ -25,8 +25,7 @@ import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.ZipUtil
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.textmate.TextMateService
-import org.jetbrains.plugins.textmate.configuration.BundleConfigBean
-import org.jetbrains.plugins.textmate.configuration.TextMateSettings
+import org.jetbrains.plugins.textmate.configuration.TextMateUserBundlesSettings
 import org.jetbrains.plugins.textmate.plist.JsonPlistReader
 import java.awt.Component
 import java.awt.Dimension
@@ -147,8 +146,7 @@ class InstallVSCodePluginAction : AnAction(), DumbAware {
         ZipUtil.extract(temp.toPath(), extensionDir, null)
 
         indicator.text = "Applying $selectedValue"
-        val state = TextMateSettings.getInstance().state ?: TextMateSettings.TextMateSettingsState()
-        state.bundles.add(BundleConfigBean(selectedValue.toString(), extensionDir.resolve("extension").pathString, true))
+        TextMateUserBundlesSettings.instance?.addBundle(extensionDir.resolve("extension").pathString, selectedValue.toString())
         TextMateService.getInstance().reloadEnabledBundles()
       }
     })

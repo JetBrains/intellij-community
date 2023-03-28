@@ -7,6 +7,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.bundles.Bundle;
 import org.jetbrains.plugins.textmate.bundles.TextMateBundleReader;
+import org.jetbrains.plugins.textmate.configuration.TextMateBuiltinBundlesSettings;
+import org.jetbrains.plugins.textmate.configuration.TextMateUserBundlesSettings;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
 import org.jetbrains.plugins.textmate.language.preferences.PreferencesRegistry;
 import org.jetbrains.plugins.textmate.language.preferences.ShellVariablesRegistry;
@@ -45,7 +47,7 @@ public abstract class TextMateService {
   }
 
   /**
-   * Unregister all and register all enabled bundles in IDE {@link org.jetbrains.plugins.textmate.configuration.TextMateSettings.TextMateSettingsState#getBundles()}
+   * Unregister all and register all enabled bundles in IDE {@link TextMateUserBundlesSettings#getBundles()}, {@link TextMateBuiltinBundlesSettings#builtinBundles}
    * 1. read all enabled bundles
    * 2. prepare syntax table of supported languages
    * 3. prepare preferences table of enabled bundles

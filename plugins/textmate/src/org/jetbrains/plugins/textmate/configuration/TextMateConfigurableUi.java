@@ -13,28 +13,23 @@ import org.jetbrains.plugins.textmate.TextMateBundle;
 import org.jetbrains.plugins.textmate.TextMateService;
 
 import javax.swing.*;
-import java.util.List;
+import java.util.Set;
 
-public class TextMateSettingsUI implements ConfigurableUi<TextMateSettings>, Disposable {
+public class TextMateConfigurableUi implements ConfigurableUi<TextMateConfigurableData>, Disposable {
   private final TextMateBundlesListPanel myBundlesListPanel;
   private final JPanel myBundlesList;
 
-  public TextMateSettingsUI() {
+  public TextMateConfigurableUi() {
     myBundlesListPanel = new TextMateBundlesListPanel();
     myBundlesList = myBundlesListPanel.createMainComponent();
     Disposer.register(this, myBundlesListPanel);
   }
 
   @Override
-  public void apply(@NotNull TextMateSettings settings) {
-    TextMateSettings.TextMateSettingsState state = settings.getState();
-    if (state == null) {
-      state = new TextMateSettings.TextMateSettingsState();
-    }
-    List<BundleConfigBean> newBundles = state.getBundles();
-    settings.loadState(state);
-    if (myBundlesListPanel.isModified(newBundles)) {
-      state.setBundles(myBundlesListPanel.getState());
+  public void apply(@NotNull TextMateConfigurableData settings) {
+    Set<TextMateConfigurableBundle> state = settings.getConfigurableBundles();
+    if (myBundlesListPanel.isModified(state)) {
+      settings.applySettings(myBundlesListPanel.getState());
       ProgressManager.getInstance().run(new Task.Backgroundable(null, TextMateBundle.message("textmate.loading.bundles.title"), false,
                                                                 PerformInBackgroundOption.ALWAYS_BACKGROUND) {
         @Override
@@ -46,18 +41,13 @@ public class TextMateSettingsUI implements ConfigurableUi<TextMateSettings>, Dis
   }
 
   @Override
-  public void reset(@NotNull TextMateSettings settings) {
-    myBundlesListPanel.setState(settings.getBundles());
+  public void reset(@NotNull TextMateConfigurableData settings) {
+    myBundlesListPanel.setState(settings.getConfigurableBundles());
   }
 
   @Override
-  public boolean isModified(@NotNull TextMateSettings settings) {
-    final TextMateSettings.TextMateSettingsState state = settings.getState();
-    if (state == null) {
-      return !myBundlesListPanel.getState().isEmpty();
-    }
-
-    return myBundlesListPanel.isModified(state.getBundles());
+  public boolean isModified(@NotNull TextMateConfigurableData settings) {
+    return myBundlesListPanel.isModified(settings.getConfigurableBundles());
   }
 
   @NotNull
