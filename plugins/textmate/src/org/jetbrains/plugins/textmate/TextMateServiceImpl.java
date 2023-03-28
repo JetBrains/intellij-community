@@ -109,15 +109,13 @@ public final class TextMateServiceImpl extends TextMateService {
         }
       }
 
-      if (!oldExtensionsMapping.equals(newExtensionsMapping)) {
-        if (fireEvents) {
-          fireFileTypesChangedEvent("old mappings = " + oldExtensionsMapping + ", new mappings" + newExtensionsMapping, () -> {
-            myExtensionsMapping = newExtensionsMapping;
-          });
-        }
-        else {
+      if (fireEvents && !oldExtensionsMapping.equals(newExtensionsMapping)) {
+        fireFileTypesChangedEvent("old mappings = " + oldExtensionsMapping + ", new mappings" + newExtensionsMapping, () -> {
           myExtensionsMapping = newExtensionsMapping;
-        }
+        });
+      }
+      else {
+        myExtensionsMapping = newExtensionsMapping;
       }
       mySyntaxTable.compact();
     }
