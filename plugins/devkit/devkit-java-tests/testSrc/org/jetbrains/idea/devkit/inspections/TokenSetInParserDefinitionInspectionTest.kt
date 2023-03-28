@@ -13,6 +13,10 @@ class TokenSetInParserDefinitionInspectionTest : TokenSetInParserDefinitionInspe
     doInspectionTest()
   }
 
+  fun testNotAParserDefinitionWithIllegalTokenSet() {
+    doInspectionTest()
+  }
+
   fun testParserDefinitionWithIllegalTokenSetWhenComplexCreation() {
     doInspectionTest()
   }

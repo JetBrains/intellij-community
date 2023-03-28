@@ -14,6 +14,10 @@ class KtTokenSetInParserDefinitionInspectionTest : TokenSetInParserDefinitionIns
     doInspectionTest()
   }
 
+  fun testNotAParserDefinitionWithIllegalTokenSet() {
+    doInspectionTest()
+  }
+
   fun testParserDefinitionWithIllegalTokenSetWhenComplexCreation() {
     doInspectionTest()
   }

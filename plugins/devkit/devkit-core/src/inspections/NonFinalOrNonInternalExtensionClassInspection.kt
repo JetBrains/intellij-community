@@ -6,16 +6,15 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.lang.jvm.JvmClassKind
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.createModifierActions
 import com.intellij.lang.jvm.actions.modifierRequest
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.util.PsiUtil
 import com.intellij.uast.UastHintedVisitorAdapter
 import org.jetbrains.idea.devkit.DevKitBundle
+import org.jetbrains.idea.devkit.util.isExtensionPointImplementationCandidate
 import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -33,8 +32,7 @@ internal class NonFinalOrNonInternalExtensionClassInspection : DevKitUastInspect
     override fun visitClass(node: UClass): Boolean {
       val elementToHighlight = node.getAnchorPsi() ?: return true
       val javaPsi = node.javaPsi
-      if (javaPsi.classKind != JvmClassKind.CLASS || PsiUtil.isInnerClass(javaPsi) || PsiUtil.isLocalOrAnonymousClass(
-          javaPsi) || PsiUtil.isAbstractClass(javaPsi)) {
+      if (!javaPsi.isExtensionPointImplementationCandidate()) {
         return true
       }
       val shouldMakePackageLocal = node.lang == JavaLanguage.INSTANCE && node.visibility != UastVisibility.PACKAGE_LOCAL
