@@ -65,10 +65,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -570,13 +567,6 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       }
     }
 
-    /**
-     * Hide preview temporarily when submenu is shown
-     */
-    void hidePreview() {
-      myPreviewPopupUpdateProcessor.hideTemporarily();
-    }
-
     @Override
     public void beforeTreeDispose() {
       // The flag has to be set early. Child's dispose() can call `cancelled` and it must be a no-op at this point.
@@ -657,6 +647,21 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
           }
         }
       };
+      ((ListPopupImpl)popup.myListPopup).getList().addFocusListener(new FocusListener() {
+        @Override
+        public void focusGained(FocusEvent e) {
+          if (EditorSettingsExternalizable.getInstance().isShowIntentionPreview()) {
+            popup.showPreview();
+          }
+        }
+
+        @Override
+        public void focusLost(FocusEvent e) {
+          if (EditorSettingsExternalizable.getInstance().isShowIntentionPreview()) {
+            popup.myPreviewPopupUpdateProcessor.hide();
+          }
+        }
+      });
       popup.myListPopup.addListSelectionListener(selectionListener);
 
       popup.myListPopup.addListener(new JBPopupListener() {

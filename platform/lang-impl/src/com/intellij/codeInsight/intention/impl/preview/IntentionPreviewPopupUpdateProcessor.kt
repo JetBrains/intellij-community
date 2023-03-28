@@ -43,7 +43,6 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
                                            private val originalEditor: Editor) : PopupUpdateProcessor(project) {
   private var index: Int = LOADING_PREVIEW
   private var show = false
-  private var hideForIndex = NO_PREVIEW
   private var originalPopup : JBPopup? = null
   private val editorsToRelease = mutableListOf<EditorEx>()
 
@@ -54,8 +53,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
     get() = UIUtil.getParentOfType(JWindow::class.java, popup.content)
 
   override fun updatePopup(intentionAction: Any?) {
-    if (!show || index == hideForIndex) return
-    hideForIndex = NO_PREVIEW
+    if (!show) return
 
     if (!::popup.isInitialized || popup.isDisposed) {
       val origPopup = originalPopup
@@ -102,16 +100,6 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
       .coalesceBy(this)
       .finishOnUiThread(ModalityState.defaultModalityState()) { renderPreview(it)}
       .submit(AppExecutorUtil.getAppExecutorService())
-  }
-
-  /**
-   * Hide preview until another action is selected.
-   * Useful to hide it when submenu is displayed
-   */
-  fun hideTemporarily() {
-    if (!show) return
-    hideForIndex = index
-    selectNoPreview()
   }
 
   private fun adjustPosition(originalPopup: JBPopup?) {

@@ -78,8 +78,6 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     }
 
     if (hasSubstep(action)) {
-      closeIntentionPreviewPopup();
-
       return getSubStep(action, action.getToolName());
     }
 
@@ -91,12 +89,6 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     IntentionAction a = IntentionActionDelegate.unwrap(value.getAction());
 
     return  !(a instanceof AbstractEmptyIntentionAction) || !hasSubstep(value);
-  }
-
-  private void closeIntentionPreviewPopup() {
-    if (myPopup != null) {
-      myPopup.hidePreview();
-    }
   }
 
   @Override
