@@ -1,126 +1,110 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.project;
+package com.intellij.openapi.project
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Progressive;
-import com.intellij.openapi.util.EmptyRunnable;
-import kotlinx.coroutines.flow.MutableStateFlow;
-import kotlinx.coroutines.flow.StateFlowKt;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.Progressive
+import com.intellij.openapi.util.EmptyRunnable
+import kotlinx.coroutines.flow.MutableStateFlow
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.function.Consumer
 
 /**
  * An executor that can run exactly one task. The task can be re-started many times, but there is at most one running task at any moment.
- * <p>
- * {@linkplain #tryStartProcess(Consumer)} should be invoked to start execution.
- * <p>
- * It is safe to invoke {@link #tryStartProcess(Consumer)} many times, and it is guaranteed that no more than one task is executing at any moment.
- * <p>
- * It is guaranteed that after {@linkplain  #tryStartProcess(Consumer)} the task will be executed at least one more time. Task can reset scheduled
- * executions by invoking {@linkplain #clearScheduledFlag()}
+ * [tryStartProcess] should be invoked to start execution.
+ *
+ * It is safe to invoke [tryStartProcess] many times, and it is guaranteed that no more than one task is executing at any moment.
+ *
+ * It is guaranteed that after [tryStartProcess] the task will be executed at least one more time. Task can reset scheduled
+ * executions by invoking [clearScheduledFlag]
  */
-class SingleTaskExecutor {
-  interface AutoclosableProgressive extends AutoCloseable, Progressive {
-
-    @Override
-    void close();
+internal class SingleTaskExecutor(private val task: Progressive) {
+  internal interface AutoclosableProgressive : AutoCloseable, Progressive {
+    override fun close()
   }
 
-  private class StateAwareTask implements AutoclosableProgressive {
-    private final AtomicBoolean used = new AtomicBoolean(false);
-    private final Progressive task;
-
-    private StateAwareTask(Progressive task) { this.task = task; }
-
-    @Override
-    public void close() {
+  private inner class StateAwareTask(private val task: Progressive) : AutoclosableProgressive {
+    private val used = AtomicBoolean(false)
+    override fun close() {
       if (used.compareAndSet(false, true)) {
-        runWithStateHandling(EmptyRunnable.getInstance());
+        runWithStateHandling(EmptyRunnable.getInstance())
       }
     }
 
-    @Override
-    public void run(@NotNull ProgressIndicator indicator) {
+    override fun run(indicator: ProgressIndicator) {
       if (used.compareAndSet(false, true)) {
-        runWithStateHandling(() -> task.run(indicator));
+        runWithStateHandling { task.run(indicator) }
       }
       else {
-        LOG.error("StateAwareTask cannot be reused");
+        LOG.error("StateAwareTask cannot be reused")
       }
     }
   }
 
-  private static final Logger LOG = Logger.getInstance(SingleTaskExecutor.class);
+  private enum class RunState { STOPPED, STARTING, RUNNING, STOPPING }
 
-  private enum RUN_STATE {STOPPED, STARTING, RUNNING, STOPPING}
-
-  private final MutableStateFlow<@NotNull RUN_STATE> runState = StateFlowKt.MutableStateFlow(RUN_STATE.STOPPED);
-
-  private final AtomicBoolean shouldContinueBackgroundProcessing = new AtomicBoolean(false);
-  private final Progressive task;
-
-  SingleTaskExecutor(Progressive task) {
-    this.task = task;
-  }
-
-  private void runWithStateHandling(Runnable runnable) {
+  private val runState = MutableStateFlow(RunState.STOPPED)
+  private val shouldContinueBackgroundProcessing = AtomicBoolean(false)
+  private fun runWithStateHandling(runnable: Runnable) {
     try {
       do {
         try {
-          SingleTaskExecutor.RUN_STATE currentStateForAssert = runState.getValue();
-          LOG.assertTrue(currentStateForAssert == RUN_STATE.STARTING, "Old state should be STARTING, but was " + currentStateForAssert);
-          runState.setValue(RUN_STATE.RUNNING);
+          runState.value.let { currentStateForAssert ->
+            LOG.assertTrue(currentStateForAssert == RunState.STARTING, "Old state should be STARTING, but was $currentStateForAssert")
+          }
+          runState.value = RunState.RUNNING
 
           // shouldContinueBackgroundProcessing is normally cleared before reading next item from the queue.
           // Here we clear the flag just in case, if runnable fail to clear the flag (e.g. during cancellation)
-          shouldContinueBackgroundProcessing.set(false);
-          runnable.run();
+          shouldContinueBackgroundProcessing.set(false)
+          runnable.run()
         }
         finally {
-          SingleTaskExecutor.RUN_STATE currentStateForAssert = runState.getValue();
-          LOG.assertTrue(currentStateForAssert == RUN_STATE.RUNNING, "Old state should be RUNNING, but was " + currentStateForAssert);
-          runState.setValue(RUN_STATE.STOPPING);
+          runState.value.let { currentStateForAssert ->
+            LOG.assertTrue(currentStateForAssert == RunState.RUNNING, "Old state should be RUNNING, but was $currentStateForAssert")
+          }
+          runState.value = RunState.STOPPING
         }
       }
-      while (shouldContinueBackgroundProcessing.get() && runState.compareAndSet(RUN_STATE.STOPPING, RUN_STATE.STARTING));
-    } finally {
-      runState.compareAndSet(RUN_STATE.STOPPING, RUN_STATE.STOPPED);
+      while (shouldContinueBackgroundProcessing.get() && runState.compareAndSet(RunState.STOPPING, RunState.STARTING))
+    }
+    finally {
+      runState.compareAndSet(RunState.STOPPING, RunState.STOPPED)
     }
   }
 
   /**
-   * Generates a task that will be fed into {@code #processRunner}. Consumer must invoke `run` or `close` on the task. New invocations
+   * Generates a task that will be fed into `#processRunner`. Consumer must invoke `run` or `close` on the task. New invocations
    * of this method will have no effect until previous task completes either of its `run` or `closed` methods
    *
    * @param processRunner receiver for the task that must be executed by consumer (in any thread).
    * @return true if current thread won the competition and started processing
    */
-  final boolean tryStartProcess(Consumer<AutoclosableProgressive> processRunner) {
+  fun tryStartProcess(processRunner: Consumer<AutoclosableProgressive>): Boolean {
     if (!shouldContinueBackgroundProcessing.compareAndSet(false, true)) {
-      return false; // the thread that set shouldContinueBackgroundProcessing (not this thread) should compete with the background thread
+      return false // the thread that set shouldContinueBackgroundProcessing (not this thread) should compete with the background thread
     }
-    if (runState.getValue() == RUN_STATE.RUNNING) {
-      return false; // there will be at least one more check of shouldContinueBackgroundProcessing in the background thread
+    if (runState.value == RunState.RUNNING) {
+      return false // there will be at least one more check of shouldContinueBackgroundProcessing in the background thread
     }
     else {
-      boolean thisThreadShouldProcessQueue = runState.compareAndSet(RUN_STATE.STOPPING, RUN_STATE.STARTING) ||
-                                             runState.compareAndSet(RUN_STATE.STOPPED, RUN_STATE.STARTING);
+      val thisThreadShouldProcessQueue = runState.compareAndSet(RunState.STOPPING, RunState.STARTING) ||
+                                         runState.compareAndSet(RunState.STOPPED, RunState.STARTING)
       // whatever thread (this or background) wins the competition and sets STARTING - that thread should process the queue
-      if (!thisThreadShouldProcessQueue) return false;
+      if (!thisThreadShouldProcessQueue) return false
     }
-
-    processRunner.accept(new StateAwareTask(task));
-    return true;
+    processRunner.accept(StateAwareTask(task))
+    return true
   }
 
-  public void clearScheduledFlag() {
-    shouldContinueBackgroundProcessing.set(false);
+  fun clearScheduledFlag() {
+    shouldContinueBackgroundProcessing.set(false)
   }
 
-  public boolean isRunning() {
-    return runState.getValue() != RUN_STATE.STOPPED;
+  val isRunning: Boolean
+    get() = runState.value != RunState.STOPPED
+
+  companion object {
+    private val LOG = Logger.getInstance(SingleTaskExecutor::class.java)
   }
 }
