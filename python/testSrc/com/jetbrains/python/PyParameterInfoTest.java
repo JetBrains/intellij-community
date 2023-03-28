@@ -1129,6 +1129,35 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
       , new String[]{"short_param: str"});
   }
 
+  // PY-49946
+  public void testInitializingDataclassKwOnlyOnClass() {
+    final Map<String, PsiElement> marks = loadTest(4);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("b: int, *, a: int", new String[]{"b: int, "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a: int, *, b: int", new String[]{"a: int, "});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("*, a: int, b: int", new String[]{"*, a: int"});
+    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("*, a: int", new String[]{"*, a: int"});
+  }
+
+  // PY-49946
+  public void testInitializingDataclassKwOnlyOnField() {
+    final Map<String, PsiElement> marks = loadTest(4);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("b: int, *, a: int", new String[]{"b: int, "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a: int, *, b: int", new String[]{"a: int, "});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("*, a: int, b: int", new String[]{"*, a: int"});
+    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("*, a: int", new String[]{"*, a: int"});
+  }
+
+  // PY-49946
+  public void testInitializingDataclassKwOnlyOnClassOverridingHierarchy() {
+    final Map<String, PsiElement> marks = loadTest(3);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a: int", new String[]{"a: int"});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("*, a: int", new String[]{"*, a: int"});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("*, a: int", new String[]{"*, a: int"});
+  }
+
   @NotNull
   private Collector feignCtrlP(int offset) {
     return feignCtrlP(offset, myFixture.getFile());

@@ -457,4 +457,14 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
   public void testWeakUnionClassMethodParameters() {
     doTest();
   }
+
+  // PY-49946
+  public void testInitializingDataclassKwOnlyOnClass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON310, this::doTest);
+  }
+
+  // PY-49946
+  public void testInitializingDataclassKwOnlyOnField() {
+    runWithLanguageLevel(LanguageLevel.PYTHON310, this::doTest);
+  }
 }

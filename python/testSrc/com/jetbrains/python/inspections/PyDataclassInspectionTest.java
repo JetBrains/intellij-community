@@ -315,6 +315,16 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-49946
+  public void testFieldsOrderInInheritanceNotKwOnlyBaseDataclass() {
+    doTest();
+  }
+
+  // PY-49946
+  public void testFieldsOrderInInheritanceKwOnlyBaseDataclass() {
+    doTest();
+  }
+
   @Override
   protected void doTest() {
     myFixture.copyDirectoryToProject("packages/attr", "attr");
