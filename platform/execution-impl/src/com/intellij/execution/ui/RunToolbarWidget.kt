@@ -29,6 +29,7 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.openapi.wm.ToolWindowId
@@ -83,20 +84,7 @@ internal fun createRunConfigurationsActionGroup(project: Project): ActionGroup {
   val runExecutor = registry.getExecutorById(RUN) ?: error("No '${RUN}' executor found")
   val debugExecutor = registry.getExecutorById(DEBUG) ?: error("No '${DEBUG}' executor found")
   val recents = RunConfigurationStartHistory.getInstance(project).history().take(max(recentLimit, 0))
-  val shouldShowRecent = recentLimit > 0 && recents.isNotEmpty()
-  if (shouldShowRecent) {
-    actions.add(Separator.create(ExecutionBundle.message("run.toolbar.widget.dropdown.recent.separator.text")))
-    for (conf in recents) {
-      val actionGroupWithInlineActions = createRunConfigurationWithInlines(runExecutor, debugExecutor, conf, project)
-      actions.add(actionGroupWithInlineActions)
-    }
-    actions.add(Separator.create())
-  }
-  var allRunConfigurationsToggle: AnAction? = null
-  if (shouldShowRecent) {
-    allRunConfigurationsToggle = AllRunConfigurationsToggle()
-    actions.add(allRunConfigurationsToggle)
-  }
+  var shouldShowRecent: Boolean = recents.isNotEmpty()
 
   val shouldBeShown = { configuration: RunnerAndConfigurationSettings?, holdingFilter: Boolean ->
     when {
@@ -113,8 +101,25 @@ internal fun createRunConfigurationsActionGroup(project: Project): ActionGroup {
   val createFolderFn: (String) -> DefaultActionGroup = { folderName ->
     HideableDefaultActionGroup(folderName) { shouldBeShown(null, it) }
   }
-  val allConfigurationsNumber = RunConfigurationsComboBoxAction.addRunConfigurations(actions, project, createActionFn, createFolderFn)
-  allRunConfigurationsToggle?.templatePresentation?.text = allConfigurationMessage(allConfigurationsNumber)
+  val allConfigurations = DefaultActionGroup()
+  val allConfigurationsNumber = RunConfigurationsComboBoxAction.addRunConfigurations(allConfigurations, project, createActionFn, createFolderFn)
+
+  if (shouldShowRecent && allConfigurationsNumber < recentLimit) {
+    shouldShowRecent = false
+  }
+
+  if (shouldShowRecent) {
+    actions.add(Separator.create(ExecutionBundle.message("run.toolbar.widget.dropdown.recent.separator.text")))
+    for (conf in recents) {
+      val actionGroupWithInlineActions = createRunConfigurationWithInlines(runExecutor, debugExecutor, conf, project)
+      actions.add(actionGroupWithInlineActions)
+    }
+    actions.add(Separator.create())
+  }
+  if (shouldShowRecent) {
+    actions.add(AllRunConfigurationsToggle(allConfigurationMessage(allConfigurationsNumber)))
+  }
+  actions.addAll(allConfigurations)
 
   if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
     actions.add(createCurrentFileWithInlineActions(runExecutor, debugExecutor, project))
@@ -162,7 +167,7 @@ private interface HideableAction {
 private class HideableDefaultActionGroup(@NlsSafe name: String, override val shouldBeShown: (holdingFilter: Boolean) -> Boolean)
   : DefaultActionGroup({ name }, true), DumbAware, HideableAction
 
-private class AllRunConfigurationsToggle : ToggleAction(), KeepingPopupOpenAction, DumbAware {
+private class AllRunConfigurationsToggle(@NlsActions.ActionText text: String) : ToggleAction(text), KeepingPopupOpenAction, DumbAware {
 
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
