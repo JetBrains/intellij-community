@@ -6,6 +6,7 @@ import com.intellij.ide.bookmark.Bookmark
 import com.intellij.ide.bookmark.BookmarkBundle
 import com.intellij.ide.bookmark.BookmarkType
 import com.intellij.ide.bookmark.ui.GroupSelectDialog
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.EditorGutter
 import com.intellij.openapi.project.DumbAwareAction
@@ -21,7 +22,7 @@ fun checkMultipleSelectionAndDisableAction(event: AnActionEvent): Boolean {
   return false
 }
 
-internal class ToggleBookmarkAction : Toggleable, DumbAwareAction(BookmarkBundle.messagePointer("bookmark.toggle.action.text")) {
+internal class ToggleBookmarkAction : Toggleable, DumbAwareAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
@@ -47,7 +48,7 @@ internal class ToggleBookmarkAction : Toggleable, DumbAwareAction(BookmarkBundle
         else -> null
       }
       text = when {
-        !ActionPlaces.isPopupPlace(event.place) -> BookmarkBundle.message("bookmark.toggle.action.text")
+        !ActionPlaces.isPopupPlace(event.place) -> ActionsBundle.message("action.ToggleBookmark.text")
         type != null -> BookmarkBundle.message("bookmark.delete.action.text")
         else -> BookmarkBundle.message("bookmark.add.action.text")
       }

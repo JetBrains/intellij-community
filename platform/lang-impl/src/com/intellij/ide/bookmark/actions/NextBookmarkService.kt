@@ -2,18 +2,18 @@
 package com.intellij.ide.bookmark.actions
 
 import com.intellij.ide.bookmark.*
-import com.intellij.ide.bookmark.BookmarkBundle.messagePointer
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import java.util.concurrent.atomic.AtomicReference
-import java.util.function.Supplier
 
-internal class NextBookmarkAction : IterateBookmarksAction(true, messagePointer("bookmark.go.to.next.action.text"))
-internal class PreviousBookmarkAction : IterateBookmarksAction(false, messagePointer("bookmark.go.to.previous.action.text"))
-internal abstract class IterateBookmarksAction(val forward: Boolean, dynamicText: Supplier<String>) : DumbAwareAction(dynamicText) {
+internal class NextBookmarkAction : IterateBookmarksAction(true)
+
+internal class PreviousBookmarkAction : IterateBookmarksAction(false)
+
+internal abstract class IterateBookmarksAction(val forward: Boolean) : DumbAwareAction() {
   private val AnActionEvent.nextBookmark
     get() = project?.service<NextBookmarkService>()?.next(forward, contextBookmark as? LineBookmark)
 
@@ -33,7 +33,6 @@ internal abstract class IterateBookmarksAction(val forward: Boolean, dynamicText
     }
   }
 }
-
 
 internal class NextBookmarkService(private val project: Project) : BookmarksListener, Comparator<LineBookmark> {
   private val cache = AtomicReference<List<LineBookmark>>()

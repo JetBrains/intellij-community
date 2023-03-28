@@ -3,13 +3,13 @@ package com.intellij.ide.bookmark.actions
 
 import com.intellij.ide.bookmark.BookmarkBundle
 import com.intellij.ide.bookmark.BookmarkType
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.ui.popup.PopupState
 
-internal class ChooseBookmarkTypeAction : DumbAwareAction(BookmarkBundle.messagePointer("mnemonic.chooser.mnemonic.toggle.action.text")) {
+internal class ChooseBookmarkTypeAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(event: AnActionEvent) {
@@ -23,7 +23,7 @@ internal class ChooseBookmarkTypeAction : DumbAwareAction(BookmarkBundle.message
       text = when (type) {
         BookmarkType.DEFAULT -> BookmarkBundle.message("mnemonic.chooser.mnemonic.assign.action.text")
         null -> BookmarkBundle.message("mnemonic.chooser.bookmark.create.action.text")
-        else -> BookmarkBundle.message("mnemonic.chooser.mnemonic.change.action.text")
+        else -> ActionsBundle.message("action.BookmarksView.ChooseType.text")
       }
     }
   }

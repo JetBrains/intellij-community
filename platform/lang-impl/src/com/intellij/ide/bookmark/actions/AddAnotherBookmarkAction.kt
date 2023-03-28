@@ -1,14 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.bookmark.actions
 
-import com.intellij.ide.bookmark.BookmarkBundle
 import com.intellij.ide.bookmark.LineBookmark
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 
-internal class AddAnotherBookmarkAction : DumbAwareAction(BookmarkBundle.messagePointer("bookmark.add.another.action.text")) {
-
+internal class AddAnotherBookmarkAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(event: AnActionEvent) {

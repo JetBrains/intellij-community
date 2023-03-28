@@ -31,7 +31,7 @@ import com.intellij.util.ui.tree.TreeUtil
 import java.awt.Dimension
 import javax.swing.tree.TreeSelectionModel.SINGLE_TREE_SELECTION
 
-internal class ShowTypeBookmarksAction : DumbAwareAction(BookmarkBundle.messagePointer("show.type.bookmarks.action.text")) {
+internal class ShowTypeBookmarksAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   private val BookmarksManager.typeBookmarks

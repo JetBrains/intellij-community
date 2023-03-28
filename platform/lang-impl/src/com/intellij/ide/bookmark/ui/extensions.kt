@@ -13,6 +13,7 @@ import com.intellij.ide.bookmark.ui.tree.BookmarkNode
 import com.intellij.ide.bookmark.ui.tree.FolderNode
 import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.help.HelpManager
@@ -109,7 +110,7 @@ internal fun StatusText.initialize(owner: Component) {
              })
   appendLine(message("status.text.add.bookmark.next.line"))
   ActionUtil.getAction("BookmarksView.Create")?.let { action ->
-    appendLine(message("bookmark.group.create.action.text"), LINK_PLAIN_ATTRIBUTES) {
+    appendLine(ActionsBundle.message("action.BookmarksView.Create.text"), LINK_PLAIN_ATTRIBUTES) {
       ActionUtil.invokeAction(action, owner, "BookmarksView", null, null)
     }
   }
