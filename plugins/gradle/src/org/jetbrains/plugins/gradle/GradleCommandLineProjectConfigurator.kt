@@ -64,7 +64,7 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
     val service = service<EnvironmentService>()
     val projectSelectionKey = runBlockingCancellable { service.getEnvironmentValue(ProjectOpenKeyProvider.PROJECT_OPEN_PROCESSOR) }
     if (projectSelectionKey != null && projectSelectionKey != "Gradle") {
-       // something else was selected to open the project
+      // something else was selected to open the project
       return
     }
     val state = GradleImportHintService.getInstance(project).state
@@ -225,13 +225,26 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
     override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
       val gradleText = (if (stdOut) "" else "STDERR: ") + text
       gradleLogWriter.write(gradleText)
-      if (isValidForLogging(gradleText)) {
-        logger.reportMessage(1, gradleText)
+      val croppedMessage = processMessage(gradleText)
+      if (croppedMessage != null) {
+        logger.reportMessage(1, croppedMessage)
       }
     }
 
-    private fun isValidForLogging(gradleText: String) =
-      WarmupStatus.currentStatus(ApplicationManager.getApplication()) == WarmupStatus.InProgress && (!gradleText.startsWith("\rDownload") || gradleText.contains("took"))
+    private fun processMessage(gradleText: String) : String? {
+      if (WarmupStatus.currentStatus(ApplicationManager.getApplication()) != WarmupStatus.InProgress) {
+        return gradleText
+      }
+      val cropped = gradleText.trimStart('\r').trimEnd('\n')
+      if (cropped.startsWith("Download")) {
+        // we don't want to be flooded by a ton of download messages, so we'll print only final message
+        if (cropped.contains(" took ")) {
+          return cropped
+        }
+        return null
+      }
+      return cropped
+    }
 
     override fun onEnd(id: ExternalSystemTaskId) {
       gradleLogWriter.flush()
