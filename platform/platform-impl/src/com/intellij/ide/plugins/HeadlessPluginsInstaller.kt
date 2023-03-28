@@ -61,18 +61,6 @@ internal class HeadlessPluginsInstaller : ApplicationStarter {
           LOG.error("Failed to install plugins:", error)
           exitProcess(1)
         }
-
-        override fun onFinished() {
-          val installedNonDynamic = InstalledPluginsState.getInstance().installedPlugins.map { it.pluginId }
-          val allPluginIds = PluginManager.getPlugins().mapTo(HashSet()) { it.pluginId } + installedNonDynamic
-          for (pluginId in pluginIds) {
-            if (pluginId !in allPluginIds) {
-              println("Unable to install plugin '$pluginId'")
-              exitProcess(1)
-            }
-          }
-          exitProcess(0)
-        }
       })
       exitProcess(0)
     }
