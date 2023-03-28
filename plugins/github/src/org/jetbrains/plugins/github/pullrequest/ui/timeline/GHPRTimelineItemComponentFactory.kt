@@ -13,8 +13,8 @@ import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil.Thread
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil.Title
-import com.intellij.collaboration.ui.codereview.onHyperlinkActivated
-import com.intellij.collaboration.ui.codereview.setHtmlBody
+import com.intellij.collaboration.ui.onHyperlinkActivated
+import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.collaboration.ui.util.ActivatableCoroutineScopeProvider
