@@ -617,8 +617,7 @@ private class EditorTabs(
     return EditorTabLabel(info)
   }
 
-  private inner class EditorTabLabel(private val info: TabInfo) : SingleHeightLabel(this, info) {
-
+  private inner class EditorTabLabel(info: TabInfo) : SingleHeightLabel(this, info) {
     init {
       updateFont()
     }
@@ -654,7 +653,7 @@ private class EditorTabs(
     override fun editLabelForeground(baseForeground: Color?): Color? {
       return if (baseForeground != null && paintDimmed()) {
         val blendValue = JBUI.CurrentTheme.EditorTabs.unselectedBlend()
-        val background = getInfo().tabColor ?: myTabs.tabPainter.getTabTheme().background
+        val background = info.tabColor ?: myTabs.tabPainter.getTabTheme().background
         if (background != null) {
           ColorUtil.blendColorsInRgb(background, baseForeground, blendValue.toDouble())
         }
@@ -665,20 +664,22 @@ private class EditorTabs(
 
     override fun editIcon(baseIcon: Icon): Icon {
       return if (paintDimmed()) {
-        IconLoader.getTransparentIcon(baseIcon, JBUI.CurrentTheme.EditorTabs.unselectedAlpha());
+        IconLoader.getTransparentIcon(baseIcon, JBUI.CurrentTheme.EditorTabs.unselectedAlpha())
       }
       else baseIcon
     }
 
     private fun paintDimmed(): Boolean {
-      return ExperimentalUI.isNewUI() && myTabs.selectedInfo != getInfo() && !myTabs.isHoveredTab(this)
+      return ExperimentalUI.isNewUI() && myTabs.selectedInfo != info && !myTabs.isHoveredTab(this)
     }
   }
 
   override fun getTabActionIcon(info: TabInfo, isHovered: Boolean): Icon? {
     if (!tabs.contains(info)) {
-      return null  // can be requested right after tab is removed, return null in this case
+      // can be requested right after the tab is removed, return null in this case
+      return null
     }
+
     val closeTabAction = info.tabLabelActions?.getChildren(null)?.lastOrNull() as? CloseTab
     return closeTabAction?.getIcon(isHovered)
   }

@@ -393,12 +393,11 @@ public class JBTabsImpl extends JComponent
       }
     };
     listener1.setupListeners();
-    ComponentUtil.putClientProperty(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS,
-                                    (Iterable<? extends Component>)(Iterable<JComponent>)() -> {
-                                      return JBIterable.from(getVisibleInfos())
-                                        .filter(Conditions.not(Conditions.is(mySelectedInfo)))
-                                        .transform(info -> info.getComponent()).iterator();
-                                    });
+    ClientProperty.put(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, (Iterable<? extends Component>)(Iterable<JComponent>)() -> {
+      return JBIterable.from(getVisibleInfos())
+        .filter(Conditions.not(Conditions.is(mySelectedInfo)))
+        .transform(info -> info.getComponent()).iterator();
+    });
 
     HoverListener hoverListener = new HoverListener() {
       @Override
@@ -3456,7 +3455,7 @@ public class JBTabsImpl extends JComponent
     for (int i = 0; i < getComponentCount(); i++) {
       final Component each = getComponent(i);
       if (each instanceof JComponent jc) {
-        if (!UIUtil.isClientPropertyTrue(jc, LAYOUT_DONE)) {
+        if (!ClientProperty.isTrue(jc, LAYOUT_DONE)) {
           layout(jc, new Rectangle(0, 0, 0, 0));
         }
       }
