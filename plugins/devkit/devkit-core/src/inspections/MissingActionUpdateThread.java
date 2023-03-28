@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import org.jetbrains.annotations.NotNull;
@@ -24,8 +23,7 @@ public class MissingActionUpdateThread extends DevKitJvmInspection {
   @Override
   protected boolean isAllowed(@NotNull ProblemsHolder holder) {
     return super.isAllowed(holder) &&
-           JavaPsiFacade.getInstance(holder.getProject()).
-             findClass(ActionUpdateThreadAware.class.getName(), holder.getFile().getResolveScope()) != null;
+           DevKitInspectionUtil.isClassAvailable(holder, ActionUpdateThreadAware.class.getName());
   }
 
   @Nullable

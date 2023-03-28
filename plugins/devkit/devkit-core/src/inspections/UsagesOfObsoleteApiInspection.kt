@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
@@ -17,7 +17,7 @@ class UsagesOfObsoleteApiInspection : LocalInspectionTool() {
   }
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-    if (JavaPsiFacade.getInstance(holder.project).findClass(OBSOLETE_ANNOTATION_NAME, holder.file.resolveScope) == null) {
+    if (!DevKitInspectionUtil.isClassAvailable(holder, OBSOLETE_ANNOTATION_NAME)) {
       return PsiElementVisitor.EMPTY_VISITOR
     }
     return ApiUsageUastVisitor.createPsiElementVisitor(

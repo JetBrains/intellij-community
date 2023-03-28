@@ -10,7 +10,6 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.annotationRequest
 import com.intellij.lang.jvm.actions.createAddAnnotationActions
 import com.intellij.openapi.util.text.StringUtilRt
-import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiMethod
 import com.intellij.util.EventDispatcher
 import com.intellij.util.asSafely
@@ -45,8 +44,7 @@ internal class ThreadingConcurrencyInspection(
   // skip if ancient platform version
   override fun isAllowed(holder: ProblemsHolder): Boolean {
     return super.isAllowed(holder) &&
-           JavaPsiFacade.getInstance(holder.project).findClass(RequiresEdt::class.java.canonicalName,
-                                                               holder.file.resolveScope) != null
+           DevKitInspectionUtil.isClassAvailable(holder, RequiresEdt::class.java.canonicalName)
   }
 
   override fun checkMethod(method: UMethod, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {

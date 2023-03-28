@@ -1,10 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.*
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiType
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.TypeConversionUtil.isAssignable
 import com.intellij.psi.util.TypeConversionUtil.isNullType
@@ -35,8 +36,8 @@ class UElementAsPsiInspection : DevKitUastInspectionBase(UMethod::class.java) {
   }
 
   override fun isAllowed(holder: ProblemsHolder): Boolean =
-    super.isAllowed(holder)
-    && JavaPsiFacade.getInstance(holder.project).findClass(UElement::class.java.canonicalName, holder.file.resolveScope) != null
+    super.isAllowed(holder) &&
+    DevKitInspectionUtil.isClassAvailable(holder, UElement::class.java.canonicalName)
 
   private class CodeVisitor(private val uElementType: PsiClassType, private val psiElementType: PsiClassType) : AbstractUastVisitor() {
 

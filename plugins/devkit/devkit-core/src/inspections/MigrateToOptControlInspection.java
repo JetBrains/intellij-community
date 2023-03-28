@@ -8,7 +8,10 @@ import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +33,7 @@ public class MigrateToOptControlInspection extends DevKitUastInspectionBase {
   @Override
   protected boolean isAllowed(@NotNull ProblemsHolder holder) {
     return super.isAllowed(holder) &&
-           JavaPsiFacade.getInstance(holder.getProject()).findClass(OPT_PANE, holder.getFile().getResolveScope()) != null;
+           DevKitInspectionUtil.isClassAvailable(holder, OPT_PANE);
   }
 
   @Override

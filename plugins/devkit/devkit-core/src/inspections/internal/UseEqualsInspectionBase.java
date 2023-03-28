@@ -8,7 +8,10 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.uast.UastHintedVisitorAdapter;
@@ -18,6 +21,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
@@ -30,8 +34,7 @@ abstract class UseEqualsInspectionBase extends DevKitUastInspectionBase implemen
   @Override
   protected boolean isAllowed(@NotNull ProblemsHolder holder) {
     return super.isAllowed(holder) &&
-           JavaPsiFacade.getInstance(holder.getProject())
-             .findClass(getTargetClass().getName(), holder.getFile().getResolveScope()) != null;
+           DevKitInspectionUtil.isClassAvailable(holder, getTargetClass().getName());
   }
 
   protected abstract @NotNull Class<?> getTargetClass();
