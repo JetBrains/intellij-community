@@ -110,13 +110,13 @@ public final class ClassEditorField extends EditorTextField {
   }
 
   private static String getQName(@Nullable String className) {
-    if (className == null) return className;
+    if (className == null) return "";
     return className.replace('$', '.');
   }
 
   @Nullable
   private String getJvmName(@Nullable String className) {
-    if (className == null) return null;
+    if (className == null || className.isEmpty()) return null;
 
     return FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
       PsiClass aClass = JavaPsiFacade.getInstance(getProject()).findClass(className, GlobalSearchScope.allScope(getProject()));
