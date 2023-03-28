@@ -48,15 +48,15 @@ public final class BuildRunner {
   private Map<String, String> myBuilderParams = Collections.emptyMap();
   private boolean myForceCleanCaches;
 
-  public BuildRunner(JpsModelLoader modelLoader) {
+  public BuildRunner(@NotNull JpsModelLoader modelLoader) {
     myModelLoader = modelLoader;
   }
 
-  public void setFilePaths(List<String> filePaths) {
+  public void setFilePaths(@Nullable List<String> filePaths) {
     myFilePaths = filePaths != null? filePaths : Collections.emptyList();
   }
 
-  public void setBuilderParams(Map<String, String> builderParams) {
+  public void setBuilderParams(@Nullable Map<String, String> builderParams) {
     myBuilderParams = builderParams != null? builderParams : Collections.emptyMap();
   }
 
@@ -64,7 +64,7 @@ public final class BuildRunner {
     return myModelLoader.loadModel().getProject();
   }
 
-  public ProjectDescriptor load(MessageHandler msgHandler, File dataStorageRoot, BuildFSState fsState) throws IOException {
+  public ProjectDescriptor load(@NotNull MessageHandler msgHandler, @NotNull File dataStorageRoot, @NotNull BuildFSState fsState) throws IOException {
     final JpsModel jpsModel = myModelLoader.loadModel();
     BuildDataPaths dataPaths = new BuildDataPathsImpl(dataStorageRoot);
     BuildTargetRegistryImpl targetRegistry = new BuildTargetRegistryImpl(jpsModel);
@@ -134,11 +134,11 @@ public final class BuildRunner {
     runBuild(pd, cs, msgHandler, buildType, scopes, includeDependenciesToScope);
   }
 
-  public void runBuild(ProjectDescriptor pd,
-                       CanceledStatus cs,
-                       MessageHandler msgHandler,
-                       BuildType buildType,
-                       List<TargetTypeBuildScope> scopes, final boolean includeDependenciesToScope) throws Exception {
+  public void runBuild(@NotNull ProjectDescriptor pd,
+                       @NotNull CanceledStatus cs,
+                       @NotNull MessageHandler msgHandler,
+                       @NotNull BuildType buildType,
+                       @NotNull List<TargetTypeBuildScope> scopes, final boolean includeDependenciesToScope) throws Exception {
     for (int attempt = 0; attempt < 2 && !cs.isCanceled(); attempt++) {
       final boolean forceClean = myForceCleanCaches && myFilePaths.isEmpty();
       final CompileScope compileScope = createCompilationScope(pd, scopes, myFilePaths, forceClean, includeDependenciesToScope);

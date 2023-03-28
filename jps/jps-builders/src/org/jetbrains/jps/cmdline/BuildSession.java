@@ -288,7 +288,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     LOG.info("FilePageCache stats: " + StorageLockContext.getStatistics().dumpInfoImportantForBuildProcess());
   }
 
-  private void runBuild(final MessageHandler msgHandler, CanceledStatus cs) throws Throwable{
+  private void runBuild(@NotNull MessageHandler msgHandler, @NotNull CanceledStatus cs) throws Throwable{
     final File dataStorageRoot = Utils.getDataStorageRoot(myProjectPath);
     final boolean storageFilesAbsent = !dataStorageRoot.exists() || !new File(dataStorageRoot, FS_STATE_FILE).exists();
     if (storageFilesAbsent) {
