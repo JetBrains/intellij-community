@@ -12,8 +12,6 @@ import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -25,6 +23,7 @@ import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirSuperReceiverNameReferencePositionContext
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.collectNonExtensionsForType
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
@@ -41,7 +40,7 @@ internal class FirSuperMemberCompletionContributor(
     private data class CallableInfo(
         private val _type: KtType,
         private val _signature: KtCallableSignature<*>,
-        val scopeKind: KtScopeKind?
+        val scopeKind: KtScopeKind
     ): KtLifetimeOwner {
         override val token: KtLifetimeToken
             get() = _signature.token
@@ -135,7 +134,7 @@ internal class FirSuperMemberCompletionContributor(
                         superReceiver
                     )
                 ),
-                callableInfo.scopeKind
+                CompletionSymbolOrigin.Scope(callableInfo.scopeKind),
             )
         }
     }
@@ -208,7 +207,7 @@ internal class FirSuperMemberCompletionContributor(
                         superReceiver
                     )
                 ),
-                callableInfo.scopeKind,
+                CompletionSymbolOrigin.Scope(callableInfo.scopeKind),
                 priority = ItemPriority.SUPER_METHOD_WITH_ARGUMENTS
             )
         }

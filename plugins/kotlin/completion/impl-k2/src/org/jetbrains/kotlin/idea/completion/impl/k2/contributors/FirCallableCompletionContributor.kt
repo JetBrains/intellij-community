@@ -81,7 +81,7 @@ internal open class FirCallableCompletionContributor(
         private val _signature: KtCallableSignature<*>,
         private val _explicitReceiverTypeHint: KtType?,
         val options: CallableInsertionOptions,
-        val scopeKind: KtScopeKind?,
+        val symbolOrigin: CompletionSymbolOrigin,
         val withExpectedType: Boolean,
     ) : KtLifetimeOwner {
         override val token: KtLifetimeToken
@@ -118,7 +118,7 @@ internal open class FirCallableCompletionContributor(
                 context,
                 callableWithMetadata.signature,
                 callableWithMetadata.options,
-                callableWithMetadata.scopeKind,
+                callableWithMetadata.symbolOrigin,
                 priority = null,
                 callableWithMetadata.explicitReceiverTypeHint)
         }
@@ -185,11 +185,11 @@ internal open class FirCallableCompletionContributor(
 
             (callablesFromIndex + callablesFromExtensions)
                 .filterNot { it.isExtension } // extensions should be collected and checked with `collectTopLevelExtensionsFromIndices`
-                .forEach { yield(createCallableWithMetadata(it.asSignature())) }
+                .forEach { yield(createCallableWithMetadata(it.asSignature(), CompletionSymbolOrigin.Index)) }
         }
 
         collectTopLevelExtensionsFromIndexAndResolveExtensionScope(implicitReceiversTypes, extensionChecker, visibilityChecker)
-            .forEach { yield(createCallableWithMetadata(it)) }
+            .forEach { yield(createCallableWithMetadata(it, CompletionSymbolOrigin.Index)) }
     }
 
     protected open fun KtAnalysisSession.collectDotCompletion(
@@ -206,17 +206,20 @@ internal open class FirCallableCompletionContributor(
                 if (symbol.classKind == KtClassKind.ENUM_CLASS) {
                     yieldAll(collectDotCompletionForCallableReceiver(scopeContext, explicitReceiver, extensionChecker, visibilityChecker))
                 }
+
+                val staticScope = symbol.getStaticMemberScope()
+                val staticScopeKind = KtScopeKind.StaticMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
+
                 val nonExtensions = collectNonExtensionsFromScope(
-                    symbol.getStaticMemberScope(),
+                    staticScope,
                     visibilityChecker,
                     scopeNameFilter,
                     excludeEnumEntries,
                 )
 
-                nonExtensions.forEach { memberSignature ->
-                    val options = CallableInsertionOptions(ImportStrategy.DoNothing, getInsertionStrategy(memberSignature))
-                    yield(createCallableWithMetadata(memberSignature, scopeKind = null, options))
-                }
+                nonExtensions.forEach { member ->
+                    val options = CallableInsertionOptions(ImportStrategy.DoNothing, getInsertionStrategy(member))
+                    yield(createCallableWithMetadata(member, staticScopeKind, options)) }
             }
 
             symbol is KtNamedClassOrObjectSymbol && !symbol.canBeUsedAsReceiver -> {
@@ -238,8 +241,11 @@ internal open class FirCallableCompletionContributor(
     private fun KtAnalysisSession.collectDotCompletionForPackageReceiver(
         packageSymbol: KtPackageSymbol,
         visibilityChecker: CompletionVisibilityChecker
-    ): Sequence<CallableWithMetadataForCompletion> =
-        packageSymbol.getPackageScope()
+    ): Sequence<CallableWithMetadataForCompletion> {
+        val packageScope = packageSymbol.getPackageScope()
+        val packageScopeKind = KtScopeKind.PackageMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
+
+        return packageScope
             .getCallableSymbols(scopeNameFilter)
             .filterNot { it.isExtension }
             .filter { visibilityChecker.isVisible(it) }
@@ -247,8 +253,9 @@ internal open class FirCallableCompletionContributor(
             .map { callable ->
                 val callableSignature = callable.asSignature()
                 val options = CallableInsertionOptions(ImportStrategy.DoNothing, getInsertionStrategy(callableSignature))
-                createCallableWithMetadata(callableSignature, options = options)
+                createCallableWithMetadata(callableSignature, packageScopeKind, options)
             }
+    }
 
     protected fun KtAnalysisSession.collectDotCompletionForCallableReceiver(
         scopeContext: KtScopeContext,
@@ -313,7 +320,14 @@ internal open class FirCallableCompletionContributor(
 
         collectTopLevelExtensionsFromIndexAndResolveExtensionScope(listOf(typeOfPossibleReceiver), extensionChecker, visibilityChecker)
             .filter { filter(it.symbol) }
-            .forEach { yield(createCallableWithMetadata(it, explicitReceiverTypeHint = explicitReceiverTypeHint)) }
+            .forEach {
+                val callableWithMetadata = createCallableWithMetadata(
+                    it,
+                    CompletionSymbolOrigin.Index,
+                    explicitReceiverTypeHint = explicitReceiverTypeHint,
+                )
+                yield(callableWithMetadata)
+            }
     }
 
     private fun KtAnalysisSession.collectTopLevelExtensionsFromIndexAndResolveExtensionScope(
@@ -381,11 +395,23 @@ internal open class FirCallableCompletionContributor(
     context(KtAnalysisSession)
     protected fun createCallableWithMetadata(
         signature: KtCallableSignature<*>,
-        scopeKind: KtScopeKind? = null,
+        scopeKind: KtScopeKind,
         options: CallableInsertionOptions = getOptions(signature),
         explicitReceiverTypeHint: KtType? = null,
         withExpectedType: Boolean = true,
-    ) = CallableWithMetadataForCompletion(signature, explicitReceiverTypeHint, options, scopeKind, withExpectedType)
+    ): CallableWithMetadataForCompletion {
+        val symbolOrigin = CompletionSymbolOrigin.Scope(scopeKind)
+        return CallableWithMetadataForCompletion(signature, explicitReceiverTypeHint, options, symbolOrigin, withExpectedType)
+    }
+
+    context(KtAnalysisSession)
+    protected fun createCallableWithMetadata(
+        signature: KtCallableSignature<*>,
+        symbolOrigin: CompletionSymbolOrigin,
+        options: CallableInsertionOptions = getOptions(signature),
+        explicitReceiverTypeHint: KtType? = null,
+        withExpectedType: Boolean = true,
+    ) = CallableWithMetadataForCompletion(signature, explicitReceiverTypeHint, options, symbolOrigin, withExpectedType)
 
     context(KtAnalysisSession)
     private fun Sequence<CallableWithMetadataForCompletion>.filterOutUninitializedCallables(
@@ -464,12 +490,13 @@ internal class FirCallableReferenceCompletionContributor(
                 ) { filter(it) }
 
                 val staticScope = listOfNotNull(symbol.companionObject?.getMemberScope(), symbol.getStaticMemberScope()).asCompositeScope()
+                val staticScopeKind = KtScopeKind.StaticMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
                 val staticMembers = collectNonExtensionsFromScope(
                     staticScope,
                     visibilityChecker,
                     scopeNameFilter,
                     excludeEnumEntries
-                ) { filter(it) }.map { KtCallableSignatureWithContainingScopeKind(it, scopeKind = null) }
+                ) { filter(it) }.map { KtCallableSignatureWithContainingScopeKind(it, staticScopeKind) }
 
                 (nonExtensionMembers + staticMembers).forEach {
                     yield(createCallableWithMetadata(it.signature, it.scopeKind, withExpectedType = false))

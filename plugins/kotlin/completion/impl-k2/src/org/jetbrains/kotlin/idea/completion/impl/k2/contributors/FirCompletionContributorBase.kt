@@ -9,7 +9,6 @@ import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
 import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -22,6 +21,8 @@ import org.jetbrains.kotlin.idea.completion.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupEle
 import org.jetbrains.kotlin.idea.completion.priority
 import org.jetbrains.kotlin.idea.completion.weighers.CallableWeigher.callableWeight
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
+import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighsToLookupElement
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -84,7 +86,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
     protected fun KtAnalysisSession.addClassifierSymbolToCompletion(
         symbol: KtClassifierSymbol,
         context: WeighingContext,
-        scopeKind: KtScopeKind?,
+        symbolOrigin: CompletionSymbolOrigin,
         importingStrategy: ImportStrategy = importStrategyDetector.detectImportStrategy(symbol),
     ) {
         if (symbol !is KtNamedSymbol) return
@@ -97,7 +99,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
             }
         } ?: return
 
-        Weighers.applyWeighsToLookupElement(context, lookup, symbol, scopeKind)
+        applyWeighsToLookupElement(context, lookup, KtSymbolWithOrigin(symbol, symbolOrigin))
         sink.addElement(lookup)
     }
 
@@ -105,7 +107,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         context: WeighingContext,
         signature: KtCallableSignature<*>,
         options: CallableInsertionOptions,
-        scopeKind: KtScopeKind?,
+        symbolOrigin: CompletionSymbolOrigin,
         priority: ItemPriority? = null,
         explicitReceiverTypeHint: KtType? = null,
     ) {
@@ -123,7 +125,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         }
         priority?.let { lookup.priority = it }
 
-        Weighers.applyWeighsToLookupElementForCallable(context, lookup, signature, scopeKind)
+        Weighers.applyWeighsToLookupElementForCallable(context, lookup, signature, symbolOrigin)
         sink.addElement(lookup.adaptToReceiver(context, explicitReceiverTypeHint?.render(position = Variance.INVARIANT)))
     }
 

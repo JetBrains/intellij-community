@@ -19,6 +19,19 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 
+/**
+ * Origin of [KtSymbol] used in completion suggestion
+ */
+internal sealed class CompletionSymbolOrigin {
+    class Scope(val kind: KtScopeKind) : CompletionSymbolOrigin()
+
+    object Index : CompletionSymbolOrigin()
+
+    companion object {
+        const val SCOPE_OUTSIDE_TOWER_INDEX: Int = -1
+    }
+}
+
 internal fun createStarTypeArgumentsList(typeArgumentsCount: Int): String =
     if (typeArgumentsCount > 0) {
         List(typeArgumentsCount) { "*" }.joinToString(prefix = "<", postfix = ">")
@@ -100,12 +113,14 @@ internal fun KtAnalysisSession.collectNonExtensionsForType(
 
     val nonExtensionsFromType = (callables + innerClassesConstructors).filterNonExtensions(visibilityChecker, symbolFilter)
 
-    return sequence<KtSymbolWithContainingScopeKind<KtCallableSymbol>> {
+    val scopeIndex = indexInTower ?: CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX
+
+    return sequence {
         yieldAll(nonExtensionsFromType.map {
-            KtCallableSignatureWithContainingScopeKind(it, indexInTower?.let { KtScopeKind.SimpleTypeScope(indexInTower) })
+            KtCallableSignatureWithContainingScopeKind(it, KtScopeKind.SimpleTypeScope(scopeIndex))
         })
         yieldAll(syntheticProperties.map {
-            KtCallableSignatureWithContainingScopeKind(it, indexInTower?.let { KtScopeKind.SyntheticJavaPropertiesScope(indexInTower) })
+            KtCallableSignatureWithContainingScopeKind(it, KtScopeKind.SyntheticJavaPropertiesScope(scopeIndex))
         })
     }.applyIf(excludeEnumEntries) { filterNot { isEnumEntriesProperty(it.signature.symbol) } }
 }

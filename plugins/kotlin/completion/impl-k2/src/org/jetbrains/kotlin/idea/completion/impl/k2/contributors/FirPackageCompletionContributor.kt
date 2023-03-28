@@ -3,11 +3,14 @@
 package org.jetbrains.kotlin.idea.completion.contributors
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
 import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirNameReferencePositionContext
 import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 
@@ -23,12 +26,14 @@ internal class FirPackageCompletionContributor(
             positionContext.explicitReceiver?.reference()?.resolveToSymbol() as? KtPackageSymbol
         } ?: return
 
+        val symbolOrigin = CompletionSymbolOrigin.Scope(KtScopeKind.PackageMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX))
+
         rootSymbol.getPackageScope()
             .getPackageSymbols(scopeNameFilter)
             .filterNot { it.fqName.isExcludedFromAutoImport(project, originalKtFile) }
             .forEach { packageSymbol ->
                 val element = lookupElementFactory.createPackagePartLookupElement(packageSymbol.fqName)
-                with(Weighers) { applyWeighsToLookupElement(weighingContext, element, packageSymbol, scopeKind = null) }
+                Weighers.applyWeighsToLookupElement(weighingContext, element, KtSymbolWithOrigin(packageSymbol, symbolOrigin))
                 sink.addElement(element)
             }
     }

@@ -10,9 +10,10 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.psi.UserDataProperty
 
-object ClassifierWeigher {
+internal object ClassifierWeigher {
     const val WEIGHER_ID = "kotlin.classifierWeigher"
     const val LOW_PRIORITY = Int.MAX_VALUE
 
@@ -21,13 +22,17 @@ object ClassifierWeigher {
         NON_LOCAL
     }
 
-    fun KtAnalysisSession.addWeight(lookupElement: LookupElement, symbol: KtSymbol, scopeKind: KtScopeKind?) {
+    fun KtAnalysisSession.addWeight(lookupElement: LookupElement, symbol: KtSymbol, symbolOrigin: CompletionSymbolOrigin) {
         if (symbol !is KtClassifierSymbol) return
 
         val isLocal = (symbol as? KtClassLikeSymbol)?.symbolKind == KtSymbolKind.LOCAL
         val weight = if (isLocal) Weight.LOCAL else Weight.NON_LOCAL
 
-        lookupElement.classifierWeight = CompoundWeight2(weight, scopeKind?.indexInTower ?: LOW_PRIORITY)
+        val priority = when (symbolOrigin) {
+            is CompletionSymbolOrigin.Scope -> symbolOrigin.kind.indexInTower
+            is CompletionSymbolOrigin.Index -> LOW_PRIORITY
+        }
+        lookupElement.classifierWeight = CompoundWeight2(weight, priority)
     }
 
     object Weigher : LookupElementWeigher(WEIGHER_ID) {
