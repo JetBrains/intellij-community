@@ -16,6 +16,7 @@ import junit.framework.TestCase
 import org.junit.After
 import org.junit.Before
 import org.junit.ClassRule
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.jupiter.api.fail
 import org.junit.runner.RunWith
@@ -282,6 +283,43 @@ class MergingQueueGuiExecutorTest {
   }
 
   @Test
+  @Ignore("Bug in MergingQueueGuiExecutor")
+  fun `test executor is running immediately after startBackgroundProcess`() {
+    val exceptionRef = AtomicReference<Throwable>()
+    val queue = MergingTaskQueue<LoggingTask>()
+    val id = AtomicInteger()
+    val listener = ValidatingListener(exceptionRef)
+    val executor = MergingQueueGuiExecutor(
+      project, queue, listener, "title", "suspend"
+    )
+
+    repeat(100) {
+      val endTask = CountDownLatch(1)
+      waitForExecutorToCompleteSubmittedTasks(executor, 1)
+      TestCase.assertFalse(executor.isRunning.value)
+      queue.addTask(object : LoggingTask(id.incrementAndGet(), null, null) {
+        override fun perform(indicator: ProgressIndicator) {
+          try {
+            TestCase.assertTrue(executor.isRunning.value)
+            endTask.awaitOrThrow(1, "Task is running too long")
+            return super.perform(indicator)
+          }
+          catch (t: Throwable) {
+            exceptionRef.set(t)
+            throw t
+          }
+        }
+      })
+      executor.startBackgroundProcess();
+      TestCase.assertTrue(executor.isRunning.value)
+      endTask.countDown()
+      TestCase.assertNull(exceptionRef.get())
+    }
+
+    stopExecutor(executor)
+  }
+
+  @Test
   fun `test concurrent stress mode`() {
     val repeatCount = 500
     val writeThreadsCount = 5
@@ -326,9 +364,11 @@ class MergingQueueGuiExecutorTest {
     threadsRunning.awaitOrThrow(20, "Wait for write all threads to finish")
     waitForExecutorToCompleteSubmittedTasks(executor, 10)
 
-    TestCase.assertEquals(repeatCount * writeThreadsCount, performLog.size)
-    TestCase.assertEquals(repeatCount * writeThreadsCount, disposeLog.size)
     TestCase.assertNull(exceptionRef.get())
+    TestCase.assertTrue("Queue should be empty", queue.isEmpty)
+    TestCase.assertEquals("Not all expected tasks were submitted", repeatCount * writeThreadsCount, id.get())
+    TestCase.assertEquals("Not all submitted tasks were launched", repeatCount * writeThreadsCount, performLog.size)
+    TestCase.assertEquals("Not all submitted tasks were disposed", repeatCount * writeThreadsCount, disposeLog.size)
 
     stopExecutor(executor)
   }
