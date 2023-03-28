@@ -551,6 +551,8 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                     </build>
                     """);
 
+    checkResourcesPluginIndexed();
+
     VirtualFile f = createProjectSubFile("res/foo1.properties",
                                          """
                                            foo1=${basedir}
@@ -594,6 +596,8 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                       </plugins>
                     </build>
                     """);
+
+    checkResourcesPluginIndexed();
 
     VirtualFile f = createProjectSubFile("res/foo1.properties",
                                          "foo1=${basedir}\n" +
@@ -643,9 +647,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                          </plugins>
                        </build>""");
 
-    var indicesManager = MavenIndicesManager.getInstance(myProject);
-    var pluginIndexed = indicesManager.hasLocalArtifactId("org.apache.maven.plugins", "maven-resources-plugin");
-    assertTrue("Maven resources plugin is not indexed", pluginIndexed);
+    checkResourcesPluginIndexed();
 
     checkHighlighting();
   }
@@ -687,5 +689,11 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     }
 
     fail("Maven filter reference was not added");
+  }
+
+  private void checkResourcesPluginIndexed() {
+    var indicesManager = MavenIndicesManager.getInstance(myProject);
+    var pluginIndexed = indicesManager.hasLocalArtifactId("org.apache.maven.plugins", "maven-resources-plugin");
+    assertTrue("Maven resources plugin is not indexed", pluginIndexed);
   }
 }
