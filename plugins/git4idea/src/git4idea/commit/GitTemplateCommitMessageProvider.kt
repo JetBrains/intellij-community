@@ -59,6 +59,7 @@ private class GitCommitTemplateMessageUpdater(private val project: Project,
   }
 
   private fun updateCommitMessage() {
+    if (project.isDisposed) return
     if (vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) return
 
     val templateContent = GitTemplateCommitMessageProvider.getCommitMessage(project)
