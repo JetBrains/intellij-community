@@ -23,7 +23,8 @@ internal class HtmlEditorPane() : BaseHtmlEditorPane() {
     editorKit = HTMLEditorKitBuilder().withViewFactoryExtensions(
       ExtendableHTMLViewFactory.Extensions.WORD_WRAP,
       HtmlEditorPaneUtil.CONTENT_TOOLTIP,
-      GHExtensions()
+      ScalingImageExtension,
+      InlineIconExtension
     ).build()
   }
 
@@ -31,11 +32,17 @@ internal class HtmlEditorPane() : BaseHtmlEditorPane() {
     setBody(body)
   }
 
-  private class GHExtensions : ExtendableHTMLViewFactory.Extension {
+  private object ScalingImageExtension : ExtendableHTMLViewFactory.Extension {
     override fun invoke(elem: Element, view: View): View {
       if (view is ImageView) {
         return MyScalingImageView(elem)
       }
+      return view
+    }
+  }
+
+  private object InlineIconExtension : ExtendableHTMLViewFactory.Extension {
+    override fun invoke(elem: Element, view: View): View {
       if (ICON_INLINE_ELEMENT_NAME == elem.name) {
         val icon = elem.attributes.getAttribute(HTML.Attribute.SRC)?.let {
           val path = it as String
