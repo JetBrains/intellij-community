@@ -48,7 +48,7 @@ public final class BootstrapClassLoaderUtil {
     return pluginDir.resolve(MARKETPLACE_PLUGIN_DIR).resolve("lib/boot");
   }
 
-  static boolean shouldInstallMarketplace(@NotNull Path homePath, @NotNull Path mpBoot) {
+  static boolean isMarketplacePluginCompatible(@NotNull Path homePath, @NotNull Path pluginDir, @NotNull Path mpBoot) {
     if (Files.notExists(mpBoot)) {
       return false;
     }
@@ -68,7 +68,7 @@ public final class BootstrapClassLoaderUtil {
       if (ideVersion != null) {
         SimpleVersion sinceVersion = null;
         SimpleVersion untilVersion = null;
-        try (BufferedReader reader = Files.newBufferedReader(Path.of(PathManager.getPluginsPath()).resolve(MARKETPLACE_PLUGIN_DIR).resolve("platform-build.txt"))) {
+        try (BufferedReader reader = Files.newBufferedReader(pluginDir.resolve(MARKETPLACE_PLUGIN_DIR).resolve("platform-build.txt"))) {
           sinceVersion = SimpleVersion.parse(reader.readLine());
           untilVersion = SimpleVersion.parse(reader.readLine());
         }

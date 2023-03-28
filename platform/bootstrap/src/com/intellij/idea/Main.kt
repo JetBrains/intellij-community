@@ -157,21 +157,29 @@ fun initClassLoader(addCwmLibs: Boolean) {
                     ?: throw RuntimeException("You must run JVM with -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader")
   val classpath = LinkedHashSet<Path>()
   val preinstalledPluginDir = distDir.resolve("plugins")
+  
   var pluginDir = preinstalledPluginDir
   var marketPlaceBootDir = BootstrapClassLoaderUtil.findMarketplaceBootDir(pluginDir)
   var mpBoot = marketPlaceBootDir.resolve(MARKETPLACE_BOOTSTRAP_JAR)
-  if (Files.notExists(mpBoot)) {
+  var installMarketplace = Files.exists(mpBoot) // enough to check for existence as preinstalled plugin is always compatible
+
+  if (!installMarketplace) {
     pluginDir = Path.of(PathManager.getPluginsPath())
     marketPlaceBootDir = BootstrapClassLoaderUtil.findMarketplaceBootDir(pluginDir)
     mpBoot = marketPlaceBootDir.resolve(MARKETPLACE_BOOTSTRAP_JAR)
+    installMarketplace = BootstrapClassLoaderUtil.isMarketplacePluginCompatible(distDir, pluginDir, mpBoot)
   }
-  val installMarketplace = BootstrapClassLoaderUtil.shouldInstallMarketplace(distDir, mpBoot)
+  
   if (installMarketplace) {
     val marketplaceImpl = marketPlaceBootDir.resolve("marketplace-impl.jar")
     if (Files.exists(marketplaceImpl)) {
       classpath.add(marketplaceImpl)
     }
+    else {
+      installMarketplace = false
+    }
   }
+  
   var updateSystemClassLoader = false
   if (addCwmLibs) {
     // Remote dev requires Projector libraries in system classloader due to AWT internals (see below)
