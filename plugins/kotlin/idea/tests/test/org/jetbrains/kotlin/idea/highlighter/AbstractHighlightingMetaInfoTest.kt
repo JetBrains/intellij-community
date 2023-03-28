@@ -21,7 +21,7 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
 
     override fun doMultiFileTest(files: List<PsiFile>, globalDirectives: Directives) {
         val expectedHighlighting = dataFile().getExpectedHighlightingFile()
-        checkHighlighting(files.first(), expectedHighlighting)
+        checkHighlighting(files.first(), expectedHighlighting, globalDirectives)
     }
 
     private fun checkHighlighting(file: PsiFile, expectedHighlightingFile: File) {
@@ -32,7 +32,7 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
 
         val codeMetaInfoTestCase = CodeMetaInfoTestCase(
             codeMetaInfoTypes = listOf(highlightingRenderConfiguration),
-            filterMetaInfo = createMetaInfoFilter()
+            filterMetaInfo = createMetaInfoFilter(allowErrorHighlighting = ALLOW_ERRORS in globalDirectives),
         )
 
         codeMetaInfoTestCase.checkFile(file.virtualFile, expectedHighlightingFile, project)
@@ -45,7 +45,7 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
      * - Filter exact highlightings duplicates. It is a workaround about a bug in old FE10 highlighting, which sometimes highlights
      * something twice
      */
-    private fun createMetaInfoFilter(): (CodeMetaInfo) -> Boolean {
+    private fun createMetaInfoFilter(allowErrorHighlighting: Boolean): (CodeMetaInfo) -> Boolean {
         val forbiddenSeverities = setOf(HighlightSeverity.ERROR)
 
         val ignoredSeverities = setOf(HighlightSeverity.WARNING, HighlightSeverity.WEAK_WARNING)
@@ -93,4 +93,8 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
     }
 
     protected open fun highlightingFileNameSuffix(ktFilePath: File): String = HIGHLIGHTING_EXTENSION
+
+    companion object {
+        private const val ALLOW_ERRORS = "ALLOW_ERRORS"
+    }
 }
