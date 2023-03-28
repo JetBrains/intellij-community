@@ -4,6 +4,7 @@
 package org.jetbrains.intellij.build.testFramework
 
 import com.intellij.diagnostic.telemetry.useWithScope2
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.rt.execution.junit.FileComparisonData
@@ -153,6 +154,8 @@ suspend fun runTestBuild(
   }
 }
 
+private val defaultLogFactory = Logger.getFactory()
+
 private suspend fun doRunTestBuild(context: BuildContext, traceSpanName: String?, build: suspend (context: BuildContext) -> Unit) {
   val outDir = context.paths.buildOutputDir
   var error: Throwable? = null
@@ -189,6 +192,11 @@ private suspend fun doRunTestBuild(context: BuildContext, traceSpanName: String?
 
     // close debug logging to prevent locking of output directory on Windows
     (context.messages as BuildMessagesImpl).close()
+
+    /**
+     * Overridden in [org.jetbrains.intellij.build.impl.JpsCompilationRunner.runBuild]
+     */
+    Logger.setFactory(defaultLogFactory)
 
     try {
       NioFiles.deleteRecursively(outDir)
