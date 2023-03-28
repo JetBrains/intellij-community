@@ -33,7 +33,10 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
 
         val codeMetaInfoTestCase = CodeMetaInfoTestCase(
             codeMetaInfoTypes = listOf(highlightingRenderConfiguration),
-            filterMetaInfo = createMetaInfoFilter(allowErrorHighlighting = ALLOW_ERRORS in globalDirectives),
+            filterMetaInfo = createMetaInfoFilter(
+                allowErrorHighlighting = ALLOW_ERRORS in globalDirectives,
+                highlightWarnings = HIGHLIGHT_WARNINGS in globalDirectives,
+            ),
         )
 
         codeMetaInfoTestCase.checkFile(file.virtualFile, expectedHighlightingFile, project)
@@ -46,7 +49,7 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
      * - Filter exact highlightings duplicates. It is a workaround about a bug in old FE10 highlighting, which sometimes highlights
      * something twice
      */
-    private fun createMetaInfoFilter(allowErrorHighlighting: Boolean): (CodeMetaInfo) -> Boolean {
+    private fun createMetaInfoFilter(allowErrorHighlighting: Boolean, highlightWarnings: Boolean): (CodeMetaInfo) -> Boolean {
         val forbiddenSeverities = setOf(HighlightSeverity.ERROR)
 
         val ignoredSeverities = setOf(HighlightSeverity.WARNING, HighlightSeverity.WEAK_WARNING)
@@ -74,7 +77,7 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
             }
         })
 
-        return { metaInfo ->
+        return filter@{ metaInfo ->
             require(metaInfo is HighlightingCodeMetaInfo)
             val highlightingInfo = metaInfo.highlightingInfo
 
@@ -85,7 +88,9 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
                 """.trimMargin()
             }
 
-            highlightingInfo.severity !in ignoredSeverities && seenMetaInfos.add(metaInfo)
+            if (highlightingInfo.severity in ignoredSeverities && !highlightWarnings) return@filter false
+
+            seenMetaInfos.add(metaInfo)
         }
     }
 
@@ -97,6 +102,7 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
 
     companion object {
         private const val ALLOW_ERRORS = "ALLOW_ERRORS"
+        private const val HIGHLIGHT_WARNINGS = "HIGHLIGHT_WARNINGS"
         private const val HIGHLIGHTER_ATTRIBUTES_KEY = "HIGHLIGHTER_ATTRIBUTES_KEY"
     }
 }
