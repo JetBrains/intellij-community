@@ -84,11 +84,10 @@ internal object ScriptingTargetPlatformDetector : TargetPlatformDetector {
     }
 
     private fun getScriptSettings(project: Project, virtualFile: VirtualFile, definition: ScriptDefinition): ScriptLanguageSettings {
-        val scriptModule = getScriptModule(project, virtualFile)
-
         val environmentCompilerOptions = definition.defaultCompilerOptions
         val args = definition.compilerOptions
         return if (environmentCompilerOptions.none() && args.none()) {
+            val scriptModule = getScriptModule(project, virtualFile)
             val languageVersionSettings = scriptModule?.languageVersionSettings ?: project.languageVersionSettings
             val platformVersion = detectDefaultTargetPlatformVersion(scriptModule?.platform)
             ScriptLanguageSettings(languageVersionSettings, platformVersion)
@@ -100,6 +99,7 @@ internal object ScriptingTargetPlatformDetector : TargetPlatformDetector {
                 parseCommandLineArguments(args.toList(), compilerArguments)
 
                 // TODO: reporting
+                val scriptModule = getScriptModule(project, virtualFile)
                 val languageVersionSettings = compilerArguments.toLanguageVersionSettings(MessageCollector.NONE)
                 val platformVersion = compilerArguments.jvmTarget?.let { JvmTarget.fromString(it) }
                     ?: detectDefaultTargetPlatformVersion(scriptModule?.platform)
