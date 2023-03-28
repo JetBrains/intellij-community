@@ -481,17 +481,14 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModules("project", "project.p1", "project.p2");
 
     final List<LibraryOrderEntry> moduleLibDepsP1 = getModuleLibDeps("project.p1", "Gradle: dep");
-    final boolean isGradleNewerThen_2_4 = GradleVersion.version(gradleVersion).getBaseVersion().compareTo(GradleVersion.version("2.4")) > 0;
     for (LibraryOrderEntry libDep : moduleLibDepsP1) {
-      assertEquals("Dependency must be " + (isGradleNewerThen_2_4 ? "module" : "project") + " level: " + libDep.toString(),
-                   isGradleNewerThen_2_4, libDep.isModuleLevel());
+      assertTrue("Dependency must be module level: " + libDep.toString(), libDep.isModuleLevel());
       assertEquals("Wrong library dependency", depP1Jar.getUrl(), libDep.getLibrary().getUrls(OrderRootType.CLASSES)[0]);
     }
 
     final List<LibraryOrderEntry> moduleLibDepsP2 = getModuleLibDeps("project.p2", "Gradle: dep");
     for (LibraryOrderEntry libDep : moduleLibDepsP2) {
-      assertEquals("Dependency must be " + (isGradleNewerThen_2_4 ? "module" : "project") + " level: " + libDep.toString(),
-                   isGradleNewerThen_2_4, libDep.isModuleLevel());
+      assertTrue("Dependency must be module level: " + libDep.toString(), libDep.isModuleLevel());
       assertEquals("Wrong library dependency", depP2Jar.getUrl(), libDep.getLibrary().getUrls(OrderRootType.CLASSES)[0]);
     }
   }
