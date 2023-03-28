@@ -663,10 +663,8 @@ public class DebugProcessEvents extends DebugProcessImpl {
           });
         }
 
-        // Skip suspend-all breakpoints in other threads during suspend-all stepping:
-        if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL &&
-            !DebuggerSession.filterBreakpointsDuringSteppingUsingDebuggerEngine()) {
-
+        // Skip breakpoints in other threads during suspend-all stepping:
+        if (!DebuggerSession.filterBreakpointsDuringSteppingUsingDebuggerEngine()) {
           ThreadReference filteredThread = getRequestsManager().getFilterThread();
           if (filteredThread != null && !Comparing.equal(filteredThread, thread)) {
             notifySkippedBreakpoints(event, SkippedBreakpointReason.STEPPING);
