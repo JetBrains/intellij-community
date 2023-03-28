@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui.util
 
-import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.HtmlEditorPaneUtil
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsSafe
@@ -22,7 +22,7 @@ internal class HtmlEditorPane() : BaseHtmlEditorPane() {
   init {
     editorKit = HTMLEditorKitBuilder().withViewFactoryExtensions(
       ExtendableHTMLViewFactory.Extensions.WORD_WRAP,
-      CollaborationToolsUIUtil.CONTENT_TOOLTIP,
+      HtmlEditorPaneUtil.CONTENT_TOOLTIP,
       GHExtensions()
     ).build()
   }
