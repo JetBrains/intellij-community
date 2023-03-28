@@ -38,6 +38,7 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase() {
     private lateinit var testAppDirectory: File
     private lateinit var jvmSourcesOutputDirectory: File
     private lateinit var commonSourcesOutputDirectory: File
+    private lateinit var scriptSourcesOutputDirectory: File
     private lateinit var libraryOutputDirectory: File
 
     override fun getTestAppPath(): String = testAppDirectory.absolutePath
@@ -48,6 +49,7 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase() {
         testAppDirectory = KotlinTestUtils.tmpDir("debuggerTestSources")
         jvmSourcesOutputDirectory = File(testAppDirectory, SOURCES_DIRECTORY_NAME).apply { mkdirs() }
         commonSourcesOutputDirectory = File(testAppDirectory, COMMON_SOURCES_DIR).apply { mkdirs() }
+        scriptSourcesOutputDirectory = File(testAppDirectory, SCRIPT_SOURCES_DIR).apply { mkdirs() }
         libraryOutputDirectory = File(testAppDirectory, "lib").apply { mkdirs() }
         super.runBare(testRunnable)
     }
@@ -88,8 +90,11 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase() {
             TestCompileConfiguration(useIrBackend = true, JvmClosureGenerationScheme.CLASS, enabledLanguageFeatures = emptyList())
         )
         compilerFacility.compileTestSourcesWithCli(
-            module, jvmSourcesOutputDirectory, commonSourcesOutputDirectory, classesDir, libraryOutputDirectory)
-        val (sourceFiles, _) = compilerFacility.creatKtFiles(jvmSourcesOutputDirectory, commonSourcesOutputDirectory)
+            module, jvmSourcesOutputDirectory, commonSourcesOutputDirectory,
+            scriptSourcesOutputDirectory, classesDir, libraryOutputDirectory
+        )
+        val sourceFiles =
+            compilerFacility.creatKtFiles(jvmSourcesOutputDirectory, commonSourcesOutputDirectory, scriptSourcesOutputDirectory).jvmKtFiles
         val (_, analysisResult) = compilerFacility.analyzeSources(sourceFiles)
         val bindingContext = analysisResult.bindingContext
 

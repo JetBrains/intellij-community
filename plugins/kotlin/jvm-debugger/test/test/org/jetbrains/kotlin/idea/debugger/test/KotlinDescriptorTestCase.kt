@@ -53,15 +53,19 @@ import java.io.File
 internal const val KOTLIN_LIBRARY_NAME = "KotlinJavaRuntime"
 internal const val TEST_LIBRARY_NAME = "TestLibrary"
 internal const val COMMON_SOURCES_DIR = "commonSrc"
+internal const val SCRIPT_SOURCES_DIR = "scripts"
 internal const val JVM_MODULE_NAME = "jvm"
 
 abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
     private lateinit var testAppDirectory: File
     private lateinit var jvmSourcesOutputDirectory: File
     private lateinit var commonSourcesOutputDirectory: File
+    private lateinit var scriptSourcesOutputDirectory: File
 
     private lateinit var librarySrcDirectory: File
     private lateinit var libraryOutputDirectory: File
+
+    protected lateinit var sourcesKtFiles: TestSourcesKtFiles
 
     override fun getTestAppPath(): String = testAppDirectory.absolutePath
     override fun getTestProjectJdk() = PluginTestCaseBase.fullJdk()
@@ -77,6 +81,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
         testAppDirectory = tmpDir("debuggerTestSources")
         jvmSourcesOutputDirectory = File(testAppDirectory, ExecutionTestCase.SOURCES_DIRECTORY_NAME).apply { mkdirs() }
         commonSourcesOutputDirectory = File(testAppDirectory, COMMON_SOURCES_DIR).apply { mkdirs() }
+        scriptSourcesOutputDirectory = File(testAppDirectory, SCRIPT_SOURCES_DIR).apply { mkdirs() }
 
         librarySrcDirectory = File(testAppDirectory, "libSrc").apply { mkdirs() }
         libraryOutputDirectory = File(testAppDirectory, "lib").apply { mkdirs() }
@@ -201,10 +206,11 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
 
         compilerFacility.compileLibrary(librarySrcDirectory, libraryOutputDirectory)
         compilerFacility.compileTestSourcesWithCli(
-            myModule, jvmSourcesOutputDirectory, commonSourcesOutputDirectory, File(appOutputPath), libraryOutputDirectory
+            myModule, jvmSourcesOutputDirectory, commonSourcesOutputDirectory, scriptSourcesOutputDirectory,
+            File(appOutputPath), libraryOutputDirectory
         )
-        val (jvmKtFiles, _) = compilerFacility.creatKtFiles(jvmSourcesOutputDirectory, commonSourcesOutputDirectory)
-        val mainClassName = compilerFacility.analyzeAndFindMainClass(jvmKtFiles)
+        sourcesKtFiles = compilerFacility.creatKtFiles(jvmSourcesOutputDirectory, commonSourcesOutputDirectory, scriptSourcesOutputDirectory)
+        val mainClassName = analyzeAndFindMainClass(compilerFacility)
         breakpointCreator = BreakpointCreator(
             project,
             ::systemLogger,
@@ -213,6 +219,10 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
 
         createLocalProcess(mainClassName)
         doMultiFileTest(testFiles, preferences)
+    }
+
+    protected open fun analyzeAndFindMainClass(compilerFacility: DebuggerTestCompilerFacility): String {
+        return compilerFacility.analyzeAndFindMainClass(sourcesKtFiles.jvmKtFiles)
     }
 
     override fun createLocalProcess(className: String?) {

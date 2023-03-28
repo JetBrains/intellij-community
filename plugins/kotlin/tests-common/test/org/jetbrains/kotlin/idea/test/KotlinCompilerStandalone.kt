@@ -194,9 +194,6 @@ class KotlinCompilerStandalone @JvmOverloads constructor(
 
         if (files.none { it.extension.lowercase(Locale.getDefault()) == "kts" }) {
             args += "-Xdisable-default-scripting-plugin"
-        } else {
-            // TODO(Roman.Efremov): Fix in subsequent commits. This doesn't work in K2
-            args += "-Xallow-any-scripts-in-source-roots"
         }
 
         args += options
@@ -266,9 +263,8 @@ object KotlinCliCompilerFacade {
         return classLoader.loadClass(compilerClass.java.name)
     }
 
-    @Synchronized
-    private fun createCompilerClassLoader(): ClassLoader {
-        val artifacts = listOf(
+    fun getTestArtifactsNeededForCLICompiler(): List<File> {
+        return listOf(
             TestKotlinArtifacts.kotlinStdlib,
             TestKotlinArtifacts.kotlinStdlibJdk7,
             TestKotlinArtifacts.kotlinStdlibJdk8,
@@ -283,6 +279,11 @@ object KotlinCliCompilerFacade {
             TestKotlinArtifacts.kotlinDaemon,
             TestKotlinArtifacts.jetbrainsAnnotations,
         )
+    }
+
+    @Synchronized
+    private fun createCompilerClassLoader(): ClassLoader {
+        val artifacts = getTestArtifactsNeededForCLICompiler()
 
         // enable old backend support in compiler
         val tempDirWithOldBackedMarker = createTempDirectory()

@@ -123,20 +123,23 @@ open class DebuggerTestCompilerFacility(
         module: Module,
         jvmSrcDir: File,
         commonSrcDir: File,
+        scriptSrcDir: File,
         classesDir: File,
         libClassesDir: File
     ) = with(mainFiles) {
         resources.copy(jvmSrcDir)
         resources.copy(classesDir) // sic!
         (kotlinJvm + java).copy(jvmSrcDir)
+        kotlinScripts.copy(scriptSrcDir)
         kotlinCommon.forEach { testFile -> testFile.copy(commonSrcDir.resolve(testFile.module.name)) }
 
         LocalFileSystem.getInstance().refreshAndFindFileByIoFile(classesDir)
         LocalFileSystem.getInstance().refreshAndFindFileByIoFile(libClassesDir)
 
-
-        doWriteAction {
-            compileKotlinFilesWithCliCompiler(jvmSrcDir, commonSrcDir, classesDir, libClassesDir)
+        if (kotlinJvm.isNotEmpty() || kotlinCommon.isNotEmpty()) {
+            doWriteAction {
+                compileKotlinFilesWithCliCompiler(jvmSrcDir, commonSrcDir, classesDir, libClassesDir)
+            }
         }
 
         if (java.isNotEmpty()) {
@@ -149,17 +152,18 @@ open class DebuggerTestCompilerFacility(
         }
     }
 
-    fun creatKtFiles(jvmSrcDir: File, commonSrcDir: File): Pair<List<KtFile>, List<KtFile>> = with(mainFiles) {
-        return doWriteAction<Pair<List<KtFile>, List<KtFile>>> {
+    fun creatKtFiles(jvmSrcDir: File, commonSrcDir: File, scriptsSrcDir: File): TestSourcesKtFiles = with(mainFiles) {
+        return doWriteAction<TestSourcesKtFiles> {
             val jvmKtFiles = createPsiFilesAndCollectKtFiles(kotlinJvm + java, jvmSrcDir)
             val commonKtFiles = kotlinCommon.groupBy { it.module }.flatMap { (module, files) ->
                 createPsiFilesAndCollectKtFiles(files, commonSrcDir.resolve(module.name))
             }
-            val allKtFiles = jvmKtFiles + commonKtFiles
+            val scriptKtFiles = createPsiFilesAndCollectKtFiles(kotlinScripts, scriptsSrcDir)
+            val allKtFiles = jvmKtFiles + commonKtFiles + scriptKtFiles
             if (allKtFiles.isEmpty()) {
                 error("No Kotlin files found")
             }
-            jvmKtFiles to commonKtFiles
+            TestSourcesKtFiles(jvmKtFiles, commonKtFiles, scriptKtFiles)
         }
     }
 
@@ -270,9 +274,12 @@ class TestFilesByTarget(val main: List<TestFileWithModule>, val library: List<Te
 class TestFilesByLanguageAndPlatform(
     val kotlinJvm: List<TestFileWithModule>,
     val kotlinCommon: List<TestFileWithModule>,
+    val kotlinScripts: List<TestFileWithModule>,
     val java: List<TestFileWithModule>,
     val resources: List<TestFileWithModule>
 )
+
+class TestSourcesKtFiles(val jvmKtFiles: List<KtFile>, val commonKtFiles: List<KtFile>, val scriptKtFiles: List<KtFile>)
 
 private fun splitByTarget(files: List<TestFileWithModule>): TestFilesByTarget {
     val main = mutableListOf<TestFileWithModule>()
@@ -289,6 +296,7 @@ private fun splitByTarget(files: List<TestFileWithModule>): TestFilesByTarget {
 private fun splitByLanguage(files: List<TestFileWithModule>): TestFilesByLanguageAndPlatform {
     val kotlinJvm = mutableListOf<TestFileWithModule>()
     val kotlinCommon = mutableListOf<TestFileWithModule>()
+    val kotlinScripts = mutableListOf<TestFileWithModule>()
     val java = mutableListOf<TestFileWithModule>()
     val resources = mutableListOf<TestFileWithModule>()
 
@@ -297,11 +305,12 @@ private fun splitByLanguage(files: List<TestFileWithModule>): TestFilesByLanguag
         val extension = file.name.substringAfterLast(".", missingDelimiterValue = "")
 
         val container = when (extension) {
-            "kt", "kts" ->
+            "kt" ->
                 when (file.module) {
                     is DebuggerTestModule.Common -> kotlinCommon
                     is DebuggerTestModule.Jvm -> kotlinJvm
                 }
+            "kts" -> kotlinScripts
             "java" -> java
             else -> resources
         }
@@ -309,5 +318,9 @@ private fun splitByLanguage(files: List<TestFileWithModule>): TestFilesByLanguag
         container += file
     }
 
-    return TestFilesByLanguageAndPlatform(kotlinJvm = kotlinJvm, kotlinCommon = kotlinCommon, java = java, resources = resources)
+    return TestFilesByLanguageAndPlatform(
+        kotlinJvm = kotlinJvm, kotlinCommon = kotlinCommon,
+        kotlinScripts = kotlinScripts,
+        java = java, resources = resources
+    )
 }
