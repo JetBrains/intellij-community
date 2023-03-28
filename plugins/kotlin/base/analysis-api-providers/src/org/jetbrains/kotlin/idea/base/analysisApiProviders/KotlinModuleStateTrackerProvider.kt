@@ -176,10 +176,12 @@ class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
     }
 
     @TestOnly
-    fun incrementModificationCountForAllModules() {
-        libraryCache.forEach { _, tracker -> tracker.incModificationCount() }
+    fun incrementModificationCountForAllModules(includeBinaryModules: Boolean) {
         sourceModuleCache.forEach { _, tracker -> tracker.incModificationCount() }
-        sdkCache.forEach { _, tracker -> tracker.incModificationCount() }
+        if (includeBinaryModules) {
+            libraryCache.forEach { _, tracker -> tracker.incModificationCount() }
+            sdkCache.forEach { _, tracker -> tracker.incModificationCount() }
+        }
     }
 
     override fun dispose() {}
