@@ -78,6 +78,10 @@ public class CStyleArrayDeclarationInspection extends BaseInspection implements 
         // This was fixed in Java 16 (https://bugs.openjdk.org/browse/JDK-8250629)
         return;
       }
+      if (variable instanceof PsiParameter parameter && parameter.isVarArgs()) {
+        // not compilable, fix is handled by error highlighting
+        return;
+      }
       final PsiTypeElement typeElement = variable.getTypeElement();
       if (typeElement == null || typeElement.isInferredType()) {
         return; // true for enum constants or lambda parameters

@@ -38,7 +38,7 @@ public class CStyleArrayDeclaration
         return a;
     }
 
-    record Record(int x<error descr="C-style record component declaration is not allowed">[]</error>) {
+    record Record(int x<error descr="C-style array declaration not allowed in record component">[]</error>) {
     }
 
     int methodWithoutBody()<warning descr="Method 'methodWithoutBody()' has C-style array return type declaration">[][]</warning><EOLError descr="'{' or ';' expected"></EOLError>

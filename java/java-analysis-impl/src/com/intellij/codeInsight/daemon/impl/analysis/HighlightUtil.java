@@ -1798,8 +1798,8 @@ public final class HighlightUtil {
     return null;
   }
 
-  static HighlightInfo.Builder checkRecordComponentCStyleDeclaration(@NotNull PsiRecordComponent component) {
-    PsiIdentifier identifier = component.getNameIdentifier();
+  static HighlightInfo.Builder checkCStyleDeclaration(@NotNull PsiVariable variable) {
+    PsiIdentifier identifier = variable.getNameIdentifier();
     if (identifier == null) return null;
     PsiElement start = null;
     PsiElement end = null;
@@ -1811,9 +1811,11 @@ public final class HighlightUtil {
     }
     if (start != null) {
       HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-        .range(component, start.getTextRange().getStartOffset(), end.getTextRange().getEndOffset())
-        .descriptionAndTooltip(JavaErrorBundle.message("record.component.cstyle.declaration"));
-      IntentionAction action = new NormalizeRecordComponentFix(component);
+        .range(variable, start.getTextRange().getStartOffset(), end.getTextRange().getEndOffset())
+        .descriptionAndTooltip(variable instanceof PsiRecordComponent
+          ? JavaErrorBundle.message("record.component.cstyle.declaration")
+          : JavaErrorBundle.message("vararg.cstyle.array.declaration"));
+      IntentionAction action = new NormalizeBracketsFix(variable);
       info.registerFix(action, null, null, null, null);
       return info;
     }

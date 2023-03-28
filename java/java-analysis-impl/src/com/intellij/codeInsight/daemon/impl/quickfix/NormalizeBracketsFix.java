@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
@@ -9,16 +9,16 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiRecordComponent;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class NormalizeRecordComponentFix extends LocalQuickFixAndIntentionActionOnPsiElement
+public final class NormalizeBracketsFix extends LocalQuickFixAndIntentionActionOnPsiElement
   implements IntentionActionWithFixAllOption {
-  public NormalizeRecordComponentFix(PsiRecordComponent component) {
-    super(component);
+  public NormalizeBracketsFix(PsiVariable variable) {
+    super(variable);
   }
 
   @Override
@@ -27,7 +27,7 @@ public final class NormalizeRecordComponentFix extends LocalQuickFixAndIntention
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    JavaSharedImplUtil.normalizeBrackets((PsiRecordComponent)startElement);
+    JavaSharedImplUtil.normalizeBrackets((PsiVariable)startElement);
   }
 
   @Override
