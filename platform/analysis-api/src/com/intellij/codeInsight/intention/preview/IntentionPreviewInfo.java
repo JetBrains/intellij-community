@@ -270,23 +270,40 @@ public interface IntentionPreviewInfo {
 
     HtmlBuilder builder = new HtmlBuilder();
 
-    sources.forEach((source) -> {
-      Icon sourceIcon = source.getIcon(0);
-      if (sourceIcon instanceof DeferredIcon) {
-        sourceIcon = ((DeferredIcon)sourceIcon).evaluate();
-      }
-      Icon targetIcon = target.getIcon(0);
-      if (targetIcon instanceof DeferredIcon) {
-        targetIcon = ((DeferredIcon)targetIcon).evaluate();
-      }
+    if (sources.isEmpty()) return new Html(builder.wrapWith("p"));
 
-      builder.append(getHtmlMoveFragment(
-        sourceIcon,
-        targetIcon,
-        source.getName(),
-        explicitTargetName == null ? target.getName() : explicitTargetName));
-    });
+    var source = sources.get(0);
+    Icon targetIcon = getIcon(target);
+    Icon sourceIcon = getIcon(source);
+
+    builder.append(getHtmlMoveFragment(
+      sourceIcon,
+      targetIcon,
+      source.getName(),
+      explicitTargetName == null ? target.getName() : explicitTargetName));
+
+    for (int i = 1; i < sources.size(); i++) {
+      source = sources.get(i);
+      sourceIcon = getIcon(source);
+
+      builder
+        .append(HtmlChunk.br())
+        .append(getHtmlMoveFragment(
+          sourceIcon,
+          targetIcon,
+          source.getName(),
+          explicitTargetName == null ? target.getName() : explicitTargetName));
+    }
+
     return new Html(builder.wrapWith("p"));
+  }
+
+  private static Icon getIcon(@NotNull PsiNamedElement source) {
+    Icon icon = source.getIcon(0);
+    if (icon instanceof DeferredIcon) {
+      icon = ((DeferredIcon)icon).evaluate();
+    }
+    return icon;
   }
 
   @NotNull
@@ -300,7 +317,6 @@ public interface IntentionPreviewInfo {
       .append(" ").append(HtmlChunk.htmlEntity("&rarr;")).append(" ")
       .append(getIconChunk(targetIcon, "target_" + targetName))
       .append(Objects.requireNonNull(targetName))
-      .append(HtmlChunk.br())
       .toFragment();
   }
 
