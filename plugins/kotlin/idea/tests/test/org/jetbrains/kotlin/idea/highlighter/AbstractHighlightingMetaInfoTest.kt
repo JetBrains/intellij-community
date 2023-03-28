@@ -24,10 +24,11 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
         checkHighlighting(files.first(), expectedHighlighting, globalDirectives)
     }
 
-    private fun checkHighlighting(file: PsiFile, expectedHighlightingFile: File) {
+    private fun checkHighlighting(file: PsiFile, expectedHighlightingFile: File, globalDirectives: Directives) {
         val highlightingRenderConfiguration = HighlightingConfiguration(
             descriptionRenderingOption = DescriptionRenderingOption.IF_NOT_NULL,
             renderSeverityOption = SeverityRenderingOption.ONLY_NON_INFO,
+            renderHighlightingAttributesKey = HIGHLIGHTER_ATTRIBUTES_KEY in globalDirectives
         )
 
         val codeMetaInfoTestCase = CodeMetaInfoTestCase(
@@ -77,7 +78,7 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
             require(metaInfo is HighlightingCodeMetaInfo)
             val highlightingInfo = metaInfo.highlightingInfo
 
-            require(highlightingInfo.severity !in forbiddenSeverities) {
+            require(highlightingInfo.severity !in forbiddenSeverities || allowErrorHighlighting) {
                 """
                     |Severity ${highlightingInfo.severity} should never appear in highlighting tests. Please, correct the testData.
                     |HighlightingInfo=$highlightingInfo
@@ -96,5 +97,6 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
 
     companion object {
         private const val ALLOW_ERRORS = "ALLOW_ERRORS"
+        private const val HIGHLIGHTER_ATTRIBUTES_KEY = "HIGHLIGHTER_ATTRIBUTES_KEY"
     }
 }
