@@ -227,8 +227,8 @@ class KtThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestB
         dispatcher.getMulticaster().myCallback()
         dispatcher.multicaster.myCallback()
         
-        val listener = object : MyListener {
-          @RequiresEdt // TODO necessary?!
+        val listener: MyListener = object : MyListener {
+          @RequiresEdt
           override fun myCallback() {}
         }
         listener.<error descr="Method annotated with '@RequiresEdt' must not be called from method annotated with '@RequiresBackgroundThread'">myCallback</error>()
