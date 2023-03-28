@@ -622,9 +622,12 @@ public class JBTabsImpl extends JComponent
     return getEffectiveLayout().isDragOut(label, deltaX, deltaY);
   }
 
+  /**
+   * @deprecated use {@link TabLayout#isScrollable()} instead
+   */
+  @Deprecated(forRemoval = true)
   boolean ignoreTabLabelLimitedWidthWhenPaint() {
-    return myLayout instanceof ScrollableSingleRowLayout
-           || (myLayout instanceof TableLayout && TabLayout.showPinnedTabsSeparately());
+    return myLayout.isScrollable();
   }
 
   public static Image getComponentImage(TabInfo info) {
@@ -2832,9 +2835,7 @@ public class JBTabsImpl extends JComponent
       myForcedRelayout = forced;
     }
     if (myMoreToolbar != null) {
-      myMoreToolbar.getComponent().setVisible(!isHideTabs() &&
-                                              (getEffectiveLayout() instanceof ScrollableSingleRowLayout ||
-                                               getEffectiveLayout() instanceof TableLayout));
+      myMoreToolbar.getComponent().setVisible(!isHideTabs() && myLayout.isScrollable());
     }
     revalidateAndRepaint(layoutNow);
   }

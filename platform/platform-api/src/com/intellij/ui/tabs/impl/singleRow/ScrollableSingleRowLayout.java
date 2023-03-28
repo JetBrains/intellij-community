@@ -170,6 +170,11 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
   }
 
   @Override
+  public boolean isScrollable() {
+    return true;
+  }
+
+  @Override
   public boolean isWithScrollBar() {
     return myWithScrollBar;
   }

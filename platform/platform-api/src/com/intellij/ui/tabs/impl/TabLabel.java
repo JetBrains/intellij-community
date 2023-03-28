@@ -778,7 +778,7 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     private boolean doCustomLayout(Container parent) {
       UISettings settings = UISettings.getInstance();
       int tabPlacement = settings.getEditorTabPlacement();
-      if (!myInfo.isPinned() && myTabs != null && myTabs.ignoreTabLabelLimitedWidthWhenPaint() &&
+      if (!myInfo.isPinned() && myTabs != null && myTabs.getEffectiveLayout().isScrollable() &&
           (ExperimentalUI.isNewUI() && !isHovered() || tabPlacement == SwingConstants.TOP || tabPlacement == SwingConstants.BOTTOM) &&
           settings.getShowCloseButton() && settings.getCloseTabButtonOnTheRight() &&
           parent.getWidth() < parent.getPreferredSize().width) {

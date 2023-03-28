@@ -37,6 +37,8 @@ class ScrollableMultiRowLayout(tabs: JBTabsImpl,
     scrollOffset += units
   }
 
+  override fun isScrollable(): Boolean = true
+
   override fun isWithScrollBar(): Boolean = isWithScrollBar
 
   private fun scrollToSelectedTab() {

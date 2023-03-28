@@ -31,6 +31,10 @@ public abstract class TabLayout {
     return false;
   }
 
+  public boolean isScrollable() {
+    return false;
+  }
+
   public boolean isWithScrollBar() {
     return false;
   }
