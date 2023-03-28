@@ -67,8 +67,8 @@ class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
     microVersion = versionTag.getAttributeValue("micro") ?: "0"
     patchVersion = versionTag.getAttributeValue("patch") ?: "0"
     fullVersionFormat = versionTag.getAttributeValue("full") ?: "{0}.{1}"
-    isEAP = versionTag.getAttributeValue("eap").toBoolean()
-    versionSuffix = versionTag.getAttributeValue("suffix") ?: (if (isEAP) "EAP" else null)
+    isEAP = (System.getProperty(BuildOptions.INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_IS_EAP) ?: versionTag.getAttributeValue("eap")).toBoolean()
+    versionSuffix = (System.getProperty(BuildOptions.INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_SUFFIX) ?: versionTag.getAttributeValue("suffix")) ?: (if (isEAP) "EAP" else null)
     minorVersionMainPart = minorVersion.takeWhile { it != '.' }
 
     val namesTag = root.getChild("names")!!
@@ -156,7 +156,7 @@ class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
       }
     }
     val buildDate = ZonedDateTime.ofInstant(Instant.ofEpochSecond(context.options.buildDateInSeconds), ZoneOffset.UTC)
-    BuildUtils.replaceAll(
+    var patchedAppInfo = BuildUtils.replaceAll(
       text = Files.readString(appInfoXmlPath),
       replacements = mapOf(
         "BUILD_NUMBER" to "$productCode-${context.buildNumber}",
@@ -166,6 +166,15 @@ class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
       ),
       marker = "__"
     )
+    val isEapOverride = System.getProperty(BuildOptions.INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_IS_EAP)
+    if (isEapOverride != null) {
+      patchedAppInfo = patchedAppInfo.replace("eap=\".+\"".toRegex(), "eap=\"$isEapOverride\"")
+    }
+    val suffixOverride = System.getProperty(BuildOptions.INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_SUFFIX)
+    if (suffixOverride != null) {
+      patchedAppInfo = patchedAppInfo.replace("suffix=\".+\"".toRegex(), "eap=\"$suffixOverride\"")
+    }
+    return@lazy patchedAppInfo
   }
 }
 
