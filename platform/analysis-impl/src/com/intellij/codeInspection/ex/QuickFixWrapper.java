@@ -3,6 +3,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.intention.CustomizableIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -23,7 +24,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-public final class QuickFixWrapper implements IntentionAction, PriorityAction {
+import java.util.List;
+
+public final class QuickFixWrapper implements IntentionAction, PriorityAction, CustomizableIntentionAction {
   private static final Logger LOG = Logger.getInstance(QuickFixWrapper.class);
 
   private final ProblemDescriptor myDescriptor;
@@ -138,5 +141,10 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction {
                                  e);
     }
     return myFix.generatePreview(project, descriptorForPreview);
+  }
+
+  @Override
+  public @NotNull List<@NotNull RangeToHighlight> getRangesToHighlight(@NotNull Editor editor, @NotNull PsiFile file) {
+    return myFix.getRangesToHighlight(editor.getProject(), myDescriptor);
   }
 }
