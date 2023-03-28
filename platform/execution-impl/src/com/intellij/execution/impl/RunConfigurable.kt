@@ -933,7 +933,6 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     }
 
     fun showAddPopup(showApplicableTypesOnly: Boolean, clickEvent: MouseEvent?) {
-      if (showApplicableTypesOnly) return // do not show new popup
       val allTypes = ConfigurationType.CONFIGURATION_TYPE_EP.extensionList
       val configurationTypes: MutableList<ConfigurationType?> = configurationTypeSorted(project, showApplicableTypesOnly, allTypes, true).toMutableList()
       val hiddenCount = allTypes.size - configurationTypes.size
