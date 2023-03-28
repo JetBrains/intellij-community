@@ -246,7 +246,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider,
     return pos == null ? 0 : pos.column;
   }
 
-  protected void setStateImpl(final Project project, final Editor editor, final TextEditorState state, boolean exactState) {
+  protected void setStateImpl(Project project, Editor editor, TextEditorState state, boolean exactState) {
     TextEditorState.CaretState[] carets = state.CARETS;
     if (carets.length > 0) {
       List<CaretState> states = new ArrayList<>(carets.length);
@@ -259,25 +259,30 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider,
       editor.getCaretModel().setCaretsAndSelections(states, false);
     }
 
-    final int relativeCaretPosition = state.RELATIVE_CARET_POSITION;
-    Runnable scrollingRunnable = () -> {
-      if (!editor.isDisposed()) {
-        editor.getScrollingModel().disableAnimation();
-        if (relativeCaretPosition != Integer.MAX_VALUE) {
-          EditorUtil.setRelativeCaretPosition(editor, relativeCaretPosition);
-        }
-        if (!exactState) editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-        editor.getScrollingModel().enableAnimation();
-      }
-    };
+    int relativeCaretPosition = state.RELATIVE_CARET_POSITION;
     AsyncEditorLoader.performWhenLoaded(editor, () -> {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        scrollingRunnable.run();
+        scrollToCaret(editor, exactState, relativeCaretPosition);
       }
       else {
-        UiNotifyConnector.doWhenFirstShown(editor.getContentComponent(), scrollingRunnable);
+        UiNotifyConnector.doWhenFirstShown(editor.getContentComponent(), () -> {
+          if (!editor.isDisposed()) {
+            scrollToCaret(editor, exactState, relativeCaretPosition);
+          }
+        });
       }
     });
+  }
+
+  private static void scrollToCaret(Editor editor, boolean exactState, int relativeCaretPosition) {
+    editor.getScrollingModel().disableAnimation();
+    if (relativeCaretPosition != Integer.MAX_VALUE) {
+      EditorUtil.setRelativeCaretPosition(editor, relativeCaretPosition);
+    }
+    if (!exactState) {
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    }
+    editor.getScrollingModel().enableAnimation();
   }
 
   @Override
