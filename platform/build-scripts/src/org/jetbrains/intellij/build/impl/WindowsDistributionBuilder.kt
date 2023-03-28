@@ -16,10 +16,7 @@ import org.jetbrains.intellij.build.io.*
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import java.nio.file.attribute.FileTime
-import java.util.concurrent.TimeUnit
 import kotlin.io.path.extension
-import kotlin.io.path.setLastModifiedTime
 
 internal class WindowsDistributionBuilder(
   override val context: BuildContext,
@@ -126,10 +123,11 @@ internal class WindowsDistributionBuilder(
                               context = context)
       }
 
-      context.executeStep(spanBuilder("build Windows installer")
-                            .setAttribute("arch", arch.dirName), BuildOptions.WINDOWS_EXE_INSTALLER_STEP) {
+      context.executeStep(spanBuilder = spanBuilder("build Windows installer").setAttribute("arch", arch.dirName),
+                          stepId = BuildOptions.WINDOWS_EXE_INSTALLER_STEP) {
         val productJsonDir = Files.createTempDirectory(context.paths.tempDir, "win-product-info")
-        validateProductJson(jsonText = generateProductJson(targetDir = productJsonDir, arch = arch, isRuntimeIncluded = true, context = context),
+        val jsonText = generateProductJson(productJsonDir, context, arch)
+        validateProductJson(jsonText = jsonText,
                             relativePathToProductJson = "",
                             installationDirectories = listOf(context.paths.distAllDir, osAndArchSpecificDistPath, runtimeDir),
                             installationArchives = emptyList(),
@@ -162,6 +160,10 @@ internal class WindowsDistributionBuilder(
       }
       return
     }
+  }
+
+  override fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture) {
+    generateProductJson(targetDir, context, arch)
   }
 
   private fun generateScripts(distBinDir: Path, arch: JvmArchitecture) {
@@ -389,11 +391,17 @@ private fun CoroutineScope.createBuildWinZipTask(runtimeDir: Path?,
       .setAttribute("targetFile", targetFile.toString())
       .setAttribute("arch", arch.dirName)
       .useWithScope2 {
-        val productJsonDir = context.paths.tempDir.resolve("win.dist.product-info.json.zip$zipNameSuffix")
-        generateProductJson(targetDir = productJsonDir, arch = arch, isRuntimeIncluded = runtimeDir != null, context = context)
+        val dirs = mutableListOf(context.paths.distAllDir, winDistPath)
+
+        if (runtimeDir != null) {
+          dirs.add(runtimeDir)
+        }
+
+        val productJsonDir = context.paths.tempDir.resolve("win.dist.product-info.json.zip${zipNameSuffix}")
+        generateProductJson(productJsonDir, context, arch, withRuntime = runtimeDir != null)
+        dirs.add(productJsonDir)
 
         val zipPrefix = customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)
-        val dirs = listOfNotNull(context.paths.distAllDir, winDistPath, productJsonDir, runtimeDir)
 
         val dirMap = dirs.associateWithTo(LinkedHashMap(dirs.size)) { zipPrefix }
         if (context.options.compressZipFiles) {
@@ -409,29 +417,21 @@ private fun CoroutineScope.createBuildWinZipTask(runtimeDir: Path?,
   }
 }
 
-private fun generateProductJson(targetDir: Path, isRuntimeIncluded: Boolean, arch: JvmArchitecture, context: BuildContext): String {
-  val launcherPath = "bin/${context.productProperties.baseFileName}64.exe"
-  val vmOptionsPath = "bin/${context.productProperties.baseFileName}64.exe.vmoptions"
-  val javaExecutablePath = if (isRuntimeIncluded) "jbr/bin/java.exe" else null
-
-  val file = targetDir.resolve(PRODUCT_INFO_FILE_NAME)
-  Files.createDirectories(targetDir)
-
-  val json = generateMultiPlatformProductJson(
-    "bin",
-    context.builtinModule,
-    listOf(ProductInfoLaunchData(
+private fun generateProductJson(targetDir: Path, context: BuildContext, arch: JvmArchitecture, withRuntime: Boolean = true): String {
+  val json = generateProductInfoJson(
+    relativePathToBin = "bin",
+    builtinModules = context.builtinModule,
+    launch = listOf(ProductInfoLaunchData(
       os = OsFamily.WINDOWS.osName,
       arch = arch.dirName,
-      launcherPath = launcherPath,
-      javaExecutablePath = javaExecutablePath,
-      vmOptionsFilePath = vmOptionsPath,
+      launcherPath = "bin/${context.productProperties.baseFileName}64.exe",
+      javaExecutablePath = if (withRuntime) "jbr/bin/java.exe" else null,
+      vmOptionsFilePath = "bin/${context.productProperties.baseFileName}64.exe.vmoptions",
       startupWmClass = null,
       bootClassPathJarNames = context.bootClassPathJarNames,
       additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch))),
     context)
-  Files.writeString(file, json)
-  file.setLastModifiedTime(FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS))
+  writeProductInfoJson(targetDir.resolve(PRODUCT_INFO_FILE_NAME), json, context)
   return json
 }
 

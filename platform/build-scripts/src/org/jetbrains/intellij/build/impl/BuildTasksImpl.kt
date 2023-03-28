@@ -25,7 +25,7 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.checkInArchive
-import org.jetbrains.intellij.build.impl.productInfo.generateMultiPlatformProductJson
+import org.jetbrains.intellij.build.impl.productInfo.generateProductInfoJson
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.includedModules
 import org.jetbrains.intellij.build.impl.projectStructureMapping.writeProjectStructureReport
@@ -145,6 +145,7 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
                                        arch = arch)
       updateExecutablePermissions(targetDirectory, builder.generateExecutableFilesMatchers(includeRuntime = true, arch).keys)
       builder.checkExecutablePermissions(targetDirectory, root = "", includeRuntime = true, arch = arch)
+      builder.writeProductInfoFile(targetDirectory, arch)
     }
     else {
       copyDistFiles(context = context, newDir = targetDirectory, os = currentOs, arch = arch)
@@ -949,7 +950,7 @@ suspend fun buildUpdaterJar(context: BuildContext, artifactName: String = "updat
 private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>, context: BuildContext): Path {
   val executableName = context.productProperties.baseFileName
 
-  val productJson = generateMultiPlatformProductJson(
+  val productJson = generateProductInfoJson(
     relativePathToBin = "bin",
     builtinModules = context.builtinModule,
     launch = sequenceOf(JvmArchitecture.x64, JvmArchitecture.aarch64).flatMap { arch ->

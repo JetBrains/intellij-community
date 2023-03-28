@@ -115,6 +115,10 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     }
   }
 
+  override fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture) {
+    generateProductJson(targetDir, context, arch)
+  }
+
   private fun generateVMOptions(distBinDir: Path) {
     val fileName = "${context.productProperties.baseFileName}64.vmoptions"
 
@@ -147,23 +151,23 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     val tarRoot = rootDirectoryName
     val tarName = artifactName(context, suffix)
     val tarPath = context.paths.artifactDir.resolve(tarName)
-    val paths = mutableListOf(context.paths.distAllDir, unixDistPath)
-    var javaExecutablePath: String? = null
+    val dirs = mutableListOf(context.paths.distAllDir, unixDistPath)
+
     if (runtimeDir != null) {
-      paths.add(runtimeDir)
-      javaExecutablePath = "jbr/bin/java"
-      require(Files.exists(runtimeDir.resolve(javaExecutablePath))) { "$javaExecutablePath was not found under $runtimeDir" }
+      dirs.add(runtimeDir)
+      val javaExecutablePath = "jbr/bin/java"
+      require(Files.exists(runtimeDir.resolve(javaExecutablePath))) { "${javaExecutablePath} was not found under ${runtimeDir}" }
     }
 
-    val productJsonDir = context.paths.tempDir.resolve("linux.dist.product-info.json$suffix")
-    generateProductJson(targetDir = productJsonDir, arch = arch, javaExecutablePath = javaExecutablePath, context = context)
-    paths.add(productJsonDir)
+    val productJsonDir = context.paths.tempDir.resolve("linux.dist.product-info.json${suffix}")
+    generateProductJson(productJsonDir, context, arch, withRuntime = runtimeDir != null)
+    dirs.add(productJsonDir)
 
     spanBuilder("build Linux tar.gz")
       .setAttribute("runtimeDir", runtimeDir?.toString() ?: "")
       .useWithScope2 {
         val executableFileMatchers = generateExecutableFilesMatchers(runtimeDir != null, arch).keys
-        tar(tarPath, tarRoot, paths, executableFileMatchers, context.options.buildDateInSeconds)
+        tar(tarPath, tarRoot, dirs, executableFileMatchers, context.options.buildDateInSeconds)
         checkInArchive(tarPath, tarRoot, context)
         context.notifyArtifactBuilt(tarPath)
       }
@@ -247,7 +251,8 @@ class LinuxDistributionBuilder(override val context: BuildContext,
             fs.enumerateNoAssertUnusedPatterns().forEach(::makeFileExecutable)
           }
         }
-        validateProductJson(jsonText = generateProductJson(unixSnapDistPath, arch = arch, "jbr/bin/java", context),
+        val jsonText = generateProductJson(unixSnapDistPath, context, arch)
+        validateProductJson(jsonText = jsonText,
                             relativePathToProductJson = "",
                             installationDirectories = listOf(context.paths.distAllDir, unixSnapDistPath, runtimeDir),
                             installationArchives = listOf(),
@@ -327,25 +332,21 @@ class LinuxDistributionBuilder(override val context: BuildContext,
 
 private const val NO_JBR_SUFFIX = "-no-jbr"
 
-private fun generateProductJson(targetDir: Path, arch: JvmArchitecture, javaExecutablePath: String?, context: BuildContext): String {
-  val scriptName = context.productProperties.baseFileName
-  val file = targetDir.resolve(PRODUCT_INFO_FILE_NAME)
-  Files.createDirectories(targetDir)
-  val json = generateMultiPlatformProductJson(
+private fun generateProductJson(targetDir: Path, context: BuildContext, arch: JvmArchitecture, withRuntime: Boolean = true): String {
+  val json = generateProductInfoJson(
     relativePathToBin = "bin",
     builtinModules = context.builtinModule,
     launch = listOf(ProductInfoLaunchData(
       os = OsFamily.LINUX.osName,
       arch = arch.dirName,
-      launcherPath = "bin/$scriptName.sh",
-      javaExecutablePath = javaExecutablePath,
-      vmOptionsFilePath = "bin/" + scriptName + "64.vmoptions",
+      launcherPath = "bin/${context.productProperties.baseFileName}.sh",
+      javaExecutablePath = if (withRuntime) "jbr/bin/java" else null,
+      vmOptionsFilePath = "bin/${context.productProperties.baseFileName}64.vmoptions",
       startupWmClass = getLinuxFrameClass(context),
       bootClassPathJarNames = context.bootClassPathJarNames,
       additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX, arch))),
-    context = context
-  )
-  Files.writeString(file, json)
+    context)
+  writeProductInfoJson(targetDir.resolve(PRODUCT_INFO_FILE_NAME), json, context)
   return json
 }
 
