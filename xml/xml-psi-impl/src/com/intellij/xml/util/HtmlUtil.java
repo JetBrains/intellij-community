@@ -534,6 +534,12 @@ public final class HtmlUtil {
            Objects.equals(Html5SchemaProvider.getXhtml5SchemaLocation(), descriptorPath);
   }
 
+  /**
+   * Checks if the specified string starts with an HTML tag, and if it does, it returns the tag name.
+   *
+   * @param line the string to check if it starts with an HTML tag
+   * @return if the input starts with an HTML tag, it returns the tag name, otherwise {@code null}
+   */
   public static String getStartTag(@NotNull String line) {
     if (startsWithTag(line)) {
       int tagStart = line.indexOf("<");
