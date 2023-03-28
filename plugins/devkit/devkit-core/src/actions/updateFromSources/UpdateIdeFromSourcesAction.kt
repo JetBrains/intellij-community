@@ -11,7 +11,9 @@ import com.intellij.ide.plugins.PluginInstaller
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
-import com.intellij.notification.*
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -56,10 +58,6 @@ import java.util.*
 import kotlin.io.path.name
 
 private val LOG = logger<UpdateIdeFromSourcesAction>()
-
-private val notificationGroup by lazy {
-  NotificationGroupManager.getInstance().getNotificationGroup("Update from Sources")
-}
 
 internal open class UpdateIdeFromSourcesAction
 @JvmOverloads constructor(private val forceShowSettings: Boolean = false)
@@ -217,19 +215,21 @@ internal open class UpdateIdeFromSourcesAction
             }
 
             if (event.exitCode != 0) {
-              notificationGroup.createNotification(title = DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.failed.title"),
-                                                   content = DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.failed.content",
+              Notification(
+                "Update from Sources",
+                DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.failed.title"),
+                DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.failed.content",
                                                                                   event.exitCode),
-                                                   type = NotificationType.ERROR)
-                .addAction(NotificationAction.createSimple(DevKitBundle.message("action.UpdateIdeFromSourcesAction.notification.action.view.output")) {
+                NotificationType.ERROR
+              ).addAction(NotificationAction.createSimple(DevKitBundle.message("action.UpdateIdeFromSourcesAction.notification.action.view.output")) {
                   FileEditorManager.getInstance(project).openFile(LightVirtualFile("output.txt", output.joinToString("")), true)
-                })
-                .addAction(NotificationAction.createSimple(DevKitBundle.message("action.UpdateIdeFromSourcesAction.notification.action.view.debug.log")) {
+                }
+              ).addAction(NotificationAction.createSimple(DevKitBundle.message("action.UpdateIdeFromSourcesAction.notification.action.view.debug.log")) {
                   val logFile = LocalFileSystem.getInstance().refreshAndFindFileByPath("$deployDirPath/log/debug.log") ?: return@createSimple // NON-NLS
                   logFile.refresh(true, false)
                   FileEditorManager.getInstance(project).openFile(logFile, true)
-                })
-                .notify(project)
+                }
+              ).notify(project)
               return
             }
 
@@ -257,9 +257,8 @@ internal open class UpdateIdeFromSourcesAction
   }
 
   private fun showRestartNotification(command: Array<String>, deployDirPath: String, project: Project) {
-    notificationGroup
-      .createNotification(DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.success.title"), DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.success.content"), NotificationType.INFORMATION)
-      .setListener(NotificationListener { _, _ -> restartWithCommand(command, deployDirPath) })
+    Notification("Update from Sources", DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.success.title"), DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.success.content"), NotificationType.INFORMATION)
+      .addAction(NotificationAction.createSimpleExpiring(DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.success.restart")) { restartWithCommand(command, deployDirPath) })
       .notify(project)
   }
 
