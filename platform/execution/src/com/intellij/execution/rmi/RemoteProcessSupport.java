@@ -20,8 +20,8 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -160,9 +160,9 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     return acquire(target, configuration, null);
   }
 
+  @RequiresBackgroundThread
   public EntryPoint acquire(@NotNull Target target, @NotNull Parameters configuration, @Nullable ProgressIndicator indicator)
     throws Exception {
-    SlowOperations.assertSlowOperationsAreAllowed();
 
     EntryPoint inProcess = acquireInProcess(target, configuration);
     if (inProcess != null) return inProcess;
