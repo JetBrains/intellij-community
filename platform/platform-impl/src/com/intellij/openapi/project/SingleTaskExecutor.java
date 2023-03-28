@@ -5,10 +5,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.util.EmptyRunnable;
+import kotlinx.coroutines.flow.MutableStateFlow;
+import kotlinx.coroutines.flow.StateFlowKt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 /**
@@ -56,7 +57,7 @@ class SingleTaskExecutor {
 
   private enum RUN_STATE {STOPPED, STARTING, RUNNING, STOPPING}
 
-  private final AtomicReference<RUN_STATE> runState = new AtomicReference<>(RUN_STATE.STOPPED);
+  private final MutableStateFlow<@NotNull RUN_STATE> runState = StateFlowKt.MutableStateFlow(RUN_STATE.STOPPED);
 
   private final AtomicBoolean shouldContinueBackgroundProcessing = new AtomicBoolean(false);
   private final Progressive task;
@@ -69,16 +70,19 @@ class SingleTaskExecutor {
     try {
       do {
         try {
-          RUN_STATE oldState = runState.getAndSet(RUN_STATE.RUNNING);
-          LOG.assertTrue(oldState == RUN_STATE.STARTING, "Old state should be STARTING, but was " + oldState);
+          SingleTaskExecutor.RUN_STATE currentStateForAssert = runState.getValue();
+          LOG.assertTrue(currentStateForAssert == RUN_STATE.STARTING, "Old state should be STARTING, but was " + currentStateForAssert);
+          runState.setValue(RUN_STATE.RUNNING);
+
           // shouldContinueBackgroundProcessing is normally cleared before reading next item from the queue.
           // Here we clear the flag just in case, if runnable fail to clear the flag (e.g. during cancellation)
           shouldContinueBackgroundProcessing.set(false);
           runnable.run();
         }
         finally {
-          RUN_STATE oldState = runState.getAndSet(RUN_STATE.STOPPING);
-          LOG.assertTrue(oldState == RUN_STATE.RUNNING, "Old state should be RUNNING, but was " + oldState);
+          SingleTaskExecutor.RUN_STATE currentStateForAssert = runState.getValue();
+          LOG.assertTrue(currentStateForAssert == RUN_STATE.RUNNING, "Old state should be RUNNING, but was " + currentStateForAssert);
+          runState.setValue(RUN_STATE.STOPPING);
         }
       }
       while (shouldContinueBackgroundProcessing.get() && runState.compareAndSet(RUN_STATE.STOPPING, RUN_STATE.STARTING));
@@ -98,7 +102,7 @@ class SingleTaskExecutor {
     if (!shouldContinueBackgroundProcessing.compareAndSet(false, true)) {
       return false; // the thread that set shouldContinueBackgroundProcessing (not this thread) should compete with the background thread
     }
-    if (runState.get() == RUN_STATE.RUNNING) {
+    if (runState.getValue() == RUN_STATE.RUNNING) {
       return false; // there will be at least one more check of shouldContinueBackgroundProcessing in the background thread
     }
     else {
@@ -117,6 +121,6 @@ class SingleTaskExecutor {
   }
 
   public boolean isRunning() {
-    return runState.get() != RUN_STATE.STOPPED;
+    return runState.getValue() != RUN_STATE.STOPPED;
   }
 }
