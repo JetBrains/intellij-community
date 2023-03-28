@@ -1,9 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.actions.updateFromSources
 
 import com.intellij.CommonBundle
 import com.intellij.execution.configurations.JavaParameters
-import com.intellij.execution.process.*
+import com.intellij.execution.process.OSProcessHandler
+import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessListener
+import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.ide.plugins.PluginInstaller
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNode
@@ -454,7 +457,6 @@ internal open class UpdateIdeFromSourcesAction
 
     params.classPath.addAll(classpath)
 
-    params.vmParametersList.add("-D$includeBinAndRuntimeProperty=true")
     params.vmParametersList.add("-Dintellij.build.bundled.jre.prefix=jbrsdk_jcef-")
 
     if (buildEnabledPluginsOnly) {
@@ -478,8 +480,6 @@ internal open class UpdateIdeFromSourcesAction
     e.presentation.isEnabledAndVisible = project != null && PsiUtil.isIdeaProject(project)
   }
 }
-
-private const val includeBinAndRuntimeProperty = "intellij.build.generate.bin.and.runtime.for.unpacked.dist"
 
 internal class UpdateIdeFromSourcesSettingsAction : UpdateIdeFromSourcesAction(true)
 
