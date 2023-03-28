@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.gradle.newTests.testFeatures.checkers.facets
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
+import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.config.LanguageVersion
@@ -47,6 +48,11 @@ object KotlinFacetSettingsChecker : WorkspaceModelChecker<KotlinFacetSettingsChe
 
                     is Collection<*> ->
                         println(field.name + " = " + fieldValue.joinToStringWithSorting())
+
+                    is CompilerSettings ->
+                        fieldValue.additionalArguments.filterOutInternalArguments().let {
+                            if (it.isNotEmpty()) println(field.name + " = " + it)
+                        }
 
                     else -> println(field.name + " = " + fieldValue)
                 }
@@ -99,8 +105,28 @@ object KotlinFacetSettingsChecker : WorkspaceModelChecker<KotlinFacetSettingsChe
         KotlinFacetSettings::mppVersion,
         KotlinFacetSettings::dependsOnModuleNames,
         KotlinFacetSettings::additionalVisibleModuleNames,
-        KotlinFacetSettings::targetPlatform
+        KotlinFacetSettings::targetPlatform,
+        KotlinFacetSettings::compilerSettings
     )
 
     private val CURRENT_KGP_LANGUAGE_VERSION_PLACEHOLDER = "{{LATEST_STABLE}}"
+
+    // Possible input: "-Xparam1=value1 -Xflag -param2 value2"
+    private fun String.filterOutInternalArguments() =
+        if (isEmpty()) this
+        else substring(1) // drop "-" for the first element
+            .split(" -")
+            .filterNot { arg -> internalCompilerArguments.any { arg.contains(it) } }
+            .joinToString(separator = " ") { "-$it" }
+
+    private val internalCompilerArguments = setOf(
+        "ir-output-dir",
+        "ir-output-name",
+        "Xallow-no-source-files",
+        "Xir-module-name",
+        "Xir-only",
+        "Xir-produce-klib-dir",
+        "Xir-per-module-output-name",
+        "Xcommon-sources",
+    )
 }
