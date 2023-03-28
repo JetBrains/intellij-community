@@ -1,10 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.options.*;
 import com.intellij.lang.Language;
@@ -31,15 +28,18 @@ public class MigrateToOptControlInspection extends DevKitUastInspectionBase {
   }
 
   @Override
+  protected boolean isAllowed(@NotNull ProblemsHolder holder) {
+    return super.isAllowed(holder) &&
+           JavaPsiFacade.getInstance(holder.getProject()).findClass(OPT_PANE, holder.getFile().getResolveScope()) != null;
+  }
+
+  @Override
   public ProblemDescriptor @Nullable [] checkMethod(@NotNull UMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (!method.getName().equals("createOptionsPanel")) return null;
     if (!method.getUastParameters().isEmpty()) return null;
     PsiClass psiClass = method.getJavaPsi().getContainingClass();
     if (psiClass == null || !InheritanceUtil.isInheritor(psiClass, "com.intellij.codeInspection.InspectionProfileEntry")) return null;
-    if (JavaPsiFacade.getInstance(psiClass.getProject()).findClass(OPT_PANE, psiClass.getResolveScope()) == null) {
-      // Do not suggest on older SDK versions
-      return null;
-    }
+
     Language language = psiClass.getLanguage();
     // Currently only Java and Kotlin are supported
     if (!language.equals(JavaLanguage.INSTANCE) && !language.getID().equals("kotlin")) return null;
@@ -163,7 +163,8 @@ public class MigrateToOptControlInspection extends DevKitUastInspectionBase {
       StringBuilder builder = new StringBuilder();
       if (kotlin) {
         builder.append("override fun getOptionsPane() = ");
-      } else {
+      }
+      else {
         // Use short name for return type, as import will be added anyway when processing the body
         builder.append("@Override public @org.jetbrains.annotations.NotNull " + OPT_PANE + " getOptionsPane() {\nreturn ");
       }
