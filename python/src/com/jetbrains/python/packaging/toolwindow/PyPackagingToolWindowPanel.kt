@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -441,18 +442,6 @@ class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolW
           splitter!!.secondComponent = rightPanel
         }
 
-        val renderedDescription  = with(packageDetails) {
-          when {
-            !description.isNullOrEmpty() -> service.convertToHTML(descriptionContentType, description!!)
-            !summary.isNullOrEmpty() -> service.wrapHtml(summary!!)
-            else -> NO_DESCRIPTION
-          }
-        }
-
-        descriptionPanel.setHtml(renderedDescription)
-        documentationUrl = packageDetails.documentationUrl
-        documentationLink.isVisible = documentationUrl != null
-
         if (installActions.isNotEmpty()) {
           installButton.action = wrapAction(installActions.first(), packageDetails)
           if (installActions.size > 1) {
@@ -461,6 +450,24 @@ class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolW
           }
           installButton.repaint()
         } else hideInstallableControls()
+
+        documentationUrl = packageDetails.documentationUrl
+        documentationLink.isVisible = documentationUrl != null
+
+        val renderedDescription = runCatching {
+          with(packageDetails) {
+            when {
+              !description.isNullOrEmpty() -> service.convertToHTML(descriptionContentType, description!!)
+              !summary.isNullOrEmpty() -> service.wrapHtml(summary!!)
+              else -> NO_DESCRIPTION
+            }
+          }
+        }.getOrElse {
+          thisLogger().info(it)
+          message("conda.packaging.error.rendering.description")
+        }
+
+        descriptionPanel.setHtml(renderedDescription)
       }
     }
   }
