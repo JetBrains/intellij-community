@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -132,6 +132,17 @@ public final class JavaSharedImplUtil {
     return type.annotate(provider);
   }
 
+  /**
+   * Normalizes brackets, i.e. any brackets after the identifier of the variable are moved to the correct
+   * position in the type element of the variable.
+   * For example <br>
+   * {@code String @One [] array @Two [] = null;}<br>
+   * becomes<br>
+   * {@code String @Two [] @One [] array = null;}.<br>
+   * See <a href ="https://docs.oracle.com/javase/specs/jls/se20/html/jls-10.html#jls-10.2">JLS 10.2</a>
+   *
+   * @param variable  an array variable.
+   */
   public static void normalizeBrackets(@NotNull PsiVariable variable) {
     CompositeElement variableElement = (CompositeElement)variable.getNode();
 
@@ -178,11 +189,15 @@ public final class JavaSharedImplUtil {
         newType1.rawAddChildren(newType);
         newType = newType1;
       }
-      for (int i = 0; i < arrayCount; i++) {
-        annotationElementsToMove.get(i).forEach(newType::rawAddChildren);
-
-        newType.rawAddChildren(ASTFactory.leaf(JavaTokenType.LBRACKET, "["));
-        newType.rawAddChildren(ASTFactory.leaf(JavaTokenType.RBRACKET, "]"));
+      for (int i = arrayCount - 1; i >= 0; i--) {
+        // add in reverse so the anchor can remain the same
+        TreeElement anchor = newType.getFirstChildNode();
+        anchor.rawInsertAfterMe(ASTFactory.leaf(JavaTokenType.RBRACKET, "]"));
+        anchor.rawInsertAfterMe(ASTFactory.leaf(JavaTokenType.LBRACKET, "["));
+        List<AnnotationElement> annotations = (List<AnnotationElement>)annotationElementsToMove.get(i);
+        for (int j = annotations.size() - 1; j >= 0; j--) {
+          anchor.rawInsertAfterMe(annotations.get(j));
+        }
       }
       newType.acceptTree(new GeneratedMarkerVisitor());
       newType.putUserData(CharTable.CHAR_TABLE_KEY, SharedImplUtil.findCharTableByTree(type));
