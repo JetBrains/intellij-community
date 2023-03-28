@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RetrievableIcon;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.ui.border.NamedBorder;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
@@ -278,6 +279,9 @@ final class ValueCellRenderer implements TableCellRenderer {
           .append(" bottom=").append(insets.bottom)
           .append(" right=").append(insets.right)
           .append("}");
+      }
+      if (value instanceof NamedBorder namedBorder) {
+        sb.append(" '").append(namedBorder.getName()).append("' ").append(getTextDescription(namedBorder.getOriginal()));
       }
 
       if (value instanceof UIResource) sb.append(" UIResource");
