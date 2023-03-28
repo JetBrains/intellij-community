@@ -13320,8 +13320,8 @@ io/opentelemetry/api/trace/ArrayBasedTraceStateBuilder.class:lib/app.jar
 com/intellij/codeInsight/daemon/impl/WolfHighlightingPass.class:lib/app.jar
 com/intellij/execution/configurations/ModuleBasedConfiguration.class:lib/app.jar
 com/intellij/codeInsight/daemon/impl/WolfPassFactory$1.class:lib/app.jar
-com/intellij/database/dataSource/DataSourceStorageCore.class:plugins/DatabaseTools/lib/database-plugin.jar
-com/intellij/database/dataSource/DataSourceStorageCore$PrjCore.class:plugins/DatabaseTools/lib/database-plugin.jar
+com/intellij/database/dataSource/DataSourceStorage.class:plugins/DatabaseTools/lib/database-plugin.jar
+com/intellij/database/dataSource/DataSourceStorage$PrjCore.class:plugins/DatabaseTools/lib/database-plugin.jar
 com/intellij/sql/dialects/mssql/MsDialectBase.class:plugins/DatabaseTools/lib/database-plugin.jar
 com/intellij/sql/dialects/mssql/MsDialect.class:plugins/DatabaseTools/lib/database-plugin.jar
 io/opentelemetry/api/trace/ArrayBasedTraceState.class:lib/app.jar
@@ -13356,7 +13356,7 @@ org/jetbrains/idea/devkit/testAssistant/TestDataHighlightingPass.class:plugins/d
 com/intellij/sql/dialects/mssql/formatter/MsCodeStyleSettings.class:plugins/DatabaseTools/lib/database-plugin.jar
 com/intellij/xdebugger/breakpoints/XBreakpointType$XBreakpointCreator.class:lib/app.jar
 com/intellij/httpClient/http/request/run/config/HttpRequestRunConfigurationFactory.class:plugins/restClient/lib/restClient.jar
-com/intellij/database/dataSource/DataSourceStorageCore$Listener.class:plugins/DatabaseTools/lib/database-plugin.jar
+com/intellij/database/dataSource/DataSourceStorage$Listener.class:plugins/DatabaseTools/lib/database-plugin.jar
 com/intellij/sql/dialects/mysql/MysqlCodeStyleProvider.class:plugins/DatabaseTools/lib/database-plugin.jar
 com/intellij/sql/dialects/mysql/MysqlDialect.class:plugins/DatabaseTools/lib/database-plugin.jar
 com/thoughtworks/xstream/converters/ErrorReporter.class:lib/app.jar
@@ -13444,7 +13444,7 @@ com/intellij/httpClient/http/request/highlighting/HttpRequestNameHighlightingPas
 com/intellij/database/dataSource/DataSourceStorage$1SavingListener$1.class:plugins/DatabaseTools/lib/database-plugin.jar
 com/intellij/httpClient/http/request/run/v2/HttpRequestRunLineMarkerV2Provider.class:plugins/restClient/lib/restClient.jar
 org/jetbrains/kotlin/idea/base/highlighting/KotlinBeforeResolveHighlightingPass$Registrar.class:plugins/Kotlin/lib/kotlin-plugin.jar
-com/intellij/database/dataSource/DataSourceStorageCore$AppCore.class:plugins/DatabaseTools/lib/database-plugin.jar
+com/intellij/database/dataSource/DataSourceStorage$AppCore.class:plugins/DatabaseTools/lib/database-plugin.jar
 com/intellij/execution/RunConfigurationConverter.class:lib/app.jar
 com/intellij/database/dataSource/DataSourceStorage$App.class:plugins/DatabaseTools/lib/database-plugin.jar
 com/jetbrains/debugger/wip/JSRemoteDebugConfigurationType.class:plugins/javascript-debugger/lib/ChromeConnector.jar
