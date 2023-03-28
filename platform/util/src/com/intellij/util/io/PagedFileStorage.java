@@ -139,7 +139,8 @@ public class PagedFileStorage implements Forceable/*, PagedStorage*/ {
     }
   }
 
-  public <R> @NotNull R readChannel(@NotNull ThrowableNotNullFunction<? super ReadableByteChannel, R, ? extends IOException> consumer) throws IOException {
+  public <R> @NotNull R readChannel(@NotNull ThrowableNotNullFunction<? super ReadableByteChannel, R, ? extends IOException> consumer)
+    throws IOException {
     synchronized (myInputStreamLock) {
       try {
         return useChannel(ch -> {
@@ -404,7 +405,11 @@ public class PagedFileStorage implements Forceable/*, PagedStorage*/ {
     long remaining = length;
     while (remaining > 0) {
       final int toFill = (int)Math.min(remaining, MAX_FILLER_SIZE);
-      assert toFill > 0 : "toFill: " + toFill + " -- must be positive (length: " + length + ", remaining: " + remaining + ")";
+      if (toFill <= 0) {
+        throw new AssertionError(
+          "Bug: toFill(=" + toFill + ") -- must be positive. " +
+          "Details: from: " + from + ", length: " + length + " -> offset: " + offset + ", remaining: " + remaining);
+      }
 
       put(offset, zeroes, 0, toFill);
 
