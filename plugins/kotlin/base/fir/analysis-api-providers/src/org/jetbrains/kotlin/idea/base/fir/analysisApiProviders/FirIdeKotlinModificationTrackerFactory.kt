@@ -32,10 +32,15 @@ internal class FirIdeKotlinModificationTrackerFactory(private val project: Proje
     }
 
     @TestOnly
-    override fun incrementModificationsCount() {
-        (createLibrariesWideModificationTracker() as SimpleModificationTracker).incModificationCount()
+    override fun incrementModificationsCount(includeBinaryTrackers: Boolean) {
+        if (includeBinaryTrackers) {
+            (createLibrariesWideModificationTracker() as SimpleModificationTracker).incModificationCount()
+        }
+
+        // `FirIdeModificationTrackerService` is for source modules only.
         project.getService(FirIdeModificationTrackerService::class.java).increaseModificationCountForAllModules()
-        KotlinModuleStateTrackerProvider.getInstance(project).incrementModificationCountForAllModules()
+
+        KotlinModuleStateTrackerProvider.getInstance(project).incrementModificationCountForAllModules(includeBinaryTrackers)
     }
 }
 
