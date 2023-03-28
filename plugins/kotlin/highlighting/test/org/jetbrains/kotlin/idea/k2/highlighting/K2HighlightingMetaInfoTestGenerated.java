@@ -232,4 +232,27 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
             runTest("../idea/tests/testData/highlighterMetaInfo/VariablesAsFunctions.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/highlighterMetaInfo/unresolved")
+    public static class Unresolved extends AbstractK2HighlightingMetaInfoTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("unresolvedImport.kt")
+        public void testUnresolvedImport() throws Exception {
+            runTest("../idea/tests/testData/highlighterMetaInfo/unresolved/unresolvedImport.kt");
+        }
+
+        @TestMetadata("unresolvedLabel.kt")
+        public void testUnresolvedLabel() throws Exception {
+            runTest("../idea/tests/testData/highlighterMetaInfo/unresolved/unresolvedLabel.kt");
+        }
+
+        @TestMetadata("unresolvedReference.kt")
+        public void testUnresolvedReference() throws Exception {
+            runTest("../idea/tests/testData/highlighterMetaInfo/unresolved/unresolvedReference.kt");
+        }
+    }
 }

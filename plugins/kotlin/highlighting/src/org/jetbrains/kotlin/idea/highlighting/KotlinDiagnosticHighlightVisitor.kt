@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnostic
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.diagnostics.getDefaultMessageWithFactoryName
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService
 import org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressableWarningProblemGroup
@@ -94,12 +95,27 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
         return application.isInternal || application.isUnitTestMode
     }
 
+
+    context(KtAnalysisSession)
     private fun KtDiagnosticWithPsi<*>.getHighlightInfoType(): HighlightInfoType {
-        return when (severity) {
-            Severity.INFO -> HighlightInfoType.INFORMATION
-            Severity.ERROR -> HighlightInfoType.ERROR
-            Severity.WARNING -> HighlightInfoType.WARNING
+       return when {
+            isUnresolvedDiagnostic() -> HighlightInfoType.WRONG_REF
+            else ->  when (severity) {
+                Severity.INFO -> HighlightInfoType.INFORMATION
+                Severity.ERROR -> HighlightInfoType.ERROR
+                Severity.WARNING -> HighlightInfoType.WARNING
+            }
         }
+    }
+
+    context(KtAnalysisSession)
+    private fun KtDiagnosticWithPsi<*>.isUnresolvedDiagnostic() = when (this) {
+        is KtFirDiagnostic.UnresolvedReference -> true
+        is KtFirDiagnostic.UnresolvedLabel -> true
+        is KtFirDiagnostic.UnresolvedReferenceWrongReceiver -> true
+        is KtFirDiagnostic.UnresolvedImport -> true
+        is KtFirDiagnostic.MissingStdlibClass -> true
+        else -> false
     }
 
 
