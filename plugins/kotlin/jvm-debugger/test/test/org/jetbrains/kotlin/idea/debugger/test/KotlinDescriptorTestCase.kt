@@ -63,8 +63,6 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
     private lateinit var librarySrcDirectory: File
     private lateinit var libraryOutputDirectory: File
 
-    private lateinit var mainClassName: String
-
     override fun getTestAppPath(): String = testAppDirectory.absolutePath
     override fun getTestProjectJdk() = PluginTestCaseBase.fullJdk()
 
@@ -167,7 +165,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
         testFiles: TestFiles,
         jvmTarget: JvmTarget,
         compileConfig: TestCompileConfiguration,
-    ) = DebuggerTestCompilerFacility(testFiles, jvmTarget, compileConfig)
+    ) = DebuggerTestCompilerFacility(project, testFiles, jvmTarget, compileConfig)
 
     @Suppress("UNUSED_PARAMETER")
     open fun doTest(unused: String) {
@@ -202,15 +200,11 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
         }
 
         compilerFacility.compileLibrary(librarySrcDirectory, libraryOutputDirectory)
-
-        mainClassName = compilerFacility.compileTestSourcesWithCli(
-            myModule,
-            jvmSourcesOutputDirectory,
-            commonSourcesOutputDirectory,
-            File(appOutputPath),
-            libraryOutputDirectory
+        compilerFacility.compileTestSourcesWithCli(
+            myModule, jvmSourcesOutputDirectory, commonSourcesOutputDirectory, File(appOutputPath), libraryOutputDirectory
         )
-
+        val (jvmKtFiles, _) = compilerFacility.creatKtFiles(jvmSourcesOutputDirectory, commonSourcesOutputDirectory)
+        val mainClassName = compilerFacility.analyzeAndFindMainClass(jvmKtFiles)
         breakpointCreator = BreakpointCreator(
             project,
             ::systemLogger,

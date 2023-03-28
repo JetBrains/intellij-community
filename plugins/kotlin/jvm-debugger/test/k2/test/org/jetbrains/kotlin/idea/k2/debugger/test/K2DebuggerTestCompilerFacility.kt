@@ -15,25 +15,18 @@ internal class K2DebuggerTestCompilerFacility(
     files: List<TestFileWithModule>,
     jvmTarget: JvmTarget,
     compileConfig: TestCompileConfiguration,
-) : DebuggerTestCompilerFacility(files, jvmTarget, compileConfig) {
+) : DebuggerTestCompilerFacility(project, files, jvmTarget, compileConfig) {
     override fun compileTestSourcesInIde(
-        project: Project,
         srcDir: File,
         classesDir: File,
         classBuilderFactory: ClassBuilderFactory
     ): CompilationResult {
         return withTestServicesNeededForCodeCompilation(project) {
-            super.compileTestSourcesInIde(project, srcDir, classesDir, classBuilderFactory)
+            super.compileTestSourcesInIde(srcDir, classesDir, classBuilderFactory)
         }
     }
 
-    override fun compileTestSourcesWithCli(
-        module: Module,
-        jvmSrcDir: File,
-        commonSrcDir: File,
-        classesDir: File,
-        libClassesDir: File,
-    ): String {
+    override fun compileTestSourcesWithCli(module: Module, jvmSrcDir: File, commonSrcDir: File, classesDir: File, libClassesDir: File) {
         return withTestServicesNeededForCodeCompilation(project) {
             super.compileTestSourcesWithCli(module, jvmSrcDir, commonSrcDir, classesDir, libClassesDir)
         }

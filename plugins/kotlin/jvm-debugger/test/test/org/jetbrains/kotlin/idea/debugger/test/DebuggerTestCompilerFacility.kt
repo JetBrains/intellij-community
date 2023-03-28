@@ -43,6 +43,7 @@ data class TestCompileConfiguration(
 )
 
 open class DebuggerTestCompilerFacility(
+    private val project: Project,
     files: List<TestFileWithModule>,
     private val jvmTarget: JvmTarget,
     private val compileConfig: TestCompileConfiguration,
@@ -122,40 +123,24 @@ open class DebuggerTestCompilerFacility(
         }
     }
 
-    // Returns the qualified name of the main test class.
     open fun compileTestSourcesWithCli(
         module: Module,
         jvmSrcDir: File,
         commonSrcDir: File,
         classesDir: File,
         libClassesDir: File
-    ): String = with(mainFiles) {
+    ) = with(mainFiles) {
         resources.copy(jvmSrcDir)
         resources.copy(classesDir) // sic!
         (kotlinJvm + java).copy(jvmSrcDir)
         kotlinCommon.forEach { testFile -> testFile.copy(commonSrcDir.resolve(testFile.module.name)) }
 
-        lateinit var allKtFiles: List<KtFile>
-        lateinit var jvmKtFiles: List<KtFile>
-        val project = module.project
-        doWriteAction {
-            jvmKtFiles = createPsiFilesAndCollectKtFiles(kotlinJvm + java, jvmSrcDir, project)
-            val commonKtFiles = kotlinCommon.groupBy { it.module }.flatMap { (module, files) ->
-                createPsiFilesAndCollectKtFiles(files, commonSrcDir.resolve(module.name), project)
-            }
-            allKtFiles = jvmKtFiles + commonKtFiles
-        }
-
-        if (allKtFiles.isEmpty()) {
-            error("No Kotlin files found")
-        }
-
         LocalFileSystem.getInstance().refreshAndFindFileByIoFile(classesDir)
         LocalFileSystem.getInstance().refreshAndFindFileByIoFile(libClassesDir)
 
-        val mainClassName = doWriteAction<String> {
+
+        doWriteAction {
             compileKotlinFilesWithCliCompiler(jvmSrcDir, commonSrcDir, classesDir, libClassesDir)
-            analyzeAndFindMainClass(project, jvmKtFiles)
         }
 
         if (java.isNotEmpty()) {
@@ -166,12 +151,23 @@ open class DebuggerTestCompilerFacility(
                 classesDir
             )
         }
+    }
 
-        return mainClassName
+    fun creatKtFiles(jvmSrcDir: File, commonSrcDir: File): Pair<List<KtFile>, List<KtFile>> = with(mainFiles) {
+        return doWriteAction<Pair<List<KtFile>, List<KtFile>>> {
+            val jvmKtFiles = createPsiFilesAndCollectKtFiles(kotlinJvm + java, jvmSrcDir)
+            val commonKtFiles = kotlinCommon.groupBy { it.module }.flatMap { (module, files) ->
+                createPsiFilesAndCollectKtFiles(files, commonSrcDir.resolve(module.name))
+            }
+            val allKtFiles = jvmKtFiles + commonKtFiles
+            if (allKtFiles.isEmpty()) {
+                error("No Kotlin files found")
+            }
+            jvmKtFiles to commonKtFiles
+        }
     }
 
     open fun compileTestSourcesInIde(
-        project: Project,
         srcDir: File,
         classesDir: File,
         classBuilderFactory: ClassBuilderFactory = ClassBuilderFactories.BINARIES
@@ -182,11 +178,11 @@ open class DebuggerTestCompilerFacility(
 
         lateinit var ktFiles: List<KtFile>
         doWriteAction {
-            ktFiles = createPsiFilesAndCollectKtFiles(testFiles, srcDir, project)
+            ktFiles = createPsiFilesAndCollectKtFiles(testFiles, srcDir)
         }
 
         return runReadAction {
-            compileKotlinFilesInIde(project, ktFiles, classesDir, classBuilderFactory)
+            compileKotlinFilesInIde(ktFiles, classesDir, classBuilderFactory)
         }
     }
 
@@ -216,14 +212,15 @@ open class DebuggerTestCompilerFacility(
         return options
     }
 
-    protected open fun analyzeAndFindMainClass(project: Project, jvmKtFiles: List<KtFile>): String {
-        val resolutionFacade = KotlinCacheService.getInstance(project).getResolutionFacade(jvmKtFiles)
-
-        val analysisResult = resolutionFacade.analyzeWithAllCompilerChecks(jvmKtFiles)
-        analysisResult.throwIfError()
-
-        return findMainClass(analysisResult.bindingContext, resolutionFacade.languageVersionSettings, jvmKtFiles)?.asString()
-            ?: error("Cannot find main class name")
+    // Returns the qualified name of the main test class.
+    fun analyzeAndFindMainClass(jvmKtFiles: List<KtFile>): String {
+        return runReadAction {
+            val resolutionFacade = KotlinCacheService.getInstance(project).getResolutionFacade(jvmKtFiles)
+            val analysisResult = resolutionFacade.analyzeWithAllCompilerChecks(jvmKtFiles)
+            analysisResult.throwIfError()
+            findMainClass(analysisResult.bindingContext, resolutionFacade.languageVersionSettings, jvmKtFiles)?.asString()
+                ?: error("Cannot find main class name")
+        }
     }
 
     data class CompilationResult(
@@ -233,7 +230,6 @@ open class DebuggerTestCompilerFacility(
     )
 
     private fun compileKotlinFilesInIde(
-        project: Project,
         files: List<KtFile>,
         classesDir: File,
         classBuilderFactory: ClassBuilderFactory = ClassBuilderFactories.BINARIES
@@ -269,7 +265,7 @@ open class DebuggerTestCompilerFacility(
         return CompilationResult(analysisResult, state, resolutionFacade)
     }
 
-    private fun createPsiFilesAndCollectKtFiles(testFiles: List<TestFile>, srcDir: File, project: Project): List<KtFile> {
+    private fun createPsiFilesAndCollectKtFiles(testFiles: List<TestFile>, srcDir: File): List<KtFile> {
         val ktFiles = mutableListOf<KtFile>()
         for (file in testFiles) {
             val ioFile = File(srcDir, file.name)

@@ -69,7 +69,7 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase() {
 
     protected open fun createDebuggerTestCompilerFacility(
         testFiles: TestFiles, jvmTarget: JvmTarget, compileConfiguration: TestCompileConfiguration,
-    ) = DebuggerTestCompilerFacility(testFiles, jvmTarget, compileConfiguration)
+    ) = DebuggerTestCompilerFacility(project, testFiles, jvmTarget, compileConfiguration)
 
     fun doTest(testFilePath: String) {
         val wholeFile = File(testFilePath)
@@ -86,7 +86,7 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase() {
             TestCompileConfiguration(useIrBackend = true, JvmClosureGenerationScheme.CLASS, enabledLanguageFeatures = emptyList())
         )
         val compilationResult = compilerFacility.compileTestSourcesInIde(
-            project, jvmSourcesOutputDirectory, classesDir, classBuilderFactory
+            jvmSourcesOutputDirectory, classesDir, classBuilderFactory
         )
         val generationState = compilationResult.generationState
         classFileFactory = generationState.factory
