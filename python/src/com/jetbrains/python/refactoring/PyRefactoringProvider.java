@@ -87,7 +87,7 @@ public final class PyRefactoringProvider extends RefactoringSupportProvider {
 
   @Override
   public boolean isMemberInplaceRenameAvailable(@NotNull PsiElement element, @Nullable PsiElement context) {
-    return !PyUtil.isInitOrNewMethod(element);
+    return false;
   }
 
   @Nullable
