@@ -47,7 +47,7 @@ public abstract class ArtifactRootDescriptor extends BuildRootDescriptor {
   }
 
   @Override
-  public ArtifactBuildTarget getTarget() {
+  public @NotNull ArtifactBuildTarget getTarget() {
     return myTarget;
   }
 
@@ -58,13 +58,12 @@ public abstract class ArtifactRootDescriptor extends BuildRootDescriptor {
   }
 
   @Override
-  @NotNull
-  public final File getRootFile() {
+  public final @NotNull File getRootFile() {
     return myRoot;
   }
 
   @Override
-  public String getRootId() {
+  public @NotNull String getRootId() {
     return String.valueOf(myRootIndex);
   }
 

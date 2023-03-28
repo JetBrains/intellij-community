@@ -33,8 +33,8 @@ public final class BuildRootIndexImpl implements BuildRootIndex {
   private final Map<File,List<BuildRootDescriptor>> myRootToDescriptors;
   private final ConcurrentMap<BuildRootDescriptor, FileFilter> myFileFilters;
 
-  public BuildRootIndexImpl(BuildTargetRegistry targetRegistry, JpsModel model, ModuleExcludeIndex index,
-                            BuildDataPaths dataPaths, final IgnoredFileIndex ignoredFileIndex) {
+  public BuildRootIndexImpl(@NotNull BuildTargetRegistry targetRegistry, @NotNull JpsModel model, @NotNull ModuleExcludeIndex index,
+                            @NotNull BuildDataPaths dataPaths, @NotNull IgnoredFileIndex ignoredFileIndex) {
     myIgnoredFileIndex = ignoredFileIndex;
     myRootsByTarget = new HashMap<>();
     myRootToDescriptors = FileCollectionFactory.createCanonicalFileMap();
@@ -47,11 +47,12 @@ public final class BuildRootIndexImpl implements BuildRootIndex {
     }
   }
 
-  private <R extends BuildRootDescriptor> void addRoots(BuildDataPaths dataPaths, Iterable<? extends AdditionalRootsProviderService> rootsProviders,
-                                                        BuildTarget<R> target,
-                                                        JpsModel model,
-                                                        ModuleExcludeIndex index,
-                                                        IgnoredFileIndex ignoredFileIndex) {
+  private <R extends BuildRootDescriptor> void addRoots(@NotNull BuildDataPaths dataPaths, 
+                                                        @NotNull Iterable<? extends AdditionalRootsProviderService> rootsProviders,
+                                                        @NotNull BuildTarget<R> target,
+                                                        @NotNull JpsModel model,
+                                                        @NotNull ModuleExcludeIndex index,
+                                                        @NotNull IgnoredFileIndex ignoredFileIndex) {
     List<R> descriptors = target.computeRootDescriptors(model, index, ignoredFileIndex, dataPaths);
     for (AdditionalRootsProviderService<?> provider : rootsProviders) {
       if (provider.getTargetTypes().contains(target.getTargetType())) {

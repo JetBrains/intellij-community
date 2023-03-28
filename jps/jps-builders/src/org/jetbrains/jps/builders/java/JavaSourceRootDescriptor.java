@@ -93,17 +93,17 @@ public class JavaSourceRootDescriptor extends BuildRootDescriptor {
   }
 
   @Override
-  public String getRootId() {
+  public @NotNull String getRootId() {
     return FileUtil.toSystemIndependentName(root.getPath());
   }
 
   @Override
-  public File getRootFile() {
+  public @NotNull File getRootFile() {
     return root;
   }
 
   @Override
-  public ModuleBuildTarget getTarget() {
+  public @NotNull ModuleBuildTarget getTarget() {
     return target;
   }
 

@@ -42,7 +42,7 @@ public abstract class DirtyFilesHolderBase<R extends BuildRootDescriptor, T exte
     final Ref<Boolean> hasDirtyFiles = Ref.create(false);
     processDirtyFiles(new FileProcessor<R, T>() {
       @Override
-      public boolean apply(T target, File file, R root) throws IOException {
+      public boolean apply(@NotNull T target, @NotNull File file, @NotNull R root) throws IOException {
         hasDirtyFiles.set(true);
         return false;
       }

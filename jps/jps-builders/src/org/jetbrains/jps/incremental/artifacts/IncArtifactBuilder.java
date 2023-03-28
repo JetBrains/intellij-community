@@ -151,7 +151,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
       final Set<String> changedOutputPaths = CollectionFactory.createFilePathSet();
       holder.processDirtyFiles(new FileProcessor<>() {
         @Override
-        public boolean apply(ArtifactBuildTarget target, File file, ArtifactRootDescriptor root) throws IOException {
+        public boolean apply(@NotNull ArtifactBuildTarget target, @NotNull File file, @NotNull ArtifactRootDescriptor root) throws IOException {
           int rootIndex = root.getRootIndex();
           String sourcePath = FileUtil.toSystemIndependentName(file.getPath());
           addFileToProcess(rootIndex, sourcePath, deletedFiles);

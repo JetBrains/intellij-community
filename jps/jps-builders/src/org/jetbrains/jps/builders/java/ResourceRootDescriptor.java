@@ -47,7 +47,7 @@ public class ResourceRootDescriptor extends BuildRootDescriptor {
   }
 
   @Override
-  public File getRootFile() {
+  public @NotNull File getRootFile() {
     return myRoot;
   }
 
@@ -57,9 +57,8 @@ public class ResourceRootDescriptor extends BuildRootDescriptor {
     return myExcludes;
   }
 
-  @NotNull
   @Override
-  public ResourcesTarget getTarget() {
+  public @NotNull ResourcesTarget getTarget() {
     return myTarget;
   }
 
@@ -87,7 +86,7 @@ public class ResourceRootDescriptor extends BuildRootDescriptor {
   }
 
   @Override
-  public String getRootId() {
+  public @NotNull String getRootId() {
     return FileUtil.toSystemIndependentName(myRoot.getPath());
   }
 }

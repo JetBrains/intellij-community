@@ -52,17 +52,17 @@ public final class MavenResourceRootDescriptor extends BuildRootDescriptor {
   }
 
   @Override
-  public String getRootId() {
+  public @NotNull String getRootId() {
     return myId;
   }
 
   @Override
-  public File getRootFile() {
+  public @NotNull File getRootFile() {
     return myFile;
   }
 
   @Override
-  public MavenResourcesTarget getTarget() {
+  public @NotNull MavenResourcesTarget getTarget() {
     return myTarget;
   }
 

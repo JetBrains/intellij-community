@@ -328,7 +328,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
     final List<File> toCompile = new ArrayList<>();
     dirtyFilesHolder.processDirtyFiles(new FileProcessor<R, T>() {
       @Override
-      public boolean apply(T target, File file, R sourceRoot) {
+      public boolean apply(@NotNull T target, @NotNull File file, @NotNull R sourceRoot) {
         if (shouldProcessSourceFile(file, sourceRoot, file.getPath(), configuration)) {
           if (forStubs && settings.isExcludedFromStubGeneration(file)) {
             hasExcludes.set(true);

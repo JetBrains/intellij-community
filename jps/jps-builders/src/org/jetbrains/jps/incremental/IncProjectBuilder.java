@@ -305,7 +305,7 @@ public final class IncProjectBuilder {
     }
   }
 
-  public static long calculateEstimatedBuildTime(ProjectDescriptor projectDescriptor, Predicate<BuildTarget<?>> isAffected) {
+  public static long calculateEstimatedBuildTime(@NotNull ProjectDescriptor projectDescriptor, @NotNull Predicate<BuildTarget<?>> isAffected) {
     final BuildTargetsState targetsState = projectDescriptor.getTargetsState();
     // compute estimated times for dirty targets
     long estimatedBuildTime = 0L;
@@ -1244,7 +1244,7 @@ public final class IncProjectBuilder {
       pd.fsState.processFilesToRecompile(context, target, new FileProcessor<>() {
         private SourceToOutputMapping srcToOut;
         @Override
-        public boolean apply(T target, File file, R root) throws IOException {
+        public boolean apply(@NotNull T target, @NotNull File file, @NotNull R root) throws IOException {
           final String src = FileUtil.toSystemIndependentName(file.getPath());
           if (affectedSources.add(src)) {
             if (srcToOut == null) { // lazy init
