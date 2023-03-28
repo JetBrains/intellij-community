@@ -34,12 +34,17 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
   private var previousStatus: Status? = null
 
   init {
+    ApplicationManager.getApplication().assertIsDispatchThread()
     tree.showsRootHandles = false
-    updateCurrentFile()
     project.messageBus.connect(this)
       .subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, this)
     ApplicationManager.getApplication().messageBus.connect(this)
       .subscribe(PowerSaveMode.TOPIC, this)
+  }
+
+  fun initInBGT() {
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
+    updateCurrentFile()
   }
 
   override fun getSortFoldersFirst(): Option? = null
