@@ -19,6 +19,8 @@ import org.jetbrains.plugins.gradle.properties.base.BaseProperties
 import org.jetbrains.plugins.gradle.properties.base.BasePropertiesFile
 import java.nio.file.Paths
 
+const val LOCAL_PROPERTIES_JAVA_HOME = "LOCAL_PROPERTIES_JDK"
+
 const val USE_GRADLE_JAVA_HOME = "#GRADLE_JAVA_HOME"
 const val USE_LOCAL_PROPERTIES_JAVA_HOME = "#LOCAL_PROPERTIES_JDK"
 
