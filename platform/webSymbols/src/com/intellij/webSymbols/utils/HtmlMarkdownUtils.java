@@ -37,6 +37,8 @@ public final class HtmlMarkdownUtils {
   // Final adjustments to make PhpDoc look more readable
   private static final Map<String, String> HTML_DOC_SUBSTITUTIONS = new HashMap<>();
   public static final String BR_TAG_AFTER_MARKDOWN_PROCESSING = "<br  />";
+  public static final String BR_TAG_OPENING = "&lt;br&gt;";
+  public static final String BR_TAG_CLOSING = "&lt;/br&gt;";
 
   static {
     HTML_DOC_SUBSTITUTIONS.put("<pre><code>", "<pre>");
