@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.environment.impl
 
+import com.intellij.ide.environment.DefaultedEnvironmentKey
 import com.intellij.ide.environment.EnvironmentKey
 import com.intellij.openapi.application.ApplicationManager
 
@@ -11,6 +12,9 @@ class DefaultEnvironmentService : BaseEnvironmentService() {
       LOG.warn("Access to UI is not allowed in the headless environment")
     }
     checkKeyRegistered(key)
+    if (key is DefaultedEnvironmentKey) {
+      return key.defaultValue
+    }
     return null
   }
 

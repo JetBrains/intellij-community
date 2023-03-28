@@ -4,6 +4,7 @@ package com.intellij.ide.environment.impl
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.util.DefaultIndenter
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
+import com.intellij.ide.environment.DefaultedEnvironmentKey
 import com.intellij.ide.environment.EnvironmentKey
 import com.intellij.ide.environment.EnvironmentKeyProvider
 import com.intellij.openapi.application.ApplicationManager
@@ -13,6 +14,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.platform.util.ArgsParser
+import com.intellij.util.asSafely
 import com.intellij.util.io.createFile
 import com.intellij.util.io.write
 import kotlinx.coroutines.Dispatchers
@@ -82,7 +84,7 @@ private suspend fun generateKeyConfig(generateDescriptions: Boolean, configurati
         writeEndArray()
       }
       writeStringField("key", key.id)
-      val value = configuration.get(key) ?: ""
+      val value = configuration.get(key) ?: key.asSafely<DefaultedEnvironmentKey>()?.defaultValue ?: ""
       writeStringField("value", value)
       writeEndObject()
     }

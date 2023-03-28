@@ -3,6 +3,7 @@ package com.intellij.ide.environment.impl
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.type.CollectionType
+import com.intellij.ide.environment.DefaultedEnvironmentKey
 import com.intellij.ide.environment.EnvironmentKey
 import com.intellij.openapi.application.ApplicationManager
 import kotlinx.coroutines.*
@@ -29,6 +30,10 @@ class HeadlessEnvironmentService(scope: CoroutineScope) : BaseEnvironmentService
     val valueFromConfigurationFile = mapping[key.id]
     if (valueFromConfigurationFile != null) {
       return valueFromConfigurationFile
+    }
+
+    if (key is DefaultedEnvironmentKey) {
+      return key.defaultValue
     }
 
     return onError()
