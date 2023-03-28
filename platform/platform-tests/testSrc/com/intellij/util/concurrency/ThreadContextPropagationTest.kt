@@ -4,10 +4,10 @@ package com.intellij.util.concurrency
 import com.intellij.concurrency.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.progress.timeoutRunBlocking
 import com.intellij.openapi.progress.timeoutWaitUp
 import com.intellij.openapi.util.Conditions
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.timeoutRunBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertSame

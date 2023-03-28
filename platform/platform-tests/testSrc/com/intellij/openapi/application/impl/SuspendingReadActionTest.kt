@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.*
@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LeakHunter
 import com.intellij.util.concurrency.Semaphore
+import com.intellij.util.timeoutRunBlocking
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.RepeatedTest

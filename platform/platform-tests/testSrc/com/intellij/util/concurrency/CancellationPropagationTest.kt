@@ -18,6 +18,7 @@ import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.getValue
 import com.intellij.util.setValue
+import com.intellij.util.timeoutRunBlocking
 import kotlinx.coroutines.*
 import kotlinx.coroutines.CancellationException
 import org.junit.jupiter.api.Assertions.*
