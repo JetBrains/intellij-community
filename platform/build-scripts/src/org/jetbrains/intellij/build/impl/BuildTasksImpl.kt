@@ -23,6 +23,7 @@ import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager
 import org.jetbrains.idea.maven.aether.ProgressConsumer
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.checkInArchive
 import org.jetbrains.intellij.build.impl.productInfo.generateProductInfoJson
@@ -1095,7 +1096,7 @@ private fun crossPlatformZip(macX64DistDir: Path,
         out.entry(p, f)
       }
 
-      out.entry("product-info.json", productJson)
+      out.entry(PRODUCT_INFO_FILE_NAME, productJson)
 
       Files.newDirectoryStream(winX64DistDir.resolve("bin")).use {
         for (file in it) {

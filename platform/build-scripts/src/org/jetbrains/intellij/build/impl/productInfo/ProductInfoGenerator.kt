@@ -12,7 +12,7 @@ import java.nio.file.Path
 import java.nio.file.attribute.FileTime
 import java.util.concurrent.TimeUnit
 
-internal const val PRODUCT_INFO_FILE_NAME = "product-info.json"
+const val PRODUCT_INFO_FILE_NAME = "product-info.json"
 
 @OptIn(ExperimentalSerializationApi::class)
 internal val jsonEncoder by lazy {
@@ -57,7 +57,8 @@ internal fun writeProductInfoJson(targetFile: Path, json: String, context: Build
 }
 
 /**
- * Describes format of JSON file containing meta-information about a product installation. Must be consistent with 'product-info.schema.json' file.
+ * Describes the format of JSON file containing meta-information about a product installation.
+ * Must be consistent with 'product-info.schema.json' file.
  */
 @Serializable
 data class ProductInfoData(
