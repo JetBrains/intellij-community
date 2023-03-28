@@ -64,8 +64,7 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
     }
 
     Disposer.register(this, myComponent);
-    myAsyncLoader = new AsyncEditorLoader(this, myComponent, provider);
-    myAsyncLoader.start();
+    myAsyncLoader = myProject.getService(AsyncEditorLoaderService.class).start(this, myComponent, provider);
   }
 
   /**
@@ -104,7 +103,8 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   }
 
   @Override
-  public void dispose(){
+  public void dispose() {
+    myAsyncLoader.dispose$intellij_platform_ide_impl();
     if (Boolean.TRUE.equals(myFile.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN))) {
       myFile.putUserData(TRANSIENT_EDITOR_STATE_KEY, TransientEditorState.forEditor(getEditor()));
     }

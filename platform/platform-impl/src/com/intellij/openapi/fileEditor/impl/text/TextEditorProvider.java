@@ -261,7 +261,9 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider,
 
     int relativeCaretPosition = state.RELATIVE_CARET_POSITION;
     AsyncEditorLoader.performWhenLoaded(editor, () -> {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
+      // not safe to optimize doWhenFirstShown and execute runnable right away if `isShowing() == true`,
+      // let's check only here for now
+      if (ApplicationManager.getApplication().isUnitTestMode() || editor.getContentComponent().isShowing()) {
         scrollToCaret(editor, exactState, relativeCaretPosition);
       }
       else {

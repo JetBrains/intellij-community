@@ -5,7 +5,6 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.IdeTooltipManager
-import com.intellij.ide.RemoteDesktopService
 import com.intellij.ide.dnd.DnDAware
 import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
@@ -579,8 +578,6 @@ private class IdePaneLoadingLayer(
 ) {
   companion object {
     private const val ALPHA = 0.5f
-    private const val totalFrames = 12
-    private const val opacityPerFrame: Float = ALPHA / totalFrames
   }
 
   private var currentAlpha = ALPHA
@@ -638,12 +635,10 @@ private class IdePaneLoadingLayer(
             val icon = icon
             removeIcon()
             if (icon != null) {
-              object : SimpleAnimator() {
-                override fun paintNow(frame: Int, totalFrames: Int) {
-                  currentAlpha = ALPHA - (frame * opacityPerFrame)
-                  icon.paintImmediately(icon.bounds)
-                }
-              }.run(totalFrames = totalFrames, cycleDuration = if (RemoteDesktopService.isRemoteSession()) 2_520 else 504)
+              fadeOut(initialAlpha = ALPHA) { alpha ->
+                currentAlpha = alpha
+                icon.paintImmediately(icon.bounds)
+              }
             }
           }
           finally {
