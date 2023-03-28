@@ -363,7 +363,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
         }
       }
       else {
-        myExecutionPointManager.setExecutionPoint(null);
+        myExecutionPointManager.clearExecutionPoint();
       }
       onActiveSessionChanged(previousSession, session);
     }

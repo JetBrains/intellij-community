@@ -36,7 +36,10 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.*;
-import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.XExecutionStack;
+import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XSuspendContext;
+import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.*;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
@@ -653,8 +656,7 @@ public final class XDebugSessionImpl implements XDebugSession {
       boolean isTopFrame = isTopFrameSelected();
       XSourcePosition mainSourcePosition = getFrameSourcePosition(myCurrentStackFrame, XSourceKind.MAIN);
       XSourcePosition alternativeSourcePosition = getFrameSourcePosition(myCurrentStackFrame, XSourceKind.ALTERNATIVE);
-      ExecutionPoint executionPoint = ExecutionPoint.create(mainSourcePosition, alternativeSourcePosition, isTopFrame);
-      myExecutionPointManager.setExecutionPoint(executionPoint);
+      myExecutionPointManager.setExecutionPoint(mainSourcePosition, alternativeSourcePosition, isTopFrame);
       myExecutionPointManager.setActiveSourceKind(myCurrentSourceKind);
       updateExecutionPointGutterIconRenderer();
     }

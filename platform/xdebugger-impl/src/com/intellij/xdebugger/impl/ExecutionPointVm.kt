@@ -37,37 +37,46 @@ class ExecutionPositionGutterVm(val gutterIconRendererState: StateFlow<GutterIco
 
 
 internal class ExecutionPointVmImpl(
-  project: Project,
-  coroutineScope: CoroutineScope,
-  executionPoint: ExecutionPoint,
+  override val mainPositionVm: ExecutionPositionVm?,
+  override val alternativePositionVm: ExecutionPositionVm?,
+  override val isTopFrame: Boolean,
   activeSourceKindState: StateFlow<XSourceKind>,
-  gutterIconRendererState: StateFlow<GutterIconRenderer?>,
-  updateRequestFlow: Flow<ExecutionPositionUpdateRequest>,
 ) : ExecutionPointVm {
-  override val isTopFrame: Boolean by executionPoint::isTopFrame
-
-  override val mainPositionVm: ExecutionPositionVm?
-  override val alternativePositionVm: ExecutionPositionVm?
-
   private val activeSourceKind: XSourceKind by activeSourceKindState::value
-
-  init {
-    val gutterVm = ExecutionPositionGutterVm(gutterIconRendererState)
-
-    fun createPositionVm(sourceKind: XSourceKind): ExecutionPositionVmImpl? {
-      val sourcePosition = executionPoint.getSourcePosition(sourceKind) ?: return null
-      val isActiveSourceKindState = activeSourceKindState.mapStateIn(coroutineScope) { it == sourceKind }
-      return ExecutionPositionVmImpl(project, coroutineScope, sourcePosition, isTopFrame, isActiveSourceKindState, gutterVm, updateRequestFlow)
-    }
-
-    mainPositionVm = createPositionVm(XSourceKind.MAIN)
-    alternativePositionVm = createPositionVm(XSourceKind.ALTERNATIVE)
-  }
 
   override fun navigateTo(navigationMode: ExecutionPositionNavigationMode, sourceKind: XSourceKind?) {
     val effectiveSourceKind = sourceKind ?: activeSourceKind
     mainPositionVm?.navigateTo(navigationMode, isActiveSourceKind = effectiveSourceKind == XSourceKind.MAIN)
     alternativePositionVm?.navigateTo(navigationMode, isActiveSourceKind = effectiveSourceKind == XSourceKind.ALTERNATIVE)
+  }
+
+  companion object {
+    fun create(
+      project: Project,
+      coroutineScope: CoroutineScope,
+      mainSourcePosition: XSourcePosition?,
+      alternativeSourcePosition: XSourcePosition?,
+      isTopFrame: Boolean,
+      activeSourceKindState: StateFlow<XSourceKind>,
+      gutterIconRendererState: StateFlow<GutterIconRenderer?>,
+      updateRequestFlow: Flow<ExecutionPositionUpdateRequest>,
+    ): ExecutionPointVmImpl? {
+      if (mainSourcePosition == null && alternativeSourcePosition == null) return null
+
+      val gutterVm = ExecutionPositionGutterVm(gutterIconRendererState)
+
+      fun createPositionVm(sourcePosition: XSourcePosition?, sourceKind: XSourceKind): ExecutionPositionVm? {
+        if (sourcePosition == null) return null
+        val isActiveSourceKindState = activeSourceKindState.mapStateIn(coroutineScope) { it == sourceKind }
+        return ExecutionPositionVmImpl(project, coroutineScope, sourcePosition, isTopFrame, isActiveSourceKindState, gutterVm,
+                                       updateRequestFlow)
+      }
+
+      val mainPositionVm = createPositionVm(mainSourcePosition, XSourceKind.MAIN)
+      val alternativePositionVm = createPositionVm(alternativeSourcePosition, XSourceKind.ALTERNATIVE)
+
+      return ExecutionPointVmImpl(mainPositionVm, alternativePositionVm, isTopFrame, activeSourceKindState)
+    }
   }
 }
 

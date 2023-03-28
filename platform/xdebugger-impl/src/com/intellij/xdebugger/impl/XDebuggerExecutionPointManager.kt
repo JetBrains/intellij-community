@@ -3,8 +3,6 @@ package com.intellij.xdebugger.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.diagnostic.getOrLogException
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.impl.EditorMouseHoverPopupControl
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
@@ -22,17 +20,11 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 
-private val LOG = logger<XDebuggerExecutionPointManager>()
-
 internal class XDebuggerExecutionPointManager(private val project: Project,
                                               parentScope: CoroutineScope) {
   private val coroutineScope: CoroutineScope = parentScope.childScope(Dispatchers.EDT + CoroutineName(javaClass.simpleName))
 
   private val updateRequestFlow = MutableSharedFlow<ExecutionPositionUpdateRequest>(extraBufferCapacity = 1, onBufferOverflow = DROP_OLDEST)
-
-  private val _executionPointState = MutableStateFlow<ExecutionPoint?>(null)
-  private val executionPointState: StateFlow<ExecutionPoint?> = _executionPointState.asStateFlow()
-  var executionPoint: ExecutionPoint? by _executionPointState::value
 
   private val _activeSourceKindState = MutableStateFlow(XSourceKind.MAIN)
   private val activeSourceKindState: StateFlow<XSourceKind> = _activeSourceKindState.asStateFlow()
@@ -42,20 +34,8 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
   private val gutterIconRendererState: StateFlow<GutterIconRenderer?> = _gutterIconRendererState.asStateFlow()
   var gutterIconRenderer: GutterIconRenderer? by _gutterIconRendererState::value
 
-  private val executionPointVmState: StateFlow<ExecutionPointVm?> = executionPointState
-    .onCompletion { emit(null) }
-    .map { executionPoint ->
-      kotlin.runCatching {
-        executionPoint?.let {
-          ExecutionPointVmImpl(project,
-                               coroutineScope, it,
-                               activeSourceKindState,
-                               gutterIconRendererState,
-                               updateRequestFlow)
-        }
-      }.getOrLogException(LOG)
-    }.stateIn(coroutineScope, SharingStarted.Eagerly, initialValue = null)
-  private val executionPointVm: ExecutionPointVm? by executionPointVmState::value
+  private val executionPointVmState = MutableStateFlow<ExecutionPointVm?>(null)
+  private var executionPointVm: ExecutionPointVm? by executionPointVmState::value
 
   init {
     val uiScope = coroutineScope.childScope(CoroutineName("${javaClass.simpleName}/UI"))
@@ -85,15 +65,30 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
     }
   }
 
+  fun clearExecutionPoint() {
+    executionPointVm = null
+  }
+
+  fun setExecutionPoint(mainSourcePosition: XSourcePosition?, alternativeSourcePosition: XSourcePosition?, isTopFrame: Boolean) {
+    executionPointVm = ExecutionPointVmImpl.create(project,
+                                                   coroutineScope,
+                                                   mainSourcePosition,
+                                                   alternativeSourcePosition,
+                                                   isTopFrame,
+                                                   activeSourceKindState,
+                                                   gutterIconRendererState,
+                                                   updateRequestFlow)
+  }
+
   @RequiresEdt
   fun isFullLineHighlighterAt(file: VirtualFile, line: Int, project: Project, isToCheckTopFrameOnly: Boolean): Boolean {
     return isCurrentFile(file) && ExecutionPositionUi.isFullLineHighlighterAt(file, line, project, isToCheckTopFrameOnly)
   }
 
   private fun isCurrentFile(file: VirtualFile): Boolean {
-    val point = executionPoint ?: return false
-    return point.getSourcePosition(XSourceKind.MAIN)?.file == file ||
-           point.getSourcePosition(XSourceKind.ALTERNATIVE)?.file == file
+    val pointVm = executionPointVmState.value ?: return false
+    return pointVm.mainPositionVm?.file == file ||
+           pointVm.alternativePositionVm?.file == file
   }
 
   fun updateExecutionPosition(file: VirtualFile, toNavigate: Boolean) {
@@ -105,27 +100,6 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
 
   fun showExecutionPosition() {
     executionPointVm?.navigateTo(ExecutionPositionNavigationMode.OPEN)
-  }
-}
-
-internal class ExecutionPoint private constructor(
-  private val mainSourcePosition: XSourcePosition?,
-  private val alternativeSourcePosition: XSourcePosition?,
-  val isTopFrame: Boolean,
-) {
-  fun getSourcePosition(sourceKind: XSourceKind): XSourcePosition? {
-    return when (sourceKind) {
-      XSourceKind.MAIN -> mainSourcePosition
-      XSourceKind.ALTERNATIVE -> alternativeSourcePosition
-    }
-  }
-
-  companion object {
-    @JvmStatic
-    fun create(mainSourcePosition: XSourcePosition?, alternativeSourcePosition: XSourcePosition?, isTopFrame: Boolean): ExecutionPoint? {
-      if (mainSourcePosition == null && alternativeSourcePosition == null) return null
-      return ExecutionPoint(mainSourcePosition, alternativeSourcePosition, isTopFrame)
-    }
   }
 }
 
