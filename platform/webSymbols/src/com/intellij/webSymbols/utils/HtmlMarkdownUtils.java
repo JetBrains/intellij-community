@@ -77,6 +77,9 @@ public final class HtmlMarkdownUtils {
       String line = lines[i];
       String processedLine = StringUtil.trimTrailing(line);
       processedLine = StringUtil.trimStart(processedLine, " ");
+      if (processedLine.matches("\\s+```.*")) {
+        processedLine = processedLine.trim();
+      }
 
       int count = StringUtil.getOccurrenceCount(processedLine, FENCED_CODE_BLOCK);
       if (count > 0) {
