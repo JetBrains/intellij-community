@@ -182,6 +182,7 @@ internal open class UpdateIdeFromSourcesAction
     return null
   }
 
+  @Suppress("SameParameterValue")
   private fun runUpdateScript(params: JavaParameters,
                               project: Project,
                               workIdeHome: String,
@@ -329,9 +330,9 @@ internal open class UpdateIdeFromSourcesAction
       val updateScript = FileUtil.createTempFile("update", ".cmd", false)
       val workHomePath = File(workIdeHome).absolutePath
       /* deletion of the IDE files may fail to delete some executable files because they are still used by the IDE process,
-         so the script wait for some time and try to delete again;
+         so the script waits for some time and tries to delete again;
          'ping' command is used instead of 'timeout' because the latter doesn't work from batch files;
-         removal of the script file is performed in separate process to avoid errors while executing the script */
+         removal of the script file is performed in a separate process to avoid errors while executing the script */
       FileUtil.writeToFile(updateScript, """
         @echo off
         SET count=20
@@ -350,7 +351,6 @@ internal open class UpdateIdeFromSourcesAction
           ECHO Failed to delete "$workHomePath", IDE wasn't updated. You may delete it manually and copy files from "${File(builtDistPath).absolutePath}" by hand  
           GOTO CLEANUP_AND_EXIT 
         )
-        
         XCOPY "${File(builtDistPath).absolutePath}" "$workHomePath"\ /Q /E /Y
         :CLEANUP_AND_EXIT
         START /b "" cmd /c DEL /Q /F "${updateScript.absolutePath}" & EXIT /b
