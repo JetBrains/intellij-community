@@ -2,7 +2,6 @@
 package com.intellij.openapi.progress;
 
 import com.intellij.concurrency.ThreadContext;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.util.ThrowableComputable;
 import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.ApiStatus.Internal;
