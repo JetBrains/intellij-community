@@ -66,6 +66,11 @@ public interface CustomizableIntentionAction extends IntentionAction {
     private final TextRange rangeInPsi;
     private final TextAttributesKey highlightKey;
 
+    /**
+     * @param psi psi element to highlight
+     * @param rangeInPsi range within psi element to highlight
+     * @param highlightKey highlighting key to use
+     */
     public RangeToHighlight(@NotNull PsiElement psi, @NotNull TextRange rangeInPsi, @NotNull TextAttributesKey highlightKey) {
       this.psi = psi;
       this.rangeInPsi = rangeInPsi;
