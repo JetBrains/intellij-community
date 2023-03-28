@@ -26,6 +26,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference;
+import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.junit.Test;
 
 public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
@@ -641,6 +642,10 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                            </plugin>
                          </plugins>
                        </build>""");
+
+    var indicesManager = MavenIndicesManager.getInstance(myProject);
+    var pluginIndexed = indicesManager.hasLocalArtifactId("org.apache.maven.plugins", "maven-resources-plugin");
+    assertTrue("Maven resources plugin is not indexed", pluginIndexed);
 
     checkHighlighting();
   }
