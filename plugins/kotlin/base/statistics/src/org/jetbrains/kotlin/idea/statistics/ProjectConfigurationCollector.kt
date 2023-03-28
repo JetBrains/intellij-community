@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
 import org.jetbrains.kotlin.idea.configuration.buildSystemType
+import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.isCommon
@@ -33,11 +34,12 @@ class ProjectConfigurationCollector : ProjectUsagesCollector() {
             modulesWithFacet.forEach {
                 val buildSystem = getBuildSystemType(it)
                 val platform = getPlatform(it)
-
+                val languageLevel = KotlinFacet.get(it)?.configuration?.settings?.languageLevel?.versionString
                 metrics.add(
                     buildEvent.metric(
                         systemField.with(buildSystem),
                         platformField.with(platform),
+                        languageLevelField.with(languageLevel),
                         isMPPBuild.with(it.isMultiPlatformModule || it.isNewMultiPlatformModule),
                         pluginInfoField.with(KotlinIdePlugin.getPluginInfo()),
                         eventFlags.with(KotlinASStatisticsEventFlags.calculateAndPackEventsFlagsToLong(it))
@@ -73,10 +75,11 @@ class ProjectConfigurationCollector : ProjectUsagesCollector() {
     }
 
     companion object {
-        private val GROUP = EventLogGroup("kotlin.project.configuration", 7)
+        private val GROUP = EventLogGroup("kotlin.project.configuration", 8)
 
         private val systemField = EventFields.String("system", listOf("JPS", "Maven", "Gradle", "unknown"))
         private val platformField = EventFields.String("platform", composePlatformFields())
+        private val languageLevelField = EventFields.StringValidatedByRegexp("languageVersion", "version_lang_api")
         private val isMPPBuild = EventFields.Boolean("isMPP")
         private val pluginInfoField = EventFields.PluginInfo
 
@@ -94,6 +97,7 @@ class ProjectConfigurationCollector : ProjectUsagesCollector() {
             systemField,
             platformField,
             isMPPBuild,
+            languageLevelField,
             pluginInfoField,
             eventFlags
         )
