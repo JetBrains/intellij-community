@@ -8,12 +8,12 @@ import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.navigation.targetPresentation
 import com.intellij.find.FindBundle
 import com.intellij.find.usages.api.SearchTarget
-import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts.PopupTitle
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiElement
 import com.intellij.ui.list.createTargetPopup
 import com.intellij.usages.UsageTarget

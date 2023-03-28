@@ -6,8 +6,8 @@ import com.intellij.codeInsight.navigation.fileStatusAttributes
 import com.intellij.model.Pointer
 import com.intellij.navigation.NavigationRequest
 import com.intellij.navigation.NavigationTarget
-import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.suggested.createSmartPointer
 

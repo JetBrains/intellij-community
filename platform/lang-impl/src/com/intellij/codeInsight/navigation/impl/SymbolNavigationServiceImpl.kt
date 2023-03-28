@@ -3,9 +3,13 @@ package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiSymbolService
-import com.intellij.navigation.*
+import com.intellij.navigation.NavigatableSymbol
+import com.intellij.navigation.NavigationTarget
+import com.intellij.navigation.SymbolNavigationProvider
+import com.intellij.navigation.SymbolNavigationService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClassExtension
+import com.intellij.platform.backend.presentation.TargetPresentationBuilder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.SmartList

@@ -2,6 +2,7 @@
 package com.intellij.navigation;
 
 import com.intellij.model.Pointer;
+import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;

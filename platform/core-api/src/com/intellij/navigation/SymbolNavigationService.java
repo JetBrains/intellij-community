@@ -4,6 +4,8 @@ package com.intellij.navigation;
 import com.intellij.model.Symbol;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.platform.backend.presentation.TargetPresentation;
+import com.intellij.platform.backend.presentation.TargetPresentationBuilder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
