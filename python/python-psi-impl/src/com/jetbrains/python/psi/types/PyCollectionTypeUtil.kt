@@ -387,27 +387,6 @@ object PyCollectionTypeUtil {
     return null
   }
 
-  private fun getTypedDictTypeByModificationsForDictConstructor(node: PySubscriptionExpression,
-                                                                element: PsiElement,
-                                                                typeEvalContext: TypeEvalContext): PyTypedDictType? {
-    var allStrKeys = true
-    val keysToValueTypes = LinkedHashMap<String, Pair<PyExpression?, PyType?>>()
-    val rightValue = getRightValue(node)
-
-    if (rightValue != null) {
-      val rightValueType = typeEvalContext.getType(rightValue)
-      val indexExpression = node.indexExpression
-      if (indexExpression is PyStringLiteralExpression) {
-        keysToValueTypes[indexExpression.stringValue] = Pair(rightValue, rightValueType)
-      }
-      else {
-        allStrKeys = false
-      }
-    }
-
-    return if (allStrKeys) PyTypedDictType.createFromKeysToValueTypes(element, keysToValueTypes) else null
-  }
-
   private fun getTypeByModifications(node: PySubscriptionExpression,
                                      element: PsiElement,
                                      typeEvalContext: TypeEvalContext): Pair<List<PyType?>, List<PyType?>>? {
@@ -666,10 +645,17 @@ object PyCollectionTypeUtil {
     }
 
     override fun visitPySubscriptionExpression(node: PySubscriptionExpression) {
-      val typedDictType = getTypedDictTypeByModificationsForDictConstructor(node, myElement, myTypeEvalContext)
-      if (typedDictType != null) {
-        isModificationExist = true
-        strKeysToValueTypes.putAll(typedDictType.getKeysToValuesWithTypes())
+      val rightValue = getRightValue(node) ?: return
+      val subscriptionTarget = node.operand as? PyReferenceOwner ?: return
+      val resolveContext = PyResolveContext.defaultContext(myTypeEvalContext)
+      if (!subscriptionTarget.getReference(resolveContext).isReferenceTo(myElement)) {
+        return
+      }
+
+      isModificationExist = true
+      val indexExpression = node.indexExpression
+      if (indexExpression is PyStringLiteralExpression) {
+        strKeysToValueTypes[indexExpression.stringValue] = Pair(rightValue, myTypeEvalContext.getType(rightValue))
       }
       else {
         hasAllStrKeys = false
