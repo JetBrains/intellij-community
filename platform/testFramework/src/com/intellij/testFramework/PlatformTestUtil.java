@@ -378,6 +378,10 @@ public final class PlatformTestUtil {
     }
   }
 
+  public static <T> T waitForFuture(@NotNull Future<T> future) {
+    return waitForFuture(future, MAX_WAIT_TIME);
+  }
+
   public static <T> T waitForFuture(@NotNull Future<T> future, long timeoutMillis) {
     assertDispatchThreadWithoutWriteAccess();
     long start = System.currentTimeMillis();
