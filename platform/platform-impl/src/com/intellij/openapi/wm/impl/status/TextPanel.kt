@@ -40,6 +40,14 @@ open class TextPanel @JvmOverloads constructor(private val toolTipTextSupplier: 
 
   companion object {
     const val PROPERTY_TEXT = "TextPanel.text"
+
+    fun getFont(): Font = if (SystemInfoRt.isMac && !ExperimentalUI.isNewUI()) JBFont.small() else JBUI.CurrentTheme.StatusBar.font()
+
+    fun computeTextHeight(): Int {
+      val label = JLabel("XXX") //NON-NLS
+      label.font = getFont()
+      return label.preferredSize.height
+    }
   }
 
   override fun getToolTipText(): String? = toolTipTextSupplier?.invoke() ?: super.getToolTipText()
@@ -50,12 +58,10 @@ open class TextPanel @JvmOverloads constructor(private val toolTipTextSupplier: 
                       UIManager.getDefaults().get(RenderingHints.KEY_FRACTIONALMETRICS) ?: RenderingHints.VALUE_FRACTIONALMETRICS_OFF)
   }
 
-  override fun getFont(): Font = if (SystemInfoRt.isMac && !ExperimentalUI.isNewUI()) JBFont.small() else JBUI.CurrentTheme.StatusBar.font()
+  override fun getFont(): Font = Companion.getFont()
 
   fun recomputeSize() {
-    val label = JLabel("XXX") //NON-NLS
-    label.font = font
-    preferredHeight = label.preferredSize.height
+    preferredHeight = computeTextHeight()
   }
 
   override fun paintComponent(g: Graphics) {

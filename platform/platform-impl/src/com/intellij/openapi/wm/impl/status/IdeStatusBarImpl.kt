@@ -46,6 +46,7 @@ import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.border.name
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.popup.NotificationPopup
+import com.intellij.ui.util.height
 import com.intellij.util.EventDispatcher
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -66,6 +67,7 @@ import javax.accessibility.AccessibleRole
 import javax.swing.*
 import javax.swing.border.CompoundBorder
 import javax.swing.event.HyperlinkListener
+import kotlin.math.max
 
 private const val UI_CLASS_ID = "IdeStatusBarUI"
 private val WIDGET_ID = Key.create<String>("STATUS_BAR_WIDGET_ID")
@@ -92,6 +94,8 @@ open class IdeStatusBarImpl internal constructor(
   private val centerPanel: JPanel
   private var effectComponent: JComponent? = null
   private var info: @NlsContexts.StatusBarText String? = null
+
+  private var preferredTextHeight: Int = 0
 
   private val initialEditorProvider = editorProvider
 
@@ -192,7 +196,7 @@ open class IdeStatusBarImpl internal constructor(
   override fun getPreferredSize(): Dimension {
     val size = super.getPreferredSize()!!
     val insets = insets
-    val minHeight = insets.top + insets.bottom + MIN_ICON_HEIGHT
+    val minHeight = insets.top + insets.bottom + max(MIN_ICON_HEIGHT, preferredTextHeight)
     return Dimension(size.width, size.height.coerceAtLeast(minHeight))
   }
 
@@ -580,6 +584,7 @@ open class IdeStatusBarImpl internal constructor(
         }
       }
     })
+    preferredTextHeight = TextPanel.computeTextHeight() + JBUI.CurrentTheme.StatusBar.Widget.border().getBorderInsets(null).height
   }
 
   override fun getComponentGraphics(g: Graphics): Graphics {
