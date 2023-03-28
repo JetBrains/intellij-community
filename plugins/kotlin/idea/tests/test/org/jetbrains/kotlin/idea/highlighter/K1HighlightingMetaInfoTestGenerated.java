@@ -122,6 +122,11 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
             runTest("testData/highlighterMetaInfo/AutoCreatedItParameter.kt");
         }
 
+        @TestMetadata("deprecation.kt")
+        public void testDeprecation() throws Exception {
+            runTest("testData/highlighterMetaInfo/deprecation.kt");
+        }
+
         @TestMetadata("Destructuring.kt")
         public void testDestructuring() throws Exception {
             runTest("testData/highlighterMetaInfo/Destructuring.kt");

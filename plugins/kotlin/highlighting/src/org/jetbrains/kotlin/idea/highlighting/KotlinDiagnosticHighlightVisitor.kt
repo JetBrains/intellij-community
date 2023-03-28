@@ -100,6 +100,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
     private fun KtDiagnosticWithPsi<*>.getHighlightInfoType(): HighlightInfoType {
        return when {
             isUnresolvedDiagnostic() -> HighlightInfoType.WRONG_REF
+            isDeprecatedDiagnostic() -> HighlightInfoType.DEPRECATED
             else ->  when (severity) {
                 Severity.INFO -> HighlightInfoType.INFORMATION
                 Severity.ERROR -> HighlightInfoType.ERROR
@@ -118,6 +119,11 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
         else -> false
     }
 
+    context(KtAnalysisSession)
+    private fun KtDiagnosticWithPsi<*>.isDeprecatedDiagnostic() = when (this) {
+        is KtFirDiagnostic.Deprecation -> true
+        else -> false
+    }
 
     override fun visit(element: PsiElement) {
         // After-analysis highlighting visitors are implemented as a separate highlighting pass, see [KotlinSemanticHighlightingPass],
