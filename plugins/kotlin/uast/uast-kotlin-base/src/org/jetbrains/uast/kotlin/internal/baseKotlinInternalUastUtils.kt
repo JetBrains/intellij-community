@@ -140,7 +140,7 @@ val PsiMethod.desc: String
         append(MapPsiToAsmDesc.typeDesc(returnType ?: PsiTypes.voidType()))
     }
 
-private val KtCallElement.isAnnotationArgument: Boolean
+internal val KtCallElement.isAnnotationArgument: Boolean
     // KtAnnotationEntry (or KtCallExpression when annotation is nested) -> KtValueArgumentList -> KtValueArgument -> arrayOf call
     get() = when (val elementAt2 = parents.elementAtOrNull(2)) {
         is KtAnnotationEntry -> true
