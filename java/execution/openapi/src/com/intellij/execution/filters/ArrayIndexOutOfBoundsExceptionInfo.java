@@ -37,7 +37,7 @@ public class ArrayIndexOutOfBoundsExceptionInfo extends ExceptionInfo {
   }
 
   @Override
-  PsiElement matchSpecificExceptionElement(@NotNull PsiElement e) {
+  ExceptionLineRefiner.RefinerMatchResult matchSpecificExceptionElement(@NotNull PsiElement e) {
     if (!(e instanceof PsiJavaToken && e.textMatches("[") && e.getParent() instanceof PsiArrayAccessExpression)) {
       return null;
     }
@@ -47,6 +47,7 @@ public class ArrayIndexOutOfBoundsExceptionInfo extends ExceptionInfo {
       Object value = ConstantExpressionUtil.computeCastTo(indexExpression, PsiTypes.intType());
       if (value != null && !value.equals(myIndex)) return null;
     }
-    return indexExpression;
+    //there is no reason to try to find more certain place because it doesn't have its own record in LineNumberTable
+    return ExceptionLineRefiner.RefinerMatchResult.of(indexExpression);
   }
 }

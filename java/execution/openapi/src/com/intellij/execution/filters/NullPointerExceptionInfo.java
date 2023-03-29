@@ -3,13 +3,14 @@ package com.intellij.execution.filters;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
-import java.util.function.UnaryOperator;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,60 +35,72 @@ public class NullPointerExceptionInfo extends ExceptionInfo {
     "longValue", PsiTypes.longType(),
     "floatValue", PsiTypes.floatType(),
     "doubleValue", PsiTypes.doubleType());
-  private final @NotNull UnaryOperator<PsiElement> myExtractor;
-  
+  private final @NotNull Function<PsiElement, ExceptionLineRefiner.RefinerMatchResult> myExtractor;
+
   NullPointerExceptionInfo(int offset, String message) {
     super(offset, CommonClassNames.JAVA_LANG_NULL_POINTER_EXCEPTION, message);
     if (message.isEmpty()) {
       myExtractor = getFallbackExtractor();
-    } else {
-      UnaryOperator<PsiElement> jep358Predicate = getJep358Extractor(message);
+    }
+    else {
+      Function<PsiElement, ExceptionLineRefiner.RefinerMatchResult> jep358Predicate = getJep358Extractor(message);
       myExtractor = jep358Predicate == null ? e -> null : jep358Predicate;
     }
   }
 
-  private static UnaryOperator<PsiElement> getFallbackExtractor() {
+  private static Function<PsiElement, ExceptionLineRefiner.RefinerMatchResult> getFallbackExtractor() {
     return e -> {
-      PsiExpression result = fromThrow(e);
-      if (result != null) return result;
-      result = fromSynchronized(e);
-      if (result != null) return result;
-      result = matchCompilerGeneratedNullCheck(e);
-      if (result != null) return result;
-      result = fromUnboxing(e, null);
-      if (result != null) return result;
-      if (e instanceof PsiJavaToken) {
-        IElementType tokenType = ((PsiJavaToken)e).getTokenType();
-        if (tokenType.equals(JavaTokenType.DOT)) {
-          PsiReferenceExpression ref = tryCast(e.getParent(), PsiReferenceExpression.class);
-          if (ref != null) {
-            PsiExpression qualifier = ref.getQualifierExpression();
-            if (mayBeNull(qualifier)) return qualifier;
-          }
+      ExceptionLineRefiner.RefinerMatchResult matchResult = fromThrow(e);
+      if (matchResult != null) return matchResult;
+      matchResult = fromSynchronized(e);
+      if (matchResult != null) return matchResult;
+      matchResult = matchCompilerGeneratedNullCheck(e);
+      if (matchResult != null) return matchResult;
+      matchResult = fromUnboxing(e, null);
+      if (matchResult != null) return matchResult;
+      PsiElement nextVisible = PsiTreeUtil.nextVisibleLeaf(e);
+      if (nextVisible instanceof PsiJavaToken token && token.getTokenType().equals(JavaTokenType.LBRACKET)) {
+        PsiArrayAccessExpression arrayAccess = tryCast(nextVisible.getParent(), PsiArrayAccessExpression.class);
+        if (arrayAccess != null) {
+          PsiExpression arrayExpression = arrayAccess.getArrayExpression();
+          if (mayBeNull(arrayExpression)) return onTheSameLineFor(e, arrayExpression, false);
         }
-        else if (tokenType.equals(JavaTokenType.LBRACKET)) {
-          PsiArrayAccessExpression arrayAccess = tryCast(e.getParent(), PsiArrayAccessExpression.class);
-          if (arrayAccess != null) {
-            PsiExpression arrayExpression = arrayAccess.getArrayExpression();
-            if (mayBeNull(arrayExpression)) return arrayExpression;
-          }
+      }
+      PsiElement next = null;
+      if (nextVisible instanceof PsiJavaToken token && token.getTokenType().equals((JavaTokenType.DOT))) {
+        next = token;
+      }
+      PsiElement prevVisible = PsiTreeUtil.prevVisibleLeaf(e);
+      if (prevVisible instanceof PsiJavaToken token && token.getTokenType().equals((JavaTokenType.DOT))) {
+        if (next == null) {
+          next = token;
+        }
+        else {
+          next = null;
+        }
+      }
+      if (next != null) {
+        PsiReferenceExpression ref = tryCast(next.getParent(), PsiReferenceExpression.class);
+        if (ref != null) {
+          PsiExpression qualifier = ref.getQualifierExpression();
+          if (mayBeNull(qualifier)) return onTheSameLineFor(e, qualifier, false);
         }
       }
       return null;
     };
   }
-  
-  private static PsiExpression fromThrow(PsiElement e) {
+
+  private static ExceptionLineRefiner.RefinerMatchResult fromThrow(PsiElement e) {
     if (e instanceof PsiKeyword && ((PsiKeyword)e).getTokenType().equals(JavaTokenType.THROW_KEYWORD)) {
       PsiThrowStatement throwStatement = tryCast(e.getParent(), PsiThrowStatement.class);
       if (throwStatement != null) {
-        return throwStatement.getException();
+        return onTheSameLineFor(e, throwStatement.getException(), true);
       }
     }
     return null;
   }
 
-  private static PsiExpression fromUnboxing(PsiElement e, @Nullable PsiPrimitiveType type) {
+  private static ExceptionLineRefiner.RefinerMatchResult fromUnboxing(PsiElement e, @Nullable PsiPrimitiveType type) {
     PsiExpression boxedExpression = null;
     if (e instanceof PsiIdentifier) {
       PsiReferenceExpression ref = tryCast(e.getParent(), PsiReferenceExpression.class);
@@ -108,23 +121,23 @@ public class NullPointerExceptionInfo extends ExceptionInfo {
       PsiType expressionType = boxedExpression.getType();
       PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(expressionType);
       if (unboxedType != null && (type == null || unboxedType.equals(type))) {
-        return boxedExpression;
+        return onTheSameLineFor(e, boxedExpression, false);
       }
     }
     return null;
   }
 
-  private static PsiExpression fromSynchronized(PsiElement e) {
+  private static ExceptionLineRefiner.RefinerMatchResult fromSynchronized(PsiElement e) {
     if (e instanceof PsiKeyword && ((PsiKeyword)e).getTokenType().equals(JavaTokenType.SYNCHRONIZED_KEYWORD)) {
       PsiSynchronizedStatement synchronizedStatement = tryCast(e.getParent(), PsiSynchronizedStatement.class);
       if (synchronizedStatement != null) {
-        return synchronizedStatement.getLockExpression();
+        return onTheSameLineFor(e, synchronizedStatement.getLockExpression(), true);
       }
     }
     return null;
   }
 
-  private static UnaryOperator<PsiElement> getJep358Extractor(@NonNls String message) {
+  private static Function<PsiElement, ExceptionLineRefiner.RefinerMatchResult> getJep358Extractor(@NonNls String message) {
     if (!message.startsWith("Cannot ")) return null;
     Matcher matcher = NPE_MESSAGE.matcher(message);
     if (!matcher.matches()) return null;
@@ -137,7 +150,9 @@ public class NullPointerExceptionInfo extends ExceptionInfo {
     if (matcher.group("arraylength") != null) {
       return e -> {
         PsiExpression qualifier = getFieldReferenceQualifier(e, "length");
-        return qualifier != null && qualifier.getType() instanceof PsiArrayType ? qualifier : null;
+        return qualifier != null && qualifier.getType() instanceof PsiArrayType
+               ? onTheSameLineFor(e, qualifier, false)
+               : null;
       };
     }
     String getField = matcher.group("getfield");
@@ -147,17 +162,20 @@ public class NullPointerExceptionInfo extends ExceptionInfo {
       return e -> {
         PsiExpression qualifier = getFieldReferenceQualifier(e, field);
         return qualifier != null && !(qualifier.getType() instanceof PsiArrayType) &&
-               storeMatches(e.getParent(), getField == null) ? qualifier : null;
+               storeMatches(qualifier.getParent(), getField == null) ? onTheSameLineFor(e, qualifier, false) : null;
       };
     }
     boolean arrayLoad = matcher.group("xaload") != null;
     boolean arrayStore = matcher.group("xastore") != null;
     if (arrayLoad || arrayStore) {
-      return e -> {
+      return current -> {
+        PsiElement e = PsiTreeUtil.nextVisibleLeaf(current);
         if (!(e instanceof PsiJavaToken) || !e.textMatches("[")) return null;
         PsiElement parent = e.getParent();
         if (!(parent instanceof PsiArrayAccessExpression)) return null;
-        return storeMatches(parent, arrayStore) ? ((PsiArrayAccessExpression)parent).getArrayExpression() : null;
+        return storeMatches(parent, arrayStore) ?
+               onTheSameLineFor(current, ((PsiArrayAccessExpression)parent).getArrayExpression(), false) :
+               null;
       };
     }
     String method = matcher.group("invoke");
@@ -170,20 +188,22 @@ public class NullPointerExceptionInfo extends ExceptionInfo {
           if (methodName.equals("getClass") || methodName.equals("ordinal")) {
             // x.getClass() was generated as a null-check by javac until Java 9
             // it's still possible that such a code is executed under Java 14+
-            PsiElement result = matchCompilerGeneratedNullCheck(e);
+            ExceptionLineRefiner.RefinerMatchResult result = matchCompilerGeneratedNullCheck(e);
             if (result != null) return result;
           }
           if (type != null) {
-            PsiExpression result = fromUnboxing(e, type);
+            ExceptionLineRefiner.RefinerMatchResult result = fromUnboxing(e, type);
             if (result != null) return result;
           }
-          if (!(e instanceof PsiJavaToken) || !((PsiJavaToken)e).getTokenType().equals(JavaTokenType.DOT)) return null;
-          PsiElement parent = e.getParent();
+          //method call
+          PsiElement point = PsiTreeUtil.prevVisibleLeaf(e);
+          if (!(point instanceof PsiJavaToken token) || !(token.getTokenType().equals(JavaTokenType.DOT))) return null;
+          PsiElement parent = point.getParent();
           if (!(parent instanceof PsiReferenceExpression)) return null;
           if (!(parent.getParent() instanceof PsiMethodCallExpression)) return null;
           if (!methodName.equals(((PsiReferenceExpression)parent).getReferenceName())) return null;
           PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(((PsiReferenceExpression)parent).getQualifierExpression());
-          return mayBeNull(qualifier) ? qualifier : null;
+          return mayBeNull(qualifier) ? onTheSameLineFor(e, qualifier, false) : null;
         };
       }
     }
@@ -191,36 +211,44 @@ public class NullPointerExceptionInfo extends ExceptionInfo {
   }
 
   @Nullable
-  public static PsiExpression matchCompilerGeneratedNullCheck(PsiElement e) {
+  public static ExceptionLineRefiner.RefinerMatchResult matchCompilerGeneratedNullCheck(PsiElement e) {
     PsiExpression dereferenced = null;
-    if (e instanceof PsiJavaToken && ((PsiJavaToken)e).getTokenType().equals(JavaTokenType.DOUBLE_COLON)) {
+    boolean forward = true;
+    if (PsiTreeUtil.nextVisibleLeaf(e) instanceof PsiJavaToken token &&
+        token.getTokenType().equals(JavaTokenType.DOUBLE_COLON)) {
       // method reference qualifier
-      PsiMethodReferenceExpression methodRef = tryCast(e.getParent(), PsiMethodReferenceExpression.class);
+      PsiMethodReferenceExpression methodRef = tryCast(token.getParent(), PsiMethodReferenceExpression.class);
       if (methodRef != null) {
         dereferenced = methodRef.getQualifierExpression();
+        forward = false;
       }
     }
-    else if (e instanceof PsiKeyword && e.textMatches(PsiKeyword.SWITCH)) {
-      // switch on string or enum
-      PsiSwitchBlock switchBlock = tryCast(e.getParent(), PsiSwitchBlock.class);
+    else if (e instanceof PsiJavaToken && e.textMatches("(") &&
+             PsiTreeUtil.prevVisibleLeaf(e) instanceof PsiKeyword startSwitch &&
+             startSwitch.textMatches(PsiKeyword.SWITCH)) {
+      PsiSwitchBlock switchBlock = tryCast(startSwitch.getParent(), PsiSwitchBlock.class);
       if (switchBlock != null) {
         PsiExpression selector = switchBlock.getExpression();
         if (selector != null) {
-          PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(selector.getType());
-          if (psiClass != null && (psiClass.isEnum() || CommonClassNames.JAVA_LANG_STRING.equals(psiClass.getQualifiedName()))) {
+          PsiType psiType = selector.getType();
+          if (!(psiType instanceof PsiPrimitiveType || PsiPrimitiveType.getUnboxedType(psiType) != null)) {
             dereferenced = selector;
           }
         }
       }
     }
-    else if (e instanceof PsiKeyword && e.textMatches(PsiKeyword.NEW)) {
+    else if (e instanceof PsiIdentifier &&
+             PsiTreeUtil.nextVisibleLeaf(e) instanceof PsiJavaToken dot &&
+             dot.getTokenType().equals(JavaTokenType.DOT) &&
+             PsiTreeUtil.nextVisibleLeaf(dot) instanceof PsiKeyword newKeyWord &&
+             newKeyWord.textMatches(PsiKeyword.NEW)) {
       // qualified new
-      PsiNewExpression newExpression = tryCast(e.getParent(), PsiNewExpression.class);
+      PsiNewExpression newExpression = tryCast(newKeyWord.getParent(), PsiNewExpression.class);
       if (newExpression != null) {
         dereferenced = newExpression.getQualifier();
       }
     }
-    return mayBeNull(dereferenced) ? dereferenced : null;
+    return mayBeNull(dereferenced) ? onTheSameLineFor(e, dereferenced, forward) : null;
   }
 
   private static boolean mayBeNull(PsiExpression qualifier) {
@@ -228,7 +256,8 @@ public class NullPointerExceptionInfo extends ExceptionInfo {
            !(qualifier instanceof PsiLiteralExpression) && !(qualifier instanceof PsiPolyadicExpression);
   }
 
-  private static @Nullable PsiExpression getFieldReferenceQualifier(PsiElement e, String fieldName) {
+  private static @Nullable PsiExpression getFieldReferenceQualifier(PsiElement current, String fieldName) {
+    PsiElement e = PsiTreeUtil.nextVisibleLeaf(current);
     if (!(e instanceof PsiJavaToken) || !((PsiJavaToken)e).getTokenType().equals(JavaTokenType.DOT)) return null;
     PsiElement parent = e.getParent();
     if (!(parent instanceof PsiReferenceExpression)) return null;
@@ -254,7 +283,7 @@ public class NullPointerExceptionInfo extends ExceptionInfo {
   }
 
   @Override
-  PsiElement matchSpecificExceptionElement(@NotNull PsiElement e) {
+  ExceptionLineRefiner.RefinerMatchResult matchSpecificExceptionElement(@NotNull PsiElement e) {
     return myExtractor.apply(e);
   }
 }

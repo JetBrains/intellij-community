@@ -173,14 +173,15 @@ final public class FindDivergedExceptionLineHandler extends AnAction {
           @Override
           public boolean execute(@NotNull PsiElement element) {
             ProgressManager.checkCanceled();
-            PsiElement matchedElement = myRefiner.matchElement(element);
-            if (matchedElement instanceof Navigatable) {
-              PsiMethod matchedElementMethod = PsiTreeUtil.getParentOfType(matchedElement, PsiMethod.class);
+            ExceptionLineRefiner.RefinerMatchResult matchedElement = myRefiner.matchElement(element);
+            if (matchedElement!=null && matchedElement.target() instanceof Navigatable) {
+              PsiElement target = matchedElement.target();
+              PsiMethod matchedElementMethod = PsiTreeUtil.getParentOfType(target, PsiMethod.class);
               if (matchedElementMethod != null && placeMatch(matchedElementMethod, myMetaInfo)) {
-                result.add(matchedElement);
+                result.add(target);
               }
               if (matchedElementMethod == null && (myMetaInfo.isStaticInit || myMetaInfo.isNonStaticInit)) {
-                result.add(matchedElement);
+                result.add(target);
               }
             }
             return true;
@@ -211,11 +212,11 @@ final public class FindDivergedExceptionLineHandler extends AnAction {
                                                                    @Nullable ExceptionLineRefiner refiner,
                                                                    int lineStart, int lineEnd,
                                                                    @Nullable Editor targetEditor) {
-    if (file == null) return null;
+    if (file == null || !file.isValid()) return null;
     FindDivergedExceptionLineHandler methodHandler =
       getFindMethodHandler(file, className, methodName, refiner, lineStart, lineEnd, targetEditor);
     if (methodHandler == null) return null;
-    return new ExceptionLineParserImpl.LinkInfo(file, null, methodHandler, finder -> {
+    return new ExceptionLineParserImpl.LinkInfo(file, null, null, methodHandler, finder -> {
     });
   }
 
@@ -230,6 +231,10 @@ final public class FindDivergedExceptionLineHandler extends AnAction {
 
     //it can be ambiguous to find lambda anonymous classes
     if (file == null || className == null || methodName == null || refiner == null || targetEditor == null) {
+      return null;
+    }
+
+    if (DumbService.isDumb(file.getProject())) {
       return null;
     }
 
@@ -270,9 +275,6 @@ final public class FindDivergedExceptionLineHandler extends AnAction {
 
     if (skipByRefiner(file, refiner, lineStart, lineEnd)) return null;
 
-    if (DumbService.isDumb(file.getProject())) {
-      return null;
-    }
     return new FindDivergedExceptionLineHandler(file, metaInfo, refiner, targetEditor);
   }
 

@@ -53,7 +53,16 @@ public class ExceptionFilter implements Filter, DumbAware {
       return null;
     }
     ExceptionInfo prevLineException = myNextLineRefiner == null ? null : myNextLineRefiner.getExceptionInfo();
-    myNextLineRefiner = worker.getLocationRefiner();
+    ExceptionLineRefiner nextRefiner = null;
+    if (myNextLineRefiner != null) {
+      nextRefiner = myNextLineRefiner.consumeNextLine(line);
+    }
+    if (nextRefiner == null) {
+      myNextLineRefiner = worker.getLocationRefiner();
+    }
+    else {
+      myNextLineRefiner = nextRefiner;
+    }
     if (prevLineException != null) {
       List<ResultItem> exceptionResults = getExceptionClassNameItems(prevLineException);
       if (!exceptionResults.isEmpty()) {
