@@ -9,6 +9,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -509,7 +510,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       PsiSwitchBlock replacement = generateEnhancedSwitch(switchStatement, myNewBranches, commentTracker, true);
       if (replacement == null) return;
       PsiExpression initializer = myVariableToAssign.getInitializer();
-      if (myIsRightAfterDeclaration) {
+      if (myIsRightAfterDeclaration && isNotUsed(myVariableToAssign, switchStatement)) {
         if (initializer != null) {
           List<PsiExpression> sideEffectExpressions = SideEffectChecker.extractSideEffectExpressions(initializer);
           PsiStatement[] sideEffectStatements = StatementExtractor.generateStatements(sideEffectExpressions, initializer);
@@ -530,6 +531,23 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
         String text = myVariableToAssign.getName() + "=" + replacement.getText() + ";";
         PsiStatement statementToReplace = labeledStatement != null ? labeledStatement : switchStatement;
         commentTracker.replaceAndRestoreComments(statementToReplace, text);
+      }
+    }
+
+    private static boolean isNotUsed(@NotNull PsiVariable variable, @NotNull PsiStatement switchStatement) {
+      try {
+        ControlFlow controlFlow = ControlFlowFactory
+          .getControlFlow(switchStatement, AllVariablesControlFlowPolicy.getInstance(), ControlFlowOptions.NO_CONST_EVALUATE);
+        List<PsiReferenceExpression> references = ControlFlowUtil.getReadBeforeWrite(controlFlow);
+        for (PsiReferenceExpression reference : references) {
+          if (reference != null && reference.resolve() == variable) {
+            return false;
+          }
+        }
+        return true;
+      }
+      catch (AnalysisCanceledException e) {
+        return false;
       }
     }
 
