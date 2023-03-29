@@ -720,7 +720,9 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       // editor tabs
       defaults.put(JBUI.CurrentTheme.EditorTabs.tabInsetsKey(), cmInsets(-2, 4, -2, 4))
       defaults.put(JBUI.CurrentTheme.EditorTabs.verticalTabInsetsKey(), cmInsets(2, 8, 1, 6))
-      defaults.put(JBUI.CurrentTheme.EditorTabs.tabActionsInsetKey(), 0)
+      defaults.put(JBUI.CurrentTheme.EditorTabs.tabContentInsetsActionsRightKey(), cmInsets(0))
+      defaults.put(JBUI.CurrentTheme.EditorTabs.tabContentInsetsActionsLeftKey(), cmInsets(0))
+      defaults.put(JBUI.CurrentTheme.EditorTabs.tabContentInsetsActionsNoneKey(), cmInsets(0))
       defaults.put(JBUI.CurrentTheme.EditorTabs.fontKey(), Supplier { JBFont.medium().asUIResource() })
       // toolwindows
       defaults.put(JBUI.CurrentTheme.ToolWindow.headerHeightKey(), 32)

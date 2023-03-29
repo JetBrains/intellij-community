@@ -122,11 +122,6 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
       }
 
       @Override
-      protected int getActionsInset() {
-        return 8;
-      }
-
-      @Override
       protected int getPreferredHeight() {
         return getTabLabelPreferredHeight();
       }

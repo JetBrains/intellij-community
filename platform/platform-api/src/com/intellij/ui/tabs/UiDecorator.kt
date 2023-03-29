@@ -15,11 +15,21 @@
  */
 package com.intellij.ui.tabs;
 
+import com.intellij.ui.tabs.impl.TabLabel
 import java.awt.Font
 import java.awt.Insets
+import java.util.function.Function
 
 interface UiDecorator {
   fun getDecoration(): UiDecoration
 
-  data class UiDecoration @JvmOverloads constructor(val labelFont: Font? = null, val labelInsets: Insets? = null)
+  /**
+   * Provided values must be scaled
+   */
+  data class UiDecoration @JvmOverloads constructor(
+    val labelFont: Font? = null,
+    val labelInsets: Insets? = null,
+    val contentInsetsSupplier: Function<TabLabel.ActionsPosition, Insets>? = null,
+    val iconTextGap: Int? = null
+  )
 }

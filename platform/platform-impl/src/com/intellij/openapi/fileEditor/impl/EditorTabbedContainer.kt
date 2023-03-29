@@ -48,6 +48,7 @@ import com.intellij.ui.tabs.*
 import com.intellij.ui.tabs.TabInfo.DragOutDelegate
 import com.intellij.ui.tabs.UiDecorator.UiDecoration
 import com.intellij.ui.tabs.impl.*
+import com.intellij.ui.tabs.impl.TabLabel.ActionsPosition
 import com.intellij.ui.tabs.impl.multiRow.CompressibleMultiRowLayout
 import com.intellij.ui.tabs.impl.multiRow.MultiRowLayout
 import com.intellij.ui.tabs.impl.multiRow.ScrollableMultiRowLayout
@@ -68,6 +69,7 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.lang.Runnable
 import java.util.concurrent.TimeUnit
+import java.util.function.Function
 import javax.swing.*
 
 class EditorTabbedContainer internal constructor(private val window: EditorWindow,
@@ -560,8 +562,18 @@ private class EditorTabs(
     }
     setUiDecorator(object : UiDecorator {
       override fun getDecoration(): UiDecoration {
-        val insets = if (isHorizontalTabs) JBUI.CurrentTheme.EditorTabs.tabInsets() else JBUI.CurrentTheme.EditorTabs.verticalTabInsets()
-        return UiDecoration(labelInsets = insets)
+        return UiDecoration(
+          labelInsets = if (isHorizontalTabs) JBUI.CurrentTheme.EditorTabs.tabInsets() else JBUI.CurrentTheme.EditorTabs.verticalTabInsets(),
+          contentInsetsSupplier = Function { pos ->
+            val actionsOnTheRight: Boolean? = when (pos) {
+              ActionsPosition.RIGHT -> true
+              ActionsPosition.LEFT -> false
+              ActionsPosition.NONE -> null
+            }
+            JBUI.CurrentTheme.EditorTabs.tabContentInsets(actionsOnTheRight)
+          },
+          iconTextGap = JBUI.scale(4)
+        )
       }
     })
     val source = ActionManager.getInstance().getAction("EditorTabsEntryPoint")
@@ -631,12 +643,7 @@ private class EditorTabs(
       return super.getPreferredHeight() - layoutInsets.top - layoutInsets.bottom - insets.top - insets.bottom
     }
 
-    override fun getActionsInset(): Int {
-      val buttonsOnTheRight = UISettings.shadowInstance.closeTabButtonOnTheRight
-      return if (!buttonsOnTheRight || ExperimentalUI.isNewUI()) JBUI.CurrentTheme.EditorTabs.tabActionsInset() else 2
-    }
-
-    override fun isShowTabActions(): Boolean = UISettings.shadowInstance.showCloseButton
+    override fun isShowTabActions(): Boolean = UISettings.shadowInstance.showCloseButton || isPinned
 
     override fun isTabActionsOnTheRight(): Boolean = UISettings.shadowInstance.closeTabButtonOnTheRight
 

@@ -3409,7 +3409,12 @@ public class JBTabsImpl extends JComponent
   private static final class DefaultDecorator implements UiDecorator {
     @Override
     public @NotNull UiDecoration getDecoration() {
-      return new UiDecoration(null, new JBInsets(5, 12, 5, 12));
+      return new UiDecoration(
+        null,
+        JBUI.insets(5, 8),
+        position -> JBUI.insets(0, 4),
+        JBUI.scale(4)
+      );
     }
   }
 

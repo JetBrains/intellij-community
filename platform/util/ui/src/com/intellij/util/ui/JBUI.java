@@ -600,7 +600,7 @@ public final class JBUI {
       }
 
       public static Insets tabInsets() {
-        return insets(tabInsetsKey(), isNewUI() ? insets(-7, 12, -7, 8) : insets(0, 8));
+        return insets(tabInsetsKey(), isNewUI() ? insets(-7, 8) : insets(0, 4));
       }
 
       public static String tabInsetsKey() {
@@ -615,12 +615,28 @@ public final class JBUI {
         return "EditorTabs.verticalTabInsets";
       }
 
-      public static int tabActionsInset() {
-        return getInt(tabActionsInsetKey(), 6);
+      public static Insets tabContentInsets(Boolean actionsOnTheRight) {
+        if (actionsOnTheRight == null) {
+          return insets(tabContentInsetsActionsNoneKey(), isNewUI() ? insetsLeft(4) : insets(0, 4));
+        }
+        else if (actionsOnTheRight) {
+          return insets(tabContentInsetsActionsRightKey(), isNewUI() ? insets(0, 4, 0, 6) : insets(0, 4, 0, 2));
+        }
+        else {
+          return insets(tabContentInsetsActionsLeftKey(), isNewUI() ? insetsLeft(6) : insets(0, 6, 0, 4));
+        }
       }
 
-      public static String tabActionsInsetKey() {
-        return "EditorTabs.tabActionsInset";
+      public static String tabContentInsetsActionsRightKey() {
+        return "EditorTabs.tabContentInsetsActionsRight";
+      }
+
+      public static String tabContentInsetsActionsLeftKey() {
+        return "EditorTabs.tabContentInsetsActionsLeft";
+      }
+
+      public static String tabContentInsetsActionsNoneKey() {
+        return "EditorTabs.tabContentInsetsActionsNone";
       }
 
       public static @NotNull Color borderColor() {

@@ -20,6 +20,7 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.themes.TabTheme;
 import com.intellij.util.MathUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
@@ -29,11 +30,11 @@ import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
 
 public class TabLabel extends JPanel implements Accessible, DataProvider {
   private static final Logger LOG = Logger.getInstance(TabLabel.class);
@@ -223,8 +224,6 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     };
     label.setOpaque(false);
     label.setBorder(null);
-    label.setIconTextGap(
-      tabs.isEditorTabs() ? (!UISettings.getShadowInstance().getHideTabsIfNeeded() ? 4 : 2) + 1 : new JLabel().getIconTextGap());
     label.setIconOpaque(false);
     label.setIpad(JBInsets.emptyInsets());
 
@@ -256,27 +255,6 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
 
   public Dimension getNotStrictPreferredSize() {
     return super.getPreferredSize();
-  }
-
-  @Override
-  public Insets getInsets() {
-    Insets insets = super.getInsets();
-    if (myTabs.isEditorTabs() && (isShowTabActions() || myInfo.isPinned()) && hasIcons()) {
-      if (isTabActionsOnTheRight()) {
-        if (!ExperimentalUI.isNewUI()) {
-          insets.right -= JBUIScale.scale(4);
-        }
-      }
-      else {
-        if (ExperimentalUI.isNewUI()) {
-          insets.left = insets.right;
-        }
-        else {
-          insets.left -= JBUIScale.scale(4);
-        }
-      }
-    }
-    return insets;
   }
 
   public void setAlignmentToCenter(boolean toCenter) {
@@ -504,15 +482,39 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
       getLabelComponent().setFont(decoration.getLabelFont());
     }
 
-    Insets insets = decoration.getLabelInsets();
-    if (insets != null) {
-      Insets current = JBTabsImpl.ourDefaultDecorator.getDecoration().getLabelInsets();
-      if (current != null) {
-        setBorder(
-          new EmptyBorder(getValue(current.top, insets.top), getValue(current.left, insets.left), getValue(current.bottom, insets.bottom),
-                          getValue(current.right, insets.right)));
+    MergedUiDecoration resultDec = mergeUiDecorations(decoration, JBTabsImpl.ourDefaultDecorator.getDecoration());
+    setBorder(IdeBorderFactory.createEmptyBorder(resultDec.labelInsets()));
+    myLabel.setIconTextGap(resultDec.iconTextGap());
+
+    ActionsPosition position = isShowTabActions() && myActionPanel != null
+                               ? isTabActionsOnTheRight() ? ActionsPosition.RIGHT : ActionsPosition.LEFT
+                               : ActionsPosition.NONE;
+    Insets contentInsets = resultDec.contentInsetsSupplier().apply(position);
+    myLabelPlaceholder.setBorder(IdeBorderFactory.createEmptyBorder(contentInsets));
+  }
+
+  private static MergedUiDecoration mergeUiDecorations(@NotNull UiDecorator.UiDecoration customDec,
+                                                       @NotNull UiDecorator.UiDecoration defaultDec) {
+    Function<ActionsPosition, Insets> contentInsetsSupplier = position -> {
+      Insets def = Objects.requireNonNull(defaultDec.getContentInsetsSupplier()).apply(position);
+      if (customDec.getContentInsetsSupplier() != null) {
+        return mergeInsets(customDec.getContentInsetsSupplier().apply(position), def);
       }
+      return def;
+    };
+    return new MergedUiDecoration(
+      mergeInsets(customDec.getLabelInsets(), Objects.requireNonNull(defaultDec.getLabelInsets())),
+      contentInsetsSupplier,
+      ObjectUtils.notNull(customDec.getIconTextGap(), Objects.requireNonNull(defaultDec.getIconTextGap()))
+    );
+  }
+
+  private static @NotNull Insets mergeInsets(@Nullable Insets custom, @NotNull Insets def) {
+    if (custom != null) {
+      return JBInsets.addInsets(new Insets(getValue(def.top, custom.top), getValue(def.left, custom.left),
+                                           getValue(def.bottom, custom.bottom), getValue(def.right, custom.right)));
     }
+    return def;
   }
 
   private static int getValue(int currentValue, int newValue) {
@@ -521,21 +523,21 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
 
   public void setTabActions(ActionGroup group) {
     removeOldActionPanel();
-
     if (group == null) return;
 
-    myActionPanel = new ActionPanel(myTabs, myInfo, e -> processMouseEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, this)),
+    myActionPanel = new ActionPanel(myTabs, myInfo,
+                                    e -> processMouseEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, this)),
                                     value -> setHovered(value));
-    Border border = isTabActionsOnTheRight() ? JBUI.Borders.empty(1, getActionsInset(), 1, 0)
-                                             : JBUI.Borders.empty(1, 0, 1, getActionsInset());
-    myActionPanel.setBorder(border);
     toggleShowActions(false);
-
     add(myActionPanel, isTabActionsOnTheRight() ? BorderLayout.EAST : BorderLayout.WEST);
 
     myTabs.revalidateAndRepaint(false);
   }
 
+  /**
+   * @deprecated specify {@link com.intellij.ui.tabs.UiDecorator.UiDecoration#contentInsetsSupplier} instead
+   */
+  @Deprecated(forRemoval = true)
   protected int getActionsInset() {
     return !isTabActionsOnTheRight() || ExperimentalUI.isNewUI() ? 6 : 2;
   }
@@ -724,6 +726,15 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
       return provider.getData(dataId);
     }
     return null;
+  }
+
+  public enum ActionsPosition {
+    RIGHT, LEFT, NONE
+  }
+
+  private record MergedUiDecoration(@NotNull Insets labelInsets,
+                                    @NotNull Function<ActionsPosition, Insets> contentInsetsSupplier,
+                                    int iconTextGap) {
   }
 
   @Override
