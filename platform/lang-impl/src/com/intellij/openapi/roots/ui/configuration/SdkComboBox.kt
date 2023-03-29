@@ -64,7 +64,7 @@ class SdkComboBox(model: SdkComboBoxModel) : SdkComboBoxBase<SdkListItem>(model.
 
   init {
     setModel(model)
-    setRenderer(SdkListPresenter { this@SdkComboBox.model.listModel })
+    setRenderer(SdkListPresenter.create(this, { this@SdkComboBox.model.listModel }, { it }))
     addPopupMenuListener(ModelReloadProvider())
     reloadModel()
   }
