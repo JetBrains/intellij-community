@@ -208,7 +208,17 @@ open class JBTabsImpl(private var project: Project?,
   private var listenerAdded = false
   @JvmField
   internal val attractions: MutableSet<TabInfo> = HashSet()
-  private val animator: Animator
+
+  private val animator = lazy {
+    val result = object : Animator("JBTabs Attractions", 2, 500, true) {
+      override fun paintNow(frame: Int, totalFrames: Int, cycle: Int) {
+        repaintAttractions()
+      }
+    }
+    Disposer.register(parentDisposable, result)
+    result
+  }
+
   private var allTabs: List<TabInfo>? = null
   private var focusManager = IdeFocusManager.getGlobalInstance()
   private val nestedTabs = HashSet<JBTabsImpl>()
@@ -323,21 +333,16 @@ open class JBTabsImpl(private var project: Project?,
       MouseEventAdapter.redispatch(e, fakeScrollPane)
     }
     addAwtListener(parentDisposable)
-    animator = object : Animator("JBTabs Attractions", 2, 500, true) {
-      override fun paintNow(frame: Int, totalFrames: Int, cycle: Int) {
-        repaintAttractions()
-      }
-    }
     isFocusTraversalPolicyProvider = true
     focusTraversalPolicy = object : LayoutFocusTraversalPolicy() {
       override fun getDefaultComponent(aContainer: Container): Component? = toFocus
     }
-    val listener1 = object : LazyUiDisposable<JBTabsImpl>(parentDisposable, this, this) {
+
+    object : LazyUiDisposable<JBTabsImpl>(parentDisposable, this, this) {
       override fun initialize(parent: Disposable, child: JBTabsImpl, project: Project?) {
         if (this@JBTabsImpl.project == null && project != null) {
           this@JBTabsImpl.project = project
         }
-        Disposer.register(parentDisposable, animator)
         Disposer.register(parentDisposable) { removeTimerUpdate() }
         val gp = IdeGlassPaneUtil.find(child)
         tabActionsAutoHideListenerDisposable = Disposer.newDisposable("myTabActionsAutoHideListener")
@@ -350,12 +355,12 @@ open class JBTabsImpl(private var project: Project?,
                        }, AWTEvent.FOCUS_EVENT_MASK, parentDisposable)
         dragHelper = createDragHelper(child, parentDisposable)
         dragHelper!!.start()
-        if (this@JBTabsImpl.project != null && this@JBTabsImpl.focusManager === IdeFocusManager.getGlobalInstance()) {
-          this@JBTabsImpl.focusManager = IdeFocusManager.getInstance(this@JBTabsImpl.project)
+        if (this@JBTabsImpl.project != null && focusManager === IdeFocusManager.getGlobalInstance()) {
+          focusManager = IdeFocusManager.getInstance(this@JBTabsImpl.project)
         }
       }
-    }
-    listener1.setupListeners()
+    }.setupListeners()
+
     putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Iterable {
       getVisibleInfos().asSequence().filter { it != mySelectedInfo }.map { it.component }.iterator()
     })
@@ -1619,11 +1624,13 @@ open class JBTabsImpl(private var project: Project?,
       attractions.remove(tabInfo)
       tabInfo.blinkCount = 0
     }
-    if (start && !animator.isRunning) {
-      animator.resume()
+    if (start && !animator.value.isRunning) {
+      animator.value.resume()
     }
     else if (!start && attractions.isEmpty()) {
-      animator.suspend()
+      if (animator.isInitialized()) {
+        animator.value.suspend()
+      }
       repaintAttractions()
     }
   }
