@@ -13,63 +13,57 @@ import com.intellij.util.xml.DomUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
-import org.jetbrains.idea.devkit.inspections.LightServiceMigrationUtil.Companion.Level.APPLICATION
-import org.jetbrains.idea.devkit.inspections.LightServiceMigrationUtil.Companion.Level.PROJECT
 import org.jetbrains.idea.devkit.util.DevKitDomUtil
 import org.jetbrains.idea.devkit.util.PluginPlatformInfo
 
-internal class LightServiceMigrationUtil private constructor() {
+internal object LightServiceMigrationUtil {
 
-  companion object {
+  enum class Level {
+    PROJECT, APPLICATION
+  }
 
-    enum class Level {
-      PROJECT,
-      APPLICATION
+  data class Service(val aClass: PsiClass, val level: Level)
+
+  fun canBeLightService(jvmClass: JvmClass): Boolean {
+    return jvmClass.hasModifier(JvmModifier.FINAL) &&
+           !JvmInheritanceUtil.isInheritor(jvmClass, PersistentStateComponent::class.java.canonicalName)
+  }
+
+  fun getServiceImplementation(extension: Extension): Service? {
+    val level = when (extension.xmlElementName) {
+      "projectService" -> Level.PROJECT
+      "applicationService" -> Level.APPLICATION
+      else -> return null
     }
+    val extensionPoint = extension.extensionPoint
+    if (extensionPoint == null || !DomUtil.hasXml(extensionPoint.beanClass)) return null
+    if (ServiceDescriptor::class.java.name != extensionPoint.beanClass.stringValue) return null
+    val serviceInterface = DevKitDomUtil.getAttribute(extension, "serviceInterface")
+    if (serviceInterface != null && DomUtil.hasXml(serviceInterface)) return null
+    val preload = DevKitDomUtil.getAttribute(extension, "preload")
+    if (preload != null && DomUtil.hasXml(preload)) return null
+    val serviceImplementation = DevKitDomUtil.getAttribute(extension, "serviceImplementation") ?: return null
+    if (!DomUtil.hasXml(serviceImplementation)) return null
+    val aClass = serviceImplementation.value as? PsiClass ?: return null
+    return Service(aClass, level)
+  }
 
-    data class Service(val aClass: PsiClass, val level: Level)
-
-    fun canBeLightService(jvmClass: JvmClass): Boolean {
-      return jvmClass.hasModifier(JvmModifier.FINAL) &&
-             !JvmInheritanceUtil.isInheritor(jvmClass, PersistentStateComponent::class.java.canonicalName)
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  fun getMessage(level: Level): String {
+    return when (level) {
+      Level.APPLICATION -> DevKitBundle.message("inspection.light.service.migration.app.level.message")
+      Level.PROJECT -> DevKitBundle.message("inspection.light.service.migration.project.level.message")
     }
+  }
 
-    fun getServiceImplementation(extension: Extension): Service? {
-      val level = when (extension.xmlElementName) {
-        "projectService" -> PROJECT
-        "applicationService" -> APPLICATION
-        else -> return null
-      }
-      val extensionPoint = extension.extensionPoint
-      if (extensionPoint == null || !DomUtil.hasXml(extensionPoint.beanClass)) return null
-      if (ServiceDescriptor::class.java.name != extensionPoint.beanClass.stringValue) return null
-      val serviceInterface = DevKitDomUtil.getAttribute(extension, "serviceInterface")
-      if (serviceInterface != null && DomUtil.hasXml(serviceInterface)) return null
-      val preload = DevKitDomUtil.getAttribute(extension, "preload")
-      if (preload != null && DomUtil.hasXml(preload)) return null
-      val serviceImplementation = DevKitDomUtil.getAttribute(extension, "serviceImplementation") ?: return null
-      if (!DomUtil.hasXml(serviceImplementation)) return null
-      val aClass = serviceImplementation.value as? PsiClass ?: return null
-      return Service(aClass, level)
-    }
+  fun isVersion193OrHigher(element: DomElement): Boolean {
+    val buildNumber = PluginPlatformInfo.forDomElement(element).sinceBuildNumber
+    return buildNumber != null && buildNumber.baselineVersion >= 193
+  }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    fun getMessage(level: Level): String {
-      return when (level) {
-        APPLICATION -> DevKitBundle.message("inspection.light.service.migration.app.level.message")
-        PROJECT -> DevKitBundle.message("inspection.light.service.migration.project.level.message")
-      }
-    }
-
-    fun isVersion193OrHigher(element: DomElement): Boolean {
-      val buildNumber = PluginPlatformInfo.forDomElement(element).sinceBuildNumber
-      return buildNumber != null && buildNumber.baselineVersion >= 193
-    }
-
-    fun isVersion193OrHigher(aClass: PsiClass): Boolean {
-      val module = ModuleUtilCore.findModuleForPsiElement(aClass) ?: return false
-      val buildNumber = PluginPlatformInfo.forModule(module).sinceBuildNumber
-      return buildNumber != null && buildNumber.baselineVersion >= 193
-    }
+  fun isVersion193OrHigher(aClass: PsiClass): Boolean {
+    val module = ModuleUtilCore.findModuleForPsiElement(aClass) ?: return false
+    val buildNumber = PluginPlatformInfo.forModule(module).sinceBuildNumber
+    return buildNumber != null && buildNumber.baselineVersion >= 193
   }
 }
