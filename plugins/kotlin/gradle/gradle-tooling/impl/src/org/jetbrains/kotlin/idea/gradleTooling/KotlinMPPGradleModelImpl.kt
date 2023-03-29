@@ -40,7 +40,6 @@ class KotlinSourceSetImpl @OptIn(KotlinGradlePluginVersionDependentApi::class) c
 
 
     @OptIn(KotlinGradlePluginVersionDependentApi::class)
-    @Suppress("DEPRECATION")
     constructor(kotlinSourceSet: KotlinSourceSet) : this(
         name = kotlinSourceSet.name,
         languageSettings = KotlinLanguageSettingsImpl(kotlinSourceSet.languageSettings),
@@ -60,7 +59,6 @@ class KotlinSourceSetImpl @OptIn(KotlinGradlePluginVersionDependentApi::class) c
     override fun toString() = name
 
     init {
-        @Suppress("DEPRECATION")
         require(allDependsOnSourceSets.containsAll(declaredDependsOnSourceSets)) {
             "Inconsistent source set dependencies: 'allDependsOnSourceSets' is expected to contain all 'declaredDependsOnSourceSets'"
         }
@@ -101,18 +99,6 @@ data class KotlinCompilationOutputImpl(
     )
 }
 
-@Deprecated("Use org.jetbrains.kotlin.idea.projectModel.CachedArgsInfo instead", level = DeprecationLevel.ERROR)
-@Suppress("DEPRECATION_ERROR")
-data class KotlinCompilationArgumentsImpl(
-    override val defaultArguments: Array<String>,
-    override val currentArguments: Array<String>
-) : KotlinCompilationArguments {
-    constructor(arguments: KotlinCompilationArguments) : this(
-        arguments.defaultArguments,
-        arguments.currentArguments
-    )
-}
-
 data class KotlinNativeCompilationExtensionsImpl(
     override val konanTarget: String
 ) : KotlinNativeCompilationExtensions {
@@ -136,9 +122,9 @@ data class KotlinCompilationImpl(
     override val declaredSourceSets: Set<KotlinSourceSet>,
     override val dependencies: Array<KotlinDependencyId>,
     override val output: KotlinCompilationOutput,
-    override val arguments: KotlinCompilationArguments,
     override val dependencyClasspath: Array<String>,
-    override val cachedArgsInfo: CachedArgsInfo<*>,
+    override val cachedArgsInfo: CachedArgsInfo<*>?,
+    override val compilerArguments: List<String>?,
     override val kotlinTaskProperties: KotlinTaskProperties,
     override val nativeExtensions: KotlinNativeCompilationExtensions?,
     override val associateCompilations: Set<KotlinCompilationCoordinates>,
@@ -152,9 +138,9 @@ data class KotlinCompilationImpl(
         allSourceSets = cloneSourceSetsWithCaching(kotlinCompilation.allSourceSets, cloningCache),
         dependencies = kotlinCompilation.dependencies,
         output = KotlinCompilationOutputImpl(kotlinCompilation.output),
-        arguments = KotlinCompilationArgumentsImpl(kotlinCompilation.arguments),
         dependencyClasspath = kotlinCompilation.dependencyClasspath,
-        cachedArgsInfo = createCachedArgsInfo(kotlinCompilation.cachedArgsInfo, cloningCache),
+        cachedArgsInfo = kotlinCompilation.cachedArgsInfo?.let { cachedArgsInfo -> createCachedArgsInfo(cachedArgsInfo, cloningCache) },
+        compilerArguments = kotlinCompilation.compilerArguments?.toList(),
         kotlinTaskProperties = KotlinTaskPropertiesImpl(kotlinCompilation.kotlinTaskProperties),
         nativeExtensions = kotlinCompilation.nativeExtensions?.let(::KotlinNativeCompilationExtensionsImpl),
         associateCompilations = cloneCompilationCoordinatesWithCaching(kotlinCompilation.associateCompilations, cloningCache),

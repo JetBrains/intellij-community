@@ -51,25 +51,14 @@ class KotlinSourceSetInfo @PropertyMapping("kotlinComponent") constructor(val ko
         get() = actualPlatforms.platforms.singleOrNull() ?: KotlinPlatform.COMMON
 
     @Transient
-    @Deprecated("Use lazyDefaultCompilerArguments instead!", ReplaceWith("lazyDefaultCompilerArguments"), DeprecationLevel.ERROR)
-    var defaultCompilerArguments: CommonCompilerArguments? = null
-
-    @Transient
     var lazyDefaultCompilerArguments: Lazy<CommonCompilerArguments>? = null
-
-    @Transient
-    @Deprecated("Use lazyCompilerArguments instead!", ReplaceWith("lazyCompilerArguments"), DeprecationLevel.ERROR)
-    var compilerArguments: CommonCompilerArguments? = null
 
     @Transient
     var lazyCompilerArguments: Lazy<CommonCompilerArguments>? = null
 
     @Transient
-    @Deprecated("Use lazyDependencyClasspath instead!", ReplaceWith("lazyDependencyClasspath"), DeprecationLevel.ERROR)
-    var dependencyClasspath: List<String> = emptyList()
-
-    @Transient
     var lazyDependencyClasspath: Lazy<List<String>> = lazy { emptyList() }
+
     var isTestModule: Boolean = false
     var sourceSetIdsByName: MutableMap<String, String> = LinkedHashMap()
 
