@@ -2671,29 +2671,32 @@ public class JBTabsImpl extends JComponent
   @Override
   public @Nullable TabInfo findInfo(Component component) {
     for (TabInfo each : getTabs()) {
-      if (each.getComponent() == component) return each;
+      if (each.getComponent() == component) {
+        return each;
+      }
     }
-
     return null;
   }
 
   @Override
   public TabInfo findInfo(MouseEvent event) {
-    final Point point = SwingUtilities.convertPoint(event.getComponent(), event.getPoint(), this);
+    Point point = SwingUtilities.convertPoint(event.getComponent(), event.getPoint(), this);
     return _findInfo(point, false);
   }
 
   @Override
-  public TabInfo findInfo(final Object object) {
+  public TabInfo findInfo(Object object) {
     for (int i = 0; i < getTabCount(); i++) {
-      final TabInfo each = getTabAt(i);
-      final Object eachObject = each.getObject();
-      if (eachObject != null && eachObject.equals(object)) return each;
+      TabInfo each = getTabAt(i);
+      Object eachObject = each.getObject();
+      if (eachObject != null && eachObject.equals(object)) {
+        return each;
+      }
     }
     return null;
   }
 
-  private @Nullable TabInfo _findInfo(final Point point, boolean labelsOnly) {
+  private @Nullable TabInfo _findInfo(Point point, boolean labelsOnly) {
     Component component = findComponentAt(point);
     while (component != this) {
       if (component == null) return null;
@@ -2717,20 +2720,22 @@ public class JBTabsImpl extends JComponent
     }
   }
 
-
-  private static class Max {
+  private static final class Max {
     final Dimension myLabel = new Dimension();
     final Dimension myToolbar = new Dimension();
   }
 
-  private void updateContainer(boolean forced, final boolean layoutNow) {
-    if (myProject != null && !myProject.isOpen() && !myProject.isDefault()) return;
+  private void updateContainer(boolean forced, boolean layoutNow) {
+    if (myProject != null && !myProject.isOpen() && !myProject.isDefault()) {
+      return;
+    }
+
     for (TabInfo each : new ArrayList<>(myVisibleInfos)) {
       final JComponent eachComponent = each.getComponent();
       if (getSelectedInfo() == each && getSelectedInfo() != null) {
         unqueueFromRemove(eachComponent);
 
-        final Container parent = eachComponent.getParent();
+        Container parent = eachComponent.getParent();
         if (parent != null && parent != this) {
           parent.remove(eachComponent);
         }
@@ -2740,7 +2745,9 @@ public class JBTabsImpl extends JComponent
         }
       }
       else {
-        if (eachComponent.getParent() == null) continue;
+        if (eachComponent.getParent() == null) {
+          continue;
+        }
         if (isToDeferRemoveForLater(eachComponent)) {
           queueForRemove(eachComponent);
         }
@@ -2833,7 +2840,6 @@ public class JBTabsImpl extends JComponent
 
     super.addImpl(comp, constraints, index);
   }
-
 
   private static boolean isToDeferRemoveForLater(JComponent c) {
     return c.getRootPane() != null;

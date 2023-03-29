@@ -99,16 +99,18 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
   @Override
   protected void setStateImpl(Project project, Editor editor, TextEditorState state, boolean exactState) {
     super.setStateImpl(project, editor, state, exactState);
-    // Folding
+
+    // folding
     CodeFoldingState foldState = state.getFoldingState();
     if (project != null && foldState != null && AsyncEditorLoader.isEditorLoaded(editor)) {
       if (!PsiDocumentManager.getInstance(project).isCommitted(editor.getDocument())) {
         PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
         LOG.error("File should be parsed when changing editor state, otherwise UI might be frozen for a considerable time");
       }
-      editor.getFoldingModel().runBatchFoldingOperation(
-        () -> CodeFoldingManager.getInstance(project).restoreFoldingState(editor, foldState)
-      );
+
+      editor.getFoldingModel().runBatchFoldingOperation(() -> {
+        CodeFoldingManager.getInstance(project).restoreFoldingState(editor, foldState);
+      });
     }
   }
 
