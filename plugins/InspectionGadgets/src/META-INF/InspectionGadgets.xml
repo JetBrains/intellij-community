@@ -2811,6 +2811,12 @@
                      bundle="messages.InspectionGadgetsBundle" key="inspection.non.strict.comparison.equality.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
                      implementationClass="com.siyeh.ig.controlflow.NonStrictComparisonCanBeEqualityInspection"/>
+    <psi.symbolReferenceProvider implementationClass="com.siyeh.ig.format.StringFormatSymbolReferenceProvider"
+                                 hostElementClass="com.intellij.psi.PsiLiteralExpression"
+                                 hostLanguage="JAVA"
+                                 targetClass="com.siyeh.ig.format.StringFormatSymbolReferenceProvider$JavaFormatArgumentSymbol"/>
+    <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
+              implementationClass="com.siyeh.ig.format.StringFormatUsageSearcher"/>
   </extensions>
 
 </idea-plugin>

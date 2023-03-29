@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.bugs;
+package com.siyeh.ig.format;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ConstantExpressionUtil;
@@ -30,6 +31,7 @@ import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -106,14 +108,18 @@ public final class FormatDecode {
   }
 
   public static Validator[] decodePrefix(String prefix, int argumentCount) {
-    return decode(prefix, argumentCount, true);
+    return decode(prefix, argumentCount, true, false);
   }
 
   public static Validator @NotNull [] decode(String formatString, int argumentCount) {
-    return decode(formatString, argumentCount, false);
+    return decode(formatString, argumentCount, false, false);
   }
 
-  private static Validator @NotNull [] decode(String formatString, int argumentCount, boolean isPrefix) {
+  public static Validator @NotNull [] decodeNoVerify(String formatString, int argumentCount) {
+    return decode(formatString, argumentCount, false, true);
+  }
+
+  private static Validator @NotNull [] decode(String formatString, int argumentCount, boolean isPrefix, boolean noVerify) {
     final ArrayList<Validator> parameters = new ArrayList<>();
 
     final Matcher matcher = fsPattern.matcher(formatString);
@@ -130,7 +136,7 @@ public final class FormatDecode {
       boolean isAllVerifier = false;
       //theoretically, it could be a correct specifier, divided into several parts, for example: "%1$t" + "Y"
       //it is better to add ALL_VERIFIER
-      if (isPrefix && i == formatString.length()) {
+      if (noVerify || isPrefix && i == formatString.length()) {
         isAllVerifier = true;
       }
       final String specifier = matcher.group();
@@ -195,7 +201,7 @@ public final class FormatDecode {
 
       final Validator allowed;
       if (isAllVerifier) {
-        allowed = ALL_VALIDATOR;
+        allowed = new AllValidatorWithRange(TextRange.create(matcher.start(), matcher.end()));
       }
       else if (dateSpec != null) {  // a t or T
         checkFlags(flagBits, LEFT_JUSTIFY | PREVIOUS, specifier);
@@ -392,7 +398,6 @@ public final class FormatDecode {
   }
 
   private static class AllValidator extends Validator {
-
     AllValidator() {
       super("");
     }
@@ -400,6 +405,19 @@ public final class FormatDecode {
     @Override
     public boolean valid(PsiType type) {
       return true;
+    }
+  }
+
+  private static class AllValidatorWithRange extends AllValidator {
+    private final @NotNull TextRange myRange;
+
+    AllValidatorWithRange(@NotNull TextRange range) {
+      myRange = range;
+    }
+
+    @Override
+    public @NotNull TextRange getRange() {
+      return myRange;
     }
   }
 
@@ -506,7 +524,7 @@ public final class FormatDecode {
     }
   }
 
-  private static class MultiValidator extends Validator {
+  static class MultiValidator extends Validator {
     private final Set<Validator> validators = new HashSet<>(3);
 
     MultiValidator(String specifier) {
@@ -521,6 +539,10 @@ public final class FormatDecode {
         }
       }
       return true;
+    }
+
+    Set<Validator> getValidators() {
+      return validators;
     }
 
     public void addValidator(Validator validator) {
@@ -540,6 +562,10 @@ public final class FormatDecode {
 
     public String getSpecifier() {
       return mySpecifier;
+    }
+
+    public @Nullable TextRange getRange() {
+      return null;
     }
   }
 
@@ -564,10 +590,10 @@ public final class FormatDecode {
       return extract(expression, methodNames, classNames, false);
     }
 
-    static FormatArgument extract(@NotNull PsiCallExpression expression,
-                                  List<String> methodNames,
-                                  List<String> classNames,
-                                  boolean allowNotConstant) {
+    public static FormatArgument extract(@NotNull PsiCallExpression expression,
+                                         List<String> methodNames,
+                                         List<String> classNames,
+                                         boolean allowNotConstant) {
       final PsiExpressionList argumentList = expression.getArgumentList();
       if (argumentList == null) return null;
       PsiExpression[] arguments = argumentList.getExpressions();
