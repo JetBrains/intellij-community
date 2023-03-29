@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.pom.Navigatable;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -62,6 +64,7 @@ final public class FindDivergedExceptionLineHandler extends AnAction {
     if (document == null) {
       return;
     }
+    AtomicBoolean moreThanOne = new AtomicBoolean(false);
     boolean found = new PsiTargetNavigator<>(collector())
       .presentationProvider(element -> {
         String text;
@@ -92,6 +95,9 @@ final public class FindDivergedExceptionLineHandler extends AnAction {
         if (elements.isEmpty()) {
           return;
         }
+        if (elements.size() > 1) {
+          moreThanOne.set(true);
+        }
         PsiElement next = elements.iterator().next();
         String message;
         if (next instanceof PsiMethod) {
@@ -104,19 +110,34 @@ final public class FindDivergedExceptionLineHandler extends AnAction {
         navigator.title(message);
         navigator.tabTitle(message);
       })
-      .navigate(myEditor, null, element -> EditSourceUtil.navigateToPsiElement(element));
+      .navigate(myEditor, null, element -> {
+        if (!moreThanOne.get() && element instanceof PsiMethod) {
+          //there is no reason to jump if the caret is already inside
+          int offset = myEditor.getCaretModel().getOffset();
+          PsiElement caretElement = myPsiFile.findElementAt(offset);
+          if (caretElement != null && PsiTreeUtil.isAncestor(element, caretElement, false)) {
+            showNotFound(JavaBundle.message("action.find.similar.stack.call.location.not.found", getShortName(myMetaInfo.className),
+                                            myMetaInfo.methodName));
+            return true;
+          }
+        }
+        return EditSourceUtil.navigateToPsiElement(element);
+      });
     if (!found) {
-      RelativePoint popupLocation = JBPopupFactory.getInstance().guessBestPopupLocation(myEditor);
-      String message =
-        JavaBundle.message("action.find.similar.stack.call.methods.not.found", getShortName(myMetaInfo.className), myMetaInfo.methodName);
-      final JComponent label = HintUtil.createErrorLabel(message.replace("<", "&lt;").replace(">", "&gt;"));
-      label.setBorder(JBUI.Borders.empty(2, 7));
-      JBPopupFactory.getInstance().createBalloonBuilder(label)
-        .setFadeoutTime(4000)
-        .setFillColor(HintUtil.getErrorColor())
-        .createBalloon()
-        .show(popupLocation, Balloon.Position.above);
+      showNotFound(
+        JavaBundle.message("action.find.similar.stack.call.methods.not.found", getShortName(myMetaInfo.className), myMetaInfo.methodName));
     }
+  }
+
+  private void showNotFound(@NlsContexts.HintText String message) {
+    RelativePoint popupLocation = JBPopupFactory.getInstance().guessBestPopupLocation(myEditor);
+    final JComponent label = HintUtil.createErrorLabel(message.replace("<", "&lt;").replace(">", "&gt;"));
+    label.setBorder(JBUI.Borders.empty(2, 7));
+    JBPopupFactory.getInstance().createBalloonBuilder(label)
+      .setFadeoutTime(4000)
+      .setFillColor(HintUtil.getErrorColor())
+      .createBalloon()
+      .show(popupLocation, Balloon.Position.above);
   }
 
   @VisibleForTesting
