@@ -456,8 +456,9 @@ class IdeEventQueue private constructor() : EventQueue() {
   }
 
   override fun getNextEvent(): AWTEvent {
-    val event = if (appIsLoaded()) {
-      ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite<AWTEvent, InterruptedException> { super.getNextEvent() }
+    val applicationEx = ApplicationManagerEx.getApplicationEx()
+    val event = if (applicationEx != null && appIsLoaded()) {
+      applicationEx.runUnlockingIntendedWrite<AWTEvent, InterruptedException> { super.getNextEvent() }
     }
     else {
       super.getNextEvent()
