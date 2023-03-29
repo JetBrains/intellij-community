@@ -14,7 +14,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.uast.UastHintedVisitorAdapter
 import org.jetbrains.idea.devkit.DevKitBundle
-import org.jetbrains.idea.devkit.util.isExtensionPointImplementationCandidate
+import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -32,7 +32,7 @@ internal class NonFinalOrNonInternalExtensionClassInspection : DevKitUastInspect
     override fun visitClass(node: UClass): Boolean {
       val elementToHighlight = node.getAnchorPsi() ?: return true
       val javaPsi = node.javaPsi
-      if (!javaPsi.isExtensionPointImplementationCandidate()) {
+      if (!PsiUtil.isExtensionPointImplementationCandidate(javaPsi)) {
         return true
       }
       val shouldMakePackageLocal = node.lang == JavaLanguage.INSTANCE && node.visibility != UastVisibility.PACKAGE_LOCAL

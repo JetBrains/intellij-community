@@ -19,7 +19,7 @@ import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
 import org.jetbrains.idea.devkit.dom.ExtensionPoint.Area
-import org.jetbrains.idea.devkit.util.isExtensionPointImplementationCandidate
+import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass
 import org.jetbrains.idea.devkit.util.processExtensionDeclarations
 import org.jetbrains.uast.UClass
@@ -34,7 +34,7 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass::class.j
   override fun checkClass(aClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
     val javaPsi = aClass.javaPsi
     // Groovy from test data - ignore it
-    if (javaPsi.language.id == "Groovy" || !javaPsi.isExtensionPointImplementationCandidate() ||
+    if (javaPsi.language.id == "Groovy" || !PsiUtil.isExtensionPointImplementationCandidate(javaPsi) ||
         javaPsi.hasModifierProperty(PsiModifier.PRIVATE) /* ignore private classes */) {
       return null
     }

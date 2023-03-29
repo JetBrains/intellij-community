@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.lang.jvm.JvmClassKind;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -189,4 +190,12 @@ public final class PsiUtil {
     }
     return false;
   }
+
+  public static boolean isExtensionPointImplementationCandidate(PsiClass psiClass) {
+    return psiClass.getClassKind() == JvmClassKind.CLASS &&
+           !com.intellij.psi.util.PsiUtil.isInnerClass(psiClass) &&
+           !com.intellij.psi.util.PsiUtil.isLocalOrAnonymousClass(psiClass) &&
+           !com.intellij.psi.util.PsiUtil.isAbstractClass(psiClass);
+  }
+
 }

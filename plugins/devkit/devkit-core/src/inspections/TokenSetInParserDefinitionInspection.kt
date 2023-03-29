@@ -10,15 +10,16 @@ import com.intellij.psi.TokenType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.InheritanceUtil
 import org.jetbrains.idea.devkit.DevKitBundle
-import org.jetbrains.idea.devkit.util.isExtensionPointImplementationCandidate
+import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 internal class TokenSetInParserDefinitionInspection : DevKitUastInspectionBase(UClass::class.java) {
 
   override fun checkClass(uClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor> {
-    if (!uClass.javaPsi.isExtensionPointImplementationCandidate()) return ProblemDescriptor.EMPTY_ARRAY
-    if (!InheritanceUtil.isInheritor(uClass.javaPsi, ParserDefinition::class.java.name)) return ProblemDescriptor.EMPTY_ARRAY
+    val javaPsi = uClass.javaPsi
+    if (!PsiUtil.isExtensionPointImplementationCandidate(javaPsi)) return ProblemDescriptor.EMPTY_ARRAY
+    if (!InheritanceUtil.isInheritor(javaPsi, ParserDefinition::class.java.name)) return ProblemDescriptor.EMPTY_ARRAY
 
     val problemsHolder = createProblemsHolder(uClass, manager, isOnTheFly)
     uClass.fields

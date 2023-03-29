@@ -11,7 +11,7 @@ import com.intellij.psi.util.InheritanceUtil
 import com.intellij.util.xml.DomManager
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
-import org.jetbrains.idea.devkit.util.isExtensionPointImplementationCandidate
+import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass
 import org.jetbrains.uast.UClass
 
@@ -19,7 +19,7 @@ class ExtensionRegisteredAsServiceOrComponentInspection : DevKitUastInspectionBa
 
   override fun checkClass(uClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor?>? {
     val psiClass = uClass.javaPsi
-    if (!psiClass.isExtensionPointImplementationCandidate()) {
+    if (!PsiUtil.isExtensionPointImplementationCandidate(psiClass)) {
       return ProblemDescriptor.EMPTY_ARRAY
     }
 
