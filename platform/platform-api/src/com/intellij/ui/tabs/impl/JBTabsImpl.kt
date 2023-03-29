@@ -54,7 +54,7 @@ import com.intellij.util.Function
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.*
-import com.intellij.util.ui.update.LazyUiDisposable
+import com.intellij.util.ui.update.lazyUiDisposable
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.*
@@ -337,27 +337,24 @@ open class JBTabsImpl(private var project: Project?,
       override fun getDefaultComponent(aContainer: Container): Component? = toFocus
     }
 
-    //noinspection ResultOfObjectAllocationIgnored
-    object : LazyUiDisposable<JBTabsImpl>(parentDisposable, this, this) {
-      override fun initialize(parent: Disposable, child: JBTabsImpl, project: Project?) {
-        if (this@JBTabsImpl.project == null && project != null) {
-          this@JBTabsImpl.project = project
-        }
-
-        Disposer.register(parentDisposable) { removeTimerUpdate() }
-        val gp = IdeGlassPaneUtil.find(child)
-        tabActionsAutoHideListenerDisposable = Disposer.newDisposable("myTabActionsAutoHideListener")
-        Disposer.register(parentDisposable, tabActionsAutoHideListenerDisposable)
-        gp.addMouseMotionPreprocessor(tabActionsAutoHideListener, tabActionsAutoHideListenerDisposable)
-        glassPane = gp
-        StartupUiUtil.addAwtListener({
-                         if (JBPopupFactory.getInstance().getChildPopups(this@JBTabsImpl).isEmpty()) {
-                           processFocusChange()
-                         }
-                       }, AWTEvent.FOCUS_EVENT_MASK, parentDisposable)
-        dragHelper = createDragHelper(child, parentDisposable)
-        dragHelper!!.start()
+    lazyUiDisposable(parent = parentDisposable, ui = this, child = this) { child, project ->
+      if (this@JBTabsImpl.project == null && project != null) {
+        this@JBTabsImpl.project = project
       }
+
+      Disposer.register(parentDisposable) { removeTimerUpdate() }
+      val gp = IdeGlassPaneUtil.find(child)
+      tabActionsAutoHideListenerDisposable = Disposer.newDisposable("myTabActionsAutoHideListener")
+      Disposer.register(parentDisposable, tabActionsAutoHideListenerDisposable)
+      gp.addMouseMotionPreprocessor(tabActionsAutoHideListener, tabActionsAutoHideListenerDisposable)
+      glassPane = gp
+      StartupUiUtil.addAwtListener({
+                                     if (JBPopupFactory.getInstance().getChildPopups(this@JBTabsImpl).isEmpty()) {
+                                       processFocusChange()
+                                     }
+                                   }, AWTEvent.FOCUS_EVENT_MASK, parentDisposable)
+      dragHelper = createDragHelper(child, parentDisposable)
+      dragHelper!!.start()
     }
 
     putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Iterable {
