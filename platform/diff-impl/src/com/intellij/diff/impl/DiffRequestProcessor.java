@@ -324,9 +324,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     updateToolOrderSettings(newOrder);
   }
 
-  private @NotNull ViewerState createState() {
-    FrameDiffTool frameTool = getFittedTool(true);
-
+  private @NotNull ViewerState createState(@NotNull FrameDiffTool frameTool) {
     DiffViewer viewer = frameTool.createComponent(myContext, myActiveRequest);
 
     for (DiffExtension extension : DiffExtension.EP_NAME.getExtensions()) {
@@ -403,8 +401,10 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
         myActiveRequest = request;
         onAssigned(myActiveRequest, true);
 
+        FrameDiffTool frameTool = null;
         try {
-          myState = createState();
+          frameTool = getFittedTool(true);
+          myState = createState(frameTool);
           try {
             myState.init();
           }
@@ -415,7 +415,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
         }
         catch (Throwable e) {
           LOG.error(e);
-          myState = new ErrorState(new ErrorDiffRequest(DiffBundle.message("error.cant.show.diff.message"), e), getFittedTool(true));
+          myState = new ErrorState(new ErrorDiffRequest(DiffBundle.message("error.cant.show.diff.message"), e), frameTool);
           myState.init();
         }
       });
