@@ -13,6 +13,8 @@ class ClassCompletionTest : MermaidBaseTestCase("completion/diagrams/class") {
 
   fun `test at top level with frontmatter`() = doTest("class", "direction")
 
+  fun `test at top level at mid line with frontmatter`() = doTest("class", "direction")
+
   fun `test directions`() = doTest(*directions)
 
   private fun doTest(vararg variants: String) {

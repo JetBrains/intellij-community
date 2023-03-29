@@ -8,6 +8,7 @@ import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.WHITE_SPACES_WITHOUT
 import com.intellij.mermaid.lang.lexer.MermaidTokens
 import com.intellij.mermaid.lang.parser.MermaidElements
 import com.intellij.mermaid.lang.psi.MermaidDirective
+import com.intellij.mermaid.lang.psi.MermaidFrontmatter
 import com.intellij.mermaid.lang.psi.children
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PatternCondition
@@ -408,6 +409,7 @@ class MermaidCompletionContributor : CompletionContributor() {
       psiElement(MermaidTokens.Frontmatter.FRONTMATTER_START),
       psiElement(MermaidTokens.Frontmatter.FRONTMATTER_VALUE),
       psiElement(MermaidTokens.Frontmatter.FRONTMATTER_END),
+      psiElement(MermaidFrontmatter::class.java),
     )
   }
 
