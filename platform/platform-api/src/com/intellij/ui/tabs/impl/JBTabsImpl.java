@@ -1720,9 +1720,11 @@ public class JBTabsImpl extends JComponent
     }
     else if (TabInfo.TEXT.equals(evt.getPropertyName())) {
       updateText(tabInfo);
+      revalidateAndRepaint();
     }
     else if (TabInfo.ICON.equals(evt.getPropertyName())) {
       updateIcon(tabInfo);
+      revalidateAndRepaint();
     }
     else if (TabInfo.TAB_COLOR.equals(evt.getPropertyName())) {
       revalidateAndRepaint();
@@ -1810,9 +1812,8 @@ public class JBTabsImpl extends JComponent
     return index;
   }
 
-  private void updateIcon(final TabInfo tabInfo) {
+  private void updateIcon(@NotNull TabInfo tabInfo) {
     myInfo2Label.get(tabInfo).setIcon(tabInfo.getIcon());
-    revalidateAndRepaint();
   }
 
   public void revalidateAndRepaint() {
@@ -1858,12 +1859,10 @@ public class JBTabsImpl extends JComponent
     }
   }
 
-  private void updateText(TabInfo tabInfo) {
+  private void updateText(@NotNull TabInfo tabInfo) {
     TabLabel label = myInfo2Label.get(tabInfo);
     label.setText(tabInfo.getColoredText());
     label.setToolTipText(tabInfo.getTooltipText());
-
-    revalidateAndRepaint();
   }
 
   private void updateSideComponent(final TabInfo tabInfo) {
