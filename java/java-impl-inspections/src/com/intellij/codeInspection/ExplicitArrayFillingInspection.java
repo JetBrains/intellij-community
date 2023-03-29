@@ -296,7 +296,7 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
       if (!(assignment.getLExpression() instanceof PsiArrayAccessExpression arrayAccessExpression)) {
         return null;
       }
-      container = IndexedContainerUtil.arrayContainerWithBound(arrayAccessExpression, loop.getBound());
+      container = IndexedContainer.arrayContainerWithBound(arrayAccessExpression, loop.getBound());
     }
     return container;
   }
