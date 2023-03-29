@@ -247,7 +247,7 @@ final class JBTabsDemoAction extends AnAction {
 
     tabs.setUiDecorator(new UiDecorator() {
       @Override
-      public UiDecoration getDecoration() {
+      public @NotNull UiDecoration getDecoration() {
         return new UiDecoration(null, new Insets(0, -1, 0, -1));
       }
     });

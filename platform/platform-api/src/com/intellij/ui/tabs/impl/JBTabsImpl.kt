@@ -79,9 +79,11 @@ import kotlin.Pair
 private val ABC_COMPARATOR: Comparator<TabInfo> = Comparator { o1, o2 -> NaturalComparator.INSTANCE.compare(o1.text, o2.text) }
 private val LOG = logger<JBTabsImpl>()
 private const val SCROLL_BAR_THICKNESS = 3
+private const val ADJUST_BORDERS = true
+private const val LAYOUT_DONE: @NonNls String = "Layout.done"
 
 @DirtyUI
-open class JBTabsImpl(private var myProject: Project?,
+open class JBTabsImpl(private var project: Project?,
                       parentDisposable: Disposable) : JComponent(), JBTabsEx, PropertyChangeListener, TimerListener, DataProvider,
                                                       PopupMenuListener, JBTabsPresentation, Queryable, UISettingsListener,
                                                       QuickActionProvider, MorePopupAware, Accessible {
@@ -101,27 +103,24 @@ open class JBTabsImpl(private var myProject: Project?,
     val DEFAULT_MAX_TAB_WIDTH = scale(300)
 
     @JvmField
-    val defaultDecorator: UiDecorator = DefaultDecorator()
-
-    private const val adjustBorders = true
-    private const val LAYOUT_DONE: @NonNls String = "Layout.done"
+    internal val defaultDecorator: UiDecorator = DefaultDecorator()
 
     @JvmStatic
     fun getComponentImage(info: TabInfo): Image {
-      val cmp = info.component
-      val img: BufferedImage
-      if (cmp.isShowing) {
-        val width = cmp.width
-        val height = cmp.height
-        img = UIUtil.createImage(info.component, if (width > 0) width else 500, if (height > 0) height else 500,
-                                 BufferedImage.TYPE_INT_ARGB)
-        val g = img.createGraphics()
-        cmp.paint(g)
+      val component = info.component
+      val image: BufferedImage
+      if (component.isShowing) {
+        val width = component.width
+        val height = component.height
+        image = ImageUtil.createImage(info.component?.graphicsConfiguration, if (width > 0) width else 500, if (height > 0) height else 500,
+                                      BufferedImage.TYPE_INT_ARGB)
+        val g = image.createGraphics()
+        component.paint(g)
       }
       else {
-        img = UIUtil.createImage(info.component, 500, 500, BufferedImage.TYPE_INT_ARGB)
+        image = ImageUtil.createImage(info.component?.graphicsConfiguration, 500, 500, BufferedImage.TYPE_INT_ARGB)
       }
-      return img
+      return image
     }
 
     @JvmStatic
@@ -155,9 +154,9 @@ open class JBTabsImpl(private var myProject: Project?,
     }
   }
 
-  private val myVisibleInfos: MutableList<TabInfo> = ArrayList()
+  private val visibleInfos: MutableList<TabInfo> = ArrayList()
   private val infoToPage: MutableMap<TabInfo, AccessibleTabPage> = HashMap()
-  private val myHiddenInfos: MutableMap<TabInfo, Int> = HashMap()
+  private val hiddenInfos: MutableMap<TabInfo, Int> = HashMap()
   private var mySelectedInfo: TabInfo? = null
 
   val infoToLabel: MutableMap<TabInfo, TabLabel> = HashMap()
@@ -243,8 +242,10 @@ open class JBTabsImpl(private var myProject: Project?,
   private var mySelectionChangeHandler: JBTabs.SelectionChangeHandler? = null
   private var deferredFocusRequest: Runnable? = null
   private var firstTabOffset = 0
-  val tabPainterAdapter = createTabPainterAdapter()
-  val tabPainter = tabPainterAdapter.tabPainter
+
+  @JvmField
+  internal val tabPainterAdapter: TabPainterAdapter = createTabPainterAdapter()
+  val tabPainter: JBTabPainter = tabPainterAdapter.tabPainter
 
   private var alphabeticalMode = false
   open fun isAlphabeticalMode(): Boolean = alphabeticalMode
@@ -333,8 +334,8 @@ open class JBTabsImpl(private var myProject: Project?,
     }
     val listener1 = object : LazyUiDisposable<JBTabsImpl>(parentDisposable, this, this) {
       override fun initialize(parent: Disposable, child: JBTabsImpl, project: Project?) {
-        if (myProject == null && project != null) {
-          myProject = project
+        if (this@JBTabsImpl.project == null && project != null) {
+          this@JBTabsImpl.project = project
         }
         Disposer.register(parentDisposable, animator)
         Disposer.register(parentDisposable) { removeTimerUpdate() }
@@ -349,13 +350,15 @@ open class JBTabsImpl(private var myProject: Project?,
                        }, AWTEvent.FOCUS_EVENT_MASK, parentDisposable)
         dragHelper = createDragHelper(child, parentDisposable)
         dragHelper!!.start()
-        if (myProject != null && this@JBTabsImpl.focusManager === IdeFocusManager.getGlobalInstance()) {
-          this@JBTabsImpl.focusManager = IdeFocusManager.getInstance(myProject)
+        if (this@JBTabsImpl.project != null && this@JBTabsImpl.focusManager === IdeFocusManager.getGlobalInstance()) {
+          this@JBTabsImpl.focusManager = IdeFocusManager.getInstance(this@JBTabsImpl.project)
         }
       }
     }
     listener1.setupListeners()
-    putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, getVisibleInfos().asSequence().filter { it != mySelectedInfo }.map { it.component })
+    putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Iterable {
+      getVisibleInfos().asSequence().filter { it != mySelectedInfo }.map { it.component }.iterator()
+    })
     val hoverListener = object : HoverListener() {
       override fun mouseEntered(component: Component, x: Int, y: Int) {
         toggleScrollBar(isInsideTabsArea(x, y))
@@ -593,7 +596,7 @@ open class JBTabsImpl(private var myProject: Project?,
 
   private fun repaintAttractions() {
     var needsUpdate = false
-    for (each in myVisibleInfos) {
+    for (each in visibleInfos) {
       val eachLabel = infoToLabel.get(each)
       needsUpdate = needsUpdate or eachLabel!!.repaintAttraction()
     }
@@ -879,7 +882,7 @@ open class JBTabsImpl(private var myProject: Project?,
     if (selectedIndex != null) {
       step.defaultOptionIndex = selectedIndex
     }
-    val popup = JBPopupFactory.getInstance().createListPopup(myProject!!, step) {
+    val popup = JBPopupFactory.getInstance().createListPopup(project!!, step) {
       val descriptor = object : ListItemDescriptorAdapter<TabInfo>() {
         @Suppress("DialogTitleCapitalization")
         override fun getTextFor(value: TabInfo): String = value.text
@@ -1152,7 +1155,7 @@ open class JBTabsImpl(private var myProject: Project?,
       label.setIcon(info.icon)
       label.setTabActions(info.tabLabelActions)
       label.setAlignmentToCenter(false)
-      label.apply(if (uiDecorator != null) uiDecorator!!.decoration else defaultDecorator.decoration)
+      label.apply(uiDecorator?.decoration ?: defaultDecorator.decoration)
       label.addMouseListener(object : MouseAdapter() {
         override fun mouseClicked(e: MouseEvent) {
           if (e.isShiftDown && !e.isPopupTrigger) {
@@ -1245,11 +1248,11 @@ open class JBTabsImpl(private var myProject: Project?,
     infoToLabel.put(info, label)
     infoToPage.put(info, AccessibleTabPage(parent = this, tabInfo = info))
     if (!isDropTarget) {
-      if (index < 0 || index > myVisibleInfos.size - 1) {
-        myVisibleInfos.add(info)
+      if (index < 0 || index > visibleInfos.size - 1) {
+        visibleInfos.add(info)
       }
       else {
-        myVisibleInfos.add(index, info)
+        visibleInfos.add(index, info)
       }
     }
     resetTabsCache()
@@ -1374,10 +1377,10 @@ open class JBTabsImpl(private var myProject: Project?,
       return removeDeferred()
     }
     val toFocus = toFocus
-    return if (myProject != null && toFocus != null) {
+    return if (project != null && toFocus != null) {
       val result = ActionCallback()
       requestFocus(toFocus, requestFocusInWindow).doWhenProcessed {
-        if (myProject!!.isDisposed) {
+        if (project!!.isDisposed) {
           result.setRejected()
         }
         else {
@@ -1393,7 +1396,7 @@ open class JBTabsImpl(private var myProject: Project?,
                                                         }
                                                         else {
                                                           focusManager.requestFocusInProject(this,
-                                                                                             myProject)
+                                                                                             project)
                                                         }
                                                       }, ModalityState.NON_MODAL)
       removeDeferred()
@@ -1451,7 +1454,7 @@ open class JBTabsImpl(private var myProject: Project?,
           res.setDone()
         }
         else {
-          focusManager.requestFocusInProject(toFocus, myProject).notifyWhenDone(res)
+          focusManager.requestFocusInProject(toFocus, project).notifyWhenDone(res)
         }
       }
       return res
@@ -1541,27 +1544,27 @@ open class JBTabsImpl(private var myProject: Project?,
 
   private fun updateHiding() {
     var update = false
-    val visible = myVisibleInfos.iterator()
+    val visible = visibleInfos.iterator()
     while (visible.hasNext()) {
       val tabInfo = visible.next()
-      if (tabInfo.isHidden && !myHiddenInfos.containsKey(tabInfo)) {
-        myHiddenInfos.put(tabInfo, myVisibleInfos.indexOf(tabInfo))
+      if (tabInfo.isHidden && !hiddenInfos.containsKey(tabInfo)) {
+        hiddenInfos.put(tabInfo, visibleInfos.indexOf(tabInfo))
         visible.remove()
         update = true
       }
     }
-    val hidden = myHiddenInfos.keys.iterator()
+    val hidden = hiddenInfos.keys.iterator()
     while (hidden.hasNext()) {
       val each = hidden.next()
-      if (!each.isHidden && myHiddenInfos.containsKey(each)) {
-        myVisibleInfos.add(getIndexInVisibleArray(each), each)
+      if (!each.isHidden && hiddenInfos.containsKey(each)) {
+        visibleInfos.add(getIndexInVisibleArray(each), each)
         hidden.remove()
         update = true
       }
     }
     if (update) {
       resetTabsCache()
-      if (mySelectedInfo != null && myHiddenInfos.containsKey(mySelectedInfo)) {
+      if (mySelectedInfo != null && hiddenInfos.containsKey(mySelectedInfo)) {
         val toSelect = getToSelectOnRemoveOf(mySelectedInfo!!)
         setSelectedInfo(toSelect)
       }
@@ -1570,10 +1573,10 @@ open class JBTabsImpl(private var myProject: Project?,
   }
 
   private fun getIndexInVisibleArray(each: TabInfo): Int {
-    val info = myHiddenInfos[each]
-    var index = info ?: myVisibleInfos.size
-    if (index > myVisibleInfos.size) {
-      index = myVisibleInfos.size
+    val info = hiddenInfos[each]
+    var index = info ?: visibleInfos.size
+    if (index > visibleInfos.size) {
+      index = visibleInfos.size
     }
     if (index < 0) {
       index = 0
@@ -1590,11 +1593,11 @@ open class JBTabsImpl(private var myProject: Project?,
   }
 
   override fun isOpaque(): Boolean {
-    return super.isOpaque() && !myVisibleInfos.isEmpty()
+    return super.isOpaque() && !visibleInfos.isEmpty()
   }
 
   open fun revalidateAndRepaint(layoutNow: Boolean) {
-    if (myVisibleInfos.isEmpty() && parent != null) {
+    if (visibleInfos.isEmpty() && parent != null) {
       val nonOpaque = ComponentUtil.findUltimateParent(this)
       val toRepaint = SwingUtilities.convertRectangle(parent, bounds, nonOpaque)
       nonOpaque.repaint(toRepaint.x, toRepaint.y, toRepaint.width, toRepaint.height)
@@ -1649,9 +1652,9 @@ open class JBTabsImpl(private var myProject: Project?,
     }
 
     if (mySelectedInfo == null) {
-      return if (myVisibleInfos.isEmpty()) null else myVisibleInfos[0]
+      return if (visibleInfos.isEmpty()) null else visibleInfos[0]
     }
-    else if (myVisibleInfos.contains(mySelectedInfo)) {
+    else if (visibleInfos.contains(mySelectedInfo)) {
       return mySelectedInfo
     }
     else {
@@ -1662,11 +1665,13 @@ open class JBTabsImpl(private var myProject: Project?,
 
   private fun setSelectedInfo(info: TabInfo?) {
     mySelectedInfo = info
-    infoToToolbar.forEach { (tabInfo: TabInfo?, toolbar: Toolbar) -> toolbar.isVisible = info == tabInfo }
+    for ((tabInfo, toolbar) in infoToToolbar) {
+      toolbar.isVisible = info == tabInfo
+    }
   }
 
   override fun getToSelectOnRemoveOf(info: TabInfo): TabInfo? {
-    if (!myVisibleInfos.contains(info) || mySelectedInfo != info || myVisibleInfos.size == 1) {
+    if (!visibleInfos.contains(info) || mySelectedInfo != info || visibleInfos.size == 1) {
       return null
     }
 
@@ -1685,6 +1690,7 @@ open class JBTabsImpl(private var myProject: Project?,
     if (from < 0) {
       return null
     }
+
     var index = from
     val infos = getVisibleInfos()
     while (true) {
@@ -1735,14 +1741,15 @@ open class JBTabsImpl(private var myProject: Project?,
 
   override fun getTabAt(tabIndex: Int): TabInfo = tabs.get(tabIndex)
 
+  @RequiresEdt
   override fun getTabs(): List<TabInfo> {
-    EDT.assertIsEdt()
-    if (allTabs != null) {
-      return allTabs!!
+    allTabs?.let {
+      return it
     }
-    val result = ArrayList(myVisibleInfos)
-    for (each in myHiddenInfos.keys) {
-      result.add(getIndexInVisibleArray(each), each)
+
+    val result = visibleInfos.toMutableList()
+    for (tabInfo in hiddenInfos.keys) {
+      result.add(getIndexInVisibleArray(tabInfo), tabInfo)
     }
     if (isAlphabeticalMode()) {
       sortTabsAlphabetically(result)
@@ -1751,11 +1758,10 @@ open class JBTabsImpl(private var myProject: Project?,
     return result
   }
 
-  override fun getTargetInfo(): TabInfo? {
-    return if (popupInfo != null) popupInfo else selectedInfo
-  }
+  override fun getTargetInfo(): TabInfo? = popupInfo ?: selectedInfo
 
   override fun popupMenuWillBecomeVisible(e: PopupMenuEvent) {}
+
   override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent) {
     resetPopup()
   }
@@ -2042,13 +2048,13 @@ open class JBTabsImpl(private var myProject: Project?,
     get() = arcSize + 1
 
   fun resetLayout(resetLabels: Boolean) {
-    for (tabInfo in myVisibleInfos) {
+    for (tabInfo in visibleInfos) {
       reset(tabInfo, resetLabels)
     }
     dropInfo?.let {
       reset(it, resetLabels)
     }
-    for (tabInfo in myHiddenInfos.keys) {
+    for (tabInfo in hiddenInfos.keys) {
       reset(tabInfo = tabInfo, resetLabels = resetLabels)
     }
     for (eachDeferred in deferredToRemove.keys) {
@@ -2069,7 +2075,7 @@ open class JBTabsImpl(private var myProject: Project?,
 
   override fun paintComponent(g: Graphics) {
     super.paintComponent(g)
-    if (myVisibleInfos.isEmpty()) {
+    if (visibleInfos.isEmpty()) {
       if (emptyText != null) {
         setupAntialiasing(g)
         UIUtil.drawCenteredString((g as Graphics2D), Rectangle(0, 0, width, height), emptyText!!)
@@ -2105,14 +2111,14 @@ open class JBTabsImpl(private var myProject: Project?,
 
   open fun getVisibleInfos(): List<TabInfo> {
     if (AdvancedSettings.getBoolean("editor.keep.pinned.tabs.on.left")) {
-      groupPinnedFirst(myVisibleInfos)
+      groupPinnedFirst(visibleInfos)
     }
     if (isAlphabeticalMode()) {
-      val result = ArrayList(myVisibleInfos)
+      val result = ArrayList(visibleInfos)
       sortTabsAlphabetically(result)
       return result
     }
-    return myVisibleInfos
+    return visibleInfos
   }
 
   private fun groupPinnedFirst(infos: MutableList<TabInfo>) {
@@ -2133,11 +2139,13 @@ open class JBTabsImpl(private var myProject: Project?,
         firstNotPinned = i
       }
     }
-    if (changed) resetTabsCache()
+    if (changed) {
+      resetTabsCache()
+    }
   }
 
   private val isNavigationVisible: Boolean
-    get() = myVisibleInfos.size > 1
+    get() = visibleInfos.size > 1
 
   override fun getComponentGraphics(graphics: Graphics): Graphics {
     return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics))
@@ -2152,7 +2160,7 @@ open class JBTabsImpl(private var myProject: Project?,
   private fun computeMaxSize(): Max {
     val max = Max()
     val isSideComponentOnTabs = effectiveLayout!!.isSideComponentOnTabs
-    for (eachInfo in myVisibleInfos) {
+    for (eachInfo in visibleInfos) {
       val label = infoToLabel[eachInfo]
       max.myLabel.height = Math.max(max.myLabel.height, label!!.preferredSize.height)
       max.myLabel.width = Math.max(max.myLabel.width, label.preferredSize.width)
@@ -2185,7 +2193,7 @@ open class JBTabsImpl(private var myProject: Project?,
 
   private fun computeSize(transform: Function<in JComponent, out Dimension>, tabCount: Int): Dimension {
     val size = Dimension()
-    for (each in myVisibleInfos) {
+    for (each in visibleInfos) {
       val c = each.component
       if (c != null) {
         val eachSize = transform.`fun`(c)
@@ -2280,7 +2288,7 @@ open class JBTabsImpl(private var myProject: Project?,
       getToSelectOnRemoveOf(info!!)
     }
     else {
-      assert(myVisibleInfos.contains(forcedSelectionTransfer)) { "Cannot find tab for selection transfer, tab=$forcedSelectionTransfer" }
+      assert(visibleInfos.contains(forcedSelectionTransfer)) { "Cannot find tab for selection transfer, tab=$forcedSelectionTransfer" }
       forcedSelectionTransfer
     }
     if (toSelect != null) {
@@ -2296,7 +2304,7 @@ open class JBTabsImpl(private var myProject: Project?,
       processRemove(info, true)
       removeDeferred().notifyWhenDone(result)
     }
-    if (myVisibleInfos.isEmpty()) {
+    if (visibleInfos.isEmpty()) {
       removeDeferredNow()
     }
     revalidateAndRepaint(true)
@@ -2339,8 +2347,8 @@ open class JBTabsImpl(private var myProject: Project?,
     else {
       addToDeferredRemove(tabComponent)
     }
-    myVisibleInfos.remove(info)
-    myHiddenInfos.remove(info)
+    visibleInfos.remove(info)
+    hiddenInfos.remove(info)
     infoToLabel.remove(info)
     infoToPage.remove(info)
     infoToToolbar.remove(info)
@@ -2404,7 +2412,7 @@ open class JBTabsImpl(private var myProject: Project?,
   }
 
   private fun updateContainer(forced: Boolean, layoutNow: Boolean) {
-    for (tabInfo in java.util.List.copyOf(myVisibleInfos)) {
+    for (tabInfo in java.util.List.copyOf(visibleInfos)) {
       val component = tabInfo.component
       if (tabInfo == selectedInfo) {
         unqueueFromRemove(component)
@@ -2502,12 +2510,13 @@ open class JBTabsImpl(private var myProject: Project?,
     }
   }
 
-  override fun addImpl(comp: Component, constraints: Any, index: Int) {
-    unqueueFromRemove(comp)
-    if (comp is TabLabel) {
-      comp.apply(if (uiDecorator != null) uiDecorator!!.decoration else defaultDecorator.decoration)
+  override fun addImpl(component: Component, constraints: Any?, index: Int) {
+    unqueueFromRemove(component)
+    if (component is TabLabel) {
+      val uiDecorator = uiDecorator
+      component.apply(uiDecorator?.decoration ?: defaultDecorator.decoration)
     }
-    super.addImpl(comp, constraints, index)
+    super.addImpl(component, constraints, index)
   }
 
   fun relayout(forced: Boolean, layoutNow: Boolean) {
@@ -2537,7 +2546,7 @@ open class JBTabsImpl(private var myProject: Project?,
   }
 
   private fun addListeners() {
-    for (eachInfo in myVisibleInfos) {
+    for (eachInfo in visibleInfos) {
       val label = infoToLabel[eachInfo]
       for (eachListener in tabMouseListeners) {
         when (eachListener) {
@@ -2550,7 +2559,7 @@ open class JBTabsImpl(private var myProject: Project?,
   }
 
   private fun removeListeners() {
-    for (eachInfo in myVisibleInfos) {
+    for (eachInfo in visibleInfos) {
       val label = infoToLabel[eachInfo]
       for (eachListener in tabMouseListeners) {
         when (eachListener) {
@@ -2818,7 +2827,7 @@ open class JBTabsImpl(private var myProject: Project?,
 
   override fun setSideComponentVertical(vertical: Boolean): JBTabsPresentation {
     horizontalSide = !vertical
-    for (each in myVisibleInfos) {
+    for (each in visibleInfos) {
       each.changeSupport.firePropertyChange(TabInfo.ACTION_GROUP, "new1", "new2")
     }
     relayout(true, false)
@@ -2880,34 +2889,33 @@ open class JBTabsImpl(private var myProject: Project?,
   }
 
   private fun applyDecoration() {
-    if (uiDecorator != null) {
-      val uiDecoration = uiDecorator!!.decoration
+    uiDecorator?.decoration?.let { uiDecoration ->
       for (tabLabel in infoToLabel.values) {
         tabLabel.apply(uiDecoration)
       }
     }
-    for (each in tabs) {
-      adjust(each)
+    for (tabInfo in tabs) {
+      adjust(tabInfo)
     }
     relayout(forced = true, layoutNow = false)
   }
 
   protected open fun adjust(tabInfo: TabInfo) {
-    if (adjustBorders) {
+    if (ADJUST_BORDERS) {
       @Suppress("DEPRECATION")
       UIUtil.removeScrollBorder(tabInfo.component)
     }
   }
 
   override fun sortTabs(comparator: Comparator<TabInfo>) {
-    myVisibleInfos.sortWith(comparator)
+    visibleInfos.sortWith(comparator)
     resetTabsCache()
     relayout(forced = true, layoutNow = false)
   }
 
   protected fun reorderTab(tabInfo: TabInfo, newIndex: Int) {
-    if (myVisibleInfos.remove(tabInfo)) {
-      myVisibleInfos.add(newIndex, tabInfo)
+    if (visibleInfos.remove(tabInfo)) {
+      visibleInfos.add(newIndex, tabInfo)
       resetTabsCache()
       relayout(forced = true, layoutNow = false)
     }
@@ -3030,9 +3038,9 @@ open class JBTabsImpl(private var myProject: Project?,
     if (source == target || source == null || target == null) {
       return
     }
-    val targetIndex = myVisibleInfos.indexOf(target)
-    myVisibleInfos.remove(source)
-    myVisibleInfos.add(targetIndex, source)
+    val targetIndex = visibleInfos.indexOf(target)
+    visibleInfos.remove(source)
+    visibleInfos.add(targetIndex, source)
     invalidate()
     relayout(forced = true, layoutNow = true)
   }
@@ -3077,7 +3085,7 @@ open class JBTabsImpl(private var myProject: Project?,
   override fun processDropOver(over: TabInfo, point: RelativePoint) {
     val pointInMySpace = point.getPoint(this)
     val index = effectiveLayout!!.getDropIndexFor(pointInMySpace)
-    val side: Int = if (myVisibleInfos.isEmpty()) {
+    val side: Int = if (visibleInfos.isEmpty()) {
       SwingConstants.CENTER
     }
     else {
@@ -3094,12 +3102,12 @@ open class JBTabsImpl(private var myProject: Project?,
   }
 
   override val isEmptyVisible: Boolean
-    get() = myVisibleInfos.isEmpty()
+    get() = visibleInfos.isEmpty()
 
   val tabHGap: Int
     get() = -myBorder.thickness
 
-  override fun toString(): String = "JBTabs visible=$myVisibleInfos selected=$mySelectedInfo"
+  override fun toString(): String = "JBTabs visible=$visibleInfos selected=$mySelectedInfo"
 
   override fun getAccessibleContext(): AccessibleContext {
     if (accessibleContext == null) {

@@ -209,7 +209,7 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
 
       @Override
       protected Color getActiveTextColor(Color attributesColor) {
-        TabPainterAdapter painterAdapter = myTabs.getTabPainterAdapter();
+        TabPainterAdapter painterAdapter = myTabs.tabPainterAdapter;
         TabTheme theme = painterAdapter.getTabTheme();
         Color foreground = myTabs.getSelectedInfo() == myInfo
                            && (UIUtil.getLabelForeground().equals(attributesColor) || attributesColor == null)
@@ -516,11 +516,7 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     return myInfo;
   }
 
-  public void apply(UiDecorator.UiDecoration decoration) {
-    if (decoration == null) {
-      return;
-    }
-
+  final void apply(@NotNull UiDecorator.UiDecoration decoration) {
     if (decoration.getLabelFont() != null) {
       setFont(decoration.getLabelFont());
       getLabelComponent().setFont(decoration.getLabelFont());
@@ -536,7 +532,7 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
 
   public static MergedUiDecoration mergeUiDecorations(@NotNull UiDecorator.UiDecoration customDec,
                                                       @NotNull UiDecorator.UiDecoration defaultDec) {
-    Function<ActionsPosition, Insets> contentInsetsSupplier = position -> {
+                                  Function<ActionsPosition, Insets> contentInsetsSupplier = position -> {
       Insets def = Objects.requireNonNull(defaultDec.getContentInsetsSupplier()).apply(position);
       if (customDec.getContentInsetsSupplier() != null) {
         return mergeInsets(customDec.getContentInsetsSupplier().apply(position), def);
@@ -687,8 +683,7 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
   }
 
   private void paintBackground(Graphics g) {
-    TabPainterAdapter painterAdapter = myTabs.getTabPainterAdapter();
-    painterAdapter.paintBackground(this, g, myTabs);
+    myTabs.tabPainterAdapter.paintBackground(this, g, myTabs);
   }
 
   @Override
