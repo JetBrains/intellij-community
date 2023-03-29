@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.SystemInfoRt;
@@ -49,6 +49,8 @@ public final class PathManager {
   private static final String CONFIG_DIRECTORY = "config";
   private static final String SYSTEM_DIRECTORY = "system";
   private static final String PATHS_SELECTOR = System.getProperty(PROPERTY_PATHS_SELECTOR);
+
+  private static final String RIDER_REPO_MARKER_FILE = ".rider.root.marker";
 
   private static final class Lazy {
     private static final Pattern PROPERTY_REF = Pattern.compile("\\$\\{(.+?)}");
@@ -686,7 +688,7 @@ public final class PathManager {
       // support projects in ULTIMATE_REPO/remote-dev/extras/SUBDIR
       return homePath + "/../../../community";
     }
-    if (Files.isRegularFile(Paths.get(homePath, "../../Product.Root"))) { // .NET products directory
+    if (Files.isRegularFile(Paths.get(homePath, "../" + RIDER_REPO_MARKER_FILE))) {
       return homePath + "/../ultimate/community";
     }
     return homePath;
