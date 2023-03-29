@@ -1,69 +1,53 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.ui.update;
+package com.intellij.util.ui.update
 
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
-import static com.intellij.openapi.actionSystem.PlatformDataKeys.UI_DISPOSABLE;
+import com.intellij.ide.DataManager
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.atomic.AtomicReference
+import javax.swing.JComponent
 
 @ApiStatus.Internal
-public abstract class LazyUiDisposable<T> implements Activatable {
-  private final AtomicReference<JComponent> uiRef;
-  private final Disposable parent;
-  private final T child;
+abstract class LazyUiDisposable<T>(private val parent: Disposable?, ui: JComponent, private val child: T) : Activatable {
+  private val uiRef: AtomicReference<JComponent?>
 
-  public LazyUiDisposable(@Nullable Disposable parent, @NotNull JComponent ui, @NotNull T child) {
-    this.uiRef = new AtomicReference<>(ui);
-    this.parent = parent;
-    this.child = child;
-
-    UiNotifyConnector.Once.installOn(ui, this);
+  init {
+    uiRef = AtomicReference(ui)
+    UiNotifyConnector.Once.installOn(ui, this)
   }
 
-  @Override
-  public final void showNotify() {
-    JComponent ui = uiRef.getAndSet(null);
-    if (ui == null) {
-      return;
-    }
-
-    Project project = null;
-    Disposable parent = this.parent;
-
+  override fun showNotify() {
+    val ui = uiRef.getAndSet(null) ?: return
+    var project: Project? = null
+    var parent = parent
     if (ApplicationManager.getApplication() != null) {
-      DataContext context = DataManager.getInstance().getDataContext(ui);
-      project = PROJECT.getData(context);
+      val context = DataManager.getInstance().getDataContext(ui)
+      project = CommonDataKeys.PROJECT.getData(context)
       if (parent == null) {
-        parent = UI_DISPOSABLE.getData(context);
+        parent = PlatformDataKeys.UI_DISPOSABLE.getData(context)
       }
     }
     if (parent == null) {
-      if (project == null) {
-        Logger.getInstance(LazyUiDisposable.class).warn("use application as a parent disposable");
-        parent = ApplicationManager.getApplication();
+      parent = if (project == null) {
+        Logger.getInstance(LazyUiDisposable::class.java).warn("use application as a parent disposable")
+        ApplicationManager.getApplication()
       }
       else {
-        Logger.getInstance(LazyUiDisposable.class).warn("use project as a parent disposable");
-        parent = project;
+        Logger.getInstance(LazyUiDisposable::class.java).warn("use project as a parent disposable")
+        project
       }
     }
-    initialize(parent, child, project);
-    if (child instanceof Disposable) {
-      Disposer.register(parent, (Disposable)child);
+    initialize(parent!!, child, project)
+    if (child is Disposable) {
+      Disposer.register(parent, (child as Disposable))
     }
   }
 
-  protected abstract void initialize(@NotNull Disposable parent, @NotNull T child, @Nullable Project project);
+  protected abstract fun initialize(parent: Disposable, child: T, project: Project?)
 }
