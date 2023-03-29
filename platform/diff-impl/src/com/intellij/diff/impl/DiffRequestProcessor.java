@@ -85,7 +85,6 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
   private final @NotNull DiffContext myContext;
 
   private final @NotNull DiffSettings mySettings;
-  private final @NotNull List<DiffTool> myAvailableTools = new ArrayList<>();
   private final @NotNull List<DiffTool> myToolOrder = new ArrayList<>();
   private final @Nullable DiffTool myForcedDiffTool;
 
@@ -136,9 +135,9 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
 
     myIsNewToolbar = DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DIFF_NEW_TOOLBAR, myContext);
 
-    updateAvailableDiffTools();
+    readToolOrderFromSettings();
     DiffTool.EP_NAME.addChangeListener(() -> {
-      updateAvailableDiffTools();
+      readToolOrderFromSettings();
       updateRequest(true);
     }, this);
     DiffToolSubstitutor.EP_NAME.addChangeListener(() -> updateRequest(true), this);
@@ -264,7 +263,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
   }
 
   private @NotNull List<FrameDiffTool> getAvailableFittedTools() {
-    return filterFittedTools(myAvailableTools);
+    return filterFittedTools(getAvailableTools());
   }
 
   private @NotNull List<FrameDiffTool> filterFittedTools(@NotNull List<? extends DiffTool> tools) {
@@ -299,12 +298,14 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     return substitutor instanceof FrameDiffTool ? (FrameDiffTool)substitutor : null;
   }
 
-  private void updateAvailableDiffTools() {
-    myAvailableTools.clear();
-    myToolOrder.clear();
+  private static @NotNull List<DiffTool> getAvailableTools() {
+    return DiffManagerEx.getInstance().getDiffTools();
+  }
 
-    myAvailableTools.addAll(DiffManagerEx.getInstance().getDiffTools());
-    myToolOrder.addAll(getToolOrderFromSettings(myAvailableTools));
+  @RequiresEdt
+  private void readToolOrderFromSettings() {
+    myToolOrder.clear();
+    myToolOrder.addAll(getToolOrderFromSettings(getAvailableTools()));
   }
 
   private void moveToolOnTop(@NotNull DiffTool tool) {
