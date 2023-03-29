@@ -2,6 +2,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -103,7 +104,10 @@ public final class ReincludedRootsUtil {
     void classifyFiles(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
       WorkspaceFileIndex workspaceFileIndex = WorkspaceFileIndex.getInstance(project);
       for (VirtualFile file : files) {
-        WorkspaceFileSet fileSet = workspaceFileIndex.findFileSet(file, true, true, true, true, true);
+        WorkspaceFileSet fileSet = ReadAction.nonBlocking(() -> {
+        return workspaceFileIndex.findFileSet(file, true, true, true, true, true);
+      }).expireWith(project).executeSynchronously();
+
         if (fileSet == null) {
           filesFromIndexableSetContributors.add(file);
           continue;

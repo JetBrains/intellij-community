@@ -5,6 +5,7 @@ import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.RootsChangeRescanningInfo;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -59,6 +60,15 @@ final class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
     if (changes.isEmpty()) {
       runFullRescan(project, "Project roots have changed");
     }
+    if (DumbServiceImpl.isSynchronousTaskExecution()) {
+      doIndexChanges(project, changes);
+    }
+    else {
+      ApplicationManager.getApplication().executeOnPooledThread(() -> doIndexChanges(project, changes));
+    }
+  }
+
+  private static void doIndexChanges(@NotNull Project project, @NotNull List<? extends RootsChangeRescanningInfo> changes) {
     boolean indexDependencies = false;
     for (RootsChangeRescanningInfo change : changes) {
       if (change == RootsChangeRescanningInfo.TOTAL_RESCAN) {
