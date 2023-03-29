@@ -56,6 +56,7 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -86,7 +87,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
 
   private final @NotNull DiffSettings mySettings;
   private final @NotNull List<DiffTool> myToolOrder = new ArrayList<>();
-  private final @Nullable DiffTool myForcedDiffTool;
+  private final @Nullable FrameDiffTool myForcedDiffTool;
 
   private final @NotNull DefaultActionGroup myToolbarGroup;
   private final @NotNull DefaultActionGroup myRightToolbarGroup;
@@ -131,7 +132,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     myActiveRequest = new LoadingDiffRequest();
 
     mySettings = DiffSettings.getSettings(myContext.getUserData(DiffUserDataKeys.PLACE));
-    myForcedDiffTool = myContext.getUserData(DiffUserDataKeysEx.FORCE_DIFF_TOOL);
+    myForcedDiffTool = ObjectUtils.tryCast(myContext.getUserData(DiffUserDataKeysEx.FORCE_DIFF_TOOL), FrameDiffTool.class);
 
     myIsNewToolbar = DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DIFF_NEW_TOOLBAR, myContext);
 
@@ -245,9 +246,9 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
   public abstract void updateRequest(boolean force, @Nullable ScrollToPolicy scrollToChangePolicy);
 
   private @NotNull FrameDiffTool getFittedTool(boolean applySubstitutor) {
-    if (myForcedDiffTool instanceof FrameDiffTool) {
+    if (myForcedDiffTool != null) {
       return myForcedDiffTool.canShow(myContext, myActiveRequest)
-             ? (FrameDiffTool)myForcedDiffTool
+             ? myForcedDiffTool
              : ErrorDiffTool.INSTANCE;
     }
 
