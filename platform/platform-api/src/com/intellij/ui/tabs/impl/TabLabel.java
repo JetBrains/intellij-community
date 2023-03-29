@@ -624,7 +624,7 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
   }
 
   public boolean repaintAttraction() {
-    if (!myTabs.getAttractions().contains(myInfo)) {
+    if (!myTabs.attractions.contains(myInfo)) {
       if (getLayeredIcon().isLayerEnabled(1)) {
         getLayeredIcon().setLayerEnabled(1, false);
         setAttractionIcon(null);

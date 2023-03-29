@@ -81,7 +81,7 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
     }
 
     val myInfo2Label = tabs.infoToLabel
-    val firstLabel = myInfo2Label[tabs.visibleInfos[0]] ?: return
+    val firstLabel = myInfo2Label[tabs.getVisibleInfos()[0]] ?: return
 
     when (tabs.position) {
       JBTabsPosition.top -> {

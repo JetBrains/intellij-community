@@ -224,7 +224,7 @@ public abstract class SingleRowLayoutStrategy {
       } else {
         JComponent vToolbar = data.vToolbar.get();
         final int vToolbarWidth = vToolbar != null ? vToolbar.getPreferredSize().width : 0;
-        final int vSeparatorWidth = vToolbarWidth > 0 ? myTabs.getSeparatorWidth() : 0;
+        final int vSeparatorWidth = vToolbarWidth > 0 ? myTabs.separatorWidth : 0;
         final int x = vToolbarWidth > 0 ? vToolbarWidth + vSeparatorWidth : 0;
         JComponent hToolbar = data.hToolbar.get();
         final int hToolbarHeight = !myTabs.isSideComponentOnTabs() && hToolbar != null ? hToolbar.getPreferredSize().height : 0;

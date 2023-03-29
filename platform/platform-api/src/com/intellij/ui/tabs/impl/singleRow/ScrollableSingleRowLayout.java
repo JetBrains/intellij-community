@@ -35,7 +35,7 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
   @Override
   public void scroll(int units) {
     myScrollOffset += units;
-    clampScrollOffsetToBounds(myLastSingRowLayout);
+    clampScrollOffsetToBounds(lastSingRowLayout);
   }
 
   @Override

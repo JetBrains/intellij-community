@@ -31,7 +31,7 @@ public class TableLayout extends TabLayout {
 
   final JBTabsImpl myTabs;
 
-  public TablePassInfo myLastTableLayout;
+  public TablePassInfo lastTableLayout;
 
   private final boolean myWithScrollBar;
 
@@ -282,7 +282,7 @@ public class TableLayout extends TabLayout {
                              myTabs.getLayoutInsets().top;
       if (!myTabs.getHorizontalSide() && selectedToolbar != null && !selectedToolbar.isEmpty()) {
         final int toolbarWidth = selectedToolbar.getPreferredSize().width;
-        final int vSeparatorWidth = toolbarWidth > 0 ? myTabs.getSeparatorWidth() : 0;
+        final int vSeparatorWidth = toolbarWidth > 0 ? myTabs.separatorWidth : 0;
         if (myTabs.isSideComponentBefore()) {
           Rectangle compRect =
             myTabs.layoutComp(toolbarWidth + vSeparatorWidth, componentY, myTabs.getSelectedInfo().getComponent(), 0, 0);
@@ -302,7 +302,7 @@ public class TableLayout extends TabLayout {
     if (unitedTabArea != null) {
       data.tabRectangle.setBounds(unitedTabArea);
     }
-    myLastTableLayout = data;
+    lastTableLayout = data;
     return data;
   }
 
@@ -316,35 +316,35 @@ public class TableLayout extends TabLayout {
 
   @Override
   public boolean isDragOut(@NotNull TabLabel tabLabel, int deltaX, int deltaY) {
-    if (myLastTableLayout == null) {
+    if (lastTableLayout == null) {
       return super.isDragOut(tabLabel, deltaX, deltaY);
     }
 
-    Rectangle area = new Rectangle(myLastTableLayout.toFitRec.width, tabLabel.getBounds().height);
-    for (int i = 0; i < myLastTableLayout.myVisibleInfos.size(); i++) {
-      area = area.union(myTabs.getInfoToLabel().get(myLastTableLayout.myVisibleInfos.get(i)).getBounds());
+    Rectangle area = new Rectangle(lastTableLayout.toFitRec.width, tabLabel.getBounds().height);
+    for (int i = 0; i < lastTableLayout.myVisibleInfos.size(); i++) {
+      area = area.union(myTabs.getInfoToLabel().get(lastTableLayout.myVisibleInfos.get(i)).getBounds());
     }
     return Math.abs(deltaY) > area.height * getDragOutMultiplier();
   }
 
   @Override
   public int getDropIndexFor(Point point) {
-    if (myLastTableLayout == null) return -1;
+    if (lastTableLayout == null) return -1;
     int result = -1;
 
     Component c = myTabs.getComponentAt(point);
     Set<TabInfo> lastInRow = new HashSet<>();
-    for (int i = 0; i < myLastTableLayout.table.size(); i++) {
-      List<TabInfo> columns = myLastTableLayout.table.get(i).myColumns;
+    for (int i = 0; i < lastTableLayout.table.size(); i++) {
+      List<TabInfo> columns = lastTableLayout.table.get(i).myColumns;
       if (!columns.isEmpty()) {
         lastInRow.add(columns.get(columns.size() - 1));
       }
     }
 
     if (c instanceof JBTabsImpl) {
-      for (int i = 0; i < myLastTableLayout.myVisibleInfos.size() - 1; i++) {
-        TabInfo firstInfo = myLastTableLayout.myVisibleInfos.get(i);
-        TabInfo secondInfo = myLastTableLayout.myVisibleInfos.get(i + 1);
+      for (int i = 0; i < lastTableLayout.myVisibleInfos.size() - 1; i++) {
+        TabInfo firstInfo = lastTableLayout.myVisibleInfos.get(i);
+        TabInfo secondInfo = lastTableLayout.myVisibleInfos.get(i + 1);
         TabLabel first = myTabs.getInfoToLabel().get(firstInfo);
         TabLabel second = myTabs.getInfoToLabel().get(secondInfo);
 
@@ -372,18 +372,18 @@ public class TableLayout extends TabLayout {
 
     if (c instanceof TabLabel) {
       TabInfo info = ((TabLabel)c).getInfo();
-      int index = myLastTableLayout.myVisibleInfos.indexOf(info);
+      int index = lastTableLayout.myVisibleInfos.indexOf(info);
       boolean isDropTarget = myTabs.isDropTarget(info);
       if (!isDropTarget) {
         for (int i = 0; i <= index; i++) {
-          if (myTabs.isDropTarget(myLastTableLayout.myVisibleInfos.get(i))) {
+          if (myTabs.isDropTarget(lastTableLayout.myVisibleInfos.get(i))) {
             index -= 1;
             break;
           }
         }
         result = index;
       }
-      else if (index < myLastTableLayout.myVisibleInfos.size()) {
+      else if (index < lastTableLayout.myVisibleInfos.size()) {
         result = index;
       }
     }
@@ -416,7 +416,7 @@ public class TableLayout extends TabLayout {
     }
     myScrollOffset += units;
 
-    clampScrollOffsetToBounds(myLastTableLayout);
+    clampScrollOffsetToBounds(lastTableLayout);
   }
 
   private void clampScrollOffsetToBounds(@Nullable TablePassInfo data) {

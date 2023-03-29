@@ -15,7 +15,7 @@ import java.util.*;
  */
 @SuppressWarnings("removal")
 @Deprecated(forRemoval = true)
-public class TablePassInfo extends LayoutPassInfo {
+public final class TablePassInfo extends LayoutPassInfo {
   final List<TableRow> table = new ArrayList<>();
   public final Rectangle toFitRec;
   public final Rectangle tabRectangle = new Rectangle();
