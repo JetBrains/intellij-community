@@ -138,7 +138,7 @@ class InspectionRunner {
       };
       visitElements(init, outside, false, finalPriorityRange, TOMB_STONE, afterOutside, foundInjected, injectedContexts,
                     toolWrappers, empty(), enabledToolsPredicate);
-      reportIdsOfInspectionsReportedAnyProblem(init);
+      reportIdsOfInspectionsReportedAnyProblemToFUS(init);
 
       boolean isWholeFileInspectionsPass = !init.isEmpty() && init.get(0).tool.runForWholeFile();
       if (myIsOnTheFly && !isWholeFileInspectionsPass) {
@@ -153,13 +153,13 @@ class InspectionRunner {
     return ContainerUtil.concat(init, redundantContexts, injectedContexts);
   }
 
-  private void reportIdsOfInspectionsReportedAnyProblem(List<InspectionContext> init) {
+  private void reportIdsOfInspectionsReportedAnyProblemToFUS(@NotNull List<? extends InspectionContext> init) {
     if (!StatisticsUploadAssistant.isCollectAllowedOrForced()) return;
     Set<String> inspectionIdsReportedProblems = new HashSet<>();
     InspectionProblemHolder holder;
     for (InspectionContext context : init) {
       holder = context.holder;
-      if (holder.anyProblemWasReported) {
+      if (holder.anyProblemWasReported()) {
         inspectionIdsReportedProblems.add(context.tool.getID());
       }
     }
@@ -439,7 +439,6 @@ class InspectionRunner {
     long otherStamp; // nano-stamp of the first info/weak warn/etc. created
     final long initTimeStamp = System.nanoTime();
     volatile long finishTimeStamp;
-    boolean anyProblemWasReported = false;
 
     InspectionProblemHolder(@NotNull PsiFile file,
                             @NotNull LocalInspectionToolWrapper toolWrapper,
@@ -459,7 +458,6 @@ class InspectionRunner {
         return;
       }
       super.registerProblem(descriptor);
-      anyProblemWasReported = true;
       HighlightSeverity severity = myProfileWrapper.getErrorLevel(myToolWrapper.getDisplayKey(), getFile()).getSeverity();
       if (severity.compareTo(HighlightSeverity.ERROR) >= 0) {
         if (errorStamp == 0) {
@@ -476,6 +474,10 @@ class InspectionRunner {
           otherStamp = System.nanoTime();
         }
       }
+    }
+
+    boolean anyProblemWasReported() {
+      return errorStamp > 0 || warningStamp > 0 || otherStamp > 0;
     }
   }
 

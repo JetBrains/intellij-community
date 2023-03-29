@@ -10,7 +10,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@Service(value = Service.Level.PROJECT)
+/**
+ * Holds the set of inspections reported something. After collecting the report, the storage is reset.
+ */
+@Service(Service.Level.PROJECT)
 @ApiStatus.Internal
 public final class InspectionUsageStorage {
   public static InspectionUsageStorage getInstance(Project project) {
@@ -24,7 +27,7 @@ public final class InspectionUsageStorage {
     return ContainerUtil.newConcurrentSet();
   }
 
-  public void reportInspectionsWhichReportedProblems(Set<String> inspectionIds) {
+  public void reportInspectionsWhichReportedProblems(@NotNull Set<String> inspectionIds) {
     inspectionsReportingProblems.addAll(inspectionIds);
     inspectionSessions.incrementAndGet();
   }
