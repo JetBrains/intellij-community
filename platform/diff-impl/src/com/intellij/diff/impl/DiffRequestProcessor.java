@@ -845,6 +845,10 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       if (e == null) return AnAction.EMPTY_ARRAY;
 
+      if (myForcedDiffTool != null) {
+        return AnAction.EMPTY_ARRAY;
+      }
+
       DiffTool activeTool = e.getData(ACTIVE_DIFF_TOOL);
       DiffContext diffContext = e.getData(DiffDataKeys.DIFF_CONTEXT);
       DiffRequest diffRequest = e.getData(DiffDataKeys.DIFF_REQUEST);
