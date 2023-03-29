@@ -81,53 +81,40 @@ private fun initRemoteDevIfNeeded(args: List<String>) {
   if (!isRemoteDevEnabled) {
     return
   }
+  if (!JBR.isGraphicsUtilsSupported()) {
+    error("JBR version 17.0.6b796 or later is required to run a remote-dev server with lux")
+  }
 
   runActivity("cwm host init") {
-    if (isLuxEnabled()) {
-      initLux()
-    }
-    else {
-      initProjector()
-    }
+    val geClassName = if (isLuxEnabled()) "com.jetbrains.rdserver.lux.toolkit.LuxGraphicsEnvironment" else "org.jetbrains.projector.awt.image.PGraphicsEnvironment"
+    initRemoteDevGraphicsEnvironment(geClassName)
+    initProjector()
+    initLux()
   }
 }
 
 private fun isLuxEnabled() = System.getProperty("lux.enabled", "true").toBoolean()
 
 private fun initProjector() {
-  if (!JBR.isProjectorUtilsSupported()) {
-    error("JBR version 17.0.5b653.12 or later is required to run a remote-dev server")
-  }
-
-  if (!isLuxEnabled()) {
-    JBR.getProjectorUtils().setLocalGraphicsEnvironmentProvider {
-      val projectorEnvClass = AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.awt.image.PGraphicsEnvironment")
-      projectorEnvClass.getDeclaredMethod("getInstance").invoke(null) as GraphicsEnvironment
-    }
-  }
-
   val projectorMainClass = AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.server.ProjectorLauncher\$Starter")
   MethodHandles.privateLookupIn(projectorMainClass, MethodHandles.lookup()).findStatic(
     projectorMainClass, "runProjectorServer", MethodType.methodType(Boolean::class.javaPrimitiveType)
   ).invoke()
 }
 
-private fun initLux() {
-  if (!JBR.isGraphicsUtilsSupported()) {
-    error("JBR version 17.0.6b796 or later is required to run a remote-dev server with lux")
+private fun initRemoteDevGraphicsEnvironment(geClassName: String) {
+  JBR.getProjectorUtils().setLocalGraphicsEnvironmentProvider {
+    val clazz = AppStarter::class.java.classLoader.loadClass(geClassName)
+    clazz.getDeclaredMethod("getInstance").invoke(null) as GraphicsEnvironment
   }
+}
 
+private fun initLux() {
+  if (!isLuxEnabled()) return
   if (System.getProperty("lux.fonts.disable.projector.font.manager", "false").toBoolean()) {
     // disable PFontManager
     System.setProperty("org.jetbrains.projector.server.enable.font.manager", "false")
   }
-
-  JBR.getProjectorUtils().setLocalGraphicsEnvironmentProvider {
-    val luxGraphicsEnvClass = AppStarter::class.java.classLoader.loadClass("com.jetbrains.rdserver.lux.toolkit.LuxGraphicsEnvironment")
-    luxGraphicsEnvClass.getDeclaredMethod("getInstance").invoke(null) as GraphicsEnvironment
-  }
-
-  initProjector()
 
   System.setProperty("awt.nativeDoubleBuffering", false.toString())
   System.setProperty("swing.bufferPerWindow", true.toString())
