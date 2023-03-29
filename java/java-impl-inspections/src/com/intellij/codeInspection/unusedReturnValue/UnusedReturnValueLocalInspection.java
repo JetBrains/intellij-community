@@ -45,6 +45,7 @@ public class UnusedReturnValueLocalInspection extends AbstractBaseJavaLocalInspe
         PsiTypes.voidType().equals(method.getReturnType()) ||
         VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(method.getModifierList()), myGlobal.highestModifier) < 0 ||
         myGlobal.IGNORE_BUILDER_PATTERN && PropertyUtilBase.isSimplePropertySetter(method) ||
+        MethodUtils.isChainable(method) ||
         method.hasModifierProperty(PsiModifier.NATIVE) ||
         MethodUtils.hasSuper(method) ||
         RefUtil.isImplicitRead(method) ||

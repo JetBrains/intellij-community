@@ -74,6 +74,8 @@ public class UnusedReturnValueLocalTest extends JavaInspectionTestCase {
     }
   }
 
+  public void testChainMethods() { doTest(); }
+
   public void testUsedFromGroovy() {
     doTest();
   }

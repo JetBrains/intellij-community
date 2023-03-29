@@ -80,6 +80,8 @@ public class UnusedReturnValueTest extends JavaInspectionTestCase {
     }
   }
 
+  public void testChainMethods() { doTest(); }
+
   public void testUsedFromGroovy() {
     doTest();
   }
