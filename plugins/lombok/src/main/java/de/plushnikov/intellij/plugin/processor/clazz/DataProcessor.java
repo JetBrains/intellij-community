@@ -55,7 +55,7 @@ public class DataProcessor extends AbstractClassProcessor {
   protected Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     Collection<String> result = new ArrayList<>();
 
-    final String staticConstructorName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "staticConstructor", "");
+    final String staticConstructorName = getStaticConstructorNameValue(psiAnnotation);
     if(StringUtil.isNotEmpty(staticConstructorName)) {
       result.add(staticConstructorName);
     }
@@ -66,6 +66,10 @@ public class DataProcessor extends AbstractClassProcessor {
     result.addAll(getSetterProcessor().getNamesOfPossibleGeneratedElements(psiClass, psiAnnotation));
 
     return result;
+  }
+
+  private static String getStaticConstructorNameValue(@NotNull PsiAnnotation psiAnnotation) {
+    return PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "staticConstructor", "");
   }
 
   @Override
@@ -79,7 +83,7 @@ public class DataProcessor extends AbstractClassProcessor {
         getEqualsAndHashCodeProcessor().validateCallSuperParamExtern(psiAnnotation, psiClass, builder);
       }
 
-      final String staticName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "staticConstructor", "");
+      final String staticName = getStaticConstructorNameValue(psiAnnotation);
       if (shouldGenerateRequiredArgsConstructor(psiClass, staticName)) {
         getRequiredArgsConstructorProcessor().validateBaseClassConstructor(psiClass, builder);
       }
@@ -112,7 +116,7 @@ public class DataProcessor extends AbstractClassProcessor {
     }
 
     final boolean hasConstructorWithoutParameters;
-    final String staticName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "staticConstructor", "");
+    final String staticName = getStaticConstructorNameValue(psiAnnotation);
     if (shouldGenerateRequiredArgsConstructor(psiClass, staticName)) {
       target.addAll(
         getRequiredArgsConstructorProcessor().createRequiredArgsConstructor(psiClass, PsiModifier.PUBLIC, psiAnnotation, staticName, true));
