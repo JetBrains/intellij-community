@@ -3,13 +3,14 @@ package com.intellij.vcs.log.data.index
 
 import com.intellij.util.indexing.StorageException
 import com.intellij.vcs.log.VcsUser
-import com.intellij.vcs.log.impl.VcsLogIndexer
 import it.unimi.dsi.fastutil.ints.IntSet
 import java.io.IOException
 
-internal interface VcsLogUserBiMap {
+internal interface VcsLogUsersStorage {
   @Throws(IOException::class)
   fun isUsersEmpty(): Boolean
+
+  fun getCommitterOrAuthorForCommit(commitId: Int): VcsUser?
 
   fun getAuthorForCommit(commitId: Int): VcsUser?
 
@@ -17,16 +18,7 @@ internal interface VcsLogUserBiMap {
     return commitIds.mapNotNull { commitId -> getAuthorForCommit(commitId)?.let { user -> commitId to user } }.toMap()
   }
 
-  fun getCommitterForCommits(commitIds: Iterable<Int>): Map<Int, VcsUser> = emptyMap()
-
-  fun getUserId(commitId: Int, user: VcsUser): Int
-
-  fun getUserById(id: Int): VcsUser?
-
-  fun update(commitId: Int, details: VcsLogIndexer.CompressedDetails)
-
-  @Throws(StorageException::class)
-  fun flush()
+  fun getCommitterForCommits(commitIds: Iterable<Int>): Map<Int, VcsUser>
 
   @Throws(IOException::class, StorageException::class)
   fun getCommitsForUsers(users: Set<VcsUser>): IntSet?

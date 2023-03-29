@@ -71,23 +71,21 @@ public final class IndexDataGetter {
   //
 
   public @Nullable VcsUser getAuthor(int commit) {
-    return executeAndCatch(() -> myIndexStorage.users.getAuthorForCommit(commit));
+    return executeAndCatch(() -> myIndexStorage.store.getAuthorForCommit(commit));
   }
 
   public @Nullable Map<Integer, VcsUser> getAuthor(@NotNull Collection<Integer> commitIds) {
-    return executeAndCatch(() -> myIndexStorage.users.getAuthorForCommits(commitIds));
+    return executeAndCatch(() -> myIndexStorage.store.getAuthorForCommits(commitIds));
   }
 
   public @Nullable VcsUser getCommitter(int commit) {
     return executeAndCatch(() -> {
-      return myIndexStorage.store.getCommitterOrAuthor(commit,
-                                                       myIndexStorage.users::getUserById,
-                                                       myIndexStorage.users::getAuthorForCommit);
+      return myIndexStorage.store.getCommitterOrAuthorForCommit(commit);
     });
   }
 
   public @NotNull Map<Integer, VcsUser> getCommitter(@NotNull Collection<Integer> commitIds) {
-    return executeAndCatch(() -> myIndexStorage.users.getCommitterForCommits(commitIds), Collections.emptyMap());
+    return executeAndCatch(() -> myIndexStorage.store.getCommitterForCommits(commitIds), Collections.emptyMap());
   }
 
   public @Nullable Long getAuthorTime(int commit) {
@@ -195,7 +193,7 @@ public final class IndexDataGetter {
   }
 
   private @NotNull IntSet filterUsers(@NotNull Set<? extends VcsUser> users) {
-    return executeAndCatch(() -> myIndexStorage.users.getCommitsForUsers(users), new IntOpenHashSet());
+    return executeAndCatch(() -> myIndexStorage.store.getCommitsForUsers(users), new IntOpenHashSet());
   }
 
   private @NotNull IntSet filterPaths(@NotNull Collection<? extends FilePath> paths) {
@@ -275,7 +273,7 @@ public final class IndexDataGetter {
     VirtualFile root = getRoot(path);
     if (myProviders.containsKey(root) && root != null) {
       executeAndCatch(() -> {
-        myIndexStorage.paths.iterateChangesInCommits(root, path, (changes, commit) -> executeAndCatch(() -> {
+        myIndexStorage.store.iterateChangesInCommits(root, path, (changes, commit) -> executeAndCatch(() -> {
           int[] parents = myIndexStorage.store.getParent(commit);
           if (parents == null) {
             throw new CorruptedDataException("No parents for commit " + commit);
@@ -334,7 +332,7 @@ public final class IndexDataGetter {
     public @Nullable EdgeData<FilePath> findRename(int parent, int child, @NotNull FilePath path, boolean isChildPath) {
       VirtualFile root = Objects.requireNonNull(getRoot(path));
       return executeAndCatch(() -> {
-        return myIndexStorage.paths.findRename(parent, child, root, path, isChildPath);
+        return myIndexStorage.store.findRename(parent, child, root, path, isChildPath);
       });
     }
   }

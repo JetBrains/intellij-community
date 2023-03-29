@@ -63,8 +63,6 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
   static final int VERSION = 18;
   public static final VcsLogProgress.ProgressKey INDEXING = new VcsLogProgress.ProgressKey("index");
 
-  private static final boolean useSqlite = Registry.is("vcs.log.index.sqlite.storage", false);
-
   private final @NotNull Project myProject;
   private final @NotNull VcsLogErrorHandler myErrorHandler;
   private final @NotNull VcsLogProgress myProgress;
@@ -203,7 +201,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
         continue;
       }
 
-      requestConsumer.consume(new IndexingRequest(root, myIndexStorage.paths.getPathsEncoder(), commits, isFull));
+      requestConsumer.consume(new IndexingRequest(root, myIndexStorage.store.getPathsEncoder(), commits, isFull));
     }
 
     if (isFull) {
@@ -219,12 +217,10 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
 
     try {
       int commitId = myStorage.getCommitIndex(detail.getId(), detail.getRoot());
-      myIndexStorage.add(commitId, detail);
-      if (useSqlite) {
-        mutator.putPathChanges(commitId, detail, myStorage);
-      }
+      mutator.putUsersAndPaths(commitId, detail);
+      mutator.putPathChanges(commitId, detail, myStorage);
       mutator.putParents(commitId, detail.getParents(), hash -> myStorage.getCommitIndex(hash, detail.getRoot()));
-      mutator.putCommit(commitId, detail, user -> myIndexStorage.users.getUserId(commitId, user));
+      mutator.putCommit(commitId, detail);
     }
     catch (IOException | UncheckedIOException e) {
       myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
@@ -310,8 +306,6 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
 
   static final class IndexStorage implements Disposable {
     public final @NotNull VcsLogStorageBackend store;
-    public final @NotNull VcsLogUserBiMap users;
-    public final @NotNull VcsLogIndexedPaths paths;
 
     IndexStorage(@NotNull StorageId indexStorageId,
                  @NotNull VcsLogStorage storage,
@@ -323,18 +317,13 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       Disposer.register(parentDisposable, this);
 
       try {
-        StorageLockContext storageLockContext = new StorageLockContext();
-        if (useSqlite) {
-          store = (SqliteVcsLogStorageBackend)storage;
+        if (storage instanceof VcsLogStorageBackend) {
+          store = (VcsLogStorageBackend)storage;
         }
         else {
-          store = new PhmVcsLogStorageBackend(indexStorageId, storageLockContext, errorHandler, this);
+          StorageLockContext storageLockContext = new StorageLockContext();
+          store = new PhmVcsLogStorageBackend(indexStorageId, storage, roots, userRegistry, storageLockContext, errorHandler, this);
         }
-
-        users = useSqlite ? (SqliteVcsLogStorageBackend)store :
-                new VcsLogUserIndex(indexStorageId, storageLockContext, userRegistry, errorHandler, this);
-        paths = useSqlite ? (SqliteVcsLogStorageBackend)store :
-                new VcsLogPathsIndex(indexStorageId, storage, roots, storageLockContext, errorHandler, store, this);
 
         reportEmpty();
       }
@@ -344,19 +333,14 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       }
     }
 
-    void add(int commitId, @NotNull VcsLogIndexer.CompressedDetails detail) {
-      users.update(commitId, detail);
-      paths.update(commitId, detail);
-    }
-
     private void reportEmpty() throws IOException {
       if (store.isEmpty()) {
         return;
       }
 
       var trigramsEmpty = store.getTrigramsEmpty();
-      boolean usersEmpty = users.isUsersEmpty();
-      boolean pathsEmpty = paths.isPathsEmpty();
+      boolean usersEmpty = store.isUsersEmpty();
+      boolean pathsEmpty = store.isPathsEmpty();
       if ((trigramsEmpty != null && trigramsEmpty) || usersEmpty || pathsEmpty) {
         LOG.warn("Some of the index maps empty:\n" +
                  "trigrams empty " + trigramsEmpty + "\n" +
@@ -511,7 +495,6 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       final var mutator = indexStorage.store.createWriter();
       boolean performCommit = false;
       try {
-        indexStorage.paths.setMutator(mutator);
         if (myFull) {
           indexAll(indicator, mutator);
         }
@@ -538,10 +521,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
         scheduleReindex();
       }
       finally {
-        indexStorage.paths.setMutator(null);
         try {
-          myIndexStorage.users.flush();
-          myIndexStorage.paths.flush();
           mutator.close(performCommit);
         }
         catch (ProcessCanceledException ignored) {
@@ -560,16 +540,6 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
         }
 
         report();
-      }
-    }
-
-    private void flushUserAndPathMaps() {
-      try {
-        myIndexStorage.users.flush();
-        myIndexStorage.paths.flush();
-      }
-      catch (Exception e) {
-        myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
       }
     }
 
@@ -644,7 +614,8 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       }
     }
 
-    private void indexOneByOne(@NotNull IntStream commits, @NotNull ProgressIndicator indicator, VcsLogWriter mutator) throws VcsException {
+    private void indexOneByOne(@NotNull IntStream commits, @NotNull ProgressIndicator indicator, @NotNull VcsLogWriter mutator)
+      throws VcsException {
       // We pass hashes to VcsLogProvider#readFullDetails in batches
       // in order to avoid allocating too much memory for these hashes
       // a batch of 20k will occupy ~2.4Mb
@@ -656,7 +627,6 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
           indicator.checkCanceled();
           storeDetail(detail, mutator);
           if (myNewIndexedCommits.incrementAndGet() % FLUSHED_COMMITS_NUMBER == 0) {
-            flushUserAndPathMaps();
             mutator.flush();
           }
 
@@ -671,7 +641,6 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
         storeDetail(details, mutator);
 
         if (myNewIndexedCommits.incrementAndGet() % FLUSHED_COMMITS_NUMBER == 0) {
-          flushUserAndPathMaps();
           mutator.flush();
         }
 

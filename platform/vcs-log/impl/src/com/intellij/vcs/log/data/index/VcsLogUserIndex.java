@@ -21,7 +21,6 @@ import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.VcsUserRegistry;
 import com.intellij.vcs.log.data.VcsUserKeyDescriptor;
 import com.intellij.vcs.log.impl.VcsLogErrorHandler;
-import com.intellij.vcs.log.impl.VcsLogIndexer;
 import com.intellij.vcs.log.util.StorageId;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -41,7 +40,7 @@ import java.util.Set;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
-final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitDetails> implements VcsLogUserBiMap {
+final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitDetails> {
   private static final Logger LOG = Logger.getInstance(VcsLogUserIndex.class);
   private static final @NonNls String USERS = "users";
   private static final @NonNls String USERS_IDS = "users-ids";
@@ -64,11 +63,6 @@ final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitD
   }
 
   @Override
-  public void update(int commitId, @NotNull VcsLogIndexer.CompressedDetails details) {
-    super.update(commitId, details);
-  }
-
-  @Override
   protected @NotNull Pair<ForwardIndex, ForwardIndexAccessor<Integer, Void>> createdForwardIndex(@Nullable StorageLockContext storageLockContext) throws IOException {
     return new Pair<>(new PersistentMapBasedForwardIndex(myStorageId.getStorageFile(myName + ".idx"), true, false, storageLockContext),
                       new KeyCollectionForwardIndexAccessor<>(new IntCollectionDataExternalizer()));
@@ -82,8 +76,7 @@ final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitD
                                       storageId.getVersion());
   }
 
-  @Override
-  public IntSet getCommitsForUsers(@NotNull Set<? extends VcsUser> users) throws IOException, StorageException {
+  @NotNull IntSet getCommitsForUsers(@NotNull Set<? extends VcsUser> users) throws IOException, StorageException {
     IntSet ids = new IntOpenHashSet();
     for (VcsUser user : users) {
       ids.add(myUserIndexer.getUserId(user));
@@ -91,8 +84,7 @@ final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitD
     return getCommitsWithAnyKey(ids);
   }
 
-  @Override
-  public @Nullable VcsUser getAuthorForCommit(int commitId) {
+  @Nullable VcsUser getAuthorForCommit(int commitId) {
     try {
       Collection<Integer> userIds = getKeysForCommit(commitId);
       if (userIds == null || userIds.isEmpty()) {
@@ -106,8 +98,7 @@ final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitD
     }
   }
 
-  @Override
-  public int getUserId(int commitId, @NotNull VcsUser user) {
+  int getUserId(@NotNull VcsUser user) {
     try {
       return myUserIndexer.getUserId(user);
     }
@@ -116,19 +107,13 @@ final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitD
     }
   }
 
-  @Override
-  public @Nullable VcsUser getUserById(int id) {
+  @Nullable VcsUser getUserById(int id) {
     try {
       return myUserIndexer.getUserById(id);
     }
     catch (IOException e) {
       throw new UncheckedIOException(e);
     }
-  }
-
-  @Override
-  public boolean isUsersEmpty() throws IOException {
-    return isEmpty();
   }
 
   @Override

@@ -5,17 +5,21 @@ package com.intellij.vcs.log.data.index
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Processor
+import com.intellij.util.indexing.StorageException
 import com.intellij.util.io.*
 import com.intellij.util.io.storage.AbstractStorage
-import com.intellij.vcs.log.CommitId
-import com.intellij.vcs.log.Hash
-import com.intellij.vcs.log.VcsLogTextFilter
-import com.intellij.vcs.log.VcsUser
+import com.intellij.vcs.log.*
+import com.intellij.vcs.log.data.VcsLogStorage
+import com.intellij.vcs.log.data.index.VcsLogPathsIndex.ChangeKind
+import com.intellij.vcs.log.data.index.VcsLogPathsIndex.LightFilePath
+import com.intellij.vcs.log.history.EdgeData
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.VcsLogErrorHandler
 import com.intellij.vcs.log.impl.VcsLogIndexer
+import com.intellij.vcs.log.impl.VcsLogIndexer.PathsEncoder
 import com.intellij.vcs.log.util.StorageId
 import it.unimi.dsi.fastutil.ints.IntSet
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
@@ -25,13 +29,16 @@ import java.io.IOException
 import java.nio.file.Files
 import java.util.*
 import java.util.function.IntConsumer
-import java.util.function.IntFunction
+import java.util.function.ObjIntConsumer
 import java.util.function.ToIntFunction
 
 internal class PhmVcsLogStorageBackend(
   storageId: StorageId,
+  storage: VcsLogStorage,
+  roots: Set<VirtualFile>,
+  userRegistry: VcsUserRegistry,
   storageLockContext: StorageLockContext,
-  errorHandler: VcsLogErrorHandler,
+  private val errorHandler: VcsLogErrorHandler,
   disposable: Disposable,
 ) : VcsLogStorageBackend {
   private val messages: PersistentHashMap<Int, String>
@@ -42,6 +49,10 @@ internal class PhmVcsLogStorageBackend(
   private val renames: PersistentHashMap<IntArray, IntArray>
 
   private val trigrams: VcsLogMessagesTrigramIndex
+
+  private val paths: VcsLogPathsIndex
+
+  private val users: VcsLogUserIndex
 
   @Volatile
   override var isFresh = false
@@ -101,6 +112,10 @@ internal class PhmVcsLogStorageBackend(
                                 /* lockContext = */ storageLockContext)
     Disposer.register(disposable, Disposable { catchAndWarn(renames::close) })
 
+    paths = VcsLogPathsIndex(storageId, storage, roots, storageLockContext, errorHandler, renames, disposable)
+
+    users = VcsLogUserIndex(storageId, storageLockContext, userRegistry, errorHandler, disposable)
+
     trigrams = VcsLogMessagesTrigramIndex(storageId, storageLockContext, errorHandler, disposable)
   }
 
@@ -109,10 +124,10 @@ internal class PhmVcsLogStorageBackend(
 
   override fun createWriter(): VcsLogWriter {
     return object : VcsLogWriter {
-      override fun putCommit(commitId: Int, details: VcsLogIndexer.CompressedDetails, userToId: ToIntFunction<VcsUser>) {
+      override fun putCommit(commitId: Int, details: VcsLogIndexer.CompressedDetails) {
         timestamps.put(commitId, longArrayOf(details.authorTime, details.commitTime))
         if (details.author != details.committer) {
-          committers.put(commitId, userToId.applyAsInt(details.committer))
+          committers.put(commitId, users.getUserId(details.committer))
         }
         trigrams.update(commitId, details)
         messages.put(commitId, details.fullMessage)
@@ -133,7 +148,12 @@ internal class PhmVcsLogStorageBackend(
       }
 
       override fun putRename(parent: Int, child: Int, renames: IntArray) {
-        this@PhmVcsLogStorageBackend.putRename(parent, child, renames)
+        this@PhmVcsLogStorageBackend.renames.put(intArrayOf(parent, child), renames)
+      }
+
+      override fun putUsersAndPaths(commitId: Int, details: VcsLogIndexer.CompressedDetails) {
+        users.update(commitId, details)
+        paths.update(commitId, details)
       }
     }
   }
@@ -164,18 +184,28 @@ internal class PhmVcsLogStorageBackend(
     timestamps.force()
     trigrams.flush()
     messages.force()
+    users.flush()
+    paths.flush()
   }
 
   override fun getMessage(commitId: Int): String? = messages.get(commitId)
 
-  override fun getCommitterOrAuthor(commitId: Int, getUserById: IntFunction<VcsUser>, getAuthorForCommit: IntFunction<VcsUser>): VcsUser? {
+  override fun getCommitterOrAuthorForCommit(commitId: Int): VcsUser? {
     val committer = committers.get(commitId)
     if (committer != null) {
-      return getUserById.apply(committer)
+      return users.getUserById(committer)
     }
     else {
-      return if (messages.containsMapping(commitId)) getAuthorForCommit.apply(commitId) else null
+      return if (messages.containsMapping(commitId)) getAuthorForCommit(commitId) else null
     }
+  }
+
+  override fun getCommitterForCommits(commitIds: Iterable<Int>): Map<Int, VcsUser> {
+    return commitIds.mapNotNull { commitId ->
+      committers.get(commitId)?.let { committer ->
+        users.getUserById(committer)?.let { user -> commitId to user }
+      }
+    }.toMap()
   }
 
   override fun getTimestamp(commitId: Int): LongArray? = timestamps.get(commitId)
@@ -185,14 +215,6 @@ internal class PhmVcsLogStorageBackend(
   @Throws(IOException::class)
   override fun processMessages(processor: (Int, String) -> Boolean) {
     messages.processKeysWithExistingMapping(Processor { commit -> processor(commit, messages.get(commit) ?: return@Processor true) })
-  }
-
-  override fun putRename(parent: Int, child: Int, renames: IntArray) {
-    this.renames.put(intArrayOf(parent, child), renames)
-  }
-
-  override fun forceRenameMap() {
-    renames.force()
   }
 
   override fun getRename(parent: Int, child: Int): IntArray? = renames.get(intArrayOf(parent, child))
@@ -219,6 +241,57 @@ internal class PhmVcsLogStorageBackend(
       }
     }
   }
+
+  @Throws(IOException::class)
+  override fun findRename(parent: Int, child: Int, root: VirtualFile, path: FilePath, isChildPath: Boolean): EdgeData<FilePath?>? {
+    val renames = getRename(parent, child)
+    if (renames == null || renames.isEmpty()) {
+      return null
+    }
+    val pathId: Int = paths.getPathId(LightFilePath(root, path))
+    var i = 0
+    while (i < renames.size) {
+      val first = renames[i]
+      val second = renames[i + 1]
+      if (isChildPath && second == pathId || !isChildPath && first == pathId) {
+        val path1 = paths.getPath(first, path.isDirectory)
+        val path2 = paths.getPath(second, path.isDirectory)
+        return EdgeData(path1, path2)
+      }
+      i += 2
+    }
+    return null
+  }
+
+  @Throws(IOException::class, StorageException::class)
+  override fun iterateChangesInCommits(root: VirtualFile, path: FilePath,
+                                       consumer: ObjIntConsumer<List<ChangeKind>>) {
+    val pathId: Int = paths.getPathId(LightFilePath(root, path))
+    paths.iterateCommitIdsAndValues(pathId, consumer)
+  }
+
+  override fun getPathsEncoder(): PathsEncoder =
+    PathsEncoder { root, relativePath, _ ->
+      try {
+        paths.getPathId(LightFilePath(root, relativePath))
+      }
+      catch (e: IOException) {
+        errorHandler.handleError(VcsLogErrorHandler.Source.Index, e)
+        return@PathsEncoder 0
+      }
+    }
+
+  override fun getAuthorForCommit(commitId: Int): VcsUser? {
+    return users.getAuthorForCommit(commitId)
+  }
+
+  override fun getCommitsForUsers(users: Set<VcsUser>): IntSet {
+    return this.users.getCommitsForUsers(users)
+  }
+
+  override fun isPathsEmpty() = paths.isEmpty
+
+  override fun isUsersEmpty() = users.isEmpty
 }
 
 private inline fun catchAndWarn(runnable: () -> Unit) {

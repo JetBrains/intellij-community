@@ -3,16 +3,14 @@ package com.intellij.vcs.log.data.index
 
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogTextFilter
-import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.impl.VcsLogIndexer
 import it.unimi.dsi.fastutil.ints.IntSet
 import java.io.IOException
 import java.util.function.IntConsumer
-import java.util.function.IntFunction
 import java.util.function.ToIntFunction
 
-internal interface VcsLogStorageBackend {
+internal interface VcsLogStorageBackend : VcsLogUsersStorage, VcsLogPathsStorage {
   val isEmpty: Boolean
 
   /**
@@ -28,8 +26,6 @@ internal interface VcsLogStorageBackend {
   fun getMessages(commitIds: Collection<Int>): Map<Int, String> {
     return commitIds.mapNotNull { commitId -> getMessage(commitId)?.let { message -> commitId to message } }.toMap()
   }
-
-  fun getCommitterOrAuthor(commitId: Int, getUserById: IntFunction<VcsUser>, getAuthorForCommit: IntFunction<VcsUser>): VcsUser?
 
   fun getTimestamp(commitId: Int): LongArray?
 
@@ -54,12 +50,6 @@ internal interface VcsLogStorageBackend {
   @Throws(IOException::class)
   fun processMessages(processor: (Int, String) -> Boolean)
 
-  // todo move to mutator
-  @Throws(IOException::class)
-  fun putRename(parent: Int, child: Int, renames: IntArray)
-
-  fun forceRenameMap()
-
   fun getRename(parent: Int, child: Int): IntArray?
 
   fun createWriter(): VcsLogWriter
@@ -75,7 +65,7 @@ internal interface VcsLogStorageBackend {
 
 interface VcsLogWriter {
   @Throws(IOException::class)
-  fun putCommit(commitId: Int, details: VcsLogIndexer.CompressedDetails, userToId: ToIntFunction<VcsUser>)
+  fun putCommit(commitId: Int, details: VcsLogIndexer.CompressedDetails)
 
   fun putParents(commitId: Int, parents: List<Hash>, hashToId: ToIntFunction<Hash>)
 
@@ -86,4 +76,5 @@ interface VcsLogWriter {
   fun putRename(parent: Int, child: Int, renames: IntArray)
 
   fun putPathChanges(commitId: Int, details: VcsLogIndexer.CompressedDetails, logStore: VcsLogStorage) {}
+  fun putUsersAndPaths(commitId: Int, details: VcsLogIndexer.CompressedDetails) {}
 }
