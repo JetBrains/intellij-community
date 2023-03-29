@@ -54,15 +54,15 @@ public class TableLayout extends TabLayout {
     boolean singleRow = myTabs.isSingleRow();
     boolean showPinnedTabsSeparately = showPinnedTabsSeparately();
     boolean scrollable = UISettings.getInstance().getHideTabsIfNeeded() && singleRow;
-    int titleWidth = myTabs.myTitleWrapper.getPreferredSize().width;
+    int titleWidth = myTabs.titleWrapper.getPreferredSize().width;
 
-    data.titleRect.setBounds(data.toFitRec.x, data.toFitRec.y, titleWidth, myTabs.myHeaderFitSize.height);
+    data.titleRect.setBounds(data.toFitRec.x, data.toFitRec.y, titleWidth, myTabs.headerFitSize.height);
     data.entryPointRect.setBounds(data.toFitRec.x + data.toFitRec.width - myTabs.getEntryPointPreferredSize().width - myTabs.getActionsInsets().right,
                                   data.toFitRec.y,
                                   myTabs.getEntryPointPreferredSize().width,
-                                  myTabs.myHeaderFitSize.height);
+                                  myTabs.headerFitSize.height);
     data.moreRect.setBounds(data.toFitRec.x + data.toFitRec.width - myTabs.getEntryPointPreferredSize().width - myTabs.getActionsInsets().right,
-                            data.toFitRec.y, 0, myTabs.myHeaderFitSize.height);
+                            data.toFitRec.y, 0, myTabs.headerFitSize.height);
     calculateLengths(data);
 
     int eachX = data.titleRect.x + data.titleRect.width;
@@ -89,13 +89,13 @@ public class TableLayout extends TabLayout {
         if (requiredRowsPinned == 0) {
           requiredRowsPinned = 1;
         }
-        myTabs.layout(eachLabel, eachX, eachY, width, myTabs.myHeaderFitSize.height);
+        myTabs.layout(eachLabel, eachX, eachY, width, myTabs.headerFitSize.height);
         data.bounds.put(eachInfo, eachLabel.getBounds());
       }
       else {
         if ((!scrollable && eachX + width + hGap > maxX - entryPointMargin && !singleRow) || (showPinnedTabsSeparately && eachLabel.isNextToLastPinned())) {
           requiredRowsUnpinned++;
-          eachY += myTabs.myHeaderFitSize.height;
+          eachY += myTabs.headerFitSize.height;
           eachX = data.toFitRec.x;
         }
         else if (requiredRowsUnpinned == 0) {
@@ -108,8 +108,8 @@ public class TableLayout extends TabLayout {
           }
         }
 
-        myTabs.layout(eachLabel, eachX - getScrollOffset(), eachY, width == 1 ? 0 : width, myTabs.myHeaderFitSize.height);
-        Rectangle rectangle = new Rectangle(myTabs.myHeaderFitSize);
+        myTabs.layout(eachLabel, eachX - getScrollOffset(), eachY, width == 1 ? 0 : width, myTabs.headerFitSize.height);
+        Rectangle rectangle = new Rectangle(myTabs.headerFitSize);
         data.bounds.put(eachInfo, eachLabel.getBounds());
         int intersection = eachLabel.getBounds().intersection(rectangle).width;
         if (scrollable && intersection < eachLabel.getBounds().width) {
@@ -121,7 +121,7 @@ public class TableLayout extends TabLayout {
         entryPointMargin = singleRow ? 0 : - data.moreRect.width;
       }
     }
-    if (requiredRowsPinned > 0 && requiredRowsUnpinned > 0) data.moreRect.y += myTabs.myHeaderFitSize.height /*+ myTabs.getSeparatorWidth()*/;
+    if (requiredRowsPinned > 0 && requiredRowsUnpinned > 0) data.moreRect.y += myTabs.headerFitSize.height /*+ myTabs.getSeparatorWidth()*/;
 
     if (data.invisible.isEmpty()) {
       data.moreRect.setBounds(0, 0, 0, 0);
@@ -169,7 +169,7 @@ public class TableLayout extends TabLayout {
             int moreWidth = getMoreRectAxisSize();
             int entryPointsWidth = pinned.isEmpty() ? myTabs.getEntryPointPreferredSize().width : 0;
             data.moreRect.setBounds(data.toFitRec.x + data.toFitRec.width - moreWidth - entryPointsWidth - myTabs.getActionsInsets().right,
-                                    myTabs.getLayoutInsets().top, moreWidth, myTabs.myHeaderFitSize.height);
+                                    myTabs.getLayoutInsets().top, moreWidth, myTabs.headerFitSize.height);
             calculateRawLengths(unpinned, data);
           }
         }
@@ -182,7 +182,7 @@ public class TableLayout extends TabLayout {
       calculateRawLengths(data.myVisibleInfos, data);
       if (getTotalLength(data.myVisibleInfos, data) > standardLengthToFit) {
         int moreWidth = getMoreRectAxisSize();
-        data.moreRect.setBounds(data.toFitRec.x + data.toFitRec.width - moreWidth, data.toFitRec.y, moreWidth, myTabs.myHeaderFitSize.height);
+        data.moreRect.setBounds(data.toFitRec.x + data.toFitRec.width - moreWidth, data.toFitRec.y, moreWidth, myTabs.headerFitSize.height);
         calculateRawLengths(data.myVisibleInfos, data);
       }
     }
@@ -257,11 +257,11 @@ public class TableLayout extends TabLayout {
     rect.y += myTabs.getBorderThickness();
     myTabs.myMoreToolbar.getComponent().setBounds(rect);
 
-    ActionToolbar entryPointToolbar = myTabs.myEntryPointToolbar;
+    ActionToolbar entryPointToolbar = myTabs.entryPointToolbar;
     if (entryPointToolbar != null) {
       entryPointToolbar.getComponent().setBounds(data.entryPointRect);
     }
-    myTabs.myTitleWrapper.setBounds(data.titleRect);
+    myTabs.titleWrapper.setBounds(data.titleRect);
 
     Insets insets = myTabs.getLayoutInsets();
     int eachY = insets.top;
@@ -276,7 +276,7 @@ public class TableLayout extends TabLayout {
     }
 
     if (myTabs.getSelectedInfo() != null) {
-      final JBTabsImpl.Toolbar selectedToolbar = myTabs.myInfo2Toolbar.get(myTabs.getSelectedInfo());
+      final JBTabsImpl.Toolbar selectedToolbar = myTabs.infoToToolbar.get(myTabs.getSelectedInfo());
 
       final int componentY = (unitedTabArea != null ? unitedTabArea.y + unitedTabArea.height : eachY) + (myTabs.isEditorTabs() ? 0 : 2) -
                              myTabs.getLayoutInsets().top;

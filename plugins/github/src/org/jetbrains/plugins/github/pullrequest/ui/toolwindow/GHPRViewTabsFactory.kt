@@ -68,7 +68,7 @@ internal class GHPRViewTabsFactory(private val project: Project, private val dis
     }
 
     val tabs = object : SingleHeightTabs(project, uiDisposable) {
-      override fun adjust(each: TabInfo?) = Unit
+      override fun adjust(tabInfo: TabInfo?) = Unit
     }.apply {
       addTab(infoTabInfo)
       addTab(filesTabInfo)

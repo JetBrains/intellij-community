@@ -2,7 +2,6 @@
 package com.intellij.ui.tabs
 
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.util.Pair
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
@@ -22,7 +21,7 @@ interface JBTabsEx : JBTabs {
 
   fun removeTab(info: TabInfo, forcedSelectionTransfer: TabInfo?)
 
-  fun getToSelectOnRemoveOf(info: TabInfo?): TabInfo?
+  fun getToSelectOnRemoveOf(info: TabInfo): TabInfo?
 
   fun sortTabs(comparator: Comparator<TabInfo>)
 
@@ -39,7 +38,10 @@ interface JBTabsEx : JBTabs {
 
   val isEmptyVisible: Boolean
 
-  fun setTitleProducer(titleProducer: () -> Pair<Icon, @Nls String>)
+  fun setTitleProducer(titleProducer: (() -> Pair<Icon, @Nls String>)?)
 
+  /**
+   * true if tabs and top toolbar should be hidden from a view
+   */
   var isHideTopPanel: Boolean
 }

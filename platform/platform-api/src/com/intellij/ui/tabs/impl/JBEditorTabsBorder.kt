@@ -87,13 +87,13 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
       JBTabsPosition.top -> {
         val startY = firstLabel.y - if (tabs.position == JBTabsPosition.bottom) 0 else thickness
         val startRow = if (ExperimentalUI.isNewUI()) 1 else 0
-        val lastRow = tabs.lastLayoutPass.rowCount
+        val lastRow = tabs.lastLayoutPass!!.rowCount
         for (eachRow in startRow until lastRow) {
-          val yl = (eachRow * tabs.myHeaderFitSize.height) + startY
+          val yl = (eachRow * tabs.headerFitSize!!.height) + startY
           tabs.tabPainter.paintBorderLine(g, thickness, Point(x, yl), Point(x + width, yl))
         }
         if (!ExperimentalUI.isNewUI() || (tabs as? JBEditorTabs)?.shouldPaintBottomBorder() == true) {
-          val yl = lastRow * tabs.myHeaderFitSize.height + startY
+          val yl = lastRow * tabs.headerFitSize!!.height + startY
           tabs.tabPainter.paintBorderLine(g, thickness, Point(x, yl), Point(x + width, yl))
         }
       }

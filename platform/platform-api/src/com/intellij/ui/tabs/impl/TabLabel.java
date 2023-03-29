@@ -526,7 +526,7 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
       getLabelComponent().setFont(decoration.getLabelFont());
     }
 
-    MergedUiDecoration resultDec = mergeUiDecorations(decoration, JBTabsImpl.ourDefaultDecorator.getDecoration());
+    MergedUiDecoration resultDec = mergeUiDecorations(decoration, JBTabsImpl.defaultDecorator.getDecoration());
     setBorder(IdeBorderFactory.createEmptyBorder(resultDec.labelInsets()));
     myLabel.setIconTextGap(resultDec.iconTextGap());
 

@@ -152,8 +152,8 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
       }
 
       getTabPainter()
-        .paintBorderLine((Graphics2D)g, getBorderThickness(), new Point(x, y + myHeaderFitSize.height),
-                         new Point(x + width, y + myHeaderFitSize.height));
+        .paintBorderLine((Graphics2D)g, getBorderThickness(), new Point(x, y + headerFitSize.height),
+                         new Point(x + width, y + headerFitSize.height));
     }
 
     public void setSideMask(@SideBorder.SideMask int mask) {

@@ -19,12 +19,9 @@ open class SingleHeightTabs(project: Project?, focusManager: IdeFocusManager?, p
 
   open inner class SingleHeightLabel(tabs: JBTabsImpl, info: TabInfo) : TabLabel(tabs, info) {
     override fun getPreferredSize(): Dimension {
-      val size = super.getPreferredSize()
-      return Dimension(size.width, getPreferredHeight())
+      return Dimension(super.getPreferredSize().width, getPreferredHeight())
     }
 
-    protected open fun getPreferredHeight(): Int {
-      return JBUI.scale(UNSCALED_PREF_HEIGHT)
-    }
+    protected open fun getPreferredHeight(): Int = JBUI.scale(UNSCALED_PREF_HEIGHT)
   }
 }

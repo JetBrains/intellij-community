@@ -115,7 +115,7 @@ public abstract class SingleRowLayout extends TabLayout {
     }
 
     if (selected != null) {
-      data.comp = new WeakReference<>(selected.getComponent());
+      data.component = new WeakReference<>(selected.getComponent());
       getStrategy().layoutComp(data);
     }
 
@@ -149,7 +149,7 @@ public abstract class SingleRowLayout extends TabLayout {
       data.insets.left += myTabs.getFirstTabOffset();
     }
 
-    final JBTabsImpl.Toolbar selectedToolbar = myTabs.myInfo2Toolbar.get(selected);
+    final JBTabsImpl.Toolbar selectedToolbar = myTabs.infoToToolbar.get(selected);
     data.hToolbar =
       new WeakReference<>(selectedToolbar != null && myTabs.myHorizontalSide && !selectedToolbar.isEmpty() ? selectedToolbar : null);
     data.vToolbar =
