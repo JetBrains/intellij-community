@@ -3,7 +3,6 @@ package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.build.BuildProgressListener;
 import com.intellij.build.BuildViewManager;
-import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
@@ -34,14 +33,12 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalS
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -161,7 +158,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       readExternalBoolean(element, DEBUG_SERVER_PROCESS_NAME, this::setDebugServerProcess);
       readExternalBoolean(element, REATTACH_DEBUG_PROCESS_NAME, this::setReattachDebugProcess);
     }
-    ExternalSystemRunConfigurationExtensionManager.readExternal(this, element);
+    ExternalSystemRunConfigurationExtensionManager.getInstance().readExternal(this, element);
   }
 
   @Override
@@ -180,7 +177,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     }));
     writeExternalBoolean(element, DEBUG_SERVER_PROCESS_NAME, isDebugServerProcess());
     writeExternalBoolean(element, REATTACH_DEBUG_PROCESS_NAME, isReattachDebugProcess());
-    ExternalSystemRunConfigurationExtensionManager.writeExternal(this, element);
+    ExternalSystemRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
   }
 
   protected static void readExternalBoolean(@NotNull Element element, @NotNull String name, @NotNull Consumer<Boolean> consumer) {
@@ -206,16 +203,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
   @NotNull
   @Override
   public SettingsEditor<ExternalSystemRunConfiguration> getConfigurationEditor() {
-    if (Registry.is("ide.new.run.config", true)) {
-      return new ExternalSystemRunConfigurationFragmentedEditor(this);
-    }
-
-    SettingsEditorGroup<ExternalSystemRunConfiguration> group = new SettingsEditorGroup<>();
-    group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"),
-                    new ExternalSystemRunConfigurationEditor(getProject(), mySettings.getExternalSystemId()));
-    ExternalSystemRunConfigurationExtensionManager.appendEditors(this, group);
-    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
-    return group;
+    return new ExternalSystemRunConfigurationFragmentedEditor(this);
   }
 
   @Override

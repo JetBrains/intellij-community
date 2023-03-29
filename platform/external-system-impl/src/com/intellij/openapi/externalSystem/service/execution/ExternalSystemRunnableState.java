@@ -56,7 +56,6 @@ import java.net.*;
 import java.util.Arrays;
 import java.util.Enumeration;
 
-import static com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemRunConfigurationExtensionManager.createVMParameters;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.convert;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.getConsoleManagerFor;
 import static com.intellij.openapi.util.text.StringUtil.nullize;
@@ -221,7 +220,9 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       progressListenerClazz != null ? myProject.getService(progressListenerClazz)
                                     : createBuildView(buildDescriptor, consoleView);
 
-    ExternalSystemRunConfigurationExtensionManager.attachToProcess(myConfiguration, processHandler, myEnv.getRunnerSettings());
+    var runnerSettings = myEnv.getRunnerSettings();
+    var runConfigurationExtensionManager = ExternalSystemRunConfigurationExtensionManager.getInstance();
+    runConfigurationExtensionManager.attachExtensionsToProcess(myConfiguration, processHandler, runnerSettings);
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       final String startDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
@@ -358,7 +359,9 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
 
   @Nullable
   private String getJvmParametersSetup() throws ExecutionException {
-    SimpleJavaParameters extensionsJP = createVMParameters(myConfiguration, myEnv.getRunnerSettings(), myEnv.getExecutor());
+    var extensionsJP = new SimpleJavaParameters();
+    var runConfigurationExtensionManager = ExternalSystemRunConfigurationExtensionManager.getInstance();
+    runConfigurationExtensionManager.updateVMParameters(myConfiguration, extensionsJP, myEnv.getRunnerSettings(), myEnv.getExecutor());
 
     String jvmParametersSetup = "";
     if (myDebugPort <= 0) {

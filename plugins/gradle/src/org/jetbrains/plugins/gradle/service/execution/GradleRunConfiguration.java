@@ -10,13 +10,10 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
-import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -24,9 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.GradleIdeManager;
 import org.jetbrains.plugins.gradle.execution.target.GradleRuntimeType;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
-import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLine;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLine;
 
 import java.util.StringJoiner;
 
@@ -114,21 +110,6 @@ public class GradleRunConfiguration
     super.writeExternal(element);
     writeExternalBoolean(element, DEBUG_ALL_NAME, isDebugAllEnabled());
     writeExternalBoolean(element, FORCE_TEST_NAME, isForceTestExecution());
-  }
-
-  @NotNull
-  @Override
-  public SettingsEditor<ExternalSystemRunConfiguration> getConfigurationEditor() {
-    if (Registry.is("ide.new.run.config", true)) {
-      return super.getConfigurationEditor();
-    }
-
-    final SettingsEditor<ExternalSystemRunConfiguration> editor = super.getConfigurationEditor();
-    if (editor instanceof SettingsEditorGroup group) {
-      //noinspection unchecked
-      group.addEditor(GradleBundle.message("gradle.settings.title"), new GradleDebugSettingsEditor());
-    }
-    return editor;
   }
 
   @NotNull
