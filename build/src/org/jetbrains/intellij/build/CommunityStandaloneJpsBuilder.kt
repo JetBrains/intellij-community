@@ -51,11 +51,6 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
   layout.withModule("intellij.java.rt", "idea_rt.jar")
   layout.withModule("intellij.platform.jps.build.javac.rt", "jps-builders-6.jar")
 
-  layout.withModule("intellij.platform.jps.build.javac.rt.rpc", "rt/jps-javac-rt-rpc.jar")
-  layout.withModuleLibrary(libraryName = "protobuf-java6",
-                           moduleName = "intellij.platform.jps.build.javac.rt.rpc",
-                           relativeOutputPath = "rt/protobuf-java6.jar")
-
   // layout of groovy jars must be consistent with GroovyBuilder.getGroovyRtRoots method
   layout.withModule("intellij.groovy.jps", "groovy-jps.jar")
   layout.withModule("intellij.groovy.rt", "groovy-rt.jar")

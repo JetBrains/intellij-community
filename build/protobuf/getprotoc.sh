@@ -40,8 +40,6 @@ getprotoc() {
   fi
 }
 
-getprotoc 3.5.1
-mv -f "$PROTOC_BIN_DIR/protoc-3.5.1" "$PROTOC_BIN_DIR/protoc-java6"
 getprotoc
 
 export PATH="$PROTOC_BIN_DIR:$PATH"

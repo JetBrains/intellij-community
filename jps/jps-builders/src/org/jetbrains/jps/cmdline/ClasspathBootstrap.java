@@ -39,7 +39,6 @@ import org.jetbrains.xxh3.Xxh3;
 import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
 import java.io.File;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -59,6 +58,7 @@ public final class ClasspathBootstrap {
     AddressResolverGroup.class, // netty resolver
     ByteBufAllocator.class, // netty buffer
     ProtobufDecoder.class,  // netty codec
+    Message.class, // protobuf
   };
 
   private static final String[] REFLECTION_OPEN_PACKAGES = {
@@ -79,12 +79,6 @@ public final class ClasspathBootstrap {
   };
 
   private static final String DEFAULT_MAVEN_REPOSITORY_PATH = ".m2/repository";
-  private static final String PROTOBUF_JAVA6_VERSION = "3.5.1";
-  private static final String PROTOBUF_JAVA6_JAR_NAME = "protobuf-java-" + PROTOBUF_JAVA6_VERSION + ".jar";
-  private static final String PROTOBUF_JAVA6_DISTRIBUTION_JAR_NAME = "protobuf-java6.jar";
-
-  private static final String EXTERNAL_JAVAC_MODULE_NAME = "intellij.platform.jps.build.javac.rt.rpc";
-  private static final String EXTERNAL_JAVAC_JAR_NAME = "jps-javac-rt-rpc.jar";
 
   private static void addToClassPath(Class<?> aClass, Set<String> result) {
     Path path = PathManager.getJarForClass(aClass);
@@ -121,7 +115,6 @@ public final class ClasspathBootstrap {
     ClassPathUtil.addKotlinStdlib(cp);
     addToClassPath(cp, COMMON_REQUIRED_CLASSES);
 
-    addToClassPath(Message.class, cp);  // protobuf
     addToClassPath(ClassWriter.class, cp);  // asm
     addToClassPath(ClassVisitor.class, cp);  // asm-commons
     addToClassPath(JpsModel.class, cp);  // intellij.platform.jps.model
@@ -167,7 +160,6 @@ public final class ClasspathBootstrap {
     for (Class<?> aClass : COMMON_REQUIRED_CLASSES) {
       cp.add(getResourceFile(aClass));
     }
-    addExternalJavacRpcClasspath(cp);
 
     try {
       final Class<?> cmdLineWrapper = Class.forName("com.intellij.rt.execution.CommandLineWrapper");
@@ -221,28 +213,6 @@ public final class ClasspathBootstrap {
     }
 
     return new ArrayList<>(cp);
-  }
-
-  private static void addExternalJavacRpcClasspath(@NotNull Collection<File> cp) {
-    Path rootPath = Paths.get(getResourcePath(ExternalJavacProcess.class));
-    if (Files.isRegularFile(rootPath)) {
-      // running regular installation
-      Path rtDirPath = rootPath.resolveSibling("rt");
-      cp.add(rtDirPath.resolve(EXTERNAL_JAVAC_JAR_NAME).toFile());
-      cp.add(rtDirPath.resolve(PROTOBUF_JAVA6_DISTRIBUTION_JAR_NAME).toFile());
-    }
-    else {
-      // running from sources or on the build server
-      cp.add(rootPath.resolveSibling(EXTERNAL_JAVAC_MODULE_NAME).toFile());
-
-      // take the library from the local maven repository
-      File localRepositoryDir = getMavenLocalRepositoryDir();
-      File protobufJava6File = new File(
-        String.join(File.separator, localRepositoryDir.getAbsolutePath(), "com", "google", "protobuf", "protobuf-java",
-                    PROTOBUF_JAVA6_VERSION, PROTOBUF_JAVA6_JAR_NAME)
-      );
-      cp.add(protobufJava6File);
-    }
   }
 
   private static @NotNull File getMavenLocalRepositoryDir() {

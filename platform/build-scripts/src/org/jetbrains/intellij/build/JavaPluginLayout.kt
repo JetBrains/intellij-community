@@ -24,10 +24,6 @@ object JavaPluginLayout {
       spec.withModule("intellij.java.resources", mainJarName)
       spec.withModule("intellij.java.resources.en", mainJarName)
 
-      // JavacRemoteProto generated against protobuf-java6; don't let it sneak into the IDE classpath and shadow its JavacRemoteProto.
-      spec.withModule("intellij.platform.jps.build.javac.rt.rpc", "rt/jps-javac-rt-rpc.jar")
-      spec.withModuleLibrary("protobuf-java6", "intellij.platform.jps.build.javac.rt.rpc", "rt")
-
       for (moduleName in listOf(
         "intellij.java.compiler.antTasks",
         "intellij.java.guiForms.compiler",
