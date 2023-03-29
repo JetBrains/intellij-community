@@ -635,6 +635,14 @@ private class EditorTabs(
       return if (!buttonsOnTheRight || ExperimentalUI.isNewUI()) JBUI.CurrentTheme.EditorTabs.tabActionsInset() else 2
     }
 
+    override fun isShowTabActions(): Boolean = UISettings.shadowInstance.showCloseButton
+
+    override fun isTabActionsOnTheRight(): Boolean = UISettings.shadowInstance.closeTabButtonOnTheRight
+
+    override fun shouldPaintFadeout(): Boolean {
+      return super.shouldPaintFadeout() && Registry.`is`("ide.editor.tabs.show.fadeout", true)
+    }
+
     override fun editLabelForeground(baseForeground: Color?): Color? {
       return if (baseForeground != null && paintDimmed()) {
         val blendValue = JBUI.CurrentTheme.EditorTabs.unselectedBlend()

@@ -261,8 +261,8 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
   @Override
   public Insets getInsets() {
     Insets insets = super.getInsets();
-    if (myTabs.isEditorTabs() && (UISettings.getShadowInstance().getShowCloseButton() || myInfo.isPinned()) && hasIcons()) {
-      if (UISettings.getShadowInstance().getCloseTabButtonOnTheRight()) {
+    if (myTabs.isEditorTabs() && (isShowTabActions() || myInfo.isPinned()) && hasIcons()) {
+      if (isTabActionsOnTheRight()) {
         if (!ExperimentalUI.isNewUI()) {
           insets.right -= JBUIScale.scale(4);
         }
@@ -312,12 +312,15 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
       return;
     }
     doPaint(g);
-    if (Registry.is("ide.editor.tabs.show.fadeout", true)
-        && !Registry.is("ui.no.bangs.and.whistles", false)
-        && UISettings.getInstance().getHideTabsIfNeeded()
-        && myTabs.isSingleRow() && !isHovered() && !isSelected()) {
+    if (shouldPaintFadeout()) {
       paintFadeout(g);
     }
+  }
+
+  protected boolean shouldPaintFadeout() {
+    return !Registry.is("ui.no.bangs.and.whistles", false)
+           && myTabs.getEffectiveLayout().isScrollable()
+           && myTabs.isSingleRow() && !isHovered() && !isSelected();
   }
 
   protected void paintFadeout(final Graphics g) {
@@ -523,20 +526,26 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
 
     myActionPanel = new ActionPanel(myTabs, myInfo, e -> processMouseEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, this)),
                                     value -> setHovered(value));
-    boolean buttonsOnTheRight = UISettings.getShadowInstance().getCloseTabButtonOnTheRight();
-    Border border = buttonsOnTheRight ? JBUI.Borders.empty(1, getActionsInset(), 1, 0)
-                                      : JBUI.Borders.empty(1, 0, 1, getActionsInset());
+    Border border = isTabActionsOnTheRight() ? JBUI.Borders.empty(1, getActionsInset(), 1, 0)
+                                             : JBUI.Borders.empty(1, 0, 1, getActionsInset());
     myActionPanel.setBorder(border);
     toggleShowActions(false);
 
-    add(myActionPanel, buttonsOnTheRight ? BorderLayout.EAST : BorderLayout.WEST);
+    add(myActionPanel, isTabActionsOnTheRight() ? BorderLayout.EAST : BorderLayout.WEST);
 
     myTabs.revalidateAndRepaint(false);
   }
 
   protected int getActionsInset() {
-    boolean buttonsOnTheRight = UISettings.getShadowInstance().getCloseTabButtonOnTheRight();
-    return !buttonsOnTheRight || ExperimentalUI.isNewUI() ? 6 : 2;
+    return !isTabActionsOnTheRight() || ExperimentalUI.isNewUI() ? 6 : 2;
+  }
+
+  protected boolean isShowTabActions() {
+    return true;
+  }
+
+  protected boolean isTabActionsOnTheRight() {
+    return true;
   }
 
   private void removeOldActionPanel() {
@@ -676,7 +685,7 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
         remove(myActionPanel);
       }
       else {
-        add(myActionPanel, UISettings.getShadowInstance().getCloseTabButtonOnTheRight() ? BorderLayout.EAST : BorderLayout.WEST);
+        add(myActionPanel, isTabActionsOnTheRight() ? BorderLayout.EAST : BorderLayout.WEST);
       }
     }
   }
@@ -776,11 +785,9 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     }
 
     private boolean doCustomLayout(Container parent) {
-      UISettings settings = UISettings.getInstance();
-      int tabPlacement = settings.getEditorTabPlacement();
       if (!myInfo.isPinned() && myTabs != null && myTabs.getEffectiveLayout().isScrollable() &&
-          (ExperimentalUI.isNewUI() && !isHovered() || tabPlacement == SwingConstants.TOP || tabPlacement == SwingConstants.BOTTOM) &&
-          settings.getShowCloseButton() && settings.getCloseTabButtonOnTheRight() &&
+          (ExperimentalUI.isNewUI() && !isHovered() || myTabs.isHorizontalTabs()) &&
+          isShowTabActions() && isTabActionsOnTheRight() &&
           parent.getWidth() < parent.getPreferredSize().width) {
         int spaceTop = parent.getInsets().top;
         int spaceLeft = parent.getInsets().left;

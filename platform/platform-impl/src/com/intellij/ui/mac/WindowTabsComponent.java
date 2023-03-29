@@ -173,16 +173,13 @@ public final class WindowTabsComponent extends JBTabsImpl {
       }
 
       @Override
-      public void setTabActions(ActionGroup group) {
-        super.setTabActions(group);
-        if (myActionPanel != null) {
-          remove(myActionPanel);
-          add(myActionPanel, BorderLayout.WEST);
-        }
+      protected boolean isTabActionsOnTheRight() {
+        return false;
       }
 
       @Override
-      protected void paintFadeout(Graphics g) {
+      protected boolean shouldPaintFadeout() {
+        return false;
       }
     };
   }
