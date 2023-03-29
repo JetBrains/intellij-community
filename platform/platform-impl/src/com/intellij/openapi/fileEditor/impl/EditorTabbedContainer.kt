@@ -558,11 +558,12 @@ private class EditorTabs(
     coroutineScope.coroutineContext.job.invokeOnCompletion {
       Toolkit.getDefaultToolkit().removeAWTEventListener(listener)
     }
-
-    setUiDecorator {
-      val insets = if (isHorizontalTabs) JBUI.CurrentTheme.EditorTabs.tabInsets() else JBUI.CurrentTheme.EditorTabs.verticalTabInsets()
-      UiDecoration(null, insets)
-    }
+    setUiDecorator(object : UiDecorator {
+      override fun getDecoration(): UiDecoration {
+        val insets = if (isHorizontalTabs) JBUI.CurrentTheme.EditorTabs.tabInsets() else JBUI.CurrentTheme.EditorTabs.verticalTabInsets()
+        return UiDecoration(labelInsets = insets)
+      }
+    })
     val source = ActionManager.getInstance().getAction("EditorTabsEntryPoint")
     source.templatePresentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
     entryPointActionGroup = DefaultActionGroup(source)

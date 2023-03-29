@@ -15,32 +15,11 @@
  */
 package com.intellij.ui.tabs;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import java.awt.Font
+import java.awt.Insets
 
-import java.awt.*;
+interface UiDecorator {
+  fun getDecoration(): UiDecoration
 
-public interface UiDecorator {
-  @NotNull
-  UiDecoration getDecoration();
-
-  class UiDecoration {
-    private @Nullable final Font myLabelFont;
-    private @Nullable final Insets myLabelInsets;
-
-    public UiDecoration(final Font labelFont, final Insets labelInsets) {
-      myLabelFont = labelFont;
-      myLabelInsets = labelInsets;
-    }
-
-    @Nullable
-    public Font getLabelFont() {
-      return myLabelFont;
-    }
-
-    @Nullable
-    public Insets getLabelInsets() {
-      return myLabelInsets;
-    }
-  }
+  data class UiDecoration @JvmOverloads constructor(val labelFont: Font? = null, val labelInsets: Insets? = null)
 }
