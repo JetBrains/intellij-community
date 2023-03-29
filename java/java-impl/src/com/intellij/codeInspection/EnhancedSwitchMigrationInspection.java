@@ -70,9 +70,10 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
                                                  true));
           }
           if (replacer.getType() == ReplacementType.Expression && replacer.getMaxNumberStatementsInBranch() != null && replacer.getMaxNumberStatementsInBranch() > 1) {
+            int newMaxValue = replacer.getMaxNumberStatementsInBranch() - 1;
             fixes.add(new SetInspectionOptionFix(EnhancedSwitchMigrationInspection.this, "myMaxNumberStatementsForBranch",
-                                                 JavaBundle.message("inspection.switch.expression.migration.option.expression.max.statements"),
-                                                 replacer.getMaxNumberStatementsInBranch() - 1));
+                                                 JavaBundle.message("inspection.switch.expression.migration.option.expression.max.statements", newMaxValue),
+                                                 newMaxValue));
           }
           holder.registerProblem(switchKeyword, JavaBundle.message("inspection.switch.expression.migration.inspection.switch.description"),
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
