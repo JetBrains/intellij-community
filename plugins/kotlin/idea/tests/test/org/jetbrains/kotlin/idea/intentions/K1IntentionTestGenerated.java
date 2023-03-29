@@ -6154,9 +6154,24 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                 runTest("testData/intentions/convertLambdaToReference/generic4.kt");
             }
 
+            @TestMetadata("generic5.kt")
+            public void testGeneric5() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/generic5.kt");
+            }
+
             @TestMetadata("genericExtension.kt")
             public void testGenericExtension() throws Exception {
                 runTest("testData/intentions/convertLambdaToReference/genericExtension.kt");
+            }
+
+            @TestMetadata("genericExtension2.kt")
+            public void testGenericExtension2() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/genericExtension2.kt");
+            }
+
+            @TestMetadata("genericExtension3.kt")
+            public void testGenericExtension3() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/genericExtension3.kt");
             }
 
             @TestMetadata("genericExtensionWithTypealias.kt")
