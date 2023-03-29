@@ -78,7 +78,6 @@ import kotlin.Pair
 
 @DirtyUI
 open class JBTabsImpl(private var myProject: Project?,
-                      focusManager: IdeFocusManager?,
                       parentDisposable: Disposable) : JComponent(), JBTabsEx, PropertyChangeListener, TimerListener, DataProvider,
                                                       PopupMenuListener, JBTabsPresentation, Queryable, UISettingsListener,
                                                       QuickActionProvider, MorePopupAware, Accessible {
@@ -237,18 +236,20 @@ open class JBTabsImpl(private var myProject: Project?,
   private var isRequestFocusOnLastFocusedComponent = false
   private var listenerAdded = false
   val attractions: MutableSet<TabInfo> = HashSet()
-  private val myAnimator: Animator
+  private val animator: Animator
   private var allTabs: List<TabInfo>? = null
-  private var focusManager: IdeFocusManager
+  private var focusManager: IdeFocusManager = IdeFocusManager.getGlobalInstance()
   private val nestedTabs: MutableSet<JBTabsImpl> = HashSet()
   var addNavigationGroup: Boolean = true
   private var myActiveTabFillIn: Color? = null
   private var myTabLabelActionsAutoHide = false
-  private val myTabActionsAutoHideListener = TabActionsAutoHideListener()
+  private val tabActionsAutoHideListener = TabActionsAutoHideListener()
   private var tabActionsAutoHideListenerDisposable = Disposer.newDisposable()
   private var glassPane: IdeGlassPane? = null
-  var tabActionsMouseDeadzone = TimedDeadzone.DEFAULT
+
+  internal var tabActionsMouseDeadZone: TimedDeadzone.Length = TimedDeadzone.DEFAULT
     private set
+
   private var myRemoveDeferredRequest: Long = 0
   var position = JBTabsPosition.top
     private set
@@ -275,7 +276,7 @@ open class JBTabsImpl(private var myProject: Project?,
   private var alphabeticalMode = false
   open fun isAlphabeticalMode(): Boolean = alphabeticalMode
 
-  private var mySupportsCompression = false
+  private var supportsCompression = false
   private var emptyText: String? = null
 
   var isMouseInsideTabsArea = false
@@ -287,20 +288,16 @@ open class JBTabsImpl(private var myProject: Project?,
     return JBDefaultTabsBorder(this)
   }
 
-  protected open fun createTabPainterAdapter(): TabPainterAdapter {
-    return DefaultTabPainterAdapter(DEFAULT)
-  }
+  protected open fun createTabPainterAdapter(): TabPainterAdapter = DefaultTabPainterAdapter(DEFAULT)
 
   private var tabLabelAtMouse: TabLabel? = null
-  private val myScrollBar: JBScrollBar
+  private val scrollBar: JBScrollBar
   private val myScrollBarChangeListener: ChangeListener
   private var scrollBarOn = false
 
   constructor(project: Project) : this(project, project)
-  private constructor(project: Project, parent: Disposable) : this(project, IdeFocusManager.getInstance(project), parent)
 
   init {
-    this.focusManager = focusManager ?: IdeFocusManager.getGlobalInstance()
     isOpaque = true
     background = tabPainter.getBackgroundColor()
     border = myBorder
@@ -327,32 +324,30 @@ open class JBTabsImpl(private var myProject: Project?,
     moreToolbar = createToolbar(DefaultActionGroup(actionManager.getAction("TabList")))
     add(moreToolbar.component)
     val entryPointActionGroup = entryPointActionGroup
-    if (entryPointActionGroup != null) {
-      entryPointToolbar = createToolbar(entryPointActionGroup)
-      add(entryPointToolbar!!.component)
+    if (entryPointActionGroup == null) {
+      entryPointToolbar = null
     }
     else {
-      entryPointToolbar = null
+      entryPointToolbar = createToolbar(entryPointActionGroup)
+      add(entryPointToolbar!!.component)
     }
     add(titleWrapper)
     Disposer.register(parentDisposable) { setTitleProducer(null) }
 
-    // This scroll pane won't be shown on screen, it is needed only to handle scrolling events and properly update scrolling model
-    val fakeScrollPane: JScrollPane = JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
-                                                   ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS)
-    myScrollBar = JBThinOverlappingScrollBar(if (isHorizontalTabs) Adjustable.HORIZONTAL else Adjustable.VERTICAL)
-    fakeScrollPane.verticalScrollBar = myScrollBar
-    fakeScrollPane.horizontalScrollBar = myScrollBar
+    // This scroll pane won't be shown on screen, it is needed only to handle scrolling events and properly update a scrolling model
+    val fakeScrollPane = JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS)
+    scrollBar = JBThinOverlappingScrollBar(if (isHorizontalTabs) Adjustable.HORIZONTAL else Adjustable.VERTICAL)
+    fakeScrollPane.verticalScrollBar = scrollBar
+    fakeScrollPane.horizontalScrollBar = scrollBar
     fakeScrollPane.isVisible = true
     fakeScrollPane.setBounds(0, 0, 0, 0)
-    add(myScrollBar)
-    addMouseWheelListener { event: MouseWheelEvent ->
+    add(scrollBar)
+    addMouseWheelListener { event ->
       val modifiers = UIUtil.getAllModifiers(event) or if (isHorizontalTabs) InputEvent.SHIFT_DOWN_MASK else 0
-      val e = MouseEventAdapter.convert(event, fakeScrollPane, event.id, event.getWhen(),
-                                        modifiers, event.x, event.y)
+      val e = MouseEventAdapter.convert(event, fakeScrollPane, event.id, event.getWhen(), modifiers, event.x, event.y)
       MouseEventAdapter.redispatch(e, fakeScrollPane)
     }
-    val listener: AWTEventListener = object : AWTEventListener {
+    val listener = object : AWTEventListener {
       val afterScroll = Alarm(parentDisposable)
       override fun eventDispatched(event: AWTEvent) {
         var tabRectangle: Rectangle? = null
@@ -389,10 +384,9 @@ open class JBTabsImpl(private var myProject: Project?,
     }
     Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.MOUSE_MOTION_EVENT_MASK)
     Disposer.register(parentDisposable) {
-      val toolkit = Toolkit.getDefaultToolkit()
-      toolkit?.removeAWTEventListener(listener)
+      Toolkit.getDefaultToolkit()?.removeAWTEventListener(listener)
     }
-    myAnimator = object : Animator("JBTabs Attractions", 2, 500, true) {
+    animator = object : Animator("JBTabs Attractions", 2, 500, true) {
       override fun paintNow(frame: Int, totalFrames: Int, cycle: Int) {
         repaintAttractions()
       }
@@ -406,12 +400,12 @@ open class JBTabsImpl(private var myProject: Project?,
         if (myProject == null && project != null) {
           myProject = project
         }
-        Disposer.register(parentDisposable, myAnimator)
+        Disposer.register(parentDisposable, animator)
         Disposer.register(parentDisposable) { removeTimerUpdate() }
         val gp = IdeGlassPaneUtil.find(child)
         tabActionsAutoHideListenerDisposable = Disposer.newDisposable("myTabActionsAutoHideListener")
         Disposer.register(parentDisposable, tabActionsAutoHideListenerDisposable)
-        gp.addMouseMotionPreprocessor(myTabActionsAutoHideListener, tabActionsAutoHideListenerDisposable)
+        gp.addMouseMotionPreprocessor(tabActionsAutoHideListener, tabActionsAutoHideListenerDisposable)
         glassPane = gp
         addAwtListener({
                          if (!JBPopupFactory.getInstance().getChildPopups(this@JBTabsImpl).isEmpty()) return@addAwtListener
@@ -469,7 +463,7 @@ open class JBTabsImpl(private var myProject: Project?,
       return
     }
     scrollBarOn = isOn
-    myScrollBar.toggle(isOn)
+    scrollBar.toggle(isOn)
   }
 
   private fun createToolbar(group: ActionGroup): ActionToolbar {
@@ -509,7 +503,7 @@ open class JBTabsImpl(private var myProject: Project?,
                                          SCROLL_BAR_THICKNESS)
     }
   private val scrollBarModel: BoundedRangeModel
-    get() = myScrollBar.model
+    get() = scrollBar.model
   val isWithScrollBar: Boolean
     get() = effectiveLayout!!.isWithScrollBar
 
@@ -589,7 +583,7 @@ open class JBTabsImpl(private var myProject: Project?,
   override val isEditorTabs: Boolean
     get() = false
 
-  fun supportsCompression(): Boolean = mySupportsCompression
+  fun supportsCompression(): Boolean = supportsCompression
 
   override fun setNavigationActionsEnabled(enabled: Boolean): JBTabs {
     navigationActionsEnabled = enabled
@@ -1398,7 +1392,7 @@ open class JBTabsImpl(private var myProject: Project?,
     if (label != null) {
       setComponentZOrder(label, 0)
     }
-    setComponentZOrder(myScrollBar, 0)
+    setComponentZOrder(scrollBar, 0)
     fireBeforeSelectionChanged(oldInfo, newInfo)
     val oldValue = isMouseInsideTabsArea
     try {
@@ -1654,11 +1648,11 @@ open class JBTabsImpl(private var myProject: Project?,
       attractions.remove(tabInfo)
       tabInfo.blinkCount = 0
     }
-    if (start && !myAnimator.isRunning) {
-      myAnimator.resume()
+    if (start && !animator.isRunning) {
+      animator.resume()
     }
     else if (!start && attractions.isEmpty()) {
-      myAnimator.suspend()
+      animator.suspend()
       repaintAttractions()
     }
   }
@@ -1949,10 +1943,10 @@ open class JBTabsImpl(private var myProject: Project?,
       centerizeEntryPointToolbarPosition()
       centerizeMoreToolbarPosition()
       moveDraggedTabLabel()
-      myTabActionsAutoHideListener.processMouseOver()
+      tabActionsAutoHideListener.processMouseOver()
       applyResetComponents()
-      myScrollBar.orientation = if (isHorizontalTabs) Adjustable.HORIZONTAL else Adjustable.VERTICAL
-      myScrollBar.bounds = scrollBarBounds
+      scrollBar.orientation = if (isHorizontalTabs) Adjustable.HORIZONTAL else Adjustable.VERTICAL
+      scrollBar.bounds = scrollBarBounds
       updateScrollBarModel()
       updateToolbarIfVisibilityChanged(moreToolbar, moreBoundsBeforeLayout)
       updateToolbarIfVisibilityChanged(entryPointToolbar, entryPointBoundsBeforeLayout)
@@ -3023,7 +3017,7 @@ open class JBTabsImpl(private var myProject: Project?,
   }
 
   override fun setTabLabelActionsMouseDeadzone(length: TimedDeadzone.Length): JBTabsPresentation {
-    tabActionsMouseDeadzone = length
+    tabActionsMouseDeadZone = length
     for (tabInfo in tabs) {
       infoToLabel.get(tabInfo)!!.updateTabActions()
     }
@@ -3057,7 +3051,7 @@ open class JBTabsImpl(private var myProject: Project?,
   }
 
   override fun setSupportsCompression(value: Boolean): JBTabsPresentation {
-    mySupportsCompression = value
+    supportsCompression = value
     updateRowLayout()
     return this
   }

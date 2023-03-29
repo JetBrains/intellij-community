@@ -40,7 +40,7 @@ final class JBTabsDemoAction extends AnAction {
     final JFrame frame = new JFrame();
     frame.getContentPane().setLayout(new BorderLayout(0, 0));
     final int[] count = new int[1];
-    final JBTabsImpl tabs = new JBTabsImpl(null, null, ApplicationManager.getApplication());
+    final JBTabsImpl tabs = new JBTabsImpl(null, ApplicationManager.getApplication());
 
     //final JPanel flow = new JPanel(new FlowLayout(FlowLayout.CENTER));
     //frame.getContentPane().add(flow);

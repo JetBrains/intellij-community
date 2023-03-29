@@ -23,8 +23,14 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
 
   private boolean myAlphabeticalModeChanged = false;
 
-  public JBEditorTabs(@Nullable Project project, @Nullable IdeFocusManager focusManager, @NotNull Disposable parentDisposable) {
-    super(project, focusManager, parentDisposable);
+  public JBEditorTabs(@Nullable Project project, @SuppressWarnings("unused") @Nullable IdeFocusManager focusManager, @NotNull Disposable parentDisposable) {
+    super(project, parentDisposable);
+    setSupportsCompression(true);
+  }
+
+  public JBEditorTabs(@Nullable Project project, @NotNull Disposable parentDisposable) {
+    super(project, parentDisposable);
+    setSupportsCompression(true);
   }
 
   @Override
@@ -36,14 +42,14 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
   }
 
   /**
-   * @deprecated Use {@link #JBEditorTabs(Project, IdeFocusManager, Disposable)}
+   * @deprecated Use {@link #JBEditorTabs(Project, Disposable)}
    */
   @Deprecated
   public JBEditorTabs(@Nullable Project project,
                       @SuppressWarnings("unused") @NotNull ActionManager actionManager,
                       @Nullable IdeFocusManager focusManager,
                       @NotNull Disposable parent) {
-    this(project, focusManager, parent);
+    this(project, parent);
   }
 
   @Override

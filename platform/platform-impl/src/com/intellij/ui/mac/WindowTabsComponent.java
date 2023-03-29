@@ -14,7 +14,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.ClientProperty;
@@ -70,7 +69,8 @@ public final class WindowTabsComponent extends JBTabsImpl {
   private final Map<IdeFrameImpl, Integer> myIndexes = new HashMap<>();
 
   public WindowTabsComponent(@NotNull IdeFrameImpl nativeWindow, @Nullable Project project, @NotNull Disposable parentDisposable) {
-    super(project, IdeFocusManager.getInstance(project), parentDisposable);
+    super(project, parentDisposable);
+
     myNativeWindow = nativeWindow;
     myParentDisposable = parentDisposable;
 
@@ -98,12 +98,12 @@ public final class WindowTabsComponent extends JBTabsImpl {
   }
 
   @Override
-  protected SingleRowLayout createSingleRowLayout() {
+  protected @NotNull SingleRowLayout createSingleRowLayout() {
     return new WindowTabsLayout(this);
   }
 
   @Override
-  public Dimension getPreferredSize() {
+  public @NotNull Dimension getPreferredSize() {
     return new Dimension(super.getPreferredSize().width, JBUI.scale(TAB_HEIGHT));
   }
 
@@ -119,7 +119,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
   }
 
   @Override
-  protected TabLabel createTabLabel(TabInfo info) {
+  protected @NotNull TabLabel createTabLabel(@NotNull TabInfo info) {
     return new TabLabel(this, info) {
       {
         for (MouseListener listener : getMouseListeners()) {
@@ -185,7 +185,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
   }
 
   @Override
-  protected TabPainterAdapter createTabPainterAdapter() {
+  protected @NotNull TabPainterAdapter createTabPainterAdapter() {
     return new TabPainterAdapter() {
       private final JBTabPainter myTabPainter = new JBDefaultTabPainter(new DefaultTabTheme() {
         @Override

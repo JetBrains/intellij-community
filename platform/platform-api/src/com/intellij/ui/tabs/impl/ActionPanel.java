@@ -48,7 +48,7 @@ public final class ActionPanel extends NonOpaquePanel {
     inner.setLayout(new BoxLayout(inner, BoxLayout.X_AXIS));
     wrapper.add(inner, BorderLayout.CENTER);
     for (AnAction each : children) {
-      ActionButton eachButton = new ActionButton(tabInfo, each, tabInfo.getTabActionPlace(), pass, hover, tabs.getTabActionsMouseDeadzone()) {
+      ActionButton eachButton = new ActionButton(tabInfo, each, tabInfo.getTabActionPlace(), pass, hover, tabs.getTabActionsMouseDeadZone$intellij_platform_ide()) {
         @Override
         protected void repaintComponent(final Component c) {
           TabLabel tabLabel = (TabLabel) SwingUtilities.getAncestorOfClass(TabLabel.class, c);
@@ -97,7 +97,7 @@ public final class ActionPanel extends NonOpaquePanel {
     boolean anyModified = false;
     for (ActionButton each : myButtons) {
       changed |= each.update();
-      each.setMouseDeadZone(myTabs.getTabActionsMouseDeadzone());
+      each.setMouseDeadZone(myTabs.getTabActionsMouseDeadZone$intellij_platform_ide());
       anyVisible |= each.getComponent().isVisible();
 
       Boolean markModified = each.getPrevPresentation().getClientProperty(JBEditorTabs.MARK_MODIFIED_KEY);

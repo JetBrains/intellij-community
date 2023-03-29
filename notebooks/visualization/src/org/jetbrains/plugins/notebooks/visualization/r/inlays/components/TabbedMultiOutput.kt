@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.Gray
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.TabsListener
@@ -48,7 +47,7 @@ class TabbedMultiOutput(val editor: Editor, parent: Disposable) : NotebookInlayM
 
   init {
     Disposer.register(parent, disposable)
-    tabs = JBTabsImpl(project, IdeFocusManager.getInstance(project), disposable)
+    tabs = JBTabsImpl(project, disposable)
     tabs.addListener(object : TabsListener {
       override fun selectionChanged(oldSelection: TabInfo?, newSelection: TabInfo?) {
         oldSelection?.onViewportChange(false)  // Definitely false
