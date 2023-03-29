@@ -34,14 +34,14 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
     int lengthEstimation = 0;
 
     for (TabInfo tabInfo : data.toLayout) {
-      lengthEstimation += Math.max(getMinTabWidth(), myTabs.myInfo2Label.get(tabInfo).getPreferredSize().width);
+      lengthEstimation += Math.max(getMinTabWidth(), myTabs.infoToLabel.get(tabInfo).getPreferredSize().width);
     }
 
     final int extraWidth = data.toFitLength - lengthEstimation;
     float fractionalPart = 0;
     for (Iterator<TabInfo> iterator = data.toLayout.iterator(); iterator.hasNext(); ) {
       TabInfo tabInfo = iterator.next();
-      final TabLabel label = myTabs.myInfo2Label.get(tabInfo);
+      final TabLabel label = myTabs.infoToLabel.get(tabInfo);
 
       int length;
       int lengthIncrement = label.getPreferredSize().width;
@@ -69,7 +69,7 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
     }
 
     for (TabInfo eachInfo : data.toDrop) {
-      JBTabsImpl.resetLayout(myTabs.myInfo2Label.get(eachInfo));
+      JBTabsImpl.resetLayout(myTabs.infoToLabel.get(eachInfo));
     }
   }
 

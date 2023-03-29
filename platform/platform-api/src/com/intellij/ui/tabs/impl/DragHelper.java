@@ -49,7 +49,7 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
       return false;
     }
 
-    TabLabel label = myTabs.myInfo2Label.get(myDragSource);
+    TabLabel label = myTabs.infoToLabel.get(myDragSource);
     if (label == null) {
       return false;
     }
@@ -209,7 +209,7 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
       Rectangle saved = myDragRec;
       myDragRec = null;
       myTabs.reallocate(myDragSource, targetLabel.getInfo());
-      myDragOriginalRec = myTabs.myInfo2Label.get(myDragSource).getBounds();
+      myDragOriginalRec = myTabs.infoToLabel.get(myDragSource).getBounds();
       myDragRec = saved;
       myTabs.moveDraggedTabLabel();
     } else {

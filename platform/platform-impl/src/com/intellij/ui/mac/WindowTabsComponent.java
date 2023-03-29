@@ -78,7 +78,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
       @Override
       public @NotNull UiDecoration getDecoration() {
         //noinspection UseDPIAwareInsets
-        return new UiDecoration(JBFont.medium(), new Insets(-1, myDropInfo == null ? 0 : -1, -1, -1));
+        return new UiDecoration(JBFont.medium(), new Insets(-1, dropInfo == null ? 0 : -1, -1, -1));
       }
     });
 
@@ -547,7 +547,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
 
       @Override
       public void dragOutStarted(@NotNull MouseEvent mouseEvent, @NotNull TabInfo info) {
-        WindowFrameDockableContent content = new WindowFrameDockableContent(WindowTabsComponent.this, info, myInfo2Label.get(info));
+        WindowFrameDockableContent content = new WindowFrameDockableContent(WindowTabsComponent.this, info, infoToLabel.get(info));
         info.setHidden(true);
         DockManagerImpl manager = getDockManager();
         updateDockContainers(manager);

@@ -139,7 +139,7 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
 
   @Override
   public boolean isTabHidden(@NotNull TabInfo info) {
-    TabLabel label = myTabs.myInfo2Label.get(info);
+    TabLabel label = myTabs.infoToLabel.get(info);
     Rectangle bounds = label.getBounds();
     int deadzone = JBUI.scale(DEADZONE_FOR_DECLARE_TAB_HIDDEN);
     return getStrategy().getMinPosition(bounds) < -deadzone
@@ -153,7 +153,7 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
     int i = data.toLayout.size() - 1;
     while (i >= 0) {
       TabInfo info = data.toLayout.get(i);
-      TabLabel label = myTabs.myInfo2Label.get(info);
+      TabLabel label = myTabs.infoToLabel.get(info);
       if (!label.getBounds().isEmpty()) {
         return label;
       }

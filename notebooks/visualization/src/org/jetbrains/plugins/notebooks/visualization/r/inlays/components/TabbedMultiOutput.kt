@@ -131,7 +131,7 @@ class TabbedMultiOutput(val editor: Editor, parent: Disposable) : NotebookInlayM
         text = inlayOutput.title
       }
     }).apply {
-      tabs.myInfo2Label[this]?.apply {
+      tabs.infoToLabel[this]?.apply {
         if (inlayOutput.preferredWidth != 0) {
           preferredSize = Dimension(inlayOutput.preferredWidth, 0)
         }

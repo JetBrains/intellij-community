@@ -10,7 +10,6 @@ import com.intellij.ui.tabs.impl.LayoutPassInfo;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.ui.tabs.impl.TabLayout;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -211,14 +210,14 @@ public class TableLayout extends TabLayout {
     int lengthEstimation = 0;
 
     for (TabInfo tabInfo : list) {
-      lengthEstimation += Math.max(getMinTabWidth(), myTabs.myInfo2Label.get(tabInfo).getPreferredSize().width);
+      lengthEstimation += Math.max(getMinTabWidth(), myTabs.infoToLabel.get(tabInfo).getPreferredSize().width);
     }
 
     final int extraWidth = toFitLength - lengthEstimation;
 
     for (Iterator<TabInfo> iterator = list.iterator(); iterator.hasNext(); ) {
       TabInfo tabInfo = iterator.next();
-      final TabLabel label = myTabs.myInfo2Label.get(tabInfo);
+      final TabLabel label = myTabs.infoToLabel.get(tabInfo);
 
       int length;
       int lengthIncrement = label.getPreferredSize().width;
@@ -323,7 +322,7 @@ public class TableLayout extends TabLayout {
 
     Rectangle area = new Rectangle(myLastTableLayout.toFitRec.width, tabLabel.getBounds().height);
     for (int i = 0; i < myLastTableLayout.myVisibleInfos.size(); i++) {
-      area = area.union(myTabs.myInfo2Label.get(myLastTableLayout.myVisibleInfos.get(i)).getBounds());
+      area = area.union(myTabs.infoToLabel.get(myLastTableLayout.myVisibleInfos.get(i)).getBounds());
     }
     return Math.abs(deltaY) > area.height * getDragOutMultiplier();
   }
@@ -346,8 +345,8 @@ public class TableLayout extends TabLayout {
       for (int i = 0; i < myLastTableLayout.myVisibleInfos.size() - 1; i++) {
         TabInfo firstInfo = myLastTableLayout.myVisibleInfos.get(i);
         TabInfo secondInfo = myLastTableLayout.myVisibleInfos.get(i + 1);
-        TabLabel first = myTabs.myInfo2Label.get(firstInfo);
-        TabLabel second = myTabs.myInfo2Label.get(secondInfo);
+        TabLabel first = myTabs.infoToLabel.get(firstInfo);
+        TabLabel second = myTabs.infoToLabel.get(secondInfo);
 
         Rectangle firstBounds = first.getBounds();
         Rectangle secondBounds = second.getBounds();

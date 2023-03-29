@@ -65,7 +65,7 @@ public abstract class SingleRowLayout extends TabLayout {
         myLastSingRowLayout.layoutSize.equals(myTabs.getSize()) &&
         myLastSingRowLayout.scrollOffset == getScrollOffset()) {
       for (TabInfo each : data.myVisibleInfos) {
-        final TabLabel eachLabel = myTabs.myInfo2Label.get(each);
+        final TabLabel eachLabel = myTabs.infoToLabel.get(each);
         if (!eachLabel.isValid()) {
           layoutLabels = true;
           break;
@@ -122,7 +122,7 @@ public abstract class SingleRowLayout extends TabLayout {
     data.tabRectangle = new Rectangle();
 
     if (data.toLayout.size() > 0) {
-      final TabLabel firstLabel = myTabs.myInfo2Label.get(data.toLayout.get(0));
+      final TabLabel firstLabel = myTabs.infoToLabel.get(data.toLayout.get(0));
       final TabLabel lastLabel = findLastVisibleLabel(data);
       if (firstLabel != null && lastLabel != null) {
         data.tabRectangle.x = firstLabel.getBounds().x;
@@ -140,7 +140,7 @@ public abstract class SingleRowLayout extends TabLayout {
 
   @Nullable
   protected TabLabel findLastVisibleLabel(SingleRowPassInfo data) {
-    return myTabs.myInfo2Label.get(data.toLayout.get(data.toLayout.size() - 1));
+    return myTabs.infoToLabel.get(data.toLayout.get(data.toLayout.size() - 1));
   }
 
   protected void prepareLayoutPassInfo(SingleRowPassInfo data, TabInfo selected) {
@@ -175,7 +175,7 @@ public abstract class SingleRowLayout extends TabLayout {
   protected void layoutLabels(final SingleRowPassInfo data) {
     boolean layoutStopped = false;
     for (TabInfo eachInfo : data.toLayout) {
-      final TabLabel label = myTabs.myInfo2Label.get(eachInfo);
+      final TabLabel label = myTabs.infoToLabel.get(eachInfo);
       if (layoutStopped) {
         final Rectangle rec = getStrategy().getLayoutRect(data, 0, 0);
         myTabs.layout(label, rec);
@@ -196,7 +196,7 @@ public abstract class SingleRowLayout extends TabLayout {
     }
 
     for (TabInfo eachInfo : data.toDrop) {
-      JBTabsImpl.resetLayout(myTabs.myInfo2Label.get(eachInfo));
+      JBTabsImpl.resetLayout(myTabs.infoToLabel.get(eachInfo));
     }
   }
 
@@ -222,7 +222,7 @@ public abstract class SingleRowLayout extends TabLayout {
   }
 
   protected int getRequiredLength(TabInfo eachInfo) {
-    TabLabel label = myTabs.myInfo2Label.get(eachInfo);
+    TabLabel label = myTabs.infoToLabel.get(eachInfo);
     return getStrategy().getLengthIncrement(label != null ? label.getPreferredSize() : new Dimension())
                                       + (myTabs.isEditorTabs() ? myTabs.getTabHGap() : 0);
   }
@@ -243,8 +243,8 @@ public abstract class SingleRowLayout extends TabLayout {
 
     if (c instanceof JBTabsImpl) {
       for (int i = 0; i < myLastSingRowLayout.myVisibleInfos.size() - 1; i++) {
-        TabLabel first = myTabs.myInfo2Label.get(myLastSingRowLayout.myVisibleInfos.get(i));
-        TabLabel second = myTabs.myInfo2Label.get(myLastSingRowLayout.myVisibleInfos.get(i + 1));
+        TabLabel first = myTabs.infoToLabel.get(myLastSingRowLayout.myVisibleInfos.get(i));
+        TabLabel second = myTabs.infoToLabel.get(myLastSingRowLayout.myVisibleInfos.get(i + 1));
 
         Rectangle firstBounds = first.getBounds();
         Rectangle secondBounds = second.getBounds();

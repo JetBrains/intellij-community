@@ -83,9 +83,9 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
     final Point point = relativePoint.getPoint(getComponent());
     myShowDropLocation = shouldAddToGlobal(point);
     super.processDropOver(over, relativePoint);
-    for (Map.Entry<TabInfo, TabLabel> entry : myInfo2Label.entrySet()) {
+    for (Map.Entry<TabInfo, TabLabel> entry : infoToLabel.entrySet()) {
       final TabLabel label = entry.getValue();
-      if (label.getBounds().contains(point) && myDropInfo != entry.getKey()) {
+      if (label.getBounds().contains(point) && dropInfo != entry.getKey()) {
         select(entry.getKey(), false);
         break;
       }

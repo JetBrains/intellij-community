@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Producer;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -25,7 +26,7 @@ public interface JBTabsEx extends JBTabs {
   @Nullable
   TabInfo getToSelectOnRemoveOf(TabInfo info);
 
-  void sortTabs(Comparator<? super TabInfo> comparator);
+  void sortTabs(@NotNull Comparator<? super TabInfo> comparator);
 
   int getDropInfoIndex();
 

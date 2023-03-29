@@ -57,7 +57,7 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
       }
 
       private fun bounds(tabInfo: TabInfo?): Rectangle? {
-        return tabs.myInfo2Label.get(tabInfo ?: return null)?.bounds
+        return tabs.infoToLabel.get(tabInfo ?: return null)?.bounds
       }
     })
   }
@@ -80,7 +80,7 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
       return
     }
 
-    val myInfo2Label = tabs.myInfo2Label
+    val myInfo2Label = tabs.infoToLabel
     val firstLabel = myInfo2Label[tabs.visibleInfos[0]] ?: return
 
     when (tabs.position) {
