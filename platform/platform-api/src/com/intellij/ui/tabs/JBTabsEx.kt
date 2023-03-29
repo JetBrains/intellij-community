@@ -1,43 +1,45 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui.tabs;
+package com.intellij.ui.tabs
 
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.util.Pair;
-import com.intellij.util.Producer;
-import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.util.Pair
+import org.intellij.lang.annotations.MagicConstant
+import org.jetbrains.annotations.Nls
+import javax.swing.Icon
+import javax.swing.SwingConstants
 
-import javax.swing.*;
-import java.util.Comparator;
+interface JBTabsEx : JBTabs {
+  companion object {
+    @JvmField
+    val NAVIGATION_ACTIONS_KEY = DataKey.create<JBTabsEx>("JBTabs")
+  }
 
+  val isEditorTabs: Boolean
 
-public interface JBTabsEx extends JBTabs {
-  DataKey<JBTabsEx> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
+  fun updateTabActions(validateNow: Boolean)
 
-  boolean isEditorTabs();
+  fun addTabSilently(info: TabInfo, index: Int): TabInfo?
 
-  void updateTabActions(boolean validateNow);
+  fun removeTab(info: TabInfo, forcedSelectionTransfer: TabInfo?)
 
-  TabInfo addTabSilently(TabInfo info, int index);
+  fun getToSelectOnRemoveOf(info: TabInfo?): TabInfo?
 
-  void removeTab(TabInfo info, @Nullable TabInfo forcedSelectionTransfer);
+  fun sortTabs(comparator: Comparator<TabInfo>)
 
-  @Nullable
-  TabInfo getToSelectOnRemoveOf(TabInfo info);
+  val dropInfoIndex: Int
 
-  void sortTabs(@NotNull Comparator<? super TabInfo> comparator);
+  @get:MagicConstant(intValues = [
+    SwingConstants.TOP.toLong(),
+    SwingConstants.LEFT.toLong(),
+    SwingConstants.BOTTOM.toLong(),
+    SwingConstants.RIGHT.toLong(),
+    -1,
+  ])
+  val dropSide: Int
 
-  int getDropInfoIndex();
+  val isEmptyVisible: Boolean
 
-  @MagicConstant(intValues = {SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, -1})
-  int getDropSide();
+  fun setTitleProducer(titleProducer: () -> Pair<Icon, @Nls String>)
 
-  boolean isEmptyVisible();
-
-  void setTitleProducer(@Nullable Producer<? extends Pair<Icon, String>> titleProducer);
-
-  void setHideTopPanel(boolean isHideTopPanel);
-
-  boolean isHideTopPanel();
+  var isHideTopPanel: Boolean
 }
