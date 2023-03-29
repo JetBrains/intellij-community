@@ -19,7 +19,6 @@ package org.jetbrains.idea.maven.server;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -28,7 +27,7 @@ public class MavenServerDownloadListenerWrapper extends MavenRemoteObject
   private final ConcurrentLinkedQueue<DownloadArtifactEvent> myPullingQueue = new ConcurrentLinkedQueue<DownloadArtifactEvent>();
 
   @Override
-  public void artifactDownloaded(File file, String relativePath) throws RemoteException {
+  public void artifactDownloaded(File file, String relativePath) {
     myPullingQueue.add(new DownloadArtifactEvent(file.getAbsolutePath(), relativePath));
   }
 
