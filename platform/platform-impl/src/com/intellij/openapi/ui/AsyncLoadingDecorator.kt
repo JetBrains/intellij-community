@@ -25,9 +25,9 @@ internal class AsyncLoadingDecorator(private val startDelay: Duration) {
   }
 
   fun startLoading(scope: CoroutineScope, addUi: (component: JComponent) -> Unit): Job {
-    val scheduledTime = System.currentTimeMillis()
+    val scheduleTime = System.currentTimeMillis()
     return scope.launch {
-      delay((startDelay.inWholeMilliseconds - (System.currentTimeMillis() - scheduledTime)).coerceAtLeast(0))
+      delay((startDelay.inWholeMilliseconds - (System.currentTimeMillis() - scheduleTime)).coerceAtLeast(0))
       withContext(Dispatchers.EDT) {
         val loadingLayer = LoadingLayer(AsyncProcessIcon.Big("Loading"))
         addUi(loadingLayer)

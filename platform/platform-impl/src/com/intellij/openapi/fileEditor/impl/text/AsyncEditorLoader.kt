@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
+import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.ui.EditorNotifications
@@ -24,6 +25,7 @@ internal class AsyncEditorLoaderService(private val coroutineScope: CoroutineSco
                                    editorComponent = editorComponent,
                                    provider = provider,
                                    coroutineScope = coroutineScope.childScope(supervisor = false))
+
     loader.start()
     return loader
   }
@@ -72,41 +74,62 @@ class AsyncEditorLoader internal constructor(private val textEditor: TextEditorI
   internal fun start() {
     editor.putUserData(ASYNC_LOADER, this)
 
-    val continuationDeferred = coroutineScope.async {
-      constrainedReadAction(ReadConstraint.withDocumentsCommitted(project)) { textEditor.loadEditorInBackground() }
-    }
-
-    // do not show half-ready editor (not highlighted)
-    editorComponent.editor.component.isVisible = false
-
-    coroutineScope.launch(ModalityState.current().asContextElement()) {
-      val indicatorJob = editorComponent.loadingDecorator.startLoading(scope = this, addUi = editorComponent::addLoadingDecoratorUi)
-
-      val continuation = continuationDeferred.await()
-      editorComponent.loadingDecorator.stopLoading(scope = this, indicatorJob = indicatorJob)
-
-      withContext(Dispatchers.EDT) {
-        editor.putUserData(ASYNC_LOADER, null)
-
-        LOG.runAndLogException {
-          continuation.run()
-        }
-
-        ensureActive()
-
-        // should be before executing delayed actions - editor state restoration maybe a delayed action, and it uses `doWhenFirstShown`,
-        // for performance reasons better to avoid
-        editorComponent.editor.component.isVisible = true
-
-        editor.scrollingModel.disableAnimation()
-        while (true) {
-          (delayedActions.pollFirst() ?: break).run()
-          ensureActive()
-        }
-        editor.scrollingModel.enableAnimation()
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      val continuation = runBlockingModal(project, "") {
+        loadEditor()
       }
-      EditorNotifications.getInstance(project).updateNotifications(textEditor.myFile)
+      editor.putUserData(ASYNC_LOADER, null)
+      continuation.run()
+      while (true) {
+        (delayedActions.pollFirst() ?: break).run()
+      }
     }
+    else {
+      val continuationDeferred = coroutineScope.async {
+        loadEditor()
+      }
+
+      // do not show half-ready editor (not highlighted)
+      editorComponent.editor.component.isVisible = false
+
+      val modality = ModalityState.current().asContextElement()
+      val indicatorJob = editorComponent.loadingDecorator.startLoading(scope = coroutineScope + modality,
+                                                                       addUi = editorComponent::addLoadingDecoratorUi)
+
+      coroutineScope.launch(modality) {
+        val continuation = continuationDeferred.await()
+        editorComponent.loadingDecorator.stopLoading(scope = this, indicatorJob = indicatorJob)
+        loaded(continuation)
+        EditorNotifications.getInstance(project).updateNotifications(textEditor.myFile)
+      }
+    }
+  }
+
+  private suspend fun loaded(continuation: Runnable) {
+    withContext(Dispatchers.EDT) {
+      editor.putUserData(ASYNC_LOADER, null)
+
+      LOG.runAndLogException {
+        continuation.run()
+      }
+
+      ensureActive()
+
+      // should be before executing delayed actions - editor state restoration maybe a delayed action, and it uses `doWhenFirstShown`,
+      // for performance reasons better to avoid
+      editorComponent.editor.component.isVisible = true
+
+      editor.scrollingModel.disableAnimation()
+      while (true) {
+        (delayedActions.pollFirst() ?: break).run()
+        ensureActive()
+      }
+      editor.scrollingModel.enableAnimation()
+    }
+  }
+
+  private suspend fun loadEditor(): Runnable {
+    return constrainedReadAction(ReadConstraint.withDocumentsCommitted(project)) { textEditor.loadEditorInBackground() }
   }
 
   @RequiresEdt

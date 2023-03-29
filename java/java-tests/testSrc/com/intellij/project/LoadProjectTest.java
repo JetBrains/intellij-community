@@ -62,7 +62,7 @@ public class LoadProjectTest extends HeavyPlatformTestCase {
     fileA.navigate(true);
     Editor editorA = FileEditorManager.getInstance(getProject()).openTextEditor(new OpenFileDescriptor(getProject(), a), true);
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
+    EditorTestUtil.waitForLoading(editorA);
 
     assertNotNull(editorA);
     CodeInsightTestFixtureImpl.instantiateAndRun(fileA, editorA, new int[] {Pass.EXTERNAL_TOOLS}, false);

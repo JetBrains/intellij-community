@@ -73,8 +73,7 @@ public final class EditorUtil {
     return editor != null && editor.getContentComponent() instanceof JPasswordField;
   }
 
-  @Nullable
-  public static EditorEx getEditorEx(@Nullable FileEditor fileEditor) {
+  public static @Nullable EditorEx getEditorEx(@Nullable FileEditor fileEditor) {
     Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
     return editor instanceof EditorEx ? (EditorEx)editor : null;
   }
@@ -227,7 +226,7 @@ public final class EditorUtil {
     fillVirtualSpaceUntil(editor, position.column, position.line);
   }
 
-  public static void fillVirtualSpaceUntil(@NotNull final Editor editor, int columnNumber, int lineNumber) {
+  public static void fillVirtualSpaceUntil(final @NotNull Editor editor, int columnNumber, int lineNumber) {
     final int offset = editor.logicalPositionToOffset(new LogicalPosition(lineNumber, columnNumber));
     final String filler = EditorModificationUtil.calcStringToFillVirtualSpace(editor);
     if (!filler.isEmpty()) {
@@ -299,8 +298,7 @@ public final class EditorUtil {
     return offset - start + shift;
   }
 
-  @NotNull
-  public static FontInfo fontForChar(final char c, @JdkConstants.FontStyle int style, @NotNull Editor editor) {
+  public static @NotNull FontInfo fontForChar(final char c, @JdkConstants.FontStyle int style, @NotNull Editor editor) {
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
     return ComplementaryFontsRegistry.getFontAbleToDisplay(c, style, colorsScheme.getFontPreferences(),
                                                            FontInfo.getFontRenderContext(editor.getContentComponent()));
@@ -699,8 +697,7 @@ public final class EditorUtil {
     EditorFactory.getInstance().refreshAllEditors();
   }
 
-  @NotNull
-  public static TextRange getSelectionInAnyMode(Editor editor) {
+  public static @NotNull TextRange getSelectionInAnyMode(Editor editor) {
     List<Caret> carets = editor.getCaretModel().getAllCarets();
     return carets.get(0).getSelectionRange().union(carets.get(carets.size() - 1).getSelectionRange());
   }
@@ -724,8 +721,7 @@ public final class EditorUtil {
    * @return EXCLUSIVE intervals [startY, endY)
    * @see #yToLogicalLineRange(Editor, int)
    */
-  @NotNull
-  public static Pair<@NotNull Interval, @Nullable Interval> logicalLineToYRange(@NotNull Editor editor, int logicalLine) {
+  public static @NotNull Pair<@NotNull Interval, @Nullable Interval> logicalLineToYRange(@NotNull Editor editor, int logicalLine) {
     if (logicalLine < 0) throw new IllegalArgumentException("Logical line is negative: " + logicalLine);
     Document document = editor.getDocument();
     int startVisualLine;
@@ -769,8 +765,7 @@ public final class EditorUtil {
    * @return INCLUSIVE interval [startLogicalLine, endLogicalLine]
    * @see #logicalLineToYRange(Editor, int)
    */
-  @NotNull
-  public static Interval yToLogicalLineRange(@NotNull Editor editor, int y) {
+  public static @NotNull Interval yToLogicalLineRange(@NotNull Editor editor, int y) {
     int visualLine = editor.yToVisualLine(y);
     if (editor instanceof EditorImpl) {
       VisualLinesIterator iterator = new VisualLinesIterator((EditorImpl)editor, visualLine);
@@ -960,8 +955,7 @@ public final class EditorUtil {
     }
   }
 
-  @NotNull
-  public static String displayCharInEditor(char c, @NotNull TextAttributesKey textAttributesKey, @NotNull String fallback) {
+  public static @NotNull String displayCharInEditor(char c, @NotNull TextAttributesKey textAttributesKey, @NotNull String fallback) {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     TextAttributes textAttributes = scheme.getAttributes(textAttributesKey);
     int style = textAttributes != null ? textAttributes.getFontType() : Font.PLAIN;
@@ -979,8 +973,7 @@ public final class EditorUtil {
    *
    * @see InlayProperties#relatesToPrecedingText(boolean)
    */
-  @NotNull
-  public static VisualPosition inlayAwareOffsetToVisualPosition(@NotNull Editor editor, int offset) {
+  public static @NotNull VisualPosition inlayAwareOffsetToVisualPosition(@NotNull Editor editor, int offset) {
     LogicalPosition logicalPosition = editor.offsetToLogicalPosition(offset);
     if (editor instanceof EditorWindow) {
       logicalPosition = ((EditorWindow)editor).injectedToHost(logicalPosition);
@@ -1177,8 +1170,7 @@ public final class EditorUtil {
            !isCaretInsideSelection(e.getData(CommonDataKeys.CARET));
   }
 
-  @NotNull
-  public static DataContext getEditorDataContext(@NotNull Editor editor) {
+  public static @NotNull DataContext getEditorDataContext(@NotNull Editor editor) {
     DataContext context = DataManager.getInstance().getDataContext(editor.getContentComponent());
     if (PROJECT.getData(context) == editor.getProject()) {
       return context;
