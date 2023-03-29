@@ -126,12 +126,12 @@ object CodeWithMeGuestLauncher {
       includeInManifest = CodeWithMeClientDownloader.getJetBrainsClientManifestFilter(sessionInfo.hostBuildNumber),
     )
     val lifetime = aLifetime ?: project?.createLifetime() ?: Lifetime.Eternal
-    CodeWithMeClientDownloader.runCwmGuestProcessFromDownload(
+    val clientLifetime = CodeWithMeClientDownloader.runCwmGuestProcessFromDownload(
       lifetime = lifetime,
       url = url,
       extractedJetBrainsClientData = ExtractedJetBrainsClientData(guestData.targetPath, null, clientBuild)
     )
-    onDone(lifetime)
+    onDone(clientLifetime)
     return true
   }
 
