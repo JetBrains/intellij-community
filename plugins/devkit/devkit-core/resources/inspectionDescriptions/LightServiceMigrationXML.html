@@ -2,23 +2,21 @@
 <body>
 Reports services registered in <code>plugin.xml</code> that can be converted to light ones.
 <p>
-  A service not going to be overridden does not need to be registered in <code>plugin.xml</code>.
-  Instead, annotate service class with <a
-  href="https://github.com/JetBrains/intellij-community/blob/idea/223.8836.41/platform/core-api/src/com/intellij/openapi/components/Service.java">@Service</a>.
-  Project-level services must specify <code>@Service(Service.Level.PROJECT)</code>.
+  A service that is not intended for overriding is not required to be registered in the <code>plugin.xml</code> file.
+  Instead, annotate the service class with the <code>@com.intellij.openapi.components.Service</code> annotation. For
+  project-level services, specify <code>@Service(Service.Level.PROJECT)</code>.
 <p>
-  Restrictions:
+  Requirements:
 <ul>
-  <li>The version of the IntelliJ Platform is not less than 2019.3</li>
+  <li>IntelliJ Platform 2019.3 or newer.</li>
   <li>Service class must be <code>final</code>.</li>
   <li><code>serviceInterface</code> is not specified.</li>
-  <li>If service is a <a href="https://plugins.jetbrains.com/docs/intellij/persisting-state-of-components.html">PersistentStateComponent</a>,
+  <li>If the service is a <code>com.intellij.openapi.components.PersistentStateComponent</code>,
     roaming must be disabled (<code>roamingType = RoamingType.DISABLED</code>).
   </li>
   <li><code>preload</code> is not specified.</li>
 </ul>
-<p>Also reports services registered in <code>plugin.xml</code> whose classes are already annotated with <a
-  href="https://github.com/JetBrains/intellij-community/blob/idea/223.8836.41/platform/core-api/src/com/intellij/openapi/components/Service.java">@Service</a>.
+<p>Also reports services registered in <code>plugin.xml</code> whose classes are already annotated with <code>@Service</code>.
 <p>
   See <a href="https://plugins.jetbrains.com/docs/intellij/plugin-services.html">Services</a> in IntelliJ Platform Plugin SDK docs for more details.
 </p>
