@@ -2,15 +2,41 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
+import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.JarFileSystem
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.refactoring.suggested.startOffset
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
+import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.runAll
 import java.io.File
 
 abstract class AbstractKotlinReferenceTypeHintsProviderTest :
     InlayHintsProviderTestCase() { // Abstract- prefix is just a convention for GenerateTests
+
+    override fun setUp() {
+        super.setUp()
+        PresentationFactory.customToStringProvider = { element ->
+            val virtualFile = element.containingFile.virtualFile
+            val jarFileSystem = virtualFile.fileSystem as? JarFileSystem
+            val path = jarFileSystem?.let {
+                val root = VfsUtilCore.getRootFile(virtualFile)
+                "${it.protocol}://${root.name}${JarFileSystem.JAR_SEPARATOR}${VfsUtilCore.getRelativeLocation(virtualFile, root)}"
+            } ?: virtualFile.toString()
+            "$path:${if (jarFileSystem != null) "*" else element.startOffset.toString()}"
+        }
+    }
+
+    override fun tearDown() {
+        runAll(
+            ThrowableRunnable { PresentationFactory.customToStringProvider = null },
+            ThrowableRunnable { super.tearDown() },
+        )
+    }
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()

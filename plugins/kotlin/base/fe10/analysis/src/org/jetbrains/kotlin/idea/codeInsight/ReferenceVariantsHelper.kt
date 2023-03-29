@@ -242,7 +242,11 @@ class ReferenceVariantsHelper(
                 )
             )
             descriptors.addAll(resolutionScope.collectAllFromMeAndParent { scope ->
-                scope.collectSyntheticStaticMembersAndConstructors(resolutionFacade, kindFilter, nameFilter)
+                val start = System.nanoTime()
+                val list =
+                    scope.collectSyntheticStaticMembersAndConstructors(resolutionFacade, kindFilter, nameFilter)
+                val end = System.nanoTime()
+                list
             })
         }
 
