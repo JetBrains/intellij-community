@@ -62,6 +62,14 @@ abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>) : GroupedEleme
     item.icon = getIcon(value)
   }
 
+  open fun customize(item: SimpleColoredComponent,
+                     value: T,
+                     index: Int,
+                     isSelected: Boolean,
+                     cellHasFocus: Boolean) {
+    customize(item, value, index)
+  }
+
   /**
    * @return The separator on top of [value], null if none.
    */
@@ -97,7 +105,7 @@ abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>) : GroupedEleme
     return layoutComponent(coloredComponent)
   }
 
-  private fun layoutComponent(component: JComponent): JComponent = when {
+  open fun layoutComponent(component: JComponent): JComponent = when {
     ExperimentalUI.isNewUI() -> SelectablePanel.wrap(component)
     else -> JBUI.Panels.simplePanel(component).apply {
       border = JBUI.Borders.empty(20, 16)
@@ -123,7 +131,7 @@ abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>) : GroupedEleme
 
     coloredComponent.apply {
       clear()
-      customize(this, value, index)
+      customize(this, value, index, isSelected, cellHasFocus)
     }
 
     mySeparatorComponent.apply {
