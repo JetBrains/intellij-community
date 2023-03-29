@@ -5,6 +5,7 @@ import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.ide.ui.customization.CustomActionsSchema.Companion.getInstance
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.Disposer
@@ -45,6 +46,7 @@ import com.intellij.vcs.log.util.VcsLogUtil
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
 import org.jetbrains.annotations.Nls
 import java.util.*
+import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
 import javax.swing.JComponent
 import javax.swing.JScrollPane
@@ -60,6 +62,8 @@ class VcsLogChangesBrowser internal constructor(project: Project,
                                                 parent: Disposable) : AsyncChangesBrowserBase(project, false, false), Disposable {
   private val eventDispatcher = EventDispatcher.create(Listener::class.java)
   private val toolbarWrapper: Wrapper
+
+  private val unprocessedSelection = AtomicReference<Selection?>(null)
 
   private var commitModel = CommitModel.createEmpty()
   private var isShowChangesFromParents = false
@@ -136,7 +140,7 @@ class VcsLogChangesBrowser internal constructor(project: Project,
   }
 
   fun setSelectedDetails(detailsList: List<VcsFullCommitDetails>) {
-    commitModel = createCommitModel(detailsList)
+    unprocessedSelection.set(Selection(detailsList, null))
     updateModel()
   }
 
@@ -145,7 +149,7 @@ class VcsLogChangesBrowser internal constructor(project: Project,
   }
 
   fun setEmptyWithText(statusTextConsumer: Consumer<in StatusText>) {
-    commitModel = CommitModel.createText(statusTextConsumer)
+    unprocessedSelection.set(Selection(emptyList(), statusTextConsumer))
     updateModel()
   }
 
@@ -156,8 +160,10 @@ class VcsLogChangesBrowser internal constructor(project: Project,
   }
 
   private fun updateModel() {
-    updateStatusText()
-    viewer.requestRefresh { eventDispatcher.multicaster.onModelUpdated() }
+    viewer.requestRefresh {
+      updateStatusText()
+      eventDispatcher.multicaster.onModelUpdated()
+    }
   }
 
   private fun updateStatusText() {
@@ -192,10 +198,23 @@ class VcsLogChangesBrowser internal constructor(project: Project,
   override val changesTreeModel: AsyncChangesTreeModel
     get() = MyVcsLogAsyncChangesTreeModel()
 
-  override fun dispose() = shutdown()
+  override fun dispose() {
+    shutdown()
+    unprocessedSelection.set(null)
+  }
 
   private inner class MyVcsLogAsyncChangesTreeModel : SimpleAsyncChangesTreeModel() {
     override fun buildTreeModelSync(grouping: ChangesGroupingPolicyFactory): DefaultTreeModel {
+      val selection = unprocessedSelection.getAndSet(null)
+      if (selection != null) {
+        try {
+          commitModel = selection.createCommitModel()
+        }
+        catch (e: ProcessCanceledException) {
+          unprocessedSelection.compareAndSet(null, selection)
+          throw e
+        }
+      }
       return buildTreeModelSync(commitModel, affectedPaths, isShowOnlyAffectedSelected, isShowChangesFromParents, grouping)
     }
 
@@ -366,6 +385,8 @@ class VcsLogChangesBrowser internal constructor(project: Project,
     override fun toString() = text
   }
 
+  private data class Selection(val details: List<VcsFullCommitDetails>, val emptyText: Consumer<in StatusText>? = null)
+
   private class CommitModel(val roots: Set<VirtualFile>,
                             val changes: List<Change>,
                             val changesToParents: Map<CommitId, Set<Change>>,
@@ -385,14 +406,14 @@ class VcsLogChangesBrowser internal constructor(project: Project,
     @JvmField
     val HAS_AFFECTED_FILES = DataKey.create<Boolean>("VcsLogChangesBrowser.HasAffectedFiles")
 
-    private fun createCommitModel(detailsList: List<VcsFullCommitDetails>): CommitModel {
-      if (detailsList.isEmpty()) return CommitModel.createEmpty()
+    private fun Selection.createCommitModel(): CommitModel {
+      if (details.isEmpty()) return CommitModel.createText(emptyText)
 
-      val roots = detailsList.map(VcsFullCommitDetails::getRoot).toSet()
+      val roots = details.map(VcsFullCommitDetails::getRoot).toSet()
 
-      val singleCommitDetail = detailsList.singleOrNull()
+      val singleCommitDetail = details.singleOrNull()
       if (singleCommitDetail == null) {
-        return CommitModel(roots, VcsLogUtil.collectChanges(detailsList) { it.changes }, emptyMap(), null)
+        return CommitModel(roots, VcsLogUtil.collectChanges(details) { it.changes }, emptyMap(), null)
       }
 
       val changesToParents = if (singleCommitDetail.parents.size > 1) {
