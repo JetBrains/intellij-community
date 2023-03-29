@@ -15,6 +15,7 @@ import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.util.DevKitDomUtil
 import org.jetbrains.idea.devkit.util.PluginPlatformInfo
+import org.jetbrains.idea.devkit.util.PsiUtil
 
 internal object LightServiceMigrationUtil {
 
@@ -57,11 +58,13 @@ internal object LightServiceMigrationUtil {
   }
 
   fun isVersion193OrHigher(element: DomElement): Boolean {
+    if (PsiUtil.isIdeaProject(element.module?.project)) return true
     val buildNumber = PluginPlatformInfo.forDomElement(element).sinceBuildNumber
     return buildNumber != null && buildNumber.baselineVersion >= 193
   }
 
   fun isVersion193OrHigher(aClass: PsiClass): Boolean {
+    if (PsiUtil.isIdeaProject(aClass.project)) return true
     val module = ModuleUtilCore.findModuleForPsiElement(aClass) ?: return false
     val buildNumber = PluginPlatformInfo.forModule(module).sinceBuildNumber
     return buildNumber != null && buildNumber.baselineVersion >= 193

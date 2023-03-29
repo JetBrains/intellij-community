@@ -13,7 +13,6 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.xml.DomUtil
 import org.jetbrains.idea.devkit.dom.Extension
-import org.jetbrains.idea.devkit.util.PsiUtil.isIdeaProject
 import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass
 
 internal class LightServiceMigrationCodeInspection : DevKitJvmInspection() {
@@ -27,8 +26,7 @@ internal class LightServiceMigrationCodeInspection : DevKitJvmInspection() {
             PsiUtil.isAbstractClass(clazz)) {
           return true
         }
-        if (isIdeaProject(project) ||
-            LightServiceMigrationUtil.isVersion193OrHigher(clazz) ||
+        if (LightServiceMigrationUtil.isVersion193OrHigher(clazz) ||
             ApplicationManager.getApplication().isUnitTestMode) {
           if (clazz.hasAnnotation(Service::class.java.canonicalName)) return true
           if (!LightServiceMigrationUtil.canBeLightService(clazz)) return true

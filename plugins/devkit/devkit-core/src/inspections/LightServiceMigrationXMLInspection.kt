@@ -8,12 +8,10 @@ import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
 import com.intellij.util.xml.highlighting.DomHighlightingHelper
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
-import org.jetbrains.idea.devkit.util.PsiUtil
 
 internal class LightServiceMigrationXMLInspection : DevKitPluginXmlInspectionBase() {
   override fun checkDomElement(element: DomElement, holder: DomElementAnnotationHolder, helper: DomHighlightingHelper) {
-    if (PsiUtil.isIdeaProject(element.module?.project) ||
-        LightServiceMigrationUtil.isVersion193OrHigher(element) ||
+    if (LightServiceMigrationUtil.isVersion193OrHigher(element) ||
         ApplicationManager.getApplication().isUnitTestMode) {
       if (element !is Extension) return
       val (aClass, level) = LightServiceMigrationUtil.getServiceImplementation(element) ?: return
