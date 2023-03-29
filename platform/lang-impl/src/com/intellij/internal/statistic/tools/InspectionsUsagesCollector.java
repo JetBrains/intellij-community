@@ -124,8 +124,12 @@ public final class InspectionsUsagesCollector extends ProjectUsagesCollector {
   private static final StringListEventField INSPECTION_IDS_REPORTING_PROBLEMS_FIELD = EventFields.StringListValidatedByCustomRule(
     "inspectionIds", InspectionToolValidator.class);
 
-  private static final EventId1<List<? extends String>> INSPECTION_IDS_REPORTING_PROBLEMS = GROUP.registerEvent("inspections.reporting.problems",
-                                                                                  INSPECTION_IDS_REPORTING_PROBLEMS_FIELD);
+  @SuppressWarnings("TypeParameterExtendsFinalClass")
+  private static final EventId2<List<? extends String>, Integer> INSPECTION_IDS_REPORTING_PROBLEMS = GROUP.registerEvent(
+    "inspections.reporting.problems",
+    INSPECTION_IDS_REPORTING_PROBLEMS_FIELD,
+    EventFields.Int("inspectionSessions")
+  );
 
   @Override
   public EventLogGroup getGroup() {
@@ -170,7 +174,7 @@ public final class InspectionsUsagesCollector extends ProjectUsagesCollector {
 
   private static MetricEvent getInspectionsReportingProblemsEvent(@NotNull Project project) {
     InspectionUsageStorage.Report report = InspectionUsageStorage.getInstance(project).collectHighligtingReport();
-    return INSPECTION_IDS_REPORTING_PROBLEMS.metric(report.inspectionsReportingProblems().stream().toList());
+    return INSPECTION_IDS_REPORTING_PROBLEMS.metric(new ArrayList<>(report.inspectionsReportingProblems()), report.inspectionSessionCount());
   }
 
   private static Collection<MetricEvent> getChangedSettingsEvents(InspectionToolWrapper<?, ?> tool,

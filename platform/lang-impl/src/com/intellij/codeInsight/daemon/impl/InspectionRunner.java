@@ -9,6 +9,7 @@ import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobLauncherImpl;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -153,6 +154,7 @@ class InspectionRunner {
   }
 
   private void reportIdsOfInspectionsReportedAnyProblem(List<InspectionContext> init) {
+    if (!StatisticsUploadAssistant.isCollectAllowedOrForced()) return;
     Set<String> inspectionIdsReportedProblems = new HashSet<>();
     InspectionProblemHolder holder;
     for (InspectionContext context : init) {

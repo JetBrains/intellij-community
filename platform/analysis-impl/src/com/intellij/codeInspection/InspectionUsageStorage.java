@@ -8,6 +8,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service(value = Service.Level.PROJECT)
 @ApiStatus.Internal
@@ -16,6 +17,7 @@ public final class InspectionUsageStorage {
     return project.getService(InspectionUsageStorage.class);
   }
   private Set<String> inspectionsReportingProblems = newStorage();
+  private final AtomicInteger inspectionSessions = new AtomicInteger(0);
 
   @NotNull
   private static Set<@NotNull String> newStorage() {
@@ -24,14 +26,16 @@ public final class InspectionUsageStorage {
 
   public void reportInspectionsWhichReportedProblems(Set<String> inspectionIds) {
     inspectionsReportingProblems.addAll(inspectionIds);
+    inspectionSessions.incrementAndGet();
   }
 
   @NotNull
   public Report collectHighligtingReport() {
     Set<String> old = inspectionsReportingProblems;
     inspectionsReportingProblems = newStorage();
-    return new Report(old);
+    int inspectionSessionCount = inspectionSessions.getAndSet(0);
+    return new Report(old, inspectionSessionCount);
   }
 
-  public record Report(Set<String> inspectionsReportingProblems) {}
+  public record Report(Set<String> inspectionsReportingProblems, int inspectionSessionCount) {}
 }
