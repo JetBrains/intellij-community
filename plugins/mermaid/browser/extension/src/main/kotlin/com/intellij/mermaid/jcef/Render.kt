@@ -66,9 +66,10 @@ private fun Element.updatePieDiagramViewBox() {
 
   val childElement = findChildElement { it.nodeName == "g" && it.hasAttribute("transform") } ?: return
 
+  val height = getAttribute("viewBox")?.split(" ")?.lastOrNull()
   removeAttribute("viewBox")
   val rect = childElement.getBoundingClientRect()
-  setAttribute("viewBox", "0 0 ${rect.right} ${rect.bottom}")
+  setAttribute("viewBox", "0 0 ${rect.right} ${height ?: rect.bottom}")
 }
 
 private fun Element.addStyleAttributeFromElement(svgElement: Element) {
