@@ -157,6 +157,7 @@ class UnindexedFilesIndexer extends DumbModeTask {
 
   @Override
   public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+    myIndex.loadIndexes(); // make sure that indexes are loaded, because we can get here without scanning (e.g. from VFS refresh)
     if (!IndexInfrastructure.hasIndices()) {
       return;
     }
