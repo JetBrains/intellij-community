@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -218,6 +219,14 @@ final class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyl
         if (LOG.isDebugEnabled()) {
           LOG.debug("Computation ended for " + file.getName());
         }
+      }
+      catch (ProcessCanceledException pce) {
+        // CodeStyleSettingsModifier extensions (aka [modifier]) can produce PCE while not ready.
+        // But often this procedure is performed under an externally canceled progress,
+        // so we return to the initial state
+        cancel();
+        reset();
+        throw pce;
       }
       finally {
         myComputationLock.unlock();
