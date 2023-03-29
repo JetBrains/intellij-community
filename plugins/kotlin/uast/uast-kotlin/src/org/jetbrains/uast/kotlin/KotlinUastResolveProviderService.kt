@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.builtins.createFunctionType
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.psi.*
@@ -64,7 +63,7 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         get() = KotlinConverter
 
     override fun convertToPsiAnnotation(ktElement: KtElement): PsiAnnotation? {
-        return ktElement.actionUnderSafeAnalyzeBlock({ ktElement.toLightAnnotation() }, { null })
+        return ktElement.toLightAnnotation()
     }
 
     private fun getResolvedCall(sourcePsi: KtCallElement): ResolvedCall<*>? {
@@ -172,7 +171,7 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
     }
 
     override fun getPsiAnnotations(psiElement: PsiModifierListOwner): Array<PsiAnnotation> {
-        return psiElement.actionUnderSafeAnalyzeBlock({ psiElement.annotations }, { emptyArray() })
+        return psiElement.annotations
     }
 
     override fun getReferenceVariants(ktExpression: KtExpression, nameHint: String): Sequence<PsiElement> {
