@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.idea.gradleTooling.GradleImportProperties.ENABLE_KGP
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinExtensionReflection
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinMultiplatformImportReflection
 import org.jetbrains.kotlin.idea.projectModel.*
+import org.jetbrains.kotlin.tooling.core.Interner
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver
 import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder
@@ -19,6 +20,7 @@ interface HasDependencyResolver {
 
 interface MultiplatformModelImportingContext : KotlinSourceSetContainer, HasDependencyResolver {
     val project: Project
+    val interner: Interner
     val kotlinGradlePluginVersion: KotlinGradlePluginVersion?
     val compilerArgumentsCacheMapper: CompilerArgumentsCacheMapper
 
@@ -96,6 +98,7 @@ internal class MultiplatformModelImportingContextImpl(
     modelBuilderContext: ModelBuilderContext
 ) : MultiplatformModelImportingContext {
 
+    override val interner: Interner = Interner()
 
     /** see [initializeSourceSets] */
     override lateinit var sourceSetsByName: Map<String, KotlinSourceSetImpl>
