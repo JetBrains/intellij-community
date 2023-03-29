@@ -276,7 +276,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   }
 
   private static boolean reportConflicts(final ArrayList<String> conflicts, final Project project) {
-    ConflictsDialog conflictsDialog = new ConflictsDialog(project, ArrayUtilRt.toStringArray(conflicts));
+    ConflictsDialog conflictsDialog = new Conflict(project, ArrayUtilRt.toStringArray(conflicts));
     return conflictsDialog.showAndGet();
   }
 

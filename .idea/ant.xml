@@ -6,6 +6,7 @@
         <property name="work.idea.home" value="$APPLICATION_HOME_DIR$" />
       </properties>
     </buildFile>
+    <buildFile url="file://$PROJECT_DIR$/build.xml" />
   </component>
   <component name="GantSettings">
     <option name="SDK_HOME" value="$PROJECT_DIR$/build/lib/gant" />

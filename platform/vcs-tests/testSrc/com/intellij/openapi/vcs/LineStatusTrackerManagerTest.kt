@@ -775,7 +775,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
       val tracker = file.tracker as PartialLocalLineStatusTracker
       file.assertAffectedChangeLists("Test", DEFAULT)
 
-      val range = tracker.getRanges()!![1]
+      tracker.getRanges()!![1]
       file.moveAllChangesTo("Test 2")
       file.assertAffectedChangeLists("Test 2")
       assertNotNull(file.tracker)
@@ -843,7 +843,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
       val tracker = file.tracker as PartialLocalLineStatusTracker
       file.assertAffectedChangeLists("Test", DEFAULT)
 
-      val range = tracker.getRanges()!![1]
+      tracker.getRanges()!![1]
       file.moveAllChangesTo("Test 2")
       file.assertAffectedChangeLists("Test 2")
 
