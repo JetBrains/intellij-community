@@ -23,11 +23,14 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
+import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference;
-import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.junit.Test;
+
+import java.util.Set;
 
 public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
   @Test
@@ -524,7 +527,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
   public void testCustomDelimiters() throws Exception {
     createProjectSubDir("res");
 
-    importProject("""
+    importProjectAndExpectResourcePluginIndexed("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -551,8 +554,6 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                     </build>
                     """);
 
-    checkResourcesPluginIndexed();
-
     VirtualFile f = createProjectSubFile("res/foo1.properties",
                                          """
                                            foo1=${basedir}
@@ -570,7 +571,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
   public void testDontUseDefaultDelimiter1() throws Exception {
     createProjectSubDir("res");
 
-    importProject("""
+    importProjectAndExpectResourcePluginIndexed("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -597,8 +598,6 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                     </build>
                     """);
 
-    checkResourcesPluginIndexed();
-
     VirtualFile f = createProjectSubFile("res/foo1.properties",
                                          "foo1=${basedir}\n" +
                                          "foo2=|pom.baseUri|");
@@ -609,7 +608,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
 
   @Test
   public void testDoNotAddReferenceToDelimiterDefinition() {
-    importProject("""
+    importProjectAndExpectResourcePluginIndexed("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -646,8 +645,6 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                            </plugin>
                          </plugins>
                        </build>""");
-
-    checkResourcesPluginIndexed();
 
     checkHighlighting();
   }
@@ -691,9 +688,10 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     fail("Maven filter reference was not added");
   }
 
-  private void checkResourcesPluginIndexed() {
-    var indicesManager = MavenIndicesManager.getInstance(myProject);
-    var pluginIndexed = indicesManager.hasLocalArtifactId("org.apache.maven.plugins", "maven-resources-plugin");
-    assertTrue("Maven resources plugin is not indexed", pluginIndexed);
+  private void importProjectAndExpectResourcePluginIndexed(@NotNull @Language(value = "XML", prefix = "<project>", suffix = "</project>") String xml) {
+    runAndExpectPluginIndexEvents(Set.of("maven-resources-plugin"), () -> {
+      importProject(xml);
+    });
   }
+
 }
