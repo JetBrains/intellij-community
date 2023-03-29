@@ -143,16 +143,16 @@ class ActionStepBuilder {
     mySeparatorText = null;
   }
 
-  private List<PopupFactoryImpl.InlineActionItem> createInlineActionsItems(@NotNull List<? extends AnAction> inlineActions) {
-    var inlineActionGroup = new DefaultActionGroup(inlineActions);
+  private @NotNull List<PopupFactoryImpl.InlineActionItem> createInlineActionsItems(@NotNull List<? extends AnAction> inlineActions) {
     List<PopupFactoryImpl.InlineActionItem> res = new ArrayList<>();
-    for (AnAction action : Utils.expandActionGroup(inlineActionGroup, myPresentationFactory, myDataContext, myActionPlace)) {
+    for (AnAction action : inlineActions) {
       Presentation presentation = myPresentationFactory.getPresentation(action);
+      if (!presentation.isVisible()) continue;
       PopupFactoryImpl.InlineActionItem item = new PopupFactoryImpl.InlineActionItem(action, myMaxIconWidth, myMaxIconHeight);
       item.updateFromPresentation(presentation, myActionPlace);
       res.add(item);
     }
-    return res;
+    return res.isEmpty() ? Collections.emptyList() : res;
   }
 
   static @NotNull Couple<Icon> calcRawIcons(@NotNull AnAction action, @NotNull Presentation presentation, boolean forceChecked) {
