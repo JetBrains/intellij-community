@@ -246,7 +246,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider,
     return pos == null ? 0 : pos.column;
   }
 
-  protected void setStateImpl(Project project, Editor editor, TextEditorState state, boolean exactState) {
+  protected void setStateImpl(@Nullable Project project, @NotNull Editor editor, @NotNull TextEditorState state, boolean exactState) {
     TextEditorState.CaretState[] carets = state.CARETS;
     if (carets.length > 0) {
       List<CaretState> states = new ArrayList<>(carets.length);

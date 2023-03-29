@@ -20,6 +20,7 @@ import com.intellij.util.SlowOperations;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
@@ -97,14 +98,16 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
   }
 
   @Override
-  protected void setStateImpl(Project project, Editor editor, TextEditorState state, boolean exactState) {
+  protected void setStateImpl(@Nullable Project project, @NotNull Editor editor, @NotNull TextEditorState state, boolean exactState) {
     super.setStateImpl(project, editor, state, exactState);
 
     // folding
     CodeFoldingState foldState = state.getFoldingState();
+    // folding state is restored by PsiAwareTextEditorImpl.loadEditorInBackground, that's why here we check isEditorLoaded
     if (project != null && foldState != null && AsyncEditorLoader.isEditorLoaded(editor)) {
-      if (!PsiDocumentManager.getInstance(project).isCommitted(editor.getDocument())) {
-        PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+      PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
+      if (!psiDocumentManager.isCommitted(editor.getDocument())) {
+        psiDocumentManager.commitDocument(editor.getDocument());
         LOG.error("File should be parsed when changing editor state, otherwise UI might be frozen for a considerable time");
       }
 

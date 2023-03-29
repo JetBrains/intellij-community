@@ -126,7 +126,7 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   }
 
   @Override
-  public @NotNull Editor getEditor(){
+  public @NotNull EditorEx getEditor() {
     return getActiveEditor();
   }
 
