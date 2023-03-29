@@ -20,7 +20,7 @@ import com.intellij.refactoring.extractMethod.SignatureSuggesterPreviewDialog
 import com.intellij.refactoring.extractMethod.newImpl.*
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.inputParameterOf
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.replacePsiRange
-import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.addMethodInBestPlace
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.replaceWithMethod
 import com.intellij.refactoring.extractMethod.newImpl.JavaDuplicatesFinder.Companion.textRangeOf
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.extractMethod.newImpl.structures.InputParameter
@@ -43,7 +43,7 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
       val copiedClass = PsiTreeUtil.findSameElementInCopy(targetClass, copiedFile)
       val expression = elements.singleOrNull() as? PsiExpression
       val virtualExpressionRange = expression?.getUserData(ElementToWorkOn.TEXT_RANGE)?.textRange
-      val range = virtualExpressionRange ?:TextRange(elements.first().textRange.startOffset, elements.last().textRange.endOffset)
+      val range = virtualExpressionRange ?: TextRange(elements.first().textRange.startOffset, elements.last().textRange.endOffset)
       val copiedElements = ExtractSelector().suggestElementsToExtract(copiedFile, range)
       val extractOptions = findExtractOptions(copiedClass, copiedElements, methodName, makeStatic)
       return DuplicatesMethodExtractor(extractOptions, targetClass, elements)
@@ -57,14 +57,13 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
     val document = file.viewProvider.document
 
     val preparedElements = MethodExtractor().prepareRefactoringElements(extractOptions)
-    val (calls, method) = runWriteAction {
-      val addedMethod = addMethodInBestPlace(targetClass, elements.first(), preparedElements.method)
-      val callElements = replacePsiRange(elements, preparedElements.callElements)
-      Pair(callElements, addedMethod)
+    val (callsPointer, methodPointer) = runWriteAction {
+      val (calls, method) = replaceWithMethod(targetClass, elements, preparedElements)
+      val methodPointer = SmartPointerManager.createPointer(method)
+      val callsPointer = calls.map(SmartPointerManager::createPointer)
+      Pair(callsPointer, methodPointer)
     }
 
-    val methodPointer = SmartPointerManager.createPointer(method)
-    val callsPointer = calls.map(SmartPointerManager::createPointer)
     val manager = PsiDocumentManager.getInstance(file.project)
     manager.doPostponedOperationsAndUnblockDocument(document)
     manager.commitDocument(document)
@@ -106,9 +105,10 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
     val exactDuplicates = duplicates.filter { duplicate ->
       duplicate.changedExpressions.all { changedExpression -> changedExpression.pattern in initialParameters }
     }
-    val oldMethodCall = findMethodCallInside(calls.firstOrNull()) ?: throw IllegalStateException()
-    val newMethodCall = findMethodCallInside(parametrizedExtraction.callElements.firstOrNull()) ?: throw IllegalStateException()
+    val oldMethodCall = findMethodCallInside(calls.firstOrNull())
+    val newMethodCall = findMethodCallInside(parametrizedExtraction.callElements.firstOrNull())
     fun confirmChangeSignature(): Boolean {
+      if (oldMethodCall == null || newMethodCall == null) return false
       val manager = CodeStyleManager.getInstance(project)
       val initialMethod = manager.reformat(method.copy()) as PsiMethod
       val parametrizedMethod = manager.reformat(parametrizedExtraction.method) as PsiMethod

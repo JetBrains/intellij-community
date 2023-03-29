@@ -98,8 +98,13 @@ object InplaceExtractUtils {
       return false
     }
     val reference = PsiTreeUtil.findElementOfClassAtOffset(file, variableRange.startOffset, PsiReferenceExpression::class.java, false)
-    val resolvedElements = reference?.multiResolve(false)
-    if (resolvedElements?.size != 1) {
+    if (reference != null && reference.multiResolve(false).size != 1) {
+      showErrorHint(editor, variableRange.endOffset, JavaRefactoringBundle.message("extract.method.error.method.conflict"))
+      return false
+    }
+    val member = PsiTreeUtil.findElementOfClassAtOffset(file, variableRange.startOffset, PsiMember::class.java, false)
+    val parentClass = member?.containingClass
+    if (member is PsiMethod && parentClass != null && parentClass.findMethodsBySignature(member, true).size > 1) {
       showErrorHint(editor, variableRange.endOffset, JavaRefactoringBundle.message("extract.method.error.method.conflict"))
       return false
     }
@@ -301,11 +306,13 @@ object InplaceExtractUtils {
     return document.getLineNumber(range.startOffset)..document.getLineNumber(range.endOffset)
   }
 
-  fun createPreview(editor: Editor, methodRange: TextRange, methodOffset: Int, callRange: TextRange, callOffset: Int): EditorCodePreview {
+  fun createPreview(editor: Editor, methodRange: TextRange, methodOffset: Int, callRange: TextRange?, callOffset: Int?): EditorCodePreview {
     val codePreview = EditorCodePreview.create(editor)
     val highlighting = createInsertedHighlighting(editor, methodRange)
     Disposer.register(codePreview, highlighting)
-    addPreview(codePreview, editor, getLinesFromTextRange(editor.document, callRange), callOffset)
+    if (callRange != null && callOffset != null) {
+      addPreview(codePreview, editor, getLinesFromTextRange(editor.document, callRange), callOffset)
+    }
     addPreview(codePreview, editor, getLinesFromTextRange(editor.document, methodRange).trim(4), methodOffset)
     return codePreview
   }

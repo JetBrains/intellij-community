@@ -20,13 +20,13 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiEditorUtil
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.JavaRefactoringSettings
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractMethod.ExtractMethodDialog
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.guessMethodName
-import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.replacePsiRange
-import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.addMethodInBestPlace
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.replaceWithMethod
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.findAllOptionsToExtract
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.selectOptionWithTargetClass
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.withFilteredAnnotations
@@ -152,9 +152,7 @@ class MethodExtractor {
   fun extractMethod(extractOptions: ExtractOptions): ExtractedElements {
     val preparedElements = prepareRefactoringElements(extractOptions)
     return WriteAction.compute<ExtractedElements, Throwable> {
-      val method = addMethodInBestPlace(extractOptions.targetClass, extractOptions.elements.first(), preparedElements.method)
-      val callElements = replacePsiRange(extractOptions.elements, preparedElements.callElements)
-      ExtractedElements(callElements, method)
+      replaceWithMethod(extractOptions.targetClass, extractOptions.elements, preparedElements)
     }
   }
 
@@ -237,7 +235,12 @@ class MethodExtractor {
       updateMethodAnnotations(method, dependencies.inputParameters)
     }
 
-    val callElements = CallBuilder(dependencies.elements.first()).createCall(method, dependencies)
+    val context = PsiTreeUtil.getContextOfType(dependencies.elements.first(), PsiMember::class.java)
+    val callElements = if (context !is PsiClass) {
+      CallBuilder(dependencies.elements.first()).createCall(method, dependencies)
+    } else {
+      emptyList()
+    }
     return ExtractedElements(callElements, method)
   }
 

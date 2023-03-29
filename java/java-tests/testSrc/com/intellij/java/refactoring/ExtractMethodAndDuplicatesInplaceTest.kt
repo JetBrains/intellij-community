@@ -476,6 +476,18 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     doTest()
   }
 
+  fun testExtractExpressionFromClassContext(){
+    doTest{
+      nextTemplateVariable()
+    }
+  }
+
+  fun testExtractMethodFromClassContext(){
+    doTest{
+      nextTemplateVariable()
+    }
+  }
+
   fun testRefactoringListener(){
     templateTest {
       configureByFile("$BASE_PATH/${getTestName(false)}.java")

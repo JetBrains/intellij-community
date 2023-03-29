@@ -181,7 +181,11 @@ public final class IntroduceVariableUtil {
 
       final PsiElement parent = literalExpression != null ? literalExpression : elementAt;
       PsiElement commonParent = PsiTreeUtil.findCommonParent(elementAtStart, elementAtEnd);
-      tempExpr = elementFactory.createExpressionFromText(text, Objects.requireNonNullElse(parent, commonParent));
+      PsiElement context = Objects.requireNonNullElse(parent, commonParent);
+      if (TextRange.create(startOffset, endOffset).contains(context.getTextRange())){
+        context = context.getParent();
+      }
+      tempExpr = elementFactory.createExpressionFromText(text, context);
 
       if (ErrorUtil.containsDeepError(tempExpr)) return null;
 
