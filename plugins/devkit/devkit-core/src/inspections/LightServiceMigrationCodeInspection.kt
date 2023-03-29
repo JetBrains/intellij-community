@@ -18,7 +18,7 @@ import org.jetbrains.idea.devkit.util.PluginPlatformInfo
 import org.jetbrains.idea.devkit.util.PsiUtil.isIdeaProject
 import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass
 
-class LightServiceMigrationCodeInspection : DevKitJvmInspection() {
+internal class LightServiceMigrationCodeInspection : DevKitJvmInspection() {
 
   override fun buildVisitor(project: Project, sink: HighlightSink, isOnTheFly: Boolean): JvmElementVisitor<Boolean> {
     return object : DefaultJvmElementVisitor<Boolean> {
