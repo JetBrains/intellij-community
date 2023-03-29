@@ -17,6 +17,7 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.Function;
+import com.intellij.util.indexing.IndexUpToDateCheckIn;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,7 +64,8 @@ public abstract class StubTreeLoader {
                                                      @Nullable Throwable cause) {
     return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
       VirtualFile file = psiFile.getViewProvider().getVirtualFile();
-      StubTree stubTreeFromIndex = (StubTree)readFromVFile(psiFile.getProject(), file);
+      StubTree stubTreeFromIndex = IndexUpToDateCheckIn.disableUpToDateCheckIn(
+        () -> (StubTree)readFromVFile(psiFile.getProject(), file));
       boolean compiled = psiFile instanceof PsiCompiledElement;
       Document document = compiled ? null : FileDocumentManager.getInstance().getDocument(file);
       IndexingStampInfo indexingStampInfo = getIndexingStampInfo(file);
