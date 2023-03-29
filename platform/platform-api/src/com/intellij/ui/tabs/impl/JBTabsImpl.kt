@@ -1,3701 +1,3040 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui.tabs.impl;
+package com.intellij.ui.tabs.impl
 
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.advanced.AdvancedSettings;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.rd.GraphicsExKt;
-import com.intellij.openapi.ui.OnePixelDivider;
-import com.intellij.openapi.ui.Queryable;
-import com.intellij.openapi.ui.ShadowAction;
-import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeGlassPane;
-import com.intellij.openapi.wm.IdeGlassPaneUtil;
-import com.intellij.ui.*;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.JBScrollBar;
-import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.components.JBThinOverlappingScrollBar;
-import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.hover.HoverListener;
-import com.intellij.ui.popup.list.GroupedItemsListRenderer;
-import com.intellij.ui.popup.list.SelectablePanel;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.switcher.QuickActionProvider;
-import com.intellij.ui.tabs.*;
-import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
-import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
-import com.intellij.ui.tabs.impl.singleRow.SingleRowPassInfo;
-import com.intellij.ui.tabs.impl.table.TableLayout;
-import com.intellij.ui.tabs.impl.table.TablePassInfo;
-import com.intellij.ui.tabs.impl.themes.TabTheme;
-import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.Producer;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
-import com.intellij.util.ui.*;
-import com.intellij.util.ui.update.LazyUiDisposable;
-import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.accessibility.*;
-import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.PopupMenuEvent;
-import javax.swing.event.PopupMenuListener;
-import javax.swing.plaf.ComponentUI;
-import java.awt.*;
-import java.awt.event.*;
-import java.awt.image.BufferedImage;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.util.List;
-import java.util.*;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
-
-import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
+import com.intellij.icons.AllIcons
+import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettings.Companion.getInstance
+import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
+import com.intellij.ide.ui.UISettingsListener
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getBoolean
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.rd.fill2DRoundRect
+import com.intellij.openapi.ui.Queryable
+import com.intellij.openapi.ui.ShadowAction
+import com.intellij.openapi.ui.popup.*
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep
+import com.intellij.openapi.ui.popup.util.PopupUtil
+import com.intellij.openapi.util.*
+import com.intellij.openapi.util.IconLoader.getTransparentIcon
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.IdeGlassPane
+import com.intellij.openapi.wm.IdeGlassPaneUtil
+import com.intellij.ui.*
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.components.JBScrollBar
+import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.JBThinOverlappingScrollBar
+import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.hover.HoverListener
+import com.intellij.ui.popup.list.GroupedItemsListRenderer
+import com.intellij.ui.popup.list.SelectablePanel
+import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.ui.switcher.QuickActionProvider
+import com.intellij.ui.tabs.*
+import com.intellij.ui.tabs.JBTabPainter.Companion.DEFAULT
+import com.intellij.ui.tabs.UiDecorator.UiDecoration
+import com.intellij.ui.tabs.impl.JBTabsImpl
+import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout
+import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout
+import com.intellij.ui.tabs.impl.singleRow.SingleRowPassInfo
+import com.intellij.ui.tabs.impl.table.TableLayout
+import com.intellij.ui.tabs.impl.themes.TabTheme
+import com.intellij.util.Alarm
+import com.intellij.util.ArrayUtil
+import com.intellij.util.Function
+import com.intellij.util.Producer
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.JBIterable
+import com.intellij.util.ui.*
+import com.intellij.util.ui.StartupUiUtil.addAwtListener
+import com.intellij.util.ui.update.LazyUiDisposable
+import org.intellij.lang.annotations.MagicConstant
+import org.jetbrains.annotations.NonNls
+import java.awt.*
+import java.awt.event.*
+import java.awt.image.BufferedImage
+import java.beans.PropertyChangeEvent
+import java.beans.PropertyChangeListener
+import java.util.*
+import java.util.function.Consumer
+import java.util.function.Predicate
+import java.util.function.Supplier
+import javax.accessibility.*
+import javax.swing.*
+import javax.swing.border.Border
+import javax.swing.event.ChangeListener
+import javax.swing.event.PopupMenuEvent
+import javax.swing.event.PopupMenuListener
+import javax.swing.plaf.ComponentUI
 
 @DirtyUI
-public class JBTabsImpl extends JComponent
-  implements JBTabsEx, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, JBTabsPresentation, Queryable,
-             UISettingsListener, QuickActionProvider, MorePopupAware, Accessible {
+open class JBTabsImpl(private val myProject: Project?,
+                      focusManager: IdeFocusManager?,
+                      parentDisposable: Disposable) : JComponent(), JBTabsEx, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, JBTabsPresentation, Queryable, UISettingsListener, QuickActionProvider, MorePopupAware, Accessible {
+  private val myVisibleInfos: MutableList<TabInfo> = ArrayList()
+  private val myInfo2Page: MutableMap<TabInfo?, AccessibleTabPage> = HashMap()
+  private val myHiddenInfos: MutableMap<TabInfo, Int> = HashMap()
+  private var mySelectedInfo: TabInfo? = null
+  val myInfo2Label: MutableMap<TabInfo?, TabLabel> = HashMap()
+  val myInfo2Toolbar: MutableMap<TabInfo?, Toolbar> = HashMap()
+  val myMoreToolbar: ActionToolbar?
+  var myEntryPointToolbar: ActionToolbar? = null
+  val myTitleWrapper = NonOpaquePanel()
+  var myHeaderFitSize: Dimension? = null
+  private var innerInsets: Insets = JBInsets.emptyInsets()
+  private val myTabMouseListeners = ContainerUtil.createLockFreeCopyOnWriteList<EventListener>()
+  private val myTabListeners = ContainerUtil.createLockFreeCopyOnWriteList<TabsListener>()
+  private var myFocused = false
+  private var myPopupGroup: Supplier<out ActionGroup>? = null
+  var popupPlace: String? = null
+    private set
+  var myPopupInfo: TabInfo? = null
+  val myNavigationActions: DefaultActionGroup
+  val myPopupListener: PopupMenuListener
+  var myActivePopup: JPopupMenu? = null
+  var myHorizontalSide = true
+  var isSideComponentOnTabs = true
+    private set
+  var isSideComponentBefore = true
+    private set
+  val separatorWidth = JBUI.scale(1)
+  private var myDataProvider: DataProvider? = null
+  private val myDeferredToRemove = WeakHashMap<Component, Component>()
+  private var mySingleRowLayout: SingleRowLayout
+  private var myTableLayout = createTableLayout()
 
-  public static final Key<Boolean> PINNED = Key.create("pinned");
-
-  public static final Key<Integer> SIDE_TABS_SIZE_LIMIT_KEY = Key.create("SIDE_TABS_SIZE_LIMIT_KEY");
-
-  private static final Key<Integer> HIDDEN_INFOS_SELECT_INDEX_KEY = Key.create("HIDDEN_INFOS_SELECT_INDEX");
-
-  public static final int MIN_TAB_WIDTH = JBUIScale.scale(75);
-  public static final int DEFAULT_MAX_TAB_WIDTH = JBUIScale.scale(300);
-
-  private static final Comparator<TabInfo> ABC_COMPARATOR = (o1, o2) -> StringUtil.naturalCompare(o1.getText(), o2.getText());
-  private static final Logger LOG = Logger.getInstance(JBTabsImpl.class);
-  private static final int SCROLL_BAR_THICKNESS = 3;
-
-  private final List<@NotNull TabInfo> myVisibleInfos = new ArrayList<>();
-  private final Map<TabInfo, AccessibleTabPage> myInfo2Page = new HashMap<>();
-  private final Map<TabInfo, Integer> myHiddenInfos = new HashMap<>();
-
-  private TabInfo mySelectedInfo;
-  public final Map<TabInfo, TabLabel> myInfo2Label = new HashMap<>();
-  public final Map<TabInfo, Toolbar> myInfo2Toolbar = new HashMap<>();
-  public final ActionToolbar myMoreToolbar;
-  public @Nullable ActionToolbar myEntryPointToolbar;
-  public final NonOpaquePanel myTitleWrapper = new NonOpaquePanel();
-  public Dimension myHeaderFitSize;
-
-  private Insets myInnerInsets = JBInsets.emptyInsets();
-
-  private final List<EventListener> myTabMouseListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final List<TabsListener> myTabListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private boolean myFocused;
-
-  private Supplier<? extends ActionGroup> myPopupGroup;
-  private String myPopupPlace;
-
-  TabInfo myPopupInfo;
-  final DefaultActionGroup myNavigationActions;
-
-  final PopupMenuListener myPopupListener;
-  JPopupMenu myActivePopup;
-
-  public boolean myHorizontalSide = true;
-
-  private boolean mySideComponentOnTabs = true;
-
-  private boolean mySideComponentBefore = true;
-
-  private final int mySeparatorWidth = JBUI.scale(1);
-
-  private DataProvider myDataProvider;
-
-  private final WeakHashMap<Component, Component> myDeferredToRemove = new WeakHashMap<>();
-
-  private SingleRowLayout mySingleRowLayout;
-  private TableLayout myTableLayout = createTableLayout();
   // it's an invisible splitter intended for changing size of tab zone
-  private final TabsSideSplitter mySplitter = new TabsSideSplitter(this);
+  private val mySplitter = TabsSideSplitter(this)
+  var effectiveLayout: TabLayout? = null
+    private set
+  var lastLayoutPass: LayoutPassInfo? = null
+    private set
+  var myForcedRelayout = false
+  private var myUiDecorator: UiDecorator? = null
+  private var myPaintFocus = false
+  private var myHideTabs = false
+  private var myHideTopPanel = false
+  private var isRequestFocusOnLastFocusedComponent = false
+  private var myListenerAdded = false
+  val myAttractions: MutableSet<TabInfo> = HashSet()
+  private val myAnimator: Animator
+  private var myAllTabs: List<TabInfo>? = null
+  private var myFocusManager: IdeFocusManager
+  private val myNestedTabs: MutableSet<JBTabsImpl> = HashSet()
+  var myAddNavigationGroup = true
+  private var myActiveTabFillIn: Color? = null
+  private var myTabLabelActionsAutoHide = false
+  private val myTabActionsAutoHideListener = TabActionsAutoHideListener()
+  private var myTabActionsAutoHideListenerDisposable = Disposer.newDisposable()
+  private var myGlassPane: IdeGlassPane? = null
+  var tabActionsMouseDeadzone = TimedDeadzone.DEFAULT
+    private set
+  private var myRemoveDeferredRequest: Long = 0
+  var position = JBTabsPosition.top
+    private set
+  private val myBorder = createTabBorder()
+  private val myNextAction: BaseNavigationAction?
+  private val myPrevAction: BaseNavigationAction?
+  var isTabDraggingEnabled = false
+    private set
+  protected var dragHelper: DragHelper? = null
+  private var myNavigationActionsEnabled = true
+  protected var myDropInfo: TabInfo? = null
+  private var myDropInfoIndex = 0
 
-
-  private TabLayout myLayout;
-  private LayoutPassInfo myLastLayoutPass;
-
-  public boolean myForcedRelayout;
-
-  private UiDecorator myUiDecorator;
-  static final UiDecorator ourDefaultDecorator = new DefaultDecorator();
-
-  private boolean myPaintFocus;
-
-  private boolean myHideTabs;
-  private boolean myHideTopPanel;
-  private @Nullable Project myProject;
-
-  private boolean myRequestFocusOnLastFocusedComponent;
-  private boolean myListenerAdded;
-  final Set<TabInfo> myAttractions = new HashSet<>();
-  private final Animator myAnimator;
-  private List<TabInfo> myAllTabs;
-  private @NotNull IdeFocusManager myFocusManager;
-  private static final boolean myAdjustBorders = true;
-  private final Set<JBTabsImpl> myNestedTabs = new HashSet<>();
-
-  boolean myAddNavigationGroup = true;
-
-  private Color myActiveTabFillIn;
-
-  private boolean myTabLabelActionsAutoHide;
-
-  private final TabActionsAutoHideListener myTabActionsAutoHideListener = new TabActionsAutoHideListener();
-  private Disposable myTabActionsAutoHideListenerDisposable = Disposer.newDisposable();
-  private IdeGlassPane myGlassPane;
-  private static final @NonNls String LAYOUT_DONE = "Layout.done";
-
-  private TimedDeadzone.Length myTabActionsMouseDeadzone = TimedDeadzone.DEFAULT;
-
-  private long myRemoveDeferredRequest;
-
-  private JBTabsPosition myPosition = JBTabsPosition.top;
-
-  private final JBTabsBorder myBorder = createTabBorder();
-  private final BaseNavigationAction myNextAction;
-  private final BaseNavigationAction myPrevAction;
-
-  private boolean myTabDraggingEnabled;
-  private DragHelper myDragHelper;
-  private boolean myNavigationActionsEnabled = true;
-
-  protected TabInfo myDropInfo;
-  private int myDropInfoIndex;
-
-  @MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT,
-    -1})
-  private int myDropSide = -1;
-  protected boolean myShowDropLocation = true;
-
-  private TabInfo myOldSelection;
-  private SelectionChangeHandler mySelectionChangeHandler;
-
-  private Runnable myDeferredFocusRequest;
-  private int myFirstTabOffset;
-
-  private final TabPainterAdapter myTabPainterAdapter = createTabPainterAdapter();
-  protected final JBTabPainter myTabPainter = myTabPainterAdapter.getTabPainter();
-  private boolean myAlphabeticalMode;
-  private boolean mySupportsCompression;
-  private String myEmptyText;
-  private boolean myMouseInsideTabsArea;
-  private boolean myRemoveNotifyInProgress;
-
-  private boolean mySingleRow = true;
-
-  protected JBTabsBorder createTabBorder() {
-    return new JBDefaultTabsBorder(this);
+  @MagicConstant(
+    intValues = [SwingConstants.CENTER.toLong(), SwingConstants.TOP.toLong(), SwingConstants.LEFT.toLong(), SwingConstants.BOTTOM.toLong(), SwingConstants.RIGHT.toLong(), -1])
+  private var myDropSide = -1
+  protected var myShowDropLocation = true
+  private var myOldSelection: TabInfo? = null
+  private var mySelectionChangeHandler: JBTabs.SelectionChangeHandler? = null
+  private var myDeferredFocusRequest: Runnable? = null
+  private var myFirstTabOffset = 0
+  val tabPainterAdapter = createTabPainterAdapter()
+  val tabPainter = tabPainterAdapter.tabPainter
+  open var isAlphabeticalMode = false
+    private set
+  private var mySupportsCompression = false
+  private var myEmptyText: String? = null
+  var isMouseInsideTabsArea = false
+    private set
+  private var myRemoveNotifyInProgress = false
+  private var mySingleRow = true
+  protected open fun createTabBorder(): JBTabsBorder {
+    return JBDefaultTabsBorder(this)
   }
 
-  public JBTabPainter getTabPainter() {
-    return myTabPainter;
+  protected open fun createTabPainterAdapter(): TabPainterAdapter {
+    return DefaultTabPainterAdapter(DEFAULT)
   }
 
-  TabPainterAdapter getTabPainterAdapter() {
-    return myTabPainterAdapter;
-  }
+  private var tabLabelAtMouse: TabLabel? = null
+  private val myScrollBar: JBScrollBar
+  private val myScrollBarChangeListener: ChangeListener
+  private var myScrollBarOn = false
 
-  protected TabPainterAdapter createTabPainterAdapter() {
-    return new DefaultTabPainterAdapter(JBTabPainter.getDEFAULT());
-  }
+  constructor(project: Project) : this(project, project)
+  private constructor(project: Project, parent: Disposable) : this(project, IdeFocusManager.getInstance(project), parent)
 
-  private TabLabel tabLabelAtMouse;
-
-  private final JBScrollBar myScrollBar;
-  private final ChangeListener myScrollBarChangeListener;
-  private boolean myScrollBarOn = false;
-
-  public JBTabsImpl(@NotNull Project project) {
-    this(project, project);
-  }
-
-  private JBTabsImpl(@NotNull Project project, @NotNull Disposable parent) {
-    this(project, IdeFocusManager.getInstance(project), parent);
-  }
-
-  public JBTabsImpl(@Nullable Project project, @Nullable IdeFocusManager focusManager, @NotNull Disposable parentDisposable) {
-    myProject = project;
-    myFocusManager = focusManager == null ? getGlobalInstance() : focusManager;
-
-    setOpaque(true);
-    setBackground(myTabPainter.getBackgroundColor());
-
-    setBorder(myBorder);
-
-    myNavigationActions = new DefaultActionGroup();
-
-    myNextAction = new SelectNextAction(this, parentDisposable);
-    myPrevAction = new SelectPreviousAction(this, parentDisposable);
-
-    myNavigationActions.add(myNextAction);
-    myNavigationActions.add(myPrevAction);
-
-    setUiDecorator(null);
-
-    mySingleRowLayout = createSingleRowLayout();
-    setLayout(mySingleRowLayout);
-
-    mySplitter.getDivider().setOpaque(false);
-
-    myPopupListener = new PopupMenuListener() {
-      @Override
-      public void popupMenuWillBecomeVisible(final PopupMenuEvent e) {
+  init {
+    myFocusManager = focusManager ?: IdeFocusManager.getGlobalInstance()
+    isOpaque = true
+    background = tabPainter.getBackgroundColor()
+    border = myBorder
+    myNavigationActions = DefaultActionGroup()
+    myNextAction = SelectNextAction(this, parentDisposable)
+    myPrevAction = SelectPreviousAction(this, parentDisposable)
+    myNavigationActions.add(myNextAction)
+    myNavigationActions.add(myPrevAction)
+    setUiDecorator(null)
+    mySingleRowLayout = createSingleRowLayout()
+    setLayout(mySingleRowLayout)
+    mySplitter.divider.isOpaque = false
+    myPopupListener = object : PopupMenuListener {
+      override fun popupMenuWillBecomeVisible(e: PopupMenuEvent) {}
+      override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent) {
+        disposePopupListener()
       }
 
-      @Override
-      public void popupMenuWillBecomeInvisible(final PopupMenuEvent e) {
-        disposePopupListener();
+      override fun popupMenuCanceled(e: PopupMenuEvent) {
+        disposePopupListener()
       }
-
-      @Override
-      public void popupMenuCanceled(final PopupMenuEvent e) {
-        disposePopupListener();
-      }
-    };
-
-    ActionManager actionManager = ActionManager.getInstance();
-    myMoreToolbar = createToolbar(new DefaultActionGroup(actionManager.getAction("TabList")));
-    add(myMoreToolbar.getComponent());
-
-    DefaultActionGroup entryPointActionGroup = getEntryPointActionGroup();
+    }
+    val actionManager = ActionManager.getInstance()
+    myMoreToolbar = createToolbar(DefaultActionGroup(actionManager.getAction("TabList")))
+    add(myMoreToolbar.component)
+    val entryPointActionGroup = entryPointActionGroup
     if (entryPointActionGroup != null) {
-      myEntryPointToolbar = createToolbar(entryPointActionGroup);
-      add(myEntryPointToolbar.getComponent());
+      myEntryPointToolbar = createToolbar(entryPointActionGroup)
+      add(myEntryPointToolbar!!.component)
     }
     else {
-      myEntryPointToolbar = null;
+      myEntryPointToolbar = null
     }
-
-    add(myTitleWrapper);
-    Disposer.register(parentDisposable, () -> {
-      setTitleProducer(null);
-    });
+    add(myTitleWrapper)
+    Disposer.register(parentDisposable) { setTitleProducer(null) }
 
     // This scroll pane won't be shown on screen, it is needed only to handle scrolling events and properly update scrolling model
-    JScrollPane fakeScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-    myScrollBar = new JBThinOverlappingScrollBar(isHorizontalTabs() ? Adjustable.HORIZONTAL : Adjustable.VERTICAL);
-    fakeScrollPane.setVerticalScrollBar(myScrollBar);
-    fakeScrollPane.setHorizontalScrollBar(myScrollBar);
-    fakeScrollPane.setVisible(true);
-    fakeScrollPane.setBounds(0, 0, 0, 0);
-
-    add(myScrollBar);
-    addMouseWheelListener(event -> {
-      int modifiers = UIUtil.getAllModifiers(event) | (isHorizontalTabs() ? InputEvent.SHIFT_DOWN_MASK : 0);
-      MouseWheelEvent e = MouseEventAdapter.convert(event, fakeScrollPane, event.getID(), event.getWhen(),
-                                                    modifiers, event.getX(), event.getY());
-      MouseEventAdapter.redispatch(e, fakeScrollPane);
-    });
-    AWTEventListener listener = new AWTEventListener() {
-      final Alarm afterScroll = new Alarm(parentDisposable);
-
-      @Override
-      public void eventDispatched(AWTEvent event) {
-        Rectangle tabRectangle = null;
+    val fakeScrollPane: JScrollPane = JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
+                                                   ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS)
+    myScrollBar = JBThinOverlappingScrollBar(if (isHorizontalTabs) Adjustable.HORIZONTAL else Adjustable.VERTICAL)
+    fakeScrollPane.verticalScrollBar = myScrollBar
+    fakeScrollPane.horizontalScrollBar = myScrollBar
+    fakeScrollPane.isVisible = true
+    fakeScrollPane.setBounds(0, 0, 0, 0)
+    add(myScrollBar)
+    addMouseWheelListener { event: MouseWheelEvent ->
+      val modifiers = UIUtil.getAllModifiers(event) or if (isHorizontalTabs) InputEvent.SHIFT_DOWN_MASK else 0
+      val e = MouseEventAdapter.convert(event, fakeScrollPane, event.id, event.getWhen(),
+                                        modifiers, event.x, event.y)
+      MouseEventAdapter.redispatch(e, fakeScrollPane)
+    }
+    val listener: AWTEventListener = object : AWTEventListener {
+      val afterScroll = Alarm(parentDisposable)
+      override fun eventDispatched(event: AWTEvent) {
+        var tabRectangle: Rectangle? = null
         if (mySingleRowLayout.myLastSingRowLayout != null) {
-          tabRectangle = mySingleRowLayout.myLastSingRowLayout.tabRectangle;
+          tabRectangle = mySingleRowLayout.myLastSingRowLayout.tabRectangle
         }
         else if (myTableLayout.myLastTableLayout != null) {
-          tabRectangle = myTableLayout.myLastTableLayout.tabRectangle;
+          tabRectangle = myTableLayout.myLastTableLayout.tabRectangle
         }
-        if (tabRectangle == null) return;
-
-        MouseEvent me = (MouseEvent)event;
-        Point point = me.getPoint();
-        SwingUtilities.convertPointToScreen(point, me.getComponent());
-        Rectangle rect = getVisibleRect();
-        rect = rect.intersection(tabRectangle);
-        Point p = rect.getLocation();
-        SwingUtilities.convertPointToScreen(p, JBTabsImpl.this);
-        rect.setLocation(p);
-        boolean inside = rect.contains(point);
-        if (inside != myMouseInsideTabsArea) {
-          myMouseInsideTabsArea = inside;
-          afterScroll.cancelAllRequests();
+        if (tabRectangle == null) return
+        val me = event as MouseEvent
+        val point = me.point
+        SwingUtilities.convertPointToScreen(point, me.component)
+        var rect = visibleRect
+        rect = rect.intersection(tabRectangle)
+        val p = rect.location
+        SwingUtilities.convertPointToScreen(p, this@JBTabsImpl)
+        rect.location = p
+        val inside = rect.contains(point)
+        if (inside != isMouseInsideTabsArea) {
+          isMouseInsideTabsArea = inside
+          afterScroll.cancelAllRequests()
           if (!inside) {
-            afterScroll.addRequest(() -> {
-              // here is no any "isEDT"-checks <== this task should be called in EDT <==
-              // <== Alarm instance executes tasks in EDT <== used constructor of Alarm uses EDT for tasks by default
-              if (!myMouseInsideTabsArea) {
-                relayout(false, false);
-              }
-            }, 500);
+            afterScroll.addRequest({
+                                     // here is no any "isEDT"-checks <== this task should be called in EDT <==
+                                     // <== Alarm instance executes tasks in EDT <== used constructor of Alarm uses EDT for tasks by default
+                                     if (!isMouseInsideTabsArea) {
+                                       relayout(false, false)
+                                     }
+                                   }, 500)
           }
         }
       }
-    };
-    Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.MOUSE_MOTION_EVENT_MASK);
-    Disposer.register(parentDisposable, () -> {
-      Toolkit toolkit = Toolkit.getDefaultToolkit();
-      if (toolkit != null) {
-        toolkit.removeAWTEventListener(listener);
-      }
-    });
-
-    myAnimator = new Animator("JBTabs Attractions", 2, 500, true) {
-      @Override
-      public void paintNow(final int frame, final int totalFrames, final int cycle) {
-        repaintAttractions();
-      }
-    };
-
-    setFocusTraversalPolicyProvider(true);
-    setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
-      @Override
-      public Component getDefaultComponent(final Container aContainer) {
-        return getToFocus();
-      }
-    });
-
-    LazyUiDisposable<JBTabsImpl> listener1 = new LazyUiDisposable<>(parentDisposable, this, this) {
-      @Override
-      protected void initialize(@NotNull Disposable parent, @NotNull JBTabsImpl child, @Nullable Project project) {
-        if (myProject == null && project != null) {
-          myProject = project;
-        }
-
-        Disposer.register(parentDisposable, myAnimator);
-        Disposer.register(parentDisposable, () -> removeTimerUpdate());
-
-        IdeGlassPane gp = IdeGlassPaneUtil.find(child);
-        myTabActionsAutoHideListenerDisposable = Disposer.newDisposable("myTabActionsAutoHideListener");
-        Disposer.register(parentDisposable, myTabActionsAutoHideListenerDisposable);
-        gp.addMouseMotionPreprocessor(myTabActionsAutoHideListener, myTabActionsAutoHideListenerDisposable);
-        myGlassPane = gp;
-
-        StartupUiUtil.addAwtListener(__ -> {
-          if (!JBPopupFactory.getInstance().getChildPopups(JBTabsImpl.this).isEmpty()) return;
-          processFocusChange();
-        }, AWTEvent.FOCUS_EVENT_MASK, parentDisposable);
-
-        myDragHelper = createDragHelper(child, parentDisposable);
-        myDragHelper.start();
-
-        if (myProject != null && myFocusManager == getGlobalInstance()) {
-          myFocusManager = IdeFocusManager.getInstance(myProject);
-        }
-      }
-    };
-    listener1.setupListeners();
-    ClientProperty.put(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, (Iterable<? extends Component>)(Iterable<JComponent>)() -> {
-      return JBIterable.from(getVisibleInfos())
-        .filter(Conditions.not(Conditions.is(mySelectedInfo)))
-        .transform(info -> info.getComponent()).iterator();
-    });
-
-    HoverListener hoverListener = new HoverListener() {
-      @Override
-      public void mouseEntered(@NotNull Component component, int x, int y) {
-        toggleScrollBar(isInsideTabsArea(x, y));
-      }
-
-      @Override
-      public void mouseMoved(@NotNull Component component, int x, int y) {
-        toggleScrollBar(isInsideTabsArea(x, y));
-      }
-
-      @Override
-      public void mouseExited(@NotNull Component component) {
-        toggleScrollBar(false);
-      }
-    };
-    hoverListener.addTo(this);
-
-    myScrollBarChangeListener = new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        updateTabsOffsetFromScrollBar();
-      }
-    };
-  }
-
-  private boolean isInsideTabsArea(int x, int y) {
-    Dimension area = myHeaderFitSize;
-    if (myTableLayout.myLastTableLayout != null) {
-      area = myTableLayout.myLastTableLayout.tabRectangle.getSize();
     }
+    Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.MOUSE_MOTION_EVENT_MASK)
+    Disposer.register(parentDisposable) {
+      val toolkit = Toolkit.getDefaultToolkit()
+      toolkit?.removeAWTEventListener(listener)
+    }
+    myAnimator = object : Animator("JBTabs Attractions", 2, 500, true) {
+      override fun paintNow(frame: Int, totalFrames: Int, cycle: Int) {
+        repaintAttractions()
+      }
+    }
+    isFocusTraversalPolicyProvider = true
+    focusTraversalPolicy = object : LayoutFocusTraversalPolicy() {
+      override fun getDefaultComponent(aContainer: Container): Component {
+        return toFocus
+      }
+    }
+    val listener1: LazyUiDisposable<JBTabsImpl> = object : LazyUiDisposable<JBTabsImpl?>(parentDisposable, this, this) {
+      override fun initialize(parent: Disposable, child: JBTabsImpl, project: Project?) {
+        if (myProject == null && project != null) {
+          myProject = project
+        }
+        Disposer.register(parentDisposable, myAnimator)
+        Disposer.register(parentDisposable) { removeTimerUpdate() }
+        val gp = IdeGlassPaneUtil.find(child)
+        myTabActionsAutoHideListenerDisposable = Disposer.newDisposable("myTabActionsAutoHideListener")
+        Disposer.register(parentDisposable, myTabActionsAutoHideListenerDisposable)
+        gp.addMouseMotionPreprocessor(myTabActionsAutoHideListener, myTabActionsAutoHideListenerDisposable)
+        myGlassPane = gp
+        addAwtListener({ __: AWTEvent? ->
+                         if (!JBPopupFactory.getInstance().getChildPopups(this@JBTabsImpl).isEmpty()) return@addAwtListener
+                         processFocusChange()
+                       }, AWTEvent.FOCUS_EVENT_MASK, parentDisposable)
+        dragHelper = createDragHelper(child, parentDisposable)
+        dragHelper!!.start()
+        if (myProject != null && myFocusManager === IdeFocusManager.getGlobalInstance()) {
+          myFocusManager = IdeFocusManager.getInstance(myProject)
+        }
+      }
+    }
+    listener1.setupListeners()
+    ClientProperty.put(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Iterable {
+      JBIterable.from(
+        visibleInfos)
+        .filter(Conditions.not(Conditions.`is`(mySelectedInfo)))
+        .transform { info: TabInfo? -> info!!.component }.iterator()
+    } as Iterable<Component?>)
+    val hoverListener: HoverListener = object : HoverListener() {
+      override fun mouseEntered(component: Component, x: Int, y: Int) {
+        toggleScrollBar(isInsideTabsArea(x, y))
+      }
 
-    if (area == null) return false;
+      override fun mouseMoved(component: Component, x: Int, y: Int) {
+        toggleScrollBar(isInsideTabsArea(x, y))
+      }
 
-    return switch (getTabsPosition()) {
-      case top -> y <= area.height;
-      case left -> x <= area.width;
-      case bottom -> y >= getHeight() - area.height;
-      case right -> x >= getWidth() - area.width;
-    };
+      override fun mouseExited(component: Component) {
+        toggleScrollBar(false)
+      }
+    }
+    hoverListener.addTo(this)
+    myScrollBarChangeListener = ChangeListener { updateTabsOffsetFromScrollBar() }
   }
 
-  private void toggleScrollBar(boolean isOn) {
-    if (isOn == myScrollBarOn) return;
-    myScrollBarOn = isOn;
-    myScrollBar.toggle(isOn);
+  private fun isInsideTabsArea(x: Int, y: Int): Boolean {
+    var area = myHeaderFitSize
+    if (myTableLayout.myLastTableLayout != null) {
+      area = myTableLayout.myLastTableLayout.tabRectangle.size
+    }
+    return if (area == null) false
+    else when (tabsPosition) {
+      JBTabsPosition.top -> y <= area.height
+      JBTabsPosition.left -> x <= area.width
+      JBTabsPosition.bottom -> y >= height - area.height
+      JBTabsPosition.right -> x >= width - area.width
+    }
   }
 
-  private @NotNull ActionToolbar createToolbar(ActionGroup group) {
-    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TABS_MORE_TOOLBAR, group, true);
-    toolbar.setTargetComponent(this);
-    toolbar.getComponent().setBorder(JBUI.Borders.empty());
-    toolbar.getComponent().setOpaque(false);
-    toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-    return toolbar;
+  private fun toggleScrollBar(isOn: Boolean) {
+    if (isOn == myScrollBarOn) return
+    myScrollBarOn = isOn
+    myScrollBar.toggle(isOn)
   }
 
-  protected @Nullable DefaultActionGroup getEntryPointActionGroup() {
-    return null;
+  private fun createToolbar(group: ActionGroup): ActionToolbar {
+    val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TABS_MORE_TOOLBAR, group, true)
+    toolbar.targetComponent = this
+    toolbar.component.border = JBUI.Borders.empty()
+    toolbar.component.isOpaque = false
+    toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+    return toolbar
   }
 
-  private Rectangle getScrollBarBounds() {
-    if (!isWithScrollBar() || isHideTabs()) return new Rectangle(0, 0, 0, 0);
-
-    return switch (getTabsPosition()) {
-      case left -> {
+  protected open val entryPointActionGroup: DefaultActionGroup?
+    protected get() = null
+  private val scrollBarBounds: Rectangle
+    private get() = if (!isWithScrollBar || isHideTabs) Rectangle(0, 0, 0, 0)
+    else when (tabsPosition) {
+      JBTabsPosition.left -> {
         if (ExperimentalUI.isNewUI()) {
-          Rectangle tabsRect = myLastLayoutPass.getHeaderRectangle();
+          val tabsRect = lastLayoutPass!!.headerRectangle
           if (tabsRect != null) {
-            yield new Rectangle(tabsRect.x + tabsRect.width - SCROLL_BAR_THICKNESS, 0, SCROLL_BAR_THICKNESS, getHeight());
+            Rectangle(tabsRect.x + tabsRect.width - SCROLL_BAR_THICKNESS, 0,
+                      SCROLL_BAR_THICKNESS, height)
           }
           else {
-            yield new Rectangle(0, 0, 0, 0);
+            Rectangle(0, 0, 0, 0)
           }
         }
         else {
-          yield new Rectangle(0, 0, SCROLL_BAR_THICKNESS, getHeight());
+          Rectangle(0, 0, SCROLL_BAR_THICKNESS, height)
         }
       }
-      case right -> new Rectangle(getWidth() - SCROLL_BAR_THICKNESS, 0, SCROLL_BAR_THICKNESS, getHeight());
-      case top -> new Rectangle(0, 1, getWidth(), SCROLL_BAR_THICKNESS);
-      case bottom -> new Rectangle(0, getHeight() - SCROLL_BAR_THICKNESS, getWidth(), SCROLL_BAR_THICKNESS);
-    };
-  }
-
-  private BoundedRangeModel getScrollBarModel() {
-    return myScrollBar.getModel();
-  }
-
-  public boolean isWithScrollBar() {
-    return myLayout.isWithScrollBar();
-  }
-
-  protected @NotNull DragHelper createDragHelper(@NotNull JBTabsImpl tabs, @NotNull Disposable parentDisposable) {
-    return new DragHelper(tabs, parentDisposable);
-  }
-
-  public boolean isMouseInsideTabsArea() {
-    return myMouseInsideTabsArea;
-  }
-
-  @Override
-  public void uiSettingsChanged(@NotNull UISettings uiSettings) {
-    for (Map.Entry<TabInfo, TabLabel> entry : myInfo2Label.entrySet()) {
-      TabInfo info = entry.getKey();
-      TabLabel label = entry.getValue();
-
-      info.revalidate();
-      label.setTabActions(info.getTabLabelActions());
+      JBTabsPosition.right -> Rectangle(width - SCROLL_BAR_THICKNESS, 0,
+                                        SCROLL_BAR_THICKNESS, height)
+      JBTabsPosition.top -> Rectangle(0, 1, width, SCROLL_BAR_THICKNESS)
+      JBTabsPosition.bottom -> Rectangle(0, height - SCROLL_BAR_THICKNESS, width,
+                                         SCROLL_BAR_THICKNESS)
     }
-    updateRowLayout();
+  private val scrollBarModel: BoundedRangeModel
+    private get() = myScrollBar.model
+  val isWithScrollBar: Boolean
+    get() = effectiveLayout!!.isWithScrollBar
+
+  protected open fun createDragHelper(tabs: JBTabsImpl, parentDisposable: Disposable): DragHelper {
+    return DragHelper(tabs, parentDisposable)
   }
 
-  private void updateRowLayout() {
-    if (getTabsPosition() != JBTabsPosition.top) {
-      mySingleRow = true;
+  override fun uiSettingsChanged(uiSettings: UISettings) {
+    for ((info, label) in myInfo2Label) {
+      info!!.revalidate()
+      label.setTabActions(info.tabLabelActions)
     }
-    boolean forceTableLayout = getTabsPosition() == JBTabsPosition.top
-                               && supportsTableLayoutAsSingleRow()
-                               && TabLayout.showPinnedTabsSeparately();
-    boolean useTableLayout = !isSingleRow() || forceTableLayout;
+    updateRowLayout()
+  }
+
+  private fun updateRowLayout() {
+    if (tabsPosition != JBTabsPosition.top) {
+      mySingleRow = true
+    }
+    val forceTableLayout = (tabsPosition == JBTabsPosition.top && supportsTableLayoutAsSingleRow()
+                            && TabLayout.showPinnedTabsSeparately())
+    val useTableLayout = !isSingleRow || forceTableLayout
     if (useTableLayout) {
-      myTableLayout = createTableLayout();
+      myTableLayout = createTableLayout()
     }
     else {
-      mySingleRowLayout = createSingleRowLayout();
+      mySingleRowLayout = createSingleRowLayout()
     }
-    TabLayout layout = useTableLayout ? myTableLayout : mySingleRowLayout;
-    layout.scroll(getScrollBarModel().getValue()); // set current scroll value to new layout
-    setLayout(layout);
-    relayout(true, true);
+    val layout = if (useTableLayout) myTableLayout else mySingleRowLayout
+    layout.scroll(scrollBarModel.value) // set current scroll value to new layout
+    setLayout(layout)
+    relayout(true, true)
   }
 
-  protected boolean supportsTableLayoutAsSingleRow() {
-    return false;
+  protected open fun supportsTableLayoutAsSingleRow(): Boolean {
+    return false
   }
 
-  protected TableLayout createTableLayout() {
-    boolean isWithScrollBar = ExperimentalUI.isEditorTabsWithScrollBar()
-                              && isSingleRow()
-                              && getTabsPosition() == JBTabsPosition.top
-                              && supportsTableLayoutAsSingleRow()
-                              && TabLayout.showPinnedTabsSeparately()
-                              && (!supportsCompression() || UISettings.getInstance().getHideTabsIfNeeded());
-    return new TableLayout(this, isWithScrollBar);
+  protected fun createTableLayout(): TableLayout {
+    val isWithScrollBar = ((ExperimentalUI.isEditorTabsWithScrollBar()
+                            && isSingleRow && tabsPosition == JBTabsPosition.top) && supportsTableLayoutAsSingleRow()
+                           && TabLayout.showPinnedTabsSeparately()
+                           && (!supportsCompression() || getInstance().hideTabsIfNeeded))
+    return TableLayout(this, isWithScrollBar)
   }
 
-  protected SingleRowLayout createSingleRowLayout() {
-    return new ScrollableSingleRowLayout(this);
+  protected open fun createSingleRowLayout(): SingleRowLayout {
+    return ScrollableSingleRowLayout(this)
   }
 
-  @Override
-  public JBTabs setNavigationActionBinding(String prevActionId, String nextActionId) {
-    if (myNextAction != null) {
-      myNextAction.reconnect(nextActionId);
-    }
-    if (myPrevAction != null) {
-      myPrevAction.reconnect(prevActionId);
-    }
-
-    return this;
+  override fun setNavigationActionBinding(prevActionId: String, nextActionId: String): JBTabs {
+    myNextAction?.reconnect(nextActionId)
+    myPrevAction?.reconnect(prevActionId)
+    return this
   }
 
-  public void setHovered(TabLabel label) {
-    TabLabel old = tabLabelAtMouse;
-    tabLabelAtMouse = label;
-
+  fun setHovered(label: TabLabel?) {
+    val old = tabLabelAtMouse
+    tabLabelAtMouse = label
     if (old != null) {
-      old.revalidate();
-      old.repaint();
+      old.revalidate()
+      old.repaint()
     }
-
     if (tabLabelAtMouse != null) {
-      tabLabelAtMouse.revalidate();
-      tabLabelAtMouse.repaint();
+      tabLabelAtMouse!!.revalidate()
+      tabLabelAtMouse!!.repaint()
     }
   }
 
-  void unHover(TabLabel label) {
-    if (tabLabelAtMouse == label) {
-      tabLabelAtMouse = null;
-      label.revalidate();
-      label.repaint();
+  fun unHover(label: TabLabel) {
+    if (tabLabelAtMouse === label) {
+      tabLabelAtMouse = null
+      label.revalidate()
+      label.repaint()
     }
   }
 
-  public final boolean isHoveredTab(TabLabel label) {
-    return label != null && label == tabLabelAtMouse;
+  fun isHoveredTab(label: TabLabel?): Boolean {
+    return label != null && label === tabLabelAtMouse
   }
 
-  public boolean isActiveTabs(TabInfo info) {
-    return UIUtil.isFocusAncestor(this);
+  open fun isActiveTabs(info: TabInfo?): Boolean {
+    return UIUtil.isFocusAncestor(this)
   }
 
-  @Override
-  public boolean isEditorTabs() {
-    return false;
+  override fun isEditorTabs(): Boolean {
+    return false
   }
 
-  public boolean supportsCompression() {
-    return mySupportsCompression;
+  fun supportsCompression(): Boolean {
+    return mySupportsCompression
   }
 
-  @Override
-  public JBTabs setNavigationActionsEnabled(boolean enabled) {
-    myNavigationActionsEnabled = enabled;
-    return this;
+  override fun setNavigationActionsEnabled(enabled: Boolean): JBTabs {
+    myNavigationActionsEnabled = enabled
+    return this
   }
 
-  public void addNestedTabs(@NotNull JBTabsImpl tabs, @NotNull Disposable parentDisposable) {
-    myNestedTabs.add(tabs);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        myNestedTabs.remove(tabs);
-      }
-    });
+  fun addNestedTabs(tabs: JBTabsImpl, parentDisposable: Disposable) {
+    myNestedTabs.add(tabs)
+    Disposer.register(parentDisposable) { myNestedTabs.remove(tabs) }
   }
 
-  public boolean isDragOut(TabLabel label, int deltaX, int deltaY) {
-    return getEffectiveLayout().isDragOut(label, deltaX, deltaY);
+  fun isDragOut(label: TabLabel?, deltaX: Int, deltaY: Int): Boolean {
+    return effectiveLayout!!.isDragOut(label!!, deltaX, deltaY)
   }
 
-  boolean ignoreTabLabelLimitedWidthWhenPaint() {
-    return myLayout instanceof ScrollableSingleRowLayout
-           || (myLayout instanceof TableLayout && TabLayout.showPinnedTabsSeparately());
+  fun ignoreTabLabelLimitedWidthWhenPaint(): Boolean {
+    return effectiveLayout is ScrollableSingleRowLayout || effectiveLayout is TableLayout && TabLayout.showPinnedTabsSeparately()
   }
 
-  public static Image getComponentImage(TabInfo info) {
-    JComponent cmp = info.getComponent();
-
-    BufferedImage img;
-    if (cmp.isShowing()) {
-      final int width = cmp.getWidth();
-      final int height = cmp.getHeight();
-      img = UIUtil.createImage(info.getComponent(), width > 0 ? width : 500, height > 0 ? height : 500, BufferedImage.TYPE_INT_ARGB);
-      Graphics2D g = img.createGraphics();
-      cmp.paint(g);
-    }
-    else {
-      img = UIUtil.createImage(info.getComponent(), 500, 500, BufferedImage.TYPE_INT_ARGB);
-    }
-    return img;
+  fun resetTabsCache() {
+    EDT.assertIsEdt()
+    myAllTabs = null
   }
 
-  void resetTabsCache() {
-    EDT.assertIsEdt();
-    myAllTabs = null;
-  }
-
-  private void processFocusChange() {
-    Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+  private fun processFocusChange() {
+    val owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
     if (owner == null) {
-      setFocused(false);
-      return;
+      setFocused(false)
+      return
     }
-
-    if (owner == this || SwingUtilities.isDescendingFrom(owner, this)) {
-      setFocused(true);
+    if (owner === this || SwingUtilities.isDescendingFrom(owner, this)) {
+      setFocused(true)
     }
     else {
-      setFocused(false);
+      setFocused(false)
     }
   }
 
-  private void repaintAttractions() {
-    boolean needsUpdate = false;
-    for (TabInfo each : myVisibleInfos) {
-      TabLabel eachLabel = myInfo2Label.get(each);
-      needsUpdate |= eachLabel.repaintAttraction();
+  private fun repaintAttractions() {
+    var needsUpdate = false
+    for (each in myVisibleInfos) {
+      val eachLabel = myInfo2Label[each]
+      needsUpdate = needsUpdate or eachLabel!!.repaintAttraction()
     }
-
     if (needsUpdate) {
-      relayout(true, false);
+      relayout(true, false)
     }
   }
 
-  @Override
-  public void addNotify() {
-    super.addNotify();
-    addTimerUpdate();
-
-    getScrollBarModel().addChangeListener(myScrollBarChangeListener);
-
+  override fun addNotify() {
+    super.addNotify()
+    addTimerUpdate()
+    scrollBarModel.addChangeListener(myScrollBarChangeListener)
     if (myDeferredFocusRequest != null) {
-      final Runnable request = myDeferredFocusRequest;
-      myDeferredFocusRequest = null;
-
-      request.run();
+      val request: Runnable = myDeferredFocusRequest
+      myDeferredFocusRequest = null
+      request.run()
     }
   }
 
-  @Override
-  public void remove(int index) {
+  override fun remove(index: Int) {
     if (myRemoveNotifyInProgress) {
-      LOG.warn(new IllegalStateException("removeNotify in progress"));
+      LOG.warn(IllegalStateException("removeNotify in progress"))
     }
-    super.remove(index);
+    super.remove(index)
   }
 
-  @Override
-  public void removeAll() {
+  override fun removeAll() {
     if (myRemoveNotifyInProgress) {
-      LOG.warn(new IllegalStateException("removeNotify in progress"));
+      LOG.warn(IllegalStateException("removeNotify in progress"))
     }
-    super.removeAll();
+    super.removeAll()
   }
 
-  @Override
-  public void removeNotify() {
+  override fun removeNotify() {
     try {
-      myRemoveNotifyInProgress = true;
-      super.removeNotify();
+      myRemoveNotifyInProgress = true
+      super.removeNotify()
     }
     finally {
-      myRemoveNotifyInProgress = false;
+      myRemoveNotifyInProgress = false
     }
-
-    setFocused(false);
-
-    removeTimerUpdate();
-
-    getScrollBarModel().removeChangeListener(myScrollBarChangeListener);
-
+    setFocused(false)
+    removeTimerUpdate()
+    scrollBarModel.removeChangeListener(myScrollBarChangeListener)
     if (ScreenUtil.isStandardAddRemoveNotify(this) && myGlassPane != null) {
-      Disposer.dispose(myTabActionsAutoHideListenerDisposable);
-      myTabActionsAutoHideListenerDisposable = Disposer.newDisposable();
-      myGlassPane = null;
+      Disposer.dispose(myTabActionsAutoHideListenerDisposable)
+      myTabActionsAutoHideListenerDisposable = Disposer.newDisposable()
+      myGlassPane = null
     }
   }
 
-  @Override
-  public void processMouseEvent(MouseEvent e) {
-    super.processMouseEvent(e);
+  public override fun processMouseEvent(e: MouseEvent) {
+    super.processMouseEvent(e)
   }
 
-  private void addTimerUpdate() {
+  private fun addTimerUpdate() {
     if (!myListenerAdded) {
-      ActionManager.getInstance().addTimerListener(this);
-      myListenerAdded = true;
+      ActionManager.getInstance().addTimerListener(this)
+      myListenerAdded = true
     }
   }
 
-  private void removeTimerUpdate() {
+  private fun removeTimerUpdate() {
     if (myListenerAdded) {
-      ActionManager.getInstance().removeTimerListener(this);
-      myListenerAdded = false;
+      ActionManager.getInstance().removeTimerListener(this)
+      myListenerAdded = false
     }
   }
 
-  public void layoutComp(SingleRowPassInfo data, int deltaX, int deltaY, int deltaWidth, int deltaHeight) {
-    JComponent hToolbar = data.hToolbar.get();
-    JComponent vToolbar = data.vToolbar.get();
+  fun layoutComp(data: SingleRowPassInfo, deltaX: Int, deltaY: Int, deltaWidth: Int, deltaHeight: Int) {
+    val hToolbar = data.hToolbar.get()
+    val vToolbar = data.vToolbar.get()
     if (hToolbar != null) {
-      final int toolbarHeight = hToolbar.getPreferredSize().height;
-      final Rectangle compRect = layoutComp(deltaX, toolbarHeight + deltaY, data.comp.get(), deltaWidth, deltaHeight);
-      layout(hToolbar, compRect.x, compRect.y - toolbarHeight, compRect.width, toolbarHeight);
+      val toolbarHeight = hToolbar.preferredSize.height
+      val compRect = layoutComp(deltaX, toolbarHeight + deltaY, data.comp.get(), deltaWidth, deltaHeight)
+      layout(hToolbar, compRect.x, compRect.y - toolbarHeight, compRect.width, toolbarHeight)
     }
     else if (vToolbar != null) {
-      final int toolbarWidth = vToolbar.getPreferredSize().width;
-      final int vSeparatorWidth = toolbarWidth > 0 ? 1 : 0;
-      if (mySideComponentBefore) {
-        final Rectangle compRect = layoutComp(toolbarWidth + vSeparatorWidth + deltaX, deltaY, data.comp.get(), deltaWidth, deltaHeight);
-        layout(vToolbar, compRect.x - toolbarWidth - vSeparatorWidth, compRect.y, toolbarWidth, compRect.height);
+      val toolbarWidth = vToolbar.preferredSize.width
+      val vSeparatorWidth = if (toolbarWidth > 0) 1 else 0
+      if (isSideComponentBefore) {
+        val compRect = layoutComp(toolbarWidth + vSeparatorWidth + deltaX, deltaY, data.comp.get(), deltaWidth, deltaHeight)
+        layout(vToolbar, compRect.x - toolbarWidth - vSeparatorWidth, compRect.y, toolbarWidth, compRect.height)
       }
       else {
-        final Rectangle compRect = layoutComp(new Rectangle(deltaX, deltaY, getWidth() - toolbarWidth - vSeparatorWidth, getHeight()),
-                                              data.comp.get(), deltaWidth, deltaHeight);
-        layout(vToolbar, compRect.x + compRect.width + vSeparatorWidth, compRect.y, toolbarWidth, compRect.height);
+        val compRect = layoutComp(Rectangle(deltaX, deltaY, width - toolbarWidth - vSeparatorWidth, height),
+                                  data.comp.get(), deltaWidth, deltaHeight)
+        layout(vToolbar, compRect.x + compRect.width + vSeparatorWidth, compRect.y, toolbarWidth, compRect.height)
       }
     }
     else {
-      layoutComp(deltaX, deltaY, data.comp.get(), deltaWidth, deltaHeight);
+      layoutComp(deltaX, deltaY, data.comp.get(), deltaWidth, deltaHeight)
     }
   }
 
-  public boolean isDropTarget(TabInfo info) {
-    return myDropInfo != null && myDropInfo == info;
+  fun isDropTarget(info: TabInfo): Boolean {
+    return myDropInfo != null && myDropInfo == info
   }
 
-  private void setDropInfoIndex(int dropInfoIndex) {
-    myDropInfoIndex = dropInfoIndex;
+  private fun setDropInfoIndex(dropInfoIndex: Int) {
+    myDropInfoIndex = dropInfoIndex
   }
 
-  @MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT,
-    -1})
-  private void setDropSide(int side) {
-    myDropSide = side;
+  @MagicConstant(
+    intValues = [SwingConstants.CENTER.toLong(), SwingConstants.TOP.toLong(), SwingConstants.LEFT.toLong(), SwingConstants.BOTTOM.toLong(), SwingConstants.RIGHT.toLong(), -1])
+  private fun setDropSide(side: Int) {
+    myDropSide = side
   }
 
-  public int getFirstTabOffset() {
-    return myFirstTabOffset;
+  fun getFirstTabOffset(): Int {
+    return myFirstTabOffset
   }
 
-  @Override
-  public void setFirstTabOffset(int firstTabOffset) {
-    myFirstTabOffset = firstTabOffset;
+  override fun setFirstTabOffset(firstTabOffset: Int) {
+    myFirstTabOffset = firstTabOffset
   }
 
-  @Override
-  public JBTabsPresentation setEmptyText(@Nullable String text) {
-    myEmptyText = text;
-    return this;
+  override fun setEmptyText(text: String?): JBTabsPresentation {
+    myEmptyText = text
+    return this
   }
 
   /**
    * TODO use RdGraphicsExKt#childAtMouse(IdeGlassPane, Container)
    */
-  @Deprecated
-  final class TabActionsAutoHideListener extends MouseMotionAdapter implements Weighted {
-    private TabLabel myCurrentOverLabel;
-    private Point myLastOverPoint;
-
-    @Override
-    public double getWeight() {
-      return 1;
+  @Deprecated("")
+  internal inner class TabActionsAutoHideListener : MouseMotionAdapter(), Weighted {
+    private var myCurrentOverLabel: TabLabel? = null
+    private var myLastOverPoint: Point? = null
+    override fun getWeight(): Double {
+      return 1
     }
 
-    @Override
-    public void mouseMoved(final MouseEvent e) {
-      if (!myTabLabelActionsAutoHide) return;
-
-      myLastOverPoint = SwingUtilities.convertPoint(e.getComponent(), e.getX(), e.getY(), JBTabsImpl.this);
-      processMouseOver();
+    override fun mouseMoved(e: MouseEvent) {
+      if (!myTabLabelActionsAutoHide) return
+      myLastOverPoint = SwingUtilities.convertPoint(e.component, e.x, e.y, this@JBTabsImpl)
+      processMouseOver()
     }
 
-    void processMouseOver() {
+    fun processMouseOver() {
       if (!myTabLabelActionsAutoHide || myLastOverPoint == null) {
-        return;
+        return
       }
-
-      if (myLastOverPoint.x >= 0 && myLastOverPoint.x < getWidth() && myLastOverPoint.y > 0 && myLastOverPoint.y < getHeight()) {
-        final TabLabel label = myInfo2Label.get(_findInfo(myLastOverPoint, true));
+      if (myLastOverPoint!!.x >= 0 && myLastOverPoint!!.x < width && myLastOverPoint!!.y > 0 && myLastOverPoint!!.y < height) {
+        val label = myInfo2Label[_findInfo(myLastOverPoint!!, true)]
         if (label != null) {
           if (myCurrentOverLabel != null) {
-            myCurrentOverLabel.toggleShowActions(false);
+            myCurrentOverLabel!!.toggleShowActions(false)
           }
-          label.toggleShowActions(true);
-          myCurrentOverLabel = label;
-          return;
+          label.toggleShowActions(true)
+          myCurrentOverLabel = label
+          return
         }
       }
-
       if (myCurrentOverLabel != null) {
-        myCurrentOverLabel.toggleShowActions(false);
-        myCurrentOverLabel = null;
+        myCurrentOverLabel!!.toggleShowActions(false)
+        myCurrentOverLabel = null
       }
     }
   }
 
-
-  @Override
-  public ModalityState getModalityState() {
-    return ModalityState.stateForComponent(this);
+  override fun getModalityState(): ModalityState {
+    return ModalityState.stateForComponent(this)
   }
 
-  @Override
-  public void run() {
-    updateTabActions(false);
+  override fun run() {
+    updateTabActions(false)
   }
 
-  @Override
-  public void updateTabActions(final boolean validateNow) {
-    if (isHideTabs()) return;
-
-    final Ref<Boolean> changed = new Ref<>(Boolean.FALSE);
-    for (final TabInfo eachInfo : myInfo2Label.keySet()) {
-      final boolean changes = myInfo2Label.get(eachInfo).updateTabActions();
-      changed.set(changed.get().booleanValue() || changes);
+  override fun updateTabActions(validateNow: Boolean) {
+    if (isHideTabs) return
+    val changed = Ref(java.lang.Boolean.FALSE)
+    for (eachInfo in myInfo2Label.keys) {
+      val changes = myInfo2Label[eachInfo]!!.updateTabActions()
+      changed.set(changed.get() || changes)
     }
-
     if (changed.get()) {
-      revalidateAndRepaint();
+      revalidateAndRepaint()
     }
   }
 
-  public @NotNull Dimension getEntryPointPreferredSize() {
-    if (myEntryPointToolbar == null) return new Dimension();
-    return myEntryPointToolbar.getComponent().getPreferredSize();
-  }
+  val entryPointPreferredSize: Dimension
+    get() = if (myEntryPointToolbar == null) Dimension() else myEntryPointToolbar!!.component.preferredSize
+  val moreToolbarPreferredSize: Dimension
+    // Returns default one action horizontal toolbar size (26x24)
+    get() {
+      val baseSize = ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE
+      return Dimension(baseSize.width + JBUI.scale(4), baseSize.height + JBUI.scale(2))
+    }
+  private val entryPointRect: Rectangle?
+    private get() {
+      if (effectiveLayout is SingleRowLayout) {
+        val lastLayout = mySingleRowLayout.myLastSingRowLayout
+        return lastLayout?.entryPointRect
+      }
+      if (effectiveLayout is TableLayout) {
+        val lastLayout = myTableLayout.myLastTableLayout
+        return lastLayout?.entryPointRect
+      }
+      return null
+    }
+  private val moreRect: Rectangle?
+    private get() {
+      if (effectiveLayout is SingleRowLayout) {
+        val lastLayout = mySingleRowLayout.myLastSingRowLayout
+        return lastLayout?.moreRect
+      }
+      if (effectiveLayout is TableLayout) {
+        val lastLayout = myTableLayout.myLastTableLayout
+        return lastLayout?.moreRect
+      }
+      return null
+    }
+  private val titleRect: Rectangle?
+    private get() {
+      if (effectiveLayout is SingleRowLayout) {
+        val lastLayout = mySingleRowLayout.myLastSingRowLayout
+        return lastLayout?.titleRect
+      }
+      if (effectiveLayout is TableLayout) {
+        val lastLayout = myTableLayout.myLastTableLayout
+        return lastLayout?.titleRect
+      }
+      return null
+    }
 
-  // Returns default one action horizontal toolbar size (26x24)
-  public @NotNull Dimension getMoreToolbarPreferredSize() {
-    Dimension baseSize = ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE;
-    return new Dimension(baseSize.width + JBUI.scale(4), baseSize.height + JBUI.scale(2));
-  }
-
-  private Rectangle getEntryPointRect() {
-    if (myLayout instanceof SingleRowLayout) {
-      SingleRowPassInfo lastLayout = mySingleRowLayout.myLastSingRowLayout;
-      return lastLayout != null ? lastLayout.entryPointRect : null;
-    }
-    if (myLayout instanceof TableLayout) {
-      TablePassInfo lastLayout = myTableLayout.myLastTableLayout;
-      return lastLayout != null ? lastLayout.entryPointRect : null;
-    }
-    return null;
-  }
-
-  private Rectangle getMoreRect() {
-    if (myLayout instanceof SingleRowLayout) {
-      SingleRowPassInfo lastLayout = mySingleRowLayout.myLastSingRowLayout;
-      return lastLayout != null ? lastLayout.moreRect : null;
-    }
-    if (myLayout instanceof TableLayout) {
-      TablePassInfo lastLayout = myTableLayout.myLastTableLayout;
-      return lastLayout != null ? lastLayout.moreRect : null;
-    }
-    return null;
-  }
-
-  private Rectangle getTitleRect() {
-    if (myLayout instanceof SingleRowLayout) {
-      SingleRowPassInfo lastLayout = mySingleRowLayout.myLastSingRowLayout;
-      return lastLayout != null ? lastLayout.titleRect : null;
-    }
-    if (myLayout instanceof TableLayout) {
-      TablePassInfo lastLayout = myTableLayout.myLastTableLayout;
-      return lastLayout != null ? lastLayout.titleRect : null;
-    }
-    return null;
-  }
-
-  @Override
-  public void setTitleProducer(@Nullable Producer<? extends Pair<Icon, String>> titleProducer) {
-    myTitleWrapper.removeAll();
+  override fun setTitleProducer(titleProducer: Producer<out Pair<Icon, String>>?) {
+    myTitleWrapper.removeAll()
     if (titleProducer != null) {
-      ActionToolbar toolbar = ActionManager.getInstance()
-        .createActionToolbar(ActionPlaces.TABS_MORE_TOOLBAR, new DefaultActionGroup(new TitleAction(titleProducer)), true);
-      toolbar.setTargetComponent(null);
-      toolbar.setMiniMode(true);
-      myTitleWrapper.setContent(toolbar.getComponent());
+      val toolbar = ActionManager.getInstance()
+        .createActionToolbar(ActionPlaces.TABS_MORE_TOOLBAR, DefaultActionGroup(TitleAction(titleProducer)), true)
+      toolbar.targetComponent = null
+      toolbar.setMiniMode(true)
+      myTitleWrapper.setContent(toolbar.component)
     }
   }
 
-  @Override
-  public boolean canShowMorePopup() {
-    Rectangle rect = getMoreRect();
-    return rect != null && !rect.isEmpty();
+  override fun canShowMorePopup(): Boolean {
+    val rect = moreRect
+    return rect != null && !rect.isEmpty
   }
 
-  @Override
-  public @Nullable JBPopup showMorePopup() {
-    Rectangle rect = getMoreRect();
-    if (rect == null) return null;
-
-    List<TabInfo> hiddenInfos = ContainerUtil.filter(getVisibleInfos(), tabInfo -> mySingleRowLayout.isTabHidden(tabInfo));
-    if (ExperimentalUI.isNewUI()) {
-      return showListPopup(rect, hiddenInfos);
+  override fun showMorePopup(): JBPopup? {
+    val rect = moreRect ?: return null
+    val hiddenInfos = ContainerUtil.filter(
+      visibleInfos) { tabInfo: TabInfo? -> mySingleRowLayout.isTabHidden(tabInfo) }
+    return if (ExperimentalUI.isNewUI()) {
+      showListPopup(rect, hiddenInfos)
     }
     else {
-      return showTabLabelsPopup(rect, hiddenInfos);
+      showTabLabelsPopup(rect, hiddenInfos)
     }
   }
 
-  private JBPopup showListPopup(Rectangle rect, List<TabInfo> hiddenInfos) {
-    int separatorIndex = ContainerUtil.indexOf(hiddenInfos, info -> {
-      TabLabel label = myInfo2Label.get(info);
-      return getPosition().isSide() ? label.getY() >= 0 : label.getX() >= 0;
-    });
-    TabInfo separatorInfo = separatorIndex > 0 ? hiddenInfos.get(separatorIndex) : null;
-
-    HiddenInfosListPopupStep step = new HiddenInfosListPopupStep(hiddenInfos, separatorInfo);
-    Integer selectedIndex = ClientProperty.get(this, HIDDEN_INFOS_SELECT_INDEX_KEY);
-    if (selectedIndex != null) {
-      step.setDefaultOptionIndex(selectedIndex);
+  private fun showListPopup(rect: Rectangle, hiddenInfos: List<TabInfo?>): JBPopup {
+    val separatorIndex = ContainerUtil.indexOf(hiddenInfos) { info: TabInfo? ->
+      val label = myInfo2Label[info]
+      if (position.isSide) label!!.y >= 0 else label!!.x >= 0
     }
-
-    ListPopup popup = JBPopupFactory.getInstance().createListPopup(myProject, step, renderer -> {
-      ListItemDescriptor<TabInfo> descriptor = new ListItemDescriptorAdapter<>() {
-        @Override
-        public @NotNull String getTextFor(TabInfo value) {
-          return value.getText();
+    val separatorInfo = if (separatorIndex > 0) hiddenInfos[separatorIndex] else null
+    val step = HiddenInfosListPopupStep(hiddenInfos, separatorInfo)
+    val selectedIndex = ClientProperty.get(this, HIDDEN_INFOS_SELECT_INDEX_KEY)
+    if (selectedIndex != null) {
+      step.defaultOptionIndex = selectedIndex
+    }
+    val popup = JBPopupFactory.getInstance().createListPopup(myProject!!, step) { renderer: ListCellRenderer<*>? ->
+      val descriptor: ListItemDescriptor<TabInfo> = object : ListItemDescriptorAdapter<TabInfo?>() {
+        override fun getTextFor(value: TabInfo): String {
+          return@createListPopup value.text
         }
 
-        @Override
-        public @Nullable Icon getIconFor(TabInfo value) {
-          return value.getIcon();
+        override fun getIconFor(value: TabInfo): Icon? {
+          return@createListPopup value.icon
         }
 
-        @Override
-        public boolean hasSeparatorAboveOf(TabInfo value) {
-          return value == separatorInfo;
+        override fun hasSeparatorAboveOf(value: TabInfo): Boolean {
+          return@createListPopup value == separatorInfo
         }
-      };
-      return new GroupedItemsListRenderer<>(descriptor) {
-        private static final Key<Integer> HOVER_INDEX_KEY = Key.create("HOVER_INDEX");
-        private static final Key<TabInfo> TAB_INFO_KEY = Key.create("TAB_INFO");
-        private static final Key<Boolean> SELECTED_KEY = Key.create("SELECTED");
-        JPanel component;
-        JLabel iconLabel;
-        SimpleColoredComponent textLabel;
-        JLabel actionLabel;
-        MouseAdapter listMouseListener;
-
-        @Override
-        protected JComponent createItemComponent() {
+      }
+      object : GroupedItemsListRenderer<TabInfo?>(descriptor) {
+        private val HOVER_INDEX_KEY = Key.create<Int>("HOVER_INDEX")
+        private val TAB_INFO_KEY = Key.create<TabInfo?>("TAB_INFO")
+        private val SELECTED_KEY = Key.create<Boolean>("SELECTED")
+        var component: JPanel? = null
+        var iconLabel: JLabel? = null
+        var textLabel: SimpleColoredComponent? = null
+        var actionLabel: JLabel? = null
+        var listMouseListener: MouseAdapter? = null
+        override fun createItemComponent(): JComponent {
           // there is the separate label 'textLabel', but the original one still should be created,
           // as it is used from the GroupedElementsRenderer.configureComponent
-          createLabel();
-
-          component = new JPanel();
-          BoxLayout layout = new BoxLayout(component, BoxLayout.X_AXIS);
-          component.setLayout(layout);
+          createLabel()
+          component = JPanel()
+          val layout = BoxLayout(component, BoxLayout.X_AXIS)
+          component!!.layout = layout
           // painting underline for the selected tab
-          component.setBorder(new Border() {
-            @Override
-            public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-              if (ClientProperty.get(c, SELECTED_KEY) != Boolean.TRUE) {
-                return;
+          component!!.border = object : Border {
+            override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
+              if (ClientProperty.get<Boolean>(c, SELECTED_KEY) !== java.lang.Boolean.TRUE) {
+                return@createListPopup
               }
-              int inset = JBUI.scale(2);
-              int arc = JBUI.scale(4);
-              TabTheme theme = getTabPainter().getTabTheme();
-              Rectangle rect = new Rectangle(x, y + inset, theme.getUnderlineHeight(), height - inset * 2);
-              GraphicsExKt.fill2DRoundRect((Graphics2D)g, rect, arc, theme.getUnderlineColor());
+              val inset = JBUI.scale(2)
+              val arc = JBUI.scale(4)
+              val theme: TabTheme = tabPainter.getTabTheme()
+              val rect = Rectangle(x, y + inset, theme.underlineHeight, height - inset * 2)
+              (g as Graphics2D).fill2DRoundRect(rect, arc.toDouble(), theme.underlineColor)
             }
 
-            @Override
-            public Insets getBorderInsets(Component c) {
-              return JBInsets.create(new Insets(0, 9, 0, 3));
+            override fun getBorderInsets(c: Component): Insets {
+              return@createListPopup JBInsets.create(Insets(0, 9, 0, 3))
             }
 
-            @Override
-            public boolean isBorderOpaque() {
-              return true;
+            override fun isBorderOpaque(): Boolean {
+              return@createListPopup true
             }
-          });
-
-          UISettings settings = UISettings.getInstance();
-          if (!settings.getCloseTabButtonOnTheRight()) {
-            addActionLabel();
-            int gap = JBUI.CurrentTheme.ActionsList.elementIconGap() - 2;
-            component.add(Box.createRigidArea(new Dimension(gap, 0)));
           }
-
-          iconLabel = new JLabel();
-          component.add(iconLabel);
-          int gap = JBUI.CurrentTheme.ActionsList.elementIconGap() - 2;
-          component.add(Box.createRigidArea(new Dimension(gap, 0)));
-
-          textLabel = new SimpleColoredComponent() {
-            @Override
-            public Dimension getMaximumSize() {
-              return getPreferredSize();
+          val settings = getInstance()
+          if (!settings.closeTabButtonOnTheRight) {
+            addActionLabel()
+            val gap = JBUI.CurrentTheme.ActionsList.elementIconGap() - 2
+            component!!.add(Box.createRigidArea(Dimension(gap, 0)))
+          }
+          iconLabel = JLabel()
+          component!!.add(iconLabel)
+          val gap = JBUI.CurrentTheme.ActionsList.elementIconGap() - 2
+          component!!.add(Box.createRigidArea(Dimension(gap, 0)))
+          textLabel = object : SimpleColoredComponent() {
+            override fun getMaximumSize(): Dimension {
+              return@createListPopup preferredSize
             }
-          };
-          textLabel.setMyBorder(null);
-          textLabel.setIpad(JBInsets.emptyInsets());
-          textLabel.setOpaque(true);
-          component.add(textLabel);
-
-          if (settings.getCloseTabButtonOnTheRight()) {
-            component.add(Box.createRigidArea(new JBDimension(30, 0)));
-            component.add(Box.createHorizontalGlue());
-            addActionLabel();
           }
-
-          JComponent result = layoutComponent(component);
-          if (result instanceof SelectablePanel selectablePanel) {
-            selectablePanel.setBorder(JBUI.Borders.empty(0, 5));
-            selectablePanel.setSelectionInsets(JBInsets.create(0, 5));
-            selectablePanel.setPreferredHeight(JBUI.scale(26));
+          textLabel.setMyBorder(null)
+          textLabel.setIpad(JBInsets.emptyInsets())
+          textLabel.setOpaque(true)
+          component!!.add(textLabel)
+          if (settings.closeTabButtonOnTheRight) {
+            component!!.add(Box.createRigidArea(JBDimension(30, 0)))
+            component!!.add(Box.createHorizontalGlue())
+            addActionLabel()
           }
-          return result;
+          val result = layoutComponent(component)
+          if (result is SelectablePanel) {
+            result.setBorder(JBUI.Borders.empty(0, 5))
+            result.selectionInsets = JBInsets.create(0, 5)
+            result.preferredHeight = JBUI.scale(26)
+          }
+          return@createListPopup result
         }
 
-        private void addActionLabel() {
-          actionLabel = new JLabel();
-          component.add(actionLabel);
+        private fun addActionLabel() {
+          actionLabel = JLabel()
+          component!!.add(actionLabel)
         }
 
-        @Override
-        protected void customizeComponent(JList<? extends TabInfo> list, TabInfo info, boolean isSelected) {
+        protected override fun customizeComponent(list: JList<out TabInfo>, info: TabInfo, isSelected: Boolean) {
           if (actionLabel != null) {
-            boolean isHovered = Objects.equals(ClientProperty.get(list, HOVER_INDEX_KEY), myCurrentIndex);
-            Icon icon = JBTabsImpl.this.getTabActionIcon(info, isHovered);
-            actionLabel.setIcon(icon);
-            ClientProperty.put(actionLabel, TAB_INFO_KEY, info);
-
-            addMouseListener(list);
+            val isHovered = ClientProperty.get(list, HOVER_INDEX_KEY) == myCurrentIndex
+            val icon = getTabActionIcon(info, isHovered)
+            actionLabel!!.icon = icon
+            ClientProperty.put(actionLabel!!, TAB_INFO_KEY, info)
+            addMouseListener(list)
           }
-
-          TabInfo selectedInfo = getSelectedInfo();
-          Icon icon = info.getIcon();
+          val selectedInfo = selectedInfo
+          var icon = info.icon
           if (icon != null && info != selectedInfo) {
-            icon = IconLoader.getTransparentIcon(icon, JBUI.CurrentTheme.EditorTabs.unselectedAlpha());
+            icon = getTransparentIcon(icon, JBUI.CurrentTheme.EditorTabs.unselectedAlpha())
           }
-          iconLabel.setIcon(icon);
-
-          textLabel.clear();
-          info.getColoredText().appendToComponent(textLabel);
-
-          Color customBackground = info.getTabColor();
-          myRendererComponent.setBackground(customBackground != null ? customBackground : JBUI.CurrentTheme.Popup.BACKGROUND);
-
-          ClientProperty.put(component, SELECTED_KEY, info == selectedInfo ? true : null);
-
-          component.invalidate();
+          iconLabel!!.icon = icon
+          textLabel!!.clear()
+          info.coloredText.appendToComponent(textLabel!!)
+          val customBackground = info.tabColor
+          myRendererComponent.background = customBackground ?: JBUI.CurrentTheme.Popup.BACKGROUND
+          ClientProperty.put(component!!, SELECTED_KEY, if (info == selectedInfo) true else null)
+          component!!.invalidate()
         }
 
-        @Override
-        protected void setComponentIcon(Icon icon, Icon disabledIcon) {
+        override fun setComponentIcon(icon: Icon, disabledIcon: Icon) {
           // icon will be set in customizeComponent
         }
 
-        @Override
-        protected SeparatorWithText createSeparator() {
-          Insets labelInsets = JBUI.CurrentTheme.Popup.separatorLabelInsets();
-          return new GroupHeaderSeparator(labelInsets);
+        override fun createSeparator(): SeparatorWithText {
+          val labelInsets = JBUI.CurrentTheme.Popup.separatorLabelInsets()
+          return@createListPopup GroupHeaderSeparator(labelInsets)
         }
 
-        private void addMouseListener(JList<? extends TabInfo> list) {
-          if (listMouseListener != null) return;
-          listMouseListener = new MouseAdapter() {
-            @Override
-            public void mouseMoved(MouseEvent e) {
-              Point point = e.getLocationOnScreen();
-              SwingUtilities.convertPointFromScreen(point, list);
-              int hoveredIndex = list.locationToIndex(point);
-              Component renderer = ListUtil.getDeepestRendererChildComponentAt(list, e.getPoint());
-              updateHoveredIconIndex(ClientProperty.get(renderer, TAB_INFO_KEY) != null ? hoveredIndex : -1);
+        private fun addMouseListener(list: JList<out TabInfo>) {
+          if (listMouseListener != null) return@createListPopup
+          listMouseListener = object : MouseAdapter() {
+            override fun mouseMoved(e: MouseEvent) {
+              val point = e.locationOnScreen
+              SwingUtilities.convertPointFromScreen(point, list)
+              val hoveredIndex = list.locationToIndex(point)
+              val renderer = ListUtil.getDeepestRendererChildComponentAt(list, e.point)
+              updateHoveredIconIndex(if (ClientProperty.get(renderer, TAB_INFO_KEY) != null) hoveredIndex else -1)
             }
 
-            @Override
-            public void mouseExited(MouseEvent e) {
-              updateHoveredIconIndex(-1);
+            override fun mouseExited(e: MouseEvent) {
+              updateHoveredIconIndex(-1)
             }
 
-            private void updateHoveredIconIndex(int hoveredIndex) {
-              Integer oldIndex = ClientProperty.get(list, HOVER_INDEX_KEY);
-              ClientProperty.put(list, HOVER_INDEX_KEY, hoveredIndex);
-              if (!Objects.equals(oldIndex, hoveredIndex)) {
-                list.repaint();
+            private fun updateHoveredIconIndex(hoveredIndex: Int) {
+              val oldIndex = ClientProperty.get(list, HOVER_INDEX_KEY)
+              ClientProperty.put(list, HOVER_INDEX_KEY, hoveredIndex)
+              if (oldIndex != hoveredIndex) {
+                list.repaint()
               }
             }
 
-            @Override
-            public void mouseReleased(MouseEvent e) {
-              Point point = e.getLocationOnScreen();
-              SwingUtilities.convertPointFromScreen(point, list);
-              int clickedIndex = list.locationToIndex(point);
-              Component renderer = ListUtil.getDeepestRendererChildComponentAt(list, e.getPoint());
-              if (!(renderer instanceof JLabel label)) {
-                return;
+            override fun mouseReleased(e: MouseEvent) {
+              val point = e.locationOnScreen
+              SwingUtilities.convertPointFromScreen(point, list)
+              val clickedIndex = list.locationToIndex(point)
+              val renderer = ListUtil.getDeepestRendererChildComponentAt(list, e.point)
+              if (renderer !is JLabel) {
+                return@createListPopup
               }
-
-              TabInfo tabInfo = ClientProperty.get(label, TAB_INFO_KEY);
+              val tabInfo = ClientProperty.get(renderer, TAB_INFO_KEY)
               if (tabInfo == null) {
-                return;
+                return@createListPopup
               }
 
               // The last one is expected to be 'CloseTab'
-              AnAction tabAction = tabInfo.getTabLabelActions() != null
-                                   ? ArrayUtil.getLastElement(tabInfo.getTabLabelActions().getChildren(null))
-                                   : null;
+              val tabAction = if (tabInfo.getTabLabelActions() != null) ArrayUtil.getLastElement(
+                tabInfo.getTabLabelActions().getChildren(null))
+              else null
               if (tabAction == null && !tabInfo.isPinned()) {
-                return;
+                return@createListPopup
               }
-
-              boolean clickToUnpin = false;
+              var clickToUnpin = false
               if (tabInfo.isPinned()) {
                 if (tabAction != null) {
-                  JComponent component = tabInfo.getComponent();
-                  boolean wasShowing = UIUtil.isShowing(component);
+                  val component = tabInfo.getComponent()
+                  val wasShowing = UIUtil.isShowing(component)
                   try {
-                    UIUtil.markAsShowing(component, true);
-                    ActionManager.getInstance().tryToExecute(tabAction, e, tabInfo.getComponent(), tabInfo.getTabActionPlace(), true);
+                    UIUtil.markAsShowing(component, true)
+                    ActionManager.getInstance().tryToExecute(tabAction, e, tabInfo.getComponent(), tabInfo.getTabActionPlace(), true)
                   }
                   finally {
-                    UIUtil.markAsShowing(component, wasShowing);
+                    UIUtil.markAsShowing(component, wasShowing)
                   }
-                  clickToUnpin = true;
+                  clickToUnpin = true
                 }
               }
               if (!clickToUnpin) {
-                removeTab(tabInfo);
+                removeTab(tabInfo)
               }
-
-              e.consume();
-              int indexToSelect = Math.min(clickedIndex, list.getModel().getSize());
-              ClientProperty.put(JBTabsImpl.this, HIDDEN_INFOS_SELECT_INDEX_KEY, indexToSelect);
-              step.selectTab = false;  // do not select current tab, because we already handled other action: close or unpin
-
-              JBPopup curPopup = PopupUtil.getPopupContainerFor(list);
+              e.consume()
+              val indexToSelect = Math.min(clickedIndex, list.model.size)
+              ClientProperty.put(this@JBTabsImpl, HIDDEN_INFOS_SELECT_INDEX_KEY, indexToSelect)
+              step.selectTab = false // do not select current tab, because we already handled other action: close or unpin
+              val curPopup = PopupUtil.getPopupContainerFor(list)
               if (curPopup != null) {
-                Component button = PopupUtil.getPopupToggleComponent(curPopup);
-                curPopup.cancel();
-                if (list.getModel().getSize() > 0) {
-                  JBPopup newPopup = showMorePopup();
+                val button = PopupUtil.getPopupToggleComponent(curPopup)
+                curPopup.cancel()
+                if (list.model.size > 0) {
+                  val newPopup = showMorePopup()
                   if (newPopup != null) {
-                    PopupUtil.setPopupToggleComponent(newPopup, button);
+                    PopupUtil.setPopupToggleComponent(newPopup, button)
                   }
                 }
               }
             }
-          };
-          MouseListener[] listeners = list.getMouseListeners();
-          MouseMotionListener[] motionListeners = list.getMouseMotionListeners();
-          Arrays.stream(listeners).forEach(list::removeMouseListener);
-          Arrays.stream(motionListeners).forEach(list::removeMouseMotionListener);
-          list.addMouseListener(listMouseListener);
-          list.addMouseMotionListener(listMouseListener);
-          Arrays.stream(listeners).forEach(list::addMouseListener);
-          Arrays.stream(motionListeners).forEach(list::addMouseMotionListener);
+          }
+          val listeners = list.mouseListeners
+          val motionListeners = list.mouseMotionListeners
+          Arrays.stream(listeners).forEach { l: MouseListener? -> list.removeMouseListener(l) }
+          Arrays.stream(motionListeners).forEach { l: MouseMotionListener? -> list.removeMouseMotionListener(l) }
+          list.addMouseListener(listMouseListener)
+          list.addMouseMotionListener(listMouseListener)
+          Arrays.stream(listeners).forEach { l: MouseListener? -> list.addMouseListener(l) }
+          Arrays.stream(motionListeners).forEach { l: MouseMotionListener? -> list.addMouseMotionListener(l) }
         }
-      };
-    });
-
-    popup.getContent().putClientProperty(MorePopupAware.class, Boolean.TRUE);
-    popup.addListener(new JBPopupListener() {
-      @Override
-      public void onClosed(@NotNull LightweightWindowEvent event) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          ClientProperty.put(JBTabsImpl.this, HIDDEN_INFOS_SELECT_INDEX_KEY, null);
-        });
       }
-    });
-    popup.show(new RelativePoint(this, new Point(rect.x, rect.y + rect.height)));
-    return popup;
+    }
+    popup.content.putClientProperty(MorePopupAware::class.java, java.lang.Boolean.TRUE)
+    popup.addListener(object : JBPopupListener {
+      override fun onClosed(event: LightweightWindowEvent) {
+        ApplicationManager.getApplication().invokeLater { ClientProperty.put(this@JBTabsImpl, HIDDEN_INFOS_SELECT_INDEX_KEY, null) }
+      }
+    })
+    popup.show(RelativePoint(this, Point(rect.x, rect.y + rect.height)))
+    return popup
   }
 
   // returns the icon that will be used in the hidden tabs list
-  protected @Nullable Icon getTabActionIcon(@NotNull TabInfo info, boolean isHovered) {
-    boolean hasActions = info.getTabLabelActions() != null && info.getTabLabelActions().getChildren(null).length > 0;
-    Icon icon;
-    if (hasActions) {
-      icon = isHovered ? AllIcons.Actions.CloseHovered : AllIcons.Actions.Close;
+  protected open fun getTabActionIcon(info: TabInfo, isHovered: Boolean): Icon? {
+    val hasActions = info.tabLabelActions != null && info.tabLabelActions.getChildren(null).size > 0
+    var icon: Icon?
+    icon = if (hasActions) {
+      if (isHovered) AllIcons.Actions.CloseHovered else AllIcons.Actions.Close
     }
     else {
-      icon = EmptyIcon.ICON_16;
+      EmptyIcon.ICON_16
     }
-    if (info.isPinned()) {
-      icon = AllIcons.Actions.PinTab;
+    if (info.isPinned) {
+      icon = AllIcons.Actions.PinTab
     }
-    return icon;
+    return icon
   }
 
-  private class HiddenInfosListPopupStep extends BaseListPopupStep<TabInfo> {
-    private final TabInfo separatorInfo;
-    boolean selectTab = true;
-
-    private HiddenInfosListPopupStep(@NotNull List<TabInfo> values, @Nullable TabInfo separatorInfo) {
-      super(null, values);
-      this.separatorInfo = separatorInfo;
-    }
-
-    @Override
-    public @Nullable PopupStep<?> onChosen(TabInfo selectedValue, boolean finalChoice) {
+  private inner class HiddenInfosListPopupStep(values: List<TabInfo?>, private val separatorInfo: TabInfo?) : BaseListPopupStep<TabInfo?>(
+    null, values) {
+    var selectTab = true
+    override fun onChosen(selectedValue: TabInfo, finalChoice: Boolean): PopupStep<*>? {
       if (selectTab) {
-        select(selectedValue, true);
+        select(selectedValue, true)
       }
       else {
-        selectTab = true;
+        selectTab = true
       }
-      return FINAL_CHOICE;
+      return FINAL_CHOICE
     }
 
-    @Override
-    public @Nullable ListSeparator getSeparatorAbove(TabInfo value) {
-      return value == separatorInfo ? new ListSeparator() : null;
+    override fun getSeparatorAbove(value: TabInfo): ListSeparator? {
+      return if (value == separatorInfo) ListSeparator() else null
     }
 
-    @Override
-    public Icon getIconFor(TabInfo value) {
-      return value.getIcon();
+    override fun getIconFor(value: TabInfo): Icon? {
+      return value.icon
     }
 
-    @Override
-    public @NotNull String getTextFor(TabInfo value) {
-      return value.getText();
+    override fun getTextFor(value: TabInfo): String {
+      return value.text
     }
   }
 
-  private JBPopup showTabLabelsPopup(Rectangle rect, List<TabInfo> hiddenInfos) {
-    JPanel gridPanel = new JPanel(new GridLayout(hiddenInfos.size(), 1));
-    JScrollPane scrollPane = new JBScrollPane(gridPanel) {
-      @Override
-      public Dimension getPreferredSize() {
-        Dimension size = super.getPreferredSize();
-        if (ScreenUtil.getScreenRectangle(JBTabsImpl.this).height < gridPanel.getPreferredSize().height) {
-          size.width += UIUtil.getScrollBarWidth();
+  private fun showTabLabelsPopup(rect: Rectangle, hiddenInfos: List<TabInfo?>): JBPopup {
+    val gridPanel = JPanel(GridLayout(hiddenInfos.size, 1))
+    val scrollPane: JScrollPane = object : JBScrollPane(gridPanel) {
+      override fun getPreferredSize(): Dimension {
+        val size = super.getPreferredSize()
+        if (ScreenUtil.getScreenRectangle(this@JBTabsImpl).height < gridPanel.preferredSize.height) {
+          size.width += UIUtil.getScrollBarWidth()
         }
-        return size;
+        return size
       }
-    };
-    JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(scrollPane, null).createPopup();
-    for (TabInfo info : hiddenInfos) {
-      TabLabel label = createTabLabel(info);
-      label.setDoubleBuffered(true);
-      label.setText(info.getColoredText());
-      label.setIcon(info.getIcon());
-      label.setTabActions(info.getTabLabelActions());
-      label.setAlignmentToCenter(false);
-      label.apply(myUiDecorator != null ? myUiDecorator.getDecoration() : ourDefaultDecorator.getDecoration());
-      label.addMouseListener(new MouseAdapter() {
-        @Override
-        public void mouseClicked(MouseEvent e) {
-          if (e.isShiftDown() && !e.isPopupTrigger()) {
-            removeTab(info);
+    }
+    val popup = JBPopupFactory.getInstance().createComponentPopupBuilder(scrollPane, null).createPopup()
+    for (info in hiddenInfos) {
+      val label = createTabLabel(info)
+      label.isDoubleBuffered = true
+      label.setText(info.coloredText)
+      label.setIcon(info.icon)
+      label.setTabActions(info.tabLabelActions)
+      label.setAlignmentToCenter(false)
+      label.apply(if (myUiDecorator != null) myUiDecorator!!.decoration else ourDefaultDecorator.decoration)
+      label.addMouseListener(object : MouseAdapter() {
+        override fun mouseClicked(e: MouseEvent) {
+          if (e.isShiftDown && !e.isPopupTrigger) {
+            removeTab(info)
             if (canShowMorePopup()) {
-              showMorePopup();
+              showMorePopup()
             }
-            popup.cancel();
+            popup.cancel()
           }
           else {
-            select(info, true);
+            select(info, true)
           }
         }
-      });
-      add(label);
+      })
+      add(label)
       try {
-        label.updateTabActions();
+        label.updateTabActions()
       }
       finally {
-        remove(label);
+        remove(label)
       }
-      gridPanel.add(label);
+      gridPanel.add(label)
     }
-    popup.getContent().putClientProperty(MorePopupAware.class, Boolean.TRUE);
-    popup.show(new RelativePoint(this, new Point(rect.x, rect.y + rect.height)));
-    return popup;
+    popup.content.putClientProperty(MorePopupAware::class.java, java.lang.Boolean.TRUE)
+    popup.show(RelativePoint(this, Point(rect.x, rect.y + rect.height)))
+    return popup
   }
 
-  private @Nullable JComponent getToFocus() {
-    final TabInfo info = getSelectedInfo();
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("selected info: " + info);
+  private val toFocus: JComponent?
+    private get() {
+      val info = selectedInfo
+      if (LOG.isDebugEnabled) {
+        LOG.debug("selected info: $info")
+      }
+      if (info == null) return null
+      var toFocus: JComponent? = null
+      if (isRequestFocusOnLastFocusedComponent && info.lastFocusOwner != null && !isMyChildIsFocusedNow) {
+        toFocus = info.lastFocusOwner
+        if (LOG.isDebugEnabled) {
+          LOG.debug("last focus owner: $toFocus")
+        }
+      }
+      if (toFocus == null) {
+        toFocus = info.preferredFocusableComponent
+        if (LOG.isDebugEnabled) {
+          LOG.debug("preferred focusable component: $toFocus")
+        }
+        if (toFocus == null || !toFocus.isShowing) {
+          return null
+        }
+        val policyToFocus = myFocusManager.getFocusTargetFor(toFocus)
+        if (LOG.isDebugEnabled) {
+          LOG.debug("focus target: $policyToFocus")
+        }
+        if (policyToFocus != null) {
+          toFocus = policyToFocus
+        }
+      }
+      return toFocus
     }
 
-    if (info == null) return null;
-
-    JComponent toFocus = null;
-
-    if (isRequestFocusOnLastFocusedComponent() && info.getLastFocusOwner() != null && !isMyChildIsFocusedNow()) {
-      toFocus = info.getLastFocusOwner();
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("last focus owner: " + toFocus);
-      }
-    }
-
-    if (toFocus == null) {
-      toFocus = info.getPreferredFocusableComponent();
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("preferred focusable component: " + toFocus);
-      }
-
-      if (toFocus == null || !toFocus.isShowing()) {
-        return null;
-      }
-      final JComponent policyToFocus = myFocusManager.getFocusTargetFor(toFocus);
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("focus target: " + policyToFocus);
-      }
-
-      if (policyToFocus != null) {
-        toFocus = policyToFocus;
-      }
-    }
-
-    return toFocus;
-  }
-
-  @Override
-  public void requestFocus() {
-    final JComponent toFocus = getToFocus();
+  override fun requestFocus() {
+    val toFocus = toFocus
     if (toFocus != null) {
-      getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(toFocus, true));
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown { IdeFocusManager.getGlobalInstance().requestFocus(toFocus, true) }
     }
     else {
-      getGlobalInstance().doWhenFocusSettlesDown(() -> super.requestFocus());
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown { super.requestFocus() }
     }
   }
 
-  @Override
-  public boolean requestFocusInWindow() {
-    final JComponent toFocus = getToFocus();
-    return toFocus != null ? toFocus.requestFocusInWindow() : super.requestFocusInWindow();
+  override fun requestFocusInWindow(): Boolean {
+    val toFocus = toFocus
+    return toFocus?.requestFocusInWindow() ?: super.requestFocusInWindow()
   }
 
-
-  @Override
-  public @NotNull TabInfo addTab(TabInfo info, int index) {
-    return addTab(info, index, false, true);
+  override fun addTab(info: TabInfo, index: Int): TabInfo {
+    return addTab(info, index, false, true)
   }
 
-  @Override
-  public TabInfo addTabSilently(TabInfo info, int index) {
-    return addTab(info, index, false, false);
+  override fun addTabSilently(info: TabInfo, index: Int): TabInfo {
+    return addTab(info, index, false, false)
   }
 
-  private TabInfo addTab(@NotNull TabInfo info, int index, boolean isDropTarget, boolean fireEvents) {
-    if (!isDropTarget && getTabs().contains(info)) {
-      return getTabs().get(getTabs().indexOf(info));
+  private fun addTab(info: TabInfo, index: Int, isDropTarget: Boolean, fireEvents: Boolean): TabInfo {
+    if (!isDropTarget && tabs.contains(info)) {
+      return tabs[tabs.indexOf(info)]
     }
-
-    info.getChangeSupport().addPropertyChangeListener(this);
-    TabLabel label = createTabLabel(info);
-    myInfo2Label.put(info, label);
-    myInfo2Page.put(info, new AccessibleTabPage(info));
-
+    info.changeSupport.addPropertyChangeListener(this)
+    val label = createTabLabel(info)
+    myInfo2Label[info] = label
+    myInfo2Page[info] = AccessibleTabPage(info)
     if (!isDropTarget) {
-      if (index < 0 || index > myVisibleInfos.size() - 1) {
-        myVisibleInfos.add(info);
+      if (index < 0 || index > myVisibleInfos.size - 1) {
+        myVisibleInfos.add(info)
       }
       else {
-        myVisibleInfos.add(index, info);
+        myVisibleInfos.add(index, info)
       }
     }
-
-    resetTabsCache();
-
-    updateText(info);
-    updateIcon(info);
-    updateSideComponent(info);
-    updateTabActions(info);
-
-    add(label);
-
-    adjust(info);
-
-    updateAll(false);
-
-    if (info.isHidden()) {
-      updateHiding();
+    resetTabsCache()
+    updateText(info)
+    updateIcon(info)
+    updateSideComponent(info)
+    updateTabActions(info)
+    add(label)
+    adjust(info)
+    updateAll(false)
+    if (info.isHidden) {
+      updateHiding()
     }
-
     if (!isDropTarget && fireEvents) {
-      if (getTabCount() == 1) {
-        fireBeforeSelectionChanged(null, info);
-        fireSelectionChanged(null, info);
+      if (tabCount == 1) {
+        fireBeforeSelectionChanged(null, info)
+        fireSelectionChanged(null, info)
       }
     }
-
-    revalidateAndRepaint(false);
-
-    return info;
+    revalidateAndRepaint(false)
+    return info
   }
 
-  protected TabLabel createTabLabel(TabInfo info) {
-    return new TabLabel(this, info);
+  protected open fun createTabLabel(info: TabInfo?): TabLabel {
+    return TabLabel(this, info)
   }
 
-  @Override
-  public @NotNull TabInfo addTab(TabInfo info) {
-    return addTab(info, -1);
+  override fun addTab(info: TabInfo): TabInfo {
+    return addTab(info, -1)
   }
 
-  @Override
-  public TabLabel getTabLabel(TabInfo info) {
-    return myInfo2Label.get(info);
+  override fun getTabLabel(info: TabInfo): TabLabel {
+    return myInfo2Label[info]!!
   }
 
-  public @Nullable ActionGroup getPopupGroup() {
-    return myPopupGroup != null ? myPopupGroup.get() : null;
+  val popupGroup: ActionGroup?
+    get() = if (myPopupGroup != null) myPopupGroup!!.get() else null
+
+  override fun setPopupGroup(popupGroup: ActionGroup, place: String, addNavigationGroup: Boolean): JBTabs {
+    return setPopupGroup({ popupGroup }, place, addNavigationGroup)
   }
 
-  public String getPopupPlace() {
-    return myPopupPlace;
+  override fun setPopupGroup(popupGroup: Supplier<out ActionGroup>,
+                             place: String,
+                             addNavigationGroup: Boolean): JBTabs {
+    myPopupGroup = popupGroup
+    popupPlace = place
+    myAddNavigationGroup = addNavigationGroup
+    return this
   }
 
-  @Override
-  public @NotNull JBTabs setPopupGroup(final @NotNull ActionGroup popupGroup, @NotNull String place, final boolean addNavigationGroup) {
-    return setPopupGroup(() -> popupGroup, place, addNavigationGroup);
+  private fun updateAll(forcedRelayout: Boolean) {
+    val toSelect = selectedInfo
+    setSelectedInfo(toSelect)
+    updateContainer(forcedRelayout, false)
+    removeDeferred()
+    updateListeners()
+    updateTabActions(false)
+    updateEnabling()
   }
 
-  @Override
-  public @NotNull JBTabs setPopupGroup(@NotNull Supplier<? extends ActionGroup> popupGroup,
-                                       @NotNull String place,
-                                       boolean addNavigationGroup) {
-    myPopupGroup = popupGroup;
-    myPopupPlace = place;
-    myAddNavigationGroup = addNavigationGroup;
-    return this;
-  }
-
-  private void updateAll(boolean forcedRelayout) {
-    TabInfo toSelect = getSelectedInfo();
-    setSelectedInfo(toSelect);
-    updateContainer(forcedRelayout, false);
-    removeDeferred();
-    updateListeners();
-    updateTabActions(false);
-    updateEnabling();
-  }
-
-  private boolean isMyChildIsFocusedNow() {
-    Component owner = getFocusOwner();
-    if (owner == null) {
-      return false;
+  private val isMyChildIsFocusedNow: Boolean
+    private get() {
+      val owner = focusOwner ?: return false
+      return if (mySelectedInfo != null && !SwingUtilities.isDescendingFrom(owner, mySelectedInfo!!.component)) {
+        false
+      }
+      else SwingUtilities.isDescendingFrom(owner, this)
     }
 
-    if (mySelectedInfo != null && !SwingUtilities.isDescendingFrom(owner, mySelectedInfo.getComponent())) {
-      return false;
+  override fun select(info: TabInfo, requestFocus: Boolean): ActionCallback {
+    return _setSelected(info, requestFocus, false)
+  }
+
+  private fun _setSelected(info: TabInfo, requestFocus: Boolean, requestFocusInWindow: Boolean): ActionCallback {
+    if (!isEnabled) {
+      return ActionCallback.REJECTED
     }
-
-    return SwingUtilities.isDescendingFrom(owner, this);
-  }
-
-  private static @Nullable JComponent getFocusOwner() {
-    Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    return (JComponent)(owner instanceof JComponent ? owner : null);
-  }
-
-  @Override
-  public @NotNull ActionCallback select(@NotNull TabInfo info, boolean requestFocus) {
-    return _setSelected(info, requestFocus, false);
-  }
-
-  private @NotNull ActionCallback _setSelected(final TabInfo info, final boolean requestFocus, boolean requestFocusInWindow) {
-    if (!isEnabled()) {
-      return ActionCallback.REJECTED;
-    }
-
-    myMouseInsideTabsArea = false;//temporary state to make selection fully visible (scrolled in view)
-    if (mySelectionChangeHandler != null) {
-      return mySelectionChangeHandler.execute(info, requestFocus, new ActiveRunnable() {
-        @Override
-        public @NotNull ActionCallback run() {
-          return executeSelectionChange(info, requestFocus, requestFocusInWindow);
+    isMouseInsideTabsArea = false //temporary state to make selection fully visible (scrolled in view)
+    return if (mySelectionChangeHandler != null) {
+      mySelectionChangeHandler!!.execute(info, requestFocus, object : ActiveRunnable() {
+        override fun run(): ActionCallback {
+          return executeSelectionChange(info, requestFocus, requestFocusInWindow)
         }
-      });
+      })
     }
-    return executeSelectionChange(info, requestFocus, requestFocusInWindow);
+    else executeSelectionChange(info, requestFocus, requestFocusInWindow)
   }
 
-  private @NotNull ActionCallback executeSelectionChange(@NotNull TabInfo info, boolean requestFocus, boolean requestFocusInWindow) {
-    if (mySelectedInfo != null && mySelectedInfo.equals(info)) {
+  private fun executeSelectionChange(info: TabInfo, requestFocus: Boolean, requestFocusInWindow: Boolean): ActionCallback {
+    if (mySelectedInfo != null && mySelectedInfo == info) {
       if (!requestFocus) {
-        return ActionCallback.DONE;
+        return ActionCallback.DONE
       }
-
-      Component owner = myFocusManager.getFocusOwner();
-      JComponent c = info.getComponent();
-      if (c != null && owner != null && (c == owner || SwingUtilities.isDescendingFrom(owner, c))) {
+      val owner = myFocusManager.focusOwner
+      val c = info.component
+      return if (c != null && owner != null && (c === owner || SwingUtilities.isDescendingFrom(owner, c))) {
         // This might look like a no-op, but in some cases it's not. In particular, it's required when a focus transfer has just been
         // requested to another component. E.g. this happens on 'unsplit' operation when we remove an editor component from UI hierarchy and
         // re-add it at once in a different layout, and want that editor component to preserve focus afterwards.
-        return requestFocus(owner, requestFocusInWindow);
+        requestFocus(owner, requestFocusInWindow)
       }
-      return requestFocus(getToFocus(), requestFocusInWindow);
+      else requestFocus(toFocus, requestFocusInWindow)
     }
-
-    if (myRequestFocusOnLastFocusedComponent && mySelectedInfo != null && isMyChildIsFocusedNow()) {
-      mySelectedInfo.setLastFocusOwner(getFocusOwnerToStore());
+    if (isRequestFocusOnLastFocusedComponent && mySelectedInfo != null && isMyChildIsFocusedNow) {
+      mySelectedInfo!!.lastFocusOwner = focusOwnerToStore
     }
-
-    TabInfo oldInfo = mySelectedInfo;
-    setSelectedInfo(info);
-    TabInfo newInfo = getSelectedInfo();
-
-    TabLabel label = myInfo2Label.get(info);
+    val oldInfo = mySelectedInfo
+    setSelectedInfo(info)
+    val newInfo = selectedInfo
+    val label = myInfo2Label[info]
     if (label != null) {
-      setComponentZOrder(label, 0);
+      setComponentZOrder(label, 0)
     }
-    setComponentZOrder(myScrollBar, 0);
-
-    fireBeforeSelectionChanged(oldInfo, newInfo);
-    boolean oldValue = myMouseInsideTabsArea;
+    setComponentZOrder(myScrollBar, 0)
+    fireBeforeSelectionChanged(oldInfo, newInfo)
+    val oldValue = isMouseInsideTabsArea
     try {
-      updateContainer(false, true);
+      updateContainer(false, true)
     }
     finally {
-      myMouseInsideTabsArea = oldValue;
+      isMouseInsideTabsArea = oldValue
     }
-
-    fireSelectionChanged(oldInfo, newInfo);
-
+    fireSelectionChanged(oldInfo, newInfo)
     if (!requestFocus) {
-      return removeDeferred();
+      return removeDeferred()
     }
-
-    JComponent toFocus = getToFocus();
-    if (myProject != null && toFocus != null) {
-      ActionCallback result = new ActionCallback();
-      requestFocus(toFocus, requestFocusInWindow).doWhenProcessed(() -> {
-        if (myProject.isDisposed()) {
-          result.setRejected();
+    val toFocus = toFocus
+    return if (myProject != null && toFocus != null) {
+      val result = ActionCallback()
+      requestFocus(toFocus, requestFocusInWindow).doWhenProcessed {
+        if (myProject.isDisposed) {
+          result.setRejected()
         }
         else {
-          removeDeferred().notifyWhenDone(result);
+          removeDeferred().notifyWhenDone(result)
         }
-      });
-      return result;
+      }
+      result
     }
     else {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (requestFocusInWindow) {
-          requestFocusInWindow();
-        }
-        else {
-          myFocusManager.requestFocusInProject(this, myProject);
-        }
-      }, ModalityState.NON_MODAL);
-      return removeDeferred();
+      ApplicationManager.getApplication().invokeLater({
+                                                        if (requestFocusInWindow) {
+                                                          requestFocusInWindow()
+                                                        }
+                                                        else {
+                                                          myFocusManager.requestFocusInProject(this,
+                                                                                               myProject)
+                                                        }
+                                                      }, ModalityState.NON_MODAL)
+      removeDeferred()
     }
   }
 
-  protected @Nullable JComponent getFocusOwnerToStore() {
-    JComponent owner = getFocusOwner();
-    if (owner == null) return null;
-    JBTabsImpl tabs = ComponentUtil.getParentOfType(JBTabsImpl.class, owner.getParent());
-    if (tabs != this) return null;
-    return owner;
-  }
+  protected open val focusOwnerToStore: JComponent?
+    protected get() {
+      val owner = focusOwner ?: return null
+      val tabs = ComponentUtil.getParentOfType(JBTabsImpl::class.java, owner.parent)
+      return if (tabs !== this) null else owner
+    }
 
-  private void fireBeforeSelectionChanged(@Nullable TabInfo oldInfo, TabInfo newInfo) {
+  private fun fireBeforeSelectionChanged(oldInfo: TabInfo?, newInfo: TabInfo?) {
     if (oldInfo != newInfo) {
-      myOldSelection = oldInfo;
+      myOldSelection = oldInfo
       try {
-        for (TabsListener eachListener : myTabListeners) {
-          eachListener.beforeSelectionChanged(oldInfo, newInfo);
+        for (eachListener in myTabListeners) {
+          eachListener.beforeSelectionChanged(oldInfo, newInfo)
         }
       }
       finally {
-        myOldSelection = null;
+        myOldSelection = null
       }
     }
   }
 
-  private void fireSelectionChanged(@Nullable TabInfo oldInfo, @Nullable TabInfo newInfo) {
+  private fun fireSelectionChanged(oldInfo: TabInfo?, newInfo: TabInfo?) {
     if (oldInfo != newInfo) {
-      for (TabsListener eachListener : myTabListeners) {
-        if (eachListener != null) {
-          eachListener.selectionChanged(oldInfo, newInfo);
-        }
+      for (eachListener in myTabListeners) {
+        eachListener?.selectionChanged(oldInfo, newInfo)
       }
     }
   }
 
-  void fireTabsMoved() {
-    for (TabsListener eachListener : myTabListeners) {
-      if (eachListener != null) {
-        eachListener.tabsMoved();
-      }
+  fun fireTabsMoved() {
+    for (eachListener in myTabListeners) {
+      eachListener?.tabsMoved()
     }
   }
 
-
-  private void fireTabRemoved(@NotNull TabInfo info) {
-    for (TabsListener eachListener : myTabListeners) {
-      if (eachListener != null) {
-        eachListener.tabRemoved(info);
-      }
+  private fun fireTabRemoved(info: TabInfo) {
+    for (eachListener in myTabListeners) {
+      eachListener?.tabRemoved(info)
     }
   }
 
-  private @NotNull ActionCallback requestFocus(final Component toFocus, boolean inWindow) {
-    if (toFocus == null) return ActionCallback.DONE;
-
-    if (isShowing()) {
-      ActionCallback res = new ActionCallback();
-      ApplicationManager.getApplication().invokeLater(() -> {
+  private fun requestFocus(toFocus: Component?, inWindow: Boolean): ActionCallback {
+    if (toFocus == null) return ActionCallback.DONE
+    if (isShowing) {
+      val res = ActionCallback()
+      ApplicationManager.getApplication().invokeLater {
         if (inWindow) {
-          toFocus.requestFocusInWindow();
-          res.setDone();
+          toFocus.requestFocusInWindow()
+          res.setDone()
         }
         else {
-          myFocusManager.requestFocusInProject(toFocus, myProject).notifyWhenDone(res);
+          myFocusManager.requestFocusInProject(toFocus, myProject).notifyWhenDone(res)
         }
-      });
-      return res;
+      }
+      return res
     }
-    return ActionCallback.REJECTED;
+    return ActionCallback.REJECTED
   }
 
-  private @NotNull ActionCallback removeDeferred() {
+  private fun removeDeferred(): ActionCallback {
     if (myDeferredToRemove.isEmpty()) {
-      return ActionCallback.DONE;
+      return ActionCallback.DONE
     }
-
-    ActionCallback callback = new ActionCallback();
-    long executionRequest = ++myRemoveDeferredRequest;
-    myFocusManager.doWhenFocusSettlesDown(() -> {
+    val callback = ActionCallback()
+    val executionRequest = ++myRemoveDeferredRequest
+    myFocusManager.doWhenFocusSettlesDown {
       if (myRemoveDeferredRequest == executionRequest) {
-        removeDeferredNow();
+        removeDeferredNow()
       }
-
-      callback.setDone();
-    });
-    return callback;
+      callback.setDone()
+    }
+    return callback
   }
 
-  private void unqueueFromRemove(Component c) {
-    myDeferredToRemove.remove(c);
+  private fun unqueueFromRemove(c: Component) {
+    myDeferredToRemove.remove(c)
   }
 
-  private void removeDeferredNow() {
-    for (Component each : myDeferredToRemove.keySet()) {
-      if (each != null && each.getParent() == this) {
-        remove(each);
+  private fun removeDeferredNow() {
+    for (each in myDeferredToRemove.keys) {
+      if (each != null && each.parent === this) {
+        remove(each)
       }
     }
-    myDeferredToRemove.clear();
+    myDeferredToRemove.clear()
   }
 
-  @Override
-  public void propertyChange(final PropertyChangeEvent evt) {
-    final TabInfo tabInfo = (TabInfo)evt.getSource();
-    if (TabInfo.ACTION_GROUP.equals(evt.getPropertyName())) {
-      updateSideComponent(tabInfo);
-      relayout(false, false);
+  override fun propertyChange(evt: PropertyChangeEvent) {
+    val tabInfo = evt.source as TabInfo
+    if (TabInfo.ACTION_GROUP == evt.propertyName) {
+      updateSideComponent(tabInfo)
+      relayout(false, false)
     }
-    else if (TabInfo.COMPONENT.equals(evt.getPropertyName())) {
-      relayout(true, false);
+    else if (TabInfo.COMPONENT == evt.propertyName) {
+      relayout(true, false)
     }
-    else if (TabInfo.TEXT.equals(evt.getPropertyName())) {
-      updateText(tabInfo);
-      revalidateAndRepaint();
+    else if (TabInfo.TEXT == evt.propertyName) {
+      updateText(tabInfo)
+      revalidateAndRepaint()
     }
-    else if (TabInfo.ICON.equals(evt.getPropertyName())) {
-      updateIcon(tabInfo);
-      revalidateAndRepaint();
+    else if (TabInfo.ICON == evt.propertyName) {
+      updateIcon(tabInfo)
+      revalidateAndRepaint()
     }
-    else if (TabInfo.TAB_COLOR.equals(evt.getPropertyName())) {
-      revalidateAndRepaint();
+    else if (TabInfo.TAB_COLOR == evt.propertyName) {
+      revalidateAndRepaint()
     }
-    else if (TabInfo.ALERT_STATUS.equals(evt.getPropertyName())) {
-      boolean start = ((Boolean)evt.getNewValue()).booleanValue();
-      updateAttraction(tabInfo, start);
+    else if (TabInfo.ALERT_STATUS == evt.propertyName) {
+      val start = evt.newValue as Boolean
+      updateAttraction(tabInfo, start)
     }
-    else if (TabInfo.TAB_ACTION_GROUP.equals(evt.getPropertyName())) {
-      updateTabActions(tabInfo);
-      relayout(false, false);
+    else if (TabInfo.TAB_ACTION_GROUP == evt.propertyName) {
+      updateTabActions(tabInfo)
+      relayout(false, false)
     }
-    else if (TabInfo.HIDDEN.equals(evt.getPropertyName())) {
-      updateHiding();
-      relayout(false, false);
+    else if (TabInfo.HIDDEN == evt.propertyName) {
+      updateHiding()
+      relayout(false, false)
     }
-    else if (TabInfo.ENABLED.equals(evt.getPropertyName())) {
-      updateEnabling();
+    else if (TabInfo.ENABLED == evt.propertyName) {
+      updateEnabling()
     }
   }
 
-  private void updateEnabling() {
-    List<TabInfo> all = getTabs();
-    for (TabInfo tabInfo : all) {
-      TabLabel eachLabel = myInfo2Label.get(tabInfo);
-      eachLabel.setTabEnabled(tabInfo.isEnabled());
+  private fun updateEnabling() {
+    val all = tabs
+    for (tabInfo in all) {
+      val eachLabel = myInfo2Label[tabInfo]
+      eachLabel!!.setTabEnabled(tabInfo.isEnabled)
     }
-
-    TabInfo selected = getSelectedInfo();
-    if (selected != null && !selected.isEnabled()) {
-      TabInfo toSelect = getToSelectOnRemoveOf(selected);
+    val selected = selectedInfo
+    if (selected != null && !selected.isEnabled) {
+      val toSelect = getToSelectOnRemoveOf(selected)
       if (toSelect != null) {
-        select(toSelect, myFocusManager.getFocusedDescendantFor(this) != null);
+        select(toSelect, myFocusManager.getFocusedDescendantFor(this) != null)
       }
     }
   }
 
-  private void updateHiding() {
-    boolean update = false;
-
-    Iterator<TabInfo> visible = myVisibleInfos.iterator();
+  private fun updateHiding() {
+    var update = false
+    val visible = myVisibleInfos.iterator()
     while (visible.hasNext()) {
-      TabInfo each = visible.next();
-      if (each.isHidden() && !myHiddenInfos.containsKey(each)) {
-        myHiddenInfos.put(each, myVisibleInfos.indexOf(each));
-        visible.remove();
-        update = true;
+      val each = visible.next()
+      if (each.isHidden && !myHiddenInfos.containsKey(each)) {
+        myHiddenInfos[each] = myVisibleInfos.indexOf(each)
+        visible.remove()
+        update = true
       }
     }
-
-
-    Iterator<TabInfo> hidden = myHiddenInfos.keySet().iterator();
+    val hidden = myHiddenInfos.keys.iterator()
     while (hidden.hasNext()) {
-      TabInfo each = hidden.next();
-      if (!each.isHidden() && myHiddenInfos.containsKey(each)) {
-        myVisibleInfos.add(getIndexInVisibleArray(each), each);
-        hidden.remove();
-        update = true;
+      val each = hidden.next()
+      if (!each.isHidden && myHiddenInfos.containsKey(each)) {
+        myVisibleInfos.add(getIndexInVisibleArray(each), each)
+        hidden.remove()
+        update = true
       }
     }
-
-
     if (update) {
-      resetTabsCache();
+      resetTabsCache()
       if (mySelectedInfo != null && myHiddenInfos.containsKey(mySelectedInfo)) {
-        TabInfo toSelect = getToSelectOnRemoveOf(mySelectedInfo);
-        setSelectedInfo(toSelect);
+        val toSelect = getToSelectOnRemoveOf(mySelectedInfo!!)
+        setSelectedInfo(toSelect)
       }
-      updateAll(true);
+      updateAll(true)
     }
   }
 
-  private int getIndexInVisibleArray(TabInfo each) {
-    Integer info = myHiddenInfos.get(each);
-    int index = info == null ? myVisibleInfos.size() : info.intValue();
-
-    if (index > myVisibleInfos.size()) {
-      index = myVisibleInfos.size();
+  private fun getIndexInVisibleArray(each: TabInfo): Int {
+    val info = myHiddenInfos[each]
+    var index = info ?: myVisibleInfos.size
+    if (index > myVisibleInfos.size) {
+      index = myVisibleInfos.size
     }
-
     if (index < 0) {
-      index = 0;
+      index = 0
     }
-
-    return index;
+    return index
   }
 
-  private void updateIcon(@NotNull TabInfo tabInfo) {
-    myInfo2Label.get(tabInfo).setIcon(tabInfo.getIcon());
+  private fun updateIcon(tabInfo: TabInfo) {
+    myInfo2Label[tabInfo]!!.setIcon(tabInfo.icon)
   }
 
-  public void revalidateAndRepaint() {
-    revalidateAndRepaint(true);
+  fun revalidateAndRepaint() {
+    revalidateAndRepaint(true)
   }
 
-  @Override
-  public boolean isOpaque() {
-    return super.isOpaque() && !myVisibleInfos.isEmpty();
+  override fun isOpaque(): Boolean {
+    return super.isOpaque() && !myVisibleInfos.isEmpty()
   }
 
-  protected void revalidateAndRepaint(boolean layoutNow) {
-    if (myVisibleInfos.isEmpty() && getParent() != null) {
-      Component nonOpaque = ComponentUtil.findUltimateParent(this);
-      Rectangle toRepaint = SwingUtilities.convertRectangle(getParent(), getBounds(), nonOpaque);
-      nonOpaque.repaint(toRepaint.x, toRepaint.y, toRepaint.width, toRepaint.height);
+  open fun revalidateAndRepaint(layoutNow: Boolean) {
+    if (myVisibleInfos.isEmpty() && parent != null) {
+      val nonOpaque = ComponentUtil.findUltimateParent(this)
+      val toRepaint = SwingUtilities.convertRectangle(parent, bounds, nonOpaque)
+      nonOpaque.repaint(toRepaint.x, toRepaint.y, toRepaint.width, toRepaint.height)
     }
-
     if (layoutNow) {
-      validate();
+      validate()
     }
     else {
-      revalidate();
+      revalidate()
     }
-    repaint();
+    repaint()
   }
 
-  private void updateAttraction(final TabInfo tabInfo, boolean start) {
+  private fun updateAttraction(tabInfo: TabInfo, start: Boolean) {
     if (start) {
-      myAttractions.add(tabInfo);
+      myAttractions.add(tabInfo)
     }
     else {
-      myAttractions.remove(tabInfo);
-      tabInfo.setBlinkCount(0);
+      myAttractions.remove(tabInfo)
+      tabInfo.blinkCount = 0
     }
-
-    if (start && !myAnimator.isRunning()) {
-      myAnimator.resume();
+    if (start && !myAnimator.isRunning) {
+      myAnimator.resume()
     }
     else if (!start && myAttractions.isEmpty()) {
-      myAnimator.suspend();
-      repaintAttractions();
+      myAnimator.suspend()
+      repaintAttractions()
     }
   }
 
-  private void updateText(@NotNull TabInfo tabInfo) {
-    TabLabel label = myInfo2Label.get(tabInfo);
-    label.setText(tabInfo.getColoredText());
-    label.setToolTipText(tabInfo.getTooltipText());
+  private fun updateText(tabInfo: TabInfo) {
+    val label = myInfo2Label[tabInfo]
+    label!!.setText(tabInfo.coloredText)
+    label.toolTipText = tabInfo.tooltipText
   }
 
-  private void updateSideComponent(final TabInfo tabInfo) {
-    final Toolbar old = myInfo2Toolbar.get(tabInfo);
-    if (old != null) {
-      remove(old);
-    }
-
-    final Toolbar toolbar = createToolbarComponent(tabInfo);
-    myInfo2Toolbar.put(tabInfo, toolbar);
-    add(toolbar);
+  private fun updateSideComponent(tabInfo: TabInfo) {
+    val old = myInfo2Toolbar[tabInfo]
+    old?.let { remove(it) }
+    val toolbar = createToolbarComponent(tabInfo)
+    myInfo2Toolbar[tabInfo] = toolbar
+    add(toolbar)
   }
 
-  private void updateTabActions(final TabInfo info) {
-    myInfo2Label.get(info).setTabActions(info.getTabLabelActions());
+  private fun updateTabActions(info: TabInfo) {
+    myInfo2Label[info]!!.setTabActions(info.tabLabelActions)
   }
 
-  @Override
-  public @Nullable TabInfo getSelectedInfo() {
+  override fun getSelectedInfo(): TabInfo? {
     if (myOldSelection != null) {
-      return myOldSelection;
+      return myOldSelection
     }
-
-    if (mySelectedInfo == null) {
-      return myVisibleInfos.isEmpty() ? null : myVisibleInfos.get(0);
+    return if (mySelectedInfo == null) {
+      if (myVisibleInfos.isEmpty()) null else myVisibleInfos[0]
     }
     else if (myVisibleInfos.contains(mySelectedInfo)) {
-      return mySelectedInfo;
+      mySelectedInfo
     }
     else {
-      setSelectedInfo(null);
-      return null;
+      setSelectedInfo(null)
+      null
     }
   }
 
-  private void setSelectedInfo(@Nullable TabInfo info) {
-    mySelectedInfo = info;
-    myInfo2Toolbar.forEach((tabInfo, toolbar) -> toolbar.setVisible(Objects.equals(info, tabInfo)));
+  private fun setSelectedInfo(info: TabInfo?) {
+    mySelectedInfo = info
+    myInfo2Toolbar.forEach { (tabInfo: TabInfo?, toolbar: Toolbar) -> toolbar.isVisible = info == tabInfo }
   }
 
-  @Override
-  public @Nullable TabInfo getToSelectOnRemoveOf(TabInfo info) {
-    if (!myVisibleInfos.contains(info)) return null;
-    if (mySelectedInfo != info) return null;
-
-    if (myVisibleInfos.size() == 1) return null;
-
-    int index = getVisibleInfos().indexOf(info);
-
-    TabInfo result = null;
+  override fun getToSelectOnRemoveOf(info: TabInfo): TabInfo? {
+    if (!myVisibleInfos.contains(info)) return null
+    if (mySelectedInfo != info) return null
+    if (myVisibleInfos.size == 1) return null
+    val index = visibleInfos.indexOf(info)
+    var result: TabInfo? = null
     if (index > 0) {
-      result = findEnabledBackward(index, false);
+      result = findEnabledBackward(index, false)
     }
-
     if (result == null) {
-      result = findEnabledForward(index, false);
+      result = findEnabledForward(index, false)
     }
-
-    return result;
+    return result
   }
 
-  @Nullable
-  TabInfo findEnabledForward(int from, boolean cycle) {
-    if (from < 0) return null;
-    int index = from;
-    List<TabInfo> infos = getVisibleInfos();
+  fun findEnabledForward(from: Int, cycle: Boolean): TabInfo? {
+    if (from < 0) return null
+    var index = from
+    val infos = visibleInfos
     while (true) {
-      index++;
-      if (index == infos.size()) {
-        if (!cycle) break;
-        index = 0;
+      index++
+      if (index == infos.size) {
+        if (!cycle) break
+        index = 0
       }
-      if (index == from) break;
-      final TabInfo each = infos.get(index);
-      if (each.isEnabled()) return each;
+      if (index == from) break
+      val each = infos[index]
+      if (each!!.isEnabled) return each
     }
-
-    return null;
+    return null
   }
 
-  public boolean isAlphabeticalMode() {
-    return myAlphabeticalMode;
-  }
-
-  @Nullable
-  TabInfo findEnabledBackward(int from, boolean cycle) {
-    if (from < 0) return null;
-    int index = from;
-    List<TabInfo> infos = getVisibleInfos();
+  fun findEnabledBackward(from: Int, cycle: Boolean): TabInfo? {
+    if (from < 0) return null
+    var index = from
+    val infos = visibleInfos
     while (true) {
-      index--;
+      index--
       if (index == -1) {
-        if (!cycle) break;
-        index = infos.size() - 1;
+        if (!cycle) break
+        index = infos.size - 1
       }
-      if (index == from) break;
-      final TabInfo each = infos.get(index);
-      if (each.isEnabled()) return each;
+      if (index == from) break
+      val each = infos[index]
+      if (each!!.isEnabled) return each
     }
-
-    return null;
+    return null
   }
 
-  private Toolbar createToolbarComponent(final TabInfo tabInfo) {
-    return new Toolbar(this, tabInfo);
+  private fun createToolbarComponent(tabInfo: TabInfo): Toolbar {
+    return Toolbar(this, tabInfo)
   }
 
-  @Override
-  public @NotNull TabInfo getTabAt(final int tabIndex) {
-    return getTabs().get(tabIndex);
+  override fun getTabAt(tabIndex: Int): TabInfo {
+    return tabs[tabIndex]
   }
 
-  @Override
-  public @NotNull List<TabInfo> getTabs() {
-    EDT.assertIsEdt();
+  override fun getTabs(): List<TabInfo> {
+    EDT.assertIsEdt()
     if (myAllTabs != null) {
-      return myAllTabs;
+      return myAllTabs
     }
-
-    List<TabInfo> result = new ArrayList<>(myVisibleInfos);
-    for (TabInfo each : myHiddenInfos.keySet()) {
-      result.add(getIndexInVisibleArray(each), each);
+    val result: List<TabInfo> = ArrayList(myVisibleInfos)
+    for (each in myHiddenInfos.keys) {
+      result.add(getIndexInVisibleArray(each), each)
     }
-
-    if (isAlphabeticalMode()) {
-      sortTabsAlphabetically(result);
+    if (isAlphabeticalMode) {
+      sortTabsAlphabetically(result)
     }
-
-    myAllTabs = result;
-    return result;
+    myAllTabs = result
+    return result
   }
 
-  @Override
-  public TabInfo getTargetInfo() {
-    return myPopupInfo != null ? myPopupInfo : getSelectedInfo();
+  override fun getTargetInfo(): TabInfo? {
+    return if (myPopupInfo != null) myPopupInfo else selectedInfo
   }
 
-  @Override
-  public void popupMenuWillBecomeVisible(final PopupMenuEvent e) {
+  override fun popupMenuWillBecomeVisible(e: PopupMenuEvent) {}
+  override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent) {
+    resetPopup()
   }
 
-  @Override
-  public void popupMenuWillBecomeInvisible(final PopupMenuEvent e) {
-    resetPopup();
+  override fun popupMenuCanceled(e: PopupMenuEvent) {
+    resetPopup()
   }
 
-  @Override
-  public void popupMenuCanceled(final PopupMenuEvent e) {
-    resetPopup();
-  }
-
-  private void resetPopup() {
+  private fun resetPopup() {
     //todo [kirillk] dirty hack, should rely on ActionManager to understand that menu item was either chosen on or cancelled
-    SwingUtilities.invokeLater(() -> {
+    SwingUtilities.invokeLater {
       // No need to reset popup info if a new popup has been already opened and myPopupInfo refers to the corresponding info.
       if (myActivePopup == null) {
-        myPopupInfo = null;
+        myPopupInfo = null
       }
-    });
-  }
-
-  @Override
-  public void setPaintBlocked(boolean blocked, final boolean takeSnapshot) {
-  }
-
-  private void addToDeferredRemove(final Component c) {
-    if (!myDeferredToRemove.containsKey(c)) {
-      myDeferredToRemove.put(c, c);
     }
   }
 
-  @Override
-  public @NotNull JBTabsPresentation setToDrawBorderIfTabsHidden(final boolean toDrawBorderIfTabsHidden) {
-    return this;
+  override fun setPaintBlocked(blocked: Boolean, takeSnapshot: Boolean) {}
+  private fun addToDeferredRemove(c: Component) {
+    if (!myDeferredToRemove.containsKey(c)) {
+      myDeferredToRemove[c] = c
+    }
   }
 
-  @Override
-  public @NotNull JBTabs getJBTabs() {
-    return this;
+  override fun setToDrawBorderIfTabsHidden(toDrawBorderIfTabsHidden: Boolean): JBTabsPresentation {
+    return this
   }
 
-  public static final class Toolbar extends NonOpaquePanel {
-    private final JBTabsImpl tabs;
-    private final TabInfo info;
+  override fun getJBTabs(): JBTabs {
+    return this
+  }
 
-    public Toolbar(JBTabsImpl tabs, TabInfo info) {
-      this.tabs = tabs;
-      this.info = info;
-
-      setLayout(new BorderLayout());
-
-      final ActionGroup group = info.getGroup();
-      final JComponent side = info.getSideComponent();
-
+  class Toolbar(private val tabs: JBTabsImpl, private val info: TabInfo) : NonOpaquePanel() {
+    init {
+      layout = BorderLayout()
+      val group = info.group
+      val side = info.sideComponent
       if (group != null) {
-        final String place = info.getPlace();
-        ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(
-          place != null && !place.equals(ActionPlaces.UNKNOWN) ? place : "JBTabs", group, tabs.myHorizontalSide);
-        toolbar.setTargetComponent(info.getActionsContextComponent());
-        final JComponent actionToolbar = toolbar.getComponent();
-        add(actionToolbar, BorderLayout.CENTER);
+        val place = info.place
+        val toolbar = ActionManager.getInstance().createActionToolbar(
+          if (place != null && place != ActionPlaces.UNKNOWN) place else "JBTabs", group, tabs.myHorizontalSide)
+        toolbar.targetComponent = info.actionsContextComponent
+        val actionToolbar = toolbar.component
+        add(actionToolbar, BorderLayout.CENTER)
       }
-
       if (side != null) {
         if (group != null) {
-          add(side, BorderLayout.EAST);
+          add(side, BorderLayout.EAST)
         }
         else {
-          add(side, BorderLayout.CENTER);
+          add(side, BorderLayout.CENTER)
         }
       }
-      UIUtil.uiTraverser(this).filter(c -> !UIUtil.canDisplayFocusedState(c)).forEach(c -> c.setFocusable(false));
+      UIUtil.uiTraverser(this).filter { c: Component? ->
+        !UIUtil.canDisplayFocusedState(
+          c!!)
+      }.forEach(
+        Consumer { c: Component -> c.isFocusable = false })
     }
 
-    @Override
-    public Dimension getPreferredSize() {
-      Dimension base = super.getPreferredSize();
-      TabLabel label = tabs.myInfo2Label.get(info);
-      if (tabs.myHorizontalSide && tabs.mySideComponentOnTabs && label != null && base.height > 0) {
-        return new Dimension(base.width, label.getPreferredSize().height);
+    override fun getPreferredSize(): Dimension {
+      val base = super.getPreferredSize()
+      val label = tabs.myInfo2Label[info]
+      return if (tabs.myHorizontalSide && tabs.isSideComponentOnTabs && label != null && base.height > 0) {
+        Dimension(base.width, label.preferredSize.height - tabs.borderThickness)
       }
-      return base;
+      else base
     }
 
-    public boolean isEmpty() {
-      return getComponentCount() == 0;
-    }
+    val isEmpty: Boolean
+      get() = componentCount == 0
   }
 
-  private void updateScrollBarModel() {
-    BoundedRangeModel scrollBarModel = getScrollBarModel();
-    if (scrollBarModel.getValueIsAdjusting()) return;
-
-    int maximum = myLastLayoutPass.getRequiredLength();
-    int value = myLayout.getScrollOffset();
-    int extent;
-
-    if (isHorizontalTabs()) {
-      extent = getTabsAreaWidth();
+  private fun updateScrollBarModel() {
+    val scrollBarModel = scrollBarModel
+    if (scrollBarModel.valueIsAdjusting) return
+    val maximum = lastLayoutPass!!.requiredLength
+    val value = effectiveLayout!!.scrollOffset
+    var extent: Int
+    if (isHorizontalTabs) {
+      extent = tabsAreaWidth
     }
     else {
-      extent = getHeight();
-      if (!ExperimentalUI.isNewUI() && myEntryPointToolbar != null && myEntryPointToolbar.getComponent().isVisible()) {
-        extent = myEntryPointToolbar.getComponent().getY();
+      extent = height
+      if (!ExperimentalUI.isNewUI() && myEntryPointToolbar != null && myEntryPointToolbar!!.component.isVisible) {
+        extent = myEntryPointToolbar!!.component.y
       }
     }
-
-    scrollBarModel.setMaximum(maximum);
-    scrollBarModel.setValue(value);
+    scrollBarModel.maximum = maximum
+    scrollBarModel.value = value
     // If extent is 0, that means the layout is in improper state, so we don't show the scrollbar.
-    scrollBarModel.setExtent(extent == 0 ? value + maximum : extent);
+    scrollBarModel.extent = if (extent == 0) value + maximum else extent
   }
 
-  private void updateTabsOffsetFromScrollBar() {
-    int currentUnitsOffset = myLayout.getScrollOffset();
-    int updatedOffset = getScrollBarModel().getValue();
-    myLayout.scroll(updatedOffset - currentUnitsOffset);
-    relayout(false, false);
+  private fun updateTabsOffsetFromScrollBar() {
+    val currentUnitsOffset = effectiveLayout!!.scrollOffset
+    val updatedOffset = scrollBarModel.value
+    effectiveLayout!!.scroll(updatedOffset - currentUnitsOffset)
+    relayout(false, false)
   }
 
-  @Override
-  public void doLayout() {
+  override fun doLayout() {
     try {
-
-      final Collection<TabLabel> labels = myInfo2Label.values();
-      for (TabLabel each : labels) {
-        each.setTabActionsAutoHide(myTabLabelActionsAutoHide);
+      val labels: Collection<TabLabel> = myInfo2Label.values
+      for (each in labels) {
+        each.setTabActionsAutoHide(myTabLabelActionsAutoHide)
       }
-
-      Rectangle moreBoundsBeforeLayout = myMoreToolbar.getComponent().getBounds();
-      Rectangle entryPointBoundsBeforeLayout = myEntryPointToolbar != null
-                                               ? myEntryPointToolbar.getComponent().getBounds()
-                                               : new Rectangle(0, 0, 0, 0);
-
-      myHeaderFitSize = computeHeaderFitSize();
-
-      List<TabInfo> visible = new ArrayList<>(getVisibleInfos());
-
+      val moreBoundsBeforeLayout = myMoreToolbar!!.component.bounds
+      val entryPointBoundsBeforeLayout = if (myEntryPointToolbar != null) myEntryPointToolbar!!.component.bounds else Rectangle(0, 0, 0, 0)
+      myHeaderFitSize = computeHeaderFitSize()
+      val visible: MutableList<TabInfo?> = ArrayList(
+        visibleInfos)
       if (myDropInfo != null && !visible.contains(myDropInfo) && myShowDropLocation) {
-        if (getDropInfoIndex() >= 0 && getDropInfoIndex() < visible.size()) {
-          visible.add(getDropInfoIndex(), myDropInfo);
+        if (dropInfoIndex >= 0 && dropInfoIndex < visible.size) {
+          visible.add(dropInfoIndex, myDropInfo)
         }
         else {
-          visible.add(myDropInfo);
+          visible.add(myDropInfo)
         }
       }
-
-      if (myLayout instanceof SingleRowLayout) {
-        mySingleRowLayout.scrollSelectionInView();
-        myLastLayoutPass = mySingleRowLayout.layoutSingleRow(visible);
-
-        Rectangle titleRect = getTitleRect();
-        if (titleRect != null && !titleRect.isEmpty()) {
-          Dimension preferredSize = myTitleWrapper.getPreferredSize();
-          Rectangle bounds = new Rectangle(titleRect);
-          JBInsets.removeFrom(bounds, getLayoutInsets());
-          int xDiff = (bounds.width - preferredSize.width) / 2;
-          int yDiff = (bounds.height - preferredSize.height) / 2;
-          bounds.x += xDiff;
-          bounds.width -= 2 * xDiff;
-          bounds.y += yDiff;
-          bounds.height -= 2 * yDiff;
-          myTitleWrapper.setBounds(bounds);
+      if (effectiveLayout is SingleRowLayout) {
+        mySingleRowLayout.scrollSelectionInView()
+        lastLayoutPass = mySingleRowLayout.layoutSingleRow(visible)
+        val titleRect = titleRect
+        if (titleRect != null && !titleRect.isEmpty) {
+          val preferredSize = myTitleWrapper.preferredSize
+          val bounds = Rectangle(titleRect)
+          JBInsets.removeFrom(bounds, layoutInsets)
+          val xDiff = (bounds.width - preferredSize.width) / 2
+          val yDiff = (bounds.height - preferredSize.height) / 2
+          bounds.x += xDiff
+          bounds.width -= 2 * xDiff
+          bounds.y += yDiff
+          bounds.height -= 2 * yDiff
+          myTitleWrapper.bounds = bounds
         }
         else {
-          myTitleWrapper.setBounds(new Rectangle());
+          myTitleWrapper.bounds = Rectangle()
         }
-        myTableLayout.myLastTableLayout = null;
-        OnePixelDivider divider = mySplitter.getDivider();
-        if (divider.getParent() == this) {
-          int location = getTabsPosition() == JBTabsPosition.left
-                         ? mySingleRowLayout.myLastSingRowLayout.tabRectangle.width
-                         : getWidth() - mySingleRowLayout.myLastSingRowLayout.tabRectangle.width;
-          divider.setBounds(location, 0, 1, getHeight());
+        myTableLayout.myLastTableLayout = null
+        val divider = mySplitter.divider
+        if (divider.parent === this) {
+          val location = if (tabsPosition == JBTabsPosition.left) mySingleRowLayout.myLastSingRowLayout.tabRectangle.width else width - mySingleRowLayout.myLastSingRowLayout.tabRectangle.width
+          divider.setBounds(location, 0, 1, height)
         }
       }
       else {
-        myTableLayout.scrollSelectionInView();
-        myLastLayoutPass = myTableLayout.layoutTable(visible);
-        mySingleRowLayout.myLastSingRowLayout = null;
+        myTableLayout.scrollSelectionInView()
+        lastLayoutPass = myTableLayout.layoutTable(visible)
+        mySingleRowLayout.myLastSingRowLayout = null
       }
-
-      centerizeEntryPointToolbarPosition();
-      centerizeMoreToolbarPosition();
-
-      moveDraggedTabLabel();
-
-      myTabActionsAutoHideListener.processMouseOver();
-
-      applyResetComponents();
-
-      myScrollBar.setOrientation(isHorizontalTabs() ? Adjustable.HORIZONTAL : Adjustable.VERTICAL);
-      myScrollBar.setBounds(getScrollBarBounds());
-      updateScrollBarModel();
-
-      updateToolbarIfVisibilityChanged(myMoreToolbar, moreBoundsBeforeLayout);
-      updateToolbarIfVisibilityChanged(myEntryPointToolbar, entryPointBoundsBeforeLayout);
+      centerizeEntryPointToolbarPosition()
+      centerizeMoreToolbarPosition()
+      moveDraggedTabLabel()
+      myTabActionsAutoHideListener.processMouseOver()
+      applyResetComponents()
+      myScrollBar.orientation = if (isHorizontalTabs) Adjustable.HORIZONTAL else Adjustable.VERTICAL
+      myScrollBar.bounds = scrollBarBounds
+      updateScrollBarModel()
+      updateToolbarIfVisibilityChanged(myMoreToolbar, moreBoundsBeforeLayout)
+      updateToolbarIfVisibilityChanged(myEntryPointToolbar, entryPointBoundsBeforeLayout)
     }
     finally {
-      myForcedRelayout = false;
+      myForcedRelayout = false
     }
   }
 
-  private static void updateToolbarIfVisibilityChanged(@Nullable ActionToolbar toolbar, @NotNull Rectangle previousBounds) {
-    if (toolbar == null) return;
-    Rectangle curBounds = toolbar.getComponent().getBounds();
-    if (curBounds.isEmpty() != previousBounds.isEmpty()) {
-      toolbar.updateActionsImmediately();
-    }
-  }
-
-  private int getTabsAreaWidth() {
-    if (myMoreToolbar.getComponent().isVisible()) {
-      return myMoreToolbar.getComponent().getX();
-    }
-    else if (myEntryPointToolbar != null && myEntryPointToolbar.getComponent().isVisible() && myTableLayout.myLastTableLayout == null) {
-      return myEntryPointToolbar.getComponent().getX();
-    }
-    return getBounds().width;
-  }
-
-  private void centerizeMoreToolbarPosition() {
-    Rectangle moreRect = getMoreRect();
-    JComponent mComponent = myMoreToolbar.getComponent();
-    if (moreRect != null && !moreRect.isEmpty()) {
-      Rectangle bounds = new Rectangle(moreRect);
-      if (!ExperimentalUI.isNewUI() || !getTabsPosition().isSide()) {
-        Dimension preferredSize = mComponent.getPreferredSize();
-        int xDiff = (bounds.width - preferredSize.width) / 2;
-        int yDiff = (bounds.height - preferredSize.height) / 2;
-        bounds.x += xDiff + 2;
-        bounds.width -= 2 * xDiff;
-        bounds.y += yDiff;
-        bounds.height -= 2 * yDiff;
+  private val tabsAreaWidth: Int
+    private get() {
+      if (myMoreToolbar!!.component.isVisible) {
+        return myMoreToolbar.component.x
       }
-      mComponent.setBounds(bounds);
+      else if (myEntryPointToolbar != null && myEntryPointToolbar!!.component.isVisible && myTableLayout.myLastTableLayout == null) {
+        return myEntryPointToolbar!!.component.x
+      }
+      return bounds.width
+    }
+
+  private fun centerizeMoreToolbarPosition() {
+    val moreRect = moreRect
+    val mComponent = myMoreToolbar!!.component
+    if (moreRect != null && !moreRect.isEmpty) {
+      val bounds = Rectangle(moreRect)
+      if (!ExperimentalUI.isNewUI() || !tabsPosition.isSide) {
+        val preferredSize = mComponent.preferredSize
+        val xDiff = (bounds.width - preferredSize.width) / 2
+        val yDiff = (bounds.height - preferredSize.height) / 2
+        bounds.x += xDiff + 2
+        bounds.width -= 2 * xDiff
+        bounds.y += yDiff
+        bounds.height -= 2 * yDiff
+      }
+      mComponent.bounds = bounds
     }
     else {
-      mComponent.setBounds(new Rectangle());
+      mComponent.bounds = Rectangle()
     }
-    mComponent.putClientProperty(LAYOUT_DONE, true);
+    mComponent.putClientProperty(LAYOUT_DONE, true)
   }
 
-  private void centerizeEntryPointToolbarPosition() {
-    JComponent eComponent = myEntryPointToolbar == null ? null : myEntryPointToolbar.getComponent();
-    if (eComponent == null) {
-      return;
-    }
-    Rectangle entryPointRect = getEntryPointRect();
-    if (entryPointRect != null && !entryPointRect.isEmpty() && getTabCount() > 0) {
-      Dimension preferredSize = eComponent.getPreferredSize();
-      Rectangle bounds = new Rectangle(entryPointRect);
-      if (!ExperimentalUI.isNewUI() || !getTabsPosition().isSide()) {
-        int xDiff = (bounds.width - preferredSize.width) / 2;
-        int yDiff = (bounds.height - preferredSize.height) / 2;
-        bounds.x += xDiff + 2;
-        bounds.width -= 2 * xDiff;
-        bounds.y += yDiff;
-        bounds.height -= 2 * yDiff;
+  private fun centerizeEntryPointToolbarPosition() {
+    val eComponent = (if (myEntryPointToolbar == null) null else myEntryPointToolbar!!.component) ?: return
+    val entryPointRect = entryPointRect
+    if (entryPointRect != null && !entryPointRect.isEmpty && tabCount > 0) {
+      val preferredSize = eComponent.preferredSize
+      val bounds = Rectangle(entryPointRect)
+      if (!ExperimentalUI.isNewUI() || !tabsPosition.isSide) {
+        val xDiff = (bounds.width - preferredSize.width) / 2
+        val yDiff = (bounds.height - preferredSize.height) / 2
+        bounds.x += xDiff + 2
+        bounds.width -= 2 * xDiff
+        bounds.y += yDiff
+        bounds.height -= 2 * yDiff
       }
-      eComponent.setBounds(bounds);
+      eComponent.bounds = bounds
     }
     else {
-      eComponent.setBounds(new Rectangle());
+      eComponent.bounds = Rectangle()
     }
-    eComponent.putClientProperty(LAYOUT_DONE, true);
+    eComponent.putClientProperty(LAYOUT_DONE, true)
   }
 
-  void moveDraggedTabLabel() {
-    if (myDragHelper != null && myDragHelper.myDragRec != null) {
-      final TabLabel selectedLabel = myInfo2Label.get(getDraggedTabSelectionInfo());
+  fun moveDraggedTabLabel() {
+    if (dragHelper != null && dragHelper.myDragRec != null) {
+      val selectedLabel = myInfo2Label[draggedTabSelectionInfo]
       if (selectedLabel != null) {
-        final Rectangle bounds = selectedLabel.getBounds();
-        if (isHorizontalTabs()) {
-          selectedLabel.setBounds(myDragHelper.myDragRec.x, bounds.y, bounds.width, bounds.height);
+        val bounds = selectedLabel.bounds
+        if (isHorizontalTabs) {
+          selectedLabel.setBounds(dragHelper.myDragRec.x, bounds.y, bounds.width, bounds.height)
         }
         else {
-          selectedLabel.setBounds(bounds.x, myDragHelper.myDragRec.y, bounds.width, bounds.height);
+          selectedLabel.setBounds(bounds.x, dragHelper.myDragRec.y, bounds.width, bounds.height)
         }
       }
     }
   }
 
-  protected @Nullable TabInfo getDraggedTabSelectionInfo() {
-    return getSelectedInfo();
-  }
+  protected open val draggedTabSelectionInfo: TabInfo?
+    protected get() = selectedInfo
 
-  private Dimension computeHeaderFitSize() {
-    final Max max = computeMaxSize();
-
-    if (myPosition == JBTabsPosition.top || myPosition == JBTabsPosition.bottom) {
-      return new Dimension(getSize().width, myHorizontalSide ? Math.max(max.myLabel.height, max.myToolbar.height) : max.myLabel.height);
+  private fun computeHeaderFitSize(): Dimension {
+    val max = computeMaxSize()
+    return if (position == JBTabsPosition.top || position == JBTabsPosition.bottom) {
+      Dimension(size.width,
+                if (myHorizontalSide) Math.max(max.myLabel.height, max.myToolbar.height) else max.myLabel.height)
     }
-    return new Dimension(max.myLabel.width + (myHorizontalSide ? 0 : max.myToolbar.width), getSize().height);
+    else Dimension(
+      max.myLabel.width + if (myHorizontalSide) 0 else max.myToolbar.width, size.height)
   }
 
-  public Rectangle layoutComp(int componentX, int componentY, final JComponent comp, int deltaWidth, int deltaHeight) {
-    return layoutComp(new Rectangle(componentX, componentY, getWidth(), getHeight()), comp, deltaWidth, deltaHeight);
+  fun layoutComp(componentX: Int, componentY: Int, comp: JComponent?, deltaWidth: Int, deltaHeight: Int): Rectangle {
+    return layoutComp(Rectangle(componentX, componentY, width, height), comp, deltaWidth, deltaHeight)
   }
 
-  public Rectangle layoutComp(final Rectangle bounds, final JComponent comp, int deltaWidth, int deltaHeight) {
-    Insets insets = getLayoutInsets();
-    Insets inner = getInnerInsets();
-
-    int x = insets.left + bounds.x + inner.left;
-    int y = insets.top + bounds.y + inner.top;
-    int width = bounds.width - insets.left - insets.right - bounds.x - inner.left - inner.right;
-    int height = bounds.height - insets.top - insets.bottom - bounds.y - inner.top - inner.bottom;
-
-    if (!isHideTabs()) {
-      width += deltaWidth;
-      height += deltaHeight;
+  fun layoutComp(bounds: Rectangle, comp: JComponent?, deltaWidth: Int, deltaHeight: Int): Rectangle {
+    val insets = layoutInsets
+    val inner = innerInsets
+    val x = insets.left + bounds.x + inner.left
+    val y = insets.top + bounds.y + inner.top
+    var width = bounds.width - insets.left - insets.right - bounds.x - inner.left - inner.right
+    var height = bounds.height - insets.top - insets.bottom - bounds.y - inner.top - inner.bottom
+    if (!isHideTabs) {
+      width += deltaWidth
+      height += deltaHeight
     }
-
-    return layout(comp, x, y, width, height);
+    return layout(comp, x, y, width, height)
   }
 
-  @Override
-  public JBTabsPresentation setInnerInsets(final Insets innerInsets) {
-    myInnerInsets = innerInsets;
-    return this;
+  override fun setInnerInsets(innerInsets: Insets): JBTabsPresentation {
+    this.innerInsets = innerInsets
+    return this
   }
 
-  private Insets getInnerInsets() {
-    return myInnerInsets;
-  }
+  val layoutInsets: Insets
+    get() = myBorder.effectiveBorder
+  open val toolbarInset: Int
+    get() = arcSize + 1
 
-  public Insets getLayoutInsets() {
-    return myBorder.getEffectiveBorder();
-  }
-
-  public int getToolbarInset() {
-    return getArcSize() + 1;
-  }
-
-  public void resetLayout(boolean resetLabels) {
-    for (TabInfo each : myVisibleInfos) {
-      reset(each, resetLabels);
+  fun resetLayout(resetLabels: Boolean) {
+    for (each in myVisibleInfos) {
+      reset(each, resetLabels)
     }
-
     if (myDropInfo != null) {
-      reset(myDropInfo, resetLabels);
+      reset(myDropInfo!!, resetLabels)
     }
-
-    for (TabInfo each : myHiddenInfos.keySet()) {
-      reset(each, resetLabels);
+    for (each in myHiddenInfos.keys) {
+      reset(each, resetLabels)
     }
-
-    for (Component eachDeferred : myDeferredToRemove.keySet()) {
-      resetLayout((JComponent)eachDeferred);
+    for (eachDeferred in myDeferredToRemove.keys) {
+      resetLayout(eachDeferred as JComponent)
     }
   }
 
-  private void reset(final TabInfo each, final boolean resetLabels) {
-    final JComponent c = each.getComponent();
+  private fun reset(each: TabInfo, resetLabels: Boolean) {
+    val c = each.component
     if (c != null) {
-      resetLayout(c);
+      resetLayout(c)
     }
-
-    resetLayout(myInfo2Toolbar.get(each));
-
+    resetLayout(myInfo2Toolbar[each])
     if (resetLabels) {
-      resetLayout(myInfo2Label.get(each));
+      resetLayout(myInfo2Label[each])
     }
   }
 
-  private static int getArcSize() {
-    return 4;
-  }
-
-  public final @NotNull JBTabsPosition getPosition() {
-    return myPosition;
-  }
-
-  @Override
-  protected void paintComponent(final Graphics g) {
-    super.paintComponent(g);
-
+  override fun paintComponent(g: Graphics) {
+    super.paintComponent(g)
     if (myVisibleInfos.isEmpty()) {
       if (myEmptyText != null) {
-        UISettings.setupAntialiasing(g);
-        UIUtil.drawCenteredString((Graphics2D)g, new Rectangle(0, 0, getWidth(), getHeight()), myEmptyText);
+        setupAntialiasing(g)
+        UIUtil.drawCenteredString((g as Graphics2D), Rectangle(0, 0, width, height), myEmptyText!!)
       }
-      return;
+      return
     }
-
-    myTabPainter.fillBackground((Graphics2D)g, new Rectangle(0, 0, getWidth(), getHeight()));
-    drawBorder(g);
-    drawToolbarSeparator(g);
+    tabPainter.fillBackground((g as Graphics2D), Rectangle(0, 0, width, height))
+    drawBorder(g)
+    drawToolbarSeparator(g)
   }
 
-  private void drawToolbarSeparator(Graphics g) {
-    Toolbar toolbar = myInfo2Toolbar.get(getSelectedInfo());
-    if (toolbar != null && toolbar.getParent() == this && !mySideComponentOnTabs && !myHorizontalSide && isHideTabs()) {
-      Rectangle bounds = toolbar.getBounds();
+  private fun drawToolbarSeparator(g: Graphics) {
+    val toolbar = myInfo2Toolbar[selectedInfo]
+    if (toolbar != null && toolbar.parent === this && !isSideComponentOnTabs && !myHorizontalSide && isHideTabs) {
+      val bounds = toolbar.bounds
       if (bounds.width > 0) {
-        if (mySideComponentBefore) {
-          getTabPainter().paintBorderLine((Graphics2D)g, mySeparatorWidth,
-                                          new Point(bounds.x + bounds.width, bounds.y),
-                                          new Point(bounds.x + bounds.width, bounds.y + bounds.height));
+        if (isSideComponentBefore) {
+          tabPainter.paintBorderLine((g as Graphics2D), separatorWidth,
+                                     Point(bounds.x + bounds.width, bounds.y),
+                                     Point(bounds.x + bounds.width, bounds.y + bounds.height))
         }
         else {
-          getTabPainter().paintBorderLine((Graphics2D)g, mySeparatorWidth,
-                                          new Point(bounds.x - mySeparatorWidth, bounds.y),
-                                          new Point(bounds.x - mySeparatorWidth, bounds.y + bounds.height));
+          tabPainter.paintBorderLine((g as Graphics2D), separatorWidth,
+                                     Point(bounds.x - separatorWidth, bounds.y),
+                                     Point(bounds.x - separatorWidth, bounds.y + bounds.height))
         }
       }
     }
   }
 
-  protected TabLabel getSelectedLabel() {
-    return myInfo2Label.get(getSelectedInfo());
-  }
+  val selectedLabel: TabLabel?
+    get() = myInfo2Label[selectedInfo]
+  open val visibleInfos: List<TabInfo?>
+    get() {
+      if (getBoolean("editor.keep.pinned.tabs.on.left")) {
+        groupPinnedFirst(myVisibleInfos)
+      }
+      if (isAlphabeticalMode) {
+        val result = ArrayList(myVisibleInfos)
+        sortTabsAlphabetically(result)
+        return result
+      }
+      return myVisibleInfos
+    }
 
-  protected List<TabInfo> getVisibleInfos() {
-    if (AdvancedSettings.getBoolean("editor.keep.pinned.tabs.on.left")) {
-      groupPinnedFirst(myVisibleInfos);
-    }
-    if (isAlphabeticalMode()) {
-      var result = new ArrayList<>(myVisibleInfos);
-      sortTabsAlphabetically(result);
-      return result;
-    }
-    return myVisibleInfos;
-  }
-
-  private static void sortTabsAlphabetically(@NotNull List<TabInfo> tabs) {
-    int lastPinnedIndex = ContainerUtil.lastIndexOf(tabs, TabInfo::isPinned);
-    if (lastPinnedIndex == -1 || !AdvancedSettings.getBoolean("editor.keep.pinned.tabs.on.left")) {
-      tabs.sort(ABC_COMPARATOR);
-    }
-    else {
-      tabs.subList(0, lastPinnedIndex + 1).sort(ABC_COMPARATOR);
-      tabs.subList(lastPinnedIndex + 1, tabs.size()).sort(ABC_COMPARATOR);
-    }
-  }
-
-  private void groupPinnedFirst(List<TabInfo> infos) {
-    int firstNotPinned = -1;
-    boolean changed = false;
-    for (int i = 0; i < infos.size(); i++) {
-      TabInfo info = infos.get(i);
-      if (info.isPinned()) {
+  private fun groupPinnedFirst(infos: MutableList<TabInfo>) {
+    var firstNotPinned = -1
+    var changed = false
+    for (i in infos.indices) {
+      val info = infos[i]
+      if (info.isPinned) {
         if (firstNotPinned != -1) {
-          TabInfo tabInfo = infos.remove(firstNotPinned);
-          infos.add(firstNotPinned, info);
-          infos.set(i, tabInfo);
-          firstNotPinned++;
-          changed = true;
+          val tabInfo = infos.removeAt(firstNotPinned)
+          infos.add(firstNotPinned, info)
+          infos[i] = tabInfo
+          firstNotPinned++
+          changed = true
         }
       }
       else if (firstNotPinned == -1) {
-        firstNotPinned = i;
+        firstNotPinned = i
       }
     }
-
-    if (changed) resetTabsCache();
+    if (changed) resetTabsCache()
   }
 
-  protected LayoutPassInfo getLastLayoutPass() {
-    return myLastLayoutPass;
+  private val isNavigationVisible: Boolean
+    private get() = myVisibleInfos.size > 1
+
+  override fun getComponentGraphics(graphics: Graphics): Graphics {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics))
   }
 
-  public static int getSelectionTabVShift() {
-    return 2;
-  }
-
-  private boolean isNavigationVisible() {
-    return myVisibleInfos.size() > 1;
-  }
-
-  @Override
-  protected Graphics getComponentGraphics(Graphics graphics) {
-    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
-  }
-
-  protected void drawBorder(Graphics g) {
-    if (!isHideTabs()) {
-      myBorder.paintBorder(this, g, 0, 0, getWidth(), getHeight());
+  protected fun drawBorder(g: Graphics?) {
+    if (!isHideTabs) {
+      myBorder.paintBorder(this, g, 0, 0, width, height)
     }
   }
 
-  private Max computeMaxSize() {
-    Max max = new Max();
-    final boolean isSideComponentOnTabs = myLayout.isSideComponentOnTabs();
-
-    for (TabInfo eachInfo : myVisibleInfos) {
-      final TabLabel label = myInfo2Label.get(eachInfo);
-      max.myLabel.height = Math.max(max.myLabel.height, label.getPreferredSize().height);
-      max.myLabel.width = Math.max(max.myLabel.width, label.getPreferredSize().width);
-
+  private fun computeMaxSize(): Max {
+    val max = Max()
+    val isSideComponentOnTabs = effectiveLayout!!.isSideComponentOnTabs
+    for (eachInfo in myVisibleInfos) {
+      val label = myInfo2Label[eachInfo]
+      max.myLabel.height = Math.max(max.myLabel.height, label!!.preferredSize.height)
+      max.myLabel.width = Math.max(max.myLabel.width, label.preferredSize.width)
       if (isSideComponentOnTabs) {
-        final Toolbar toolbar = myInfo2Toolbar.get(eachInfo);
-        if (toolbar != null && !toolbar.isEmpty()) {
-          max.myToolbar.height = Math.max(max.myToolbar.height, toolbar.getPreferredSize().height);
-          max.myToolbar.width = Math.max(max.myToolbar.width, toolbar.getPreferredSize().width);
+        val toolbar = myInfo2Toolbar[eachInfo]
+        if (toolbar != null && !toolbar.isEmpty) {
+          max.myToolbar.height = Math.max(max.myToolbar.height, toolbar.preferredSize.height)
+          max.myToolbar.width = Math.max(max.myToolbar.width, toolbar.preferredSize.width)
         }
       }
     }
-    if (getTabsPosition().isSide()) {
-      if (mySplitter.getSideTabsLimit() > 0) {
-        max.myLabel.width = Math.min(max.myLabel.width, mySplitter.getSideTabsLimit());
+    if (tabsPosition.isSide) {
+      if (mySplitter.sideTabsLimit > 0) {
+        max.myLabel.width = Math.min(max.myLabel.width, mySplitter.sideTabsLimit)
       }
     }
-
-    return max;
+    max.myToolbar.height++
+    return max
   }
 
-  @Override
-  public Dimension getMinimumSize() {
-    return computeSize(component -> component.getMinimumSize(), 1);
+  override fun getMinimumSize(): Dimension {
+    return computeSize(
+      { component: JComponent -> component.minimumSize }, 1)
   }
 
-  @Override
-  public Dimension getPreferredSize() {
-    return computeSize(component -> component.getPreferredSize(), 3);
+  override fun getPreferredSize(): Dimension {
+    return computeSize(
+      { component: JComponent -> component.preferredSize }, 3)
   }
 
-  private Dimension computeSize(Function<? super JComponent, ? extends Dimension> transform, int tabCount) {
-    Dimension size = new Dimension();
-    for (TabInfo each : myVisibleInfos) {
-      final JComponent c = each.getComponent();
+  private fun computeSize(transform: Function<in JComponent, out Dimension>, tabCount: Int): Dimension {
+    val size = Dimension()
+    for (each in myVisibleInfos) {
+      val c = each.component
       if (c != null) {
-        final Dimension eachSize = transform.fun(c);
-        size.width = Math.max(eachSize.width, size.width);
-        size.height = Math.max(eachSize.height, size.height);
+        val eachSize = transform.`fun`(c)
+        size.width = Math.max(eachSize.width, size.width)
+        size.height = Math.max(eachSize.height, size.height)
       }
     }
-
-    addHeaderSize(size, tabCount);
-    return size;
+    addHeaderSize(size, tabCount)
+    return size
   }
 
-  private void addHeaderSize(Dimension size, final int tabsCount) {
-    Dimension header = computeHeaderPreferredSize(tabsCount);
-
-    final boolean horizontal = getTabsPosition() == JBTabsPosition.top || getTabsPosition() == JBTabsPosition.bottom;
+  private fun addHeaderSize(size: Dimension, tabsCount: Int) {
+    val header = computeHeaderPreferredSize(tabsCount)
+    val horizontal = tabsPosition == JBTabsPosition.top || tabsPosition == JBTabsPosition.bottom
     if (horizontal) {
-      size.height += header.height;
-      size.width = Math.max(size.width, header.width);
+      size.height += header.height
+      size.width = Math.max(size.width, header.width)
     }
     else {
-      size.height += Math.max(size.height, header.height);
-      size.width += header.width;
+      size.height += Math.max(size.height, header.height)
+      size.width += header.width
     }
-
-    final Insets insets = getLayoutInsets();
-    size.width += insets.left + insets.right + 1;
-    size.height += insets.top + insets.bottom + 1;
+    val insets = layoutInsets
+    size.width += insets.left + insets.right + 1
+    size.height += insets.top + insets.bottom + 1
   }
 
-  private Dimension computeHeaderPreferredSize(int tabsCount) {
-    final Iterator<TabInfo> infos = myInfo2Label.keySet().iterator();
-    Dimension size = new Dimension();
-    int currentTab = 0;
-
-    final boolean horizontal = getTabsPosition() == JBTabsPosition.top || getTabsPosition() == JBTabsPosition.bottom;
-
+  private fun computeHeaderPreferredSize(tabsCount: Int): Dimension {
+    val infos: Iterator<TabInfo?> = myInfo2Label.keys.iterator()
+    val size = Dimension()
+    var currentTab = 0
+    val horizontal = tabsPosition == JBTabsPosition.top || tabsPosition == JBTabsPosition.bottom
     while (infos.hasNext()) {
-      final boolean canGrow = currentTab < tabsCount;
-
-      TabInfo eachInfo = infos.next();
-      final TabLabel eachLabel = myInfo2Label.get(eachInfo);
-      final Dimension eachPrefSize = eachLabel.getPreferredSize();
+      val canGrow = currentTab < tabsCount
+      val eachInfo = infos.next()
+      val eachLabel = myInfo2Label[eachInfo]
+      val eachPrefSize = eachLabel!!.preferredSize
       if (horizontal) {
         if (canGrow) {
-          size.width += eachPrefSize.width;
+          size.width += eachPrefSize.width
         }
-        size.height = Math.max(size.height, eachPrefSize.height);
+        size.height = Math.max(size.height, eachPrefSize.height)
       }
       else {
-        size.width = Math.max(size.width, eachPrefSize.width);
+        size.width = Math.max(size.width, eachPrefSize.width)
         if (canGrow) {
-          size.height += eachPrefSize.height;
+          size.height += eachPrefSize.height
         }
       }
-
-      currentTab++;
+      currentTab++
     }
-
     if (horizontal) {
-      size.height += myBorder.getThickness();
+      size.height += myBorder.thickness
     }
     else {
-      size.width += myBorder.getThickness();
+      size.width += myBorder.thickness
     }
-
-    return size;
+    return size
   }
 
-  @Override
-  public int getTabCount() {
-    return getTabs().size();
+  override fun getTabCount(): Int {
+    return tabs.size
   }
 
-  @Override
-  public @NotNull JBTabsPresentation getPresentation() {
-    return this;
+  override fun getPresentation(): JBTabsPresentation {
+    return this
   }
 
-  @Override
-  public @NotNull ActionCallback removeTab(final TabInfo info) {
-    return doRemoveTab(info, null, false);
+  override fun removeTab(info: TabInfo?): ActionCallback {
+    return doRemoveTab(info, null, false)
   }
 
-  @Override
-  public void removeTab(final TabInfo info, @Nullable TabInfo forcedSelectionTransfer) {
-    doRemoveTab(info, forcedSelectionTransfer, false);
+  override fun removeTab(info: TabInfo, forcedSelectionTransfer: TabInfo?) {
+    doRemoveTab(info, forcedSelectionTransfer, false)
   }
 
   @RequiresEdt
-  private @NotNull ActionCallback doRemoveTab(TabInfo info, @Nullable TabInfo forcedSelectionTransfer, boolean isDropTarget) {
+  private fun doRemoveTab(info: TabInfo?, forcedSelectionTransfer: TabInfo?, isDropTarget: Boolean): ActionCallback {
     if (myRemoveNotifyInProgress) {
-      LOG.warn(new IllegalStateException("removeNotify in progress"));
+      LOG.warn(IllegalStateException("removeNotify in progress"))
     }
-    if (myPopupInfo == info) myPopupInfo = null;
-
+    if (myPopupInfo == info) myPopupInfo = null
     if (!isDropTarget) {
-      if (info == null || !getTabs().contains(info)) return ActionCallback.DONE;
+      if (info == null || !tabs.contains(info)) return ActionCallback.DONE
     }
-
-    if (isDropTarget && myLastLayoutPass != null) {
-      myLastLayoutPass.myVisibleInfos.remove(info);
+    if (isDropTarget && lastLayoutPass != null) {
+      lastLayoutPass!!.myVisibleInfos.remove(info)
     }
-
-    ActionCallback result = new ActionCallback();
-
-    TabInfo toSelect;
-    if (forcedSelectionTransfer == null) {
-      toSelect = getToSelectOnRemoveOf(info);
+    val result = ActionCallback()
+    val toSelect: TabInfo?
+    toSelect = if (forcedSelectionTransfer == null) {
+      getToSelectOnRemoveOf(info!!)
     }
     else {
-      assert myVisibleInfos.contains(forcedSelectionTransfer) : "Cannot find tab for selection transfer, tab=" + forcedSelectionTransfer;
-      toSelect = forcedSelectionTransfer;
+      assert(myVisibleInfos.contains(forcedSelectionTransfer)) { "Cannot find tab for selection transfer, tab=$forcedSelectionTransfer" }
+      forcedSelectionTransfer
     }
-
     if (toSelect != null) {
-      boolean clearSelection = info.equals(mySelectedInfo);
-      boolean transferFocus = isFocused(info);
-      processRemove(info, false);
+      val clearSelection = info == mySelectedInfo
+      val transferFocus = isFocused(info!!)
+      processRemove(info, false)
       if (clearSelection) {
-        setSelectedInfo(info);
+        setSelectedInfo(info)
       }
-      _setSelected(toSelect, transferFocus, true).doWhenProcessed(() -> removeDeferred().notifyWhenDone(result));
+      _setSelected(toSelect, transferFocus, true).doWhenProcessed { removeDeferred().notifyWhenDone(result) }
     }
     else {
-      processRemove(info, true);
-      removeDeferred().notifyWhenDone(result);
+      processRemove(info, true)
+      removeDeferred().notifyWhenDone(result)
     }
-
     if (myVisibleInfos.isEmpty()) {
-      removeDeferredNow();
+      removeDeferredNow()
     }
-
-    revalidateAndRepaint(true);
-
-    fireTabRemoved(info);
-
-    return result;
+    revalidateAndRepaint(true)
+    fireTabRemoved(info!!)
+    return result
   }
 
   // Tells whether focus is currently within one of the tab's components, or it was there last time the containing window had focus
-  private boolean isFocused(@NotNull TabInfo info) {
-    TabLabel label = myInfo2Label.get(info);
-    Toolbar toolbar = myInfo2Toolbar.get(info);
-    JComponent component = info.getComponent();
-
-    Predicate<Component> ancestorChecker = focusOwner -> {
+  private fun isFocused(info: TabInfo): Boolean {
+    val label = myInfo2Label[info]
+    val toolbar = myInfo2Toolbar[info]
+    val component = info.component
+    val ancestorChecker = Predicate<Component> { focusOwner: Component? ->
+      var focusOwner = focusOwner
       while (focusOwner != null) {
-        if (focusOwner == label || focusOwner == toolbar || focusOwner == component) {
-          return true;
+        if (focusOwner === label || focusOwner === toolbar || focusOwner === component) {
+          return@Predicate true
         }
-        focusOwner = focusOwner.getParent();
+        focusOwner = focusOwner.parent
       }
-      return false;
-    };
-
-    if (ancestorChecker.test(KeyboardFocusManager.getCurrentKeyboardFocusManager().getPermanentFocusOwner())) {
-      return true;
+      false
     }
-    Window ourWindow = SwingUtilities.getWindowAncestor(this);
-    return ourWindow != null && !ourWindow.isFocused() && ancestorChecker.test(ourWindow.getMostRecentFocusOwner());
+    if (ancestorChecker.test(KeyboardFocusManager.getCurrentKeyboardFocusManager().permanentFocusOwner)) {
+      return true
+    }
+    val ourWindow = SwingUtilities.getWindowAncestor(this)
+    return ourWindow != null && !ourWindow.isFocused && ancestorChecker.test(ourWindow.mostRecentFocusOwner)
   }
 
-  private void processRemove(final TabInfo info, boolean forcedNow) {
-    TabLabel tabLabel = myInfo2Label.get(info);
-    if (tabLabel != null) {
-      remove(tabLabel);
-    }
-
-    Toolbar toolbar = myInfo2Toolbar.get(info);
-    if (toolbar != null) {
-      remove(toolbar);
-    }
-
-    JComponent tabComponent = info.getComponent();
+  private fun processRemove(info: TabInfo?, forcedNow: Boolean) {
+    val tabLabel = myInfo2Label[info]
+    tabLabel?.let { remove(it) }
+    val toolbar = myInfo2Toolbar[info]
+    toolbar?.let { remove(it) }
+    val tabComponent = info!!.component
     if (forcedNow || !isToDeferRemoveForLater(tabComponent)) {
-      remove(tabComponent);
+      remove(tabComponent)
     }
     else {
-      addToDeferredRemove(tabComponent);
+      addToDeferredRemove(tabComponent)
     }
-
-    myVisibleInfos.remove(info);
-    myHiddenInfos.remove(info);
-    myInfo2Label.remove(info);
-    myInfo2Page.remove(info);
-    myInfo2Toolbar.remove(info);
-    if (tabLabelAtMouse == tabLabel) {
-      tabLabelAtMouse = null;
+    myVisibleInfos.remove(info)
+    myHiddenInfos.remove(info)
+    myInfo2Label.remove(info)
+    myInfo2Page.remove(info)
+    myInfo2Toolbar.remove(info)
+    if (tabLabelAtMouse === tabLabel) {
+      tabLabelAtMouse = null
     }
-    resetTabsCache();
-
-    updateAll(false);
+    resetTabsCache()
+    updateAll(false)
   }
 
-  @Override
-  public @Nullable TabInfo findInfo(Component component) {
-    for (TabInfo each : getTabs()) {
-      if (each.getComponent() == component) {
-        return each;
+  override fun findInfo(component: Component): TabInfo? {
+    for (each in tabs) {
+      if (each.component === component) {
+        return each
       }
     }
-    return null;
+    return null
   }
 
-  @Override
-  public TabInfo findInfo(MouseEvent event) {
-    Point point = SwingUtilities.convertPoint(event.getComponent(), event.getPoint(), this);
-    return _findInfo(point, false);
+  override fun findInfo(event: MouseEvent): TabInfo? {
+    val point = SwingUtilities.convertPoint(event.component, event.point, this)
+    return _findInfo(point, false)
   }
 
-  @Override
-  public TabInfo findInfo(Object object) {
-    for (int i = 0; i < getTabCount(); i++) {
-      TabInfo each = getTabAt(i);
-      Object eachObject = each.getObject();
-      if (eachObject != null && eachObject.equals(object)) {
-        return each;
+  override fun findInfo(`object`: Any): TabInfo? {
+    for (i in 0 until tabCount) {
+      val each = getTabAt(i)
+      val eachObject = each.getObject()
+      if (eachObject != null && eachObject == `object`) {
+        return each
       }
     }
-    return null;
+    return null
   }
 
-  private @Nullable TabInfo _findInfo(Point point, boolean labelsOnly) {
-    Component component = findComponentAt(point);
-    while (component != this) {
-      if (component == null) return null;
-      if (component instanceof TabLabel) {
-        return ((TabLabel)component).getInfo();
+  private fun _findInfo(point: Point, labelsOnly: Boolean): TabInfo? {
+    var component = findComponentAt(point)
+    while (component !== this) {
+      if (component == null) return null
+      if (component is TabLabel) {
+        return component.info
       }
       if (!labelsOnly) {
-        final TabInfo info = findInfo(component);
-        if (info != null) return info;
+        val info = findInfo(component)
+        if (info != null) return info
       }
-      component = component.getParent();
+      component = component.parent
     }
-
-    return null;
+    return null
   }
 
-  @Override
-  public void removeAllTabs() {
-    for (TabInfo each : getTabs()) {
-      removeTab(each);
+  override fun removeAllTabs() {
+    for (each in tabs) {
+      removeTab(each)
     }
   }
 
-  private static final class Max {
-    final Dimension myLabel = new Dimension();
-    final Dimension myToolbar = new Dimension();
+  private class Max {
+    val myLabel = Dimension()
+    val myToolbar = Dimension()
   }
 
-  private void updateContainer(boolean forced, boolean layoutNow) {
-    for (TabInfo tabInfo : List.copyOf(myVisibleInfos)) {
-      JComponent component = tabInfo.getComponent();
-      if (tabInfo == getSelectedInfo()) {
-        unqueueFromRemove(component);
-
-        Container parent = component.getParent();
-        if (parent != null && parent != this) {
-          parent.remove(component);
+  private fun updateContainer(forced: Boolean, layoutNow: Boolean) {
+    for (tabInfo in java.util.List.copyOf(myVisibleInfos)) {
+      val component = tabInfo.component
+      if (tabInfo == selectedInfo) {
+        unqueueFromRemove(component)
+        val parent = component.parent
+        if (parent != null && parent !== this) {
+          parent.remove(component)
         }
-
-        if (component.getParent() == null) {
-          add(component);
+        if (component.parent == null) {
+          add(component)
         }
       }
       else {
-        if (component.getParent() == null) {
-          continue;
+        if (component.parent == null) {
+          continue
         }
         if (isToDeferRemoveForLater(component)) {
-          addToDeferredRemove(component);
+          addToDeferredRemove(component)
         }
         else {
-          remove(component);
+          remove(component)
         }
       }
     }
-
-    updateEntryPointToolbar();
-
-    if (myLayout == mySingleRowLayout) {
-      mySingleRowLayout.scrollSelectionInView();
+    updateEntryPointToolbar()
+    if (effectiveLayout === mySingleRowLayout) {
+      mySingleRowLayout.scrollSelectionInView()
     }
-    else if (myLayout == myTableLayout) {
-      myTableLayout.scrollSelectionInView();
+    else if (effectiveLayout === myTableLayout) {
+      myTableLayout.scrollSelectionInView()
     }
-    relayout(forced, layoutNow);
+    relayout(forced, layoutNow)
   }
 
-  private void updateEntryPointToolbar() {
+  private fun updateEntryPointToolbar() {
     if (myEntryPointToolbar != null) {
-      remove(myEntryPointToolbar.getComponent());
+      remove(myEntryPointToolbar!!.component)
     }
-
-    TabInfo selectedInfo = getSelectedInfo();
-    ActionGroup tabActionGroup = selectedInfo != null ? selectedInfo.getTabPaneActions() : null;
-    DefaultActionGroup entryPointActionGroup = getEntryPointActionGroup();
+    val selectedInfo = selectedInfo
+    val tabActionGroup = selectedInfo?.tabPaneActions
+    val entryPointActionGroup = entryPointActionGroup
     if (tabActionGroup != null || entryPointActionGroup != null) {
-      ActionGroup group;
-      if (tabActionGroup != null && entryPointActionGroup != null) {
-        if (!myMoreToolbar.getComponent().getBounds().isEmpty()
-            && tabActionGroup.getChildren(null).length != 0
-            // check that more toolbar and entry point toolbar are in the same row
-            && (!TabLayout.showPinnedTabsSeparately() || ContainerUtil.all(getTabs(), info -> !info.isPinned()))) {
-          group = new DefaultActionGroup(new FakeEmptyAction(), Separator.create(), tabActionGroup, Separator.create(), entryPointActionGroup);
+      val group: ActionGroup
+      group = if (tabActionGroup != null && entryPointActionGroup != null) {
+        if ( // check that more toolbar and entry point toolbar are in the same row
+          !myMoreToolbar!!.component.bounds.isEmpty && tabActionGroup.getChildren(
+            null).size != 0 && (!TabLayout.showPinnedTabsSeparately() || ContainerUtil.all(
+            tabs) { info: TabInfo -> !info.isPinned })) {
+          DefaultActionGroup(FakeEmptyAction(), Separator.create(), tabActionGroup, Separator.create(), entryPointActionGroup)
         }
         else {
-          group = new DefaultActionGroup(tabActionGroup, Separator.create(), entryPointActionGroup);
+          DefaultActionGroup(tabActionGroup, Separator.create(), entryPointActionGroup)
         }
       }
       else {
-        group = tabActionGroup != null ? tabActionGroup : entryPointActionGroup;
+        tabActionGroup ?: entryPointActionGroup!!
       }
-
-      if (myEntryPointToolbar != null && myEntryPointToolbar.getActionGroup().equals(group)) {
+      if (myEntryPointToolbar != null && myEntryPointToolbar!!.actionGroup == group) {
         // keep old toolbar to avoid blinking (actions need to be updated to be visible)
-        add(myEntryPointToolbar.getComponent());
+        add(myEntryPointToolbar!!.component)
       }
       else {
-        myEntryPointToolbar = createToolbar(group);
-        add(myEntryPointToolbar.getComponent());
+        myEntryPointToolbar = createToolbar(group)
+        add(myEntryPointToolbar!!.component)
       }
     }
     else {
-      myEntryPointToolbar = null;
+      myEntryPointToolbar = null
     }
   }
 
-  /**
-   * @return insets, that should be used to layout {@link JBTabsImpl#myMoreToolbar} and {@link JBTabsImpl#myEntryPointToolbar}
-   */
-  public Insets getActionsInsets() {
-    if (ExperimentalUI.isNewUI()) {
-      return getPosition().isSide() ? JBInsets.create(new Insets(4, 8, 4, 3))
-                                    : JBInsets.create(new Insets(0, 5, 0, 8));
+  val actionsInsets: Insets
+    /**
+     * @return insets, that should be used to layout [JBTabsImpl.myMoreToolbar] and [JBTabsImpl.myEntryPointToolbar]
+     */
+    get() = if (ExperimentalUI.isNewUI()) {
+      if (position.isSide) JBInsets.create(Insets(4, 8, 4, 3)) else JBInsets.create(Insets(0, 5, 0, 8))
     }
     else {
-      return JBInsets.create(new Insets(0, 1, 0, 1));
+      JBInsets.create(Insets(0, 1, 0, 1))
     }
-  }
 
   // Useful when you need to always show separator as first or last component of ActionToolbar
   // Just put it as first or last action and any separator will not be counted as corner and will be shown
-  private static class FakeEmptyAction extends DumbAwareAction implements CustomComponentAction {
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
+  private class FakeEmptyAction : DumbAwareAction(), CustomComponentAction {
+    override fun actionPerformed(e: AnActionEvent) {
       // do nothing
     }
 
-    @Override
-    public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-      JPanel panel = new JPanel();
-      Dimension size = new Dimension(0, 0);
-      panel.setPreferredSize(size);
-      return panel;
+    override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+      val panel = JPanel()
+      val size = Dimension(0, 0)
+      panel.preferredSize = size
+      return panel
     }
   }
 
-  @Override
-  protected void addImpl(final Component comp, final Object constraints, final int index) {
-    unqueueFromRemove(comp);
-
-    if (comp instanceof TabLabel) {
-      ((TabLabel)comp).apply(myUiDecorator != null ? myUiDecorator.getDecoration() : ourDefaultDecorator.getDecoration());
+  override fun addImpl(comp: Component, constraints: Any, index: Int) {
+    unqueueFromRemove(comp)
+    if (comp is TabLabel) {
+      comp.apply(if (myUiDecorator != null) myUiDecorator!!.decoration else ourDefaultDecorator.decoration)
     }
-
-    super.addImpl(comp, constraints, index);
+    super.addImpl(comp, constraints, index)
   }
 
-  private static boolean isToDeferRemoveForLater(JComponent c) {
-    return c.getRootPane() != null;
-  }
-
-  void relayout(boolean forced, final boolean layoutNow) {
+  fun relayout(forced: Boolean, layoutNow: Boolean) {
     if (!myForcedRelayout) {
-      myForcedRelayout = forced;
+      myForcedRelayout = forced
     }
     if (myMoreToolbar != null) {
-      myMoreToolbar.getComponent().setVisible(!isHideTabs() &&
-                                              (getEffectiveLayout() instanceof ScrollableSingleRowLayout ||
-                                               getEffectiveLayout() instanceof TableLayout));
+      myMoreToolbar.component.isVisible = !isHideTabs &&
+                                          (effectiveLayout is ScrollableSingleRowLayout ||
+                                           effectiveLayout is TableLayout)
     }
-    revalidateAndRepaint(layoutNow);
+    revalidateAndRepaint(layoutNow)
   }
 
-  public int getBorderThickness() {
-    return myBorder.getThickness();
+  val borderThickness: Int
+    get() = myBorder.thickness
+
+  override fun addTabMouseListener(listener: MouseListener): JBTabs {
+    removeListeners()
+    myTabMouseListeners.add(listener)
+    addListeners()
+    return this
   }
 
-  @Override
-  public @NotNull JBTabs addTabMouseListener(@NotNull MouseListener listener) {
-    removeListeners();
-    myTabMouseListeners.add(listener);
-    addListeners();
-    return this;
+  override fun getComponent(): JComponent {
+    return this
   }
 
-  @Override
-  public @NotNull JComponent getComponent() {
-    return this;
-  }
-
-  private void addListeners() {
-    for (TabInfo eachInfo : myVisibleInfos) {
-      final TabLabel label = myInfo2Label.get(eachInfo);
-      for (EventListener eachListener : myTabMouseListeners) {
-        if (eachListener instanceof MouseListener) {
-          label.addMouseListener((MouseListener)eachListener);
+  private fun addListeners() {
+    for (eachInfo in myVisibleInfos) {
+      val label = myInfo2Label[eachInfo]
+      for (eachListener in myTabMouseListeners) {
+        if (eachListener is MouseListener) {
+          label!!.addMouseListener(eachListener)
         }
-        else if (eachListener instanceof MouseMotionListener) {
-          label.addMouseMotionListener((MouseMotionListener)eachListener);
+        else if (eachListener is MouseMotionListener) {
+          label!!.addMouseMotionListener(eachListener)
         }
         else {
-          assert false;
+          assert(false)
         }
       }
     }
   }
 
-  private void removeListeners() {
-    for (TabInfo eachInfo : myVisibleInfos) {
-      final TabLabel label = myInfo2Label.get(eachInfo);
-      for (EventListener eachListener : myTabMouseListeners) {
-        if (eachListener instanceof MouseListener) {
-          label.removeMouseListener((MouseListener)eachListener);
+  private fun removeListeners() {
+    for (eachInfo in myVisibleInfos) {
+      val label = myInfo2Label[eachInfo]
+      for (eachListener in myTabMouseListeners) {
+        if (eachListener is MouseListener) {
+          label!!.removeMouseListener(eachListener)
         }
-        else if (eachListener instanceof MouseMotionListener) {
-          label.removeMouseMotionListener((MouseMotionListener)eachListener);
+        else if (eachListener is MouseMotionListener) {
+          label!!.removeMouseMotionListener(eachListener)
         }
         else {
-          assert false;
+          assert(false)
         }
       }
     }
   }
 
-  private void updateListeners() {
-    removeListeners();
-    addListeners();
+  private fun updateListeners() {
+    removeListeners()
+    addListeners()
   }
 
-  @Override
-  public JBTabs addListener(@NotNull TabsListener listener) {
-    return addListener(listener, null);
+  override fun addListener(listener: TabsListener): JBTabs {
+    return addListener(listener, null)
   }
 
-  @Override
-  public JBTabs addListener(@NotNull TabsListener listener, @Nullable Disposable disposable) {
-    myTabListeners.add(listener);
+  override fun addListener(listener: TabsListener, disposable: Disposable?): JBTabs {
+    myTabListeners.add(listener)
     if (disposable != null) {
-      Disposer.register(disposable, () -> myTabListeners.remove(listener));
+      Disposer.register(disposable) { myTabListeners.remove(listener) }
     }
-    return this;
+    return this
   }
 
-  @Override
-  public JBTabs setSelectionChangeHandler(SelectionChangeHandler handler) {
-    mySelectionChangeHandler = handler;
-    return this;
+  override fun setSelectionChangeHandler(handler: JBTabs.SelectionChangeHandler): JBTabs {
+    mySelectionChangeHandler = handler
+    return this
   }
 
-  public void setFocused(final boolean focused) {
-    if (myFocused == focused) return;
-
-    myFocused = focused;
-
+  fun setFocused(focused: Boolean) {
+    if (myFocused == focused) return
+    myFocused = focused
     if (myPaintFocus) {
-      repaint();
+      repaint()
     }
   }
 
-  @Override
-  public int getIndexOf(final @Nullable TabInfo tabInfo) {
-    return getVisibleInfos().indexOf(tabInfo);
+  override fun getIndexOf(tabInfo: TabInfo?): Int {
+    return visibleInfos.indexOf(tabInfo)
   }
 
-  @Override
-  public boolean isHideTabs() {
-    return myHideTabs || myHideTopPanel;
+  override fun isHideTabs(): Boolean {
+    return myHideTabs || myHideTopPanel
   }
 
-  @Override
-  public void setHideTabs(final boolean hideTabs) {
-    if (isHideTabs() == hideTabs) return;
-
-    myHideTabs = hideTabs;
-
+  override fun setHideTabs(hideTabs: Boolean) {
+    if (isHideTabs == hideTabs) return
+    myHideTabs = hideTabs
     if (myEntryPointToolbar != null) {
-      myEntryPointToolbar.getComponent().setVisible(!myHideTabs);
+      myEntryPointToolbar!!.component.isVisible = !myHideTabs
     }
-
-    relayout(true, false);
+    relayout(true, false)
   }
 
   /**
    * @param hideTopPanel true if tabs and top toolbar should be hidden from a view
    */
-  @Override
-  public void setHideTopPanel(boolean hideTopPanel) {
-    if (isHideTopPanel() == hideTopPanel) return;
-
-    myHideTopPanel = hideTopPanel;
-
-    getTabs().stream()
-      .map(TabInfo::getSideComponent)
-      .forEach(component -> component.setVisible(!myHideTopPanel));
-
-    relayout(true, true);
+  override fun setHideTopPanel(hideTopPanel: Boolean) {
+    if (isHideTopPanel == hideTopPanel) return
+    myHideTopPanel = hideTopPanel
+    tabs.stream()
+      .map { obj: TabInfo -> obj.sideComponent }
+      .forEach { component: JComponent -> component.isVisible = !myHideTopPanel }
+    relayout(true, true)
   }
 
-  @Override
-  public boolean isHideTopPanel() {
-    return myHideTopPanel;
+  override fun isHideTopPanel(): Boolean {
+    return myHideTopPanel
   }
 
-  @Override
-  public @NotNull JBTabsPresentation setActiveTabFillIn(final @Nullable Color color) {
-    if (!isChanged(myActiveTabFillIn, color)) return this;
-
-    myActiveTabFillIn = color;
-    revalidateAndRepaint(false);
-    return this;
+  override fun setActiveTabFillIn(color: Color?): JBTabsPresentation {
+    if (!isChanged(myActiveTabFillIn, color)) return this
+    myActiveTabFillIn = color
+    revalidateAndRepaint(false)
+    return this
   }
 
-  private static boolean isChanged(Object oldObject, Object newObject) {
-    return !Comparing.equal(oldObject, newObject);
-  }
-
-  @Override
-  public @NotNull JBTabsPresentation setTabLabelActionsAutoHide(boolean autoHide) {
+  override fun setTabLabelActionsAutoHide(autoHide: Boolean): JBTabsPresentation {
     if (myTabLabelActionsAutoHide != autoHide) {
-      myTabLabelActionsAutoHide = autoHide;
-      revalidateAndRepaint(false);
+      myTabLabelActionsAutoHide = autoHide
+      revalidateAndRepaint(false)
     }
-    return this;
+    return this
   }
 
-  @Override
-  public JBTabsPresentation setFocusCycle(boolean root) {
-    setFocusCycleRoot(root);
-    return this;
+  override fun setFocusCycle(root: Boolean): JBTabsPresentation {
+    isFocusCycleRoot = root
+    return this
   }
 
-
-  @Override
-  public JBTabsPresentation setPaintFocus(boolean paintFocus) {
-    myPaintFocus = paintFocus;
-    return this;
+  override fun setPaintFocus(paintFocus: Boolean): JBTabsPresentation {
+    myPaintFocus = paintFocus
+    return this
   }
 
-  private abstract static class BaseNavigationAction extends DumbAwareAction {
-    private final ShadowAction myShadow;
-    private final JBTabsImpl myTabs;
+  private abstract class BaseNavigationAction internal constructor(copyFromId: @NlsSafe String,
+                                                                   private val myTabs: JBTabsImpl,
+                                                                   parentDisposable: Disposable) : DumbAwareAction() {
+    private val myShadow: ShadowAction
 
-    BaseNavigationAction(@NlsSafe @NotNull String copyFromId, @NotNull JBTabsImpl tabs, @NotNull Disposable parentDisposable) {
-      myTabs = tabs;
-      myShadow = new ShadowAction(this, copyFromId, tabs, parentDisposable);
-      setEnabledInModalContext(true);
+    init {
+      myShadow = ShadowAction(this, copyFromId, tabs, parentDisposable)
+      isEnabledInModalContext = true
     }
 
-    @Override
-    public final void update(@NotNull AnActionEvent e) {
-      JBTabsImpl tabs = (JBTabsImpl)e.getData(NAVIGATION_ACTIONS_KEY);
-      e.getPresentation().setVisible(tabs != null);
-      if (tabs == null) return;
-
-      tabs = findNavigatableTabs(tabs);
-      e.getPresentation().setEnabled(tabs != null);
+    override fun update(e: AnActionEvent) {
+      var tabs = e.getData(JBTabsEx.NAVIGATION_ACTIONS_KEY) as JBTabsImpl?
+      e.presentation.isVisible = tabs != null
+      if (tabs == null) return
+      tabs = findNavigatableTabs(tabs)
+      e.presentation.isEnabled = tabs != null
       if (tabs != null) {
-        _update(e, tabs, tabs.getVisibleInfos().indexOf(tabs.getSelectedInfo()));
+        _update(e, tabs, tabs.visibleInfos.indexOf(tabs.selectedInfo))
       }
     }
 
-    @Nullable
-    JBTabsImpl findNavigatableTabs(JBTabsImpl tabs) {
+    fun findNavigatableTabs(tabs: JBTabsImpl?): JBTabsImpl? {
       // The debugger UI contains multiple nested JBTabsImpl, where the innermost JBTabsImpl has only one tab. In this case,
       // the action should target the outer JBTabsImpl.
-      if (tabs == null || tabs != myTabs) {
-        return null;
+      if (tabs == null || tabs !== myTabs) {
+        return null
       }
-      if (tabs.isNavigatable()) {
-        return tabs;
+      if (tabs.isNavigatable) {
+        return tabs
       }
-      Component c = tabs.getParent();
+      var c: Component? = tabs.parent
       while (c != null) {
-        if (c instanceof JBTabsImpl && ((JBTabsImpl)c).isNavigatable()) {
-          return (JBTabsImpl)c;
+        if (c is JBTabsImpl && c.isNavigatable) {
+          return c
         }
-        c = c.getParent();
+        c = c.parent
       }
-      return null;
+      return null
     }
 
-    public void reconnect(String actionId) {
-      myShadow.reconnect(ActionManager.getInstance().getAction(actionId));
+    fun reconnect(actionId: String?) {
+      myShadow.reconnect(ActionManager.getInstance().getAction(actionId!!))
     }
 
-    protected abstract void _update(AnActionEvent e, JBTabsImpl tabs, int selectedIndex);
-
-    @Override
-    public final void actionPerformed(@NotNull AnActionEvent e) {
-      JBTabsImpl tabs = (JBTabsImpl)e.getData(NAVIGATION_ACTIONS_KEY);
-      tabs = findNavigatableTabs(tabs);
+    protected abstract fun _update(e: AnActionEvent, tabs: JBTabsImpl, selectedIndex: Int)
+    override fun actionPerformed(e: AnActionEvent) {
+      var tabs = e.getData(JBTabsEx.NAVIGATION_ACTIONS_KEY) as JBTabsImpl?
+      tabs = findNavigatableTabs(tabs)
       if (tabs == null) {
-        return;
+        return
       }
-
-      List<TabInfo> infos;
-      int index;
+      var infos: List<TabInfo?>
+      var index: Int
       while (true) {
-        infos = tabs.getVisibleInfos();
-        index = infos.indexOf(tabs.getSelectedInfo());
-        if (index == -1) return;
-        if (borderIndex(infos, index) && tabs.navigatableParent() != null) {
-          tabs = tabs.navigatableParent();
+        infos = tabs!!.visibleInfos
+        index = infos.indexOf(tabs.selectedInfo)
+        if (index == -1) return
+        tabs = if (borderIndex(infos, index) && tabs.navigatableParent() != null) {
+          tabs.navigatableParent()
         }
         else {
-          break;
+          break
         }
       }
-
-      _actionPerformed(e, tabs, index);
+      _actionPerformed(e, tabs, index)
     }
 
-    protected abstract boolean borderIndex(List<TabInfo> infos, int index);
-
-    protected abstract void _actionPerformed(AnActionEvent e, JBTabsImpl tabs, int selectedIndex);
+    protected abstract fun borderIndex(infos: List<TabInfo?>, index: Int): Boolean
+    protected abstract fun _actionPerformed(e: AnActionEvent?, tabs: JBTabsImpl?, selectedIndex: Int)
   }
 
-  private static final class SelectNextAction extends BaseNavigationAction {
-    private SelectNextAction(JBTabsImpl tabs, @NotNull Disposable parentDisposable) {
-      super(IdeActions.ACTION_NEXT_TAB, tabs, parentDisposable);
+  private class SelectNextAction(tabs: JBTabsImpl, parentDisposable: Disposable) : BaseNavigationAction(IdeActions.ACTION_NEXT_TAB, tabs,
+                                                                                                        parentDisposable) {
+    override fun _update(e: AnActionEvent, tabs: JBTabsImpl, selectedIndex: Int) {
+      e.presentation.isEnabled = tabs.findEnabledForward(selectedIndex, true) != null
     }
 
-    @Override
-    protected void _update(AnActionEvent e, JBTabsImpl tabs, int selectedIndex) {
-      e.getPresentation().setEnabled(tabs.findEnabledForward(selectedIndex, true) != null);
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
     }
 
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
+    override fun borderIndex(infos: List<TabInfo?>, index: Int): Boolean {
+      return index == infos.size - 1
     }
 
-    @Override
-    protected boolean borderIndex(List<TabInfo> infos, int index) {
-      return index == infos.size() - 1;
-    }
-
-    @Override
-    protected void _actionPerformed(AnActionEvent e, JBTabsImpl tabs, int selectedIndex) {
-      TabInfo tabInfo = tabs.findEnabledForward(selectedIndex, true);
+    override fun _actionPerformed(e: AnActionEvent?, tabs: JBTabsImpl?, selectedIndex: Int) {
+      val tabInfo = tabs!!.findEnabledForward(selectedIndex, true)
       if (tabInfo != null) {
-        JComponent lastFocus = tabInfo.getLastFocusOwner();
-        tabs.select(tabInfo, true);
+        val lastFocus = tabInfo.lastFocusOwner
+        tabs.select(tabInfo, true)
         tabs.myNestedTabs.stream()
-          .filter((nestedTabs) -> (lastFocus == null) || SwingUtilities.isDescendingFrom(lastFocus, nestedTabs))
-          .forEach((nestedTabs) -> {
-            nestedTabs.selectFirstVisible();
-          });
+          .filter { nestedTabs: JBTabsImpl? -> lastFocus == null || SwingUtilities.isDescendingFrom(lastFocus, nestedTabs) }
+          .forEach { nestedTabs: JBTabsImpl -> nestedTabs.selectFirstVisible() }
       }
     }
   }
 
-  protected boolean isNavigatable() {
-    final int selectedIndex = getVisibleInfos().indexOf(getSelectedInfo());
-    return isNavigationVisible() && selectedIndex >= 0 && myNavigationActionsEnabled;
-  }
+  protected val isNavigatable: Boolean
+    protected get() {
+      val selectedIndex = visibleInfos.indexOf(selectedInfo)
+      return isNavigationVisible && selectedIndex >= 0 && myNavigationActionsEnabled
+    }
 
-  private JBTabsImpl navigatableParent() {
-    Component c = getParent();
+  private fun navigatableParent(): JBTabsImpl? {
+    var c: Component? = parent
     while (c != null) {
-      if (c instanceof JBTabsImpl && ((JBTabsImpl)c).isNavigatable()) {
-        return (JBTabsImpl)c;
+      if (c is JBTabsImpl && c.isNavigatable) {
+        return c
       }
-      c = c.getParent();
+      c = c.parent
     }
-
-    return null;
+    return null
   }
 
-  private void selectFirstVisible() {
-    if (!isNavigatable()) return;
-    TabInfo select = getVisibleInfos().get(0);
-    JComponent lastFocus = select.getLastFocusOwner();
-    select(select, true);
+  private fun selectFirstVisible() {
+    if (!isNavigatable) return
+    val select = visibleInfos[0]!!
+    val lastFocus = select.lastFocusOwner
+    select(select, true)
     myNestedTabs.stream()
-      .filter((nestedTabs) -> (lastFocus == null) || SwingUtilities.isDescendingFrom(lastFocus, nestedTabs))
-      .forEach((nestedTabs) -> {
-        nestedTabs.selectFirstVisible();
-      });
+      .filter { nestedTabs: JBTabsImpl? -> lastFocus == null || SwingUtilities.isDescendingFrom(lastFocus, nestedTabs) }
+      .forEach { nestedTabs: JBTabsImpl -> nestedTabs.selectFirstVisible() }
   }
 
-  private void selectLastVisible() {
-    if (!isNavigatable()) return;
-    int last = getVisibleInfos().size() - 1;
-    TabInfo select = getVisibleInfos().get(last);
-    JComponent lastFocus = select.getLastFocusOwner();
-    select(select, true);
+  private fun selectLastVisible() {
+    if (!isNavigatable) return
+    val last = visibleInfos.size - 1
+    val select = visibleInfos[last]!!
+    val lastFocus = select.lastFocusOwner
+    select(select, true)
     myNestedTabs.stream()
-      .filter((nestedTabs) -> (lastFocus == null) || SwingUtilities.isDescendingFrom(lastFocus, nestedTabs))
-      .forEach((nestedTabs) -> {
-        nestedTabs.selectLastVisible();
-      });
+      .filter { nestedTabs: JBTabsImpl? -> lastFocus == null || SwingUtilities.isDescendingFrom(lastFocus, nestedTabs) }
+      .forEach { nestedTabs: JBTabsImpl -> nestedTabs.selectLastVisible() }
   }
 
-  private static final class SelectPreviousAction extends BaseNavigationAction {
-    private SelectPreviousAction(JBTabsImpl tabs, @NotNull Disposable parentDisposable) {
-      super(IdeActions.ACTION_PREVIOUS_TAB, tabs, parentDisposable);
+  private class SelectPreviousAction(tabs: JBTabsImpl, parentDisposable: Disposable) : BaseNavigationAction(IdeActions.ACTION_PREVIOUS_TAB,
+                                                                                                            tabs, parentDisposable) {
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
     }
 
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
+    override fun _update(e: AnActionEvent, tabs: JBTabsImpl, selectedIndex: Int) {
+      e.presentation.isEnabled = tabs.findEnabledBackward(selectedIndex, true) != null
     }
 
-    @Override
-    protected void _update(final AnActionEvent e, final JBTabsImpl tabs, int selectedIndex) {
-      e.getPresentation().setEnabled(tabs.findEnabledBackward(selectedIndex, true) != null);
+    override fun borderIndex(infos: List<TabInfo?>, index: Int): Boolean {
+      return index == 0
     }
 
-    @Override
-    protected boolean borderIndex(List<TabInfo> infos, int index) {
-      return index == 0;
-    }
-
-    @Override
-    protected void _actionPerformed(final AnActionEvent e, final JBTabsImpl tabs, final int selectedIndex) {
-      TabInfo tabInfo = tabs.findEnabledBackward(selectedIndex, true);
+    override fun _actionPerformed(e: AnActionEvent?, tabs: JBTabsImpl?, selectedIndex: Int) {
+      val tabInfo = tabs!!.findEnabledBackward(selectedIndex, true)
       if (tabInfo != null) {
-        JComponent lastFocus = tabInfo.getLastFocusOwner();
-        tabs.select(tabInfo, true);
+        val lastFocus = tabInfo.lastFocusOwner
+        tabs.select(tabInfo, true)
         tabs.myNestedTabs.stream()
-          .filter((nestedTabs) -> (lastFocus == null) || SwingUtilities.isDescendingFrom(lastFocus, nestedTabs))
-          .forEach((nestedTabs) -> {
-            nestedTabs.selectLastVisible();
-          });
+          .filter { nestedTabs: JBTabsImpl? -> lastFocus == null || SwingUtilities.isDescendingFrom(lastFocus, nestedTabs) }
+          .forEach { nestedTabs: JBTabsImpl -> nestedTabs.selectLastVisible() }
       }
     }
   }
 
-  private void disposePopupListener() {
+  private fun disposePopupListener() {
     if (myActivePopup != null) {
-      myActivePopup.removePopupMenuListener(myPopupListener);
-      myActivePopup = null;
+      myActivePopup!!.removePopupMenuListener(myPopupListener)
+      myActivePopup = null
     }
   }
 
-  @Override
-  public JBTabsPresentation setSideComponentVertical(final boolean vertical) {
-    myHorizontalSide = !vertical;
-
-    for (TabInfo each : myVisibleInfos) {
-      each.getChangeSupport().firePropertyChange(TabInfo.ACTION_GROUP, "new1", "new2");
+  override fun setSideComponentVertical(vertical: Boolean): JBTabsPresentation {
+    myHorizontalSide = !vertical
+    for (each in myVisibleInfos) {
+      each.changeSupport.firePropertyChange(TabInfo.ACTION_GROUP, "new1", "new2")
     }
-
-
-    relayout(true, false);
-
-    return this;
+    relayout(true, false)
+    return this
   }
 
-  @Override
-  public JBTabsPresentation setSideComponentOnTabs(boolean onTabs) {
-    mySideComponentOnTabs = onTabs;
-
-    relayout(true, false);
-
-    return this;
+  override fun setSideComponentOnTabs(onTabs: Boolean): JBTabsPresentation {
+    isSideComponentOnTabs = onTabs
+    relayout(true, false)
+    return this
   }
 
-  @Override
-  public JBTabsPresentation setSideComponentBefore(boolean before) {
-    mySideComponentBefore = before;
-
-    relayout(true, false);
-
-    return this;
+  override fun setSideComponentBefore(before: Boolean): JBTabsPresentation {
+    isSideComponentBefore = before
+    relayout(true, false)
+    return this
   }
 
-  @Override
-  public JBTabsPresentation setSingleRow(boolean singleRow) {
-    mySingleRow = singleRow;
-    updateRowLayout();
-    return this;
+  override fun setSingleRow(singleRow: Boolean): JBTabsPresentation {
+    mySingleRow = singleRow
+    updateRowLayout()
+    return this
   }
 
-  private boolean setLayout(TabLayout layout) {
-    if (myLayout == layout) return false;
-    myLayout = layout;
-    return true;
+  private fun setLayout(layout: TabLayout): Boolean {
+    if (effectiveLayout === layout) return false
+    effectiveLayout = layout
+    return true
   }
 
-  public int getSeparatorWidth() {
-    return mySeparatorWidth;
+  open fun useSmallLabels(): Boolean {
+    return false
   }
 
-  public boolean useSmallLabels() {
-    return false;
+  override fun isSingleRow(): Boolean {
+    return mySingleRow
   }
 
-  @Override
-  public boolean isSingleRow() {
-    return mySingleRow;
+  val isSideComponentVertical: Boolean
+    get() = !myHorizontalSide
+
+  override fun setUiDecorator(decorator: UiDecorator?): JBTabsPresentation {
+    myUiDecorator = decorator ?: ourDefaultDecorator
+    applyDecoration()
+    return this
   }
 
-  public boolean isSideComponentVertical() {
-    return !myHorizontalSide;
+  override fun setUI(newUI: ComponentUI) {
+    super.setUI(newUI)
+    applyDecoration()
   }
 
-  public boolean isSideComponentOnTabs() {
-    return mySideComponentOnTabs;
+  override fun updateUI() {
+    super.updateUI()
+    SwingUtilities.invokeLater {
+      applyDecoration()
+      revalidateAndRepaint(false)
+    }
   }
 
-  public boolean isSideComponentBefore() {
-    return mySideComponentBefore;
-  }
-
-  public TabLayout getEffectiveLayout() {
-    return myLayout;
-  }
-
-  @Override
-  public JBTabsPresentation setUiDecorator(@Nullable UiDecorator decorator) {
-    myUiDecorator = decorator == null ? ourDefaultDecorator : decorator;
-    applyDecoration();
-    return this;
-  }
-
-  @Override
-  protected void setUI(final ComponentUI newUI) {
-    super.setUI(newUI);
-    applyDecoration();
-  }
-
-  @Override
-  public void updateUI() {
-    super.updateUI();
-    SwingUtilities.invokeLater(() -> {
-      applyDecoration();
-
-      revalidateAndRepaint(false);
-    });
-  }
-
-  private void applyDecoration() {
+  private fun applyDecoration() {
     if (myUiDecorator != null) {
-      UiDecorator.UiDecoration uiDecoration = myUiDecorator.getDecoration();
-      for (TabLabel each : myInfo2Label.values()) {
-        each.apply(uiDecoration);
+      val uiDecoration = myUiDecorator!!.decoration
+      for (each in myInfo2Label.values) {
+        each.apply(uiDecoration)
       }
     }
-
-
-    for (TabInfo each : getTabs()) {
-      adjust(each);
+    for (each in tabs) {
+      adjust(each)
     }
-
-    relayout(true, false);
+    relayout(true, false)
   }
 
-  protected void adjust(final TabInfo each) {
+  protected open fun adjust(each: TabInfo) {
     if (myAdjustBorders) {
-      UIUtil.removeScrollBorder(each.getComponent());
+      UIUtil.removeScrollBorder(each.component)
     }
   }
 
-  @Override
-  public void sortTabs(Comparator<? super TabInfo> comparator) {
-    myVisibleInfos.sort(comparator);
-    resetTabsCache();
-    relayout(true, false);
+  override fun sortTabs(comparator: Comparator<in TabInfo>) {
+    myVisibleInfos.sort(comparator)
+    resetTabsCache()
+    relayout(true, false)
   }
 
-  protected void reorderTab(@NotNull TabInfo tabInfo, int newIndex) {
+  protected fun reorderTab(tabInfo: TabInfo, newIndex: Int) {
     if (myVisibleInfos.remove(tabInfo)) {
-      myVisibleInfos.add(newIndex, tabInfo);
-      resetTabsCache();
-      relayout(true, false);
+      myVisibleInfos.add(newIndex, tabInfo)
+      resetTabsCache()
+      relayout(true, false)
     }
   }
 
-  private boolean isRequestFocusOnLastFocusedComponent() {
-    return myRequestFocusOnLastFocusedComponent;
+  override fun setRequestFocusOnLastFocusedComponent(requestFocusOnLastFocusedComponent: Boolean): JBTabsPresentation {
+    isRequestFocusOnLastFocusedComponent = requestFocusOnLastFocusedComponent
+    return this
   }
 
-  @Override
-  public JBTabsPresentation setRequestFocusOnLastFocusedComponent(final boolean requestFocusOnLastFocusedComponent) {
-    myRequestFocusOnLastFocusedComponent = requestFocusOnLastFocusedComponent;
-    return this;
-  }
-
-
-  @Override
-  public @Nullable Object getData(final @NotNull @NonNls String dataId) {
+  override fun getData(dataId: @NonNls String): Any? {
     if (myDataProvider != null) {
-      final Object value = myDataProvider.getData(dataId);
-      if (value != null) return value;
+      val value = myDataProvider!!.getData(dataId)
+      if (value != null) return value
     }
-
-    if (QuickActionProvider.KEY.is(dataId)) {
-      return this;
+    if (QuickActionProvider.KEY.`is`(dataId)) {
+      return this
     }
-    if (MorePopupAware.KEY.is(dataId)) {
-      return this;
+    if (MorePopupAware.KEY.`is`(dataId)) {
+      return this
     }
-
-    return NAVIGATION_ACTIONS_KEY.is(dataId) ? this : null;
+    return if (JBTabsEx.NAVIGATION_ACTIONS_KEY.`is`(dataId)) this else null
   }
 
-  @Override
-  public @NotNull List<AnAction> getActions(boolean originalProvider) {
-    ArrayList<AnAction> result = new ArrayList<>();
-
-    TabInfo selection = getSelectedInfo();
+  override fun getActions(originalProvider: Boolean): List<AnAction> {
+    val result = ArrayList<AnAction>()
+    val selection = selectedInfo
     if (selection != null) {
-      ActionGroup group = selection.getGroup();
+      val group = selection.group
       if (group != null) {
-        AnAction[] children = group.getChildren(null);
-        Collections.addAll(result, children);
+        val children = group.getChildren(null)
+        Collections.addAll(result, *children)
       }
     }
-
-    return result;
+    return result
   }
 
-  public ActionGroup getNavigationActions() {
-    return myNavigationActions;
+  val navigationActions: ActionGroup
+    get() = myNavigationActions
+
+  override fun getDataProvider(): DataProvider? {
+    return myDataProvider
   }
 
-  @Override
-  public DataProvider getDataProvider() {
-    return myDataProvider;
+  override fun setDataProvider(dataProvider: DataProvider): JBTabsImpl {
+    myDataProvider = dataProvider
+    return this
   }
 
-  @Override
-  public JBTabsImpl setDataProvider(final @NotNull DataProvider dataProvider) {
-    myDataProvider = dataProvider;
-    return this;
-  }
-
-
-  static boolean isSelectionClick(MouseEvent e) {
-    if (e.getClickCount() == 1) {
-      if (!e.isPopupTrigger()) {
-        return e.getButton() == MouseEvent.BUTTON1 && !e.isControlDown() && !e.isAltDown() && !e.isMetaDown();
-      }
-    }
-    return false;
-  }
-
-  private static final class DefaultDecorator implements UiDecorator {
-    @Override
-    public @NotNull UiDecoration getDecoration() {
-      return new UiDecoration(null, new JBInsets(5, 12, 5, 12));
+  private class DefaultDecorator : UiDecorator {
+    override fun getDecoration(): UiDecoration {
+      return UiDecoration(null, JBInsets(5, 12, 5, 12))
     }
   }
 
-  public Rectangle layout(JComponent c, Rectangle bounds) {
-    final Rectangle now = c.getBounds();
-    if (!bounds.equals(now)) {
-      c.setBounds(bounds);
+  fun layout(c: JComponent?, bounds: Rectangle): Rectangle {
+    val now = c!!.bounds
+    if (bounds != now) {
+      c.bounds = bounds
     }
-    c.doLayout();
-    c.putClientProperty(LAYOUT_DONE, Boolean.TRUE);
-
-    return bounds;
+    c.doLayout()
+    c.putClientProperty(LAYOUT_DONE, java.lang.Boolean.TRUE)
+    return bounds
   }
 
-  public Rectangle layout(JComponent c, int x, int y, int width, int height) {
-    return layout(c, new Rectangle(x, y, width, height));
+  fun layout(c: JComponent?, x: Int, y: Int, width: Int, height: Int): Rectangle {
+    return layout(c, Rectangle(x, y, width, height))
   }
 
-  public static void resetLayout(JComponent c) {
-    if (c == null) return;
-    c.putClientProperty(LAYOUT_DONE, null);
-  }
-
-  private void applyResetComponents() {
-    for (int i = 0; i < getComponentCount(); i++) {
-      final Component each = getComponent(i);
-      if (each instanceof JComponent jc) {
-        if (!ClientProperty.isTrue(jc, LAYOUT_DONE)) {
-          layout(jc, new Rectangle(0, 0, 0, 0));
+  private fun applyResetComponents() {
+    for (i in 0 until componentCount) {
+      val each = getComponent(i)
+      if (each is JComponent) {
+        if (!ClientProperty.isTrue(each, LAYOUT_DONE!!)) {
+          layout(each, Rectangle(0, 0, 0, 0))
         }
       }
     }
   }
 
-
-  @Override
-  public @NotNull JBTabsPresentation setTabLabelActionsMouseDeadzone(final TimedDeadzone.Length length) {
-    myTabActionsMouseDeadzone = length;
-    final List<TabInfo> all = getTabs();
-    for (TabInfo each : all) {
-      final TabLabel eachLabel = myInfo2Label.get(each);
-      eachLabel.updateTabActions();
+  override fun setTabLabelActionsMouseDeadzone(length: TimedDeadzone.Length): JBTabsPresentation {
+    tabActionsMouseDeadzone = length
+    val all = tabs
+    for (each in all) {
+      val eachLabel = myInfo2Label[each]
+      eachLabel!!.updateTabActions()
     }
-    return this;
+    return this
   }
 
-  @Override
-  public @NotNull JBTabsPresentation setTabsPosition(final JBTabsPosition position) {
-    myPosition = position;
-    OnePixelDivider divider = mySplitter.getDivider();
-    if (position.isSide() && divider.getParent() == null) {
-      add(divider);
+  override fun setTabsPosition(position: JBTabsPosition): JBTabsPresentation {
+    this.position = position
+    val divider = mySplitter.divider
+    if (position.isSide && divider.parent == null) {
+      add(divider)
     }
-    else if (divider.getParent() == this && !position.isSide()) {
-      remove(divider);
+    else if (divider.parent === this && !position.isSide) {
+      remove(divider)
     }
-
-    applyDecoration();
-    relayout(true, false);
-    return this;
+    applyDecoration()
+    relayout(true, false)
+    return this
   }
 
-  @Override
-  public JBTabsPosition getTabsPosition() {
-    return myPosition;
+  override fun getTabsPosition(): JBTabsPosition {
+    return position
   }
 
-  public TimedDeadzone.Length getTabActionsMouseDeadzone() {
-    return myTabActionsMouseDeadzone;
+  override fun setTabDraggingEnabled(enabled: Boolean): JBTabsPresentation {
+    isTabDraggingEnabled = enabled
+    return this
   }
 
-  @Override
-  public JBTabsPresentation setTabDraggingEnabled(boolean enabled) {
-    myTabDraggingEnabled = enabled;
-    return this;
+  override fun setAlphabeticalMode(alphabeticalMode: Boolean): JBTabsPresentation {
+    isAlphabeticalMode = alphabeticalMode
+    return this
   }
 
-  @Override
-  public JBTabsPresentation setAlphabeticalMode(boolean alphabeticalMode) {
-    myAlphabeticalMode = alphabeticalMode;
-    return this;
+  override fun setSupportsCompression(supportsCompression: Boolean): JBTabsPresentation {
+    mySupportsCompression = supportsCompression
+    updateRowLayout()
+    return this
   }
 
-  @Override
-  public JBTabsPresentation setSupportsCompression(boolean supportsCompression) {
-    mySupportsCompression = supportsCompression;
-    updateRowLayout();
-    return this;
+  fun reallocate(source: TabInfo?, target: TabInfo?) {
+    if (source == target || source == null || target == null) return
+    val targetIndex = myVisibleInfos.indexOf(target)
+    myVisibleInfos.remove(source)
+    myVisibleInfos.add(targetIndex, source)
+    invalidate()
+    relayout(true, true)
   }
 
-  public boolean isTabDraggingEnabled() {
-    return myTabDraggingEnabled;
+  val isHorizontalTabs: Boolean
+    get() = tabsPosition == JBTabsPosition.top || tabsPosition == JBTabsPosition.bottom
+
+  override fun putInfo(info: MutableMap<in String, in String>) {
+    val selected = selectedInfo
+    selected?.putInfo(info)
   }
 
-  void reallocate(TabInfo source, TabInfo target) {
-    if (source == target || source == null || target == null) return;
-
-    final int targetIndex = myVisibleInfos.indexOf(target);
-
-    myVisibleInfos.remove(source);
-    myVisibleInfos.add(targetIndex, source);
-
-    invalidate();
-    relayout(true, true);
-  }
-
-  public boolean isHorizontalTabs() {
-    return getTabsPosition() == JBTabsPosition.top || getTabsPosition() == JBTabsPosition.bottom;
-  }
-
-  @Override
-  public void putInfo(@NotNull Map<? super String, ? super String> info) {
-    final TabInfo selected = getSelectedInfo();
-    if (selected != null) {
-      selected.putInfo(info);
-    }
-  }
-
-
-  @Override
-  public void resetDropOver(TabInfo tabInfo) {
+  override fun resetDropOver(tabInfo: TabInfo) {
     if (myDropInfo != null) {
-      TabInfo dropInfo = myDropInfo;
-      myDropInfo = null;
-      myShowDropLocation = true;
-      myForcedRelayout = true;
-      setDropInfoIndex(-1);
-      setDropSide(-1);
-      doRemoveTab(dropInfo, null, true);
+      val dropInfo: TabInfo = myDropInfo
+      myDropInfo = null
+      myShowDropLocation = true
+      myForcedRelayout = true
+      setDropInfoIndex(-1)
+      setDropSide(-1)
+      doRemoveTab(dropInfo, null, true)
     }
   }
 
-  @Override
-  public Image startDropOver(TabInfo tabInfo, RelativePoint point) {
-    myDropInfo = tabInfo;
-
-    Point pointInMySpace = point.getPoint(this);
-    int index = myLayout.getDropIndexFor(pointInMySpace);
-    setDropInfoIndex(index);
-    addTab(myDropInfo, index, true, true);
-
-    TabLabel label = myInfo2Label.get(myDropInfo);
-    Dimension size = label.getPreferredSize();
-    label.setBounds(0, 0, size.width, size.height);
-
-    BufferedImage img = UIUtil.createImage(this, size.width, size.height, BufferedImage.TYPE_INT_ARGB);
-    Graphics2D g = img.createGraphics();
-    label.paintOffscreen(g);
-    g.dispose();
-
-    relayout(true, false);
-
-    return img;
+  override fun startDropOver(tabInfo: TabInfo, point: RelativePoint): Image {
+    myDropInfo = tabInfo
+    val pointInMySpace = point.getPoint(this)
+    val index = effectiveLayout!!.getDropIndexFor(pointInMySpace)
+    setDropInfoIndex(index)
+    addTab(myDropInfo!!, index, true, true)
+    val label = myInfo2Label[myDropInfo]
+    val size = label!!.preferredSize
+    label.setBounds(0, 0, size.width, size.height)
+    val img = UIUtil.createImage(this, size.width, size.height, BufferedImage.TYPE_INT_ARGB)
+    val g = img.createGraphics()
+    label.paintOffscreen(g)
+    g.dispose()
+    relayout(true, false)
+    return img
   }
 
-  @Override
-  public void processDropOver(TabInfo over, RelativePoint point) {
-    Point pointInMySpace = point.getPoint(this);
-    int index = myLayout.getDropIndexFor(pointInMySpace);
-    int side;
-    if (myVisibleInfos.isEmpty()) {
-      side = SwingConstants.CENTER;
+  override fun processDropOver(over: TabInfo, point: RelativePoint) {
+    val pointInMySpace = point.getPoint(this)
+    val index = effectiveLayout!!.getDropIndexFor(pointInMySpace)
+    val side: Int
+    side = if (myVisibleInfos.isEmpty()) {
+      SwingConstants.CENTER
     }
     else {
-      side = index != -1
-             ? -1
-             : myLayout.getDropSideFor(pointInMySpace);
+      if (index != -1) -1 else effectiveLayout!!.getDropSideFor(pointInMySpace)
     }
-    if (index != getDropInfoIndex()) {
-      setDropInfoIndex(index);
-      relayout(true, false);
+    if (index != dropInfoIndex) {
+      setDropInfoIndex(index)
+      relayout(true, false)
     }
     if (side != myDropSide) {
-      setDropSide(side);
-      relayout(true, false);
+      setDropSide(side)
+      relayout(true, false)
     }
   }
 
-  @Override
-  public int getDropInfoIndex() {
-    return myDropInfoIndex;
+  override fun getDropInfoIndex(): Int {
+    return myDropInfoIndex
   }
 
-  protected DragHelper getDragHelper() {
-    return myDragHelper;
+  @MagicConstant(
+    intValues = [SwingConstants.CENTER.toLong(), SwingConstants.TOP.toLong(), SwingConstants.LEFT.toLong(), SwingConstants.BOTTOM.toLong(), SwingConstants.RIGHT.toLong(), -1])
+  override fun getDropSide(): Int {
+    return myDropSide
   }
 
-  @Override
-  @MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT,
-    -1})
-  public int getDropSide() {
-    return myDropSide;
+  override fun isEmptyVisible(): Boolean {
+    return myVisibleInfos.isEmpty()
   }
 
-  @Override
-  public boolean isEmptyVisible() {
-    return myVisibleInfos.isEmpty();
+  val tabHGap: Int
+    get() = -myBorder.thickness
+
+  override fun toString(): String {
+    return "JBTabs visible=$myVisibleInfos selected=$mySelectedInfo"
   }
 
-  public int getTabHGap() {
-    return -myBorder.getThickness();
-  }
-
-  @Override
-  public String toString() {
-    return "JBTabs visible=" + myVisibleInfos + " selected=" + mySelectedInfo;
-  }
-
-
-  @Override
-  public AccessibleContext getAccessibleContext() {
+  override fun getAccessibleContext(): AccessibleContext {
     if (accessibleContext == null) {
-      accessibleContext = new AccessibleJBTabsImpl();
+      accessibleContext = AccessibleJBTabsImpl()
     }
-    return accessibleContext;
+    return accessibleContext
   }
 
   /**
@@ -3704,149 +3043,124 @@ public class JBTabsImpl extends JComponent
    * is that JBTabsImpl can only expose the content of the selected tab, as the
    * content of tabs is created/deleted on demand when a tab is selected.
    */
-  protected class AccessibleJBTabsImpl extends AccessibleJComponent implements AccessibleSelection {
-
-    AccessibleJBTabsImpl() {
-      getAccessibleComponent();
-      addListener(new TabsListener() {
-        @Override
-        public void selectionChanged(TabInfo oldSelection, TabInfo newSelection) {
-          firePropertyChange(AccessibleContext.ACCESSIBLE_SELECTION_PROPERTY, null, null);
+  protected inner class AccessibleJBTabsImpl internal constructor() : AccessibleJComponent(), AccessibleSelection {
+    init {
+      accessibleComponent
+      addListener(object : TabsListener {
+        override fun selectionChanged(oldSelection: TabInfo?, newSelection: TabInfo?) {
+          firePropertyChange(ACCESSIBLE_SELECTION_PROPERTY, null, null)
         }
-      });
+      })
     }
 
-    @Override
-    public String getAccessibleName() {
-      String name = accessibleName;
+    override fun getAccessibleName(): String {
+      var name = accessibleName
       if (name == null) {
-        name = (String)getClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY);
+        name = getClientProperty(ACCESSIBLE_NAME_PROPERTY) as String
       }
-
       if (name == null) {
         // Similar to JTabbedPane, we return the name of our selected tab
         // as our own name.
-        TabLabel selectedLabel = getSelectedLabel();
+        val selectedLabel: TabLabel = selectedLabel
         if (selectedLabel != null) {
-          if (selectedLabel.getAccessibleContext() != null) {
-            name = selectedLabel.getAccessibleContext().getAccessibleName();
+          if (selectedLabel.accessibleContext != null) {
+            name = selectedLabel.accessibleContext.accessibleName
           }
         }
       }
-
       if (name == null) {
-        name = super.getAccessibleName();
+        name = super.getAccessibleName()
       }
-      return name;
+      return name
     }
 
-    @Override
-    public AccessibleRole getAccessibleRole() {
-      return AccessibleRole.PAGE_TAB_LIST;
+    override fun getAccessibleRole(): AccessibleRole {
+      return AccessibleRole.PAGE_TAB_LIST
     }
 
-    @Override
-    public Accessible getAccessibleChild(int i) {
-      Accessible accessibleChild = super.getAccessibleChild(i);
+    override fun getAccessibleChild(i: Int): Accessible {
+      val accessibleChild = super.getAccessibleChild(i)
       // Note: Unlike a JTabbedPane, JBTabsImpl has many more child types than just pages.
       // So we wrap TabLabel instances with their corresponding AccessibleTabPage, while
       // leaving other types of children untouched.
-      if (accessibleChild instanceof TabLabel label) {
-        return myInfo2Page.get(label.getInfo());
+      return if (accessibleChild is TabLabel) {
+        myInfo2Page[accessibleChild.info]!!
       }
-      return accessibleChild;
+      else accessibleChild
     }
 
-    @Override
-    public AccessibleSelection getAccessibleSelection() {
-      return this;
+    override fun getAccessibleSelection(): AccessibleSelection {
+      return this
     }
 
-    @Override
-    public int getAccessibleSelectionCount() {
-      return getSelectedInfo() == null ? 0 : 1;
+    override fun getAccessibleSelectionCount(): Int {
+      return if (selectedInfo == null) 0 else 1
     }
 
-    @Override
-    public Accessible getAccessibleSelection(int i) {
-      if (getSelectedInfo() == null) {
-        return null;
+    override fun getAccessibleSelection(i: Int): Accessible {
+      return if (selectedInfo == null) {
+        null
       }
-      return myInfo2Page.get(getSelectedInfo());
+      else myInfo2Page[selectedInfo]!!
     }
 
-    @Override
-    public boolean isAccessibleChildSelected(int i) {
-      return i == getIndexOf(getSelectedInfo());
+    override fun isAccessibleChildSelected(i: Int): Boolean {
+      return i == getIndexOf(selectedInfo)
     }
 
-    @Override
-    public void addAccessibleSelection(int i) {
-      TabInfo info = getTabAt(i);
-      select(info, false);
+    override fun addAccessibleSelection(i: Int) {
+      val info = getTabAt(i)
+      select(info, false)
     }
 
-    @Override
-    public void removeAccessibleSelection(int i) {
+    override fun removeAccessibleSelection(i: Int) {
       // can't do
     }
 
-    @Override
-    public void clearAccessibleSelection() {
+    override fun clearAccessibleSelection() {
       // can't do
     }
 
-    @Override
-    public void selectAllAccessibleSelection() {
+    override fun selectAllAccessibleSelection() {
       // can't do
     }
   }
 
   /**
    * AccessibleContext implementation for a single tab page.
-   * <p>
+   *
+   *
    * A tab page has a label as the display zone, name, description, etc.
    * A tab page exposes a child component only if it corresponds to the
    * selected tab in the tab pane. Inactive tabs don't have a child
    * component to expose, as components are created/deleted on demand.
    * A tab page exposes one action: select and activate the panel.
    */
-  private class AccessibleTabPage extends AccessibleContext
-    implements Accessible, AccessibleComponent, AccessibleAction {
+  private inner class AccessibleTabPage internal constructor(private val tabInfo: TabInfo) : AccessibleContext(), Accessible, AccessibleComponent, AccessibleAction {
+    private val myParent: JBTabsImpl
+    private val myComponent: Component
 
-    private final @NotNull JBTabsImpl myParent;
-    private final @NotNull TabInfo myTabInfo;
-    private final Component myComponent;
-
-    AccessibleTabPage(@NotNull TabInfo tabInfo) {
-      myParent = JBTabsImpl.this;
-      myTabInfo = tabInfo;
-      myComponent = tabInfo.getComponent();
-      setAccessibleParent(myParent);
-      initAccessibleContext();
+    init {
+      myParent = this@JBTabsImpl
+      myComponent = tabInfo.component
+      setAccessibleParent(myParent)
+      initAccessibleContext()
     }
 
-    private @NotNull TabInfo getTabInfo() {
-      return myTabInfo;
-    }
-
-    private int getTabIndex() {
-      return getIndexOf(myTabInfo);
-    }
-
-    private TabLabel getTabLabel() {
-      return myInfo2Label.get(getTabInfo());
-    }
+    private val tabIndex: Int
+      private get() = getIndexOf(tabInfo)
+    private val tabLabel: TabLabel?
+      private get() = myInfo2Label[tabInfo]
 
     /*
      * initializes the AccessibleContext for the page
      */
-    void initAccessibleContext() {
+    fun initAccessibleContext() {
       // Note: null checks because we do not want to load Accessibility classes unnecessarily.
-      if (accessibleContext != null && myComponent instanceof Accessible) {
-        AccessibleContext ac = myComponent.getAccessibleContext();
+      if (accessibleContext != null && myComponent is Accessible) {
+        val ac = myComponent.getAccessibleContext()
         if (ac != null) {
-          ac.setAccessibleParent(this);
+          ac.accessibleParent = this
         }
       }
     }
@@ -3854,351 +3168,364 @@ public class JBTabsImpl extends JComponent
     /////////////////
     // Accessibility support
     ////////////////
-
-    @Override
-    public AccessibleContext getAccessibleContext() {
-      return this;
+    override fun getAccessibleContext(): AccessibleContext {
+      return this
     }
 
     // AccessibleContext methods
-
-    @Override
-    public String getAccessibleName() {
-      String name = accessibleName;
+    override fun getAccessibleName(): String {
+      var name = accessibleName
       if (name == null) {
-        name = (String)getClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY);
+        name = getClientProperty(ACCESSIBLE_NAME_PROPERTY) as String
       }
-
       if (name == null) {
-        TabLabel label = getTabLabel();
-        if (label != null && label.getAccessibleContext() != null) {
-          name = label.getAccessibleContext().getAccessibleName();
+        val label = tabLabel
+        if (label != null && label.accessibleContext != null) {
+          name = label.accessibleContext.accessibleName
         }
       }
-
       if (name == null) {
-        name = super.getAccessibleName();
+        name = super.getAccessibleName()
       }
-      return name;
+      return name
     }
 
-    @Override
-    public String getAccessibleDescription() {
-      String description = accessibleDescription;
+    override fun getAccessibleDescription(): String {
+      var description = accessibleDescription
       if (description == null) {
-        description = (String)getClientProperty(AccessibleContext.ACCESSIBLE_DESCRIPTION_PROPERTY);
+        description = getClientProperty(ACCESSIBLE_DESCRIPTION_PROPERTY) as String
       }
-
       if (description == null) {
-        TabLabel label = getTabLabel();
-        if (label != null && label.getAccessibleContext() != null) {
-          description = label.getAccessibleContext().getAccessibleDescription();
+        val label = tabLabel
+        if (label != null && label.accessibleContext != null) {
+          description = label.accessibleContext.accessibleDescription
         }
       }
-
       if (description == null) {
-        description = super.getAccessibleDescription();
+        description = super.getAccessibleDescription()
       }
-      return description;
+      return description
     }
 
-    @Override
-    public AccessibleRole getAccessibleRole() {
-      return AccessibleRole.PAGE_TAB;
+    override fun getAccessibleRole(): AccessibleRole {
+      return AccessibleRole.PAGE_TAB
     }
 
-    @Override
-    public AccessibleStateSet getAccessibleStateSet() {
-      AccessibleStateSet states = myParent.getAccessibleContext().getAccessibleStateSet();
-      states.add(AccessibleState.SELECTABLE);
-      TabInfo info = myParent.getSelectedInfo();
-      if (info == getTabInfo()) {
-        states.add(AccessibleState.SELECTED);
+    override fun getAccessibleStateSet(): AccessibleStateSet {
+      val states = myParent.getAccessibleContext().accessibleStateSet
+      states.add(AccessibleState.SELECTABLE)
+      val info = myParent.selectedInfo
+      if (info == tabInfo) {
+        states.add(AccessibleState.SELECTED)
       }
-      return states;
+      return states
     }
 
-    @Override
-    public int getAccessibleIndexInParent() {
-      return getTabIndex();
+    override fun getAccessibleIndexInParent(): Int {
+      return tabIndex
     }
 
-    @Override
-    public int getAccessibleChildrenCount() {
+    override fun getAccessibleChildrenCount(): Int {
       // Expose the tab content only if it is active, as the content for
       // inactive tab does is usually not ready (i.e. may never have been
       // activated).
-      return getSelectedInfo() == getTabInfo() && myComponent instanceof Accessible ? 1 : 0;
+      return if (selectedInfo == tabInfo && myComponent is Accessible) 1 else 0
     }
 
-    @Override
-    public Accessible getAccessibleChild(int i) {
-      return getSelectedInfo() == getTabInfo() && myComponent instanceof Accessible ? (Accessible)myComponent : null;
+    override fun getAccessibleChild(i: Int): Accessible {
+      return if (selectedInfo == tabInfo && myComponent is Accessible) (myComponent as Accessible) else null
     }
 
-    @Override
-    public Locale getLocale() {
-      return JBTabsImpl.this.getLocale();
+    override fun getLocale(): Locale {
+      return locale
     }
 
-    @Override
-    public AccessibleComponent getAccessibleComponent() {
-      return this;
+    override fun getAccessibleComponent(): AccessibleComponent {
+      return this
     }
 
-    @Override
-    public AccessibleAction getAccessibleAction() {
-      return this;
+    override fun getAccessibleAction(): AccessibleAction {
+      return this
     }
 
     // AccessibleComponent methods
-
-    @Override
-    public Color getBackground() {
-      return JBTabsImpl.this.getBackground();
+    override fun getBackground(): Color {
+      return background
     }
 
-    @Override
-    public void setBackground(Color c) {
-      JBTabsImpl.this.setBackground(c);
+    override fun setBackground(c: Color) {
+      background = c
     }
 
-    @Override
-    public Color getForeground() {
-      return JBTabsImpl.this.getForeground();
+    override fun getForeground(): Color {
+      return foreground
     }
 
-    @Override
-    public void setForeground(Color c) {
-      JBTabsImpl.this.setForeground(c);
+    override fun setForeground(c: Color) {
+      foreground = c
     }
 
-    @Override
-    public Cursor getCursor() {
-      return JBTabsImpl.this.getCursor();
+    override fun getCursor(): Cursor {
+      return cursor
     }
 
-    @Override
-    public void setCursor(Cursor c) {
-      JBTabsImpl.this.setCursor(c);
+    override fun setCursor(c: Cursor) {
+      cursor = c
     }
 
-    @Override
-    public Font getFont() {
-      return JBTabsImpl.this.getFont();
+    override fun getFont(): Font {
+      return font
     }
 
-    @Override
-    public void setFont(Font f) {
-      JBTabsImpl.this.setFont(f);
+    override fun setFont(f: Font) {
+      font = f
     }
 
-    @Override
-    public FontMetrics getFontMetrics(Font f) {
-      return JBTabsImpl.this.getFontMetrics(f);
+    override fun getFontMetrics(f: Font): FontMetrics {
+      return this@JBTabsImpl.getFontMetrics(f)
     }
 
-    @Override
-    public boolean isEnabled() {
-      return getTabInfo().isEnabled();
+    override fun isEnabled(): Boolean {
+      return tabInfo.isEnabled
     }
 
-    @Override
-    public void setEnabled(boolean b) {
-      getTabInfo().setEnabled(b);
+    override fun setEnabled(b: Boolean) {
+      tabInfo.isEnabled = b
     }
 
-    @Override
-    public boolean isVisible() {
-      return !getTabInfo().isHidden();
+    override fun isVisible(): Boolean {
+      return !tabInfo.isHidden
     }
 
-    @Override
-    public void setVisible(boolean b) {
-      getTabInfo().setHidden(!b);
+    override fun setVisible(b: Boolean) {
+      tabInfo.isHidden = !b
     }
 
-    @Override
-    public boolean isShowing() {
-      return JBTabsImpl.this.isShowing();
+    override fun isShowing(): Boolean {
+      return this@JBTabsImpl.isShowing
     }
 
-    @Override
-    public boolean contains(Point p) {
-      Rectangle r = getBounds();
-      return r.contains(p);
+    override fun contains(p: Point): Boolean {
+      val r = bounds
+      return r.contains(p)
     }
 
-    @Override
-    public Point getLocationOnScreen() {
-      Point parentLocation = JBTabsImpl.this.getLocationOnScreen();
-      Point componentLocation = getLocation();
-      componentLocation.translate(parentLocation.x, parentLocation.y);
-      return componentLocation;
+    override fun getLocationOnScreen(): Point {
+      val parentLocation = this@JBTabsImpl.locationOnScreen
+      val componentLocation = location
+      componentLocation.translate(parentLocation.x, parentLocation.y)
+      return componentLocation
     }
 
-    @Override
-    public Point getLocation() {
-      Rectangle r = getBounds();
-      return new Point(r.x, r.y);
+    override fun getLocation(): Point {
+      val r = bounds
+      return Point(r.x, r.y)
     }
 
-    @Override
-    public void setLocation(Point p) {
+    override fun setLocation(p: Point) {
       // do nothing
     }
 
     /**
      * Returns the bounds of tab.  The bounds are with respect to the JBTabsImpl coordinate space.
      */
-    @Override
-    public Rectangle getBounds() {
-      return getTabLabel().getBounds();
+    override fun getBounds(): Rectangle {
+      return tabLabel!!.bounds
     }
 
-    @Override
-    public void setBounds(Rectangle r) {
+    override fun setBounds(r: Rectangle) {
       // do nothing
     }
 
-    @Override
-    public Dimension getSize() {
-      Rectangle r = getBounds();
-      return new Dimension(r.width, r.height);
+    override fun getSize(): Dimension {
+      val r = bounds
+      return Dimension(r.width, r.height)
     }
 
-    @Override
-    public void setSize(Dimension d) {
+    override fun setSize(d: Dimension) {
       // do nothing
     }
 
-    @Override
-    public Accessible getAccessibleAt(Point p) {
-      return myComponent instanceof Accessible ? (Accessible)myComponent : null;
+    override fun getAccessibleAt(p: Point): Accessible {
+      return if (myComponent is Accessible) (myComponent as Accessible) else null
     }
 
-    @Override
-    public boolean isFocusTraversable() {
-      return false;
+    override fun isFocusTraversable(): Boolean {
+      return false
     }
 
-    @Override
-    public void requestFocus() {
+    override fun requestFocus() {
       // do nothing
     }
 
-    @Override
-    public void addFocusListener(FocusListener l) {
+    override fun addFocusListener(l: FocusListener) {
       // do nothing
     }
 
-    @Override
-    public void removeFocusListener(FocusListener l) {
+    override fun removeFocusListener(l: FocusListener) {
       // do nothing
     }
 
-    @Override
-    public AccessibleIcon[] getAccessibleIcon() {
-      AccessibleIcon accessibleIcon = null;
-
-      if (getTabInfo().getIcon() instanceof ImageIcon) {
-        AccessibleContext ac =
-          ((ImageIcon)getTabInfo().getIcon()).getAccessibleContext();
-        accessibleIcon = (AccessibleIcon)ac;
+    override fun getAccessibleIcon(): Array<AccessibleIcon> {
+      var accessibleIcon: AccessibleIcon? = null
+      if (tabInfo.icon is ImageIcon) {
+        val ac = (tabInfo.icon as ImageIcon).accessibleContext
+        accessibleIcon = ac as AccessibleIcon
       }
-
-      if (accessibleIcon != null) {
-        AccessibleIcon[] returnIcons = new AccessibleIcon[1];
-        returnIcons[0] = accessibleIcon;
-        return returnIcons;
+      return if (accessibleIcon != null) {
+        val returnIcons = arrayOfNulls<AccessibleIcon>(1)
+        returnIcons[0] = accessibleIcon
+        returnIcons
       }
       else {
-        return null;
+        null
       }
     }
 
     // AccessibleAction methods
-
-    @Override
-    public int getAccessibleActionCount() {
-      return 1;
+    override fun getAccessibleActionCount(): Int {
+      return 1
     }
 
-    @Override
-    public String getAccessibleActionDescription(int i) {
-      if (i != 0) {
-        return null;
+    override fun getAccessibleActionDescription(i: Int): String {
+      return if (i != 0) {
+        null
       }
-
-      return "Activate";
+      else "Activate"
     }
 
-    @Override
-    public boolean doAccessibleAction(int i) {
+    override fun doAccessibleAction(i: Int): Boolean {
       if (i != 0) {
-        return false;
+        return false
       }
-
-      select(getTabInfo(), true);
-      return true;
+      select(tabInfo, true)
+      return true
     }
   }
 
-  /**
-   * @deprecated Not used.
-   */
-  @Deprecated(forRemoval = true)
-  public void dispose() {
+  @Deprecated("Not used.")
+  fun dispose() {
   }
 
-  private final class TitleAction extends AnAction implements CustomComponentAction {
-    private final @NotNull Producer<? extends Pair<Icon, String>> myTitleProvider;
-    private final JLabel myLabel = new JLabel() {
-      @Override
-      public Dimension getPreferredSize() {
-        Dimension size = super.getPreferredSize();
-        size.height = JBUI.scale(SingleHeightTabs.UNSCALED_PREF_HEIGHT);
-        return size;
+  private inner class TitleAction private constructor(private val myTitleProvider: Producer<out Pair<Icon, String>>) : AnAction(), CustomComponentAction {
+    private val myLabel: JLabel = object : JLabel() {
+      override fun getPreferredSize(): Dimension {
+        val size = super.getPreferredSize()
+        size.height = JBUI.scale(SingleHeightTabs.UNSCALED_PREF_HEIGHT)
+        return size
       }
 
-      @Override
-      public void updateUI() {
-        super.updateUI();
-        setFont(new TabLabel(JBTabsImpl.this, new TabInfo(null)).getLabelComponent().getFont());
-        setBorder(JBUI.Borders.empty(0, 5, 0, 6));
+      override fun updateUI() {
+        super.updateUI()
+        font = TabLabel(this@JBTabsImpl, TabInfo(null)).labelComponent.font
+        border = JBUI.Borders.empty(0, 5, 0, 6)
       }
-    };
-
-    private TitleAction(@NotNull Producer<? extends Pair<Icon, String>> titleProvider) {
-      myTitleProvider = titleProvider;
     }
 
-    @Override
-    public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-      update();
-      return myLabel;
+    override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+      update()
+      return myLabel
     }
 
-    private void update() {
-      Pair<Icon, String> pair = myTitleProvider.produce();
-      myLabel.setIcon(pair.first);
-      //noinspection HardCodedStringLiteral
-      myLabel.setText(pair.second);
+    private fun update() {
+      val pair = myTitleProvider.produce()
+      myLabel.icon = pair.first
+      myLabel.text = pair.second
     }
 
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
     }
 
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
+    override fun actionPerformed(e: AnActionEvent) {
       //do nothing
     }
 
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      update();
+    override fun update(e: AnActionEvent) {
+      update()
+    }
+  }
+
+  companion object {
+    val PINNED = Key.create<Boolean>("pinned")
+    val SIDE_TABS_SIZE_LIMIT_KEY = Key.create<Int>("SIDE_TABS_SIZE_LIMIT_KEY")
+    private val HIDDEN_INFOS_SELECT_INDEX_KEY = Key.create<Int>("HIDDEN_INFOS_SELECT_INDEX")
+    val MIN_TAB_WIDTH = scale(75)
+    val DEFAULT_MAX_TAB_WIDTH = scale(300)
+    private val ABC_COMPARATOR = Comparator { o1: TabInfo, o2: TabInfo -> StringUtil.naturalCompare(o1.text, o2.text) }
+    private val LOG = Logger.getInstance(JBTabsImpl::class.java)
+    private const val SCROLL_BAR_THICKNESS = 3
+    val ourDefaultDecorator: UiDecorator = DefaultDecorator()
+    private const val myAdjustBorders = true
+    private val LAYOUT_DONE: @NonNls String? = "Layout.done"
+    fun getComponentImage(info: TabInfo): Image {
+      val cmp = info.component
+      val img: BufferedImage
+      if (cmp.isShowing) {
+        val width = cmp.width
+        val height = cmp.height
+        img = UIUtil.createImage(info.component, if (width > 0) width else 500, if (height > 0) height else 500,
+                                 BufferedImage.TYPE_INT_ARGB)
+        val g = img.createGraphics()
+        cmp.paint(g)
+      }
+      else {
+        img = UIUtil.createImage(info.component, 500, 500, BufferedImage.TYPE_INT_ARGB)
+      }
+      return img
+    }
+
+    private val focusOwner: JComponent?
+      private get() {
+        val owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
+        return owner as? JComponent
+      }
+
+    private fun updateToolbarIfVisibilityChanged(toolbar: ActionToolbar?, previousBounds: Rectangle) {
+      if (toolbar == null) return
+      val curBounds = toolbar.component.bounds
+      if (curBounds.isEmpty != previousBounds.isEmpty) {
+        toolbar.updateActionsImmediately()
+      }
+    }
+
+    private val arcSize: Int
+      private get() = 4
+
+    private fun sortTabsAlphabetically(tabs: List<TabInfo>) {
+      val lastPinnedIndex = ContainerUtil.lastIndexOf(tabs) { obj: TabInfo -> obj.isPinned }
+      if (lastPinnedIndex == -1 || !getBoolean("editor.keep.pinned.tabs.on.left")) {
+        tabs.sort(ABC_COMPARATOR)
+      }
+      else {
+        tabs.subList(0, lastPinnedIndex + 1).sort(ABC_COMPARATOR)
+        tabs.subList(lastPinnedIndex + 1, tabs.size).sort(ABC_COMPARATOR)
+      }
+    }
+
+    val selectionTabVShift: Int
+      get() = 2
+
+    private fun isToDeferRemoveForLater(c: JComponent): Boolean {
+      return c.rootPane != null
+    }
+
+    private fun isChanged(oldObject: Any?, newObject: Any?): Boolean {
+      return !Comparing.equal(oldObject, newObject)
+    }
+
+    fun isSelectionClick(e: MouseEvent): Boolean {
+      if (e.clickCount == 1) {
+        if (!e.isPopupTrigger) {
+          return e.button == MouseEvent.BUTTON1 && !e.isControlDown && !e.isAltDown && !e.isMetaDown
+        }
+      }
+      return false
+    }
+
+    fun resetLayout(c: JComponent?) {
+      if (c == null) return
+      c.putClientProperty(LAYOUT_DONE, null)
     }
   }
 }
