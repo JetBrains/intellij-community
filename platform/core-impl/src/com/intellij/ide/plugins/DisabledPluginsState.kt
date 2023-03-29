@@ -48,10 +48,15 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
     }
 
     @JvmStatic
+    fun getRequiredPlugins(): Set<PluginId> {
+      return splitByComma(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY)
+    }
+
+    @JvmStatic
     fun loadDisabledPlugins(): Set<PluginId> {
       val disabledPlugins = LinkedHashSet<PluginId>()
       val path = defaultFilePath
-      val requiredPlugins = splitByComma(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY)
+      val requiredPlugins = getRequiredPlugins()
       var updateFile = false
       try {
         val pluginIdsFromFile = PluginManagerCore.tryReadPluginIdsFromFile(path, logger)
