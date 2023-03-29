@@ -4,11 +4,13 @@ package org.jetbrains.kotlin.idea.fir.shortenRefs
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.AbstractImportsTest
-import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.utils.IgnoreTests
+import java.io.File
 
 abstract class AbstractFirShortenRefsTest : AbstractImportsTest() {
     override val captureExceptions: Boolean = false
@@ -28,7 +30,13 @@ abstract class AbstractFirShortenRefsTest : AbstractImportsTest() {
         }
 
         project.executeWriteCommand("") {
-            shortenings.invokeShortening()
+            val shortenedElements = shortenings.invokeShortening()
+            val shorteningResultAsString = buildString {
+                shortenedElements.forEach {
+                    appendLine(it.text)
+                }
+            }
+            KotlinTestUtils.assertEqualsToFile(getShorteningResultFile(), shorteningResultAsString)
         }
 
         selectionModel.removeSelection()
@@ -45,4 +53,6 @@ abstract class AbstractFirShortenRefsTest : AbstractImportsTest() {
 
     override val nameCountToUseStarImportDefault: Int
         get() = Integer.MAX_VALUE
+
+    private fun getShorteningResultFile(): File = File(dataFile().path.removeSuffix(".kt") + ".txt")
 }
