@@ -1,13 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
-import com.intellij.ide.ui.laf.darcula.ui.DarculaJBPopupComboPopup
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.popup.list.ComboBoxPopup
+import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -119,7 +119,7 @@ abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>) : GroupedEleme
                                             index: Int,
                                             isSelected: Boolean,
                                             cellHasFocus: Boolean): Component {
-    val popup = (combo.popup as? DarculaJBPopupComboPopup<*>)?.popup
+    val model = (list?.model as? ListPopupModel)
 
     coloredComponent.apply {
       clear()
@@ -127,9 +127,9 @@ abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>) : GroupedEleme
     }
 
     mySeparatorComponent.apply {
-      isVisible = popup?.isSeparatorAboveOf(value) == true
+      isVisible = model?.isSeparatorAboveOf(value) == true
       if (isVisible) {
-        caption = popup!!.getCaptionAboveOf(value)
+        caption = model!!.getCaptionAboveOf(value)
         (this as GroupHeaderSeparator).setHideLine(index == 0)
       }
     }
