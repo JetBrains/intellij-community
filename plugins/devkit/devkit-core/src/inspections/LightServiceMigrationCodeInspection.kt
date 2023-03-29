@@ -8,13 +8,11 @@ import com.intellij.lang.jvm.JvmClassKind
 import com.intellij.lang.jvm.JvmElementVisitor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.xml.DomUtil
 import org.jetbrains.idea.devkit.dom.Extension
-import org.jetbrains.idea.devkit.util.PluginPlatformInfo
 import org.jetbrains.idea.devkit.util.PsiUtil.isIdeaProject
 import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass
 
@@ -29,7 +27,9 @@ internal class LightServiceMigrationCodeInspection : DevKitJvmInspection() {
             PsiUtil.isAbstractClass(clazz)) {
           return true
         }
-        if (isIdeaProject(project) || isVersion193OrHigher(clazz) || ApplicationManager.getApplication().isUnitTestMode) {
+        if (isIdeaProject(project) ||
+            LightServiceMigrationUtil.isVersion193OrHigher(clazz) ||
+            ApplicationManager.getApplication().isUnitTestMode) {
           if (clazz.hasAnnotation(Service::class.java.canonicalName)) return true
           if (!LightServiceMigrationUtil.canBeLightService(clazz)) return true
           for (candidate in locateExtensionsByPsiClass(clazz)) {
@@ -43,12 +43,6 @@ internal class LightServiceMigrationCodeInspection : DevKitJvmInspection() {
           }
         }
         return true
-      }
-
-      private fun isVersion193OrHigher(aClass: PsiClass): Boolean {
-        val module = ModuleUtilCore.findModuleForPsiElement(aClass) ?: return false
-        val buildNumber = PluginPlatformInfo.forModule(module).sinceBuildNumber
-        return buildNumber != null && buildNumber.baselineVersion >= 193
       }
     }
   }

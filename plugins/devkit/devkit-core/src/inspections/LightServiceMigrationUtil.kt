@@ -6,7 +6,9 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.util.JvmInheritanceUtil
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceDescriptor
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.PsiClass
+import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.DomUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle
@@ -14,6 +16,7 @@ import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.inspections.LightServiceMigrationUtil.Companion.Level.APPLICATION
 import org.jetbrains.idea.devkit.inspections.LightServiceMigrationUtil.Companion.Level.PROJECT
 import org.jetbrains.idea.devkit.util.DevKitDomUtil
+import org.jetbrains.idea.devkit.util.PluginPlatformInfo
 
 internal class LightServiceMigrationUtil private constructor() {
 
@@ -56,6 +59,17 @@ internal class LightServiceMigrationUtil private constructor() {
         APPLICATION -> DevKitBundle.message("inspection.light.service.migration.app.level.message")
         PROJECT -> DevKitBundle.message("inspection.light.service.migration.project.level.message")
       }
+    }
+
+    fun isVersion193OrHigher(element: DomElement): Boolean {
+      val buildNumber = PluginPlatformInfo.forDomElement(element).sinceBuildNumber
+      return buildNumber != null && buildNumber.baselineVersion >= 193
+    }
+
+    fun isVersion193OrHigher(aClass: PsiClass): Boolean {
+      val module = ModuleUtilCore.findModuleForPsiElement(aClass) ?: return false
+      val buildNumber = PluginPlatformInfo.forModule(module).sinceBuildNumber
+      return buildNumber != null && buildNumber.baselineVersion >= 193
     }
   }
 }
