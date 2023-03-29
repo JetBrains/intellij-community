@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("unused", "HardCodedStringLiteral")
 
 package com.intellij.util.indexing.diagnostic.presentation
@@ -49,13 +49,10 @@ fun createAggregateHtml(
             thead {
               tr {
                 th("Time") {
-                  colSpan = "7"
-                }
-                th("Files") {
                   colSpan = "6"
                 }
-                th("IDE") {
-                  rowSpan = "2"
+                th("Files") {
+                  colSpan = "5"
                 }
                 th("Type") {
                   rowSpan = "2"
@@ -64,12 +61,10 @@ fun createAggregateHtml(
               tr {
                 th("Started")
                 th("Total")
-                th("Creating iterators")
                 th("Scanning")
                 th("Indexing")
                 th("Content loading")
                 th("Finished")
-                th("Providers")
                 th("Scanned")
                 th("Shared indexes (w/o content loading)")
                 th("Scheduled for indexing")
@@ -90,7 +85,6 @@ fun createAggregateHtml(
                     text(diagnostic.indexingTimes.updatingStart.presentableLocalDateTime())
                   }
                   td(diagnostic.indexingTimes.totalUpdatingTime.presentableDuration())
-                  td(diagnostic.indexingTimes.creatingIteratorsTime.presentableDuration())
                   td(diagnostic.indexingTimes.scanFilesTime.presentableDuration())
                   td(diagnostic.indexingTimes.indexingTime.presentableDuration())
                   td(diagnostic.indexingTimes.contentLoadingVisibleTime.presentableDuration())
@@ -104,15 +98,11 @@ fun createAggregateHtml(
 
                   // Files section.
                   val fileCount = diagnostic.fileCount
-                  td(fileCount?.numberOfFileProviders?.toString() ?: NOT_APPLICABLE)
                   td(fileCount?.numberOfScannedFiles?.toString() ?: NOT_APPLICABLE)
                   td(fileCount?.numberOfFilesIndexedByInfrastructureExtensionsDuringScan?.toString() ?: NOT_APPLICABLE)
                   td(fileCount?.numberOfFilesScheduledForIndexingAfterScan?.toString() ?: NOT_APPLICABLE)
                   td(fileCount?.numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage?.toString() ?: NOT_APPLICABLE)
                   td(fileCount?.numberOfFilesIndexedWithLoadingContent?.toString() ?: NOT_APPLICABLE)
-
-                  // IDE section.
-                  td(diagnostic.appInfo.productCode + "-" + diagnostic.appInfo.build)
 
                   //Indexing type section
                   td(diagnostic.indexingTimes.scanningType.name.lowercase(Locale.ENGLISH).replace('_', ' '))
