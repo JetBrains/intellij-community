@@ -12,7 +12,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.codeInsight.daemon.impl.*;
-import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
@@ -1864,7 +1863,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       if (policy != null) {
         policy.waitForHighlighting(getProject(), topEditor);
       }
-      CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(topEditor);
+      EditorTestUtil.buildInitialFoldingsInBackground(topEditor);
       return getFoldingData(topEditor, withCollapseStatus);
     });
   }

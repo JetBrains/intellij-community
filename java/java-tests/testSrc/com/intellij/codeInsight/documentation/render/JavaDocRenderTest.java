@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation.render;
 
-import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -14,6 +13,7 @@ import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.editor.impl.Interval;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -175,7 +175,7 @@ public class JavaDocRenderTest extends AbstractEditorTest {
                     }
                   }""", true);
       int methodBodyPos = getEditor().getDocument().getText().indexOf("{\n  }");
-      CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(getEditor());
+      EditorTestUtil.buildInitialFoldingsInBackground(getEditor());
       executeAction(IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
       assertNotNull(getEditor().getFoldingModel().getCollapsedRegionAtOffset(methodBodyPos));
       executeAction(IdeActions.ACTION_EXPAND_ALL_REGIONS);

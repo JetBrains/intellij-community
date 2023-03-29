@@ -7,7 +7,6 @@ import com.intellij.codeInsight.EditorInfo;
 import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
-import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.intention.AbstractIntentionAction;
@@ -2244,7 +2243,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
             }
         }""";
       configureByText(JavaFileType.INSTANCE, text);
-      CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(myEditor);
+      EditorTestUtil.buildInitialFoldingsInBackground(myEditor);
       waitForDaemon();
       EditorTestUtil.executeAction(myEditor, IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
       waitForDaemon();
@@ -2269,7 +2268,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
           }\s
         }""";
       configureByText(JavaFileType.INSTANCE, text);
-      CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(myEditor);
+      EditorTestUtil.buildInitialFoldingsInBackground(myEditor);
       waitForDaemon();
       checkFoldingState("[FoldRegion -(22:27), placeholder='{}']");
 

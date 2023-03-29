@@ -33,6 +33,7 @@ import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.testFramework.EditorTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -206,7 +207,7 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
   }
   
   private void buildInitialFoldRegions() {
-    CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(getEditor());
+    EditorTestUtil.buildInitialFoldingsInBackground(getEditor());
   }
   
   private void updateFoldRegions() {

@@ -4,6 +4,7 @@ package com.intellij.openapi.fileEditor.impl.text;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -71,6 +72,7 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
    * @return a continuation to be called in EDT
    */
   protected @NotNull Runnable loadEditorInBackground() {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myFile, scheme, myProject);
     EditorEx editor = getActiveEditor();

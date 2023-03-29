@@ -116,10 +116,12 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
   @Nullable
   @Override
   public CodeFoldingState buildInitialFoldings(@NotNull final Document document) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+
     if (myProject.isDisposed()) {
       return null;
     }
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(myProject);
     if (psiDocumentManager.isUncommited(document)) {
       // skip building foldings for uncommitted document, CodeFoldingPass invoked by daemon will do it later
@@ -131,7 +133,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
       return null;
     }
 
-
+    boolean supportsDumbModeFolding = FoldingUpdate.supportsDumbModeFolding(file);
     List<FoldingUpdate.RegionInfo> regionInfos = FoldingUpdate.getFoldingsFor(file, true);
 
     return editor -> {
@@ -140,7 +142,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
       final FoldingModelEx foldingModel = (FoldingModelEx)editor.getFoldingModel();
       if (!foldingModel.isFoldingEnabled()) return;
       if (isFoldingsInitializedInEditor(editor)) return;
-      if (DumbService.isDumb(myProject) && !FoldingUpdate.supportsDumbModeFolding(editor)) return;
+      if (DumbService.isDumb(myProject) && !supportsDumbModeFolding) return;
 
       foldingModel.runBatchFoldingOperationDoNotCollapseCaret(new UpdateFoldRegionsOperation(myProject, editor, file, regionInfos,
                                                                                              UpdateFoldRegionsOperation.ApplyDefaultStateMode.YES,
