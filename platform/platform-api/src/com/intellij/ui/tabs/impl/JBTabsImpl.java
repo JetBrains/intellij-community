@@ -92,7 +92,7 @@ public class JBTabsImpl extends JComponent
   private static final Logger LOG = Logger.getInstance(JBTabsImpl.class);
   private static final int SCROLL_BAR_THICKNESS = 3;
 
-  private final List<TabInfo> myVisibleInfos = new ArrayList<>();
+  private final List<@NotNull TabInfo> myVisibleInfos = new ArrayList<>();
   private final Map<TabInfo, AccessibleTabPage> myInfo2Page = new HashMap<>();
   private final Map<TabInfo, Integer> myHiddenInfos = new HashMap<>();
 
@@ -1366,7 +1366,7 @@ public class JBTabsImpl extends JComponent
     return addTab(info, index, false, false);
   }
 
-  private TabInfo addTab(TabInfo info, int index, boolean isDropTarget, boolean fireEvents) {
+  private TabInfo addTab(@NotNull TabInfo info, int index, boolean isDropTarget, boolean fireEvents) {
     if (!isDropTarget && getTabs().contains(info)) {
       return getTabs().get(getTabs().indexOf(info));
     }
@@ -1451,7 +1451,7 @@ public class JBTabsImpl extends JComponent
     return this;
   }
 
-  private void updateAll(final boolean forcedRelayout) {
+  private void updateAll(boolean forcedRelayout) {
     TabInfo toSelect = getSelectedInfo();
     setSelectedInfo(toSelect);
     updateContainer(forcedRelayout, false);
@@ -1462,19 +1462,20 @@ public class JBTabsImpl extends JComponent
   }
 
   private boolean isMyChildIsFocusedNow() {
-    final Component owner = getFocusOwner();
-    if (owner == null) return false;
+    Component owner = getFocusOwner();
+    if (owner == null) {
+      return false;
+    }
 
-
-    if (mySelectedInfo != null) {
-      if (!SwingUtilities.isDescendingFrom(owner, mySelectedInfo.getComponent())) return false;
+    if (mySelectedInfo != null && !SwingUtilities.isDescendingFrom(owner, mySelectedInfo.getComponent())) {
+      return false;
     }
 
     return SwingUtilities.isDescendingFrom(owner, this);
   }
 
   private static @Nullable JComponent getFocusOwner() {
-    final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     return (JComponent)(owner instanceof JComponent ? owner : null);
   }
 
@@ -1858,17 +1859,24 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public @Nullable TabInfo getSelectedInfo() {
-    if (myOldSelection != null) return myOldSelection;
-
-    if (!myVisibleInfos.contains(mySelectedInfo)) {
-      setSelectedInfo(null);
+    if (myOldSelection != null) {
+      return myOldSelection;
     }
-    return mySelectedInfo != null ? mySelectedInfo : !myVisibleInfos.isEmpty() ? myVisibleInfos.get(0) : null;
+
+    if (mySelectedInfo == null) {
+      return myVisibleInfos.isEmpty() ? null : myVisibleInfos.get(0);
+    }
+    else if (myVisibleInfos.contains(mySelectedInfo)) {
+      return mySelectedInfo;
+    }
+    else {
+      setSelectedInfo(null);
+      return null;
+    }
   }
 
   private void setSelectedInfo(@Nullable TabInfo info) {
     mySelectedInfo = info;
-
     myInfo2Toolbar.forEach((tabInfo, toolbar) -> toolbar.setVisible(Objects.equals(info, tabInfo)));
   }
 
@@ -2730,29 +2738,29 @@ public class JBTabsImpl extends JComponent
       return;
     }
 
-    for (TabInfo each : new ArrayList<>(myVisibleInfos)) {
-      final JComponent eachComponent = each.getComponent();
-      if (getSelectedInfo() == each && getSelectedInfo() != null) {
-        unqueueFromRemove(eachComponent);
+    for (TabInfo tabInfo : List.copyOf(myVisibleInfos)) {
+      JComponent component = tabInfo.getComponent();
+      if (tabInfo == getSelectedInfo()) {
+        unqueueFromRemove(component);
 
-        Container parent = eachComponent.getParent();
+        Container parent = component.getParent();
         if (parent != null && parent != this) {
-          parent.remove(eachComponent);
+          parent.remove(component);
         }
 
-        if (eachComponent.getParent() == null) {
-          add(eachComponent);
+        if (component.getParent() == null) {
+          add(component);
         }
       }
       else {
-        if (eachComponent.getParent() == null) {
+        if (component.getParent() == null) {
           continue;
         }
-        if (isToDeferRemoveForLater(eachComponent)) {
-          queueForRemove(eachComponent);
+        if (isToDeferRemoveForLater(component)) {
+          queueForRemove(component);
         }
         else {
-          remove(eachComponent);
+          remove(component);
         }
       }
     }
