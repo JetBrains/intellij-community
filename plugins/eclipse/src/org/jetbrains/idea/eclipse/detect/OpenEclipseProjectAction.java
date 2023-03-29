@@ -3,6 +3,7 @@ package org.jetbrains.idea.eclipse.detect;
 
 import com.intellij.openapi.wm.impl.welcomeScreen.OpenAlienProjectAction;
 
+@SuppressWarnings("ComponentNotRegistered")
 public class OpenEclipseProjectAction extends OpenAlienProjectAction {
 
   public OpenEclipseProjectAction() {
