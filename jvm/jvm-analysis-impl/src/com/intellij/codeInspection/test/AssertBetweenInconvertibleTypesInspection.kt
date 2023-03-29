@@ -10,6 +10,7 @@ import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiType
 import com.intellij.uast.UastHintedVisitorAdapter
+import com.intellij.util.asSafely
 import com.siyeh.ig.callMatcher.CallMatcher
 import com.siyeh.ig.psiutils.InconvertibleTypesChecker
 import com.siyeh.ig.psiutils.InconvertibleTypesChecker.Convertible
@@ -76,35 +77,20 @@ private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: P
     }
   }
 
-  private fun getQualifier(call: UCallExpression): UCallExpression? {
-    val receiver = call.getParentOfType<UQualifiedReferenceExpression>()?.receiver
-    if (receiver is UCallExpression) return receiver
-    if (receiver is UQualifiedReferenceExpression) {
-      val selector = receiver.selector
-      if (selector is UCallExpression) return selector
-    }
-    return null
-  }
-
   private fun processAssertJ(call: UCallExpression) {
-    if (!ASSERTJ_IS_EQUALS_MATCHER.uCallMatches(call)) return
-    var qualifier = getQualifier(call)
-    if (qualifier == null) return
-    val chain = qualifier.getOutermostQualified().getQualifiedChain()
-    val lastDescribed = chain.lastOrNull { expr ->
-      expr is UCallExpression && ASSERTJ_DESCRIBED_MATCHER.uCallMatches(expr)
-    }
-    if (lastDescribed != null) qualifier = getQualifier(lastDescribed as UCallExpression)
-    if (qualifier == null || !ASSERTJ_ASSERT_THAT_MATCHER.uCallMatches(qualifier)) return
-    val lastExtracting = chain.lastOrNull { expr ->
-      expr is UCallExpression && ASSERTJ_EXTRACTING_MATCHER.uCallMatches(expr)
-    } as UCallExpression?
-    val callValueArguments = lastExtracting?.valueArguments ?: call.valueArguments
-    val qualValueArguments = qualifier.valueArguments
-    if (callValueArguments.isEmpty() || qualValueArguments.isEmpty()) return
-    checkConvertibleTypes(call, callValueArguments.first(), qualValueArguments[0], holder)
+    if (!ASSERTJ_ASSERT_THAT_MATCHER.uCallMatches(call)) return
+    val chain = call.getOutermostQualified().getQualifiedChain()
+    val isEqualsCall = chain.findLast {
+      it is UCallExpression && ASSERTJ_IS_EQUALS_MATCHER.uCallMatches(it)
+    }.asSafely<UCallExpression>() ?: return
+    val extractingCall = chain.findLast {
+      it is UCallExpression && ASSERTJ_EXTRACTING_MATCHER.uCallMatches(it)
+    }.asSafely<UCallExpression>()
+    val sourceCall = extractingCall ?: call
+    val sourceArg = sourceCall.valueArguments.firstOrNull() ?: return
+    val checkArg = isEqualsCall.valueArguments.firstOrNull() ?: return
+    checkConvertibleTypes(isEqualsCall, sourceArg, checkArg, holder)
   }
-
 
   fun buildErrorString(methodName: String, left: PsiType, right: PsiType): @Nls String {
     val comparedTypeText = left.presentableText
@@ -129,10 +115,6 @@ private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: P
     private val ASSERTJ_IS_EQUALS_MATCHER: CallMatcher = CallMatcher.instanceCall(
       "org.assertj.core.api.Assert", "isEqualTo", "isSameAs", "isNotEqualTo", "isNotSameAs"
     ).parameterTypes(CommonClassNames.JAVA_LANG_OBJECT)
-
-    private val ASSERTJ_DESCRIBED_MATCHER: CallMatcher = CallMatcher.instanceCall(
-      "org.assertj.core.api.Descriptable", "describedAs", "as"
-    )
 
     private val ASSERTJ_EXTRACTING_MATCHER: CallMatcher = CallMatcher.instanceCall(
       "org.assertj.core.api.AbstractObjectAssert", "extracting"
