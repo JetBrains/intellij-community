@@ -4,12 +4,13 @@
 
 See `org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil` for common utility methods.
 
-Inspections should avoid running whenever they're not applicable in current context.
+Inspections should avoid running whenever they are not applicable in the current context.
 This includes:
 
-- required minimum platform version (`org.jetbrains.idea.devkit.util.PluginPlatformInfo`)
-- required present platform API class (only available in newer platform versions). It is safe to assume most plugin do **not** target the latest platform.
-- required present plugin API class (e.g., checks specific to Java PSI)
+- requires minimum platform version (`org.jetbrains.idea.devkit.util.PluginPlatformInfo`)
+- requires present platform API class (only available in newer platform versions).
+  It is safe to assume most plugins do **not** target the latest platform.
+- requires present plugin API class (e.g., checks specific to Java PSI)
 - checked class is not a suitable candidate (e.g., a class without FQN cannot be registered in `plugin.xml`)
 - only applicable to IDEA project (`org.jetbrains.idea.devkit.util.PsiUtil.isIdeaProject()`)
 
@@ -20,7 +21,7 @@ See their docs for important considerations.
 
 Implement and register in `intellij.devkit.core` module.
 
-Tests must cover both Java and Kotlin sources explicitly.
+See [Testing Code: JVM Languages](#testing-code-jvm-languages).
 
 ### Code: Kotlin Only
 
@@ -28,7 +29,30 @@ Use regular `LocalInspectionTool` with immediate `DevKitInspectionUtil.isAllowed
 
 Implement and register in `intellij.kotlin.devkit` module.
 
-### Plugin Descriptor (plugin.xml)
+### Plugin Descriptor
 
 Extend `org.jetbrains.idea.devkit.inspections.DevKitPluginXmlInspectionBase` and override `checkDomElement()` to check specific DOM
 elements.
+
+See [Testing: Plugin Descriptor](#testing-plugin-descriptor)
+
+## Tests
+
+Use _light_ tests only ideally.
+See existing base classes like `org.jetbrains.idea.devkit.inspections.PluginModuleTestCase`
+or `org.jetbrains.idea.devkit.inspections.quickfix.LightDevKitInspectionFixTestBase`.
+
+Add required classes in the test as "mock" containing the minimum set of required signatures.
+Same for declaring platform extension points, declare them in testdata `plugin.xml`.
+
+### Testing Code: JVM Languages
+
+Always write explicit tests for both Java and Kotlin sources.
+
+Tests and test data go to `intellij.devkit.java.tests` and `intellij.devkit.kotlin.tests`, respectively.
+
+Test data path constants: `org.jetbrains.idea.devkit.DevkitJavaTestsUtil` & `org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil`.
+
+### Testing: Plugin Descriptor
+
+Extend from `org.jetbrains.idea.devkit.inspections.PluginXmlDomInspectionTestBase`.
