@@ -122,9 +122,6 @@ internal class ModifiableContentEntryBridge(
 
   override fun addExcludeFolder(file: VirtualFile): ExcludeFolder = addExcludeFolder(file.toVirtualFileUrl(virtualFileManager), false)
   override fun addExcludeFolder(url: String): ExcludeFolder = addExcludeFolder(virtualFileManager.fromUrl(url), false)
-  override fun addExcludeFolder(url: String, source: ProjectModelExternalSource): ExcludeFolder {
-    return addExcludeFolder(virtualFileManager.fromUrl(url), true)
-  }
 
   override fun addExcludeFolder(url: String, isAutomaticallyImported: Boolean): ExcludeFolder {
     return addExcludeFolder(virtualFileManager.fromUrl(url), isAutomaticallyImported)

@@ -291,17 +291,12 @@ public interface ContentEntry extends Synthetic {
   ExcludeFolder addExcludeFolder(@NotNull String url);
 
   /**
-   * This method accepts externalSource, what means that if the content root is "externally imported" (e.g. using maven or gradle),
-   * the source root will get the {@link com.intellij.workspaceModel.storage.EntitySource} of the content entity and will
-   * also be marked as "externally imported".
-   */
-  ExcludeFolder addExcludeFolder(@NotNull String url, ProjectModelExternalSource source);
-  /**
    * @param isAutomaticallyImported true if the exclude root is "detected" or "imported" by IDE, false if it is explicitly defined by user.
    *                                This means that if the content root is "externally imported" (e.g. using maven or gradle),
    *                                the source root will get the {@link com.intellij.workspaceModel.storage.EntitySource} of the content
    *                                entity and will also be marked as "externally imported".
    */
+  @NotNull
   ExcludeFolder addExcludeFolder(@NotNull String url, boolean isAutomaticallyImported);
 
   /**
