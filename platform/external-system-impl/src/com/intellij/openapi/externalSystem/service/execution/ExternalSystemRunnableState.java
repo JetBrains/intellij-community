@@ -44,10 +44,9 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.task.RunConfigurationTaskState;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.xdebugger.XDebugProcess;
-import com.intellij.xdebugger.XDebugSession;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -117,8 +116,10 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
   public ServerSocket getForkSocket() {
     if (myForkSocket == null && !Boolean.getBoolean("external.system.disable.fork.debugger")) {
       try {
-        boolean isRemoteRun = ExternalSystemExecutionAware.getExtensions(mySettings.getExternalSystemId()).stream()
-          .anyMatch(aware -> aware.isRemoteRun(myConfiguration, myProject));
+        boolean isRemoteRun = ContainerUtil.exists(
+          ExternalSystemExecutionAware.getExtensions(mySettings.getExternalSystemId()),
+          aware -> aware.isRemoteRun(myConfiguration, myProject)
+        );
         myForkSocket = new ServerSocket(0, 0, findAddress(isRemoteRun));
       }
       catch (IOException e) {
@@ -398,11 +399,5 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
         contentDescriptor.setActivateToolWindowWhenAdded(settings.isActivateToolWindowBeforeRun());
       }
     }
-  }
-
-  @Nullable
-  public XDebugProcess startDebugProcess(@NotNull XDebugSession session,
-                                         @NotNull ExecutionEnvironment env) {
-    return null;
   }
 }
