@@ -11,6 +11,7 @@ import com.intellij.internal.DebugAttachDetector;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.actionSystem.ex.InlineActionsHolder;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -520,7 +521,15 @@ final class ActionUpdater {
     List<AnAction> children = getGroupChildren(group, strategy);
     List<AnAction> result = ContainerUtil.concat(children, child -> expandGroupChild(child, hideDisabled, strategy));
     myForcedUpdateThread = prevForceAsync;
-    return group.postProcessVisibleChildren(result, asUpdateSession(strategy));
+    List<AnAction> actions = group.postProcessVisibleChildren(result, asUpdateSession(strategy));
+    for (AnAction action : actions) {
+      if (action instanceof InlineActionsHolder holder) {
+        for (AnAction inlineAction : holder.getInlineActions()) {
+          update(inlineAction, strategy);
+        }
+      }
+    }
+    return actions;
   }
 
   private List<AnAction> getGroupChildren(ActionGroup group, UpdateStrategy strategy) {
