@@ -41,10 +41,6 @@ import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<TextEditorComponent>()
 
-private fun assertThread() {
-  ApplicationManager.getApplication().assertIsDispatchThread()
-}
-
 @Internal
 open class TextEditorComponent(
   private val project: Project,
@@ -205,7 +201,7 @@ open class TextEditorComponent(
    */
   private inner class MyDocumentListener : DocumentListener {
     /**
-     * We can reuse this runnable to decrease number of allocated object.
+     * We can reuse this runnable to decrease the number of allocated objects.
      */
     private val updateRunnable: Runnable
     private var isUpdateScheduled = false
@@ -219,7 +215,7 @@ open class TextEditorComponent(
 
     override fun documentChanged(e: DocumentEvent) {
       if (!isUpdateScheduled) {
-        // document's timestamp is changed later on undo or PSI changes
+        // a document's timestamp is changed later on undo or PSI changes
         ApplicationManager.getApplication().invokeLater(updateRunnable)
         isUpdateScheduled = true
       }
@@ -240,7 +236,7 @@ open class TextEditorComponent(
   private inner class MyVirtualFileListener : VirtualFileListener {
     override fun propertyChanged(e: VirtualFilePropertyEvent) {
       if (VirtualFile.PROP_NAME == e.propertyName) {
-        // File can be invalidated after file changes name (extension also can change). The editor should be removed if it's invalid.
+        // File can be invalidated after file changes name (an extension also can change). The editor should be removed if it's invalid.
         updateValidProperty()
         if (e.file == file &&
             (FileContentUtilCore.FORCE_RELOAD_REQUESTOR == e.requestor || !Comparing.equal<Any>(e.oldValue, e.newValue))) {
@@ -252,7 +248,7 @@ open class TextEditorComponent(
     override fun contentsChanged(event: VirtualFileEvent) {
       // commit
       if (event.isFromSave) {
-        assertThread()
+        ApplicationManager.getApplication().assertIsDispatchThread()
         val file = event.file
         LOG.assertTrue(file.isValid)
         if (file == this@TextEditorComponent.file) {
@@ -262,7 +258,7 @@ open class TextEditorComponent(
     }
   }
 
-  // Swing calls us _before_ ours constructor
+  // Swing calls us _before_ mine constructor
   @Suppress("UNNECESSARY_SAFE_CALL", "USELESS_ELVIS")
   override fun getBackground(): Color? = editorImpl?.backgroundColor ?: super.getBackground()
 
