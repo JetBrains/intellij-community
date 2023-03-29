@@ -270,30 +270,14 @@ public interface IntentionPreviewInfo {
 
     HtmlBuilder builder = new HtmlBuilder();
 
-    if (sources.isEmpty()) return new Html(builder.wrapWith("p"));
-
-    var source = sources.get(0);
     Icon targetIcon = getIcon(target);
-    Icon sourceIcon = getIcon(source);
-
-    builder.append(getHtmlMoveFragment(
-      sourceIcon,
-      targetIcon,
-      source.getName(),
-      explicitTargetName == null ? target.getName() : explicitTargetName));
-
-    for (int i = 1; i < sources.size(); i++) {
-      source = sources.get(i);
-      sourceIcon = getIcon(source);
-
-      builder
-        .append(HtmlChunk.br())
-        .append(getHtmlMoveFragment(
-          sourceIcon,
-          targetIcon,
-          source.getName(),
-          explicitTargetName == null ? target.getName() : explicitTargetName));
-    }
+    builder.appendWithSeparators(
+      HtmlChunk.br(),
+      ContainerUtil.map(sources, source -> getHtmlMoveFragment(
+        getIcon(source),
+        targetIcon,
+        source.getName(),
+        explicitTargetName == null ? target.getName() : explicitTargetName)));
 
     return new Html(builder.wrapWith("p"));
   }
