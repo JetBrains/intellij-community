@@ -13,6 +13,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
@@ -313,10 +314,18 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
     }
   }
 
+  /**
+   * This method executes under write lock, so we don't expect [com.intellij.openapi.progress.ProcessCanceledException]
+   * and [java.util.concurrent.CancellationException] because we don't call client suspend functions.
+   * But it's a different situation for [com.intellij.openapi.progress.ProcessCanceledException] even if this exception
+   * occurs it's important to allow other clients to do their calculations otherwise we can get inconsistent state
+   * because model was already changed.
+   */
   private fun logErrorOnEventHandling(action: () -> Unit) {
     try {
       action.invoke()
     } catch (e: Throwable) {
+      if (e is AlreadyDisposedException) throw e
       val message = "Exception at Workspace Model event handling"
       if (userWarningLoggingLevel) {
         log.warn(message, e)
