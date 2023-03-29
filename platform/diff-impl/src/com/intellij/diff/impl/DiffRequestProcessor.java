@@ -86,7 +86,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
   private final @NotNull DiffContext myContext;
 
   private final @NotNull DiffSettings mySettings;
-  private final @NotNull List<DiffTool> myToolOrder = new ArrayList<>();
+  private @NotNull List<DiffTool> myToolOrder = Collections.emptyList(); // stores non-FrameDiffTool to keep the ordering
   private final @Nullable FrameDiffTool myForcedDiffTool;
 
   private final @NotNull DefaultActionGroup myToolbarGroup;
@@ -305,22 +305,21 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
 
   @RequiresEdt
   private void readToolOrderFromSettings() {
-    myToolOrder.clear();
-    myToolOrder.addAll(getToolOrderFromSettings(getAvailableTools()));
+    myToolOrder = getToolOrderFromSettings(getAvailableTools());
   }
 
   private void moveToolOnTop(@NotNull DiffTool tool) {
-    myToolOrder.remove(tool);
+    List<DiffTool> newOrder = new ArrayList<>(myToolOrder);
+    newOrder.remove(tool);
 
     FrameDiffTool toolToReplace = getFittedTool(false);
 
-    int index;
-    for (index = 0; index < myToolOrder.size(); index++) {
-      if (myToolOrder.get(index) == toolToReplace) break;
-    }
-    myToolOrder.add(index, tool);
+    int index = ContainerUtil.indexOf(newOrder, it -> it == toolToReplace);
+    if (index == -1) index = newOrder.size();
+    newOrder.add(index, tool);
 
-    updateToolOrderSettings(myToolOrder);
+    myToolOrder = newOrder;
+    updateToolOrderSettings(newOrder);
   }
 
   private @NotNull ViewerState createState() {
