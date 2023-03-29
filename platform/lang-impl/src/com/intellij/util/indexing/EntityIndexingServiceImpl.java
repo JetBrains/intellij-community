@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.RootsChangeRescanningInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -15,8 +14,8 @@ import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusSer
 import com.intellij.util.indexing.roots.IndexableEntityProvider;
 import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
-import com.intellij.util.indexing.roots.WorkspaceIndexingRootsBuilder;
 import com.intellij.util.indexing.roots.LibraryIndexableEntityProvider;
+import com.intellij.util.indexing.roots.WorkspaceIndexingRootsBuilder;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.workspaceModel.core.fileIndex.DependencyDescription;
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind;
@@ -59,15 +58,10 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
     if (changes.isEmpty()) {
       runFullRescan(project, "Project roots have changed");
     }
-    boolean fullReindexOnBuildableChanges = Registry.is("indexing.full.rescan.on.buildable.changes");
     boolean indexDependencies = false;
     for (RootsChangeRescanningInfo change : changes) {
       if (change == RootsChangeRescanningInfo.TOTAL_RESCAN) {
         runFullRescan(project, "Reindex requested by project root model changes");
-        return;
-      }
-      else if (fullReindexOnBuildableChanges && change instanceof BuildableRootsChangeRescanningInfo) {
-        runFullRescan(project, "Reindex requested by buildable changes");
         return;
       }
       else if (change == RootsChangeRescanningInfo.RESCAN_DEPENDENCIES_IF_NEEDED) {
