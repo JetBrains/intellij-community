@@ -276,11 +276,8 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
           if (tool.canShow(diffContext, diffRequest)) {
             result.add((FrameDiffTool)tool);
           }
-          else {
-            FrameDiffTool substitutor = findToolSubstitutor(tool, diffContext, diffRequest);
-            if (substitutor != null) {
-              result.add((FrameDiffTool)tool);
-            }
+          else if (findToolSubstitutor(tool, diffContext, diffRequest) != null) {
+            result.add((FrameDiffTool)tool);
           }
         }
       }
@@ -313,7 +310,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
 
   private void switchToDiffTool(@NotNull DiffTool diffTool) {
     if (myForcedDiffTool != null) return;
-    if (myState.getActiveTool() == diffTool) return;
+    if (isSameToolOrSubstitutor(diffTool, myState.getActiveTool(), myContext, myActiveRequest)) return;
 
     DiffUsageTriggerCollector.logToggleDiffTool(myProject, diffTool, myContext.getUserData(DiffUserDataKeys.PLACE));
 
@@ -814,7 +811,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
       presentation.setText(activeTool.getName());
 
       for (DiffTool tool : filterFittedTools(getAllKnownTools(), diffContext, diffRequest)) {
-        if (tool != activeTool) {
+        if (!isSameToolOrSubstitutor(tool, activeTool, diffContext, diffRequest)) {
           presentation.setEnabledAndVisible(true);
           return;
         }
@@ -857,12 +854,20 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
 
       List<AnAction> actions = new ArrayList<>();
       for (DiffTool tool : filterFittedTools(getAllKnownTools(), diffContext, diffRequest)) {
-        FrameDiffTool substitutor = findToolSubstitutor(tool, diffContext, diffRequest);
-        if (tool == activeTool || substitutor == activeTool) continue;
+        if (isSameToolOrSubstitutor(tool, activeTool, diffContext, diffRequest)) continue;
         actions.add(new DiffToolToggleAction(tool));
       }
       return actions.toArray(AnAction.EMPTY_ARRAY);
     }
+  }
+
+  private static boolean isSameToolOrSubstitutor(@NotNull DiffTool tool,
+                                                 @NotNull DiffTool activeTool,
+                                                 @NotNull DiffContext diffContext,
+                                                 @NotNull DiffRequest diffRequest) {
+    if (tool == activeTool) return true;
+    if (findToolSubstitutor(tool, diffContext, diffRequest) == activeTool) return true;
+    return false;
   }
 
   private final class DiffToolToggleAction extends AnAction implements DumbAware {
