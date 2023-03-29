@@ -457,7 +457,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
   }
 
   /**
-   * @see com.intellij.openapi.vcs.changes.actions.diff.ChangeGoToChangePopupAction
+   * @see com.intellij.openapi.vcs.changes.actions.diff.PresentableGoToChangePopupAction
    */
   protected @Nullable AnAction createGoToChangeAction() {
     return null;
