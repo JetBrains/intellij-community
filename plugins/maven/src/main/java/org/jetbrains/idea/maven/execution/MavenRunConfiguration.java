@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution;
 
-import com.intellij.CommonBundle;
 import com.intellij.build.*;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.StartBuildEvent;
@@ -9,7 +8,6 @@ import com.intellij.build.events.impl.StartBuildEventImpl;
 import com.intellij.build.process.BuildProcessHandler;
 import com.intellij.debugger.impl.RemoteConnectionBuilder;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.impl.SingleConfigurationConfigurable;
@@ -32,7 +30,6 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -66,7 +63,6 @@ import org.jetbrains.idea.maven.execution.target.MavenRuntimeType;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
-import org.jetbrains.idea.maven.project.MavenGeneralSettingsEditor;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenDistribution;
@@ -148,26 +144,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
   @NotNull
   @Override
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    if (Registry.is("ide.new.run.config", true)) {
-      return new MavenRunConfigurationSettingsEditor(this);
-    }
-
-    SettingsEditorGroup<MavenRunConfiguration> group = new SettingsEditorGroup<>();
-
-    MavenRunnerParametersSettingEditor runnerParamsEditor = new MavenRunnerParametersSettingEditor(getProject());
-    MavenGeneralSettingsEditor generalSettingsEditor = new MavenGeneralSettingsEditor(getProject());
-    MavenRunnerSettingsEditor runnerSettingsEditor = new MavenRunnerSettingsEditor(getProject());
-
-    runnerParamsEditor.registerSettingsWatcher(new MavenRCSettingsWatcherImpl(getProject(), "maven.params", false));
-    generalSettingsEditor.registerSettingsWatcher(new MavenRCSettingsWatcherImpl(getProject(), "maven.general", true));
-    runnerSettingsEditor.registerSettingsWatcher(new MavenRCSettingsWatcherImpl(getProject(), "maven.runner", true));
-
-    group.addEditor(RunnerBundle.message("maven.runner.parameters.title"), runnerParamsEditor);
-    group.addEditor(CommonBundle.message("tab.title.general"), generalSettingsEditor);
-    group.addEditor(RunnerBundle.message("maven.tab.runner"), runnerSettingsEditor);
-    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
-
-    return group;
+    return new MavenRunConfigurationSettingsEditor(this);
   }
 
   @ApiStatus.Internal
@@ -335,8 +312,10 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     @Override
     public RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
       ParametersList programParametersList = myJavaParameters.getProgramParametersList();
-      boolean execGoal = programParametersList.getList().stream()
-        .anyMatch(parameter -> parameter.equals("exec:exec") || EXEC_MAVEN_PLUGIN_PATTERN.matcher(parameter).matches());
+      boolean execGoal = ContainerUtil.exists(
+        programParametersList.getList(),
+        parameter -> parameter.equals("exec:exec") || EXEC_MAVEN_PLUGIN_PATTERN.matcher(parameter).matches()
+      );
       if (!execGoal) {
         return null;
       }
@@ -650,8 +629,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       }
       Project project = myConfiguration.getProject();
       ExternalSystemRunConfigurationViewManager viewManager = project.getService(ExternalSystemRunConfigurationViewManager.class);
-      return new BuildView(project, console, descriptor, "build.toolwindow.run.selection.state",
-                           viewManager) {
+      return new BuildView(project, console, descriptor, "build.toolwindow.run.selection.state", viewManager) {
         @Override
         public void onEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
           super.onEvent(buildId, event);

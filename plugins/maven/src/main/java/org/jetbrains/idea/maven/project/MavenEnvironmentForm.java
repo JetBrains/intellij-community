@@ -31,8 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenVersionAwareSupportExtension;
 import org.jetbrains.idea.maven.MavenVersionSupportUtil;
 import org.jetbrains.idea.maven.config.MavenConfig;
-import org.jetbrains.idea.maven.execution.MavenRCSettingsWatcher;
-import org.jetbrains.idea.maven.execution.MavenSettingsObservable;
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeTargetConfiguration;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -51,7 +49,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObservable {
+public class MavenEnvironmentForm implements PanelWithAnchor {
   private JPanel panel;
   private LabeledComponent<ComponentWithBrowseButton<TextFieldWithHistory>> mavenHomeComponent;
   private ContextHelpLabel mavenHomeOnTargetHelpLabel;
@@ -195,15 +193,6 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
     updateMavenVersionLabel();
     userSettingsFileOverrider.reset(data.getUserSettingsFile());
     localRepositoryOverrider.reset(data.getLocalRepository());
-  }
-
-  @Override
-  public void registerSettingsWatcher(@NotNull MavenRCSettingsWatcher watcher) {
-    watcher.registerComponent("mavenHome", mavenHomeField);
-    watcher.registerComponent("settingsFileOverride.checkbox", userSettingsFileOverrider.checkBox);
-    watcher.registerComponent("settingsFileOverride.text", userSettingsFileOverrider.component);
-    watcher.registerComponent("localRepoOverride.checkbox", localRepositoryOverrider.checkBox);
-    watcher.registerComponent("localRepoOverride.text", localRepositoryOverrider.component);
   }
 
   @Nullable
