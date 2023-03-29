@@ -80,6 +80,8 @@ import static com.intellij.util.ObjectUtils.chooseNotNull;
 public abstract class DiffRequestProcessor implements CheckedDisposable {
   private static final Logger LOG = Logger.getInstance(DiffRequestProcessor.class);
 
+  private static final DataKey<DiffTool> ACTIVE_DIFF_TOOL = DataKey.create("active_diff_tool");
+
   private boolean myDisposed;
 
   private final @Nullable Project myProject;
@@ -774,23 +776,30 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     // TODO: add icons for diff tools, show only icon in toolbar - to reduce jumping on change ?
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
+      return ActionUpdateThread.BGT;
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
 
-      DiffTool activeTool = myState.getActiveTool();
-      //noinspection DialogTitleCapitalization
-      presentation.setText(activeTool.getName());
-
       if (myForcedDiffTool != null) {
         presentation.setEnabledAndVisible(false);
         return;
       }
 
-      for (DiffTool tool : filterFittedTools(getAllKnownTools(), myContext, myActiveRequest)) {
+      DiffTool activeTool = e.getData(ACTIVE_DIFF_TOOL);
+      DiffContext diffContext = e.getData(DiffDataKeys.DIFF_CONTEXT);
+      DiffRequest diffRequest = e.getData(DiffDataKeys.DIFF_REQUEST);
+      if (activeTool == null || diffContext == null || diffRequest == null) {
+        presentation.setEnabledAndVisible(false);
+        return;
+      }
+
+      //noinspection DialogTitleCapitalization
+      presentation.setText(activeTool.getName());
+
+      for (DiffTool tool : filterFittedTools(getAllKnownTools(), diffContext, diffRequest)) {
         if (tool != activeTool) {
           presentation.setEnabledAndVisible(true);
           return;
@@ -802,8 +811,12 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
 
     @Override
     protected @NotNull DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
+      DiffContext diffContext = context.getData(DiffDataKeys.DIFF_CONTEXT);
+      DiffRequest diffRequest = context.getData(DiffDataKeys.DIFF_REQUEST);
+      if (diffContext == null || diffRequest == null) return new DefaultActionGroup();
+
       DefaultActionGroup group = new DefaultActionGroup();
-      for (DiffTool tool : filterFittedTools(getAllKnownTools(), myContext, myActiveRequest)) {
+      for (DiffTool tool : filterFittedTools(getAllKnownTools(), diffContext, diffRequest)) {
         group.add(new DiffToolToggleAction(tool));
       }
 
@@ -814,17 +827,24 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
   private class MyChangeDiffToolActionGroup extends ActionGroup implements DumbAware {
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
+      return ActionUpdateThread.BGT;
     }
 
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       if (e == null) return AnAction.EMPTY_ARRAY;
 
+      DiffTool activeTool = e.getData(ACTIVE_DIFF_TOOL);
+      DiffContext diffContext = e.getData(DiffDataKeys.DIFF_CONTEXT);
+      DiffRequest diffRequest = e.getData(DiffDataKeys.DIFF_REQUEST);
+      if (activeTool == null || diffContext == null || diffRequest == null) {
+        return AnAction.EMPTY_ARRAY;
+      }
+
       List<AnAction> actions = new ArrayList<>();
-      for (DiffTool tool : filterFittedTools(getAllKnownTools(), myContext, myActiveRequest)) {
-        FrameDiffTool substitutor = findToolSubstitutor(tool, myContext, myActiveRequest);
-        if (tool == myState.getActiveTool() || substitutor == myState.getActiveTool()) continue;
+      for (DiffTool tool : filterFittedTools(getAllKnownTools(), diffContext, diffRequest)) {
+        FrameDiffTool substitutor = findToolSubstitutor(tool, diffContext, diffRequest);
+        if (tool == activeTool || substitutor == activeTool) continue;
         actions.add(new DiffToolToggleAction(tool));
       }
       return actions.toArray(AnAction.EMPTY_ARRAY);
@@ -842,7 +862,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -1225,6 +1245,9 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
       }
       else if (DiffDataKeys.DIFF_REQUEST.is(dataId)) {
         return myActiveRequest;
+      }
+      else if (ACTIVE_DIFF_TOOL.is(dataId)) {
+        return myState.getActiveTool();
       }
       else if (CommonDataKeys.PROJECT.is(dataId)) {
         return myProject;
