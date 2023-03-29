@@ -25,6 +25,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.TestDataFile;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
@@ -47,7 +48,20 @@ public class XmlParsingTest extends ParsingTestCase {
 
   @Override
   protected String getTestDataPath() {
+    return getXmlParsingTestDataPath();
+  }
+
+  private static String getXmlParsingTestDataPath() {
     return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/";
+  }
+
+  @Override
+  protected String loadFile(@NotNull @TestDataFile String name) throws IOException {
+    // Allow to load files from XML dir by extending tests
+    if (new File(getXmlParsingTestDataPath() + "psi/xml", name).exists()) {
+      return loadFileDefault(getXmlParsingTestDataPath() + "psi/xml", name);
+    }
+    return loadFileDefault(myFullDataPath, name);
   }
 
   @Override
@@ -184,12 +198,14 @@ public class XmlParsingTest extends ParsingTestCase {
   }
 
   private void doTestLexerPerformance(String fileName, int expectedMs) throws IOException {
+    if (getClass() != XmlParsingTest.class) return;
     final String text = loadFile(fileName);
     final XmlLexer lexer = new XmlLexer();
-    final FilterLexer filterLexer = new FilterLexer(new XmlLexer(),
-                                                    new FilterLexer.SetFilter(
-                                                      LanguageParserDefinitions.INSTANCE.forLanguage(XMLLanguage.INSTANCE)
-                                                        .getWhitespaceTokens()));
+    final FilterLexer filterLexer = new FilterLexer(
+      new XmlLexer(),
+      new FilterLexer.SetFilter(
+        LanguageParserDefinitions.INSTANCE.forLanguage(XMLLanguage.INSTANCE)
+          .getWhitespaceTokens()));
 
     PlatformTestUtil.startPerformanceTest("XML Lexer Performance on " + fileName, expectedMs, () -> {
       for (int i = 0; i < 10; i++) {
@@ -248,6 +264,7 @@ public class XmlParsingTest extends ParsingTestCase {
   }
 
   public void testReparsePerformance() throws Exception {
+    if (getClass() != XmlParsingTest.class) return;
     final IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
     final TestFixtureBuilder<IdeaProjectTestFixture> builder = factory.createLightFixtureBuilder(getTestName(false));
     final CodeInsightTestFixture fixture = factory.createCodeInsightFixture(builder.getFixture());
