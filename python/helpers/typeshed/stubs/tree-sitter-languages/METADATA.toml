@@ -1,0 +1,5 @@
+version = "1.5.*"
+requires = ["types-tree-sitter"]
+
+[tool.stubtest]
+ignore_missing_stub = false

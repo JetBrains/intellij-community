@@ -25,7 +25,7 @@ jobs:
           git config --global user.name stubsabot
           git config --global user.email '<>'
       - name: Install dependencies
-        run: pip install aiohttp packaging termcolor tomli tomlkit
+        run: pip install -r requirements-tests.txt
       - name: Run stubsabot
         run: GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} python scripts/stubsabot.py --action-level everything
 
@@ -45,4 +45,4 @@ jobs:
               repo: "typeshed",
               title: `Stubsabot failed on ${new Date().toDateString()}`,
               body: "Stubsabot runs are listed here: https://github.com/python/typeshed/actions/workflows/stubsabot.yml",
-            }
+            })

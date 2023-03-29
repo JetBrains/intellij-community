@@ -1,6 +1,6 @@
-from typing import Any, Generic, TypeVar
 from _typeshed import Incomplete
 from collections.abc import Generator
+from typing import Any, Generic, TypeVar
 
 from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm.query import Query
@@ -54,15 +54,6 @@ class Pagination(Generic[_T]):
     def iter_pages(
         self, left_edge: int = ..., left_current: int = ..., right_current: int = ..., right_edge: int = ...
     ) -> Generator[int | None, None, None]: ...
-
-_T = TypeVar("_T")
-
-class BaseQuery(Query[_T]):
-    def get_or_404(self, ident, description: Any | None = ...): ...
-    def first_or_404(self, description: Any | None = ...): ...
-    def paginate(
-        self, page: Any | None = ..., per_page: Any | None = ..., error_out: bool = ..., max_per_page: Any | None = ...
-    ): ...
 
 def get_state(app): ...
 

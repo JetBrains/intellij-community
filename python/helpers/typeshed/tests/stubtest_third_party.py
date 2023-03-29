@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import functools
+import os
 import subprocess
 import sys
 import tempfile
@@ -13,7 +14,7 @@ from pathlib import Path
 from typing import NoReturn
 
 import tomli
-from colors import colored, print_error, print_success_msg
+from utils import colored, print_error, print_success_msg
 
 
 @functools.lru_cache()
@@ -37,12 +38,21 @@ def run_stubtest(dist: Path, *, verbose: bool = False) -> bool:
         venv_dir = Path(tmp)
         venv.create(venv_dir, with_pip=True, clear=True)
 
-        pip_exe = str(venv_dir / "bin" / "pip")
-        python_exe = str(venv_dir / "bin" / "python")
+        if sys.platform == "win32":
+            pip = venv_dir / "Scripts" / "pip.exe"
+            python = venv_dir / "Scripts" / "python.exe"
+        else:
+            pip = venv_dir / "bin" / "pip"
+            python = venv_dir / "bin" / "python"
+
+        pip_exe, python_exe = str(pip), str(python)
 
         dist_version = metadata["version"]
+        extras = stubtest_meta.get("extras", [])
         assert isinstance(dist_version, str)
-        dist_req = f"{dist.name}=={dist_version}"
+        assert isinstance(extras, list)
+        dist_extras = ", ".join(extras)
+        dist_req = f"{dist.name}[{dist_extras}]=={dist_version}"
 
         # If @tests/requirements-stubtest.txt exists, run "pip install" on it.
         req_path = dist / "@tests" / "requirements-stubtest.txt"
@@ -80,12 +90,21 @@ def run_stubtest(dist: Path, *, verbose: bool = False) -> bool:
             *packages_to_check,
             *modules_to_check,
         ]
+
+        # For packages that need a display, we need to pass at least $DISPLAY
+        # to stubtest. $DISPLAY is set by xvfb-run in CI.
+        #
+        # It seems that some other environment variables are needed too,
+        # because the CI fails if we pass only os.environ["DISPLAY"]. I didn't
+        # "bisect" to see which variables are actually needed.
+        stubtest_env = os.environ | {"MYPYPATH": str(dist), "MYPY_FORCE_COLOR": "1"}
+
         allowlist_path = dist / "@tests/stubtest_allowlist.txt"
         if allowlist_path.exists():
             stubtest_cmd.extend(["--allowlist", str(allowlist_path)])
 
         try:
-            subprocess.run(stubtest_cmd, env={"MYPYPATH": str(dist), "MYPY_FORCE_COLOR": "1"}, check=True, capture_output=True)
+            subprocess.run(stubtest_cmd, env=stubtest_env, check=True, capture_output=True)
         except subprocess.CalledProcessError as e:
             print_error("fail")
             print_commands(dist, pip_cmd, stubtest_cmd)
@@ -102,7 +121,7 @@ def run_stubtest(dist: Path, *, verbose: bool = False) -> bool:
                 print(file=sys.stderr)
             else:
                 print(f"Re-running stubtest with --generate-allowlist.\nAdd the following to {allowlist_path}:", file=sys.stderr)
-                ret = subprocess.run(stubtest_cmd + ["--generate-allowlist"], env={"MYPYPATH": str(dist)}, capture_output=True)
+                ret = subprocess.run(stubtest_cmd + ["--generate-allowlist"], env=stubtest_env, capture_output=True)
                 print_command_output(ret)
 
             return False

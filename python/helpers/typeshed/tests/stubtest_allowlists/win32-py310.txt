@@ -7,6 +7,5 @@ asyncio.IocpProactor.recvfrom
 asyncio.IocpProactor.sendto
 asyncio.windows_events.IocpProactor.recvfrom
 asyncio.windows_events.IocpProactor.sendto
-distutils.command.build_ext.__warningregistry__
 msvcrt.GetErrorMode
 subprocess.STARTUPINFO.copy

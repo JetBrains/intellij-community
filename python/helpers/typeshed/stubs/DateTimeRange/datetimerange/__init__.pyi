@@ -5,8 +5,13 @@ from typing import ClassVar
 
 from dateutil.relativedelta import relativedelta
 
-__license__: str
-__email__: str
+from .__version__ import (
+    __author__ as __author__,
+    __copyright__ as __copyright__,
+    __email__ as __email__,
+    __license__ as __license__,
+    __version__ as __version__,
+)
 
 class DateTimeRange:
     NOT_A_TIME_STR: ClassVar[str]

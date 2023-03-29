@@ -1,6 +1,0 @@
-from selenium.webdriver.remote.webelement import WebElement as RemoteWebElement
-
-class FirefoxWebElement(RemoteWebElement):
-    @property
-    def anonymous_children(self): ...
-    def find_anonymous_element_by_attribute(self, name, value): ...

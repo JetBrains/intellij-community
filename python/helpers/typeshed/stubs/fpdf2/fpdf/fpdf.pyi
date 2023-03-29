@@ -1,7 +1,7 @@
 import datetime
 from _typeshed import Incomplete, StrPath
 from collections import defaultdict
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from contextlib import _GeneratorContextManager
 from enum import IntEnum
 from io import BytesIO
@@ -11,7 +11,18 @@ from typing_extensions import Literal, TypeAlias
 from PIL import Image
 
 from .actions import Action
-from .enums import Align, AnnotationFlag, AnnotationName, Corner, PageLayout, RenderStyle, TextMarkupType, XPos, YPos
+from .enums import (
+    Align,
+    AnnotationFlag,
+    AnnotationName,
+    Corner,
+    FileAttachmentAnnotationName,
+    PageLayout,
+    RenderStyle,
+    TextMarkupType,
+    XPos,
+    YPos,
+)
 from .recorder import FPDFRecorder
 from .syntax import DestinationXYZ
 from .util import _Unit
@@ -47,6 +58,19 @@ class Annotation(NamedTuple):
     border_width: int = ...
     name: AnnotationName | None = ...
     ink_list: tuple[int, ...] = ...
+    embedded_file_name: str | None = ...
+    field_type: str | None = ...
+    value: str | None = ...
+
+class EmbeddedFile(NamedTuple):
+    basename: str
+    bytes: bytes
+    desc: str = ...
+    creation_date: datetime.datetime | None = ...
+    modification_date: datetime.datetime | None = ...
+    compress: bool = ...
+    checksum: bool = ...
+    def file_spec(self, embedded_file_ref) -> str: ...
 
 class TitleStyle(NamedTuple):
     font_family: str | None = ...
@@ -93,17 +117,21 @@ class FPDF:
     images: dict[str, _Image]
     annots: defaultdict[int, list[Annotation]]
     links: dict[int, DestinationXYZ]
+    embedded_files: list[Incomplete]
+    embedded_files_per_pdf_ref: dict[Incomplete, Incomplete]
     in_footer: int
     lasth: int
     current_font: _Font
     font_family: str
     font_style: str
+    font_stretching: float
+    char_spacing: float
+    underline: bool
     str_alias_nb_pages: str
-    underline: int
     draw_color: str
     fill_color: str
     text_color: str
-    ws: int
+    page_background: Incomplete | None
     angle: int
     xmp_metadata: str | None
     image_filter: str
@@ -137,12 +165,12 @@ class FPDF:
         orientation: _Orientation = ...,
         unit: _Unit | float = ...,
         format: _Format | tuple[float, float] = ...,
-        font_cache_dir: str | Literal["DEPRECATED"] = ...,
+        font_cache_dir: Literal["DEPRECATED"] = ...,
     ) -> None: ...
     @property
     def font_size_pt(self) -> float: ...
     @property
-    def unifontsubset(self) -> bool: ...
+    def is_ttf_font(self) -> bool: ...
     @property
     def epw(self) -> float: ...
     @property
@@ -206,6 +234,7 @@ class FPDF:
     def set_text_color(self, r: int, g: int = ..., b: int = ...) -> None: ...
     def get_string_width(self, s: str, normalized: bool = ..., markdown: bool = ...) -> float: ...
     def set_line_width(self, width: float) -> None: ...
+    def set_page_background(self, background) -> None: ...
     def line(self, x1: float, y1: float, x2: float, y2: float) -> None: ...
     def polyline(
         self, point_list: list[tuple[float, float]], fill: bool = ..., polygon: bool = ..., style: RenderStyle | str | None = ...
@@ -248,12 +277,42 @@ class FPDF:
     ) -> None: ...
     def set_font(self, family: str | None = ..., style: _FontStyles = ..., size: int = ...) -> None: ...
     def set_font_size(self, size: float) -> None: ...
-    font_stretching: float
+    def set_char_spacing(self, spacing: float) -> None: ...
     def set_stretching(self, stretching: float) -> None: ...
     def add_link(self) -> int: ...
     def set_link(self, link, y: int = ..., x: int = ..., page: int = ..., zoom: float | Literal["null"] = ...) -> None: ...
     def link(
         self, x: float, y: float, w: float, h: float, link: str | int, alt_text: str | None = ..., border_width: int = ...
+    ) -> Annotation: ...
+    def embed_file(
+        self,
+        file_path: StrPath | None = ...,
+        bytes: bytes | None = ...,
+        basename: str | None = ...,
+        modification_date: datetime.datetime | None = ...,
+        *,
+        creation_date: datetime.datetime | None = ...,
+        desc: str = ...,
+        compress: bool = ...,
+        checksum: bool = ...,
+    ) -> str: ...
+    def file_attachment_annotation(
+        self,
+        file_path: StrPath,
+        x: float,
+        y: float,
+        w: float = ...,
+        h: float = ...,
+        name: FileAttachmentAnnotationName | str | None = ...,
+        flags: Iterable[AnnotationFlag | str] = ...,
+        *,
+        bytes: bytes | None = ...,
+        basename: str | None = ...,
+        creation_date: datetime.datetime | None = ...,
+        modification_date: datetime.datetime | None = ...,
+        desc: str = ...,
+        compress: bool = ...,
+        checksum: bool = ...,
     ) -> Annotation: ...
     def text_annotation(
         self,

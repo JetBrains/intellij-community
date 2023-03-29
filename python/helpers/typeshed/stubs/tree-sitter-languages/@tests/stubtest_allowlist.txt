@@ -1,0 +1,5 @@
+# No idea what this is, seems to be auto-generated
+tree_sitter_languages.core.__test__
+
+# Fails to import and is not supposed to be imported, but stubtest finds it somehow
+tree_sitter_languages.languages

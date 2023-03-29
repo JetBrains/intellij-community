@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import builtins
 import types
 import unittest
@@ -28,7 +26,7 @@ PY34: Literal[True]
 
 string_types: tuple[type[str]]
 integer_types: tuple[type[int]]
-class_types: tuple[type[type[Any]]]
+class_types: tuple[type[type]]
 text_type = str
 binary_type = bytes
 
@@ -85,7 +83,7 @@ def raise_from(value: BaseException | type[BaseException], from_value: BaseExcep
 print_ = print
 
 def with_metaclass(meta: type, *bases: type) -> type: ...
-def add_metaclass(metaclass: type) -> Callable[[_T], _T]: ...
+def add_metaclass(metaclass: type) -> IdentityFunction: ...
 def ensure_binary(s: bytes | str, encoding: str = ..., errors: str = ...) -> bytes: ...
 def ensure_str(s: bytes | str, encoding: str = ..., errors: str = ...) -> str: ...
 def ensure_text(s: bytes | str, encoding: str = ..., errors: str = ...) -> str: ...

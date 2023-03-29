@@ -21,10 +21,17 @@ _T_contra = TypeVar("_T_contra", contravariant=True)
 
 # Use for "self" annotations:
 #   def __enter__(self: Self) -> Self: ...
-Self = TypeVar("Self")  # noqa Y001
+Self = TypeVar("Self")  # noqa: Y001
 
 # covariant version of typing.AnyStr, useful for protocols
 AnyStr_co = TypeVar("AnyStr_co", str, bytes, covariant=True)  # noqa: Y001
+
+# For partially known annotations. Usually, fields where type annotations
+# haven't been added are left unannotated, but in some situations this
+# isn't possible or a type is already partially known. In cases like these,
+# use Incomplete instead of Any as a marker. For example, use
+# "Incomplete | None" instead of "Any | None".
+Incomplete: TypeAlias = Any
 
 # stable
 class IdentityFunction(Protocol):

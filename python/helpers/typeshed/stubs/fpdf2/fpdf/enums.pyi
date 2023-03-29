@@ -1,5 +1,5 @@
 from _typeshed import Incomplete, Self
-from enum import Enum, IntEnum
+from enum import Enum, Flag, IntEnum
 
 from .syntax import Name
 
@@ -16,6 +16,13 @@ class CoerciveEnum(Enum):
 class CoerciveIntEnum(IntEnum):
     @classmethod
     def coerce(cls: type[Self], value: Self | str | int) -> Self: ...
+
+class CharVPos(CoerciveEnum):
+    SUP: str
+    SUB: str
+    NOM: str
+    DENOM: str
+    LINE: str
 
 class Align(CoerciveEnum):
     C: str
@@ -122,6 +129,11 @@ class AnnotationName(CoerciveEnum):
     NEW_PARAGRAPH: Name
     INSERT: Name
 
+class FileAttachmentAnnotationName(CoerciveEnum):
+    PUSH_PIN: Name
+    GRAPH_PUSH_PIN: Name
+    PAPERCLIP_TAG: Name
+
 class IntersectionRule(CoerciveEnum):
     NONZERO: str
     EVENODD: str
@@ -165,5 +177,11 @@ class Corner(CoerciveEnum):
     TOP_LEFT: str
     BOTTOM_RIGHT: str
     BOTTOM_LEFT: str
+
+class FontDescriptorFlags(Flag):
+    FIXED_PITCH: int
+    SYMBOLIC: int
+    ITALIC: int
+    FORCE_BOLD: int
 
 __pdoc__: Incomplete

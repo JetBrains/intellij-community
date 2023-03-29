@@ -62,11 +62,11 @@ class scputimes(NamedTuple):
     dpc: Any
 
 class svmem(NamedTuple):
-    total: Any
-    available: Any
-    percent: Any
-    used: Any
-    free: Any
+    total: int
+    available: int
+    percent: float
+    used: int
+    free: int
 
 class pmem(NamedTuple):
     rss: Any
@@ -101,7 +101,7 @@ class pio(NamedTuple):
 def convert_dos_path(s): ...
 def py2_strencode(s): ...
 def getpagesize(): ...
-def virtual_memory(): ...
+def virtual_memory() -> svmem: ...
 def swap_memory(): ...
 
 disk_io_counters: Any

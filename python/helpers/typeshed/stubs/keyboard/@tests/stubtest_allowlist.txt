@@ -1,0 +1,17 @@
+# scan_code *should* never be None in real use. This is also according to docs.
+keyboard.KeyboardEvent.scan_code
+keyboard._keyboard_event.KeyboardEvent.scan_code
+# Defaults don't align with possible values
+keyboard.mouse.on_button
+keyboard.mouse.wait
+# Private modules and tests
+keyboard.__main__
+keyboard._darwinkeyboard
+keyboard._darwinmouse
+keyboard._keyboard_tests
+keyboard._mouse_tests
+keyboard._nixcommon
+keyboard._nixkeyboard
+keyboard._nixmouse
+keyboard._winkeyboard
+keyboard._winmouse

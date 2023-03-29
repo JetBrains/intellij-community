@@ -1,19 +1,11 @@
+from collections.abc import Mapping
 from typing import Any
+from typing_extensions import TypeAlias
 
 from .models import Response
-from .sessions import (
-    RequestsCookieJar,
-    _Auth,
-    _Cert,
-    _Data,
-    _Files,
-    _HeadersMapping,
-    _HooksInput,
-    _Params,
-    _TextMapping,
-    _Timeout,
-    _Verify,
-)
+from .sessions import RequestsCookieJar, _Auth, _Cert, _Data, _Files, _HooksInput, _Params, _TextMapping, _Timeout, _Verify
+
+_HeadersMapping: TypeAlias = Mapping[str, str | bytes]
 
 def request(
     method: str | bytes,

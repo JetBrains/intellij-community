@@ -6,9 +6,6 @@ class winreg:
     HKEY_LOCAL_MACHINE: Any
     HKEY_CLASSES_ROOT: Any
 
-def msvc9_find_vcvarsall(version): ...
-def msvc9_query_vcvarsall(ver, arch: str = ..., *args, **kwargs): ...
-
 PLAT_SPEC_TO_RUNTIME: Any
 
 def msvc14_get_vc_env(plat_spec): ...

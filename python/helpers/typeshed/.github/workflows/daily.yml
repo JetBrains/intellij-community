@@ -15,7 +15,7 @@ env:
 jobs:
   stubtest-stdlib:
     name: Check stdlib with stubtest
-    if: github.repository == 'python/typeshed'
+    if: ${{ github.repository == 'python/typeshed' || github.event_name == 'workflow_dispatch' }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -38,7 +38,7 @@ jobs:
 
   stubtest-third-party:
     name: Check third party stubs with stubtest
-    if: github.repository == 'python/typeshed'
+    if: ${{ github.repository == 'python/typeshed' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-20.04
     strategy:
       matrix:
@@ -56,7 +56,7 @@ jobs:
           sudo apt update
           sudo apt install -y $(python tests/get_apt_packages.py)
       - name: Run stubtest
-        run: python tests/stubtest_third_party.py --num-shards 4 --shard-index ${{ matrix.shard-index }}
+        run: xvfb-run python tests/stubtest_third_party.py --num-shards 4 --shard-index ${{ matrix.shard-index }}
 
   # https://github.community/t/run-github-actions-job-only-if-previous-job-has-failed/174786/2
   create-issue-on-failure:
@@ -76,4 +76,5 @@ jobs:
               repo: "typeshed",
               title: `Stubtest failed on ${new Date().toDateString()}`,
               body: "Stubtest runs are listed here: https://github.com/python/typeshed/actions/workflows/daily.yml",
+              labels: ["help wanted"],
             })

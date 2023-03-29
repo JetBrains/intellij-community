@@ -1,19 +1,20 @@
 from collections.abc import Callable, Iterable
-from typing import Any, TypeVar, Union
+from typing import TypeVar, Union
 from typing_extensions import TypeAlias
 
-_F = TypeVar("_F", bound=Callable[..., Any])
+_FormatCheckCallable: TypeAlias = Callable[[object], bool]
+_F = TypeVar("_F", bound=_FormatCheckCallable)
 _RaisesType: TypeAlias = Union[type[Exception], tuple[type[Exception], ...]]
 
 class FormatChecker:
-    checkers: dict[str, tuple[Callable[[Any], bool], _RaisesType]]
+    checkers: dict[str, tuple[_FormatCheckCallable, _RaisesType]]
 
     def __init__(self, formats: Iterable[str] | None = ...) -> None: ...
     def checks(self, format: str, raises: _RaisesType = ...) -> Callable[[_F], _F]: ...
     @classmethod
     def cls_checks(cls, format: str, raises: _RaisesType = ...) -> Callable[[_F], _F]: ...
-    def check(self, instance: Any, format: str) -> None: ...
-    def conforms(self, instance: Any, format: str) -> bool: ...
+    def check(self, instance: object, format: str) -> None: ...
+    def conforms(self, instance: object, format: str) -> bool: ...
 
 draft3_format_checker: FormatChecker
 draft4_format_checker: FormatChecker

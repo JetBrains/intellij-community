@@ -10,6 +10,9 @@ from typing_extensions import TypeAlias
 
 import gdb.types
 
+# The following submodules are automatically imported
+from . import events as events, printing as printing, prompt as prompt, types as types
+
 # Basic
 
 PYTHONDIR: str

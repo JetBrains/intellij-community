@@ -1,6 +1,7 @@
 from typing import Any
 
 from .. import exc as sa_exc
+from ..exc import NoResultFound as NoResultFound
 
 NO_STATE: Any
 
