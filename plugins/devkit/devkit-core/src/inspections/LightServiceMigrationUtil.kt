@@ -22,14 +22,14 @@ internal object LightServiceMigrationUtil {
     PROJECT, APPLICATION
   }
 
-  data class Service(val aClass: PsiClass, val level: Level)
+  data class ServiceInfo(val aClass: PsiClass, val level: Level)
 
   fun canBeLightService(jvmClass: JvmClass): Boolean {
     return jvmClass.hasModifier(JvmModifier.FINAL) &&
            !JvmInheritanceUtil.isInheritor(jvmClass, PersistentStateComponent::class.java.canonicalName)
   }
 
-  fun getServiceImplementation(extension: Extension): Service? {
+  fun getServiceImplementation(extension: Extension): ServiceInfo? {
     val level = when (extension.xmlElementName) {
       "projectService" -> Level.PROJECT
       "applicationService" -> Level.APPLICATION
@@ -45,7 +45,7 @@ internal object LightServiceMigrationUtil {
     val serviceImplementation = DevKitDomUtil.getAttribute(extension, "serviceImplementation") ?: return null
     if (!DomUtil.hasXml(serviceImplementation)) return null
     val aClass = serviceImplementation.value as? PsiClass ?: return null
-    return Service(aClass, level)
+    return ServiceInfo(aClass, level)
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
