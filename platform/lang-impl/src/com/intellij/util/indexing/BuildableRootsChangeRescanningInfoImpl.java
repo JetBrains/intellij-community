@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.project.RootsChangeRescanningInfo;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.platform.workspace.jps.entities.LibraryId;
@@ -14,7 +15,6 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -64,32 +64,21 @@ public final class BuildableRootsChangeRescanningInfoImpl extends BuildableRoots
   }
 
   @Override
-  public @NotNull BuildableRootsChangeRescanningInfo addWorkspaceEntity(@NotNull WorkspaceEntity entity) {
+  public @NotNull BuildableRootsChangeRescanningInfoEx addWorkspaceEntity(@NotNull WorkspaceEntity entity) {
     entities.add(entity);
     return this;
   }
 
-  @NotNull
-  Collection<ModuleId> getModules() {
-    return modules;
+  @Override
+  public @NotNull RootsChangeRescanningInfo buildInfo() {
+    return new BuiltRescanningInfo(Set.copyOf(modules), hasInheritedSdk, List.copyOf(sdks), List.copyOf(libraries), List.copyOf(entities));
   }
 
-  public boolean hasInheritedSdk() {
-    return hasInheritedSdk;
-  }
-
-  @NotNull
-  Collection<Pair<String, String>> getSdks() {
-    return sdks;
-  }
-
-  @NotNull
-  Collection<LibraryId> getLibraries() {
-    return libraries;
-  }
-
-  @NotNull
-  Collection<WorkspaceEntity> getWorkspaceEntities() {
-    return entities;
+  record BuiltRescanningInfo(@NotNull Set<ModuleId> modules,
+                             boolean hasInheritedSdk,
+                             @NotNull List<Pair<String, String>> sdks,
+                             @NotNull List<LibraryId> libraries,
+                             @NotNull List<WorkspaceEntity> entities)
+    implements RootsChangeRescanningInfo {
   }
 }

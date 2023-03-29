@@ -4,6 +4,7 @@ package com.intellij.openapi.projectRoots.impl;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.RootsChangeRescanningInfo;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -176,7 +177,7 @@ public class MockSdk implements Sdk, SdkModificator {
     WriteAction.run(myRootProvider::fireRootSetChanged);
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       WriteAction.run(() -> {
-        BuildableRootsChangeRescanningInfo info = BuildableRootsChangeRescanningInfo.newInstance().addSdk(this);
+        RootsChangeRescanningInfo info = BuildableRootsChangeRescanningInfo.newInstance().addSdk(this).buildInfo();
         ((ProjectRootManagerEx)ProjectRootManager.getInstance(project)).makeRootsChange(EmptyRunnable.getInstance(), info);
       });
     }

@@ -31,7 +31,8 @@ class ProjectRootManagerBridge(project: Project, coroutineScope: CoroutineScope)
       return Runnable {
         super.actionToRunWhenProjectJdkChanges.run()
         if (moduleDependencyIndex.hasProjectSdkDependency()) {
-          fireRootsChanged(BuildableRootsChangeRescanningInfo.newInstance().addInheritedSdk())
+          val info = BuildableRootsChangeRescanningInfo.newInstance().addInheritedSdk().buildInfo()
+          fireRootsChanged(info)
         }
       }
     }
@@ -55,7 +56,7 @@ class ProjectRootManagerBridge(project: Project, coroutineScope: CoroutineScope)
 
     override fun referencedLibraryAdded(library: Library) {
       if (shouldListen(library)) {
-        fireRootsChanged(BuildableRootsChangeRescanningInfo.newInstance().addLibrary(library))
+        fireRootsChanged(BuildableRootsChangeRescanningInfo.newInstance().addLibrary(library).buildInfo())
       }
     }
 
@@ -63,7 +64,7 @@ class ProjectRootManagerBridge(project: Project, coroutineScope: CoroutineScope)
       if (insideRootsChange || !shouldListen(library)) return
       insideRootsChange = true
       try {
-        fireRootsChanged(BuildableRootsChangeRescanningInfo.newInstance().addLibrary(library))
+        fireRootsChanged(BuildableRootsChangeRescanningInfo.newInstance().addLibrary(library).buildInfo())
       }
       finally {
         insideRootsChange = false
@@ -86,11 +87,11 @@ class ProjectRootManagerBridge(project: Project, coroutineScope: CoroutineScope)
     }
 
     override fun referencedSdkAdded(sdk: Sdk) {
-      fireRootsChanged(BuildableRootsChangeRescanningInfo.newInstance().addSdk(sdk))
+      fireRootsChanged(BuildableRootsChangeRescanningInfo.newInstance().addSdk(sdk).buildInfo())
     }
 
     override fun referencedSdkChanged(sdk: Sdk) {
-      fireRootsChanged(BuildableRootsChangeRescanningInfo.newInstance().addSdk(sdk))
+      fireRootsChanged(BuildableRootsChangeRescanningInfo.newInstance().addSdk(sdk).buildInfo())
     }
 
     override fun referencedSdkRemoved(sdk: Sdk) {
