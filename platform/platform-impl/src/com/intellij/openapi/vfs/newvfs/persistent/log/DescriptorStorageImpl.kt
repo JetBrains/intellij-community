@@ -6,10 +6,10 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.io.ChunkMMappedFileIO
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.StorageIO
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.AdvancingPositionTracker
 import com.intellij.util.io.DataEnumerator
-import com.intellij.util.io.UnInterruptibleFileChannel
+import com.intellij.util.io.ResilientFileChannel
 import java.nio.channels.FileChannel
 import java.nio.file.Path
-import java.nio.file.StandardOpenOption
+import java.nio.file.StandardOpenOption.*
 import kotlin.io.path.div
 
 class DescriptorStorageImpl(
@@ -23,8 +23,7 @@ class DescriptorStorageImpl(
   init {
     FileUtil.ensureExists(storagePath.toFile())
 
-    val fileChannel = UnInterruptibleFileChannel(storagePath / "descriptors",
-                                                 StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE)
+    val fileChannel = ResilientFileChannel(storagePath / "descriptors", READ, WRITE, CREATE)
     storageIO = ChunkMMappedFileIO(fileChannel, FileChannel.MapMode.READ_WRITE)
 
     position = AdvancingPositionTracker(lastSafeSize ?: 0L)

@@ -242,8 +242,8 @@ public final class DirectBufferWrapper {
     final ByteBuffer buffer = DirectByteBufferAllocator.ALLOCATOR.allocate(bufferSize);
     buffer.order(myFile.isNativeBytesOrder() ? ByteOrder.nativeOrder() : ByteOrder.BIG_ENDIAN);
     assert buffer.limit() > 0;
-    return myFile.useChannel(ch -> {
-      int readBytes = ch.read(buffer, myPosition);
+    return myFile.executeIdempotentOp(ch -> {
+      final int readBytes = ch.read(buffer, myPosition);
       if (readBytes < bufferSize) {
         for (int i = Math.max(0, readBytes); i < bufferSize; i++) {
           buffer.put(i, (byte)0);
@@ -282,7 +282,7 @@ public final class DirectBufferWrapper {
       buffer.rewind();
       buffer.limit(myBufferDataEndPos);
 
-      myFile.useChannel(ch -> {
+      myFile.executeIdempotentOp(ch -> {
         ch.write(buffer, myPosition);
         return null;
       }, myFile.isReadOnly());

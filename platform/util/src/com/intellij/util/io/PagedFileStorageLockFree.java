@@ -2,6 +2,8 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.io.FileChannelInterruptsRetryer.FileChannelIdempotentOperation;
+import com.intellij.util.io.OpenChannelsCache.FileChannelOperation;
 import com.intellij.util.io.pagecache.FilePageCacheStatistics;
 import com.intellij.util.io.pagecache.Page;
 import com.intellij.util.io.pagecache.PagedStorage;
@@ -22,8 +24,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-
-import static com.intellij.util.io.PageCacheUtils.CHANNELS_CACHE;
 
 public class PagedFileStorageLockFree implements PagedStorage {
   private static final Logger LOG = Logger.getInstance(PagedFileStorageLockFree.class);
@@ -438,17 +438,14 @@ public class PagedFileStorageLockFree implements PagedStorage {
     return pages;
   }
 
-  <R> R useChannel(final @NotNull OpenChannelsCache.ChannelProcessor<R> processor,
-                   final boolean read) throws IOException {
-    if (storageLockContext.useChannelCache()) {
-      return CHANNELS_CACHE.useChannel(file, processor, read);
-    }
-    else {
-      storageLockContext.getBufferCache().incrementUncachedFileAccess();
-      try (OpenChannelsCache.ChannelDescriptor desc = new OpenChannelsCache.ChannelDescriptor(file, read)) {
-        return processor.process(desc.getChannel());
-      }
-    }
+  <R> R executeOp(final @NotNull FileChannelOperation<R> operation,
+                  final boolean readOnly) throws IOException {
+    return storageLockContext.executeOp(file, operation, readOnly);
+  }
+
+  <R> R executeIdempotentOp(final @NotNull FileChannelIdempotentOperation<R> operation,
+                            final boolean readOnly) throws IOException {
+    return storageLockContext.executeIdempotentOp(file, operation, readOnly);
   }
 
   private PageImpl createUninitializedPage(final int pageIndex) {
@@ -467,7 +464,7 @@ public class PagedFileStorageLockFree implements PagedStorage {
     final long startedAtNs = statistics.startTimestampNs();
     final ByteBuffer pageBuffer = pageCache.allocatePageBuffer(pageSize);
     pageBuffer.order(nativeBytesOrder ? ByteOrder.nativeOrder() : ByteOrder.BIG_ENDIAN);
-    useChannel(ch -> {
+    executeIdempotentOp(ch -> {
       final int readBytes = ch.read(pageBuffer, pageToLoad.offsetInFile());
       if (readBytes < pageSize) {
         final int startFrom = Math.max(0, readBytes);
@@ -484,7 +481,7 @@ public class PagedFileStorageLockFree implements PagedStorage {
     final FilePageCacheStatistics statistics = pageCache.getStatistics();
     final long startedAtNs = statistics.startTimestampNs();
     final int bytesToStore = bufferToSave.remaining();
-    useChannel(ch -> {
+    executeIdempotentOp(ch -> {
       ch.write(bufferToSave, offsetInFile);
       return null;
     }, isReadOnly());

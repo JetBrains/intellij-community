@@ -9,14 +9,14 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.io.StorageIO
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.AdvancingPositionTracker
 import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.DataOutputStream
-import com.intellij.util.io.UnInterruptibleFileChannel
+import com.intellij.util.io.ResilientFileChannel
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
 import java.io.EOFException
 import java.io.OutputStream
 import java.nio.channels.FileChannel
 import java.nio.file.Path
-import java.nio.file.StandardOpenOption
+import java.nio.file.StandardOpenOption.*
 import kotlin.io.path.div
 
 class PayloadStorageImpl(
@@ -29,8 +29,7 @@ class PayloadStorageImpl(
   init {
     FileUtil.ensureExists(storagePath.toFile())
 
-    val fileChannel = UnInterruptibleFileChannel(storagePath / "payload",
-                                                 StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE)
+    val fileChannel = ResilientFileChannel(storagePath / "payload", READ, WRITE, CREATE)
     storageIO = ChunkMMappedFileIO(fileChannel, FileChannel.MapMode.READ_WRITE)
 
     position = AdvancingPositionTracker(lastSafeSize ?: 0L)

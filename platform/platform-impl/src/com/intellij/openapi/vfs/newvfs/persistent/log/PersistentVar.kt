@@ -3,11 +3,12 @@ package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.DataOutputStream
-import com.intellij.util.io.UnInterruptibleFileChannel
+import com.intellij.util.io.FileChannelInterruptsRetryer
 import java.io.*
 import java.nio.channels.Channels
 import java.nio.file.Path
-import java.nio.file.StandardOpenOption
+import java.nio.file.StandardOpenOption.*
+import java.util.*
 import kotlin.reflect.KProperty
 
 abstract class PersistentVar<T>(
@@ -17,25 +18,29 @@ abstract class PersistentVar<T>(
     FileUtil.createIfNotExists(path.toFile())
   }
 
-  protected val fileChannel = UnInterruptibleFileChannel(path, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE)
+  protected val fileChannelRetryer = FileChannelInterruptsRetryer(path, EnumSet.of(READ, WRITE, CREATE))
 
   abstract fun DataInput.readValue(): T?
   abstract fun DataOutput.writeValue(value: T)
 
   @Throws(IOException::class)
   operator fun getValue(thisRef: Any?, property: KProperty<*>): T? = synchronized(this) {
-    DataInputStream(Channels.newInputStream(fileChannel.position(0))).readValue()
+    return fileChannelRetryer.retryIfInterrupted {
+      DataInputStream(Channels.newInputStream(it.position(0))).readValue()
+    }
   }
 
   @Throws(IOException::class)
   operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T?): Unit = synchronized(this) {
-    if (value == null) {
-      fileChannel.truncate(0)
+    fileChannelRetryer.retryIfInterrupted {
+      if (value == null) {
+        it.truncate(0)
+      }
+      else {
+        DataOutputStream(Channels.newOutputStream(it.position(0))).writeValue(value)
+      }
+      it.force(false)
     }
-    else {
-      DataOutputStream(Channels.newOutputStream(fileChannel.position(0))).writeValue(value)
-    }
-    fileChannel.force(false)
   }
 
   companion object {

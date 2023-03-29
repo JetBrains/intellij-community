@@ -12,7 +12,7 @@ import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.containers.*;
 import com.intellij.util.indexing.impl.ValueContainerImpl;
-import com.intellij.util.io.UnInterruptibleFileChannel;
+import com.intellij.util.io.ResilientFileChannel;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.function.IntConsumer;
@@ -192,14 +191,14 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
       private static final int DEFAULT_FILE_ALLOCATION_BYTES = 512;
       private static final int DEFAULT_FULL_SCAN_BUFFER_BYTES = 1024;
 
-      private final @NotNull FileChannel myFileChannel;
+      private final @NotNull ResilientFileChannel myFileChannel;
       private volatile long myElementsCount;
       private volatile long myModificationsCounter = 0L;
       private final @NotNull ByteBuffer myDataBuffer = ByteBuffer.allocate(ELEMENT_BYTES);
 
       private ForwardIndexFileController(@NotNull Path storage) throws StorageException {
         try {
-          myFileChannel = new UnInterruptibleFileChannel(storage, StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE);
+          myFileChannel = new ResilientFileChannel(storage, StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE);
           long fileSize = myFileChannel.size();
           if (fileSize % ELEMENT_BYTES != 0) {
             LOG.error("file type index is corrupted");
