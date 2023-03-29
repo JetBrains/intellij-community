@@ -2777,10 +2777,6 @@ public class JBTabsImpl extends JComponent
   }
 
   private void updateContainer(boolean forced, boolean layoutNow) {
-    if (myProject != null && !myProject.isOpen() && !myProject.isDefault()) {
-      return;
-    }
-
     for (TabInfo tabInfo : List.copyOf(myVisibleInfos)) {
       JComponent component = tabInfo.getComponent();
       if (tabInfo == getSelectedInfo()) {
