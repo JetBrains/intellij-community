@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public final class JavaSharedImplUtil {
@@ -40,20 +41,24 @@ public final class JavaSharedImplUtil {
 
   public static PsiType getType(@NotNull PsiTypeElement typeElement, @NotNull PsiElement anchor, @Nullable PsiAnnotation stopAt) {
     PsiType type = typeElement.getType();
+    boolean ellipsisType = type instanceof PsiEllipsisType;
 
     List<PsiAnnotation[]> allAnnotations = collectAnnotations(anchor, stopAt);
     if (allAnnotations == null) return null;
-    for (PsiAnnotation[] annotations : allAnnotations) {
-      type = type.createArrayType().annotate(TypeAnnotationProvider.Static.create(annotations));
+    for (int i = 0, size = allAnnotations.size(); i < size; i++) {
+      type = ((ellipsisType && i == size - 1) ? new PsiEllipsisType(type) : type.createArrayType())
+        .annotate(TypeAnnotationProvider.Static.create(allAnnotations.get(i)));
     }
 
     return type;
   }
 
-  // collects annotations bound to C-style arrays
+  /**
+   * Collects annotations bound to C-style arrays.
+   */
   @Nullable
   private static List<PsiAnnotation[]> collectAnnotations(@NotNull PsiElement anchor, @Nullable PsiAnnotation stopAt) {
-    List<PsiAnnotation[]> annotations = new SmartList<>();
+    List<PsiAnnotation[]> annotations = Collections.emptyList();
 
     List<PsiAnnotation> current = null;
     boolean found = stopAt == null;
@@ -69,6 +74,7 @@ public final class JavaSharedImplUtil {
       }
 
       if (PsiUtil.isJavaToken(child, JavaTokenType.LBRACKET)) {
+        if (annotations == Collections.EMPTY_LIST) annotations = new SmartList<>();
         annotations.add(0, current == null ? PsiAnnotation.EMPTY_ARRAY : ContainerUtil.toArray(current, PsiAnnotation.ARRAY_FACTORY));
         current = null;
         if (stop) return annotations;
