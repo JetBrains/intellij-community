@@ -361,6 +361,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
         if (tab != null) {
           tab.select();
         }
+        myExecutionPointManager.setAlternativeSourceKindFlow(session.getAlternativeSourceKindState());
       }
       else {
         myExecutionPointManager.clearExecutionPoint();

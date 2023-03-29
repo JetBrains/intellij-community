@@ -2,6 +2,7 @@
 package com.intellij.xdebugger;
 
 import com.intellij.xdebugger.frame.XStackFrame;
+import kotlinx.coroutines.flow.StateFlow;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,5 +15,6 @@ import org.jetbrains.annotations.Nullable;
  */
 @ApiStatus.Experimental
 public interface XAlternativeSourceHandler {
+  @NotNull StateFlow<@NotNull Boolean> getAlternativeSourceKindState();
   @Nullable XSourcePosition getAlternativePosition(@NotNull XStackFrame frame);
 }

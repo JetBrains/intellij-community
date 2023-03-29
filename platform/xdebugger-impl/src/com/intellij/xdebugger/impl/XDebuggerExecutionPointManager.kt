@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.impl.EditorMouseHoverPopupControl
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
@@ -12,13 +13,12 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.ui.ExecutionPositionUi
 import com.intellij.xdebugger.impl.ui.showExecutionPointUi
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 
+
+private val LOG = logger<XDebuggerExecutionPointManager>()
 
 internal class XDebuggerExecutionPointManager(private val project: Project,
                                               parentScope: CoroutineScope) {
@@ -26,9 +26,18 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
 
   private val updateRequestFlow = MutableSharedFlow<ExecutionPositionUpdateRequest>(extraBufferCapacity = 1, onBufferOverflow = DROP_OLDEST)
 
-  private val _activeSourceKindState = MutableStateFlow(XSourceKind.MAIN)
-  private val activeSourceKindState: StateFlow<XSourceKind> = _activeSourceKindState.asStateFlow()
-  var activeSourceKind: XSourceKind by _activeSourceKindState::value
+  private val _alternativeSourceKindFlowState = MutableStateFlow<Flow<Boolean>>(emptyFlow())
+  var alternativeSourceKindFlow: Flow<Boolean> by _alternativeSourceKindFlowState::value
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private val activeSourceKindState: StateFlow<XSourceKind> =
+    _alternativeSourceKindFlowState
+      .flatMapLatest { isAlternativeFlow ->
+        isAlternativeFlow.map { isAlternativeSourceKind ->
+          if (isAlternativeSourceKind) XSourceKind.ALTERNATIVE else XSourceKind.MAIN
+        }.catch { t -> LOG.error(t) }
+      }
+      .stateIn(coroutineScope, started = SharingStarted.Eagerly, initialValue = XSourceKind.MAIN)
 
   private val _gutterIconRendererState = MutableStateFlow<GutterIconRenderer?>(null)
   private val gutterIconRendererState: StateFlow<GutterIconRenderer?> = _gutterIconRendererState.asStateFlow()
