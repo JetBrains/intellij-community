@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -198,7 +198,7 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
     if ("com.jetbrains.cidr.lang.daemon.OCAnnotator".equals(callerClass == null ? null : callerClass.getName())) {
       //todo temporary fix. CLion guys promised to fix their annotator eventually
       //LOG.warnInProduction(pluginException);
-      if (LocalDate.now().isAfter(LocalDate.of(2023, Month.MARCH, 13))) {
+      if (LocalDate.now().isAfter(LocalDate.of(2023, Month.MAY, 13))) {
         if (ApplicationManager.getApplication().isInternal() || ApplicationManager.getApplication().isUnitTestMode()) {
           Period p = Period.between(LocalDate.of(2020, Month.APRIL, 27), LocalDate.now());
           String f = String.format("CLion developers promised to fix their annotator %d centuries %d years %d months %d days ago", p.getYears() / 100, p.getYears() % 100, p.getMonths(), p.getDays());
