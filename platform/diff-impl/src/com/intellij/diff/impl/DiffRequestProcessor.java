@@ -311,9 +311,16 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     myToolOrder = getToolOrderFromSettings(getAllKnownTools());
   }
 
-  private void moveToolOnTop(@NotNull DiffTool tool) {
-    myToolOrder = moveToolToTop(tool, myToolOrder, myContext, myActiveRequest);
+  private void switchToDiffTool(@NotNull DiffTool diffTool) {
+    if (myForcedDiffTool != null) return;
+    if (myState.getActiveTool() == diffTool) return;
+
+    DiffUsageTriggerCollector.logToggleDiffTool(myProject, diffTool, myContext.getUserData(DiffUserDataKeys.PLACE));
+
+    myToolOrder = moveToolToTop(diffTool, myToolOrder, myContext, myActiveRequest);
     updateToolOrderSettings(myToolOrder);
+
+    updateRequest(true);
   }
 
   private static @NotNull List<DiffTool> moveToolToTop(@NotNull DiffTool tool,
@@ -760,10 +767,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
 
     @Override
     public void onSelected(@NotNull Project project, @NotNull DiffTool diffTool) {
-      DiffUsageTriggerCollector.logToggleDiffTool(project, diffTool, myContext.getUserData(DiffUserDataKeys.PLACE));
-      moveToolOnTop(diffTool);
-
-      updateRequest(true);
+      switchToDiffTool(diffTool);
     }
 
     @Override
@@ -882,12 +886,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      if (myState.getActiveTool() == myDiffTool) return;
-
-      DiffUsageTriggerCollector.logToggleDiffTool(e.getProject(), myDiffTool, myContext.getUserData(DiffUserDataKeys.PLACE));
-      moveToolOnTop(myDiffTool);
-
-      updateRequest(true);
+      switchToDiffTool(myDiffTool);
     }
   }
 
