@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight
 import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testIntegration.TestFramework
-import org.jetbrains.kotlin.idea.junit.AbstractKotlinTestFrameworkAdapter
+import org.jetbrains.kotlin.idea.junit.KotlinTestFrameworkAdapter
 import org.jetbrains.kotlin.idea.runConfigurations.jvm.KotlinDelegatingTestFramework
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework
 
@@ -53,7 +53,7 @@ abstract class AbstractLightTestRunLineMarkersTest: AbstractLineMarkersTest() {
         ExtensionTestUtil.maskExtensions(
             TestFramework.EXTENSION_NAME,
             TestFramework.EXTENSION_NAME.extensionList.filter {
-                !lightClass || it !is AbstractKotlinTestFrameworkAdapter
+                !lightClass || it !is KotlinTestFrameworkAdapter
             },
             testRootDisposable
         )
