@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
@@ -15,6 +16,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.SimpleColoredText;
@@ -40,6 +42,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.util.Collections;
 
 import static com.intellij.openapi.editor.colors.EditorColors.REFERENCE_HYPERLINK_COLOR;
@@ -95,12 +98,24 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
   public void onClick(Inlay inlay, @NotNull EditorMouseEvent event) {
     int x = event.getMouseEvent().getX();
     boolean isRemoveIconClick = myCustomNode && x >= myRemoveXCoordinate;
+    boolean isJumpToTypeSourceClick = (event.getMouseEvent().getModifiersEx() & InputEvent.CTRL_DOWN_MASK) != 0;
+    XValue value = myValueNode.getValueContainer();
     if (isRemoveIconClick) {
       XDebugSessionTab tab = ((XDebugSessionImpl)mySession).getSessionTab();
       if (tab != null) {
         tab.getWatchesView().removeWatches(Collections.singletonList(myValueNode));
       }
       inlay.update();
+    }
+    else if (isJumpToTypeSourceClick && value.canNavigateToTypeSource()) {
+      value.computeTypeSourcePosition(sourcePosition -> {
+        if (sourcePosition != null) {
+          final Project project = mySession.getProject();
+          AppUIExecutor.onUiThread().expireWith(project).submit(() -> {
+            sourcePosition.createNavigatable(project).navigate(true);
+          });
+        }
+      });
     }
     else if (x >= myTextStartXCoordinate) {
       handleClick(inlay);
