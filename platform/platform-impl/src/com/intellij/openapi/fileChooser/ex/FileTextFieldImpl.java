@@ -130,13 +130,13 @@ public class FileTextFieldImpl implements FileTextField, Disposable {
 
     myCancelAction = new CancelAction();
 
-    LazyUiDisposable<FileTextFieldImpl> disposable = new LazyUiDisposable<>(parent, field, this) {
+    //noinspection ResultOfObjectAllocationIgnored
+    new LazyUiDisposable<>(parent, field, FileTextFieldImpl.this) {
       @Override
-      protected void initialize(@NotNull Disposable parent, @NotNull FileTextFieldImpl child, @Nullable Project project) {
+      protected void initialize(@NotNull Disposable parent1, @NotNull FileTextFieldImpl child, @Nullable Project project) {
         Disposer.register(child, myUiUpdater);
       }
     };
-    disposable.setupListeners();
   }
 
   @SuppressWarnings("unused") //used by rider

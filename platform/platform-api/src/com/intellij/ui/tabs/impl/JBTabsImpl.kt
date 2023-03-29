@@ -54,7 +54,6 @@ import com.intellij.util.Function
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.*
-import com.intellij.util.ui.StartupUiUtil.addAwtListener
 import com.intellij.util.ui.update.LazyUiDisposable
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -223,7 +222,7 @@ open class JBTabsImpl(private var project: Project?,
   private var focusManager = IdeFocusManager.getGlobalInstance()
   private val nestedTabs = HashSet<JBTabsImpl>()
   var addNavigationGroup: Boolean = true
-  private var myActiveTabFillIn: Color? = null
+  private var activeTabFillIn: Color? = null
   private var tabLabelActionsAutoHide = false
   private val tabActionsAutoHideListener = TabActionsAutoHideListener()
   private var tabActionsAutoHideListenerDisposable = Disposer.newDisposable()
@@ -332,34 +331,34 @@ open class JBTabsImpl(private var project: Project?,
       val e = MouseEventAdapter.convert(event, fakeScrollPane, event.id, event.getWhen(), modifiers, event.x, event.y)
       MouseEventAdapter.redispatch(e, fakeScrollPane)
     }
-    addAwtListener(parentDisposable)
+    addMouseMotionAwtListener(parentDisposable)
     isFocusTraversalPolicyProvider = true
     focusTraversalPolicy = object : LayoutFocusTraversalPolicy() {
       override fun getDefaultComponent(aContainer: Container): Component? = toFocus
     }
 
+    //noinspection ResultOfObjectAllocationIgnored
     object : LazyUiDisposable<JBTabsImpl>(parentDisposable, this, this) {
       override fun initialize(parent: Disposable, child: JBTabsImpl, project: Project?) {
         if (this@JBTabsImpl.project == null && project != null) {
           this@JBTabsImpl.project = project
         }
+
         Disposer.register(parentDisposable) { removeTimerUpdate() }
         val gp = IdeGlassPaneUtil.find(child)
         tabActionsAutoHideListenerDisposable = Disposer.newDisposable("myTabActionsAutoHideListener")
         Disposer.register(parentDisposable, tabActionsAutoHideListenerDisposable)
         gp.addMouseMotionPreprocessor(tabActionsAutoHideListener, tabActionsAutoHideListenerDisposable)
         glassPane = gp
-        addAwtListener({
-                         if (!JBPopupFactory.getInstance().getChildPopups(this@JBTabsImpl).isEmpty()) return@addAwtListener
-                         processFocusChange()
+        StartupUiUtil.addAwtListener({
+                         if (JBPopupFactory.getInstance().getChildPopups(this@JBTabsImpl).isEmpty()) {
+                           processFocusChange()
+                         }
                        }, AWTEvent.FOCUS_EVENT_MASK, parentDisposable)
         dragHelper = createDragHelper(child, parentDisposable)
         dragHelper!!.start()
-        if (this@JBTabsImpl.project != null && focusManager === IdeFocusManager.getGlobalInstance()) {
-          focusManager = IdeFocusManager.getInstance(this@JBTabsImpl.project)
-        }
       }
-    }.setupListeners()
+    }
 
     putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Iterable {
       getVisibleInfos().asSequence().filter { it != mySelectedInfo }.map { it.component }.iterator()
@@ -381,8 +380,8 @@ open class JBTabsImpl(private var project: Project?,
     myScrollBarChangeListener = ChangeListener { updateTabsOffsetFromScrollBar() }
   }
 
-  private fun addAwtListener(parentDisposable: Disposable) {
-    val listener = object : AWTEventListener {
+  private fun addMouseMotionAwtListener(parentDisposable: Disposable) {
+    StartupUiUtil.addAwtListener(object : AWTEventListener {
       val afterScroll = Alarm(parentDisposable)
 
       override fun eventDispatched(event: AWTEvent) {
@@ -419,11 +418,7 @@ open class JBTabsImpl(private var project: Project?,
                                  }, 500)
         }
       }
-    }
-    Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.MOUSE_MOTION_EVENT_MASK)
-    Disposer.register(parentDisposable) {
-      Toolkit.getDefaultToolkit()?.removeAWTEventListener(listener)
-    }
+    }, AWTEvent.MOUSE_MOTION_EVENT_MASK, parentDisposable)
   }
 
   private fun isInsideTabsArea(x: Int, y: Int): Boolean {
@@ -2636,8 +2631,8 @@ open class JBTabsImpl(private var project: Project?,
     }
 
   override fun setActiveTabFillIn(color: Color?): JBTabsPresentation {
-    if (!isChanged(myActiveTabFillIn, color)) return this
-    myActiveTabFillIn = color
+    if (!isChanged(activeTabFillIn, color)) return this
+    activeTabFillIn = color
     revalidateAndRepaint(false)
     return this
   }

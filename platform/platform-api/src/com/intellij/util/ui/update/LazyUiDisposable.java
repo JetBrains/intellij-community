@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,28 +18,29 @@ import java.util.concurrent.atomic.AtomicReference;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 import static com.intellij.openapi.actionSystem.PlatformDataKeys.UI_DISPOSABLE;
 
+@ApiStatus.Internal
 public abstract class LazyUiDisposable<T> implements Activatable {
-  private final AtomicReference<JComponent> myUI;
-  private final Disposable myParent;
-  private final T myChild;
+  private final AtomicReference<JComponent> uiRef;
+  private final Disposable parent;
+  private final T child;
 
   public LazyUiDisposable(@Nullable Disposable parent, @NotNull JComponent ui, @NotNull T child) {
-    myUI = new AtomicReference<>(ui);
-    myParent = parent;
-    myChild = child;
-  }
+    this.uiRef = new AtomicReference<>(ui);
+    this.parent = parent;
+    this.child = child;
 
-  public void setupListeners() {
-    UiNotifyConnector.Once.installOn(myUI.get(), this);
+    UiNotifyConnector.Once.installOn(ui, this);
   }
 
   @Override
   public final void showNotify() {
-    JComponent ui = myUI.getAndSet(null);
-    if (ui == null) return;
+    JComponent ui = uiRef.getAndSet(null);
+    if (ui == null) {
+      return;
+    }
 
     Project project = null;
-    Disposable parent = myParent;
+    Disposable parent = this.parent;
 
     if (ApplicationManager.getApplication() != null) {
       DataContext context = DataManager.getInstance().getDataContext(ui);
@@ -57,9 +59,9 @@ public abstract class LazyUiDisposable<T> implements Activatable {
         parent = project;
       }
     }
-    initialize(parent, myChild, project);
-    if (myChild instanceof Disposable) {
-      Disposer.register(parent, (Disposable)myChild);
+    initialize(parent, child, project);
+    if (child instanceof Disposable) {
+      Disposer.register(parent, (Disposable)child);
     }
   }
 
