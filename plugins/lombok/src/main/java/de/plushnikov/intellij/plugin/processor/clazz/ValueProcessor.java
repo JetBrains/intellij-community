@@ -52,7 +52,7 @@ public class ValueProcessor extends AbstractClassProcessor {
   protected Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     Collection<String> result = new ArrayList<>();
 
-    final String staticConstructorName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "staticConstructor", "");
+    final String staticConstructorName = getStaticConstructorNameValue(psiAnnotation);
     if(StringUtil.isNotEmpty(staticConstructorName)) {
       result.add(staticConstructorName);
     }
@@ -62,6 +62,10 @@ public class ValueProcessor extends AbstractClassProcessor {
     result.addAll(getGetterProcessor().getNamesOfPossibleGeneratedElements(psiClass, psiAnnotation));
 
     return result;
+  }
+
+  private static String getStaticConstructorNameValue(@NotNull PsiAnnotation psiAnnotation) {
+    return PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "staticConstructor", "");
   }
 
   @Override
@@ -104,7 +108,7 @@ public class ValueProcessor extends AbstractClassProcessor {
       final Collection<PsiMethod> definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
       filterToleratedElements(definedConstructors);
 
-      final String staticName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "staticConstructor", "");
+      final String staticName = getStaticConstructorNameValue(psiAnnotation);
       final Collection<PsiField> requiredFields = AbstractConstructorClassProcessor.getAllFields(psiClass);
 
       if (getAllArgsConstructorProcessor().validateIsConstructorNotDefined(psiClass, staticName, requiredFields,
