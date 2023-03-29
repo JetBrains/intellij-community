@@ -54,15 +54,15 @@ public class TableLayout extends TabLayout {
     boolean singleRow = myTabs.isSingleRow();
     boolean showPinnedTabsSeparately = showPinnedTabsSeparately();
     boolean scrollable = UISettings.getInstance().getHideTabsIfNeeded() && singleRow;
-    int titleWidth = myTabs.titleWrapper.getPreferredSize().width;
+    int titleWidth = myTabs.getTitleWrapper().getPreferredSize().width;
 
-    data.titleRect.setBounds(data.toFitRec.x, data.toFitRec.y, titleWidth, myTabs.headerFitSize.height);
+    data.titleRect.setBounds(data.toFitRec.x, data.toFitRec.y, titleWidth, myTabs.getHeaderFitSize().height);
     data.entryPointRect.setBounds(data.toFitRec.x + data.toFitRec.width - myTabs.getEntryPointPreferredSize().width - myTabs.getActionsInsets().right,
                                   data.toFitRec.y,
                                   myTabs.getEntryPointPreferredSize().width,
-                                  myTabs.headerFitSize.height);
+                                  myTabs.getHeaderFitSize().height);
     data.moreRect.setBounds(data.toFitRec.x + data.toFitRec.width - myTabs.getEntryPointPreferredSize().width - myTabs.getActionsInsets().right,
-                            data.toFitRec.y, 0, myTabs.headerFitSize.height);
+                            data.toFitRec.y, 0, myTabs.getHeaderFitSize().height);
     calculateLengths(data);
 
     int eachX = data.titleRect.x + data.titleRect.width;
@@ -89,13 +89,13 @@ public class TableLayout extends TabLayout {
         if (requiredRowsPinned == 0) {
           requiredRowsPinned = 1;
         }
-        myTabs.layout(eachLabel, eachX, eachY, width, myTabs.headerFitSize.height);
+        myTabs.layout(eachLabel, eachX, eachY, width, myTabs.getHeaderFitSize().height);
         data.bounds.put(eachInfo, eachLabel.getBounds());
       }
       else {
         if ((!scrollable && eachX + width + hGap > maxX - entryPointMargin && !singleRow) || (showPinnedTabsSeparately && eachLabel.isNextToLastPinned())) {
           requiredRowsUnpinned++;
-          eachY += myTabs.headerFitSize.height;
+          eachY += myTabs.getHeaderFitSize().height;
           eachX = data.toFitRec.x;
         }
         else if (requiredRowsUnpinned == 0) {
@@ -108,8 +108,8 @@ public class TableLayout extends TabLayout {
           }
         }
 
-        myTabs.layout(eachLabel, eachX - getScrollOffset(), eachY, width == 1 ? 0 : width, myTabs.headerFitSize.height);
-        Rectangle rectangle = new Rectangle(myTabs.headerFitSize);
+        myTabs.layout(eachLabel, eachX - getScrollOffset(), eachY, width == 1 ? 0 : width, myTabs.getHeaderFitSize().height);
+        Rectangle rectangle = new Rectangle(myTabs.getHeaderFitSize());
         data.bounds.put(eachInfo, eachLabel.getBounds());
         int intersection = eachLabel.getBounds().intersection(rectangle).width;
         if (scrollable && intersection < eachLabel.getBounds().width) {
@@ -121,7 +121,7 @@ public class TableLayout extends TabLayout {
         entryPointMargin = singleRow ? 0 : - data.moreRect.width;
       }
     }
-    if (requiredRowsPinned > 0 && requiredRowsUnpinned > 0) data.moreRect.y += myTabs.headerFitSize.height /*+ myTabs.getSeparatorWidth()*/;
+    if (requiredRowsPinned > 0 && requiredRowsUnpinned > 0) data.moreRect.y += myTabs.getHeaderFitSize().height /*+ myTabs.getSeparatorWidth()*/;
 
     if (data.invisible.isEmpty()) {
       data.moreRect.setBounds(0, 0, 0, 0);
@@ -169,7 +169,7 @@ public class TableLayout extends TabLayout {
             int moreWidth = getMoreRectAxisSize();
             int entryPointsWidth = pinned.isEmpty() ? myTabs.getEntryPointPreferredSize().width : 0;
             data.moreRect.setBounds(data.toFitRec.x + data.toFitRec.width - moreWidth - entryPointsWidth - myTabs.getActionsInsets().right,
-                                    myTabs.getLayoutInsets().top, moreWidth, myTabs.headerFitSize.height);
+                                    myTabs.getLayoutInsets().top, moreWidth, myTabs.getHeaderFitSize().height);
             calculateRawLengths(unpinned, data);
           }
         }
@@ -182,7 +182,7 @@ public class TableLayout extends TabLayout {
       calculateRawLengths(data.myVisibleInfos, data);
       if (getTotalLength(data.myVisibleInfos, data) > standardLengthToFit) {
         int moreWidth = getMoreRectAxisSize();
-        data.moreRect.setBounds(data.toFitRec.x + data.toFitRec.width - moreWidth, data.toFitRec.y, moreWidth, myTabs.headerFitSize.height);
+        data.moreRect.setBounds(data.toFitRec.x + data.toFitRec.width - moreWidth, data.toFitRec.y, moreWidth, myTabs.getHeaderFitSize().height);
         calculateRawLengths(data.myVisibleInfos, data);
       }
     }
@@ -210,14 +210,14 @@ public class TableLayout extends TabLayout {
     int lengthEstimation = 0;
 
     for (TabInfo tabInfo : list) {
-      lengthEstimation += Math.max(getMinTabWidth(), myTabs.infoToLabel.get(tabInfo).getPreferredSize().width);
+      lengthEstimation += Math.max(getMinTabWidth(), myTabs.getInfoToLabel().get(tabInfo).getPreferredSize().width);
     }
 
     final int extraWidth = toFitLength - lengthEstimation;
 
     for (Iterator<TabInfo> iterator = list.iterator(); iterator.hasNext(); ) {
       TabInfo tabInfo = iterator.next();
-      final TabLabel label = myTabs.infoToLabel.get(tabInfo);
+      final TabLabel label = myTabs.getInfoToLabel().get(tabInfo);
 
       int length;
       int lengthIncrement = label.getPreferredSize().width;
@@ -255,13 +255,13 @@ public class TableLayout extends TabLayout {
 
     Rectangle rect = new Rectangle(data.moreRect);
     rect.y += myTabs.getBorderThickness();
-    myTabs.myMoreToolbar.getComponent().setBounds(rect);
+    myTabs.getMoreToolbar().getComponent().setBounds(rect);
 
-    ActionToolbar entryPointToolbar = myTabs.entryPointToolbar;
+    ActionToolbar entryPointToolbar = myTabs.getEntryPointToolbar();
     if (entryPointToolbar != null) {
       entryPointToolbar.getComponent().setBounds(data.entryPointRect);
     }
-    myTabs.titleWrapper.setBounds(data.titleRect);
+    myTabs.getTitleWrapper().setBounds(data.titleRect);
 
     Insets insets = myTabs.getLayoutInsets();
     int eachY = insets.top;
@@ -276,11 +276,11 @@ public class TableLayout extends TabLayout {
     }
 
     if (myTabs.getSelectedInfo() != null) {
-      final JBTabsImpl.Toolbar selectedToolbar = myTabs.infoToToolbar.get(myTabs.getSelectedInfo());
+      final JBTabsImpl.Toolbar selectedToolbar = myTabs.getInfoToToolbar().get(myTabs.getSelectedInfo());
 
       final int componentY = (unitedTabArea != null ? unitedTabArea.y + unitedTabArea.height : eachY) + (myTabs.isEditorTabs() ? 0 : 2) -
                              myTabs.getLayoutInsets().top;
-      if (!myTabs.myHorizontalSide && selectedToolbar != null && !selectedToolbar.isEmpty()) {
+      if (!myTabs.getHorizontalSide() && selectedToolbar != null && !selectedToolbar.isEmpty()) {
         final int toolbarWidth = selectedToolbar.getPreferredSize().width;
         final int vSeparatorWidth = toolbarWidth > 0 ? myTabs.getSeparatorWidth() : 0;
         if (myTabs.isSideComponentBefore()) {
@@ -322,7 +322,7 @@ public class TableLayout extends TabLayout {
 
     Rectangle area = new Rectangle(myLastTableLayout.toFitRec.width, tabLabel.getBounds().height);
     for (int i = 0; i < myLastTableLayout.myVisibleInfos.size(); i++) {
-      area = area.union(myTabs.infoToLabel.get(myLastTableLayout.myVisibleInfos.get(i)).getBounds());
+      area = area.union(myTabs.getInfoToLabel().get(myLastTableLayout.myVisibleInfos.get(i)).getBounds());
     }
     return Math.abs(deltaY) > area.height * getDragOutMultiplier();
   }
@@ -345,8 +345,8 @@ public class TableLayout extends TabLayout {
       for (int i = 0; i < myLastTableLayout.myVisibleInfos.size() - 1; i++) {
         TabInfo firstInfo = myLastTableLayout.myVisibleInfos.get(i);
         TabInfo secondInfo = myLastTableLayout.myVisibleInfos.get(i + 1);
-        TabLabel first = myTabs.infoToLabel.get(firstInfo);
-        TabLabel second = myTabs.infoToLabel.get(secondInfo);
+        TabLabel first = myTabs.getInfoToLabel().get(firstInfo);
+        TabLabel second = myTabs.getInfoToLabel().get(secondInfo);
 
         Rectangle firstBounds = first.getBounds();
         Rectangle secondBounds = second.getBounds();

@@ -83,18 +83,18 @@ open class JBTabsImpl(private var myProject: Project?,
                                                       PopupMenuListener, JBTabsPresentation, Queryable, UISettingsListener,
                                                       QuickActionProvider, MorePopupAware, Accessible {
   companion object {
-    @JvmStatic
+    @JvmField
     val PINNED = Key.create<Boolean>("pinned")
 
-    @JvmStatic
+    @JvmField
     val SIDE_TABS_SIZE_LIMIT_KEY = Key.create<Int>("SIDE_TABS_SIZE_LIMIT_KEY")
 
     private val HIDDEN_INFOS_SELECT_INDEX_KEY = Key.create<Int>("HIDDEN_INFOS_SELECT_INDEX")
 
-    @JvmStatic
+    @JvmField
     val MIN_TAB_WIDTH = scale(75)
 
-    @JvmStatic
+    @JvmField
     val DEFAULT_MAX_TAB_WIDTH = scale(300)
 
     private val ABC_COMPARATOR: Comparator<TabInfo> = Comparator { o1, o2 -> NaturalComparator.INSTANCE.compare(o1.text, o2.text) }
@@ -175,8 +175,11 @@ open class JBTabsImpl(private var myProject: Project?,
       return false
     }
 
+    @JvmStatic
     fun resetLayout(c: JComponent?) {
-      if (c == null) return
+      if (c == null) {
+        return
+      }
       c.putClientProperty(LAYOUT_DONE, null)
     }
   }
@@ -185,12 +188,16 @@ open class JBTabsImpl(private var myProject: Project?,
   private val infoToPage: MutableMap<TabInfo, AccessibleTabPage> = HashMap()
   private val myHiddenInfos: MutableMap<TabInfo, Int> = HashMap()
   private var mySelectedInfo: TabInfo? = null
-  val infoToLabel: MutableMap<TabInfo?, TabLabel> = HashMap()
-  val infoToToolbar: MutableMap<TabInfo?, Toolbar> = HashMap()
-  val myMoreToolbar: ActionToolbar?
+
+  val infoToLabel: MutableMap<TabInfo, TabLabel> = HashMap()
+  val infoToToolbar: MutableMap<TabInfo, Toolbar> = HashMap()
+
+  val moreToolbar: ActionToolbar?
   var entryPointToolbar: ActionToolbar? = null
   val titleWrapper = NonOpaquePanel()
+
   var headerFitSize: Dimension? = null
+
   private var innerInsets: Insets = JBInsets.emptyInsets()
   private val myTabMouseListeners = ContainerUtil.createLockFreeCopyOnWriteList<EventListener>()
   private val myTabListeners = ContainerUtil.createLockFreeCopyOnWriteList<TabsListener>()
@@ -198,11 +205,11 @@ open class JBTabsImpl(private var myProject: Project?,
   private var myPopupGroup: Supplier<out ActionGroup>? = null
   var popupPlace: String? = null
     private set
-  var myPopupInfo: TabInfo? = null
+  var popupInfo: TabInfo? = null
   val myNavigationActions: DefaultActionGroup
-  val myPopupListener: PopupMenuListener
-  var myActivePopup: JPopupMenu? = null
-  var myHorizontalSide = true
+  val popupListener: PopupMenuListener
+  var activePopup: JPopupMenu? = null
+  var horizontalSide = true
   var isSideComponentOnTabs = true
     private set
   var isSideComponentBefore = true
@@ -219,19 +226,22 @@ open class JBTabsImpl(private var myProject: Project?,
     private set
   var lastLayoutPass: LayoutPassInfo? = null
     private set
-  var myForcedRelayout = false
+
+  internal var forcedRelayout: Boolean = false
+    private set
+
   private var uiDecorator: UiDecorator? = null
   private var myPaintFocus = false
   private var myHideTabs = false
   private var myHideTopPanel = false
   private var isRequestFocusOnLastFocusedComponent = false
   private var listenerAdded = false
-  val myAttractions: MutableSet<TabInfo> = HashSet()
+  val attractions: MutableSet<TabInfo> = HashSet()
   private val myAnimator: Animator
   private var allTabs: List<TabInfo>? = null
   private var focusManager: IdeFocusManager
   private val nestedTabs: MutableSet<JBTabsImpl> = HashSet()
-  var myAddNavigationGroup = true
+  var addNavigationGroup: Boolean = true
   private var myActiveTabFillIn: Color? = null
   private var myTabLabelActionsAutoHide = false
   private val myTabActionsAutoHideListener = TabActionsAutoHideListener()
@@ -254,7 +264,7 @@ open class JBTabsImpl(private var myProject: Project?,
   override var dropInfoIndex = 0
 
   override var dropSide = -1
-  protected var myShowDropLocation = true
+  protected var showDropLocation: Boolean = true
   private var myOldSelection: TabInfo? = null
   private var mySelectionChangeHandler: JBTabs.SelectionChangeHandler? = null
   private var deferredFocusRequest: Runnable? = null
@@ -262,7 +272,8 @@ open class JBTabsImpl(private var myProject: Project?,
   val tabPainterAdapter = createTabPainterAdapter()
   val tabPainter = tabPainterAdapter.tabPainter
 
-  open var isAlphabeticalMode = false
+  private var alphabeticalMode = false
+  open fun isAlphabeticalMode(): Boolean = alphabeticalMode
 
   private var mySupportsCompression = false
   private var emptyText: String? = null
@@ -302,7 +313,7 @@ open class JBTabsImpl(private var myProject: Project?,
     singleRowLayout = createSingleRowLayout()
     setLayout(singleRowLayout)
     mySplitter.divider.isOpaque = false
-    myPopupListener = object : PopupMenuListener {
+    popupListener = object : PopupMenuListener {
       override fun popupMenuWillBecomeVisible(e: PopupMenuEvent) {}
       override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent) {
         disposePopupListener()
@@ -313,8 +324,8 @@ open class JBTabsImpl(private var myProject: Project?,
       }
     }
     val actionManager = ActionManager.getInstance()
-    myMoreToolbar = createToolbar(DefaultActionGroup(actionManager.getAction("TabList")))
-    add(myMoreToolbar.component)
+    moreToolbar = createToolbar(DefaultActionGroup(actionManager.getAction("TabList")))
+    add(moreToolbar.component)
     val entryPointActionGroup = entryPointActionGroup
     if (entryPointActionGroup != null) {
       entryPointToolbar = createToolbar(entryPointActionGroup)
@@ -508,7 +519,7 @@ open class JBTabsImpl(private var myProject: Project?,
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
     for ((info, label) in infoToLabel) {
-      info!!.revalidate()
+      info.revalidate()
       label.setTabActions(info.tabLabelActions)
     }
     updateRowLayout()
@@ -1318,7 +1329,7 @@ open class JBTabsImpl(private var myProject: Project?,
                              addNavigationGroup: Boolean): JBTabs {
     myPopupGroup = popupGroup
     popupPlace = place
-    myAddNavigationGroup = addNavigationGroup
+    this.addNavigationGroup = addNavigationGroup
     return this
   }
 
@@ -1637,16 +1648,16 @@ open class JBTabsImpl(private var myProject: Project?,
 
   private fun updateAttraction(tabInfo: TabInfo, start: Boolean) {
     if (start) {
-      myAttractions.add(tabInfo)
+      attractions.add(tabInfo)
     }
     else {
-      myAttractions.remove(tabInfo)
+      attractions.remove(tabInfo)
       tabInfo.blinkCount = 0
     }
     if (start && !myAnimator.isRunning) {
       myAnimator.resume()
     }
-    else if (!start && myAttractions.isEmpty()) {
+    else if (!start && attractions.isEmpty()) {
       myAnimator.suspend()
       repaintAttractions()
     }
@@ -1771,7 +1782,7 @@ open class JBTabsImpl(private var myProject: Project?,
     for (each in myHiddenInfos.keys) {
       result.add(getIndexInVisibleArray(each), each)
     }
-    if (isAlphabeticalMode) {
+    if (isAlphabeticalMode()) {
       sortTabsAlphabetically(result)
     }
     allTabs = result
@@ -1779,7 +1790,7 @@ open class JBTabsImpl(private var myProject: Project?,
   }
 
   override fun getTargetInfo(): TabInfo? {
-    return if (myPopupInfo != null) myPopupInfo else selectedInfo
+    return if (popupInfo != null) popupInfo else selectedInfo
   }
 
   override fun popupMenuWillBecomeVisible(e: PopupMenuEvent) {}
@@ -1795,8 +1806,8 @@ open class JBTabsImpl(private var myProject: Project?,
     //todo [kirillk] dirty hack, should rely on ActionManager to understand that menu item was either chosen on or cancelled
     SwingUtilities.invokeLater {
       // No need to reset popup info if a new popup has been already opened and myPopupInfo refers to the corresponding info.
-      if (myActivePopup == null) {
-        myPopupInfo = null
+      if (activePopup == null) {
+        popupInfo = null
       }
     }
   }
@@ -1824,7 +1835,7 @@ open class JBTabsImpl(private var myProject: Project?,
       if (group != null) {
         val place = info.place
         val toolbar = ActionManager.getInstance().createActionToolbar(
-          if (place != null && place != ActionPlaces.UNKNOWN) place else "JBTabs", group, tabs.myHorizontalSide)
+          if (place != null && place != ActionPlaces.UNKNOWN) place else "JBTabs", group, tabs.horizontalSide)
         toolbar.targetComponent = info.actionsContextComponent
         val actionToolbar = toolbar.component
         add(actionToolbar, BorderLayout.CENTER)
@@ -1847,7 +1858,7 @@ open class JBTabsImpl(private var myProject: Project?,
     override fun getPreferredSize(): Dimension {
       val base = super.getPreferredSize()
       val label = tabs.infoToLabel[info]
-      return if (tabs.myHorizontalSide && tabs.isSideComponentOnTabs && label != null && base.height > 0) {
+      return if (tabs.horizontalSide && tabs.isSideComponentOnTabs && label != null && base.height > 0) {
         Dimension(base.width, label.preferredSize.height - tabs.borderThickness)
       }
       else base
@@ -1891,12 +1902,12 @@ open class JBTabsImpl(private var myProject: Project?,
       for (each in labels) {
         each.setTabActionsAutoHide(myTabLabelActionsAutoHide)
       }
-      val moreBoundsBeforeLayout = myMoreToolbar!!.component.bounds
+      val moreBoundsBeforeLayout = moreToolbar!!.component.bounds
       val entryPointBoundsBeforeLayout = if (entryPointToolbar != null) entryPointToolbar!!.component.bounds else Rectangle(0, 0, 0, 0)
       headerFitSize = computeHeaderFitSize()
       val visible: MutableList<TabInfo?> = ArrayList(
         visibleInfos)
-      if (dropInfo != null && !visible.contains(dropInfo) && myShowDropLocation) {
+      if (dropInfo != null && !visible.contains(dropInfo) && showDropLocation) {
         if (dropInfoIndex >= 0 && dropInfoIndex < visible.size) {
           visible.add(dropInfoIndex, dropInfo)
         }
@@ -1943,18 +1954,18 @@ open class JBTabsImpl(private var myProject: Project?,
       myScrollBar.orientation = if (isHorizontalTabs) Adjustable.HORIZONTAL else Adjustable.VERTICAL
       myScrollBar.bounds = scrollBarBounds
       updateScrollBarModel()
-      updateToolbarIfVisibilityChanged(myMoreToolbar, moreBoundsBeforeLayout)
+      updateToolbarIfVisibilityChanged(moreToolbar, moreBoundsBeforeLayout)
       updateToolbarIfVisibilityChanged(entryPointToolbar, entryPointBoundsBeforeLayout)
     }
     finally {
-      myForcedRelayout = false
+      forcedRelayout = false
     }
   }
 
   private val tabsAreaWidth: Int
     get() {
-      if (myMoreToolbar!!.component.isVisible) {
-        return myMoreToolbar.component.x
+      if (moreToolbar!!.component.isVisible) {
+        return moreToolbar.component.x
       }
       else if (entryPointToolbar != null && entryPointToolbar!!.component.isVisible && tableLayout.myLastTableLayout == null) {
         return entryPointToolbar!!.component.x
@@ -1964,7 +1975,7 @@ open class JBTabsImpl(private var myProject: Project?,
 
   private fun centerizeMoreToolbarPosition() {
     val moreRect = moreRect
-    val mComponent = myMoreToolbar!!.component
+    val mComponent = moreToolbar!!.component
     if (moreRect != null && !moreRect.isEmpty) {
       val bounds = Rectangle(moreRect)
       if (!ExperimentalUI.isNewUI() || !tabsPosition.isSide) {
@@ -2028,10 +2039,10 @@ open class JBTabsImpl(private var myProject: Project?,
   private fun computeHeaderFitSize(): Dimension {
     val max = computeMaxSize()
     if (position == JBTabsPosition.top || position == JBTabsPosition.bottom) {
-      return Dimension(size.width, if (myHorizontalSide) Math.max(max.myLabel.height, max.myToolbar.height) else max.myLabel.height)
+      return Dimension(size.width, if (horizontalSide) Math.max(max.myLabel.height, max.myToolbar.height) else max.myLabel.height)
     }
     else {
-      return Dimension(max.myLabel.width + if (myHorizontalSide) 0 else max.myToolbar.width, size.height)
+      return Dimension(max.myLabel.width + if (horizontalSide) 0 else max.myToolbar.width, size.height)
     }
   }
 
@@ -2108,7 +2119,7 @@ open class JBTabsImpl(private var myProject: Project?,
 
   private fun drawToolbarSeparator(g: Graphics) {
     val toolbar = infoToToolbar[selectedInfo]
-    if (toolbar != null && toolbar.parent === this && !isSideComponentOnTabs && !myHorizontalSide && isHideTabs) {
+    if (toolbar != null && toolbar.parent === this && !isSideComponentOnTabs && !horizontalSide && isHideTabs) {
       val bounds = toolbar.bounds
       if (bounds.width > 0) {
         if (isSideComponentBefore) {
@@ -2133,7 +2144,7 @@ open class JBTabsImpl(private var myProject: Project?,
       if (getBoolean("editor.keep.pinned.tabs.on.left")) {
         groupPinnedFirst(myVisibleInfos)
       }
-      if (isAlphabeticalMode) {
+      if (isAlphabeticalMode()) {
         val result = ArrayList(myVisibleInfos)
         sortTabsAlphabetically(result)
         return result
@@ -2293,7 +2304,7 @@ open class JBTabsImpl(private var myProject: Project?,
     if (removeNotifyInProgress) {
       LOG.warn(IllegalStateException("removeNotify in progress"))
     }
-    if (myPopupInfo == info) myPopupInfo = null
+    if (popupInfo == info) popupInfo = null
     if (!isDropTarget) {
       if (info == null || !tabs.contains(info)) return ActionCallback.DONE
     }
@@ -2475,7 +2486,7 @@ open class JBTabsImpl(private var myProject: Project?,
       val group: ActionGroup
       group = if (tabActionGroup != null && entryPointActionGroup != null) {
         // check that more toolbar and entry point toolbar are in the same row
-        if (!myMoreToolbar!!.component.bounds.isEmpty &&
+        if (!moreToolbar!!.component.bounds.isEmpty &&
             tabActionGroup.getChildren(null).isNotEmpty() &&
             (!TabLayout.showPinnedTabsSeparately() || tabs.all { !it.isPinned })) {
           DefaultActionGroup(FakeEmptyAction(), Separator.create(), tabActionGroup, Separator.create(), entryPointActionGroup)
@@ -2503,7 +2514,7 @@ open class JBTabsImpl(private var myProject: Project?,
 
   val actionsInsets: Insets
     /**
-     * @return insets, that should be used to layout [JBTabsImpl.myMoreToolbar] and [JBTabsImpl.entryPointToolbar]
+     * @return insets, that should be used to layout [JBTabsImpl.moreToolbar] and [JBTabsImpl.entryPointToolbar]
      */
     get() = if (ExperimentalUI.isNewUI()) {
       if (position.isSide) JBInsets.create(Insets(4, 8, 4, 3)) else JBInsets.create(Insets(0, 5, 0, 8))
@@ -2536,11 +2547,11 @@ open class JBTabsImpl(private var myProject: Project?,
   }
 
   fun relayout(forced: Boolean, layoutNow: Boolean) {
-    if (!myForcedRelayout) {
-      myForcedRelayout = forced
+    if (!forcedRelayout) {
+      forcedRelayout = forced
     }
-    if (myMoreToolbar != null) {
-      myMoreToolbar.component.isVisible = !isHideTabs &&
+    if (moreToolbar != null) {
+      moreToolbar.component.isVisible = !isHideTabs &&
                                           (effectiveLayout is ScrollableSingleRowLayout ||
                                            effectiveLayout is TableLayout)
     }
@@ -2835,14 +2846,14 @@ open class JBTabsImpl(private var myProject: Project?,
   }
 
   private fun disposePopupListener() {
-    if (myActivePopup != null) {
-      myActivePopup!!.removePopupMenuListener(myPopupListener)
-      myActivePopup = null
+    if (activePopup != null) {
+      activePopup!!.removePopupMenuListener(popupListener)
+      activePopup = null
     }
   }
 
   override fun setSideComponentVertical(vertical: Boolean): JBTabsPresentation {
-    myHorizontalSide = !vertical
+    horizontalSide = !vertical
     for (each in myVisibleInfos) {
       each.changeSupport.firePropertyChange(TabInfo.ACTION_GROUP, "new1", "new2")
     }
@@ -2883,7 +2894,7 @@ open class JBTabsImpl(private var myProject: Project?,
   }
 
   val isSideComponentVertical: Boolean
-    get() = !myHorizontalSide
+    get() = !horizontalSide
 
   override fun setUiDecorator(decorator: UiDecorator?): JBTabsPresentation {
     uiDecorator = decorator ?: defaultDecorator
@@ -3040,8 +3051,8 @@ open class JBTabsImpl(private var myProject: Project?,
     return this
   }
 
-  override fun setAlphabeticalMode(alphabeticalMode: Boolean): JBTabsPresentation {
-    isAlphabeticalMode = alphabeticalMode
+  override fun setAlphabeticalMode(value: Boolean): JBTabsPresentation {
+    alphabeticalMode = value
     return this
   }
 
@@ -3073,8 +3084,8 @@ open class JBTabsImpl(private var myProject: Project?,
     if (dropInfo != null) {
       val dropInfo = dropInfo!!
       this.dropInfo = null
-      myShowDropLocation = true
-      myForcedRelayout = true
+      showDropLocation = true
+      forcedRelayout = true
       dropInfoIndex = -1
       dropSide = -1
       doRemoveTab(info = dropInfo, forcedSelectionTransfer = null, isDropTarget = true)

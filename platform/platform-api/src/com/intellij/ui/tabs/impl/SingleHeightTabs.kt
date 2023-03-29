@@ -8,7 +8,8 @@ import com.intellij.ui.tabs.TabInfo
 import com.intellij.util.ui.JBUI
 import java.awt.Dimension
 
-open class SingleHeightTabs(project: Project?, focusManager: IdeFocusManager?, parent: Disposable) : JBEditorTabs(project, focusManager, parent) {
+open class SingleHeightTabs(project: Project?, focusManager: IdeFocusManager?, parent: Disposable) :
+  JBEditorTabs(project, focusManager, parent) {
   companion object {
     const val UNSCALED_PREF_HEIGHT = 28
   }

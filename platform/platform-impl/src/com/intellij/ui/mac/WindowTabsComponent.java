@@ -78,7 +78,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
       @Override
       public @NotNull UiDecoration getDecoration() {
         //noinspection UseDPIAwareInsets
-        return new UiDecoration(JBFont.medium(), new Insets(-1, dropInfo == null ? 0 : -1, -1, -1));
+        return new UiDecoration(JBFont.medium(), new Insets(-1, getDropInfo() == null ? 0 : -1, -1, -1));
       }
     });
 
@@ -113,7 +113,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
     return source != null ? source : super.getDraggedTabSelectionInfo();
   }
 
-  private static boolean isSelectionClick(@NotNull MouseEvent e) {
+  private static boolean _isSelectionClick(@NotNull MouseEvent e) {
     return e.getClickCount() == 1 && !e.isPopupTrigger() && e.getButton() == MouseEvent.BUTTON1
            && !e.isControlDown() && !e.isAltDown() && !e.isMetaDown();
   }
@@ -129,7 +129,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
         addMouseListener(new MouseAdapter() {
           @Override
           public void mousePressed(MouseEvent e) {
-            if (!UIUtil.isCloseClick(e, MouseEvent.MOUSE_PRESSED) && !isSelectionClick(e)) {
+            if (!UIUtil.isCloseClick(e, MouseEvent.MOUSE_PRESSED) && !_isSelectionClick(e)) {
               handlePopup(e);
             }
           }
@@ -141,7 +141,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
 
           @Override
           public void mouseClicked(MouseEvent e) {
-            if (isSelectionClick(e)) {
+            if (_isSelectionClick(e)) {
               Component c = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
               if (c instanceof InplaceButton) return;
               myTabs.select(info, true);
@@ -547,7 +547,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
 
       @Override
       public void dragOutStarted(@NotNull MouseEvent mouseEvent, @NotNull TabInfo info) {
-        WindowFrameDockableContent content = new WindowFrameDockableContent(WindowTabsComponent.this, info, infoToLabel.get(info));
+        WindowFrameDockableContent content = new WindowFrameDockableContent(WindowTabsComponent.this, info, getInfoToLabel().get(info));
         info.setHidden(true);
         DockManagerImpl manager = getDockManager();
         updateDockContainers(manager);

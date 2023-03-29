@@ -15,7 +15,6 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 
 public abstract class SingleRowLayout extends TabLayout {
-
   final JBTabsImpl myTabs;
   public SingleRowPassInfo myLastSingRowLayout;
 
@@ -59,13 +58,13 @@ public abstract class SingleRowLayout extends TabLayout {
   protected boolean checkLayoutLabels(SingleRowPassInfo data) {
     boolean layoutLabels = true;
 
-    if (!myTabs.myForcedRelayout &&
+    if (!myTabs.getForcedRelayout$intellij_platform_ide() &&
         myLastSingRowLayout != null &&
         myLastSingRowLayout.contentCount == myTabs.getTabCount() &&
         myLastSingRowLayout.layoutSize.equals(myTabs.getSize()) &&
         myLastSingRowLayout.scrollOffset == getScrollOffset()) {
       for (TabInfo each : data.myVisibleInfos) {
-        final TabLabel eachLabel = myTabs.infoToLabel.get(each);
+        final TabLabel eachLabel = myTabs.getInfoToLabel().get(each);
         if (!eachLabel.isValid()) {
           layoutLabels = true;
           break;
@@ -121,8 +120,8 @@ public abstract class SingleRowLayout extends TabLayout {
 
     data.tabRectangle = new Rectangle();
 
-    if (data.toLayout.size() > 0) {
-      final TabLabel firstLabel = myTabs.infoToLabel.get(data.toLayout.get(0));
+    if (!data.toLayout.isEmpty()) {
+      final TabLabel firstLabel = myTabs.getInfoToLabel().get(data.toLayout.get(0));
       final TabLabel lastLabel = findLastVisibleLabel(data);
       if (firstLabel != null && lastLabel != null) {
         data.tabRectangle.x = firstLabel.getBounds().x;
@@ -140,7 +139,7 @@ public abstract class SingleRowLayout extends TabLayout {
 
   @Nullable
   protected TabLabel findLastVisibleLabel(SingleRowPassInfo data) {
-    return myTabs.infoToLabel.get(data.toLayout.get(data.toLayout.size() - 1));
+    return myTabs.getInfoToLabel().get(data.toLayout.get(data.toLayout.size() - 1));
   }
 
   protected void prepareLayoutPassInfo(SingleRowPassInfo data, TabInfo selected) {
@@ -149,11 +148,11 @@ public abstract class SingleRowLayout extends TabLayout {
       data.insets.left += myTabs.getFirstTabOffset();
     }
 
-    final JBTabsImpl.Toolbar selectedToolbar = myTabs.infoToToolbar.get(selected);
+    final JBTabsImpl.Toolbar selectedToolbar = myTabs.getInfoToToolbar().get(selected);
     data.hToolbar =
-      new WeakReference<>(selectedToolbar != null && myTabs.myHorizontalSide && !selectedToolbar.isEmpty() ? selectedToolbar : null);
+      new WeakReference<>(selectedToolbar != null && myTabs.isHorizontalTabs() && !selectedToolbar.isEmpty() ? selectedToolbar : null);
     data.vToolbar =
-      new WeakReference<>(selectedToolbar != null && !myTabs.myHorizontalSide && !selectedToolbar.isEmpty() ?  selectedToolbar : null);
+      new WeakReference<>(selectedToolbar != null && !myTabs.getHorizontalSide() && !selectedToolbar.isEmpty() ? selectedToolbar : null);
     data.toFitLength = getStrategy().getToFitLength(data);
   }
 
@@ -163,7 +162,7 @@ public abstract class SingleRowLayout extends TabLayout {
   }
 
   protected void layoutMoreButton(SingleRowPassInfo data) {
-    if (data.toDrop.size() > 0) {
+    if (!data.toDrop.isEmpty()) {
       data.moreRect = getStrategy().getMoreRect(data);
     }
   }
@@ -175,7 +174,7 @@ public abstract class SingleRowLayout extends TabLayout {
   protected void layoutLabels(final SingleRowPassInfo data) {
     boolean layoutStopped = false;
     for (TabInfo eachInfo : data.toLayout) {
-      final TabLabel label = myTabs.infoToLabel.get(eachInfo);
+      final TabLabel label = myTabs.getInfoToLabel().get(eachInfo);
       if (layoutStopped) {
         final Rectangle rec = getStrategy().getLayoutRect(data, 0, 0);
         myTabs.layout(label, rec);
@@ -196,7 +195,7 @@ public abstract class SingleRowLayout extends TabLayout {
     }
 
     for (TabInfo eachInfo : data.toDrop) {
-      JBTabsImpl.resetLayout(myTabs.infoToLabel.get(eachInfo));
+      JBTabsImpl.Companion.resetLayout(myTabs.getInfoToLabel().get(eachInfo));
     }
   }
 
@@ -222,7 +221,7 @@ public abstract class SingleRowLayout extends TabLayout {
   }
 
   protected int getRequiredLength(TabInfo eachInfo) {
-    TabLabel label = myTabs.infoToLabel.get(eachInfo);
+    TabLabel label = myTabs.getInfoToLabel().get(eachInfo);
     return getStrategy().getLengthIncrement(label != null ? label.getPreferredSize() : new Dimension())
                                       + (myTabs.isEditorTabs() ? myTabs.getTabHGap() : 0);
   }
@@ -243,8 +242,8 @@ public abstract class SingleRowLayout extends TabLayout {
 
     if (c instanceof JBTabsImpl) {
       for (int i = 0; i < myLastSingRowLayout.myVisibleInfos.size() - 1; i++) {
-        TabLabel first = myTabs.infoToLabel.get(myLastSingRowLayout.myVisibleInfos.get(i));
-        TabLabel second = myTabs.infoToLabel.get(myLastSingRowLayout.myVisibleInfos.get(i + 1));
+        TabLabel first = myTabs.getInfoToLabel().get(myLastSingRowLayout.myVisibleInfos.get(i));
+        TabLabel second = myTabs.getInfoToLabel().get(myLastSingRowLayout.myVisibleInfos.get(i + 1));
 
         Rectangle firstBounds = first.getBounds();
         Rectangle secondBounds = second.getBounds();

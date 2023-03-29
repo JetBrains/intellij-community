@@ -81,11 +81,11 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
   @Override
   public void processDropOver(TabInfo over, RelativePoint relativePoint) {
     final Point point = relativePoint.getPoint(getComponent());
-    myShowDropLocation = shouldAddToGlobal(point);
+    setShowDropLocation(shouldAddToGlobal(point));
     super.processDropOver(over, relativePoint);
-    for (Map.Entry<TabInfo, TabLabel> entry : infoToLabel.entrySet()) {
+    for (Map.Entry<TabInfo, TabLabel> entry : getInfoToLabel().entrySet()) {
       final TabLabel label = entry.getValue();
-      if (label.getBounds().contains(point) && dropInfo != entry.getKey()) {
+      if (label.getBounds().contains(point) && getDropInfo() != entry.getKey()) {
         select(entry.getKey(), false);
         break;
       }
@@ -152,8 +152,8 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
       }
 
       getTabPainter()
-        .paintBorderLine((Graphics2D)g, getBorderThickness(), new Point(x, y + headerFitSize.height),
-                         new Point(x + width, y + headerFitSize.height));
+        .paintBorderLine((Graphics2D)g, getBorderThickness(), new Point(x, y + getHeaderFitSize().height),
+                         new Point(x + width, y + getHeaderFitSize().height));
     }
 
     public void setSideMask(@SideBorder.SideMask int mask) {

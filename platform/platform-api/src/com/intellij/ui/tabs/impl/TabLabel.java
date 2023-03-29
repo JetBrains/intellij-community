@@ -393,7 +393,7 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
 
     String place = myTabs.getPopupPlace();
     place = place != null ? place : ActionPlaces.UNKNOWN;
-    myTabs.myPopupInfo = myInfo;
+    myTabs.setPopupInfo(myInfo);
 
     final DefaultActionGroup toShow = new DefaultActionGroup();
     if (myTabs.getPopupGroup() != null) {
@@ -403,17 +403,17 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
 
     JBTabsImpl tabs =
       (JBTabsImpl)JBTabsEx.NAVIGATION_ACTIONS_KEY.getData(DataManager.getInstance().getDataContext(e.getComponent(), e.getX(), e.getY()));
-    if (tabs == myTabs && myTabs.myAddNavigationGroup) {
-      toShow.addAll(myTabs.myNavigationActions);
+    if (tabs == myTabs && myTabs.getAddNavigationGroup()) {
+      toShow.addAll(myTabs.getNavigationActions());
     }
 
     if (toShow.getChildrenCount() == 0) return;
 
-    myTabs.myActivePopup = ActionManager.getInstance().createActionPopupMenu(place, toShow).getComponent();
-    myTabs.myActivePopup.addPopupMenuListener(myTabs.myPopupListener);
+    myTabs.setActivePopup(ActionManager.getInstance().createActionPopupMenu(place, toShow).getComponent());
+    myTabs.getActivePopup().addPopupMenuListener(myTabs.getPopupListener());
 
-    myTabs.myActivePopup.addPopupMenuListener(myTabs);
-    JBPopupMenu.showByEvent(e, myTabs.myActivePopup);
+    myTabs.getActivePopup().addPopupMenuListener(myTabs);
+    JBPopupMenu.showByEvent(e, myTabs.getActivePopup());
   }
 
 
@@ -624,7 +624,7 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
   }
 
   public boolean repaintAttraction() {
-    if (!myTabs.myAttractions.contains(myInfo)) {
+    if (!myTabs.getAttractions().contains(myInfo)) {
       if (getLayeredIcon().isLayerEnabled(1)) {
         getLayeredIcon().setLayerEnabled(1, false);
         setAttractionIcon(null);
