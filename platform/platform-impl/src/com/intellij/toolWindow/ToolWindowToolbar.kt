@@ -22,7 +22,6 @@ import java.awt.Color
 import java.awt.Point
 import java.awt.Rectangle
 import javax.swing.JComponent
-import javax.swing.JPanel
 import javax.swing.border.Border
 
 internal abstract class ToolWindowToolbar : JBPanel<ToolWindowToolbar>() {
@@ -36,7 +35,7 @@ internal abstract class ToolWindowToolbar : JBPanel<ToolWindowToolbar>() {
     isOpaque = true
     background = JBUI.CurrentTheme.ToolWindow.background()
 
-    val topWrapper = JPanel(BorderLayout()).apply {
+    val topWrapper = JBPanel<JBPanel<*>>(BorderLayout()).apply {
       border = JBUI.Borders.customLineTop(getBorderColor())
     }
     border = createBorder()
