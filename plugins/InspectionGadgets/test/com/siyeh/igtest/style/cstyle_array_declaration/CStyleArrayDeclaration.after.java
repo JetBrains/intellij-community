@@ -50,4 +50,14 @@ public class CStyleArrayDeclaration
 
     @Target(ElementType.TYPE_USE)
     public @interface Anno {}
+
+    public /*1*/ /*2*/ Integer @A(3) [] @A(4) [] @A(1) [] @A(2) [] test5()  /*3*/  /*4*/ {
+      return null;
+    }
+    String @A(3) [] @A(4) [] @A(1) /*1*/[] @A(2) /*2*/[] string  /*3*/  /*4*/;
+
+    @Target(ElementType.TYPE_USE)
+    @interface A {
+      int value();
+    }
 }

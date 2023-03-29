@@ -50,4 +50,14 @@ public class CStyleArrayDeclaration
 
     @Target(ElementType.TYPE_USE)
     public @interface Anno {}
+
+    public Integer @A(1) /*1*/[] @A(2) /*2*/[] test5() <warning descr="Method 'test5()' has C-style array return type declaration">@A(3) /*3*/[] @A(4) /*4*/[]</warning>  {
+      return null;
+    }
+    String @A(1) /*1*/ [] @A(2) /*2*/[] string <warning descr="Field 'string' has C-style array type declaration">@A(3) /*3*/[] @A(4) /*4*/[]</warning>;
+
+    @Target(ElementType.TYPE_USE)
+    @interface A {
+      int value();
+    }
 }
