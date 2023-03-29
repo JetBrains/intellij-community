@@ -41,7 +41,7 @@ class StrictLocalRepositoryManager implements LocalRepositoryManager {
         entriesCount = zip.size();
       }
       catch (IOException e) {
-        LOG.warn("Unable to read a number of entries in " + archive, e);
+        LOG.warn("Unable to read a number of entries in " + archive + ": " + e.getMessage());
         entriesCount = 0;
       }
       if (entriesCount <= 0) {
