@@ -83,7 +83,7 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
       @Override
       public void mousePressed(final MouseEvent e) {
         if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_PRESSED)) return;
-        if (JBTabsImpl.isSelectionClick(e, false) && myInfo.isEnabled()) {
+        if (JBTabsImpl.isSelectionClick(e) && myInfo.isEnabled()) {
           final TabInfo selectedInfo = myTabs.getSelectedInfo();
           if (selectedInfo != myInfo) {
             myInfo.setPreviousSelection(selectedInfo);
