@@ -82,6 +82,11 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     highlight("""module M { }""")
   }
 
+  fun testFileDuplicateInResourceRoot() {
+    addResourceFile("module-info.java", """module M.test { }""")
+    highlight("""module M { }""")
+  }
+
   fun testWrongFileLocation() {
     highlight("pkg/module-info.java", """<error descr="Module declaration should be located in a module's source root">module M</error> { }""")
   }
