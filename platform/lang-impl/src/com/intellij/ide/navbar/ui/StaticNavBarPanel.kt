@@ -5,6 +5,7 @@ import com.intellij.ide.navbar.ide.*
 import com.intellij.ide.navbar.vm.NavBarVm
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
+import com.intellij.ui.components.JBPanel
 import com.intellij.util.attachAsChildTo
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.Activatable
@@ -16,14 +17,13 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.transformLatest
 import java.awt.BorderLayout
 import java.awt.Window
-import javax.swing.JPanel
 
 internal class StaticNavBarPanel(
   private val project: Project,
   private val cs: CoroutineScope,
   private val updateRequests: Flow<Any>,
   private val requestNavigation: (NavBarVmItem) -> Unit,
-) : JPanel(BorderLayout()), Activatable {
+) : JBPanel<StaticNavBarPanel>(BorderLayout()), Activatable {
 
   private val _window: MutableStateFlow<Window?> = MutableStateFlow(null)
   private val _vm: MutableStateFlow<NavBarVm?> = MutableStateFlow(null)
