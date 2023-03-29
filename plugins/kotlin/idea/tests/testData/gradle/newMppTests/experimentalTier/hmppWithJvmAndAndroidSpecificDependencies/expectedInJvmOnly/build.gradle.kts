@@ -10,4 +10,10 @@ publishing {
     repositories {
         maven("$rootDir/repo")
     }
+
+    publications {
+        create<MavenPublication>("maven") {
+            from(components["java"])
+        }
+    }
 }
