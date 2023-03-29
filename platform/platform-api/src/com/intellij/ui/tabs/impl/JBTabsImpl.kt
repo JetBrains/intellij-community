@@ -13,8 +13,9 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getBoolean
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.fill2DRoundRect
@@ -52,7 +53,6 @@ import com.intellij.util.Alarm
 import com.intellij.util.Function
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.JBIterable
 import com.intellij.util.ui.*
 import com.intellij.util.ui.StartupUiUtil.addAwtListener
 import com.intellij.util.ui.update.LazyUiDisposable
@@ -76,6 +76,10 @@ import javax.swing.event.PopupMenuListener
 import javax.swing.plaf.ComponentUI
 import kotlin.Pair
 
+private val ABC_COMPARATOR: Comparator<TabInfo> = Comparator { o1, o2 -> NaturalComparator.INSTANCE.compare(o1.text, o2.text) }
+private val LOG = logger<JBTabsImpl>()
+private const val SCROLL_BAR_THICKNESS = 3
+
 @DirtyUI
 open class JBTabsImpl(private var myProject: Project?,
                       parentDisposable: Disposable) : JComponent(), JBTabsEx, PropertyChangeListener, TimerListener, DataProvider,
@@ -95,10 +99,6 @@ open class JBTabsImpl(private var myProject: Project?,
 
     @JvmField
     val DEFAULT_MAX_TAB_WIDTH = scale(300)
-
-    private val ABC_COMPARATOR: Comparator<TabInfo> = Comparator { o1, o2 -> NaturalComparator.INSTANCE.compare(o1.text, o2.text) }
-    private val LOG = Logger.getInstance(JBTabsImpl::class.java)
-    private const val SCROLL_BAR_THICKNESS = 3
 
     @JvmField
     val defaultDecorator: UiDecorator = DefaultDecorator()
@@ -122,34 +122,6 @@ open class JBTabsImpl(private var myProject: Project?,
         img = UIUtil.createImage(info.component, 500, 500, BufferedImage.TYPE_INT_ARGB)
       }
       return img
-    }
-
-    private val focusOwner: JComponent?
-      get() {
-        val owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
-        return owner as? JComponent
-      }
-
-    private fun updateToolbarIfVisibilityChanged(toolbar: ActionToolbar?, previousBounds: Rectangle) {
-      if (toolbar == null) return
-      val curBounds = toolbar.component.bounds
-      if (curBounds.isEmpty != previousBounds.isEmpty) {
-        toolbar.updateActionsImmediately()
-      }
-    }
-
-    private val arcSize: Int
-      get() = 4
-
-    private fun sortTabsAlphabetically(tabs: MutableList<TabInfo>) {
-      val lastPinnedIndex = ContainerUtil.lastIndexOf(tabs) { obj: TabInfo -> obj.isPinned }
-      if (lastPinnedIndex == -1 || !getBoolean("editor.keep.pinned.tabs.on.left")) {
-        tabs.sortWith(ABC_COMPARATOR)
-      }
-      else {
-        tabs.subList(0, lastPinnedIndex + 1).sortWith(ABC_COMPARATOR)
-        tabs.subList(lastPinnedIndex + 1, tabs.size).sortWith(ABC_COMPARATOR)
-      }
     }
 
     @JvmStatic
@@ -419,13 +391,8 @@ open class JBTabsImpl(private var myProject: Project?,
       }
     }
     listener1.setupListeners()
-    ClientProperty.put(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Iterable {
-      JBIterable.from(
-        visibleInfos)
-        .filter(Conditions.not(Conditions.`is`(mySelectedInfo)))
-        .transform { info: TabInfo? -> info!!.component }.iterator()
-    } as Iterable<Component?>)
-    val hoverListener: HoverListener = object : HoverListener() {
+    putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, visibleInfos.asSequence().filter { it != mySelectedInfo }.map { it.component })
+    val hoverListener = object : HoverListener() {
       override fun mouseEntered(component: Component, x: Int, y: Int) {
         toggleScrollBar(isInsideTabsArea(x, y))
       }
@@ -462,6 +429,7 @@ open class JBTabsImpl(private var myProject: Project?,
     if (isOn == scrollBarOn) {
       return
     }
+
     scrollBarOn = isOn
     scrollBar.toggle(isOn)
   }
@@ -1216,8 +1184,8 @@ open class JBTabsImpl(private var myProject: Project?,
   private val toFocus: JComponent?
     get() {
       val info = selectedInfo
-      if (LOG.isDebugEnabled) {
-        LOG.debug("selected info: $info")
+      LOG.debug {
+        "selected info: $info"
       }
       if (info == null) return null
       var toFocus: JComponent? = null
@@ -1339,7 +1307,7 @@ open class JBTabsImpl(private var myProject: Project?,
 
   private val isMyChildIsFocusedNow: Boolean
     get() {
-      val owner = focusOwner ?: return false
+      val owner = getFocusOwner() ?: return false
       if (mySelectedInfo != null && !SwingUtilities.isDescendingFrom(owner, mySelectedInfo!!.component)) {
         return false
       }
@@ -1434,7 +1402,7 @@ open class JBTabsImpl(private var myProject: Project?,
 
   protected open val focusOwnerToStore: JComponent?
     get() {
-      val owner = focusOwner ?: return null
+      val owner = getFocusOwner() ?: return null
       val tabs = ComponentUtil.getParentOfType(JBTabsImpl::class.java, owner.parent)
       return if (tabs !== this) null else owner
     }
@@ -2135,7 +2103,7 @@ open class JBTabsImpl(private var myProject: Project?,
 
   open val visibleInfos: List<TabInfo>
     get() {
-      if (getBoolean("editor.keep.pinned.tabs.on.left")) {
+      if (AdvancedSettings.getBoolean("editor.keep.pinned.tabs.on.left")) {
         groupPinnedFirst(myVisibleInfos)
       }
       if (isAlphabeticalMode()) {
@@ -3205,6 +3173,35 @@ open class JBTabsImpl(private var myProject: Project?,
 
   @Deprecated("Not used.")
   fun dispose() {
+  }
+}
+
+private fun getFocusOwner(): JComponent? {
+  return KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner as? JComponent
+}
+
+private fun updateToolbarIfVisibilityChanged(toolbar: ActionToolbar?, previousBounds: Rectangle) {
+  if (toolbar == null) {
+    return
+  }
+
+  val bounds = toolbar.component.bounds
+  if (bounds.isEmpty != previousBounds.isEmpty) {
+    toolbar.updateActionsImmediately()
+  }
+}
+
+private val arcSize: Int
+  get() = 4
+
+private fun sortTabsAlphabetically(tabs: MutableList<TabInfo>) {
+  val lastPinnedIndex = tabs.indexOfLast { it.isPinned }
+  if (lastPinnedIndex == -1 || !AdvancedSettings.getBoolean("editor.keep.pinned.tabs.on.left")) {
+    tabs.sortWith(ABC_COMPARATOR)
+  }
+  else {
+    tabs.subList(0, lastPinnedIndex + 1).sortWith(ABC_COMPARATOR)
+    tabs.subList(lastPinnedIndex + 1, tabs.size).sortWith(ABC_COMPARATOR)
   }
 }
 
