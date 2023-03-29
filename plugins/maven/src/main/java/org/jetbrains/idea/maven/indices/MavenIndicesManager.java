@@ -10,14 +10,12 @@ import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
+import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -30,7 +28,6 @@ import org.jetbrains.idea.reposearch.DependencySearchService;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -43,6 +40,13 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * Get current index state, schedule update index list, check MavenId in index, add data to index.
  */
 public final class MavenIndicesManager implements Disposable {
+  public static final Topic<MavenIndexerListener> INDEXER_TOPIC =
+    new Topic<>(MavenIndexerListener.class.getSimpleName(), MavenIndexerListener.class);
+
+  public interface MavenIndexerListener {
+    void indexUpdated(Set<File> added, Set<File> failedToAdd);
+  }
+
   private final @NotNull Project myProject;
   private final @NotNull MavenIndices myMavenIndices;
 
@@ -160,17 +164,23 @@ public final class MavenIndicesManager implements Disposable {
    * Add artifact info to index async.
    *
    */
-  public Promise<Void> addArtifactIndexAsync(@Nullable MavenId mavenId, @NotNull File artifactFile) {
-    if (myMavenIndices.isNotInit()) return Promises.rejectedPromise();
+  public boolean scheduleArtifactIndexing(@Nullable MavenId mavenId, @NotNull File artifactFile) {
+    if (myMavenIndices.isNotInit()) return false;
     MavenIndex localIndex = myMavenIndices.getIndexHolder().getLocalIndex();
     if (localIndex == null) {
-      return Promises.rejectedPromise();
+      return false;
     }
-    AsyncPromise<Void> result = new AsyncPromise<>();
+    if (mavenId != null) {
+      if (mavenId.getGroupId() == null || mavenId.getArtifactId() == null || mavenId.getVersion() == null) {
+        return false;
+      }
+      if (localIndex.hasVersion(mavenId.getGroupId(), mavenId.getArtifactId(), mavenId.getVersion())) return false;
+    }
+
     AppExecutorUtil.getAppExecutorService().execute(() -> {
-      myIndexFixer.fixIndex(mavenId, artifactFile, localIndex).processed(result);
+      myIndexFixer.fixIndex(mavenId, artifactFile, localIndex);
     });
-    return result;
+    return true;
   }
 
   /**
@@ -207,7 +217,7 @@ public final class MavenIndicesManager implements Disposable {
   }
 
   private final class IndexFixer {
-    private final ConcurrentLinkedQueue<Pair<File, AsyncPromise<Void>>> queueToAdd = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<File> queueToAdd = new ConcurrentLinkedQueue<>();
     private final MergingUpdateQueue myMergingUpdateQueue;
     private final AddToIndexRunnable taskConsumer = new AddToIndexRunnable();
 
@@ -217,16 +227,8 @@ public final class MavenIndicesManager implements Disposable {
       ).usePassThroughInUnitTestMode();
     }
 
-    public Promise<Void> fixIndex(@Nullable MavenId mavenId, @NotNull File file, @NotNull MavenIndex localIndex) {
-      if (mavenId != null) {
-        if (mavenId.getGroupId() == null || mavenId.getArtifactId() == null || mavenId.getVersion() == null) {
-          return Promises.rejectedPromise();
-        }
-        if (localIndex.hasVersion(mavenId.getGroupId(), mavenId.getArtifactId(), mavenId.getVersion())) return Promises.rejectedPromise();
-      }
-      AsyncPromise<Void> result = new AsyncPromise<>();
-
-      queueToAdd.add(new Pair<>(file, result));
+    public void fixIndex(@Nullable MavenId mavenId, @NotNull File file, @NotNull MavenIndex localIndex) {
+      queueToAdd.add(file);
       myMergingUpdateQueue.queue(new Update(IndexFixer.this) {
         @Override
         public void run() {
@@ -238,7 +240,6 @@ public final class MavenIndicesManager implements Disposable {
           return myMavenIndices.isDisposed();
         }
       });
-      return result;
     }
 
     private class AddToIndexRunnable implements Runnable {
@@ -247,25 +248,39 @@ public final class MavenIndicesManager implements Disposable {
       public void run() {
         MavenIndex localIndex = myMavenIndices.getIndexHolder().getLocalIndex();
         if (localIndex == null) return;
-        Pair<File, AsyncPromise<Void>> elementToAdd;
-        List<Pair<File, AsyncPromise<Void>>> retryElements = new ArrayList<>();
+        File elementToAdd;
+        Set<File> retryElements = new TreeSet<>();
+        Set<File> failedToAddFiles = new TreeSet<>();
         Set<File> addedFiles = new TreeSet<>();
         while ((elementToAdd = queueToAdd.poll()) != null) {
-          if (addedFiles.contains(elementToAdd.first)) {
-            elementToAdd.second.setResult(null);
+          if (addedFiles.contains(elementToAdd)) {
             continue;
           }
-
-          boolean added = localIndex.tryAddArtifact(elementToAdd.first);
+          boolean added = localIndex.tryAddArtifact(elementToAdd);
           if (added) {
-            addedFiles.add(elementToAdd.first);
-            elementToAdd.second.setResult(null);
+            addedFiles.add(elementToAdd);
           }
           else {
             retryElements.add(elementToAdd);
           }
         }
-        if (!retryElements.isEmpty() && retryElements.size() < 10_000) queueToAdd.addAll(retryElements);
+
+        if (!retryElements.isEmpty()) {
+          if (retryElements.size() < 10_000) {
+            queueToAdd.addAll(retryElements);
+          }
+          else {
+            failedToAddFiles = retryElements;
+          }
+        }
+
+        fireUpdated(addedFiles, failedToAddFiles);
+      }
+
+      private void fireUpdated(Set<File> added, Set<File> failedToAdd) {
+        if (!added.isEmpty() || !failedToAdd.isEmpty()) {
+          ApplicationManager.getApplication().getMessageBus().syncPublisher(INDEXER_TOPIC).indexUpdated(added, failedToAdd);
+        }
       }
     }
   }
@@ -279,7 +294,7 @@ public final class MavenIndicesManager implements Disposable {
 
     @Override
     public void artifactDownloaded(File file, String relativePath) {
-      myManager.addArtifactIndexAsync(null, file);
+      myManager.scheduleArtifactIndexing(null, file);
     }
   }
 

@@ -59,7 +59,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       if (localIndex == null) return null;
       Path artifactPath = MavenUtil.getArtifactPath(Path.of(localIndex.getRepositoryPathOrUrl()), id, "pom", null);
       if (artifactPath != null && artifactPath.toFile().exists()) {
-        MavenIndicesManager.getInstance(contextProject).addArtifactIndexAsync(id, artifactPath.toFile());
+        MavenIndicesManager.getInstance(contextProject).scheduleArtifactIndexing(id, artifactPath.toFile());
         return s;
       }
       return null;
