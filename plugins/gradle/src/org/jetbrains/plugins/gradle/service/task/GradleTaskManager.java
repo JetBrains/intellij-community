@@ -169,7 +169,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     var isEnabledTestLauncher = Registry.is("gradle.testLauncherAPI.enabled")
                                 || ApplicationManager.getApplication().isUnitTestMode();
     return isEnabledTestLauncher
-           && Boolean.TRUE.equals(settings.getUserData(GradleConstants.RUN_TASK_AS_TEST))
+           && Boolean.TRUE.equals(settings.getUserData(GradleRunConfiguration.RUN_TASK_AS_TEST))
            && Optional.ofNullable(settings.getGradleHome())
              .map(GradleInstallationManager::getGradleVersion)
              .map(GradleInstallationManager::getGradleVersionSafe)
@@ -255,11 +255,10 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       Map<String, String> enhancementParameters = new HashMap<>();
       enhancementParameters.put(GradleProjectResolverExtension.JVM_PARAMETERS_SETUP_KEY, jvmParametersSetup);
 
-      String isTestExecution = String.valueOf(Boolean.TRUE == effectiveSettings.getUserData(GradleConstants.RUN_TASK_AS_TEST));
-      enhancementParameters.put(GradleProjectResolverExtension.TEST_EXECUTION_EXPECTED_KEY, isTestExecution);
+      Boolean isTestExecution = Boolean.TRUE == effectiveSettings.getUserData(GradleRunConfiguration.RUN_TASK_AS_TEST);
+      enhancementParameters.put(GradleProjectResolverExtension.TEST_EXECUTION_EXPECTED_KEY, String.valueOf(isTestExecution));
 
       Integer debugDispatchPort = effectiveSettings.getUserData(DEBUGGER_DISPATCH_PORT_KEY);
-
       if (debugDispatchPort != null) {
         enhancementParameters.put(GradleProjectResolverExtension.DEBUG_DISPATCH_PORT_KEY, String.valueOf(debugDispatchPort));
         String debugOptions = effectiveSettings.getUserData(GradleRunConfiguration.DEBUGGER_PARAMETERS_KEY);

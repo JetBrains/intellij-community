@@ -40,6 +40,8 @@ public class GradleRunConfiguration extends ExternalSystemRunConfiguration imple
   public static final String FORCE_TEST_NAME = "ForceTestExec";
   public static final Key<Boolean> DEBUG_FLAG_KEY = Key.create("DEBUG_GRADLE_SCRIPT");
   public static final Key<Boolean> DEBUG_ALL_KEY = Key.create("DEBUG_ALL_TASKS");
+  public static final Key<Boolean> RUN_TASK_AS_TEST = Key.create("plugins.gradle.enable.test.reporting");
+  public static final Key<Boolean> FORCE_TEST_EXECUTION = Key.create("plugins.gradle.force.test.execution");
 
   @ApiStatus.Internal
   public static final Key<String> DEBUGGER_PARAMETERS_KEY = Key.create("DEBUGGER_PARAMETERS");
@@ -92,7 +94,7 @@ public class GradleRunConfiguration extends ExternalSystemRunConfiguration imple
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
     putUserData(DEBUG_FLAG_KEY, Boolean.valueOf(isDebugServerProcess()));
     putUserData(DEBUG_ALL_KEY, Boolean.valueOf(isDebugAllEnabled));
-    putUserData(GradleConstants.FORCE_TEST_EXECUTION, forceTestExecution);
+    putUserData(FORCE_TEST_EXECUTION, forceTestExecution);
     return super.getState(executor, env);
   }
 

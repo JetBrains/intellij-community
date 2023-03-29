@@ -65,11 +65,10 @@ import org.jetbrains.plugins.gradle.action.GradleRerunFailedTestsAction;
 import org.jetbrains.plugins.gradle.execution.filters.ReRunTaskFilter;
 import org.jetbrains.plugins.gradle.execution.test.runner.events.GradleTestEventsProcessor;
 import org.jetbrains.plugins.gradle.execution.test.runner.events.GradleTestsExecutionConsoleOutputProcessor;
+import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.service.execution.GradleTestExecutionUtil;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-
-import static org.jetbrains.plugins.gradle.util.GradleConstants.RUN_TASK_AS_TEST;
 
 /**
  * @author Vladislav.Soroka
@@ -268,7 +267,7 @@ public class GradleTestsExecutionConsoleManager
         var arguments = StringUtil.notNullize(taskTask.getArguments());
         var commandLine = GradleTestExecutionUtil.parseCommandLine(tasksAndArguments, arguments);
         if (GradleTestExecutionUtil.hasTestTasks(commandLine, project, externalProjectPath)) {
-          taskTask.putUserData(RUN_TASK_AS_TEST, true);
+          taskTask.putUserData(GradleRunConfiguration.RUN_TASK_AS_TEST, true);
           return true;
         }
       }

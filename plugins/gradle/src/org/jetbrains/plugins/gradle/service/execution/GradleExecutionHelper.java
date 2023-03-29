@@ -458,7 +458,7 @@ public class GradleExecutionHelper {
   }
 
   private static boolean isTestExecForced(@NotNull GradleExecutionSettings settings) {
-    return ObjectUtils.chooseNotNull(settings.getUserData(GradleConstants.FORCE_TEST_EXECUTION), false);
+    return ObjectUtils.chooseNotNull(settings.getUserData(GradleRunConfiguration.FORCE_TEST_EXECUTION), false);
   }
 
   private static void setupTestLauncherArguments(
