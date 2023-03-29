@@ -104,8 +104,8 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
   }
 
   @Override
-  public boolean isSpecificallyModified() {
-    return ContainerUtil.exists(getFragments(), fragment -> fragment.isSpecificallyModified());
+  public boolean isReadyForApply() {
+    return ContainerUtil.all(getFragments(), fragment -> fragment.isReadyForApply());
   }
 
   private void installFragmentsAligner() {

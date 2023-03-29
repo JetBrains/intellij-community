@@ -206,6 +206,10 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     myValidationAlarm.cancelAllRequests();
     myValidationAlarm.addRequest(() -> {
       if (myComponent != null) {
+        if (!getEditor().isReadyForApply()) {
+          addValidationRequest();
+          return;
+        }
         try {
           RunnerAndConfigurationSettings snapshot = createSnapshot(false);
           snapshot.setName(getNameText());

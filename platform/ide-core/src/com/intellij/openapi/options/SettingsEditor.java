@@ -144,4 +144,8 @@ public abstract class SettingsEditor<Settings> implements Disposable {
   public boolean isSpecificallyModified() {
     return false;
   }
+
+  public boolean isReadyForApply() {
+    return true;
+  }
 }

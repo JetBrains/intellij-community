@@ -3,7 +3,6 @@ package com.intellij.execution.impl;
 
 import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.ui.RunnerAndConfigurationSettingsEditor;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorConfigurable;
@@ -44,7 +43,9 @@ abstract class BaseRCSettingsConfigurable extends SettingsEditorConfigurable<Run
       if (editor instanceof ConfigurationSettingsEditorWrapper && !((ConfigurationSettingsEditorWrapper)editor).supportsSnapshots()) {
         return super.isModified();
       }
-
+      if (!getEditor().isReadyForApply()) {
+        return true;
+      }
       RunnerAndConfigurationSettings snapshot = getSnapshot();
       Element originalXml = ((SerializableScheme)original).writeScheme();
       Element snapshotXml = ((SerializableScheme)snapshot).writeScheme();

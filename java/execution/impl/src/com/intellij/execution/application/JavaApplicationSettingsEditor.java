@@ -63,8 +63,8 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
                                    (configuration, component) -> configuration.setMainClassName(component.getClassName()),
                                    Predicates.alwaysTrue()) {
         @Override
-        public boolean isSpecificallyModified() {
-          return myComponent.isModified();
+        public boolean isReadyForApply() {
+          return myComponent.isReadyForApply();
         }
       };
     mainClassFragment.setHint(ExecutionBundle.message("application.configuration.main.class.hint"));

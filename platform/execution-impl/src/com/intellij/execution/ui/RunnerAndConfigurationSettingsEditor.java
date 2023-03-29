@@ -59,6 +59,11 @@ public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerA
   }
 
   @Override
+  public boolean isReadyForApply() {
+    return myConfigurationEditor.isReadyForApply();
+  }
+
+  @Override
   protected void resetEditorFrom(@NotNull RunnerAndConfigurationSettings s) {
     myConfigurationEditor.resetEditorFrom((RunnerAndConfigurationSettingsImpl)s);
     myConfigurationEditor.resetFrom((RunConfigurationBase<?>)s.getConfiguration());
