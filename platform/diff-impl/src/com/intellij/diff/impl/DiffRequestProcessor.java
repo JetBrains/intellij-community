@@ -247,20 +247,21 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
   @RequiresEdt
   public abstract void updateRequest(boolean force, @Nullable ScrollToPolicy scrollToChangePolicy);
 
-  private @NotNull FrameDiffTool getFittedTool(boolean applySubstitutor) {
-    if (myForcedDiffTool != null) {
-      return myForcedDiffTool.canShow(myContext, myActiveRequest)
-             ? myForcedDiffTool
+  private static @NotNull FrameDiffTool findFittedTool(@NotNull List<? extends DiffTool> tools,
+                                                       @NotNull DiffContext diffContext,
+                                                       @NotNull DiffRequest diffRequest,
+                                                       @Nullable FrameDiffTool forcedDiffTool) {
+    if (forcedDiffTool != null) {
+      return forcedDiffTool.canShow(diffContext, diffRequest)
+             ? forcedDiffTool
              : ErrorDiffTool.INSTANCE;
     }
 
-    List<FrameDiffTool> tools = filterFittedTools(myToolOrder, myContext, myActiveRequest);
-    FrameDiffTool tool = tools.isEmpty() ? ErrorDiffTool.INSTANCE : tools.get(0);
+    List<FrameDiffTool> fittedTools = filterFittedTools(tools, diffContext, diffRequest);
+    FrameDiffTool tool = ContainerUtil.getFirstItem(fittedTools, ErrorDiffTool.INSTANCE);
 
-    if (applySubstitutor) {
-      FrameDiffTool substitutor = findToolSubstitutor(tool, myContext, myActiveRequest);
-      if (substitutor != null) return substitutor;
-    }
+    FrameDiffTool substitutor = findToolSubstitutor(tool, diffContext, diffRequest);
+    if (substitutor != null) return substitutor;
 
     return tool;
   }
@@ -311,17 +312,26 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
   }
 
   private void moveToolOnTop(@NotNull DiffTool tool) {
-    List<DiffTool> newOrder = new ArrayList<>(myToolOrder);
-    newOrder.remove(tool);
+    myToolOrder = moveToolToTop(tool, myToolOrder, myContext, myActiveRequest);
+    updateToolOrderSettings(myToolOrder);
+  }
 
-    FrameDiffTool toolToReplace = getFittedTool(false);
+  private static @NotNull List<DiffTool> moveToolToTop(@NotNull DiffTool tool,
+                                                       @NotNull List<DiffTool> oldOrder,
+                                                       @NotNull DiffContext diffContext,
+                                                       @NotNull DiffRequest diffRequest) {
+    List<FrameDiffTool> fittedTools = filterFittedTools(oldOrder, diffContext, diffRequest);
+    FrameDiffTool toolToReplace = ContainerUtil.getFirstItem(fittedTools);
+    if (toolToReplace == tool) return oldOrder;
+
+    List<DiffTool> newOrder = new ArrayList<>(oldOrder);
+    newOrder.remove(tool);
 
     int index = ContainerUtil.indexOf(newOrder, it -> it == toolToReplace);
     if (index == -1) index = newOrder.size();
     newOrder.add(index, tool);
 
-    myToolOrder = newOrder;
-    updateToolOrderSettings(newOrder);
+    return newOrder;
   }
 
   private @NotNull ViewerState createState(@NotNull FrameDiffTool frameTool) {
@@ -403,7 +413,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
 
         FrameDiffTool frameTool = null;
         try {
-          frameTool = getFittedTool(true);
+          frameTool = findFittedTool(myToolOrder, myContext, myActiveRequest, myForcedDiffTool);
           myState = createState(frameTool);
           try {
             myState.init();
