@@ -46,6 +46,11 @@ Using IntelliJ IDEA **File | Open**, select the `<IDEA_HOME>` directory.
    option in [the compiler settings](https://www.jetbrains.com/help/idea/specifying-compilation-settings.html). With notably more memory
    available, increase "User-local build process heap size" to 3000 - that will greatly reduce compilation time.
 
+Note that it is important to use the variant of JetBrains Runtime **without JCEF**.
+So, if for some reason `jbr-17` SDK points to an installation of JetBrains Runtime with JCEF, you need to change it: 
+ensure that IntelliJ IDEA is running in internal mode (by adding `idea.is.internal=true` to `idea.properties` file), navigate to `jbr-17` 
+item in Project Structure | SDKs, click on 'Browse' button, choose 'Download...' item and select version 17 and vendor 'JetBrains Runtime'.
+
 ### Building the IntelliJ Application Source Code
 To build IntelliJ IDEA Community Edition from source, choose **Build | Build Project** from the main menu.
 
