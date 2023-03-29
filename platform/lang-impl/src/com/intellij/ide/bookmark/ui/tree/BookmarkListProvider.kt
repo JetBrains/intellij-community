@@ -9,6 +9,7 @@ import com.intellij.ide.bookmark.LineBookmark
 import com.intellij.ide.bookmark.providers.FileBookmarkImpl
 import com.intellij.ide.bookmark.providers.LineBookmarkImpl
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -27,7 +28,7 @@ internal class BookmarkListProvider(private val project: Project) : BookmarksLis
     else -> null
   }
 
-  override fun getEditActionText() = message("bookmark.edit.action.text")
+  override fun getEditActionText() = ActionsBundle.message("action.EditBookmark.text")
   override fun canEdit(selection: Any) = selection is BookmarkNode<*>
   override fun performEdit(selection: Any, parent: JComponent) {
     val node = selection as? BookmarkNode<*> ?: return
