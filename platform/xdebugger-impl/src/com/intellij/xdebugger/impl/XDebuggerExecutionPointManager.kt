@@ -50,13 +50,6 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
     val uiScope = coroutineScope.childScope(CoroutineName("${javaClass.simpleName}/UI"))
     showExecutionPointUi(project, uiScope, executionPointVmState)
 
-    // navigate when execution point changes
-    uiScope.launch {
-      executionPointVmState.filterNotNull().collect {
-        it.navigateTo(ExecutionPositionNavigationMode.OPEN)
-      }
-    }
-
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       uiScope.launch {
         executionPointVmState
@@ -78,7 +71,14 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
     executionPointVm = null
   }
 
-  fun setExecutionPoint(mainSourcePosition: XSourcePosition?, alternativeSourcePosition: XSourcePosition?, isTopFrame: Boolean) {
+  fun setExecutionPoint(mainSourcePosition: XSourcePosition?,
+                        alternativeSourcePosition: XSourcePosition?,
+                        isTopFrame: Boolean,
+                        navigationSourceKind: XSourceKind) {
+    if (mainSourcePosition == null && alternativeSourcePosition == null) {
+      return clearExecutionPoint()
+    }
+
     executionPointVm = ExecutionPointVmImpl.create(project,
                                                    coroutineScope,
                                                    mainSourcePosition,
@@ -86,7 +86,11 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
                                                    isTopFrame,
                                                    activeSourceKindState,
                                                    gutterIconRendererState,
-                                                   updateRequestFlow)
+                                                   updateRequestFlow).also {
+      coroutineScope.launch {
+        it.navigateTo(ExecutionPositionNavigationMode.OPEN, navigationSourceKind)
+      }
+    }
   }
 
   @RequiresEdt

@@ -60,9 +60,7 @@ internal class ExecutionPointVmImpl(
       activeSourceKindState: StateFlow<XSourceKind>,
       gutterIconRendererState: StateFlow<GutterIconRenderer?>,
       updateRequestFlow: Flow<ExecutionPositionUpdateRequest>,
-    ): ExecutionPointVmImpl? {
-      if (mainSourcePosition == null && alternativeSourcePosition == null) return null
-
+    ): ExecutionPointVmImpl {
       val gutterVm = ExecutionPositionGutterVm(gutterIconRendererState)
 
       fun createPositionVm(sourcePosition: XSourcePosition?, sourceKind: XSourceKind): ExecutionPositionVm? {

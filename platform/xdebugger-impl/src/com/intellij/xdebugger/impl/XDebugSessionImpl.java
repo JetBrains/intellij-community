@@ -653,12 +653,16 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void updateExecutionPosition() {
+    updateExecutionPosition(getCurrentSourceKind());
+  }
+
+  private void updateExecutionPosition(@NotNull XSourceKind navigationSourceKind) {
     // allowed only for the active session
     if (myDebuggerManager.getCurrentSession() == this) {
       boolean isTopFrame = isTopFrameSelected();
       XSourcePosition mainSourcePosition = getFrameSourcePosition(myCurrentStackFrame, XSourceKind.MAIN);
       XSourcePosition alternativeSourcePosition = getFrameSourcePosition(myCurrentStackFrame, XSourceKind.ALTERNATIVE);
-      myExecutionPointManager.setExecutionPoint(mainSourcePosition, alternativeSourcePosition, isTopFrame);
+      myExecutionPointManager.setExecutionPoint(mainSourcePosition, alternativeSourcePosition, isTopFrame, navigationSourceKind);
       updateExecutionPointGutterIconRenderer();
     }
   }
@@ -917,7 +921,9 @@ public final class XDebugSessionImpl implements XDebugSession {
 
     myPaused.set(true);
 
-    updateExecutionPosition();
+    boolean isAlternative = myAlternativeSourceHandler != null &&
+                            myAlternativeSourceHandler.isAlternativeSourceKindPreferred(suspendContext);
+    updateExecutionPosition(isAlternative ? XSourceKind.ALTERNATIVE : XSourceKind.MAIN);
 
     logPositionReached(topFramePosition);
 
