@@ -132,7 +132,7 @@ public final class FSRecordsImpl {
   private static int calculateVersion() {
     //bumped main version (59 -> 60) because of VfsDependentEnumerator removal, and filenames change
     final int mainVFSFormatVersion = 60;
-    return nextMask(mainVFSFormatVersion + (PersistentFSRecordsStorageFactory.RECORDS_STORAGE_KIND.ordinal()),  /* acceptable range is [0..255] */ 8,
+    return nextMask(mainVFSFormatVersion + (PersistentFSRecordsStorageFactory.getRecordsStorageImplementation().ordinal()),  /* acceptable range is [0..255] */ 8,
            nextMask(USE_CONTENT_HASHES,
            nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
            nextMask(false, // feel free to re-use

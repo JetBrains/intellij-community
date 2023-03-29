@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
@@ -19,6 +20,7 @@ import com.intellij.util.io.storage.*;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -100,11 +102,12 @@ final class PersistentFSConnector {
     throw new RuntimeException("Can't initialize filesystem storage", exception);
   }
 
-  private static @NotNull PersistentFSConnection tryInit(final @NotNull Path cachesDir,
-                                                         final int expectedVersion,
-                                                         final boolean useContentHashes,
-                                                         final @NotNull InvertedNameIndex invertedNameIndexToFill,
-                                                         final List<ConnectionInterceptor> interceptors) throws IOException {
+  @VisibleForTesting
+  static @NotNull PersistentFSConnection tryInit(final @NotNull Path cachesDir,
+                                                 final int expectedVersion,
+                                                 final boolean useContentHashes,
+                                                 final @NotNull InvertedNameIndex invertedNameIndexToFill,
+                                                 final List<ConnectionInterceptor> interceptors) throws IOException {
     AbstractAttributesStorage attributesStorage = null;
     RefCountingContentStorage contentsStorage = null;
     PersistentFSRecordsStorage recordsStorage = null;
@@ -361,7 +364,9 @@ final class PersistentFSConnector {
 
   private static void logNameEnumeratorFiles(final Path basePath,
                                              final Path namesFile) throws IOException {
-    final boolean traceNumeratorOps = ApplicationManager.getApplication().isUnitTestMode()
+    final Application application = ApplicationManager.getApplication();
+    final boolean traceNumeratorOps = application!= null
+                                      && application.isUnitTestMode()
                                       && PlatformUtils.isFleetBackend();
     if (traceNumeratorOps) {
       final String namesFilePrefix = namesFile.getFileName().toString();

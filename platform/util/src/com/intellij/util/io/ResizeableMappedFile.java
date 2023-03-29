@@ -190,9 +190,10 @@ public class ResizeableMappedFile implements Forceable, Closeable {
   }
 
   private long readLength() throws IOException {
-    Path lengthFile = getLengthFile();
-    long zero = 0L;
-    if (!Files.exists(lengthFile) && (!Files.exists(myStorage.getFile()) || Files.size(myStorage.getFile()) == zero)) {
+    final Path storageFile = myStorage.getFile();
+    final Path lengthFile = getLengthFile();
+    final long zero = 0L;
+    if (!Files.exists(lengthFile) && (!Files.exists(storageFile) || Files.size(storageFile) == zero)) {
       writeLength(zero);
       return zero;
     }
@@ -203,7 +204,8 @@ public class ResizeableMappedFile implements Forceable, Closeable {
     catch (IOException e) {
       long realSize = realSize();
       writeLength(realSize);
-      LOG.error("storage size = " + realSize + ", file size = " + Files.size(myStorage.getFile()), e);
+      LOG.info("Can't find .len file for " + storageFile + ", re-creating it from actual file. " +
+               "Storage size = " + realSize + ", file size = " + Files.size(storageFile), e);
       return realSize;
     }
   }
