@@ -269,10 +269,10 @@ open class IdeErrorsDialog internal constructor(private val myMessagePool: Messa
     val commentPanel = JPanel(BorderLayout())
     commentPanel.border = JBUI.Borders.emptyTop(5)
     commentPanel.add(scrollPane(myCommentArea, 0, 0), BorderLayout.CENTER)
-    val attachmentsPanel = JPanel(BorderLayout(scale(5), 0))
+    val attachmentsPanel = JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
+                                      scrollPane(myAttachmentList, 150, 350),
+                                      scrollPane(myAttachmentArea, 500, 350))
     attachmentsPanel.border = JBUI.Borders.emptyTop(5)
-    attachmentsPanel.add(scrollPane(myAttachmentList, 150, 350), BorderLayout.WEST)
-    attachmentsPanel.add(scrollPane(myAttachmentArea, 500, 350), BorderLayout.CENTER)
     val accountRow = JPanel(GridBagLayout())
     accountRow.border = JBUI.Borders.empty(6, 0)
     accountRow.add(myCredentialLabel, GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, JBInsets.emptyInsets(), 0, 0))
