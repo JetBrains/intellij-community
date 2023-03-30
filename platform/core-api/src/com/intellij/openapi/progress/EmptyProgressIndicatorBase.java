@@ -53,7 +53,7 @@ public abstract class EmptyProgressIndicatorBase implements ProgressIndicator {
 
   @Override
   public final void checkCanceled() {
-    if (isCanceled() && myNonCancelableSectionCount == 0) {
+    if (isCanceled() && myNonCancelableSectionCount == 0 && !Cancellation.isInNonCancelableSection()) {
       throw new ProcessCanceledException();
     }
   }
