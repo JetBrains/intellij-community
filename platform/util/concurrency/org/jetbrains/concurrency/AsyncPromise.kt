@@ -19,6 +19,14 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
     val CANCELED = object: CancellationException() {
       override fun fillInStackTrace(): Throwable = this
     }
+
+    @Internal
+    @JvmField
+    val CANCELED_CE = CANCELED.wrapToCE()
+
+    private fun Throwable.wrapToCE() = this as? CompletionException ?: object : CompletionException(this) {
+      override fun fillInStackTrace(): Throwable = this
+    }
   }
 
   internal val f: CompletableFuture<T>
@@ -65,7 +73,7 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
   override fun isCancelled(): Boolean = f.isCancelled
 
   // because of the unorthodox contract: "double cancel must return false"
-  override fun cancel(mayInterruptIfRunning: Boolean): Boolean = !isCancelled && f.completeExceptionally(CANCELED)
+  override fun cancel(mayInterruptIfRunning: Boolean): Boolean = !isCancelled && f.completeExceptionally(CANCELED_CE)
 
   override fun cancel() {
     cancel(true)
@@ -133,7 +141,7 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
       val future = CompletableFuture<SUB_RESULT>()
       promise
         .onSuccess { value -> future.complete(value) }
-        .onError { error -> future.completeExceptionally(error) }
+        .onError { error -> future.completeExceptionally(error.wrapToCE()) }
       future
     }, hasErrorHandler, addExceptionHandler = true)
   }
@@ -152,7 +160,7 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
   }
 
   override fun setError(error: Throwable): Boolean {
-    if (!f.completeExceptionally(error)) {
+    if (!f.completeExceptionally(error.wrapToCE())) {
       return false
     }
 
