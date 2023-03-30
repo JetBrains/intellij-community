@@ -4,6 +4,7 @@ package com.intellij.debugger.ui.tree.render;
 import com.intellij.debugger.engine.FullValueEvaluatorProvider;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.sun.jdi.Type;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +41,7 @@ public abstract class CompoundRendererProvider {
     return null;
   }
 
-  protected Function<Type, CompletableFuture<Boolean>> getIsApplicableChecker() {
+  protected Function<Type, CompletableFuture<Boolean>> getIsApplicableChecker(Project project) {
     return null;
   }
 
@@ -49,7 +50,7 @@ public abstract class CompoundRendererProvider {
   }
 
   @NotNull
-  public final NodeRenderer createRenderer() {
+  public final NodeRenderer createRenderer(Project project) {
     CompoundReferenceRenderer res = new CompoundReferenceRenderer(getName(), getValueLabelRenderer(), getChildrenRenderer());
     res.setIconRenderer(getIconRenderer());
     res.setFullValueEvaluator(getFullValueEvaluatorProvider());
@@ -58,7 +59,7 @@ public abstract class CompoundRendererProvider {
       res.setClassName(className);
       res.setIsApplicableChecker(type -> DebuggerUtilsAsync.instanceOf(type, res.getClassName()));
     }
-    Function<Type, CompletableFuture<Boolean>> isApplicableChecker = getIsApplicableChecker();
+    Function<Type, CompletableFuture<Boolean>> isApplicableChecker = getIsApplicableChecker(project);
     if (isApplicableChecker != null) {
       res.setIsApplicableChecker(isApplicableChecker);
     }

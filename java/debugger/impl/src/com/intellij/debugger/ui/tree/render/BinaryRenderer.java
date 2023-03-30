@@ -4,6 +4,7 @@ package com.intellij.debugger.ui.tree.render;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.sun.jdi.*;
 
 import java.util.concurrent.CompletableFuture;
@@ -67,7 +68,7 @@ public class BinaryRenderer extends CompoundRendererProvider {
   }
 
   @Override
-  protected Function<Type, CompletableFuture<Boolean>> getIsApplicableChecker() {
+  protected Function<Type, CompletableFuture<Boolean>> getIsApplicableChecker(Project project) {
     return t -> {
       if (t == null) {
         return CompletableFuture.completedFuture(false);

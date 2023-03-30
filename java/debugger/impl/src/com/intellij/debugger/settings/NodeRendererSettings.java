@@ -247,7 +247,9 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     }
 
     // plugins registered renderers come after that
-    CompoundRendererProvider.EP_NAME.getExtensionList().stream().map(CompoundRendererProvider::createRenderer).forEach(allRenderers::add);
+    CompoundRendererProvider.EP_NAME.getExtensionList().stream()
+      .map((provider) -> provider.createRenderer(project))
+      .forEach(allRenderers::add);
     allRenderers.addAll(NodeRenderer.EP_NAME.getExtensionList());
 
     // now all predefined stuff
