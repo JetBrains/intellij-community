@@ -1220,6 +1220,12 @@ private fun validateMercuryModuleUsage(platform: PlatformLayout, context: BuildC
   val fleetMercuryModuleNames = setOf(
     "fleet.plugins.mercury.backend",
     "fleet.plugins.mercury.protocol",
+    "intellij.appcode",
+    "intellij.kmm.plugin",
+    "intellij.kmm.android",
+    "kotlin-ultimate.appcode-kmm",
+    "kotlin-ultimate.mobile-native",
+    "kotlin-ultimate.kotlin-ocswift",
   )
   val includedModuleNames = platform.includedModules.map { it.moduleName }.toSet()
   check(fleetMercuryModuleNames.intersect(includedModuleNames).isEmpty()) {
