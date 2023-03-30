@@ -56,9 +56,9 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     if (startElement != endElement) assertPhysical(endElement);
 
     TextRange startElementRange = getAnnotationRange(startElement);
-    LOG.assertTrue(startElement instanceof ExternallyAnnotated || startElement instanceof PsiBinaryFile || startElementRange != null, startElement);
+    assertRange(startElement, startElementRange);
     TextRange endElementRange = startElement == endElement ? startElementRange : getAnnotationRange(endElement);
-    LOG.assertTrue(endElement instanceof ExternallyAnnotated || endElement instanceof PsiBinaryFile || endElementRange != null, endElement);
+    assertRange(endElement, endElementRange);
     if (startElementRange != null
         && endElementRange != null
         && startElementRange.getStartOffset() >= endElementRange.getEndOffset()) {
@@ -93,6 +93,11 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     myAfterEndOfLine = isAfterEndOfLine;
     myTextRangeInElement = rangeInElement;
     myCreationTrace = onTheFly ? null : ThrowableInterner.intern(new Throwable());
+  }
+
+  private static void assertRange(@NotNull PsiElement element, TextRange range) {
+    LOG.assertTrue(element instanceof ExternallyAnnotated || element instanceof PsiBinaryFile || range != null, element);
+    LOG.assertTrue(!(range != null && element instanceof PsiBinaryFile), "binary files should have null range");
   }
 
   private static @NotNull LocalQuickFix @Nullable [] filterFixes(LocalQuickFix @Nullable [] fixes, boolean onTheFly) {
