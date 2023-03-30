@@ -197,13 +197,17 @@ data class UParameterInfo(val type: PsiType?, val suggestedName: String?)
 infix fun String?.ofType(type: PsiType?): UParameterInfo = UParameterInfo(type, this)
 
 @ApiStatus.Experimental
-inline fun <reified T : UElement> UElement.replace(newElement: T): T? =
-  UastCodeGenerationPlugin.byLanguage(this.lang)
+inline fun <reified T : UElement> UElement.replace(newElement: T): T? {
+  if (this == newElement) return newElement
+
+  return UastCodeGenerationPlugin.byLanguage(this.lang)
     ?.replace(this, newElement, T::class.java).also {
       if (it == null) {
         logger<UastCodeGenerationPlugin>().warn("failed replacing the $this with $newElement")
       }
     }
+}
+
 
 fun UReferenceExpression.bindToElement(element: PsiElement): PsiElement? =
   UastCodeGenerationPlugin.byLanguage(this.lang)?.bindToElement(this, element)
