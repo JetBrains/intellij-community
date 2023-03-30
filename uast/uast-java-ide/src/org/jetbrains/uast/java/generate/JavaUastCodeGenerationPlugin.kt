@@ -138,18 +138,35 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
 
 private fun PsiElementFactory.createExpressionStatement(expression: PsiExpression, oldElement: UElement? = null): PsiStatement? {
   val comments = oldElement?.comments
-  val textStatement = if (comments.isNullOrEmpty()) "x;" else createStatementTextWithComment(comments)
-  
+  val textStatement = if (comments.isNullOrEmpty()) "x;" else createStatementTextWithComment(comments, oldElement)
+
   val statement = createStatementFromText(textStatement, null) as? PsiExpressionStatement ?: return null
 
   statement.expression.replace(expression)
   return statement
 }
 
-private fun createStatementTextWithComment(comments: List<UComment>): String {
-  val comment = comments.joinToString(separator = " ") { it.text }
+private fun createStatementTextWithComment(comments: List<UComment>, oldElement: UElement): String {
+  val comment = comments.joinToString(prefix = getCommentPrefix(comments, oldElement), separator = " ") { it.text }
+
+  return "x;$comment"
+}
+
+private fun getCommentPrefix(comments: List<UComment>, oldElement: UElement): String {
+  val lastCommentPsi = comments.last().sourcePsi
+  val sourcePsi = oldElement.sourcePsi
+  val defaultPrefix = " "
+  if (sourcePsi == null) return defaultPrefix
+
+  val isCommentInChildren = sourcePsi.children.filterIsInstance<PsiComment>().any { it == lastCommentPsi }
+  val siblings = if (isCommentInChildren) {
+    sourcePsi.firstChild.siblings()
+  } else {
+    sourcePsi.siblings(withSelf = false)
+  }
+  val beforeComment = siblings.takeWhile { it != lastCommentPsi }.lastOrNull()  
   
-  return "x; $comment"
+  return (beforeComment as? PsiWhiteSpace)?.text ?: defaultPrefix
 }
 
 class JavaUastElementFactory(private val project: Project) : UastElementFactory {
@@ -412,7 +429,6 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
 
     return JavaUBlockExpression(blockStatement, null)
   }
-
 
   override fun createLambdaExpression(parameters: List<UParameterInfo>, body: UExpression, context: PsiElement?): ULambdaExpression? {
     //TODO: smart handling cases, when parameters types should exist in code

@@ -15,11 +15,14 @@
  */
 package org.jetbrains.uast.java.internal
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.uast.UComment
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UParameter
+import org.jetbrains.uast.java.isSemicolon
 
 interface JavaUElementWithComments : UElement {
   override val comments: List<UComment>
@@ -40,11 +43,5 @@ interface JavaUElementWithComments : UElement {
       sibling = if (forward) sibling.nextSibling else sibling.prevSibling
     }
     return sibling as? PsiComment
-  }
-
-  private fun PsiElement?.isSemicolon(): Boolean {
-    if (this !is PsiJavaToken) return false
-
-    return tokenType == JavaTokenType.SEMICOLON
   }
 }
