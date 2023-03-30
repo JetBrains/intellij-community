@@ -795,7 +795,7 @@ abstract class ComponentManagerImpl(
     if (classLoader is PluginAwareClassLoader && !isGettingServiceAllowedDuringPluginUnloading(classLoader.pluginDescriptor)) {
       componentContainerIsReadonly?.let {
         val error = AlreadyDisposedException(
-          "Cannot create light service ${serviceClass.name} because container in read-only mode (reason=$it, container=$this"
+          "Cannot create light service ${serviceClass.name} because container in read-only mode (reason=$it, container=$this)"
         )
         throw if (!isUnderIndicatorOrJob()) error else ProcessCanceledException(error)
       }
