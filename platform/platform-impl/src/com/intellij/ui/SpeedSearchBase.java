@@ -154,17 +154,17 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     new DumbAwareAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        final String prefix = getEnteredPrefix();
-        assert prefix != null;
-        final String[] strings = NameUtilCore.splitNameIntoWords(prefix);
-        final String last = strings[strings.length - 1];
-        final int i = prefix.lastIndexOf(last);
+        String prefix = getEnteredPrefix();
+        String[] strings = NameUtilCore.splitNameIntoWords(prefix);
+        if (strings.length == 0) return; // "__" has no words
+        String last = strings[strings.length - 1];
+        int i = prefix.lastIndexOf(last);
         mySearchPopup.mySearchField.setText(prefix.substring(0, i).trim());
       }
 
       @Override
       public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setEnabled(isPopupActive() && !Strings.isEmpty(getEnteredPrefix()));
+        e.getPresentation().setEnabled(isPopupActive() && Strings.isNotEmpty(getEnteredPrefix()));
       }
 
       @Override
