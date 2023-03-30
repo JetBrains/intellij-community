@@ -48,8 +48,13 @@ class MermaidEnterBetweenPairHandler : EnterHandlerDelegateAdapter() {
     documentText: CharSequence,
     caretOffset: Int
   ): Boolean {
-    return isLBraceToken(file, editor, documentText, caretOffset) && isRBraceToken(file, editor, documentText, caretOffset)
-      && isValidOffset(caretOffset + 1, documentText)
+    return isLBraceToken(file, editor, documentText, caretOffset) && isRBraceToken(
+      file,
+      editor,
+      documentText,
+      caretOffset
+    )
+      && isValidOffset(caretOffset, documentText)
   }
 
   private fun isLBraceToken(
@@ -70,6 +75,7 @@ class MermaidEnterBetweenPairHandler : EnterHandlerDelegateAdapter() {
     val iteratorLeft = positionLeft.iterator
     val leftBraceMatcher: BraceMatcher = BraceMatchingUtil.getBraceMatcher(file.fileType, iteratorLeft)
     return leftBraceMatcher.isLBraceToken(iteratorLeft, documentText, file.fileType)
+      && leftBraceMatcher.isStructuralBrace(iteratorLeft, documentText, file.fileType)
   }
 
   private fun isRBraceToken(
@@ -84,6 +90,7 @@ class MermaidEnterBetweenPairHandler : EnterHandlerDelegateAdapter() {
     val iteratorRight = positionRight.iterator
     val rightBraceMatcher: BraceMatcher = BraceMatchingUtil.getBraceMatcher(file.fileType, iteratorRight)
     return rightBraceMatcher.isRBraceToken(iteratorRight, documentText, file.fileType)
+      && rightBraceMatcher.isStructuralBrace(iteratorRight, documentText, file.fileType)
   }
 
   private fun getPosition(editor: Editor, offset: Int): MermaidSemanticEditorPosition {

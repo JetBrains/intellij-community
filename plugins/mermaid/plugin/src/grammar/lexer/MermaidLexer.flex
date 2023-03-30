@@ -458,6 +458,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [\w_]+ { yypushstate(class_name); return ClassDiagram.CLASS_ID; }
 }
 <struct> {
+  "{" { return OPEN_CURLY; }
   "}" { yybegin(class_diagram); return CLOSE_CURLY; }
 }
 <struct, class_member> {
@@ -647,6 +648,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [a-zA-Z_][\w\-\[\]\(\)]* { return ATTRIBUTE_WORD; }
   [~] { yypushstate(generic); return TILDA; }
   [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
+  "{" { return OPEN_CURLY; }
   "}" { yybegin(entity_relationship); return CLOSE_CURLY; }
   "," { return COMMA; }
 }

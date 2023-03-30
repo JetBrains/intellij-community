@@ -34,7 +34,6 @@ internal class MermaidEnterAfterUnmatchedPairHandler : EnterHandlerDelegateAdapt
 
     val position = getPosition(editor, offset - 1)
     position.moveBeforeOptionalMix(MermaidTokens.WHITE_SPACE)
-    if (position.isAt(MermaidTokens.OPEN_CURLY)) return Result.Continue
 
     position.moveBeforeOptionalMix(
       MermaidTokens.ID,

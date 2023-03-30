@@ -12,9 +12,9 @@ class MermaidPairMatcher : PairedBraceMatcherAdapter(MyPairedBraceMatcher(), Mer
   companion object {
     private class MyPairedBraceMatcher : PairedBraceMatcher {
       private val pairs = arrayOf(
-        BracePair(MermaidTokens.OPEN_CURLY, MermaidTokens.CLOSE_CURLY, true),
-        BracePair(MermaidTokens.OPEN_ROUND, MermaidTokens.CLOSE_ROUND, true),
-        BracePair(MermaidTokens.OPEN_SQUARE, MermaidTokens.CLOSE_SQUARE, true),
+        BracePair(MermaidTokens.OPEN_CURLY, MermaidTokens.CLOSE_CURLY, false),
+        BracePair(MermaidTokens.OPEN_ROUND, MermaidTokens.CLOSE_ROUND, false),
+        BracePair(MermaidTokens.OPEN_SQUARE, MermaidTokens.CLOSE_SQUARE, false),
 
         BracePair(MermaidTokens.Flowchart.SUBGRAPH, MermaidTokens.END, true),
         BracePair(MermaidTokens.Sequence.LOOP, MermaidTokens.END, true),

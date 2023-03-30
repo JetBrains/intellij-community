@@ -353,7 +353,7 @@ stateDeclaration ::= stateId COLON complexLabel
 
 stateDeclarationHeader ::= STATE stateId
 
-stateBlock ::= OPEN_CURLY EOL* innerStateBody CLOSE_CURLY { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+stateBlock ::= OPEN_CURLY EOL* innerStateBody? CLOSE_CURLY { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
 private innerStateBody ::= innerStateLines
 private innerStateLines ::= innerStateLine [innerStateLines]
 private innerStateLine ::= innerStateDiagramStatement [EOL] | EOL
@@ -682,7 +682,7 @@ c4Attr ::= DOLLAR C4_ATTRIBUTE EQUALITY string | c4AttrComplexName | maybeEmptyS
 c4AttrComplexName ::= (C4_ATTRIBUTE | DOLLAR | EQUALITY)+
 
 boundaryStatement ::= boundaryHeader boundaryBlock
-boundaryBlock ::= OPEN_CURLY EOL+ c4Lines CLOSE_CURLY { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+boundaryBlock ::= OPEN_CURLY EOL* c4Lines? CLOSE_CURLY { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
 
 boundaryHeader ::= ENTERPRISE_BOUNDARY c4Attributes
   | SYSTEM_BOUNDARY c4Attributes
