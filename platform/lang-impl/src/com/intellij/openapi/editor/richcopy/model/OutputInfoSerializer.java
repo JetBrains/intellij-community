@@ -17,9 +17,10 @@ package com.intellij.openapi.editor.richcopy.model;
 
 import com.intellij.util.io.CompactDataInput;
 import com.intellij.util.io.CompactDataOutput;
-import net.jpountz.lz4.LZ4BlockInputStream;
-import net.jpountz.lz4.LZ4BlockOutputStream;
+import net.jpountz.lz4.LZ4DecompressorWithLength;
+import net.jpountz.lz4.LZ4Factory;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
 /**
@@ -34,16 +35,10 @@ public final class OutputInfoSerializer {
 
   public final static class OutputStream implements MarkupHandler {
     private final CompactDataOutput myOutputStream;
-    private final java.io.OutputStream myUnderlyingOutputStream;
     private int myCurrentOffset;
 
     public OutputStream(java.io.OutputStream stream) {
-      myUnderlyingOutputStream = new LZ4BlockOutputStream(stream);
-      myOutputStream = new CompactDataOutput(myUnderlyingOutputStream);
-    }
-
-    public void close() throws IOException {
-      myUnderlyingOutputStream.close();
+      myOutputStream = new CompactDataOutput(stream);
     }
 
     @Override
@@ -86,12 +81,10 @@ public final class OutputInfoSerializer {
 
   public final static class InputStream {
     private final CompactDataInput myInputStream;
-    private final java.io.InputStream myUnderlyingInputStream;
     private int myCurrentOffset;
 
-    public InputStream(java.io.InputStream stream) {
-      myUnderlyingInputStream = new LZ4BlockInputStream(stream);
-      myInputStream = new CompactDataInput(myUnderlyingInputStream);
+    public InputStream(byte[] stream) {
+      myInputStream = new CompactDataInput(new ByteArrayInputStream(new LZ4DecompressorWithLength(LZ4Factory.fastestJavaInstance().fastDecompressor()).decompress(stream)));
     }
 
     public void read(MarkupHandler handler) throws Exception {
@@ -110,10 +103,6 @@ public final class OutputInfoSerializer {
         case FONT_ID -> handler.handleFont(myInputStream.readInt());
         default -> throw new IllegalStateException("Unknown tag id: " + id);
       }
-    }
-
-    public void close() throws IOException {
-      myUnderlyingInputStream.close();
     }
   }
 }
