@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
 import org.jetbrains.idea.devkit.themes.UnregisteredNamedColorInspectionTestBase
@@ -6,8 +6,7 @@ import org.jetbrains.idea.devkit.themes.UnregisteredNamedColorInspectionTestBase
 class UnregisteredNamedColorInspectionTest : UnregisteredNamedColorInspectionTestBase() {
 
   fun testInspection() {
-    //language=JAVA
-    myFixture.addClass("""
+    myFixture.configureByText("InspectionTest.java", """
       import com.intellij.ui.JBColor;
 
       class InspectionTest {
@@ -17,6 +16,6 @@ class UnregisteredNamedColorInspectionTest : UnregisteredNamedColorInspectionTes
         }
       }
     """.trimIndent())
-    myFixture.testHighlighting("InspectionTest.java")
+    myFixture.checkHighlighting()
   }
 }
