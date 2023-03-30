@@ -34,6 +34,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Main api class for work with maven indices.
@@ -74,6 +75,7 @@ public final class MavenIndicesManager implements Disposable {
 
   @Override
   public void dispose() {
+    myIndexFixer.stop();
     if (MavenUtil.isMavenUnitTestModeEnabled()) {
       PathKt.delete(getIndicesDir());
     }
@@ -221,6 +223,7 @@ public final class MavenIndicesManager implements Disposable {
     private final ConcurrentLinkedQueue<File> queueToAdd = new ConcurrentLinkedQueue<>();
     private final MergingUpdateQueue myMergingUpdateQueue;
     private final AddToIndexRunnable taskConsumer = new AddToIndexRunnable();
+    private final AtomicBoolean stopped = new AtomicBoolean(false);
 
     private IndexFixer() {
       myMergingUpdateQueue = new MergingUpdateQueue(
@@ -229,6 +232,8 @@ public final class MavenIndicesManager implements Disposable {
     }
 
     public void fixIndex(@NotNull File file) {
+      if (stopped.get()) return;
+
       queueToAdd.add(file);
       myMergingUpdateQueue.queue(new Update(this) {
         @Override
@@ -243,6 +248,10 @@ public final class MavenIndicesManager implements Disposable {
       });
     }
 
+    public void stop() {
+      stopped.set(true);
+    }
+
     private class AddToIndexRunnable implements Runnable {
 
       @Override
@@ -254,6 +263,7 @@ public final class MavenIndicesManager implements Disposable {
         Set<File> failedToAddFiles = new TreeSet<>();
 
         synchronized (queueToAdd) {
+          if (stopped.get()) return;
           if (queueToAdd.isEmpty()) return;
 
           Set<File> filesToAddNow = new TreeSet<>();
