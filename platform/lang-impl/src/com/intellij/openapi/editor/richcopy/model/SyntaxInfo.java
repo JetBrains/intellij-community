@@ -85,27 +85,27 @@ public final class SyntaxInfo {
         }
         it.processNext(new MarkupHandler() {
           @Override
-          public void handleText(int startOffset, int endOffset) throws Exception {
+          public void handleText(int startOffset, int endOffset) {
             b.append("text(").append(startOffset).append(",").append(endOffset).append(")");
           }
 
           @Override
-          public void handleForeground(int foregroundId) throws Exception {
+          public void handleForeground(int foregroundId) {
             b.append("foreground(").append(foregroundId).append(")");
           }
 
           @Override
-          public void handleBackground(int backgroundId) throws Exception {
+          public void handleBackground(int backgroundId) {
             b.append("background(").append(backgroundId).append(")");
           }
 
           @Override
-          public void handleFont(int fontNameId) throws Exception {
+          public void handleFont(int fontNameId) {
             b.append("font(").append(fontNameId).append(")");
           }
 
           @Override
-          public void handleStyle(int style) throws Exception {
+          public void handleStyle(int style) {
             b.append("style(").append(style).append(")");
           }
 
@@ -123,7 +123,7 @@ public final class SyntaxInfo {
     }
   }
 
-  public static class Builder {
+  public static final class Builder {
     private final ColorRegistry myColorRegistry = new ColorRegistry();
     private final FontNameRegistry myFontNameRegistry = new FontNameRegistry();
     private final int myDefaultForeground;
@@ -203,11 +203,11 @@ public final class SyntaxInfo {
     }
   }
 
-  public class MarkupIterator {
+  public final class MarkupIterator {
     private int pos;
     private final OutputInfoSerializer.InputStream myOutputInfoStream;
 
-    public MarkupIterator() {
+    MarkupIterator() {
       myOutputInfoStream = new OutputInfoSerializer.InputStream(new ByteArrayInputStream(myOutputInfosSerialized));
     }
 

@@ -25,14 +25,14 @@ import java.io.IOException;
 /**
  * Not synchronized, stream implementations must be used from one thread at a time only
  */
-public class OutputInfoSerializer {
+public final class OutputInfoSerializer {
   private static final int TEXT_ID = 0;
   private static final int STYLE_ID = 1;
   private static final int FOREGROUND_ID = 2;
   private static final int BACKGROUND_ID = 3;
   private static final int FONT_ID = 4;
 
-  public static class OutputStream implements MarkupHandler {
+  public final static class OutputStream implements MarkupHandler {
     private final CompactDataOutput myOutputStream;
     private final java.io.OutputStream myUnderlyingOutputStream;
     private int myCurrentOffset;
@@ -84,7 +84,7 @@ public class OutputInfoSerializer {
     }
   }
 
-  public static class InputStream {
+  public final static class InputStream {
     private final CompactDataInput myInputStream;
     private final java.io.InputStream myUnderlyingInputStream;
     private int myCurrentOffset;
