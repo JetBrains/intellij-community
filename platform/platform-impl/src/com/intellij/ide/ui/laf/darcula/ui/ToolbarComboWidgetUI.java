@@ -34,12 +34,15 @@ import static com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUiSizes.*;
 public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeListener {
   private static final Icon EXPAND_ICON = AllIcons.General.ChevronDown;
   private static final int SEPARATOR_WIDTH = 1;
+  private static final int SEPARATOR_HEIGHT = 20;
   private static final int DEFAULT_MAX_WIDTH = 350;
 
   private final HoverAreaTracker hoverTracker = new HoverAreaTracker();
   private final ClickListener clickListener = new ToolbarComboWidgetClickListener();
   private TextCutStrategy textCutStrategy = new DefaultCutStrategy();
   private int maxWidth;
+
+  private int separatorPosition = 0;
 
   public ToolbarComboWidgetUI() {
     maxWidth = UIManager.getInt("MainToolbar.Dropdown.maxWidth");
@@ -86,7 +89,7 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
 
   private static void setUIDefaults(ToolbarComboWidget c) {
     c.setForeground(JBColor.namedColor("MainToolbar.Dropdown.foreground", JBColor.foreground()));
-    c.setBackground(JBColor.namedColor("MainToolbar.Dropdown.background", JBColor.foreground()));
+    c.setBackground(JBColor.namedColor("MainToolbar.Dropdown.background", JBColor.background()));
     c.setHoverBackground(JBColor.namedColor("MainToolbar.Dropdown.hoverBackground", JBColor.background()));
 
     Insets insets = JBUI.CurrentTheme.MainToolbar.Dropdown.borderInsets();
@@ -129,8 +132,9 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
 
       if (isSeparatorShown(combo)) {
         doClip(paintRect, getGapBeforeSeparator());
-        g2.setColor(UIManager.getColor("Separator.separatorColor"));
-        g2.fillRect(paintRect.x, paintRect.y, SEPARATOR_WIDTH, paintRect.height);
+        g2.setColor(UIManager.getColor("MainToolbar.separatorColor"));
+        g2.fillRect(paintRect.x, ((int)paintRect.getCenterY()) - SEPARATOR_HEIGHT / 2, SEPARATOR_WIDTH, SEPARATOR_HEIGHT);
+        separatorPosition = paintRect.x;
         doClip(paintRect, SEPARATOR_WIDTH);
       }
 
@@ -328,7 +332,7 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
     }
   }
 
-  private static class HoverAreaTracker extends MyMouseTracker {
+  private class HoverAreaTracker extends MyMouseTracker {
 
     private Rectangle hoverRect;
 
@@ -358,9 +362,9 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
         return;
       }
 
-      int rightPart = SEPARATOR_WIDTH + getGapBeforeExpandIcon() + EXPAND_ICON.getIconWidth() + comp.getInsets().right;
-      Rectangle right = new Rectangle((int)(compBounds.getMaxX() - rightPart), compBounds.y, rightPart, compBounds.height);
-      Rectangle left = new Rectangle(compBounds.x, compBounds.y, compBounds.width - rightPart + SEPARATOR_WIDTH, compBounds.height);
+      Insets insets = comp.getInsets();
+      Rectangle left = new Rectangle(compBounds.x, compBounds.y, separatorPosition + insets.left + SEPARATOR_WIDTH, compBounds.height);
+      Rectangle right = new Rectangle(separatorPosition + insets.left, compBounds.y, (int)(compBounds.getMaxX() - insets.right - separatorPosition), compBounds.height);
 
       updateHoverRect(left.contains(mousePosition) ? left : right);
     }
