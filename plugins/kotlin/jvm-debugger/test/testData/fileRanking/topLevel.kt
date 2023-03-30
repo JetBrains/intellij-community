@@ -10,6 +10,7 @@ val a = run {
     }
     5
 }
+// PRODUCED_CLASS_NAMES: a.AKt
 
 fun x() {
     println("")
@@ -23,3 +24,4 @@ val b = 5
 fun y() {
     println("")
 }
+// PRODUCED_CLASS_NAMES: b.AKt

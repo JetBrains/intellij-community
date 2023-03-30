@@ -16,6 +16,7 @@ class A {                        // Line with the same rank
         }
     }
 }
+// PRODUCED_CLASS_NAMES: a.A, a.AKt, a.A$a$1, a.A$a$1$1
 
 //FILE: b/a.kt
 package b
@@ -34,3 +35,4 @@ class A {
         }
     }
 }
+// PRODUCED_CLASS_NAMES: b.A, b.A$b$1, b.A$b$2, b.A$b$2$1, b.A$b$2$1$1

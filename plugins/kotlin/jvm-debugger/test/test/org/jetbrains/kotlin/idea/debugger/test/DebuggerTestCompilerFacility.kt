@@ -17,14 +17,10 @@ import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
-import org.jetbrains.kotlin.cli.common.output.writeAllTo
 import org.jetbrains.kotlin.cli.jvm.compiler.findMainClass
-import org.jetbrains.kotlin.codegen.ClassBuilderFactories
-import org.jetbrains.kotlin.codegen.ClassBuilderFactory
-import org.jetbrains.kotlin.codegen.GenerationUtils
-import org.jetbrains.kotlin.codegen.state.GenerationState
-import org.jetbrains.kotlin.config.*
-import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
+import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
+import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.codegen.CodegenTestUtil
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
@@ -123,7 +119,7 @@ open class DebuggerTestCompilerFacility(
         }
     }
 
-    open fun compileTestSourcesWithCli(
+    fun compileTestSourcesWithCli(
         module: Module,
         jvmSrcDir: File,
         commonSrcDir: File,
@@ -167,26 +163,10 @@ open class DebuggerTestCompilerFacility(
         }
     }
 
-    open fun compileTestSourcesInIde(
-        srcDir: File,
-        classesDir: File,
-        classBuilderFactory: ClassBuilderFactory = ClassBuilderFactories.BINARIES
-    ): CompilationResult = with(mainFiles) {
-        val testFiles = kotlinJvm + java
-        testFiles.copy(srcDir)
-        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(srcDir)
-
-        lateinit var ktFiles: List<KtFile>
-        doWriteAction {
-            ktFiles = createPsiFilesAndCollectKtFiles(testFiles, srcDir)
-        }
-
-        return runReadAction {
-            compileKotlinFilesInIde(ktFiles, classesDir, classBuilderFactory)
-        }
-    }
-
-    private fun compileKotlinFilesWithCliCompiler(jvmSrcDir: File, commonSrcDir: File, classesDir: File, libClassesDir: File, ) {
+    private fun compileKotlinFilesWithCliCompiler(
+        jvmSrcDir: File, commonSrcDir: File, classesDir: File,
+        libClassesDir: File,
+    ) {
         val options = mutableListOf(
             "-Xcommon-sources=${commonSrcDir.absolutePath}",
             "-Xmulti-platform",
@@ -212,57 +192,28 @@ open class DebuggerTestCompilerFacility(
         return options
     }
 
-    // Returns the qualified name of the main test class.
-    fun analyzeAndFindMainClass(jvmKtFiles: List<KtFile>): String {
+    open fun analyzeSources(ktFiles: List<KtFile>): Pair<ResolutionFacade, AnalysisResult> {
         return runReadAction {
-            val resolutionFacade = KotlinCacheService.getInstance(project).getResolutionFacade(jvmKtFiles)
-            val analysisResult = resolutionFacade.analyzeWithAllCompilerChecks(jvmKtFiles)
+            val resolutionFacade = KotlinCacheService.getInstance(project)
+                .getResolutionFacadeWithForcedPlatform(ktFiles, JvmPlatforms.unspecifiedJvmPlatform)
+            val analysisResult = try {
+                resolutionFacade.analyzeWithAllCompilerChecks(ktFiles)
+            } catch (_: ProcessCanceledException) {
+                // allow module's descriptors update due to dynamic loading of Scripting Support Libraries for .kts files
+                resolutionFacade.analyzeWithAllCompilerChecks(ktFiles)
+            }
             analysisResult.throwIfError()
-            findMainClass(analysisResult.bindingContext, resolutionFacade.languageVersionSettings, jvmKtFiles)?.asString()
-                ?: error("Cannot find main class name")
+            resolutionFacade to analysisResult
         }
     }
 
-    data class CompilationResult(
-        val analysisResult: AnalysisResult,
-        val generationState: GenerationState,
-        val resolutionFacade: ResolutionFacade
-    )
-
-    private fun compileKotlinFilesInIde(
-        files: List<KtFile>,
-        classesDir: File,
-        classBuilderFactory: ClassBuilderFactory = ClassBuilderFactories.BINARIES
-    ): CompilationResult {
-        val resolutionFacade = KotlinCacheService.getInstance(project).getResolutionFacadeWithForcedPlatform(files, JvmPlatforms.unspecifiedJvmPlatform)
-
-        val analysisResult = try {
-            resolutionFacade.analyzeWithAllCompilerChecks(files)
-        } catch (_: ProcessCanceledException) {
-            // allow module's descriptors update due to dynamic loading of Scripting Support Libraries for .kts files
-            resolutionFacade.analyzeWithAllCompilerChecks(files)
+    // Returns the qualified name of the main test class.
+    fun analyzeAndFindMainClass(jvmKtFiles: List<KtFile>): String {
+        return runReadAction {
+            val (resolutionFacade, analysisResult) = analyzeSources(jvmKtFiles)
+            findMainClass(analysisResult.bindingContext, resolutionFacade.languageVersionSettings, jvmKtFiles)?.asString()
+                ?: error("Cannot find main class name")
         }
-        analysisResult.throwIfError()
-
-        val configuration = CompilerConfiguration()
-        configuration.put(JVMConfigurationKeys.JVM_TARGET, jvmTarget)
-        configuration.put(JVMConfigurationKeys.IR, compileConfig.useIrBackend)
-        configuration.put(JVMConfigurationKeys.DO_NOT_CLEAR_BINDING_CONTEXT, true)
-        configuration.put(JVMConfigurationKeys.LAMBDAS, compileConfig.lambdasGenerationScheme)
-
-        val state = GenerationUtils.generateFiles(project, files, configuration, classBuilderFactory, analysisResult) {
-            generateDeclaredClassFilter(GenerationState.GenerateClassFilter.GENERATE_ALL)
-        }
-
-        val extraDiagnostics = state.collectedExtraJvmDiagnostics
-        if (!extraDiagnostics.isEmpty()) {
-            val compoundMessage = extraDiagnostics.joinToString("\n") { DefaultErrorMessages.render(it) }
-            error("One or more errors occurred during code generation: \n$compoundMessage")
-        }
-
-        state.factory.writeAllTo(classesDir)
-
-        return CompilationResult(analysisResult, state, resolutionFacade)
     }
 
     private fun createPsiFilesAndCollectKtFiles(testFiles: List<TestFile>, srcDir: File): List<KtFile> {

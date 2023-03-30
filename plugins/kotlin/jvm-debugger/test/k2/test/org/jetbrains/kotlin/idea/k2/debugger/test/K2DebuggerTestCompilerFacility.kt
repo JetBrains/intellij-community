@@ -1,14 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.debugger.test
 
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.codegen.ClassBuilderFactory
+import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.debugger.test.DebuggerTestCompilerFacility
 import org.jetbrains.kotlin.idea.debugger.test.TestCompileConfiguration
 import org.jetbrains.kotlin.idea.debugger.test.TestFileWithModule
-import java.io.File
+import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
+import org.jetbrains.kotlin.psi.KtFile
 
 internal class K2DebuggerTestCompilerFacility(
     private val project: Project,
@@ -16,19 +16,10 @@ internal class K2DebuggerTestCompilerFacility(
     jvmTarget: JvmTarget,
     compileConfig: TestCompileConfiguration,
 ) : DebuggerTestCompilerFacility(project, files, jvmTarget, compileConfig) {
-    override fun compileTestSourcesInIde(
-        srcDir: File,
-        classesDir: File,
-        classBuilderFactory: ClassBuilderFactory
-    ): CompilationResult {
-        return withTestServicesNeededForCodeCompilation(project) {
-            super.compileTestSourcesInIde(srcDir, classesDir, classBuilderFactory)
-        }
-    }
 
-    override fun compileTestSourcesWithCli(module: Module, jvmSrcDir: File, commonSrcDir: File, classesDir: File, libClassesDir: File) {
+    override fun analyzeSources(ktFiles: List<KtFile>): Pair<ResolutionFacade, AnalysisResult> {
         return withTestServicesNeededForCodeCompilation(project) {
-            super.compileTestSourcesWithCli(module, jvmSrcDir, commonSrcDir, classesDir, libClassesDir)
+            super.analyzeSources(ktFiles)
         }
     }
 }
