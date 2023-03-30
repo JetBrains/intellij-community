@@ -28,6 +28,7 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -418,7 +419,7 @@ public final class MavenIndex implements MavenSearchIndex {
    * @return list of artifact responses; indexed id is not null if artifact added; indexed id is null if retry is needed
    */
   @NotNull
-  public List<AddArtifactResponse> tryAddArtifacts(@NotNull Collection<File> artifactFiles) {
+  public List<AddArtifactResponse> tryAddArtifacts(@NotNull Collection<File> artifactFiles, @NotNull AtomicBoolean stopped) {
     var failedResponses = ContainerUtil.map(artifactFiles, file -> new AddArtifactResponse(file, null));
     return doIndexAndRecoveryTask(() -> {
       boolean locked = indexUpdateLock.tryLock();
@@ -438,8 +439,10 @@ public final class MavenIndex implements MavenSearchIndex {
               }
             }
           }
-          indexData.flush();
-          return addArtifactResponses;
+          if (!stopped.get()) {
+            indexData.flush();
+            return addArtifactResponses;
+          }
         }
         return failedResponses;
       } finally {

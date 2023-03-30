@@ -28,6 +28,8 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.reposearch.DependencySearchService;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
@@ -35,6 +37,8 @@ import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Main api class for work with maven indices.
@@ -76,8 +80,31 @@ public final class MavenIndicesManager implements Disposable {
   @Override
   public void dispose() {
     myIndexFixer.stop();
+    deleteIndicesDirInUnitTests();
+  }
+
+  private void deleteIndicesDirInUnitTests() {
     if (MavenUtil.isMavenUnitTestModeEnabled()) {
-      PathKt.delete(getIndicesDir());
+      Path dir = getIndicesDir();
+      try {
+        PathKt.delete(dir);
+      }
+      catch (Exception e) {
+        // if some files haven't been deleted in the index directory, report them
+        try (Stream<Path> stream = Files.walk(dir)) {
+          var files = stream
+            .map(Path::getFileName)
+            .map(Path::toString)
+            .collect(Collectors.toSet());
+          var message = files.isEmpty()
+                        ? "Failed to delete the index directory"
+                        : "Failed to delete files in the index directory: " + String.join(", ", files);
+          throw new RuntimeException(message, e);
+        }
+        catch (IOException ex) {
+          throw new RuntimeException(ex);
+        }
+      }
     }
   }
 
@@ -274,7 +301,7 @@ public final class MavenIndicesManager implements Disposable {
           if (filesToAddNow.isEmpty()) return;
 
           Set<File> retryElements = new TreeSet<>();
-          var addArtifactResponses = localIndex.tryAddArtifacts(filesToAddNow);
+          var addArtifactResponses = localIndex.tryAddArtifacts(filesToAddNow, stopped);
           for (var addArtifactResponse : addArtifactResponses) {
             var file = addArtifactResponse.artifactFile();
             var added = addArtifactResponse.indexedMavenId() != null;
