@@ -2,6 +2,7 @@
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.Gray;
 import com.intellij.util.Function;
@@ -43,6 +44,8 @@ class JBCefOsrHandler implements CefRenderHandler {
   private final @NotNull Function<? super JComponent, ? extends Rectangle> myScreenBoundsProvider;
   private final @NotNull AtomicReference<Point> myLocationOnScreenRef = new AtomicReference<>(new Point());
   private final @NotNull JBCefOsrComponent.MyScale myScale = new JBCefOsrComponent.MyScale();
+  private final @NotNull JBCefFpsMeter myFpsMeter = JBCefFpsMeter.register(
+    RegistryManager.getInstance().get("ide.browser.jcef.osr.measureFPS.id").asString());
 
   private volatile @Nullable JBHiDPIScaledImage myImage;
 
@@ -73,6 +76,7 @@ class JBCefOsrHandler implements CefRenderHandler {
         updateLocation();
       }
     });
+    myFpsMeter.registerComponent(myComponent);
   }
 
   @Override
@@ -137,7 +141,8 @@ class JBCefOsrHandler implements CefRenderHandler {
         drawByteBuffer(image, buffer, dirtyRects);
         myPopupImage = image;
       }
-    } else {
+    }
+    else {
       drawByteBuffer(image, buffer, dirtyRects);
       myImage = image;
     }
@@ -175,6 +180,7 @@ class JBCefOsrHandler implements CefRenderHandler {
       return;
     }
 
+    myFpsMeter.paintFrameStarted();
     VolatileImage vi = myVolatileImage;
 
     do {
@@ -182,7 +188,8 @@ class JBCefOsrHandler implements CefRenderHandler {
       myContentOutdated = false;
       if (vi == null || vi.getWidth() == myComponent.getWidth() || vi.getWidth() != myComponent.getHeight()) {
         vi = createVolatileImage();
-      } else if (contentOutdated) {
+      }
+      else if (contentOutdated) {
         drawVolatileImage(vi);
       }
 
@@ -196,6 +203,8 @@ class JBCefOsrHandler implements CefRenderHandler {
     while (vi.contentsLost());
 
     myVolatileImage = vi;
+
+    myFpsMeter.paintFrameFinished(g);
   }
 
   public void updateScale(JBCefOsrComponent.MyScale scale) {
