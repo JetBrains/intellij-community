@@ -177,13 +177,13 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
     testGroup("jvm-debugger/test") {
         testClass<AbstractKotlinSteppingTest> {
-            model("stepping/stepIntoAndSmartStepInto", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest", testClassName = "StepInto")
-            model("stepping/stepIntoAndSmartStepInto", pattern = KT_WITHOUT_DOTS, testMethodName = "doSmartStepIntoTest", testClassName = "SmartStepInto")
-            model("stepping/stepInto", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest", testClassName = "StepIntoOnly")
-            model("stepping/stepOut", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepOutTest")
-            model("stepping/stepOver", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepOverTest")
-            model("stepping/filters", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest")
-            model("stepping/custom", pattern = KT_WITHOUT_DOTS, testMethodName = "doCustomTest")
+            model("stepping/stepIntoAndSmartStepInto", pattern = KT_WITHOUT_DOTS, targetBackend = TargetBackend.JVM_WITH_IR_EVALUATOR, testMethodName = "doStepIntoTest", testClassName = "StepInto")
+            model("stepping/stepIntoAndSmartStepInto", pattern = KT_WITHOUT_DOTS, targetBackend = TargetBackend.JVM_WITH_IR_EVALUATOR, testMethodName = "doSmartStepIntoTest", testClassName = "SmartStepInto")
+            model("stepping/stepInto", pattern = KT_WITHOUT_DOTS, targetBackend = TargetBackend.JVM_WITH_IR_EVALUATOR, testMethodName = "doStepIntoTest", testClassName = "StepIntoOnly")
+            model("stepping/stepOut", pattern = KT_WITHOUT_DOTS, targetBackend = TargetBackend.JVM_WITH_IR_EVALUATOR, testMethodName = "doStepOutTest")
+            model("stepping/stepOver", pattern = KT_WITHOUT_DOTS, targetBackend = TargetBackend.JVM_WITH_IR_EVALUATOR, testMethodName = "doStepOverTest")
+            model("stepping/filters", pattern = KT_WITHOUT_DOTS, targetBackend = TargetBackend.JVM_WITH_IR_EVALUATOR, testMethodName = "doStepIntoTest")
+            model("stepping/custom", pattern = KT_WITHOUT_DOTS, targetBackend = TargetBackend.JVM_WITH_IR_EVALUATOR, testMethodName = "doCustomTest")
         }
 
         testClass<AbstractIrKotlinSteppingTest> {
