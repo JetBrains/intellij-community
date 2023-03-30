@@ -1246,6 +1246,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         newLayout.addInfo(entry.id, old.copy())
       }
       else if (old != new) {
+        if (!entry.toolWindow.isAvailable) {
+          new.isVisible = false // Preserve invariants: if it can't be shown, don't consider it visible.
+        }
         list.add(LayoutData(old = old, new = new, entry = entry))
       }
     }
@@ -1256,9 +1259,17 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       return
     }
 
+    // First, apply the new info to all windows, including unavailable ones
+    // (so they're shown in their appropriate places if they ARE shown later by some user action).
     for (item in list) {
       item.entry.applyWindowInfo(item.new)
+    }
 
+    // For unavailable windows, stop right here (we don't want to try to move their stripe buttons, for example).
+    list.removeAll { !it.entry.toolWindow.isAvailable }
+
+    // Now, show/hide/dock/undock/rearrange tool windows and their stripe buttons.
+    for (item in list) {
       if (item.old.isVisible && !item.new.isVisible) {
         updateStateAndRemoveDecorator(item.new, item.entry, dirtyMode = true)
       }
