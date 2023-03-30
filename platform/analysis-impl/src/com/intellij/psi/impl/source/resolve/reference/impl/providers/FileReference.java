@@ -102,8 +102,9 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
     else {
       ResolveResult[] resolveResults = contextRef.multiResolve(false);
       for (ResolveResult resolveResult : resolveResults) {
-        if (resolveResult.getElement() != null) {
-          result.add((PsiFileSystemItem)resolveResult.getElement());
+        PsiElement element = resolveResult.getElement();
+        if (element != null) {
+          result.add((PsiFileSystemItem)element);
         }
       }
     }
