@@ -211,14 +211,8 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
                 additionalVisibleModuleNames = kotlinSourceSet.additionalVisible
             )
 
-            val defaultCompilerArguments = kotlinSourceSet.lazyDefaultCompilerArguments?.value
             if (compilerArguments != null) {
-                applyCompilerArgumentsToFacet(
-                    compilerArguments,
-                    defaultCompilerArguments,
-                    kotlinFacet,
-                    modelsProvider
-                )
+                applyCompilerArgumentsToFacet(compilerArguments, kotlinFacet, modelsProvider)
             }
 
             adjustClasspath(kotlinFacet, kotlinSourceSet.lazyDependencyClasspath.value)

@@ -121,34 +121,24 @@ private fun LanguageVersion.coerceAtMostVersion(version: IdeKotlinVersion): Lang
 
 fun parseCompilerArgumentsToFacet(
     arguments: List<String>,
-    defaultArguments: List<String>,
     kotlinFacet: KotlinFacet,
     modelsProvider: IdeModifiableModelsProvider?
 ) {
     val compilerArgumentsClass = kotlinFacet.configuration.settings.compilerArguments?.javaClass ?: return
     val currentArgumentsBean = compilerArgumentsClass.newInstance()
-    val defaultArgumentsBean = compilerArgumentsClass.newInstance()
-    val defaultArgumentWithDefaults = substituteDefaults(defaultArguments, defaultArgumentsBean)
     val currentArgumentWithDefaults = substituteDefaults(arguments, currentArgumentsBean)
-    parseCommandLineArguments(defaultArgumentWithDefaults, defaultArgumentsBean)
     parseCommandLineArguments(currentArgumentWithDefaults, currentArgumentsBean)
-    applyCompilerArgumentsToFacet(currentArgumentsBean, defaultArgumentsBean, kotlinFacet, modelsProvider)
+    applyCompilerArgumentsToFacet(currentArgumentsBean, kotlinFacet, modelsProvider)
 }
 
 fun applyCompilerArgumentsToFacet(
     arguments: CommonCompilerArguments,
-    defaultArguments: CommonCompilerArguments?,
     kotlinFacet: KotlinFacet,
     modelsProvider: IdeModifiableModelsProvider?
 ) {
     with(kotlinFacet.configuration.settings) {
         val compilerArguments = this.compilerArguments ?: return
-
-        val defaultCompilerArguments = defaultArguments?.let { copyBean(it) } ?: compilerArguments::class.java.newInstance()
-        defaultCompilerArguments.convertPathsToSystemIndependent()
-
         val oldPluginOptions = compilerArguments.pluginOptions
-
         val emptyArgs = compilerArguments::class.java.newInstance()
 
         // Ad-hoc work-around for android compilations: middle source sets could be actualized up to
@@ -171,7 +161,7 @@ fun applyCompilerArgumentsToFacet(
         val ignoredFields = compilerArguments.ignoredFields
 
         fun exposeAsAdditionalArgument(property: KProperty1<CommonCompilerArguments, Any?>) =
-            property.name !in primaryFields && property.get(compilerArguments) != property.get(defaultCompilerArguments)
+            property.name !in primaryFields && property.get(compilerArguments) != property.get(emptyArgs)
 
         val additionalArgumentsString = with(compilerArguments::class.java.newInstance()) {
             copyFieldsSatisfying(compilerArguments, this) { exposeAsAdditionalArgument(it) && it.name !in ignoredFields }
