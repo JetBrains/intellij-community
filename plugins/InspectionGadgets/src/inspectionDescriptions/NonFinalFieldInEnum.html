@@ -1,7 +1,7 @@
 <html>
 <body>
 Reports non-final fields in enumeration types.
-Non-final fields are rarely need and provide global mutable state.
+Non-final fields introduce global mutable state, which is generally considered undesirable.
 <p><b>Example:</b></p>
 <pre><code>
   enum Enum {
