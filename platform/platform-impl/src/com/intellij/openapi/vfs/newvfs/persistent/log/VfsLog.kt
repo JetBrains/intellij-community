@@ -88,8 +88,8 @@ class VfsLog(
       }
   }
 
-  val interceptors = if (readOnly) { emptyList() } else {
-    listOf<ConnectionInterceptor>(
+  val interceptors : List<ConnectionInterceptor> = if (readOnly) { emptyList() } else {
+    listOf(
       ContentsLogInterceptor(processor),
       AttributesLogInterceptor(processor),
       RecordsLogInterceptor(processor)

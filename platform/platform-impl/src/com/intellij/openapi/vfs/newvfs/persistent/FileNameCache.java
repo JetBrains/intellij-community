@@ -1,21 +1,23 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.impl;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.IntSLRUCache;
 import com.intellij.util.containers.IntObjectLRUMap;
 import com.intellij.util.io.URLUtil;
 import io.opentelemetry.api.metrics.Meter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@ApiStatus.Internal
 public final class FileNameCache {
   @SuppressWarnings("unchecked") private static final IntSLRUCache<CharSequence>[] ourNameCache = new IntSLRUCache[16];
 
@@ -65,7 +67,7 @@ public final class FileNameCache {
   }
 
   @NotNull
-  private static IntObjectLRUMap.MapEntry<CharSequence> cacheData(CharSequence name, int nameId, int stripe) {
+  private static IntObjectLRUMap.MapEntry<CharSequence> cacheData(@Nullable CharSequence name, int nameId, int stripe) {
     if (name == null) {
       throw FSRecords.handleError(
         new RuntimeException("VFS name enumerator corrupted: nameId(=" + nameId + ") is not found in enumerator (=null)"));

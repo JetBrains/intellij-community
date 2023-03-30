@@ -73,7 +73,7 @@ public final class FSRecords {
 
   /** @return path to the directory there all VFS files are located */
   public static @NotNull String getCachesDir() {
-    final String dir = System.getProperty("caches_dir");
+    String dir = System.getProperty("caches_dir");
     return dir == null ? PathManager.getSystemPath() + "/caches/" : dir;
   }
 
@@ -83,12 +83,12 @@ public final class FSRecords {
 
   //========== lifecycle: =====================================================
 
-  static synchronized void connect(final @NotNull VfsLog vfsLog) throws UncheckedIOException {
+  static synchronized void connect(@NotNull VfsLog vfsLog) throws UncheckedIOException {
     impl = FSRecordsImpl.connect(Path.of(getCachesDir()), vfsLog);
   }
 
   static synchronized void dispose() {
-    final FSRecordsImpl _impl = impl;
+    FSRecordsImpl _impl = impl;
     if (_impl != null) {
       _impl.dispose();
       impl = null;
@@ -98,7 +98,7 @@ public final class FSRecords {
 
   @NotNull
   private static FSRecordsImpl implOrFail() {
-    final FSRecordsImpl _impl = impl;
+    FSRecordsImpl _impl = impl;
     if (_impl == null || _impl.isDisposed()) {
       throw alreadyDisposed();
     }
@@ -152,7 +152,7 @@ public final class FSRecords {
     return implOrFail().createRecord();
   }
 
-  static void deleteRecordRecursively(final int fileId) {
+  static void deleteRecordRecursively(int fileId) {
     implOrFail().deleteRecordRecursively(fileId);
   }
 
@@ -180,35 +180,35 @@ public final class FSRecords {
     return impl.listRoots();
   }
 
-  static int findRootRecord(final @NotNull String rootUrl) {
+  static int findRootRecord(@NotNull String rootUrl) {
     return implOrFail().findRootRecord(rootUrl);
   }
 
-  static void loadRootData(final int id,
-                           final @NotNull String path,
-                           final @NotNull NewVirtualFileSystem fs) {
+  static void loadRootData(int id,
+                           @NotNull String path,
+                           @NotNull NewVirtualFileSystem fs) {
     implOrFail().loadRootData(id, path, fs);
   }
 
-  static void deleteRootRecord(final int fileId) {
+  static void deleteRootRecord(int fileId) {
     implOrFail().deleteRootRecord(fileId);
   }
 
 
   //========== directory/children manipulation: =============================
 
-  static void loadDirectoryData(final int id,
-                                final @NotNull VirtualFile parent,
-                                final @NotNull CharSequence path,
-                                final @NotNull NewVirtualFileSystem fs) {
+  static void loadDirectoryData(int id,
+                                @NotNull VirtualFile parent,
+                                @NotNull CharSequence path,
+                                @NotNull NewVirtualFileSystem fs) {
     implOrFail().loadDirectoryData(id, parent, path, fs);
   }
 
-  public static int @NotNull [] listIds(final int fileId) {
+  public static int @NotNull [] listIds(int fileId) {
     return implOrFail().listIds(fileId);
   }
 
-  static boolean mayHaveChildren(final int fileId) {
+  static boolean mayHaveChildren(int fileId) {
     return implOrFail().mayHaveChildren(fileId);
   }
 
@@ -216,15 +216,15 @@ public final class FSRecords {
    * @return child infos (sorted by id) without (potentially expensive) name (or without even nameId if `loadNameId` is false)
    */
   @NotNull
-  static ListResult list(final int parentId) {
+  static ListResult list(int parentId) {
     return implOrFail().list(parentId);
   }
 
-  public static @NotNull @Unmodifiable List<CharSequence> listNames(final int parentId) {
+  public static @NotNull @Unmodifiable List<CharSequence> listNames(int parentId) {
     return implOrFail().listNames(parentId);
   }
 
-  static boolean wereChildrenAccessed(final int fileId) {
+  static boolean wereChildrenAccessed(int fileId) {
     return impl.wereChildrenAccessed(fileId);
   }
 
@@ -232,22 +232,22 @@ public final class FSRecords {
   // Obtain fresh children and try to apply `childrenConvertor` to the children of `parentId`.
   // If everything is still valid (i.e. no one changed the list in the meantime), commit.
   // Failing that, repeat pessimistically: retry converter inside write lock for fresh children and commit inside the same write lock
-  static @NotNull ListResult update(final @NotNull VirtualFile parent,
-                                    final int parentId,
-                                    final @NotNull Function<? super ListResult, ListResult> childrenConvertor) {
+  static @NotNull ListResult update(@NotNull VirtualFile parent,
+                                    int parentId,
+                                    @NotNull Function<? super ListResult, ListResult> childrenConvertor) {
     SlowOperations.assertSlowOperationsAreAllowed();
     return implOrFail().update(parent, parentId, childrenConvertor);
   }
 
-  static void moveChildren(final int fromParentId,
-                           final int toParentId) {
+  static void moveChildren(int fromParentId,
+                           int toParentId) {
     implOrFail().moveChildren(fromParentId, toParentId);
   }
 
   //MAYBE RC: this method is better to be moved up, to VirtualFileSystem?
-  static @Nullable VirtualFileSystemEntry findFileById(final int fileId,
-                                                       final @NotNull VirtualDirectoryCache idToDirCache) {
-    final FSRecordsImpl impl = implOrFail();
+  static @Nullable VirtualFileSystemEntry findFileById(int fileId,
+                                                       @NotNull VirtualDirectoryCache idToDirCache) {
+    FSRecordsImpl impl = implOrFail();
 
     //We climb up from fileId, collecting parentIds (=path), until find a parent which is cached in
     // idToDirCache. From that (grand)parent we climb down (findDescendantByIdPath) to fileId,
@@ -260,7 +260,7 @@ public final class FSRecords {
       public Void compute() {
         int currentId = fileId;
         while (true) {
-          final int parentId = impl.getParent(currentId);
+          int parentId = impl.getParent(currentId);
           if (path != null && (path.size() % 128 == 0 && path.contains(parentId))) {
             //circularity check is expensive: do it only once-in-a-while, as path became deep enough
             //  to start to suspect something may be wrong.
@@ -276,7 +276,7 @@ public final class FSRecords {
             //    the method .findFileById() is used in an assumption it just returns null
             //    if 'incorrect' fileId is passed in? -- so I keep legacy behavior until I'll
             //    be able to understand it better, or fix calling code meaningfully
-            final String currentFileName = getName(currentId);
+            String currentFileName = getName(currentId);
             LOG.info(
               "file[" + fileId + "]: top parent (currentId: " + currentId + ", name: '" + currentFileName + "', parent: 0), " +
               "is still not in the idToDirCache. path: " + path);
@@ -317,14 +317,14 @@ public final class FSRecords {
       }
     }
 
-    final ParentFinder finder = new ParentFinder();
+    ParentFinder finder = new ParentFinder();
     try {
       finder.compute();
     }
     catch (Throwable t) {
       throw impl.handleError(t);
     }
-    final VirtualFileSystemEntry file = finder.findDescendantByIdPath();
+    VirtualFileSystemEntry file = finder.findDescendantByIdPath();
     if (file != null) {
       LOG.assertTrue(file.getId() == fileId);
     }
@@ -334,12 +334,12 @@ public final class FSRecords {
 
   //========== symlink manipulation: ========================================
 
-  static @Nullable String readSymlinkTarget(final int fileId) {
+  static @Nullable String readSymlinkTarget(int fileId) {
     return implOrFail().readSymlinkTarget(fileId);
   }
 
-  static void storeSymlinkTarget(final int fileId,
-                                 final @Nullable String symlinkTarget) {
+  static void storeSymlinkTarget(int fileId,
+                                 @Nullable String symlinkTarget) {
     implOrFail().storeSymlinkTarget(fileId, symlinkTarget);
   }
 
@@ -350,105 +350,105 @@ public final class FSRecords {
     return implOrFail().processAllNames(processor);
   }
 
-  public static boolean processFilesWithNames(final @NotNull Set<String> names,
-                                              final @NotNull IntPredicate processor) {
+  public static boolean processFilesWithNames(@NotNull Set<String> names,
+                                              @NotNull IntPredicate processor) {
     return implOrFail().processFilesWithNames(names, processor);
   }
 
 
   //========== file record fields accessors: ================================
 
-  public static int getParent(final int fileId) {
+  public static int getParent(int fileId) {
     return implOrFail().getParent(fileId);
   }
 
-  static void setParent(final int id,
-                        final int parentId) {
+  static void setParent(int id,
+                        int parentId) {
     implOrFail().setParent(id, parentId);
   }
 
   //TODO RC: this method is used to look up files by name, but this non-strict enumerator this approach
   //         becomes 'non-strict' also: nameId returned could be the new nameId, never used before, hence
   //         in any file record, even though name was already registered for some file(s)
-  public static int getNameId(final @NotNull String name) {
+  static int getNameId(@NotNull String name) {
     return implOrFail().getNameId(name);
   }
 
-  public static @NotNull String getName(final int fileId) {
+  public static @NotNull String getName(int fileId) {
     return implOrFail().getName(fileId);
   }
 
-  static @NotNull CharSequence getNameSequence(final int fileId) {
+  static @NotNull CharSequence getNameSequence(int fileId) {
     return implOrFail().getNameSequence(fileId);
   }
 
-  public static CharSequence getNameByNameId(final int nameId) {
+  static CharSequence getNameByNameId(int nameId) {
     return implOrFail().getNameByNameId(nameId);
   }
 
-  static void setName(final int fileId,
-                      final @NotNull String name,
-                      final int oldNameId) {
+  static void setName(int fileId,
+                      @NotNull String name,
+                      int oldNameId) {
     implOrFail().setName(fileId, name, oldNameId);
   }
 
-  static void setFlags(final int fileId,
-                       final @PersistentFS.Attributes int flags) {
+  static void setFlags(int fileId,
+                       @PersistentFS.Attributes int flags) {
     implOrFail().setFlags(fileId, flags);
   }
 
-  static @PersistentFS.Attributes int getFlags(final int fileId) {
+  static @PersistentFS.Attributes int getFlags(int fileId) {
     return implOrFail().getFlags(fileId);
   }
 
   @ApiStatus.Internal
-  public static boolean isDeleted(final int fileId) {
+  public static boolean isDeleted(int fileId) {
     return implOrFail().isDeleted(fileId);
   }
 
-  static long getLength(final int fileId) {
+  static long getLength(int fileId) {
     return implOrFail().getLength(fileId);
   }
 
-  static void setLength(final int fileId,
-                        final long length) {
+  static void setLength(int fileId,
+                        long length) {
     implOrFail().setLength(fileId, length);
   }
 
   /**
    * @return nameId > 0
    */
-  static int writeAttributesToRecord(final int fileId,
-                                     final int parentId,
-                                     final @NotNull FileAttributes attributes,
-                                     final @NotNull String name,
-                                     final boolean overwriteMissed) {
+  static int writeAttributesToRecord(int fileId,
+                                     int parentId,
+                                     @NotNull FileAttributes attributes,
+                                     @NotNull String name,
+                                     boolean overwriteMissed) {
     return implOrFail().writeAttributesToRecord(fileId, parentId, attributes, name, overwriteMissed);
   }
 
 
-  static long getTimestamp(final int fileId) {
+  static long getTimestamp(int fileId) {
     return implOrFail().getTimestamp(fileId);
   }
 
-  static void setTimestamp(final int fileId,
-                           final long value) {
+  static void setTimestamp(int fileId,
+                           long value) {
     implOrFail().setTimestamp(fileId, value);
   }
 
-  static int getModCount(final int fileId) {
+  static int getModCount(int fileId) {
     return impl.getModCount(fileId);
   }
 
   //========== file attributes accessors: ===================================
 
-  public static @Nullable AttributeInputStream readAttributeWithLock(final int fileId,
-                                                                     final @NotNull FileAttribute attribute) {
+  public static @Nullable AttributeInputStream readAttributeWithLock(int fileId,
+                                                                     @NotNull FileAttribute attribute) {
     return implOrFail().readAttributeWithLock(fileId, attribute);
   }
 
-  public static @NotNull AttributeOutputStream writeAttribute(final int fileId,
-                                                              final @NotNull FileAttribute attribute) {
+  public static @NotNull AttributeOutputStream writeAttribute(int fileId,
+                                                              @NotNull FileAttribute attribute) {
     //TODO RC: we need to check fileId here, and throw exception if it is not valid
     return implOrFail().writeAttribute(fileId, attribute);
   }
@@ -460,57 +460,57 @@ public final class FSRecords {
   }
 
   @ApiStatus.Internal
-  public static <R> @Nullable R readAttributeRawWithLock(final int fileId,
-                                                         final @NotNull FileAttribute attribute,
-                                                         final ByteBufferReader<R> reader) {
+  public static <R> @Nullable R readAttributeRawWithLock(int fileId,
+                                                         @NotNull FileAttribute attribute,
+                                                         ByteBufferReader<R> reader) {
     return implOrFail().readAttributeRawWithLock(fileId, attribute, reader);
   }
 
-  public static void writeAttributeRaw(final int fileId,
-                                       final FileAttribute attribute,
-                                       final ByteBufferWriter writer) {
+  public static void writeAttributeRaw(int fileId,
+                                       FileAttribute attribute,
+                                       ByteBufferWriter writer) {
     implOrFail().writeAttributeRaw(fileId, attribute, writer);
   }
 
   //========== file content accessors: ======================================
 
-  static int acquireFileContent(final int fileId) {
+  static int acquireFileContent(int fileId) {
     return implOrFail().acquireFileContent(fileId);
   }
 
-  static @Nullable DataInputStream readContent(final int fileId) {
+  static @Nullable DataInputStream readContent(int fileId) {
     return implOrFail().readContent(fileId);
   }
 
-  static @NotNull DataInputStream readContentById(final int contentId) {
+  static @NotNull DataInputStream readContentById(int contentId) {
     return implOrFail().readContentById(contentId);
   }
 
-  static void releaseContent(final int contentId) {
+  static void releaseContent(int contentId) {
     implOrFail().releaseContent(contentId);
   }
 
-  static int getContentId(final int fileId) {
+  static int getContentId(int fileId) {
     return implOrFail().getContentId(fileId);
   }
 
   @TestOnly
-  static byte[] getContentHash(final int fileId) {
+  static byte[] getContentHash(int fileId) {
     return implOrFail().getContentHash(fileId);
   }
 
-  static @NotNull DataOutputStream writeContent(final int fileId,
-                                                final boolean readOnly) {
+  static @NotNull DataOutputStream writeContent(int fileId,
+                                                boolean readOnly) {
     return implOrFail().writeContent(fileId, readOnly);
   }
 
-  static void writeContent(final int fileId,
-                           final @NotNull ByteArraySequence bytes,
-                           final boolean readOnly) {
+  static void writeContent(int fileId,
+                           @NotNull ByteArraySequence bytes,
+                           boolean readOnly) {
     implOrFail().writeContent(fileId, bytes, readOnly);
   }
 
-  static int storeUnlinkedContent(final byte[] bytes) {
+  static int storeUnlinkedContent(byte[] bytes) {
     return implOrFail().storeUnlinkedContent(bytes);
   }
 
@@ -535,7 +535,7 @@ public final class FSRecords {
    * understands it is as a method exit point.
    */
   @Contract("_->fail")
-  public static RuntimeException handleError(final Throwable e) throws RuntimeException, Error {
+  public static RuntimeException handleError(Throwable e) throws RuntimeException, Error {
     return implOrFail().handleError(e);
   }
 
@@ -549,14 +549,14 @@ public final class FSRecords {
   /**
    * @return human-readable description of file fileId -- as much information as VFS now contains
    */
-  public static @NotNull String describeAlreadyCreatedFile(final int fileId,
-                                                           final int nameId) {
+  public static @NotNull String describeAlreadyCreatedFile(int fileId,
+                                                           int nameId) {
     return implOrFail().describeAlreadyCreatedFile(fileId, nameId);
   }
 
   @TestOnly
   public static void checkFilenameIndexConsistency() {
-    final FSRecordsImpl _impl = impl;
+    FSRecordsImpl _impl = impl;
     if (_impl != null && !_impl.isDisposed()) {
       _impl.checkFilenameIndexConsistency();
     }
@@ -564,7 +564,7 @@ public final class FSRecords {
 
   @NotNull
   private static AlreadyDisposedException alreadyDisposed() {
-    final AlreadyDisposedException alreadyDisposed = new AlreadyDisposedException("VFS is already disposed");
+    AlreadyDisposedException alreadyDisposed = new AlreadyDisposedException("VFS is already disposed");
     if (disconnectLocationStackTrace != null) {
       alreadyDisposed.addSuppressed(disconnectLocationStackTrace);
     }

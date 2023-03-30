@@ -10,6 +10,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.openapi.vfs.newvfs.persistent.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.testFramework.TestModeFlags;
@@ -59,7 +60,7 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
  */
 public final class VfsData {
   @TestOnly
-  public static final Key<Boolean> ENABLE_IS_INDEXED_FLAG_KEY = new Key<>("is_indexed_flag_enabled");
+  private static final Key<Boolean> ENABLE_IS_INDEXED_FLAG_KEY = new Key<>("is_indexed_flag_enabled");
   private static final Logger LOG = Logger.getInstance(VfsData.class);
   private static volatile Boolean isIsIndexedFlagDisabled = null;
   private static final int SEGMENT_BITS = 9;

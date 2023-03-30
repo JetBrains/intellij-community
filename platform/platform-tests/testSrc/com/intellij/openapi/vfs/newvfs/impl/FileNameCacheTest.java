@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vfs.newvfs.persistent.FileNameCache;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 

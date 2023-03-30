@@ -18,7 +18,6 @@ import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
-import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferReader;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferWriter;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
@@ -71,8 +70,8 @@ import static com.intellij.openapi.vfs.newvfs.persistent.InvertedNameIndex.NULL_
  * be in FSRecords?
  */
 @ApiStatus.Internal
-public final class FSRecordsImpl {
-  static final Logger LOG = Logger.getInstance(FSRecordsImpl.class);
+final class FSRecordsImpl {
+  private static final Logger LOG = Logger.getInstance(FSRecordsImpl.class);
 
   private static final boolean USE_CONTENT_HASHES = SystemProperties.getBooleanProperty("idea.share.contents", true);
   static final boolean INLINE_ATTRIBUTES = SystemProperties.getBooleanProperty("idea.inline.vfs.attributes", true);
@@ -82,8 +81,8 @@ public final class FSRecordsImpl {
    */
   static final boolean USE_SMALL_ATTR_TABLE = SystemProperties.getBooleanProperty("idea.use.small.attr.table.for.vfs", true);
 
-  public static final boolean USE_FAST_NAMES_IMPLEMENTATION = SystemProperties.getBooleanProperty("vfs.use-fast-names-storage", false);
-  public static final boolean USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION =
+  static final boolean USE_FAST_NAMES_IMPLEMENTATION = SystemProperties.getBooleanProperty("vfs.use-fast-names-storage", false);
+  static final boolean USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION =
     SystemProperties.getBooleanProperty("vfs.use-streamlined-attributes-storage", false);
 
   private static final FileAttribute SYMLINK_TARGET_ATTRIBUTE = new FileAttribute("FsRecords.SYMLINK_TARGET");
@@ -115,17 +114,17 @@ public final class FSRecordsImpl {
   /** Keep stacktrace of {@link #dispose()} call -- for better diagnostics of unexpected dispose */
   private volatile Exception disposedStackTrace = null;
 
-  private static int nextMask(final int value,
-                              final int bits,
-                              final int prevMask) {
+  private static int nextMask(int value,
+                              int bits,
+                              int prevMask) {
     assert value < (1 << bits) && value >= 0 : value;
     int mask = (prevMask << bits) | value;
     if (mask < 0) throw new IllegalStateException("Too many flags, int mask overflown");
     return mask;
   }
 
-  private static int nextMask(final boolean value,
-                              final int prevMask) {
+  private static int nextMask(boolean value,
+                              int prevMask) {
     return nextMask(value ? 1 : 0, 1, prevMask);
   }
 
@@ -153,25 +152,25 @@ public final class FSRecordsImpl {
    *
    * @param storagesDirectoryPath directory there to put all FS-records files ('caches' directory)
    */
-  static FSRecordsImpl connect(final @NotNull Path storagesDirectoryPath,
-                               final @NotNull VfsLog vfsLog) throws UncheckedIOException {
+  static FSRecordsImpl connect(@NotNull Path storagesDirectoryPath,
+                               @NotNull VfsLog vfsLog) throws UncheckedIOException {
     if (IOUtil.isSharedCachesEnabled()) {
       IOUtil.OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.set(false);
     }
     try {
-      final int currentVersion = calculateVersion();
-      final InvertedNameIndex invertedNameIndex = new InvertedNameIndex();
-      final PersistentFSConnection connection = PersistentFSConnector.connect(
+      int currentVersion = calculateVersion();
+      InvertedNameIndex invertedNameIndex = new InvertedNameIndex();
+      PersistentFSConnection connection = PersistentFSConnector.connect(
         storagesDirectoryPath,
         currentVersion,
         USE_CONTENT_HASHES,
         invertedNameIndex,
         vfsLog.getInterceptors()
       );
-      final PersistentFSContentAccessor contentAccessor = new PersistentFSContentAccessor(USE_CONTENT_HASHES, connection);
-      final PersistentFSAttributeAccessor attributeAccessor = new PersistentFSAttributeAccessor(connection);
-      final PersistentFSTreeAccessor treeAccessor = new PersistentFSTreeAccessor(attributeAccessor, connection);
-      final PersistentFSRecordAccessor recordAccessor = new PersistentFSRecordAccessor(contentAccessor, attributeAccessor, connection);
+      PersistentFSContentAccessor contentAccessor = new PersistentFSContentAccessor(USE_CONTENT_HASHES, connection);
+      PersistentFSAttributeAccessor attributeAccessor = new PersistentFSAttributeAccessor(connection);
+      PersistentFSTreeAccessor treeAccessor = new PersistentFSTreeAccessor(attributeAccessor, connection);
+      PersistentFSRecordAccessor recordAccessor = new PersistentFSRecordAccessor(contentAccessor, attributeAccessor, connection);
 
       try {
         treeAccessor.ensureLoaded();
@@ -195,13 +194,13 @@ public final class FSRecordsImpl {
   }
 
 
-  public FSRecordsImpl(final @NotNull PersistentFSConnection connection,
-                       final @NotNull PersistentFSContentAccessor contentAccessor,
-                       final @NotNull PersistentFSAttributeAccessor attributeAccessor,
-                       final @NotNull PersistentFSTreeAccessor treeAccessor,
-                       final @NotNull PersistentFSRecordAccessor recordAccessor,
-                       final @NotNull InvertedNameIndex invertedNameIndex,
-                       final int currentVersion) {
+  private FSRecordsImpl(@NotNull PersistentFSConnection connection,
+                        @NotNull PersistentFSContentAccessor contentAccessor,
+                        @NotNull PersistentFSAttributeAccessor attributeAccessor,
+                        @NotNull PersistentFSTreeAccessor treeAccessor,
+                        @NotNull PersistentFSRecordAccessor recordAccessor,
+                        @NotNull InvertedNameIndex invertedNameIndex,
+                        int currentVersion) {
     this.connection = connection;
     this.contentAccessor = contentAccessor;
     this.attributeAccessor = attributeAccessor;
@@ -214,7 +213,7 @@ public final class FSRecordsImpl {
 
   //========== lifecycle: ========================================
 
-  public synchronized void dispose() {
+  synchronized void dispose() {
     if (!disposed) {
       PersistentFSConnector.disconnect(connection);
       invertedNameIndex.clear();
@@ -223,13 +222,13 @@ public final class FSRecordsImpl {
     }
   }
 
-  public boolean isDisposed() {
+  boolean isDisposed() {
     return disposed;
   }
 
   private void checkNotDisposed() {
     if (disposed) {
-      final AlreadyDisposedException alreadyDisposed = new AlreadyDisposedException("VFS is already disposed");
+      AlreadyDisposedException alreadyDisposed = new AlreadyDisposedException("VFS is already disposed");
       if (disposedStackTrace != null) {
         alreadyDisposed.addSuppressed(disposedStackTrace);
       }
@@ -240,11 +239,11 @@ public final class FSRecordsImpl {
 
   //========== general FS records properties: ========================================
 
-  public int getVersion() {
+  int getVersion() {
     return currentVersion;
   }
 
-  public long getCreationTimestamp() {
+  long getCreationTimestamp() {
     try {
       checkNotDisposed();
       return connection.getTimestamp();
@@ -256,7 +255,7 @@ public final class FSRecordsImpl {
 
   //========== modifications counters: ========================================
 
-  public long getInvertedNameIndexModCount() {
+  long getInvertedNameIndexModCount() {
     return invertedNameIndexModCount.get();
   }
 
@@ -293,7 +292,7 @@ public final class FSRecordsImpl {
 
   //========== record allocations: ========================================
 
-  public int createRecord() {
+  int createRecord() {
     try {
       return recordAccessor.createRecord();
     }
@@ -305,7 +304,7 @@ public final class FSRecordsImpl {
   /**
    * @return records (ids) freed in previous session, and not yet re-used in a current session.
    */
-  public @NotNull IntList getRemainFreeRecords() {
+  @NotNull IntList getRemainFreeRecords() {
     checkNotDisposed();
     return connection.getFreeRecords();
   }
@@ -315,11 +314,11 @@ public final class FSRecordsImpl {
    * Returns !empty list only in unit-tests -- outside of testing records freed in a current session are marked by REMOVED
    * flag, but not collected into free-list
    */
-  public @NotNull IntList getNewFreeRecords() {
+  @NotNull IntList getNewFreeRecords() {
     return recordAccessor.getNewFreeRecords();
   }
 
-  void deleteRecordRecursively(final int fileId) {
+  void deleteRecordRecursively(int fileId) {
     checkNotDisposed();
     try {
       markAsDeletedRecursively(fileId);
@@ -330,12 +329,12 @@ public final class FSRecordsImpl {
     }
   }
 
-  private void markAsDeletedRecursively(final int fileId) throws IOException {
+  private void markAsDeletedRecursively(int fileId) throws IOException {
     for (int childId : listIds(fileId)) {
       markAsDeletedRecursively(childId);
     }
 
-    final int nameId = connection.getRecords().getNameId(fileId);
+    int nameId = connection.getRecords().getNameId(fileId);
     if (PersistentFS.isDirectory(getFlags(fileId))) {
       treeAccessor.deleteDirectoryRecord(fileId);
     }
@@ -358,7 +357,7 @@ public final class FSRecordsImpl {
     }
   }
 
-  int findRootRecord(final @NotNull String rootUrl) {
+  int findRootRecord(@NotNull String rootUrl) {
     try {
       return treeAccessor.findOrCreateRootRecord(rootUrl);
     }
@@ -367,9 +366,9 @@ public final class FSRecordsImpl {
     }
   }
 
-  void loadRootData(final int fileId,
-                    final @NotNull String path,
-                    final @NotNull NewVirtualFileSystem fs) {
+  void loadRootData(int fileId,
+                    @NotNull String path,
+                    @NotNull NewVirtualFileSystem fs) {
     try {
       treeAccessor.loadRootData(fileId, path, fs);
     }
@@ -378,7 +377,7 @@ public final class FSRecordsImpl {
     }
   }
 
-  void deleteRootRecord(final int fileId) {
+  void deleteRootRecord(int fileId) {
     try {
       treeAccessor.deleteRootRecord(fileId);
     }
@@ -390,10 +389,10 @@ public final class FSRecordsImpl {
 
   //========== directory/children manipulation: ========================================
 
-  void loadDirectoryData(final int id,
-                         final @NotNull VirtualFile parent,
-                         final @NotNull CharSequence path,
-                         final @NotNull NewVirtualFileSystem fs) {
+  void loadDirectoryData(int id,
+                         @NotNull VirtualFile parent,
+                         @NotNull CharSequence path,
+                         @NotNull NewVirtualFileSystem fs) {
     try {
       treeAccessor.loadDirectoryData(id, parent, path, fs);
     }
@@ -402,7 +401,7 @@ public final class FSRecordsImpl {
     }
   }
 
-  public int @NotNull [] listIds(final int fileId) {
+  int @NotNull [] listIds(int fileId) {
     try {
       return treeAccessor.listIds(fileId);
     }
@@ -411,7 +410,7 @@ public final class FSRecordsImpl {
     }
   }
 
-  boolean mayHaveChildren(final int fileId) {
+  boolean mayHaveChildren(int fileId) {
     try {
       return treeAccessor.mayHaveChildren(fileId);
     }
@@ -424,7 +423,7 @@ public final class FSRecordsImpl {
    * @return child infos (sorted by id) without (potentially expensive) name (or without even nameId if `loadNameId` is false)
    */
   @NotNull
-  ListResult list(final int parentId) {
+  ListResult list(int parentId) {
     try {
       return treeAccessor.doLoadChildren(parentId);
     }
@@ -433,11 +432,11 @@ public final class FSRecordsImpl {
     }
   }
 
-  public @NotNull @Unmodifiable List<CharSequence> listNames(final int parentId) {
+  @NotNull @Unmodifiable List<CharSequence> listNames(int parentId) {
     return ContainerUtil.map(list(parentId).children, ChildInfo::getName);
   }
 
-  boolean wereChildrenAccessed(final int fileId) {
+  boolean wereChildrenAccessed(int fileId) {
     try {
       return treeAccessor.wereChildrenAccessed(fileId);
     }
@@ -452,9 +451,9 @@ public final class FSRecordsImpl {
    * If everything is still valid (i.e. no one changed the list in the meantime), commit.
    * Failing that, repeat pessimistically: retry converter inside write lock for fresh children and commit inside the same write lock
    */
-  @NotNull ListResult update(final @NotNull VirtualFile parent,
-                             final int parentId,
-                             final @NotNull Function<? super ListResult, ListResult> childrenConvertor) {
+  @NotNull ListResult update(@NotNull VirtualFile parent,
+                             int parentId,
+                             @NotNull Function<? super ListResult, ListResult> childrenConvertor) {
     assert parentId > 0 : parentId;
     ListResult children = list(parentId);
     ListResult result = childrenConvertor.apply(children);
@@ -496,15 +495,15 @@ public final class FSRecordsImpl {
     }
   }
 
-  void moveChildren(final int fromParentId,
-                    final int toParentId) {
+  void moveChildren(int fromParentId,
+                    int toParentId) {
     assert fromParentId > 0 : fromParentId;
     assert toParentId > 0 : toParentId;
 
     if (fromParentId == toParentId) return;
 
-    final int minId = Math.min(fromParentId, toParentId);
-    final int maxId = Math.max(fromParentId, toParentId);
+    int minId = Math.min(fromParentId, toParentId);
+    int maxId = Math.max(fromParentId, toParentId);
 
     checkNotDisposed();
     updateLock.lock(minId);
@@ -512,7 +511,7 @@ public final class FSRecordsImpl {
       updateLock.lock(maxId);
       try {
         try {
-          final ListResult children = list(fromParentId);
+          ListResult children = list(fromParentId);
           if (LOG.isDebugEnabled()) {
             LOG.debug("Move children from " + fromParentId + " to " + toParentId + "; children = " + children);
           }
@@ -544,9 +543,9 @@ public final class FSRecordsImpl {
 
   //========== symlink manipulation: ========================================
 
-  private void updateSymlinksForNewChildren(final @NotNull VirtualFile parent,
-                                            final @NotNull ListResult oldChildren,
-                                            final @NotNull ListResult newChildren) {
+  private void updateSymlinksForNewChildren(@NotNull VirtualFile parent,
+                                            @NotNull ListResult oldChildren,
+                                            @NotNull ListResult newChildren) {
     // find children which are added to the list and call updateSymlinkInfoForNewChild() on them (once)
     ContainerUtil.processSortedListsInOrder(
       oldChildren.children, newChildren.children,
@@ -559,9 +558,9 @@ public final class FSRecordsImpl {
       });
   }
 
-  private void updateSymlinkInfoForNewChild(final @NotNull VirtualFile parent,
-                                            final @NotNull ChildInfo info) {
-    final int attributes = info.getFileAttributeFlags();
+  private void updateSymlinkInfoForNewChild(@NotNull VirtualFile parent,
+                                            @NotNull ChildInfo info) {
+    int attributes = info.getFileAttributeFlags();
     if (attributes != -1 && PersistentFS.isSymLink(attributes)) {
       int id = info.getId();
       String symlinkTarget = info.getSymlinkTarget();
@@ -575,7 +574,7 @@ public final class FSRecordsImpl {
     }
   }
 
-  @Nullable String readSymlinkTarget(final int fileId) {
+  @Nullable String readSymlinkTarget(int fileId) {
     try (DataInputStream stream = readAttribute(fileId, SYMLINK_TARGET_ATTRIBUTE)) {
       if (stream != null) {
         try {
@@ -585,8 +584,8 @@ public final class FSRecordsImpl {
         catch (EOFException eof) {
           //EA-822669: collect detailed info for debug (TODO: remove after root cause found)
           try (DataInputStream attrStream = readAttribute(fileId, SYMLINK_TARGET_ATTRIBUTE)) {
-            final int size = attrStream.available();
-            final byte[] content = new byte[size];
+            int size = attrStream.available();
+            byte[] content = new byte[size];
             attrStream.readFully(content);
             throw handleError(
               new IOException("Can't read symLink from attribute[fileId:" + fileId + "][=" + IOUtil.toHexString(content) + "]", eof)
@@ -601,8 +600,8 @@ public final class FSRecordsImpl {
     }
   }
 
-  void storeSymlinkTarget(final int fileId,
-                          final @Nullable String symlinkTarget) {
+  void storeSymlinkTarget(int fileId,
+                          @Nullable String symlinkTarget) {
     try {
       checkNotDisposed();
       connection.markDirty();
@@ -617,7 +616,7 @@ public final class FSRecordsImpl {
 
   //========== file by name iterations: ========================================
 
-  public boolean processAllNames(final @NotNull Processor<? super CharSequence> processor) {
+  boolean processAllNames(@NotNull Processor<? super CharSequence> processor) {
     try {
       checkNotDisposed();
       return connection.getNames().processAllDataObjects(processor);
@@ -627,8 +626,8 @@ public final class FSRecordsImpl {
     }
   }
 
-  public boolean processFilesWithNames(final @NotNull Set<String> names,
-                                       final @NotNull IntPredicate processor) {
+  boolean processFilesWithNames(@NotNull Set<String> names,
+                                @NotNull IntPredicate processor) {
     if (names.isEmpty()) return true;
     return invertedNameIndex.processFilesWithNames(names, processor);
   }
@@ -636,7 +635,7 @@ public final class FSRecordsImpl {
 
   //========== file record fields accessors: ========================================
 
-  @PersistentFS.Attributes int getFlags(final int fileId) {
+  @PersistentFS.Attributes int getFlags(int fileId) {
     try {
       checkNotDisposed();
       return connection.getRecords().getFlags(fileId);
@@ -646,7 +645,7 @@ public final class FSRecordsImpl {
     }
   }
 
-  public boolean isDeleted(final int fileId) {
+  boolean isDeleted(int fileId) {
     try {
       return recordAccessor.isDeleted(fileId);
     }
@@ -655,7 +654,7 @@ public final class FSRecordsImpl {
     }
   }
 
-  int getModCount(final int fileId) {
+  int getModCount(int fileId) {
     try {
       checkNotDisposed();
       return connection.getRecords().getModCount(fileId);
@@ -666,10 +665,10 @@ public final class FSRecordsImpl {
   }
 
 
-  public int getParent(final int fileId) {
+  int getParent(int fileId) {
     try {
       checkNotDisposed();
-      final int parentId = connection.getRecords().getParent(fileId);
+      int parentId = connection.getRecords().getParent(fileId);
       if (parentId == fileId) {
         throw new IllegalStateException("Cyclic parent child relations in the database: fileId = " + fileId + " == parentId");
       }
@@ -681,8 +680,8 @@ public final class FSRecordsImpl {
     }
   }
 
-  void setParent(final int fileId,
-                 final int parentId) {
+  void setParent(int fileId,
+                 int parentId) {
     if (fileId == parentId) {
       LOG.error("Cyclic parent/child relations");
       return;
@@ -704,7 +703,7 @@ public final class FSRecordsImpl {
    * becomes 'non-strict' also: nameId returned could be the new nameId, never used before, hence
    * in any file record, even though name was already registered for some file(s)
    */
-  public int getNameId(final @NotNull String name) {
+  int getNameId(@NotNull String name) {
     try {
       checkNotDisposed();
       return connection.getNames().enumerate(name);
@@ -717,15 +716,15 @@ public final class FSRecordsImpl {
     }
   }
 
-  public @NotNull String getName(final int fileId) {
+  @NotNull String getName(int fileId) {
     return getNameSequence(fileId).toString();
   }
 
-  @NotNull CharSequence getNameSequence(final int fileId) {
+  @NotNull CharSequence getNameSequence(int fileId) {
     //TODO RC: I don't see any profit of CharSequence method since under the hood it is always a String
     try {
       checkNotDisposed();
-      final int nameId = connection.getRecords().getNameId(fileId);
+      int nameId = connection.getRecords().getNameId(fileId);
       return nameId == NULL_NAME_ID ? "" : FileNameCache.getVFileName(nameId);
     }
     catch (IOException e) {
@@ -733,7 +732,7 @@ public final class FSRecordsImpl {
     }
   }
 
-  public CharSequence getNameByNameId(final int nameId) {
+  CharSequence getNameByNameId(int nameId) {
     assert nameId >= NULL_NAME_ID : "nameId(=" + nameId + ") must be positive";
     try {
       checkNotDisposed();
@@ -744,12 +743,10 @@ public final class FSRecordsImpl {
     }
   }
 
-  void setName(final int fileId,
-               final @NotNull String name,
-               final int oldNameId) {
+  void setName(int fileId, @NotNull String name, int oldNameId) {
     try {
       checkNotDisposed();
-      final int nameId = getNameId(name);
+      int nameId = getNameId(name);
 
       connection.getRecords().setNameId(fileId, nameId);
       connection.markDirty();
@@ -762,8 +759,8 @@ public final class FSRecordsImpl {
     }
   }
 
-  void setFlags(final int fileId,
-                final @PersistentFS.Attributes int flags) {
+  void setFlags(int fileId,
+                @PersistentFS.Attributes int flags) {
     try {
       checkNotDisposed();
       if (connection.getRecords().setFlags(fileId, flags)) {
@@ -775,7 +772,7 @@ public final class FSRecordsImpl {
     }
   }
 
-  long getLength(final int fileId) {
+  long getLength(int fileId) {
     try {
       checkNotDisposed();
       return connection.getRecords().getLength(fileId);
@@ -785,8 +782,8 @@ public final class FSRecordsImpl {
     }
   }
 
-  void setLength(final int fileId,
-                 final long len) {
+  void setLength(int fileId,
+                 long len) {
     try {
       checkNotDisposed();
       if (connection.getRecords().setLength(fileId, len)) {
@@ -798,7 +795,7 @@ public final class FSRecordsImpl {
     }
   }
 
-  long getTimestamp(final int fileId) {
+  long getTimestamp(int fileId) {
     try {
       checkNotDisposed();
       return connection.getRecords().getTimestamp(fileId);
@@ -808,8 +805,8 @@ public final class FSRecordsImpl {
     }
   }
 
-  void setTimestamp(final int fileId,
-                    final long value) {
+  void setTimestamp(int fileId,
+                    long value) {
     try {
       checkNotDisposed();
       if (connection.getRecords().setTimestamp(fileId, value)) {
@@ -821,7 +818,7 @@ public final class FSRecordsImpl {
     }
   }
 
-  int getContentId(final int fileId) {
+  int getContentId(int fileId) {
     try {
       return connection.getRecords().getContentRecordId(fileId);
     }
@@ -833,15 +830,15 @@ public final class FSRecordsImpl {
   /**
    * @return nameId > 0
    */
-  int writeAttributesToRecord(final int fileId,
-                              final int parentId,
-                              final @NotNull FileAttributes attributes,
-                              final @NotNull String name,
-                              final boolean overwriteMissed) {
-    final int nameId = getNameId(name);
-    final long timestamp = attributes.lastModified;
-    final long length = attributes.isDirectory() ? -1L : attributes.length;
-    final int flags = PersistentFSImpl.fileAttributesToFlags(attributes);
+  int writeAttributesToRecord(int fileId,
+                              int parentId,
+                              @NotNull FileAttributes attributes,
+                              @NotNull String name,
+                              boolean overwriteMissed) {
+    int nameId = getNameId(name);
+    long timestamp = attributes.lastModified;
+    long length = attributes.isDirectory() ? -1L : attributes.length;
+    int flags = PersistentFSImpl.fileAttributesToFlags(attributes);
 
     try {
       fillRecord(fileId, timestamp, length, flags, nameId, parentId, overwriteMissed);
@@ -856,13 +853,13 @@ public final class FSRecordsImpl {
     return nameId;
   }
 
-  private void fillRecord(final int fileId,
-                          final long timestamp,
-                          final long length,
-                          final int flags,
-                          final int nameId,
-                          final int parentId,
-                          final boolean overwriteMissed) throws IOException {
+  private void fillRecord(int fileId,
+                          long timestamp,
+                          long length,
+                          int flags,
+                          int nameId,
+                          int parentId,
+                          boolean overwriteMissed) throws IOException {
     checkNotDisposed();
     connection.getRecords().fillRecord(fileId, timestamp, length, flags, nameId, parentId, overwriteMissed);
     connection.markDirty();
@@ -871,8 +868,8 @@ public final class FSRecordsImpl {
 
   //========== file attributes accessors: ========================================
 
-  public @Nullable AttributeInputStream readAttributeWithLock(final int fileId,
-                                                              final @NotNull FileAttribute attribute) {
+  @Nullable AttributeInputStream readAttributeWithLock(int fileId,
+                                                       @NotNull FileAttribute attribute) {
     try {
       return readAttribute(fileId, attribute);
     }
@@ -882,13 +879,13 @@ public final class FSRecordsImpl {
   }
 
   /** must be called under r or w lock */
-  private @Nullable AttributeInputStream readAttribute(final int fileId,
-                                                       final @NotNull FileAttribute attribute) throws IOException {
+  private @Nullable AttributeInputStream readAttribute(int fileId,
+                                                       @NotNull FileAttribute attribute) throws IOException {
     return attributeAccessor.readAttribute(fileId, attribute);
   }
 
-  public @NotNull AttributeOutputStream writeAttribute(final int fileId,
-                                                       final @NotNull FileAttribute attribute) {
+  @NotNull AttributeOutputStream writeAttribute(int fileId,
+                                                @NotNull FileAttribute attribute) {
     //TODO RC: we need to check fileId here, and throw exception if it is not valid
     return attributeAccessor.writeAttribute(fileId, attribute);
   }
@@ -896,14 +893,14 @@ public final class FSRecordsImpl {
   //'raw' (lambda + ByteBuffer instead of Input/OutputStream) attributes access: experimental
 
   @ApiStatus.Internal
-  public boolean supportsRawAttributesAccess() {
+  boolean supportsRawAttributesAccess() {
     return attributeAccessor.supportsRawAccess();
   }
 
   @ApiStatus.Internal
-  public <R> @Nullable R readAttributeRawWithLock(final int fileId,
-                                                  final @NotNull FileAttribute attribute,
-                                                  final ByteBufferReader<R> reader) {
+  <R> @Nullable R readAttributeRawWithLock(int fileId,
+                                           @NotNull FileAttribute attribute,
+                                           ByteBufferReader<R> reader) {
     try {
       return attributeAccessor.readAttributeRaw(fileId, attribute, reader);
     }
@@ -913,16 +910,16 @@ public final class FSRecordsImpl {
   }
 
   @ApiStatus.Internal
-  public void writeAttributeRaw(final int fileId,
-                                final @NotNull FileAttribute attribute,
-                                final @NotNull ByteBufferWriter writer) {
+  void writeAttributeRaw(int fileId,
+                         @NotNull FileAttribute attribute,
+                         @NotNull ByteBufferWriter writer) {
     attributeAccessor.writeAttributeRaw(fileId, attribute, writer);
   }
 
 
   //========== file content accessors: ========================================
 
-  @Nullable DataInputStream readContent(final int fileId) {
+  @Nullable DataInputStream readContent(int fileId) {
     try {
       return contentAccessor.readContent(fileId);
     }
@@ -944,7 +941,7 @@ public final class FSRecordsImpl {
     return null;
   }
 
-  @NotNull DataInputStream readContentById(final int contentId) {
+  @NotNull DataInputStream readContentById(int contentId) {
     try {
       return contentAccessor.readContentDirectly(contentId);
     }
@@ -954,7 +951,7 @@ public final class FSRecordsImpl {
     return null;
   }
 
-  int acquireFileContent(final int fileId) {
+  int acquireFileContent(int fileId) {
     try {
       return contentAccessor.acquireContentRecord(fileId);
     }
@@ -963,7 +960,7 @@ public final class FSRecordsImpl {
     }
   }
 
-  void releaseContent(final int contentId) {
+  void releaseContent(int contentId) {
     try {
       contentAccessor.releaseContentRecord(contentId);
     }
@@ -972,8 +969,8 @@ public final class FSRecordsImpl {
     }
   }
 
-  @NotNull DataOutputStream writeContent(final int fileId,
-                                         final boolean readOnly) {
+  @NotNull DataOutputStream writeContent(int fileId,
+                                         boolean readOnly) {
     return new DataOutputStream(contentAccessor.new ContentOutputStream(fileId, readOnly)) {
       @Override
       public void close() {
@@ -991,9 +988,9 @@ public final class FSRecordsImpl {
     };
   }
 
-  void writeContent(final int fileId,
-                    final @NotNull ByteArraySequence bytes,
-                    final boolean readOnly) {
+  void writeContent(int fileId,
+                    @NotNull ByteArraySequence bytes,
+                    boolean readOnly) {
     try {
       contentAccessor.writeContent(fileId, bytes, readOnly);
     }
@@ -1003,7 +1000,7 @@ public final class FSRecordsImpl {
   }
 
   @TestOnly
-  byte[] getContentHash(final int fileId) {
+  byte[] getContentHash(int fileId) {
     try {
       return contentAccessor.getContentHash(fileId);
     }
@@ -1012,7 +1009,7 @@ public final class FSRecordsImpl {
     }
   }
 
-  int storeUnlinkedContent(final byte[] bytes) {
+  int storeUnlinkedContent(byte[] bytes) {
     try {
       return contentAccessor.allocateContentRecordAndStore(bytes);
     }
@@ -1024,7 +1021,7 @@ public final class FSRecordsImpl {
 
   //========== aux: ========================================
 
-  public void invalidateCaches() {
+  void invalidateCaches() {
     checkNotDisposed();
     connection.createBrokenMarkerFile(null);
   }
@@ -1044,10 +1041,10 @@ public final class FSRecordsImpl {
    * javac understands it is as a method exit point.
    */
   @Contract("_->fail")
-  public RuntimeException handleError(final Throwable e) throws RuntimeException, Error {
+  RuntimeException handleError(Throwable e) throws RuntimeException, Error {
     if (e instanceof ClosedStorageException) {
       // no connection means IDE is closing...
-      final AlreadyDisposedException alreadyDisposed = new AlreadyDisposedException("VFS already disposed");
+      AlreadyDisposedException alreadyDisposed = new AlreadyDisposedException("VFS already disposed");
       alreadyDisposed.addSuppressed(e);
       if (disposed && disposedStackTrace != null) {
         alreadyDisposed.addSuppressed(disposedStackTrace);
@@ -1080,14 +1077,14 @@ public final class FSRecordsImpl {
     }
   }
 
-  public @NotNull String describeAlreadyCreatedFile(final int fileId,
-                                                    final int nameId) {
+  @NotNull String describeAlreadyCreatedFile(int fileId,
+                                             int nameId) {
     invalidateCaches();
     //RC: actually, this method is better to be located in VfsData class from there it is called
     //    The only list(parentId) method is not public -- all other methods could be called
     //    from VfsData
-    final int parentId = getParent(fileId);
-    final String description = "fileId=" + fileId +
+    int parentId = getParent(fileId);
+    String description = "fileId=" + fileId +
                                "; nameId=" + nameId + "(" + FileNameCache.getVFileName(nameId) + ")" +
                                "; parentId=" + parentId;
     if (parentId <= 0) {
