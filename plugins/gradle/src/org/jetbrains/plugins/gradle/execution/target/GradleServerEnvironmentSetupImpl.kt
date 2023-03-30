@@ -18,7 +18,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil.*
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.PathMapper
 import com.intellij.util.PathMappingSettings
 import com.intellij.util.io.isDirectory
@@ -31,6 +30,7 @@ import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetup.Companion.targetJavaExecutablePathMappingKey
 import org.jetbrains.plugins.gradle.service.execution.GradleServerConfigurationProvider
+import org.jetbrains.plugins.gradle.service.execution.MAIN_INIT_SCRIPT_NAME
 import org.jetbrains.plugins.gradle.service.execution.toGroovyStringLiteral
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.tooling.proxy.Main
@@ -216,7 +216,9 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
       }
     }
 
-    val targetArguments = request.requestFileArgumentsUpload(consumerOperationParameters, environmentConfiguration, javaParameters)
+    registerInitScriptsPathsToMap(consumerOperationParameters)
+    registerToolingExtensionsJarPaths(consumerOperationParameters, javaParameters)
+    val targetArguments = requestFileArgumentsUpload(request, consumerOperationParameters, environmentConfiguration)
 
     EP.forEachExtensionSafe {
       it.prepareTargetEnvironmentRequest(request, this, progressIndicator)
@@ -227,47 +229,65 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     return targetArguments
   }
 
-  private fun TargetEnvironmentRequest.requestFileArgumentsUpload(parameters: ConsumerOperationParameters,
-                                                                  environmentConfiguration: TargetEnvironmentConfiguration,
-                                                                  javaParameters: SimpleJavaParameters):
-    List<Pair<String, TargetValue<String>?>> {
-    if (parameters.arguments.isNullOrEmpty()) return emptyList()
+  private fun registerToolingExtensionsJarPaths(parameters: ConsumerOperationParameters, javaParameters: SimpleJavaParameters) {
+    val mainInitScriptPath = collectInitScripts(parameters)
+      .find { File(it).name.startsWith(MAIN_INIT_SCRIPT_NAME) }
+    if (mainInitScriptPath != null) {
+      // Based on the format of the `/org/jetbrains/plugins/gradle/tooling/internal/init/Init.gradle` file
+      // Expected that mapPath is use only for `initscript.dependencies.classpath`
+      val toolingExtensionsJarPaths = extractPathsToMap(mainInitScriptPath)
+      if (toolingExtensionsJarPaths.isEmpty()) {
+        log.warn("No tooling extensions jars in main init script")
+      }
+      javaParameters.classPath.addAll(toolingExtensionsJarPaths)
+    }
+  }
 
-    val targetBuildArguments = mutableListOf<Pair<String, TargetValue<String>?>>()
+  private fun registerInitScriptsPathsToMap(parameters: ConsumerOperationParameters) {
+    val initScriptPaths = collectInitScripts(parameters)
+    for (initScriptPath in initScriptPaths) {
+      val pathsToMap = extractPathsToMap(initScriptPath)
+      localPathsToMap.addAll(pathsToMap)
+    }
+  }
+
+  private fun collectInitScripts(parameters: ConsumerOperationParameters): List<String> {
+    val initScriptPaths = ArrayList<String>()
     val iterator = parameters.arguments.iterator()
     while (iterator.hasNext()) {
       val arg = iterator.next()
       if (arg == INIT_SCRIPT_CMD_OPTION && iterator.hasNext()) {
         val path = iterator.next()
-        targetBuildArguments.add(arg to targetEnvironmentProvider.requestUploadIntoTarget(path, this, environmentConfiguration))
-        val file = File(path)
-        if (file.extension != GradleConstants.EXTENSION) continue
-        if (file.name.startsWith("ijinit")) {
-          val fileContent = loadFile(file, CharsetToolkit.UTF8, true)
-          // based on the format of the `/org/jetbrains/plugins/gradle/tooling/internal/init/Init.gradle` file
-          val toolingExtensionsPaths = fileContent
-            .substringAfter(
-              "initscript {\n" +
-              "  dependencies {\n" +
-              "    classpath files(", "")
-            .substringBefore(
-              ")\n" +
-              "  }", "")
-            .nullize()
-            ?.drop(10)?.dropLast(3)?.split("\"),mapPath(\"")
-          if (toolingExtensionsPaths != null) {
-            for (toolingExtensionsPath in toolingExtensionsPaths) {
-              javaParameters.classPath.add(toolingExtensionsPath)
-              localPathsToMap += toolingExtensionsPath
-            }
-          }
-        }
-        else if (!file.name.startsWith("ijmapper")) {
-          val fileContent = loadFile(file, CharsetToolkit.UTF8, true)
-          val regex = Regex("mapPath\\(['|\"](.{2,}?)['|\"][)]")
-          val matches = regex.findAll(fileContent)
-          matches.mapTo(localPathsToMap) { it.groupValues[1] }
-        }
+        initScriptPaths.add(path)
+      }
+    }
+    return initScriptPaths
+  }
+
+  private fun extractPathsToMap(initScriptPath: String): List<String> {
+    val initScriptFile = File(initScriptPath)
+    if (initScriptFile.extension == GradleConstants.EXTENSION) {
+      val fileContent = initScriptFile.readText()
+      val regex = "mapPath\\(['|\"](.{2,}?)['|\"][)]".toRegex()
+      val matches = regex.findAll(fileContent)
+      return matches.map { it.groupValues[1] }.toList()
+    }
+    return emptyList()
+  }
+
+  private fun requestFileArgumentsUpload(
+    request: TargetEnvironmentRequest,
+    parameters: ConsumerOperationParameters,
+    configuration: TargetEnvironmentConfiguration
+  ): List<Pair<String, TargetValue<String>?>> {
+    val targetBuildArguments = ArrayList<Pair<String, TargetValue<String>?>>()
+    val iterator = parameters.arguments.iterator()
+    while (iterator.hasNext()) {
+      val arg = iterator.next()
+      if (arg == INIT_SCRIPT_CMD_OPTION && iterator.hasNext()) {
+        val path = iterator.next()
+        val targetInitScriptPath = targetEnvironmentProvider.requestUploadIntoTarget(path, request, configuration)
+        targetBuildArguments.add(arg to targetInitScriptPath)
       }
       else {
         targetBuildArguments.add(arg to null)

@@ -14,9 +14,13 @@ import java.nio.charset.StandardCharsets
 import java.util.regex.Matcher
 
 
+const val MAIN_INIT_SCRIPT_NAME = "ijInit"
+const val WRAPPER_INIT_SCRIPT_NAME = "ijWrapper"
+const val TEST_INIT_SCRIPT_NAME = "ijTestInit"
+
 fun createMainInitScript(isBuildSrcProject: Boolean, toolingExtensionClasses: Set<Class<*>>): File {
   val jarPaths = GradleExecutionHelper.getToolingExtensionsJarPaths(toolingExtensionClasses)
-  return createInitScript("ijInit", loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/Init.gradle", mapOf(
+  return createInitScript(MAIN_INIT_SCRIPT_NAME, loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/Init.gradle", mapOf(
     "EXTENSIONS_JARS_PATH" to jarPaths.toGroovyListLiteral { "mapPath(" + toGroovyStringLiteral() + ")" },
     "IS_BUILD_SCR_PROJECT" to isBuildSrcProject.toString()
   )))
@@ -45,21 +49,24 @@ fun createWrapperInitScript(
   scriptFile: File,
   fileWithPathToProperties: File
 ): File {
-  return createInitScript("ijWrapper", loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/WrapperInit.gradle", mapOf(
-    "GRADLE_VERSION" to (gradleVersion?.version?.toGroovyStringLiteral() ?: "null"),
-    "JAR_FILE" to jarFile.path.toGroovyStringLiteral(),
-    "SCRIPT_FILE" to scriptFile.path.toGroovyStringLiteral(),
-    "FILE_WITH_PATH_TO_PROPERTIES" to fileWithPathToProperties.path.toGroovyStringLiteral()
-  )))
+  return createInitScript(WRAPPER_INIT_SCRIPT_NAME,
+                          loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/WrapperInit.gradle", mapOf(
+                            "GRADLE_VERSION" to (gradleVersion?.version?.toGroovyStringLiteral() ?: "null"),
+                            "JAR_FILE" to jarFile.path.toGroovyStringLiteral(),
+                            "SCRIPT_FILE" to scriptFile.path.toGroovyStringLiteral(),
+                            "FILE_WITH_PATH_TO_PROPERTIES" to fileWithPathToProperties.path.toGroovyStringLiteral()
+                          )))
 }
 
 fun createTestInitScript(tasks: List<GradleCommandLineTask>, forceExecution: Boolean): File {
-  return createInitScript("ijTestInit", loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/TestInit.gradle", mapOf(
-    "IMPORT_GRADLE_TASKS_UTIL" to loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/GradleTasksUtil.gradle"),
-    "TEST_TASKS_WITH_PATTERNS" to tasks.associate { it.name to it.getTestPatterns() }
-      .toGroovyMapLiteral({ toGroovyStringLiteral() }, { toGroovyListLiteral { toGroovyStringLiteral() } }),
-    "FORCE_TEST_EXECUTION" to forceExecution.toString()
-  )))
+  return createInitScript(TEST_INIT_SCRIPT_NAME,
+                          loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/TestInit.gradle", mapOf(
+                            "IMPORT_GRADLE_TASKS_UTIL" to loadInitScript(
+                              "/org/jetbrains/plugins/gradle/tooling/internal/init/GradleTasksUtil.gradle"),
+                            "TEST_TASKS_WITH_PATTERNS" to tasks.associate { it.name to it.getTestPatterns() }
+                              .toGroovyMapLiteral({ toGroovyStringLiteral() }, { toGroovyListLiteral { toGroovyStringLiteral() } }),
+                            "FORCE_TEST_EXECUTION" to forceExecution.toString()
+                          )))
 }
 
 fun loadJvmDebugInitScript(
