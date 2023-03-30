@@ -76,13 +76,27 @@ public class XmlHighlighterTest extends LightJavaCodeInsightTestCase {
     // Found by XmlCodeInsightSanityTest.testIncrementalHighlighterUpdate
     configure("<idea-plugin><name>Remote", " Interpreter</name></idea-plugin>", XmlFileType.INSTANCE);
 
-    Runnable action = () -> {
+    runConsistencyTest( () -> {
       // Wrapping ' Interpreter'. Note space in front
       doc.insertString(offset, "${");
       doc.insertString(offset + 14, "}");
-    };
-    CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(action), "", null);
-    CheckHighlighterConsistency.performCheck(editor);
+    });
+  }
+
+  public void testUnfinishedStringInDoctype() {
+    // Found by XmlCodeInsightSanityTest.testIncrementalHighlighterUpdate
+    //noinspection TextBlockMigration
+    configure("<!DOCTYPE faces-config PUBLIC\n" +
+              "  \"-//Sun Microsystems, Inc.//DTD JavaServer Faces Config 1.0//EN",
+              "\"\n" +
+              "  \"http://java.sun.com/dtd/web-facesconfig_1_1.dtd\">\n" +
+              "<faces-config>\n" +
+              "</faces-config>\n", XmlFileType.INSTANCE);
+
+    runConsistencyTest( () -> {
+      doc.deleteString(offset, doc.getTextLength()); // Remove everything after 'EN', leave string unfinished
+      doc.insertString(offset - 25, "\""); // Close string in the middle
+    });
   }
 
   public void testUnclosedCommentAtEnd() {
@@ -98,5 +112,10 @@ public class XmlHighlighterTest extends LightJavaCodeInsightTestCase {
     CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(action), "", null);
     List<IElementType> newTokens = EditorTestUtil.getAllTokens(highlighter);
     assertEquals(oldTokens, newTokens);
+  }
+
+  private void runConsistencyTest(Runnable action) {
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(action), "", null);
+    CheckHighlighterConsistency.performCheck(editor);
   }
 }

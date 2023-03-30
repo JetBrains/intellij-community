@@ -29,6 +29,22 @@ public class XmlLexerTest extends LexerTestCase {
     return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/" + getDirPath() + "/" + getTestName(true) + extension;
   }
 
+  public void testWrappedEL() {
+    doTest("<idea-plugin><name>Remote${ Interpreter}</name></idea-plugin>");
+  }
+
+  public void testUnfinishedEL() {
+    doTest("<idea-plugin><name>Remote${ Interpreter</name></idea-plugin>");
+  }
+
+  public void testUnfinishedStringInDoctype() {
+    doTest("<!DOCTYPE faces-config PUBLIC \"-//Sun Microsystems, Inc.//DTD JavaServer Faces Config1.0//EN");
+  }
+
+  public void testUnfinishedMarkupDeclarationInDoctype() {
+    doTest("<!DOCTYPE schema [ <!ENTITY RelativeURL  \"[^:#/\\?]*(:{0,0}|[#/\\?].*)\">");
+  }
+
 
   public void testPerformance1() throws IOException {
     doTestPerformance("pallada.xml", 200);
