@@ -202,7 +202,6 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
     }
     if (modelsProvider instanceof IdeModifiableModelsProviderImpl impl) {
       MutableEntityStorage diff = impl.getActualStorageBuilder();
-      List<VirtualFileUrl> toRemove = new ArrayList<>();
 
       VirtualFileUrl vfu = project.getService(VirtualFileUrlManager.class).fromUrl(contentEntry.getUrl());
       Pair<WorkspaceEntity, String> result = ContainerUtil.find(diff.getVirtualFileUrlIndex().findEntitiesByUrl(vfu).iterator(), pair -> {
@@ -212,13 +211,9 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
       if (result != null && result.component1() instanceof ContentRootEntity contentRootEntity) {
         for (ExcludeUrlEntity excludeEntity : contentRootEntity.getExcludedUrls()) {
           if (isImportedEntity(owner, excludeEntity)) {
-            toRemove.add(excludeEntity.getUrl());
+            diff.removeEntity(excludeEntity);
           }
         }
-      }
-
-      for (VirtualFileUrl url : toRemove) {
-        contentEntry.removeExcludeFolder(url.getUrl());
       }
     }
   }
