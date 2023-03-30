@@ -12,7 +12,7 @@ instead of being registered as services in <code>plugin.xml</code>
   <li>IntelliJ Platform 2019.3 or newer.</li>
   <li>Service class must be <code>final</code>.</li>
   <li><code>serviceInterface</code> is not specified.</li>
-  <li>If the service is a <code>com.intellij.openapi.components.PersistentStateComponent</code>,
+  <li>If the application-level service is a <code>com.intellij.openapi.components.PersistentStateComponent</code>,
     roaming must be disabled (<code>roamingType = RoamingType.DISABLED</code>).
   </li>
   <li><code>preload</code> is not specified.</li>
