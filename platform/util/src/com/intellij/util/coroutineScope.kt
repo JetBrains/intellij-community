@@ -12,7 +12,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 @Internal
 fun requireNoJob(context: CoroutineContext) {
   require(context[Job] == null) {
-    "Found Job in context: $context"
+    "Context must not specify a Job: $context"
   }
 }
 
