@@ -81,18 +81,10 @@ internal val metadataFields = KotlinFacetFields(
     hiddenFields = emptyList()
 )
 
-internal val CommonCompilerArguments.primaryFields: List<String>
+internal val CommonCompilerArguments.kotlinFacetFields: KotlinFacetFields
     get() = when (this) {
-        is K2JVMCompilerArguments -> jvmFields.allFields
-        is K2JSCompilerArguments -> jsFields.allFields
-        is K2MetadataCompilerArguments -> metadataFields.allFields
-        else -> commonFields.allFields
-    }
-
-internal val CommonCompilerArguments.ignoredFields: List<String>
-    get() = buildList {
-        if (this@ignoredFields is K2JVMCompilerArguments) {
-            add(K2JVMCompilerArguments::noJdk.name)
-            add(K2JVMCompilerArguments::jdkHome.name)
-        }
+        is K2JVMCompilerArguments -> jvmFields
+        is K2JSCompilerArguments -> jsFields
+        is K2MetadataCompilerArguments -> metadataFields
+        else -> commonFields
     }
