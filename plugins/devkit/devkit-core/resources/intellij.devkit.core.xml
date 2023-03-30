@@ -244,11 +244,11 @@
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.RetrievingServiceInspection"
                      key="inspection.retrieving.light.service.display.name"/>
-    <localInspection language="UAST" shortName="NonFinalOrNonInternalExtensionClass"
+    <localInspection language="JVM" shortName="NonFinalOrNonInternalExtensionClass"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.NonFinalOrNonInternalExtensionClassInspection"
-                     key="inspection.extension.class.display.name"/>
+                     key="inspection.non.final.or.non.internal.extension.class.display.name"/>
     <localInspection language="XML" applyToDialects="false" shortName="LightServiceMigrationXML"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
                      enabledByDefault="true" level="WARNING"

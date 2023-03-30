@@ -2,16 +2,18 @@
 package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.idea.devkit.inspections.NonFinalOrNonInternalExtensionClassInspectionTestBase
+import org.jetbrains.idea.devkit.inspections.quickfix.LightDevKitInspectionFixTestBase
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 
-@TestDataPath("\$CONTENT_ROOT/testData/inspections/nonFinalOrNonInternalExtensionClass")
-class KtNonFinalOrNonInternalExtensionClassInspectionTest : NonFinalOrNonInternalExtensionClassInspectionTestBase() {
-  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/nonFinalOrNonInternalExtensionClass/"
+@TestDataPath("\$CONTENT_ROOT/testData/inspections/openOrNonInternalExtensionClass")
+class OpenOrNonInternalExtensionClassInspectionTest : LightDevKitInspectionFixTestBase() {
+
+  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/openOrNonInternalExtensionClass/"
   override fun getFileExtension(): String = "kt"
 
   override fun setUp() {
     super.setUp()
+    myFixture.enableInspections(OpenOrNonInternalExtensionClassInspection())
     myFixture.copyDirectoryToProject("resources", "resources")
   }
 
@@ -20,7 +22,7 @@ class KtNonFinalOrNonInternalExtensionClassInspectionTest : NonFinalOrNonInterna
   }
 
   fun testMakeInternal() {
-    doTest()
+    doTest("Make 'MyInspection' internal")
   }
 
   fun testInternalFinalExtensionClass() {

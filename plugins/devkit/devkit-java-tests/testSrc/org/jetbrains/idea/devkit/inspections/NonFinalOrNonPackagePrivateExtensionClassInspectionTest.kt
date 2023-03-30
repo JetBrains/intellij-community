@@ -3,15 +3,17 @@ package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
+import org.jetbrains.idea.devkit.inspections.quickfix.LightDevKitInspectionFixTestBase
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/nonFinalOrNonPackagePrivateExtensionClass")
-class NonFinalOrNonPackagePrivateExtensionClassInspectionTest : NonFinalOrNonInternalExtensionClassInspectionTestBase() {
+class NonFinalOrNonPackagePrivateExtensionClassInspectionTest : LightDevKitInspectionFixTestBase() {
 
   override fun getBasePath() = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/nonFinalOrNonPackagePrivateExtensionClass/"
   override fun getFileExtension() = "java"
 
   override fun setUp() {
     super.setUp()
+    myFixture.enableInspections(NonFinalOrNonInternalExtensionClassInspection())
     myFixture.copyDirectoryToProject("resources", "resources")
   }
 
@@ -20,7 +22,7 @@ class NonFinalOrNonPackagePrivateExtensionClassInspectionTest : NonFinalOrNonInt
   }
 
   fun testMustBePackagePrivate() {
-    doTest()
+    doTest("Make 'MyInspection' not public")
   }
 
   fun testPackagePrivateFinalExtensionClass() {

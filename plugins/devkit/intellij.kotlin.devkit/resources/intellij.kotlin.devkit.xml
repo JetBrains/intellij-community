@@ -41,6 +41,13 @@
                      enabledByDefault="false" level="WEAK WARNING"
                      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.CallingKtFunctionShouldBeRequiresBlockingContextInspection"
                      key="inspections.calling.method.should.be.rbc.annotated.kt"/>
+
+    <localInspection language="kotlin" id="OpenOrNonInternalExtensionClassInspection"
+                     groupBundle="messages.DevKitBundle"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.OpenOrNonInternalExtensionClassInspection"
+                     key="inspection.open.or.non.internal.extension.class.display.name"/>
   </extensions>
 
   <extensions defaultExtensionNs="DevKit.lang">
