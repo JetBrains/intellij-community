@@ -22,7 +22,6 @@ interface MultiplatformModelImportingContext : KotlinSourceSetContainer, HasDepe
     val project: Project
     val interner: Interner
     val kotlinGradlePluginVersion: KotlinGradlePluginVersion?
-    val compilerArgumentsCacheMapper: CompilerArgumentsCacheMapper
 
     val importReflection: KotlinMultiplatformImportReflection?
     val kotlinExtensionReflection: KotlinExtensionReflection
@@ -94,7 +93,6 @@ internal class MultiplatformModelImportingContextImpl(
     override val importReflection: KotlinMultiplatformImportReflection?,
     override val kotlinExtensionReflection: KotlinExtensionReflection,
     override val kotlinGradlePluginVersion: KotlinGradlePluginVersion?,
-    override val compilerArgumentsCacheMapper: CompilerArgumentsCacheMapper,
     modelBuilderContext: ModelBuilderContext
 ) : MultiplatformModelImportingContext {
 

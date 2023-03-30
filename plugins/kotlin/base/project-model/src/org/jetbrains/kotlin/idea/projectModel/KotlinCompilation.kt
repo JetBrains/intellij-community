@@ -43,8 +43,6 @@ interface KotlinCompilation : KotlinComponent, HasMutableExtras {
     )
     val dependencyClasspath: Array<String>
 
-    val cachedArgsInfo: CachedArgsInfo<*>?
-
     val compilerArguments: List<String>?
 
     val disambiguationClassifier: String?
