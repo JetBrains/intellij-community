@@ -193,7 +193,7 @@ fn get_configuration() -> Result<Box<dyn LaunchConfiguration>> {
             let remote_dev_args = RemoteDevLaunchConfiguration::parse_remote_dev_args(&cmd_args)?;
             (remote_dev_args.project_path, remote_dev_args.ij_args)
         },
-        false => (None, cmd_args)
+        false => (None, cmd_args[1..].to_vec())
     };
 
     if is_remote_dev {

@@ -67,11 +67,10 @@ mod tests {
 
         let dump = run_launcher_and_get_dump_with_args(&test, args);
 
-        assert_eq!(&dump.cmdArguments[0], &test.launcher_path.to_string_lossy());
-        assert_eq!(&dump.cmdArguments[1], "dump-launch-parameters");
-        assert_eq!(&dump.cmdArguments[2], "--output");
-        assert_eq!(&dump.cmdArguments[3], &test.test_root_dir.path().join(TEST_OUTPUT_FILE_NAME).to_string_lossy());
-        assert_eq!(&dump.cmdArguments[4], args[0]);
+        assert_eq!(&dump.cmdArguments[0], "dump-launch-parameters");
+        assert_eq!(&dump.cmdArguments[1], "--output");
+        assert_eq!(&dump.cmdArguments[2], &test.test_root_dir.path().join(TEST_OUTPUT_FILE_NAME).to_string_lossy());
+        assert_eq!(&dump.cmdArguments[3], args[0]);
     }
 
     // todo: order tests
