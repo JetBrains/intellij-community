@@ -1,5 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("KotlinFacetFieldsUtils")
+
 package org.jetbrains.kotlin.idea.facet
 
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
@@ -89,7 +90,9 @@ internal val CommonCompilerArguments.primaryFields: List<String>
     }
 
 internal val CommonCompilerArguments.ignoredFields: List<String>
-    get() = when (this) {
-        is K2JVMCompilerArguments -> listOf(K2JVMCompilerArguments::noJdk.name, K2JVMCompilerArguments::jdkHome.name)
-        else -> emptyList()
+    get() = buildList {
+        if (this@ignoredFields is K2JVMCompilerArguments) {
+            add(K2JVMCompilerArguments::noJdk.name)
+            add(K2JVMCompilerArguments::jdkHome.name)
+        }
     }

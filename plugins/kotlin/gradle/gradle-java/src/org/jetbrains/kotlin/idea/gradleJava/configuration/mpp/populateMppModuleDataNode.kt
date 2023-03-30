@@ -31,8 +31,6 @@ import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtil
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.fullName
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinCompilationImpl
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
-import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo
-import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedSerializedArgsInfo
 import org.jetbrains.kotlin.idea.gradleTooling.resolveAllDependsOnSourceSets
 import org.jetbrains.kotlin.idea.projectModel.*
 import org.jetbrains.kotlin.idea.util.NotNullableCopyableDataNodeUserDataProperty
@@ -57,7 +55,6 @@ import java.util.stream.Collectors
  * @param moduleDataNode: The node representing a specific Gradle project which contains multiplatform source sets
  */
 internal fun populateMppModuleDataNode(context: KotlinMppGradleProjectResolver.Context) {
-    KotlinMPPCompilerArgumentsCacheMergeManager.mergeCache(context.gradleModule, context.resolverCtx)
     context.initializeModuleData()
     context.createMppGradleSourceSetDataNodes()
 }
@@ -141,8 +138,6 @@ internal fun doCreateSourceSetInfo(
         )
     }
 
-    val cacheHolder = CompilerArgumentsCacheMergeManager.compilerArgumentsCacheHolder
-
     return KotlinSourceSetInfo(compilation).also { sourceSetInfo ->
         sourceSetInfo.moduleId = KotlinModuleUtils.getKotlinModuleId(gradleModule, compilation, resolverCtx)
         sourceSetInfo.gradleModuleId = GradleProjectResolverUtil.getModuleId(resolverCtx, gradleModule)
@@ -160,33 +155,6 @@ internal fun doCreateSourceSetInfo(
         sourceSetInfo.additionalVisible = sourceSetInfo.additionalVisible.map {
             KotlinModuleUtils.getGradleModuleQualifiedName(resolverCtx, gradleModule, it)
         }.toSet()
-
-        when (val cachedArgsInfo = compilation.cachedArgsInfo) {
-            is CachedExtractedArgsInfo -> {
-                val restoredArgs = lazy { CachedArgumentsRestoring.restoreExtractedArgs(cachedArgsInfo, cacheHolder) }
-                sourceSetInfo.lazyCompilerArguments = lazy { restoredArgs.value.currentCompilerArguments }
-                sourceSetInfo.lazyDefaultCompilerArguments = lazy { restoredArgs.value.defaultCompilerArguments }
-                sourceSetInfo.lazyDependencyClasspath =
-                    lazy { restoredArgs.value.dependencyClasspath.map { PathUtil.toSystemIndependentName(it) } }
-            }
-
-            is CachedSerializedArgsInfo -> {
-                val restoredArgs =
-                    lazy { CachedArgumentsRestoring.restoreSerializedArgsInfo(cachedArgsInfo, cacheHolder) }
-                sourceSetInfo.lazyCompilerArguments = lazy {
-                    createCompilerArguments(restoredArgs.value.currentCompilerArguments.toList(), compilation.platform).also {
-                        it.multiPlatform = true
-                    }
-                }
-                sourceSetInfo.lazyDefaultCompilerArguments = lazy {
-                    createCompilerArguments(restoredArgs.value.defaultCompilerArguments.toList(), compilation.platform)
-                }
-
-                sourceSetInfo.lazyDependencyClasspath = lazy {
-                    restoredArgs.value.dependencyClasspath.map { PathUtil.toSystemIndependentName(it) }
-                }
-            }
-        }
 
         compilation.compilerArguments?.let { compilerArguments ->
             val lazyParsedCompilerArguments = lazy { createCompilerArguments(compilerArguments, compilation.platform) }
@@ -577,7 +545,7 @@ private fun ExternalProject.notImportedCommonSourceSets() =
 
 private fun KotlinPlatform.isNotSupported() = IdePlatformKindTooling.getToolingIfAny(this) == null
 
-private fun createCompilerArguments(args: List<String>, platform: KotlinPlatform): CommonCompilerArguments {
+fun createCompilerArguments(args: List<String>, platform: KotlinPlatform): CommonCompilerArguments {
     val compilerArguments = IdePlatformKindTooling.getTooling(platform).kind.argumentsClass.newInstance()
     parseCommandLineArguments(args.toList(), compilerArguments)
     return compilerArguments
