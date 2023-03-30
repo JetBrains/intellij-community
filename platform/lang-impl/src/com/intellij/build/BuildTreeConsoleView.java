@@ -381,7 +381,9 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
         nodesMap.put(eventId, currentNode);
       }
       else {
-        LOG.warn("start event id collision found:" + eventId + ", was also in node: " + currentNode.getTitle());
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("start event id collision found:" + eventId + ", was also in node: " + currentNode.getTitle());
+        }
         return;
       }
     }
