@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.OptionTag;
@@ -24,6 +25,7 @@ public final class MavenRunnerParameters implements Cloneable {
   private boolean myResolveToWorkspace;
 
   private final List<String> myProjectsCmdOptionValues = new ArrayList<>();
+  private @Nullable String myCmdOptions = null;
 
   private final Map<String, Boolean> myProfilesMap = new LinkedHashMap<>();
 
@@ -189,14 +191,23 @@ public final class MavenRunnerParameters implements Cloneable {
     }
   }
 
-  public List<String> getCmdOptions() {
-    if (myProjectsCmdOptionValues.isEmpty()) {
-      return List.of();
+  public List<String> getOptions() {
+    List<String> options = new ArrayList<>();
+    if (!myProjectsCmdOptionValues.isEmpty()) {
+      options.add("--projects=" + String.join(",", myProjectsCmdOptionValues));
     }
+    if (StringUtil.isNotEmpty(myCmdOptions)) {
+      options.add(myCmdOptions);
+    }
+    return options;
+  }
 
-    var projects = "--projects=" + String.join(",", myProjectsCmdOptionValues);
+  public @Nullable String getCmdOptions() {
+    return myCmdOptions;
+  }
 
-    return List.of(projects);
+  public void setCmdOptions(@Nullable String cmdOptions) {
+    myCmdOptions = cmdOptions;
   }
 
   /**

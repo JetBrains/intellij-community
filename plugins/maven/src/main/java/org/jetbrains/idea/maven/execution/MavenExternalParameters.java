@@ -416,7 +416,7 @@ public final class MavenExternalParameters {
       parametersList.add(goal);
     }
 
-    for (var cmdOption : parameters.getCmdOptions()) {
+    for (var cmdOption : parameters.getOptions()) {
       parametersList.add(cmdOption);
     }
 
