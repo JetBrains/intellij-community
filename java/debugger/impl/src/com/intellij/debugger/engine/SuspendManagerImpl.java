@@ -257,6 +257,7 @@ public class SuspendManagerImpl implements SuspendManager {
     processVote(suspendContext);
   }
 
+  @Override
   public List<SuspendContextImpl> getPausedContexts() {
     return new ArrayList<>(myPausedContexts);
   }

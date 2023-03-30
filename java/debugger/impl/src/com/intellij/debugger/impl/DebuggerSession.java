@@ -473,7 +473,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
               .notify(getProject());
           }
         }
-        if (((SuspendManagerImpl)myDebugProcess.getSuspendManager()).getPausedContexts().size() > 1) {
+        if (myDebugProcess.getSuspendManager().getPausedContexts().size() > 1) {
           return;
         }
         else {
