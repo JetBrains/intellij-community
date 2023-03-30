@@ -759,7 +759,6 @@ abstract class ComponentManagerImpl(
   }
 
   private fun <T : Any> getOrCreateLightService(serviceClass: Class<T>): T {
-    checkThatCreatingOfLightServiceIsAllowed(serviceClass)
     synchronized(serviceClass) {
       val adapter = componentKeyToAdapter.get(serviceClass.name) as LightServiceComponentAdapter?
       if (adapter != null) {
@@ -768,6 +767,7 @@ abstract class ComponentManagerImpl(
       }
 
       LoadingState.COMPONENTS_REGISTERED.checkOccurred()
+      checkThatCreatingOfLightServiceIsAllowed(serviceClass)
 
       var result: T? = null
       if (!isUnderIndicatorOrJob()) {
