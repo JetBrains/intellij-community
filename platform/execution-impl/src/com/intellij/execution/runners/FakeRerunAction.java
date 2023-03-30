@@ -49,7 +49,7 @@ public class FakeRerunAction extends AnAction {
   public void actionPerformed(@NotNull AnActionEvent event) {
     ExecutionEnvironment environment = getEnvironment(event);
     if (environment != null) {
-      MacroManager.getInstance().cacheMacrosPreview(event.getDataContext());
+      MacroManager.getInstance().cacheMacrosPreview(event.getDataContext(), environment.getProject());
       ExecutionUtil.restart(environment);
     }
   }

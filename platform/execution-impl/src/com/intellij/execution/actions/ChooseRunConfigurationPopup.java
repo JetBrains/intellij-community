@@ -388,7 +388,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
           final RunManager manager = RunManager.getInstance(project);
 
           if (!manager.isRiderRunWidgetActive()) RunManager.getInstance(project).setSelectedConfiguration(config);
-          MacroManager.getInstance().cacheMacrosPreview(context);
+          MacroManager.getInstance().cacheMacrosPreview(context, project);
           ExecutorRegistryImpl.RunnerHelper.run(project, settings.getConfiguration(), settings, context, executor);
         }
 

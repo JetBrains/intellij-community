@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -115,7 +116,9 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    MacroManager.getInstance().cacheMacrosPreview(e.getDataContext());
+    Project project = e.getProject();
+    LOG.assertTrue(project != null);
+    MacroManager.getInstance().cacheMacrosPreview(e.getDataContext(), project);
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, e.getPlace());
     final RunnerAndConfigurationSettings existing = findExisting(context);
     if (existing == null || dataContext.getData(ExecutorAction.getOrderKey()) != null) {

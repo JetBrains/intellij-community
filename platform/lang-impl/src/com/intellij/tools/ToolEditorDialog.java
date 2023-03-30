@@ -43,7 +43,7 @@ public class ToolEditorDialog extends DialogWrapper {
 
     DataContext dataContext = DataManager.getInstance().getDataContext(parent);
     myProject = CommonDataKeys.PROJECT.getData(dataContext);
-    MacroManager.getInstance().cacheMacrosPreview(dataContext);
+    MacroManager.getInstance().cacheMacrosPreview(dataContext, myProject);
     setTitle(title);
 
     init();

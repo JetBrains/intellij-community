@@ -5,9 +5,12 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeCoreBundle;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Computable;
@@ -50,7 +53,10 @@ public final class MacrosDialog extends DialogWrapper {
                       @NotNull Predicate<? super Macro> filter,
                       @Nullable Map<String, String> userMacros) {
     super(parent, true);
-    MacroManager.getInstance().cacheMacrosPreview(DataManager.getInstance().getDataContext(parent));
+    DataContext context = DataManager.getInstance().getDataContext(parent);
+    Project project = CommonDataKeys.PROJECT.getData(context);
+    assert project != null;
+    MacroManager.getInstance().cacheMacrosPreview(context, project);
     init(filter, userMacros);
   }
 

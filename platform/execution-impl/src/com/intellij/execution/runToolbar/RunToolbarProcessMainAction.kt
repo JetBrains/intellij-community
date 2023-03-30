@@ -27,7 +27,7 @@ class RunToolbarProcessMainAction(process: RunToolbarProcess, executor: Executor
           val mainSlotData = slotManager.mainSlotData
 
           mainSlotData.environment?.let { environment ->
-            MacroManager.getInstance().cacheMacrosPreview(e.getDataContext())
+            MacroManager.getInstance().cacheMacrosPreview(e.dataContext, project)
             ExecutionUtil.restart(environment)
           } ?: run {
             ExecutorRegistryImpl.RunnerHelper.run(project, it.configuration, it, e.dataContext, executor)

@@ -7,9 +7,12 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -102,6 +105,10 @@ public final class MacroManager {
     return ContainerUtil.concat(predefinedMacros, Macro.EP_NAME.getExtensionList());
   }
 
+  /**
+   * @deprecated Use {@link #cacheMacrosPreview(DataContext, Project)}
+   */
+  @Deprecated()
   public void cacheMacrosPreview(DataContext dataContext) {
     dataContext = getCorrectContext(dataContext);
     for (Macro macro : predefinedMacros) {
@@ -110,6 +117,21 @@ public final class MacroManager {
     for (Macro macro : Macro.EP_NAME.getExtensionList()) {
       macro.cachePreview(dataContext);
     }
+  }
+
+  public void cacheMacrosPreview(DataContext dataContext, @NotNull Project project) {
+    DataContext correct = getCorrectContext(dataContext);
+    for (Macro macro : ContainerUtil.filter(predefinedMacros, macro -> macro instanceof EditorMacro)) {
+      macro.cachePreview(dataContext);
+    }
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.run(() -> {
+      for (Macro macro : ContainerUtil.filter(predefinedMacros, macro -> !(macro instanceof EditorMacro))) {
+        macro.cachePreview(correct);
+      }
+      for (Macro macro : Macro.EP_NAME.getExtensionList()) {
+        macro.cachePreview(correct);
+      }
+    }), ApplicationBundle.message("dialog.title.caching.macros"), true, project);
   }
 
   private static DataContext getCorrectContext(DataContext dataContext) {
