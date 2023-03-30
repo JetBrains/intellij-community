@@ -7,6 +7,7 @@ import org.jetbrains.concurrency.asDeferred
 
 internal class PlatformBuildWarmupSupport(val project: Project) : ProjectBuildWarmupSupport {
   override fun getBuilderId() = "PLATFORM"
+  @Deprecated("Return type is not descriptive enough", ReplaceWith("buildProjectWithStatus(rebuild).message"))
   override suspend fun buildProject(rebuild: Boolean): String {
     return buildProjectWithStatus(rebuild).message
   }
