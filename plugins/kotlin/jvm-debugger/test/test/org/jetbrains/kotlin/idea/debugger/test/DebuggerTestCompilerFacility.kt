@@ -97,12 +97,8 @@ open class DebuggerTestCompilerFacility(
         if (kotlinStdlibInMavenArtifacts() == null)
             mavenArtifacts.add(kotlinStdlibPath)
 
-        val options = mutableListOf("-jvm-target", jvmTarget.description,
-                                    "-Xlambdas=${lambdasGenerationScheme.description}")
-
-        if (!useIrBackend) {
-            options.add("-Xuse-old-backend")
-        }
+        val options = mutableListOf("-jvm-target", jvmTarget.description)
+        options.addAll(getCompilerOptionsCommonForLibAndSource())
 
         if (kotlinJvm.isNotEmpty()) {
             KotlinCompilerStandalone(
@@ -206,16 +202,27 @@ open class DebuggerTestCompilerFacility(
     }
 
     private fun compileKotlinFilesWithCliCompiler(jvmSrcDir: File, commonSrcDir: File, classesDir: File) {
+        val options = mutableListOf(
+            "-Xcommon-sources=${commonSrcDir.absolutePath}",
+            "-Xmulti-platform",
+        )
+        options.addAll(getCompilerOptionsCommonForLibAndSource())
+
         KotlinCompilerStandalone(
             listOf(jvmSrcDir, commonSrcDir), target = classesDir,
-            options = listOf(
-                "-Xuse-ir=$useIrBackend",
-                "-Xcommon-sources=${commonSrcDir.absolutePath}",
-                "-Xmulti-platform",
-                "-Xlambdas=${lambdasGenerationScheme.description}"
-            ),
+            options = options,
             classpath = mavenArtifacts.map(::File)
         ).compile()
+    }
+
+    private fun getCompilerOptionsCommonForLibAndSource(): Collection<String> {
+        val options = mutableListOf(
+            "-Xlambdas=${lambdasGenerationScheme.description}",
+        )
+        if (!useIrBackend) {
+            options.add("-Xuse-old-backend")
+        }
+        return options
     }
 
     protected open fun analyzeAndFindMainClass(project: Project, jvmKtFiles: List<KtFile>): String {
