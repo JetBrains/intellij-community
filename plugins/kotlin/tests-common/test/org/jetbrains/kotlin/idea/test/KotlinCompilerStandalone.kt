@@ -194,6 +194,9 @@ class KotlinCompilerStandalone @JvmOverloads constructor(
 
         if (files.none { it.extension.lowercase(Locale.getDefault()) == "kts" }) {
             args += "-Xdisable-default-scripting-plugin"
+        } else {
+            // TODO(Roman.Efremov): Fix in subsequent commits. This doesn't work in K2
+            args += "-Xallow-any-scripts-in-source-roots"
         }
 
         args += options

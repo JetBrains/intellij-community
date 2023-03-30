@@ -20,7 +20,7 @@ public class JavaFields {
 
 // FILE: test.kt
 import lib.JavaFields
-import lib.JavaMethods
+
 
 fun main() {
     //Breakpoint!

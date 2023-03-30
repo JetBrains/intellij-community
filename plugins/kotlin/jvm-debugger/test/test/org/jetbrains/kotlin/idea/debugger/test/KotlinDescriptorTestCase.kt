@@ -35,7 +35,6 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebugSession
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinEvaluator
 import org.jetbrains.kotlin.idea.debugger.test.preference.*
 import org.jetbrains.kotlin.idea.debugger.test.util.BreakpointCreator
@@ -167,10 +166,8 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
     protected open fun createDebuggerTestCompilerFacility(
         testFiles: TestFiles,
         jvmTarget: JvmTarget,
-        useIrBackend: Boolean,
-        lambdasGenerationScheme: JvmClosureGenerationScheme,
-    ) =
-        DebuggerTestCompilerFacility(testFiles, jvmTarget, useIrBackend, lambdasGenerationScheme)
+        compileConfig: TestCompileConfiguration,
+    ) = DebuggerTestCompilerFacility(testFiles, jvmTarget, compileConfig)
 
     @Suppress("UNUSED_PARAMETER")
     open fun doTest(unused: String) {
@@ -189,7 +186,13 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
         val rawJvmTarget = preferences[DebuggerPreferenceKeys.JVM_TARGET]
         val jvmTarget = JvmTarget.fromString(rawJvmTarget) ?: error("Invalid JVM target value: $rawJvmTarget")
 
-        val compilerFacility = createDebuggerTestCompilerFacility(testFiles, jvmTarget, useIrBackend(), lambdasGenerationScheme())
+        val enabledLanguageFeatures = preferences[DebuggerPreferenceKeys.ENABLED_LANGUAGE_FEATURE]
+            .map { LanguageFeature.fromString(it) ?: error("Not found language feature $it") }
+
+        val compilerFacility = createDebuggerTestCompilerFacility(
+            testFiles, jvmTarget,
+            TestCompileConfiguration(useIrBackend(), lambdasGenerationScheme(), enabledLanguageFeatures)
+        )
 
         for (library in preferences[DebuggerPreferenceKeys.ATTACH_LIBRARY]) {
             if (library.startsWith("maven("))
@@ -200,25 +203,12 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
 
         compilerFacility.compileLibrary(librarySrcDirectory, libraryOutputDirectory)
 
-        val enabledLanguageFeatures = mutableMapOf<LanguageFeature, LanguageFeature.State>()
-        for (param in preferences[DebuggerPreferenceKeys.ENABLED_LANGUAGE_FEATURE]) {
-            val languageFeature = LanguageFeature.fromString(param) ?: continue
-            enabledLanguageFeatures[languageFeature] = LanguageFeature.State.ENABLED
-        }
-
-        val languageVersionSettings = LanguageVersionSettingsImpl(
-            module.languageVersionSettings.languageVersion,
-            module.languageVersionSettings.apiVersion,
-            specificFeatures = enabledLanguageFeatures
-        )
-
-        mainClassName = compilerFacility.compileTestSources(
+        mainClassName = compilerFacility.compileTestSourcesWithCli(
             myModule,
             jvmSourcesOutputDirectory,
             commonSourcesOutputDirectory,
             File(appOutputPath),
-            libraryOutputDirectory,
-            languageVersionSettings
+            libraryOutputDirectory
         )
 
         breakpointCreator = BreakpointCreator(

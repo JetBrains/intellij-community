@@ -1,4 +1,4 @@
-// ATTACH_LIBRARY: maven("org.jetbrains.kotlin:kotlin-script-runtime:1.6.21")
+// ATTACH_LIBRARY: maven(org.jetbrains.kotlin:kotlin-script-runtime:1.6.21)
 
 
 // FILE: kt51755/some.kts
@@ -36,8 +36,8 @@ import kt51755.*
 // RESULT: instance of kt51755.Some$A(id=ID): Lkt51755/Some$A;
 
 
-fun main() {
-    val some = Some()
+fun main(args: Array<String>) {
+    val some = Some(args)
     val a = Some.A("hoho")
     a.sum(12)
 }
