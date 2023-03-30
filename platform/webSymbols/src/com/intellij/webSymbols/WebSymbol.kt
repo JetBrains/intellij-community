@@ -7,7 +7,6 @@ import com.intellij.navigation.NavigatableSymbol
 import com.intellij.navigation.NavigationTarget
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.backend.documentation.DocumentationSymbol
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiElement
@@ -27,7 +26,7 @@ import javax.swing.Icon
  * INAPPLICABLE_JVM_NAME -> https://youtrack.jetbrains.com/issue/KT-31420
  **/
 @Suppress("INAPPLICABLE_JVM_NAME")
-interface WebSymbol : WebSymbolsScope, Symbol, DocumentationSymbol, NavigatableSymbol {
+interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
 
   val origin: WebSymbolOrigin
 
@@ -69,9 +68,6 @@ interface WebSymbol : WebSymbolsScope, Symbol, DocumentationSymbol, NavigatableS
 
   val attributeValue: WebSymbolHtmlAttributeValue?
     get() = null
-
-  val documentation: WebSymbolDocumentation?
-    get() = WebSymbolDocumentation.create(this)
 
   val pattern: WebSymbolsPattern?
     get() = null
@@ -122,8 +118,11 @@ interface WebSymbol : WebSymbolsScope, Symbol, DocumentationSymbol, NavigatableS
         .presentation()
     }
 
-  override fun getDocumentationTarget(): DocumentationTarget =
-    WebSymbolDocumentationTargetImpl(this)
+  fun getDocumentationTarget(location: PsiElement?): DocumentationTarget =
+    WebSymbolDocumentationTargetImpl(this, location)
+
+  fun createDocumentation(location: PsiElement?): WebSymbolDocumentation? =
+    WebSymbolDocumentation.create(this, location)
 
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
     emptyList()

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.documentation.mdn
 
+import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 
@@ -27,9 +28,9 @@ abstract class MdnDocumentedSymbol : WebSymbol {
   override val descriptionSections: Map<String, String>
     get() = mdnDoc?.sections ?: emptyMap()
 
-  override val documentation: WebSymbolDocumentation?
-    get() = this.mdnDoc?.let { mdnDoc ->
-      val documentation = super.documentation
+  override fun createDocumentation(location: PsiElement?): WebSymbolDocumentation? =
+    this.mdnDoc?.let { mdnDoc ->
+      val documentation = super.createDocumentation(location)
       return documentation?.with(
         deprecated = false, // already contained in MDN documentation sections
         experimental = false, // already contained in MDN documentation sections
@@ -37,6 +38,6 @@ abstract class MdnDocumentedSymbol : WebSymbol {
                      ?.let { it + (documentation.footnote?.let { prev -> "<br>$prev" } ?: "") }
                    ?: documentation.footnote,
       )
-    } ?: super.documentation
+    } ?: super.createDocumentation(location)
 
 }
