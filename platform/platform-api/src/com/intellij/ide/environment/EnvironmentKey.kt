@@ -33,6 +33,7 @@ sealed interface EnvironmentKey {
     private open class EnvironmentKeyImpl(
       override val id: @NonNls String) : EnvironmentKey {
       override fun equals(other: Any?): Boolean = other is EnvironmentKeyImpl && other.id == this.id
+      override fun toString(): String = id
 
       override fun hashCode(): Int = id.hashCode()
     }

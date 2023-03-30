@@ -3,6 +3,7 @@ package com.intellij.warmup
 
 import com.intellij.ide.environment.impl.EnvironmentUtil
 import com.intellij.ide.warmup.WarmupStatus
+import com.intellij.idea.AppExitCodes
 import com.intellij.openapi.application.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -105,7 +106,7 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
         waitForBuilders(project, buildMode, builders)
       }
       project
-    } ?: return
+    } ?: exitProcess(AppExitCodes.STARTUP_EXCEPTION)
 
     waitUntilProgressTasksAreFinishedOrFail()
 
