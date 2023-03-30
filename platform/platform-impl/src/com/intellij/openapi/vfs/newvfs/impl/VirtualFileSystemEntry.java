@@ -32,7 +32,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   public static final VirtualFileSystemEntry[] EMPTY_ARRAY = new VirtualFileSystemEntry[0];
@@ -242,52 +244,51 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     }
   }
 
-  private char @NotNull [] computePath(@NotNull String protocol, @NotNull String protoSeparator) {
+  private @NotNull String computePath(@NotNull String protocol, @NotNull String protoSeparator) {
     int length = 0;
-    for (VirtualFileSystemEntry v = this; v != null; v = v.getParent()) {
-      if (length != 0) {
-        length++;
+    List<CharSequence> names = new ArrayList<>();
+    VirtualFileSystemEntry v = this;
+    for (;;) {
+      VirtualDirectoryImpl parent = v.getParent();
+      if (parent == null) {
+        break;
       }
-      int nameLength = -v.appendMyName(null, 0);
-      length += nameLength;
+      CharSequence name = v.getNameSequence();
+      if (length != 0) length++;
+      length += name.length();
+      names.add(name);
+      v = parent;
     }
     int protocolLength = protocol.length();
-    length += protocolLength + protoSeparator.length();
+    String rootPath = v.getPath();
+    int rootPathLength = rootPath.length();
+    length += protocolLength + protoSeparator.length() + rootPathLength;
     char[] path = new char[length];
     CharArrayUtil.getChars(protocol, path, 0);
     CharArrayUtil.getChars(protoSeparator, path, protocolLength);
-    int i = length;
-    for (VirtualFileSystemEntry v = this; v != null; v = v.getParent()) {
-      if (i != length) {
-        // copy separator
-        path[--i] = '/';
-      }
-      i = v.appendMyName(path, i);
+    int o = protocolLength + protoSeparator.length();
+    CharArrayUtil.getChars(rootPath, path, o, rootPathLength);
+    o += rootPathLength;
+    for (int i = names.size() - 1; i >= 1; i--) {
+      CharSequence name = names.get(i);
+      int nameLength = name.length();
+      CharArrayUtil.getChars(name, path, o, nameLength);
+      o += nameLength;
+      path[o++] = '/';
     }
-    return path;
-  }
-
-  // store my name in {@code buffer} (if not null) so that it will end at {@code endIndex}. return the start index where the name is stored.
-  @ApiStatus.Internal
-  protected int appendMyName(char @Nullable [] buffer, int endIndex) {
-    CharSequence name = getNameSequence();
-    int i = endIndex - name.length();
-    if (buffer != null) {
-      CharArrayUtil.getChars(name, buffer, i);
-    }
-    return i;
+    CharSequence name = names.get(0);
+    CharArrayUtil.getChars(name, path, o);
+    return new String(path);
   }
 
   @Override
   public @NotNull String getUrl() {
-    String protocol = getFileSystem().getProtocol();
-    char[] chars = computePath(protocol, "://");
-    return new String(chars);
+    return computePath(getFileSystem().getProtocol(), "://");
   }
 
   @Override
   public @NotNull String getPath() {
-    return new String(computePath("", ""));
+    return computePath("", "");
   }
 
   @Override
