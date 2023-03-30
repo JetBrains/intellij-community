@@ -329,15 +329,16 @@ public class ParameterInfoComponent extends JPanel {
     MyParameterContext context = new MyParameterContext(singleParameterInfo);
 
     int highlightedComponentIdx = -1;
-    for (int i = 0; i < myParameterInfoControllerData.getDescriptors().length; i++) {
+    Object[] descriptors = myParameterInfoControllerData.getDescriptors();
+    for (int i = 0; i < descriptors.length; i++) {
       context.i = i;
-      final Object o = myParameterInfoControllerData.getDescriptors()[i];
+      final Object o = descriptors[i];
 
-      boolean isHighlighted = myParameterInfoControllerData.getDescriptors()[i].equals(myParameterInfoControllerData.getHighlighted());
+      boolean isHighlighted = descriptors[i].equals(myParameterInfoControllerData.getHighlighted());
       if (isHighlighted) {
         context.result.highlightedSignature = i;
       }
-      if (singleParameterInfo && myParameterInfoControllerData.getDescriptors().length > 1 && !context.isHighlighted()) {
+      if (singleParameterInfo && descriptors.length > 1 && !context.isHighlighted()) {
         setVisible(i, false);
       }
       else {
