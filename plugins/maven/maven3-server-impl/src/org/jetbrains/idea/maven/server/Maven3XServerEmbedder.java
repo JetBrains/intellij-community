@@ -928,6 +928,11 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     if ("3.8.2".equals(mavenVersion) || "3.8.3".equals(mavenVersion)) {
       return false;
     }
+    // don't resolve dependencies in parallel if an old maven version is used; those versions have issues with concurrency
+    if (VersionComparatorUtil.compare(mavenVersion, "3.6.0") < 0) {
+      return false;
+    }
+
     return true;
   }
 
@@ -1581,7 +1586,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     RepositorySystemSession session = maven.newRepositorySession(request);
     myImporterSpy.setIndicator(myCurrentIndicator);
 
-    List<PluginResolutionResponse> results = new ArrayList<>();
+    List<PluginResolutionData> resolutions = new ArrayList<>();
 
     for (PluginResolutionRequest pluginResolutionRequest : pluginResolutionRequests) {
       MavenId mavenPluginId = pluginResolutionRequest.getMavenPluginId();
@@ -1597,12 +1602,31 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       List<org.apache.maven.model.Dependency> pluginDependencies =
         null == pluginFromProject ? Collections.emptyList() : pluginFromProject.getDependencies();
 
-      PluginResolutionResponse result = resolvePlugin(mavenPluginId, pluginDependencies, remoteRepos, session);
-
-      results.add(result);
+      PluginResolutionData resolution = new PluginResolutionData(mavenPluginId, pluginDependencies, remoteRepos);
+      resolutions.add(resolution);
     }
 
+    boolean runInParallel = canResolveDependenciesInParallel();
+    List<PluginResolutionResponse> results =
+      MavenServerParallelRunner.execute(runInParallel, resolutions, resolution ->
+        resolvePlugin(resolution.mavenPluginId, resolution.pluginDependencies, resolution.remoteRepos, session)
+      );
+
     return results;
+  }
+
+  private static class PluginResolutionData {
+    MavenId mavenPluginId;
+    List<org.apache.maven.model.Dependency> pluginDependencies;
+    List<RemoteRepository> remoteRepos;
+
+    private PluginResolutionData(MavenId mavenPluginId,
+                                 List<org.apache.maven.model.Dependency> pluginDependencies,
+                                 List<RemoteRepository> remoteRepos) {
+      this.mavenPluginId = mavenPluginId;
+      this.pluginDependencies = pluginDependencies;
+      this.remoteRepos = remoteRepos;
+    }
   }
 
   @NotNull
