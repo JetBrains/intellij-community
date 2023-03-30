@@ -58,6 +58,9 @@ class JCefImageViewer(private val myFile: VirtualFile,
     private const val HOST_NAME = "localhost"
     private const val PROTOCOL = "http"
 
+    private const val OVERLAY_SCROLLBARS_CSS_PATH = "/overlayscrollbars.css"
+    private const val OVERLAY_SCROLLBARS_JS_PATH = "/overlayscrollbars.browser.es6.js"
+
     private const val VIEWER_PATH = "/index.html"
     private const val IMAGE_PATH = "/image"
     private const val SCROLLBARS_CSS_PATH = "/scrollbars.css"
@@ -184,8 +187,16 @@ class JCefImageViewer(private val myFile: VirtualFile,
       }
     }
 
+    myRequestHandler.addResource(OVERLAY_SCROLLBARS_CSS_PATH) {
+      CefStreamResourceHandler(ByteArrayInputStream(JBCefScrollbarsHelper.getOverlayScrollbarsSourceCSS().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
+    }
+
+    myRequestHandler.addResource(OVERLAY_SCROLLBARS_JS_PATH) {
+      CefStreamResourceHandler(ByteArrayInputStream(JBCefScrollbarsHelper.getOverlayScrollbarsSourceJS().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
+    }
+
     myRequestHandler.addResource(SCROLLBARS_CSS_PATH) {
-      CefStreamResourceHandler(ByteArrayInputStream(JBCefScrollbarsHelper.buildScrollbarsStyle().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
+      CefStreamResourceHandler(ByteArrayInputStream(JBCefScrollbarsHelper.getOverlayScrollbarStyle().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
     }
 
     myRequestHandler.addResource(CHESSBOARD_CSS_PATH) {

@@ -114,9 +114,14 @@
       mix-blend-mode: difference;
     }
   </style>
+
+  <link type="text/css" href="overlayscrollbars.css" rel="stylesheet" />
+  <script type="text/javascript" src="overlayscrollbars.browser.es6.js"></script>
+
   <link id="scrollbars_style" rel="stylesheet" type="text/css" href="scrollbars.css"/>
   <link id="chessboard_style" rel="stylesheet" type="text/css" href="chessboard.css"/>
   <link id="pixel_grid_style" rel="stylesheet" type="text/css" href="pixel_grid.css"/>
+
   <title>Image viewer</title>
 </head>
 
@@ -165,7 +170,6 @@
 
   const gState = {
     'zoom': 1.0,
-    'url': '',
     'grid_visible': false,
     'chessboard_visible': false,
     'status': ViewerStatus.INIT
@@ -173,10 +177,12 @@
 
   let gUrl = ''
 
+  const overlayScrollbars = OverlayScrollbarsGlobal.OverlayScrollbars(document.getElementById('view_port'), {});
+
   const gUI = {
     'image': document.getElementById('image'),
     'canvas': document.getElementById('svg_canvas'),
-    'view_port': document.getElementById('view_port'),
+    'view_port': overlayScrollbars.elements().viewport,
     'chessboard': document.getElementById('chessboard'),
     'pixel_grid': document.getElementById('pixel_grid'),
     'control_panel': document.getElementById('control_panel'),
