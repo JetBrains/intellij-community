@@ -2,6 +2,7 @@
 package com.intellij.openapi.client
 
 import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.asContextElement2
 import com.intellij.ide.plugins.ContainerDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
@@ -31,6 +32,7 @@ abstract class ClientSessionImpl(
 ) : ComponentManagerImpl(
   parent = null,
   setExtensionsRootArea = false,
+  context = clientId.asContextElement2(),
 ), ClientSession {
 
   override val isLightServiceSupported = false
