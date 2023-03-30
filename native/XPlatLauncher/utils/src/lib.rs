@@ -1,12 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 use std::{env, fs};
 use std::ffi::OsStr;
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
-use std::os::unix::fs::PermissionsExt;
 use anyhow::{bail, Result};
 use log::debug;
+
+#[cfg(any(target_os = "macos", target_os = "linux"))]
+use {
+    std::os::unix::fs::PermissionsExt
+};
 
 #[cfg(target_os = "windows")]
 pub fn canonical_non_unc(path: &Path) -> Result<String> {
@@ -24,7 +28,7 @@ pub fn canonical_non_unc(path: &Path) -> Result<String> {
 }
 
 #[cfg(any(target_os = "macos", target_os = "linux"))]
-pub fn is_executable(path: &Path) -> Result<bool>{
+pub fn is_executable(path: &Path) -> Result<bool> {
     let permissions = path.metadata()?.permissions();
     let is_executable = permissions.mode() & 0o111 != 0;
     Ok(path.is_file() && is_executable)
