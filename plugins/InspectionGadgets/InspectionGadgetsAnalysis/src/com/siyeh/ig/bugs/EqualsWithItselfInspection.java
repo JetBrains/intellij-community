@@ -45,12 +45,18 @@ public class EqualsWithItselfInspection extends BaseInspection {
     CallMatcher.staticCall("org.junit.Assert", "assertEquals", "assertArrayEquals", "assertIterableEquals",
                            "assertLinesMatch", "assertNotEquals"),
     CallMatcher.staticCall("org.junit.jupiter.api.Assertions", "assertEquals", "assertArrayEquals", "assertIterableEquals",
-                           "assertLinesMatch", "assertNotEquals")
+                           "assertLinesMatch", "assertNotEquals"),
+    CallMatcher.staticCall("org.testng.Assert", "assertEquals", "assertEqualsDeep", "assertEqualsNoOrder", "assertNotEquals",
+                           "assertNotEqualsDeep"),
+    CallMatcher.staticCall("org.testng.AssertJUnit", "assertEquals"),
+    CallMatcher.staticCall("org.testng.internal.junit.ArrayAsserts", "assertArrayEquals")
   );
 
   private static final CallMatcher ASSERT_ARGUMENTS_THE_SAME = CallMatcher.anyOf(
     CallMatcher.staticCall("org.junit.Assert", "assertSame", "assertNotSame"),
-    CallMatcher.staticCall("org.junit.jupiter.api.Assertions", "assertSame", "assertNotSame")
+    CallMatcher.staticCall("org.junit.jupiter.api.Assertions", "assertSame", "assertNotSame"),
+    CallMatcher.staticCall("org.testng.Assert", "assertSame", "assertNotSame"),
+    CallMatcher.staticCall("org.testng.AssertJUnit", "assertSame", "assertNotSame")
   );
 
   private static final CallMatcher ONE_ARGUMENT_COMPARISON = CallMatcher.anyOf(
