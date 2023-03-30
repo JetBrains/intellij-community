@@ -33,6 +33,7 @@ public interface PsiFile extends PsiFileSystemItem {
    * @return the virtual file, or {@code null} if the file exists only in memory.
    */
   @Override
+  @Nullable
   VirtualFile getVirtualFile();
 
   /**
@@ -40,6 +41,7 @@ public interface PsiFile extends PsiFileSystemItem {
    *
    * @return the containing directory, or {@code null} if the file exists only in memory.
    */
+  @Nullable
   PsiDirectory getContainingDirectory();
 
   @Override
