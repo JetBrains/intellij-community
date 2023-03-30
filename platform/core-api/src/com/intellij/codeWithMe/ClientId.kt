@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeWithMe
 
+import com.intellij.concurrency.currentThreadContext
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.diagnostic.Logger
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
 import java.util.function.BiConsumer
 import java.util.function.Function
+import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -371,3 +373,19 @@ private class ClientIdElement(private val clientId: ClientId) : ThreadContextEle
     oldState.finish()
   }
 }
+
+private class ClientIdElement2(val clientId: ClientId) : AbstractCoroutineContextElement(Key) {
+
+  override fun toString(): String = clientId.toString()
+
+  object Key : CoroutineContext.Key<ClientIdElement2>
+}
+
+@ApiStatus.Internal
+fun ClientId.asContextElement2(): CoroutineContext.Element = ClientIdElement2(this)
+
+@ApiStatus.Internal
+fun CoroutineContext.clientId(): ClientId? = this[ClientIdElement2.Key]?.clientId
+
+@ApiStatus.Internal
+fun currentThreadClientId(): ClientId? = currentThreadContext().clientId()
