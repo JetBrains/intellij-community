@@ -437,6 +437,12 @@
             displayType="STICKY_BALLOON"
             key="kotlin.dist.downloading.failed.group.name"
     />
+    <notificationGroup
+            id="Configure Kotlin"
+            displayType="STICKY_BALLOON"
+            key="configure.kotlin"
+            bundle="messages.KotlinProjectConfigurationBundle"
+    />
   </extensions>
 
   <!-- Declaration search and Find Usages -->

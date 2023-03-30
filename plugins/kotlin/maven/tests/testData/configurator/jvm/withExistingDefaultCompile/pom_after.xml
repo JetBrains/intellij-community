@@ -72,8 +72,8 @@
                         </goals>
                     </execution>
                     <execution>
-                        <id>default-compile</id>
-                        <phase>none</phase>
+                      <id>default-compile</id>
+                      <phase>compile</phase>
                     </execution>
                     <execution>
                         <id>default-testCompile</id>
