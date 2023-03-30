@@ -898,7 +898,8 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractBytecodeToolWindowTest> {
-            model("internal/toolWindow", isRecursive = false, pattern = DIRECTORY)
+            model("internal/toolWindow", isRecursive = false, pattern = DIRECTORY, testMethodName = "doTestWithIr", testClassName = "WithIR")
+            model("internal/toolWindow", isRecursive = false, pattern = DIRECTORY, testMethodName = "doTestWithoutIr", testClassName = "WithoutIR")
         }
 
         testClass<AbstractReferenceResolveTest>("org.jetbrains.kotlin.idea.kdoc.KdocResolveTestGenerated") {

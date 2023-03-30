@@ -17,59 +17,120 @@ import org.junit.runner.RunWith;
 @TestRoot("idea/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("testData/internal/toolWindow")
-public class BytecodeToolWindowTestGenerated extends AbstractBytecodeToolWindowTest {
-    private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+public abstract class BytecodeToolWindowTestGenerated extends AbstractBytecodeToolWindowTest {
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/internal/toolWindow")
+    public static class WithIR extends AbstractBytecodeToolWindowTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithIr, this, testDataFilePath);
+        }
+
+        @TestMetadata("componentInlineFun")
+        public void testComponentInlineFun() throws Exception {
+            runTest("testData/internal/toolWindow/componentInlineFun/");
+        }
+
+        @TestMetadata("inlineFunctionBodyResolve")
+        public void testInlineFunctionBodyResolve() throws Exception {
+            runTest("testData/internal/toolWindow/inlineFunctionBodyResolve/");
+        }
+
+        @TestMetadata("inlineFunctionDeep1")
+        public void testInlineFunctionDeep1() throws Exception {
+            runTest("testData/internal/toolWindow/inlineFunctionDeep1/");
+        }
+
+        @TestMetadata("inlineFunctionDeep2")
+        public void testInlineFunctionDeep2() throws Exception {
+            runTest("testData/internal/toolWindow/inlineFunctionDeep2/");
+        }
+
+        @TestMetadata("inlineFunctionInfixCall")
+        public void testInlineFunctionInfixCall() throws Exception {
+            runTest("testData/internal/toolWindow/inlineFunctionInfixCall/");
+        }
+
+        @TestMetadata("inlineFunctionReifiedParam")
+        public void testInlineFunctionReifiedParam() throws Exception {
+            runTest("testData/internal/toolWindow/inlineFunctionReifiedParam/");
+        }
+
+        @TestMetadata("inlineProperty")
+        public void testInlineProperty() throws Exception {
+            runTest("testData/internal/toolWindow/inlineProperty/");
+        }
+
+        @TestMetadata("iteratorFun")
+        public void testIteratorFun() throws Exception {
+            runTest("testData/internal/toolWindow/iteratorFun/");
+        }
+
+        @TestMetadata("multipleInlineFunctionCalls")
+        public void testMultipleInlineFunctionCalls() throws Exception {
+            runTest("testData/internal/toolWindow/multipleInlineFunctionCalls/");
+        }
+
+        @TestMetadata("objectInInlineFun")
+        public void testObjectInInlineFun() throws Exception {
+            runTest("testData/internal/toolWindow/objectInInlineFun/");
+        }
     }
 
-    @TestMetadata("componentInlineFun")
-    public void testComponentInlineFun() throws Exception {
-        runTest("testData/internal/toolWindow/componentInlineFun/");
-    }
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/internal/toolWindow")
+    public static class WithoutIR extends AbstractBytecodeToolWindowTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithoutIr, this, testDataFilePath);
+        }
 
-    @TestMetadata("inlineFunctionBodyResolve")
-    public void testInlineFunctionBodyResolve() throws Exception {
-        runTest("testData/internal/toolWindow/inlineFunctionBodyResolve/");
-    }
+        @TestMetadata("componentInlineFun")
+        public void testComponentInlineFun() throws Exception {
+            runTest("testData/internal/toolWindow/componentInlineFun/");
+        }
 
-    @TestMetadata("inlineFunctionDeep1")
-    public void testInlineFunctionDeep1() throws Exception {
-        runTest("testData/internal/toolWindow/inlineFunctionDeep1/");
-    }
+        @TestMetadata("inlineFunctionBodyResolve")
+        public void testInlineFunctionBodyResolve() throws Exception {
+            runTest("testData/internal/toolWindow/inlineFunctionBodyResolve/");
+        }
 
-    @TestMetadata("inlineFunctionDeep2")
-    public void testInlineFunctionDeep2() throws Exception {
-        runTest("testData/internal/toolWindow/inlineFunctionDeep2/");
-    }
+        @TestMetadata("inlineFunctionDeep1")
+        public void testInlineFunctionDeep1() throws Exception {
+            runTest("testData/internal/toolWindow/inlineFunctionDeep1/");
+        }
 
-    @TestMetadata("inlineFunctionInfixCall")
-    public void testInlineFunctionInfixCall() throws Exception {
-        runTest("testData/internal/toolWindow/inlineFunctionInfixCall/");
-    }
+        @TestMetadata("inlineFunctionDeep2")
+        public void testInlineFunctionDeep2() throws Exception {
+            runTest("testData/internal/toolWindow/inlineFunctionDeep2/");
+        }
 
-    @TestMetadata("inlineFunctionReifiedParam")
-    public void testInlineFunctionReifiedParam() throws Exception {
-        runTest("testData/internal/toolWindow/inlineFunctionReifiedParam/");
-    }
+        @TestMetadata("inlineFunctionInfixCall")
+        public void testInlineFunctionInfixCall() throws Exception {
+            runTest("testData/internal/toolWindow/inlineFunctionInfixCall/");
+        }
 
-    @TestMetadata("inlineProperty")
-    public void testInlineProperty() throws Exception {
-        runTest("testData/internal/toolWindow/inlineProperty/");
-    }
+        @TestMetadata("inlineFunctionReifiedParam")
+        public void testInlineFunctionReifiedParam() throws Exception {
+            runTest("testData/internal/toolWindow/inlineFunctionReifiedParam/");
+        }
 
-    @TestMetadata("iteratorFun")
-    public void testIteratorFun() throws Exception {
-        runTest("testData/internal/toolWindow/iteratorFun/");
-    }
+        @TestMetadata("inlineProperty")
+        public void testInlineProperty() throws Exception {
+            runTest("testData/internal/toolWindow/inlineProperty/");
+        }
 
-    @TestMetadata("multipleInlineFunctionCalls")
-    public void testMultipleInlineFunctionCalls() throws Exception {
-        runTest("testData/internal/toolWindow/multipleInlineFunctionCalls/");
-    }
+        @TestMetadata("iteratorFun")
+        public void testIteratorFun() throws Exception {
+            runTest("testData/internal/toolWindow/iteratorFun/");
+        }
 
-    @TestMetadata("objectInInlineFun")
-    public void testObjectInInlineFun() throws Exception {
-        runTest("testData/internal/toolWindow/objectInInlineFun/");
+        @TestMetadata("multipleInlineFunctionCalls")
+        public void testMultipleInlineFunctionCalls() throws Exception {
+            runTest("testData/internal/toolWindow/multipleInlineFunctionCalls/");
+        }
+
+        @TestMetadata("objectInInlineFun")
+        public void testObjectInInlineFun() throws Exception {
+            runTest("testData/internal/toolWindow/objectInInlineFun/");
+        }
     }
 }
