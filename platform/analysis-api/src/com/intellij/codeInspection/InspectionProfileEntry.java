@@ -32,10 +32,7 @@ import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.annotations.Property;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.io.BufferedReader;
@@ -356,6 +353,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
    *
    * @return {@code null} if no UI options required.
    */
+  @ApiStatus.Obsolete
   public @Nullable JComponent createOptionsPanel() {
     OptPane pane = getOptionsPane();
     if (pane.equals(OptPane.EMPTY)) return null;
@@ -377,7 +375,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
 
   /**
    * @return true iff default configuration options should be shown for the tool. E.g., scope-severity settings.
-   * @apiNote if {@code false} returned, only panel provided by {@link #createOptionsPanel()} is shown if any.
+   * @apiNote if {@code false} returned, only panel provided by {@link #getOptionsPane()} is shown if any.
    */
   public boolean showDefaultConfigurationOptions() {
     return true;
