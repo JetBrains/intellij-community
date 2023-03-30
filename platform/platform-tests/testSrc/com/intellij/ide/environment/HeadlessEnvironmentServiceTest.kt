@@ -23,14 +23,13 @@ import java.nio.file.Path
 import kotlin.io.path.deleteIfExists
 
 class HeadlessEnvironmentServiceTest : LightPlatformTestCase() {
-
   private val configurationFilePath : Path
     get() = Path.of(project.basePath!! + "/environmentKeys.json")
 
   private suspend fun getExistingKey(key: EnvironmentKey): String {
-    val value1 = service<EnvironmentService>().requestEnvironmentValue(key)
-    val value2 = service<EnvironmentService>().getEnvironmentValue(key)
-    TestCase.assertEquals(value1!!, value2)
+    val value1 = service<EnvironmentService>().getValue(key, null)
+    val value2 = service<EnvironmentService>().getValue(key, undefined)
+    TestCase.assertEquals(value1!!, value2!!)
     return value1
   }
 
@@ -63,7 +62,24 @@ class HeadlessEnvironmentServiceTest : LightPlatformTestCase() {
       EnvironmentKeyStubGenerator().performGeneration(listOf("--file=$configurationFilePath"))
 
       val contents = configurationFilePath.readText()
-      assertEquals(getJsonContents(null, dummyKeyWithDefaultValue.defaultValue), contents)
+      assertEquals(
+"""[
+  {
+    "description": [
+      "My dummy test key",
+      "With a long description"
+    ],
+    "key": "my.dummy.test.key",
+    "value": ""
+  },
+  {
+    "description": [
+      "Just another dummy key"
+    ],
+    "key": "my.dummy.test.key.2",
+    "value": ""
+  }
+]""", contents)
 
       checkGeneratedFileSanity()
     } finally {
@@ -83,8 +99,8 @@ class HeadlessEnvironmentServiceTest : LightPlatformTestCase() {
     "value": ""
   },
   {
-    "key": "my.dummy.test.key.with.default.value",
-    "value": "Foo"
+    "key": "my.dummy.test.key.2",
+    "value": ""
   }
 ]""", contents)
 
@@ -94,10 +110,10 @@ class HeadlessEnvironmentServiceTest : LightPlatformTestCase() {
     }
   }
 
-  private fun runTestWithValues(value1: String?, value2: String?, action: suspend () -> Unit) = runTestWithMaskedServices {
+  private fun runTestWithFile(text: String, action: suspend () -> Unit) = runTestWithMaskedServices {
     blockingContext {
       runWriteAction {
-        configurationFilePath.write(getJsonContents(value1, value2))
+        configurationFilePath.write(text)
       }
     }
     EnvironmentUtil.setPathTemporarily(configurationFilePath, testRootDisposable)
@@ -108,71 +124,74 @@ class HeadlessEnvironmentServiceTest : LightPlatformTestCase() {
     }
   }
 
-  fun testCheckExistingKey() = runTestWithValues("secret-value", null) {
-    val dummyKeyValue = getExistingKey(dummyKey)
-    assertEquals("secret-value", dummyKeyValue)
-  }
-
-  fun testAbsentKey() = runTestWithValues(null, null) {
-    try {
-      assertNull(service<EnvironmentService>().getEnvironmentValue(dummyKey))
-      service<EnvironmentService>().requestEnvironmentValue(dummyKey)
-      fail("should throw")
-    } catch (e : HeadlessEnvironmentService.MissingEnvironmentKeyException) {
-      // ignored
-    }
-  }
-
-  fun testDefaultKey() = runTestWithValues(null, null) {
-    val defaultedDummyKeyValue = getExistingKey(dummyKeyWithDefaultValue)
-    assertEquals("Foo", defaultedDummyKeyValue)
-  }
-
-  fun testOverwrittenDefaultKey() = runTestWithValues(null, "Bar") {
-    val defaultedDummyKeyValue = getExistingKey(dummyKeyWithDefaultValue)
-    assertEquals("Bar", defaultedDummyKeyValue)
-  }
-
-  fun testUnknownKey() = runTestWithValues(null, null) {
-    try {
-      assertNull(service<EnvironmentService>().getEnvironmentValue(dummyKey))
-      service<EnvironmentService>().requestEnvironmentValue(notRegisteredDummyKey)
-      // the warning in log is intentional
-      fail("should throw")
-    } catch (e : HeadlessEnvironmentService.MissingEnvironmentKeyException) {
-      // ignored
-    }
-  }
-}
-
-private val dummyKey: EnvironmentKey = EnvironmentKey.create("my.dummy.test.key", { "My dummy test key\nWith a long description" })
-private val notRegisteredDummyKey: EnvironmentKey = EnvironmentKey.create("not.registered.dummy.key", { "My dummy test key" })
-private val dummyKeyWithDefaultValue: DefaultedEnvironmentKey = EnvironmentKey.createWithDefaultValue("my.dummy.test.key.with.default.value", { "My dummy test key with default value"}, "Foo")
-
-fun getJsonContents(value1: String?, value2: String?) : String =
-"""[
+  fun testCheckExistingKey() = runTestWithFile(
+    """[
   {
     "description": [
       "My dummy test key",
       "With a long description"
     ],
     "key": "my.dummy.test.key",
-    "value": "${value1 ?: ""}"
-  },
+    "value": "secret-value"
+  }
+]""") {
+    val dummyKeyValue = getExistingKey(dummyKey)
+    assertEquals("secret-value", dummyKeyValue)
+  }
+
+  fun testAbsentKey() = runTestWithFile(
+    """[
   {
     "description": [
-      "My dummy test key with default value"
+      "My dummy test key",
+      "With a long description"
     ],
-    "key": "my.dummy.test.key.with.default.value",
-    "value": "${value2 ?: ""}"
+    "key": "my.dummy.test.key",
+    "value": ""
   }
-]"""
+]""") {
+    try {
+      TestCase.assertEquals(undefined, service<EnvironmentService>().getValue(dummyKey, undefined))
+      service<EnvironmentService>().getValue(dummyKey, null)
+      fail("should throw")
+    } catch (e : HeadlessEnvironmentService.MissingEnvironmentKeyException) {
+      // ignored, we expect this outcome
+    }
+  }
+
+  fun testUnknownKey() = runTestWithFile("""[
+  {
+    "description": [
+      "My dummy test key",
+      "With a long description"
+    ],
+    "key": "my.dummy.test.key",
+    "value": ""
+  }
+]""") {
+    try {
+      service<EnvironmentService>().getValue(notRegisteredDummyKey, undefined)
+      // the warning in log is intentional
+      fail("should throw")
+    } catch (e : AssertionError) {
+      // ignored, we expect this outcome
+    }
+  }
+
+  companion object {
+    private const val undefined = "__undefined__"
+  }
+}
+
+private val dummyKey: EnvironmentKey = EnvironmentKey.create("my.dummy.test.key")
+private val dummyKey2: EnvironmentKey = EnvironmentKey.create("my.dummy.test.key.2")
+private val notRegisteredDummyKey: EnvironmentKey = EnvironmentKey.create("not.registered.dummy.key")
 
 private class TestKeyProvider : EnvironmentKeyProvider {
 
-  override fun getAllKeys(): List<EnvironmentKey> = listOf(
-    dummyKey,
-    dummyKeyWithDefaultValue
+  override fun getKnownKeys(): Map<EnvironmentKey, String> = mapOf(
+    dummyKey to "My dummy test key\nWith a long description",
+    dummyKey2 to "Just another dummy key",
   )
 
   override suspend fun getRequiredKeys(project: Project): List<EnvironmentKey> =

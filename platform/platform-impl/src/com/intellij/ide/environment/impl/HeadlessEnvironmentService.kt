@@ -3,8 +3,8 @@ package com.intellij.ide.environment.impl
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.type.CollectionType
-import com.intellij.ide.environment.DefaultedEnvironmentKey
 import com.intellij.ide.environment.EnvironmentKey
+import com.intellij.ide.environment.description
 import com.intellij.openapi.application.ApplicationManager
 import kotlinx.coroutines.*
 import java.io.IOException
@@ -15,7 +15,7 @@ class HeadlessEnvironmentService(scope: CoroutineScope) : BaseEnvironmentService
     getModelFromFile()
   }
 
-  private suspend fun scanForEnvironmentValue(key: EnvironmentKey, onError: () -> String?): String? {
+  override suspend fun getValue(key: EnvironmentKey, defaultValue: String?): String {
     if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
       LOG.warn("Access to environment parameters in the IDE with UI must be delegated to the user")
     }
@@ -32,25 +32,17 @@ class HeadlessEnvironmentService(scope: CoroutineScope) : BaseEnvironmentService
       return valueFromConfigurationFile
     }
 
-    if (key is DefaultedEnvironmentKey) {
-      return key.defaultValue
+    if (defaultValue != null) {
+      return defaultValue
     }
 
-    return onError()
-  }
-
-  override suspend fun requestEnvironmentValue(key: EnvironmentKey): String? = scanForEnvironmentValue(key) {
     throw MissingEnvironmentKeyException(key)
-  }
-
-  override suspend fun getEnvironmentValue(key: EnvironmentKey): String? = scanForEnvironmentValue(key) {
-    null
   }
 
   class MissingEnvironmentKeyException(val key: EnvironmentKey) : CancellationException(
     """Missing value for a key '${key.id}'
       |Usage:
-      |${key.description.get()}
+      |${key.description}
       |""".trimMargin())
 
   private class EnvironmentKeyEntry {

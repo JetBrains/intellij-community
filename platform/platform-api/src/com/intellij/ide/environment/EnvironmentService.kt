@@ -2,6 +2,9 @@
 package com.intellij.ide.environment
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Contract
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 
 /**
  * Allows retrieving values for [EnvironmentKey].
@@ -14,41 +17,31 @@ import org.jetbrains.annotations.ApiStatus
 interface EnvironmentService {
 
   /**
-   * Retrieves a value for [key] from the environment and returns `null` if value is not defined.
+   * Retrieves a value for [key] from the environment.
    *
-   * This method can be used if a client can provide their own ways to mitigate the absence of a value.
-   * If the key is necessary, then [requestEnvironmentValue] should be used
-   */
-  suspend fun getEnvironmentValue(key: EnvironmentKey): String?
-
-  /**
-   * The same as [getEnvironmentValue], but avoids nullability issues when [key] has a default value.
-   */
-  suspend fun getEnvironmentValue(key: DefaultedEnvironmentKey): String = getEnvironmentValue(key as EnvironmentKey) ?: key.defaultValue
-
-  /**
-   * Retrieves a value from the environment and performs environment-specific action if value is not defined.
+   * The semantics of returned value is the following:
+   * - If the environment has some defined value for [key], then this value is returned.
+   * - Otherwise if [defaultValue] is not `null`, [defaultValue] is returned.
+   * - Otherwise the service enters in its error-handling state.
    *
-   * In particular, current implementations of this service have the following semantics on an absent key:
+   * In particular, current implementations of this service have the following behavior in error-handling state:
    * - If the environment allows the usage of UI, then this method returns `null`, and the client may use a modal dialog to get a value.
-   * - If the environment does not allow the usage of UI, then [java.util.concurrent.CancellationException] is thrown, so [requestEnvironmentValue] never
-   * returns `null` in the headless environment.
+   * - If the environment does not allow the usage of UI, then [java.util.concurrent.CancellationException] is thrown.
+   * *Note:* the descriptions above are for platform behavior only. In general, error-handling behavior is implementation defined,
+   * but all implementations must obey the semantics of returned value stated above.
    *
    * The supposed workflow is sketched in the following snippet:
    * ```
-   * suspend fun requestUserDecision() : ChoiceData {
-   *   val value : String = service<EnvironmentService>.requestEnvironmentValue(MY_AWESOME_KEY)
+   * suspend fun getMyAwesomeSdkPath(): String {
+   *   val value: String = service<EnvironmentService>.getValue(MY_AWESOME_SDK_KEY, null)
    *   // if we are in a headless environment and we have no value for a key,
-   *   // then the next line will not be executed because of an exception
+   *   // then the next line will not be executed because of an exception being thrown
    *   if (value != null) {
-   *     return ChoiceData.ofString(value)
+   *     return value
    *   }
    *   return showModalDialogAndGetValue()
    * }
    * ```
-   *
-   * The documentation above is about platform behavior only. Custom implementations of this service may possess other behavior.
    */
-  suspend fun requestEnvironmentValue(key: EnvironmentKey): String?
-
+  suspend fun getValue(key: EnvironmentKey, defaultValue: String?): String?
 }

@@ -9,10 +9,14 @@ import com.intellij.openapi.project.Project
 class JvmEnvironmentKeyProvider : EnvironmentKeyProvider {
 
   companion object {
-    val JDK_KEY = EnvironmentKey.create("project.jdk", JavaBundle.messagePointer("environment.key.description.project.jdk"))
-    val JDK_NAME = EnvironmentKey.createWithDefaultValue("project.jdk.name", JavaBundle.messagePointer("environment.key.description.project.jdk.name"), "warmup_jdk")
+    val JDK_KEY = EnvironmentKey.create("project.jdk")
+    val JDK_NAME = EnvironmentKey.create("project.jdk.name")
   }
-  override fun getAllKeys(): List<EnvironmentKey> = listOf(JDK_KEY, JDK_NAME)
+
+  override fun getKnownKeys(): Map<EnvironmentKey, String> =
+    mapOf(JDK_KEY to JavaBundle.message("environment.key.description.project.jdk"),
+          JDK_NAME to JavaBundle.message("environment.key.description.project.jdk.name"),
+    )
 
   override suspend fun getRequiredKeys(project: Project): List<EnvironmentKey> = listOf()
 }

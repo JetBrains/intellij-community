@@ -70,13 +70,6 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
     val pomXmlFile = basePath + "/" + MavenConstants.POM_XML
     if (FileUtil.findFirstThatExist(pomXmlFile) == null) return
 
-    val service = service<EnvironmentService>()
-    val projectSelectionKey = runBlockingCancellable { service.getEnvironmentValue(ProjectOpenKeyProvider.PROJECT_OPEN_PROCESSOR) }
-    if (projectSelectionKey != null && projectSelectionKey != "Maven") {
-      // something else was selected to open the project
-      return
-    }
-
     val mavenProjectAware = ExternalSystemUnlinkedProjectAware.getInstance(MavenUtil.SYSTEM_ID)!!
     val isMavenProjectLinked = mavenProjectAware.isLinkedProject(project, basePath)
 

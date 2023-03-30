@@ -8,12 +8,12 @@ import com.intellij.openapi.project.ProjectBundle
 
 class ProjectOpenKeyProvider : EnvironmentKeyProvider {
   companion object {
-    val PROJECT_OPEN_PROCESSOR: EnvironmentKey = EnvironmentKey.create("project.open.type", ProjectBundle.messagePointer("project.open.processor.environment.property"))
+    val PROJECT_OPEN_PROCESSOR: EnvironmentKey = EnvironmentKey.create("project.open.type")
   }
 
   override suspend fun getRequiredKeys(project: Project): List<EnvironmentKey> = listOf()
 
-  override fun getAllKeys(): List<EnvironmentKey> = listOf(
-    PROJECT_OPEN_PROCESSOR,
+  override fun getKnownKeys(): Map<EnvironmentKey, String> = mapOf(
+    PROJECT_OPEN_PROCESSOR to ProjectBundle.message("project.open.processor.environment.property"),
   )
 }

@@ -2,17 +2,15 @@
 package com.intellij.ide.environment
 
 import com.intellij.ide.environment.EnvironmentKey.Companion.create
-import com.intellij.openapi.util.NlsContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
-import java.util.function.Supplier
 
 /**
  * Represents a key for a value defined in user environment.
  * The preferable way to work with this class is to store its instances in a static field after calling [create].
  *
  * To get a value for a key, use [EnvironmentService].
- * **Note**: every key must be registered in some [EnvironmentKeyProvider].
+ * **Note**: every key must be registered in some [EnvironmentKeyProvider.getKnownKeys].
  */
 sealed interface EnvironmentKey {
 
@@ -22,56 +20,26 @@ sealed interface EnvironmentKey {
    */
   val id: @NonNls String
 
-  /**
-   * The purpose of this key and the format of its values.
-   */
-  val description: Supplier<@EnvironmentKeyDescription String>
-
   companion object {
 
     @JvmStatic
-    fun create(id: @NonNls String, description: Supplier<@EnvironmentKeyDescription String>): EnvironmentKey {
-      return EnvironmentKeyImpl(id, description)
+    fun create(id: @NonNls String): EnvironmentKey {
+      require(regex.matches(id))
+      return EnvironmentKeyImpl(id)
     }
 
-    @JvmStatic
-    fun createWithDefaultValue(id: @NonNls String, description: Supplier<@EnvironmentKeyDescription String>, defaultValue: @NonNls String): DefaultedEnvironmentKey {
-      require(defaultValue.isNotEmpty()) {
-        "Empty strings as default values are not supported."
-      }
-      return DefaultEnvironmentKeyImpl(id, description, defaultValue)
-    }
+    private val regex: Regex = Regex("^[a-z0-9]+(\\.[a-z0-9]+)*$")
 
     private open class EnvironmentKeyImpl(
-      override val id: @NonNls String,
-      override val description: Supplier<@Nls String>) : EnvironmentKey {
+      override val id: @NonNls String) : EnvironmentKey {
       override fun equals(other: Any?): Boolean = other is EnvironmentKeyImpl && other.id == this.id
 
       override fun hashCode(): Int = id.hashCode()
     }
-
-    private class DefaultEnvironmentKeyImpl(
-      id: String,
-      description: Supplier<@EnvironmentKeyDescription String>,
-      override val defaultValue: @NonNls String): EnvironmentKeyImpl(id, description), DefaultedEnvironmentKey {
-      override fun equals(other: Any?): Boolean = super.equals(other)
-      override fun hashCode(): Int = super.hashCode()
-    }
-
-    @NlsContext(prefix = "environment.key.description")
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @Target(AnnotationTarget.CLASS, AnnotationTarget.TYPE, AnnotationTarget.TYPE_PARAMETER, AnnotationTarget.FUNCTION,
-            AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER, AnnotationTarget.VALUE_PARAMETER)
-    private annotation class EnvironmentKeyDescription
   }
 }
 
-interface DefaultedEnvironmentKey : EnvironmentKey {
-  /**
-   * The default value for a key.
-   * The default value **must be non-empty**.
-   */
-  val defaultValue: @NonNls String
-}
-
-
+val EnvironmentKey.description: @Nls String
+  get() = EnvironmentKeyProvider.EP_NAME.extensionList.firstNotNullOfOrNull { provider ->
+    provider.getKnownKeys()[this]
+  } ?: error("Key ${this.id} must be registered in some ${EnvironmentKeyProvider}")

@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 
 class CheckKeysStartupActivity : ProjectActivity {
+
   override suspend fun execute(project: Project) {
     if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
       return
@@ -22,8 +23,8 @@ class CheckKeysStartupActivity : ProjectActivity {
     var exceptionOccurred = false
     for (registry in blockingContext { EnvironmentKeyProvider.EP_NAME.extensionList }) {
       for (requiredKey in registry.getRequiredKeys(project)) {
-        val value = environmentService.getEnvironmentValue(requiredKey)
-        if (value == null) {
+        val value = environmentService.getValue(requiredKey, undefined)
+        if (value == undefined) {
           exceptionOccurred = true
           messageBuilder.appendLine(HeadlessEnvironmentService.MissingEnvironmentKeyException(requiredKey).message)
         }
@@ -32,5 +33,9 @@ class CheckKeysStartupActivity : ProjectActivity {
     if (exceptionOccurred) {
       thisLogger().error(messageBuilder.toString())
     }
+  }
+
+  companion object {
+    const val undefined : String = "!!!___***undefined***___!!!";
   }
 }
