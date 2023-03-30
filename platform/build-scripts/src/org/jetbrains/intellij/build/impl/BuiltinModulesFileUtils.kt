@@ -16,7 +16,7 @@ fun readBuiltinModulesFile(file: Path): BuiltinModulesFileData {
   return Files.newInputStream(file).use { Json.decodeFromStream<BuiltinModulesFileData>(it) }
 }
 
-internal fun customizeBuiltinModulesAllowOnlySpecified(
+fun customizeBuiltinModulesAllowOnlySpecified(
   context: BuildContext,
   builtinModulesFile: Path,
   moduleNames: List<String>?,
