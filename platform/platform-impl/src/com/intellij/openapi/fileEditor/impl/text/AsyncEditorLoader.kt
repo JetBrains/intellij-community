@@ -14,6 +14,8 @@ import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
 import java.util.*
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 @Service(Service.Level.PROJECT)
 internal class AsyncEditorLoaderService(private val coroutineScope: CoroutineScope) {
@@ -48,6 +50,16 @@ class AsyncEditorLoader internal constructor(private val textEditor: TextEditorI
     fun performWhenLoaded(editor: Editor, runnable: Runnable) {
       val loader = editor.getUserData(ASYNC_LOADER)
       loader?.delayedActions?.add(runnable) ?: runnable.run()
+    }
+
+    internal suspend fun waitForLoaded(editor: Editor) {
+      if (editor.getUserData(ASYNC_LOADER) != null) {
+        withContext(Dispatchers.EDT) {
+          suspendCoroutine {
+            performWhenLoaded(editor) { it.resume(Unit) }
+          }
+        }
+      }
     }
 
     @JvmStatic

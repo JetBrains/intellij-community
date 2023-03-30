@@ -104,6 +104,23 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     return openFileInCommand(OpenFileDescriptor(project, file))
   }
 
+  override suspend fun openFile(file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite {
+    val descriptor = OpenFileDescriptor(project, file)
+    val editWithProvider = openFileImpl3(descriptor)
+    val editors = editWithProvider.first
+    for (i in editors.indices) {
+      val editor = editors[i]
+      if (editor is NavigatableFileEditor && descriptor.file == editor.file) {
+        if (editor.canNavigateTo(descriptor)) {
+          setSelectedEditor(descriptor.file, editWithProvider.second[i].editorTypeId)
+          editor.navigateTo(descriptor)
+        }
+        break
+      }
+    }
+    return FileEditorComposite.fromPair(editWithProvider)
+  }
+
   private fun openFileImpl3(openFileDescriptor: FileEditorNavigatable): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
     val file = openFileDescriptor.file
     if (!isCurrentlyUnderLocalId) {

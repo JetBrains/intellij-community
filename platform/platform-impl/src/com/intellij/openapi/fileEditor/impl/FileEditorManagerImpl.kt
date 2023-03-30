@@ -33,6 +33,7 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.extensions.ExtensionPointListener
@@ -46,6 +47,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.EditorComposite.Companion.retrofit
 import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl.Companion.getInstanceImpl
+import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.fileTypes.FileTypeEvent
 import com.intellij.openapi.fileTypes.FileTypeListener
@@ -208,7 +210,7 @@ open class FileEditorManagerImpl(
 
     val publisher = project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
 
-    // not using collectLatest() to ensure that no selection update is missed by the listeners
+    // not using collectLatest() to ensure that the listeners miss no selection update
     selectionFlow
       .zipWithNext { oldState, state ->
         val oldEditorWithProvider = oldState?.fileEditorProvider
@@ -281,7 +283,7 @@ open class FileEditorManagerImpl(
       // updates tabs names
       connection.subscribe(VirtualFileManager.VFS_CHANGES, MyVirtualFileListener())
 
-      // extends/cuts number of opened tabs. Also updates location of tabs
+      // Extends/cuts number of opened tabs. Also updates the location of tabs.
       connection.subscribe(UISettingsListener.TOPIC, MyUISettingsListener())
 
       connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
@@ -800,7 +802,7 @@ open class FileEditorManagerImpl(
           openFileImpl2(window = editorWindow, file = file, options = options)
         }
       }
-      if (mode == OpenMode.RIGHT_SPLIT) {
+      else if (mode == OpenMode.RIGHT_SPLIT) {
         val result = openInRightSplit(file)
         if (result != null) {
           return result
@@ -817,11 +819,35 @@ open class FileEditorManagerImpl(
     return openFileImpl2(window = windowToOpenIn, file = file, options = options)
   }
 
+  override suspend fun openFile(file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite {
+    var windowToOpenIn: EditorWindow? = null
+    if (options.reuseOpen || !AdvancedSettings.getBoolean(EDITOR_OPEN_INACTIVE_SPLITTER)) {
+      windowToOpenIn = withContext(Dispatchers.EDT) { findWindowInAllSplitters(file) }
+    }
+    if (windowToOpenIn == null) {
+      windowToOpenIn = withContext(Dispatchers.EDT) { getOrCreateCurrentWindow(file) }
+    }
+    if (forbidSplitFor(file) && !windowToOpenIn.isFileOpen(file)) {
+      withContext(Dispatchers.EDT) {
+        closeFile(file)
+      }
+    }
+
+    val composite = openFileAsync(window = windowToOpenIn, _file = file, entry = null, options = options)
+    for (editor in composite.allEditors) {
+      if (editor is TextEditor) {
+        AsyncEditorLoader.waitForLoaded(editor.editor)
+      }
+    }
+    return composite
+  }
+
   private fun findWindowInAllSplitters(file: VirtualFile): EditorWindow? {
     val activeCurrentWindow = getActiveSplitterSync().currentWindow
     if (activeCurrentWindow != null && isFileOpenInWindow(file, activeCurrentWindow)) {
       return activeCurrentWindow
     }
+
     for (splitters in getAllSplitters()) {
       for (window in splitters.getWindows()) {
         if (isFileOpenInWindow(file, window)) {
@@ -923,9 +949,9 @@ open class FileEditorManagerImpl(
 
   /**
    * Unlike the openFile method, file can be invalid.
-   * For example, all files were invalidated, and they are being removed one by one.
-   * If we have removed one invalid file, then another invalid file becomes selected.
-   * That's why we do not require that passed file is valid.
+   * For example, all files were invalidated, and they're being removed one by one.
+   * If we've removed one invalid file, then another invalid file becomes selected.
+   * That's why we don't require that passed file is valid.
    */
   internal fun openMaybeInvalidFile(window: EditorWindow, file: VirtualFile, entry: HistoryEntry?): FileEditorComposite {
     return openFileImpl4(window = window, _file = file, entry = entry, options = FileEditorOpenOptions(requestFocus = true))
@@ -941,6 +967,7 @@ open class FileEditorManagerImpl(
   /**
    * This method can be invoked from background thread. Of course, UI for returned editors should be accessed from EDT in any case.
    */
+  @Suppress("DuplicatedCode")
   internal fun openFileImpl4(window: EditorWindow,
                              @Suppress("LocalVariableName") _file: VirtualFile,
                              entry: HistoryEntry?,
@@ -948,19 +975,7 @@ open class FileEditorManagerImpl(
     assert(ApplicationManager.getApplication().isDispatchThread ||
            !ApplicationManager.getApplication().isReadAccessAllowed) { "must not attempt opening files under read action" }
     if (!ClientId.isCurrentlyUnderLocalId) {
-      val clientManager = clientFileEditorManager ?: return EMPTY
-      val result = clientManager.openFile(file = _file, forceCreate = false)
-      val allEditors = result.map { it.fileEditor }
-      val allProviders = result.map { it.provider }
-      return object : FileEditorComposite {
-        override val isPreview: Boolean
-          get() = options.usePreviewTab
-
-        override val allEditors: List<FileEditor>
-          get() = allEditors
-        override val allProviders: List<FileEditorProvider>
-          get() = allProviders
-      }
+      return openFileUsingClient(file = _file, options = options)
     }
 
     val file = getOriginalFile(_file)
@@ -978,11 +993,11 @@ open class FileEditorManagerImpl(
         return EMPTY
       }
 
-      // File is not opened yet. In this case, we have to create editors and select the created EditorComposite.
+      // A file is not opened yet. In this case, we have to create editors and select the created EditorComposite.
       newProviders = FileEditorProviderManager.getInstance().getProviderList(project, file)
       builders = arrayOfNulls(newProviders.size)
       for (i in newProviders.indices) {
-        try {
+        LOG.runAndLogException {
           val provider = newProviders[i]
           builders[i] = ApplicationManager.getApplication().runReadAction<AsyncFileEditorProvider.Builder?, RuntimeException> {
             if (project.isDisposed || !file.isValid) {
@@ -992,15 +1007,6 @@ open class FileEditorManagerImpl(
             if (provider is AsyncFileEditorProvider) provider.createEditorAsync(project, file) else null
           }
         }
-        catch (e: ProcessCanceledException) {
-          throw e
-        }
-        catch (e: CancellationException) {
-          throw e
-        }
-        catch (e: Throwable) {
-          LOG.error(e)
-        }
       }
     }
     else {
@@ -1008,21 +1014,12 @@ open class FileEditorManagerImpl(
       builders = null
     }
 
+    val effectiveOptions = getEffectiveOptions(options, entry)
+
     fun open(): FileEditorComposite {
       return runBulkTabChange(window.owner) {
-        var effectiveOptions = options
         (TransactionGuard.getInstance() as TransactionGuardImpl).assertWriteActionAllowed()
         LOG.assertTrue(file.isValid, "Invalid file: $file")
-        if (effectiveOptions.requestFocus) {
-          val activeProject = ProjectUtil.getActiveProject()
-          if (activeProject != null && activeProject != project) {
-            // allow focus switching only within a project
-            effectiveOptions = effectiveOptions.copy(requestFocus = false)
-          }
-        }
-        if (entry != null && entry.isPreview) {
-          effectiveOptions = effectiveOptions.copy(usePreviewTab = false)
-        }
         val (result, opened) = doOpenInEdtImpl(window = window,
                                                file = file,
                                                entry = entry,
@@ -1045,6 +1042,94 @@ open class FileEditorManagerImpl(
           open()
         }
       }
+    }
+  }
+
+  @Suppress("DuplicatedCode")
+  private suspend fun openFileAsync(window: EditorWindow,
+                                    @Suppress("LocalVariableName") _file: VirtualFile,
+                                    entry: HistoryEntry?,
+                                    options: FileEditorOpenOptions): FileEditorComposite {
+    if (!ClientId.isCurrentlyUnderLocalId) {
+      return openFileUsingClient(file = _file, options = options)
+    }
+
+    val file = getOriginalFile(_file)
+    val existingComposite = withContext(Dispatchers.EDT) { window.getComposite(file) }
+
+    val newProviders: List<FileEditorProvider>?
+    val builders: Array<AsyncFileEditorProvider.Builder?>?
+    if (existingComposite == null) {
+      if (!canOpenFile(file)) {
+        return EMPTY
+      }
+
+      // A file is not opened yet. In this case, we have to create editors and select the created EditorComposite.
+      newProviders = FileEditorProviderManager.getInstance().getProviderList(project, file)
+      builders = arrayOfNulls(newProviders.size)
+      for (i in newProviders.indices) {
+        LOG.runAndLogException {
+          val provider = newProviders[i]
+          builders[i] = readAction {
+            if (project.isDisposed || !file.isValid) {
+              return@readAction null
+            }
+            LOG.assertTrue(provider.accept(project, file), "Provider $provider doesn't accept file $file")
+            if (provider is AsyncFileEditorProvider) provider.createEditorAsync(project, file) else null
+          }
+        }
+      }
+    }
+    else {
+      newProviders = null
+      builders = null
+    }
+
+    val effectiveOptions = getEffectiveOptions(options, entry)
+    val (result, opened) = withContext(Dispatchers.EDT) {
+      doOpenInEdtImpl(window = window,
+                      file = file,
+                      entry = entry,
+                      options = effectiveOptions,
+                      newProviders = newProviders,
+                      builders = builders?.asList() ?: emptyList())
+    }
+    if (opened != null) {
+      withContext(Dispatchers.EDT) {
+        opened()
+      }
+    }
+    return result
+  }
+
+  private fun getEffectiveOptions(options: FileEditorOpenOptions, entry: HistoryEntry?): FileEditorOpenOptions {
+    var effectiveOptions = options
+    if (effectiveOptions.requestFocus) {
+      val activeProject = ProjectUtil.getActiveProject()
+      if (activeProject != null && activeProject != project) {
+        // allow focus switching only within a project
+        effectiveOptions = effectiveOptions.copy(requestFocus = false)
+      }
+    }
+    if (entry != null && entry.isPreview) {
+      effectiveOptions = effectiveOptions.copy(usePreviewTab = false)
+    }
+    return effectiveOptions
+  }
+
+  private fun openFileUsingClient(file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite {
+    val clientManager = clientFileEditorManager ?: return EMPTY
+    val result = clientManager.openFile(file = file, forceCreate = false)
+    val allEditors = result.map { it.fileEditor }
+    val allProviders = result.map { it.provider }
+    return object : FileEditorComposite {
+      override val isPreview: Boolean
+        get() = options.usePreviewTab
+
+      override val allEditors: List<FileEditor>
+        get() = allEditors
+      override val allProviders: List<FileEditorProvider>
+        get() = allProviders
     }
   }
 
@@ -1092,6 +1177,23 @@ open class FileEditorManagerImpl(
     val selectedEditor = composite.selectedEditor
     selectedEditor?.selectNotify()
 
+    if (newEditor) {
+      openFileSetModificationCount.increment()
+    }
+
+    if (!isReopeningOnStartup) {
+      //[jeka] this is a hack to support back-forward navigation
+      // previously there was an incorrect call to fireSelectionChanged() with a side-effect
+      IdeDocumentHistory.getInstance(project).onSelectionChanged()
+    }
+
+    // update frame and tab title
+    updateFileName(file)
+
+    if (options.pin) {
+      window.setFilePinned(composite, pinned = true)
+    }
+
     // transfer focus into editor
     if (options.requestFocus && !ApplicationManager.getApplication().isUnitTestMode) {
       val focusRunnable = Runnable {
@@ -1112,22 +1214,6 @@ open class FileEditorManagerImpl(
         focusRunnable.run()
       }
       IdeFocusManager.getInstance(project).toFront(splitters)
-    }
-    if (newEditor) {
-      openFileSetModificationCount.increment()
-    }
-
-    if (!isReopeningOnStartup) {
-      //[jeka] this is a hack to support back-forward navigation
-      // previously there was an incorrect call to fireSelectionChanged() with a side-effect
-      IdeDocumentHistory.getInstance(project).onSelectionChanged()
-    }
-
-    // update frame and tab title
-    updateFileName(file)
-
-    if (options.pin) {
-      window.setFilePinned(composite, pinned = true)
     }
 
     if (newEditor) {
