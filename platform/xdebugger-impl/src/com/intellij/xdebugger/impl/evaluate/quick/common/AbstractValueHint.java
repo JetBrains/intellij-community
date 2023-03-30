@@ -5,6 +5,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.navigation.NavigationUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.TooltipEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -28,6 +29,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValue;
@@ -270,8 +272,8 @@ public abstract class AbstractValueHint {
                                                      @Nullable XFullValueEvaluator evaluator) {
     SimpleColoredComponent component = HintUtil.createInformationComponent();
     component.setIcon(icon != null
-                      ? IconManager.getInstance().createRowIcon(IconUtil.getAddIcon(), icon)
-                      : IconUtil.getAddIcon());
+                      ? IconManager.getInstance().createRowIcon(UIUtil.getTreeCollapsedIcon(), icon)
+                      : UIUtil.getTreeCollapsedIcon());
     component.setCursor(hintCursor());
     text.appendToComponent(component);
     appendEvaluatorLink(evaluator, component);
