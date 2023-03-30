@@ -278,12 +278,14 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
       synchronized (context) {
         for (File artifactFile : artifactFiles) {
           ArtifactContext artifactContext = myArtifactContextProducer.getArtifactContext(context, artifactFile);
-          if (artifactContext == null) return null;
-          myIndexer.addArtifactToIndex(artifactContext, context);
-          //invalidateSearchersAndReadersCache
-
-          ArtifactInfo a = artifactContext.getArtifactInfo();
-          results.add(new AddArtifactResponse(artifactFile, new IndexedMavenId(a.getGroupId(), a.getArtifactId(), a.getVersion(), a.getPackaging(), a.getDescription())));
+          IndexedMavenId id = null;
+          if (artifactContext != null) {
+            myIndexer.addArtifactToIndex(artifactContext, context);
+            //invalidateSearchersAndReadersCache
+            ArtifactInfo a = artifactContext.getArtifactInfo();
+            id = new IndexedMavenId(a.getGroupId(), a.getArtifactId(), a.getVersion(), a.getPackaging(), a.getDescription());
+          }
+          results.add(new AddArtifactResponse(artifactFile, id));
         }
       }
       return results;

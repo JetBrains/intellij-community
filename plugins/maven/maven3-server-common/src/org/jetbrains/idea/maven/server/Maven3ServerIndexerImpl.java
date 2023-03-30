@@ -251,12 +251,13 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
       synchronized (index) {
         for (File artifactFile : artifactFiles) {
           ArtifactContext artifactContext = myArtifactContextProducer.getArtifactContext(index, artifactFile);
-          if (artifactContext == null) return null;
-
-          addArtifact(myIndexer, index, artifactContext);
-
-          ArtifactInfo a = artifactContext.getArtifactInfo();
-          results.add(new AddArtifactResponse(artifactFile, new IndexedMavenId(a.groupId, a.artifactId, a.version, a.packaging, a.description)));
+          IndexedMavenId id = null;
+          if (artifactContext != null) {
+            addArtifact(myIndexer, index, artifactContext);
+            ArtifactInfo a = artifactContext.getArtifactInfo();
+            id = new IndexedMavenId(a.groupId, a.artifactId, a.version, a.packaging, a.description);
+          }
+          results.add(new AddArtifactResponse(artifactFile, id));
         }
       }
       return results;
