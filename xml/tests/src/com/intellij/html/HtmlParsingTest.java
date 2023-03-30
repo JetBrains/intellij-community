@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.html;
 
 import com.intellij.lang.ParserDefinition;
@@ -6,6 +6,7 @@ import com.intellij.lang.html.HTMLParserDefinition;
 import com.intellij.lexer.EmbeddedTokenTypesProvider;
 import com.intellij.xml.XmlParsingTest;
 import org.jetbrains.annotations.NotNull;
+import org.junit.AssumptionViolatedException;
 
 public class HtmlParsingTest extends XmlParsingTest {
 
@@ -36,12 +37,12 @@ public class HtmlParsingTest extends XmlParsingTest {
 
   @Override
   public void testDtdUrl1() {
-    //disable test
+    throw new AssumptionViolatedException("disable");
   }
 
   @Override
   public void testCustomMimeType() {
-    //disable test
+    throw new AssumptionViolatedException("disable");
   }
 
   public void testHtmlDoctype1() throws Exception {

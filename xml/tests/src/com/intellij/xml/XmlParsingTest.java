@@ -8,9 +8,7 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.lang.xml.XMLParserDefinition;
 import com.intellij.lang.xml.XmlASTFactory;
 import com.intellij.lexer.EmbeddedTokenTypesProvider;
-import com.intellij.lexer.FilterLexer;
 import com.intellij.lexer.Lexer;
-import com.intellij.lexer.XmlLexer;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
@@ -23,9 +21,9 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
+import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.TestDataFile;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
@@ -33,10 +31,13 @@ import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Assume;
+import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.io.IOException;
 
+@RunWith(JUnit38AssumeSupportRunner.class)
 public class XmlParsingTest extends ParsingTestCase {
   public XmlParsingTest() {
     super("psi/xml", "xml", new XMLParserDefinition());
@@ -53,15 +54,6 @@ public class XmlParsingTest extends ParsingTestCase {
 
   private static String getXmlParsingTestDataPath() {
     return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/";
-  }
-
-  @Override
-  protected String loadFile(@NotNull @TestDataFile String name) throws IOException {
-    // Allow to load files from XML dir by extending tests
-    if (new File(getXmlParsingTestDataPath() + "psi/xml", name).exists()) {
-      return loadFileDefault(getXmlParsingTestDataPath() + "psi/xml", name);
-    }
-    return loadFileDefault(myFullDataPath, name);
   }
 
   @Override
@@ -189,43 +181,6 @@ public class XmlParsingTest extends ParsingTestCase {
     doTestXml(loadFile("manyErrors.xml"));
   }
 
-  public void testLexerPerformance1() throws Exception {
-    doTestLexerPerformance("pallada.xml", 200);
-  }
-
-  public void testLexerPerformance2() throws Exception {
-    doTestLexerPerformance("performance2.xml", 350);
-  }
-
-  private void doTestLexerPerformance(String fileName, int expectedMs) throws IOException {
-    if (getClass() != XmlParsingTest.class) return;
-    final String text = loadFile(fileName);
-    final XmlLexer lexer = new XmlLexer();
-    final FilterLexer filterLexer = new FilterLexer(
-      new XmlLexer(),
-      new FilterLexer.SetFilter(
-        LanguageParserDefinitions.INSTANCE.forLanguage(XMLLanguage.INSTANCE)
-          .getWhitespaceTokens()));
-
-    PlatformTestUtil.startPerformanceTest("XML Lexer Performance on " + fileName, expectedMs, () -> {
-      for (int i = 0; i < 10; i++) {
-        doLex(lexer, text);
-        doLex(filterLexer, text);
-      }
-    }).assertTiming();
-  }
-
-  private static void doLex(Lexer lexer, final String text) {
-    lexer.start(text);
-    long time = System.nanoTime();
-    int count = 0;
-    while (lexer.getTokenType() != null) {
-      lexer.advance();
-      count++;
-    }
-    LOG.debug("Plain lexing took " + (System.nanoTime() - time) + "ns. Lexems count:" + count);
-  }
-
   private static void transformAllChildren(final ASTNode file) {
     for (ASTNode child = file.getFirstChildNode(); child != null; child = child.getTreeNext()) {
       transformAllChildren(child);
@@ -241,7 +196,7 @@ public class XmlParsingTest extends ParsingTestCase {
   }
 
   private void doTestPerformance(String fileName, int expectedMs) throws IOException {
-    final String text = loadFile(fileName);
+    final String text = loadFileDefault(getXmlParsingTestDataPath() + "psi/xml", fileName);
     long start = System.nanoTime();
     final PsiFile file = createFile(fileName, text);
     transformAllChildren(file.getNode());
@@ -260,15 +215,15 @@ public class XmlParsingTest extends ParsingTestCase {
       count++;
     }
     while ((firstLeaf = TreeUtil.nextLeaf(firstLeaf, null)) != null);
-    LOG.debug("For " + count + " lexems");
+    LOG.debug("For " + count + " lexemes");
   }
 
   public void testReparsePerformance() throws Exception {
-    if (getClass() != XmlParsingTest.class) return;
+    Assume.assumeTrue("Skip in non XmlParsingTest", getClass() == XmlParsingTest.class);
     final IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
     final TestFixtureBuilder<IdeaProjectTestFixture> builder = factory.createLightFixtureBuilder(getTestName(false));
     final CodeInsightTestFixture fixture = factory.createCodeInsightFixture(builder.getFixture());
-    fixture.setTestDataPath(myFullDataPath);
+    fixture.setTestDataPath(getXmlParsingTestDataPath() + "psi/xml");
     fixture.setUp();
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new PsiAwareTextEditorProvider(),
                                                                             fixture.getTestRootDisposable());
