@@ -1,7 +1,6 @@
 package com.intellij.mermaid.lang.psi.symbol.identifier
 
 import com.intellij.model.Pointer
-import com.intellij.navigation.TargetPresentation
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.rename.api.RenameTarget
 
@@ -20,7 +19,5 @@ internal class IdentifierRenameTarget(val symbol: MermaidIdentifierSymbol): Rena
   override val maximalSearchScope: SearchScope?
     get() = symbol.maximalSearchScope
 
-  override fun presentation(): TargetPresentation {
-    return symbol.presentation()
-  }
+  override fun presentation() = symbol.presentation()
 }

@@ -5,7 +5,6 @@ import com.intellij.model.Pointer
 import com.intellij.navigation.NavigationRequest
 import com.intellij.navigation.NavigationService
 import com.intellij.navigation.NavigationTarget
-import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile

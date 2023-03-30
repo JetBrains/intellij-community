@@ -3,7 +3,7 @@ package com.intellij.mermaid.lang.psi.symbol.identifier
 import com.intellij.find.usages.api.UsageHandler
 import com.intellij.mermaid.lang.psi.*
 import com.intellij.model.Pointer
-import com.intellij.navigation.*
+import com.intellij.navigation.SymbolNavigationService
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
@@ -27,9 +27,7 @@ open class UnresolvedIdentifierSymbol(
   override val targetName: String
     get() = text
 
-  override fun presentation(): TargetPresentation {
-    return TargetPresentation.builder(text).presentation()
-  }
+  override fun presentation() = SymbolNavigationService.getInstance().presentationBuilder(text).presentation()
 
   override fun createPointer(): Pointer<out UnresolvedIdentifierSymbol> {
     val project = file.project
