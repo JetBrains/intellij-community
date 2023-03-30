@@ -179,7 +179,12 @@ private suspend fun callProjectConfigurators(
     for (configuration in activeConfigurators) {
       durationStep(fraction, "Configurator ${configuration.configuratorPresentableName} is in action..." /* NON-NLS */) {
         runTaskAndLogTime("Configure " + configuration.configuratorPresentableName) {
-          action(configuration)
+          try {
+            action(configuration)
+          } catch (e : CancellationException) {
+            val message = (e.message ?: e.stackTraceToString()).lines().joinToString("\n") { "[${configuration.configuratorPresentableName}]: $it" }
+            WarmupLogger.logInfo("Configurator '${configuration.configuratorPresentableName}' was cancelled with the following outcome:\n$message")
+          }
         }
       }
     }
