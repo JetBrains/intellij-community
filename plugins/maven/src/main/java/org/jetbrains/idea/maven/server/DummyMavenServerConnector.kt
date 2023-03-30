@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle
 import org.jetbrains.idea.maven.server.MavenServerConnector.State
-import org.jetbrains.idea.maven.server.RemoteObjectWrapper.Retriable
 import org.jetbrains.idea.maven.server.security.MavenToken
 import java.io.File
 import java.rmi.RemoteException
@@ -119,8 +118,12 @@ class DummyIndexer : MavenServerIndexer {
 
   override fun processArtifacts(indexId: MavenIndexId, startFrom: Int, token: MavenToken?): List<IndexedMavenId>? = null
 
-  override fun addArtifact(indexId: MavenIndexId, artifactFile: File?, token: MavenToken?): IndexedMavenId {
-    return IndexedMavenId(null, null, null, null, null)
+  override fun addArtifacts(indexId: MavenIndexId, artifactFiles: MutableCollection<File>, token: MavenToken): MutableList<AddArtifactResponse> {
+    val responses = mutableListOf<AddArtifactResponse>();
+    for (artifactFile in artifactFiles) {
+      responses.add(AddArtifactResponse(artifactFile, IndexedMavenId(null, null, null, null, null)))
+    }
+    return responses
   }
 
   override fun search(indexId: MavenIndexId, query: String, maxResult: Int, token: MavenToken?): Set<MavenArtifactInfo> {

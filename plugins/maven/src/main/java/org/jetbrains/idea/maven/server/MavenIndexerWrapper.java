@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -112,14 +113,14 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
     });
   }
 
-  @Nullable
-  public IndexedMavenId addArtifact(final MavenIndexId mavenIndexId, final File artifactFile) throws MavenServerIndexerException {
+  @NotNull
+  public List<AddArtifactResponse> addArtifacts(MavenIndexId mavenIndexId, Collection<File> artifactFiles) {
     return perform(() -> {
       try {
-        return getOrCreateWrappee().addArtifact(mavenIndexId, artifactFile, ourToken);
+        return getOrCreateWrappee().addArtifacts(mavenIndexId, artifactFiles, ourToken);
       }
       catch (Throwable ignore) {
-        return null;
+        return ContainerUtil.map(artifactFiles, file -> new AddArtifactResponse(file, null));
       }
     });
   }

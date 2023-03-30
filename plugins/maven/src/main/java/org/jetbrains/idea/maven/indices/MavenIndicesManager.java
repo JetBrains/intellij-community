@@ -23,6 +23,7 @@ import org.jetbrains.idea.maven.project.MavenProjectChanges;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.server.*;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.reposearch.DependencySearchService;
 
@@ -178,7 +179,7 @@ public final class MavenIndicesManager implements Disposable {
     }
 
     AppExecutorUtil.getAppExecutorService().execute(() -> {
-      myIndexFixer.fixIndex(mavenId, artifactFile, localIndex);
+      myIndexFixer.fixIndex(artifactFile);
     });
     return true;
   }
@@ -227,12 +228,12 @@ public final class MavenIndicesManager implements Disposable {
       ).usePassThroughInUnitTestMode();
     }
 
-    public void fixIndex(@Nullable MavenId mavenId, @NotNull File file, @NotNull MavenIndex localIndex) {
+    public void fixIndex(@NotNull File file) {
       queueToAdd.add(file);
-      myMergingUpdateQueue.queue(new Update(IndexFixer.this) {
+      myMergingUpdateQueue.queue(new Update(this) {
         @Override
         public void run() {
-          ((Runnable)taskConsumer).run();
+          taskConsumer.run();
         }
 
         @Override
@@ -248,29 +249,41 @@ public final class MavenIndicesManager implements Disposable {
       public void run() {
         MavenIndex localIndex = myMavenIndices.getIndexHolder().getLocalIndex();
         if (localIndex == null) return;
-        File elementToAdd;
-        Set<File> retryElements = new TreeSet<>();
-        Set<File> failedToAddFiles = new TreeSet<>();
-        Set<File> addedFiles = new TreeSet<>();
-        while ((elementToAdd = queueToAdd.poll()) != null) {
-          if (addedFiles.contains(elementToAdd)) {
-            continue;
-          }
-          boolean added = localIndex.tryAddArtifact(elementToAdd);
-          if (added) {
-            addedFiles.add(elementToAdd);
-          }
-          else {
-            retryElements.add(elementToAdd);
-          }
-        }
 
-        if (!retryElements.isEmpty()) {
-          if (retryElements.size() < 10_000) {
-            queueToAdd.addAll(retryElements);
+        Set<File> addedFiles = new TreeSet<>();
+        Set<File> failedToAddFiles = new TreeSet<>();
+
+        synchronized (queueToAdd) {
+          if (queueToAdd.isEmpty()) return;
+
+          Set<File> filesToAddNow = new TreeSet<>();
+          File elementToAdd;
+          while ((elementToAdd = queueToAdd.poll()) != null) {
+            filesToAddNow.add(elementToAdd);
           }
-          else {
-            failedToAddFiles = retryElements;
+          if (filesToAddNow.isEmpty()) return;
+
+          Set<File> retryElements = new TreeSet<>();
+          var addArtifactResponses = localIndex.tryAddArtifacts(filesToAddNow);
+          for (var addArtifactResponse : addArtifactResponses) {
+            var file = addArtifactResponse.artifactFile();
+            var added = addArtifactResponse.indexedMavenId() != null;
+            if (added) {
+              addedFiles.add(file);
+            }
+            else {
+              retryElements.add(file);
+            }
+          }
+
+          if (!retryElements.isEmpty()) {
+            if (retryElements.size() < 10_000) {
+              queueToAdd.addAll(retryElements);
+            }
+            else {
+              MavenLog.LOG.error("Failed to index artifacts: " + retryElements.size());
+              failedToAddFiles.addAll(retryElements);
+            }
           }
         }
 

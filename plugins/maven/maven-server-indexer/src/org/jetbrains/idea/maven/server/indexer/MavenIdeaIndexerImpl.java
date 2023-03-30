@@ -270,19 +270,23 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
   }
 
   @Override
-  public IndexedMavenId addArtifact(MavenIndexId indexId, File artifactFile, MavenToken token) throws MavenServerIndexerException {
+  public @NotNull List<AddArtifactResponse> addArtifacts(@NotNull MavenIndexId indexId, @NotNull Collection<File> artifactFiles, MavenToken token) throws MavenServerIndexerException {
     MavenServerUtil.checkToken(token);
     try {
       IndexingContext context = getIndex(indexId);
+      List<AddArtifactResponse> results = new ArrayList<>();
       synchronized (context) {
-        ArtifactContext artifactContext = myArtifactContextProducer.getArtifactContext(context, artifactFile);
-        if (artifactContext == null) return null;
-        myIndexer.addArtifactToIndex(artifactContext, context);
-        //invalidateSearchersAndReadersCache
+        for (File artifactFile : artifactFiles) {
+          ArtifactContext artifactContext = myArtifactContextProducer.getArtifactContext(context, artifactFile);
+          if (artifactContext == null) return null;
+          myIndexer.addArtifactToIndex(artifactContext, context);
+          //invalidateSearchersAndReadersCache
 
-        ArtifactInfo a = artifactContext.getArtifactInfo();
-        return new IndexedMavenId(a.getGroupId(), a.getArtifactId(), a.getVersion(), a.getPackaging(), a.getDescription());
+          ArtifactInfo a = artifactContext.getArtifactInfo();
+          results.add(new AddArtifactResponse(artifactFile, new IndexedMavenId(a.getGroupId(), a.getArtifactId(), a.getVersion(), a.getPackaging(), a.getDescription())));
+        }
       }
+      return results;
     }
     catch (Exception e) {
       throw new MavenServerIndexerException(wrapException(e));
