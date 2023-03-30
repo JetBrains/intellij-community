@@ -28,7 +28,10 @@ abstract class ClientSessionImpl(
   final override val clientId: ClientId,
   final override val type: ClientType,
   private val sharedComponentManager: ClientAwareComponentManager
-) : ComponentManagerImpl(null, false), ClientSession {
+) : ComponentManagerImpl(
+  parent = null,
+  setExtensionsRootArea = false,
+), ClientSession {
 
   override val isLightServiceSupported = false
   override val isMessageBusSupported = false
