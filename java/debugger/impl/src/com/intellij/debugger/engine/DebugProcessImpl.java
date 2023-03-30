@@ -1875,8 +1875,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     public ResumeCommand(SuspendContextImpl suspendContext) {
       super(suspendContext);
-      final ThreadReferenceProxyImpl contextThread = getDebuggerContext().getThreadProxy();
-      myContextThread = contextThread != null ? contextThread : (suspendContext != null ? suspendContext.getThread() : null);
+      final ThreadReferenceProxyImpl thread = suspendContext != null ? suspendContext.getThread() : null;
+      myContextThread = thread != null ? thread : getDebuggerContext().getThreadProxy();
     }
 
     @Override
