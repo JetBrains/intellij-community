@@ -2536,15 +2536,7 @@ public class StringUtil extends StringUtilRt {
 
   @Contract("null -> false")
   public static boolean isNotNegativeNumber(@Nullable CharSequence s) {
-    if (s == null) {
-      return false;
-    }
-    for (int i = 0; i < s.length(); i++) {
-      if (!isDecimalDigit(s.charAt(i))) {
-        return false;
-      }
-    }
-    return true;
+    return Strings.isNotNegativeNumber(s);
   }
 
   @Contract(pure = true)
@@ -2558,20 +2550,7 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int compare(@Nullable CharSequence s1, @Nullable CharSequence s2, boolean ignoreCase) {
-    if (s1 == s2) return 0;
-    if (s1 == null) return -1;
-    if (s2 == null) return 1;
-
-    int length1 = s1.length();
-    int length2 = s2.length();
-    int i = 0;
-    for (; i < length1 && i < length2; i++) {
-      int diff = Strings.compare(s1.charAt(i), s2.charAt(i), ignoreCase);
-      if (diff != 0) {
-        return diff;
-      }
-    }
-    return length1 - length2;
+    return Strings.compare(s1, s2, ignoreCase);
   }
 
   @Contract(pure = true)

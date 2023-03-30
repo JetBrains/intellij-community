@@ -1,28 +1,13 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
-
-import static com.intellij.openapi.util.text.StringUtil.isNotNegativeNumber;
 
 /**
  * Holds <a href="http://semver.org">Semantic Version</a>.
@@ -151,19 +136,19 @@ public final class SemVer implements Comparable<SemVer> {
 
       CharSequence segment1 = new CharSequenceSubSequence(pre1, start1, end1);
       CharSequence segment2 = new CharSequenceSubSequence(pre2, start2, end2);
-      if (isNotNegativeNumber(segment1)) {
-        if (!isNotNegativeNumber(segment2)) {
+      if (Strings.isNotNegativeNumber(segment1)) {
+        if (!Strings.isNotNegativeNumber(segment2)) {
           // According to SemVer specification numeric segments has lower precedence
           // than non-numeric segments
           return -1;
         }
         diff = compareNumeric(segment1, segment2);
       }
-      else if (isNotNegativeNumber(segment2)) {
+      else if (Strings.isNotNegativeNumber(segment2)) {
         return 1;
       }
       else {
-        diff = StringUtil.compare(segment1, segment2, false);
+        diff = Strings.compare(segment1, segment2, false);
       }
       start1 = end1 + 1;
       start2 = end2 + 1;
@@ -195,9 +180,9 @@ public final class SemVer implements Comparable<SemVer> {
           int preReleaseIdx = text.indexOf('-', minorEndIdx + 1);
           int patchEndIdx = preReleaseIdx >= 0 ? preReleaseIdx : text.length();
 
-          int major = StringUtil.parseInt(text.substring(0, majorEndIdx), -1);
-          int minor = StringUtil.parseInt(text.substring(majorEndIdx + 1, minorEndIdx), -1);
-          int patch = StringUtil.parseInt(text.substring(minorEndIdx + 1, patchEndIdx), -1);
+          int major = StringUtilRt.parseInt(text.substring(0, majorEndIdx), -1);
+          int minor = StringUtilRt.parseInt(text.substring(majorEndIdx + 1, minorEndIdx), -1);
+          int patch = StringUtilRt.parseInt(text.substring(minorEndIdx + 1, patchEndIdx), -1);
           String preRelease = preReleaseIdx >= 0 ? text.substring(preReleaseIdx + 1) : null;
 
           if (major >= 0 && minor >= 0 && patch >= 0) {
