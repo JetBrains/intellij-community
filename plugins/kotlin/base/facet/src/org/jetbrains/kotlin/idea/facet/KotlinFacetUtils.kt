@@ -1,5 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("KotlinFacetUtils")
+
 package org.jetbrains.kotlin.idea.facet
 
 import com.intellij.openapi.application.runReadAction
@@ -16,7 +17,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.idea.base.util.isAndroidModule
 import org.jetbrains.kotlin.cli.common.arguments.*
-import org.jetbrains.kotlin.compilerRunner.ArgumentUtils
+import org.jetbrains.kotlin.compilerRunner.toArgumentStrings
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.platforms.IdePlatformKindProjectStructure
 import org.jetbrains.kotlin.idea.compiler.configuration.*
@@ -164,24 +165,47 @@ fun applyCompilerArgumentsToFacet(
         if (modelsProvider != null)
             kotlinFacet.module.configureSdkIfPossible(compilerArguments, modelsProvider)
 
-        val primaryFields = compilerArguments.primaryFields
-        val ignoredFields = compilerArguments.ignoredFields
+        val allFacetFields = compilerArguments.kotlinFacetFields.allFields
+
+        val ignoredFields = hashSetOf(
+            K2JVMCompilerArguments::noJdk.name,
+            K2JVMCompilerArguments::jdkHome.name,
+        )
+
+        val ignoredAsAdditionalArguments = ignoredFields + hashSetOf(
+            K2JVMCompilerArguments::moduleName.name,
+            K2JVMCompilerArguments::noReflect.name,
+            K2JVMCompilerArguments::noStdlib.name,
+            K2JVMCompilerArguments::allowNoSourceFiles.name,
+            K2JVMCompilerArguments::jvmDefault.name,
+            K2JVMCompilerArguments::useIR.name,
+            K2JVMCompilerArguments::reportPerf.name,
+            K2JVMCompilerArguments::noKotlinNothingValueException.name,
+            K2JVMCompilerArguments::noOptimizedCallableReferences
+        )
 
         fun exposeAsAdditionalArgument(property: KProperty1<CommonCompilerArguments, Any?>) =
-            property.name !in primaryFields && property.get(compilerArguments) != property.get(emptyArgs)
+            /* Handled by facet directly */
+            property.name !in allFacetFields &&
+                    /* Explicitly  not shown to users as 'additional arguments' */
+                    property.name !in ignoredAsAdditionalArguments &&
+                    /* Default value from compiler arguments is used */
+                    property.get(compilerArguments) != property.get(emptyArgs)
 
-        val additionalArgumentsString = with(compilerArguments::class.java.newInstance()) {
-            copyFieldsSatisfying(compilerArguments, this) { exposeAsAdditionalArgument(it) && it.name !in ignoredFields }
-            ArgumentUtils.convertArgumentsToStringListNoDefaults(this).joinToString(separator = " ") {
+
+        val additionalArgumentsString = with(compilerArguments::class.java.getDeclaredConstructor().newInstance()) {
+            copyFieldsSatisfying(compilerArguments, this) { exposeAsAdditionalArgument(it) }
+            toArgumentStrings().joinToString(separator = " ") {
                 if (StringUtil.containsWhitespaces(it) || it.startsWith('"')) {
                     StringUtil.wrapWithDoubleQuote(StringUtil.escapeQuotes(it))
                 } else it
             }
         }
-        compilerSettings?.additionalArguments =
-            if (additionalArgumentsString.isNotEmpty()) additionalArgumentsString else CompilerSettings.DEFAULT_ADDITIONAL_ARGUMENTS
 
-        with(compilerArguments::class.java.newInstance()) {
+        compilerSettings?.additionalArguments = additionalArgumentsString.ifEmpty { CompilerSettings.DEFAULT_ADDITIONAL_ARGUMENTS }
+
+        /* 'Reset' ignored fields and arguments that will be exposed as 'additional arguments' to the user */
+        with(compilerArguments::class.java.getDeclaredConstructor().newInstance()) {
             copyFieldsSatisfying(this, compilerArguments) { exposeAsAdditionalArgument(it) || it.name in ignoredFields }
         }
 
