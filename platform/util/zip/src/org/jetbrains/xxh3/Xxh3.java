@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.xxh3;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -18,15 +18,15 @@ import java.nio.charset.StandardCharsets;
 @ApiStatus.Internal
 @ApiStatus.Experimental
 public final class Xxh3 {
-  public static long hash(byte[] input) {
+  public static long hash(byte @NotNull [] input) {
     return Xxh3Impl.hash(input, ByteArrayAccess.INSTANCE, 0, input.length, 0);
   }
 
-  public static long hash(InputStream inputStream, int length) {
+  public static long hash(@NotNull InputStream inputStream, int length) {
     return Xxh3Impl.hash(inputStream, new InputStreamAccess(length), 0, length, 0);
   }
 
-  public static long hash(byte[] input, int offset, int length) {
+  public static long hash(byte @NotNull [] input, int offset, int length) {
     return Xxh3Impl.hash(input, ByteArrayAccess.INSTANCE, offset, length, 0);
   }
 
@@ -46,20 +46,20 @@ public final class Xxh3 {
   /**
    * Characters are encoded using UTF-8.
    */
-  public static long hash(String input) {
+  public static long hash(@NotNull String input) {
     byte[] data = input.getBytes(StandardCharsets.UTF_8);
     return Xxh3Impl.hash(data, ByteArrayAccess.INSTANCE, 0, data.length, 0);
   }
 
-  public static long hashUnencodedChars(CharSequence input) {
+  public static long hashUnencodedChars(@NotNull CharSequence input) {
     return Xxh3Impl.hash(input, CharSequenceAccess.INSTANCE, 0, input.length() * 2, 0);
   }
 
-  public static long hashLongs(long[] input) {
+  public static long hashLongs(long @NotNull [] input) {
     return hashLongs(input, 0);
   }
 
-  public static long hashLongs(long[] input, long seed) {
+  public static long hashLongs(long @NotNull [] input, long seed) {
     return Xxh3Impl.hash(input, LongArrayAccessForLongs.INSTANCE, 0, input.length * Long.BYTES, seed);
   }
 
