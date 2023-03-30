@@ -181,7 +181,17 @@ fun applyCompilerArgumentsToFacet(
             K2JVMCompilerArguments::useIR.name,
             K2JVMCompilerArguments::reportPerf.name,
             K2JVMCompilerArguments::noKotlinNothingValueException.name,
-            K2JVMCompilerArguments::noOptimizedCallableReferences
+            K2JVMCompilerArguments::noOptimizedCallableReferences,
+
+            K2NativeCompilerArguments::enableAssertions.name,
+            K2NativeCompilerArguments::debug.name,
+            K2NativeCompilerArguments::outputName.name,
+            K2NativeCompilerArguments::linkerArguments.name,
+            K2NativeCompilerArguments::singleLinkerArguments.name,
+            K2NativeCompilerArguments::produce.name,
+            K2NativeCompilerArguments::target.name,
+            K2NativeCompilerArguments::shortModuleName.name,
+            K2NativeCompilerArguments::noendorsedlibs.name
         )
 
         fun exposeAsAdditionalArgument(property: KProperty1<CommonCompilerArguments, Any?>) =
