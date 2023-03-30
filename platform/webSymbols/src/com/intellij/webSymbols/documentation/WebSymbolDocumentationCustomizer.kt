@@ -2,11 +2,12 @@
 package com.intellij.webSymbols.documentation
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.WebSymbol
 
 interface WebSymbolDocumentationCustomizer {
 
-  fun customize(symbol: WebSymbol, documentation: WebSymbolDocumentation): WebSymbolDocumentation
+  fun customize(symbol: WebSymbol, location: PsiElement?, documentation: WebSymbolDocumentation): WebSymbolDocumentation
 
   companion object {
     val EP_NAME = ExtensionPointName.create<WebSymbolDocumentationCustomizer>(

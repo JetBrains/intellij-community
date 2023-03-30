@@ -29,9 +29,9 @@ internal open class WebSymbolMatchImpl private constructor(override val matchedN
     get() = reversedSegments().flatMap { it.symbols.asSequence() }
       .mapNotNull { it.psiContext }.firstOrNull()
 
-  override val documentation: WebSymbolDocumentation?
-    get() = reversedSegments().flatMap { it.symbols.asSequence() }
-      .mapNotNull { it.documentation }.firstOrNull()
+  override fun createDocumentation(location: PsiElement?): WebSymbolDocumentation? =
+    reversedSegments().flatMap { it.symbols.asSequence() }
+      .firstNotNullOfOrNull { it.createDocumentation(location) }
 
   override val name: String
     get() = matchedName.substring(nameSegments.firstOrNull()?.start ?: 0,
@@ -117,16 +117,16 @@ internal open class WebSymbolMatchImpl private constructor(override val matchedN
         .toList()
     else emptyList()
 
-  override fun getDocumentationTarget(): DocumentationTarget =
+  override fun getDocumentationTarget(location: PsiElement?): DocumentationTarget =
     reversedSegments()
       .flatMap { it.symbols.asSequence() }
       .map {
-        if (it === this) super.getDocumentationTarget()
-        else it.documentationTarget
+        if (it === this) super.getDocumentationTarget(location)
+        else it.getDocumentationTarget(location)
       }
-      .filter { it !is WebSymbolDocumentationTarget || it.symbol.documentation?.isNotEmpty() == true }
+      .filter { it !is WebSymbolDocumentationTarget || it.symbol.createDocumentation(location)?.isNotEmpty() == true }
       .firstOrNull()
-    ?: super.getDocumentationTarget()
+    ?: super.getDocumentationTarget(location)
 
   override fun equals(other: Any?): Boolean =
     other is WebSymbolMatch
