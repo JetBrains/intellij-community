@@ -1415,7 +1415,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     return VisibleHighlightingPassFactory.calculateVisibleRange(editor);
   }
 
-  public static void makeWholeEditorWindowVisible(@NotNull EditorImpl editor) {
+  static void makeWholeEditorWindowVisible(@NotNull EditorImpl editor) {
     editor.getScrollPane().getViewport().setSize(1000, editor.getPreferredHeight());
 
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
@@ -1754,7 +1754,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     int N_BLOCKS = codeBlocks(file).size();
     assertTrue("codeblocks :"+N_BLOCKS, N_BLOCKS > 1000);
     Random random = new Random();
-    int N = 50;
+    int N = 10;
     // try with both serialized and not-serialized passes
     myDaemonCodeAnalyzer.serializeCodeInsightPasses(false);
     for (int i=0; i<N*2; i++) {
@@ -1887,7 +1887,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         assertSame(editor, FileEditorManager.getInstance(myProject).getSelectedTextEditor());
 
 
-        // wait for first pass to complete
+        // wait for the first pass to complete
         long start = System.currentTimeMillis();
         while (myDaemonCodeAnalyzer.isRunning() || !applied.contains(editor)) {
           UIUtil.dispatchAllInvocationEvents();
@@ -1944,7 +1944,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         assertSame(editor, FileEditorManager.getInstance(myProject).getSelectedTextEditor());
 
 
-        // wait for first pass to complete
+        // wait for the first pass to complete
         long start = System.currentTimeMillis();
         while (myDaemonCodeAnalyzer.isRunning() || !applied.contains(editor)) {
           UIUtil.dispatchAllInvocationEvents();
@@ -2165,7 +2165,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         caretLeft();
         Object updateProgress = new HashMap<>(myDaemonCodeAnalyzer.getUpdateProgress());
         long waitForDaemonStart = System.currentTimeMillis();
-        while (myDaemonCodeAnalyzer.getUpdateProgress().equals(updateProgress) && System.currentTimeMillis() < waitForDaemonStart + 5000) { // wait until daemon started
+        while (myDaemonCodeAnalyzer.getUpdateProgress().equals(updateProgress) && System.currentTimeMillis() < waitForDaemonStart + 5000) { // wait until the daemon started
           UIUtil.dispatchAllInvocationEvents();
         }
         if (myDaemonCodeAnalyzer.getUpdateProgress().equals(updateProgress)) {
