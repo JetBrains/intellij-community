@@ -175,12 +175,11 @@ public class IncorrectMessageFormatInspection extends AbstractBaseJavaLocalInspe
             return null;
           }
           MessageFormatUtil.MessageFormatError error = toHighlight.get();
-          createError(expression, error.errorType(), getRelatedText(pattern, error), 0, expression.getTextLength(),
-                      InspectionGadgetsBundle.message("inspection.incorrect.message.format.pattern", pattern));
+          createError(expression, error, pattern, 0, expression.getTextLength());
         }
         else {
           for (MessageFormatUtil.MessageFormatError error : result.errors()) {
-            createError(expression, error.errorType(), getRelatedText(pattern, error), error.fromIndex(), error.toIndex(), null);
+            createError(expression, error, pattern, -1, 0);
           }
         }
 
@@ -200,26 +199,32 @@ public class IncorrectMessageFormatInspection extends AbstractBaseJavaLocalInspe
       }
 
       private void createError(@NotNull PsiExpression expression,
-                               @NotNull MessageFormatUtil.MessageFormatErrorType type,
-                               @Nullable String relatedText,
-                               int start, int from, @Nullable @Nls String message) {
+                               @NotNull MessageFormatUtil.MessageFormatError error,
+                               @NotNull String pattern,
+                               int start, int end) {
         //it's relevant mostly for IDEA files
+        MessageFormatUtil.MessageFormatErrorType type = error.errorType();
         if (type == MessageFormatUtil.MessageFormatErrorType.QUOTED_PLACEHOLDER) {
           return;
         }
+        String relatedText = getRelatedText(pattern, error);
         if (relatedText == null) {
           return;
         }
         String errorText = getMessageFormatTemplate(type, relatedText);
-        if (message != null) {
-          errorText = message + " " + errorText;
+        if (start >= 0) {
+          errorText = InspectionGadgetsBundle.message("inspection.incorrect.message.format.pattern", errorText, pattern);
+        }
+        else {
+          start = error.fromIndex();
+          end = error.toIndex();
         }
         ProblemHighlightType highlightType = getCustomHighlightType(type);
         if (highlightType == null) {
-          holder.registerProblem(expression, TextRange.create(start, from), errorText);
+          holder.registerProblem(expression, TextRange.create(start, end), errorText);
         }
         else {
-          holder.registerProblem(expression, errorText, highlightType, TextRange.create(start, from));
+          holder.registerProblem(expression, errorText, highlightType, TextRange.create(start, end));
         }
       }
 

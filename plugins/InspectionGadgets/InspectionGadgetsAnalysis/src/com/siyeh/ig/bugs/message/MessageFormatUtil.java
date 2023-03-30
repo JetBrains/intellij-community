@@ -401,16 +401,17 @@ public final class MessageFormatUtil {
     return holder;
   }
 
-  //lower cased because they also are used to compare with patterns
   enum MessageFormatType {
-    number, date, time, choice
+    NUMBER, DATE, TIME, CHOICE
   }
 
   enum MessageFormatParsedType {
     STRING, FORMAT_ELEMENT, NUMBER /*for choice format*/
   }
 
-  enum MessageFormatElementPart {ARGUMENT_INDEX, FORMAT_TYPE, FORMAT_STYLE}
+  enum MessageFormatElementPart {
+    ARGUMENT_INDEX, FORMAT_TYPE, FORMAT_STYLE
+  }
 
   public enum MessageFormatErrorType {
     QUOTED_PLACEHOLDER(ErrorSeverity.WEAK_WARNING),
@@ -445,7 +446,6 @@ public final class MessageFormatUtil {
   }
 
   public record MessageFormatPlaceholder(int index) {
-
   }
 
   static class MessageFormatPart {
@@ -541,7 +541,7 @@ public final class MessageFormatUtil {
       if (!formatTypeSegment.isEmpty()) {
         String typeSegment = formatTypeSegment.toString();
         for (MessageFormatType value : MessageFormatType.values()) {
-          if (value.name().equals(typeSegment.trim().toLowerCase(Locale.ROOT))) {
+          if (value.name().equals(typeSegment.trim().toUpperCase(Locale.ROOT))) {
             formatType = value;
           }
         }
@@ -561,11 +561,11 @@ public final class MessageFormatUtil {
     private void tryParseStyle(@NotNull MessageHolder holder) {
       if (formatType != null) {
         switch (formatType) {
-          case choice -> {
+          case CHOICE -> {
             MessageHolder choiceHolder = parseChoice(formatStyleSegment.toString());
             holder.merge(choiceHolder, formatStyleSegmentStart);
           }
-          case number, date, time -> {
+          case NUMBER, DATE, TIME -> {
             //skip, because it may depend on locals
           }
           default -> throw new IllegalArgumentException("formatType: " + formatType);
