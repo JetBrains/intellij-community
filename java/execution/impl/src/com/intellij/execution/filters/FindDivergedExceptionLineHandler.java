@@ -131,11 +131,11 @@ final public class FindDivergedExceptionLineHandler extends AnAction {
 
   private void showNotFound(@NlsContexts.HintText String message) {
     RelativePoint popupLocation = JBPopupFactory.getInstance().guessBestPopupLocation(myEditor);
-    final JComponent label = HintUtil.createErrorLabel(message.replace("<", "&lt;").replace(">", "&gt;"));
+    final JComponent label = HintUtil.createWarningLabel(message.replace("<", "&lt;").replace(">", "&gt;"));
     label.setBorder(JBUI.Borders.empty(2, 7));
     JBPopupFactory.getInstance().createBalloonBuilder(label)
       .setFadeoutTime(4000)
-      .setFillColor(HintUtil.getErrorColor())
+      .setFillColor(HintUtil.getWarningColor())
       .createBalloon()
       .show(popupLocation, Balloon.Position.above);
   }
