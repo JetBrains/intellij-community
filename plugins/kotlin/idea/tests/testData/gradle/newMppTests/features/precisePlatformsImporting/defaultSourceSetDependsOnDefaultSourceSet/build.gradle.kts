@@ -17,21 +17,21 @@ version = "1.0"
 
 kotlin {
     jvm() 
-    js(IR)
+    linuxX64("linux")
 
     sourceSets {
         val commonMain by getting {}
 
-        val intermediateBetweenJsAndCommon by creating {
+        val intermediateBetweenLinuxAndCommon by creating {
             dependsOn(commonMain)
         }
 
-        val jsMain by getting {
-            dependsOn(intermediateBetweenJsAndCommon)
+        val linuxMain by getting {
+            dependsOn(intermediateBetweenLinuxAndCommon)
         }
 
         val jvmMain by getting {
-            dependsOn(jsMain)
+            dependsOn(linuxMain)
         }
     }
 }

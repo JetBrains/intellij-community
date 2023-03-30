@@ -1,2 +1,0 @@
-Could not resolve org.jetbrains.kotlin:kotlin-dom-api-compat:1.9.0-dev-3768 for my-app:jvmMain
-Could not resolve org.jetbrains.kotlin:kotlin-dom-api-compat:1.9.0-dev-3768 for my-app:jvmTest
