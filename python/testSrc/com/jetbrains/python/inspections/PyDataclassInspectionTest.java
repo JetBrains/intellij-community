@@ -48,6 +48,11 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-57582
+  public void testFieldsOrderKwOnly() {
+    doTest();
+  }
+
   // PY-26354
   public void testAttrsFieldsOrder() {
     doTest();

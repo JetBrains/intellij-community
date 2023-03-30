@@ -32,6 +32,7 @@ object PyDataclassNames {
     const val DATACLASSES_FIELD = "dataclasses.field"
     const val DATACLASSES_REPLACE = "dataclasses.replace"
     const val DUNDER_POST_INIT = "__post_init__"
+    const val DATACLASSES_KW_ONLY_TYPE = "dataclasses.KW_ONLY"
     val DECORATOR_PARAMETERS = listOf("init", "repr", "eq", "order", "unsafe_hash", "frozen")
     val HELPER_FUNCTIONS = setOf(DATACLASSES_FIELDS, DATACLASSES_ASDICT, "dataclasses.astuple", DATACLASSES_REPLACE)
   }

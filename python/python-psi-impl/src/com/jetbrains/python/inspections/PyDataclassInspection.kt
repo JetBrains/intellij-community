@@ -102,6 +102,8 @@ class PyDataclassInspection : PyInspection() {
 
         processAnnotationsExistence(node, dataclassParameters)
 
+        var kwOnlyVisited = false
+
         PyNamedTupleInspection.inspectFieldsOrder(
           node,
           {
@@ -112,9 +114,19 @@ class PyDataclassInspection : PyInspection() {
           myTypeEvalContext,
           this::registerProblem,
           {
+            // skip all field after `_: KW_ONLY`
+            if (kwOnlyVisited){
+              return@inspectFieldsOrder false
+            }
+
             val stub = it.stub
             val fieldStub = if (stub == null) PyDataclassFieldStubImpl.create(it)
             else stub.getCustomStub(PyDataclassFieldStub::class.java)
+
+            if (isKwOnly(it)) {
+              kwOnlyVisited = true
+              return@inspectFieldsOrder false
+            }
 
             (fieldStub == null || fieldStub.initValue() && !fieldStub.kwOnly()) &&
             !(fieldStub == null && it.annotationValue == null) && // skip fields that are not annotated
@@ -686,6 +698,10 @@ class PyDataclassInspection : PyInspection() {
 
     private fun isInitVar(field: PyTargetExpression): Boolean {
       return (myTypeEvalContext.getType(field) as? PyClassType)?.classQName == Dataclasses.DATACLASSES_INITVAR
+    }
+
+    private fun isKwOnly(field: PyTargetExpression): Boolean {
+      return (myTypeEvalContext.getType(field) as? PyClassType)?.classQName == Dataclasses.DATACLASSES_KW_ONLY_TYPE
     }
 
     private fun isExpectedDataclass(type: PyType?,
