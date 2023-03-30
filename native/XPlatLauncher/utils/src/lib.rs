@@ -35,7 +35,7 @@ pub fn is_executable(path: &Path) -> Result<bool> {
 }
 
 #[cfg(any(target_os = "windows"))]
-pub fn is_executable(path: &Path) -> Result<bool>{
+pub fn is_executable(_path: &Path) -> Result<bool> {
     Ok(true)
 }
 
