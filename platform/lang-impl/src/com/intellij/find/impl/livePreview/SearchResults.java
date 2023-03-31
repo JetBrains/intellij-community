@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl.livePreview;
 
 
@@ -404,16 +404,11 @@ public class SearchResults implements DocumentListener, CaretListener {
     if (justReplaced || (toPush = !repairCursorFromStack())) {
       if (justReplaced || !tryToRepairOldCursor(oldCursorRange)) {
         if (myFindModel != null) {
-          if(oldCursorRange != null && !myFindModel.isGlobal()) {
-            myCursor = firstOccurrenceAfterOffset(oldCursorRange.getEndOffset());
+          if (justReplaced) {
+            nextOccurrence(false, next, false, true, false);
           }
           else {
-            if (justReplaced) {
-              nextOccurrence(false, next, false, true, false);
-            }
-            else {
-              myCursor = oldCursorRange == null ? firstOccurrenceAtOrAfterCaret() : firstOccurrenceAfterCaret();
-            }
+            myCursor = oldCursorRange == null ? firstOccurrenceAtOrAfterCaret() : firstOccurrenceAfterCaret();
           }
         }
         else {
@@ -659,12 +654,10 @@ public class SearchResults implements DocumentListener, CaretListener {
   }
 
   private void moveCursorTo(@NotNull FindResult next, boolean retainOldSelection, boolean adjustScrollPosition) {
-    if (!mySelectionManager.isSelected(next)) {
-      retainOldSelection &= myCursor != null && mySelectionManager.isSelected(myCursor);
-      myCursor = next;
-      updateSelection(!retainOldSelection, false, adjustScrollPosition);
-      notifyCursorMoved();
-    }
+    retainOldSelection &= myCursor != null && mySelectionManager.isSelected(myCursor);
+    myCursor = next;
+    updateSelection(!retainOldSelection, false, adjustScrollPosition);
+    notifyCursorMoved();
   }
 
   private void notifyCursorMoved() {
