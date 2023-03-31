@@ -40,7 +40,6 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
   var reusedFullScreenState = false
 
   var normalBounds: Rectangle? = null
-  var firstInitBounds: Rectangle? = null
   // when this client property is true, we have to ignore 'resizing' events and not spoil 'normal bounds' value for frame
   var togglingFullScreenInProgress: Boolean = false
 
@@ -92,13 +91,6 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
 
   @Suppress("OVERRIDE_DEPRECATION")
   override fun show() {
-    if (firstInitBounds != null && java.lang.Boolean.getBoolean("mac.check.frame.init.bounds")) {
-      val initBound = firstInitBounds!!
-      firstInitBounds = null
-      if (!bounds.equals(initBound)) {
-        bounds = initBound
-      }
-    }
     @Suppress("DEPRECATION")
     super.show()
     SwingUtilities.invokeLater { focusableWindowState = true }

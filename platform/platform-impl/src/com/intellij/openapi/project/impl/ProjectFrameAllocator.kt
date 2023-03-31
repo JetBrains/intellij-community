@@ -404,9 +404,6 @@ internal fun applyBoundsOrDefault(frame: JFrame, bounds: Rectangle?) {
     frame.setLocationRelativeTo(null)
   }
   else {
-    if (frame is IdeFrameImpl) {
-      frame.firstInitBounds = bounds
-    }
     frame.bounds = bounds
   }
 }
