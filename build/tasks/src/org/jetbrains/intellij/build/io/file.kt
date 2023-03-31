@@ -25,9 +25,9 @@ fun moveFile(source: Path, target: Path) {
   Files.move(source, target)
 }
 
-fun moveFileToDir(file: Path, targetDir: Path) {
+fun moveFileToDir(file: Path, targetDir: Path): Path {
   Files.createDirectories(targetDir)
-  Files.move(file, targetDir.resolve(file.fileName))
+  return Files.move(file, targetDir.resolve(file.fileName))
 }
 
 fun copyFile(file: Path, target: Path) {
