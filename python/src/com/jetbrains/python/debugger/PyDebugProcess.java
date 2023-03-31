@@ -231,6 +231,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
             getSession().positionReached(createSuspendContext(threadInfo));
           }
         }
+        PyFrameListener.publisher().frameChanged();
         for (PyFrameListener listener : myFrameListeners) {
           listener.frameChanged();
         }
@@ -238,9 +239,10 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
       @Override
       public void sessionStopped() {
+        PyFrameListener.publisher().sessionStopped(null);
         XDebugSessionListener.super.sessionStopped();
         for (PyFrameListener listener : myFrameListeners) {
-          listener.sessionStopped();
+          listener.sessionStopped(null);
         }
       }
     });

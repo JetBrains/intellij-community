@@ -17,6 +17,7 @@ import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.impl.frame.XStandaloneVariablesView;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.console.protocol.*;
@@ -782,20 +783,29 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   @Override
   public void notifyCommandExecuted(boolean more) {
     super.notifyCommandExecuted(more);
+    PyFrameListener.publisher().frameChanged();
     for (PyFrameListener listener : myFrameListeners) {
       listener.frameChanged();
     }
   }
 
   private void notifyVariablesLoaded(XValueChildrenList values) {
+    PyFrameListener.publisher().valuesUpdated(this, values);
     for (PyFrameListener listener : myFrameListeners) {
-      listener.updateVariables(this, values);
+      listener.valuesUpdated(this, values);
+    }
+  }
+
+  void notifyViewCreated(XStandaloneVariablesView view) {
+    PyFrameListener.publisher().viewCreated(this, view);
+    for (PyFrameListener listener : myFrameListeners) {
+      listener.viewCreated(this, view);
     }
   }
 
   private void notifySessionStopped() {
+    PyFrameListener.publisher().sessionStopped(this);
     for (PyFrameListener listener : myFrameListeners) {
-      listener.sessionStopped();
       listener.sessionStopped(this);
     }
   }
@@ -837,9 +847,6 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     myDebugCommunication = debugCommunication;
   }
 
-  public PythonDebugConsoleCommunication getDebugCommunication() {
-    return myDebugCommunication;
-  }
 
   public void setConsoleView(@Nullable PythonConsoleView consoleView) {
     myConsoleView = consoleView;

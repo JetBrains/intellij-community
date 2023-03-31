@@ -1,66 +1,54 @@
-package com.jetbrains.python.console.completion
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.codeInsight.completion
 
 import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.lang.LanguageNamesValidation
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
-import com.intellij.xdebugger.frame.XValueChildrenList
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener
+import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueGroupNodeImpl
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.PythonLanguage
-import com.jetbrains.python.debugger.PyDebugValue
+import com.jetbrains.python.debugger.PyXValueGroup
+import com.jetbrains.python.debugger.pydev.ProcessDebugger
 import com.jetbrains.python.debugger.values.DataFrameDebugValue
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl
+import java.util.concurrent.CompletableFuture
+import javax.swing.tree.TreeNode
 
 /**
- *
- * This data class collect information about possible DataFrame.
- * @param psiName - name of PsiElement, that could be DataFrame type
- * @param needValidatorCheck - boolean flag to switch on check for validating columns name
- * @param columnsBefore - list of sub-columns before the place where completion was called
+ * This data class stores information about a possible python object.
+ * @param psiName - name of PsiElement, that could be a python object
+ * @param needValidatorCheck - boolean flag to switch on check for validating completion items name
+ * @param pyQualifiedExpressionList - represents a qualified expression in the list
  * LanguageNamesValidation.INSTANCE.forLanguage(PythonLanguage.getInstance()).isIdentifier()
  *
+ * An example "a.b.c": psiName = "a", needValidatorCheck = false, pyQualifiedExpressionList = ["b","c"]
  */
-data class PandasDataFrameCandidate(val psiName: String, val needValidatorCheck: Boolean, val columnsBefore: List<String>)
+data class PyObjectCandidate(val psiName: String, val needValidatorCheck: Boolean, val pyQualifiedExpressionList: List<String>)
 
 
-// Priority value to control order in CompletionResultSet
-private const val DATAFRAME_COLUMN_PRIORITY = 100.0
+// Temporary priority value to control order in CompletionResultSet (DS-3746)
+private const val RUNTIME_COMPLETION_PRIORITY = 100.0
 
-fun selectDataFrameDebugValue(valuesEnv: XValueChildrenList): Map<String, DataFrameDebugValue>? {
-  val dataFrameObjects = mutableMapOf<String, DataFrameDebugValue>()
-  for (elem in 0 until valuesEnv.size()) {
-    val currentValue = valuesEnv.getValue(elem)
-    if (currentValue is DataFrameDebugValue) {
-      dataFrameObjects[currentValue.name] = currentValue
-    }
-  }
-  if (dataFrameObjects.isEmpty()) return null
-  return dataFrameObjects
-}
-
-fun collectParentReferences(parentDebug: PyDebugValue?, value: DataFrameDebugValue): String {
-  val referencesCollection = mutableListOf<String>()
-  var parent = parentDebug
-  referencesCollection.add(value.name)
-  while (parent != null) {
-    referencesCollection.add(parent.name)
-    parent = parent.parent
-  }
-  return referencesCollection.reversed().joinToString(".")
-}
-
-fun getCompleteAttribute(parameters: CompletionParameters): List<PandasDataFrameCandidate> {
+fun getCompleteAttribute(parameters: CompletionParameters): List<PyObjectCandidate> {
 
   val callInnerReferenceExpression = getCallInnerReferenceExpression(parameters)
   val (currentElement, needValidatorCheck) =
@@ -84,7 +72,7 @@ fun getCompleteAttribute(parameters: CompletionParameters): List<PandasDataFrame
   }
 }
 
-private fun createPandasDataFrameCandidate(psiElement: PsiElement, needValidatorCheck: Boolean): PandasDataFrameCandidate {
+private fun createPandasDataFrameCandidate(psiElement: PsiElement, needValidatorCheck: Boolean): PyObjectCandidate {
   val columns = mutableListOf<String>()
 
   val firstChild: PsiElement = PsiTreeUtil.getDeepestFirst(psiElement)
@@ -113,15 +101,15 @@ private fun createPandasDataFrameCandidate(psiElement: PsiElement, needValidator
     }
   }
 
-  return PandasDataFrameCandidate(firstChild.text, needValidatorCheck, columns)
+  return PyObjectCandidate(firstChild.text, needValidatorCheck, columns)
 }
 
 private fun getPossibleObjectsDataFrame(parameters: CompletionParameters,
-                                        callInnerReferenceExpression: PyExpression?): List<PandasDataFrameCandidate> {
+                                        callInnerReferenceExpression: PyExpression?): List<PyObjectCandidate> {
   return setOfNotNull(callInnerReferenceExpression?.text, getSliceSubscriptionReferenceExpression(parameters)?.text,
                       getAttributeReferenceExpression(parameters)?.text).map {
 
-    PandasDataFrameCandidate(it, false, emptyList())
+    PyObjectCandidate(it, false, emptyList())
   }
 }
 
@@ -135,10 +123,10 @@ private fun findCompleteAttribute(parameters: CompletionParameters): Pair<PsiEle
   }
 
   val exactElement = element.prevSibling?.prevSibling
-  when {
-    exactElement != null -> return Pair(exactElement, needCheck)
+  return when {
+    exactElement != null -> Pair(exactElement, needCheck)
 
-    else -> return null
+    else -> null
   }
 }
 
@@ -215,6 +203,16 @@ private fun collectParentOfLambdaExpression(element: PyExpression, callInnerRefe
   return null
 }
 
+fun proceedPyValueChildrenNames(childrenNodes: Set<String>, ignoreML: Boolean = false): List<LookupElement> {
+  return childrenNodes.map {
+    val lookupElement = LookupElementBuilder.create(it).withTypeText("New runtime")
+    when (ignoreML) {
+      true -> PrioritizedLookupElement.withPriority(lookupElement, RUNTIME_COMPLETION_PRIORITY).asMLIgnorable()
+      false -> PrioritizedLookupElement.withPriority(lookupElement, RUNTIME_COMPLETION_PRIORITY)
+    }
+  }
+}
+
 fun processDataFrameColumns(dfName: String,
                             columns: Set<String>,
                             needValidatorCheck: Boolean,
@@ -233,8 +231,8 @@ fun processDataFrameColumns(dfName: String,
     }?.let {
       val lookupElement = LookupElementBuilder.create(it).withTypeText(PyBundle.message("pandas.completion.type.text", dfName))
       when (ignoreML) {
-        true -> PrioritizedLookupElement.withPriority(lookupElement, DATAFRAME_COLUMN_PRIORITY).asMLIgnorable()
-        false -> PrioritizedLookupElement.withPriority(lookupElement, DATAFRAME_COLUMN_PRIORITY)
+        true -> PrioritizedLookupElement.withPriority(lookupElement, RUNTIME_COMPLETION_PRIORITY).asMLIgnorable()
+        false -> PrioritizedLookupElement.withPriority(lookupElement, RUNTIME_COMPLETION_PRIORITY)
       }
     }
   }
@@ -242,4 +240,78 @@ fun processDataFrameColumns(dfName: String,
 
 private fun LookupElement.asMLIgnorable(): LookupElement {
   return object : LookupElementDecorator<LookupElement>(this), MLRankingIgnorable {}
+}
+
+
+fun computeChildrenIfNeeded(valueNode: XValueContainerNode<*>) {
+  if (!valueNode.isLeaf && valueNode.loadedChildren.isEmpty()) {
+    val futureChildrenReady = CompletableFuture<Boolean>()
+    val listener = object : XDebuggerTreeListener {
+      override fun childrenLoaded(node: XDebuggerTreeNode, children: MutableList<out XValueContainerNode<*>>, last: Boolean) {
+        if (node == valueNode) {
+          futureChildrenReady.complete(true)
+        }
+      }
+    }
+    // Start to listen tree changes.
+    valueNode.tree.addTreeListener(listener)
+    invokeLater {
+      valueNode.startComputingChildren()
+    }
+    // Additional check (children did not empty yet) to prevent race condition.
+    if (valueNode.loadedChildren.isEmpty()) {
+      // Wait until children will be added to the tree.
+      futureChildrenReady.get()
+    }
+    // Stop to listen tree changes.
+    valueNode.tree.removeTreeListener(listener)
+  }
+}
+
+fun extractChildByName(childrenNodes: List<TreeNode>, name: String): XValueNodeImpl? {
+  return childrenNodes.firstOrNull { it is XValueNodeImpl && it.name == name } as XValueNodeImpl?
+}
+
+fun getParentNodeByName(children: List<TreeNode>, psiName: String): XValueNodeImpl? {
+  for (node in children) {
+    if (node is XValueGroupNodeImpl && (node.valueContainer as PyXValueGroup).groupType == ProcessDebugger.GROUP_TYPE.SPECIAL) {
+      computeChildrenIfNeeded(node)
+      extractChildByName(node.loadedChildren, psiName)?.let {
+        return it
+      }
+    }
+    else if (node is XValueNodeImpl) {
+      if (node.name == psiName) {
+        return node
+      }
+    }
+  }
+  return null
+}
+
+fun getSetOfChildrenByListOfCall(valueNode: XValueNodeImpl?, listOfCall: List<String>): Pair<XValueNodeImpl, List<String>>? {
+  var currentNode = valueNode ?: return null
+  listOfCall.forEachIndexed { index, call ->
+    when (currentNode.valueContainer) {
+      is DataFrameDebugValue -> {
+        return Pair(currentNode, listOfCall.subList(index, listOfCall.size))
+      }
+      else -> {
+        computeChildrenIfNeeded(currentNode)
+        currentNode = extractChildByName(currentNode.children, call) ?: return null
+      }
+    }
+  }
+  computeChildrenIfNeeded(currentNode)
+  return Pair(currentNode, emptyList())
+}
+
+fun createCustomMatcher(parameters: CompletionParameters, result: CompletionResultSet): CompletionResultSet {
+  val currentElement = parameters.position
+  if (currentElement is PyStringElement) {
+    val newPrefix = TextRange.create(currentElement.contentRange.startOffset,
+                                     parameters.offset - currentElement.textRange.startOffset).substring(currentElement.text)
+    return result.withPrefixMatcher(newPrefix)
+  }
+  return result
 }

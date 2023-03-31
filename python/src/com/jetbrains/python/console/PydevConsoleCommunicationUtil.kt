@@ -4,7 +4,6 @@
 package com.jetbrains.python.console
 
 import com.intellij.xdebugger.frame.XValueChildrenList
-import com.jetbrains.python.console.completion.collectParentReferences
 import com.jetbrains.python.console.protocol.DebugValue
 import com.jetbrains.python.console.protocol.GetArrayResponse
 import com.jetbrains.python.debugger.ArrayChunk
@@ -55,15 +54,14 @@ object InformationColumnsSerializer : DeserializationStrategy<DataFrameDebugValu
 }
 
 private fun parseDebugValue(value: String): DataFrameDebugValue.InformationColumns? {
-
-  try {
-    return Json.decodeFromString(InformationColumnsSerializer, value)
+  return try {
+    Json.decodeFromString(InformationColumnsSerializer, value)
   }
   catch (_: SerializationException) {
-    return null
+    null
   }
   catch (_: IllegalArgumentException) {
-    return null
+    null
   }
 }
 
@@ -81,7 +79,9 @@ fun parseVars(vars: List<DebugValue>, parent: PyDebugValue?, frameAccessor: PyFr
   for (debugValue in vars) {
     val pyDebugValue = createPyDebugValue(debugValue, frameAccessor)
     if (frameAccessor is PydevConsoleCommunication && parent !is DataFrameDebugValue && pyDebugValue is DataFrameDebugValue) {
-      val dfReference = collectParentReferences(parent, pyDebugValue)
+      val dfReference = generateSequence(parent, PyDebugValue::getParent).fold(pyDebugValue.name) { name, parentValue ->
+        "${parentValue.name}.$name"
+      }
       val columns = extractDataFrameColumns(dfReference, frameAccessor)
       columns?.let {
         pyDebugValue.setColumns(it)
