@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.util.Arrays;
@@ -22,19 +23,47 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class CompressionUtil {
   private static final int COMPRESSION_THRESHOLD = 64;
   private static final ThreadLocalCachedByteArray spareBufferLocal = new ThreadLocalCachedByteArray();
-  private static final LZ4Factory factory;
+  private static final LZ4Compressor compressor;
+  private static final LZ4FastDecompressor decompressor;
+
   static {
-    factory = SystemProperties.getBooleanProperty("idea.use.native.compression", false)
-              ? LZ4Factory.fastestInstance()
-              : LZ4Factory.fastestJavaInstance();
+    if (Boolean.getBoolean("idea.use.native.compression")) {
+      LZ4Factory factory = LZ4Factory.fastestInstance();
+      compressor = factory.fastCompressor();
+      decompressor = factory.fastDecompressor();
+    }
+    else {
+      LZ4Compressor c = null;
+      LZ4FastDecompressor d = null;
+      try {
+        // java 9+ is required - util still has java 8 level
+        Class<?> cClass = CompressionUtil.class.getClassLoader().loadClass("com.intellij.util.io.LZ4Compressor");
+        MethodHandles.Lookup lookup = MethodHandles.lookup();
+        c = (LZ4Compressor)lookup.findStaticGetter(cClass, "INSTANCE", cClass).invoke();
+        Class<?> dClass = CompressionUtil.class.getClassLoader().loadClass("com.intellij.util.io.LZ4Decompressor");
+        d = (LZ4FastDecompressor)lookup.findStaticGetter(dClass, "INSTANCE", dClass).invoke();
+      }
+      catch (Throwable ignore) {
+      }
+
+      if (c == null || d == null) {
+        LZ4Factory factory = LZ4Factory.fastestJavaInstance();
+        compressor = factory.fastCompressor();
+        decompressor = factory.fastDecompressor();
+      }
+      else {
+        compressor = c;
+        decompressor = d;
+      }
+    }
   }
 
   private static LZ4Compressor compressor() {
-    return factory.fastCompressor();
+    return compressor;
   }
 
   private static LZ4FastDecompressor decompressor() {
-    return factory.fastDecompressor();
+    return decompressor;
   }
 
   public static int writeCompressed(@NotNull DataOutput out, byte @NotNull [] bytes, int start, int length) throws IOException {
