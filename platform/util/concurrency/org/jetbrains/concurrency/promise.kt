@@ -242,13 +242,14 @@ fun Logger.errorIfNotMessage(e: Throwable): Boolean {
 
 fun <T> CompletableFuture<T>.asPromise(): Promise<T> {
   val promise = AsyncPromise<T>()
-  whenComplete { result, throwable ->
+  handle { result, throwable ->
     if (throwable == null) {
       promise.setResult(result)
     }
     else {
       promise.setError(throwable)
     }
+    result
   }
   return promise
 }
