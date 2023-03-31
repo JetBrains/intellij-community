@@ -533,7 +533,7 @@ open class EditorsSplitters internal constructor(
     get() = insideChange > 0
 
   internal fun updateFileBackgroundColorAsync(file: VirtualFile) {
-    coroutineScope.launch {
+    coroutineScope.launch(ModalityState.any().asContextElement()) {
       updateFileBackgroundColor(file)
     }
   }
@@ -543,7 +543,7 @@ open class EditorsSplitters internal constructor(
       EditorTabPresentationUtil.getEditorTabBackgroundColor(manager.project, file)
     }
 
-    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+    withContext(Dispatchers.EDT) {
       for (window in windows) {
         val index = window.findFileIndex(file)
         if (index != -1) {
