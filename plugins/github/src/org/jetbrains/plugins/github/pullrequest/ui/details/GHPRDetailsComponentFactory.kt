@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.codereview.details.*
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewDetailsViewModel
 import com.intellij.collaboration.ui.util.emptyBorders
@@ -28,7 +29,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowV
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStatusViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRCommitsViewModel
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -69,17 +69,17 @@ internal object GHPRDetailsComponentFactory {
       isOpaque = false
 
       add(CodeReviewDetailsTitleComponentFactory.create(scope, reviewDetailsVm, GithubBundle.message("open.on.github.action"), actionGroup,
-                                                        htmlPaneFactory = { HtmlEditorPane() }),
+                                                        htmlPaneFactory = { SimpleHtmlPane() }),
           CC().growX().gap(ReviewDetailsUIUtil.TITLE_GAPS))
       add(CodeReviewDetailsDescriptionComponentFactory.create(scope, reviewDetailsVm, actionGroup, ::showTimelineAction,
-                                                              htmlPaneFactory = { HtmlEditorPane() }),
+                                                              htmlPaneFactory = { SimpleHtmlPane() }),
           CC().growX().gap(ReviewDetailsUIUtil.DESCRIPTION_GAPS))
       add(commitsAndBranches, CC().growX().gap(ReviewDetailsUIUtil.COMMIT_POPUP_BRANCHES_GAPS))
       add(CodeReviewDetailsCommitInfoComponentFactory.create(scope, commitsVm.selectedCommit,
                                                              commitPresenter = { commit ->
                                                                createCommitInfoPresenter(commit, commitsVm.ghostUser)
                                                              },
-                                                             htmlPaneFactory = { HtmlEditorPane() }),
+                                                             htmlPaneFactory = { SimpleHtmlPane() }),
           CC().growX().gap(ReviewDetailsUIUtil.COMMIT_INFO_GAPS).maxHeight("${ReviewDetailsUIUtil.COMMIT_INFO_MAX_HEIGHT}"))
       add(commitFilesBrowserComponent, CC().grow().push())
       add(statusChecks, CC().growX().gap(ReviewDetailsUIUtil.STATUSES_GAPS).maxHeight("${ReviewDetailsUIUtil.STATUSES_MAX_HEIGHT}"))

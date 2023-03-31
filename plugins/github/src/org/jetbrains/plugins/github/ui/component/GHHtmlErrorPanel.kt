@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui.component
 
+import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.collaboration.ui.util.getName
 import com.intellij.ide.BrowserUtil
@@ -13,12 +14,12 @@ import com.intellij.util.ui.NamedColorUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.KeyEvent
 import javax.swing.Action
 import javax.swing.JComponent
+import javax.swing.JEditorPane
 import javax.swing.KeyStroke
 import javax.swing.SwingConstants
 import javax.swing.event.HyperlinkEvent
@@ -36,7 +37,7 @@ object GHHtmlErrorPanel {
 
   fun create(model: GHErrorPanelModel, horizontalAlignment: Int = SwingConstants.CENTER): JComponent {
 
-    val pane = HtmlEditorPane().apply {
+    val pane = SimpleHtmlPane().apply {
       foreground = NamedColorUtil.getErrorForeground()
       isFocusable = true
 
@@ -61,7 +62,7 @@ object GHHtmlErrorPanel {
   }
 
   private class Controller(private val model: GHErrorPanelModel,
-                           private val pane: HtmlEditorPane,
+                           private val pane: JEditorPane,
                            horizontalAlignment: Int) {
 
     private val alignmentText = when (horizontalAlignment) {

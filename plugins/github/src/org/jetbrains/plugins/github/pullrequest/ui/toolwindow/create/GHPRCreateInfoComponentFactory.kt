@@ -46,7 +46,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowRepositoryContentController
 import org.jetbrains.plugins.github.ui.util.DisableableDocument
-import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import java.awt.Component
 import java.awt.Container
@@ -325,7 +324,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
 
   private fun createErrorAlreadyExistsLabel(loadingModel: GHSimpleLoadingModel<GHPRIdentifier?>): JComponent {
     val iconLabel = JLabel(AllIcons.Ide.FatalError)
-    val textPane = HtmlEditorPane().apply {
+    val textPane = SimpleHtmlPane().apply {
       setHtmlBody(HtmlBuilder()
                     .append(GithubBundle.message("pull.request.create.already.exists"))
                     .appendLink("VIEW", GithubBundle.message("pull.request.create.already.exists.view"))
@@ -363,7 +362,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
                                             commitsCountModel: SingleValueModel<Int?>,
                                             loadingModel: GHLoadingModel): JComponent {
       val iconLabel = JLabel(AllIcons.General.Warning)
-      val textPane = HtmlEditorPane()
+      val textPane = SimpleHtmlPane()
 
       val panel = textPaneWithIcon(iconLabel, textPane)
       fun update() {
@@ -384,7 +383,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
 
     private fun createErrorLabel(loadingModel: GHLoadingModel, @Nls prefix: String? = null): JComponent {
       val iconLabel = JLabel(AllIcons.Ide.FatalError)
-      val textPane = HtmlEditorPane()
+      val textPane = SimpleHtmlPane()
 
       val panel = textPaneWithIcon(iconLabel, textPane)
 
@@ -400,7 +399,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
       return panel
     }
 
-    private fun textPaneWithIcon(iconLabel: JLabel, textPane: HtmlEditorPane) =
+    private fun textPaneWithIcon(iconLabel: JLabel, textPane: JEditorPane) =
       JPanel(MigLayout(LC().insets("0").gridGap("0", "0"))).apply {
         add(iconLabel, CC().alignY("top").gapRight("${iconLabel.iconTextGap}"))
         add(textPane, CC().minWidth("0"))
