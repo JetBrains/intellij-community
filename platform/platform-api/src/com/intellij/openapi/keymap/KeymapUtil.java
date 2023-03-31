@@ -478,30 +478,6 @@ public final class KeymapUtil {
     return buffer.toString().trim(); // trim trailing space (if any)
   }
 
-  @NotNull
-  public static String getKeyModifiersTextForMacOSLeopard(@JdkConstants.InputEventMask int modifiers) {
-    StringBuilder buf = new StringBuilder();
-    if ((modifiers & InputEvent.META_MASK) != 0) {
-      buf.append("\u2318");
-    }
-    if ((modifiers & InputEvent.CTRL_MASK) != 0) {
-      buf.append(Toolkit.getProperty("AWT.control", "Ctrl"));
-    }
-    if ((modifiers & InputEvent.ALT_MASK) != 0) {
-      buf.append("\u2325");
-    }
-    if ((modifiers & InputEvent.SHIFT_MASK) != 0) {
-      buf.append(Toolkit.getProperty("AWT.shift", "Shift"));
-    }
-    if ((modifiers & InputEvent.ALT_GRAPH_MASK) != 0) {
-      buf.append(Toolkit.getProperty("AWT.altGraph", "Alt Graph"));
-    }
-    if ((modifiers & InputEvent.BUTTON1_MASK) != 0) {
-      buf.append(Toolkit.getProperty("AWT.button1", "Button1"));
-    }
-    return buf.toString();
-  }
-
   public static boolean isTooltipRequest(@NotNull KeyEvent keyEvent) {
     if (ourTooltipKeysProperty == null) {
       ourTooltipKeysProperty = Registry.get("ide.forcedShowTooltip");
