@@ -37,7 +37,6 @@ import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -92,10 +91,7 @@ public final class MavenIndicesManager implements Disposable {
       catch (Exception e) {
         // if some files haven't been deleted in the index directory, report them
         try (Stream<Path> stream = Files.walk(dir)) {
-          var files = stream
-            .map(Path::getFileName)
-            .map(Path::toString)
-            .collect(Collectors.toSet());
+          var files = stream.map(Path::toString).toList();
           var message = files.isEmpty()
                         ? "Failed to delete the index directory"
                         : "Failed to delete files in the index directory: " + String.join(", ", files);
