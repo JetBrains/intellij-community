@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.memberPullUp;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightMethodUtil;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -27,7 +28,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class JavaPullUpHandler implements PullUpDialog.Callback, ElementsHandler, ContextAwareActionHandler, JavaPullUpHandlerBase {
   private PsiClass mySubclass;
@@ -106,7 +110,21 @@ public class JavaPullUpHandler implements PullUpDialog.Callback, ElementsHandler
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, aClass)) return;
     mySubclass = aClass;
-    MemberInfoStorage memberInfoStorage = new MemberInfoStorage(mySubclass, element -> true);
+    MemberInfoStorage memberInfoStorage = new MemberInfoStorage(mySubclass, element -> {
+      if (mySubclass.isEnum()) {
+        if (element instanceof PsiMethod method &&
+            HighlightMethodUtil.isEnumSyntheticMethod(method.getSignature(PsiSubstitutor.EMPTY), aClass.getProject())) {
+          return false;
+        }
+        else if (element instanceof PsiEnumConstant || element instanceof PsiClassInitializer) {
+          return false;
+        }
+        else if (element instanceof PsiField field && !field.hasModifierProperty(PsiModifier.STATIC)) {
+          return false;
+        }
+      }
+      return true;
+    });
     List<MemberInfo> members = memberInfoStorage.getClassMemberInfos(mySubclass);
 
     for (MemberInfo memberInfo : members) {
