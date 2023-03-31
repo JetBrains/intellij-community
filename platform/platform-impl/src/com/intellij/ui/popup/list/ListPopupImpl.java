@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup.list;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
@@ -647,11 +648,14 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       ListPopupStep<Object> listStep = getListStep();
       Object selectedValue = myListModel.getElementAt(forIndex);
       if (withTimer) {
+        ClientId currentClientId = ClientId.getCurrent();
         myShowSubmenuTimer = new Timer(250, e -> {
-          if (!isDisposed() && myLastSelectedIndex == forIndex) {
-            disposeChildren();
-            showNextStepPopup(listStep.onChosen(selectedValue, false), selectedValue);
-          }
+          ClientId.withClientId(currentClientId, () -> {
+            if (!isDisposed() && myLastSelectedIndex == forIndex) {
+              disposeChildren();
+              showNextStepPopup(listStep.onChosen(selectedValue, false), selectedValue);
+            }
+          });
         });
         myShowSubmenuTimer.setRepeats(false);
         myShowSubmenuTimer.start();

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.popup.util;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -33,6 +34,7 @@ import java.awt.*;
 import java.awt.event.ComponentEvent;
 import java.awt.event.InputEvent;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 public final class PopupUtil {
@@ -91,6 +93,11 @@ public final class PopupUtil {
 
   public static int getPopupType(@NotNull final PopupFactory factory) {
     try {
+      if (!ClientId.isCurrentlyUnderLocalId()) {
+        final Field field = PopupFactory.class.getDeclaredField("HEAVY_WEIGHT_POPUP");
+        field.setAccessible(true);
+        return (Integer)field.get(null);
+      }
       final Method method = PopupFactory.class.getDeclaredMethod("getPopupType");
       method.setAccessible(true);
       final Object result = method.invoke(factory);
