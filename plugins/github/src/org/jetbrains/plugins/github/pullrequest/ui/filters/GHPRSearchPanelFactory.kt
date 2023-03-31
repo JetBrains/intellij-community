@@ -39,10 +39,12 @@ internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel, private val 
         showAsyncChooserPopup(
           point,
           itemsLoader = { vm.getAuthors() },
-          presenter = { PopupItemPresentation.Simple(
-            it.shortName,
-            avatarIconsProvider.getIcon(it.avatarUrl, Avatar.Sizes.BASE),
-            it.name?.let { fullName -> "(${fullName})" }) }
+          presenter = {
+            PopupItemPresentation.Simple(
+              it.shortName,
+              avatarIconsProvider.getIcon(it.avatarUrl, Avatar.Sizes.BASE),
+              it.name?.let { fullName -> "(${fullName})" })
+          }
         )?.login
       },
     DropDownComponentFactory(vm.labelFilterState)
@@ -58,10 +60,12 @@ internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel, private val 
         showAsyncChooserPopup(
           point,
           itemsLoader = { vm.getAssignees() },
-          presenter = { PopupItemPresentation.Simple(
-            it.shortName,
-            avatarIconsProvider.getIcon(it.avatarUrl, Avatar.Sizes.BASE),
-            it.name?.let { fullName -> "($fullName)" }) }
+          presenter = {
+            PopupItemPresentation.Simple(
+              it.shortName,
+              avatarIconsProvider.getIcon(it.avatarUrl, Avatar.Sizes.BASE),
+              it.name?.let { fullName -> "($fullName)" })
+          }
         )?.login
       },
     DropDownComponentFactory(vm.reviewFilterState)
@@ -77,6 +81,7 @@ internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel, private val 
     is GHPRListQuickFilter.Open -> GithubBundle.message("pull.request.list.filter.quick.open")
     is GHPRListQuickFilter.YourPullRequests -> GithubBundle.message("pull.request.list.filter.quick.yours")
     is GHPRListQuickFilter.AssignedToYou -> GithubBundle.message("pull.request.list.filter.quick.assigned")
+    is GHPRListQuickFilter.ReviewRequests -> GithubBundle.message("pull.request.list.filter.quick.review.requests")
   }
 
   companion object {
