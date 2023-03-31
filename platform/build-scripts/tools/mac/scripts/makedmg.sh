@@ -6,6 +6,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
+MOUNT_POINT="/Volumes/$1"
 EXPLODED=${4:-"./$2.exploded"}
 RESULT_DMG=${3:-"$1.dmg"}
 TEMP_DMG="$2.temp.dmg"
@@ -54,7 +55,7 @@ function generate_DS_Store() {
   ./bin/pip3 install mac-alias==2.2.0 ds-store==1.3.0
   ./bin/python3 makedmg.py "$VOLNAME" "$BG_PIC" "$1"
   log "DMG/DS_Store is generated"
-  rm -rf "/Volumes/$1/.fseventsd"
+  rm -rf "$MOUNT_POINT/.fseventsd"
 }
 
 mkdir "${EXPLODED}/.background"
@@ -72,20 +73,20 @@ log "Creating unpacked r/w disk image ${VOLNAME}..."
 hdiutil create -srcfolder "${EXPLODED}" -volname "$VOLNAME" -anyowners -nospotlight -fs HFS+ -fsargs "-c c=64,a=16,e=16" -format UDRW "$TEMP_DMG"
 
 # check if the image already mounted
-if [ -d "/Volumes/$1" ]; then
-  diskutil unmount "/Volumes/$1"
+if [ -d "$MOUNT_POINT" ]; then
+  diskutil unmount "$MOUNT_POINT"
 fi
-if [ -d "/Volumes/$1" ]; then
+if [ -d "$MOUNT_POINT" ]; then
   attempt=1
   limit=5
   while [ $attempt -le $limit ]
   do
-    log "/Volumes/$1 - the image is already mounted.  This build will wait for unmount for 1 min (up to 5 times)."
+    log "$MOUNT_POINT - the image is already mounted.  This build will wait for unmount for 1 min (up to 5 times)."
     sleep 60;
     ((attempt++))
-    if [ -d "/Volumes/$1" ]; then
+    if [ -d "$MOUNT_POINT" ]; then
       if [ "$attempt" -ge $limit ]; then
-        log "/Volumes/$1 - the image is still mounted. By the reason the build will be stopped."
+        log "$MOUNT_POINT - the image is still mounted. By the reason the build will be stopped."
         if [ "$CLEANUP_EXPLODED" = "true" ]; then
           rm -rf "$EXPLODED"
         fi
@@ -102,31 +103,35 @@ fi
 
 # mount this image
 log "Mounting unpacked r/w disk image..."
-device=$(hdiutil attach -readwrite -noverify -noautoopen -mountpoint "/Volumes/$1" "$TEMP_DMG" | grep '^/dev/' | awk 'NR==1{print $1}')
+device=$(hdiutil attach -readwrite -noverify -noautoopen -mountpoint "$MOUNT_POINT" "$TEMP_DMG" | grep '^/dev/' | awk 'NR==1{print $1}')
 log "Mounted as $device"
 sleep 10
-find "/Volumes/$1" -maxdepth 1
+find "$MOUNT_POINT" -maxdepth 1
 
 # set properties
 log "Updating $VOLNAME disk image styles..."
-stat "/Volumes/$1/DSStorePlaceHolder"
-rm "/Volumes/$1/DSStorePlaceHolder"
+stat "$MOUNT_POINT/DSStorePlaceHolder"
+rm "$MOUNT_POINT/DSStorePlaceHolder"
 
 generate_DS_Store "$1"
 
 if [[ -n ${SOURCE_DATE_EPOCH+x} ]]; then
   timestamp=$(date -r "$SOURCE_DATE_EPOCH" +%Y%m%d%H%m)
   log "Updating access and modification times for files and symbolic links in $RESULT_DMG to $timestamp"
-  find "/Volumes/$1" -exec touch -amht "$timestamp" '{}' \;
+  find "$MOUNT_POINT" -exec touch -amht "$timestamp" '{}' \;
 fi
 
-sync;sync;sync
 
 if [ "$CONTENT_SIGNED" = "true" ]; then
-  codesign --verify --deep --strict --verbose "/Volumes/$1/$BUILD_NAME"
+  codesign --verify --deep --strict --verbose "$MOUNT_POINT/$BUILD_NAME"
 fi
 
-retry "Detaching disk" 3 hdiutil detach "$device"
+function detach_disk() {
+  sync --file-system "$MOUNT_POINT"
+  hdiutil detach "$device"
+}
+
+retry "Detaching disk" 3 detach_disk
 
 log "Compressing r/w disk image to ${RESULT_DMG}..."
 hdiutil convert "$TEMP_DMG" -format ULFO -imagekey lzfse-level=9 -o "$RESULT_DMG"
