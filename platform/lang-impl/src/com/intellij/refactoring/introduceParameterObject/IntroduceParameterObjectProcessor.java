@@ -4,6 +4,7 @@ package com.intellij.refactoring.introduceParameterObject;
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
@@ -14,6 +15,7 @@ import com.intellij.refactoring.changeSignature.OverriderMethodUsageInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.refactoring.util.FixableUsagesRefactoringProcessor;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
@@ -118,9 +120,10 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
         if (element != null && IntroduceParameterObjectDelegate.findDelegate(element) == null) {
           final PsiFile containingFile = element.getContainingFile();
           if (filesWithUsages.add(containingFile)) {
-            String message = RefactoringBundle.message("dialog.message.method.overridden.in.language.that.doesn.t.support.this.refactoring",
-                                                       containingFile.getName());
-            conflicts.putValue(element, message);
+            String message =
+              RefactoringBundle.message("dialog.message.method.overridden.in.language.that.doesn.t.support.this.refactoring",
+                                        RefactoringUIUtil.getDescription(myMethod, false), element.getLanguage().getDisplayName());
+            conflicts.putValue(element, StringUtil.capitalize(message));
           }
         }
         changeSignatureUsages.add(info);
@@ -133,9 +136,8 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
       }
     }
 
-    ChangeSignatureProcessorBase
-      .collectConflictsFromExtensions(new Ref<>(changeSignatureUsages.toArray(UsageInfo.EMPTY_ARRAY)), conflicts,
-                                      myChangeInfo);
+    ChangeSignatureProcessorBase.collectConflictsFromExtensions(
+      new Ref<>(changeSignatureUsages.toArray(UsageInfo.EMPTY_ARRAY)), conflicts, myChangeInfo);
 
     return showConflicts(conflicts, usageInfos);
   }
