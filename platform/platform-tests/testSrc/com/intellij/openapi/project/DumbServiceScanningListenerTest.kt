@@ -19,7 +19,6 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.fail
 
@@ -55,16 +54,16 @@ class DumbServiceScanningListenerTest {
   }
 
   @Test
-  fun `test dumb service suspends when listener started in different initial scanning states (false)`() {
-    `test dumb service suspends when listener started in different initial scanning states`(false)
+  fun `test dumb service suspends when listener started in state (false)`() {
+    `test dumb service suspends when listener started in state`(false)
   }
 
   @Test
-  fun `test dumb service suspends when listener started in different initial scanning states (true)`() {
-    `test dumb service suspends when listener started in different initial scanning states`(true)
+  fun `test dumb service suspends when listener started in state (true)`() {
+    `test dumb service suspends when listener started in state`(true)
   }
 
-  private fun `test dumb service suspends when listener started in different initial scanning states`(initialScanningRunState: Boolean) {
+  private fun `test dumb service suspends when listener started in state`(initialScanningRunState: Boolean) {
     val listener = DumbServiceScanningListener(project, cs)
     val tc = DumbServiceScanningListener.TestCompanion(listener)
     val scanningState = MutableStateFlow(initialScanningRunState)
@@ -89,22 +88,32 @@ class DumbServiceScanningListenerTest {
 
     dumbTaskStarted.awaitOrThrow(1, "Dumb task didn't start")
 
-    Thread.sleep(10) // this is for our test to update isPaused in background thread
-    assertFalse(isPaused.get(), "Listener is not active yet. Should be resumed.")
+    waitOneSecondOrFail("Listener is not active yet. Should be resumed.") { !isPaused.get() }
 
     tc.subscribe(scanningState)
 
-    Thread.sleep(10) // this is for our test to update isPaused in background thread
     assertEquals(initialScanningRunState, scanningState.value, "Sanity")
-    assertEquals(initialScanningRunState, isPaused.get(), "Listener should respect initialScanningRunState after subscription")
+    waitOneSecondOrFail("Listener should respect initialScanningRunState after subscription (expected: $initialScanningRunState)") {
+      isPaused.get() == initialScanningRunState
+    }
 
     repeat(10) {
       scanningState.value = !scanningState.value
-      Thread.sleep(10) // this is for our test to update isPaused in background thread
-      assertEquals(scanningState.value, isPaused.get(), "Should respect current scanning state after change")
+      waitOneSecondOrFail("Should respect current scanning state after change (expected: ${scanningState.value})") {
+        isPaused.get() == scanningState.value
+      }
     }
 
     assertNull(exception.get())
+  }
+
+  private fun waitOneSecondOrFail(message: String, condition: () -> Boolean) {
+    repeat(1000 / 10) {
+      if (condition()) return
+      else Thread.sleep(10)
+    }
+
+    fail(message)
   }
 
   private fun CountDownLatch.awaitOrThrow(seconds: Long, message: String) {
