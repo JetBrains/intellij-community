@@ -467,6 +467,7 @@
       <action id="GotoTest" class="com.intellij.testIntegration.GotoTestOrCodeAction">
         <override-text place="MainMenu"/>
         <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
+        <synonym key="action.GotoTest.text.subject"/>
       </action>
       <action id="GotoRelated" class="com.intellij.ide.actions.GotoRelatedSymbolAction"/>
       <separator/>
