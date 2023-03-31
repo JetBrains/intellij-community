@@ -25,7 +25,7 @@ abstract class MultiRowLayout(protected val tabs: JBTabsImpl,
     val data = MultiRowPassInfo(tabs, visibleInfos, toFitRec, scrollOffset)
     prevLayoutPassInfo = data
 
-    if (tabs.isHideTabs || visibleInfos.isEmpty()) {
+    if (tabs.isHideTabs || visibleInfos.isEmpty() || data.toFitRec.isEmpty) {
       return data
     }
 

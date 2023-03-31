@@ -38,6 +38,7 @@ import java.util.function.Function;
 
 public class TabLabel extends JPanel implements Accessible, DataProvider {
   private static final Logger LOG = Logger.getInstance(TabLabel.class);
+  private static final int MIN_WIDTH_TO_CROP_ICON = 39;
 
   // If this System property is set to true 'close' button would be shown on the left of text (it's on the right by default)
   protected final SimpleColoredComponent myLabel;
@@ -48,6 +49,9 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
   private final TabInfo myInfo;
   protected ActionPanel myActionPanel;
   private boolean myCentered;
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
+  private boolean isCompressionEnabled;
+  private boolean forcePaintBorders;
 
   private final Wrapper myLabelPlaceholder = new Wrapper(false);
   protected final JBTabsImpl myTabs;
@@ -73,7 +77,7 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
 
     setAlignmentToCenter(true);
 
-    myIcon = new LayeredIcon(2);
+    myIcon = createLayeredIcon();
 
     addMouseListener(new MouseAdapter() {
       @Override
@@ -370,6 +374,18 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     return false;
   }
 
+  public boolean isLastInRow() {
+    List<TabInfo> infos = myTabs.getVisibleInfos();
+    for (int ind = 0; ind < infos.size() - 1; ind++) {
+      TabLabel cur = myTabs.myInfo2Label.get(infos.get(ind));
+      if (cur == this) {
+        TabLabel next = myTabs.myInfo2Label.get(infos.get(ind + 1));
+        return cur.getY() != next.getY();
+      }
+    }
+    return infos.get(infos.size() - 1) == myInfo;
+  }
+
   protected void handlePopup(final MouseEvent e) {
     if (e.getClickCount() != 1 || !e.isPopupTrigger() || PopupUtil.getPopupContainerFor(this) != null) return;
 
@@ -464,6 +480,34 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     invalidateIfNeeded();
   }
 
+  protected @NotNull LayeredIcon createLayeredIcon() {
+    return new LayeredIcon(2) {
+      @Override
+      public int getIconWidth() {
+        int iconWidth = super.getIconWidth();
+        int tabWidth = TabLabel.this.getWidth();
+        int minTabWidth = JBUI.scale(MIN_WIDTH_TO_CROP_ICON);
+        if (isCompressionEnabled && tabWidth < minTabWidth) {
+          return Math.max(iconWidth - (minTabWidth - tabWidth), iconWidth / 2);
+        }
+        else {
+          return iconWidth;
+        }
+      }
+
+      @Override
+      public void paintIcon(Component c, Graphics g, int x, int y) {
+        Graphics g2 = g.create(x, y, getIconWidth(), getIconHeight());
+        try {
+          super.paintIcon(c, g2, 0, 0);
+        }
+        finally {
+          g2.dispose();
+        }
+      }
+    };
+  }
+
   private LayeredIcon getLayeredIcon() {
     return myIcon;
   }
@@ -486,15 +530,12 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     setBorder(IdeBorderFactory.createEmptyBorder(resultDec.labelInsets()));
     myLabel.setIconTextGap(resultDec.iconTextGap());
 
-    ActionsPosition position = isShowTabActions() && myActionPanel != null
-                               ? isTabActionsOnTheRight() ? ActionsPosition.RIGHT : ActionsPosition.LEFT
-                               : ActionsPosition.NONE;
-    Insets contentInsets = resultDec.contentInsetsSupplier().apply(position);
+    Insets contentInsets = resultDec.contentInsetsSupplier().apply(getActionsPosition());
     myLabelPlaceholder.setBorder(IdeBorderFactory.createEmptyBorder(contentInsets));
   }
 
-  private static MergedUiDecoration mergeUiDecorations(@NotNull UiDecorator.UiDecoration customDec,
-                                                       @NotNull UiDecorator.UiDecoration defaultDec) {
+  public static MergedUiDecoration mergeUiDecorations(@NotNull UiDecorator.UiDecoration customDec,
+                                                      @NotNull UiDecorator.UiDecoration defaultDec) {
     Function<ActionsPosition, Insets> contentInsetsSupplier = position -> {
       Insets def = Objects.requireNonNull(defaultDec.getContentInsetsSupplier()).apply(position);
       if (customDec.getContentInsetsSupplier() != null) {
@@ -548,6 +589,16 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
 
   protected boolean isTabActionsOnTheRight() {
     return true;
+  }
+
+  public @NotNull ActionsPosition getActionsPosition() {
+    return isShowTabActions() && myActionPanel != null
+           ? isTabActionsOnTheRight() ? ActionsPosition.RIGHT : ActionsPosition.LEFT
+           : ActionsPosition.NONE;
+  }
+
+  public void enableCompressionMode(boolean enabled) {
+    isCompressionEnabled = enabled;
   }
 
   private void removeOldActionPanel() {
@@ -692,6 +743,14 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     }
   }
 
+  public void setForcePaintBorders(boolean forcePaintBorders) {
+    this.forcePaintBorders = forcePaintBorders;
+  }
+
+  public boolean isForcePaintBorders() {
+    return forcePaintBorders;
+  }
+
   @Override
   public String toString() {
     return myInfo.getText();
@@ -732,9 +791,9 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     RIGHT, LEFT, NONE
   }
 
-  private record MergedUiDecoration(@NotNull Insets labelInsets,
-                                    @NotNull Function<ActionsPosition, Insets> contentInsetsSupplier,
-                                    int iconTextGap) {
+  public record MergedUiDecoration(@NotNull Insets labelInsets,
+                                   @NotNull Function<ActionsPosition, Insets> contentInsetsSupplier,
+                                   int iconTextGap) {
   }
 
   @Override
@@ -779,7 +838,7 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
       super.addLayoutComponent(comp, constraints);
     }
 
-    private void checkConstraints(Object constraints) {
+    private static void checkConstraints(Object constraints) {
       if (NORTH.equals(constraints) || SOUTH.equals(constraints)) {
         LOG.warn(new IllegalArgumentException("constraints=" + constraints));
       }
@@ -787,33 +846,36 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
 
     @Override
     public void layoutContainer(Container parent) {
+      int prefWidth = parent.getPreferredSize().width;
       synchronized (parent.getTreeLock()) {
-        boolean success = doCustomLayout(parent);
-        if (!success) {
+        if (!myInfo.isPinned() && myTabs != null &&
+            myTabs.getEffectiveLayout().isScrollable() &&
+            (ExperimentalUI.isNewUI() && !isHovered() || myTabs.isHorizontalTabs()) &&
+            isShowTabActions() && isTabActionsOnTheRight() &&
+            parent.getWidth() < prefWidth) {
+          layoutScrollable(parent);
+        }
+        else if (!myInfo.isPinned() && isCompressionEnabled &&
+                 !isHovered() && !isSelected() &&
+                 parent.getWidth() < prefWidth) {
+          layoutCompressible(parent);
+        }
+        else {
           super.layoutContainer(parent);
         }
       }
     }
 
-    private boolean doCustomLayout(Container parent) {
-      if (!myInfo.isPinned() && myTabs != null && myTabs.getEffectiveLayout().isScrollable() &&
-          (ExperimentalUI.isNewUI() && !isHovered() || myTabs.isHorizontalTabs()) &&
-          isShowTabActions() && isTabActionsOnTheRight() &&
-          parent.getWidth() < parent.getPreferredSize().width) {
-        int spaceTop = parent.getInsets().top;
-        int spaceLeft = parent.getInsets().left;
-        int spaceBottom = parent.getHeight() - parent.getInsets().bottom;
-        int spaceHeight = spaceBottom - spaceTop;
+    private void layoutScrollable(Container parent) {
+      int spaceTop = parent.getInsets().top;
+      int spaceLeft = parent.getInsets().left;
+      int spaceBottom = parent.getHeight() - parent.getInsets().bottom;
+      int spaceHeight = spaceBottom - spaceTop;
 
-        int xOffset = spaceLeft;
-
-        xOffset = layoutComponent(xOffset, getLayoutComponent(WEST), spaceTop, spaceHeight);
-        xOffset = layoutComponent(xOffset, getLayoutComponent(CENTER), spaceTop, spaceHeight);
-        layoutComponent(xOffset, getLayoutComponent(EAST), spaceTop, spaceHeight);
-
-        return true;
-      }
-      return false;
+      int xOffset = spaceLeft;
+      xOffset = layoutComponent(xOffset, getLayoutComponent(WEST), spaceTop, spaceHeight);
+      xOffset = layoutComponent(xOffset, getLayoutComponent(CENTER), spaceTop, spaceHeight);
+      layoutComponent(xOffset, getLayoutComponent(EAST), spaceTop, spaceHeight);
     }
 
     private int layoutComponent(int xOffset, Component component, int spaceTop, int spaceHeight) {
@@ -823,6 +885,33 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
         xOffset += prefWestWidth + getHgap();
       }
       return xOffset;
+    }
+
+    private void layoutCompressible(Container parent) {
+      Insets insets = parent.getInsets();
+      int height = parent.getHeight() - insets.bottom - insets.top;
+      int curX = insets.left;
+      int maxX = parent.getWidth() - insets.right;
+
+      Component left = getLayoutComponent(WEST);
+      Component center = getLayoutComponent(CENTER);
+      Component right = getLayoutComponent(EAST);
+
+      if (left != null) {
+        left.setBounds(0, 0, 0, 0);
+        int decreasedLen = parent.getPreferredSize().width - parent.getWidth();
+        int width = Math.max(left.getPreferredSize().width - decreasedLen, 0);
+        curX += width;
+      }
+
+      if (center != null) {
+        int width = Math.min(center.getPreferredSize().width, maxX - curX);
+        center.setBounds(curX, insets.top, width, height);
+      }
+
+      if (right != null) {
+        right.setBounds(0, 0, 0, 0);
+      }
     }
   }
 }

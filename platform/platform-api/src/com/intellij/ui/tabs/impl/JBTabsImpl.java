@@ -44,10 +44,7 @@ import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowPassInfo;
 import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.ui.tabs.impl.themes.TabTheme;
-import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.Producer;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
@@ -144,7 +141,7 @@ public class JBTabsImpl extends JComponent
   public boolean myForcedRelayout;
 
   private UiDecorator myUiDecorator;
-  static final UiDecorator ourDefaultDecorator = new DefaultDecorator();
+  public static final UiDecorator ourDefaultDecorator = new DefaultDecorator();
 
   private boolean myPaintFocus;
 
@@ -519,6 +516,13 @@ public class JBTabsImpl extends JComponent
     TabLayout layout = useMultiRowLayout() ? createMultiRowLayout() : createSingleRowLayout();
     layout.scroll(getScrollBarModel().getValue()); // set current scroll value to new layout
     setLayout(layout);
+
+    applyDecoration();
+    for (TabLabel label : myInfo2Label.values()) {
+      label.enableCompressionMode(false);
+      label.setForcePaintBorders(false);
+    }
+
     relayout(true, true);
   }
 
@@ -3282,6 +3286,10 @@ public class JBTabsImpl extends JComponent
     myUiDecorator = decorator == null ? ourDefaultDecorator : decorator;
     applyDecoration();
     return this;
+  }
+
+  public @NotNull UiDecorator getUiDecorator() {
+    return ObjectUtils.notNull(myUiDecorator, ourDefaultDecorator);
   }
 
   @Override
