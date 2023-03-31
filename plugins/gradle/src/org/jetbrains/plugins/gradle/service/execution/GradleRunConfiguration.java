@@ -43,9 +43,6 @@ public class GradleRunConfiguration
   public static final Key<Boolean> RUN_TASK_AS_TEST = Key.create("plugins.gradle.enable.test.reporting");
   public static final Key<Boolean> FORCE_TEST_EXECUTION = Key.create("plugins.gradle.force.test.execution");
 
-  @ApiStatus.Internal
-  public static final Key<String> DEBUGGER_PARAMETERS_KEY = Key.create("DEBUGGER_PARAMETERS");
-
   private boolean isDebugAllEnabled = false;
   private boolean forceTestExecution = false;
 
