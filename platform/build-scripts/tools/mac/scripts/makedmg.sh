@@ -45,6 +45,15 @@ log "BUILD_NAME is $BUILD_NAME"
 VOLNAME="${BUILD_NAME%.app}"
 log "VOLNAME is $VOLNAME"
 
+function cleanup() {
+  if [ "$CLEANUP_EXPLODED" = "true" ]; then
+    rm -rf "$EXPLODED"
+  fi
+  rm -f "$TEMP_DMG" || true
+}
+
+trap 'cleanup' EXIT
+
 function generate_DS_Store() {
   if ! python3 --version; then
     log "python3 is required for DMG/DS_Store generation"
@@ -76,30 +85,7 @@ hdiutil create -srcfolder "${EXPLODED}" -volname "$VOLNAME" -anyowners -nospotli
 if [ -d "$MOUNT_POINT" ]; then
   diskutil unmount "$MOUNT_POINT"
 fi
-if [ -d "$MOUNT_POINT" ]; then
-  attempt=1
-  limit=5
-  while [ $attempt -le $limit ]
-  do
-    log "$MOUNT_POINT - the image is already mounted.  This build will wait for unmount for 1 min (up to 5 times)."
-    sleep 60;
-    ((attempt++))
-    if [ -d "$MOUNT_POINT" ]; then
-      if [ "$attempt" -ge $limit ]; then
-        log "$MOUNT_POINT - the image is still mounted. By the reason the build will be stopped."
-        if [ "$CLEANUP_EXPLODED" = "true" ]; then
-          rm -rf "$EXPLODED"
-        fi
-        rm -f "$TEMP_DMG"
-        exit 1
-      fi
-    fi
-  done
-fi
-
-if [ "$CLEANUP_EXPLODED" = "true" ]; then
-  rm -rf "$EXPLODED"
-fi
+retry "Waiting for $MOUNT_POINT unmounted" 10 [ ! -d "$MOUNT_POINT" ]
 
 # mount this image
 log "Mounting unpacked r/w disk image..."
@@ -135,7 +121,6 @@ retry "Detaching disk" 3 detach_disk
 
 log "Compressing r/w disk image to ${RESULT_DMG}..."
 hdiutil convert "$TEMP_DMG" -format ULFO -imagekey lzfse-level=9 -o "$RESULT_DMG"
-rm -f "$TEMP_DMG"
 
 if hdiutil internet-enable -help >/dev/null 2>/dev/null; then
   hdiutil internet-enable -no "$RESULT_DMG"
