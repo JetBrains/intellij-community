@@ -558,6 +558,10 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   }
 
   private @NotNull CollectedEvents collectEvents(@NotNull List<? extends VFileEvent> events) {
+    if (!hasAnyPointers()) {
+      // e.g., in some VFS stress tests
+      return new CollectedEvents(new MultiMap<>(), List.of(), List.of(), 0, 0);
+    }
     long start = System.currentTimeMillis();
     MultiMap<VirtualFilePointerListener, VirtualFilePointerImpl> toFirePointers = MultiMap.create();
     List<NodeToUpdate> toUpdateNodes = new ArrayList<>();
@@ -638,6 +642,10 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     long prepareElapsedMs = System.currentTimeMillis() - start;
 
     return new CollectedEvents(toFirePointers, toUpdateNodes, eventList, startModCount, prepareElapsedMs);
+  }
+
+  private boolean hasAnyPointers() {
+    return myLocalRoot.children.length != 0 || myTempRoot.children.length != 0;
   }
 
   // converts multi-map with pointers-to-fire into convenient
