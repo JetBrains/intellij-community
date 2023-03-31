@@ -53,6 +53,13 @@ private fun prepareCurrentThreadContext(): CoroutineContext {
   return currentThreadContext().minusKey(BlockingJob)
 }
 
+@Internal
+@RequiresBlockingContext
+fun isInCancellableContext(): Boolean {
+  return (ProgressManager.getGlobalProgressIndicator() != null || Cancellation.currentJob() != null) &&
+         !Cancellation.isInNonCancelableSection()
+}
+
 /**
  * Ensures that the current thread has an [associated job][Cancellation.currentJob].
  *
