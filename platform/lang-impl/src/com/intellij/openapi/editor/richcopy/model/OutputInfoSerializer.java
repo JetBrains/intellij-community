@@ -17,8 +17,8 @@ package com.intellij.openapi.editor.richcopy.model;
 
 import com.intellij.util.io.CompactDataInput;
 import com.intellij.util.io.CompactDataOutput;
+import com.intellij.util.io.LZ4Decompressor;
 import net.jpountz.lz4.LZ4DecompressorWithLength;
-import net.jpountz.lz4.LZ4Factory;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -84,7 +84,7 @@ public final class OutputInfoSerializer {
     private int myCurrentOffset;
 
     public InputStream(byte[] stream) {
-      myInputStream = new CompactDataInput(new ByteArrayInputStream(new LZ4DecompressorWithLength(LZ4Factory.fastestJavaInstance().fastDecompressor()).decompress(stream)));
+      myInputStream = new CompactDataInput(new ByteArrayInputStream(new LZ4DecompressorWithLength(LZ4Decompressor.INSTANCE).decompress(stream)));
     }
 
     public void read(MarkupHandler handler) throws Exception {

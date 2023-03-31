@@ -2,6 +2,7 @@
 package com.intellij.serialization
 
 import com.intellij.util.ParameterizedTypeImpl
+import com.intellij.util.io.LZ4Compressor
 import com.intellij.util.io.move
 import com.intellij.util.io.safeOutputStream
 import net.jpountz.lz4.LZ4Factory
@@ -36,7 +37,7 @@ data class VersionedFile @JvmOverloads constructor(val file: Path, val version: 
       val out = if (isCompressed) LZ4FrameOutputStream(/* out = */ it,
                                                        /* blockSize = */ LZ4FrameOutputStream.BLOCKSIZE.SIZE_4MB,
                                                        /* knownSize = */ -1L,
-                                                       /* compressor = */ LZ4Factory.fastestJavaInstance().fastCompressor(),
+                                                       /* compressor = */ LZ4Compressor,
                                                        /* checksum = */ XXHashFactory.fastestJavaInstance().hash32(),
                                                        /* ...bits = */ LZ4FrameOutputStream.FLG.Bits.BLOCK_INDEPENDENCE) else it
       ObjectSerializer.instance.serializer.writeVersioned(obj = data,

@@ -2,8 +2,8 @@
 package com.intellij.openapi.editor.richcopy.model;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.util.io.LZ4Compressor;
 import net.jpountz.lz4.LZ4CompressorWithLength;
-import net.jpountz.lz4.LZ4Factory;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -185,8 +185,8 @@ public final class SyntaxInfo {
       myColorRegistry.seal();
       myFontNameRegistry.seal();
       byte[] compressed =
-        new LZ4CompressorWithLength(LZ4Factory.fastestJavaInstance().fastCompressor()).compress(myStream.getInternalBuffer(), 0,
-                                                                                                myStream.size());
+        new LZ4CompressorWithLength(LZ4Compressor.INSTANCE).compress(myStream.getInternalBuffer(), 0,
+                                                             myStream.size());
       return new SyntaxInfo(myOutputInfoCount, compressed, myDefaultForeground, myDefaultBackground, myFontSize, myFontNameRegistry,
                             myColorRegistry);
     }

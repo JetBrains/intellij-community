@@ -19,5 +19,6 @@
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.base" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
+    <orderEntry type="library" name="lz4-java" level="project" />
   </component>
 </module>
