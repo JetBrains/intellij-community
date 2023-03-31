@@ -27,6 +27,3 @@ fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinProjectArt
     return KotlinProjectArtifactDependencyResolver().resolve(context, this, dependency)
         .mapNotNull { sourceDependency -> addDependency(sourceDependency) }
 }
-
-var DataNode<out AbstractDependencyData<*>>.kotlinDependencies: MutableSet<IdeaKotlinDependency>
-        by FactoryCopyableDataNodeUserDataProperty(Key.create(IdeaKotlinDependency::class.java.name)) { hashSetOf() }
