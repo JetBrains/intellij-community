@@ -155,6 +155,10 @@ sealed class BaseLayout {
     includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, packMode = LibraryPackMode.MERGED))
   }
 
+  fun withProjectLibraries(libraryNames: Iterable<String>) {
+    libraryNames.forEach(::withProjectLibrary)
+  }
+
   fun withProjectLibrary(libraryName: String, packMode: LibraryPackMode) {
     includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, packMode = packMode))
   }

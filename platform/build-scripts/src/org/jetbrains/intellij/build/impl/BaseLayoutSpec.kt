@@ -40,6 +40,10 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
     layout.withProjectLibrary(libraryName)
   }
 
+  fun withProjectLibraries(libraryNames: Iterable<String>) {
+    layout.withProjectLibraries(libraryNames)
+  }
+
   fun withProjectLibrary(libraryName: String, outPath: String) {
     layout.includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, packMode = LibraryPackMode.MERGED, outPath = outPath))
   }
