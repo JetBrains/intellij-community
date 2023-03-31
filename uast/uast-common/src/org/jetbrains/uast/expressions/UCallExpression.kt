@@ -22,7 +22,7 @@ interface UCallExpression : UExpression, UResolvable {
   /**
    * Checks if kind corresponds to the expected kind possibly employing additional performance optimizations.
    */
-  fun isOfKind(expectedKind: UastCallKind): Boolean {
+  fun hasKind(expectedKind: UastCallKind): Boolean {
     return kind == expectedKind
   }
 

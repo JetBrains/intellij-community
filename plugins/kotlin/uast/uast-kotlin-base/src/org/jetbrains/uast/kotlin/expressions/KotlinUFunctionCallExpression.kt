@@ -123,14 +123,14 @@ class KotlinUFunctionCallExpression(
         baseResolveProviderService.callKind(sourcePsi)
     }
 
-    override fun isOfKind(expectedKind: UastCallKind): Boolean {
+    override fun hasKind(expectedKind: UastCallKind): Boolean {
         if (expectedKind == UastCallKind.NESTED_ARRAY_INITIALIZER
             && !sourcePsi.isAnnotationArgument) {
             // do not try to resolve arbitrary calls if we only need array initializer inside annotations
             return false
         }
 
-        return super.isOfKind(expectedKind)
+        return super.hasKind(expectedKind)
     }
 
     override val receiver: UExpression? by lz {
