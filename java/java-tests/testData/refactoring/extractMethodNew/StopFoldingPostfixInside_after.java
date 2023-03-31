@@ -2,10 +2,10 @@ public class Devk {
 
     void fr(String... params ) {
         int idx = 0;
-        newMethod(idx, params);
+        newMethod(params, idx);
     }
 
-    private void newMethod(int idx, String[] params) {
+    private void newMethod(String[] params, int idx) {
         System.out.println(params[idx++]);
         System.out.println(params[idx++]);
         System.out.println(params[idx++]);

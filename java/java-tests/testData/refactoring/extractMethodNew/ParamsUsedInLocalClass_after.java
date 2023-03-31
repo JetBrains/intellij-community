@@ -3,11 +3,11 @@ class A {
       final int abc = 0;
       boolean b = false;
 
-        if (newMethod(abc, b)) return;
+        if (newMethod(b, abc)) return;
         System.out.println("");
     }
 
-    private boolean newMethod(final int abc, boolean b) {
+    private boolean newMethod(boolean b, final int abc) {
         if (b) {
           class T {
             void bar() {

@@ -16,10 +16,10 @@ public class Test {
         String bb = "bb";
         myTest(list, aa, bb);
         Collection col = new ArrayList();
-        newMethod(aa, bb, col);
+        newMethod(col, aa, bb);
     }
 
-    private void newMethod(String aa, String bb, Collection col) {
+    private void newMethod(Collection col, String aa, String bb) {
         myTest(col, aa, bb);
     }
 }
