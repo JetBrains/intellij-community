@@ -4,25 +4,27 @@ package com.intellij.openapi.project
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.impl.ProgressSuspender
-import com.intellij.testFramework.ProjectExtension
-import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.ProjectRule
 import com.intellij.util.SystemProperties
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.extension.RegisterExtension
-import org.junit.jupiter.api.fail
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.ValueSource
+import org.junit.After
+import org.junit.Before
+import org.junit.ClassRule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.fail
 
 
-@TestApplication
+@RunWith(JUnit4::class)
 class DumbServiceScanningListenerTest {
   private val ignoreHeadlessKey: String = "intellij.progress.task.ignoreHeadless"
   private val forceDumbQueueTaskKey: String = "idea.force.dumb.queue.tasks"
@@ -32,12 +34,12 @@ class DumbServiceScanningListenerTest {
   private val cs = CoroutineScope(Dispatchers.IO + Job())
 
   companion object {
+    @ClassRule
     @JvmField
-    @RegisterExtension
-    val p = ProjectExtension(runPostStartUpActivities = false, preloadServices = false)
+    val p = ProjectRule(runPostStartUpActivities = false, preloadServices = false)
   }
 
-  @BeforeEach
+  @Before
   fun setUp() {
     prevIgnoreHeadlessVal = SystemProperties.setProperty(ignoreHeadlessKey, "true")
     prevForceDumbQueueTaskVal = SystemProperties.setProperty(forceDumbQueueTaskKey, "true")
@@ -45,16 +47,24 @@ class DumbServiceScanningListenerTest {
     project.service<DumbService>().waitForSmartMode()
   }
 
-  @AfterEach
+  @After
   fun tearDown() {
     cs.cancel("End of test")
     SystemProperties.setProperty(ignoreHeadlessKey, prevIgnoreHeadlessVal)
     SystemProperties.setProperty(forceDumbQueueTaskKey, prevForceDumbQueueTaskVal)
   }
 
-  @ParameterizedTest(name = "With initial scanning state = {0}")
-  @ValueSource(booleans = [true, false])
-  fun `test dumb service suspends when listener started in different initial scanning states`(initialScanningRunState: Boolean) {
+  @Test
+  fun `test dumb service suspends when listener started in different initial scanning states (false)`() {
+    `test dumb service suspends when listener started in different initial scanning states`(false)
+  }
+
+  @Test
+  fun `test dumb service suspends when listener started in different initial scanning states (true)`() {
+    `test dumb service suspends when listener started in different initial scanning states`(true)
+  }
+
+  private fun `test dumb service suspends when listener started in different initial scanning states`(initialScanningRunState: Boolean) {
     val listener = DumbServiceScanningListener(project, cs)
     val tc = DumbServiceScanningListener.TestCompanion(listener)
     val scanningState = MutableStateFlow(initialScanningRunState)
