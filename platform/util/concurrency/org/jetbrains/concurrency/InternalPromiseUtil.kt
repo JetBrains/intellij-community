@@ -17,7 +17,6 @@ internal interface CompletablePromise<T> : Promise<T> {
 internal class MessageError(message: String, isLog: Boolean) : RuntimeException(message) {
   val log: ThreeState = ThreeState.fromBoolean(isLog)
 
-  @Synchronized
   override fun fillInStackTrace() = this
 }
 
