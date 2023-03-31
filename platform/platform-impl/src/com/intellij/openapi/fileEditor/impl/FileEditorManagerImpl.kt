@@ -55,6 +55,7 @@ import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.*
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.roots.AdditionalLibraryRootsListener
@@ -83,6 +84,7 @@ import com.intellij.ui.docking.impl.DockManagerImpl
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.IconUtil
+import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.flow.zipWithNext
@@ -125,6 +127,7 @@ open class FileEditorManagerImpl(
   private val project: Project,
   private val coroutineScope: CoroutineScope,
 ) : FileEditorManagerEx(), PersistentStateComponent<Element?>, Disposable {
+  private val dumbModeFinishedScope = coroutineScope.childScope()
   enum class OpenMode {
     NEW_WINDOW, RIGHT_SPLIT, DEFAULT
   }
@@ -247,7 +250,7 @@ open class FileEditorManagerImpl(
     project.messageBus.connect(coroutineScope).subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
       override fun exitDumbMode() {
         // can happen under write action, so postpone to avoid deadlock on FileEditorProviderManager.getProviders()
-        coroutineScope.launch {
+        dumbModeFinishedScope.launch {
           dumbModeFinished(project)
         }
       }
@@ -2152,6 +2155,25 @@ open class FileEditorManagerImpl(
 
   @ApiStatus.Internal
   open fun forceUseUiInHeadlessMode() = false
+
+  @TestOnly
+  fun waitForAsyncUpdateOnDumbModeFinished() {
+    runBlockingMaybeCancellable {
+      val job = dumbModeFinishedScope.coroutineContext.job
+      while (true) {
+        UIUtil.dispatchAllInvocationEvents()
+        yield()
+
+        val jobs = job.children.toList()
+        if (jobs.isEmpty()) {
+          break
+        }
+
+        UIUtil.dispatchAllInvocationEvents()
+        yield()
+      }
+    }
+  }
 }
 
 @Deprecated("Please use EditorComposite directly")
