@@ -889,5 +889,10 @@ public final class Utils {
     ProcessCanceledWithReasonException(Object reason) {
       this.reason = reason;
     }
+
+    @Override
+    public Throwable fillInStackTrace() {
+      return this;
+    }
   }
 }
