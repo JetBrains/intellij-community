@@ -10,10 +10,10 @@ import com.intellij.lang.jvm.annotation.JvmAnnotationEnumFieldValue
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.util.processExtensionsByClassName
-import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
 import java.util.concurrent.atomic.AtomicBoolean
 
 
@@ -44,7 +44,7 @@ class ApplicationServiceAsStaticFinalFieldInspection : AbstractBaseJavaLocalInsp
   }
 
   private fun isExplicitConstructorCall(field: PsiField): Boolean {
-    return field.getChildOfType<PsiNewExpression>() != null
+    return PsiTreeUtil.getChildOfType(field, PsiNewExpression::class.java) != null;
   }
 
   private fun isLightApplicationService(psiClass: PsiClass): Boolean {
