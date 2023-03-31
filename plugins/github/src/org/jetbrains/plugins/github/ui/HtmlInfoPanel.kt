@@ -1,20 +1,21 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui
 
+import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import java.awt.Cursor
 import javax.swing.event.HyperlinkEvent
 
+// used externally
 class HtmlInfoPanel : Wrapper() {
   private var currentSeverity: Severity? = null
   private var currentLinkActivationListener: ((HyperlinkEvent) -> Unit)? = null
 
-  private val errorPane = HtmlEditorPane().apply {
+  private val errorPane = SimpleHtmlPane().apply {
     removeHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
     addHyperlinkListener { e ->
       if (e.eventType == HyperlinkEvent.EventType.ACTIVATED) {

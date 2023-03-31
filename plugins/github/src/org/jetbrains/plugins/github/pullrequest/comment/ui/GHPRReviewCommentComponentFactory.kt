@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.VisibleForTesting
@@ -9,7 +10,6 @@ import org.jetbrains.plugins.github.pullrequest.comment.GHMarkdownToHtmlConverte
 import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChange
 import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChangeApplier
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
-import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import javax.swing.JComponent
 
 
@@ -45,7 +45,7 @@ class GHPRReviewCommentComponentFactory(private val project: Project) {
   }
 
   private fun createCommentPane(htmlBody: String, maxTextWidth: Int): JComponent =
-    HtmlEditorPane(htmlBody).let {
+    SimpleHtmlPane(htmlBody).let {
       CollaborationToolsUIUtil.wrapWithLimitedSize(it, maxWidth = maxTextWidth)
     }
 

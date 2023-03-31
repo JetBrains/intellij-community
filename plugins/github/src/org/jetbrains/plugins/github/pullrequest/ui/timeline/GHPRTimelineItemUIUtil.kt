@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.ui.HorizontalListPanel
+import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType.FULL
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.build
@@ -16,13 +17,13 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import java.util.*
 import javax.swing.JComponent
+import javax.swing.JEditorPane
 
 internal object GHPRTimelineItemUIUtil {
 
-  fun createTitleTextPane(actor: GHActor, date: Date?): HtmlEditorPane {
+  fun createTitleTextPane(actor: GHActor, date: Date?): JEditorPane {
     val userNameLink = HtmlChunk.link(actor.url, actor.getPresentableName())
       .wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(UIUtil.getLabelForeground())))
       .bold()
@@ -34,7 +35,7 @@ internal object GHPRTimelineItemUIUtil {
           append(JBDateFormat.getFormatter().formatPrettyDateTime(date))
         }
       }.toString()
-    val titleTextPane = HtmlEditorPane(titleText).apply {
+    val titleTextPane = SimpleHtmlPane(titleText).apply {
       foreground = UIUtil.getContextHelpForeground()
     }
     return titleTextPane
@@ -69,7 +70,7 @@ internal object GHPRTimelineItemUIUtil {
 
   //language=HTML
   fun createDescriptionComponent(text: @Nls String, type: StatusMessageType = StatusMessageType.INFO): JComponent {
-    val textPane = HtmlEditorPane(text)
+    val textPane = SimpleHtmlPane(text)
     return StatusMessageComponentFactory.create(textPane, type)
   }
 }

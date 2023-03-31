@@ -1,8 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
+import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.VerticalListPanel
-import com.intellij.collaboration.ui.util.bindText
+import com.intellij.collaboration.ui.util.bindTextHtml
 import com.intellij.collaboration.ui.util.bindVisibility
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -12,18 +13,17 @@ import com.intellij.util.ui.NamedColorUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRCommitsViewModel
-import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import javax.swing.JComponent
 
 internal object GHPRDetailsCommitInfoComponentFactory {
   private const val COMPONENTS_GAP = 8
 
   fun create(scope: CoroutineScope, commitsVm: GHPRCommitsViewModel): JComponent {
-    val title = HtmlEditorPane().apply {
-      bindText(scope, commitsVm.selectedCommit.map { commit -> commit?.messageHeadlineHTML.orEmpty() })
+    val title = SimpleHtmlPane().apply {
+      bindTextHtml(scope, commitsVm.selectedCommit.map { commit -> commit?.messageHeadlineHTML.orEmpty() })
     }
-    val info = HtmlEditorPane().apply {
-      bindText(scope, commitsVm.selectedCommit.map { commit ->
+    val info = SimpleHtmlPane().apply {
+      bindTextHtml(scope, commitsVm.selectedCommit.map { commit ->
         commit ?: return@map ""
         val author = commit.author?.user ?: commitsVm.ghostUser
         HtmlBuilder()
