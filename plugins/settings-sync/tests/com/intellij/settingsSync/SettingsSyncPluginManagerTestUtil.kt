@@ -7,11 +7,19 @@ import com.intellij.settingsSync.plugins.SettingsSyncPluginInstaller
 import java.nio.file.Path
 import java.util.*
 
-class TestPluginInstaller : SettingsSyncPluginInstaller {
-  val installedPluginIds = HashSet<String>()
+class TestPluginInstaller(private val afterInstallPluginCallback: (PluginId) -> Unit) : SettingsSyncPluginInstaller {
+  val installedPluginIds = HashSet<PluginId>()
+
+  // there's no marketplace to find plugin descriptors, so we'll just populate that in advance
+
+  internal fun justInstalledPlugins(): Collection<IdeaPluginDescriptor> =
+    TestPluginDescriptor.ALL.filter { installedPluginIds.contains(it.key) }.values
 
   override fun installPlugins(pluginsToInstall: List<PluginId>) {
-    installedPluginIds += pluginsToInstall.map { it.idString }
+    for (pluginId in pluginsToInstall) {
+      installedPluginIds += pluginId
+      afterInstallPluginCallback.invoke(pluginId)
+    }
   }
 }
 
@@ -27,8 +35,17 @@ data class TestPluginDescriptor(
   val bundled: Boolean = false,
   private var essential: Boolean = false
 ) : IdeaPluginDescriptor {
+  companion object {
+    val ALL = hashMapOf<PluginId, TestPluginDescriptor>()
+  }
+
   private var _enabled = true
-  private val _pluginId = PluginId.getId(idString)
+  private val _pluginId: PluginId
+
+  init {
+    _pluginId = PluginId.getId(idString)
+    ALL[_pluginId] = this
+  }
 
   override fun getPluginId(): PluginId = _pluginId
 
@@ -54,6 +71,7 @@ data class TestPluginDescriptor(
   override fun getReleaseDate(): Date? = null
   override fun getReleaseVersion(): Int = 1
   override fun isLicenseOptional(): Boolean = true
+
   @Deprecated("Deprecated in Java")
   override fun getOptionalDependentPluginIds(): Array<PluginId> = PluginId.EMPTY_ARRAY
   override fun getVendor(): String? = null

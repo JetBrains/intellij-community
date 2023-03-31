@@ -1,8 +1,6 @@
 package com.intellij.settingsSync.plugins
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginStateListener
-import com.intellij.ide.plugins.PluginStateManager
+import com.intellij.ide.plugins.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -172,20 +170,44 @@ internal class SettingsSyncPluginManager : Disposable {
       }
     }
 
-    val pluginManagerProxy = PluginManagerProxy.getInstance()
-
-    invokeAndWaitIfNeeded {
-      LOG.info("Enabling plugins: $pluginsToEnable")
-      pluginManagerProxy.enablePlugins(pluginsToEnable)
-    }
-
-    invokeAndWaitIfNeeded {
-      LOG.info("Disabling plugins: $pluginsToDisable")
-      pluginManagerProxy.disablePlugins(pluginsToDisable)
-    }
+    changePluginsStateAndReport(pluginsToDisable, false)
+    changePluginsStateAndReport(pluginsToEnable, true)
 
     LOG.info("Installing plugins: $pluginsToInstall")
-    pluginManagerProxy.createInstaller().installPlugins(pluginsToInstall)
+    PluginManagerProxy.getInstance().createInstaller().installPlugins(pluginsToInstall)
+  }
+
+  private fun changePluginsStateAndReport(plugins: Set<PluginId>, enable: Boolean) {
+    if (plugins.isEmpty()) {
+      return
+    }
+
+    invokeAndWaitIfNeeded {
+      val actionName = if (enable) "enabling" else "disabling"
+      val notUpdatedPlugins = mutableListOf<String>()
+      try {
+        LOG.info("$actionName plugins: $plugins")
+        if (enable)
+          PluginManagerProxy.getInstance().enablePlugins(plugins)
+        else
+          PluginManagerProxy.getInstance().disablePlugins(plugins)
+      }
+      catch (ex: Exception) {
+        LOG.warn("An exception occurred while processing $actionName plugins: $plugins", ex)
+      }
+      finally {
+        for (pluginId in plugins) {
+          val plugin = PluginManagerCore.getPlugin(pluginId) ?: continue
+          if (plugin.isEnabled != enable) {
+            notUpdatedPlugins.add(plugin.name)
+          }
+        }
+        if (notUpdatedPlugins.size > 0) {
+          //TODO show a popup that restart is required
+          LOG.warn("A restart may be required to finish $actionName the following plugins: $notUpdatedPlugins")
+        }
+      }
+    }
   }
 
   private fun findPlugin(idString: String): IdeaPluginDescriptor? {

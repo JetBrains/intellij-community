@@ -11,9 +11,12 @@ import org.junit.Assert
 import java.util.concurrent.CopyOnWriteArrayList
 
 internal class TestPluginManager : AbstractPluginManagerProxy() {
-  val installer = TestPluginInstaller()
+  val installer = TestPluginInstaller() {
+    addPluginDescriptors(TestPluginDescriptor.ALL[it]!!)
+  }
   private val ownPluginDescriptors = HashMap<PluginId, IdeaPluginDescriptor>()
   private val pluginEnabledStateListeners = CopyOnWriteArrayList<Runnable>()
+  var pluginStateExceptionThrower: ((PluginId) -> Unit)? = null
 
   override fun getPlugins(): Array<IdeaPluginDescriptor> {
     return ownPluginDescriptors.values.toTypedArray()
@@ -26,6 +29,7 @@ internal class TestPluginManager : AbstractPluginManagerProxy() {
           val descriptor = findPlugin(plugin)
           assert(descriptor is TestPluginDescriptor)
           descriptor?.isEnabled = true
+          pluginStateExceptionThrower?.invoke(plugin)
         }
         for (pluginListener in pluginEnabledStateListeners) {
           pluginListener.run()
@@ -38,6 +42,7 @@ internal class TestPluginManager : AbstractPluginManagerProxy() {
           val descriptor = findPlugin(plugin)
           assert(descriptor is TestPluginDescriptor)
           descriptor?.isEnabled = false
+          pluginStateExceptionThrower?.invoke(plugin)
         }
         for (pluginListener in pluginEnabledStateListeners) {
           pluginListener.run()
@@ -64,6 +69,7 @@ internal class TestPluginManager : AbstractPluginManagerProxy() {
     pluginEnabledStateListeners.add(disabledListener)
     Disposer.register(parentDisposable, Disposable {
       pluginEnabledStateListeners.remove(disabledListener)
+      pluginStateExceptionThrower = null
     })
   }
 

@@ -15,7 +15,7 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
     val installedPluginIds = testPluginManager.installer.installedPluginIds
     // NB: quickJump should be skipped because it is disabled
     assertEquals(2, installedPluginIds.size)
-    assertTrue(installedPluginIds.containsAll(listOf(typengo.idString, ideaLight.idString)))
+    assertTrue(installedPluginIds.containsAll(listOf(typengo.pluginId, ideaLight.pluginId)))
   }
 
   fun `test do not install when plugin sync is disabled`() {
@@ -30,7 +30,7 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
       val installedPluginIds = testPluginManager.installer.installedPluginIds
       // IdeaLight is a UI plugin, it doesn't fall under PLUGINS category
       assertEquals(1, installedPluginIds.size)
-      assertTrue(installedPluginIds.contains(ideaLight.idString))
+      assertTrue(installedPluginIds.contains(ideaLight.pluginId))
     }
     finally {
       SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.PLUGINS, true)
@@ -49,7 +49,7 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
       val installedPluginIds = testPluginManager.installer.installedPluginIds
       // IdeaLight is a UI plugin, it doesn't fall under PLUGINS category
       assertEquals(1, installedPluginIds.size)
-      assertTrue(installedPluginIds.contains(typengo.idString))
+      assertTrue(installedPluginIds.contains(typengo.pluginId))
     }
     finally {
       SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.UI, true)
@@ -73,6 +73,8 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
     assertFalse(quickJump.isEnabled)
     assertIdeState {
       quickJump(enabled = false)
+      typengo(enabled = true)
+      ideaLight(enabled = true, category = SettingsCategory.UI)
     }
   }
 
@@ -214,5 +216,49 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
     assertPluginManagerState {
       javascript(enabled = false) // we shouldn't enable it in PluginManager
     }
+  }
+
+  @TestFor(issues = ["IDEA-303581"])
+  fun `test don't fail the sync on plugins' action fail`() {
+    testPluginManager.addPluginDescriptors(git4idea, quickJump.withEnabled(false))
+    pluginManager.updateStateFromIdeOnStart(null)
+
+    testPluginManager.pluginStateExceptionThrower = {
+      if (it == git4idea.pluginId)
+        throw RuntimeException("Some arbitrary exception")
+    }
+
+    val pushedState = state {
+      git4idea(enabled = false)
+      quickJump(enabled = true)
+      typengo(enabled = true)
+    }
+
+    pluginManager.pushChangesToIde(pushedState)
+
+    assertIdeState(pushedState)
+    assertPluginManagerState(pushedState)
+  }
+
+  @TestFor(issues = ["IDEA-303581"])
+  fun `test don't fail the sync when plugin install fails`() {
+    testPluginManager.addPluginDescriptors(git4idea, quickJump.withEnabled(false))
+    pluginManager.updateStateFromIdeOnStart(null)
+
+    testPluginManager.pluginStateExceptionThrower = {
+      if (it == git4idea.pluginId)
+        throw RuntimeException("Some arbitrary exception")
+    }
+
+    val pushedState = state {
+      git4idea(enabled = false)
+      quickJump(enabled = true)
+      typengo(enabled = true)
+    }
+
+    pluginManager.pushChangesToIde(pushedState)
+
+    assertIdeState(pushedState)
+    assertPluginManagerState(pushedState)
   }
 }
