@@ -58,7 +58,6 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
             declaredSourceSets = kotlinSourceSets,
             dependencies = dependencies.map { importingContext.dependencyMapper.getId(it) }.distinct().toTypedArray(),
             output = output,
-            dependencyClasspath = emptyArray(),
             compilerArguments = compilerArguments,
             kotlinTaskProperties = kotlinTaskProperties,
             nativeExtensions = nativeExtensions,
