@@ -5,7 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.BalloonImpl.ShadowBorderProvider
-import com.intellij.ui.scale.ScaleContext.Companion.create
+import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.ui.drawImage
 import java.awt.*
 import java.awt.geom.Rectangle2D
@@ -55,6 +55,8 @@ open class NotificationBalloonShadowBorderProvider protected constructor(@JvmFie
     val bottomRightHeight = bottomRightIcon.iconHeight
     val rightWidth = rightIcon.iconWidth
     val bottomHeight = bottomIcon.iconHeight
+
+    val scaleContext = ScaleContext.create(component)
     drawLine(component = component,
              g = g,
              icon = topIcon,
@@ -62,7 +64,8 @@ open class NotificationBalloonShadowBorderProvider protected constructor(@JvmFie
              start = topLeftWidth,
              end = topRightWidth,
              start2 = 0,
-             horizontal = true)
+             horizontal = true,
+             scaleContext = scaleContext)
     drawLine(component = component,
              g = g,
              icon = bottomIcon,
@@ -70,7 +73,8 @@ open class NotificationBalloonShadowBorderProvider protected constructor(@JvmFie
              start = bottomLeftWidth,
              end = bottomRightWidth,
              start2 = height - bottomHeight,
-             horizontal = true)
+             horizontal = true,
+             scaleContext = scaleContext)
     drawLine(component = component,
              g = g,
              icon = leftIcon,
@@ -78,7 +82,8 @@ open class NotificationBalloonShadowBorderProvider protected constructor(@JvmFie
              start = topLeftHeight,
              end = bottomLeftHeight,
              start2 = 0,
-             horizontal = false)
+             horizontal = false,
+             scaleContext = scaleContext)
     drawLine(component = component,
              g = g,
              icon = rightIcon,
@@ -86,7 +91,8 @@ open class NotificationBalloonShadowBorderProvider protected constructor(@JvmFie
              start = topRightHeight,
              end = bottomRightHeight,
              start2 = width - rightWidth,
-             horizontal = false)
+             horizontal = false,
+             scaleContext = scaleContext)
     topLeftIcon.paintIcon(component, g, 0, 0)
     topRightIcon.paintIcon(component, g, width - topRightWidth, 0)
     bottomRightIcon.paintIcon(component, g, width - bottomRightWidth, height - bottomRightHeight)
@@ -182,10 +188,11 @@ private fun drawLine(component: JComponent,
                      start: Int,
                      end: Int,
                      start2: Int,
-                     horizontal: Boolean) {
+                     horizontal: Boolean,
+                     scaleContext: ScaleContext) {
   val length = fullLength - start - end
   val iconSnapshot = IconLoader.getIconSnapshot(icon)
-  val image = IconLoader.toImage(iconSnapshot, create(component))
+  val image = IconLoader.toImage(iconSnapshot, scaleContext)
   val iconWidth = iconSnapshot.iconWidth
   val iconHeight = iconSnapshot.iconHeight
   if (horizontal) {
