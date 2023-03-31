@@ -24,13 +24,19 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
 
   @Override
   public void runActivity(@NotNull Project project) {
-    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
+    ProgressManager.progress(IndexingBundle.message("progress.text.loading.indexes"));
+    FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     PushedFilePropertiesUpdater propertiesUpdater = PushedFilePropertiesUpdater.getInstance(project);
     if (propertiesUpdater instanceof PushedFilePropertiesUpdaterImpl) {
       ((PushedFilePropertiesUpdaterImpl)propertiesUpdater).initializeProperties();
     }
 
     fileBasedIndex.registerProjectFileSets(project);
+
+    // load indexes while in dumb mode, otherwise someone from read action may hit `FileBasedIndex.getIndex` and hang (IDEA-316697)
+    fileBasedIndex.loadIndexes();
+    fileBasedIndex.waitUntilIndicesAreInitialized();
+
     // schedule dumb mode start after the read action we're currently in
     if (fileBasedIndex instanceof FileBasedIndexImpl) {
       boolean suspended = IndexInfrastructure.isIndexesInitializationSuspended();
