@@ -123,7 +123,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
         }
       }
       if (!future.isDone()) {
-        future.completeExceptionally(AsyncPromise.CANCELED_CE);
+        future.completeExceptionally(AsyncPromise.CANCELED);
       }
       return null;
     }).onError(future::completeExceptionally);

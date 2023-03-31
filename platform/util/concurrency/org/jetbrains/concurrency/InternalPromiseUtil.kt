@@ -3,7 +3,6 @@ package org.jetbrains.concurrency
 
 import com.intellij.util.ThreeState
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.CompletionException
 
 internal fun isHandlerObsolete(handler: Any): Boolean {
   return handler is Obsolescent && handler.isObsolete
@@ -15,9 +14,10 @@ internal interface CompletablePromise<T> : Promise<T> {
 }
 
 @ApiStatus.Internal
-internal class MessageError(message: String, isLog: Boolean) : CompletionException(message) {
+internal class MessageError(message: String, isLog: Boolean) : RuntimeException(message) {
   val log: ThreeState = ThreeState.fromBoolean(isLog)
 
+  @Synchronized
   override fun fillInStackTrace() = this
 }
 
