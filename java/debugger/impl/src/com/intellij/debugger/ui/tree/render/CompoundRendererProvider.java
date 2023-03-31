@@ -41,10 +41,18 @@ public abstract class CompoundRendererProvider {
     return null;
   }
 
-  protected Function<Type, CompletableFuture<Boolean>> getIsApplicableChecker(Project project) {
+  /**
+   * @deprecated use {@link CompoundRendererProvider#getIsApplicableChecker(Project)}
+   */
+  @Deprecated
+  protected Function<Type, CompletableFuture<Boolean>> getIsApplicableChecker() {
     return null;
   }
 
+  protected Function<Type, CompletableFuture<Boolean>> getIsApplicableChecker(Project project) {
+    return getIsApplicableChecker();
+  }
+  
   protected boolean isEnabled() {
     return false;
   }

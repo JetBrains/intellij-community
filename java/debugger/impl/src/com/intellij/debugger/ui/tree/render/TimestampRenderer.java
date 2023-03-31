@@ -3,7 +3,6 @@ package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.openapi.project.Project;
 import com.sun.jdi.LongType;
 import com.sun.jdi.LongValue;
 import com.sun.jdi.Type;
@@ -37,7 +36,7 @@ public class TimestampRenderer extends CompoundRendererProvider {
   }
 
   @Override
-  protected Function<Type, CompletableFuture<Boolean>> getIsApplicableChecker(Project project) {
+  protected Function<Type, CompletableFuture<Boolean>> getIsApplicableChecker() {
     return type -> CompletableFuture.completedFuture(type instanceof LongType);
   }
 }

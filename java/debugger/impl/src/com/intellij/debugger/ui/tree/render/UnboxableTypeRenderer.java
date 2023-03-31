@@ -7,7 +7,6 @@ import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.expression.UnBoxingEvaluator;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
@@ -71,7 +70,7 @@ public abstract class UnboxableTypeRenderer extends CompoundRendererProvider {
   }
 
   @Override
-  protected Function<Type, CompletableFuture<Boolean>> getIsApplicableChecker(Project project) {
+  protected Function<Type, CompletableFuture<Boolean>> getIsApplicableChecker() {
     return type -> CompletableFuture.completedFuture(type instanceof ReferenceType && StringUtil.equals(type.name(), myClassName));
   }
 

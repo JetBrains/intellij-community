@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.debugger.core
 
 import com.intellij.debugger.ui.tree.render.CompoundRendererProvider
-import com.intellij.openapi.project.Project
 import com.sun.jdi.Type
 import org.jetbrains.kotlin.idea.debugger.KotlinClassRenderer
 import java.util.function.Function
@@ -19,7 +18,7 @@ class KotlinClassRendererProvider : CompoundRendererProvider() {
 
     override fun getChildrenRenderer() = classRenderer
 
-    override fun getIsApplicableChecker(project: Project) = Function { type: Type? -> classRenderer.isApplicableAsync(type) }
+    override fun getIsApplicableChecker() = Function { type: Type? -> classRenderer.isApplicableAsync(type) }
 
     override fun isEnabled() = true
 }
