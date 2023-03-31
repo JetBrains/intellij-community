@@ -3,7 +3,7 @@ package com.intellij.util;
 
 import com.intellij.openapi.util.ThreadLocalCachedByteArray;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.util.io.DataOutputStream;
 import net.jpountz.lz4.LZ4Compressor;
 import net.jpountz.lz4.LZ4Factory;
@@ -73,13 +73,14 @@ public final class CompressionUtil {
       byte[] compressedOutputBuffer = spareBufferLocal.getBuffer(compressor.maxCompressedLength(length));
       int compressedSize = compressor.compress(bytes, start, length, compressedOutputBuffer, 0);
       if (compressedSize < length) {
-        DataInputOutputUtil.writeINT(out, -compressedSize);
-        DataInputOutputUtil.writeINT(out, length - compressedSize);
+        int val = -compressedSize;
+        DataInputOutputUtilRt.writeINT(out, val);
+        DataInputOutputUtilRt.writeINT(out, length - compressedSize);
         out.write(compressedOutputBuffer, 0, compressedSize);
         return compressedSize;
       }
     }
-    DataInputOutputUtil.writeINT(out, length);
+    DataInputOutputUtilRt.writeINT(out, length);
     out.write(bytes, start, length);
     return length;
   }
@@ -111,14 +112,14 @@ public final class CompressionUtil {
       System.out.println("Compressed " + requests + " times, size:" + mySizeBeforeCompression + "->" + mySizeAfterCompression + " for " + (l  / 1000000) + "ms");
     }
 
-    DataInputOutputUtil.writeINT(out, compressedSize);
+    DataInputOutputUtilRt.writeINT(out, compressedSize);
     out.write(compressedOutputBuffer, 0, compressedSize);
 
     return compressedSize;
   }
 
   public static byte @NotNull [] readCompressedWithoutOriginalBufferLength(@NotNull DataInput in, int originalBufferLength) throws IOException {
-    int size = DataInputOutputUtil.readINT(in);
+    int size = DataInputOutputUtilRt.readINT(in);
 
     byte[] bytes = spareBufferLocal.getBuffer(size);
     in.readFully(bytes, 0, size);
@@ -139,11 +140,11 @@ public final class CompressionUtil {
   }
 
   public static byte @NotNull [] readCompressed(@NotNull DataInput in) throws IOException {
-    int size = DataInputOutputUtil.readINT(in);
+    int size = DataInputOutputUtilRt.readINT(in);
     if (size < 0) {
       size = -size;
       byte[] bytes = spareBufferLocal.getBuffer(size);
-      int sizeUncompressed = DataInputOutputUtil.readINT(in) + size;
+      int sizeUncompressed = DataInputOutputUtilRt.readINT(in) + size;
       in.readFully(bytes, 0, size);
       byte[] result = new byte[sizeUncompressed];
       int decompressed = decompressor().decompress(bytes, 0, result, 0, sizeUncompressed);
@@ -173,14 +174,14 @@ public final class CompressionUtil {
 
       for (int i=0; i< length;i++) {
         char c = string.charAt(i);
-        DataInputOutputUtil.writeINT(out, c);
+        DataInputOutputUtilRt.writeINT(out, c);
       }
 
       LZ4Compressor compressor = compressor();
       int bytesWritten = bytes.size();
       ByteBuffer dest = ByteBuffer.wrap(spareBufferLocal.getBuffer(compressor.maxCompressedLength(bytesWritten) + 10));
-      DataInputOutputUtil.writeINT(dest, length);
-      DataInputOutputUtil.writeINT(dest, bytesWritten - length);
+      DataInputOutputUtilRt.writeINT(dest, length);
+      DataInputOutputUtilRt.writeINT(dest, bytesWritten - length);
       compressor.compress(ByteBuffer.wrap(bytes.getInternalBuffer(), 0, bytesWritten), dest);
 
       return dest.position() < length * 2 ? Arrays.copyOf(dest.array(), dest.position()) : string;
@@ -195,8 +196,8 @@ public final class CompressionUtil {
     if (compressed instanceof CharSequence) return (CharSequence)compressed;
 
     ByteBuffer buffer = ByteBuffer.wrap((byte[])compressed);
-    int len = DataInputOutputUtil.readINT(buffer);
-    int uncompressedLength = DataInputOutputUtil.readINT(buffer) + len;
+    int len = DataInputOutputUtilRt.readINT(buffer);
+    int uncompressedLength = DataInputOutputUtilRt.readINT(buffer) + len;
 
     ByteBuffer dest = ByteBuffer.wrap(spareBufferLocal.getBuffer(uncompressedLength), 0, uncompressedLength);
     decompressor().decompress(buffer, dest);
@@ -205,7 +206,7 @@ public final class CompressionUtil {
     char[] chars = new char[len];
 
     for (int i=0; i<len; i++) {
-      int c = DataInputOutputUtil.readINT(dest);
+      int c = DataInputOutputUtilRt.readINT(dest);
       chars[i] = (char)c;
     }
     return new String(chars);
