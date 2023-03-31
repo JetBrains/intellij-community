@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystemMarker;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.containers.FileCollectionFactory;
@@ -48,10 +49,6 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
   }
 
   private static void processRecursively(@NotNull VirtualFile fromFile, final boolean dbOnly, @NotNull FileProcessor processor) {
-    if (!(fromFile.getFileSystem() instanceof LocalFileSystem)) {
-      return;
-    }
-
     VfsUtilCore.visitChildrenRecursively(fromFile, new VirtualFileVisitor<Void>() {
       @NotNull @Override
       public Result visitFileEx(@NotNull VirtualFile file) {
@@ -81,6 +78,10 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
     });
   }
 
+  private static boolean isToProcess(@NotNull VirtualFileSystem fileSystem) {
+    return fileSystem instanceof LocalFileSystem && !(fileSystem instanceof TempFileSystemMarker);
+  }
+
   private static boolean isInContentOfOpenedProject(@NotNull final VirtualFile file) {
     // probably need a read action to ensure that the project was not disposed during the iteration over the project list
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
@@ -99,6 +100,9 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
     Set<File> filesChanged = FileCollectionFactory.createCanonicalFileSet();
     Set<File> filesDeleted = FileCollectionFactory.createCanonicalFileSet();
     for (VFileEvent event : events) {
+      if (!isToProcess(event.getFileSystem())) {
+        continue;
+      }
       if (event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent) {
         collectPaths(event.getFile(), filesDeleted);
       }
@@ -116,6 +120,9 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
 
   private static void after(@NotNull List<? extends VFileEvent> events, Set<File> filesDeleted, Set<File> filesChanged) {
     for (VFileEvent event : events) {
+      if (!isToProcess(event.getFileSystem())) {
+        continue;
+      }
       if (event instanceof VFilePropertyChangeEvent) {
         handlePropChange((VFilePropertyChangeEvent)event, filesDeleted, filesChanged);
       }
