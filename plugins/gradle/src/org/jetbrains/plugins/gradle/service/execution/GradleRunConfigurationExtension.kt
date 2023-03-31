@@ -22,8 +22,8 @@ class GradleRunConfigurationExtension
       GradleBundle.message("gradle.tasks.script.debugging"),
       GradleBundle.message("gradle.settings.title"),
       null,
-      GradleRunConfiguration::isScriptDebugEnabled,
-      GradleRunConfiguration::setScriptDebugEnabled
+      GradleRunConfiguration::isDebugServerProcess,
+      GradleRunConfiguration::setDebugServerProcess
     )
     addTag(
       "gradle.tasks.reattach.debug.process.fragment",

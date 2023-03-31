@@ -203,18 +203,6 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     listener.onEnvironmentPrepared(id);
   }
 
-  protected static boolean isGradleScriptDebug(@Nullable GradleExecutionSettings settings) {
-    return Optional.ofNullable(settings)
-      .map(s -> s.getUserData(GradleRunConfiguration.DEBUG_FLAG_KEY))
-      .orElse(false);
-  }
-
-  protected static boolean isDebugAllTasks(@Nullable GradleExecutionSettings settings) {
-    return Optional.ofNullable(settings)
-      .map(s -> s.getUserData(GradleRunConfiguration.DEBUG_ALL_KEY))
-      .orElse(false);
-  }
-
   @Override
   public boolean cancelTask(@NotNull ExternalSystemTaskId id, @NotNull ExternalSystemTaskNotificationListener listener)
     throws ExternalSystemException {
@@ -323,19 +311,20 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
 
   public static void setupGradleScriptDebugging(@NotNull GradleExecutionSettings effectiveSettings) {
     Integer gradleScriptDebugPort = effectiveSettings.getUserData(BUILD_PROCESS_DEBUGGER_PORT_KEY);
-    if (isGradleScriptDebug(effectiveSettings) && gradleScriptDebugPort != null && gradleScriptDebugPort > 0) {
+    if (effectiveSettings.isDebugServerProcess() && gradleScriptDebugPort != null && gradleScriptDebugPort > 0) {
       String debugAddress;
       String dispatchAddr = effectiveSettings.getUserData(DEBUGGER_DISPATCH_ADDR_KEY);
       if (dispatchAddr != null) {
         debugAddress = dispatchAddr + ":" + gradleScriptDebugPort;
-      } else {
+      }
+      else {
         boolean isJdk9orLater = ExternalSystemJdkUtil.isJdk9orLater(effectiveSettings.getJavaHome());
         debugAddress = (isJdk9orLater ? "127.0.0.1:" : "") + gradleScriptDebugPort;
       }
       String jvmOpt = ForkedDebuggerHelper.JVM_DEBUG_SETUP_PREFIX + debugAddress;
       effectiveSettings.withVmOption(jvmOpt);
     }
-    if (isDebugAllTasks(effectiveSettings)) {
+    if (effectiveSettings.isDebugAllEnabled()) {
       effectiveSettings.withVmOption("-Didea.gradle.debug.all=true");
     }
   }

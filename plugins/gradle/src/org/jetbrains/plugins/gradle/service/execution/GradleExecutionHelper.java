@@ -450,15 +450,11 @@ public class GradleExecutionHelper {
       setupTestLauncherArguments(testLauncher, commandLine);
     }
     else if (operation instanceof BuildLauncher buildLauncher) {
-      setupBuildLauncherArguments(buildLauncher, commandLine, isTestExecForced(settings));
+      setupBuildLauncherArguments(buildLauncher, commandLine, settings.isForceTestExecution());
     }
     else {
       operation.withArguments(commandLine.getTokens());
     }
-  }
-
-  private static boolean isTestExecForced(@NotNull GradleExecutionSettings settings) {
-    return ObjectUtils.chooseNotNull(settings.getUserData(GradleRunConfiguration.FORCE_TEST_EXECUTION), false);
   }
 
   private static void setupTestLauncherArguments(

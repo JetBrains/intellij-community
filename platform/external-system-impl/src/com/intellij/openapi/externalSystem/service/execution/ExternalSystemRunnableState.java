@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
@@ -62,6 +63,9 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.getCon
 import static com.intellij.openapi.util.text.StringUtil.nullize;
 
 public class ExternalSystemRunnableState extends UserDataHolderBase implements RunProfileState {
+
+  private static final Logger LOG = Logger.getInstance(ExternalSystemRunnableState.class);
+
   @ApiStatus.Internal
   public static final Key<Integer> DEBUGGER_DISPATCH_PORT_KEY = Key.create("DEBUGGER_DISPATCH_PORT");
   @ApiStatus.Internal
@@ -93,8 +97,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
         port = NetUtils.findAvailableSocketPort();
       }
       catch (IOException e) {
-        ExternalSystemRunConfiguration.LOG
-          .warn("Unexpected I/O exception occurred on attempt to find a free port to use for external system task debugging", e);
+        LOG.warn("Unexpected I/O exception occurred on attempt to find a free port to use for external system task debugging", e);
         port = 0;
       }
     }
@@ -110,14 +113,14 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
 
   @Nullable
   public ServerSocket getForkSocket() {
-    if (myForkSocket == null && !ExternalSystemRunConfiguration.DISABLE_FORK_DEBUGGER) {
+    if (myForkSocket == null && !Boolean.getBoolean("external.system.disable.fork.debugger")) {
       try {
         boolean isRemoteRun = ExternalSystemExecutionAware.getExtensions(mySettings.getExternalSystemId()).stream()
           .anyMatch(aware -> aware.isRemoteRun(myConfiguration, myProject));
         myForkSocket = new ServerSocket(0, 0, findAddress(isRemoteRun));
       }
       catch (IOException e) {
-        ExternalSystemRunConfiguration.LOG.error(e);
+        LOG.error(e);
       }
     }
     return myForkSocket;
@@ -144,7 +147,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
           }
         }
         catch (SocketException e) {
-          ExternalSystemRunConfiguration.LOG.debug("Error while querying interface " + networkInterface + " for IP addresses", e);
+          LOG.debug("Error while querying interface " + networkInterface + " for IP addresses", e);
         }
       }
     }

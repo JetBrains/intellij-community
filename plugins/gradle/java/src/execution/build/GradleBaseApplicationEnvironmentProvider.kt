@@ -131,7 +131,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
                                         runAppTaskName, mainClass, javaExePath, sourceSetName, javaModuleName)
     gradleRunConfiguration.putUserData<String>(GradleTaskManager.INIT_SCRIPT_KEY, initScript)
     gradleRunConfiguration.putUserData<String>(GradleTaskManager.INIT_SCRIPT_PREFIX_KEY, runAppTaskName)
-    (gradleRunConfiguration as GradleRunConfiguration).isScriptDebugEnabled = false
+    (gradleRunConfiguration as GradleRunConfiguration).isDebugServerProcess = false
 
     // reuse all before tasks except 'Make' as it doesn't make sense for delegated run
     gradleRunConfiguration.beforeRunTasks = RunManagerImpl.getInstanceImpl(project).getBeforeRunTasks(runProfile)

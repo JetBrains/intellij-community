@@ -4,8 +4,6 @@ package org.jetbrains.plugins.gradle.service.execution;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.LocatableRunConfigurationOptions;
-import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.LanguageRuntimeType;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
@@ -32,13 +30,15 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.StringJoiner;
 
-public class GradleRunConfiguration extends ExternalSystemRunConfiguration implements SMRunnerConsolePropertiesProvider,
-                                                                                      TargetEnvironmentAwareRunProfile {
+public class GradleRunConfiguration
+  extends ExternalSystemRunConfiguration
+  implements SMRunnerConsolePropertiesProvider,
+             TargetEnvironmentAwareRunProfile {
 
-  public static final String DEBUG_FLAG_NAME = "GradleScriptDebugEnabled";
-  public static final String DEBUG_ALL_NAME = "DebugAllEnabled";
-  public static final String FORCE_TEST_NAME = "ForceTestExec";
-  public static final Key<Boolean> DEBUG_FLAG_KEY = Key.create("DEBUG_GRADLE_SCRIPT");
+  private static final String DEBUG_FLAG_NAME = "GradleScriptDebugEnabled";
+  private static final String DEBUG_ALL_NAME = "DebugAllEnabled";
+  private static final String FORCE_TEST_NAME = "ForceTestExec";
+
   public static final Key<Boolean> DEBUG_ALL_KEY = Key.create("DEBUG_ALL_TASKS");
   public static final Key<Boolean> RUN_TASK_AS_TEST = Key.create("plugins.gradle.enable.test.reporting");
   public static final Key<Boolean> FORCE_TEST_EXECUTION = Key.create("plugins.gradle.force.test.execution");
@@ -47,7 +47,6 @@ public class GradleRunConfiguration extends ExternalSystemRunConfiguration imple
   public static final Key<String> DEBUGGER_PARAMETERS_KEY = Key.create("DEBUGGER_PARAMETERS");
 
   private boolean isDebugAllEnabled = false;
-
   private boolean forceTestExecution = false;
 
   public GradleRunConfiguration(Project project, ConfigurationFactory factory, String name) {
@@ -56,12 +55,22 @@ public class GradleRunConfiguration extends ExternalSystemRunConfiguration imple
     setReattachDebugProcess(true);
   }
 
-  public boolean isScriptDebugEnabled() {
-    return isDebugServerProcess();
+  public boolean isDebugAllEnabled() {
+    return isDebugAllEnabled;
   }
 
-  public void setScriptDebugEnabled(boolean scriptDebugEnabled) {
-    setDebugServerProcess(scriptDebugEnabled);
+  public void setDebugAllEnabled(boolean debugAllEnabled) {
+    isDebugAllEnabled = debugAllEnabled;
+    putUserData(DEBUG_ALL_KEY, debugAllEnabled);
+  }
+
+  public boolean isForceTestExecution() {
+    return forceTestExecution;
+  }
+
+  public void setForceTestExecution(boolean forceTestExecution) {
+    this.forceTestExecution = forceTestExecution;
+    putUserData(FORCE_TEST_EXECUTION, forceTestExecution);
   }
 
   public @NotNull String getRawCommandLine() {
@@ -89,15 +98,6 @@ public class GradleRunConfiguration extends ExternalSystemRunConfiguration imple
     return GradleCommandLine.parse(getRawCommandLine());
   }
 
-  @Nullable
-  @Override
-  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
-    putUserData(DEBUG_FLAG_KEY, Boolean.valueOf(isDebugServerProcess()));
-    putUserData(DEBUG_ALL_KEY, Boolean.valueOf(isDebugAllEnabled));
-    putUserData(FORCE_TEST_EXECUTION, forceTestExecution);
-    return super.getState(executor, env);
-  }
-
   @ApiStatus.Internal
   @Override
   public @NotNull LocatableRunConfigurationOptions getOptions() {
@@ -107,30 +107,16 @@ public class GradleRunConfiguration extends ExternalSystemRunConfiguration imple
   @Override
   public void readExternal(@NotNull Element element) throws InvalidDataException {
     super.readExternal(element);
-    final Element child = element.getChild(DEBUG_FLAG_NAME);
-    if (child != null) {
-      setDebugServerProcess(Boolean.parseBoolean(child.getText()));
-    }
-    final Element debugAll = element.getChild(DEBUG_ALL_NAME);
-    if (debugAll != null) {
-      isDebugAllEnabled = Boolean.parseBoolean(debugAll.getText());
-    }
-
-    final Element forceTestExec = element.getChild(FORCE_TEST_NAME);
-    if (forceTestExec != null) {
-      forceTestExecution = Boolean.parseBoolean(forceTestExec.getText());
-    }
+    readExternalBoolean(element, DEBUG_FLAG_NAME, this::setDebugServerProcess);
+    readExternalBoolean(element, DEBUG_ALL_NAME, this::setDebugAllEnabled);
+    readExternalBoolean(element, FORCE_TEST_NAME, this::setForceTestExecution);
   }
 
   @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
-    final Element debugAll = new Element(DEBUG_ALL_NAME);
-    debugAll.setText(String.valueOf(isDebugAllEnabled));
-    element.addContent(debugAll);
-    final Element forceTestExec = new Element(FORCE_TEST_NAME);
-    forceTestExec.setText(String.valueOf(forceTestExecution));
-    element.addContent(forceTestExec);
+    writeExternalBoolean(element, DEBUG_ALL_NAME, isDebugAllEnabled());
+    writeExternalBoolean(element, FORCE_TEST_NAME, isForceTestExecution());
   }
 
   @NotNull
@@ -154,14 +140,6 @@ public class GradleRunConfiguration extends ExternalSystemRunConfiguration imple
     return GradleIdeManager.getInstance().createTestConsoleProperties(getProject(), executor, this);
   }
 
-  public boolean isDebugAllEnabled() {
-    return isDebugAllEnabled;
-  }
-
-  public void setDebugAllEnabled(boolean debugAllEnabled) {
-    isDebugAllEnabled = debugAllEnabled;
-  }
-
   @Override
   public boolean canRunOn(@NotNull TargetEnvironmentConfiguration target) {
     return true;
@@ -180,13 +158,5 @@ public class GradleRunConfiguration extends ExternalSystemRunConfiguration imple
   @Override
   public void setDefaultTargetName(@Nullable String targetName) {
     getOptions().setRemoteTarget(targetName);
-  }
-
-  public boolean isForceTestExecution() {
-    return forceTestExecution;
-  }
-
-  public void setForceTestExecution(boolean forceTestExecution) {
-    this.forceTestExecution = forceTestExecution;
   }
 }

@@ -27,6 +27,7 @@ import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
+import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemRunConfigurationExtensionManager;
 import com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemRunConfigurationFragmentedEditor;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
@@ -63,17 +64,21 @@ import javax.swing.*;
 import java.io.File;
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.function.Consumer;
 
 public class ExternalSystemRunConfiguration extends LocatableConfigurationBase implements SearchScopeProvidingRunProfile {
+
+  private static final Logger LOG = Logger.getInstance(ExternalSystemRunConfiguration.class);
+
+  private ExternalSystemTaskExecutionSettings mySettings = new ExternalSystemTaskExecutionSettings();
+
   public static final Key<InputStream> RUN_INPUT_KEY = Key.create("RUN_INPUT_KEY");
   public static final Key<Class<? extends BuildProgressListener>> PROGRESS_LISTENER_KEY = Key.create("PROGRESS_LISTENER_KEY");
+  public static final Key<Boolean> DEBUG_SERVER_PROCESS_KEY = ExternalSystemExecutionSettings.DEBUG_SERVER_PROCESS_KEY;
 
-  static final Logger LOG = Logger.getInstance(ExternalSystemRunConfiguration.class);
-  private ExternalSystemTaskExecutionSettings mySettings = new ExternalSystemTaskExecutionSettings();
-  static final boolean DISABLE_FORK_DEBUGGER = Boolean.getBoolean("external.system.disable.fork.debugger");
-
-  public static final String DEBUG_SERVER_PROCESS_NAME = "ExternalSystemDebugServerProcess";
+  private static final String DEBUG_SERVER_PROCESS_NAME = "ExternalSystemDebugServerProcess";
   private static final String REATTACH_DEBUG_PROCESS_NAME = "ExternalSystemReattachDebugProcess";
+
   private boolean isDebugServerProcess = true;
   private boolean isReattachDebugProcess = false;
 
@@ -104,6 +109,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
 
   public void setDebugServerProcess(boolean debugServerProcess) {
     isDebugServerProcess = debugServerProcess;
+    putUserData(DEBUG_SERVER_PROCESS_KEY, debugServerProcess);
   }
 
   @Override
@@ -152,15 +158,8 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     Element e = element.getChild(ExternalSystemTaskExecutionSettings.TAG_NAME);
     if (e != null) {
       mySettings = XmlSerializer.deserialize(e, ExternalSystemTaskExecutionSettings.class);
-
-      final Element debugServerProcess = element.getChild(DEBUG_SERVER_PROCESS_NAME);
-      if (debugServerProcess != null) {
-        isDebugServerProcess = Boolean.parseBoolean(debugServerProcess.getText());
-      }
-      final Element reattachProcess = element.getChild(REATTACH_DEBUG_PROCESS_NAME);
-      if (reattachProcess != null) {
-        isReattachDebugProcess = Boolean.parseBoolean(reattachProcess.getText());
-      }
+      readExternalBoolean(element, DEBUG_SERVER_PROCESS_NAME, this::setDebugServerProcess);
+      readExternalBoolean(element, REATTACH_DEBUG_PROCESS_NAME, this::setReattachDebugProcess);
     }
     ExternalSystemRunConfigurationExtensionManager.readExternal(this, element);
   }
@@ -179,15 +178,24 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
         };
       }
     }));
-
-    final Element debugServerProcess = new Element(DEBUG_SERVER_PROCESS_NAME);
-    debugServerProcess.setText(String.valueOf(isDebugServerProcess));
-    element.addContent(debugServerProcess);
-    final Element reattachProcess = new Element(REATTACH_DEBUG_PROCESS_NAME);
-    reattachProcess.setText(String.valueOf(isReattachDebugProcess));
-    element.addContent(reattachProcess);
-
+    writeExternalBoolean(element, DEBUG_SERVER_PROCESS_NAME, isDebugServerProcess());
+    writeExternalBoolean(element, REATTACH_DEBUG_PROCESS_NAME, isReattachDebugProcess());
     ExternalSystemRunConfigurationExtensionManager.writeExternal(this, element);
+  }
+
+  protected static void readExternalBoolean(@NotNull Element element, @NotNull String name, @NotNull Consumer<Boolean> consumer) {
+    var childElement = element.getChild(name);
+    if (childElement == null) {
+      return;
+    }
+    var value = Boolean.parseBoolean(childElement.getText());
+    consumer.accept(value);
+  }
+
+  protected static void writeExternalBoolean(@NotNull Element element, @NotNull String name, boolean value) {
+    var childElement = new Element(name);
+    childElement.setText(String.valueOf(value));
+    element.addContent(childElement);
   }
 
   @NotNull
@@ -210,13 +218,11 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     return group;
   }
 
-  @Nullable
   @Override
-  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
+  public @Nullable RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
     // DebugExecutor ID  - com.intellij.execution.executors.DefaultDebugExecutor.EXECUTOR_ID
-    String debugExecutorId = ToolWindowId.DEBUG;
-    ExternalSystemRunnableState
-      runnableState = new ExternalSystemRunnableState(mySettings, getProject(), debugExecutorId.equals(executor.getId()), this, env);
+    var isStateForDebug = ToolWindowId.DEBUG.equals(executor.getId());
+    var runnableState = new ExternalSystemRunnableState(mySettings, getProject(), isStateForDebug, this, env);
     copyUserDataTo(runnableState);
     return runnableState;
   }

@@ -139,7 +139,7 @@ abstract class AbstractKotlinTestClassGradleConfigurationProducer
         if (GradleConstants.SYSTEM_ID != configuration.settings.externalSystemId) return false
         if (sourceElement.isNull) return false
 
-        configuration.isScriptDebugEnabled = false
+        configuration.isDebugServerProcess = false
         configuration.isForceTestExecution = true
         return doSetupConfigurationFromContext(configuration, context, sourceElement)
     }
