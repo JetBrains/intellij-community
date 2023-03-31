@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Computable
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
@@ -109,6 +110,7 @@ suspend fun checkCancelled() {
  * @see blockingContextToIndicator
  * @see runBlocking
  */
+@RequiresBackgroundThread(generateAssertion = false)
 @RequiresBlockingContext
 fun <T> runBlockingCancellable(action: suspend CoroutineScope.() -> T): T {
   return runBlockingCancellable(allowOrphan = false, action)
@@ -135,6 +137,7 @@ private fun <T> runBlockingCancellable(allowOrphan: Boolean, action: suspend Cor
  * which makes inner [runBlockingCancellable] a child of the orphan job.
  */
 @Internal
+@RequiresBackgroundThread(generateAssertion = false)
 @RequiresBlockingContext
 fun <T> runBlockingMaybeCancellable(action: suspend CoroutineScope.() -> T): T {
   return runBlockingCancellable(allowOrphan = true, action)
