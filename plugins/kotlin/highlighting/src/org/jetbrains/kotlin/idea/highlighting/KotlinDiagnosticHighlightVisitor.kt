@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService
 import org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressableWarningProblemGroup
+import org.jetbrains.kotlin.idea.statistics.compilationError.KotlinCompilationErrorFrequencyStatsCollector
 import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
@@ -50,9 +51,14 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
 
     private fun analyze(file: KtFile, holder: HighlightInfoHolder) {
         analyze(file) {
-            file.collectDiagnosticsForFile(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS).forEach { diagnostic ->
+            val diagnostics = file.collectDiagnosticsForFile(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+            for (diagnostic in diagnostics) {
                 addDiagnostic(diagnostic, holder)
             }
+            KotlinCompilationErrorFrequencyStatsCollector.recordCompilationErrorsHappened(
+                diagnostics.asSequence().filter { it.severity == Severity.ERROR }.mapNotNull(KtDiagnosticWithPsi<*>::factoryName),
+                file
+            )
         }
     }
 

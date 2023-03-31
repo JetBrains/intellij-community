@@ -15,11 +15,13 @@ import com.intellij.util.CommonProcessors
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.RenderingContext
 import org.jetbrains.kotlin.diagnostics.rendering.parameters
 import org.jetbrains.kotlin.idea.base.fe10.highlighting.suspender.KotlinHighlightingSuspender
 import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightErrors
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
+import org.jetbrains.kotlin.idea.statistics.compilationError.KotlinCompilationErrorFrequencyStatsCollector
 import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
@@ -119,7 +121,8 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
         //cleanUpCalculatingAnnotations(highlightInfoByTextRange)
         if (!shouldHighlightErrors) return
 
-        bindingContext.diagnostics
+        val diagnostics = bindingContext.diagnostics
+        diagnostics
             .filter { diagnostic ->
                 diagnostic.psiElement in elements
                         // has been processed earlier e.g. on-fly or for some reasons it could be duplicated diagnostics for the same factory
@@ -138,6 +141,10 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
             .forEach {
                 annotateDiagnostic(it.key, holder, it.value, highlightInfoByDiagnostic, calculatingInProgress = false)
             }
+        KotlinCompilationErrorFrequencyStatsCollector.recordCompilationErrorsHappened(
+            diagnostics.asSequence().filter { it.severity == Severity.ERROR }.map(Diagnostic::factoryName),
+            file
+        )
     }
 
     private fun annotateDiagnostic(
