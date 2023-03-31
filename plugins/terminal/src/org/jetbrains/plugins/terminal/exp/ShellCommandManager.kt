@@ -6,6 +6,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.jediterm.terminal.Terminal
 import com.jediterm.terminal.TerminalCustomCommandListener
+import java.nio.charset.StandardCharsets
+import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 
@@ -30,8 +32,9 @@ class ShellCommandManager(terminal: Terminal) {
     val currentDirectory = event.getOrNull(2)
     if (command != null && command.startsWith("command=") &&
         currentDirectory != null && currentDirectory.startsWith("current_directory=")) {
-      val commandRun = CommandRun(System.nanoTime(), currentDirectory.removePrefix("current_directory="),
-                                  command.removePrefix("command="))
+      val commandRun = CommandRun(System.nanoTime(),
+                                  decodeHex(currentDirectory.removePrefix("current_directory=")),
+                                  decodeHex(command.removePrefix("command=")))
       this.commandRun = commandRun
       fireCommandStarted(commandRun)
     }
@@ -50,7 +53,7 @@ class ShellCommandManager(terminal: Terminal) {
       }
       val commandRun = this.commandRun
       if (commandRun != null) {
-        val newDirectory = currentDirectoryField.removePrefix("current_directory=")
+        val newDirectory = decodeHex(currentDirectoryField.removePrefix("current_directory="))
         if (commandRun.workingDirectory != newDirectory) {
           fireDirectoryChanged(newDirectory)
         }
@@ -62,7 +65,7 @@ class ShellCommandManager(terminal: Terminal) {
   private fun processCommandHistoryEvent(event: List<String>) {
     val history = event.getOrNull(1)
     if (history != null && history.startsWith("history_string=")) {
-      fireCommandHistoryReceived(history.removePrefix("history_string="))
+      fireCommandHistoryReceived(decodeHex(history.removePrefix("history_string=")))
     }
   }
 
@@ -106,6 +109,11 @@ class ShellCommandManager(terminal: Terminal) {
         listeners.remove(listener)
       }
     }
+  }
+
+  private fun decodeHex(hexStr: String): String {
+    val bytes = HexFormat.of().parseHex(hexStr)
+    return String(bytes, StandardCharsets.UTF_8)
   }
 
   companion object {

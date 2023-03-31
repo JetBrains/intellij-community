@@ -6,16 +6,11 @@ __intellij_encode() {
   # Use LC_CTYPE=C to process text byte-by-byte and
   # LC_COLLATE=C to compare byte-for-byte. Ensure that
   # LC_ALL and LANG are not set so they don't interfere.
-  builtin local i ch hexch LC_CTYPE=C LC_COLLATE=C LC_ALL= LANG=
+  builtin local i hexch LC_CTYPE=C LC_COLLATE=C LC_ALL= LANG=
   builtin local value="$1"
   for ((i = 1; i <= ${#value}; ++i)); do
-    ch="$value[i]"
-    if [[ "$ch" =~ [/._~A-Za-z0-9-] ]]; then
-      out+="$ch"
-    else
-      builtin printf -v hexch "%02X" "'$ch"
-      out+="%$hexch"
-    fi
+    builtin printf -v hexch "%02X" "'$value[i]"
+    out+="$hexch"
   done
   builtin print -r "$out"
 }
