@@ -189,7 +189,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       val textPane = HtmlEditorPane()
       fun HtmlEditorPane.updateText(body: @Nls String) {
         val text = body.takeIf { it.isNotBlank() }?.convertToHtml(project) ?: noDescriptionHtmlText
-        setBody(text)
+        setHtmlBody(text)
       }
       textPane.updateText(details.body)
 

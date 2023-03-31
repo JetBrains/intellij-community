@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.ui.util
 
 import com.intellij.collaboration.ui.HtmlEditorPaneUtil
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane
+import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.ui.ExtendableHTMLViewFactory
 import com.intellij.util.ui.HTMLEditorKitBuilder
@@ -19,6 +20,6 @@ internal class HtmlEditorPane() : BaseHtmlEditorPane() {
   }
 
   constructor(@NlsSafe body: String) : this() {
-    setBody(body)
+    setHtmlBody(body)
   }
 }

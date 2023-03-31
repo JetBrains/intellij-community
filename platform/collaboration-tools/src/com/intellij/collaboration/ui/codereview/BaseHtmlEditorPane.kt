@@ -25,6 +25,8 @@ open class BaseHtmlEditorPane : JEditorPane() {
     caret.updatePolicy = DefaultCaret.NEVER_UPDATE
   }
 
+  @Deprecated(message = "Deprecated in favour of a generic extension on JEditorPane",
+              replaceWith = ReplaceWith("setHtmlBody(body)", "com.intellij.collaboration.ui.setHtmlBody"))
   fun setBody(@Nls body: String) {
     if (body.isEmpty()) {
       text = ""

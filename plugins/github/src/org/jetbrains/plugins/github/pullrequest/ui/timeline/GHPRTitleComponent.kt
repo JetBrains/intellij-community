@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.CodeReviewTitleUIUtil
+import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.util.ui.JBFont
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -22,7 +23,7 @@ internal object GHPRTitleComponent {
         url = model.value.url,
         tooltip = GithubBundle.message("open.on.github.action")
       )
-      titlePane.setBody(title)
+      titlePane.setHtmlBody(title)
     }
     return titlePane
   }
