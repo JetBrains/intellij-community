@@ -3,8 +3,7 @@ package com.intellij.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.ui.popup.Balloon
-import com.intellij.openapi.util.IconLoader.getIconSnapshot
-import com.intellij.openapi.util.IconLoader.toImage
+import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.BalloonImpl.ShadowBorderProvider
 import com.intellij.ui.scale.ScaleContext.Companion.create
 import com.intellij.util.ui.drawImage
@@ -27,11 +26,16 @@ open class NotificationBalloonShadowBorderProvider protected constructor(@JvmFie
                                                                          private val topRightIcon: Icon,
                                                                          private val bottomLeftIcon: Icon,
                                                                          private val bottomRightIcon: Icon) : ShadowBorderProvider {
-  constructor(fillColor: Color, borderColor: Color) : this(fillColor, borderColor,
-                                                           AllIcons.Ide.Shadow.Top, AllIcons.Ide.Shadow.Left, AllIcons.Ide.Shadow.Bottom,
-                                                           AllIcons.Ide.Shadow.Right,
-                                                           AllIcons.Ide.Shadow.TopLeft, AllIcons.Ide.Shadow.TopRight,
-                                                           AllIcons.Ide.Shadow.BottomLeft, AllIcons.Ide.Shadow.BottomRight)
+  constructor(fillColor: Color, borderColor: Color) : this(fillColor = fillColor,
+                                                           borderColor = borderColor,
+                                                           topIcon = AllIcons.Ide.Shadow.Top,
+                                                           leftIcon = AllIcons.Ide.Shadow.Left,
+                                                           bottomIcon = AllIcons.Ide.Shadow.Bottom,
+                                                           rightIcon = AllIcons.Ide.Shadow.Right,
+                                                           topLeftIcon = AllIcons.Ide.Shadow.TopLeft,
+                                                           topRightIcon = AllIcons.Ide.Shadow.TopRight,
+                                                           bottomLeftIcon = AllIcons.Ide.Shadow.BottomLeft,
+                                                           bottomRightIcon = AllIcons.Ide.Shadow.BottomRight)
 
   override fun getInsets(): Insets {
     @Suppress("UseDPIAwareInsets")
@@ -51,10 +55,38 @@ open class NotificationBalloonShadowBorderProvider protected constructor(@JvmFie
     val bottomRightHeight = bottomRightIcon.iconHeight
     val rightWidth = rightIcon.iconWidth
     val bottomHeight = bottomIcon.iconHeight
-    drawLine(component, g, topIcon, width, topLeftWidth, topRightWidth, 0, true)
-    drawLine(component, g, bottomIcon, width, bottomLeftWidth, bottomRightWidth, height - bottomHeight, true)
-    drawLine(component, g, leftIcon, height, topLeftHeight, bottomLeftHeight, 0, false)
-    drawLine(component, g, rightIcon, height, topRightHeight, bottomRightHeight, width - rightWidth, false)
+    drawLine(component = component,
+             g = g,
+             icon = topIcon,
+             fullLength = width,
+             start = topLeftWidth,
+             end = topRightWidth,
+             start2 = 0,
+             horizontal = true)
+    drawLine(component = component,
+             g = g,
+             icon = bottomIcon,
+             fullLength = width,
+             start = bottomLeftWidth,
+             end = bottomRightWidth,
+             start2 = height - bottomHeight,
+             horizontal = true)
+    drawLine(component = component,
+             g = g,
+             icon = leftIcon,
+             fullLength = height,
+             start = topLeftHeight,
+             end = bottomLeftHeight,
+             start2 = 0,
+             horizontal = false)
+    drawLine(component = component,
+             g = g,
+             icon = rightIcon,
+             fullLength = height,
+             start = topRightHeight,
+             end = bottomRightHeight,
+             start2 = width - rightWidth,
+             horizontal = false)
     topLeftIcon.paintIcon(component, g, 0, 0)
     topRightIcon.paintIcon(component, g, width - topRightWidth, 0)
     bottomRightIcon.paintIcon(component, g, width - bottomRightWidth, height - bottomRightHeight)
@@ -152,8 +184,8 @@ private fun drawLine(component: JComponent,
                      start2: Int,
                      horizontal: Boolean) {
   val length = fullLength - start - end
-  val iconSnapshot = getIconSnapshot(icon)
-  val image = toImage(iconSnapshot, create(component))
+  val iconSnapshot = IconLoader.getIconSnapshot(icon)
+  val image = IconLoader.toImage(iconSnapshot, create(component))
   val iconWidth = iconSnapshot.iconWidth
   val iconHeight = iconSnapshot.iconHeight
   if (horizontal) {
