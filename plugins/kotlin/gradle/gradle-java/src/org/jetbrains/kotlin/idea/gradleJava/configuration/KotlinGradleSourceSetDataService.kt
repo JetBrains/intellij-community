@@ -54,7 +54,6 @@ import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSetData
 import org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger
 import org.jetbrains.kotlin.idea.gradleJava.inspections.getResolvedVersionByModuleData
 import org.jetbrains.kotlin.idea.gradleJava.migrateNonJvmSourceFolders
-import org.jetbrains.kotlin.idea.gradleTooling.CompilerArgumentsBySourceSet
 import org.jetbrains.kotlin.library.KLIB_FILE_EXTENSION
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.impl.isCommon
@@ -366,7 +365,7 @@ fun configureFacetWithCompilerArguments(
     applyCompilerArgumentsToFacet(parsedArguments, kotlinFacet, modelsProvider)
 
     if (parsedArguments is K2JVMCompilerArguments) run {
-        adjustClasspath(kotlinFacet, parsedArguments.classpath?.split(File.pathSeparator) ?: return@run)
+        adjustClasspath(kotlinFacet, parsedArguments.classpath?.toSet() ?: return@run)
     }
 }
 
@@ -383,11 +382,11 @@ private fun getAdditionalVisibleModuleNames(moduleNode: DataNode<ModuleData>, so
         .toSet()
 }
 
-internal fun adjustClasspath(kotlinFacet: KotlinFacet, dependencyClasspath: List<String>) {
+internal fun adjustClasspath(kotlinFacet: KotlinFacet, dependencyClasspath: Set<String>) {
     if (dependencyClasspath.isEmpty()) return
     val arguments = kotlinFacet.configuration.settings.compilerArguments as? K2JVMCompilerArguments ?: return
-    val fullClasspath = arguments.classpath?.split(File.pathSeparator) ?: emptyList()
+    val fullClasspath = arguments.classpath.orEmpty()
     if (fullClasspath.isEmpty()) return
-    val newClasspath = fullClasspath - dependencyClasspath
-    arguments.classpath = if (newClasspath.isNotEmpty()) newClasspath.joinToString(File.pathSeparator) else null
+    val newClasspath = fullClasspath.toSet() - dependencyClasspath.toSet()
+    arguments.classpath = if (newClasspath.isNotEmpty()) newClasspath.toTypedArray() else null
 }
