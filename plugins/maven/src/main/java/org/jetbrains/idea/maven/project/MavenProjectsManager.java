@@ -1000,7 +1000,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     MavenSyncConsole console = getSyncConsole();
     console.startImport(myProgressListener, spec);
     StructuredIdeActivity activity = MavenImportStats.startImportActivity(myProject);
-    myMavenProjectResolver.clearPluginCache();
     fireImportAndResolveScheduled(spec);
     AsyncPromise<List<Module>> promise = scheduleResolve();
     promise.onProcessed(m -> {
