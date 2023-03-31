@@ -12,6 +12,7 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.serialization.PropertyMapping
+import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinImportingDiagnostic
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.Serializable
@@ -49,7 +50,7 @@ class KotlinGradleSourceSetData @PropertyMapping("sourceSetName") constructor(va
 
     var kotlinPluginVersion: String? = null
 
-    var compilerArguments: List<String>? = null
+    var compilerArguments: CommonCompilerArguments? = null
     lateinit var additionalVisibleSourceSets: Set<String>
     override var implementedModuleNames: List<String> = emptyList()
 
