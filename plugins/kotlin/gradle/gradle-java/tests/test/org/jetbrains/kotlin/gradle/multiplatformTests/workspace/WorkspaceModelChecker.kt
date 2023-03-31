@@ -87,7 +87,12 @@ abstract class WorkspaceModelChecker<V : Any>(private val respectOrder: Boolean)
             testClassifier
         )
 
-        val actualWorkspaceModelText = printModel(project, actualTestProjectRoot, testConfiguration, kotlinPluginVersion)
+        val actualProjectReport = buildProjectReport(project, actualTestProjectRoot, testConfiguration, kotlinPluginVersion)
+        val expectedProjectReport = WorkspaceModelTestReportParser.parse(expectedTestDataFile.readText())
+
+        val correctedReport = actualProjectReport.applyCommentsFrom(expectedProjectReport)
+
+        val actualWorkspaceModelText = correctedReport.render(respectOrder)
 
         // NB: KotlinTestUtils handle non-existent expectedFile fine
         KotlinTestUtils.assertEqualsToFile(
@@ -96,21 +101,19 @@ abstract class WorkspaceModelChecker<V : Any>(private val respectOrder: Boolean)
         ) { sanitizeExpectedFile(it) }
     }
 
-    private fun printModel(
+    private fun buildProjectReport(
         project: Project,
         projectRoot: File,
         testConfiguration: TestConfiguration,
         kotlinGradlePluginVersion: KotlinToolingVersion
-    ): String {
+    ): ProjectReport {
         val context = PrinterContext(project, projectRoot, testConfiguration, kotlinGradlePluginVersion)
 
         val moduleReports = context.buildModulesReport()
-        val projectReport = ProjectReport(
+        return ProjectReport(
             moduleReports,
             renderModuleFilteringConfiguration(testConfiguration) + renderTestConfigurationDescription(testConfiguration)
         )
-
-        return projectReport.render(respectOrder)
     }
 
     private fun PrinterContext.buildModulesReport(): List<ModuleReport> {
