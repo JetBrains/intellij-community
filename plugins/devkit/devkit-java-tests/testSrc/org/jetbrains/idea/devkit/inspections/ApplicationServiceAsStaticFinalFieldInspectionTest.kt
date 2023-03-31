@@ -108,6 +108,12 @@ class ApplicationServiceAsStaticFinalFieldInspectionTest : PluginModuleTestCase(
     myFixture.testHighlighting("RegisteredServicesInFields.java", *getServiceDeclarationPaths("Registered"))
   }
 
+  fun testExplicitConstructorCallInFields() {
+    setPluginXml("plugin.xml")
+    myFixture.testHighlighting("ConstructorCallInFields.java", *getServiceDeclarationPaths("Registered"))
+  }
+
+
   fun testLightServicesInFields() {
     myFixture.testHighlighting("LightServicesInFields.java", *getServiceDeclarationPaths("LightService"))
   }

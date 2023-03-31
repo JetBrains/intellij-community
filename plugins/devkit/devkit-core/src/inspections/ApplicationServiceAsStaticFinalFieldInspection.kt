@@ -13,6 +13,7 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.util.processExtensionsByClassName
+import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
 import java.util.concurrent.atomic.AtomicBoolean
 
 
@@ -28,6 +29,8 @@ class ApplicationServiceAsStaticFinalFieldInspection : AbstractBaseJavaLocalInsp
       override fun visitField(field: PsiField) {
         if (!(field.hasModifier(JvmModifier.STATIC) && field.hasModifier(JvmModifier.FINAL))) return
 
+        if (isExplicitConstructorCall(field)) return
+
         val fieldTypeClass = PsiTypesUtil.getPsiClass(field.type) ?: return
         val classFqn = fieldTypeClass.qualifiedName ?: return
 
@@ -38,6 +41,10 @@ class ApplicationServiceAsStaticFinalFieldInspection : AbstractBaseJavaLocalInsp
       }
 
     }
+  }
+
+  private fun isExplicitConstructorCall(field: PsiField): Boolean {
+    return field.getChildOfType<PsiNewExpression>() != null
   }
 
   private fun isLightApplicationService(psiClass: PsiClass): Boolean {

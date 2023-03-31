@@ -317,7 +317,7 @@
 
     <localInspection language="JAVA" shortName="ApplicationServiceAsStaticFinalField" groupPathKey="inspections.group.path"
                      key="inspections.application.service.as.static.final.field.display.name" groupKey="inspections.group.code"
-                     enabledByDefault="false" level="WARNING"
+                     enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.ApplicationServiceAsStaticFinalFieldInspection"/>
 
     <localInspection language="UAST" enabledByDefault="false" level="ERROR"
