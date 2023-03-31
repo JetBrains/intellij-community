@@ -2,17 +2,16 @@
 package com.jetbrains.python.ui
 
 import com.intellij.toolWindow.DefaultToolWindowLayoutBuilder
-import com.intellij.toolWindow.IntellijPlatformDefaultToolWindowLayoutProvider
+import com.intellij.toolWindow.DefaultToolWindowLayoutExtension
 
-open class PyToolWindowLayoutProvider : IntellijPlatformDefaultToolWindowLayoutProvider() {
-  override fun configureBottomVisibleOnLargeStripe(builder: DefaultToolWindowLayoutBuilder) {
-    super.configureBottomVisibleOnLargeStripe(builder)
-    builder.add("Python Packages", 0.1f)
-    builder.add("Python Console", 0.1f)
+open class PyToolWindowLayoutProvider : DefaultToolWindowLayoutExtension {
+  override fun buildV1Layout(builder: DefaultToolWindowLayoutBuilder) {
   }
 
-  override fun configureRightVisibleOnLargeStripe(builder: DefaultToolWindowLayoutBuilder) {
-    super.configureRightVisibleOnLargeStripe(builder)
-    builder.add("SciView", 0.1f)
+  override fun buildV2Layout(builder: DefaultToolWindowLayoutBuilder) {
+    builder.right.addOrUpdate("SciView") { weight = 0.1f }
+    builder.bottom.addOrUpdate("Python Packages") { weight = 0.1f }
+    builder.bottom.addOrUpdate("Python Console") { weight = 0.1f }
   }
+
 }
