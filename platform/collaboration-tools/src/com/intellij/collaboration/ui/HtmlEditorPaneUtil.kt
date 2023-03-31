@@ -30,7 +30,9 @@ fun SimpleHtmlPane(additionalStyleSheet: StyleSheet? = null, @Language("HTML") b
   JEditorPane().apply {
     editorKit = HTMLEditorKitBuilder().withViewFactoryExtensions(
       ExtendableHTMLViewFactory.Extensions.WORD_WRAP,
-      HtmlEditorPaneUtil.CONTENT_TOOLTIP
+      HtmlEditorPaneUtil.CONTENT_TOOLTIP,
+      HtmlEditorPaneUtil.INLINE_ICON_EXTENSION,
+      HtmlEditorPaneUtil.IMAGES_EXTENSION
     ).apply {
       if (additionalStyleSheet != null) {
         val defaultStyleSheet = StyleSheetUtil.getDefaultStyleSheet()
