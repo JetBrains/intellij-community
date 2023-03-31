@@ -735,7 +735,9 @@ public class SwitchBlockHighlightingModel {
       PsiCaseLabelElementList list = ObjectUtils.tryCast(element.getParent(), PsiCaseLabelElementList.class);
       if (list == null || list.getElementCount() != 2) return false;
       PsiCaseLabelElement[] elements = list.getElements();
-      return ExpressionUtils.isNullLiteral(elements[0]) && elements[1] instanceof PsiDefaultCaseLabelElement;
+      return elements[0] instanceof PsiExpression expr &&
+             ExpressionUtils.isNullLiteral(expr) &&
+             elements[1] instanceof PsiDefaultCaseLabelElement;
     }
 
     @Override
@@ -867,10 +869,14 @@ public class SwitchBlockHighlightingModel {
         return null;
       }
       if (elements.length == 2) {
-        if (firstElement instanceof PsiDefaultCaseLabelElement && ExpressionUtils.isNullLiteral(elements[1])) {
+        if (firstElement instanceof PsiDefaultCaseLabelElement &&
+            elements[1] instanceof PsiExpression expr &&
+            ExpressionUtils.isNullLiteral(expr)) {
           return new CaseLabelCombinationProblem(firstElement, "invalid.default.and.null.order");
         }
-        if (ExpressionUtils.isNullLiteral(firstElement) && elements[1] instanceof PsiDefaultCaseLabelElement) {
+        if (firstElement instanceof PsiExpression expr &&
+            ExpressionUtils.isNullLiteral(expr) &&
+            elements[1] instanceof PsiDefaultCaseLabelElement) {
           return null;
         }
       }
@@ -884,7 +890,7 @@ public class SwitchBlockHighlightingModel {
           defaultIndex = i;
           break;
         }
-        else if (ExpressionUtils.isNullLiteral(elements[i])) {
+        else if (elements[i] instanceof PsiExpression expr && ExpressionUtils.isNullLiteral(expr)) {
           nullIndex = i;
           break;
         }

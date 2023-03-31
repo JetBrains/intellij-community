@@ -231,7 +231,8 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
   }
 
   private static boolean hasNullCase(@NotNull List<SwitchStatementBranch> allBranches) {
-    return ContainerUtil.or(allBranches, br -> ContainerUtil.or(br.getCaseElements(), ExpressionUtils::isNullLiteral));
+    return ContainerUtil.or(allBranches, br -> ContainerUtil.or(br.getCaseElements(), el -> el instanceof PsiExpression expr &&
+                                                                                            ExpressionUtils.isNullLiteral(expr)));
   }
 
   @NotNull
