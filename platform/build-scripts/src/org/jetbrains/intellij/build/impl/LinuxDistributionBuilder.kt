@@ -23,6 +23,7 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.PosixFilePermissions
 import kotlin.io.path.name
+import kotlin.io.path.nameWithoutExtension
 import kotlin.time.Duration.Companion.minutes
 
 class LinuxDistributionBuilder(override val context: BuildContext,
@@ -282,8 +283,9 @@ class LinuxDistributionBuilder(override val context: BuildContext,
           workingDir = snapDir,
           timeout = context.options.snapDockerBuildTimeoutMin.minutes,
         )
-        moveFileToDir(resultDir.resolve(snapArtifact), context.paths.artifactDir)
-        context.notifyArtifactBuilt(context.paths.artifactDir.resolve(snapArtifact))
+        val snapArtifactPath = moveFileToDir(resultDir.resolve(snapArtifact), context.paths.artifactDir)
+        context.notifyArtifactBuilt(snapArtifactPath)
+        checkExecutablePermissions(unSquashSnap(snapArtifactPath), root = "", includeRuntime = true, arch = arch)
       }
   }
 
@@ -332,6 +334,15 @@ class LinuxDistributionBuilder(override val context: BuildContext,
 
     copyInspectScript(context, distBinDir)
   }
+
+  private suspend fun unSquashSnap(snap: Path): Path {
+    val unSquashed = context.paths.tempDir.resolve("unSquashed-${snap.nameWithoutExtension}")
+    NioFiles.deleteRecursively(unSquashed)
+    Files.createDirectories(unSquashed)
+    runProcess(listOf("unsquashfs", "$snap"), workingDir = unSquashed, inheritOut = true)
+    return unSquashed.resolve("squashfs-root")
+  }
+
 }
 
 private const val NO_JBR_SUFFIX = "-no-jbr"
