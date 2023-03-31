@@ -3,10 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create
 
 import com.intellij.CommonBundle
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
-import com.intellij.collaboration.ui.CollaborationToolsUIUtil
-import com.intellij.collaboration.ui.HorizontalListPanel
-import com.intellij.collaboration.ui.ListenableProgressIndicator
-import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.*
 import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
@@ -329,10 +326,10 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
   private fun createErrorAlreadyExistsLabel(loadingModel: GHSimpleLoadingModel<GHPRIdentifier?>): JComponent {
     val iconLabel = JLabel(AllIcons.Ide.FatalError)
     val textPane = HtmlEditorPane().apply {
-      setBody(HtmlBuilder()
-                .append(GithubBundle.message("pull.request.create.already.exists"))
-                .appendLink("VIEW", GithubBundle.message("pull.request.create.already.exists.view"))
-                .toString())
+      setHtmlBody(HtmlBuilder()
+                    .append(GithubBundle.message("pull.request.create.already.exists"))
+                    .appendLink("VIEW", GithubBundle.message("pull.request.create.already.exists.view"))
+                    .toString())
       removeHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
       addHyperlinkListener(object : HyperlinkAdapter() {
         override fun hyperlinkActivated(e: HyperlinkEvent) {
@@ -374,7 +371,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
         panel.isVisible = commits == 0 && loadingModel.error == null
         val base = directionModel.baseBranch?.name.orEmpty()
         val head = directionModel.headBranch?.name.orEmpty()
-        textPane.setBody(GithubBundle.message("pull.request.create.no.changes", base, head))
+        textPane.setHtmlBody(GithubBundle.message("pull.request.create.no.changes", base, head))
       }
 
       commitsCountModel.addAndInvokeListener { update() }
@@ -393,7 +390,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
 
       fun update() {
         panel.isVisible = loadingModel.error != null
-        textPane.setBody(prefix?.plus(" ").orEmpty() + loadingModel.error?.message.orEmpty())
+        textPane.setHtmlBody(prefix?.plus(" ").orEmpty() + loadingModel.error?.message.orEmpty())
       }
       loadingModel.addStateChangeListener(object : GHLoadingModel.StateChangeListener {
         override fun onLoadingStarted() = update()

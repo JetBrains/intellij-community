@@ -6,6 +6,7 @@ import com.intellij.collaboration.ui.codereview.CodeReviewTitleUIUtil
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.collaboration.ui.codereview.details.RequestState
 import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
+import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.collaboration.ui.util.bindText
 import com.intellij.collaboration.ui.util.bindTextHtml
 import com.intellij.collaboration.ui.util.bindVisibility
@@ -44,7 +45,7 @@ internal object GHPRTitleComponent {
         url = model.value.url,
         tooltip = GithubBundle.message("open.on.github.action")
       )
-      titlePane.setBody(title)
+      titlePane.setHtmlBody(title)
     }
     return titlePane
   }
