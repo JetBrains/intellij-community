@@ -29,6 +29,7 @@ import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PersistentHashMapValueStorage;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.*;
 
@@ -330,17 +331,23 @@ final class FSRecordsImpl {
   }
 
   private void markAsDeletedRecursively(int fileId) throws IOException {
-    for (int childId : listIds(fileId)) {
-      markAsDeletedRecursively(childId);
+    IntList ids = new IntArrayList();
+    ids.add(fileId);
+    for (int i=0; i<ids.size();i++) {
+      int id = ids.getInt(i);
+      ids.addElements(ids.size(), listIds(id));
     }
+    // delete children first
+    for (int i = ids.size() - 1; i >= 0; i--) {
+      int id = ids.getInt(i);
+      int nameId = connection.getRecords().getNameId(id);
+      if (PersistentFS.isDirectory(getFlags(id))) {
+        treeAccessor.deleteDirectoryRecord(id);
+      }
+      recordAccessor.markRecordAsDeleted(id);
 
-    int nameId = connection.getRecords().getNameId(fileId);
-    if (PersistentFS.isDirectory(getFlags(fileId))) {
-      treeAccessor.deleteDirectoryRecord(fileId);
+      invertedNameIndex.updateFileName(id, NULL_NAME_ID, nameId);
     }
-    recordAccessor.markRecordAsDeleted(fileId);
-
-    invertedNameIndex.updateFileName(fileId, NULL_NAME_ID, nameId);
     invertedNameIndexModCount.incrementAndGet();
   }
 
