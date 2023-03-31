@@ -8,7 +8,6 @@ import com.intellij.ui.Graphics2DDelegate
 import com.intellij.ui.HyperlinkAdapter
 import com.intellij.util.ui.*
 import org.intellij.lang.annotations.Language
-import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.image.ImageObserver
 import javax.swing.JEditorPane
@@ -26,7 +25,7 @@ import javax.swing.text.html.StyleSheet
  * Read-only editor pane intended to display simple HTML snippet
  */
 @Suppress("FunctionName")
-fun SimpleHtmlPane(additionalStyleSheet: StyleSheet? = null, @Language("HTML") body: @Nls String? = null): JEditorPane =
+fun SimpleHtmlPane(additionalStyleSheet: StyleSheet? = null, @Language("HTML") body: String? = null): JEditorPane =
   JEditorPane().apply {
     editorKit = HTMLEditorKitBuilder().withViewFactoryExtensions(
       ExtendableHTMLViewFactory.Extensions.WORD_WRAP,
@@ -60,13 +59,14 @@ fun SimpleHtmlPane(additionalStyleSheet: StyleSheet? = null, @Language("HTML") b
  * Read-only editor pane intended to display simple HTML snippet
  */
 @Suppress("FunctionName")
-fun SimpleHtmlPane(@Language("HTML") body: @Nls String? = null): JEditorPane = SimpleHtmlPane(null, body)
+fun SimpleHtmlPane(@Language("HTML") body: String? = null): JEditorPane = SimpleHtmlPane(null, body)
 
-fun JEditorPane.setHtmlBody(@Language("HTML") @Nls body: String) {
+fun JEditorPane.setHtmlBody(@Language("HTML") body: String) {
   if (body.isEmpty()) {
     text = ""
   }
   else {
+    @Suppress("HardCodedStringLiteral")
     text = "<html><body>$body</body></html>"
   }
   setSize(Int.MAX_VALUE / 2, Int.MAX_VALUE / 2)
