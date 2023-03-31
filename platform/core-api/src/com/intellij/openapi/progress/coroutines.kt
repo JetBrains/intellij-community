@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Computable
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -108,6 +109,7 @@ suspend fun checkCancelled() {
  * @see blockingContextToIndicator
  * @see runBlocking
  */
+@RequiresBlockingContext
 fun <T> runBlockingCancellable(action: suspend CoroutineScope.() -> T): T {
   return runBlockingCancellable(allowOrphan = false, action)
 }
@@ -133,6 +135,7 @@ private fun <T> runBlockingCancellable(allowOrphan: Boolean, action: suspend Cor
  * which makes inner [runBlockingCancellable] a child of the orphan job.
  */
 @Internal
+@RequiresBlockingContext
 fun <T> runBlockingMaybeCancellable(action: suspend CoroutineScope.() -> T): T {
   return runBlockingCancellable(allowOrphan = true, action)
 }
@@ -143,6 +146,7 @@ fun <T> runBlockingMaybeCancellable(action: suspend CoroutineScope.() -> T): T {
   "Use `runBlockingCancellable` instead."
 )
 @Internal
+@RequiresBlockingContext
 fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
   assertBackgroundThreadOrWriteAction()
   return prepareIndicatorThreadContext(indicator) { ctx ->
@@ -269,6 +273,7 @@ suspend fun <T> coroutineToIndicator(action: () -> T): T {
  * - If [RawProgressReporter] is found in the coroutine context, updates of the installed indicator are sent into the reporter.
  */
 @Internal
+@RequiresBlockingContext
 fun <T> blockingContextToIndicator(action: () -> T): T {
   val ctx = currentThreadContext()
   return contextToIndicator(ctx, action)
@@ -355,6 +360,7 @@ private fun assertBackgroundThreadOrWriteAction() {
   replaceWith = ReplaceWith("indicatorRunBlockingCancellable(indicator, action)"),
   level = DeprecationLevel.ERROR,
 )
+@RequiresBlockingContext
 fun <T> runBlockingCancellable(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
   @Suppress("DEPRECATION")
   return indicatorRunBlockingCancellable(indicator, action)
@@ -366,6 +372,7 @@ fun <T> runBlockingCancellable(indicator: ProgressIndicator, action: suspend Cor
   replaceWith = ReplaceWith("runBlockingCancellable(action)"),
   level = DeprecationLevel.ERROR,
 )
+@RequiresBlockingContext
 fun <T> runSuspendingAction(action: suspend CoroutineScope.() -> T): T {
   return runBlockingCancellable(action)
 }
@@ -376,6 +383,7 @@ fun <T> runSuspendingAction(action: suspend CoroutineScope.() -> T): T {
   replaceWith = ReplaceWith("runBlockingCancellable(indicator, action)"),
   level = DeprecationLevel.ERROR,
 )
+@RequiresBlockingContext
 fun <T> runSuspendingAction(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
   @Suppress("DEPRECATION")
   return indicatorRunBlockingCancellable(indicator, action)

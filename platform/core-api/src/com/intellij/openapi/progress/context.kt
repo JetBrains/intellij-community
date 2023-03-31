@@ -8,6 +8,7 @@ import com.intellij.concurrency.resetThreadContext
 import com.intellij.openapi.application.asContextElement
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.BlockingJob
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.CoroutineContext
@@ -69,6 +70,7 @@ private fun prepareCurrentThreadContext(): CoroutineContext {
  * @throws CancellationException if there was a current job it was cancelled
  */
 @Internal
+@RequiresBlockingContext
 fun <T> prepareThreadContext(action: (CoroutineContext) -> T): T {
   val indicator = ProgressManager.getGlobalProgressIndicator()
   if (indicator != null) {
