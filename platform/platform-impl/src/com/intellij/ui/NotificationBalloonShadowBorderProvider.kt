@@ -7,8 +7,7 @@ import com.intellij.openapi.util.IconLoader.getIconSnapshot
 import com.intellij.openapi.util.IconLoader.toImage
 import com.intellij.ui.BalloonImpl.ShadowBorderProvider
 import com.intellij.ui.scale.ScaleContext.Companion.create
-import com.intellij.util.ui.StartupUiUtil.drawImage
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.drawImage
 import java.awt.*
 import java.awt.geom.Rectangle2D
 import java.awt.geom.RoundRectangle2D
@@ -155,16 +154,28 @@ private fun drawLine(component: JComponent,
   val length = fullLength - start - end
   val iconSnapshot = getIconSnapshot(icon)
   val image = toImage(iconSnapshot, create(component))
+  val iconWidth = iconSnapshot.iconWidth
+  val iconHeight = iconSnapshot.iconHeight
   if (horizontal) {
-    drawImage(g, image!!,
-              Rectangle(start, start2, length, iconSnapshot.iconHeight),
-              Rectangle(0, 0, iconSnapshot.iconWidth, iconSnapshot.iconHeight),
-              component)
+    drawImage(g = g,
+              image = image!!,
+              x = start,
+              y = start2,
+              dw = length,
+              dh = iconHeight,
+              sourceBounds = Rectangle(0, 0, iconWidth, iconHeight),
+              op = null,
+              observer = component)
   }
   else {
-    UIUtil.drawImage(g, image!!,
-                     Rectangle(start2, start, iconSnapshot.iconWidth, length),
-                     Rectangle(0, 0, iconSnapshot.iconWidth, iconSnapshot.iconHeight),
-                     component)
+    drawImage(g = g,
+              image = image!!,
+              x = start2,
+              y = start,
+              dw = iconWidth,
+              dh = length,
+              sourceBounds = Rectangle(0, 0, iconWidth, iconHeight),
+              op = null,
+              observer = component)
   }
 }
