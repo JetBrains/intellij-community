@@ -195,7 +195,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
       val oldWidth = scaledDelegateIcon.iconWidth
       val result = IconDeferrerImpl.evaluateDeferred {
         if (isNeedReadAction) {
-          runReadAction { evaluate() }
+          readAction { evaluate() }
         }
         else {
           evaluate()

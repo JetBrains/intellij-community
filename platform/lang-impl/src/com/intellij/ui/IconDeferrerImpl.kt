@@ -23,7 +23,7 @@ internal class IconDeferrerImpl private constructor() : IconDeferrer() {
   companion object {
     private val isEvaluationInProgress = ThreadLocal.withInitial { false }
 
-    suspend inline fun <T> evaluateDeferred(crossinline runnable: () -> T): T {
+    suspend inline fun <T> evaluateDeferred(crossinline runnable: suspend () -> T): T {
       try {
         isEvaluationInProgress.set(true)
         return withContext(isEvaluationInProgress.asContextElement()) {
