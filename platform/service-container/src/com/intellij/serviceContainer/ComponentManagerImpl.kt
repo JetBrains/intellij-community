@@ -2,6 +2,7 @@
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplaceGetOrSet", "ReplacePutWithAssignment", "OVERRIDE_DEPRECATION")
 package com.intellij.serviceContainer
 
+import com.intellij.concurrency.resetThreadContext
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PluginException
@@ -995,6 +996,12 @@ abstract class ComponentManagerImpl(
   final override fun <T : Any> instantiateClass(aClass: Class<T>, pluginId: PluginId): T {
     checkCanceledIfNotInClassInit()
 
+    return resetThreadContext().use {
+      doInstantiateClass(aClass, pluginId)
+    }
+  }
+
+  private fun <T : Any> doInstantiateClass(aClass: Class<T>, pluginId: PluginId): T {
     try {
       val lookup = MethodHandles.privateLookupIn(aClass, methodLookup)
       if (parent == null) {
@@ -1046,7 +1053,9 @@ abstract class ComponentManagerImpl(
   protected open fun getActualContainerInstance(): ComponentManager = this
 
   final override fun <T : Any> instantiateClassWithConstructorInjection(aClass: Class<T>, key: Any, pluginId: PluginId): T {
-    return instantiateUsingPicoContainer(aClass, key, pluginId, this, constructorParameterResolver)
+    return resetThreadContext().use {
+      instantiateUsingPicoContainer(aClass, key, pluginId, this, constructorParameterResolver)
+    }
   }
 
   internal open val isGetComponentAdapterOfTypeCheckEnabled: Boolean
