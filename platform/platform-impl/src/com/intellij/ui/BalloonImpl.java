@@ -655,8 +655,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
   /**
    * Figure out the component to focus inside the {@link #myContent} field.
    */
-  @NotNull
-  private Component getContentToFocus() {
+  private @NotNull Component getContentToFocus() {
     Component focusComponent = myContent;
     FocusTraversalPolicy policy = myContent.getFocusTraversalPolicy();
     if (policy instanceof SortingFocusTraversalPolicy &&
@@ -742,9 +741,8 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
       myActionProvider = new ActionProvider() {
         private ActionButton myCloseButton;
 
-        @NotNull
         @Override
-        public List<ActionButton> createActions() {
+        public @NotNull List<ActionButton> createActions() {
           myCloseButton = new CloseButton(listener);
           return Collections.singletonList(myCloseButton);
         }
@@ -812,9 +810,8 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     createComponentBorder();
   }
 
-  @NotNull
   @Override
-  public Rectangle getConsumedScreenBounds() {
+  public @NotNull Rectangle getConsumedScreenBounds() {
     Rectangle bounds = component.getBounds();
     Point location = bounds.getLocation();
     SwingUtilities.convertPointToScreen(location, myLayeredPane);
@@ -827,8 +824,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     return ComponentUtil.getWindow(myLayeredPane);
   }
 
-  @NotNull
-  private EmptyBorder getPointlessBorder() {
+  private @NotNull EmptyBorder getPointlessBorder() {
     return new EmptyBorder(myBorderInsets);
   }
 
@@ -862,8 +858,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     return hasShadow() ? myShadowSize : 0;
   }
 
-  @NotNull
-  public Insets getShadowBorderInsets() {
+  public @NotNull Insets getShadowBorderInsets() {
     if (myShadowBorderProvider != null) {
       return myShadowBorderProvider.getInsets();
     }
@@ -904,7 +899,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
   }
 
 
-  private void runAnimation(boolean forward, final JLayeredPane layeredPane, @Nullable final Runnable onDone) {
+  private void runAnimation(boolean forward, final JLayeredPane layeredPane, final @Nullable Runnable onDone) {
     if (myAnimator != null) {
       Disposer.dispose(myAnimator);
     }
@@ -1200,7 +1195,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
 
     abstract int getChangeShift(AbstractPosition original, int xShift, int yShift);
 
-    public void updateBounds(@NotNull final BalloonImpl balloon) {
+    public void updateBounds(final @NotNull BalloonImpl balloon) {
       if (balloon.myLayeredPane == null || balloon.component == null) return;
 
       Insets shadow = balloon.component.getInsets();
@@ -1386,11 +1381,9 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
       return all;
     }
 
-    @NotNull
-    public abstract Point getShiftedPoint(@NotNull Point targetPoint, int shift);
+    public abstract @NotNull Point getShiftedPoint(@NotNull Point targetPoint, int shift);
 
-    @NotNull
-    public abstract Point getShiftedPoint(@NotNull Point targetPoint, @NotNull Insets shift);
+    public abstract @NotNull Point getShiftedPoint(@NotNull Point targetPoint, @NotNull Insets shift);
 
     @Override
     public String toString() {
@@ -1398,8 +1391,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     }
   }
 
-  @NotNull
-  private static RoundRectangle2D.Double getPointlessShape(BalloonImpl balloon, Rectangle bounds) {
+  private static @NotNull RoundRectangle2D.Double getPointlessShape(BalloonImpl balloon, Rectangle bounds) {
     return new RoundRectangle2D.Double(bounds.x, bounds.y, bounds.width - JBUIScale.scale(1), bounds.height - JBUIScale.scale(1),
                                        balloon.getArc(), balloon.getArc());
   }
@@ -1410,16 +1402,14 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
   public static final AbstractPosition AT_LEFT = new AtLeft();
 
 
-  private static class Below extends AbstractPosition {
-    @NotNull
+  private static final class Below extends AbstractPosition {
     @Override
-    public Point getShiftedPoint(@NotNull Point targetPoint, int shift) {
+    public @NotNull Point getShiftedPoint(@NotNull Point targetPoint, int shift) {
       return new Point(targetPoint.x, targetPoint.y + shift);
     }
 
-    @NotNull
     @Override
-    public Point getShiftedPoint(@NotNull Point targetPoint, @NotNull Insets shift) {
+    public @NotNull Point getShiftedPoint(@NotNull Point targetPoint, @NotNull Insets shift) {
       return getShiftedPoint(targetPoint, -shift.top);
     }
 
@@ -1483,15 +1473,13 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
   }
 
   private static class Above extends AbstractPosition {
-    @NotNull
     @Override
-    public Point getShiftedPoint(@NotNull Point targetPoint, int shift) {
+    public @NotNull Point getShiftedPoint(@NotNull Point targetPoint, int shift) {
       return new Point(targetPoint.x, targetPoint.y - shift);
     }
 
-    @NotNull
     @Override
-    public Point getShiftedPoint(@NotNull Point targetPoint, @NotNull Insets shift) {
+    public @NotNull Point getShiftedPoint(@NotNull Point targetPoint, @NotNull Insets shift) {
       return getShiftedPoint(targetPoint, -shift.top);
     }
 
@@ -1554,15 +1542,13 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
   }
 
   private static class AtRight extends AbstractPosition {
-    @NotNull
     @Override
-    public Point getShiftedPoint(@NotNull Point targetPoint, int shift) {
+    public @NotNull Point getShiftedPoint(@NotNull Point targetPoint, int shift) {
       return new Point(targetPoint.x + shift, targetPoint.y);
     }
 
-    @NotNull
     @Override
-    public Point getShiftedPoint(@NotNull Point targetPoint, @NotNull Insets shift) {
+    public @NotNull Point getShiftedPoint(@NotNull Point targetPoint, @NotNull Insets shift) {
       return getShiftedPoint(targetPoint, -shift.left);
     }
 
@@ -1624,15 +1610,13 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
   }
 
   private static class AtLeft extends AbstractPosition {
-    @NotNull
     @Override
-    public Point getShiftedPoint(@NotNull Point targetPoint, int shift) {
+    public @NotNull Point getShiftedPoint(@NotNull Point targetPoint, int shift) {
       return new Point(targetPoint.x - shift, targetPoint.y);
     }
 
-    @NotNull
     @Override
-    public Point getShiftedPoint(@NotNull Point targetPoint, @NotNull Insets shift) {
+    public @NotNull Point getShiftedPoint(@NotNull Point targetPoint, @NotNull Insets shift) {
       return getShiftedPoint(targetPoint, -shift.left);
     }
 

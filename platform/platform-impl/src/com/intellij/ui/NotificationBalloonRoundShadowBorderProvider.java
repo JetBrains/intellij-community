@@ -11,7 +11,7 @@ import java.awt.geom.RoundRectangle2D;
 /**
  * @author Alexander Lobas
  */
-public class NotificationBalloonRoundShadowBorderProvider extends NotificationBalloonShadowBorderProvider {
+public final class NotificationBalloonRoundShadowBorderProvider extends NotificationBalloonShadowBorderProvider {
   public static final JBValue CORNER_RADIUS = new JBValue.UIInteger("Notification.arc", 12);
 
   public NotificationBalloonRoundShadowBorderProvider(@NotNull Color fillColor, @NotNull Color borderColor) {
@@ -23,9 +23,9 @@ public class NotificationBalloonRoundShadowBorderProvider extends NotificationBa
   @Override
   public void paintBorder(@NotNull Rectangle bounds, @NotNull Graphics2D g) {
     int cornerRadius = CORNER_RADIUS.get();
-    g.setColor(myFillColor);
+    g.setColor(fillColor);
     g.fill(new RoundRectangle2D.Double(bounds.x, bounds.y, bounds.width, bounds.height, cornerRadius, cornerRadius));
-    g.setColor(myBorderColor);
+    g.setColor(borderColor);
     g.draw(new RoundRectangle2D.Double(bounds.x + 0.5, bounds.y + 0.5, bounds.width - 1, bounds.height - 1, cornerRadius, cornerRadius));
   }
 }
