@@ -109,7 +109,6 @@ public final class CompressionUtil {
     return decompressedResult;
   }
 
-
   public static byte @NotNull [] readCompressed(@NotNull DataInput in) throws IOException {
     int size = DataInputOutputUtil.readINT(in);
     if (size < 0) {
@@ -131,8 +130,7 @@ public final class CompressionUtil {
 
   private static final int STRING_COMPRESSION_THRESHOLD = 1024;
 
-  @NotNull
-  public static Object compressStringRawBytes(@NotNull CharSequence string) {
+  public static @NotNull Object compressStringRawBytes(@NotNull CharSequence string) {
     int length = string.length();
     if (length < STRING_COMPRESSION_THRESHOLD) {
       if (string instanceof CharBuffer && ((CharBuffer)string).capacity() > STRING_COMPRESSION_THRESHOLD) {
@@ -164,8 +162,7 @@ public final class CompressionUtil {
     }
   }
 
-  @NotNull
-  public static CharSequence uncompressStringRawBytes(@NotNull Object compressed) {
+  public static @NotNull CharSequence uncompressStringRawBytes(@NotNull Object compressed) {
     if (compressed instanceof CharSequence) return (CharSequence)compressed;
 
     ByteBuffer buffer = ByteBuffer.wrap((byte[])compressed);

@@ -37,7 +37,7 @@ public final class CompactDataInput implements DataInput {
   @Override
   public int skipBytes(int n) throws IOException {
     int total = 0;
-    int cur = 0;
+    int cur;
 
     while ((total<n) && ((cur = (int) in.skip(n-total)) > 0)) {
         total += cur;
