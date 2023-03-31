@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui.component
 
+import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.collaboration.ui.util.getName
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.util.NlsSafe
@@ -85,11 +86,11 @@ object GHHtmlErrorPanel {
           errorTextBuilder.br()
             .appendP(HtmlChunk.link(ERROR_ACTION_HREF, errorAction.getName()))
         }
-        pane.setBody(errorTextBuilder.toString())
+        pane.setHtmlBody(errorTextBuilder.toString())
       }
       else {
         pane.isVisible = false
-        pane.setBody("")
+        pane.setHtmlBody("")
       }
       // JDK bug - need to force height recalculation (see JBR-2256)
       pane.setSize(Int.MAX_VALUE / 2, Int.MAX_VALUE / 2)
