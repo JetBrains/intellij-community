@@ -4,17 +4,12 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.async.combineAndCollect
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.CollaborationToolsUIUtil
-import com.intellij.collaboration.ui.ComponentListPanelFactory
-import com.intellij.collaboration.ui.HorizontalListPanel
-import com.intellij.collaboration.ui.VerticalListPanel
+import com.intellij.collaboration.ui.*
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil.Thread
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil.Title
-import com.intellij.collaboration.ui.onHyperlinkActivated
-import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.collaboration.ui.util.ActivatableCoroutineScopeProvider
@@ -66,10 +61,10 @@ import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUt
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.createTimelineItem
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.createTitlePane
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import java.awt.Component
 import java.awt.Container
 import javax.swing.JComponent
+import javax.swing.JEditorPane
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.LayoutFocusTraversalPolicy
@@ -108,7 +103,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     catch (e: Exception) {
       LOG.warn(e)
       return createTimelineItem(avatarIconsProvider, prAuthor ?: ghostUser, null,
-                                HtmlEditorPane(GithubBundle.message("cannot.display.item", e.message ?: "")))
+                                SimpleHtmlPane(GithubBundle.message("cannot.display.item", e.message ?: "")))
     }
   }
 
@@ -139,7 +134,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
         }
         builder.toString()
       }.map { text ->
-        HtmlEditorPane(text).apply {
+        SimpleHtmlPane(text).apply {
           removeHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
           onHyperlinkActivated {
             val href = it.description
@@ -167,7 +162,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
         GithubBundle.message("pull.request.timeline.commits.added", commitsCount)
       }
 
-      add(HtmlEditorPane(titleText))
+      add(SimpleHtmlPane(titleText))
       add(StatusMessageComponentFactory.create(commitsPanels))
     }
     val actor = commits.singleOrNull()?.commit?.author?.user ?: prAuthor ?: ghostUser
@@ -186,8 +181,8 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     val contentPanel: JPanel?
     val actionsPanel: JPanel?
     if (details is GHPullRequest) {
-      val textPane = HtmlEditorPane()
-      fun HtmlEditorPane.updateText(body: @Nls String) {
+      val textPane = SimpleHtmlPane()
+      fun JEditorPane.updateText(body: @Nls String) {
         val text = body.takeIf { it.isNotBlank() }?.convertToHtml(project) ?: noDescriptionHtmlText
         setHtmlBody(text)
       }
@@ -216,7 +211,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
   }
 
   private fun createComponent(comment: GHIssueComment): JComponent {
-    val textPane = HtmlEditorPane(comment.body.convertToHtml(project))
+    val textPane = SimpleHtmlPane(comment.body.convertToHtml(project))
     val panelHandle = GHEditableHtmlPaneHandle(project, textPane, comment::body) { newText ->
       commentsDataProvider.updateComment(EmptyProgressIndicator(), comment.id, newText)
         .successOnEdt { textPane.setHtmlBody(it.convertToHtml(project)) }
@@ -376,7 +371,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
         combineAndCollect(thread.collapsedState, textFlow) { collapsed, text ->
           removeAll()
           if (collapsed) {
-            val textPane = HtmlEditorPane(text).apply {
+            val textPane = SimpleHtmlPane(text).apply {
               foreground = UIUtil.getContextHelpForeground()
             }.let { pane ->
               CollaborationToolsUIUtil
@@ -447,7 +442,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
   private fun createReviewContentItem(review: GHPullRequestReview): JComponent {
     val panelHandle: GHEditableHtmlPaneHandle?
     if (review.body.isNotEmpty()) {
-      val textPane = HtmlEditorPane(review.body.convertToHtml(project))
+      val textPane = SimpleHtmlPane(review.body.convertToHtml(project))
       panelHandle =
         GHEditableHtmlPaneHandle(project, textPane, review::body) { newText ->
           reviewDataProvider.updateReviewBody(EmptyProgressIndicator(), review.id, newText)
@@ -490,7 +485,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
           .minWidth("0"))
       }
 
-      add(StatusMessageComponentFactory.create(HtmlEditorPane(stateText), stateType), CC().grow().push()
+      add(StatusMessageComponentFactory.create(SimpleHtmlPane(stateText), stateType), CC().grow().push()
         .minWidth("0"))
     }
 

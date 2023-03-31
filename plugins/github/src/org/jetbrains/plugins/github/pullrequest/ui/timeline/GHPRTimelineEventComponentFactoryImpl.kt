@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.openapi.util.NlsSafe
@@ -22,7 +23,6 @@ import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.createDescriptionComponent
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.createTimelineItem
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import javax.swing.JComponent
 
 class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHAvatarIconsProvider, private val ghostUser: GHUser)
@@ -59,7 +59,7 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
     }
 
     protected fun eventItem(event: GHPRTimelineEvent, titleText: @Nls String, detailsText: @Nls String? = null): JComponent {
-      val titlePane = HtmlEditorPane(titleText)
+      val titlePane = SimpleHtmlPane(titleText)
       val content = if (detailsText == null) {
         titlePane
       }

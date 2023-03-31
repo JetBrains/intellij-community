@@ -6,10 +6,15 @@ import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBInsets
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JEditorPane
 import javax.swing.text.DefaultCaret
 
+/**
+ * Prefer [com.intellij.collaboration.ui.SimpleHtmlPane]
+ */
+@ApiStatus.Obsolete
 open class BaseHtmlEditorPane : JEditorPane() {
 
   init {
