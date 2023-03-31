@@ -248,7 +248,8 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
 
     // plugins registered renderers come after that
     CompoundRendererProvider.EP_NAME.getExtensionList().stream()
-      .map((provider) -> provider.createRenderer(project))
+      .filter(provider -> provider.isApplicable(project))
+      .map((provider) -> provider.createRenderer())
       .forEach(allRenderers::add);
     allRenderers.addAll(NodeRenderer.EP_NAME.getExtensionList());
 
@@ -368,7 +369,10 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   }
 
   public CompoundReferenceRenderer createCompoundReferenceRenderer(
-    @NonNls final String rendererName, @NonNls final String className, final ValueLabelRenderer labelRenderer, final ChildrenRenderer childrenRenderer
+    @NonNls final String rendererName,
+    @NonNls final String className,
+    final ValueLabelRenderer labelRenderer,
+    final ChildrenRenderer childrenRenderer
   ) {
     CompoundReferenceRenderer renderer = new CompoundReferenceRenderer(this, rendererName, labelRenderer, childrenRenderer);
     renderer.setClassName(className);
@@ -389,7 +393,8 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     final ExpressionChildrenRenderer childrenRenderer = new ExpressionChildrenRenderer();
     childrenRenderer.setChildrenExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expressionText, "", JavaFileType.INSTANCE));
     if (childrenExpandableText != null) {
-      childrenRenderer.setChildrenExpandable(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, childrenExpandableText, "", JavaFileType.INSTANCE));
+      childrenRenderer.setChildrenExpandable(
+        new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, childrenExpandableText, "", JavaFileType.INSTANCE));
     }
     return childrenRenderer;
   }
@@ -425,12 +430,15 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
 
     private MapEntryLabelRenderer() {
       super("java.util.Map$Entry");
-      myKeyExpression.setReferenceExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "this.getKey()", "", JavaFileType.INSTANCE));
-      myValueExpression.setReferenceExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "this.getValue()", "", JavaFileType.INSTANCE));
+      myKeyExpression.setReferenceExpression(
+        new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "this.getKey()", "", JavaFileType.INSTANCE));
+      myValueExpression.setReferenceExpression(
+        new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "this.getValue()", "", JavaFileType.INSTANCE));
     }
 
     @Override
-    public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
+    public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener)
+      throws EvaluateException {
       if (!isShowValue(descriptor, evaluationContext)) {
         descriptor.putUserData(RENDERER_MUTED, true);
         return "";
@@ -580,7 +588,9 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     }
   }
 
-  static void visitAnnotatedElements(String annotationFqn, Project project, BiConsumer<? super PsiModifierListOwner, ? super PsiAnnotation> consumer) {
+  static void visitAnnotatedElements(String annotationFqn,
+                                     Project project,
+                                     BiConsumer<? super PsiModifierListOwner, ? super PsiAnnotation> consumer) {
     JavaAnnotationIndex.getInstance().get(StringUtil.getShortName(annotationFqn), project, GlobalSearchScope.allScope(project))
       .forEach(annotation -> {
         PsiElement parent = annotation.getContext();

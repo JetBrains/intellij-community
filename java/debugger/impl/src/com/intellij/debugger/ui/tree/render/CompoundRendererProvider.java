@@ -40,17 +40,13 @@ public abstract class CompoundRendererProvider {
   protected FullValueEvaluatorProvider getFullValueEvaluatorProvider() {
     return null;
   }
-
-  /**
-   * @deprecated use {@link CompoundRendererProvider#getIsApplicableChecker(Project)}
-   */
-  @Deprecated
+  
   protected Function<Type, CompletableFuture<Boolean>> getIsApplicableChecker() {
     return null;
   }
 
-  protected Function<Type, CompletableFuture<Boolean>> getIsApplicableChecker(Project project) {
-    return getIsApplicableChecker();
+  public Boolean isApplicable(Project project) {
+    return true;
   }
   
   protected boolean isEnabled() {
@@ -58,7 +54,7 @@ public abstract class CompoundRendererProvider {
   }
 
   @NotNull
-  public final NodeRenderer createRenderer(Project project) {
+  public final NodeRenderer createRenderer() {
     CompoundReferenceRenderer res = new CompoundReferenceRenderer(getName(), getValueLabelRenderer(), getChildrenRenderer());
     res.setIconRenderer(getIconRenderer());
     res.setFullValueEvaluator(getFullValueEvaluatorProvider());
@@ -67,7 +63,7 @@ public abstract class CompoundRendererProvider {
       res.setClassName(className);
       res.setIsApplicableChecker(type -> DebuggerUtilsAsync.instanceOf(type, res.getClassName()));
     }
-    Function<Type, CompletableFuture<Boolean>> isApplicableChecker = getIsApplicableChecker(project);
+    Function<Type, CompletableFuture<Boolean>> isApplicableChecker = getIsApplicableChecker();
     if (isApplicableChecker != null) {
       res.setIsApplicableChecker(isApplicableChecker);
     }
