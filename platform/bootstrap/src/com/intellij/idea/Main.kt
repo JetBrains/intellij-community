@@ -4,6 +4,7 @@
 
 package com.intellij.idea
 
+import awt.IntellijGraphicEnvironment
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.rootTask
@@ -86,8 +87,7 @@ private fun initRemoteDevIfNeeded(args: List<String>) {
   }
 
   runActivity("cwm host init") {
-    val geClassName = if (isLuxEnabled()) "com.jetbrains.rdserver.lux.toolkit.LuxGraphicsEnvironment" else "org.jetbrains.projector.awt.image.PGraphicsEnvironment"
-    initRemoteDevGraphicsEnvironment(geClassName)
+    initRemoteDevGraphicsEnvironment()
     initProjector()
     initLux()
   }
@@ -102,10 +102,10 @@ private fun initProjector() {
   ).invoke()
 }
 
-private fun initRemoteDevGraphicsEnvironment(geClassName: String) {
+private fun initRemoteDevGraphicsEnvironment() {
   JBR.getProjectorUtils().setLocalGraphicsEnvironmentProvider {
-    val clazz = AppStarter::class.java.classLoader.loadClass(geClassName)
-    clazz.getDeclaredMethod("getInstance").invoke(null) as GraphicsEnvironment
+    if (isLuxEnabled()) IntellijGraphicEnvironment.instance
+    else AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.awt.image.PGraphicsEnvironment").getDeclaredMethod("getInstance").invoke(null) as GraphicsEnvironment
   }
 }
 
