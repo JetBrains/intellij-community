@@ -33,18 +33,8 @@ interface KotlinCompilation : KotlinComponent, HasMutableExtras {
     fun getDeclaredSourceSets(): Collection<KotlinSourceSet> = declaredSourceSets
 
     val associateCompilations: Set<KotlinCompilationCoordinates>
-
     val output: KotlinCompilationOutput
-
-    @Deprecated(
-        "Raw dependency classpath is not available anymore",
-        ReplaceWith("cachedArgsInfo#dependencyClasspath"),
-        level = DeprecationLevel.ERROR
-    )
-    val dependencyClasspath: Array<String>
-
     val compilerArguments: List<String>?
-
     val disambiguationClassifier: String?
     val platform: KotlinPlatform
     val kotlinTaskProperties: KotlinTaskProperties

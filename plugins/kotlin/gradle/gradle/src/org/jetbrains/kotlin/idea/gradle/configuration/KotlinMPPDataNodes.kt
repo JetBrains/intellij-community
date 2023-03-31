@@ -68,14 +68,11 @@ class KotlinSourceSetInfo @PropertyMapping("kotlinComponent") constructor(val ko
 
     var additionalVisible: Set<String> = emptySet()
     var externalSystemRunTasks: Collection<ExternalSystemRunTask> = emptyList()
+
 }
 
 interface CompilerArgumentsProvider {
     fun get(): CommonCompilerArguments
-}
-
-fun CompilerArgumentsProvider(arguments: CommonCompilerArguments) = object : CompilerArgumentsProvider {
-    override fun get(): CommonCompilerArguments = arguments
 }
 
 fun CompilerArgumentsProvider(weakLazy: () -> CommonCompilerArguments) = object : CompilerArgumentsProvider {
