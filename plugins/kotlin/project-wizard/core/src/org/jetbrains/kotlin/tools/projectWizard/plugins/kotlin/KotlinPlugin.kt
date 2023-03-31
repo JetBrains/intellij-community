@@ -132,7 +132,6 @@ class KotlinPlugin(context: Context) : Plugin(context) {
             runBefore(BuildSystemPlugin.createModules)
             withAction {
                 val version = version.propertyValue
-                if (version.kind.isStable) return@withAction UNIT_SUCCESS
                 val pluginRepository = version.buildSystemPluginRepository(buildSystemType) ?: return@withAction UNIT_SUCCESS
                 BuildSystemPlugin.pluginRepositoreis.addValues(pluginRepository) andThen
                         updateBuildFiles { buildFile ->
