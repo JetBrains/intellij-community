@@ -41,7 +41,8 @@ public class KotlinStubsTest extends LightJavaCodeInsightFixtureTestCase {
         PsiFile psiFile = myFixture.configureByText("foo.kt", "import java.util.ArrayList as alist\nclass C(): alist() { }");
         List<KtDeclaration> declarations = ((KtFile) psiFile).getDeclarations();
         KtClass ktClass = (KtClass) declarations.get(0);
-        KotlinClassStub stub = KtStubElementTypes.CLASS.createStub(ktClass, null);
+        KotlinClassStub stub = KtStubElementTypes.CLASS.createStub(
+                ktClass, new KotlinFileStubImpl(null, "", false, null, null, null));
         List<String> names = stub.getSuperNames();
         assertSameElements(names, "ArrayList", "alist");
     }
@@ -50,7 +51,8 @@ public class KotlinStubsTest extends LightJavaCodeInsightFixtureTestCase {
         PsiFile psiFile = myFixture.configureByText("foo.kt", "interface Test { }");
         List<KtDeclaration> declarations = ((KtFile) psiFile).getDeclarations();
         KtClass ktClass = (KtClass) declarations.get(0);
-        KotlinClassStub stub = KtStubElementTypes.CLASS.createStub(ktClass, null);
+        KotlinClassStub stub = KtStubElementTypes.CLASS.createStub(
+                ktClass, new KotlinFileStubImpl(null, "", false, null, null, null));
         assertEquals(true, stub.isInterface());
     }
 

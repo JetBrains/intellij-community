@@ -18,12 +18,3 @@ val StubBasedPsiElementBase<*>.containingFileStub: PsiFileStub<*>?
 
 val StubElement<*>.containingKotlinFileStub: KotlinFileStub?
     get() = containingFileStub as? KotlinFileStub
-
-val StubElement<*>.containingFileStub: PsiFileStub<*>
-    get() {
-        var current = this
-        while (current !is PsiFileStub<*>) {
-            current = current.parentStub
-        }
-        return current
-    }

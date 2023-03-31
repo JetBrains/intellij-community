@@ -3,6 +3,7 @@ package com.intellij.psi.stubs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayFactory;
@@ -25,11 +26,25 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
     super(parent);
     myStubList = parent == null ? new MaterialStubList(10) : ((StubBase<?>)parent).myStubList;
     myStubList.addStub(this, (StubBase<?>)parent, elementType);
+    if (parent == null && !(this instanceof PsiFileStub<?>)) {
+      throw new PsiInvalidElementAccessException(getPsi(),
+                                                 "stub hierarchy is invalid: the parent of " + this + " (" + getClass() + ")" +
+                                                 " is null, even though it's not a PsiFileStub", null);
+    }
   }
 
   @Override
   public StubElement getParentStub() {
     return myParent;
+  }
+
+  @Override
+  public PsiFileStub<?> getContainingFileStub() {
+    StubBase<?> rootStub = myStubList.get(0);
+    if (!(rootStub instanceof PsiFileStub)) {
+      return null;
+    }
+    return (PsiFileStub<?>)rootStub;
   }
 
   @NotNull
@@ -90,7 +105,8 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
   }
 
   @Override
-  public <E extends PsiElement> E @NotNull [] getChildrenByType(@NotNull final IElementType elementType, final @NotNull ArrayFactory<? extends E> f) {
+  public <E extends PsiElement> E @NotNull [] getChildrenByType(@NotNull final IElementType elementType,
+                                                                final @NotNull ArrayFactory<? extends E> f) {
     List<StubElement> childrenStubs = getChildrenStubs();
     int count = countChildren(elementType, childrenStubs);
 
@@ -122,7 +138,9 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
     return count;
   }
 
-  private static <E extends PsiElement> void fillFilteredChildren(IElementType type, E[] result, List<? extends StubElement> childrenStubs) {
+  private static <E extends PsiElement> void fillFilteredChildren(IElementType type,
+                                                                  E[] result,
+                                                                  List<? extends StubElement> childrenStubs) {
     int count = 0;
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, childrenStubsSize = childrenStubs.size(); i < childrenStubsSize; i++) {
@@ -151,7 +169,8 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
   }
 
   @Override
-  public <E extends PsiElement> E @NotNull [] getChildrenByType(@NotNull final TokenSet filter, final @NotNull ArrayFactory<? extends E> f) {
+  public <E extends PsiElement> E @NotNull [] getChildrenByType(@NotNull final TokenSet filter,
+                                                                final @NotNull ArrayFactory<? extends E> f) {
     List<StubElement> childrenStubs = getChildrenStubs();
     int count = countChildren(filter, childrenStubs);
 
@@ -217,5 +236,4 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
   public int compareByOrderWith(ObjectStubBase<?> another) {
     return Integer.compare(getStubId(), another.getStubId());
   }
-
 }

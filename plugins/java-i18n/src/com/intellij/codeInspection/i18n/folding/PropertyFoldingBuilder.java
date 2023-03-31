@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspLanguage;
 import com.intellij.psi.jsp.JspxLanguage;
+import com.intellij.psi.stubs.PsiFileStubImpl;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,7 +36,7 @@ import java.util.*;
 public class PropertyFoldingBuilder extends FoldingBuilderEx {
   private static final int FOLD_MAX_LENGTH = 50;
   private static final Key<IProperty> CACHE = Key.create("i18n.property.cache");
-  public static final IProperty NULL = new PropertyImpl(new PropertyStubImpl(null, null), PropertiesElementTypes.PROPERTY);
+  public static final IProperty NULL = new PropertyImpl(new PropertyStubImpl(new PsiFileStubImpl<>(null), null), PropertiesElementTypes.PROPERTY);
 
   @Override
   public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement element, @NotNull Document document, boolean quick) {
