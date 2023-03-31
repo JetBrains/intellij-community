@@ -159,7 +159,6 @@ abstract class DeprecatedSymbolUsageFixBase(
                 patternTypeArgumentCount == typeArgumentList?.arguments?.size
             ) {
                 if (typeArgumentList != null) expressionFromPattern.replaceOrCreateTypeArgumentList(typeArgumentList.copy() as KtTypeArgumentList)
-                else patternTypeArgumentList?.delete()
                 expressionFromPattern.text
             } else this
         }
