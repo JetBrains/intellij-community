@@ -182,6 +182,7 @@ class BuildOptions(
      */
     const val RESOLVE_DEPENDENCIES_DELAY_MS_PROPERTY = "intellij.build.dependencies.resolution.retry.delay.ms"
     const val TARGET_OS_PROPERTY = "intellij.build.target.os"
+    const val TARGET_ARCH_PROPERTY = "intellij.build.target.arch"
 
     /**
      * If `true` the project modules will be compiled incrementally
@@ -412,6 +413,9 @@ class BuildOptions(
       targetOsId == OsFamily.LINUX.osId -> persistentListOf(OsFamily.LINUX)
       else -> throw IllegalStateException("Unknown target OS $targetOsId")
     }
+    targetArch = System.getProperty(TARGET_ARCH_PROPERTY)
+      ?.takeIf { it.isNotBlank() }
+      ?.let(JvmArchitecture::valueOf)
     val randomSeedString = System.getProperty("intellij.build.randomSeed")
     randomSeedNumber = if (randomSeedString == null || randomSeedString.isBlank()) {
       ThreadLocalRandom.current().nextLong()
