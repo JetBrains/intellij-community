@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.ex.temp;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileAttributes;
@@ -8,10 +9,15 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.containers.ContainerUtil;
+import it.unimi.dsi.fastutil.ints.IntArraySet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -21,10 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePointerCapableFileSystem, TempFileSystemMarker {
   private static final String TEMP_PROTOCOL = "temp";
@@ -327,5 +330,27 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
   @Override
   protected @NotNull String normalize(@NotNull String path) {
     return path;
+  }
+
+  // manipulate (very quickly) internal data structures so that it would seem as if `root` has no children anymore. (VF.delete() is too slow in deleting huge VFS hierarchies)
+  @TestOnly
+  public void nukeChildren(@NotNull VirtualFile root) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    assert root.getFileSystem() == TempFileSystem.getInstance();
+    List<VirtualFile> files = new ArrayList<>();
+    files.add(root);
+    FSDir fsDir = (FSDir)convertAndCheck(root);
+    for (int i = 0; i < files.size(); i++) {
+      VirtualFile entry = files.get(i);
+      files.addAll(((VirtualFileSystemEntry)entry).getCachedChildren());
+    }
+    // invalidate children then parents
+    for (int i = files.size() - 1; i >= 0; i--) {
+      VirtualFile entry = files.get(i);
+      clearFsItemCache(entry);
+    }
+    IntSet s = new IntArraySet(ContainerUtil.map(((VirtualDirectoryImpl)root).getCachedChildren(), v -> ((VirtualFileSystemEntry)v).getId()));
+    fsDir.myChildren.clear();
+    ((VirtualDirectoryImpl)root).removeChildren(s, List.of());
   }
 }
