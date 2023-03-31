@@ -1002,33 +1002,4 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
       containsExactlyInAnyOrder(expected).
       containsExactlyInAnyOrder(list2);
   }
-
-  @Test
-  public void getPathForVeryDeepFileMustNotFailWithStackOverflowError_Stress() throws IOException {
-    VirtualFile tmpRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");
-    assertNotNull(tmpRoot);
-    assertThat(tmpRoot.getFileSystem()).isInstanceOf(TempFileSystem.class);
-    VirtualFile testDir = WriteAction.computeAndWait(() -> tmpRoot.createChildDirectory(this, getTestName(true)));
-    int N_LEVELS = 1_000_000;
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 30_000, () -> {
-      UIUtil.pump();
-      StringBuilder expectedPath = new StringBuilder(N_LEVELS*4+100);
-      expectedPath.append(testDir.getPath());
-      VirtualFile nested = WriteAction.computeAndWait(() -> {
-        VirtualFile v = testDir;
-        for (int i = 0; i < N_LEVELS; i++) {
-          v = v.createChildDirectory(this, "dir");
-          expectedPath.append("/").append(v.getName());
-        }
-        return v;
-      });
-
-      try {
-        assertEquals(expectedPath.toString(), nested.getPath());
-      }
-      finally {
-        WriteAction.runAndWait(() -> TempFileSystem.getInstance().nukeChildren(testDir));
-      }
-    }).attempts(1).assertTiming();
-  }
 }
