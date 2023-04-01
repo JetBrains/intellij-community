@@ -41,6 +41,6 @@ sealed class StdlibDetectorFacility {
     }
 
     protected fun isSupported(project: Project, library: LibraryEx): Boolean {
-        return project.service<LibraryEffectiveKindProvider>().getEffectiveKind(library) == supportedLibraryKind
+        return detectLibraryKind(library, project) == supportedLibraryKind
     }
 }
