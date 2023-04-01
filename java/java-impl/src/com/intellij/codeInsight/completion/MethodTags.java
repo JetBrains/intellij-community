@@ -164,16 +164,16 @@ public final class MethodTags {
         String string = strings[i];
         joiner.add(string);
       }
-      result.add(of(joiner.toString(), firstPart.matcher));
+      result.add(new Tag(joiner.toString(), firstPart.matcher));
     }
     return result;
   }
 
   private static Tag[] getTags(String string) {
     return switch (string) {
-      case "add" -> new Tag[]{of("put", childOf(CommonClassNames.JAVA_LANG_ITERABLE)),
-        of("sum", childOf("java.math.BigDecimal", "java.math.BigInteger")),
-        of("plus", childOf("java.math.BigDecimal", "java.math.BigInteger"))};
+      case "add" -> new Tag[]{new Tag("put", childOf(CommonClassNames.JAVA_LANG_ITERABLE)),
+        new Tag("sum", childOf("java.math.BigDecimal", "java.math.BigInteger")),
+        new Tag("plus", childOf("java.math.BigDecimal", "java.math.BigInteger"))};
       case "append" -> anyFrom("add");
       case "apply" -> anyFrom("invoke", "do", "call");
       case "assert" -> anyFrom("expect", "verify", "test", "ensure");
@@ -199,7 +199,7 @@ public final class MethodTags {
       case "perform" -> anyFrom("execute", "run", "do");
       case "persist" -> anyFrom("save");
       case "print" -> anyFrom("write");
-      case "put" -> new Tag[]{of("add", childOf(CommonClassNames.JAVA_UTIL_MAP))};
+      case "put" -> new Tag[]{new Tag("add", childOf(CommonClassNames.JAVA_UTIL_MAP))};
       case "remove" -> anyFrom("delete");
       case "run" -> anyFrom("start", "execute", "call");
       case "save" -> anyFrom("persist", "write");
@@ -215,10 +215,6 @@ public final class MethodTags {
   }
 
   record Tag (@NotNull String name, @NotNull Predicate<PsiClass> matcher) {
-    static Tag of(@NotNull String name, @NotNull Predicate<PsiClass> matcher) {
-      return new Tag(name, matcher);
-    }
-
     static Predicate<PsiClass> any() {
       return t -> true;
     }
@@ -228,7 +224,7 @@ public final class MethodTags {
     }
 
     public static Tag[] anyFrom(String... names) {
-      return Arrays.stream(names).map(name -> of(name, any())).toArray(Tag[]::new);
+      return Arrays.stream(names).map(name -> new Tag(name, any())).toArray(Tag[]::new);
     }
   }
 }
