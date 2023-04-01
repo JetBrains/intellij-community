@@ -27,6 +27,7 @@ class OTelConfigurator(private val mainScope: CoroutineScope,
   private val serviceVersion = appInfo.build.asStringWithoutProductCode()
   private val serviceNamespace = appInfo.build.productCode
   private val metricsReportingPath = if (enableMetricsByDefault) MetricsExporterUtils.metricsReportingPath() else null
+  private val shutdownCompletionTimeout: Long = 10
   private val resource = Resource.create(Attributes.of(
     ResourceAttributes.SERVICE_NAME, serviceName,
     ResourceAttributes.SERVICE_VERSION, serviceVersion,
@@ -38,18 +39,23 @@ class OTelConfigurator(private val mainScope: CoroutineScope,
     val metricsEnabled = metricsEnabled()
     val metricsExporters = mutableListOf<MetricsExporterEntry>()
     val spanExporters = mutableListOf<AsyncSpanExporter>()
+    configureExporters(spanExporters, metricsExporters)
+    registerSpanExporters(spanExporters)
+    if (metricsEnabled) {
+      registerMetricsExporter(metricsExporters)
+    }
+  }
+
+  private fun configureExporters(spanExporters: MutableList<AsyncSpanExporter>,
+                        metricsExporters: MutableList<MetricsExporterEntry>) {
     spanExporters.addAll(getDefaultSpanExporters())
     metricsExporters.add(MetricsExporterEntry(getDefaultMetricsExporters(), Duration.ofMinutes(1)))
 
-    getCustomOTelProviders().forEach { provider: OTelExportersProvider ->
+    for (provider: OTelExportersProvider in getCustomOTelProviders()) {
       spanExporters.addAll(provider.getSpanExporters())
       val metrics = provider.getMetricsExporters()
       val duration = provider.getReadsInterval()
       metricsExporters.add(MetricsExporterEntry(metrics, duration))
-    }
-    registerSpanExporters(spanExporters)
-    if (metricsEnabled) {
-      registerMetricsExporter(metricsExporters)
     }
   }
 
@@ -86,9 +92,8 @@ class OTelConfigurator(private val mainScope: CoroutineScope,
         resource).build()
 
       otelSdkBuilder.setTracerProvider(tracerProvider)
-
       ShutDownTracker.getInstance().registerShutdownTask {
-        tracerProvider.shutdown().join(10, TimeUnit.SECONDS)
+        tracerProvider.shutdown().join(shutdownCompletionTimeout, TimeUnit.SECONDS)
       }
     }
   }
