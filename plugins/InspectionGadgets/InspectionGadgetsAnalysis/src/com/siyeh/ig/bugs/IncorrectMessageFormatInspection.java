@@ -202,8 +202,8 @@ public class IncorrectMessageFormatInspection extends AbstractBaseJavaLocalInspe
                                @NotNull MessageFormatUtil.MessageFormatError error,
                                @NotNull String pattern,
                                int start, int end) {
-        //it's relevant mostly for IDEA files
         MessageFormatUtil.MessageFormatErrorType type = error.errorType();
+        //it's relevant mostly for IDEA files
         if (type == MessageFormatUtil.MessageFormatErrorType.QUOTED_PLACEHOLDER) {
           return;
         }
