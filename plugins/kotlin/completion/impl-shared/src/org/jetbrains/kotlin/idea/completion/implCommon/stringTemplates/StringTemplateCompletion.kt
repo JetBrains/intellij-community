@@ -30,5 +30,21 @@ object StringTemplateCompletion {
         }
         return null
     }
+    
+    
+    fun checkQualifiedThisInStringTemplateCompletion(parameters: CompletionParameters): CompletionParameters? {
+        val position = parameters.position
+
+            if(position.node.elementType == KtTokens.IDENTIFIER )
+            {
+                if (position.parent  is KtReferenceExpression)
+                {
+                    return parameters
+                }
+
+            }
+
+        return null
+    }
 
 }
