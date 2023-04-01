@@ -184,4 +184,28 @@ class Sample {
     stringJoiner5.merge(stringJoiner4);
     stringJoiner5.add("1");
   }
+
+  private void stringBuilderChainInitializer() {
+    StringBuilder <warning descr="Contents of 'StringBuilder sb' are updated, but never queried">sb</warning> = ((new StringBuilder())
+      .append("asdf"));
+    sb.append("a");
+    sb.append("1")
+      .append("2");
+
+    StringBuilder <warning descr="Contents of 'StringBuilder sb2' are updated, but never queried">sb2</warning> = ((new StringBuilder())
+                                                                                                                   .append("asdf"));
+  }
+  private void stringJoinerChainInitializer() {
+    StringJoiner <warning descr="Contents of 'StringJoiner sb' are updated, but never queried">sb</warning> = ((new StringJoiner(","))
+      .add("asdf"));
+    sb.add("a");
+    sb.add("1")
+      .add("2");
+
+
+  }
+
+  private final static StringBuilder <warning descr="Contents of 'StringBuilder sbField' are updated, but never queried">sbField</warning> = ((new StringBuilder())
+                        .append("asdf"));
+
 }

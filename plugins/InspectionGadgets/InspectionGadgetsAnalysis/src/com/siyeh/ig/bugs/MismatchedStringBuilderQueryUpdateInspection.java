@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
@@ -79,11 +79,12 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
         return;
       }
       final PsiClass containingClass = PsiUtil.getTopLevelClass(field);
-      if (!checkVariable(field, containingClass)) {
+      PsiExpression firstQualifier = getFirstQualifier(field.getInitializer(), type);
+      if (!checkVariable(field, firstQualifier, containingClass)) {
         return;
       }
       final boolean queried = isStringBuilderQueried(field, containingClass, type);
-      final boolean updated = isStringBuilderUpdated(field, containingClass, type);
+      final boolean updated = isStringBuilderUpdated(field, firstQualifier, containingClass, type);
       if (queried == updated || UnusedSymbolUtil.isImplicitWrite(field)) {
         return;
       }
@@ -98,22 +99,25 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
       if (type == null) {
         return;
       }
-      if (!checkVariable(variable, codeBlock)) {
+      PsiExpression firstQualifier = getFirstQualifier(variable.getInitializer(), type);
+      if (!checkVariable(variable, firstQualifier, codeBlock)) {
         return;
       }
       final boolean queried = isStringBuilderQueried(variable, codeBlock, type);
-      final boolean updated = isStringBuilderUpdated(variable, codeBlock, type);
+      final boolean updated = isStringBuilderUpdated(variable, firstQualifier, codeBlock, type);
       if (queried == updated) {
         return;
       }
       registerVariableError(variable, Boolean.valueOf(updated), variable.getType());
     }
 
-    private static boolean checkVariable(@NotNull PsiVariable variable, @Nullable PsiElement context) {
+    private static boolean checkVariable(@NotNull PsiVariable variable,
+                                         @Nullable PsiExpression firstQualifier,
+                                         @Nullable PsiElement context) {
       if (context == null) {
         return false;
       }
-      if (!(PsiUtil.skipParenthesizedExprDown(variable.getInitializer()) instanceof PsiNewExpression)) {
+      if (!(PsiUtil.skipParenthesizedExprDown(firstQualifier) instanceof PsiNewExpression)) {
         return false;
       }
       if (VariableAccessUtils.variableIsAssigned(variable, context)) {
@@ -131,16 +135,53 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
       return !VariableAccessUtils.variableIsUsedInArrayInitializer(variable, context);
     }
 
-    private static boolean isStringBuilderUpdated(@NotNull PsiVariable variable, @NotNull PsiElement context, @NotNull BuilderType type) {
-      final PsiExpression initializer = variable.getInitializer();
-      if (initializer != null &&
-          !(ConstructionUtils.isEmptyStringBuilderInitializer(initializer) ||
-           isOnlyDelimiterStringJoinerInitializer(initializer))) {
+    @Nullable
+    private static PsiExpression getFirstQualifier(@Nullable PsiExpression expression, @NotNull BuilderType type) {
+      if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
+        final PsiExpression next = parenthesizedExpression.getExpression();
+        return getFirstQualifier(next, type);
+      }
+      else if (expression instanceof PsiMethodCallExpression methodCallExpression) {
+        final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+        final String name = methodExpression.getReferenceName();
+        if (name != null && returnSelfNames.get(type).contains(name)) {
+          return getFirstQualifier(methodExpression.getQualifierExpression(), type);
+        }
+      }
+      return expression;
+    }
+
+    private static boolean isStringBuilderUpdated(@NotNull PsiVariable variable, @Nullable PsiExpression firstQualifiedInitializer,
+                                                  @NotNull PsiElement context, @NotNull BuilderType type) {
+      if ((firstQualifiedInitializer != null &&
+           !(ConstructionUtils.isEmptyStringBuilderInitializer(firstQualifiedInitializer) ||
+           isOnlyDelimiterStringJoinerInitializer(firstQualifiedInitializer)))) {
+        return true;
+      }
+      if (firstQualifiedInitializer != variable.getInitializer() && isChainUpdated(variable.getInitializer(), type)) {
         return true;
       }
       final StringBuilderUpdateCalledVisitor visitor = new StringBuilderUpdateCalledVisitor(variable, type);
       context.accept(visitor);
       return visitor.isUpdated();
+    }
+
+    private static boolean isChainUpdated(@Nullable PsiExpression expression, @NotNull BuilderType type) {
+      if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
+        final PsiExpression next = parenthesizedExpression.getExpression();
+        return isChainUpdated(next, type);
+      }
+      else if (expression instanceof PsiMethodCallExpression methodCallExpression) {
+        final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+        final String name = methodExpression.getReferenceName();
+        if (name != null && StringBuilderUpdateCalledVisitor.updateNames.get(type).contains(name)) {
+          return true;
+        }
+        if (name != null && returnSelfNames.get(type).contains(name)) {
+          return isChainUpdated(methodExpression.getQualifierExpression(), type);
+        }
+      }
+      return false;
     }
 
     private static boolean isOnlyDelimiterStringJoinerInitializer(@NotNull PsiExpression construction) {
