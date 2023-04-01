@@ -26,10 +26,16 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileType name="JSON" extensions="har;json" implementationClass="com.intellij.json.JsonFileType" fieldName="INSTANCE" language="JSON"/>
-    <fileType name="JSON5" extensions="json5" implementationClass="com.intellij.json.json5.Json5FileType" fieldName="INSTANCE" language="JSON5"/>
+    <fileType name="JSON" extensions="har;json"
+              implementationClass="com.intellij.json.JsonFileType" fieldName="INSTANCE"
+              language="JSON"/>
+    <fileType name="JSON5" extensions="json5" fileNames="devcontainer.json"
+              implementationClass="com.intellij.json.json5.Json5FileType" fieldName="INSTANCE"
+              language="JSON5"/>
     <fileType name="JSON-lines" extensions="jsonl;jsonlines;ldjson;ndjson"
-              implementationClass="com.intellij.json.jsonLines.JsonLinesFileType" fieldName="INSTANCE" language="JSON Lines"/>
+              implementationClass="com.intellij.json.jsonLines.JsonLinesFileType" fieldName="INSTANCE"
+              language="JSON Lines"/>
+
     <fileIconProvider implementation="com.jetbrains.jsonSchema.JsonSchemaIconProvider"/>
     <lang.parserDefinition language="JSON" implementationClass="com.intellij.json.JsonParserDefinition"/>
     <lang.parserDefinition language="JSON5" implementationClass="com.intellij.json.json5.Json5ParserDefinition"/>
