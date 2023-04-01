@@ -28,7 +28,6 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -380,6 +379,22 @@ public final class MavenIndex implements MavenSearchIndex {
     }
   }
 
+  private void closeAndClean(PersistentHashMap<String, Set<String>> map) {
+    try {
+      map.closeAndClean();
+    }
+    catch (IOException e) {
+      MavenLog.LOG.error(e);
+    }
+  }
+
+  public void closeAndClean() {
+    closeAndClean(myData.groupToArtifactMap);
+    closeAndClean(myData.groupWithArtifactToVersionMap);
+    closeAndClean(myData.archetypeIdToDescriptionMap);
+    close(false);
+  }
+
   private static <T> Set<T> getOrCreate(Map<String, Set<T>> map, String key) {
     return map.computeIfAbsent(key, k -> new TreeSet<>());
   }
@@ -419,7 +434,7 @@ public final class MavenIndex implements MavenSearchIndex {
    * @return list of artifact responses; indexed id is not null if artifact added; indexed id is null if retry is needed
    */
   @NotNull
-  public List<AddArtifactResponse> tryAddArtifacts(@NotNull Collection<File> artifactFiles, @NotNull AtomicBoolean stopped) {
+  public List<AddArtifactResponse> tryAddArtifacts(@NotNull Collection<File> artifactFiles) {
     var failedResponses = ContainerUtil.map(artifactFiles, file -> new AddArtifactResponse(file, null));
     return doIndexAndRecoveryTask(() -> {
       boolean locked = indexUpdateLock.tryLock();
@@ -439,10 +454,8 @@ public final class MavenIndex implements MavenSearchIndex {
               }
             }
           }
-          if (!stopped.get()) {
-            indexData.flush();
-            return addArtifactResponses;
-          }
+          indexData.flush();
+          return addArtifactResponses;
         }
         return failedResponses;
       } finally {

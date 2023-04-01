@@ -84,6 +84,12 @@ public final class MavenIndicesManager implements Disposable {
 
   private void deleteIndicesDirInUnitTests() {
     if (MavenUtil.isMavenUnitTestModeEnabled()) {
+      if (!myMavenIndices.isDisposed()) {
+        var localIndex = myMavenIndices.getIndexHolder().getLocalIndex();
+        if (localIndex != null) {
+          localIndex.closeAndClean();
+        }
+      }
       Path dir = getIndicesDir();
       try {
         PathKt.delete(dir);
@@ -297,7 +303,7 @@ public final class MavenIndicesManager implements Disposable {
           if (filesToAddNow.isEmpty()) return;
 
           Set<File> retryElements = new TreeSet<>();
-          var addArtifactResponses = localIndex.tryAddArtifacts(filesToAddNow, stopped);
+          var addArtifactResponses = localIndex.tryAddArtifacts(filesToAddNow);
           for (var addArtifactResponse : addArtifactResponses) {
             var file = addArtifactResponse.artifactFile();
             var added = addArtifactResponse.indexedMavenId() != null;
@@ -324,6 +330,8 @@ public final class MavenIndicesManager implements Disposable {
       }
 
       private void fireUpdated(Set<File> added, Set<File> failedToAdd) {
+        if (stopped.get()) return;
+
         if (!added.isEmpty() || !failedToAdd.isEmpty()) {
           ApplicationManager.getApplication().getMessageBus().syncPublisher(INDEXER_TOPIC).indexUpdated(added, failedToAdd);
         }
