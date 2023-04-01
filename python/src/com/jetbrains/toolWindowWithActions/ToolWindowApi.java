@@ -70,5 +70,6 @@ final class ToolWindowApi {
   void close() {
     myContentManager.removeAllContents(true);
     myToolWindowManager.unregisterToolWindow(myWindowName);
+    myToolWindowManager.exit();
   }
 }
