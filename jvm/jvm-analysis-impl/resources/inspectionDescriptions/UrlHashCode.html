@@ -1,9 +1,7 @@
 <html>
 <body>
-Reports <code>java.util.Set</code> and <code>java.util.Map</code> variables that contain
-<code>java.net.URL</code> objects.
-Such collections will call the <code>equals()</code> and <code>hashCode()</code> methods on inserted objects,
-which can cause performance problems on <code>URL</code> objects.
+Reports <code>hashCode()</code> and <code>equals()</code> calls on <code>java.net.URL</code> objects and calls that add <code>URL</code>
+objects to maps and sets.
 <p>
   <code>URL</code>'s <code>equals()</code> and <code>hashCode()</code> methods can perform a DNS lookup to resolve the host name.
   This may cause significant delays, depending on the availability and speed of the network and the DNS server.
@@ -11,7 +9,9 @@ which can cause performance problems on <code>URL</code> objects.
 </p>
 <p><b>Example:</b></p>
 <pre><code>
-  Set&lt;URL&gt; set = new HashSet&lt;URL&gt;();
+  boolean urlEquals(URL url1, URL url2) {
+      return url1.equals(url2);
+  }
 </code></pre>
 <!-- tooltip end -->
 </body>

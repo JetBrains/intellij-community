@@ -1842,9 +1842,6 @@
                      bundle="messages.InspectionGadgetsBundle" key="call.to.simple.setter.in.class.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.performance.CallToSimpleSetterInClassInspection" cleanupTool="true"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="CollectionContainsUrl" bundle="messages.InspectionGadgetsBundle" key="collection.contains.url.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="true"
-                     level="WARNING" implementationClass="com.siyeh.ig.performance.CollectionContainsUrlInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="CollectionWithoutInitialCapacity" shortName="CollectionsMustHaveInitialCapacity"
                      bundle="messages.InspectionGadgetsBundle" key="collections.must.have.initial.capacity.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="false"
@@ -1853,10 +1850,6 @@
                      key="dynamic.regex.replaceable.by.compiled.pattern.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.performance.DynamicRegexReplaceableByCompiledPatternInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="EqualsHashCodeCalledOnUrl" bundle="messages.InspectionGadgetsBundle"
-                     key="equals.hashcode.called.on.url.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.performance.EqualsHashCodeCalledOnUrlInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="FieldMayBeStatic" bundle="messages.InspectionGadgetsBundle" key="field.may.be.static.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.performance.FieldMayBeStaticInspection"/>

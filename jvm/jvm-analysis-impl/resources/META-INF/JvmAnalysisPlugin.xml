@@ -108,6 +108,13 @@
                      implementationClass="com.intellij.codeInspection.logging.LoggingConditionDisagreesWithLogLevelStatementInspection"/>
     <inspectionElementsMerger implementation="com.intellij.codeInspection.logging.LoggingConditionDisagreesWithLogLevelStatementInspectionMerger"/>
 
+    <!-- Performance -->
+    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="UrlHashCode"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="jvm.inspections.equals.hashcode.called.on.url.display.name"
+                     implementationClass="com.intellij.codeInspection.performance.UrlHashCodeInspection"/>
+    <inspectionElementsMerger implementation="com.intellij.codeInspection.performance.UrlHashCodeInspectionMerger"/>
+
 
     <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="UnstableApiUsage"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
