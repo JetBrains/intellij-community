@@ -51,7 +51,11 @@ class TypeLookupElementFactory {
     fun KtAnalysisSession.createLookup(symbol: KtClassifierSymbol): LookupElement? {
         val (relativeNameAsString, fqNameAsString) = when (symbol) {
             is KtTypeParameterSymbol -> symbol.name.asString().let { it to it }
-            is KtClassLikeSymbol -> symbol.classIdIfNonLocal?.let { it.relativeClassName.asString() to it.asFqNameString() }
+
+            is KtClassLikeSymbol -> when (val classId = symbol.classIdIfNonLocal) {
+                null -> symbol.name?.asString()?.let { it to it }
+                else -> classId.relativeClassName.asString() to classId.asFqNameString()
+            }
         } ?: return null
 
         val tailText = (symbol as? KtClassLikeSymbol)?.let { getTailText(symbol, usePackageFqName = true) }

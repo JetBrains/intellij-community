@@ -18,10 +18,13 @@ internal object FirClassifierProvider {
         position: KtElement,
         scopeNameFilter: KtScopeNameFilter,
         visibilityChecker: CompletionVisibilityChecker
-    ): Sequence<KtClassifierSymbol> =
-        originalKtFile.getScopeContextForPosition(position).scopes
-            .getClassifierSymbols(scopeNameFilter)
-            .filter { visibilityChecker.isVisible(it) }
+    ): Sequence<KtSymbolWithContainingScopeKind<KtClassifierSymbol>> =
+        originalKtFile.getScopeContextForPosition(position).scopes.asSequence().flatMap { scopeWithKind ->
+            val classifiers = scopeWithKind.scope.getClassifierSymbols(scopeNameFilter)
+                .filter { visibilityChecker.isVisible(it) }
+                .map { KtSymbolWithContainingScopeKind(it, scopeWithKind.kind) }
+            classifiers
+        }
 
     fun KtAnalysisSession.getAvailableClassifiersFromIndex(
         symbolProvider: KtSymbolFromIndexProvider,

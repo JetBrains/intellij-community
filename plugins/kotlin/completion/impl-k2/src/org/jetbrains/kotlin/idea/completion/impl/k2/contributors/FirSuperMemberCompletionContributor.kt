@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.completion.contributors
 import com.intellij.psi.util.parentsOfType
 import com.intellij.refactoring.suggested.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
@@ -19,7 +20,7 @@ import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirSuperReceiverNameReferencePositionContext
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.collectNonExtensions
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.collectNonExtensionsForType
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
@@ -36,6 +37,9 @@ internal class FirSuperMemberCompletionContributor(
     private val excludeEnumEntries =
         !basicContext.project.languageVersionSettings.supportsFeature(LanguageFeature.EnumEntries)
 
+
+    private data class CallableInfo(val type: KtType, val symbol: KtCallableSymbol, val scopeKind: KtScopeKind?)
+
     override fun KtAnalysisSession.complete(
         positionContext: FirSuperReceiverNameReferencePositionContext,
         weighingContext: WeighingContext
@@ -44,11 +48,12 @@ internal class FirSuperMemberCompletionContributor(
         val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
         val superType = superReceiver.getKtType() ?: return
 
-        val (nonExtensionMembers: Iterable<Pair<KtType, KtCallableSymbol>>, namesNeedDisambiguation: Set<Name>) = if (superType !is KtIntersectionType) {
-            getNonExtensionsMemberSymbols(superType, visibilityChecker).map { superType to it }.asIterable() to emptySet()
-        } else {
-            getSymbolsAndNamesNeedDisambiguation(superType.conjuncts, visibilityChecker)
-        }
+        val (nonExtensionMembers: Iterable<CallableInfo>, namesNeedDisambiguation: Set<Name>) =
+            if (superType !is KtIntersectionType) {
+                getNonExtensionsMemberSymbols(superType, visibilityChecker).asIterable() to emptySet()
+            } else {
+                getSymbolsAndNamesNeedDisambiguation(superType.conjuncts, visibilityChecker)
+            }
         collectCallToSuperMember(superReceiver, nonExtensionMembers, weighingContext, namesNeedDisambiguation)
         collectDelegateCallToSuperMember(weighingContext, superReceiver, nonExtensionMembers, namesNeedDisambiguation)
 
@@ -57,12 +62,12 @@ internal class FirSuperMemberCompletionContributor(
     private fun KtAnalysisSession.getSymbolsAndNamesNeedDisambiguation(
         superTypes: List<KtType>,
         visibilityChecker: CompletionVisibilityChecker
-    ): Pair<List<Pair<KtType, KtCallableSymbol>>, Set<Name>> {
-        val allSymbols = mutableListOf<Pair<KtType, KtCallableSymbol>>()
+    ): Pair<List<CallableInfo>, Set<Name>> {
+        val allSymbols = mutableListOf<CallableInfo>()
         val symbolsInAny = mutableSetOf<KtCallableSymbol>()
         val symbolCountsByName = mutableMapOf<Name, Int>()
         for (superType in superTypes) {
-            for (symbol in getNonExtensionsMemberSymbols(superType, visibilityChecker)) {
+            for ((_, symbol, scopeKind) in getNonExtensionsMemberSymbols(superType, visibilityChecker)) {
                 // Abstract symbol does not participate completion.
                 if (symbol !is KtSymbolWithModality || symbol.modality == Modality.ABSTRACT) continue
 
@@ -72,7 +77,7 @@ internal class FirSuperMemberCompletionContributor(
                     symbolsInAny.add(symbol)
                 }
 
-                allSymbols.add(superType to symbol)
+                allSymbols.add(CallableInfo(superType, symbol, scopeKind))
                 val name = symbol.callableIdIfNonLocal?.callableName ?: continue
                 symbolCountsByName[name] = (symbolCountsByName[name] ?: 0) + 1
             }
@@ -90,19 +95,19 @@ internal class FirSuperMemberCompletionContributor(
     private fun KtAnalysisSession.getNonExtensionsMemberSymbols(
         receiverType: KtType,
         visibilityChecker: CompletionVisibilityChecker
-    ): Sequence<KtCallableSymbol> {
-        val scope = receiverType.getTypeScope()?.getDeclarationScope() ?: return emptySequence()
-        val syntheticJavaPropertiesScope = receiverType.getSyntheticJavaPropertiesScope()?.getDeclarationScope()
-        return collectNonExtensions(scope, syntheticJavaPropertiesScope, visibilityChecker, scopeNameFilter, excludeEnumEntries)
+    ): Sequence<CallableInfo> {
+        return collectNonExtensionsForType(receiverType, visibilityChecker, scopeNameFilter, excludeEnumEntries).map { (symbol, scopeKind) ->
+            CallableInfo(receiverType, symbol, scopeKind)
+        }
     }
 
     private fun KtAnalysisSession.collectCallToSuperMember(
         superReceiver: KtSuperExpression,
-        nonExtensionMembers: Iterable<Pair<KtType, KtCallableSymbol>>,
+        nonExtensionMembers: Iterable<CallableInfo>,
         context: WeighingContext,
         namesNeedDisambiguation: Set<Name>
     ) {
-        nonExtensionMembers.forEach { (superType, callableSymbol) ->
+        nonExtensionMembers.forEach { (superType, callableSymbol, scopeKind) ->
             addCallableSymbolToCompletion(
                 context,
                 callableSymbol,
@@ -115,7 +120,8 @@ internal class FirSuperMemberCompletionContributor(
                         namesNeedDisambiguation,
                         superReceiver
                     )
-                )
+                ),
+                scopeKind
             )
         }
     }
@@ -128,7 +134,7 @@ internal class FirSuperMemberCompletionContributor(
     private fun KtAnalysisSession.collectDelegateCallToSuperMember(
         context: WeighingContext,
         superReceiver: KtSuperExpression,
-        nonExtensionMembers: Iterable<Pair<KtType, KtCallableSymbol>>,
+        nonExtensionMembers: Iterable<CallableInfo>,
         namesNeedDisambiguation: Set<Name>
     ) {
         // A map that contains all containing functions as values, each of which is indexed by symbols it overrides. For example, consider
@@ -161,7 +167,7 @@ internal class FirSuperMemberCompletionContributor(
 
         if (superFunctionToContainingFunction.isEmpty()) return
 
-        for ((superType, callableSymbol) in nonExtensionMembers) {
+        for ((superType, callableSymbol, scopeKind) in nonExtensionMembers) {
             val matchedContainingFunction = superFunctionToContainingFunction[callableSymbol] ?: continue
             if (callableSymbol !is KtFunctionSymbol) continue
             if (callableSymbol.valueParameters.isEmpty()) continue
@@ -187,6 +193,7 @@ internal class FirSuperMemberCompletionContributor(
                         superReceiver
                     )
                 ),
+                scopeKind,
                 priority = ItemPriority.SUPER_METHOD_WITH_ARGUMENTS
             )
         }

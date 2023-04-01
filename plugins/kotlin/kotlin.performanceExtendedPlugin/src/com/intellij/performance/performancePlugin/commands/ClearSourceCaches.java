@@ -33,7 +33,7 @@ public class ClearSourceCaches extends AbstractCommand {
             KotlinIDEModificationTrackerService.Companion.invalidateCaches(project);
             if (System.getProperty("idea.kotlin.plugin.use.k2", "false").equals("true")) {
                 KtAnalysisSessionProvider.Companion.getInstance(project).clearCaches();
-                project.getService(KotlinModificationTrackerFactory.class).incrementModificationsCount();
+                project.getService(KotlinModificationTrackerFactory.class).incrementModificationsCount(false);
             }
             actionCallback.setDone();
         });

@@ -32,9 +32,9 @@ internal class Fe10KotlinModificationTrackerFactory(private val project: Project
     }
 
     @TestOnly
-    override fun incrementModificationsCount() {
+    override fun incrementModificationsCount(includeBinaryTrackers: Boolean) {
         KotlinCodeBlockModificationListener.getInstance(project).incModificationCount()
         KotlinModuleOutOfCodeBlockModificationTracker.incrementModificationCountForAllModules(project)
-        KotlinModuleStateTrackerProvider.getInstance(project).incrementModificationCountForAllModules()
+        KotlinModuleStateTrackerProvider.getInstance(project).incrementModificationCountForAllModules(includeBinaryTrackers)
     }
 }

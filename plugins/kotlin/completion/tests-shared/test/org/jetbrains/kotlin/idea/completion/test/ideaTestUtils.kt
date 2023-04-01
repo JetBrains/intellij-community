@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.completion.test
 
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
@@ -12,7 +13,11 @@ import java.io.File
 fun CodeInsightTestFixture.configureWithExtraFile(path: String, vararg extraNameParts: String = arrayOf(".Data")) {
     val fileName = File(path).name
 
-    val noExtensionPath = FileUtil.getNameWithoutExtension(fileName)
+    var noExtensionPath = FileUtil.getNameWithoutExtension(fileName)
+    if (FileUtilRt.getExtension(noExtensionPath) == "fir") {
+        noExtensionPath = FileUtil.getNameWithoutExtension(noExtensionPath)
+    }
+
     val extensions = arrayOf("kt", "java", "properties")
     val extraPaths: List<String> = extraNameParts.flatMap { extensions.map { ext -> "$noExtensionPath$it.$ext" } }
         .mapNotNull { File(testDataPath, it).takeIf { file -> file.exists() }?.name }

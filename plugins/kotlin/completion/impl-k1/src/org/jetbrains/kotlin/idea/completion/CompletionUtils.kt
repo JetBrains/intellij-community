@@ -63,7 +63,7 @@ fun LookupElement.keepOldArgumentListOnTab(): LookupElement {
 
 fun PrefixMatcher.asStringNameFilter() = { name: String -> prefixMatches(name) }
 
-fun ((String) -> Boolean).toNameFilter(): (Name) -> Boolean {
+fun ((String) -> Boolean).toNameFilter(): NameFilter {
     return { name -> !name.isSpecial && this(name.identifier) }
 }
 

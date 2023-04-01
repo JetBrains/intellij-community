@@ -122,6 +122,11 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
             runTest("testData/highlighterMetaInfo/AutoCreatedItParameter.kt");
         }
 
+        @TestMetadata("deprecation.kt")
+        public void testDeprecation() throws Exception {
+            runTest("testData/highlighterMetaInfo/deprecation.kt");
+        }
+
         @TestMetadata("Destructuring.kt")
         public void testDestructuring() throws Exception {
             runTest("testData/highlighterMetaInfo/Destructuring.kt");
@@ -230,6 +235,29 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
         @TestMetadata("VariablesAsFunctions.kt")
         public void testVariablesAsFunctions() throws Exception {
             runTest("testData/highlighterMetaInfo/VariablesAsFunctions.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/highlighterMetaInfo/unresolved")
+    public static class Unresolved extends AbstractK1HighlightingMetaInfoTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("unresolvedImport.kt")
+        public void testUnresolvedImport() throws Exception {
+            runTest("testData/highlighterMetaInfo/unresolved/unresolvedImport.kt");
+        }
+
+        @TestMetadata("unresolvedLabel.kt")
+        public void testUnresolvedLabel() throws Exception {
+            runTest("testData/highlighterMetaInfo/unresolved/unresolvedLabel.kt");
+        }
+
+        @TestMetadata("unresolvedReference.kt")
+        public void testUnresolvedReference() throws Exception {
+            runTest("testData/highlighterMetaInfo/unresolved/unresolvedReference.kt");
         }
     }
 }

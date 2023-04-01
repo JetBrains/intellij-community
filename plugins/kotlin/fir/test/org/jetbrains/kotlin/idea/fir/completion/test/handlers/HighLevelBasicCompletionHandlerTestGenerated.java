@@ -237,6 +237,29 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../completion/testData/handlers/basic/extensionReceiver")
+        public static class ExtensionReceiver extends AbstractHighLevelBasicCompletionHandlerTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("ExtensionReceiverTypeArg.kt")
+            public void testExtensionReceiverTypeArg() throws Exception {
+                runTest("../completion/testData/handlers/basic/extensionReceiver/ExtensionReceiverTypeArg.kt");
+            }
+
+            @TestMetadata("ExtensionReceiverTypeNotImported.kt")
+            public void testExtensionReceiverTypeNotImported() throws Exception {
+                runTest("../completion/testData/handlers/basic/extensionReceiver/ExtensionReceiverTypeNotImported.kt");
+            }
+
+            @TestMetadata("ExtensionReceiverTypeNotImported2.kt")
+            public void testExtensionReceiverTypeNotImported2() throws Exception {
+                runTest("../completion/testData/handlers/basic/extensionReceiver/ExtensionReceiverTypeNotImported2.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../completion/testData/handlers/basic/highOrderFunctions")
         public static class HighOrderFunctions extends AbstractHighLevelBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
@@ -990,6 +1013,16 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
                 runTest("../completion/testData/handlers/basic/AddLabelToReturn.kt");
             }
 
+            @TestMetadata("AfterPackageName.kt")
+            public void testAfterPackageName() throws Exception {
+                runTest("../completion/testData/handlers/basic/AfterPackageName.kt");
+            }
+
+            @TestMetadata("AfterPackageName2.kt")
+            public void testAfterPackageName2() throws Exception {
+                runTest("../completion/testData/handlers/basic/AfterPackageName2.kt");
+            }
+
             @TestMetadata("AmbiguousSuperMethod.kt")
             public void testAmbiguousSuperMethod() throws Exception {
                 runTest("../completion/testData/handlers/basic/AmbiguousSuperMethod.kt");
@@ -1058,11 +1091,6 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             @TestMetadata("ExtensionPropertyFromSameFile.kt")
             public void testExtensionPropertyFromSameFile() throws Exception {
                 runTest("../completion/testData/handlers/basic/ExtensionPropertyFromSameFile.kt");
-            }
-
-            @TestMetadata("ExtensionReceiverTypeArg.kt")
-            public void testExtensionReceiverTypeArg() throws Exception {
-                runTest("../completion/testData/handlers/basic/ExtensionReceiverTypeArg.kt");
             }
 
             @TestMetadata("FirstTypeArgument.kt")

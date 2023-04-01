@@ -66,7 +66,7 @@ internal class FirNamedArgumentCompletionContributor(basicContext: FirBasicCompl
                     }
                 }
             }
-            elements.forEach { Weighers.applyWeighsToLookupElement(weighingContext, it, symbol = null) }
+            elements.forEach { Weighers.applyWeighsToLookupElement(weighingContext, it, symbol = null, scopeKind = null) }
 
             sink.addAllElements(elements)
         }

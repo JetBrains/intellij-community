@@ -9,6 +9,7 @@ import com.intellij.psi.*
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -82,7 +83,19 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
                 ?: specialInBinaryExpressionDummyIdentifier(tokenBefore)
                 ?: isInValueOrTypeParametersList(tokenBefore)
                 ?: handleDefaultCase(context)
+                ?: isInAnnotationEntry(tokenBefore)
                 ?: DEFAULT_DUMMY_IDENTIFIER
+        }
+    }
+
+    private fun isInAnnotationEntry(tokenBefore: PsiElement?): String? {
+        if (tokenBefore == null) return null
+
+        val typeReference = tokenBefore.parentOfType<KtTypeReference>(true) ?: return null
+        return if (typeReference.parentOfType<KtAnnotationEntry>() != null) {
+            CompletionUtilCore.DUMMY_IDENTIFIER
+        } else {
+            null
         }
     }
 

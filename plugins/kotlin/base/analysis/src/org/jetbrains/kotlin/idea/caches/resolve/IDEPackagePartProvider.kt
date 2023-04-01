@@ -32,6 +32,8 @@ class IDEPackagePartProvider(val scope: GlobalSearchScope) : PackagePartProvider
     override fun getAllOptionalAnnotationClasses(): List<ClassData> =
         emptyList()
 
+    override fun mayHaveOptionalAnnotationClasses(): Boolean = false
+
     // NB: It's ok even to return a little more than actual packages for non-class entities
     override fun computePackageSetWithNonClassDeclarations(): Set<String> = buildSet {
         FileBasedIndex.getInstance().processAllKeys(KotlinModuleMappingIndex.NAME, { name -> add(name); true }, scope, null)

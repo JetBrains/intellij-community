@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScopes
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import java.nio.file.Path
 import java.nio.file.Paths
+import org.jetbrains.kotlin.idea.base.util.not
 
 @ApiStatus.Internal
 abstract class KtModuleByModuleInfoBase(moduleInfo: ModuleInfo) {
@@ -61,7 +63,8 @@ abstract class KtModuleByModuleInfoBase(moduleInfo: ModuleInfo) {
     }
 }
 
-internal class KtSourceModuleByModuleInfo(private val moduleInfo: ModuleSourceInfo) : KtModuleByModuleInfoBase(moduleInfo), KtSourceModule {
+@ApiStatus.Internal
+open class KtSourceModuleByModuleInfo(private val moduleInfo: ModuleSourceInfo) : KtModuleByModuleInfoBase(moduleInfo), KtSourceModule {
     val ideaModule: Module get() = moduleInfo.module
 
     override val moduleName: String get() = ideaModule.name
@@ -79,6 +82,30 @@ internal class KtSourceModuleByModuleInfo(private val moduleInfo: ModuleSourceIn
     override val languageVersionSettings: LanguageVersionSettings get() = moduleInfo.module.languageVersionSettings
 
     override val project: Project get() = ideaModule.project
+}
+
+@ApiStatus.Internal
+class KtSourceModuleByModuleInfoForNonUnderContentFile(
+    val fakeVirtualFile: VirtualFile,
+    val originalVirtualFile: VirtualFile,
+    moduleInfo: ModuleSourceInfo,
+) : KtSourceModuleByModuleInfo(moduleInfo) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is KtSourceModuleByModuleInfoForNonUnderContentFile || other.fakeVirtualFile != fakeVirtualFile) return false
+        return super.equals(other)
+    }
+
+    override fun hashCode(): Int = fakeVirtualFile.hashCode()
+
+    override val contentScope: GlobalSearchScope
+        get() = replaceOriginalFileWithFakeInScope(super.contentScope)
+
+    fun replaceOriginalFileWithFakeInScope(originalScope: GlobalSearchScope): GlobalSearchScope {
+        return GlobalSearchScope.fileScope(project, fakeVirtualFile)
+            .uniteWith(originalScope)
+            .intersectWith(GlobalSearchScope.fileScope(project, originalVirtualFile).not())
+    }
 }
 
 fun ModuleSourceInfo.collectDependencies(collectionMode: ModuleDependencyCollector.CollectionMode): List<KtModule> {

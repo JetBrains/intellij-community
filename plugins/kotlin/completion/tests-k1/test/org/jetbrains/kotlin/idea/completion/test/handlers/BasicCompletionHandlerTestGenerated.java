@@ -235,6 +235,29 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/handlers/basic/extensionReceiver")
+    public static class ExtensionReceiver extends AbstractBasicCompletionHandlerTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ExtensionReceiverTypeArg.kt")
+        public void testExtensionReceiverTypeArg() throws Exception {
+            runTest("../testData/handlers/basic/extensionReceiver/ExtensionReceiverTypeArg.kt");
+        }
+
+        @TestMetadata("ExtensionReceiverTypeNotImported.kt")
+        public void testExtensionReceiverTypeNotImported() throws Exception {
+            runTest("../testData/handlers/basic/extensionReceiver/ExtensionReceiverTypeNotImported.kt");
+        }
+
+        @TestMetadata("ExtensionReceiverTypeNotImported2.kt")
+        public void testExtensionReceiverTypeNotImported2() throws Exception {
+            runTest("../testData/handlers/basic/extensionReceiver/ExtensionReceiverTypeNotImported2.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/highOrderFunctions")
     public static class HighOrderFunctions extends AbstractBasicCompletionHandlerTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -988,6 +1011,16 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             runTest("../testData/handlers/basic/AddLabelToReturn.kt");
         }
 
+        @TestMetadata("AfterPackageName.kt")
+        public void testAfterPackageName() throws Exception {
+            runTest("../testData/handlers/basic/AfterPackageName.kt");
+        }
+
+        @TestMetadata("AfterPackageName2.kt")
+        public void testAfterPackageName2() throws Exception {
+            runTest("../testData/handlers/basic/AfterPackageName2.kt");
+        }
+
         @TestMetadata("AmbiguousSuperMethod.kt")
         public void testAmbiguousSuperMethod() throws Exception {
             runTest("../testData/handlers/basic/AmbiguousSuperMethod.kt");
@@ -1056,11 +1089,6 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
         @TestMetadata("ExtensionPropertyFromSameFile.kt")
         public void testExtensionPropertyFromSameFile() throws Exception {
             runTest("../testData/handlers/basic/ExtensionPropertyFromSameFile.kt");
-        }
-
-        @TestMetadata("ExtensionReceiverTypeArg.kt")
-        public void testExtensionReceiverTypeArg() throws Exception {
-            runTest("../testData/handlers/basic/ExtensionReceiverTypeArg.kt");
         }
 
         @TestMetadata("FirstTypeArgument.kt")
