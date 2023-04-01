@@ -6,6 +6,7 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.AbstractImportsTest
 import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.ShortenOption
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.utils.IgnoreTests
@@ -23,7 +24,19 @@ abstract class AbstractFirShortenRefsTest : AbstractImportsTest() {
 
         val shortenings = executeOnPooledThreadInReadAction {
             analyze(file) {
-                collectPossibleReferenceShortenings(file, selection)
+                if (file.text.contains("// SHORTEN_AND_STAR_IMPORT")) {
+                    collectPossibleReferenceShortenings(file,
+                                                        selection,
+                                                        { ShortenOption.SHORTEN_AND_STAR_IMPORT },
+                                                        { ShortenOption.SHORTEN_AND_STAR_IMPORT })
+                } else if (file.text.contains("// SHORTEN_AND_IMPORT")) {
+                    collectPossibleReferenceShortenings(file,
+                                                        selection,
+                                                        { ShortenOption.SHORTEN_AND_IMPORT },
+                                                        { ShortenOption.SHORTEN_AND_IMPORT })
+                } else {
+                    collectPossibleReferenceShortenings(file, selection)
+                }
             }
         }
 
