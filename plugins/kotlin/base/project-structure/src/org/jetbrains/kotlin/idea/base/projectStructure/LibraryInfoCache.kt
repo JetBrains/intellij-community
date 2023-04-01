@@ -17,7 +17,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.messages.Topic
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider
+import org.jetbrains.kotlin.idea.base.platforms.detectLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.isKlibLibraryRootForPlatform
 import org.jetbrains.kotlin.idea.base.platforms.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
@@ -301,7 +301,7 @@ class LibraryInfoCache(project: Project) : Disposable {
 
         private fun getPlatform(library: LibraryEx): TargetPlatform =
             if (!library.isDisposed) {
-                project.service<LibraryEffectiveKindProvider>().getEffectiveKind(library).platform
+                detectLibraryKind(library, project).platform
             } else {
                 JvmPlatforms.defaultJvmPlatform
             }

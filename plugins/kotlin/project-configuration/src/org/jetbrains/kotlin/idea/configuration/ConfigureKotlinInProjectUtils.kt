@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.module.Module
@@ -30,7 +29,7 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
-import org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider
+import org.jetbrains.kotlin.idea.base.platforms.detectLibraryKind
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
@@ -383,7 +382,7 @@ class LibraryKindSearchScope(
         if (!super.contains(file)) return false
         val orderEntry = ModuleRootManager.getInstance(module).fileIndex.getOrderEntryForFile(file)
         if (orderEntry is LibraryOrderEntry) {
-            return module.project.service<LibraryEffectiveKindProvider>().getEffectiveKind(orderEntry.library as LibraryEx) == libraryKind
+            return detectLibraryKind(orderEntry.library as LibraryEx, module.project) == libraryKind
         }
         return true
     }

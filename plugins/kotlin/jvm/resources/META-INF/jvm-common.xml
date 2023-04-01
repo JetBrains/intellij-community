@@ -52,6 +52,8 @@
         <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector"
                             serviceImplementation="org.jetbrains.kotlin.idea.run.KotlinFE10MainFunctionDetector"/>
 
+        <cachesInvalidator implementation="org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProviderInvalidator"/>
+
         <library.type implementation="org.jetbrains.kotlin.idea.base.platforms.library.JSLibraryType"/>
         <library.javaSourceRootDetector implementation="org.jetbrains.kotlin.idea.configuration.KotlinSourceRootDetector"/>
 
