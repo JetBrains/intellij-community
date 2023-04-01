@@ -1,1 +1,1 @@
-public [ResolvedTo(BODY_RESOLVE)] constructor(): R|library/TopLevelClass|
+public [BODY_RESOLVE] constructor(): R|library/TopLevelClass|

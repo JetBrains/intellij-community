@@ -1,1 +1,1 @@
-public [ResolvedTo(BODY_RESOLVE)] constructor([ResolvedTo(BODY_RESOLVE)] s: R|kotlin/String|): R|library/TopLevelClass|
+public [BODY_RESOLVE] constructor([BODY_RESOLVE] s: R|kotlin/String|): R|library/TopLevelClass|

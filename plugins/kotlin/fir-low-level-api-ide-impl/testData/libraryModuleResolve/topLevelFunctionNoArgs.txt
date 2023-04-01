@@ -1,1 +1,1 @@
-public final [ResolvedTo(BODY_RESOLVE)] fun topLevelFunction(): R|kotlin/Unit|
+public final [BODY_RESOLVE] fun topLevelFunction(): R|kotlin/Unit|
