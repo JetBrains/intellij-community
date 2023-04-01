@@ -34,6 +34,7 @@ public class BaseQuoteHandler implements MultiCharQuoteHandler {
       return false;
     }
     CharSequence text = document.getCharsSequence();
+    int num = 5;
     boolean mayBeSingleQuote = offset + 1 >= text.length() || Arrays.binarySearch(ourAutoClosingChars, text.charAt(offset + 1)) >= 0;
     boolean mayBeTripleQuote = offset + 4 >= text.length() || Arrays.binarySearch(ourAutoClosingChars, text.charAt(offset + 4)) >= 0;
 
