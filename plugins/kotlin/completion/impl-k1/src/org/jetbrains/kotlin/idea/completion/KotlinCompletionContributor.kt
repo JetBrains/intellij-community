@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.StringTem
 import org.jetbrains.kotlin.idea.completion.smart.SmartCompletion
 import org.jetbrains.kotlin.idea.completion.smart.SmartCompletionSession
 import org.jetbrains.kotlin.idea.completion.stringTemplates.wrapLookupElementForStringTemplateAfterDotCompletion
+import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.wrapLookupElementForStringTemplateQualifiedThis
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -132,6 +133,11 @@ class KotlinCompletionContributor : CompletionContributor() {
 
         StringTemplateCompletion.correctParametersForInStringTemplateCompletion(parameters)?.let { correctedParameters ->
             doComplete(correctedParameters, result, ::wrapLookupElementForStringTemplateAfterDotCompletion)
+            return
+        }
+        
+        StringTemplateCompletion.checkQualifiedThisInStringTemplateCompletion(parameters)?.let { parameters ->
+            doComplete(parameters, result, ::wrapLookupElementForStringTemplateQualifiedThis)
             return
         }
 
