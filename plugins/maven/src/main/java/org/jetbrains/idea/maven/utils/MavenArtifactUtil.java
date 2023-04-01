@@ -104,6 +104,10 @@ public final class MavenArtifactUtil {
       dir = getArtifactDirectory(localRepository, groupId, artifactId);
     }
 
+    if (null == version) {
+      version = "";
+    }
+    version = version.trim();
     if (StringUtil.isEmpty(version)) version = resolveVersion(dir);
     return dir.resolve(version).resolve(artifactId + "-" + version + "." + type);
   }
