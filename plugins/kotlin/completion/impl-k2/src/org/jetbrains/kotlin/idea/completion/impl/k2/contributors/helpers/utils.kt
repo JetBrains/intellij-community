@@ -32,6 +32,7 @@ internal fun KtAnalysisSession.collectNonExtensionsFromScopeContext(
     scopeContext: KtScopeContext,
     visibilityChecker: CompletionVisibilityChecker,
     scopeNameFilter: KtScopeNameFilter,
+    excludeEnumEntries: Boolean,
     withSyntheticJavaProperties: Boolean = true,
     skipJavaGettersAndSetters: Boolean = true,
     symbolFilter: (KtCallableSymbol) -> Boolean = { true }
@@ -49,6 +50,7 @@ internal fun KtAnalysisSession.collectNonExtensionsFromScopeContext(
                 implicitReceiver.type,
                 visibilityChecker,
                 scopeNameFilter,
+                excludeEnumEntries,
                 withSyntheticJavaProperties = true,
                 skipJavaGettersAndSetters,
                 implicitReceiver.scopeIndexInTower,
@@ -101,14 +103,14 @@ internal fun KtAnalysisSession.collectNonExtensionsForType(
 
     val nonExtensionsFromType = (callableSymbols + innerClassesConstructors).filterNonExtensions(visibilityChecker, symbolFilter)
 
-    return sequence {
+    return sequence<KtSymbolWithContainingScopeKind<KtCallableSymbol>> {
         yieldAll(nonExtensionsFromType.map {
             KtSymbolWithContainingScopeKind(it, indexInTower?.let { KtScopeKind.SimpleTypeScope(indexInTower) })
         })
         yieldAll(syntheticProperties.map {
             KtSymbolWithContainingScopeKind(it, indexInTower?.let { KtScopeKind.SyntheticJavaPropertiesScope(indexInTower) })
         })
-    }.applyIf(excludeEnumEntries) { filterNot(::isEnumEntriesProperty) }
+    }.applyIf(excludeEnumEntries) { filterNot { isEnumEntriesProperty(it.symbol)} }
 }
 
 /**

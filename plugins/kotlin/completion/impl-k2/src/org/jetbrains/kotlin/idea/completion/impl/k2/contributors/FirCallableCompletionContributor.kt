@@ -108,7 +108,8 @@ internal open class FirCallableCompletionContributor(
         val availableNonExtensions = collectNonExtensionsFromScopeContext(
             scopeContext,
             visibilityChecker,
-            scopeNameFilter
+            scopeNameFilter,
+            excludeEnumEntries,
         ) { filter(it) }
         val extensionsWhichCanBeCalled = collectSuitableExtensions(scopeContext, extensionChecker, visibilityChecker)
 
