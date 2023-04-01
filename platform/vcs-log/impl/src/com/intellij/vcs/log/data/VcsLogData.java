@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
-import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -32,7 +31,9 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 
+import static com.intellij.diagnostic.telemetry.ScopesExtensionsKt.tracer;
 import static com.intellij.diagnostic.telemetry.TraceKt.runSpanWithScope;
+import static com.intellij.vcs.log.data.util.VcsScopeKt.VCS;
 
 public final class VcsLogData implements Disposable, VcsLogDataProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogData.class);
@@ -161,7 +162,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     synchronized (myLock) {
       if (myState.equals(State.CREATED)) {
         myState = State.INITIALIZED;
-        Span span = TraceManager.INSTANCE.getTracer("vcs").spanBuilder("initialize").startSpan();
+        Span span = tracer(VCS).spanBuilder("initialize").startSpan();
         Task.Backgroundable backgroundable = new Task.Backgroundable(myProject,
                                                                      VcsLogBundle.message("vcs.log.initial.loading.process"),
                                                                      false) {
@@ -222,7 +223,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
   }
 
   private void readCurrentUser() {
-    Span span = TraceManager.INSTANCE.getTracer("vcs").spanBuilder("readCurrentUser").startSpan();
+    Span span = tracer(VCS).spanBuilder("readCurrentUser").startSpan();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
       VirtualFile root = entry.getKey();
       try {

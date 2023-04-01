@@ -75,6 +75,8 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import static com.intellij.openapi.actionSystem.util.ActionSystemScopeKt.ActionSystem;
+
 @ApiStatus.Internal
 public final class Utils {
   private static final Key<Boolean> IS_MODAL_CONTEXT = Key.create("Component.isModalContext");
@@ -90,7 +92,7 @@ public final class Utils {
 
   static @NotNull Tracer getTracer(boolean checkNoop) {
     return checkNoop && !Boolean.TRUE.equals(Context.current().get(OT_ENABLE_SPANS)) ?
-           OpenTelemetry.noop().getTracer("") : TraceManager.INSTANCE.getTracer("actionSystem", true);
+           OpenTelemetry.noop().getTracer("") : TraceManager.INSTANCE.getTracer(ActionSystem.toString(), true);
   }
 
   public static @NotNull DataContext wrapToAsyncDataContext(@NotNull DataContext dataContext) {

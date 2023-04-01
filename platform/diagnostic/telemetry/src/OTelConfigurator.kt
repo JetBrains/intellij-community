@@ -1,13 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.telemetry
 
+import com.intellij.diagnostic.telemetry.OpenTelemetryUtils.IDEA_DIAGNOSTIC_OTLP
+import com.intellij.diagnostic.telemetry.otExporters.AggregatedMetricsExporter
+import com.intellij.diagnostic.telemetry.otExporters.AggregatedSpansProcessor
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.util.ShutDownTracker
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
 import io.opentelemetry.sdk.metrics.SdkMeterProvider
-import io.opentelemetry.sdk.metrics.export.MetricExporter
 import io.opentelemetry.sdk.metrics.export.PeriodicMetricReader
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SdkTracerProvider
@@ -26,7 +28,7 @@ class OTelConfigurator(private val mainScope: CoroutineScope,
   private val serviceName = ApplicationNamesInfo.getInstance().fullProductName
   private val serviceVersion = appInfo.build.asStringWithoutProductCode()
   private val serviceNamespace = appInfo.build.productCode
-  private val metricsReportingPath = if (enableMetricsByDefault) MetricsExporterUtils.metricsReportingPath() else null
+  private val metricsReportingPath = if (enableMetricsByDefault) OpenTelemetryUtils.metricsReportingPath() else null
   private val shutdownCompletionTimeout: Long = 10
   private val resource = Resource.create(Attributes.of(
     ResourceAttributes.SERVICE_NAME, serviceName,
@@ -34,49 +36,47 @@ class OTelConfigurator(private val mainScope: CoroutineScope,
     ResourceAttributes.SERVICE_NAMESPACE, serviceNamespace,
     ResourceAttributes.SERVICE_INSTANCE_ID, DateTimeFormatter.ISO_INSTANT.format(Instant.now()),
   ))
+  val aggregatedMetricsExporter = AggregatedMetricsExporter()
+  val aggregatedSpansProcessor = AggregatedSpansProcessor(mainScope)
+  private val spanExporters = mutableListOf<AsyncSpanExporter>()
+  private val metricsExporters = mutableListOf<MetricsExporterEntry>()
 
   init {
-    val metricsEnabled = metricsEnabled()
-    val metricsExporters = mutableListOf<MetricsExporterEntry>()
-    val spanExporters = mutableListOf<AsyncSpanExporter>()
-    configureExporters(spanExporters, metricsExporters)
-    registerSpanExporters(spanExporters)
-    if (metricsEnabled) {
-      registerMetricsExporter(metricsExporters)
+    defaultSpanExportersRegistration()
+    if (metricsEnabled()) {
+      defaultMetricsExportersRegistration()
     }
   }
 
-  private fun configureExporters(spanExporters: MutableList<AsyncSpanExporter>,
-                        metricsExporters: MutableList<MetricsExporterEntry>) {
-    spanExporters.addAll(getDefaultSpanExporters())
-    metricsExporters.add(MetricsExporterEntry(getDefaultMetricsExporters(), Duration.ofMinutes(1)))
+  private fun defaultMetricsExportersRegistration() {
+    metricsReportingPath ?: return
+    metricsExporters.add(MetricsExporterEntry(listOf(FilteredMetricsExporter(CsvMetricsExporter(RollingFileSupplier(metricsReportingPath))) { metric ->
+      metric.belongsToScope(PLATFORM_METRICS)
+    }), Duration.ofMinutes(1)))
+    metricsExporters.add(MetricsExporterEntry(listOf(aggregatedMetricsExporter), Duration.ofSeconds(1)))
+    registerMetricsExporter()
+  }
 
-    for (provider: OTelExportersProvider in getCustomOTelProviders()) {
-      spanExporters.addAll(provider.getSpanExporters())
-      val metrics = provider.getMetricsExporters()
-      val duration = provider.getReadsInterval()
-      metricsExporters.add(MetricsExporterEntry(metrics, duration))
+  private fun defaultSpanExportersRegistration() {
+    val traceFile = System.getProperty("idea.diagnostic.opentelemetry.file")
+    val traceEndpoint = System.getProperty(IDEA_DIAGNOSTIC_OTLP)
+    if (traceFile != null) {
+      spanExporters.add(JaegerJsonSpanExporter(Path.of(traceFile), serviceName, serviceVersion, serviceNamespace))
     }
+    if (traceEndpoint != null) {
+      spanExporters.add(OtlpSpanExporter(traceEndpoint))
+    }
+    registerSpanExporters()
   }
 
   fun getConfiguredSdkBuilder(): OpenTelemetrySdkBuilder {
     return otelSdkBuilder
   }
 
-  /**
-   * Custom metrics and spans providers are added here
-   * @see OTelExportersProvider
-   */
-  private fun getCustomOTelProviders(): List<OTelExportersProvider> {
-    val providersList = mutableListOf<OTelExportersProvider>()
-    providersList.add(RdctExportersProvider())
-    return providersList
-  }
-
-  private fun registerMetricsExporter(entries: List<MetricsExporterEntry>) {
+  private fun registerMetricsExporter() {
     val registeredMetricsReaders = SdkMeterProvider.builder()
-    entries.forEach { entry ->
-      entry.metrics.forEach {
+    for (entry in metricsExporters) {
+      for (it in entry.metrics) {
         val metricsReader = PeriodicMetricReader.builder(it).setInterval(entry.duration).build()
         registeredMetricsReaders.registerMetricReader(metricsReader)
       }
@@ -86,39 +86,33 @@ class OTelConfigurator(private val mainScope: CoroutineScope,
     ShutDownTracker.getInstance().registerShutdownTask(meterProvider::shutdown)
   }
 
-  private fun registerSpanExporters(spanExporters: List<AsyncSpanExporter>) {
+  fun addMetricsExporters(extraMetricsExporters: List<MetricsExporterEntry>) {
+    if (extraMetricsExporters.isEmpty()) return
+    for (exporter in extraMetricsExporters) {
+      if (!metricsExporters.contains(exporter)) metricsExporters.add(exporter)
+    }
+    registerMetricsExporter()
+  }
+
+  fun addSpanExporters(extraSpanExporters: List<AsyncSpanExporter>) {
+    if (extraSpanExporters.isEmpty()) return
+    for (exporter in extraSpanExporters) {
+      if (!spanExporters.contains(exporter)) spanExporters.add(exporter)
+    }
+    registerSpanExporters()
+  }
+
+  private fun registerSpanExporters() {
     if (spanExporters.isNotEmpty()) {
-      val tracerProvider = SdkTracerProvider.builder().addSpanProcessor(BatchSpanProcessor(mainScope, spanExporters)).setResource(
-        resource).build()
+      val tracerProvider = SdkTracerProvider.builder().addSpanProcessor(BatchSpanProcessor(mainScope, spanExporters))
+        .addSpanProcessor(aggregatedSpansProcessor)
+        .setResource(resource).build()
 
       otelSdkBuilder.setTracerProvider(tracerProvider)
       ShutDownTracker.getInstance().registerShutdownTask {
         tracerProvider.shutdown().join(shutdownCompletionTimeout, TimeUnit.SECONDS)
       }
     }
-  }
-
-  private fun getDefaultSpanExporters(): List<AsyncSpanExporter> {
-    val spanExporters = mutableListOf<AsyncSpanExporter>()
-    val traceFile = System.getProperty("idea.diagnostic.opentelemetry.file")
-    val traceEndpoint = System.getProperty("idea.diagnostic.opentelemetry.otlp")
-    if (traceFile != null) {
-      spanExporters.add(JaegerJsonSpanExporter(Path.of(traceFile), serviceName, serviceVersion, serviceNamespace))
-    }
-    if (traceEndpoint != null) {
-      spanExporters.add(OtlpSpanExporter(traceEndpoint))
-    }
-    return spanExporters
-  }
-
-  private fun getDefaultMetricsExporters(): List<MetricExporter> {
-    metricsReportingPath?: return emptyList()
-
-    val metricsExporters = mutableListOf<MetricExporter>()
-    metricsExporters.add(FilteredMetricsExporter(CsvMetricsExporter(RollingFileSupplier(metricsReportingPath))) { metric ->
-      !metric.name.contains("lux") && !metric.name.contains("rdct")
-    })
-    return metricsExporters
   }
 
   private fun metricsEnabled(): Boolean {

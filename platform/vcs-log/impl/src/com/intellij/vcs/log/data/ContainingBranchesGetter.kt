@@ -2,8 +2,9 @@
 package com.intellij.vcs.log.data
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.intellij.diagnostic.telemetry.TraceManager
+import com.intellij.vcs.log.data.util.VCS
 import com.intellij.diagnostic.telemetry.computeWithSpan
+import com.intellij.diagnostic.telemetry.tracer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
@@ -145,7 +146,7 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
 
     @Throws(VcsException::class)
     fun getContainingBranches(): List<String> {
-      return computeWithSpan(TraceManager.getTracer("vcs"), "get containing branches") {
+      return computeWithSpan(VCS.tracer(), "get containing branches") {
         try {
           getContainingBranches(myProvider, myRoot, myHash)
         }

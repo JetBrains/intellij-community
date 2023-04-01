@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
-import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -32,9 +31,11 @@ import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static com.intellij.diagnostic.telemetry.ScopesExtensionsKt.tracer;
 import static com.intellij.diagnostic.telemetry.TraceKt.computeWithSpan;
 import static com.intellij.diagnostic.telemetry.TraceUtil.computeWithSpanThrows;
 import static com.intellij.diagnostic.telemetry.TraceUtil.runWithSpanThrows;
+import static com.intellij.vcs.log.data.util.VcsScopeKt.VCS;
 
 public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogRefresherImpl.class);
@@ -53,7 +54,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
 
   private volatile @NotNull DataPack myDataPack = DataPack.EMPTY;
 
-  private final @NotNull Tracer myTracer = TraceManager.INSTANCE.getTracer("vcs");
+  private final @NotNull Tracer myTracer = tracer(VCS);
 
   public VcsLogRefresherImpl(@NotNull Project project,
                              @NotNull VcsLogStorage storage,
@@ -146,7 +147,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
   }
 
   private static @NotNull <T extends GraphCommit<Integer>> List<T> multiRepoJoin(@NotNull Collection<? extends List<T>> commits) {
-    Span span = TraceManager.INSTANCE.getTracer("vcs").spanBuilder("multi-repo join").startSpan();
+    Span span = tracer(VCS).spanBuilder("multi-repo join").startSpan();
     List<T> joined = new VcsLogMultiRepoJoiner<Integer, T>().join(commits);
     span.end();
     return joined;

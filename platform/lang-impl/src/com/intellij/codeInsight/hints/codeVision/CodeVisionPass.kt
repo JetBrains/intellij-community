@@ -39,7 +39,7 @@ class CodeVisionPass(
   private val editor: Editor
 ) : EditorBoundHighlightingPass(editor, rootElement.containingFile, true) {
   companion object {
-    private val tracer by lazy { TraceManager.getTracer("CodeVision", true) }
+    private val tracer by lazy { TraceManager.getTracer(CodeVision.toString(), true) }
 
     @JvmStatic
     @Internal

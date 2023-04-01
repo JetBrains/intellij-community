@@ -2,14 +2,16 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.diagnostic.telemetry.IJTracer;
-import com.intellij.diagnostic.telemetry.TraceManager;
+import com.intellij.diagnostic.telemetry.ScopesExtensionsKt;
 import io.opentelemetry.api.common.AttributeKey;
+
+import static com.intellij.codeInsight.daemon.impl.HighlightingPassesScopeKt.*;
 
 final class HighlightingPassTracer {
   private HighlightingPassTracer() {
   }
 
-  static IJTracer HIGHLIGHTING_PASS_TRACER = TraceManager.INSTANCE.getTracer("HighlightingPasses");
+  static IJTracer HIGHLIGHTING_PASS_TRACER = ScopesExtensionsKt.tracer(HighlightingPasses);
   static AttributeKey<String> FILE_ATTR_SPAN_KEY = AttributeKey.stringKey("file");
   static AttributeKey<String> CANCELLED_ATTR_SPAN_KEY = AttributeKey.stringKey("cancelled");
 }

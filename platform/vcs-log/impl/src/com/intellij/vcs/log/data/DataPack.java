@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
-import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefManager;
@@ -18,7 +17,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static com.intellij.diagnostic.telemetry.ScopesExtensionsKt.*;
 import static com.intellij.diagnostic.telemetry.TraceKt.computeWithSpan;
+import static com.intellij.vcs.log.data.util.VcsScopeKt.*;
 
 public class DataPack extends DataPackBase {
   public static final DataPack EMPTY = new DataPack(RefsModel.createEmptyInstance(VcsLogStorageImpl.EMPTY),
@@ -51,7 +52,7 @@ public class DataPack extends DataPackBase {
                                                                             VcsLogStorageImpl.createHashGetter(storage));
       Set<Integer> branches = getBranchCommitHashIndexes(refsModel.getBranches(), storage);
 
-      permanentGraph = computeWithSpan(TraceManager.INSTANCE.getTracer("vcs"), "building graph", (span) -> {
+      permanentGraph = computeWithSpan(tracer(VCS), "building graph", (span) -> {
         return PermanentGraphImpl.newInstance(commits, new GraphColorManagerImpl(refsModel), headCommitdComparator, branches);
       });
     }
