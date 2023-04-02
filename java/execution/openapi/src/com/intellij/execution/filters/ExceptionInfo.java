@@ -193,7 +193,7 @@ public class ExceptionInfo {
   }
 
   private static boolean onTheSameLine(@NotNull Document document, @NotNull PsiElement current, @NotNull PsiElement operand) {
-    return document.getLineNumber(current.getTextOffset()) == document.getLineNumber(operand.getTextOffset());
+    return document.getLineNumber(current.getTextRange().getStartOffset()) == document.getLineNumber(operand.getTextRange().getStartOffset());
   }
 
   private static boolean isEmpty(@NotNull PsiElement element) {

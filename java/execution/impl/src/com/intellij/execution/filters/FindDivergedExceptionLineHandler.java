@@ -150,17 +150,17 @@ final public class FindDivergedExceptionLineHandler extends AnAction {
 
         @Override
         public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
-          if (myMetaInfo.isStaticInit) {
+          if (myMetaInfo.callType == MetaInfoCallType.STATIC_INIT) {
             startPoints.add(initializer);
           }
         }
 
         @Override
         public void visitField(@NotNull PsiField field) {
-          if (myMetaInfo.isStaticInit && field.hasModifierProperty(PsiModifier.STATIC)) {
+          if (myMetaInfo.callType == MetaInfoCallType.STATIC_INIT && field.hasModifierProperty(PsiModifier.STATIC)) {
             startPoints.add(field);
           }
-          if (myMetaInfo.isNonStaticInit && !field.hasModifier(JvmModifier.STATIC)) {
+          if (myMetaInfo.callType == MetaInfoCallType.NON_STATIC_INIT && !field.hasModifier(JvmModifier.STATIC)) {
             startPoints.add(field);
           }
         }
@@ -168,11 +168,11 @@ final public class FindDivergedExceptionLineHandler extends AnAction {
         @Override
         public void visitMethod(@NotNull PsiMethod method) {
           ProgressManager.checkCanceled();
-          if (!myMetaInfo.isLambda && placeMatch(method, myMetaInfo)) {
+          if (myMetaInfo.callType != MetaInfoCallType.LAMBDA && placeMatch(method, myMetaInfo)) {
             startPoints.add(method);
           }
 
-          if (myMetaInfo.isLambda) {
+          if (myMetaInfo.callType == MetaInfoCallType.LAMBDA) {
             super.visitMethod(method);
           }
         }
@@ -180,7 +180,7 @@ final public class FindDivergedExceptionLineHandler extends AnAction {
         @Override
         public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
           ProgressManager.checkCanceled();
-          if (myMetaInfo.isLambda) {
+          if (myMetaInfo.callType == MetaInfoCallType.LAMBDA) {
             PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
             if (method != null && placeMatch(method, myMetaInfo)) {
               startPoints.add(expression);
@@ -195,13 +195,14 @@ final public class FindDivergedExceptionLineHandler extends AnAction {
           public boolean execute(@NotNull PsiElement element) {
             ProgressManager.checkCanceled();
             ExceptionLineRefiner.RefinerMatchResult matchedElement = myRefiner.matchElement(element);
-            if (matchedElement!=null && matchedElement.target() instanceof Navigatable) {
+            if (matchedElement != null && matchedElement.target() instanceof Navigatable) {
               PsiElement target = matchedElement.target();
               PsiMethod matchedElementMethod = PsiTreeUtil.getParentOfType(target, PsiMethod.class);
               if (matchedElementMethod != null && placeMatch(matchedElementMethod, myMetaInfo)) {
                 result.add(target);
               }
-              if (matchedElementMethod == null && (myMetaInfo.isStaticInit || myMetaInfo.isNonStaticInit)) {
+              if (matchedElementMethod == null &&
+                  (myMetaInfo.callType == MetaInfoCallType.NON_STATIC_INIT || myMetaInfo.callType == MetaInfoCallType.STATIC_INIT)) {
                 result.add(target);
               }
             }
@@ -222,9 +223,10 @@ final public class FindDivergedExceptionLineHandler extends AnAction {
     if (psiClass == null) return false;
     if (!metaInfo.className.equals(psiClass.getQualifiedName())) return false;
     if (element instanceof PsiMethod psiMethod) {
-      return (metaInfo.methodName.equals(psiMethod.getName()) || (metaInfo.isNonStaticInit && psiMethod.isConstructor()));
+      return (metaInfo.methodName.equals(psiMethod.getName()) ||
+              (metaInfo.callType == MetaInfoCallType.NON_STATIC_INIT && psiMethod.isConstructor()));
     }
-    return metaInfo.isNonStaticInit || metaInfo.isStaticInit;
+    return metaInfo.callType == MetaInfoCallType.NON_STATIC_INIT || metaInfo.callType == MetaInfoCallType.STATIC_INIT;
   }
 
   static ExceptionLineParserImpl.@Nullable LinkInfo createLinkInfo(@Nullable PsiFile file,
@@ -271,16 +273,16 @@ final public class FindDivergedExceptionLineHandler extends AnAction {
 
     className = className.replaceAll("\\$", ".");
 
-    boolean isLambda = false;
+    MetaInfoCallType callType = MetaInfoCallType.ORDINARY;
     if (methodName.contains("$")) {
       int lambdaIndex = methodName.indexOf(LAMBDA_KEYWORD);
       if (lambdaIndex != -1) {
-        isLambda = true;
+        callType = MetaInfoCallType.LAMBDA;
         methodName = methodName.substring(lambdaIndex + LAMBDA_KEYWORD.length());
         int nextDelimiter = methodName.indexOf("$");
         if (nextDelimiter != -1) {
           methodName = methodName.substring(0, nextDelimiter);
-          if (methodName.contains("$")) return null;
+          if (methodName.contains("$") || methodName.equals("static") || methodName.equals("new")) return null;
         }
       }
       else {
@@ -291,12 +293,26 @@ final public class FindDivergedExceptionLineHandler extends AnAction {
       }
     }
 
+    callType = findInitCallType(methodName, callType);
 
-    MetaInfo metaInfo = new MetaInfo(className, methodName, isLambda, isNonStaticInit(methodName), isStaticInit(methodName));
+    MetaInfo metaInfo = new MetaInfo(className, methodName, callType);
 
     if (skipByRefiner(file, refiner, lineStart, lineEnd)) return null;
 
     return new FindDivergedExceptionLineHandler(file, metaInfo, refiner, targetEditor);
+  }
+
+  @NotNull
+  private static MetaInfoCallType findInitCallType(@NotNull String methodName, @NotNull MetaInfoCallType callType) {
+    if (callType == MetaInfoCallType.ORDINARY) {
+      if ("<init>".equals(methodName)) {
+        callType = MetaInfoCallType.NON_STATIC_INIT;
+      }
+      else if ("<clinit>".equals(methodName)) {
+        callType = MetaInfoCallType.STATIC_INIT;
+      }
+    }
+    return callType;
   }
 
   private static boolean skipByRefiner(@NotNull PsiFile file,
@@ -342,14 +358,6 @@ final public class FindDivergedExceptionLineHandler extends AnAction {
     return false;
   }
 
-  private static boolean isNonStaticInit(String name) {
-    return "<init>".equals(name);
-  }
-
-  private static boolean isStaticInit(String name) {
-    return "<clinit>".equals(name);
-  }
-
   private static boolean hasAnonymousClass(@NotNull String className) {
     int classAdditionalInfoIndex = className.indexOf("$");
     if (classAdditionalInfoIndex != -1) {
@@ -364,7 +372,10 @@ final public class FindDivergedExceptionLineHandler extends AnAction {
     return false;
   }
 
-  private record MetaInfo(@NonNls String className, @NonNls String methodName, boolean isLambda, boolean isNonStaticInit,
-                          boolean isStaticInit) {
+  private record MetaInfo(@NonNls String className, @NonNls String methodName, @NotNull MetaInfoCallType callType) {
+  }
+
+  private enum MetaInfoCallType {
+    LAMBDA, STATIC_INIT, NON_STATIC_INIT, ORDINARY
   }
 }

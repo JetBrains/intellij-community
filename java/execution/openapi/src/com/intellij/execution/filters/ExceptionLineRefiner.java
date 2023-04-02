@@ -34,6 +34,26 @@ public interface ExceptionLineRefiner {
     return null;
   }
 
+  /**
+   * @param target the closest psi element to the reason, which is placed on the line from a stacktrace
+   * @param reason reason of exception
+   * <p>
+   * Example:
+   * <p>
+   * <pre>
+   * {@code
+   *
+   * (line: 5)    public static void main(String[] args) {
+   * (line: 6)        String text = null;
+   * (line: 7)        text
+   * (line: 8)                .
+   * (line: 9)                trim();
+   *              }
+   * }
+   * </pre>
+   * Stacktrace: ClassName.main(ClassName.java:9) <p>
+   * In this case, reason - <code>text</code>, target - <code>trim</code>
+   */
   record RefinerMatchResult(@NotNull PsiElement target, @NotNull PsiElement reason){
 
     @Nullable
