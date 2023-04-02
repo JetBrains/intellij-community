@@ -35,6 +35,10 @@ class FE1LightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), Light
         checkThrowsList(myFixture)
     }
 
+    fun testComparatorInheritor() {
+        checkComparatorInheritor(myFixture)
+    }
+
     fun testAnnotationOnPsiType() {
         checkAnnotationOnPsiType(myFixture)
     }

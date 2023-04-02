@@ -185,6 +185,27 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
         TestCase.assertNotNull(visitedMethod.singleOrNull { it.name == "getBoo" })
     }
 
+    fun checkComparatorInheritor(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class Foo(val x : Int)
+                class FooComparator : Comparator<Foo> {
+                  override fun compare(firstFoo: Foo, secondFoo: Foo): Int =
+                    firstFoo.x - secondFoo.x
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val fooComparator = uFile.findElementByTextFromPsi<UClass>("FooComparator", strict = false)
+            .orFail("can't find class FooComparator")
+
+        val lc = fooComparator.javaPsi
+        TestCase.assertTrue(lc.extendsList?.referenceElements?.isEmpty() == true)
+        TestCase.assertTrue(lc.implementsList?.referenceElements?.size == 1)
+        TestCase.assertEquals("java.util.Comparator<Foo>", lc.implementsList?.referenceElements?.single()?.reference?.canonicalText)
+    }
+
     private fun checkPsiType(psiType: PsiType, fqName: String = "TypeAnnotation") {
         TestCase.assertEquals(1, psiType.annotations.size)
         val annotation = psiType.annotations[0]
