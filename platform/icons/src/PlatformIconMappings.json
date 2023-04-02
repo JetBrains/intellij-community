@@ -7,6 +7,7 @@
       "generated.svg": "actions/generatedFolder.svg",
       "groupByMethod.svg": "actions/groupByMethod.svg",
       "install.svg": "actions/install.svg",
+      "newFolder.svg": "actions/newFolder.svg",
       "playFirst.svg": "actions/play_first.svg",
       "playBack.svg": "actions/play_back.svg",
       "playForward.svg": "actions/play_forward.svg",
