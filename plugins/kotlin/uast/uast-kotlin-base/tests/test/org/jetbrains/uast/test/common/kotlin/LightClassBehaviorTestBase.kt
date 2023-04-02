@@ -206,6 +206,33 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
         TestCase.assertEquals("java.util.Comparator<Foo>", lc.implementsList?.referenceElements?.single()?.reference?.canonicalText)
     }
 
+    fun checkBoxedReturnTypeWhenOverridingNonPrimitive(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                abstract class ActivityResultContract<I, O> {
+                  abstract fun parseResult(resultCode: Int, intent: Intent?): O
+                }
+
+                interface Intent
+
+                class StartActivityForResult : ActivityResultContract<Intent, Boolean>() {
+                  override fun parseResult(resultCode: Int, intent: Intent?): Boolean {
+                    return resultCode == 42
+                  }
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val sub = uFile.findElementByTextFromPsi<UClass>("StartActivityForResult", strict = false)
+            .orFail("can't find class StartActivityForResult")
+
+        val mtd = sub.methods.find { it.name == "parseResult" }
+            .orFail("can't find method parseResult")
+
+        TestCase.assertEquals("java.lang.Boolean", mtd.returnType?.canonicalText)
+    }
+
     private fun checkPsiType(psiType: PsiType, fqName: String = "TypeAnnotation") {
         TestCase.assertEquals(1, psiType.annotations.size)
         val annotation = psiType.annotations[0]

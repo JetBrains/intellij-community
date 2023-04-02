@@ -40,6 +40,11 @@ class FirLightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), Light
         checkComparatorInheritor(myFixture)
     }
 
+
+    fun testBoxedReturnTypeWhenOverridingNonPrimitive() {
+        checkBoxedReturnTypeWhenOverridingNonPrimitive(myFixture)
+    }
+
     fun testAnnotationOnPsiType() {
         checkAnnotationOnPsiType(myFixture)
     }
