@@ -24,7 +24,6 @@ fun checkWorkspaceModel(
     gradleVersion: String,
     checkers: List<WorkspaceModelChecker<*>>,
     testConfiguration: TestConfiguration,
-    testClassifier: String? = null,
     agpClassifier: String? = null,
 ) {
     for (checker in checkers) {
@@ -35,7 +34,6 @@ fun checkWorkspaceModel(
             kotlinPluginVersion,
             gradleVersion,
             testConfiguration,
-            testClassifier,
             agpClassifier
         )
     }
