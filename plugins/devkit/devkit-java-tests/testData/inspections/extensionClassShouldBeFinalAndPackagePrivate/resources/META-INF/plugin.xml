@@ -5,6 +5,6 @@
     <extensionPoint qualifiedName="com.intellij.myEp" interface="java.util.Collection"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
-    <myEp implementationClass="MyInspection"/>
+    <myEp implementation="MyInspection"/>
   </extensions>
 </idea-plugin>

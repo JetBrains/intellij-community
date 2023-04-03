@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.util.PsiUtil
-import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass
 
 internal class ExtensionClassShouldBeFinalAndPackagePrivateInspection : DevKitJvmInspection() {
 
@@ -28,7 +27,7 @@ internal class ExtensionClassShouldBeFinalAndPackagePrivateInspection : DevKitJv
         val isFinal = clazz.hasModifier(JvmModifier.FINAL)
         val isPackageLocal = clazz.hasModifier(JvmModifier.PACKAGE_LOCAL)
         if (isFinal && isPackageLocal) return true
-        if (locateExtensionsByPsiClass(clazz).isEmpty()) return true
+        if (!ExtensionUtil.isInstantiatedExtension(clazz) { false }) return true
         if (!isFinal) {
           val actions = createModifierActions(clazz, modifierRequest(JvmModifier.FINAL, true))
           val fixes = IntentionWrapper.wrapToQuickFixes(actions.toTypedArray(), file)

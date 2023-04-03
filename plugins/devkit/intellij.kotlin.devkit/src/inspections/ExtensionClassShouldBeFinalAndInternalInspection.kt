@@ -9,8 +9,8 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil
+import org.jetbrains.idea.devkit.inspections.ExtensionUtil
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
-import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
@@ -33,7 +33,7 @@ internal class ExtensionClassShouldBeFinalAndInternalInspection : LocalInspectio
         val isOpen = openKeyword != null
         val isInternal = klass.hasModifier(KtTokens.INTERNAL_KEYWORD)
         if (!isOpen && isInternal) return
-        if (locateExtensionsByPsiClass(ktLightClass).isEmpty()) return
+        if (!ExtensionUtil.isInstantiatedExtension(ktLightClass) { false }) return
         if (isOpen) {
           val fix = ChangeModifierFix(elementName, KtTokens.OPEN_KEYWORD, true)
           holder.registerProblem(openKeyword!!, DevKitKotlinBundle.message("inspection.extension.class.should.be.final.text"), fix)
