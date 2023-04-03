@@ -22,6 +22,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 public final class JBCefScrollbarsHelper {
@@ -67,6 +68,7 @@ public final class JBCefScrollbarsHelper {
 
     return
       String.format(
+        Locale.ROOT,
         """
           ::-webkit-scrollbar {
             width: %dpx;
@@ -75,18 +77,21 @@ public final class JBCefScrollbarsHelper {
           }
           """, trackSizePx, trackSizePx, backgroundColor) +
       String.format(
+        Locale.ROOT,
         """
           ::-webkit-scrollbar-track {
             background-color: %s;
           }
           """, trackColor) +
       String.format(
+        Locale.ROOT,
         """
           ::-webkit-scrollbar-track:hover {
             background-color: %s;
           }
           """, trackHoveredColor) +
       String.format(
+        Locale.ROOT,
         """
           ::-webkit-scrollbar-thumb {
             background-color: %s;
@@ -100,6 +105,7 @@ public final class JBCefScrollbarsHelper {
           }
           """, thumbColor, thumbRadiusPx, thumbPaddingPx, trackColor, thumbBorderColor, thumbPaddingPx) +
       String.format(
+        Locale.ROOT,
         """
           ::-webkit-scrollbar-thumb:hover {
             background-color: %s;
@@ -113,6 +119,7 @@ public final class JBCefScrollbarsHelper {
           }
           """, thumbHoveredColor, thumbRadiusPx, thumbPaddingPx, trackColor, thumbBorderHoveredColor, thumbPaddingPx) +
       String.format(
+        Locale.ROOT,
         """
           ::-webkit-scrollbar-corner {
             background-color: %s;
@@ -218,11 +225,11 @@ public final class JBCefScrollbarsHelper {
     Color color = ObjectUtils.notNull(colorsScheme.getColor(key), key.getDefaultColor());
     double alpha = ObjectUtils.notNull(getScrollbarAlpha(key), color.getAlpha()) / 255.0;
 
-    return String.format("rgba(%d, %d, %d, %f)", color.getRed(), color.getBlue(), color.getBlue(), alpha);
+    return String.format(Locale.ROOT, "rgba(%d, %d, %d, %f)", color.getRed(), color.getBlue(), color.getBlue(), alpha);
   }
 
   private static @NotNull String buildCssColor(@NotNull Color color) {
-    return String.format("rgba(%d, %d, %d, %f)", color.getRed(), color.getBlue(), color.getBlue(), color.getAlpha() / 255.0);
+    return String.format(Locale.ROOT, "rgba(%d, %d, %d, %f)", color.getRed(), color.getBlue(), color.getBlue(), color.getAlpha() / 255.0);
   }
 
   private static @NotNull String readResource(@NotNull String path) {
