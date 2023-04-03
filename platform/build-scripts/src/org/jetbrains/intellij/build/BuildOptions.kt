@@ -133,6 +133,8 @@ class BuildOptions(
      */
     const val REPAIR_UTILITY_BUNDLE_STEP = "repair_utility_bundle_step"
 
+    const val DOC_AUTHORING_ASSETS_STEP = "doc_authoring_assets"
+
     /**
      * Pass 'true' to this system property to produce an additional .dmg and .sit archives for macOS without Runtime.
      */

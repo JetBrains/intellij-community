@@ -1217,11 +1217,10 @@ fun collectModulesToCompile(context: BuildContext, result: MutableCollection<Str
 // Captures information about all available inspections in a JSON format as part of an Inspectopedia project.
 // This is later used by Qodana and other tools. Keymaps are extracted as an XML file and also used in help authoring.
 internal suspend fun buildAdditionalAuthoringArtifacts(ideClassPath: Set<String>, context: BuildContext) {
-  val commands = listOf(Pair("inspectopedia-generator", "inspections-${context.applicationInfo.productCode.lowercase()}"),
-                        Pair("keymap", "keymap-${context.applicationInfo.productCode.lowercase()}"))
-
-  val temporaryBuildDirectory = context.paths.tempDir
-  coroutineScope {
+  context.executeStep(spanBuilder("build authoring asserts"), BuildOptions.DOC_AUTHORING_ASSETS_STEP) {
+    val commands = listOf(Pair("inspectopedia-generator", "inspections-${context.applicationInfo.productCode.lowercase()}"),
+                          Pair("keymap", "keymap-${context.applicationInfo.productCode.lowercase()}"))
+    val temporaryBuildDirectory = context.paths.tempDir
     for (command in commands) {
       launch {
         val temporaryStepDirectory = temporaryBuildDirectory.resolve(command.first)
