@@ -42,8 +42,8 @@ class ProjectChangedFilesScanner {
       projectIndexingHistory.addScanningStatistics(scanningStatistics);
       projectIndexingHistory.setScanFilesDuration(Duration.ofNanos(refreshedFilesCalcDuration));
 
-      projectDumbIndexingHistory.addScanningStatistics(scanningStatistics);
-      projectDumbIndexingHistory.setScanFilesDuration(Duration.ofNanos(refreshedFilesCalcDuration));
+      projectDumbIndexingHistory.setRefreshedScanningStatistics(scanningStatistics);
+      projectDumbIndexingHistory.setRefreshedScanFilesDuration(Duration.ofNanos(refreshedFilesCalcDuration));
 
       LOG.info("Scanning refreshed files of " + myProject.getName() + " : " + files.size() + " to update, " +
                "calculated in " + TimeUnit.NANOSECONDS.toMillis(refreshedFilesCalcDuration) + "ms");

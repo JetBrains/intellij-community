@@ -66,7 +66,7 @@ interface ProjectDumbIndexingHistory : ProjectIndexingActivityHistory {
   val indexingReason: String?
   val indexingSessionId: Long
   val times: DumbIndexingTimes
-  val scanningStatistics: List<JsonScanningStatistics>
+  val refreshedScanningStatistics: JsonScanningStatistics?
   val providerStatistics: List<JsonFileProviderIndexStatistics>
   val totalStatsPerFileType: Map<String, StatsPerFileType>
   val totalStatsPerIndexer: Map<String, StatsPerIndexer>
@@ -196,7 +196,7 @@ interface DumbIndexingTimes {
   val pushPropertiesDuration: Duration
   val indexExtensionsDuration: Duration
   var creatingIteratorsDuration: Duration
-  val scanFilesDuration: Duration
+  val refreshedScanFilesDuration: Duration
   val suspendedDuration: Duration
   val appliedAllValuesSeparately: Boolean
   val separateValueApplicationVisibleTime: TimeNano

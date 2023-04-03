@@ -722,7 +722,7 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project,
   private val timesImpl = DumbIndexingTimesImpl(indexingReason = indexingReason, scanningType = scanningType,
                                             updatingStart = ZonedDateTime.now(ZoneOffset.UTC), totalUpdatingTime = System.nanoTime())
 
-  override val scanningStatistics = arrayListOf<JsonScanningStatistics>()
+  override var refreshedScanningStatistics : JsonScanningStatistics = JsonScanningStatistics()
 
   override val providerStatistics = arrayListOf<JsonFileProviderIndexStatistics>()
 
@@ -734,8 +734,8 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project,
 
   private val events = mutableListOf<Event>()
 
-  fun addScanningStatistics(statistics: ScanningStatistics) {
-    scanningStatistics += statistics.toJsonStatistics()
+  fun setRefreshedScanningStatistics(statistics: ScanningStatistics) {
+    refreshedScanningStatistics = statistics.toJsonStatistics()
   }
 
   fun addProviderStatistics(statistics: IndexingFileSetStatistics) {
@@ -853,8 +853,8 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project,
     timesImpl.totalUpdatingTime = System.nanoTime() - timesImpl.totalUpdatingTime
   }
 
-  fun setScanFilesDuration(duration: Duration) {
-    timesImpl.scanFilesDuration = duration
+  fun setRefreshedScanFilesDuration(duration: Duration) {
+    timesImpl.refreshedScanFilesDuration = duration
   }
 
   /**
@@ -955,7 +955,7 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project,
       override fun getProperty(): KMutableProperty1<DumbIndexingTimesImpl, Duration> = DumbIndexingTimesImpl::creatingIteratorsDuration
     },
     Scanning {
-      override fun getProperty() = DumbIndexingTimesImpl::scanFilesDuration
+      override fun getProperty() = DumbIndexingTimesImpl::refreshedScanFilesDuration
     },
 
     Indexing {
@@ -1035,7 +1035,7 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project,
     override var pushPropertiesDuration: Duration = Duration.ZERO,
     override var indexExtensionsDuration: Duration = Duration.ZERO,
     override var creatingIteratorsDuration: Duration = Duration.ZERO,
-    override var scanFilesDuration: Duration = Duration.ZERO,
+    override var refreshedScanFilesDuration: Duration = Duration.ZERO,
     override var suspendedDuration: Duration = Duration.ZERO,
     override var appliedAllValuesSeparately: Boolean = true,
     override var separateValueApplicationVisibleTime: TimeNano = 0,

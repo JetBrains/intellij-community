@@ -127,7 +127,7 @@ fun DumbIndexingTimes.toJson() =
     indexingTime = JsonDuration(indexingDuration.toNanos()),
     contentLoadingVisibleTime = JsonDuration(contentLoadingVisibleDuration.toNanos()),
     creatingIteratorsTime = JsonDuration(creatingIteratorsDuration.toNanos()),
-    scanFilesTime = JsonDuration(scanFilesDuration.toNanos()),
+    scanFilesTime = JsonDuration(refreshedScanFilesDuration.toNanos()),
     pushPropertiesTime = JsonDuration(pushPropertiesDuration.toNanos()),
     indexExtensionsTime = JsonDuration(indexExtensionsDuration.toNanos()),
     isAppliedAllValuesSeparately = appliedAllValuesSeparately,
@@ -210,7 +210,7 @@ private fun ProjectDumbIndexingHistoryImpl.changeToJson(): JsonProjectDumbIndexi
     fileCount = getFileCount(),
     totalStatsPerFileType = aggregateStatsPerFileType().sortedByDescending { it.partOfTotalProcessingTime.doublePercentages },
     totalStatsPerIndexer = aggregateStatsPerIndexer().sortedByDescending { it.partOfTotalIndexingTime.doublePercentages },
-    scanningStatistics = scanningStatistics.sortedByDescending { it.scanningTime.nano },
+    scanningStatistics = refreshedScanningStatistics,
     fileProviderStatistics = providerStatistics.sortedByDescending { it.totalIndexingVisibleTime.nano },
     visibleTimeToAllThreadTimeRatio = visibleTimeToAllThreadsTimeRatio
   )
@@ -235,10 +235,7 @@ private fun ProjectScanningHistoryImpl.getFileCount() = JsonProjectScanningFileC
 )
 
 private fun ProjectDumbIndexingHistoryImpl.getFileCount() = JsonProjectDumbIndexingFileCount(
-  numberOfFileProviders = scanningStatistics.size,
-  numberOfScannedFiles = scanningStatistics.sumOf { it.numberOfScannedFiles },
-  numberOfFilesIndexedByInfrastructureExtensionsDuringScan = scanningStatistics.sumOf { it.numberOfFilesFullyIndexedByInfrastructureExtensions },
-  numberOfFilesScheduledForIndexingAfterScan = scanningStatistics.sumOf { it.numberOfFilesForIndexing },
+  numberOfRefreshedScannedFiles = refreshedScanningStatistics.numberOfScannedFiles,
   numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage = providerStatistics.sumOf { it.totalNumberOfFilesFullyIndexedByExtensions },
   numberOfFilesIndexedWithLoadingContent = providerStatistics.sumOf { it.totalNumberOfIndexedFiles }
 )

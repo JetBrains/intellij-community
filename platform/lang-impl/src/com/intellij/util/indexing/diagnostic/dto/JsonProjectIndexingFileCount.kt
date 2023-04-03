@@ -31,10 +31,7 @@ data class JsonProjectScanningFileCount(
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class JsonProjectDumbIndexingFileCount(
-  val numberOfFileProviders: Int = 0,
-  val numberOfScannedFiles: Int = 0,
-  val numberOfFilesIndexedByInfrastructureExtensionsDuringScan: Int = 0,
-  val numberOfFilesScheduledForIndexingAfterScan: Int = 0,
+  val numberOfRefreshedScannedFiles: Int = 0,
   val numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage: Int = 0,
   val numberOfFilesIndexedWithLoadingContent: Int = 0
 ) : JsonProjectIndexingActivityFileCount
