@@ -1,1 +1,0 @@
-fun main() = platform.posix.fopen("myfile.txt", "r")
