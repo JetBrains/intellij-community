@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
 public class GotoSymbolAction extends SearchEverywhereBaseAction implements DumbAware {
@@ -18,7 +19,10 @@ public class GotoSymbolAction extends SearchEverywhereBaseAction implements Dumb
     if (project == null) return;
 
     boolean dumb = DumbService.isDumb(project);
-    if (!dumb || new SymbolSearchEverywhereContributor(e).isDumbAware()) {
+    SymbolSearchEverywhereContributor ssec = new SymbolSearchEverywhereContributor(e);
+    boolean dumbAware = ssec.isDumbAware();
+    Disposer.dispose(ssec);
+    if (!dumb || dumbAware) {
       String tabID = SymbolSearchEverywhereContributor.class.getSimpleName();
       showInSearchEverywherePopup(tabID, e, true, true);
     }
