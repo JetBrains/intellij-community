@@ -194,7 +194,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     replaceToolbar1Actions.addAll(replaceToolbar2Actions.getChildren(null));
 
     JPanel searchPair = new NonOpaquePanel(new BorderLayout());
-    searchPair.setBorder(isNewUI ? JBUI.Borders.emptyTop(3) : JBUI.Borders.empty());
+    searchPair.setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.Editor.SearchToolbar.borderInsets()));
 
     if (closeRunnable != null) {
       if (isNewUI) {
@@ -231,7 +231,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     Wrapper replaceToolbarWrapper1 = new Wrapper(myReplaceActionsToolbar);
     myReplaceToolbarWrapper = new NonOpaquePanel(new BorderLayout());
     myReplaceToolbarWrapper.add(replaceToolbarWrapper1, BorderLayout.WEST);
-    myReplaceToolbarWrapper.setBorder(isNewUI ? JBUI.Borders.emptyTop(10) : JBUI.Borders.emptyTop(3));
+    myReplaceToolbarWrapper.setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.Editor.ReplaceToolbar.borderInsets()));
 
     JPanel rightPanel = new NonOpaquePanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
     rightPanel.add(searchPair);
@@ -249,7 +249,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       modePanel.setOpaque(true);
       modePanel.setBackground(EDITOR_BACKGROUND);
       modePanel.setBorder(JBUI.Borders.compound(JBUI.Borders.customLine(JBUI.CurrentTheme.Editor.BORDER_COLOR, 0, 0, 0, 1),
-                                                JBUI.Borders.empty(7, 3)));
+                                                JBUI.Borders.empty(JBUI.CurrentTheme.Editor.SearchReplaceModePanel.borderInsets())));
       add(modePanel, BorderLayout.WEST);
     }
 
