@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orde
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.Test
 
-@TestMetadata("multiplatform/tier2")
+@TestMetadata("multiplatform/core/core/tier2")
 class KotlinMppTierTwoCasesImportingTests : AbstractKotlinMppGradleImportingTest() {
     override fun TestConfigurationDslScope.defaultTestConfiguration() {
         hideHighlightsBelow = HighlightSeverity.ERROR

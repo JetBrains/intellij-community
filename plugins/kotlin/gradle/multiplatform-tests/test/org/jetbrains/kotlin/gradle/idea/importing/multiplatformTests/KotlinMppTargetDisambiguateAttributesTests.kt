@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orde
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.Test
 
-@TestMetadata("multiplatform/features/attributesDisambiguate")
+@TestMetadata("multiplatform/core/features/attributesDisambiguate")
 class KotlinMppTargetDisambiguateAttributesTests : AbstractKotlinMppGradleImportingTest() {
     override fun TestConfigurationDslScope.defaultTestConfiguration() {
         hideStdlib = true

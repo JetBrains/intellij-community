@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
 
-@TestMetadata("multiplatform/features/compositeBuild")
+@TestMetadata("multiplatform/core/features/compositeBuild")
 class KotlinMppCompositeBuildImportingTest : AbstractKotlinMppGradleImportingTest() {
 
     override fun TestConfigurationDslScope.defaultTestConfiguration() {
