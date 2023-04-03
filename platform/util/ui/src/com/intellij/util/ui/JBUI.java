@@ -677,9 +677,47 @@ public final class JBUI {
 
       interface SearchField {
         static @NotNull Insets borderInsets() {
-          return insets("Editor.SearchField.borderInsets",
+          return insets(borderInsetsKey(),
                         isNewUI() ? insets(7, 10, 7, 8) :
                         insets(SystemInfo.isLinux ? 2 : 1));
+        }
+
+        static @NotNull String borderInsetsKey() {
+          return "Editor.SearchField.borderInsets";
+        }
+      }
+
+      interface SearchToolbar {
+        static @NotNull Insets borderInsets() {
+          return insets(borderInsetsKey(),
+                        isNewUI() ? insetsTop(3) :
+                        emptyInsets());
+        }
+
+        static @NotNull String borderInsetsKey() {
+          return "Editor.SearchToolbar.borderInsets";
+        }
+      }
+
+      interface ReplaceToolbar {
+        static @NotNull Insets borderInsets() {
+          return insets(borderInsetsKey(),
+                        isNewUI() ? insetsTop(10) :
+                        insetsTop(3));
+        }
+
+        static @NotNull String borderInsetsKey() {
+          return "Editor.ReplaceToolbar.borderInsets";
+        }
+      }
+
+      interface SearchReplaceModePanel {
+        static @NotNull Insets borderInsets() {
+          return insets(borderInsetsKey(), insets(7, 3));
+        }
+
+        static @NotNull String borderInsetsKey() {
+          return "Editor.SearchReplaceModePanel.borderInsets";
         }
       }
 
