@@ -23,15 +23,45 @@ To give you some intuition, most of structures of the JB-projects (like Ktor, Sp
 3. 🟡 **Moderately thorough check**. Run Misc. Tests (`KotlinMppMiscCasesImportingTests`)
 
 4. 🟢 **Thorough check**.  
-   * check tests on specific functionality (`newTests/features`), run them if you believe they are relevant to your
+   * check tests on specific functionality (`multiplatform/core/features`), run them if you believe they are relevant to your
    changes
    * Regress: `KotlinMppRegressionTests`  
 
 Of course, you can run all inheritors of `AbstractKotlinMppGradleImportingTest` or the whole package 
-`org.jetbrains.kotlin.gradle.idea.importing.newTests`
+`org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests`
 
 > 💡 Pro-tip. First tests in the test run are quite slow (dozens of seconds), but further are very quick (1-2s). So at some point running 
 > all tests actually **saves** time as opposed to running, say, half of the suites 
+
+### How to handle different behavior in different versions of KGP/AGP/Gradle?
+
+Tests infrastructure provides a handful of so-called "test-classifiers", that allow to provide a test-data specific
+for some environment. Main ones are:
+
+* KGP Version classifiers, in format of KGP version, e.g. `1.7.10`, `1.8.0`
+
+* Gradle Version classifiers, in format of respective Gradle version without all stability modifiers. 
+  E.g. `7.5.1` for Gradle 7.5.1; `8.0` for Gradle 8.0-rc-5
+
+* AGP Version classifiers, in format of "agp" followed by respective AGP version without all stability modifiers.  
+  E.g. `agp7.2.1` for AGP 7.2.1; `agp8.0` for AGP 8.0-alpha-7
+
+Adding dash-separated classifiers to the respective testdata file will make this testdata specific for that specific version.
+If classifier for some version omitted, then it's assumed that it works for any version of that component. 
+
+Examples:
+* `dependencies.txt` is shared across all versions of everything
+* `dependencies-7.5.1.txt` will be used in tests with Gradle = 7.5.1 and any KGP/AGP versions
+* `dependencies-1.8.0-7.5.1.txt` will be used in tests with Gradle = 7.5.1, KGP = 1.8.0 and any AGP
+* `dependencies-1.8.0-7.5.1-agp7.2.1.txt` will be used only in one parametrization: KGP = 1.8.0, Gradle = 7.5.1, AGP = 7.2.1
+
+Classifiers are **ordered**, so `dependencies-1.8.0-7.5.1.txt` works, but `dependencies-7.5.1-1.8.0.txt` doesn't. 
+Refer to `community/plugins/kotlin/gradle/gradle-java/tests/test/org/jetbrains/kotlin/gradle/multiplatformTests/workspace/findTestdata.kt`
+for the specific order.
+
+> ⚠️Never introduce a version-specific testdata for the latest (bootstrap, usually) KGP. Instead, introduce testdata for previous versions,
+> even if that leads to creation of more files. This way, as the support for older versions is dropped, eventually
+> test will return to only one non-suffixed testdata file
 
 ### How to change the versions of KGP/AGP/Gradle used in local test runs
 
@@ -41,7 +71,7 @@ Two options:
 ```kotlin
 // ...
 class DevModeTweaksImpl : DevModeTweaks {
-    override var overrideGradleVersion = GradleVersionTestsProperty.Value.ForAlphaAgp
+    override var overrideGradleVersion = GradleVersionTestsProperty.Value.ForAlphaAgp.version
         get() = field.checkNotOverriddenOnTeamcity()
 // ...
 
@@ -54,7 +84,7 @@ class DevModeTweaksImpl : DevModeTweaks {
 fun testFoo() {
   doTest {
     dev { 
-      overrideAgpVersion = AndroidGradlePluginVersionTestsProperty.Value.Alpha
+      overrideAgpVersion = AndroidGradlePluginVersionTestsProperty.Value.Alpha.version
     }
   }
 }
