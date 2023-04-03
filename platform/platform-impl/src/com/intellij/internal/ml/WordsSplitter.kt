@@ -4,6 +4,7 @@ package com.intellij.internal.ml
 import com.intellij.ide.ui.search.PorterStemmerUtil
 import com.intellij.util.text.NameUtilCore
 import org.jetbrains.annotations.ApiStatus
+import java.util.*
 
 @ApiStatus.Internal
 class WordsSplitter private constructor(private val skipLess: Int,
@@ -19,18 +20,22 @@ class WordsSplitter private constructor(private val skipLess: Int,
     .map(::normalize)
     .toList()
 
-  private fun wordsFromName(name: String) = sequence {
-    var start = 0
-    while (start < name.length) {
-      val next = NameUtilCore.nextWord(name, start)
-      yield(name.substring(start, next))
-      start = next
+  private fun wordsFromName(name: String): Iterable<String> = object : Iterable<String> {
+    override fun iterator(): Iterator<String> = object : Iterator<String> {
+      var start = 0
+      override fun hasNext(): Boolean = start < name.length
+      override fun next(): String {
+        val next = NameUtilCore.nextWord(name, start)
+        val word = name.substring(start, next)
+        start = next
+        return word
+      }
     }
   }
 
   private fun normalize(word: String): String {
     return word
-      .let { if (toLowerCase) it.toLowerCase() else it }
+      .let { if (toLowerCase) it.lowercase(Locale.getDefault()) else it }
       .let { if (withStemming) PorterStemmerUtil.stem(it) ?: it else it }
   }
 
