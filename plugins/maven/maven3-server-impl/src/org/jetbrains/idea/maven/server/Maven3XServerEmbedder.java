@@ -928,10 +928,10 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     if ("3.8.2".equals(mavenVersion) || "3.8.3".equals(mavenVersion)) {
       return false;
     }
-    // don't resolve dependencies in parallel if an old maven version is used; those versions have issues with concurrency
+/*    // don't resolve dependencies in parallel if an old maven version is used; those versions have issues with concurrency
     if (VersionComparatorUtil.compare(mavenVersion, "3.6.0") < 0) {
       return false;
-    }
+    }*/
 
     return true;
   }
@@ -1606,7 +1606,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       resolutions.add(resolution);
     }
 
-    boolean runInParallel = canResolveDependenciesInParallel();
+    boolean runInParallel = false;//canResolveDependenciesInParallel();
     List<PluginResolutionResponse> results =
       MavenServerParallelRunner.execute(runInParallel, resolutions, resolution ->
         resolvePlugin(resolution.mavenPluginId, resolution.pluginDependencies, resolution.remoteRepos, session)
