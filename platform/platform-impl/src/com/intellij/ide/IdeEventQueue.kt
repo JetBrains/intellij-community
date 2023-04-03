@@ -281,6 +281,12 @@ class IdeEventQueue private constructor() : EventQueue() {
       if (event.id == WindowEvent.WINDOW_ACTIVATED || event.id == WindowEvent.WINDOW_DEICONIFIED || event.id == WindowEvent.WINDOW_OPENED) {
         ActiveWindowsWatcher.addActiveWindow(event.source as Window)
       }
+      if (event.id == WindowEvent.WINDOW_DEACTIVATED || event.id == WindowEvent.WINDOW_LOST_FOCUS) {
+        if (skipWindowDeactivationEvents) {
+          Logs.LOG.warn("Skipped $event")
+          return
+        }
+      }
 
       if (isMetaKeyPressedOnLinux(event)) {
         return
@@ -1107,6 +1113,14 @@ private object SequencedEventNestedFieldHolder {
       .findVirtual(SEQUENCED_EVENT_CLASS, "dispose", MethodType.methodType(Void.TYPE))
   }
 }
+
+/**
+ * This should've been an item in [IdeEventQueue.dispatchers],
+ * but [IdeEventQueue.dispatchByCustomDispatchers] is run after [IdePopupManager.dispatch]
+ * and after [processAppActivationEvent], which defeats the very purpose of this flag.
+ */
+@Internal
+internal var skipWindowDeactivationEvents: Boolean = false
 
 // we have to stop editing with <ESC> (if any) and consume the event to prevent any further processing (dialog closing etc.)
 private class EditingCanceller : IdeEventQueue.EventDispatcher {
