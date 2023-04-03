@@ -34,7 +34,7 @@ internal class ChangeAnnotationAttributeAction(annotation: PsiAnnotation, val re
 
   private fun invokeImpl(annotation: PsiAnnotation, project: Project) {
     val factory = PsiElementFactory.getInstance(project)
-    val value = CreateAnnotationAction.attributeRequestToValue(request.value, factory, null)
+    val value = CreateAnnotationActionUtil.attributeRequestToValue(request.value, factory, null)
     annotation.setDeclaredAttributeValue(request.name, value)
   }
 }
