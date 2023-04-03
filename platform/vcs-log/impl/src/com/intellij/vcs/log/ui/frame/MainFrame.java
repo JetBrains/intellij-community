@@ -404,7 +404,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     @Override
     protected void onError(@NotNull Throwable error) {
-      myChangesBrowser.setEmptyWithText(statusText -> statusText.setText(VcsLogBundle.message("vcs.log.error.loading.status")));
+      myChangesBrowser.setEmptyWithText(statusText -> statusText.setText(VcsLogBundle.message("vcs.log.error.loading.changes.status")));
     }
   }
 
@@ -444,7 +444,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       DataPackBase dataPack = visiblePack.getDataPack();
       if (dataPack instanceof DataPack.ErrorDataPack) {
         setErrorEmptyText(((DataPack.ErrorDataPack)dataPack).getError(),
-                          VcsLogBundle.message("vcs.log.error.loading.status"));
+                          VcsLogBundle.message("vcs.log.error.loading.commits.status"));
         appendActionToEmptyText(VcsLogBundle.message("vcs.log.refresh.status.action"),
                                 () -> myLogData.refresh(myLogData.getLogProviders().keySet()));
       }
