@@ -31,14 +31,13 @@ import java.awt.*;
 import java.util.List;
 
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
-import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
 abstract class SpecificFilesViewDialog extends DialogWrapper {
   protected final JPanel myPanel;
   protected final ChangesListView myView;
   protected final Project myProject;
 
-  private final BackgroundRefresher<Runnable> myBackgroundRefresher;
+  private final BackgroundRefresher<@NotNull Runnable> myBackgroundRefresher;
 
   protected SpecificFilesViewDialog(@NotNull Project project,
                                     @NotNull @NlsContexts.DialogTitle String title,
@@ -179,9 +178,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
         DefaultTreeModel treeModel = buildTreeModel();
         return () -> updateTreeModel(treeModel);
       })
-      .thenAsync(callback -> callback != null
-                             ? AppUIExecutor.onUiThread(modalityState).submit(callback)
-                             : rejectedPromise("no callback"))
+      .thenAsync(callback -> AppUIExecutor.onUiThread(modalityState).submit(callback))
       .onProcessed(__ -> myView.setPaintBusy(false));
   }
 
