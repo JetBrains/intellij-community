@@ -3,9 +3,11 @@ package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
+import org.jetbrains.kotlin.descriptors.MemberDescriptor
 import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.util.analyzeInlinedFunctions
+import org.jetbrains.kotlin.idea.util.expectedDeclarationIfAny
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
@@ -88,6 +90,12 @@ private fun analyzeCalls(
 
             if (descriptor is ReceiverParameterDescriptor) {
                 processContextClassReceiver(descriptor.value)
+            }
+
+            if ((descriptor as? MemberDescriptor)?.isActual == true) {
+                val actualDeclaration = DescriptorToSourceUtilsIde.getAnyDeclaration(project, descriptor)
+                val expectedDeclaration = (actualDeclaration as? KtDeclaration)?.expectedDeclarationIfAny()
+                listOfNotNull(actualDeclaration, expectedDeclaration).forEach { files.add(it.containingFile as KtFile) }
             }
 
             if (descriptor.visibility == DescriptorVisibilities.LOCAL) {

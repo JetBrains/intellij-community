@@ -1749,6 +1749,11 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
             KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
         }
 
+        @TestMetadata("classMethod.kt")
+        public void testClassMethod() throws Exception {
+            runTest("testData/evaluation/multiplatform/classMethod.kt");
+        }
+
         @TestMetadata("diamond.kt")
         public void testDiamond() throws Exception {
             runTest("testData/evaluation/multiplatform/diamond.kt");
@@ -1769,14 +1774,29 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
             runTest("testData/evaluation/multiplatform/evaluateWithIntermediateJvm.kt");
         }
 
+        @TestMetadata("funWithDefaultArgument.kt")
+        public void testFunWithDefaultArgument() throws Exception {
+            runTest("testData/evaluation/multiplatform/funWithDefaultArgument.kt");
+        }
+
         @TestMetadata("functionBreakpointInCommonCode.kt")
         public void testFunctionBreakpointInCommonCode() throws Exception {
             runTest("testData/evaluation/multiplatform/functionBreakpointInCommonCode.kt");
         }
 
+        @TestMetadata("interface.kt")
+        public void testInterface() throws Exception {
+            runTest("testData/evaluation/multiplatform/interface.kt");
+        }
+
         @TestMetadata("ktij21854.kt")
         public void testKtij21854() throws Exception {
             runTest("testData/evaluation/multiplatform/ktij21854.kt");
+        }
+
+        @TestMetadata("object.kt")
+        public void testObject() throws Exception {
+            runTest("testData/evaluation/multiplatform/object.kt");
         }
 
         @TestMetadata("typealiasFromCommonCode.kt")
