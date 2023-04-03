@@ -42,12 +42,12 @@ class GradleRunConfigurationExtension
       GradleRunConfiguration::setDebugAllEnabled
     )
     addTag(
-      "gradle.tasks.tests.force.fragment",
+      "gradle.tasks.run_as_test.fragment",
       GradleBundle.message("gradle.tasks.tests.force"),
       GradleBundle.message("gradle.settings.title"),
       GradleBundle.message("gradle.tasks.tests.force.comment"),
-      GradleRunConfiguration::isForceTestExecution,
-      GradleRunConfiguration::setForceTestExecution
+      GradleRunConfiguration::isRunAsTest,
+      GradleRunConfiguration::setRunAsTest
     )
   }
 

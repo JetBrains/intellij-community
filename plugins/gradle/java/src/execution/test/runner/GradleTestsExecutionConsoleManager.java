@@ -66,7 +66,6 @@ import org.jetbrains.plugins.gradle.execution.filters.ReRunTaskFilter;
 import org.jetbrains.plugins.gradle.execution.test.runner.events.GradleTestEventsProcessor;
 import org.jetbrains.plugins.gradle.execution.test.runner.events.GradleTestsExecutionConsoleOutputProcessor;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
-import org.jetbrains.plugins.gradle.service.execution.GradleTestExecutionUtil;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -261,15 +260,8 @@ public class GradleTestsExecutionConsoleManager
   public boolean isApplicableFor(@NotNull ExternalSystemTask task) {
     if (task instanceof ExternalSystemExecuteTaskTask taskTask) {
       if (StringUtil.equals(taskTask.getExternalSystemId().getId(), GradleConstants.SYSTEM_ID.getId())) {
-        var project = taskTask.getIdeProject();
-        var externalProjectPath = taskTask.getExternalProjectPath();
-        var tasksAndArguments = taskTask.getTasksToExecute();
-        var arguments = StringUtil.notNullize(taskTask.getArguments());
-        var commandLine = GradleTestExecutionUtil.parseCommandLine(tasksAndArguments, arguments);
-        if (GradleTestExecutionUtil.hasTestTasks(commandLine, project, externalProjectPath)) {
-          taskTask.putUserData(GradleRunConfiguration.RUN_TASK_AS_TEST, true);
-          return true;
-        }
+        var isRunAsTest = taskTask.getUserData(GradleRunConfiguration.RUN_AS_TEST_KEY);
+        return ObjectUtils.chooseNotNull(isRunAsTest, false);
       }
     }
     return false;

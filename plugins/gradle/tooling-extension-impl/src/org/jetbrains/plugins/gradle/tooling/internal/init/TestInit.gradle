@@ -8,8 +8,6 @@ IMPORT_GRADLE_TASKS_UTIL
 //noinspection GrUnresolvedAccess
 Map<String, List<String>> testTasksWithPatterns = TEST_TASKS_WITH_PATTERNS
 Set<String> testTasks = testTasksWithPatterns.keySet()
-//noinspection GrUnresolvedAccess
-boolean forceTestExecution = FORCE_TEST_EXECUTION
 
 
 Project getCurrentProject() {
@@ -52,9 +50,7 @@ gradle.taskGraph.whenReady { TaskExecutionGraph taskGraph ->
       //noinspection GrUnresolvedAccess
       String name = GradleTasksUtil.findTestMatcher(project, task, testTasks)
       if (name != null) {
-        if (forceTestExecution) {
-          task.outputs.upToDateWhen { false }
-        }
+        task.outputs.upToDateWhen { false }
         def patterns = testTasksWithPatterns[name] ?: []
         if (!patterns.isEmpty()) {
           setCommandLineIncludePatterns(task, patterns)

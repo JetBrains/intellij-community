@@ -16,50 +16,68 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
+import com.intellij.testFramework.utils.vfs.deleteRecursively
 import com.intellij.util.LocalTimeCounter
+import org.jetbrains.plugins.gradle.execution.test.events.fixture.GradleExecutionEnvironmentFixture
+import org.jetbrains.plugins.gradle.execution.test.events.fixture.GradleExecutionViewFixture
 import org.jetbrains.plugins.gradle.execution.test.events.fixture.TestExecutionConsoleEventFixture
-import org.jetbrains.plugins.gradle.execution.test.events.fixture.TestExecutionConsoleFixture
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isSupportedJUnit5
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.testFramework.GradleProjectTestCase
 import org.jetbrains.plugins.gradle.testFramework.util.tree.TreeAssertion
 import org.jetbrains.plugins.gradle.testFramework.util.tree.buildTree
+import org.jetbrains.plugins.gradle.testFramework.util.waitForAnyExecution
+import org.jetbrains.plugins.gradle.testFramework.util.waitForGradleEventDispatcherClosing
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.jetbrains.plugins.gradle.util.waitForTaskExecution
 import org.junit.jupiter.api.Assertions
 
-abstract class GradleTestExecutionTestCase : GradleProjectTestCase() {
+abstract class GradleExecutionTestCase : GradleProjectTestCase() {
 
   private lateinit var testDisposable: Disposable
-  private lateinit var buildViewTestFixture: BuildViewTestFixture
 
-  lateinit var testExecutionConsoleFixture: TestExecutionConsoleFixture
-  lateinit var testExecutionEventFixture: TestExecutionConsoleEventFixture
+  lateinit var executionEnvironmentFixture: GradleExecutionEnvironmentFixture
+  lateinit var executionConsoleFixture: GradleExecutionViewFixture
+  private lateinit var buildViewFixture: BuildViewTestFixture
+  private lateinit var testExecutionEventFixture: TestExecutionConsoleEventFixture
 
   override fun setUp() {
     super.setUp()
 
+    cleanupProjectBuildDirectory()
+
     testDisposable = Disposer.newDisposable()
 
-    testExecutionConsoleFixture = TestExecutionConsoleFixture()
-    testExecutionConsoleFixture.setUp()
+    executionEnvironmentFixture = GradleExecutionEnvironmentFixture(project)
+    executionEnvironmentFixture.setUp()
+
+    executionConsoleFixture = GradleExecutionViewFixture(executionEnvironmentFixture)
+    executionConsoleFixture.setUp()
 
     testExecutionEventFixture = TestExecutionConsoleEventFixture(project)
     testExecutionEventFixture.setUp()
 
-    buildViewTestFixture = BuildViewTestFixture(project)
-    buildViewTestFixture.setUp()
+    buildViewFixture = BuildViewTestFixture(project)
+    buildViewFixture.setUp()
   }
 
   override fun tearDown() {
     runAll(
-      { testExecutionConsoleFixture.tearDown() },
+      { buildViewFixture.tearDown() },
       { testExecutionEventFixture.tearDown() },
-      { buildViewTestFixture.tearDown() },
+      { executionConsoleFixture.tearDown() },
+      { executionEnvironmentFixture.tearDown() },
       { Disposer.dispose(testDisposable) },
+      { cleanupProjectBuildDirectory() },
       { super.tearDown() },
     )
+  }
+
+  // '--rerun-tasks' corrupts gradle build caches fo gradle versions before 4.0 (included)
+  private fun cleanupProjectBuildDirectory() {
+    runWriteActionAndWait {
+      projectRoot.deleteRecursively("build")
+    }
   }
 
   val jUnitTestAnnotationClass: String
@@ -73,6 +91,14 @@ abstract class GradleTestExecutionTestCase : GradleProjectTestCase() {
       true -> "org.junit.jupiter.api.Disabled"
       else -> "org.junit.Ignore"
     }
+
+  fun isSupportedTestLauncher(): Boolean {
+    return isGradleAtLeast("7.6")
+  }
+
+  private fun isSupportedJunit5(): Boolean {
+    return isSupportedJUnit5(gradleVersion)
+  }
 
   /**
    * Call this method inside [setUp] to print events trace to console
@@ -90,13 +116,13 @@ abstract class GradleTestExecutionTestCase : GradleProjectTestCase() {
     }, testDisposable)
   }
 
-  fun executeTasks(commandLine: String) {
+  fun executeTasks(commandLine: String, isRunAsTest: Boolean = true) {
     val runManager = RunManager.getInstance(project)
     val runConfigurationName = "GradleTestExecutionTestCase (" + LocalTimeCounter.currentTime() + ")"
     val runnerSettings = runManager.createConfiguration(runConfigurationName, GradleExternalTaskConfigurationType::class.java)
     val runConfiguration = runnerSettings.configuration as GradleRunConfiguration
     runConfiguration.rawCommandLine = commandLine
-    runConfiguration.isForceTestExecution = true
+    runConfiguration.isRunAsTest = isRunAsTest
     runConfiguration.settings.externalProjectPath = projectPath
     runConfiguration.settings.externalSystemIdString = GradleConstants.SYSTEM_ID.id
     val executorId = DefaultRunExecutor.EXECUTOR_ID
@@ -104,61 +130,56 @@ abstract class GradleTestExecutionTestCase : GradleProjectTestCase() {
     val runner = ProgramRunner.getRunner(executorId, runConfiguration)!!
     Assertions.assertEquals(ExternalSystemConstants.RUNNER_ID, runner.runnerId)
     val environment = ExecutionEnvironment(executor, runner, runnerSettings, project)
-    waitForTaskExecution {
+    waitForAnyGradleTaskExecution {
       runWriteActionAndWait {
         runner.execute(environment)
       }
     }
   }
 
-  fun isSupportedTestLauncher(): Boolean {
-    return isGradleAtLeast("7.6")
-  }
-
-  private fun isSupportedJunit5(): Boolean {
-    return isSupportedJUnit5(gradleVersion)
-  }
-
-  private fun assertFullBuildExecutionTree(assert: TreeAssertion<Nothing?>.() -> Unit) {
-    buildViewTestFixture.assertBuildViewTreeEquals { treeString ->
-      val tree = buildTree(treeString!!)
-      TreeAssertion.assertTree(tree, assert)
-    }
-  }
-
-  private fun assertFullBuildExecutionTreeContains(assert: TreeAssertion<Nothing?>.() -> Unit) {
-    buildViewTestFixture.assertBuildViewTreeEquals { treeString ->
-      val tree = buildTree(treeString!!)
-      TreeAssertion.assertMatchesTree(tree, assert)
+  fun <R> waitForAnyGradleTaskExecution(action: () -> R) {
+    executionEnvironmentFixture.assertExecutionEnvironmentIsReady {
+      waitForGradleEventDispatcherClosing {
+        waitForAnyExecution(project) {
+          org.jetbrains.plugins.gradle.testFramework.util.waitForAnyGradleTaskExecution {
+            action()
+          }
+        }
+      }
     }
   }
 
   fun assertBuildExecutionTree(assert: TreeAssertion.Node<Nothing?>.() -> Unit) {
-    assertFullBuildExecutionTree { assertNode("", assert) }
+    buildViewFixture.assertBuildViewTreeEquals { treeString ->
+      val actualTree = buildTree(treeString!!)
+      TreeAssertion.assertTree(actualTree) {
+        assertNode("", assert)
+      }
+    }
   }
 
-  fun assertBuildExecutionTreeContains(assert: TreeAssertion.Node<Nothing?>.() -> Unit) {
-    assertFullBuildExecutionTreeContains { assertNode("", assert) }
+  fun assertTestConsoleContains(expected: String) {
+    executionConsoleFixture.assertTestConsoleContains(expected)
   }
 
-  fun assertTestExecutionConsoleContains(expected: String) {
-    testExecutionConsoleFixture.assertTestExecutionConsoleContains(expected)
+  fun assertRunTreeView(assert: TreeAssertion.Node<Nothing?>.() -> Unit) {
+    executionConsoleFixture.assertRunTreeView(assert)
   }
 
-  fun assertTestExecutionTree(assert: TreeAssertion.Node<Nothing?>.() -> Unit) {
-    testExecutionConsoleFixture.assertTestExecutionTree(assert)
+  fun assertTestTreeView(assert: TreeAssertion.Node<Nothing?>.() -> Unit) {
+    executionConsoleFixture.assertTestTreeView(assert)
   }
 
-  fun assertTestExecutionTreeIsEmpty() {
-    testExecutionConsoleFixture.assertTestExecutionTreeIsEmpty()
+  fun assertRunTreeViewIsEmpty() {
+    executionConsoleFixture.assertRunTreeViewIsEmpty()
   }
 
-  fun assertTestExecutionTreeIsNotCreated() {
-    testExecutionConsoleFixture.assertTestExecutionTreeIsNotCreated()
+  fun assertTestTreeViewIsEmpty() {
+    executionConsoleFixture.assertTestTreeViewIsEmpty()
   }
 
   fun assertSMTestProxyTree(assert: TreeAssertion<AbstractTestProxy>.() -> Unit) {
-    testExecutionConsoleFixture.assertSMTestProxyTree(assert)
+    executionConsoleFixture.assertSMTestProxyTree(assert)
   }
 
   fun assertTestEventCount(

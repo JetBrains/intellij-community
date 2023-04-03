@@ -441,7 +441,10 @@ public class GradleExecutionHelper {
     @NotNull List<String> tasksAndArguments,
     @NotNull GradleExecutionSettings settings
   ) {
-    var commandLine = GradleTestExecutionUtil.parseCommandLine(tasksAndArguments, settings.getArguments());
+    var commandLine = GradleCommandLineUtil.parseCommandLine(
+      tasksAndArguments,
+      settings.getArguments()
+    );
 
     LOG.info("Passing command-line to Gradle Tooling API: " +
              StringUtil.join(obfuscatePasswordParameters(commandLine.getTokens()), " "));
@@ -450,7 +453,7 @@ public class GradleExecutionHelper {
       setupTestLauncherArguments(testLauncher, commandLine);
     }
     else if (operation instanceof BuildLauncher buildLauncher) {
-      setupBuildLauncherArguments(buildLauncher, commandLine, settings.isForceTestExecution());
+      setupBuildLauncherArguments(buildLauncher, commandLine, settings.isRunAsTest());
     }
     else {
       operation.withArguments(commandLine.getTokens());
@@ -462,7 +465,7 @@ public class GradleExecutionHelper {
     @NotNull GradleCommandLine commandLine
   ) {
     for (var task : commandLine.getTasks()) {
-      var patterns = GradleTestExecutionUtil.getTestPatterns(task);
+      var patterns = GradleCommandLineUtil.getTestPatterns(task);
       if (!patterns.isEmpty()) {
         testLauncher.withTestsFor(
           it -> it.forTaskPath(task.getName())
@@ -479,16 +482,14 @@ public class GradleExecutionHelper {
   private static void setupBuildLauncherArguments(
     @NotNull BuildLauncher buildLauncher,
     @NotNull GradleCommandLine commandLine,
-    boolean forceExecution
+    boolean isRunAsTest
   ) {
-    var tasks = ContainerUtil.flatMap(commandLine.getTasks(), it ->
-      GradleTestExecutionUtil.getTestPatterns(it).isEmpty() ? it.getTokens() : List.of(it.getName())
-    );
-    buildLauncher.forTasks(ArrayUtil.toStringArray(tasks));
+    buildLauncher.forTasks(ArrayUtil.toStringArray(commandLine.getTasks().getTokens()));
     buildLauncher.withArguments(commandLine.getOptions().getTokens());
-
-    var initScript = GradleInitScriptUtil.createTestInitScript(commandLine.getTasks(), forceExecution);
-    buildLauncher.addArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.getAbsolutePath());
+    if (isRunAsTest) {
+      var initScript = GradleInitScriptUtil.createTestInitScript(commandLine.getTasks());
+      buildLauncher.addArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.getAbsolutePath());
+    }
   }
 
   private static void setupLogging(@NotNull GradleExecutionSettings settings,

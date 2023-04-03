@@ -4,8 +4,10 @@ package org.jetbrains.plugins.gradle.settings;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.execution.ParametersListUtil;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 
 import java.util.Objects;
@@ -71,6 +73,14 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
   @Nullable
   public String getGradleHome() {
     return myGradleHome;
+  }
+
+  public @Nullable GradleVersion getGradleVersion() {
+    var versionString = GradleInstallationManager.getGradleVersion(myGradleHome);
+    if (versionString == null) {
+      return null;
+    }
+    return GradleInstallationManager.getGradleVersionSafe(versionString);
   }
 
   @Nullable
@@ -139,9 +149,13 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
     return ObjectUtils.chooseNotNull(value, false);
   }
 
-  public boolean isForceTestExecution() {
-    var value = getUserData(GradleRunConfiguration.FORCE_TEST_EXECUTION);
+  public boolean isRunAsTest() {
+    var value = getUserData(GradleRunConfiguration.RUN_AS_TEST_KEY);
     return ObjectUtils.chooseNotNull(value, false);
+  }
+
+  public void setRunAsTest(boolean isRunAsTest) {
+    putUserData(GradleRunConfiguration.RUN_AS_TEST_KEY, isRunAsTest);
   }
 
   @Override

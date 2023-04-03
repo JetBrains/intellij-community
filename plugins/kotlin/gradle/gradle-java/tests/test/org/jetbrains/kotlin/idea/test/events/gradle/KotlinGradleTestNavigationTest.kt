@@ -21,7 +21,7 @@ class KotlinGradleTestNavigationTest : KotlinGradleTestNavigationTestCase() {
 
             executeTasks(":test")
 
-            assertTestExecutionTree {
+            assertTestTreeView {
                 assertNode("TestCase") {
                     assertNode("parametrized test [1] 1, first")
                     assertNode("parametrized test [2] 2, second")
@@ -77,7 +77,7 @@ class KotlinGradleTestNavigationTest : KotlinGradleTestNavigationTestCase() {
 
             executeTasks(":test")
 
-            assertTestExecutionTree {
+            assertTestTreeView {
                 assertNode("TestCase") {
                     assertNode("parametrized test") {
                         assertNode("[1] 1, first")
@@ -152,7 +152,7 @@ class KotlinGradleTestNavigationTest : KotlinGradleTestNavigationTestCase() {
 
             executeTasks(":test")
 
-            assertTestExecutionTree {
+            assertTestTreeView {
                 assertNode("ParametrizedTestCase") {
                     assertNode("parametrized test[0]")
                     assertNode("parametrized test[1]")

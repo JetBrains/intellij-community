@@ -36,10 +36,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.GradleFileModificationTracker;
-import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
-import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
@@ -59,6 +57,7 @@ import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHel
 import static com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState.*;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.util.containers.ContainerUtil.addAllNotNull;
+import static org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilderUtil.isGradleAtLeast;
 import static org.jetbrains.plugins.gradle.util.GradleUtil.determineRootProject;
 
 public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecutionSettings> {
@@ -168,13 +167,9 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
   private static boolean isApplicableTestLauncher(@NotNull GradleExecutionSettings settings) {
     var isEnabledTestLauncher = Registry.is("gradle.testLauncherAPI.enabled")
                                 || ApplicationManager.getApplication().isUnitTestMode();
-    return isEnabledTestLauncher
-           && Boolean.TRUE.equals(settings.getUserData(GradleRunConfiguration.RUN_TASK_AS_TEST))
-           && Optional.ofNullable(settings.getGradleHome())
-             .map(GradleInstallationManager::getGradleVersion)
-             .map(GradleInstallationManager::getGradleVersionSafe)
-             .map(v -> GradleVersion.version("7.6").compareTo(v) <= 0)
-             .orElse(false);
+    var gradleVersion = settings.getGradleVersion();
+    var isSupportedTestLauncher = gradleVersion != null && isGradleAtLeast(gradleVersion, "7.6");
+    return isEnabledTestLauncher && settings.isRunAsTest() && isSupportedTestLauncher;
   }
 
   private static void prepareTaskState(@NotNull ExternalSystemTaskId id,
@@ -243,7 +238,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       Map<String, String> enhancementParameters = new HashMap<>();
       enhancementParameters.put(GradleProjectResolverExtension.JVM_PARAMETERS_SETUP_KEY, jvmParametersSetup);
 
-      Boolean isTestExecution = Boolean.TRUE == effectiveSettings.getUserData(GradleRunConfiguration.RUN_TASK_AS_TEST);
+      Boolean isTestExecution = effectiveSettings.isRunAsTest();
       enhancementParameters.put(GradleProjectResolverExtension.TEST_EXECUTION_EXPECTED_KEY, String.valueOf(isTestExecution));
 
       Integer debugDispatchPort = effectiveSettings.getUserData(DEBUGGER_DISPATCH_PORT_KEY);

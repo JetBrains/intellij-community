@@ -93,7 +93,7 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     val producer = configurationFromContext.configurationProducer as P
     producer.setTestTasksChooser(testTasksFilter)
     val configuration = configurationFromContext.configuration as GradleRunConfiguration
-    assertTrue("Configuration created from context must force test re-execution", configuration.isForceTestExecution)
+    assertTrue("Configuration created from context must force test re-execution", configuration.isRunAsTest)
     assertTrue("Configuration can be setup by producer from his context",
       producer.setupConfigurationFromContext(configuration, context, Ref(context.psiLocation)))
     if (producer !is PatternGradleConfigurationProducer) {

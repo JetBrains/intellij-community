@@ -17,7 +17,6 @@ import org.assertj.core.api.ListAssert
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleAtLeast
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isSupportedJUnit5
-import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.testFramework.GradleProjectTestCase
@@ -60,8 +59,7 @@ abstract class GradleJavaTestEventsIntegrationTestCase : GradleProjectTestCase()
     val commandLine = GradleCommandLine.parse(rawCommandLine)
     val id = ExternalSystemTaskId.create(SYSTEM_ID, ExternalSystemTaskType.EXECUTE_TASK, project)
     val settings = ExternalSystemApiUtil.getExecutionSettings<GradleExecutionSettings>(project, projectPath, SYSTEM_ID)
-    settings.putUserData(GradleRunConfiguration.RUN_TASK_AS_TEST, true)
-    settings.putUserData(GradleRunConfiguration.FORCE_TEST_EXECUTION, true)
+    settings.isRunAsTest = true
     settings.withArguments(commandLine.options.tokens)
     GradleTaskManager().executeTasks(id, commandLine.tasks.tokens, projectPath, settings, null, listener)
   }

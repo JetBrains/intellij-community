@@ -21,7 +21,7 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
 
       executeTasks(":test")
 
-      assertTestExecutionTree {
+      assertTestTreeView {
         assertNode("TestCase") {
           assertNode("parametrized_test [1] 1, first")
           assertNode("parametrized_test [2] 2, second")
@@ -77,7 +77,7 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
 
       executeTasks(":test")
 
-      assertTestExecutionTree {
+      assertTestTreeView {
         assertNode("TestCase") {
           assertNode("parametrized test") {
             assertNode("[1] 1, first")
@@ -151,7 +151,7 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
 
       executeTasks(":test")
 
-      assertTestExecutionTree {
+      assertTestTreeView {
         assertNode("ParametrizedTestCase") {
           assertNode("parametrized_test[0]")
           assertNode("parametrized_test[1]")
@@ -202,7 +202,7 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
 
       executeTasks(":test")
 
-      assertTestExecutionTree {
+      assertTestTreeView {
         assertNode("SpockTestCase") {
           assertNode("length of #name is #length") {
             assertNode("length of Spock is 5")

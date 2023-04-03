@@ -180,13 +180,14 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     ExternalSystemRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
   }
 
-  protected static void readExternalBoolean(@NotNull Element element, @NotNull String name, @NotNull Consumer<Boolean> consumer) {
+  protected static boolean readExternalBoolean(@NotNull Element element, @NotNull String name, @NotNull Consumer<Boolean> consumer) {
     var childElement = element.getChild(name);
     if (childElement == null) {
-      return;
+      return false;
     }
     var value = Boolean.parseBoolean(childElement.getText());
     consumer.accept(value);
+    return true;
   }
 
   protected static void writeExternalBoolean(@NotNull Element element, @NotNull String name, boolean value) {

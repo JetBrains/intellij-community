@@ -65,13 +65,12 @@ fun createWrapperInitScript(
   return createInitScript(WRAPPER_INIT_SCRIPT_NAME, initScript)
 }
 
-fun createTestInitScript(tasks: List<GradleCommandLineTask>, forceExecution: Boolean): File {
+fun createTestInitScript(tasks: List<GradleCommandLineTask>): File {
   val initScript = loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/TestInit.gradle", mapOf(
     "IMPORT_GRADLE_TASKS_UTIL" to loadInitScript(
       "/org/jetbrains/plugins/gradle/tooling/internal/init/GradleTasksUtil.gradle"),
     "TEST_TASKS_WITH_PATTERNS" to tasks.associate { it.name to it.getTestPatterns() }
-      .toGroovyMapLiteral({ toGroovyStringLiteral() }, { toGroovyListLiteral { toGroovyStringLiteral() } }),
-    "FORCE_TEST_EXECUTION" to forceExecution.toString()
+      .toGroovyMapLiteral({ toGroovyStringLiteral() }, { toGroovyListLiteral { toGroovyStringLiteral() } })
   ))
   return createInitScript(TEST_INIT_SCRIPT_NAME, initScript)
 }

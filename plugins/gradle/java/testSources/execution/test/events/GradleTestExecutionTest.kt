@@ -7,7 +7,7 @@ import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsS
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.params.ParameterizedTest
 
-class GradleTestExecutionTest : GradleTestExecutionTestCase() {
+class GradleTestExecutionTest : GradleExecutionTestCase() {
 
   @ParameterizedTest
   @TargetVersions("4.7+")
@@ -39,13 +39,13 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
 
       executeTasks(":test :additionalTest")
 
-      assertTestExecutionTree {
+      assertTestTreeView {
         assertNode("AppTest") {
           assertNode("test")
           assertNode("test")
         }
       }
-      assertBuildExecutionTreeContains {
+      assertBuildExecutionTree {
         assertNode("failed") {
           assertNode(":compileJava")
           assertNode(":processResources")
@@ -77,7 +77,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
               }
             }
             else {
-              assertNode("There were failing tests. See the report at:")
+              assertNode("There were failing tests. See the report at: .*".toRegex())
             }
           }
           if (isSupportedTestLauncher()) {
@@ -113,19 +113,19 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
 
       executeTasks(":test")
 
-      assertTestExecutionTree {
+      assertTestTreeView {
         assertNode("AppTest") {
           assertNode("test")
         }
       }
       when {
         SystemInfo.isWindows ->
-          assertTestExecutionConsoleContains("buildscript \n" + "output\n" + "\n" + "text\n")
+          assertTestConsoleContains("buildscript \n" + "output\n" + "\n" + "text\n")
         else ->
-          assertTestExecutionConsoleContains("buildscript \n" + "output\n" + "text\n")
+          assertTestConsoleContains("buildscript \n" + "output\n" + "text\n")
       }
-      assertTestExecutionConsoleContains("script output text without eol")
-      assertTestExecutionConsoleContains("test \n" + "output\n" + "\n" + "text\n")
+      assertTestConsoleContains("script output text without eol")
+      assertTestConsoleContains("test \n" + "output\n" + "\n" + "text\n")
     }
   }
 
@@ -143,7 +143,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
 
       executeTasks(":test")
 
-      assertTestExecutionTree {
+      assertTestTreeView {
         assertNode("AppTest") {
           assertNode("test")
         }
@@ -196,11 +196,270 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test")
-
+      assertTestTreeView {
+        assertNode("TestCase") {
+          assertNode("failedTest")
+          assertNode("ignoredTest")
+          assertNode("successTest")
+        }
+      }
       assertTestEventCount("TestCase", 1, 1, 0, 0, 0, 0)
       assertTestEventCount("successTest", 0, 0, 1, 1, 0, 0)
       assertTestEventCount("failedTest", 0, 0, 1, 1, 1, 0)
       assertTestEventCount("ignoredTest", 0, 0, 1, 1, 0, 1)
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test task execution with filters`(gradleVersion: GradleVersion) {
+    testJavaProject(gradleVersion) {
+      writeText("src/test/java/org/example/TestCase1.java", """
+        |package org.example;
+        |import $jUnitTestAnnotationClass;
+        |public class TestCase1 {
+        |  @Test public void test1() {}
+        |  @Test public void test2() {}
+        |}
+      """.trimMargin())
+      writeText("src/test/java/org/example/TestCase2.java", """
+        |package org.example;
+        |import $jUnitTestAnnotationClass;
+        |public class TestCase2 {
+        |  @Test public void test1() {}
+        |  @Test public void test2() {}
+        |}
+      """.trimMargin())
+
+      executeTasks(":test")
+      assertTestTreeView {
+        assertNode("TestCase1") {
+          assertNode("test1")
+          assertNode("test2")
+        }
+        assertNode("TestCase2") {
+          assertNode("test1")
+          assertNode("test2")
+        }
+      }
+
+      executeTasks(":test --tests org.example.TestCase1")
+      assertTestTreeView {
+        assertNode("TestCase1") {
+          assertNode("test1")
+          assertNode("test2")
+        }
+      }
+
+      executeTasks(":test --tests org.example.TestCase2.test2")
+      assertTestTreeView {
+        assertNode("TestCase2") {
+          assertNode("test2")
+        }
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test non test task execution`(gradleVersion: GradleVersion) {
+    testJavaProject(gradleVersion) {
+      writeText("src/test/java/org/example/TestCase.java", """
+        |package org.example;
+        |import $jUnitTestAnnotationClass;
+        |public class TestCase {
+        |  @Test public void test() {}
+        |}
+      """.trimMargin())
+      appendText("build.gradle", """
+        |tasks.create('allTests') {
+        |    dependsOn(tasks.findByPath(':test'))
+        |}
+      """.trimMargin())
+
+      executeTasks(":test", isRunAsTest = true)
+      assertTestTreeView {
+        assertNode("TestCase") {
+          assertNode("test")
+        }
+      }
+      assertBuildExecutionTree {
+        assertNode("successful") {
+          assertNode(":compileJava")
+          assertNode(":processResources")
+          assertNode(":classes")
+          assertNode(":compileTestJava")
+          assertNode(":processTestResources")
+          assertNode(":testClasses")
+          assertNode(":test") {
+            if (isSupportedTestLauncher()) {
+              assertNode("Gradle Test Run :test") {
+                assertNode("Gradle Test Executor 1") {
+                  assertNode("TestCase") {
+                    assertNode("Test test()(org.example.TestCase)")
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      executeTasks(":test", isRunAsTest = true)
+      assertTestTreeView {
+        assertNode("TestCase") {
+          assertNode("test")
+        }
+      }
+      assertBuildExecutionTree {
+        assertNode("successful") {
+          assertNode(":compileJava")
+          assertNode(":processResources")
+          assertNode(":classes")
+          assertNode(":compileTestJava")
+          assertNode(":processTestResources")
+          assertNode(":testClasses")
+          assertNode(":test") {
+            if (isSupportedTestLauncher()) {
+              assertNode("Gradle Test Run :test") {
+                assertNode("Gradle Test Executor 2") {
+                  assertNode("TestCase") {
+                    assertNode("Test test()(org.example.TestCase)")
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      executeTasks(":allTests --rerun-tasks", isRunAsTest = true)
+      assertTestTreeView {
+        assertNode("TestCase") {
+          assertNode("test")
+        }
+      }
+      assertBuildExecutionTree {
+        assertNode("successful") {
+          assertNode(":compileJava")
+          assertNode(":processResources")
+          assertNode(":classes")
+          assertNode(":compileTestJava")
+          assertNode(":processTestResources")
+          assertNode(":testClasses")
+          assertNode(":test") {
+            if (isSupportedTestLauncher()) {
+              assertNode("Gradle Test Run :test") {
+                assertNode("Gradle Test Executor 3") {
+                  assertNode("TestCase") {
+                    assertNode("Test test()(org.example.TestCase)")
+                  }
+                }
+              }
+            }
+          }
+          assertNode(":allTests")
+        }
+      }
+
+      executeTasks(":allTests", isRunAsTest = true)
+      assertTestTreeViewIsEmpty()
+      assertBuildExecutionTree {
+        val status = when {
+          isSupportedTestLauncher() -> "failed"
+          else -> "successful"
+        }
+        assertNode(status) {
+          assertNode(":compileJava")
+          assertNode(":processResources")
+          assertNode(":classes")
+          assertNode(":compileTestJava")
+          assertNode(":processTestResources")
+          assertNode(":testClasses")
+          assertNode(":test")
+          assertNode(":allTests")
+          if (isSupportedTestLauncher()) {
+            assertNode("No matching tests found in any candidate test task.")
+          }
+        }
+      }
+
+      executeTasks(":allTests --tests *", isRunAsTest = true)
+      assertTestTreeViewIsEmpty()
+      assertBuildExecutionTree {
+        assertNode("failed") {
+          when {
+            isSupportedTestLauncher() ->
+              assertNode(
+                "Task ':allTests' of type 'org.gradle.api.DefaultTask_Decorated' " +
+                "not supported for executing tests via TestLauncher API."
+              )
+            else ->
+              assertNode("Unknown command-line option '--tests'")
+          }
+        }
+      }
+
+      executeTasks(":test --rerun-tasks", isRunAsTest = false)
+      assertRunTreeView {
+        assertNode("successful") {
+          assertNode(":compileJava")
+          assertNode(":processResources")
+          assertNode(":classes")
+          assertNode(":compileTestJava")
+          assertNode(":processTestResources")
+          assertNode(":testClasses")
+          assertNode(":test")
+        }
+      }
+
+      executeTasks(":test", isRunAsTest = false)
+      assertRunTreeView {
+        assertNode("successful") {
+          assertNode(":compileJava")
+          assertNode(":processResources")
+          assertNode(":classes")
+          assertNode(":compileTestJava")
+          assertNode(":processTestResources")
+          assertNode(":testClasses")
+          assertNode(":test")
+        }
+      }
+
+      executeTasks(":allTests --rerun-tasks", isRunAsTest = false)
+      assertRunTreeView {
+        assertNode("successful") {
+          assertNode(":compileJava")
+          assertNode(":processResources")
+          assertNode(":classes")
+          assertNode(":compileTestJava")
+          assertNode(":processTestResources")
+          assertNode(":testClasses")
+          assertNode(":test")
+          assertNode(":allTests")
+        }
+      }
+
+      executeTasks(":allTests", isRunAsTest = false)
+      assertRunTreeView {
+        assertNode("successful") {
+          assertNode(":compileJava")
+          assertNode(":processResources")
+          assertNode(":classes")
+          assertNode(":compileTestJava")
+          assertNode(":processTestResources")
+          assertNode(":testClasses")
+          assertNode(":test")
+          assertNode(":allTests")
+        }
+      }
+
+      executeTasks(":allTests --tests *", isRunAsTest = false)
+      assertRunTreeView {
+        assertNode("failed") {
+          assertNode("Unknown command-line option '--tests'")
+        }
+      }
     }
   }
 }

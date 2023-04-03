@@ -14,7 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +24,7 @@ import org.jetbrains.plugins.gradle.execution.target.GradleRuntimeType;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLine;
 
-import java.util.StringJoiner;
+import static org.jetbrains.plugins.gradle.service.execution.GradleCommandLineUtil.getTestPatterns;
 
 public class GradleRunConfiguration
   extends ExternalSystemRunConfiguration
@@ -32,15 +32,16 @@ public class GradleRunConfiguration
              TargetEnvironmentAwareRunProfile {
 
   private static final String DEBUG_FLAG_NAME = "GradleScriptDebugEnabled";
-  private static final String DEBUG_ALL_NAME = "DebugAllEnabled";
   private static final String FORCE_TEST_NAME = "ForceTestExec";
 
+  private static final String DEBUG_ALL_NAME = "DebugAllEnabled";
+  private static final String RUN_AS_TEST_NAME = "RunAsTest";
+
   public static final Key<Boolean> DEBUG_ALL_KEY = Key.create("DEBUG_ALL_TASKS");
-  public static final Key<Boolean> RUN_TASK_AS_TEST = Key.create("plugins.gradle.enable.test.reporting");
-  public static final Key<Boolean> FORCE_TEST_EXECUTION = Key.create("plugins.gradle.force.test.execution");
+  public static final Key<Boolean> RUN_AS_TEST_KEY = Key.create("RUN_AS_TEST");
 
   private boolean isDebugAllEnabled = false;
-  private boolean forceTestExecution = false;
+  private boolean isRunAsTest = false;
 
   public GradleRunConfiguration(Project project, ConfigurationFactory factory, String name) {
     super(GradleConstants.SYSTEM_ID, project, factory, name);
@@ -57,25 +58,17 @@ public class GradleRunConfiguration
     putUserData(DEBUG_ALL_KEY, debugAllEnabled);
   }
 
-  public boolean isForceTestExecution() {
-    return forceTestExecution;
+  public boolean isRunAsTest() {
+    return isRunAsTest;
   }
 
-  public void setForceTestExecution(boolean forceTestExecution) {
-    this.forceTestExecution = forceTestExecution;
-    putUserData(FORCE_TEST_EXECUTION, forceTestExecution);
+  public void setRunAsTest(boolean runAsTest) {
+    isRunAsTest = runAsTest;
+    putUserData(RUN_AS_TEST_KEY, runAsTest);
   }
 
   public @NotNull String getRawCommandLine() {
-    StringJoiner commandLine = new StringJoiner(" ");
-    for (String taskName : getSettings().getTaskNames()) {
-      commandLine.add(taskName);
-    }
-    String scriptParameters = getSettings().getScriptParameters();
-    if (StringUtil.isNotEmpty(scriptParameters)) {
-      commandLine.add(scriptParameters);
-    }
-    return commandLine.toString();
+    return getCommandLine().getText();
   }
 
   public void setRawCommandLine(@NotNull String commandLine) {
@@ -88,7 +81,10 @@ public class GradleRunConfiguration
   }
 
   public @NotNull GradleCommandLine getCommandLine() {
-    return GradleCommandLine.parse(getRawCommandLine());
+    return GradleCommandLineUtil.parseCommandLine(
+      getSettings().getTaskNames(),
+      getSettings().getScriptParameters()
+    );
   }
 
   @ApiStatus.Internal
@@ -100,16 +96,24 @@ public class GradleRunConfiguration
   @Override
   public void readExternal(@NotNull Element element) throws InvalidDataException {
     super.readExternal(element);
+
+    // migration
     readExternalBoolean(element, DEBUG_FLAG_NAME, this::setDebugServerProcess);
+    readExternalBoolean(element, FORCE_TEST_NAME, this::setRunAsTest);
+
     readExternalBoolean(element, DEBUG_ALL_NAME, this::setDebugAllEnabled);
-    readExternalBoolean(element, FORCE_TEST_NAME, this::setForceTestExecution);
+    if (!readExternalBoolean(element, RUN_AS_TEST_NAME, this::setRunAsTest)) {
+      var tasks = getCommandLine().getTasks();
+      var isRunAsTest = ContainerUtil.exists(tasks, it -> !getTestPatterns(it).isEmpty());
+      setRunAsTest(isRunAsTest);
+    }
   }
 
   @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
     writeExternalBoolean(element, DEBUG_ALL_NAME, isDebugAllEnabled());
-    writeExternalBoolean(element, FORCE_TEST_NAME, isForceTestExecution());
+    writeExternalBoolean(element, RUN_AS_TEST_NAME, isRunAsTest());
   }
 
   @NotNull

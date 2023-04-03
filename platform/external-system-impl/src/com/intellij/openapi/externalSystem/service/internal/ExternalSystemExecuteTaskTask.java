@@ -54,6 +54,8 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
     myEnv = settings.getEnv();
     myJvmParametersSetup = jvmParametersSetup;
     myConfiguration = configuration;
+
+    configuration.copyUserDataTo(this);
   }
 
   @NotNull

@@ -366,7 +366,7 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
   fun `test configurations not from context do not force test run`() {
     generateAndImportTemplateProject()
     createAndAddRunConfiguration("test verify").let { configuration ->
-      TestCase.assertFalse(configuration.isForceTestExecution)
+      TestCase.assertFalse(configuration.isRunAsTest)
     }
   }
 
