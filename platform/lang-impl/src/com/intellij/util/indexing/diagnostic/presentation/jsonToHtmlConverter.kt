@@ -4,15 +4,16 @@
 package com.intellij.util.indexing.diagnostic.presentation
 
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.asSafely
 import com.intellij.util.indexing.diagnostic.ChangedFilesPushedEvent
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
 import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics
 import com.intellij.util.indexing.diagnostic.JsonSharedIndexDiagnosticEvent
 import com.intellij.util.indexing.diagnostic.dto.*
-import org.intellij.lang.annotations.Language
-import java.util.*
 import kotlinx.html.*
 import kotlinx.html.stream.appendHTML
+import org.intellij.lang.annotations.Language
+import java.util.*
 
 fun createAggregateHtml(
   target: Appendable,
@@ -187,6 +188,202 @@ fun createAggregateHtml(
       }
     }
   }
+}
+
+internal fun createAggregateActivityHtml(
+  target: Appendable,
+  projectName: String,
+  diagnostics: List<IndexDiagnosticDumper.ExistingIndexingActivityDiagnostic>,
+  sharedIndexEvents: List<JsonSharedIndexDiagnosticEvent>,
+  changedFilesPushEvents: List<ChangedFilesPushedEvent>
+) {
+  target.appendHTML().html {
+    head {
+      title("Indexing diagnostics of '$projectName'")
+      style {
+        unsafe {
+          +CSS_STYLE
+        }
+      }
+      script {
+        unsafe {
+          +LINKABLE_TABLE_ROW_SCRIPT
+        }
+      }
+    }
+    body {
+      div(classes = "aggregate-report-content") {
+        h1("Project name")
+        text(projectName)
+
+        div {
+          h1("Indexing history")
+          table(classes = "centered-text") {
+            unsafe {
+              +"<caption style=\"caption-side: bottom; text-align: right; font-size: 14px\">Hover for details</caption>"
+            }
+            thead {
+              tr {
+                th("Time") {
+                  colSpan = "6"
+                }
+                th("Files") {
+                  colSpan = "5"
+                }
+                th("Type") {
+                  rowSpan = "2"
+                }
+              }
+              tr {
+                th("Started")
+                th("Total")
+                th("Scanning")
+                th("Indexing")
+                th("Content loading")
+                th("Finished")
+                th("Scanned")
+                th("Shared indexes (w/o content loading)")
+                th("Scheduled for indexing")
+                th("Shared indexes (content loaded)")
+                th("Total indexed (shared indexes included)")
+              }
+            }
+            tbody {
+              for (diagnostic in diagnostics.sortedByDescending { it.indexingTimes.updatingStart.instant }) {
+                val times = diagnostic.indexingTimes
+
+                val classes = if (times is JsonProjectScanningHistoryTimes) {
+                  "linkable-table-row scanning-table-row"
+                }
+                else {
+                  "linkable-table-row"
+                }
+                tr(classes = classes) {
+                  attributes["href"] = diagnostic.htmlFile.fileName.toString()
+                  printIndexingActivityRow(times, diagnostic.fileCount)
+                }
+              }
+            }
+          }
+        }
+
+        if (sharedIndexEvents.isNotEmpty()) {
+          val indexIdToEvents = sharedIndexEvents.groupBy { it.chunkUniqueId }
+          div {
+            h1("Shared Indexes")
+            table {
+              thead {
+                tr {
+                  th("Time")
+                  th("Kind")
+                  th("Name")
+                  th("Size")
+                  th("Download time")
+                  th("Download speed")
+                  th("Status")
+                  th("ID")
+                  th("Generation time")
+                }
+              }
+              tbody {
+                for (event in sharedIndexEvents.filterIsInstance<JsonSharedIndexDiagnosticEvent.Downloaded>().sortedByDescending { it.time.instant }) {
+                  val events = indexIdToEvents.getOrDefault(event.chunkUniqueId, emptyList())
+                  val lastAttach = events.filterIsInstance<JsonSharedIndexDiagnosticEvent.Attached>().maxByOrNull { it.time.instant }
+                                   ?: continue
+                  tr {
+                    td(event.time.presentableLocalDateTime())
+                    td(lastAttach.kind)
+                    td((lastAttach as? JsonSharedIndexDiagnosticEvent.Attached.Success)?.indexName ?: NOT_APPLICABLE)
+                    td(event.packedSize.presentableSize())
+                    td(event.downloadTime.presentableDuration())
+                    td(event.downloadSpeed.presentableSpeed())
+                    td(event.finishType + ((lastAttach as? JsonSharedIndexDiagnosticEvent.Attached.Success)?.let {
+                      " FB: ${it.fbMatch.presentablePercentages()}, Stub: ${it.stubMatch.presentablePercentages()}"
+                    } ?: " Incompatible"))
+                    td(event.chunkUniqueId)
+                    td(event.generationTime?.presentableLocalDateTime() ?: "unknown")
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        if (changedFilesPushEvents.isNotEmpty()) {
+          div {
+            h1("Scanning to push properties of changed files")
+            table {
+              thead {
+                tr {
+                  th("Time")
+                  th("Reason")
+                  th("Full duration")
+                  th("Is cancelled")
+                  th("Number")
+                }
+              }
+              tbody {
+                val eventsToUnify = mutableListOf<ChangedFilesPushedEvent>()
+                for (event in changedFilesPushEvents.sortedByDescending { it.startTime.instant }) {
+                  if (canUnify(event, eventsToUnify)) {
+                    eventsToUnify.add(event)
+                  }
+                  else {
+                    printUnified(eventsToUnify)
+                    eventsToUnify.clear()
+                    printEvent(event)
+                  }
+                }
+                printUnified(eventsToUnify)
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+private fun TR.printIndexingActivityRow(times: JsonProjectIndexingActivityHistoryTimes,
+                                        fileCount: JsonProjectIndexingActivityFileCount) {
+  // Time section
+  td {
+    if (times.asSafely<JsonProjectScanningHistoryTimes>()?.indexingReason != null) {
+      strong(times.asSafely<JsonProjectScanningHistoryTimes>()?.indexingReason)
+      br()
+    }
+    text(times.updatingStart.presentableLocalDateTime())
+  }
+  td(times.asSafely<JsonProjectScanningHistoryTimes>()?.totalUpdatingTime?.presentableDuration()
+     ?: times.asSafely<JsonProjectDumbIndexingHistoryTimes>()?.totalUpdatingTime?.presentableDuration() ?: "Unknown")
+  td(times.asSafely<JsonProjectScanningHistoryTimes>()?.totalUpdatingTime?.presentableDuration() ?: NOT_APPLICABLE)
+  td(times.asSafely<JsonProjectDumbIndexingHistoryTimes>()?.totalUpdatingTime?.presentableDuration() ?: NOT_APPLICABLE)
+  td(times.asSafely<JsonProjectDumbIndexingHistoryTimes>()?.contentLoadingVisibleTime?.presentableDuration()
+     ?: NOT_APPLICABLE)
+  td {
+    if (times.wasInterrupted) {
+      strong("Cancelled")
+      br()
+    }
+    text(times.updatingEnd.presentableLocalDateTime())
+  }
+
+  // Files section.
+  td(fileCount.asSafely<JsonProjectScanningFileCount>()?.numberOfScannedFiles?.toString() ?: NOT_APPLICABLE)
+  td(
+    fileCount.asSafely<JsonProjectScanningFileCount>()?.numberOfFilesIndexedByInfrastructureExtensionsDuringScan?.toString()
+    ?: NOT_APPLICABLE)
+  td(fileCount.asSafely<JsonProjectScanningFileCount>()?.numberOfFilesScheduledForIndexingAfterScan?.toString()
+     ?: NOT_APPLICABLE)
+  td(
+    fileCount.asSafely<JsonProjectDumbIndexingFileCount>()?.numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage?.toString()
+    ?: NOT_APPLICABLE)
+  td(fileCount.asSafely<JsonProjectDumbIndexingFileCount>()?.numberOfFilesIndexedWithLoadingContent?.toString()
+     ?: NOT_APPLICABLE)
+
+  //Indexing type section
+  td(times.asSafely<JsonProjectScanningHistoryTimes>()?.scanningType?.name?.lowercase(Locale.ENGLISH)?.replace('_', ' ')
+     ?: NOT_APPLICABLE)
 }
 
 private fun TBODY.printEvent(event: ChangedFilesPushedEvent) {
@@ -701,6 +898,797 @@ fun JsonIndexDiagnostic.generateHtml(target: Appendable): String {
   }.toString()
 }
 
+fun JsonIndexingActivityDiagnostic.generateHtml(target: Appendable): String =
+  when (type) {
+    IndexDiagnosticDumper.IndexingActivityType.Scanning ->
+      (this.projectIndexingHistory as JsonProjectScanningHistory).generateScanningHtml(target, appInfo, runtimeInfo)
+    IndexDiagnosticDumper.IndexingActivityType.DumbIndexing ->
+      (this.projectIndexingHistory as JsonProjectDumbIndexingHistory).generateDumbIndexingHtml(target, appInfo, runtimeInfo)
+  }
+
+
+private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
+                                                            appInfo: JsonIndexDiagnosticAppInfo,
+                                                            runtimeInfo: JsonRuntimeInfo): String {
+  return target.appendHTML().html {
+    head {
+      title("Indexing diagnostics of '${projectName}'")
+      style {
+        unsafe {
+          +CSS_STYLE
+        }
+      }
+      script {
+        unsafe {
+          +JS_SCRIPT
+        }
+      }
+    }
+    body {
+      div(classes = "navigation-bar") {
+        ul {
+          li {
+            a("#$SECTION_PROJECT_NAME_ID") {
+              text(SECTION_PROJECT_NAME_TITLE)
+            }
+          }
+          li {
+            a("#$SECTION_APP_INFO_ID") {
+              text(SECTION_APP_INFO_TITLE)
+            }
+          }
+          li {
+            a("#$SECTION_RUNTIME_INFO_ID") {
+              text(SECTION_RUNTIME_INFO_TITLE)
+            }
+          }
+          li {
+            a("#$SECTION_INDEXING_INFO_ID") {
+              text(SECTION_INDEXING_INFO_TITLE)
+            }
+          }
+          li {
+            a("#$SECTION_SLOW_FILES_ID") {
+              text(SECTION_SLOW_FILES_TITLE)
+            }
+          }
+          li {
+            a("#$SECTION_STATS_PER_FILE_TYPE_ID") {
+              text(SECTION_STATS_PER_FILE_TYPE_TITLE)
+            }
+          }
+          li {
+            a("#$SECTION_STATS_PER_INDEXER_ID") {
+              text(SECTION_STATS_PER_INDEXER_TITLE)
+            }
+          }
+          li {
+            a("#$SECTION_SCANNING_ID") {
+              text(SECTION_SCANNING_TITLE)
+            }
+          }
+          li {
+            a("#$SECTION_INDEXING_ID") {
+              text(SECTION_INDEXING_TITLE)
+            }
+          }
+        }
+        hr("solid")
+        ul {
+          li {
+            label {
+              attributes["for"] = "id-hide-minor-data-checkbox"
+              text("Hide minor data")
+              input {
+                checked = hideMinorDataInitial
+                id = "id-hide-minor-data-checkbox"
+                type = InputType.checkBox
+                onClick = "hideElementsHavingClass('minor-data', this.checked)"
+                style {
+                  unsafe {
+                    +"padding-left: 10px"
+                  }
+                }
+              }
+            }
+          }
+        }
+        div(classes = "jetbrains-logo") {
+          unsafe {
+            +JETBRAINS_GRAYSCALE_LOGO_SVG
+          }
+        }
+      }
+
+      div(classes = "stats-content") {
+        div(id = SECTION_PROJECT_NAME_ID) {
+          h1(SECTION_PROJECT_NAME_TITLE)
+          text(projectName)
+        }
+
+        printAppInfo(appInfo)
+        printRuntimeInfo(runtimeInfo)
+
+        div(id = SECTION_INDEXING_INFO_ID) {
+          h1(SECTION_INDEXING_INFO_TITLE)
+          table(classes = "two-columns") {
+            thead {
+              tr { th("Name"); th("Data") }
+            }
+            tbody {
+              tr { td(TITLE_NUMBER_OF_FILE_PROVIDERS); td(fileCount.numberOfFileProviders.toString()) }
+              tr { td(TITLE_NUMBER_OF_SCANNED_FILES); td(fileCount.numberOfScannedFiles.toString()) }
+              tr {
+                td(TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRA_EXTENSIONS_DURING_SCAN)
+                td(fileCount.numberOfFilesIndexedByInfrastructureExtensionsDuringScan.toString())
+              }
+              tr {
+                td(TITLE_NUMBER_OF_FILES_SCHEDULED_FOR_INDEXING_AFTER_SCAN)
+                td(fileCount.numberOfFilesScheduledForIndexingAfterScan.toString())
+              }
+              tr {
+                td(TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRASTRUCTURE_EXTENSIONS_DURING_INDEXING)
+                td(fileCount.numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage.toString())
+              }
+              tr {
+                td(TITLE_NUMBER_OF_FILES_INDEXED_WITH_LOADING_CONTENT)
+                td(fileCount.numberOfFilesIndexedWithLoadingContent.toString())
+              }
+              tr {
+                td("Number of too large for indexing files")
+                td(fileProviderStatistics.sumOf { it.numberOfTooLargeForIndexingFiles }.toString())
+              }
+
+              tr { td("Started at"); td(times.updatingStart.presentableLocalDateTime()) }
+              if (times.indexingReason != null) {
+                tr { td("Reason"); td(times.indexingReason) }
+              }
+              tr { td("Type"); td(times.scanningType.name.lowercase(Locale.ENGLISH).replace('_', ' ')) }
+              tr { td("Finished at"); td(times.updatingEnd.presentableLocalDateTime()) }
+              tr { td("Cancelled?"); td(times.wasInterrupted.toString()) }
+              tr { td("Suspended time"); td(times.totalSuspendedTime.presentableDuration()) }
+              tr { td("Total time"); td(times.totalUpdatingTime.presentableDuration()) }
+              tr { td("Indexing time"); td(times.indexingTime.presentableDuration()) }
+              tr { td("Iterators creation time"); td(times.creatingIteratorsTime.presentableDuration()) }
+              if (IndexDiagnosticDumper.shouldProvideVisibleAndAllThreadsTimeInfo) {
+                tr {
+                  td("Total processing visible time")
+                  td(JsonDuration(fileProviderStatistics.sumOf { stat -> stat.totalIndexingVisibleTime.nano }).presentableDuration())
+                }
+                tr {
+                  td("All threads time to visible time ratio")
+                  td(String.format("%.2f", visibleTimeToAllThreadTimeRatio))
+                }
+              }
+              tr { td("Scanning time"); td(times.scanFilesTime.presentableDuration()) }
+              tr { td("Content loading time"); td(times.contentLoadingVisibleTime.presentableDuration()) }
+              tr { td("Pushing properties time"); td(times.pushPropertiesTime.presentableDuration()) }
+              tr { td("Running extensions time"); td(times.indexExtensionsTime.presentableDuration()) }
+              tr {
+                td("Index writing time")
+                td(if (times.isAppliedAllValuesSeparately)
+                     StringUtil.formatDuration(times.separateApplyingIndexesVisibleTime.milliseconds)
+                   else
+                     "Applied under read lock"
+                )
+              }
+            }
+          }
+        }
+
+        div(id = SECTION_SLOW_FILES_ID) {
+          h1("$SECTION_SLOW_FILES_TITLE (> ${IndexingFileSetStatistics.SLOW_FILE_PROCESSING_THRESHOLD_MS} ms)")
+          table {
+            thead {
+              tr {
+                th("Provider name")
+                th("File")
+                th("Content loading time")
+                th("Indexing time")
+                th("Total processing time")
+              }
+            }
+            tbody {
+              for (providerStatistic in fileProviderStatistics.filter { it.slowIndexedFiles.isNotEmpty() }) {
+                val slowIndexedFiles = providerStatistic.slowIndexedFiles
+                for ((index, slowFile) in slowIndexedFiles.sortedByDescending { it.processingTime.nano }.withIndex()) {
+                  tr {
+                    td(if (index == 0) providerStatistic.providerName else "^")
+                    td(slowFile.fileName)
+                    td(slowFile.contentLoadingTime.presentableDuration())
+                    td(slowFile.evaluationOfIndexValueChangerTime.presentableDuration())
+                    td(slowFile.processingTime.presentableDuration())
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        div(id = SECTION_STATS_PER_FILE_TYPE_ID) {
+          h1(SECTION_STATS_PER_FILE_TYPE_TITLE)
+          table {
+            thead {
+              tr {
+                th("File type")
+                th("Number of files")
+                th("Total processing time")
+                th("Content loading time")
+                th("Total files size")
+                th("Total processing speed")
+                th("The biggest contributors")
+              }
+            }
+            tbody {
+              for (statsPerFileType in totalStatsPerFileType) {
+                val visibleIndexingTime = JsonDuration(
+                  (times.indexingTime.nano * statsPerFileType.partOfTotalProcessingTime.partition).toLong()
+                )
+                val visibleContentLoadingTime = JsonDuration(
+                  (times.contentLoadingVisibleTime.nano * statsPerFileType.partOfTotalContentLoadingTime.partition).toLong()
+                )
+                tr(classes = getMinorDataClass(visibleIndexingTime.milliseconds < 500)) {
+                  td(statsPerFileType.fileType)
+                  td(statsPerFileType.totalNumberOfFiles.toString())
+                  td(
+                    visibleIndexingTime.presentableDuration() + " (" + statsPerFileType.partOfTotalProcessingTime.presentablePercentages() + ")")
+                  td(
+                    visibleContentLoadingTime.presentableDuration() + " (" + statsPerFileType.partOfTotalContentLoadingTime.presentablePercentages() + ")")
+                  td(statsPerFileType.totalFilesSize.presentableSize())
+                  td(statsPerFileType.totalProcessingSpeed.presentableSpeed())
+                  td(
+                    statsPerFileType.biggestContributors.joinToString("\n") {
+                      it.partOfTotalProcessingTimeOfThisFileType.presentablePercentages() + ": " +
+                      it.providerName + " " +
+                      it.numberOfFiles + " files of total size " +
+                      it.totalFilesSize.presentableSize()
+                    }
+                  )
+                }
+              }
+            }
+          }
+        }
+
+        div(id = SECTION_STATS_PER_INDEXER_ID) {
+          h1(SECTION_STATS_PER_INDEXER_TITLE)
+          table {
+            thead {
+              tr {
+                th("Index")
+                th("Number of files")
+                th("Part of total indexing time")
+                th("Total number of files indexed by $INDEX_INFRA_EXTENSIONS")
+                th("Total files size")
+                th("Indexing speed")
+                th("Snapshot input mapping statistics")
+              }
+            }
+            tbody {
+              for (statsPerIndexer in totalStatsPerIndexer) {
+                tr(classes = getMinorDataClass(statsPerIndexer.partOfTotalIndexingTime.partition < 0.1)) {
+                  td(statsPerIndexer.indexId)
+                  td(statsPerIndexer.totalNumberOfFiles.toString())
+                  td(statsPerIndexer.partOfTotalIndexingTime.presentablePercentages())
+                  td(statsPerIndexer.totalNumberOfFilesIndexedByExtensions.toString())
+                  td(statsPerIndexer.totalFilesSize.presentableSize())
+                  td(statsPerIndexer.indexValueChangerEvaluationSpeed.presentableSpeed())
+
+                  fun JsonProjectScanningHistory.JsonStatsPerIndexer.JsonSnapshotInputMappingStats.presentable(): String {
+                    val hitsPercentages = JsonPercentages(totalHits, totalRequests)
+                    val missesPercentages = JsonPercentages(totalMisses, totalRequests)
+                    return "requests: $totalRequests, " +
+                           "hits: $totalHits (${hitsPercentages.presentablePercentages()}), " +
+                           "misses: $totalMisses (${missesPercentages.presentablePercentages()})"
+                  }
+                  td(statsPerIndexer.snapshotInputMappingStats.presentable())
+                }
+              }
+            }
+          }
+        }
+
+        val shouldPrintScannedFiles = scanningStatistics.any { it.scannedFiles.orEmpty().isNotEmpty() }
+        val shouldPrintProviderRoots = scanningStatistics.any { it.roots.isNotEmpty() }
+        div(id = SECTION_SCANNING_ID) {
+          h1(SECTION_SCANNING_TITLE)
+          table {
+            thead {
+              tr {
+                th("Provider name")
+                th("Number of scanned files")
+                th("Number of files scheduled for indexing")
+                th("Number of files fully indexed by $INDEX_INFRA_EXTENSIONS")
+                th("Number of double-scanned skipped files")
+                th("Total time of getting files' statuses (part of scanning)")
+                th("Scanning time")
+                th("Time processing up-to-date files")
+                th("Time updating content-less indexes")
+                th("Time indexing without content")
+                if (shouldPrintProviderRoots) {
+                  th("Roots")
+                }
+                if (shouldPrintScannedFiles) {
+                  th("Scanned files")
+                }
+              }
+            }
+            tbody {
+              for (scanningStats in scanningStatistics) {
+                tr(classes = getMinorDataClass(
+                  scanningStats.scanningTime.milliseconds < 100 && scanningStats.numberOfScannedFiles < 1000)) {
+                  td(scanningStats.providerName)
+                  td(scanningStats.numberOfScannedFiles.toString())
+                  td(scanningStats.numberOfFilesForIndexing.toString())
+                  td(scanningStats.numberOfFilesFullyIndexedByInfrastructureExtensions.toString())
+                  td(scanningStats.numberOfSkippedFiles.toString())
+                  td(scanningStats.statusTime.presentableDuration())
+                  td(scanningStats.scanningTime.presentableDuration())
+                  td(scanningStats.timeProcessingUpToDateFiles.presentableDuration())
+                  td(scanningStats.timeUpdatingContentLessIndexes.presentableDuration())
+                  td(scanningStats.timeIndexingWithoutContent.presentableDuration())
+                  if (shouldPrintProviderRoots) {
+                    td {
+                      textArea(scanningStats.roots.sorted().joinToString("\n"))
+                    }
+                  }
+                  if (shouldPrintScannedFiles) {
+                    td {
+                      textArea(
+                        scanningStats.scannedFiles.orEmpty().joinToString("\n") { file ->
+                          file.path.presentablePath + when {
+                            file.wasFullyIndexedByInfrastructureExtension -> " [by infrastructure]"
+                            file.isUpToDate -> " [up-to-date]"
+                            else -> ""
+                          }
+                        }
+                      )
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        val shouldPrintIndexedFiles = fileProviderStatistics.any { it.indexedFiles.orEmpty().isNotEmpty() }
+        div(id = SECTION_INDEXING_ID) {
+          h1(SECTION_INDEXING_TITLE)
+          table {
+            thead {
+              tr {
+                th("Provider name")
+                th("Total processing time")
+                th("Content loading time")
+                th("Number of indexed files")
+                th("Number of files indexed by $INDEX_INFRA_EXTENSIONS")
+                th("Number of too large for indexing files")
+                if (shouldPrintIndexedFiles) {
+                  th("Indexed files")
+                }
+              }
+            }
+            tbody {
+              for (providerStats in fileProviderStatistics) {
+                tr(classes = getMinorDataClass(
+                  providerStats.totalIndexingVisibleTime.milliseconds < 100 && providerStats.totalNumberOfIndexedFiles < 1000)) {
+                  td(providerStats.providerName)
+                  td(providerStats.totalIndexingVisibleTime.presentableDuration())
+                  td(providerStats.contentLoadingVisibleTime.presentableDuration())
+                  td(providerStats.totalNumberOfIndexedFiles.toString())
+                  td(providerStats.totalNumberOfFilesFullyIndexedByExtensions.toString())
+                  td(providerStats.numberOfTooLargeForIndexingFiles.toString())
+                  if (shouldPrintIndexedFiles) {
+                    td {
+                      textArea(
+                        providerStats.indexedFiles.orEmpty().joinToString("\n") { file ->
+                          file.path.presentablePath + if (file.wasFullyIndexedByExtensions) " [by infrastructure]" else ""
+                        }
+                      )
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }.toString()
+}
+
+private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appendable,
+                                                                    appInfo: JsonIndexDiagnosticAppInfo,
+                                                                    runtimeInfo: JsonRuntimeInfo): String {
+  return target.appendHTML().html {
+    head {
+      title("Indexing diagnostics of '${projectName}'")
+      style {
+        unsafe {
+          +CSS_STYLE
+        }
+      }
+      script {
+        unsafe {
+          +JS_SCRIPT
+        }
+      }
+    }
+    body {
+      div(classes = "navigation-bar") {
+        ul {
+          li {
+            a("#$SECTION_PROJECT_NAME_ID") {
+              text(SECTION_PROJECT_NAME_TITLE)
+            }
+          }
+          li {
+            a("#$SECTION_APP_INFO_ID") {
+              text(SECTION_APP_INFO_TITLE)
+            }
+          }
+          li {
+            a("#$SECTION_RUNTIME_INFO_ID") {
+              text(SECTION_RUNTIME_INFO_TITLE)
+            }
+          }
+          li {
+            a("#$SECTION_INDEXING_INFO_ID") {
+              text(SECTION_INDEXING_INFO_TITLE)
+            }
+          }
+          li {
+            a("#$SECTION_SLOW_FILES_ID") {
+              text(SECTION_SLOW_FILES_TITLE)
+            }
+          }
+          li {
+            a("#$SECTION_STATS_PER_FILE_TYPE_ID") {
+              text(SECTION_STATS_PER_FILE_TYPE_TITLE)
+            }
+          }
+          li {
+            a("#$SECTION_STATS_PER_INDEXER_ID") {
+              text(SECTION_STATS_PER_INDEXER_TITLE)
+            }
+          }
+          li {
+            a("#$SECTION_SCANNING_ID") {
+              text(SECTION_SCANNING_TITLE)
+            }
+          }
+          li {
+            a("#$SECTION_INDEXING_ID") {
+              text(SECTION_INDEXING_TITLE)
+            }
+          }
+        }
+        hr("solid")
+        ul {
+          li {
+            label {
+              attributes["for"] = "id-hide-minor-data-checkbox"
+              text("Hide minor data")
+              input {
+                checked = hideMinorDataInitial
+                id = "id-hide-minor-data-checkbox"
+                type = InputType.checkBox
+                onClick = "hideElementsHavingClass('minor-data', this.checked)"
+                style {
+                  unsafe {
+                    +"padding-left: 10px"
+                  }
+                }
+              }
+            }
+          }
+        }
+        div(classes = "jetbrains-logo") {
+          unsafe {
+            +JETBRAINS_GRAYSCALE_LOGO_SVG
+          }
+        }
+      }
+
+      div(classes = "stats-content") {
+        div(id = SECTION_PROJECT_NAME_ID) {
+          h1(SECTION_PROJECT_NAME_TITLE)
+          text(projectName)
+        }
+
+        printAppInfo(appInfo)
+        printRuntimeInfo(runtimeInfo)
+
+        div(id = SECTION_INDEXING_INFO_ID) {
+          h1(SECTION_INDEXING_INFO_TITLE)
+          table(classes = "two-columns") {
+            thead {
+              tr { th("Name"); th("Data") }
+            }
+            tbody {
+              tr { td(TITLE_NUMBER_OF_FILE_PROVIDERS); td(fileCount.numberOfFileProviders.toString()) }
+              tr { td(TITLE_NUMBER_OF_SCANNED_FILES); td(fileCount.numberOfScannedFiles.toString()) }
+              tr {
+                td(TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRA_EXTENSIONS_DURING_SCAN)
+                td(fileCount.numberOfFilesIndexedByInfrastructureExtensionsDuringScan.toString())
+              }
+              tr {
+                td(TITLE_NUMBER_OF_FILES_SCHEDULED_FOR_INDEXING_AFTER_SCAN)
+                td(fileCount.numberOfFilesScheduledForIndexingAfterScan.toString())
+              }
+              tr {
+                td(TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRASTRUCTURE_EXTENSIONS_DURING_INDEXING)
+                td(fileCount.numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage.toString())
+              }
+              tr {
+                td(TITLE_NUMBER_OF_FILES_INDEXED_WITH_LOADING_CONTENT)
+                td(fileCount.numberOfFilesIndexedWithLoadingContent.toString())
+              }
+              tr {
+                td("Number of too large for indexing files")
+                td(fileProviderStatistics.sumOf { it.numberOfTooLargeForIndexingFiles }.toString())
+              }
+
+              val times = times
+              tr { td("Started at"); td(times.updatingStart.presentableLocalDateTime()) }
+              if (times.indexingReason != null) {
+                tr { td("Reason"); td(times.indexingReason) }
+              }
+              tr { td("Type"); td(times.scanningType.name.lowercase(Locale.ENGLISH).replace('_', ' ')) }
+              tr { td("Finished at"); td(times.updatingEnd.presentableLocalDateTime()) }
+              tr { td("Cancelled?"); td(times.wasInterrupted.toString()) }
+              tr { td("Suspended time"); td(times.totalSuspendedTime.presentableDuration()) }
+              tr { td("Total time"); td(times.totalUpdatingTime.presentableDuration()) }
+              tr { td("Indexing time"); td(times.indexingTime.presentableDuration()) }
+              tr { td("Iterators creation time"); td(times.creatingIteratorsTime.presentableDuration()) }
+              if (IndexDiagnosticDumper.shouldProvideVisibleAndAllThreadsTimeInfo) {
+                tr {
+                  td("Total processing visible time")
+                  td(JsonDuration(fileProviderStatistics.sumOf { stat -> stat.totalIndexingVisibleTime.nano }).presentableDuration())
+                }
+                tr {
+                  td("All threads time to visible time ratio")
+                  td(String.format("%.2f", visibleTimeToAllThreadTimeRatio))
+                }
+              }
+              tr { td("Scanning time"); td(times.scanFilesTime.presentableDuration()) }
+              tr { td("Content loading time"); td(times.contentLoadingVisibleTime.presentableDuration()) }
+              tr { td("Pushing properties time"); td(times.pushPropertiesTime.presentableDuration()) }
+              tr { td("Running extensions time"); td(times.indexExtensionsTime.presentableDuration()) }
+              tr {
+                td("Index writing time")
+                td(if (times.isAppliedAllValuesSeparately)
+                     StringUtil.formatDuration(times.separateApplyingIndexesVisibleTime.milliseconds)
+                   else
+                     "Applied under read lock"
+                )
+              }
+            }
+          }
+        }
+
+        div(id = SECTION_SLOW_FILES_ID) {
+          h1("$SECTION_SLOW_FILES_TITLE (> ${IndexingFileSetStatistics.SLOW_FILE_PROCESSING_THRESHOLD_MS} ms)")
+          table {
+            thead {
+              tr {
+                th("Provider name")
+                th("File")
+                th("Content loading time")
+                th("Indexing time")
+                th("Total processing time")
+              }
+            }
+            tbody {
+              for (providerStatistic in fileProviderStatistics.filter { it.slowIndexedFiles.isNotEmpty() }) {
+                val slowIndexedFiles = providerStatistic.slowIndexedFiles
+                for ((index, slowFile) in slowIndexedFiles.sortedByDescending { it.processingTime.nano }.withIndex()) {
+                  tr {
+                    td(if (index == 0) providerStatistic.providerName else "^")
+                    td(slowFile.fileName)
+                    td(slowFile.contentLoadingTime.presentableDuration())
+                    td(slowFile.evaluationOfIndexValueChangerTime.presentableDuration())
+                    td(slowFile.processingTime.presentableDuration())
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        div(id = SECTION_STATS_PER_FILE_TYPE_ID) {
+          h1(SECTION_STATS_PER_FILE_TYPE_TITLE)
+          table {
+            thead {
+              tr {
+                th("File type")
+                th("Number of files")
+                th("Total processing time")
+                th("Content loading time")
+                th("Total files size")
+                th("Total processing speed")
+                th("The biggest contributors")
+              }
+            }
+            tbody {
+              for (statsPerFileType in totalStatsPerFileType) {
+                val visibleIndexingTime = JsonDuration(
+                  (times.indexingTime.nano * statsPerFileType.partOfTotalProcessingTime.partition).toLong()
+                )
+                val visibleContentLoadingTime = JsonDuration(
+                  (times.contentLoadingVisibleTime.nano * statsPerFileType.partOfTotalContentLoadingTime.partition).toLong()
+                )
+                tr(classes = getMinorDataClass(visibleIndexingTime.milliseconds < 500)) {
+                  td(statsPerFileType.fileType)
+                  td(statsPerFileType.totalNumberOfFiles.toString())
+                  td(
+                    visibleIndexingTime.presentableDuration() + " (" + statsPerFileType.partOfTotalProcessingTime.presentablePercentages() + ")")
+                  td(
+                    visibleContentLoadingTime.presentableDuration() + " (" + statsPerFileType.partOfTotalContentLoadingTime.presentablePercentages() + ")")
+                  td(statsPerFileType.totalFilesSize.presentableSize())
+                  td(statsPerFileType.totalProcessingSpeed.presentableSpeed())
+                  td(
+                    statsPerFileType.biggestContributors.joinToString("\n") {
+                      it.partOfTotalProcessingTimeOfThisFileType.presentablePercentages() + ": " +
+                      it.providerName + " " +
+                      it.numberOfFiles + " files of total size " +
+                      it.totalFilesSize.presentableSize()
+                    }
+                  )
+                }
+              }
+            }
+          }
+        }
+
+        div(id = SECTION_STATS_PER_INDEXER_ID) {
+          h1(SECTION_STATS_PER_INDEXER_TITLE)
+          table {
+            thead {
+              tr {
+                th("Index")
+                th("Number of files")
+                th("Part of total indexing time")
+                th("Total number of files indexed by $INDEX_INFRA_EXTENSIONS")
+                th("Total files size")
+                th("Indexing speed")
+                th("Snapshot input mapping statistics")
+              }
+            }
+            tbody {
+              for (statsPerIndexer in totalStatsPerIndexer) {
+                tr(classes = getMinorDataClass(statsPerIndexer.partOfTotalIndexingTime.partition < 0.1)) {
+                  td(statsPerIndexer.indexId)
+                  td(statsPerIndexer.totalNumberOfFiles.toString())
+                  td(statsPerIndexer.partOfTotalIndexingTime.presentablePercentages())
+                  td(statsPerIndexer.totalNumberOfFilesIndexedByExtensions.toString())
+                  td(statsPerIndexer.totalFilesSize.presentableSize())
+                  td(statsPerIndexer.indexValueChangerEvaluationSpeed.presentableSpeed())
+
+                  fun JsonProjectDumbIndexingHistory.JsonStatsPerIndexer.JsonSnapshotInputMappingStats.presentable(): String {
+                    val hitsPercentages = JsonPercentages(totalHits, totalRequests)
+                    val missesPercentages = JsonPercentages(totalMisses, totalRequests)
+                    return "requests: $totalRequests, " +
+                           "hits: $totalHits (${hitsPercentages.presentablePercentages()}), " +
+                           "misses: $totalMisses (${missesPercentages.presentablePercentages()})"
+                  }
+                  td(statsPerIndexer.snapshotInputMappingStats.presentable())
+                }
+              }
+            }
+          }
+        }
+
+        val shouldPrintScannedFiles = scanningStatistics.any { it.scannedFiles.orEmpty().isNotEmpty() }
+        val shouldPrintProviderRoots = scanningStatistics.any { it.roots.isNotEmpty() }
+        div(id = SECTION_SCANNING_ID) {
+          h1(SECTION_SCANNING_TITLE)
+          table {
+            thead {
+              tr {
+                th("Provider name")
+                th("Number of scanned files")
+                th("Number of files scheduled for indexing")
+                th("Number of files fully indexed by $INDEX_INFRA_EXTENSIONS")
+                th("Number of double-scanned skipped files")
+                th("Total time of getting files' statuses (part of scanning)")
+                th("Scanning time")
+                th("Time processing up-to-date files")
+                th("Time updating content-less indexes")
+                th("Time indexing without content")
+                if (shouldPrintProviderRoots) {
+                  th("Roots")
+                }
+                if (shouldPrintScannedFiles) {
+                  th("Scanned files")
+                }
+              }
+            }
+            tbody {
+              for (scanningStats in scanningStatistics) {
+                tr(classes = getMinorDataClass(
+                  scanningStats.scanningTime.milliseconds < 100 && scanningStats.numberOfScannedFiles < 1000)) {
+                  td(scanningStats.providerName)
+                  td(scanningStats.numberOfScannedFiles.toString())
+                  td(scanningStats.numberOfFilesForIndexing.toString())
+                  td(scanningStats.numberOfFilesFullyIndexedByInfrastructureExtensions.toString())
+                  td(scanningStats.numberOfSkippedFiles.toString())
+                  td(scanningStats.statusTime.presentableDuration())
+                  td(scanningStats.scanningTime.presentableDuration())
+                  td(scanningStats.timeProcessingUpToDateFiles.presentableDuration())
+                  td(scanningStats.timeUpdatingContentLessIndexes.presentableDuration())
+                  td(scanningStats.timeIndexingWithoutContent.presentableDuration())
+                  if (shouldPrintProviderRoots) {
+                    td {
+                      textArea(scanningStats.roots.sorted().joinToString("\n"))
+                    }
+                  }
+                  if (shouldPrintScannedFiles) {
+                    td {
+                      textArea(
+                        scanningStats.scannedFiles.orEmpty().joinToString("\n") { file ->
+                          file.path.presentablePath + when {
+                            file.wasFullyIndexedByInfrastructureExtension -> " [by infrastructure]"
+                            file.isUpToDate -> " [up-to-date]"
+                            else -> ""
+                          }
+                        }
+                      )
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        val shouldPrintIndexedFiles = fileProviderStatistics.any { it.indexedFiles.orEmpty().isNotEmpty() }
+        div(id = SECTION_INDEXING_ID) {
+          h1(SECTION_INDEXING_TITLE)
+          table {
+            thead {
+              tr {
+                th("Provider name")
+                th("Total processing time")
+                th("Content loading time")
+                th("Number of indexed files")
+                th("Number of files indexed by $INDEX_INFRA_EXTENSIONS")
+                th("Number of too large for indexing files")
+                if (shouldPrintIndexedFiles) {
+                  th("Indexed files")
+                }
+              }
+            }
+            tbody {
+              for (providerStats in fileProviderStatistics) {
+                tr(classes = getMinorDataClass(
+                  providerStats.totalIndexingVisibleTime.milliseconds < 100 && providerStats.totalNumberOfIndexedFiles < 1000)) {
+                  td(providerStats.providerName)
+                  td(providerStats.totalIndexingVisibleTime.presentableDuration())
+                  td(providerStats.contentLoadingVisibleTime.presentableDuration())
+                  td(providerStats.totalNumberOfIndexedFiles.toString())
+                  td(providerStats.totalNumberOfFilesFullyIndexedByExtensions.toString())
+                  td(providerStats.numberOfTooLargeForIndexingFiles.toString())
+                  if (shouldPrintIndexedFiles) {
+                    td {
+                      textArea(
+                        providerStats.indexedFiles.orEmpty().joinToString("\n") { file ->
+                          file.path.presentablePath + if (file.wasFullyIndexedByExtensions) " [by infrastructure]" else ""
+                        }
+                      )
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }.toString()
+}
+
+
 @Language("CSS")
 private val CSS_STYLE = """
   body {
@@ -796,6 +1784,10 @@ private val CSS_STYLE = """
     background: #f2f3ff;
     outline: none;
     cursor: pointer;
+  }
+  
+  .scanning-table-row {
+    background-color: aliceblue;
   }
 """.trimIndent()
 

@@ -28,6 +28,7 @@ import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner
+import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.messages.Topic
@@ -240,7 +241,8 @@ class DumbServiceImplTest {
             val index = FileBasedIndex.getInstance() as FileBasedIndexImpl
             IndexUpdateRunner(index, 1)
               .indexFiles(project, listOf(IndexUpdateRunner.FileSet(project, "child", listOf(child))),
-                          indicator, ProjectIndexingHistoryImpl(project, "Testing", ScanningType.PARTIAL))
+                          indicator, ProjectIndexingHistoryImpl(project, "Testing", ScanningType.PARTIAL),
+                          ProjectDumbIndexingHistoryImpl(project, "Testing", ScanningType.PARTIAL))
           }
         }
         catch (e: ProcessCanceledException) {

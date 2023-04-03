@@ -16,9 +16,11 @@ import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.NonUrgentExecutor
+import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils.alternativeIndexingDiagnosticDir
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils.indexingDiagnosticDir
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils.jacksonMapper
 import com.intellij.util.indexing.diagnostic.dto.*
+import com.intellij.util.indexing.diagnostic.presentation.createAggregateActivityHtml
 import com.intellij.util.indexing.diagnostic.presentation.createAggregateHtml
 import com.intellij.util.indexing.diagnostic.presentation.generateHtml
 import com.intellij.util.io.createDirectories
@@ -121,6 +123,11 @@ class IndexDiagnosticDumper : Disposable {
       SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.paths.indexed.by.infrastructure.extensions",
                                           ApplicationManagerEx.isInIntegrationTest())
 
+    @JvmStatic
+    private val shouldDumpAlternativeDiagnostics: Boolean
+      get() =
+        SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.alternative.diagnostics", false)
+
     private val LOG = Logger.getInstance(IndexDiagnosticDumper::class.java)
 
     fun readJsonIndexDiagnostic(file: Path): JsonIndexDiagnostic =
@@ -132,6 +139,11 @@ class IndexDiagnosticDumper : Disposable {
           dirStream.forEach { FileUtil.deleteWithRenaming(it) }
         }
       }
+      if (alternativeIndexingDiagnosticDir.exists()) {
+        alternativeIndexingDiagnosticDir.directoryStreamIfExists { dirStream ->
+          dirStream.forEach { FileUtil.deleteWithRenaming(it) }
+        }
+      }
     }
 
     fun getProjectDiagnosticDirectory(project: Project): Path {
@@ -140,7 +152,29 @@ class IndexDiagnosticDumper : Disposable {
       return directory
     }
 
+    fun getAlternativeProjectDiagnosticDirectory(project: Project): Path {
+      val directory = project.getProjectCachePath(alternativeIndexingDiagnosticDir)
+      directory.createDirectories()
+      return directory
+    }
+
     private fun getDiagnosticNumberLimitWithinSizeLimit(existingDiagnostics: List<ExistingDiagnostic>, sizeLimit: Long): Pair<Int, Long> {
+      thisLogger().assertTrue(sizeLimit > 0)
+      var sizeLimitLevel = sizeLimit
+      var number = 0
+      for (diagnostic in existingDiagnostics) {
+        sizeLimitLevel -= max(0, diagnostic.jsonFile.sizeOrNull())
+        sizeLimitLevel -= max(0, diagnostic.htmlFile.sizeOrNull())
+        if (sizeLimitLevel <= 0) {
+          break
+        }
+        number++
+      }
+      return Pair(min(indexingDiagnosticsLimitOfFiles, number), sizeLimitLevel)
+    }
+
+    private fun getActivityDiagnosticNumberLimitWithinSizeLimit(existingDiagnostics: List<ExistingIndexingActivityDiagnostic>,
+                                                                sizeLimit: Long): Pair<Int, Long> {
       thisLogger().assertTrue(sizeLimit > 0)
       var sizeLimitLevel = sizeLimit
       var number = 0
@@ -164,6 +198,7 @@ class IndexDiagnosticDumper : Disposable {
   private var isDisposed = false
 
   private val unsavedIndexingHistories = ConcurrentCollectionFactory.createConcurrentIdentitySet<ProjectIndexingHistoryImpl>()
+  private val unsavedIndexingActivityHistories = ConcurrentCollectionFactory.createConcurrentIdentitySet<ProjectIndexingActivityHistory>()
 
   fun onIndexingStarted(projectIndexingHistory: ProjectIndexingHistoryImpl) {
     runAllListenersSafely { onStartedIndexing(projectIndexingHistory) }
@@ -183,6 +218,48 @@ class IndexDiagnosticDumper : Disposable {
     }
     finally {
       runAllListenersSafely { onFinishedIndexing(projectIndexingHistory) }
+    }
+  }
+
+  fun onScanningFinished(projectScanningHistory: ProjectScanningHistoryImpl) {
+    // try {
+    if (!shouldDumpAlternativeDiagnostics) {
+      return
+    }
+    if (ApplicationManager.getApplication().isUnitTestMode && !shouldDumpInUnitTestMode) {
+      return
+    }
+    if (projectScanningHistory.times.wasInterrupted && !shouldDumpDiagnosticsForInterruptedUpdaters) {
+      return
+    }
+    projectScanningHistory.scanningFinished()
+    projectScanningHistory.finishTotalUpdatingTime()
+    unsavedIndexingActivityHistories.add(projectScanningHistory)
+    NonUrgentExecutor.getInstance().execute { dumpProjectIndexingActivityHistoryToLogSubdirectory(projectScanningHistory) }
+    /* }
+     finally {
+       runAllListenersSafely { onFinishedIndexing(projectIndexingHistory) } //todo[lene] support listeners
+     }*/
+  }
+
+  fun onDumbIndexingFinished(projectDumbIndexingHistory: ProjectDumbIndexingHistoryImpl) {
+    try {
+      if (!shouldDumpAlternativeDiagnostics) {
+        return
+      }
+      if (ApplicationManager.getApplication().isUnitTestMode && !shouldDumpInUnitTestMode) {
+        return
+      }
+      if (projectDumbIndexingHistory.times.wasInterrupted && !shouldDumpDiagnosticsForInterruptedUpdaters) {
+        return
+      }
+      projectDumbIndexingHistory.indexingFinished()
+      projectDumbIndexingHistory.finishTotalUpdatingTime()
+      unsavedIndexingActivityHistories.add(projectDumbIndexingHistory)
+      NonUrgentExecutor.getInstance().execute { dumpProjectIndexingActivityHistoryToLogSubdirectory(projectDumbIndexingHistory) }
+    }
+    finally {
+      //todo[lene] l8r runAllListenersSafely { onFinishedIndexing(projectIndexingHistory) }
     }
   }
 
@@ -229,6 +306,41 @@ class IndexDiagnosticDumper : Disposable {
       val changedFilesPushedEvents = ChangedFilesPushedDiagnostic.readEvents(projectIndexingHistory.project)
       indexDiagnosticDirectory.resolve("report.html").bufferedWriter().use {
         createAggregateHtml(it, projectIndexingHistory.project.name, survivedDiagnostics, sharedIndexEvents, changedFilesPushedEvents)
+      }
+    }
+    catch (e: Exception) {
+      LOG.warn("Failed to dump index diagnostic", e)
+    }
+  }
+
+  @Synchronized
+  private fun dumpProjectIndexingActivityHistoryToLogSubdirectory(projectIndexingActivityHistory: ProjectIndexingActivityHistory) {
+    if (!shouldDumpAlternativeDiagnostics) {
+      return
+    }
+    if (!unsavedIndexingActivityHistories.remove(projectIndexingActivityHistory)) {
+      return
+    }
+    try {
+      check(!isDisposed)
+
+      val project = projectIndexingActivityHistory.project
+      val indexDiagnosticDirectory = getAlternativeProjectDiagnosticDirectory(project)
+
+      val (diagnosticJson: Path, diagnosticHtml: Path) = getFilesForNewJsonAndHtmlDiagnostics(indexDiagnosticDirectory)
+
+      val jsonIndexingActivityDiagnostic = JsonIndexingActivityDiagnostic(projectIndexingActivityHistory)
+      IndexDiagnosticDumperUtils.writeValue(diagnosticJson, jsonIndexingActivityDiagnostic)
+      diagnosticHtml.bufferedWriter().use {
+        jsonIndexingActivityDiagnostic.generateHtml(it)
+      }
+
+      val existingDiagnostics = parseExistingIndexingActivityDiagnostics(indexDiagnosticDirectory)
+      val survivedDiagnostics = deleteOutdatedActivityDiagnostics(existingDiagnostics)
+      val sharedIndexEvents = SharedIndexDiagnostic.readEvents(project)
+      val changedFilesPushedEvents = ChangedFilesPushedDiagnostic.readEvents(project)
+      indexDiagnosticDirectory.resolve("report.html").bufferedWriter().use {
+        createAggregateActivityHtml(it, project.name, survivedDiagnostics, sharedIndexEvents, changedFilesPushedEvents)
       }
     }
     catch (e: Exception) {
@@ -313,6 +425,37 @@ class IndexDiagnosticDumper : Disposable {
     return survivedDiagnostics
   }
 
+  private fun deleteOutdatedActivityDiagnostics(existingDiagnostics: List<ExistingIndexingActivityDiagnostic>):
+    List<ExistingIndexingActivityDiagnostic> {
+    val sortedDiagnostics = existingDiagnostics.sortedByDescending { it.indexingTimes.updatingStart.instant }
+
+    var sizeLimit = indexingDiagnosticsSizeLimitOfFilesInMiBPerProject * 1024 * 1024.toLong()
+    val numberLimit: Int
+    if (ApplicationManagerEx.isInIntegrationTest()) {
+      numberLimit = existingDiagnostics.size
+    }
+    else if (sizeLimit > 0) {
+      val pair = getActivityDiagnosticNumberLimitWithinSizeLimit(existingDiagnostics, sizeLimit)
+      numberLimit = pair.first
+      sizeLimit = pair.second
+    }
+    else {
+      numberLimit = indexingDiagnosticsLimitOfFiles
+    }
+
+    LOG.debug("deleteOutdatedActivityDiagnostics, existing size ${existingDiagnostics.size}; sizeLimit $sizeLimit, " +
+              "indexingDiagnosticsLimitOfFiles $indexingDiagnosticsLimitOfFiles, numberLimit $numberLimit")
+
+    val survivedDiagnostics = sortedDiagnostics.take(numberLimit)
+    val outdatedDiagnostics = sortedDiagnostics.drop(numberLimit)
+
+    for (diagnostic in outdatedDiagnostics) {
+      diagnostic.jsonFile.delete()
+      diagnostic.htmlFile.delete()
+    }
+    return survivedDiagnostics
+  }
+
   private fun parseExistingDiagnostics(indexDiagnosticDirectory: Path): List<ExistingDiagnostic> =
     Files.list(indexDiagnosticDirectory).use { files ->
       files.asSequence()
@@ -332,6 +475,39 @@ class IndexDiagnosticDumper : Disposable {
         .toList()
     }
 
+  private fun parseExistingIndexingActivityDiagnostics(indexDiagnosticDirectory: Path): List<ExistingIndexingActivityDiagnostic> =
+    Files.list(indexDiagnosticDirectory).use { files ->
+      files.asSequence()
+        .filter { file -> file.fileName.toString().startsWith(fileNamePrefix) && file.extension == "json" }
+        .mapNotNull { jsonFile ->
+          val appInfo = fastReadAppInfo(jsonFile) ?: return@mapNotNull null
+          val runtimeInfo = fastReadRuntimeInfo(jsonFile) ?: return@mapNotNull null
+
+          val htmlFile = jsonFile.resolveSibling(jsonFile.nameWithoutExtension + ".html")
+          if (!htmlFile.exists()) {
+            return@mapNotNull null
+          }
+
+          val diagnosticType = fastReadJsonField(jsonFile, "type", IndexingActivityType::class.java) ?: return@mapNotNull null
+
+          val times: JsonProjectIndexingActivityHistoryTimes
+          val fileCount: JsonProjectIndexingActivityFileCount
+          when (diagnosticType) {
+            IndexingActivityType.Scanning -> {
+              times = fastReadJsonField(jsonFile, "times", JsonProjectScanningHistoryTimes::class.java) ?: return@mapNotNull null
+              fileCount = fastReadJsonField(jsonFile, "fileCount", JsonProjectScanningFileCount::class.java) ?: return@mapNotNull null
+            }
+            IndexingActivityType.DumbIndexing -> {
+              times = fastReadJsonField(jsonFile, "times", JsonProjectDumbIndexingHistoryTimes::class.java) ?: return@mapNotNull null
+              fileCount = fastReadJsonField(jsonFile, "fileCount", JsonProjectDumbIndexingFileCount::class.java) ?: return@mapNotNull null
+            }
+          }
+
+          ExistingIndexingActivityDiagnostic(jsonFile, htmlFile, appInfo, runtimeInfo, diagnosticType, times, fileCount)
+        }
+        .toList()
+    }
+
   data class ExistingDiagnostic(
     val jsonFile: Path,
     val htmlFile: Path,
@@ -343,11 +519,25 @@ class IndexDiagnosticDumper : Disposable {
     val fileCount: JsonProjectIndexingFileCount?
   )
 
+  enum class IndexingActivityType { Scanning, DumbIndexing }
+  data class ExistingIndexingActivityDiagnostic(
+    val jsonFile: Path,
+    val htmlFile: Path,
+    val appInfo: JsonIndexDiagnosticAppInfo,
+    val runtimeInfo: JsonRuntimeInfo,
+    val type: IndexingActivityType,
+    val indexingTimes: JsonProjectIndexingActivityHistoryTimes,
+    val fileCount: JsonProjectIndexingActivityFileCount
+  )
+
   @Synchronized
   override fun dispose() {
     // it's important to save diagnostic, no matter how
     for (unsavedIndexingHistory in unsavedIndexingHistories) {
       dumpProjectIndexingHistoryToLogSubdirectory(unsavedIndexingHistory)
+    }
+    for (unsavedIndexingActivityHistory in unsavedIndexingActivityHistories) {
+      dumpProjectIndexingActivityHistoryToLogSubdirectory(unsavedIndexingActivityHistory)
     }
     // The synchronized block allows to wait for unfinished background dumpers.
     isDisposed = true

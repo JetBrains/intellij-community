@@ -10,7 +10,10 @@ import com.intellij.openapi.progress.util.PingProgress
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
+import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
+import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -187,7 +190,16 @@ class PerProjectIndexingQueue(private val project: Project) {
     val (filesInQueue, totalFiles) = getAndResetQueuedFiles()
     if (totalFiles > 0) {
       val indexingReason = projectIndexingHistory.indexingReason ?: "Flushing queue of project ${project.name}"
-      UnindexedFilesIndexer(project, filesInQueue, indexingReason).indexFiles(projectIndexingHistory, indicator)
+      val projectDumbIndexingHistory = ProjectDumbIndexingHistoryImpl(project, null, ScanningType.REFRESH)
+      try {
+        UnindexedFilesIndexer(project, filesInQueue, indexingReason).indexFiles(projectIndexingHistory, projectDumbIndexingHistory, indicator)
+      }
+      catch (e: Throwable) {
+        projectDumbIndexingHistory.setWasInterrupted()
+        throw e
+      } finally {
+        IndexDiagnosticDumper.getInstance().onDumbIndexingFinished(projectDumbIndexingHistory)
+      }
     }
     else {
       LOG.info("Finished for " + project.name + ". No files to index with loading content.")

@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
 import com.intellij.openapi.project.Project
 import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
 import com.intellij.util.messages.Topic
+import org.jetbrains.annotations.ApiStatus
 import java.time.Duration
 import java.time.ZonedDateTime
 
@@ -26,6 +27,7 @@ interface ProjectIndexingHistoryListener {
   fun onFinishedIndexing(projectIndexingHistory: ProjectIndexingHistory)
 }
 
+@ApiStatus.Obsolete
 interface ProjectIndexingHistory {
   val project: Project
   val indexingReason: String?
@@ -36,6 +38,42 @@ interface ProjectIndexingHistory {
   val totalStatsPerFileType: Map<String, StatsPerFileType>
   val totalStatsPerIndexer: Map<String, StatsPerIndexer>
   val visibleTimeToAllThreadsTimeRatio: Double
+}
+
+interface ProjectIndexingActivityHistory {
+  val project: Project
+  val type: IndexDiagnosticDumper.IndexingActivityType
+}
+
+
+interface ProjectScanningHistory : ProjectIndexingActivityHistory {
+  override val project: Project
+  val indexingReason: String?
+  val indexingSessionId: Long
+  val times: ScanningTimes
+  val scanningStatistics: List<JsonScanningStatistics>
+  val providerStatistics: List<JsonFileProviderIndexStatistics>
+  val totalStatsPerFileType: Map<String, StatsPerFileType>
+  val totalStatsPerIndexer: Map<String, StatsPerIndexer>
+  val visibleTimeToAllThreadsTimeRatio: Double
+
+  override val type
+    get() = IndexDiagnosticDumper.IndexingActivityType.Scanning
+}
+
+interface ProjectDumbIndexingHistory : ProjectIndexingActivityHistory {
+  override val project: Project
+  val indexingReason: String?
+  val indexingSessionId: Long
+  val times: DumbIndexingTimes
+  val scanningStatistics: List<JsonScanningStatistics>
+  val providerStatistics: List<JsonFileProviderIndexStatistics>
+  val totalStatsPerFileType: Map<String, StatsPerFileType>
+  val totalStatsPerIndexer: Map<String, StatsPerIndexer>
+  val visibleTimeToAllThreadsTimeRatio: Double
+
+  override val type
+    get() = IndexDiagnosticDumper.IndexingActivityType.DumbIndexing
 }
 
 /**
@@ -112,6 +150,42 @@ interface StatsPerIndexer {
 }
 
 interface IndexingTimes {
+  val indexingReason: String?
+  val scanningType: ScanningType
+  val updatingStart: ZonedDateTime
+  val totalUpdatingTime: TimeNano
+  val updatingEnd: ZonedDateTime
+  val indexingDuration: Duration
+  val contentLoadingVisibleDuration: Duration
+  val pushPropertiesDuration: Duration
+  val indexExtensionsDuration: Duration
+  var creatingIteratorsDuration: Duration
+  val scanFilesDuration: Duration
+  val suspendedDuration: Duration
+  val appliedAllValuesSeparately: Boolean
+  val separateValueApplicationVisibleTime: TimeNano
+  val wasInterrupted: Boolean
+}
+
+interface ScanningTimes {
+  val indexingReason: String?
+  val scanningType: ScanningType
+  val updatingStart: ZonedDateTime
+  val totalUpdatingTime: TimeNano
+  val updatingEnd: ZonedDateTime
+  val indexingDuration: Duration
+  val contentLoadingVisibleDuration: Duration
+  val pushPropertiesDuration: Duration
+  val indexExtensionsDuration: Duration
+  var creatingIteratorsDuration: Duration
+  val scanFilesDuration: Duration
+  val suspendedDuration: Duration
+  val appliedAllValuesSeparately: Boolean
+  val separateValueApplicationVisibleTime: TimeNano
+  val wasInterrupted: Boolean
+}
+
+interface DumbIndexingTimes {
   val indexingReason: String?
   val scanningType: ScanningType
   val updatingStart: ZonedDateTime

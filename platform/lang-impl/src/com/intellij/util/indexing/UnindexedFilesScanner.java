@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -10,11 +10,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.DumbModeProgressTitle;
+import com.intellij.openapi.project.FilesScanningTask;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.UnindexedFilesScannerExecutor;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
@@ -23,9 +24,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.openapi.vfs.newvfs.VfsUsageCollector;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.SmartList;
@@ -36,10 +34,7 @@ import com.intellij.util.gist.GistManagerImpl;
 import com.intellij.util.indexing.PerProjectIndexingQueue.PerProviderSink;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService.StatusMark;
-import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
-import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl;
-import com.intellij.util.indexing.diagnostic.ScanningStatistics;
-import com.intellij.util.indexing.diagnostic.ScanningType;
+import com.intellij.util.indexing.diagnostic.*;
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics;
 import com.intellij.util.indexing.roots.IndexableFileScanner;
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
@@ -53,7 +48,6 @@ import kotlin.Pair;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.project.UnindexedFilesScannerExecutor.shouldScanInSmartMode;
@@ -168,9 +162,11 @@ public class UnindexedFilesScanner implements FilesScanningTask {
 
   private void scan(@NotNull PerformanceWatcher.Snapshot snapshot,
                     @NotNull ProjectIndexingHistoryImpl projectIndexingHistory,
+                    @NotNull ProjectScanningHistoryImpl scanningHistory,
                     @NotNull ProgressIndicator indicator,
                     @NotNull Ref<? super StatusMark> markRef) {
     projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.PushProperties);
+    scanningHistory.startStage(ProjectScanningHistoryImpl.ScanningStage.PushProperties);
     try {
       if (myPusher instanceof PushedFilePropertiesUpdaterImpl) {
         ((PushedFilePropertiesUpdaterImpl)myPusher).performDelayedPushTasks();
@@ -178,6 +174,7 @@ public class UnindexedFilesScanner implements FilesScanningTask {
     }
     finally {
       projectIndexingHistory.stopStage(ProjectIndexingHistoryImpl.Stage.PushProperties);
+      scanningHistory.stopStage(ProjectScanningHistoryImpl.ScanningStage.PushProperties);
     }
     LOG.info(snapshot.getLogResponsivenessSinceCreationMessage("Performing delayed pushing properties tasks for " + myProject.getName()));
 
@@ -189,6 +186,7 @@ public class UnindexedFilesScanner implements FilesScanningTask {
 
     List<IndexableFilesIterator> orderedProviders;
     projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.CreatingIterators);
+    scanningHistory.startStage(ProjectScanningHistoryImpl.ScanningStage.CreatingIterators);
     try {
       if (myPredefinedIndexableFilesIterators == null) {
         Pair<@NotNull List<IndexableFilesIterator>, @NotNull StatusMark> pair = collectProviders(myProject, myIndex);
@@ -201,17 +199,20 @@ public class UnindexedFilesScanner implements FilesScanningTask {
     }
     finally {
       projectIndexingHistory.stopStage(ProjectIndexingHistoryImpl.Stage.CreatingIterators);
+      scanningHistory.stopStage(ProjectScanningHistoryImpl.ScanningStage.CreatingIterators);
     }
 
     projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.Scanning);
+    scanningHistory.startStage(ProjectScanningHistoryImpl.ScanningStage.Scanning);
     try {
-      collectIndexableFilesConcurrently(myProject, indicator, orderedProviders, projectIndexingHistory);
+      collectIndexableFilesConcurrently(myProject, indicator, orderedProviders, projectIndexingHistory, scanningHistory);
       if (isFullIndexUpdate()) {
         myProject.putUserData(CONTENT_SCANNED, true);
       }
     }
     finally {
       projectIndexingHistory.stopStage(ProjectIndexingHistoryImpl.Stage.Scanning);
+      scanningHistory.stopStage(ProjectScanningHistoryImpl.ScanningStage.Scanning);
     }
     String scanningCompletedMessage = getLogScanningCompletedStageMessage(projectIndexingHistory);
     LOG.info(snapshot.getLogResponsivenessSinceCreationMessage(scanningCompletedMessage));
@@ -225,10 +226,14 @@ public class UnindexedFilesScanner implements FilesScanningTask {
     }
     LOG.info("Started scanning for indexing of " + myProject.getName() + ". Reason: " + myIndexingReason);
 
+    ProjectScanningHistoryImpl scanningHistory = new ProjectScanningHistoryImpl(myProject, myIndexingReason, myScanningType);
+
     ProgressSuspender suspender = ProgressSuspender.getSuspender(indicator);
     if (suspender != null) {
       ApplicationManager.getApplication().getMessageBus().connect(this)
         .subscribe(ProgressSuspender.TOPIC, projectIndexingHistory.getSuspendListener(suspender));
+      ApplicationManager.getApplication().getMessageBus().connect(this)
+        .subscribe(ProgressSuspender.TOPIC, scanningHistory.getSuspendListener(suspender));
     }
 
     if (myStartSuspended) {
@@ -250,9 +255,14 @@ public class UnindexedFilesScanner implements FilesScanningTask {
         DumbModeProgressTitle.getInstance(myProject)
           .attachProgressTitleText(IndexingBundle.message("progress.indexing.scanning.title"), scanningLifetime);
       }
-      scan(snapshot, projectIndexingHistory, indicator, markRef);
+      scan(snapshot, projectIndexingHistory, scanningHistory, indicator, markRef);
+    }
+    catch (Throwable e) {
+      scanningHistory.setWasInterrupted();
+      throw e;
     }
     finally {
+      IndexDiagnosticDumper.getInstance().onScanningFinished(scanningHistory);
       Disposer.dispose(scanningLifetime);
     }
 
@@ -338,8 +348,8 @@ public class UnindexedFilesScanner implements FilesScanningTask {
     @NotNull Project project,
     @NotNull ProgressIndicator indicator,
     @NotNull List<? extends IndexableFilesIterator> providers,
-    @NotNull ProjectIndexingHistoryImpl projectIndexingHistory
-  ) {
+    @NotNull ProjectIndexingHistoryImpl projectIndexingHistory,
+    @NotNull ProjectScanningHistoryImpl projectScanningHistory) {
     if (providers.isEmpty()) {
       return;
     }
@@ -395,6 +405,7 @@ public class UnindexedFilesScanner implements FilesScanningTask {
           synchronized (allTasksFinished) {
             if (!allTasksFinished.get()) {
               projectIndexingHistory.addScanningStatistics(scanningStatistics);
+              projectScanningHistory.addScanningStatistics(scanningStatistics);
             }
           }
           subTaskIndicator.finished();
