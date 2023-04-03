@@ -12,10 +12,10 @@ fun bar() {
 // EXPRESSION: x
 // RESULT: 1: I
 
-// MODULE: jvm
+// MODULE: jvm(common)
 // FILE: functionBreakpointInCommonCode.kt
 // PLATFORM: jvm
-// DEPENDS_ON: common
+
 val x = 1
 
 actual fun foo(): Int {

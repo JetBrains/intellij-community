@@ -429,7 +429,7 @@ internal fun createTestFiles(wholeFile: File, wholeFileContents: String): TestFi
                 text: String,
                 directives: Directives
             ): TestFileWithModule {
-                return TestFileWithModule(module ?: DebuggerTestModule.Jvm, fileName, text, directives)
+                return TestFileWithModule(module ?: DebuggerTestModule.Jvm.Default, fileName, text, directives)
             }
 
             override fun createModule(
@@ -438,8 +438,8 @@ internal fun createTestFiles(wholeFile: File, wholeFileContents: String): TestFi
                 friends: MutableList<String>
             ) =
                 when (name) {
-                    JVM_MODULE_NAME -> DebuggerTestModule.Jvm
-                    else -> DebuggerTestModule.Common(name)
+                    JVM_MODULE_NAME -> DebuggerTestModule.Jvm(dependencies)
+                    else -> DebuggerTestModule.Common(name, dependencies)
                 }
         }
     )
@@ -450,9 +450,13 @@ internal fun createTestFiles(wholeFile: File, wholeFileContents: String): TestFi
 
 class TestFiles(val originalFile: File, val wholeFile: TestFile, files: List<TestFileWithModule>) : List<TestFileWithModule> by files
 
-sealed class DebuggerTestModule(name: String) : KotlinBaseTest.TestModule(name, emptyList(), emptyList())  {
-    class Common(name: String) : DebuggerTestModule(name)
-    object Jvm : DebuggerTestModule(JVM_MODULE_NAME)
+sealed class DebuggerTestModule(name: String, dependencies: List<String>) : KotlinBaseTest.TestModule(name, dependencies, emptyList())  {
+    class Common(name: String, dependencies: List<String>) : DebuggerTestModule(name, dependencies)
+    class Jvm(dependencies: List<String>) : DebuggerTestModule(JVM_MODULE_NAME, dependencies) {
+        companion object {
+            val Default = Jvm(dependencies = emptyList())
+        }
+    }
 }
 
 class TestFileWithModule(

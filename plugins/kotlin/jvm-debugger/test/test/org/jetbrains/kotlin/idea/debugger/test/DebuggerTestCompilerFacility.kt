@@ -48,7 +48,7 @@ open class DebuggerTestCompilerFacility(
 ) {
     private val kotlinStdlibPath = TestKotlinArtifacts.kotlinStdlib.absolutePath
 
-    private val mainFiles: TestFilesByLanguageAndPlatform
+    protected val mainFiles: TestFilesByLanguageAndPlatform
     private val libraryFiles: TestFilesByLanguageAndPlatform
     private val mavenArtifacts = mutableListOf<String>()
 
@@ -69,7 +69,7 @@ open class DebuggerTestCompilerFacility(
 
         val testFiles = libSrcPath.walk().filter { it.isFile }.toList().map {
             val path = it.toRelativeString(libSrcPath)
-            TestFileWithModule(DebuggerTestModule.Jvm, path, FileUtil.loadFile(it, true))
+            TestFileWithModule(DebuggerTestModule.Jvm.Default, path, FileUtil.loadFile(it, true))
         }
 
         val libraryFiles = splitByLanguage(testFiles)
@@ -142,8 +142,9 @@ open class DebuggerTestCompilerFacility(
         LocalFileSystem.getInstance().refreshAndFindFileByIoFile(libClassesDir)
 
         if (kotlinJvm.isNotEmpty() || kotlinCommon.isNotEmpty()) {
+            val options = getCompileOptionsForMainSources(jvmSrcDir, commonSrcDir)
             doWriteAction {
-                compileKotlinFilesWithCliCompiler(jvmSrcDir, commonSrcDir, classesDir, libClassesDir)
+                compileKotlinFilesWithCliCompiler(jvmSrcDir, commonSrcDir, classesDir, libClassesDir, options)
             }
         }
 
@@ -174,17 +175,8 @@ open class DebuggerTestCompilerFacility(
 
     private fun compileKotlinFilesWithCliCompiler(
         jvmSrcDir: File, commonSrcDir: File, classesDir: File,
-        libClassesDir: File,
+        libClassesDir: File, options: List<String>,
     ) {
-        val options = mutableListOf(
-            "-Xmulti-platform",
-        )
-        val commonSources = commonSrcDir.walk().filter { it.extension == "kt" }.map { it.absolutePath }.toList()
-        if (commonSources.isNotEmpty()) {
-            options.add("-Xcommon-sources=${commonSources.joinToString(",")}")
-        }
-        options.addAll(getCompilerOptionsCommonForLibAndSource())
-
         KotlinCompilerStandalone(
             listOf(jvmSrcDir, commonSrcDir), target = classesDir,
             options = options,
@@ -193,7 +185,11 @@ open class DebuggerTestCompilerFacility(
         ).compile()
     }
 
-    private fun getCompilerOptionsCommonForLibAndSource(): Collection<String> {
+    protected open fun getCompileOptionsForMainSources(jvmSrcDir: File, commonSrcDir: File): List<String> {
+        return getCompilerOptionsCommonForLibAndSource()
+    }
+
+    private fun getCompilerOptionsCommonForLibAndSource(): List<String> {
         val options = mutableListOf(
             "-Xlambdas=${compileConfig.lambdasGenerationScheme.description}",
         )

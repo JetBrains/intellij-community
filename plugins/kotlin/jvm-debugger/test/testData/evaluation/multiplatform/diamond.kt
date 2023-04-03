@@ -22,24 +22,24 @@ expect fun right(): Int
 // EXPRESSION: right()
 // RESULT: 2: I
 
-// MODULE: left
+// MODULE: left(common)
 // FILE: left.kt
 // PLATFORM: jvm
-// DEPENDS_ON: common
+
 expect fun leftImplInLeaf(): Int
 actual fun left(): Int = leftImplInLeaf()
 
-// MODULE: right
+// MODULE: right(common)
 // FILE: right.kt
 // PLATFORM: jvm
-// DEPENDS_ON: common
+
 actual fun right(): Int = rightImplInLeaf()
 expect fun rightImplInLeaf(): Int
 
-// MODULE: jvm
+// MODULE: jvm(right,left)
 // FILE: jvm.kt
 // PLATFORM: jvm
-// DEPENDS_ON: left, right
+
 actual fun debugMe(i: Int): Int {
     return left() + right() + i
 }
@@ -54,4 +54,3 @@ actual fun rightImplInLeaf(): Int = 2
 fun main(){
     commonContext()
 }
-// IGNORE_FOR_K2_CODE

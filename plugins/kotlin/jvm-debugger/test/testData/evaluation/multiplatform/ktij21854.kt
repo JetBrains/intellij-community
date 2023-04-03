@@ -22,9 +22,9 @@ fun test() {
 // RESULT: "OK": Ljava/lang/String;
 
 
-// MODULE: jvm
+// MODULE: jvm(common)
 // PLATFORM: jvm
-// DEPENDS_ON: common
+
 
 // FILE: jvm.kt
 
