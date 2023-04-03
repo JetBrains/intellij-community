@@ -2,8 +2,10 @@
 package com.intellij.find.actions;
 
 import com.intellij.ide.util.gotoByName.ModelDiff;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.pom.Navigatable;
@@ -18,6 +20,7 @@ import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageToPsiElementProvider;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.*;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
@@ -165,8 +168,10 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
               String recentSearchText = speedSearch.getComparator().getRecentSearchText();
               int numberOfLettersTyped = recentSearchText != null ? recentSearchText.length() : 0;
               Project project = selectedElement.getProject();
-              UsageViewStatisticsCollector.logItemChosenInPopupFeatures(project, myUsageView, selectedElement,
-                                                                        actionHandler.buildFinishEventData(usageInfo));
+              ReadAction.nonBlocking(() -> actionHandler.buildFinishEventData(usageInfo)).submit(AppExecutorUtil.getAppExecutorService())
+                .onSuccess(finishEventData ->
+                             UsageViewStatisticsCollector.logItemChosenInPopupFeatures(project, myUsageView, selectedElement,
+                                                                                       finishEventData));
               UsageViewStatisticsCollector.logItemChosen(project, myUsageView, CodeNavigateSource.ShowUsagesPopup, getSelectedRow(),
                                                          getRowCount(),
                                                          numberOfLettersTyped,

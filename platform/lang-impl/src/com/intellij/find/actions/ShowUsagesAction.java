@@ -411,7 +411,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
     Project project = parameters.project;
     UsageViewImpl usageView = createUsageView(project);
-    UsageViewStatisticsCollector.logSearchStarted(project, usageView, CodeNavigateSource.ShowUsagesPopup, actionHandler.getEventData());
+    ReadAction.nonBlocking(() -> actionHandler.getEventData()).submit(AppExecutorUtil.getAppExecutorService()).onSuccess(
+      (eventData) -> UsageViewStatisticsCollector.logSearchStarted(project, usageView, CodeNavigateSource.ShowUsagesPopup, eventData));
     final SearchScope searchScope = actionHandler.getSelectedScope();
     final AtomicInteger outOfScopeUsages = new AtomicInteger();
     AtomicBoolean manuallyResized = new AtomicBoolean();
@@ -452,9 +453,19 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         Usage usage = node != null ? node.getUsage() : null;
         UsageInfo2UsageAdapter usageAdapter = ObjectUtils.tryCast(usage, UsageInfo2UsageAdapter.class);
         UsageInfo usageInfo = usageAdapter != null ? usageAdapter.getUsageInfo() : null;
-        UsageViewStatisticsCollector.logPopupClosed(project, usageView, event.isOk(), getRowNumber(preselectedRow.get(), table),
-                                                    getRowNumber(node, table), visibleUsages.size(), popupShownTime.get(),
-                                                    actionHandler.buildFinishEventData(usageInfo));
+        int preselectedRowNumber = getRowNumber(preselectedRow.get(), table);
+        int selectedRowNumber = getRowNumber(node, table);
+        long durationTime = System.currentTimeMillis() - popupShownTime.get();
+        ReadAction.nonBlocking(() ->
+                                 actionHandler.buildFinishEventData(usageInfo)
+        ).submit(AppExecutorUtil.getAppExecutorService()).onSuccess((finishEventData) -> {
+          UsageViewStatisticsCollector.logPopupClosed(project, usageView, event.isOk(),
+                                                      preselectedRowNumber,
+                                                      selectedRowNumber, visibleUsages.size(),
+                                                      durationTime,
+                                                      finishEventData
+          );
+        });
       }
     });
     ProgressIndicator indicator = new ProgressIndicatorBase();
