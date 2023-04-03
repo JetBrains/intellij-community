@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-use std::{mem, thread};
+use std::{env, mem, thread};
 use std::ffi::{c_void, CString};
 use std::path::{Path, PathBuf};
 use jni::errors::Error;
@@ -77,8 +77,8 @@ unsafe fn prepare_jni_env(
 ) -> Result<jni::JNIEnv<'static>> {
     // Read current directory and pass it to JVM through environment variable. The real current directory will be changed
     // in load_libjvm().
-    let work_dir = std::env::current_dir().context("Failed to get current directory")?;
-    std::env::set_var("IDEA_INITIAL_DIRECTORY", &work_dir);
+    let work_dir = env::current_dir().context("Failed to get current directory")?;
+    env::set_var("IDEA_INITIAL_DIRECTORY", &work_dir);
 
     debug!("Resolving libjvm");
     let libjvm_path = get_libjvm(&java_home)?;

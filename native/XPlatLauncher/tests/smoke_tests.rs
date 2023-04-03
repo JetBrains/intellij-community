@@ -53,7 +53,7 @@ mod tests {
 
         assert!(
             idea_vendor_name_vm_option.is_some(),
-            "Didn't find vmoption which should be set throught product-info.json additionJvmArguments field in launch section"
+            "Didn't find VM option which should be set through product-info.json additionJvmArguments field in launch section"
         );
     }
 

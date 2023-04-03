@@ -24,7 +24,7 @@ pub fn prepare_test_env(layout_kind: &LayoutSpec) -> TestEnvironment {
     let result = match prepare_test_env_impl(layout_kind) {
         Ok(x) => x,
         Err(e) => {
-            panic!("Failed to prepare test environment: {e:?}")
+            panic!("Failed to prepare test environment: {:?}", e)
         }
     };
 
@@ -177,7 +177,7 @@ fn command_handler(command: &Output) {
 
     if !exit_status.success() {
         let message = format!("Command didn't succeed,\n exit code: {exit_status},\n stdout: {stdout},\n stderr: {stderr}");
-        panic!("{message}")
+        panic!("{}", message)
     }
 }
 
@@ -619,7 +619,7 @@ pub fn run_launcher_with_args(layout_specification: &LayoutSpec, args: &[&str]) 
     let result = match run_launcher_impl(&test, args, default_env_var, None) {
         Ok(launcher_run_result) => launcher_run_result,
         Err(e) => {
-            panic!("Failed to get launcher run result: {e:?}")
+            panic!("Failed to get launcher run result: {:?}", e)
         }
     };
 
@@ -643,7 +643,7 @@ fn run_launcher_and_get_dump(test: &TestEnvironment, args: &[&str], envs: HashMa
     let result = match run_launcher_impl(&test, full_args, full_env_vars, Some(&output_file)) {
             Ok(launcher_dump) => launcher_dump,
             Err(e) => {
-                panic!("Failed to get launcher run result: {e:?}")
+                panic!("Failed to get launcher run result: {:?}", e)
             }
     };
     assert!(result.exit_status.success(), "Launcher didn't exit successfully");
@@ -690,7 +690,7 @@ fn run_remote_dev(test: &TestEnvironment, args: &[&str], envs: HashMap<&str, &st
     let result = match run_launcher_impl(&test, args, full_env_vars, Some(&output_file)) {
         Ok(launcher_dump) => launcher_dump,
         Err(e) => {
-            panic!("Failed to get launcher run result: {e:?}")
+            panic!("Failed to get launcher run result: {:?}", e)
         }
     };
 
