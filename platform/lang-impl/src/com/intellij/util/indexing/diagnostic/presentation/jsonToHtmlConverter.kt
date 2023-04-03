@@ -225,7 +225,7 @@ internal fun createAggregateActivityHtml(
             thead {
               tr {
                 th("Time") {
-                  colSpan = "6"
+                  colSpan = "4"
                 }
                 th("Files") {
                   colSpan = "5"
@@ -237,8 +237,6 @@ internal fun createAggregateActivityHtml(
               tr {
                 th("Started")
                 th("Total")
-                th("Scanning")
-                th("Indexing")
                 th("Content loading")
                 th("Finished")
                 th("Scanned")
@@ -355,9 +353,7 @@ private fun TR.printIndexingActivityRow(times: JsonProjectIndexingActivityHistor
     text(times.updatingStart.presentableLocalDateTime())
   }
   td(times.asSafely<JsonProjectScanningHistoryTimes>()?.totalUpdatingTime?.presentableDuration()
-     ?: times.asSafely<JsonProjectDumbIndexingHistoryTimes>()?.totalUpdatingTime?.presentableDuration() ?: "Unknown")
-  td(times.asSafely<JsonProjectScanningHistoryTimes>()?.totalUpdatingTime?.presentableDuration() ?: NOT_APPLICABLE)
-  td(times.asSafely<JsonProjectDumbIndexingHistoryTimes>()?.totalUpdatingTime?.presentableDuration() ?: NOT_APPLICABLE)
+     ?: times.asSafely<JsonProjectDumbIndexingHistoryTimes>()?.totalUpdatingTime?.presentableDuration() ?: "Unexpected times $times")
   td(times.asSafely<JsonProjectDumbIndexingHistoryTimes>()?.contentLoadingVisibleTime?.presentableDuration()
      ?: NOT_APPLICABLE)
   td {
