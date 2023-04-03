@@ -3,9 +3,9 @@ package org.jetbrains.kotlin.idea.test.events.gradle
 
 import com.intellij.testFramework.RunAll.Companion.runAll
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunnerViewTestCase
+import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestNavigationTestCase
 
-abstract class KotlinGradleTestRunnerViewTestCase : GradleTestRunnerViewTestCase() {
+abstract class KotlinGradleTestNavigationTestCase : GradleTestNavigationTestCase() {
 
     override fun tearDown() {
         runAll(

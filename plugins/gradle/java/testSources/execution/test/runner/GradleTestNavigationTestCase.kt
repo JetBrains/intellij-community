@@ -8,7 +8,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.GlobalSearchScope
 import org.junit.jupiter.api.Assertions
 
-abstract class GradleTestRunnerViewTestCase : GradleTestExecutionTestCase() {
+abstract class GradleTestNavigationTestCase : GradleTestExecutionTestCase() {
 
   val PsiMethod.psiClass
     get() = containingClass!!

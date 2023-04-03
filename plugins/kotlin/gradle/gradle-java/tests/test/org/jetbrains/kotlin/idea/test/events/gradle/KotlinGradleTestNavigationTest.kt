@@ -10,7 +10,7 @@ import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 
-class KotlinGradleTestRunnerViewTest : KotlinGradleTestRunnerViewTestCase() {
+class KotlinGradleTestNavigationTest : KotlinGradleTestNavigationTestCase() {
 
     @ParameterizedTest
     @TargetVersions("5.6.2 <=> 7.0")
@@ -202,9 +202,9 @@ class KotlinGradleTestRunnerViewTest : KotlinGradleTestRunnerViewTestCase() {
 
     companion object {
 
-        private val KOTLIN_JUNIT4_FIXTURE = GradleTestFixtureBuilder.create("GradleTestRunnerViewTest-kotlin-junit4") { gradleVersion ->
+        private val KOTLIN_JUNIT4_FIXTURE = GradleTestFixtureBuilder.create("KotlinGradleTestNavigationTest-kotlin-junit4") { gradleVersion ->
             withSettingsFile {
-                setProjectName("GradleTestRunnerViewTest-kotlin-junit4")
+                setProjectName("KotlinGradleTestNavigationTest-kotlin-junit4")
             }
             withBuildFile(gradleVersion) {
                 withKotlinJvmPlugin()
