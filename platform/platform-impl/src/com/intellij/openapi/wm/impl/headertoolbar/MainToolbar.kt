@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
@@ -27,12 +28,15 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.MainMe
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.HorizontalLayout
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets
 import com.intellij.util.ui.UIUtil
 import java.awt.*
 import java.awt.image.RGBImageFilter
+import java.beans.PropertyChangeListener
 import java.util.function.Supplier
+import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -109,6 +113,8 @@ private val lightThemeDarkHeaderDisableFilter: Supplier<RGBImageFilter> = Suppli
 
 private class MyActionToolbarImpl(group: ActionGroup) : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true) {
 
+  private val iconUpdater = HeaderIconUpdater()
+
   override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) {
     super.calculateBounds(size2Fit, bounds)
     for (i in 0 until bounds.size) fitRectangle(bounds[i], getComponent(i))
@@ -123,6 +129,9 @@ private class MyActionToolbarImpl(group: ActionGroup) : ActionToolbarImpl(Action
 
   override fun createCustomComponent(action: CustomComponentAction, presentation: Presentation): JComponent {
     val component = super.createCustomComponent(action, presentation)
+
+    adjustIcons(presentation)
+
     if (action is ComboBoxAction) {
       findComboButton(component)?.apply {
         setUI(MainToolbarComboBoxButtonUI())
@@ -130,6 +139,13 @@ private class MyActionToolbarImpl(group: ActionGroup) : ActionToolbarImpl(Action
       }
     }
     return component
+  }
+
+  private fun adjustIcons(presentation: Presentation) {
+    iconUpdater.registerFor(presentation, "icon", { it.icon }, { pst, icn -> pst.icon = icn})
+    iconUpdater.registerFor(presentation, "selectedIcon", { it.selectedIcon }, { pst, icn -> pst.selectedIcon = icn})
+    iconUpdater.registerFor(presentation, "hoveredIcon", { it.hoveredIcon }, { pst, icn -> pst.hoveredIcon = icn})
+    iconUpdater.registerFor(presentation, "disabledIcon", { it.disabledIcon }, { pst, icn -> pst.disabledIcon = icn})
   }
 
   override fun getSeparatorColor(): Color {
@@ -159,3 +175,28 @@ private class MyActionToolbarImpl(group: ActionGroup) : ActionToolbarImpl(Action
 }
 
 internal fun isDarkHeader() = ColorUtil.isDark(JBColor.namedColor("MainToolbar.background"))
+
+fun adjustIconForHeader(icon: Icon) = if (isDarkHeader()) IconLoader.getDarkIcon(icon, true) else icon
+
+private class HeaderIconUpdater {
+  private val iconsCache = ContainerUtil.createWeakSet<Icon>()
+
+  private fun updateIcon(p: Presentation, getter: (Presentation) -> Icon?, setter: (Presentation, Icon) -> Unit) {
+    if (!isDarkHeader()) return
+
+    getter(p)?.let { icon ->
+      val replaceIcon = adjustIconForHeader(icon)
+      iconsCache.add(replaceIcon)
+      setter(p, replaceIcon)
+    }
+  }
+
+  fun registerFor(presentation: Presentation, propName: String, getter: (Presentation) -> Icon?, setter: (Presentation, Icon) -> Unit) {
+    updateIcon(presentation, getter, setter)
+    presentation.addPropertyChangeListener(PropertyChangeListener { evt ->
+      if (evt.propertyName != propName) return@PropertyChangeListener
+      if (evt.newValue in iconsCache) return@PropertyChangeListener
+      updateIcon(presentation, getter, setter)
+    })
+  }
+}
