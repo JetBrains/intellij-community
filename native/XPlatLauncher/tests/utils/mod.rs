@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 use anyhow::{bail, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::{env, fs, io, thread, time};
@@ -545,7 +545,7 @@ pub struct IntellijMainDumpedLaunchParameters {
 
 pub const TEST_OUTPUT_FILE_NAME: &str = "output.json";
 
-fn run_launcher_impl(test: &TestEnvironment, args: &[&str], envs: HashMap<&str, &str>, output_file: &Path) -> Result<LauncherRunResult> {
+fn run_launcher_impl(test: &TestEnvironment, args: &[&str], envs: HashMap<&str, &str>, dump_file: Option<&Path>) -> Result<LauncherRunResult> {
     let stdout_file_path = test.test_root_dir.path().join("out.txt");
     let stdout_file = File::create(&stdout_file_path)?;
     let stdio = Stdio::from(stdout_file);
@@ -573,10 +573,9 @@ fn run_launcher_impl(test: &TestEnvironment, args: &[&str], envs: HashMap<&str, 
                 }
                 Some(es) => return Ok(LauncherRunResult {
                     exit_status: es,
-                    dump: match es.success() {
-                        true => Some(read_launcher_run_result(&output_file)?),
-                        false => None
-                    },
+                    dump: if !es.success() { None }
+                          else if let Some(file) = dump_file { Some(read_launcher_run_result(file)?) }
+                          else { None },
                     stdout: fs::read_to_string(&stdout_file_path).context("can't open stdout file")?
                 }),
             },
@@ -604,16 +603,14 @@ fn read_launcher_run_result(path: &Path) -> Result<IntellijMainDumpedLaunchParam
 }
 
 /// Run launcher with command line arguments and environment variables and return `LauncherRunResult` which contains:
-/// - exit status of launched application;
-/// - dump of launch parameters;
-/// - std_out of launcher;
+/// - exit status of launched application
+/// - std_out of launcher
 pub fn run_launcher(layout_specification: &LayoutSpec) -> LauncherRunResult {
     let test = prepare_test_env(layout_specification);
-    let output_file = test.test_root_dir.path().join(TEST_OUTPUT_FILE_NAME);
-    let output_args = ["--output", &output_file.to_string_lossy()];
+    let output_args = [];
     let default_env_var: HashMap<&str, &str> = HashMap::from([(xplat_launcher::DO_NOT_SHOW_ERROR_UI_ENV_VAR, "1")]);
 
-    let result = match run_launcher_impl(&test, &output_args, default_env_var, &output_file) {
+    let result = match run_launcher_impl(&test, &output_args, default_env_var, None) {
         Ok(launcher_run_result) => launcher_run_result,
         Err(e) => {
             panic!("Failed to get launcher run result: {e:?}")
@@ -623,7 +620,10 @@ pub fn run_launcher(layout_specification: &LayoutSpec) -> LauncherRunResult {
     result
 }
 
-/// Run launcher with command line arguments and environment variables and return dump of launch parameters
+/// Run launcher with command line arguments and environment variables and return `LauncherRunResult` which contains:
+/// - exit status of launched application
+/// - dump of launch parameters
+/// - std_out of launcher
 fn run_launcher_and_get_dump(test: &TestEnvironment, args: &[&str], envs: HashMap<&str, &str>) -> IntellijMainDumpedLaunchParameters {
     let output_file = test.test_root_dir.path().join(TEST_OUTPUT_FILE_NAME);
 
@@ -634,7 +634,7 @@ fn run_launcher_and_get_dump(test: &TestEnvironment, args: &[&str], envs: HashMa
     let default_env_var: HashMap<&str, &str> = HashMap::from([(xplat_launcher::DO_NOT_SHOW_ERROR_UI_ENV_VAR, "1")]);
     let full_env_vars: HashMap<&str, &str> = default_env_var.into_iter().chain(envs).collect();
 
-    let result = match run_launcher_impl(&test, full_args, full_env_vars, &output_file) {
+    let result = match run_launcher_impl(&test, full_args, full_env_vars, Some(&output_file)) {
             Ok(launcher_dump) => launcher_dump,
             Err(e) => {
                 panic!("Failed to get launcher run result: {e:?}")
@@ -681,7 +681,7 @@ fn run_remote_dev(test: &TestEnvironment, args: &[&str], envs: HashMap<&str, &st
     ]);
     let full_env_vars: HashMap<&str, &str> = default_env_var.into_iter().chain(envs).collect();
 
-    let result = match run_launcher_impl(&test, args, full_env_vars, &output_file) {
+    let result = match run_launcher_impl(&test, args, full_env_vars, Some(&output_file)) {
         Ok(launcher_dump) => launcher_dump,
         Err(e) => {
             panic!("Failed to get launcher run result: {e:?}")
