@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orde
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.Test
 
-@TestMetadata("multiplatform/experimentalTier")
+@TestMetadata("multiplatform/core/experimentalTier")
 class KotlinMppExperimentalTierCasesImportingTest : AbstractKotlinMppGradleImportingTest() {
     override fun TestConfigurationDslScope.defaultTestConfiguration() {
         hideResourceRoots = true
