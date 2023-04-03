@@ -30,6 +30,7 @@ internal fun CommonCompilerArguments.internLargeArguments(interner: Interner) {
 
     if (this is K2JVMCompilerArguments) {
         classpath?.internElements()
+        javaModulePath?.internElements()
         friendPaths?.internElements()
         additionalJavaModules?.internElements()
     }
