@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.telemetry
 
+import com.intellij.openapi.application.ApplicationInfo
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.metrics.Meter
 import io.opentelemetry.sdk.OpenTelemetrySdk
@@ -26,10 +27,13 @@ object TraceManager {
   private var sdk: OpenTelemetry = OpenTelemetry.noop()
   private var verboseMode: Boolean = false
 
-  fun init(mainScope: CoroutineScope) {
+  fun init(mainScope: CoroutineScope, appInfo: ApplicationInfo, enableMetricsByDefault: Boolean) {
     val otelSdkBuilder = OpenTelemetrySdk.builder()
-    sdk = OTelConfigurator(mainScope, otelSdkBuilder).getConfiguredSdkBuilder().setPropagators(
-      ContextPropagators.create(W3CTraceContextPropagator.getInstance())).buildAndRegisterGlobal()
+    sdk = OTelConfigurator(mainScope, otelSdkBuilder, appInfo, enableMetricsByDefault)
+      .getConfiguredSdkBuilder()
+      .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
+      .buildAndRegisterGlobal()
+
     verboseMode = System.getProperty("idea.diagnostic.opentelemetry.verbose")?.toBooleanStrictOrNull() == true
   }
 

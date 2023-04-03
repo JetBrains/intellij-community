@@ -203,7 +203,7 @@ fun CoroutineScope.startApplication(args: List<String>,
   val telemetryInitJob = async {
     appInfoDeferred.join()
     runActivity("opentelemetry configuration") {
-      TraceManager.init(mainScope)
+      TraceManager.init(mainScope, ApplicationInfoImpl.getShadowInstance(), true)
     }
   }
 
