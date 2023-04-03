@@ -22,16 +22,14 @@ class KotlinGradleTestNavigationTest : KotlinGradleTestNavigationTestCase() {
             executeTasks(":test")
 
             assertTestExecutionTree {
-                assertNode("[root]") {
-                    assertNode("TestCase") {
-                        assertNode("parametrized test [1] 1, first")
-                        assertNode("parametrized test [2] 2, second")
-                        assertNode("pretty test")
-                        assertNode("successful test")
-                        assertNode("test")
-                        assertNode("ugly parametrized test [1] 3, third")
-                        assertNode("ugly parametrized test [2] 4, fourth")
-                    }
+                assertNode("TestCase") {
+                    assertNode("parametrized test [1] 1, first")
+                    assertNode("parametrized test [2] 2, second")
+                    assertNode("pretty test")
+                    assertNode("successful test")
+                    assertNode("test")
+                    assertNode("ugly parametrized test [1] 3, third")
+                    assertNode("ugly parametrized test [2] 4, fourth")
                 }
             }
             assertSMTestProxyTree {
@@ -80,20 +78,18 @@ class KotlinGradleTestNavigationTest : KotlinGradleTestNavigationTestCase() {
             executeTasks(":test")
 
             assertTestExecutionTree {
-                assertNode("[root]") {
-                    assertNode("TestCase") {
-                        assertNode("parametrized test") {
-                            assertNode("[1] 1, first")
-                            assertNode("[2] 2, second")
-                        }
-                        assertNode("pretty parametrized test") {
-                            assertNode("[1] 3, third")
-                            assertNode("[2] 4, fourth")
-                        }
-                        assertNode("pretty test")
-                        assertNode("successful test")
-                        assertNode("test")
+                assertNode("TestCase") {
+                    assertNode("parametrized test") {
+                        assertNode("[1] 1, first")
+                        assertNode("[2] 2, second")
                     }
+                    assertNode("pretty parametrized test") {
+                        assertNode("[1] 3, third")
+                        assertNode("[2] 4, fourth")
+                    }
+                    assertNode("pretty test")
+                    assertNode("successful test")
+                    assertNode("test")
                 }
             }
             assertSMTestProxyTree {
@@ -157,16 +153,14 @@ class KotlinGradleTestNavigationTest : KotlinGradleTestNavigationTestCase() {
             executeTasks(":test")
 
             assertTestExecutionTree {
-                assertNode("[root]") {
-                    assertNode("ParametrizedTestCase") {
-                        assertNode("parametrized test[0]")
-                        assertNode("parametrized test[1]")
-                        assertNode("parametrized test[2]")
-                    }
-                    assertNode("TestCase") {
-                        assertNode("successful test")
-                        assertNode("test")
-                    }
+                assertNode("ParametrizedTestCase") {
+                    assertNode("parametrized test[0]")
+                    assertNode("parametrized test[1]")
+                    assertNode("parametrized test[2]")
+                }
+                assertNode("TestCase") {
+                    assertNode("successful test")
+                    assertNode("test")
                 }
             }
             assertSMTestProxyTree {

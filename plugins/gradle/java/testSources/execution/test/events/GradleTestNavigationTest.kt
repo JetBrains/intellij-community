@@ -22,16 +22,14 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
       executeTasks(":test")
 
       assertTestExecutionTree {
-        assertNode("[root]") {
-          assertNode("TestCase") {
-            assertNode("parametrized_test [1] 1, first")
-            assertNode("parametrized_test [2] 2, second")
-            assertNode("pretty test")
-            assertNode("successful test")
-            assertNode("test")
-            assertNode("ugly_parametrized_test [1] 3, third")
-            assertNode("ugly_parametrized_test [2] 4, fourth")
-          }
+        assertNode("TestCase") {
+          assertNode("parametrized_test [1] 1, first")
+          assertNode("parametrized_test [2] 2, second")
+          assertNode("pretty test")
+          assertNode("successful test")
+          assertNode("test")
+          assertNode("ugly_parametrized_test [1] 3, third")
+          assertNode("ugly_parametrized_test [2] 4, fourth")
         }
       }
       assertSMTestProxyTree {
@@ -80,20 +78,18 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
       executeTasks(":test")
 
       assertTestExecutionTree {
-        assertNode("[root]") {
-          assertNode("TestCase") {
-            assertNode("parametrized test") {
-              assertNode("[1] 1, first")
-              assertNode("[2] 2, second")
-            }
-            assertNode("pretty parametrized test") {
-              assertNode("[1] 3, third")
-              assertNode("[2] 4, fourth")
-            }
-            assertNode("pretty test")
-            assertNode("successful test")
-            assertNode("test")
+        assertNode("TestCase") {
+          assertNode("parametrized test") {
+            assertNode("[1] 1, first")
+            assertNode("[2] 2, second")
           }
+          assertNode("pretty parametrized test") {
+            assertNode("[1] 3, third")
+            assertNode("[2] 4, fourth")
+          }
+          assertNode("pretty test")
+          assertNode("successful test")
+          assertNode("test")
         }
       }
       assertSMTestProxyTree {
@@ -156,16 +152,14 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
       executeTasks(":test")
 
       assertTestExecutionTree {
-        assertNode("[root]") {
-          assertNode("ParametrizedTestCase") {
-            assertNode("parametrized_test[0]")
-            assertNode("parametrized_test[1]")
-            assertNode("parametrized_test[2]")
-          }
-          assertNode("TestCase") {
-            assertNode("successful_test")
-            assertNode("test")
-          }
+        assertNode("ParametrizedTestCase") {
+          assertNode("parametrized_test[0]")
+          assertNode("parametrized_test[1]")
+          assertNode("parametrized_test[2]")
+        }
+        assertNode("TestCase") {
+          assertNode("successful_test")
+          assertNode("test")
         }
       }
       assertSMTestProxyTree {
@@ -209,11 +203,9 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
       executeTasks(":test")
 
       assertTestExecutionTree {
-        assertNode("[root]") {
-          assertNode("SpockTestCase") {
-            assertNode("length of #name is #length") {
-              assertNode("length of Spock is 5")
-            }
+        assertNode("SpockTestCase") {
+          assertNode("length of #name is #length") {
+            assertNode("length of Spock is 5")
           }
         }
       }

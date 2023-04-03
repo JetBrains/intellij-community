@@ -22,18 +22,18 @@ class GradleRerunFailedTestsTest : GradleRerunFailedTestsTestCase() {
       """.trimMargin())
 
       executeTasks(":test --tests org.example.TestCase")
-      assertTestExecutionTree("""
-        |-[root]
-        | -TestCase
-        |  test1
-        |  test2
-      """.trimMargin())
+      assertTestExecutionTree {
+        assertNode("TestCase") {
+          assertNode("test1")
+          assertNode("test2")
+        }
+      }
       Assertions.assertTrue(performRerunFailedTestsAction())
-      assertTestExecutionTree("""
-        |-[root]
-        | -TestCase
-        |  test2
-      """.trimMargin())
+      assertTestExecutionTree {
+        assertNode("TestCase") {
+          assertNode("test2")
+        }
+      }
     }
   }
 
@@ -63,35 +63,35 @@ class GradleRerunFailedTestsTest : GradleRerunFailedTestsTestCase() {
       """.trimMargin())
 
       executeTasks(":test --tests org.example.SubTestCase1")
-      assertTestExecutionTree("""
-        |-[root]
-        | -SubTestCase1
-        |  test1
-        |  test2
-      """.trimMargin())
+      assertTestExecutionTree {
+        assertNode("SubTestCase1") {
+          assertNode("test1")
+          assertNode("test2")
+        }
+      }
       Assertions.assertTrue(performRerunFailedTestsAction())
-      assertTestExecutionTree("""
-        |-[root]
-        | -SubTestCase1
-        |  test2
-      """.trimMargin())
+      assertTestExecutionTree {
+        assertNode("SubTestCase1") {
+          assertNode("test2")
+        }
+      }
 
       executeTasks(":test --tests org.example.SubTestCase2")
-      assertTestExecutionTree("""
-        |-[root]
-        | -SubTestCase2
-        |  test1
-        |  test2
-        |  test3
-        |  test4
-      """.trimMargin())
+      assertTestExecutionTree {
+        assertNode("SubTestCase2") {
+          assertNode("test1")
+          assertNode("test2")
+          assertNode("test3")
+          assertNode("test4")
+        }
+      }
       Assertions.assertTrue(performRerunFailedTestsAction())
-      assertTestExecutionTree("""
-        |-[root]
-        | -SubTestCase2
-        |  test2
-        |  test4
-      """.trimMargin())
+      assertTestExecutionTree {
+        assertNode("SubTestCase2") {
+          assertNode("test2")
+          assertNode("test4")
+        }
+      }
     }
   }
 }

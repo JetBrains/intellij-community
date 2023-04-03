@@ -179,18 +179,26 @@ abstract class GradleTestExecutionTestCase : GradleProjectTestCase() {
     return isSupportedJUnit5(gradleVersion)
   }
 
-  fun assertBuildExecutionTree(assert: TreeAssertion<Nothing?>.() -> Unit) {
+  private fun assertFullBuildExecutionTree(assert: TreeAssertion<Nothing?>.() -> Unit) {
     buildViewTestFixture.assertBuildViewTreeEquals { treeString ->
       val tree = buildTree(treeString!!)
       TreeAssertion.assertTree(tree, assert)
     }
   }
 
-  fun assertBuildExecutionTreeContains(assert: TreeAssertion<Nothing?>.() -> Unit) {
+  private fun assertFullBuildExecutionTreeContains(assert: TreeAssertion<Nothing?>.() -> Unit) {
     buildViewTestFixture.assertBuildViewTreeEquals { treeString ->
       val tree = buildTree(treeString!!)
       TreeAssertion.assertMatchesTree(tree, assert)
     }
+  }
+
+  fun assertBuildExecutionTree(assert: TreeAssertion.Node<Nothing?>.() -> Unit) {
+    assertFullBuildExecutionTree { assertNode("", assert) }
+  }
+
+  fun assertBuildExecutionTreeContains(assert: TreeAssertion.Node<Nothing?>.() -> Unit) {
+    assertFullBuildExecutionTreeContains { assertNode("", assert) }
   }
 
   fun assertTestExecutionConsoleContains(expected: String) {
@@ -210,10 +218,18 @@ abstract class GradleTestExecutionTestCase : GradleProjectTestCase() {
     Assertions.assertEquals(expected, tree.sortedTree().getTreeString())
   }
 
-  fun assertTestExecutionTree(assert: TreeAssertion<Nothing?>.() -> Unit) {
+  private fun assertFullTestExecutionTree(assert: TreeAssertion<Nothing?>.() -> Unit) {
     val treeString = getTestExecutionTreeString()
     val tree = buildTree(treeString)
     TreeAssertion.assertTree(tree.sortedTree(), assert)
+  }
+
+  fun assertTestExecutionTree(assert: TreeAssertion.Node<Nothing?>.() -> Unit) {
+    assertFullTestExecutionTree { assertNode("[root]", assert) }
+  }
+
+  fun assertTestExecutionTreeIsEmpty() {
+    assertFullTestExecutionTree { assertNode("[root]") }
   }
 
   fun assertSMTestProxyTree(assert: TreeAssertion<AbstractTestProxy>.() -> Unit) {

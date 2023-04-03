@@ -40,52 +40,48 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
       executeTasks(":test :additionalTest")
 
       assertTestExecutionTree {
-        assertNode("[root]") {
-          assertNode("AppTest") {
-            assertNode("test")
-            assertNode("test")
-          }
+        assertNode("AppTest") {
+          assertNode("test")
+          assertNode("test")
         }
       }
       assertBuildExecutionTreeContains {
-        assertNode("") {
-          assertNode("failed") {
-            assertNode(":compileJava")
-            assertNode(":processResources")
-            assertNode(":classes")
-            assertNode(":compileTestJava")
-            assertNode(":processTestResources")
-            assertNode(":testClasses")
-            assertNode(":test") {
-              if (isSupportedTestLauncher()) {
-                assertNode("Gradle Test Run :test") {
-                  assertNode("Gradle Test Executor 1") {
-                    assertNode("AppTest") {
-                      assertNode("Test test()(org.example.AppTest)")
-                    }
-                  }
-                }
-              }
-            }
-            assertNode(":additionalTest") {
-              if (isSupportedTestLauncher()) {
-                assertNode("Gradle Test Run :additionalTest") {
-                  assertNode("Gradle Test Executor 2") {
-                    assertNode("AppTest") {
-                      assertNode("Test test()(org.example.AppTest)") {
-                        assertNode("'Test error message'")
-                      }
-                    }
-                  }
-                }
-              }
-              else {
-                assertNode("There were failing tests. See the report at:")
-              }
-            }
+        assertNode("failed") {
+          assertNode(":compileJava")
+          assertNode(":processResources")
+          assertNode(":classes")
+          assertNode(":compileTestJava")
+          assertNode(":processTestResources")
+          assertNode(":testClasses")
+          assertNode(":test") {
             if (isSupportedTestLauncher()) {
-              assertNode("Test failed.")
+              assertNode("Gradle Test Run :test") {
+                assertNode("Gradle Test Executor 1") {
+                  assertNode("AppTest") {
+                    assertNode("Test test()(org.example.AppTest)")
+                  }
+                }
+              }
             }
+          }
+          assertNode(":additionalTest") {
+            if (isSupportedTestLauncher()) {
+              assertNode("Gradle Test Run :additionalTest") {
+                assertNode("Gradle Test Executor 2") {
+                  assertNode("AppTest") {
+                    assertNode("Test test()(org.example.AppTest)") {
+                      assertNode("'Test error message'")
+                    }
+                  }
+                }
+              }
+            }
+            else {
+              assertNode("There were failing tests. See the report at:")
+            }
+          }
+          if (isSupportedTestLauncher()) {
+            assertNode("Test failed.")
           }
         }
       }
@@ -118,10 +114,8 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
       executeTasks(":test")
 
       assertTestExecutionTree {
-        assertNode("[root]") {
-          assertNode("AppTest") {
-            assertNode("test")
-          }
+        assertNode("AppTest") {
+          assertNode("test")
         }
       }
       when {
@@ -150,28 +144,24 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
       executeTasks(":test")
 
       assertTestExecutionTree {
-        assertNode("[root]") {
-          assertNode("AppTest") {
-            assertNode("test")
-          }
+        assertNode("AppTest") {
+          assertNode("test")
         }
       }
       assertBuildExecutionTree {
-        assertNode("") {
-          assertNode("successful") {
-            assertNode(":compileJava")
-            assertNode(":processResources")
-            assertNode(":classes")
-            assertNode(":compileTestJava")
-            assertNode(":processTestResources")
-            assertNode(":testClasses")
-            assertNode(":test") {
-              if (isSupportedTestLauncher()) {
-                assertNode("Gradle Test Run :test") {
-                  assertNode("Gradle Test Executor 1") {
-                    assertNode("AppTest") {
-                      assertNode("Test test()(org.example.AppTest)")
-                    }
+        assertNode("successful") {
+          assertNode(":compileJava")
+          assertNode(":processResources")
+          assertNode(":classes")
+          assertNode(":compileTestJava")
+          assertNode(":processTestResources")
+          assertNode(":testClasses")
+          assertNode(":test") {
+            if (isSupportedTestLauncher()) {
+              assertNode("Gradle Test Run :test") {
+                assertNode("Gradle Test Executor 1") {
+                  assertNode("AppTest") {
+                    assertNode("Test test()(org.example.AppTest)")
                   }
                 }
               }
