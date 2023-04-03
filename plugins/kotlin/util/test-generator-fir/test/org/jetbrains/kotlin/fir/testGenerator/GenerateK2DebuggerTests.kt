@@ -76,11 +76,15 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
             }
         }
 
-        //
-        //testClass<AbstractCoroutineDumpTest> {
-        //    model("coroutines")
-        //}
-        //
+        listOf(
+            AbstractK2IdeK1CodeCoroutineDumpTest::class,
+            AbstractK2IdeK2CodeCoroutineDumpTest::class,
+        ).forEach {
+            testClass(it) {
+                model("coroutines")
+            }
+        }
+
         //testClass<AbstractSequenceTraceTestCase> { // TODO: implement mapping logic for terminal operations
         //    model("sequence/streams/sequence", excludedDirectories = listOf("terminal"))
         //}
@@ -89,9 +93,14 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
         //    model("sequence/streams/sequence", excludedDirectories = listOf("terminal"))
         //}
         //
-        //testClass<AbstractContinuationStackTraceTest> {
-        //    model("continuation")
-        //}
+        listOf(
+            AbstractK2IdeK1CodeContinuationStackTraceTest::class,
+            AbstractK2IdeK2CodeContinuationStackTraceTest::class,
+        ).forEach {
+            testClass(it) {
+                model("continuation")
+            }
+        }
 
         listOf(AbstractK2IdeK1CodeKotlinVariablePrintingTest::class, AbstractK2IdeK2CodeKotlinVariablePrintingTest::class,).forEach {
             testClass(it) {
@@ -99,9 +108,14 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
             }
         }
 
-        //testClass<AbstractXCoroutinesStackTraceTest> {
-        //    model("xcoroutines")
-        //}
+        listOf(
+            AbstractK2IdeK1CodeXCoroutinesStackTraceTest::class,
+            AbstractK2IdeK2CodeXCoroutinesStackTraceTest::class,
+        ).forEach {
+            testClass(it) {
+                model("xcoroutines")
+            }
+        }
 
         testClass<AbstractK2ClassNameCalculatorTest> {
             model("classNameCalculator")
