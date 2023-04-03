@@ -4,7 +4,7 @@
 
 package com.intellij.idea
 
-import awt.IntellijGraphicEnvironment
+import com.intellij.toolkit.IdeGraphicEnvironment
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.rootTask
@@ -104,7 +104,7 @@ private fun initProjector() {
 
 private fun initRemoteDevGraphicsEnvironment() {
   JBR.getProjectorUtils().setLocalGraphicsEnvironmentProvider {
-    if (isLuxEnabled()) IntellijGraphicEnvironment.instance
+    if (isLuxEnabled()) IdeGraphicEnvironment.instance
     else AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.awt.image.PGraphicsEnvironment").getDeclaredMethod("getInstance").invoke(null) as GraphicsEnvironment
   }
 }

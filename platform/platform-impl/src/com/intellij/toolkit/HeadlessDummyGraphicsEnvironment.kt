@@ -1,16 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package awt
+package com.intellij.toolkit
 
+import org.jetbrains.annotations.ApiStatus
 import java.awt.GraphicsConfiguration
 import java.awt.GraphicsDevice
 import java.awt.Rectangle
 import java.awt.geom.AffineTransform
 import java.awt.image.ColorModel
 
-class HeadlessDummyGraphicsEnvironment: ClientIntellijGraphicsEnvironment {
+@ApiStatus.Internal
+class HeadlessDummyGraphicsEnvironment: ClientGraphicsEnvironment {
   companion object {
     @JvmStatic
-    val instance = HeadlessDummyGraphicsEnvironment()
+    val instance: HeadlessDummyGraphicsEnvironment = HeadlessDummyGraphicsEnvironment()
   }
 
   private val dummyDevice = object: GraphicsDevice() {

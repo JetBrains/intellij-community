@@ -1,17 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
-package awt
+package com.intellij.toolkit
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.GraphicsConfiguration
 import java.awt.GraphicsDevice
 import java.awt.Rectangle
 
-interface ClientIntellijGraphicsEnvironment {
+@Internal
+interface ClientGraphicsEnvironment {
   companion object {
     @JvmStatic
-    fun getInstance(): ClientIntellijGraphicsEnvironment = ApplicationManager.getApplication().service()
+    fun getInstance(): ClientGraphicsEnvironment = ApplicationManager.getApplication().service()
   }
   fun getNumScreens(): Int
   fun makeScreenDevice(id: Int): GraphicsDevice

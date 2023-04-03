@@ -1,28 +1,30 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
-package awt
+package com.intellij.toolkit
 
 import com.intellij.openapi.application.ApplicationManager
+import org.jetbrains.annotations.ApiStatus.Internal
 import sun.awt.PlatformGraphicsInfo
 import sun.java2d.SunGraphicsEnvironment
 import java.awt.Rectangle
 
-class IntellijGraphicEnvironment: SunGraphicsEnvironment() {
+@Internal
+class IdeGraphicEnvironment: SunGraphicsEnvironment() {
   companion object {
     @JvmStatic
-    val instance = IntellijGraphicEnvironment()
+    val instance: IdeGraphicEnvironment = IdeGraphicEnvironment()
 
     @JvmStatic
     val isRealHeadless
       get() = PlatformGraphicsInfo.getDefaultHeadlessProperty();
 
     @JvmStatic
-    private fun getClientInstance(): ClientIntellijGraphicsEnvironment {
+    private fun getClientInstance(): ClientGraphicsEnvironment {
       val application = ApplicationManager.getApplication()
       if (application == null) {
         return HeadlessDummyGraphicsEnvironment.instance
       }
-      val client = ClientIntellijGraphicsEnvironment.getInstance()
+      val client = ClientGraphicsEnvironment.getInstance()
       if (!client.isInitialized()) {
         return HeadlessDummyGraphicsEnvironment.instance
       }

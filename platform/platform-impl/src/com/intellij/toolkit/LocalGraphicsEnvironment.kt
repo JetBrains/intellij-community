@@ -1,13 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
-package awt
+package com.intellij.toolkit
 
+import org.jetbrains.annotations.ApiStatus
 import sun.awt.PlatformGraphicsInfo
 import sun.java2d.SunGraphicsEnvironment
 import java.awt.GraphicsDevice
 
-class LocalIntellijGraphicsEnvironment: ClientIntellijGraphicsEnvironment {
-  private val localGraphicsEnvironment: SunGraphicsEnvironment? = if (!IntellijGraphicEnvironment.isRealHeadless) PlatformGraphicsInfo.createGE() as SunGraphicsEnvironment else null
+@ApiStatus.Internal
+class LocalGraphicsEnvironment: ClientGraphicsEnvironment {
+  private val localGraphicsEnvironment: SunGraphicsEnvironment? = if (!IdeGraphicEnvironment.isRealHeadless) PlatformGraphicsInfo.createGE() as SunGraphicsEnvironment else null
 
   override fun isInitialized() = true
   override fun getNumScreens(): Int {
