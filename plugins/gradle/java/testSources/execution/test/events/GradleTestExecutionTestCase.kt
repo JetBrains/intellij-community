@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.execution.test.runner
+package org.jetbrains.plugins.gradle.execution.test.events
 
 import com.intellij.execution.ExecutorRegistry
 import com.intellij.execution.RunManager
@@ -29,7 +29,9 @@ import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
 import com.intellij.util.LocalTimeCounter
 import com.intellij.util.ui.tree.TreeUtil
-import org.jetbrains.plugins.gradle.execution.test.runner.fixture.TestExecutionConsoleEventCounter
+import org.jetbrains.plugins.gradle.execution.test.events.fixture.TestExecutionConsoleEventCounter
+import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole
+import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsoleManager
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isSupportedJUnit5
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration

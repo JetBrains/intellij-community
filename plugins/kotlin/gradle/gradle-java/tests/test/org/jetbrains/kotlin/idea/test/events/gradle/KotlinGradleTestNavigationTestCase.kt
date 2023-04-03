@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.test.events.gradle
 
 import com.intellij.testFramework.RunAll.Companion.runAll
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestNavigationTestCase
+import org.jetbrains.plugins.gradle.execution.test.events.GradleTestNavigationTestCase
 
 abstract class KotlinGradleTestNavigationTestCase : GradleTestNavigationTestCase() {
 

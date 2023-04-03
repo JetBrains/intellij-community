@@ -1,5 +1,5 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.gradle.execution.test.runner
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.gradle.execution.test.producer
 
 import com.intellij.execution.RunManager
 import com.intellij.execution.actions.ConfigurationContext
@@ -22,6 +22,10 @@ import com.intellij.testFramework.TestActionEvent
 import com.intellij.testIntegration.TestRunLineMarkerProvider
 import com.intellij.util.LocalTimeCounter
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducer
+import org.jetbrains.plugins.gradle.execution.test.runner.PatternGradleConfigurationProducer
+import org.jetbrains.plugins.gradle.execution.test.runner.TestName
+import org.jetbrains.plugins.gradle.execution.test.runner.TestTasksChooser
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
@@ -112,14 +116,14 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
   }
 
   fun GradleTestRunConfigurationProducer.setTestTasksChooser(testTasksFilter: (TestName) -> Boolean) {
-    testTasksChooser = object : TestTasksChooser() {
+    setTestTasksChooser(object : TestTasksChooser() {
       override fun <T> chooseTestTasks(project: Project,
                                        context: DataContext,
                                        testTasks: Map<TestName, T>,
                                        consumer: (List<T>) -> Unit) {
         consumer(testTasks.filterKeys(testTasksFilter).values.toList())
       }
-    }
+    })
   }
 
   protected fun GradleTestRunConfigurationProducer.createTemplateConfiguration(): GradleRunConfiguration {
