@@ -24,7 +24,11 @@ class IdeGraphicEnvironment: SunGraphicsEnvironment() {
       if (application == null) {
         return HeadlessDummyGraphicsEnvironment.instance
       }
-      val client = ClientGraphicsEnvironment.getInstance()
+      val client = try {
+        ClientGraphicsEnvironment.getInstance()
+      } catch (ex: IllegalStateException) {   // service could be not loaded yet
+        HeadlessDummyGraphicsEnvironment.instance
+      }
       if (!client.isInitialized()) {
         return HeadlessDummyGraphicsEnvironment.instance
       }
