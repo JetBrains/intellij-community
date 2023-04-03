@@ -1,10 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.codeInspection.isInheritorOf
+import com.intellij.codeInspection.*
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.Service
@@ -102,7 +99,8 @@ internal class RetrievingServiceInspection : DevKitUastInspectionBase() {
     val qualifiedName = method?.getContainingUClass()?.qualifiedName ?: return
     val serviceName = StringUtil.getShortName(qualifiedName)
     val message = DevKitBundle.message("inspection.retrieving.light.service.can.be.replaced.with", serviceName, method.name)
-    holder.registerProblem(node.sourcePsi!!, message, ReplaceWithGetInstanceCallFix(serviceName, method.name, isApplicationLevelService))
+    holder.registerProblem(node.sourcePsi!!, message, ProblemHighlightType.WEAK_WARNING,
+                           ReplaceWithGetInstanceCallFix(serviceName, method.name, isApplicationLevelService))
   }
 
   private fun getLevel(annotation: UAnnotation): Level {

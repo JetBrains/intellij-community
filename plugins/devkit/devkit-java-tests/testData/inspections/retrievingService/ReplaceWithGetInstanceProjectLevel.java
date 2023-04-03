@@ -10,6 +10,6 @@ final class MyService {
 
   void foo(Project project) {
     System.out.println(42);
-    MyService service = <warning descr="Can be replaced with 'MyService.getInstance()' call">project.getService<caret>(MyService.class)</warning>;
+    MyService service = <weak_warning descr="Can be replaced with 'MyService.getInstance()' call">project.getService<caret>(MyService.class)</weak_warning>;
   }
 }
