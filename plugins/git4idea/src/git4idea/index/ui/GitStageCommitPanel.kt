@@ -114,7 +114,7 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
         includedRoots.contains(it)
       }.values.flatMap { it.getStagedChanges(project) }
     }
-    val isCommitAll = isCommitAllProperty.asBoolean() && trackerState.stagedRoots.isEmpty()
+    val isCommitAll = isCommitAllProperty.asBoolean() && trackerState.stagedRoots.isEmpty() && trackerState.changedRoots.isNotEmpty()
     val rootsToCommit: Set<VirtualFile>
       get() {
         if (isCommitAll) {
