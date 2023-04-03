@@ -314,7 +314,7 @@ fun SourceRootEntity.hashCodeAsOrderEntry(): Int {
   return Objects.hash(packagePrefix, generated, url)
 }
 
-private fun ContentRootEntity.excludedUrlsSet(): Set<VirtualFileUrl> = this.excludedUrls.map { url }.toHashSet()
+private fun ContentRootEntity.excludedUrlsSet(): Set<VirtualFileUrl> = this.excludedUrls.map { excludedUrl -> excludedUrl.url }.toHashSet()
 
 fun ContentRootEntity.equalsAsOrderEntry(other: ContentRootEntity): Boolean {
   if (this.url != other.url) return false
