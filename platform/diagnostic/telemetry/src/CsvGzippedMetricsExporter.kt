@@ -89,7 +89,7 @@ class CsvGzippedMetricsExporter(writeToFile: Path) : MetricExporter {
     val logger = Logger.getInstance(CsvGzippedMetricsExporter::class.java)
 
     fun generateFileForConnectionMetrics(): Path {
-      val connectionMetricsPath = "open-telemetry-connection-metrics.gz"
+      val connectionMetricsPath = "open-telemetry-connection-metrics.csv.gz"
       val pathResolvedAgainstLogDir = PathManager.getLogDir().resolve(connectionMetricsPath).toAbsolutePath()
       val maxFilesToKeep = SystemProperties.getIntProperty("idea.diagnostic.opentelemetry.rdct.metrics.max-files-to-keep", 14)
 
@@ -97,7 +97,7 @@ class CsvGzippedMetricsExporter(writeToFile: Path) : MetricExporter {
     }
 
     fun generateFileForLuxMetrics(): Path {
-      val luxMetricsPath = "open-telemetry-lux-metrics.gz"
+      val luxMetricsPath = "open-telemetry-lux-metrics.csv.gz"
       val pathResolvedAgainstLogDir = PathManager.getLogDir().resolve(luxMetricsPath).toAbsolutePath()
       val maxFilesToKeep = SystemProperties.getIntProperty("idea.diagnostic.opentelemetry.lux.metrics.max-files-to-keep", 14)
 
