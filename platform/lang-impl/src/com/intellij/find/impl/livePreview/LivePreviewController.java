@@ -3,6 +3,8 @@ package com.intellij.find.impl.livePreview;
 
 import com.intellij.find.*;
 import com.intellij.find.impl.FindResultImpl;
+import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -187,7 +189,13 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
       else {
         offset = selectionModel.getBlockSelectionStarts()[0];
       }
-      FindUtil.replace(project, e, offset, copy, this);
+      LocalHistoryAction action = LocalHistory.getInstance().startAction(
+        FindBundle.message("find.replace.all.local.history.action", copy.getStringToFind(), copy.getStringToReplace()));
+      try {
+        FindUtil.replace(project, e, offset, copy, this);
+      } finally {
+        action.finish();
+      }
     }
   }
 
