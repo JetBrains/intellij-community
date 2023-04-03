@@ -2,6 +2,8 @@
 
   <resource-bundle>messages.searchEverywhereMlTyposBundle</resource-bundle>
 
+  <incompatible-with>com.intellij.modules.androidstudio</incompatible-with>
+
   <extensions defaultExtensionNs="com.intellij">
     <searchEverywhereSpellingCorrector
       implementation="com.intellij.searchEverywhereMl.typos.SearchEverywhereSpellingCorrectorFactoryImpl" />
