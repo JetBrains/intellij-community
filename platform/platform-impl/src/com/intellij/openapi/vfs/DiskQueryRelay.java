@@ -1,10 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -43,11 +41,6 @@ public final class DiskQueryRelay<Param, Result> {
   }
 
   public Result accessDiskWithCheckCanceled(@NotNull Param arg) {
-    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-    if (indicator == null) {
-      return myFunction.apply(arg);
-    }
-
     Future<Result> future = myTasks.computeIfAbsent(arg, eachArg -> ProcessIOExecutorService.INSTANCE.submit(() -> {
       try {
         return myFunction.apply(eachArg);
@@ -60,7 +53,7 @@ public final class DiskQueryRelay<Param, Result> {
       // maybe it was very fast and completed before being put into a map
       myTasks.remove(arg, future);
     }
-    return ProgressIndicatorUtils.awaitWithCheckCanceled(future, indicator);
+    return ProgressIndicatorUtils.awaitWithCheckCanceled(future);
   }
 
   /**
