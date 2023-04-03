@@ -809,13 +809,13 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
       UIUtil.setOpaqueRecursively(myScopeDetailsPanel, false);
       myResultsPreviewTable.setBackground(background);
       previewPanel.setBackground(background);
-      scopesPanel.setBorder(JBUI.Borders.empty(4, 20));
+      scopesPanel.setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.FindPopup.scopesPanelInsets()));
       myScopeSelectionToolbar.setBorder(JBUI.Borders.empty());
 
       Insets textFieldBorderInsets = JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets();
       //noinspection UseDPIAwareInsets
       myPreviewSplitter.setBlindZone(() -> new Insets(0, textFieldBorderInsets.left, 0, textFieldBorderInsets.right));
-      bottomPanel.setBorder(JBUI.Borders.empty(5, 18));
+      bottomPanel.setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.FindPopup.bottomPanelInsets()));
       bottomPanel.setBackground(JBUI.CurrentTheme.Advertiser.background());
       scrollPane.setBorder(JBUI.Borders.emptyBottom(4));
     } else {
