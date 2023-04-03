@@ -12,6 +12,8 @@ import kotlinx.coroutines.debug.internal.DebugCoroutineInfo
 import kotlinx.coroutines.debug.internal.DebugProbesImpl
 import kotlinx.coroutines.debug.internal.SUSPENDED
 import kotlinx.coroutines.internal.ScopeCoroutine
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.BufferedOutputStream
 import java.io.ByteArrayOutputStream
@@ -19,6 +21,14 @@ import java.io.PrintStream
 import java.nio.charset.StandardCharsets
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+
+internal const val COROUTINE_DUMP_HEADER: @NonNls String = "---------- Coroutine dump ----------"
+internal const val COROUTINE_DUMP_HEADER_STRIPPED: @NonNls String = "---------- Coroutine dump (stripped) ----------"
+
+@Internal
+fun isCoroutineDumpHeader(line: String): Boolean {
+  return line == COROUTINE_DUMP_HEADER || line == COROUTINE_DUMP_HEADER_STRIPPED
+}
 
 fun enableCoroutineDump() {
   runCatching {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -18,10 +18,10 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
-public final class ThreadDumper {
+import static com.intellij.diagnostic.CoroutineDumperKt.COROUTINE_DUMP_HEADER;
+import static com.intellij.diagnostic.CoroutineDumperKt.COROUTINE_DUMP_HEADER_STRIPPED;
 
-  private static final @NonNls String COROUTINE_DUMP_HEADER = "---------- Coroutine dump ----------";
-  private static final @NonNls String COROUTINE_DUMP_HEADER_STRIPPED = "---------- Coroutine dump (stripped) ----------";
+public final class ThreadDumper {
 
   private ThreadDumper() {
   }
@@ -250,11 +250,5 @@ public final class ThreadDumper {
       case TERMINATED: return "terminated";
     }
     return null;
-  }
-
-  @Internal
-  public static boolean isCoroutineDumpHeader(@NotNull String line) {
-    return line.equals(COROUTINE_DUMP_HEADER) ||
-           line.equals(COROUTINE_DUMP_HEADER_STRIPPED);
   }
 }

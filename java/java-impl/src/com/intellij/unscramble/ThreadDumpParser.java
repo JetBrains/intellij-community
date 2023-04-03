@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.unscramble;
 
-import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -11,6 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.intellij.diagnostic.CoroutineDumperKt.isCoroutineDumpHeader;
 
 
 public final class ThreadDumpParser {
@@ -39,7 +40,7 @@ public final class ThreadDumpParser {
     boolean haveNonEmptyStackTrace = false;
     StringBuilder coroutineDump = null;
     for(@NonNls String line: StringUtil.tokenize(threadDump, "\r\n")) {
-      if (ThreadDumper.isCoroutineDumpHeader(line)) {
+      if (isCoroutineDumpHeader(line)) {
         coroutineDump = new StringBuilder();
       }
       if (coroutineDump != null) {
