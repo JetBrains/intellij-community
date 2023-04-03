@@ -20,9 +20,8 @@ import org.jetbrains.kotlin.codegen.coroutines.SUSPEND_FUNCTION_COMPLETION_PARAM
 import org.jetbrains.kotlin.codegen.inline.INLINE_FUN_VAR_SUFFIX
 import org.jetbrains.kotlin.codegen.inline.isFakeLocalVariableForInline
 import org.jetbrains.kotlin.idea.debugger.base.util.*
-import org.jetbrains.kotlin.idea.debugger.core.CONTEXT_RECEIVER_PREFIX
-import org.jetbrains.kotlin.idea.debugger.core.CONTEXT_RECEIVER_PREFIX_OLD
 import org.jetbrains.kotlin.idea.debugger.core.ToggleKotlinVariablesState
+import org.jetbrains.kotlin.name.NameUtils.CONTEXT_RECEIVER_PREFIX
 
 @Suppress("EqualsOrHashCode")
 open class KotlinStackFrame(
@@ -241,8 +240,7 @@ open class KotlinStackFrame(
                     this
                 }
             }
-            name.startsWith(CONTEXT_RECEIVER_PREFIX) || name.startsWith(AsmUtil.CAPTURED_PREFIX + CONTEXT_RECEIVER_PREFIX)
-                    || name.startsWith(CONTEXT_RECEIVER_PREFIX_OLD) || name.startsWith(AsmUtil.CAPTURED_PREFIX + CONTEXT_RECEIVER_PREFIX_OLD) -> {
+            name.startsWith(CONTEXT_RECEIVER_PREFIX) || name.startsWith(AsmUtil.CAPTURED_PREFIX + CONTEXT_RECEIVER_PREFIX) -> {
                 val label = generateThisLabel(type)
                 if (label != null) {
                     clone(getThisName(label), null)
