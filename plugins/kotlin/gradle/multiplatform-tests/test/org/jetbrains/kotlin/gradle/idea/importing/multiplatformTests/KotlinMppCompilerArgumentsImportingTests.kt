@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
 
-@TestMetadata("multiplatform/features/compilerArgsImporting")
+@TestMetadata("multiplatform/core/features/compilerArgsImporting")
 class KotlinMppCompilerArgumentsImportingTests : AbstractKotlinMppGradleImportingTest() {
 
     override fun TestConfigurationDslScope.defaultTestConfiguration() {

@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.face
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.Test
 
-@TestMetadata("multiplatform/features/precisePlatformsImporting")
+@TestMetadata("multiplatform/core/features/precisePlatformsImporting")
 class PrecisePlatformsImportingTests : AbstractKotlinMppGradleImportingTest() {
     override fun TestConfigurationDslScope.defaultTestConfiguration() {
         onlyCheckers(KotlinFacetSettingsChecker)

@@ -16,7 +16,7 @@ import java.io.PrintStream
 import java.util.*
 
 class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImportingTestCase() {
-    override fun testDataDirName(): String = "commonizerImportAndCheckHighlighting"
+    override fun testDataDirName(): String = "multiplatform/commonizerImportAndCheckHighlighting"
 
     override fun printOutput(stream: PrintStream, text: String) = stream.println(text)
 

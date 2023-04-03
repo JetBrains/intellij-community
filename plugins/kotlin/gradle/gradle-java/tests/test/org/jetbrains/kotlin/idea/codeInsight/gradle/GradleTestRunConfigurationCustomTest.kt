@@ -46,7 +46,7 @@ class GradleTestRunConfigurationCustomTest16 : KotlinGradleImportingTestCase() {
     }
 
     override fun testDataDirName(): String {
-        return "testRunConfigurations"
+        return "multiplatform/testRunConfigurations"
     }
 
     override fun createProjectSubFile(relativePath: String, content: String): VirtualFile {

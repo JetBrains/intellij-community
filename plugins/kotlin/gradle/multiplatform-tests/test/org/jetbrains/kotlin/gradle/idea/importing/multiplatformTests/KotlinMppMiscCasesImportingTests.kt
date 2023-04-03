@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orde
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.Test
 
-@TestMetadata("multiplatform/features/misc")
+@TestMetadata("multiplatform/core/features/misc")
 class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest()  {
     override fun TestConfigurationDslScope.defaultTestConfiguration() {
         hideStdlib = true
