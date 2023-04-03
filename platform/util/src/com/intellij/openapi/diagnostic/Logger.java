@@ -29,7 +29,7 @@ import java.util.function.Function;
  * <a href="https://plugins.jetbrains.com/docs/intellij/ide-infrastructure.html#logging">Help | Diagnostic Tools | Debug Log Settings</a>.
  * </ul>
  * <p>
- * Test mode in tests that extend {@code UsefulTest}:
+ * Test mode in tests that extend {@code UsefulTestCase}:
  * <ul>
  * <li>The log messages go to {@code %system%/testlog/idea.log}.
  * <li>Error and warning messages go directly to the console.
