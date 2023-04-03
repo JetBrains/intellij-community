@@ -4,6 +4,8 @@
 
 See `org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil` for common utility methods.
 
+Consider marking inspections with _safe-only_ fixes ready for _Code | Code Cleanup..._(`com.intellij.codeInspection.CleanupLocalInspectionTool`).
+
 Inspections should avoid running whenever they are not applicable in the current context.
 This includes:
 
