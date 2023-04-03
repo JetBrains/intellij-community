@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.util.ThrowableComputable;
+import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -242,6 +243,14 @@ public final class ConcurrencyUtil {
     };
   }
 
+  /**
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * This method does not respect cancellation.
+   * Use {@link com.intellij.util.progress.CancellationUtil#withLockCancellable}.
+   * </p>
+   */
+  @Obsolete
   public static <T, E extends Throwable> T withLock(@NotNull Lock lock, @NotNull ThrowableComputable<T, E> runnable) throws E {
     lock.lock();
     try {
@@ -252,6 +261,14 @@ public final class ConcurrencyUtil {
     }
   }
 
+  /**
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * This method does not respect cancellation.
+   * Use {@link com.intellij.util.progress.CancellationUtil#withLockCancellable}.
+   * </p>
+   */
+  @Obsolete
   public static <E extends Throwable> void withLock(@NotNull Lock lock, @NotNull ThrowableRunnable<E> runnable) throws E {
     lock.lock();
     try {
