@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.FindBundle;
@@ -46,9 +47,7 @@ public class ToggleSelectionOnlyAction extends ToggleAction implements ContextAw
     if (KeymapUtil.isEmacsKeymap()) return null;
     SearchSession search = context.getData(SearchSession.KEY);
     if (search != null) {
-      boolean replaceState = search.getFindModel().isReplaceState();
-      AnAction action = ActionManager.getInstance().getAction(
-        replaceState ? IdeActions.ACTION_REPLACE : IdeActions.ACTION_TOGGLE_FIND_IN_SELECTION_ONLY);
+      AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_TOGGLE_FIND_IN_SELECTION_ONLY);
       return action != null ? action.getShortcutSet() : null;
     }
     return null;
