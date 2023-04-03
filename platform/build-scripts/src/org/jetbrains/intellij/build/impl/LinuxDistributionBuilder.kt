@@ -9,6 +9,7 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
@@ -74,13 +75,14 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     val suffix = if (arch == JvmArchitecture.x64) "" else "-${arch.fileSuffix}"
     context.executeStep(spanBuilder("build linux .tar.gz").setAttribute("arch", arch.name), BuildOptions.LINUX_ARTIFACTS_STEP) {
       if (customizer.buildTarGzWithoutBundledRuntime) {
-        context.executeStep(spanBuilder("Build Linux .tar.gz without bundled Runtime").setAttribute("arch", arch.name),
-                            BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_RUNTIME_STEP) {
-          val tarGzPath = buildTarGz(runtimeDir = null,
-                                     unixDistPath = osAndArchSpecificDistPath,
-                                     suffix = NO_JBR_SUFFIX + suffix,
-                                     arch = arch)
-          checkExecutablePermissions(tarGzPath, rootDirectoryName, includeRuntime = false, arch = arch)
+        launch {
+          context.executeStep(spanBuilder("Build Linux .tar.gz without bundled Runtime").setAttribute("arch", arch.name),
+                              BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_RUNTIME_STEP) {
+            buildTarGz(runtimeDir = null,
+                       unixDistPath = osAndArchSpecificDistPath,
+                       suffix = NO_JBR_SUFFIX + suffix,
+                       arch = arch)
+          }
         }
       }
       if (customizer.buildOnlyBareTarGz) {
@@ -89,17 +91,17 @@ class LinuxDistributionBuilder(override val context: BuildContext,
 
       val runtimeDir = context.bundledRuntime.extract(getProductPrefix(context), OsFamily.LINUX, arch)
       val tarGzPath = buildTarGz(arch = arch, runtimeDir = runtimeDir, unixDistPath = osAndArchSpecificDistPath, suffix = suffix)
-      checkExecutablePermissions(tarGzPath, rootDirectoryName, includeRuntime = true, arch = arch)
-
-      if (arch == JvmArchitecture.x64) {
-        buildSnapPackage(runtimeDir = runtimeDir, unixDistPath = osAndArchSpecificDistPath, arch = arch)
+      launch {
+        if (arch == JvmArchitecture.x64) {
+          buildSnapPackage(runtimeDir = runtimeDir, unixDistPath = osAndArchSpecificDistPath, arch = arch)
+        }
+        else {
+          // TODO: Add snap for aarch64
+          Span.current().addEvent("skip building Snap packages for non-x64 arch")
+        }
       }
-      else {
-        // TODO: Add snap for aarch64
-        Span.current().addEvent("skip building Snap packages for non-x64 arch")
-      }
 
-      if (!context.options.buildStepsToSkip.contains(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
+      if (!context.isStepSkipped(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
         val tempTar = Files.createTempDirectory(context.paths.tempDir, "tar-")
         try {
           unTar(tarGzPath, tempTar)
@@ -157,7 +159,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     if (runtimeDir != null) {
       dirs.add(runtimeDir)
       val javaExecutablePath = "jbr/bin/java"
-      require(Files.exists(runtimeDir.resolve(javaExecutablePath))) { "${javaExecutablePath} was not found under ${runtimeDir}" }
+      check(Files.exists(runtimeDir.resolve(javaExecutablePath))) { "${javaExecutablePath} was not found under ${runtimeDir}" }
     }
 
     val productJsonDir = context.paths.tempDir.resolve("linux.dist.product-info.json${suffix}")
@@ -171,6 +173,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
         tar(tarPath, tarRoot, dirs, executableFileMatchers, context.options.buildDateInSeconds)
         checkInArchive(tarPath, tarRoot, context)
         context.notifyArtifactBuilt(tarPath)
+        checkExecutablePermissions(tarPath, rootDirectoryName, includeRuntime = runtimeDir != null, arch = arch)
       }
     tarPath
   }
