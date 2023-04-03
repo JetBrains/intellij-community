@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.Assume
 import org.junit.Test
 
-@TestMetadata("multiplatform/features/customImportTests")
+@TestMetadata("multiplatform/core/features/customImportTests")
 class KotlinMppCustomImportingTests : AbstractKotlinMppGradleImportingTest(), CustomChecksDsl {
     override fun TestConfigurationDslScope.defaultTestConfiguration() {
         // Disable all default checkers

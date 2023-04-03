@@ -149,5 +149,5 @@ class GradleTestRunConfigurationAndHighlightingTest23 : KotlinGradleImportingTes
         return context.configurationsFromContext.orEmpty()
     }
 
-    override fun testDataDirName(): String = "testRunConfigurations"
+    override fun testDataDirName(): String = "multiplatform/testRunConfigurations"
 }
