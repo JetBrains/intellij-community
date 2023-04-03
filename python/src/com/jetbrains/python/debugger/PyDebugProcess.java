@@ -822,9 +822,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
         if (values == null) {
           return null;
         }
-        if (values != null) {
-          myStackFrameCache.put(frame.getThreadFrameId(), values);
-        }
+        myStackFrameCache.put(frame.getThreadFrameId(), values);
       }
       showFailedTestInfoIfNecessary(frame);
     }
