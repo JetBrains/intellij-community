@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
-internal class OpenOrNonInternalExtensionClassInspection : LocalInspectionTool() {
+internal class ExtensionClassShouldBeFinalAndInternalInspection : LocalInspectionTool() {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     if (!DevKitInspectionUtil.isAllowed(holder.file)) return PsiElementVisitor.EMPTY_VISITOR
@@ -36,11 +36,11 @@ internal class OpenOrNonInternalExtensionClassInspection : LocalInspectionTool()
         if (locateExtensionsByPsiClass(ktLightClass).isEmpty()) return
         if (isOpen) {
           val fix = ChangeModifierFix(elementName, KtTokens.OPEN_KEYWORD, true)
-          holder.registerProblem(openKeyword!!, DevKitKotlinBundle.message("inspection.open.or.non.internal.extension.class.should.not.be.open.text"), fix)
+          holder.registerProblem(openKeyword!!, DevKitKotlinBundle.message("inspection.extension.class.should.be.final.text"), fix)
         }
         if (!isInternal) {
           val fix = ChangeModifierFix(elementName, KtTokens.INTERNAL_KEYWORD, false)
-          holder.registerProblem(nameIdentifier, DevKitKotlinBundle.message("inspection.open.or.non.internal.extension.class.should.be.internal.text"), fix)
+          holder.registerProblem(nameIdentifier, DevKitKotlinBundle.message("inspection.extension.class.should.be.internal.text"), fix)
         }
       }
     }

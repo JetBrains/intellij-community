@@ -14,13 +14,13 @@ import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass
 
-internal class NonFinalOrNonInternalExtensionClassInspection : DevKitJvmInspection() {
+internal class ExtensionClassShouldBeFinalAndPackagePrivateInspection : DevKitJvmInspection() {
 
   override fun buildVisitor(project: Project, sink: HighlightSink, isOnTheFly: Boolean): JvmElementVisitor<Boolean> {
     return object : DefaultJvmElementVisitor<Boolean> {
       override fun visitClass(clazz: JvmClass): Boolean {
         if (clazz !is PsiClass) return true
-        if (clazz.language.id == "kotlin") return true // see OpenOrNonInternalExtensionClassInspection
+        if (clazz.language.id == "kotlin") return true // see ExtensionClassShouldBeFinalAndInternalInspection
         if (!PsiUtil.isExtensionPointImplementationCandidate(clazz)) {
           return true
         }
@@ -32,12 +32,12 @@ internal class NonFinalOrNonInternalExtensionClassInspection : DevKitJvmInspecti
         if (!isFinal) {
           val actions = createModifierActions(clazz, modifierRequest(JvmModifier.FINAL, true))
           val fixes = IntentionWrapper.wrapToQuickFixes(actions.toTypedArray(), file)
-          sink.highlight(DevKitBundle.message("inspection.non.final.or.non.internal.extension.class.should.be.final.text"), *fixes)
+          sink.highlight(DevKitBundle.message("inspection.extension.class.should.be.final.text"), *fixes)
         }
         if (!isPackageLocal) {
           val actions = createModifierActions(clazz, modifierRequest(JvmModifier.PACKAGE_LOCAL, true))
           val fixes = IntentionWrapper.wrapToQuickFixes(actions.toTypedArray(), file)
-          sink.highlight(DevKitBundle.message("inspection.non.final.or.non.internal.extension.class.should.be.package.private.text"), *fixes)
+          sink.highlight(DevKitBundle.message("inspection.extension.class.should.be.package.private.text"), *fixes)
         }
         return true
       }

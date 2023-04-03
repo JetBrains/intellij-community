@@ -35,12 +35,12 @@
                      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.CompanionObjectInExtensionInspection"
                      key="inspections.companion.object.in.extension"/>
 
-    <localInspection language="kotlin" id="OpenOrNonInternalExtensionClassInspection"
+    <localInspection language="kotlin" id="ExtensionClassShouldBeFinalAndInternalInspection"
                      groupBundle="messages.DevKitBundle"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="false" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.OpenOrNonInternalExtensionClassInspection"
-                     key="inspection.open.or.non.internal.extension.class.display.name"/>
+                     implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.ExtensionClassShouldBeFinalAndInternalInspection"
+                     key="inspection.extension.class.should.be.final.and.internal.display.name"/>
   </extensions>
 
   <extensions defaultExtensionNs="DevKit.lang">

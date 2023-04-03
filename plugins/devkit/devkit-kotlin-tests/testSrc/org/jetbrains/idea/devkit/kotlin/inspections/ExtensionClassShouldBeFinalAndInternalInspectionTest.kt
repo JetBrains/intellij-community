@@ -5,15 +5,15 @@ import com.intellij.testFramework.TestDataPath
 import org.jetbrains.idea.devkit.inspections.quickfix.LightDevKitInspectionFixTestBase
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 
-@TestDataPath("\$CONTENT_ROOT/testData/inspections/openOrNonInternalExtensionClass")
-class OpenOrNonInternalExtensionClassInspectionTest : LightDevKitInspectionFixTestBase() {
+@TestDataPath("\$CONTENT_ROOT/testData/inspections/extensionClassShouldBeFinalAndInternal")
+class ExtensionClassShouldBeFinalAndInternalInspectionTest : LightDevKitInspectionFixTestBase() {
 
-  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/openOrNonInternalExtensionClass/"
+  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/extensionClassShouldBeFinalAndInternal/"
   override fun getFileExtension(): String = "kt"
 
   override fun setUp() {
     super.setUp()
-    myFixture.enableInspections(OpenOrNonInternalExtensionClassInspection())
+    myFixture.enableInspections(ExtensionClassShouldBeFinalAndInternalInspection())
     myFixture.copyDirectoryToProject("resources", "resources")
   }
 
