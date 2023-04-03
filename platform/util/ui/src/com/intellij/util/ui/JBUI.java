@@ -1205,7 +1205,7 @@ public final class JBUI {
 
       public static final Color HEADER_BACKGROUND = JBColor.namedColor("ComplexPopup.Header.background", Popup.BACKGROUND);
 
-      public static Insets headerInsets() {
+      public static JBInsets headerInsets() {
         return insets(headerInsetsKey(), insets(13, 20, 11, 15));
       }
 
@@ -1213,7 +1213,7 @@ public final class JBUI {
         return "ComplexPopup.Header.insets";
       }
 
-      public static Insets textFieldBorderInsets() {
+      public static JBInsets textFieldBorderInsets() {
         return insets("ComplexPopup.TextField.borderInsets", insets(0, 12));
       }
 
@@ -1226,6 +1226,17 @@ public final class JBUI {
       }
 
       public static final int TEXT_FIELD_SEPARATOR_HEIGHT = 1;
+
+      public static JBInsets innerBorderInsets() {
+        return insets(
+          innerBorderInsetsKey(),
+          insets(6, 3, 6, headerInsets().getUnscaled().right - textFieldBorderInsets().getUnscaled().right)
+        );
+      }
+
+      public static @NotNull String innerBorderInsetsKey() {
+        return "ComplexPopup.innerBorderInsets";
+      }
     }
 
     public static final class Popup {
