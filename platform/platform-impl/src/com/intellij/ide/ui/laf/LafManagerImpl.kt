@@ -701,6 +701,10 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       defaults.put(JBUI.CurrentTheme.FindPopup.bottomPanelInsetsKey(), cmInsets(1, 18))
       defaults.put(JBUI.CurrentTheme.ComplexPopup.headerInsetsKey(), cmInsets(10, 20, 8, 15))
       defaults.put(JBUI.CurrentTheme.ComplexPopup.textFieldInputInsetsKey(), cmInsets(4, 2))
+      defaults.put(
+        JBUI.CurrentTheme.ComplexPopup.innerBorderInsetsKey(),
+        JBUI.CurrentTheme.ComplexPopup.innerBorderInsets().withTopAndBottom(2)
+      )
       defaults.put(JBUI.CurrentTheme.TabbedPane.tabHeightKey(), 36)
       // status bar
       defaults.put(JBUI.CurrentTheme.StatusBar.Widget.insetsKey(), cmInsets(4, 8, 3, 8))
@@ -740,6 +744,8 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
 
   @Suppress("UseDPIAwareInsets")
   private fun cmInsets(top: Int, left: Int, bottom: Int, right: Int): Insets = Insets(top, left, bottom, right)
+
+  private fun JBInsets.withTopAndBottom(topAndBottom: Int) = JBInsets(topAndBottom, unscaled.left, topAndBottom, unscaled.right)
 
   private fun updateEditorSchemeIfNecessary(oldLaf: LookAndFeelInfo?, processChangeSynchronously: Boolean) {
     if (oldLaf is TempUIThemeBasedLookAndFeelInfo || myCurrentLaf is TempUIThemeBasedLookAndFeelInfo) {

@@ -1048,8 +1048,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     //noinspection UseDPIAwareBorders
     return JBUI.Borders.compound(new EmptyBorder(0, lineInsets.left, 4, lineInsets.right),
                                  JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()),
-                                 new EmptyBorder(JBUIScale.scale(6), JBUIScale.scale(3), JBUIScale.scale(6),
-                                                 JBUI.CurrentTheme.ComplexPopup.headerInsets().right - lineInsets.right));
+                                 JBUI.Borders.empty(JBUI.CurrentTheme.ComplexPopup.innerBorderInsets()));
   }
 
   @NotNull
