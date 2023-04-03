@@ -24,8 +24,8 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.types.KotlinType
+import java.awt.event.ItemEvent
 import javax.swing.*
-import javax.swing.event.PopupMenuEvent
 
 class KotlinInplacePropertyIntroducer(
     property: KtProperty,
@@ -73,15 +73,13 @@ class KotlinInplacePropertyIntroducer(
             addPanelControl(
                 ControlWrapper {
                     val propertyKindComboBox = with(JComboBox(availableTargets.map { it.targetName.capitalize() }.toTypedArray())) {
-                        addPopupMenuListener(
-                            object : PopupMenuListenerAdapter() {
-                                override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent?) {
-                                    ApplicationManager.getApplication().invokeLater {
-                                        currentTarget = availableTargets[selectedIndex]
-                                    }
+                        addItemListener { itemEvent ->
+                            if (itemEvent.stateChange == ItemEvent.SELECTED) {
+                                ApplicationManager.getApplication().invokeLater {
+                                    currentTarget = availableTargets[selectedIndex]
                                 }
                             }
-                        )
+                        }
 
                         selectedIndex = availableTargets.indexOf(currentTarget)
 

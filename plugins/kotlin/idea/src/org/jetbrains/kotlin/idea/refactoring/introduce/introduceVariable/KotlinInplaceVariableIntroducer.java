@@ -179,9 +179,7 @@ public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> ex
                                                                           JBUI.insets(0, 5), 0, 0));
             ++count;
         }
-      panel.add(Box.createVerticalBox(), new GridBagConstraints(0, count, 1, 1, 1, 1, GridBagConstraints.NORTHWEST,
-                                                                GridBagConstraints.BOTH,
-                                                                JBInsets.emptyInsets(), 0, 0));
+        revalidate();
     }
 
     @NotNull
