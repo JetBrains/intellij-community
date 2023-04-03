@@ -27,8 +27,9 @@ import java.util.concurrent.ConcurrentHashMap
  */
 @ApiStatus.Internal
 object EarlyAccessRegistryManager {
+  const val fileName = "early-access-registry.txt"
   private val configFile: Path by lazy {
-    PathManager.getConfigDir().resolve("early-access-registry.txt")
+    PathManager.getConfigDir().resolve(fileName)
   }
 
   private val lazyMap = SynchronizedClearableLazy {
