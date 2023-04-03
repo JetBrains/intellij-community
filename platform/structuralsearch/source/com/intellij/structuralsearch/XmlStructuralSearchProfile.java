@@ -260,9 +260,9 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
         createLegacyConfiguration(SSRBundle.message("predefined.template.li.not.contained.in.ul.or.ol"), "<li> not contained in <ul> or <ol>",
                                   "[!within( <ul> or <ol> )]<li />", getHtmlXml(), HtmlFileType.INSTANCE),
         createLegacyConfiguration(SSRBundle.message("predefined.configuration.xml.attribute.referencing.java.class"), "xml attribute referencing java class",
-                                  "<'_tag 'attribute=\"'_value:[ref( classes, interfaces & enums )]\"/>", getHtmlXml(), XmlFileType.INSTANCE),
+                                  "<'_tag 'attribute=\"'_value:[ref( classes, interfaces \\& enums )]\"/>", getHtmlXml(), XmlFileType.INSTANCE),
         createConfiguration(SSRBundle.message("predefined.template.xml.tag.without.specific.attribute"), "XML tag without a specific attribute",
-          "<'_tag '_attr{0,0}:attributeName />", getHtmlXml(), XmlFileType.INSTANCE),
+                            "<'_tag '_attr{0,0}:attributeName />", getHtmlXml(), XmlFileType.INSTANCE),
       };
     }
 
