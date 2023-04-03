@@ -57,7 +57,7 @@ open class KotlinElementDescriptionProviderBase : ElementDescriptionProvider {
 
                 override fun visitTypeReference(typeReference: KtTypeReference, data: Unit): String {
                     val typeText = typeReference.typeElement?.accept(this, data) ?: "???"
-                    return if (typeReference.hasParentheses()) "($typeText)" else typeText
+                    return if (!typeReference.containingKtFile.isCompiled && typeReference.hasParentheses()) "($typeText)" else typeText
                 }
 
                 override fun visitIntersectionType(definitelyNotNullType: KtIntersectionType, data: Unit): String {
