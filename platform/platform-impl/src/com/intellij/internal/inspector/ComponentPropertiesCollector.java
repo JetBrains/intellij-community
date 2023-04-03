@@ -74,7 +74,7 @@ public final class ComponentPropertiesCollector {
 
   private static final List<String> ACCESSIBLE_CONTEXT_PROPERTIES = Arrays.asList(
     "getAccessibleRole", "getAccessibleName", "getAccessibleDescription",
-    "getAccessibleAction", "getAccessibleChildrenCount",
+    "getAccessibleAction", "getAccessibleParent", "getAccessibleChildrenCount",
     "getAccessibleIndexInParent", "getAccessibleRelationSet",
     "getAccessibleStateSet", "getAccessibleEditableText",
     "getAccessibleTable", "getAccessibleText",
