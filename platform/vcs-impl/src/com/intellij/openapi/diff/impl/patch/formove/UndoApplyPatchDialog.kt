@@ -5,8 +5,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.changes.ui.AsyncChangesTreeImpl
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
-import com.intellij.openapi.vcs.changes.ui.ChangesTreeImpl
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.UIUtil
@@ -31,7 +31,7 @@ internal class UndoApplyPatchDialog(
         label(VcsBundle.message("patch.apply.rollback.prompt", numFiles))
       }
       if (numFiles > 0) {
-        val browser: ChangesTree = ChangesTreeImpl.FilePaths(project, false, false, failedFilePaths)
+        val browser: ChangesTree = AsyncChangesTreeImpl.FilePaths(project, false, false, failedFilePaths)
         row {
           scrollCell(browser)
             .align(Align.FILL)

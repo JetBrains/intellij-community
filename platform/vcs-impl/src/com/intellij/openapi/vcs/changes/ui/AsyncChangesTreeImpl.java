@@ -1,67 +1,67 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultTreeModel;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
-/**
- * @deprecated Prefer using {@link AsyncChangesTreeImpl} instead.
- */
-@Deprecated
-public abstract class ChangesTreeImpl<T> extends ChangesTree {
-  @NotNull private final List<T> myChanges = new ArrayList<>();
+public abstract class AsyncChangesTreeImpl<T> extends AsyncChangesTree {
+  @NotNull private List<T> myChanges = Collections.emptyList();
   @NotNull private final Class<T> myClazz;
 
-  public ChangesTreeImpl(@NotNull Project project,
-                         boolean showCheckboxes,
-                         boolean highlightProblems,
-                         @NotNull Class<T> clazz) {
+  public AsyncChangesTreeImpl(@NotNull Project project,
+                              boolean showCheckboxes,
+                              boolean highlightProblems,
+                              @NotNull Class<T> clazz) {
     super(project, showCheckboxes, highlightProblems);
     myClazz = clazz;
   }
 
-  public ChangesTreeImpl(@NotNull Project project,
-                         boolean showCheckboxes,
-                         boolean highlightProblems,
-                         @NotNull Class<T> clazz,
-                         @NotNull List<? extends T> changes) {
+  public AsyncChangesTreeImpl(@NotNull Project project,
+                              boolean showCheckboxes,
+                              boolean highlightProblems,
+                              @NotNull Class<T> clazz,
+                              @NotNull List<? extends T> changes) {
     this(project, showCheckboxes, highlightProblems, clazz);
     if (showCheckboxes) setIncludedChanges(changes);
     setChangesToDisplay(changes);
   }
 
   public void setChangesToDisplay(@NotNull Collection<? extends T> changes) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     if (myProject.isDisposed()) return;
 
-    myChanges.clear();
-    myChanges.addAll(changes);
+    myChanges = new ArrayList<>(changes);
 
     rebuildTree();
   }
 
-
   @NotNull
-  protected abstract DefaultTreeModel buildTreeModel(@NotNull List<? extends T> changes);
-
   @Override
-  public void rebuildTree() {
-    DefaultTreeModel newModel = buildTreeModel(myChanges);
-    updateTreeModel(newModel);
+  protected AsyncChangesTreeModel getChangesTreeModel() {
+    return SimpleAsyncChangesTreeModel.create(grouping -> buildTreeModel(grouping, myChanges));
   }
 
+  @NotNull
+  @RequiresBackgroundThread
+  protected abstract DefaultTreeModel buildTreeModel(@NotNull ChangesGroupingPolicyFactory grouping, @NotNull List<? extends T> changes);
 
   @NotNull
   public List<T> getChanges() {
+    return ContainerUtil.filterIsInstance(myChanges, myClazz);
+  }
+
+  @NotNull
+  public List<T> getDisplayedChanges() {
     return VcsTreeModelData.all(this).userObjects(myClazz);
   }
 
@@ -75,7 +75,8 @@ public abstract class ChangesTreeImpl<T> extends ChangesTree {
     return VcsTreeModelData.included(this).userObjects(myClazz);
   }
 
-  public static class Changes extends ChangesTreeImpl<Change> {
+
+  public static class Changes extends AsyncChangesTreeImpl<Change> {
     public Changes(@NotNull Project project,
                    boolean showCheckboxes,
                    boolean highlightProblems) {
@@ -89,14 +90,14 @@ public abstract class ChangesTreeImpl<T> extends ChangesTree {
       super(project, showCheckboxes, highlightProblems, Change.class, changes);
     }
 
-    @NotNull
     @Override
-    protected DefaultTreeModel buildTreeModel(@NotNull List<? extends Change> changes) {
-      return TreeModelBuilder.buildFromChanges(myProject, getGrouping(), changes, null);
+    protected @NotNull DefaultTreeModel buildTreeModel(@NotNull ChangesGroupingPolicyFactory grouping,
+                                                       @NotNull List<? extends Change> changes) {
+      return TreeModelBuilder.buildFromChanges(myProject, grouping, changes, null);
     }
   }
 
-  public static class FilePaths extends ChangesTreeImpl<FilePath> {
+  public static class FilePaths extends AsyncChangesTreeImpl<FilePath> {
     public FilePaths(@NotNull Project project,
                      boolean showCheckboxes,
                      boolean highlightProblems) {
@@ -110,14 +111,14 @@ public abstract class ChangesTreeImpl<T> extends ChangesTree {
       super(project, showCheckboxes, highlightProblems, FilePath.class, paths);
     }
 
-    @NotNull
     @Override
-    protected DefaultTreeModel buildTreeModel(@NotNull List<? extends FilePath> changes) {
-      return TreeModelBuilder.buildFromFilePaths(myProject, getGrouping(), changes);
+    protected @NotNull DefaultTreeModel buildTreeModel(@NotNull ChangesGroupingPolicyFactory grouping,
+                                                       @NotNull List<? extends FilePath> changes) {
+      return TreeModelBuilder.buildFromFilePaths(myProject, grouping, changes);
     }
   }
 
-  public static class VirtualFiles extends ChangesTreeImpl<VirtualFile> {
+  public static class VirtualFiles extends AsyncChangesTreeImpl<VirtualFile> {
     public VirtualFiles(@NotNull Project project,
                         boolean showCheckboxes,
                         boolean highlightProblems) {
@@ -131,10 +132,10 @@ public abstract class ChangesTreeImpl<T> extends ChangesTree {
       super(project, showCheckboxes, highlightProblems, VirtualFile.class, files);
     }
 
-    @NotNull
     @Override
-    protected DefaultTreeModel buildTreeModel(@NotNull List<? extends VirtualFile> changes) {
-      return TreeModelBuilder.buildFromVirtualFiles(myProject, getGrouping(), changes);
+    protected @NotNull DefaultTreeModel buildTreeModel(@NotNull ChangesGroupingPolicyFactory grouping,
+                                                       @NotNull List<? extends VirtualFile> changes) {
+      return TreeModelBuilder.buildFromVirtualFiles(myProject, grouping, changes);
     }
   }
 }
