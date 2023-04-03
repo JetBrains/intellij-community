@@ -2,14 +2,17 @@
 package com.intellij.idea;
 
 import com.google.gson.GsonBuilder;
+import one.profiler.AsyncProfiler;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.IntStream;
 
 public class Main {
@@ -19,6 +22,9 @@ public class Main {
       switch (args[0]) {
         case "dump-launch-parameters" -> {
           dumpLaunchParameters(args);
+        }
+        case "async-profiler" -> {
+          asyncProfiler();
         }
         case "sigsegv" -> {
           segmentationViolation();
@@ -60,6 +66,24 @@ public class Main {
 
     Files.writeString(outputFile, jsonText);
     System.out.println("Dumped to " + outputFile.toAbsolutePath());
+  }
+
+  @SuppressWarnings("SpellCheckingInspection")
+  private static void asyncProfiler() throws IOException {
+    var tempFile = Files.createTempFile("async-profiler-", ".lib");
+    try {
+      var os = System.getProperty("os.name").toLowerCase();
+      var arch = System.getProperty("os.arch").toLowerCase();
+      var location = os.startsWith("mac") ? "macos" : "aarch64".equals(arch) ? "linux-aarch64" : "linux";
+      try (var stream = AsyncProfiler.class.getResourceAsStream("/binaries/" + location + "/libasyncProfiler.so")) {
+        Files.copy(Objects.requireNonNull(stream), tempFile, StandardCopyOption.REPLACE_EXISTING);
+      }
+      var profiler = AsyncProfiler.getInstance(tempFile.toString());
+      System.out.println("version=" + profiler.getVersion());
+    }
+    finally {
+      Files.deleteIfExists(tempFile);
+    }
   }
 
   private static void segmentationViolation() throws NoSuchFieldException, IllegalAccessException {

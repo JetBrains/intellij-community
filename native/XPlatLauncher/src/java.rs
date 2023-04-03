@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 use std::{mem, thread};
 use std::ffi::{c_void, CString};
 use std::path::{Path, PathBuf};
@@ -191,7 +191,10 @@ unsafe fn load_libjvm(libjvm_path: PathBuf) -> Result<libloading::Library> {
 
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 unsafe fn load_libjvm(libjvm_path: PathBuf) -> Result<libloading::Library> {
-    unsafe { libloading::Library::new(libjvm_path.as_os_str()) }.context("Failed to load libjvm")
+    let path_ref = Some(libjvm_path.as_os_str());
+    let flags = libloading::os::unix::RTLD_LAZY;
+    unsafe { libloading::os::unix::Library::open(path_ref, flags).map(From::from) }
+        .context("Failed to load libjvm")
 }
 
 fn get_jvm_init_args(vm_options: Vec<String>) -> Result<jni_sys::JavaVMInitArgs> {

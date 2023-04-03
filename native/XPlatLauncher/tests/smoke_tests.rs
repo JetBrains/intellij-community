@@ -295,6 +295,19 @@ mod tests {
         );
     }
 
+    #[rstest]
+    #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::MainBin, java_type: JavaType::EnvVar})]
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
+    fn async_profiler_loading(#[case] layout_spec: &LayoutSpec) {
+        let result = run_launcher_with_args(layout_spec, &["async-profiler"]);
+        assert!(
+            result.exit_status.success(),
+            "The exit status of the launcher is not successful: {}", exit_status_to_string(&result.exit_status));
+        assert!(
+            result.stdout.contains("version="),
+            "Profiler version is missing from the output: {}", result.stdout);
+    }
+
     #[cfg(target_os = "windows")]
     fn exit_status_to_string(status: &ExitStatus) -> String {
         let exit_code = option_to_string(status.code());

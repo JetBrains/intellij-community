@@ -1,3 +1,5 @@
+import java.net.URI
+
 plugins {
     id("java")
     id("me.filippov.gradle.jvm.wrapper")
@@ -7,11 +9,13 @@ group = "com.intellij.idea"
 version = "SNAPSHOT"
 
 repositories {
-    mavenCentral()
+  mavenCentral()
+  maven { url = URI("https://cache-redirector.jetbrains.com/intellij-dependencies") }
 }
 
 dependencies {
   implementation("com.google.code.gson", "gson", "2.9.1")
+  implementation("org.jetbrains.intellij.deps", "async-profiler", "2.9-15")
 }
 
 val fatJar = task("fatJar", type = Jar::class) {
