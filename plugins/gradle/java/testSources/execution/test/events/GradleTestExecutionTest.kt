@@ -197,10 +197,10 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
 
       executeTasks(":test")
 
-      testEventCounter.assertTestEvents("TestCase", 1, 1, 0, 0, 0, 0)
-      testEventCounter.assertTestEvents("successTest", 0, 0, 1, 1, 0, 0)
-      testEventCounter.assertTestEvents("failedTest", 0, 0, 1, 1, 1, 0)
-      testEventCounter.assertTestEvents("ignoredTest", 0, 0, 1, 1, 0, 1)
+      assertTestEventCount("TestCase", 1, 1, 0, 0, 0, 0)
+      assertTestEventCount("successTest", 0, 0, 1, 1, 0, 0)
+      assertTestEventCount("failedTest", 0, 0, 1, 1, 1, 0)
+      assertTestEventCount("ignoredTest", 0, 0, 1, 1, 0, 1)
     }
   }
 }

@@ -4,65 +4,49 @@ package org.jetbrains.plugins.gradle.execution.test.events
 import com.intellij.execution.ExecutorRegistry
 import com.intellij.execution.RunManager
 import com.intellij.execution.executors.DefaultRunExecutor
-import com.intellij.execution.impl.ConsoleViewImpl
-import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.testframework.AbstractTestProxy
-import com.intellij.execution.testframework.TestConsoleProperties
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteActionAndWait
-import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.testFramework.ExtensionTestUtil
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
 import com.intellij.util.LocalTimeCounter
-import com.intellij.util.ui.tree.TreeUtil
-import org.jetbrains.plugins.gradle.execution.test.events.fixture.TestExecutionConsoleEventCounter
-import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole
-import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsoleManager
+import org.jetbrains.plugins.gradle.execution.test.events.fixture.TestExecutionConsoleEventFixture
+import org.jetbrains.plugins.gradle.execution.test.events.fixture.TestExecutionConsoleFixture
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isSupportedJUnit5
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.testFramework.GradleProjectTestCase
-import org.jetbrains.plugins.gradle.testFramework.util.tree.*
+import org.jetbrains.plugins.gradle.testFramework.util.tree.TreeAssertion
+import org.jetbrains.plugins.gradle.testFramework.util.tree.buildTree
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.waitForTaskExecution
-import org.junit.jupiter.api.AssertionFailureBuilder
 import org.junit.jupiter.api.Assertions
 
 abstract class GradleTestExecutionTestCase : GradleProjectTestCase() {
 
   private lateinit var testDisposable: Disposable
-  private var _testExecutionEnvironment: ExecutionEnvironment? = null
-  private var _testExecutionConsole: GradleTestsExecutionConsole? = null
   private lateinit var buildViewTestFixture: BuildViewTestFixture
 
-  lateinit var testEventCounter: TestExecutionConsoleEventCounter
-
-  val testExecutionEnvironment get() = _testExecutionEnvironment!!
-  val testExecutionConsole get() = _testExecutionConsole!!
+  lateinit var testExecutionConsoleFixture: TestExecutionConsoleFixture
+  lateinit var testExecutionEventFixture: TestExecutionConsoleEventFixture
 
   override fun setUp() {
     super.setUp()
 
     testDisposable = Disposer.newDisposable()
 
-    initExecutionConsoleHandler()
+    testExecutionConsoleFixture = TestExecutionConsoleFixture()
+    testExecutionConsoleFixture.setUp()
 
-    testEventCounter = TestExecutionConsoleEventCounter()
-    testEventCounter.install(project, testDisposable)
+    testExecutionEventFixture = TestExecutionConsoleEventFixture(project)
+    testExecutionEventFixture.setUp()
 
     buildViewTestFixture = BuildViewTestFixture(project)
     buildViewTestFixture.setUp()
@@ -70,6 +54,8 @@ abstract class GradleTestExecutionTestCase : GradleProjectTestCase() {
 
   override fun tearDown() {
     runAll(
+      { testExecutionConsoleFixture.tearDown() },
+      { testExecutionEventFixture.tearDown() },
       { buildViewTestFixture.tearDown() },
       { Disposer.dispose(testDisposable) },
       { super.tearDown() },
@@ -96,58 +82,12 @@ abstract class GradleTestExecutionTestCase : GradleProjectTestCase() {
     val notificationManager = ExternalSystemProgressNotificationManager.getInstance()
     notificationManager.addNotificationListener(object : ExternalSystemTaskNotificationListenerAdapter() {
       override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
-        if (id.type == ExternalSystemTaskType.EXECUTE_TASK) {
-          when (stdOut) {
-            true -> print(text)
-            else -> System.err.print(text)
-          }
+        when (stdOut) {
+          true -> System.out.print(text)
+          else -> System.err.print(text)
         }
       }
     }, testDisposable)
-  }
-
-  private fun initExecutionConsoleHandler() {
-    val consoleManager = object : GradleTestsExecutionConsoleManager() {
-      override fun attachExecutionConsole(
-        project: Project,
-        task: ExternalSystemTask,
-        env: ExecutionEnvironment?,
-        processHandler: ProcessHandler?
-      ) = super.attachExecutionConsole(project, task, env, processHandler)
-        .also { _testExecutionEnvironment = env!! }
-        .also { _testExecutionConsole = it!! }
-    }
-    ExtensionTestUtil.maskExtensions(ExternalSystemExecutionConsoleManager.EP_NAME, listOf(consoleManager), testDisposable)
-  }
-
-  private fun getTestExecutionTreeString(): String {
-    return invokeAndWaitIfNeeded {
-      val tree = testExecutionConsole.resultsViewer.treeView!!
-        .also { PlatformTestUtil.waitWhileBusy(it) }
-      TestConsoleProperties.HIDE_PASSED_TESTS.set(testExecutionConsole.properties, false)
-        .also { PlatformTestUtil.waitWhileBusy(tree) }
-      PlatformTestUtil.expandAll(tree)
-        .also { PlatformTestUtil.waitWhileBusy(tree) }
-      PlatformTestUtil.print(tree, false)
-        .also { PlatformTestUtil.waitWhileBusy(tree) }
-    }
-  }
-
-  private fun getTestExecutionConsoleString(): String {
-    return invokeAndWaitIfNeeded {
-      val tree = testExecutionConsole.resultsViewer.treeView!!
-        .also { PlatformTestUtil.waitWhileBusy(it) }
-      TestConsoleProperties.HIDE_PASSED_TESTS.set(testExecutionConsole.properties, false)
-        .also { PlatformTestUtil.waitWhileBusy(tree) }
-      PlatformTestUtil.expandAll(tree)
-        .also { PlatformTestUtil.waitWhileBusy(tree) }
-      TreeUtil.selectFirstNode(tree)
-        .also { PlatformTestUtil.waitWhileBusy(tree) }
-      val console = testExecutionConsole.console as ConsoleViewImpl
-      console.flushDeferredText()
-        .also { PlatformTestUtil.dispatchAllEventsInIdeEventQueue() }
-      console.text
-    }
   }
 
   fun executeTasks(commandLine: String) {
@@ -202,43 +142,28 @@ abstract class GradleTestExecutionTestCase : GradleProjectTestCase() {
   }
 
   fun assertTestExecutionConsoleContains(expected: String) {
-    val actual = getTestExecutionConsoleString()
-    if (expected !in actual) {
-      throw AssertionFailureBuilder.assertionFailure()
-        .message("Test execution console doesn't contain")
-        .expected(expected)
-        .actual(actual)
-        .build()
-    }
-  }
-
-  fun assertTestExecutionTree(expected: String) {
-    val treeString = getTestExecutionTreeString()
-    val tree = buildTree(treeString)
-    Assertions.assertEquals(expected, tree.sortedTree().getTreeString())
-  }
-
-  private fun assertFullTestExecutionTree(assert: TreeAssertion<Nothing?>.() -> Unit) {
-    val treeString = getTestExecutionTreeString()
-    val tree = buildTree(treeString)
-    TreeAssertion.assertTree(tree.sortedTree(), assert)
+    testExecutionConsoleFixture.assertTestExecutionConsoleContains(expected)
   }
 
   fun assertTestExecutionTree(assert: TreeAssertion.Node<Nothing?>.() -> Unit) {
-    assertFullTestExecutionTree { assertNode("[root]", assert) }
+    testExecutionConsoleFixture.assertTestExecutionTree(assert)
   }
 
   fun assertTestExecutionTreeIsEmpty() {
-    assertFullTestExecutionTree { assertNode("[root]") }
+    testExecutionConsoleFixture.assertTestExecutionTreeIsEmpty()
+  }
+
+  fun assertTestExecutionTreeIsNotCreated() {
+    testExecutionConsoleFixture.assertTestExecutionTreeIsNotCreated()
   }
 
   fun assertSMTestProxyTree(assert: TreeAssertion<AbstractTestProxy>.() -> Unit) {
-    val treeView = testExecutionConsole.resultsViewer.treeView!!
-    invokeAndWaitIfNeeded { PlatformTestUtil.waitWhileBusy(treeView) }
-    val roots = testExecutionConsole.resultsViewer.root.children
-    val tree = buildTree(roots, { name }, { children })
-    runReadAction { // all navigation tests requires read action
-      TreeAssertion.assertTree(tree.sortedTree(), assert)
-    }
+    testExecutionConsoleFixture.assertSMTestProxyTree(assert)
+  }
+
+  fun assertTestEventCount(
+    name: String, suiteStart: Int, suiteFinish: Int, testStart: Int, testFinish: Int, testFailure: Int, testIgnore: Int
+  ) {
+    testExecutionEventFixture.assertTestEventCount(name, suiteStart, suiteFinish, testStart, testFinish, testFailure, testIgnore)
   }
 }

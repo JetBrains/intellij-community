@@ -12,6 +12,8 @@ import org.jetbrains.plugins.gradle.util.waitForTaskExecution
 abstract class GradleRerunFailedTestsTestCase : GradleTestExecutionTestCase() {
 
   fun performRerunFailedTestsAction(): Boolean = invokeAndWaitIfNeeded {
+    val testExecutionConsole = testExecutionConsoleFixture.getTestExecutionConsole()
+    val testExecutionEnvironment = testExecutionConsoleFixture.getTestExecutionEnvironment()
     val rerunAction = GradleRerunFailedTestsAction(testExecutionConsole)
     rerunAction.setModelProvider { testExecutionConsole.resultsViewer }
     val actionEvent = TestActionEvent.createTestEvent(

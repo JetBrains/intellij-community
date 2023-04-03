@@ -6,22 +6,46 @@ import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.testFramework.fixtures.IdeaTestFixture
 import org.junit.jupiter.api.Assertions
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
-class TestExecutionConsoleEventCounter {
+class TestExecutionConsoleEventFixture(
+  private val project: Project
+) : IdeaTestFixture {
 
-  private val suiteStartCounter = ConcurrentHashMap<SMTestProxy, AtomicInteger>()
-  private val suiteFinishCounter = ConcurrentHashMap<SMTestProxy, AtomicInteger>()
+  private lateinit var fixtureDisposable: Disposable
 
-  private val testStartCounter = ConcurrentHashMap<SMTestProxy, AtomicInteger>()
-  private val testFinishCounter = ConcurrentHashMap<SMTestProxy, AtomicInteger>()
-  private val testFailureCounter = ConcurrentHashMap<SMTestProxy, AtomicInteger>()
-  private val testIgnoreCounter = ConcurrentHashMap<SMTestProxy, AtomicInteger>()
+  private lateinit var suiteStartCounter: ConcurrentHashMap<SMTestProxy, AtomicInteger>
+  private lateinit var suiteFinishCounter: ConcurrentHashMap<SMTestProxy, AtomicInteger>
 
-  fun install(project: Project, parentDisposable: Disposable) {
-    project.messageBus.connect(parentDisposable)
+  private lateinit var testStartCounter: ConcurrentHashMap<SMTestProxy, AtomicInteger>
+  private lateinit var testFinishCounter: ConcurrentHashMap<SMTestProxy, AtomicInteger>
+  private lateinit var testFailureCounter: ConcurrentHashMap<SMTestProxy, AtomicInteger>
+  private lateinit var testIgnoreCounter: ConcurrentHashMap<SMTestProxy, AtomicInteger>
+
+  override fun setUp() {
+    fixtureDisposable = Disposer.newDisposable()
+
+    suiteStartCounter = ConcurrentHashMap<SMTestProxy, AtomicInteger>()
+    suiteFinishCounter = ConcurrentHashMap<SMTestProxy, AtomicInteger>()
+
+    testStartCounter = ConcurrentHashMap<SMTestProxy, AtomicInteger>()
+    testFinishCounter = ConcurrentHashMap<SMTestProxy, AtomicInteger>()
+    testFailureCounter = ConcurrentHashMap<SMTestProxy, AtomicInteger>()
+    testIgnoreCounter = ConcurrentHashMap<SMTestProxy, AtomicInteger>()
+
+    installEventWatcher()
+  }
+
+  override fun tearDown() {
+    Disposer.dispose(fixtureDisposable)
+  }
+
+  private fun installEventWatcher() {
+    project.messageBus.connect(fixtureDisposable)
       .subscribe(SMTRunnerEventsListener.TEST_STATUS, object : SMTRunnerEventsAdapter() {
         override fun onSuiteStarted(suite: SMTestProxy) = onTestEvent(suiteStartCounter, suite)
         override fun onSuiteFinished(suite: SMTestProxy) = onTestEvent(suiteFinishCounter, suite)
@@ -39,7 +63,7 @@ class TestExecutionConsoleEventCounter {
     counter.incrementAndGet()
   }
 
-  fun assertTestEvents(
+  fun assertTestEventCount(
     name: String,
     suiteStart: Int,
     suiteFinish: Int,
