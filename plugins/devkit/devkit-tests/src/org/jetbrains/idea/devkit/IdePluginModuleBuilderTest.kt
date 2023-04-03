@@ -27,6 +27,13 @@ class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_17)
     expectFile("src/main/resources/META-INF/plugin.xml", PLUGIN_XML)
 
     expectFile("settings.gradle.kts", """
+      pluginManagement {
+          repositories {
+              mavenCentral()
+              gradlePluginPortal()
+          }
+      }
+
       rootProject.name = "demo"
     """.trimIndent())
   }
