@@ -1,10 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.test.common.kotlin
 
-import com.intellij.psi.PsiArrayType
-import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import junit.framework.TestCase
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -12,6 +9,7 @@ import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UParameter
 import org.jetbrains.uast.test.env.findElementByTextFromPsi
 import org.jetbrains.uast.toUElement
 import org.jetbrains.uast.visitor.AbstractUastVisitor
@@ -258,6 +256,70 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
         lightMethod.parameterList.parameters.forEach { psiParameter ->
             checkPsiType(firstTypeArgument(psiParameter.type)!!)
         }
+    }
+
+    fun checkUpperBoundWildcardForEnum(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                enum class PowerCategoryDisplayLevel {
+                  BREAKDOWN, TOTAL
+                }
+
+                enum class PowerCategory {
+                  CPU, MEMORY
+                }
+
+                class PowerMetric {
+                  companion object {
+                    @JvmStatic
+                    fun Battery(): Type.Battery {
+                      return Type.Battery()
+                    }
+
+                    @JvmStatic
+                    fun Energy(
+                      categories: Map<PowerCategory, PowerCategoryDisplayLevel> = emptyMap()
+                    ): Type.Energy {
+                      return Type.Energy(categories)
+                    }
+
+                    @JvmStatic
+                    fun Power(
+                      categories: Map<PowerCategory, PowerCategoryDisplayLevel> = emptyMap()
+                    ): Type.Power {
+                      return Type.Power(categories)
+                    }
+                  }
+
+                  sealed class Type(var categories: Map<PowerCategory, PowerCategoryDisplayLevel> = emptyMap()) {
+                    class Power(
+                      powerCategories: Map<PowerCategory, PowerCategoryDisplayLevel> = emptyMap()
+                    ) : Type(powerCategories)
+
+                    class Energy(
+                      energyCategories: Map<PowerCategory, PowerCategoryDisplayLevel> = emptyMap()
+                    ) : Type(energyCategories)
+
+                    class Battery : Type()
+                  }
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+
+        uFile.accept(object : AbstractUastVisitor() {
+            override fun visitParameter(node: UParameter): Boolean {
+                val lc = node.javaPsi as? PsiParameter ?: return super.visitParameter(node)
+
+                val t = lc.type.canonicalText
+                if (t.contains("Map")) {
+                    TestCase.assertEquals("java.util.Map<PowerCategory,? extends PowerCategoryDisplayLevel>", t)
+                }
+
+                return super.visitParameter(node)
+            }
+        })
     }
 
 }

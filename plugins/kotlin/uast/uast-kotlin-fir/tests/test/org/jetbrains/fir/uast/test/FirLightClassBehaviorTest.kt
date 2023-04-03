@@ -43,4 +43,8 @@ class FirLightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), Light
     fun testAnnotationOnPsiTypeArgument() {
         checkAnnotationOnPsiTypeArgument(myFixture)
     }
+
+    fun testUpperBoundWildcardForEnum() {
+        checkUpperBoundWildcardForEnum(myFixture)
+    }
 }
