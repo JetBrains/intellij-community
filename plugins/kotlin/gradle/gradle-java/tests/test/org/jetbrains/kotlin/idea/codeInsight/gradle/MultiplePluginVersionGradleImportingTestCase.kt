@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.gradle.ProjectInfo
 import org.jetbrains.kotlin.gradle.newTests.TestConfiguration
 import org.jetbrains.kotlin.gradle.newTests.TestWithKotlinPluginAndGradleVersions
 import org.jetbrains.kotlin.gradle.newTests.testFeatures.checkers.orderEntries.OrderEntriesChecker
+import org.jetbrains.kotlin.gradle.newTests.testFeatures.checkers.workspace.GeneralWorkspaceChecks
 import org.jetbrains.kotlin.gradle.newTests.workspace.checkWorkspaceModel
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_7_21
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_8_0
@@ -195,6 +196,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         val testConfiguration = TestConfiguration().apply {
             // Temporary hack for older usages (they were expecting K/N Dist to be leniently folded)
             getConfiguration(OrderEntriesChecker).hideKonanDist = true
+            getConfiguration(GeneralWorkspaceChecks).testClassifier = testClassifier
             configure()
         }
 
@@ -205,7 +207,6 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
             kotlinPluginVersion,
             gradleVersion,
             listOf(OrderEntriesChecker),
-            testClassifier = testClassifier,
             testConfiguration = testConfiguration
         )
     }

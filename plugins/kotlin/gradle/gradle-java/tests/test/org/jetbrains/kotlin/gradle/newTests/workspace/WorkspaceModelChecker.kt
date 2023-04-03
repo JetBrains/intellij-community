@@ -51,7 +51,7 @@ abstract class WorkspaceModelChecker<V : Any> : AbstractTestChecker<V>() {
      */
     abstract fun renderTestConfigurationDescription(testConfiguration: TestConfiguration): List<String>
 
-    final override fun KotlinMppTestsContext.check(additionalTestClassifier: String?) {
+    final override fun KotlinMppTestsContext.check() {
         check(
             testProject,
             testDataDirectory,
@@ -59,7 +59,6 @@ abstract class WorkspaceModelChecker<V : Any> : AbstractTestChecker<V>() {
             kgpVersion,
             gradleVersion.version,
             testConfiguration,
-            additionalTestClassifier,
             agpVersion
         )
     }
@@ -71,10 +70,10 @@ abstract class WorkspaceModelChecker<V : Any> : AbstractTestChecker<V>() {
         kotlinPluginVersion: KotlinToolingVersion,
         gradleVersion: String,
         testConfiguration: TestConfiguration,
-        testClassifier: String?,
         agpClassifier: String?,
     ) {
         val kotlinClassifier = with(kotlinPluginVersion) { "$major.$minor.$patch" }
+        val testClassifier = testConfiguration.getConfiguration(GeneralWorkspaceChecks).testClassifier
         val expectedTestDataFile = findMostSpecificExistingFileOrNewDefault(
             classifier,
             expectedTestDataDir,

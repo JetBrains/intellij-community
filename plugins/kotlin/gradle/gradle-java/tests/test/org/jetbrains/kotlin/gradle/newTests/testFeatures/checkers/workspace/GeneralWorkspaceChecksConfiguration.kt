@@ -12,4 +12,6 @@ class GeneralWorkspaceChecksConfiguration {
 
     var disableCheckers: Set<AbstractTestChecker<*>>? = null
     var onlyCheckers: Set<AbstractTestChecker<*>>? = null
+
+    var testClassifier: String? = null
 }

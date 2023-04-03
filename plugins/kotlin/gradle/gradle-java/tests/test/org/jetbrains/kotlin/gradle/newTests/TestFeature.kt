@@ -105,7 +105,7 @@ interface TestFeatureWithSetUpTearDown<V : Any> : TestFeature<V> {
  * If you want to add some check that should be executed in all tests, use raw [TestFeature]
  */
 abstract class AbstractTestChecker<V : Any> : TestFeature<V> {
-    abstract fun KotlinMppTestsContext.check(additionalTestClassifier: String? = null)
+    abstract fun KotlinMppTestsContext.check()
 
     final override fun KotlinMppTestsContext.afterImport() {
         check()
