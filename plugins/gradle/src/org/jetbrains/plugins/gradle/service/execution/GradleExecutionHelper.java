@@ -674,7 +674,7 @@ public class GradleExecutionHelper {
 
   @ApiStatus.Internal
   public static void attachTargetPathMapperInitScript(@NotNull GradleExecutionSettings executionSettings) {
-    var initScriptFile = GradleInitScriptUtil.createInitScript("ijmapper", "if (!ext.has('mapPath')) ext.mapPath = { path -> path }\n");
+    var initScriptFile = GradleInitScriptUtil.createTargetPathMapperInitScript();
     executionSettings.prependArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptFile.getAbsolutePath());
   }
 
