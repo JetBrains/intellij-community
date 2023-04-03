@@ -374,7 +374,7 @@ private fun loadFileContent(item: ExportableItem, storageManager: StateStorageMa
   var content: ByteArray? = null
   var errorDuringLoadingFromProvider = false
   val skipProvider = item.roamingType == RoamingType.DISABLED
-  val handledByProvider = !skipProvider && storageManager.compoundStreamProvider.read(item.fileSpec.relativePath,
+  val handledByProvider = !skipProvider && storageManager.compoundStreamProvider.read(item.fileSpec.rawFileSpec,
                                                                                       item.roamingType) { inputStream ->
     // null stream means empty file which shouldn't be exported
     inputStream?.let {
