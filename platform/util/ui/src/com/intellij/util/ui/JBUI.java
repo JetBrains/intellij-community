@@ -1183,12 +1183,34 @@ public final class JBUI {
       }
     }
 
+    public static final class FindPopup {
+      public static @NotNull Insets scopesPanelInsets() {
+        return insets(scopesPanelInsetsKey(), isNewUI() ? insets(4, 20) : insets(3, 5));
+      }
+
+      public static @NotNull String scopesPanelInsetsKey() {
+        return "FindPopup.scopesPanelInsets";
+      }
+
+      public static @NotNull Insets bottomPanelInsets() {
+        return insets(bottomPanelInsetsKey(), isNewUI() ? insets(5, 18) : insets(5));
+      }
+
+      public static @NotNull String bottomPanelInsetsKey() {
+        return "FindPopup.bottomPanelInsets";
+      }
+    }
+
     public static final class ComplexPopup {
 
       public static final Color HEADER_BACKGROUND = JBColor.namedColor("ComplexPopup.Header.background", Popup.BACKGROUND);
 
       public static Insets headerInsets() {
-        return insets("ComplexPopup.Header.insets", insets(13, 20, 11, 15));
+        return insets(headerInsetsKey(), insets(13, 20, 11, 15));
+      }
+
+      public static @NotNull String headerInsetsKey() {
+        return "ComplexPopup.Header.insets";
       }
 
       public static Insets textFieldBorderInsets() {
@@ -1196,7 +1218,11 @@ public final class JBUI {
       }
 
       public static Insets textFieldInputInsets() {
-        return insets("ComplexPopup.TextField.inputInsets", insets(6, 2));
+        return insets(textFieldInputInsetsKey(), insets(6, 2));
+      }
+
+      public static @NotNull String textFieldInputInsetsKey() {
+        return "ComplexPopup.TextField.inputInsets";
       }
 
       public static final int TEXT_FIELD_SEPARATOR_HEIGHT = 1;
