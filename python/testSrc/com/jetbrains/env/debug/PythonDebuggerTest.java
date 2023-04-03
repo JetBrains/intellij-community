@@ -1224,7 +1224,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = "-python3.11")
   @Test
   public void testExecutableScriptDebug() {
 
@@ -1247,6 +1246,11 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         eval("x").hasValue("42");
         resume();
         waitForOutput("Subprocess exited with return code: 0");
+      }
+
+      @Override
+      public @NotNull Set<String> getTags() {
+        return ImmutableSet.of("-python3.11", "-python2.7"); // PY-59675, PY-59951
       }
     });
   }
