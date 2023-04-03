@@ -69,13 +69,14 @@ import kotlin.Comparator
 @TestDataPath("\$PROJECT_ROOT/community/plugins/kotlin/idea/tests/testData/gradle")
 abstract class AbstractKotlinMppGradleImportingTest :
     GradleImportingTestCase(), WorkspaceChecksDsl, GradleProjectsPublishingDsl, GradleProjectsLinkingDsl, HighlightingCheckDsl,
-    TestWithKotlinPluginAndGradleVersions, DevModeTweaksDsl, AllFilesUnderContentRootConfigurationDsl {
+    TestWithKotlinPluginAndGradleVersions, DevModeTweaksDsl, AllFilesUnderContentRootConfigurationDsl, CustomGradlePropertiesDsl {
 
     internal val installedFeatures = listOf<TestFeature<*>>(
         GradleProjectsPublishingTestsFeature,
         LinkedProjectPathsTestsFeature,
         NoErrorEventsDuringImportFeature,
         CustomImportChecker, // NB: Disabled by default in most suites to not pollute the DSL
+        CustomGradlePropertiesTestFeature,
 
         ContentRootsChecker,
         KotlinFacetSettingsChecker,
@@ -188,6 +189,8 @@ abstract class AbstractKotlinMppGradleImportingTest :
                 it.isDirectory -> null
 
                 !it.name.endsWith(KotlinGradleImportingTestCase.AFTER_SUFFIX) -> {
+                    val relativeToRoot = it.path.substringAfter(rootDir.path + File.separator)
+
                     val text = context.testProperties.substituteKotlinTestPropertiesInText(
                         clearTextFromDiagnosticMarkup(FileUtil.loadFile(it, /* convertLineSeparators = */ true)),
                         it
@@ -195,13 +198,24 @@ abstract class AbstractKotlinMppGradleImportingTest :
                     val preprocessedText = installedFeatures.fold(text) { currentText, nextFeature ->
                         nextFeature.preprocessFile(it, currentText) ?: currentText
                     }
-                    val relativeToRoot = it.path.substringAfter(rootDir.path + File.separator)
-                    val virtualFile = createProjectSubFile(relativeToRoot, preprocessedText)
+
+                    // Some test features might want to create files before test execution (e.g. to configure
+                    // 'gradle.properties'). 'createProjectSubFile' will overwrite pre-existing content, so we're
+                    // handling this here.
+                    // Note that editing file content *after* 'configureByFiles' isn't very nice as well, as
+                    // testFeatures will then have to care about IJ VirtualFile model (and e.g. request VFS refresh)
+                    val targetFileInTempDir = File(testProjectRoot, relativeToRoot)
+                    val textToWrite = if (targetFileInTempDir.exists())
+                        preprocessedText + "\n" + targetFileInTempDir.readText()
+                    else
+                        preprocessedText
+
+                    val virtualFile = createProjectSubFile(relativeToRoot, textToWrite)
                     if (rootForProjectCopy != null) {
                         val output = File(rootForProjectCopy, relativeToRoot)
                         output.parentFile.mkdirs()
                         output.createNewFile()
-                        output.writeText(preprocessedText)
+                        output.writeText(textToWrite)
                     }
 
                     // Real file with expected testdata allows to throw nicer exceptions in
