@@ -15,8 +15,8 @@ import org.jetbrains.annotations.ApiStatus.Internal
  * or when the Restore Default Layout action is performed (to be implemented yet).
  *
  * The tool window layout is built by creating a builder and passing it to all
- * registered extensions according to [invocationOrder]. Every extension is
- * free to modify the layout in any way using the provided builder API.
+ * registered extensions. Every extension is free to modify the layout in any way
+ * using the provided builder API.
  *
  * @see DefaultToolWindowLayoutBuilder
  */
@@ -25,21 +25,6 @@ interface DefaultToolWindowLayoutExtension {
     val EP_NAME = ExtensionPointName.create<DefaultToolWindowLayoutExtension>("com.intellij.defaultToolWindowLayout")
   }
 
-  /**
-   * Determines the invocation order of extensions.
-   *
-   * The builder is passed to all extensions sorted by this value.
-   *
-   * Recommended value range: 0-100, currently used values are:
-   * - 30: the default platform extension;
-   * - 50: the legacy API service (to be removed);
-   * - 70: plugins and products (hence it's the default, so it's not necessary to override it).
-   *
-   * Once the old API is removed, it's supposed that at most two extensions will actually be used:
-   * the default platform one will populate the builder with defaults and then a specific product
-   * will modify it to suit its own needs.
-   */
-  val invocationOrder: Int get() = 70
   fun buildV1Layout(builder: DefaultToolWindowLayoutBuilder)
   fun buildV2Layout(builder: DefaultToolWindowLayoutBuilder)
 }
@@ -185,9 +170,6 @@ interface DefaultToolWindowLayoutProvider {
 // Implementation (new API)
 
 internal class DefaultToolWindowLayoutPlatformExtension : DefaultToolWindowLayoutExtension {
-  override val invocationOrder: Int
-    get() = 30
-
   override fun buildV1Layout(builder: DefaultToolWindowLayoutBuilder) {
     builder.left.addPlatformDefaultsV1()
     builder.right.addPlatformDefaultsV1()
@@ -350,9 +332,6 @@ open class IntellijPlatformDefaultToolWindowLayoutProvider : DefaultToolWindowLa
 // new API using old API
 
 class DefaultToolWindowLayoutProviderToExtensionAdapter : DefaultToolWindowLayoutExtension {
-  override val invocationOrder: Int
-    get() = 50
-
   override fun buildV1Layout(builder: DefaultToolWindowLayoutBuilder) {
     build(builder) { createV1Layout() }
   }

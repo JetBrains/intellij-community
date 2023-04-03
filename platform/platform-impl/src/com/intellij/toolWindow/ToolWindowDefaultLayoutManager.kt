@@ -167,7 +167,7 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
 
 private fun getDefaultLayoutToolWindowDescriptors(isNewUi: Boolean): List<ToolWindowDescriptor> {
   val builder = DefaultToolWindowLayoutBuilderImpl()
-  for (layoutExtension in DefaultToolWindowLayoutExtension.EP_NAME.extensionList.sortedBy { it.invocationOrder }) {
+  for (layoutExtension in DefaultToolWindowLayoutExtension.EP_NAME.extensionList) {
     if (isNewUi) {
       layoutExtension.buildV2Layout(builder)
     }

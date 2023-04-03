@@ -57,8 +57,15 @@
                         headlessImplementation="com.intellij.openapi.wm.impl.TestWindowManager" preload="notHeadless"/>
     <applicationService serviceInterface="com.intellij.toolWindow.DefaultToolWindowLayoutProvider"
                         serviceImplementation="com.intellij.toolWindow.IntellijPlatformDefaultToolWindowLayoutProvider"/>
-    <defaultToolWindowLayout implementation="com.intellij.toolWindow.DefaultToolWindowLayoutPlatformExtension" />
-    <defaultToolWindowLayout implementation="com.intellij.toolWindow.DefaultToolWindowLayoutProviderToExtensionAdapter" />
+    <defaultToolWindowLayout
+      id="DefaultToolWindowLayoutPlatformExtension"
+      implementation="com.intellij.toolWindow.DefaultToolWindowLayoutPlatformExtension"
+      order="first"
+    />
+    <defaultToolWindowLayout
+      implementation="com.intellij.toolWindow.DefaultToolWindowLayoutProviderToExtensionAdapter"
+      order="after DefaultToolWindowLayoutPlatformExtension"
+    />
 
     <applicationService serviceInterface="com.intellij.openapi.wm.IdeFocusManager"
                         serviceImplementation="com.intellij.openapi.wm.impl.FocusManagerImpl"
