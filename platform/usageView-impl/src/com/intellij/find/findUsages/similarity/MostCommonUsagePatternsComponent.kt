@@ -173,8 +173,11 @@ class MostCommonUsagePatternsComponent(
           updateToolbar(selectedUsages.size)
           for (i in snippets.size until previewComponents.size) {
             val component = previewComponents[i]
-            remove(component)
+            myMainPanel.remove(component)
             Disposer.dispose(component)
+          }
+          if (snippets.size < previewComponents.size) {
+            previewComponents.subList(snippets.size, previewComponents.size).clear()
           }
           for ((index, loadedSnippet) in snippets.withIndex()) {
             val previewComponent: UsagePreviewComponent?
