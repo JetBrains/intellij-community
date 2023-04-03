@@ -1,0 +1,80 @@
+UFile (package = )
+    UClass (name = NullabilityOfTypeParameterKt)
+        UMethod (name = topLevelNonNullUpperBoundInherited)
+            UParameter (name = t)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+            UBlockExpression
+                UReturnExpression
+                    USimpleNameReferenceExpression (identifier = t)
+        UMethod (name = topLevelNonNullUpperBoundExplicitNullable)
+            UParameter (name = t)
+                UAnnotation (fqName = org.jetbrains.annotations.Nullable)
+            UBlockExpression
+                UReturnExpression
+                    USimpleNameReferenceExpression (identifier = t)
+        UMethod (name = topLevelNullableUpperBoundInherited)
+            UParameter (name = t)
+            UBlockExpression
+                UReturnExpression
+                    USimpleNameReferenceExpression (identifier = t)
+        UMethod (name = topLevelNullableUpperBoundExplicitNullable)
+            UParameter (name = t)
+                UAnnotation (fqName = org.jetbrains.annotations.Nullable)
+            UBlockExpression
+                UReturnExpression
+                    USimpleNameReferenceExpression (identifier = t)
+        UMethod (name = topLevelUnspecifiedUpperBoundInherited)
+            UParameter (name = t)
+            UBlockExpression
+                UReturnExpression
+                    USimpleNameReferenceExpression (identifier = t)
+        UMethod (name = topLevelUnspecifiedUpperBoundExplicitNullable)
+            UParameter (name = t)
+                UAnnotation (fqName = org.jetbrains.annotations.Nullable)
+            UBlockExpression
+                UReturnExpression
+                    USimpleNameReferenceExpression (identifier = t)
+    UClass (name = NonNullUpperBound)
+        UMethod (name = inheritedNullability)
+            UParameter (name = i)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+            UBlockExpression
+                UReturnExpression
+                    USimpleNameReferenceExpression (identifier = i)
+        UMethod (name = explicitNullable)
+            UParameter (name = e)
+                UAnnotation (fqName = org.jetbrains.annotations.Nullable)
+            UBlockExpression
+                UReturnExpression
+                    USimpleNameReferenceExpression (identifier = e)
+        UMethod (name = NonNullUpperBound)
+            UParameter (name = ctorParam)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+    UClass (name = NullableUpperBound)
+        UMethod (name = inheritedNullability)
+            UParameter (name = i)
+            UBlockExpression
+                UReturnExpression
+                    USimpleNameReferenceExpression (identifier = i)
+        UMethod (name = explicitNullable)
+            UParameter (name = e)
+                UAnnotation (fqName = org.jetbrains.annotations.Nullable)
+            UBlockExpression
+                UReturnExpression
+                    USimpleNameReferenceExpression (identifier = e)
+        UMethod (name = NullableUpperBound)
+            UParameter (name = ctorParam)
+    UClass (name = UnspecifiedUpperBound)
+        UMethod (name = inheritedNullability)
+            UParameter (name = i)
+            UBlockExpression
+                UReturnExpression
+                    USimpleNameReferenceExpression (identifier = i)
+        UMethod (name = explicitNullable)
+            UParameter (name = e)
+                UAnnotation (fqName = org.jetbrains.annotations.Nullable)
+            UBlockExpression
+                UReturnExpression
+                    USimpleNameReferenceExpression (identifier = e)
+        UMethod (name = UnspecifiedUpperBound)
+            UParameter (name = ctorParam)

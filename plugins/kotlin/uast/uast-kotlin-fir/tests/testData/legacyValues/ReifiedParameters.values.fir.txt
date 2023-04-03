@@ -1,8 +1,7 @@
 UFile (package = ) [public final class ReifiedParametersKt {...]
     UClass (name = ReifiedParametersKt) [public final class ReifiedParametersKt {...}]
-        UMethod (name = functionWithLambda) [public static fun functionWithLambda(@org.jetbrains.annotations.Nullable t: T, @org.jetbrains.annotations.NotNull process: kotlin.jvm.functions.Function1<? super T,java.lang.Integer>) : int {...}]
-            UParameter (name = t) [@org.jetbrains.annotations.Nullable var t: T]
-                UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
+        UMethod (name = functionWithLambda) [public static fun functionWithLambda(t: T, @org.jetbrains.annotations.NotNull process: kotlin.jvm.functions.Function1<? super T,java.lang.Integer>) : int {...}]
+            UParameter (name = t) [var t: T]
             UParameter (name = process) [@org.jetbrains.annotations.NotNull var process: kotlin.jvm.functions.Function1<? super T,java.lang.Integer>]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] = Nothing
@@ -37,9 +36,8 @@ UFile (package = ) [public final class ReifiedParametersKt {...]
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return this] = Nothing
                     UThisExpression (label = null) [this] = Undetermined
-        UMethod (name = functionWithParamAnnotation) [public static fun functionWithParamAnnotation(@org.jetbrains.annotations.Nullable @kotlin.Suppress(names = "s") t: T) : T {...}]
-            UParameter (name = t) [@org.jetbrains.annotations.Nullable @kotlin.Suppress(names = "s") var t: T]
-                UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
+        UMethod (name = functionWithParamAnnotation) [public static fun functionWithParamAnnotation(@kotlin.Suppress(names = "s") t: T) : T {...}]
+            UParameter (name = t) [@kotlin.Suppress(names = "s") var t: T]
                 UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress(names = "s")]
                     UNamedExpression (name = names) [names = "s"] = Undetermined
                         ULiteralExpression (value = "s") ["s"] = "s"

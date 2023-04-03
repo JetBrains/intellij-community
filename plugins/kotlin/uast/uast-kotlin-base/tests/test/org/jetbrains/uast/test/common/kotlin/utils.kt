@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.cli.jvm.compiler.CliTraceHolder
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
+import org.jetbrains.uast.UAnnotation
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UFile
@@ -38,6 +39,21 @@ fun <T> T?.orFail(msg: String): T {
     return this
         ?: throw AssertionError(msg)
 }
+
+internal val UAnnotation.isNotNull: Boolean
+    get() {
+        return qualifiedName?.endsWith("NotNull") == true || javaPsi?.isNotNull == true
+    }
+
+internal val UAnnotation.isNullable: Boolean
+    get() {
+        return qualifiedName?.endsWith("Nullable") == true || javaPsi?.isNullable == true
+    }
+
+internal val UAnnotation.isNullnessAnnotation: Boolean
+    get() {
+        return isNotNull || isNullable
+    }
 
 internal val PsiAnnotation.isNotNull: Boolean
     get() {

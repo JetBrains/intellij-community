@@ -12,7 +12,6 @@ UFile (package = )
                             ULiteralExpression (value = 42)
         UMethod (name = id)
             UParameter (name = x)
-                UAnnotation (fqName = org.jetbrains.annotations.Nullable)
             UBlockExpression
                 UReturnExpression
                     USimpleNameReferenceExpression (identifier = x)
