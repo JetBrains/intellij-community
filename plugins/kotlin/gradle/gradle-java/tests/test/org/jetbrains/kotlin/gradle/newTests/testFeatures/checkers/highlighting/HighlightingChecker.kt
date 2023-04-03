@@ -29,7 +29,7 @@ object HighlightingChecker : AbstractTestChecker<HighlightingCheckConfiguration>
         return textWithRemovedTestConfig
     }
 
-    override fun KotlinMppTestsContext.check(additionalTestClassifier: String?) {
+    override fun KotlinMppTestsContext.check() {
         val highlightingConfig = testConfiguration.getConfiguration(HighlightingChecker)
         if (highlightingConfig.skipCodeHighlighting) return
         val renderedConfig = renderConfiguration()
@@ -39,7 +39,6 @@ object HighlightingChecker : AbstractTestChecker<HighlightingCheckConfiguration>
             testDataDirectory = testDataDirectory,
             testLineMarkers = !highlightingConfig.hideLineMarkers,
             severityLevel = highlightingConfig.hideHighlightsBelow,
-            correspondingFilePostfix = additionalTestClassifier ?: "",
             postprocessActualTestData = { actualTestData -> renderedConfig + "\n" + actualTestData }
         ).invokeOnAllModules()
     }

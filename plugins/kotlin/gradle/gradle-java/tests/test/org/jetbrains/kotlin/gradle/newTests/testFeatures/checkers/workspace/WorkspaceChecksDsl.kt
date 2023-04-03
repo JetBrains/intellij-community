@@ -32,6 +32,10 @@ interface WorkspaceChecksDsl : OrderEntriesChecksDsl, KotlinFacetSettingsChecksD
         onlyModules(from)
         onlyDependencies(to)
     }
+
+    var TestConfigurationDslScope.testClassifier: String?
+        get() = config.testClassifier
+        set(value) { config.testClassifier = value }
 }
 
 private val TestConfigurationDslScope.config: GeneralWorkspaceChecksConfiguration

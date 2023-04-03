@@ -44,7 +44,7 @@ interface CustomChecksDsl {
 object CustomImportChecker : AbstractTestChecker<CustomCheck>() {
     override fun createDefaultConfiguration() = CustomCheck()
 
-    override fun KotlinMppTestsContext.check(additionalTestClassifier: String?) {
+    override fun KotlinMppTestsContext.check() {
         testConfiguration.getConfiguration(CustomImportChecker).check(this)
     }
 }
