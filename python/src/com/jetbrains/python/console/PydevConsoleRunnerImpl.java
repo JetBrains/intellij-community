@@ -815,8 +815,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     @Override
     public @NotNull ProcessHandler createPythonConsoleProcessHandler(@NotNull PythonConsoleView consoleView) {
-      return PyConsoleProcessHandlers.createPythonConsoleProcessHandler(myProcessHandler, myProcess, consoleView, myConsoleCommunication,
-                                                                        myCommandLineString, CONSOLE_CHARSET);
+      PyConsoleProcessHandlers.configureProcessHandlerForPythonConsole(myProcessHandler, consoleView, myConsoleCommunication);
+      return myProcessHandler;
     }
   }
 
