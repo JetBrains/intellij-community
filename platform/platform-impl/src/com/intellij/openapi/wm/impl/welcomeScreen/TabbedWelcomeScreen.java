@@ -174,6 +174,7 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
       toolbar.setMinimumButtonSize(new JBDimension(26, 26));
       JComponent toolbarComponent = toolbar.getComponent();
 
+      toolbarComponent.setOpaque(false);
       toolbarComponent.setBorder(null);
       result.add(toolbarComponent);
     }
