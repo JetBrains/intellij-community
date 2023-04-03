@@ -264,6 +264,7 @@ private fun publishDmgBuildScripts(context: BuildContext, entrypoint: Path, temp
       """.trimIndent()
       artifactDir.resolve("README.txt").writeText(message)
       context.messages.info(message)
+      context.notifyArtifactBuilt(artifactDir)
     }
   }
 }
