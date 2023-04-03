@@ -1,3 +1,6 @@
+//region Test configuration
+// - hidden: line markers
+//endregion
 @file:Suppress("unused")
 
 import android.content.Context
@@ -9,23 +12,23 @@ import kotlinx.coroutines.runBlocking
 import java.util.concurrent.locks.ReentrantLock
 
 class AndroidMain : JvmAndAndroidMain {
-    override fun <lineMarker descr="Overrides function in JvmAndAndroidMain Press ... to navigate">useKtorApis</lineMarker>(): HttpClient {
+    override fun useKtorApis(): HttpClient {
         return super.useKtorApis().config {
             this.useDefaultTransformers = true
         }
     }
 
-    override fun <lineMarker descr="Overrides function in JvmAndAndroidMain Press ... to navigate">useKtorApisCloseable</lineMarker>(): Closeable {
+    override fun useKtorApisCloseable(): Closeable {
         return Closeable { }
     }
 
-    override fun <lineMarker descr="Overrides function in JvmAndAndroidMain Press ... to navigate">useCoroutinesApis</lineMarker>(): Deferred<String> {
+    override fun useCoroutinesApis(): Deferred<String> {
         return runBlocking(Dispatchers.Main) {
             super.useCoroutinesApis()
         }
     }
 
-    override fun <lineMarker descr="Overrides function in JvmAndAndroidMain Press ... to navigate">useJdkApis</lineMarker>(): ReentrantLock {
+    override fun useJdkApis(): ReentrantLock {
         return ReentrantLock()
     }
 

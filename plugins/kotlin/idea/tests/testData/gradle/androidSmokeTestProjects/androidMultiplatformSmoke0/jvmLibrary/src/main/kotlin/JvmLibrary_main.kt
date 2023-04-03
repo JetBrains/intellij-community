@@ -1,3 +1,6 @@
+//region Test configuration
+// - hidden: line markers
+//endregion
 object JvmLibrary_main {
     fun sayHello() {
         MultiplatformJvmLibrary_commonMain.sayHello()

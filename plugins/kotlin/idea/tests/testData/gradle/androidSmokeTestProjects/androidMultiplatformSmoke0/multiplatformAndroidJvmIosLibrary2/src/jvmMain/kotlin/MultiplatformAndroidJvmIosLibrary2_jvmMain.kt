@@ -1,3 +1,6 @@
+//region Test configuration
+// - hidden: line markers
+//endregion
 object MultiplatformAndroidJvmIosLibrary2_jvmMain {
     fun sayHello() {
         MultiplatformAndroidJvmIosLibrary_commonMain.sayHello()

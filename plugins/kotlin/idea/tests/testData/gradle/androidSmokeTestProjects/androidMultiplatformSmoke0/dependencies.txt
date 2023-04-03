@@ -324,11 +324,21 @@ project.multiplatformAndroidJvmIosLibrary.jvmTest
     org.jetbrains:annotations:13.0 (TEST)
 
 project.multiplatformAndroidJvmIosLibrary.linuxX64Main
+    Kotlin/Native {{KGP_VERSION}} - builtin | linux_x64 (PROVIDED)
+    Kotlin/Native {{KGP_VERSION}} - iconv | linux_x64 (PROVIDED)
+    Kotlin/Native {{KGP_VERSION}} - linux | linux_x64 (PROVIDED)
+    Kotlin/Native {{KGP_VERSION}} - posix | linux_x64 (PROVIDED)
     Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
+    Kotlin/Native {{KGP_VERSION}} - zlib | linux_x64 (PROVIDED)
     multiplatformAndroidJvmIosLibrary.commonMain (refines, COMPILE)
 
 project.multiplatformAndroidJvmIosLibrary.linuxX64Test
+    Kotlin/Native {{KGP_VERSION}} - builtin | linux_x64 (PROVIDED)
+    Kotlin/Native {{KGP_VERSION}} - iconv | linux_x64 (PROVIDED)
+    Kotlin/Native {{KGP_VERSION}} - linux | linux_x64 (PROVIDED)
+    Kotlin/Native {{KGP_VERSION}} - posix | linux_x64 (PROVIDED)
     Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
+    Kotlin/Native {{KGP_VERSION}} - zlib | linux_x64 (PROVIDED)
     multiplatformAndroidJvmIosLibrary.commonMain (friend, TEST)
     multiplatformAndroidJvmIosLibrary.commonTest (refines, TEST)
     multiplatformAndroidJvmIosLibrary.linuxX64Main (friend, TEST)
@@ -425,13 +435,23 @@ project.multiplatformAndroidJvmIosLibrary2.jvmTest
     org.jetbrains:annotations:13.0 (TEST)
 
 project.multiplatformAndroidJvmIosLibrary2.linuxX64Main
+    Kotlin/Native {{KGP_VERSION}} - builtin | linux_x64 (PROVIDED)
+    Kotlin/Native {{KGP_VERSION}} - iconv | linux_x64 (PROVIDED)
+    Kotlin/Native {{KGP_VERSION}} - linux | linux_x64 (PROVIDED)
+    Kotlin/Native {{KGP_VERSION}} - posix | linux_x64 (PROVIDED)
     Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
+    Kotlin/Native {{KGP_VERSION}} - zlib | linux_x64 (PROVIDED)
     multiplatformAndroidJvmIosLibrary.commonMain (COMPILE)
     multiplatformAndroidJvmIosLibrary.linuxX64Main (COMPILE)
     multiplatformAndroidJvmIosLibrary2.commonMain (refines, COMPILE)
 
 project.multiplatformAndroidJvmIosLibrary2.linuxX64Test
+    Kotlin/Native {{KGP_VERSION}} - builtin | linux_x64 (PROVIDED)
+    Kotlin/Native {{KGP_VERSION}} - iconv | linux_x64 (PROVIDED)
+    Kotlin/Native {{KGP_VERSION}} - linux | linux_x64 (PROVIDED)
+    Kotlin/Native {{KGP_VERSION}} - posix | linux_x64 (PROVIDED)
     Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
+    Kotlin/Native {{KGP_VERSION}} - zlib | linux_x64 (PROVIDED)
     multiplatformAndroidJvmIosLibrary.commonMain (TEST)
     multiplatformAndroidJvmIosLibrary.linuxX64Main (TEST)
     multiplatformAndroidJvmIosLibrary2.commonMain (friend, TEST)
@@ -558,5 +578,5 @@ project.multiplatformJvmLibrary.jvmTest
 
 
 Test configuration:
-- hiding following standard dependencies: Kotlin/Native distribution, sdk, self
+- hiding following standard dependencies: sdk, self
 - dependencies order is not checked

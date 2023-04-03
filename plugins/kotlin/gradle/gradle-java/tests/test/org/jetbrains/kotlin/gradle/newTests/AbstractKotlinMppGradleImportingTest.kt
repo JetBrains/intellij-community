@@ -105,6 +105,8 @@ abstract class AbstractKotlinMppGradleImportingTest :
     final override val kotlinPluginVersion: KotlinToolingVersion
         get() = context.kgpVersion
 
+    // Temporary hack allowing to reuse new test runner in selected smoke tests for runs on linux-hosts
+    open val allowOnNonMac: Boolean = false
 
     open fun TestConfigurationDslScope.defaultTestConfiguration() {}
 
@@ -160,7 +162,9 @@ abstract class AbstractKotlinMppGradleImportingTest :
 
     final override fun setUp() {
         // see KT-55554
-        assumeTrue("Test is ignored because it requires Mac-host", HostManager.hostIsMac)
+        if (!allowOnNonMac) {
+            assumeTrue("Test is ignored because it requires Mac-host", HostManager.hostIsMac)
+        }
         // Hack: usually this is set-up by JUnit's Parametrized magic, but
         // our tests source versions from `kotlinTestPropertiesService`, not from
         // @Parametrized
