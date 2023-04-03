@@ -3,13 +3,13 @@ pluginManagement {
         { { kts_kotlin_plugin_repositories } }
     }
     plugins {
-        kotlin("multiplatform") version "{{kotlin_plugin_version}}"
-        kotlin("android") version "{{kotlin_plugin_version}}"
+        kotlin("multiplatform") version "{{kgp_version}}"
+        kotlin("android") version "{{kgp_version}}"
     }
     resolutionStrategy {
         eachPlugin {
             if (requested.id.id.startsWith("com.android")) {
-                useModule("com.android.tools.build:gradle:{{android_gradle_plugin_version}}")
+                useModule("com.android.tools.build:gradle:{{agp_version}}")
             }
         }
     }
@@ -17,4 +17,3 @@ pluginManagement {
 
 rootProject.name = "mpp-issue-bootstrap"
 include(":p1")
-
