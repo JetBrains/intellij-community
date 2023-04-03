@@ -11,11 +11,13 @@ import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.context.Context
 import io.opentelemetry.extension.kotlin.asContextElement
 import io.opentelemetry.semconv.trace.attributes.SemanticAttributes
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withContext
 import java.util.concurrent.Callable
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ForkJoinTask
 import java.util.function.Consumer
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Returns a new [ForkJoinTask] that performs the given function as its action within a trace, and returns
@@ -47,6 +49,15 @@ inline fun <T> SpanBuilder.useWithScope(operation: (Span) -> T): T {
 suspend inline fun <T> SpanBuilder.useWithScope2(crossinline operation: suspend (Span) -> T): T {
   val span = startSpan()
   return withContext(Context.current().with(span).asContextElement()) {
+    span.use {
+      operation(span)
+    }
+  }
+}
+
+suspend inline fun <T> SpanBuilder.useWithScope(context: CoroutineContext, crossinline operation: suspend CoroutineScope.(Span) -> T): T {
+  val span = startSpan()
+  return withContext(Context.current().with(span).asContextElement() + context) {
     span.use {
       operation(span)
     }

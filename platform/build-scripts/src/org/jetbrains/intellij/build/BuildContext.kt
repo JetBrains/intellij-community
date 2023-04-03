@@ -2,7 +2,7 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.diagnostic.telemetry.use
-import com.intellij.diagnostic.telemetry.useWithScope2
+import com.intellij.diagnostic.telemetry.useWithScope
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -10,6 +10,8 @@ import io.opentelemetry.api.trace.SpanBuilder
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
@@ -119,12 +121,12 @@ fun executeStepSync(context: BuildContext, stepMessage: String, stepId: String, 
   return true
 }
 
-suspend inline fun BuildContext.executeStep(spanBuilder: SpanBuilder, stepId: String, crossinline step: suspend (Span) -> Unit) {
+suspend inline fun BuildContext.executeStep(spanBuilder: SpanBuilder, stepId: String, crossinline step: suspend CoroutineScope.(Span) -> Unit) {
   if (isStepSkipped(stepId)) {
     spanBuilder.startSpan().addEvent("skip '$stepId' step").end()
   }
   else {
-    spanBuilder.useWithScope2(step)
+    spanBuilder.useWithScope(Dispatchers.IO, step)
   }
 }
 
