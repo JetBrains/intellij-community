@@ -1006,22 +1006,22 @@ public class HighlightInfo implements Segment {
   }
   @NotNull
   private static RangeMarker getOrCreate(@NotNull Document document,
-                                         @NotNull Long2ObjectMap<RangeMarker> ranges2markersCache,
+                                         @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
                                          long textRange) {
-    return ranges2markersCache.computeIfAbsent(textRange, __ -> document.createRangeMarker(TextRangeScalarUtil.startOffset(textRange),
+    return range2markerCache.computeIfAbsent(textRange, __ -> document.createRangeMarker(TextRangeScalarUtil.startOffset(textRange),
                                                                                            TextRangeScalarUtil.endOffset(textRange)));
   }
 
   // convert ranges to markers: from quickFixRanges -> quickFixMarkers and fixRange -> fixMarker
   // TODO rework to lock-free
   synchronized void updateQuickFixFields(@NotNull Document document,
-                            @NotNull Long2ObjectMap<RangeMarker> ranges2markersCache,
+                            @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
                             long finalHighlighterRange) {
     if (quickFixActionMarkers != null && quickFixActionRanges != null && quickFixActionRanges.size() == quickFixActionMarkers.size() +1) {
       // markers already created, make quickFixRanges <-> quickFixMarkers consistent by adding new marker to the quickFixMarkers if necessary
       Pair<IntentionActionDescriptor, TextRange> last = ContainerUtil.getLastItem(quickFixActionRanges);
       Segment textRange = last.getSecond();
-      RangeMarker marker = getOrCreate(document, ranges2markersCache, TextRangeScalarUtil.toScalarRange(textRange));
+      RangeMarker marker = getOrCreate(document, range2markerCache, TextRangeScalarUtil.toScalarRange(textRange));
       quickFixActionMarkers.add(Pair.create(last.getFirst(), marker));
       return;
     }
@@ -1029,7 +1029,7 @@ public class HighlightInfo implements Segment {
       List<Pair<IntentionActionDescriptor, RangeMarker>> list = new ArrayList<>(quickFixActionRanges.size());
       for (Pair<IntentionActionDescriptor, TextRange> pair : quickFixActionRanges) {
         TextRange textRange = pair.second;
-        RangeMarker marker = getOrCreate(document, ranges2markersCache, TextRangeScalarUtil.toScalarRange(textRange));
+        RangeMarker marker = getOrCreate(document, range2markerCache, TextRangeScalarUtil.toScalarRange(textRange));
         list.add(Pair.create(pair.first, marker));
       }
       quickFixActionMarkers = ContainerUtil.createLockFreeCopyOnWriteList(list);
@@ -1038,7 +1038,7 @@ public class HighlightInfo implements Segment {
       fixMarker = null; // null means it the same as highlighter's range
     }
     else {
-      fixMarker = getOrCreate(document, ranges2markersCache, fixRange);
+      fixMarker = getOrCreate(document, range2markerCache, fixRange);
     }
   }
 

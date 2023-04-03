@@ -43,7 +43,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   @NotNull
   private final CanISilentlyChange.Result myCanChangeFileSilently;
   private volatile boolean myIsEssentialHighlightingOnly;
-  private final Long2ObjectMap<RangeMarker> myRanges2markersCache = new Long2ObjectOpenHashMap<>();
+  private final Long2ObjectMap<RangeMarker> myRange2markerCache = new Long2ObjectOpenHashMap<>();
   private final TransferToEDTQueue<Runnable> myEDTQueue;
   private volatile boolean myInContent;
   private volatile ThreeState extensionsAllowToChangeFileSilently;
@@ -194,7 +194,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
                           int groupId) {
     applyInEDT(() ->
       UpdateHighlightersUtil.addHighlighterToEditorIncrementally(getPsiFile(), getDocument(), restrictedRange,
-                                                                 info, getColorsScheme(), groupId, myRanges2markersCache));
+                                                                 info, getColorsScheme(), groupId, myRange2markerCache));
   }
 
   void queueDisposeHighlighter(@NotNull HighlightInfo info) {

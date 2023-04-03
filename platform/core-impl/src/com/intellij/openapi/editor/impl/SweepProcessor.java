@@ -32,16 +32,16 @@ public interface SweepProcessor<T> {
    * Process all intervals from the {@code generator} in their "start offset; then end offset" order.
    * For each interval call {@code sweepProcessor} and pass this interval, its current endpoint (start or end), and current overlapping intervals which this endpoint stabs.
    * E.g. for (0,4), (2,5) intervals, this method will call {@code sweepProcessor} with:<pre>
-   *   (offset=0, atStart=true, overlapping=empty),
-   *   (offset=2, atStart=true, overlapping=(0-4)),
+   *   (offset=0, atStart=true,  overlapping=empty),
+   *   (offset=2, atStart=true,  overlapping=(0-4)),
    *   (offset=4, atStart=false, overlapping=(2-5),
    *   (offset=5, atStart=false, overlapping=empty)
    * </pre>
    */
   static <T extends Segment> boolean sweep(@NotNull Generator<? extends T> generator, @NotNull final SweepProcessor<T> sweepProcessor) {
     Queue<T> ends = new PriorityQueue<>(5, Comparator.comparingInt(Segment::getEndOffset));
-    if (!generator.generateInStartOffsetOrder(marker -> {
-      // decide whether previous marker ends here or new marker begins
+    if (!generator.processAllInStartOffsetOrder(marker -> {
+      // decide whether the previous marker ends here or the new marker begins
       int start = marker.getStartOffset();
       while (!ends.isEmpty()) {
         T previous = ends.peek();
@@ -71,6 +71,6 @@ public interface SweepProcessor<T> {
 
   @FunctionalInterface
   interface Generator<T> {
-    boolean generateInStartOffsetOrder(@NotNull Processor<? super T> processor);
+    boolean processAllInStartOffsetOrder(@NotNull Processor<? super T> processor);
   }
 }

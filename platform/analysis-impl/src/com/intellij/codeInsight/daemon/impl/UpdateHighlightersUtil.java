@@ -80,7 +80,7 @@ public final class UpdateHighlightersUtil {
                                                   @NotNull HighlightInfo info,
                                                   @Nullable EditorColorsScheme colorsScheme, // if null global scheme will be used
                                                   int group,
-                                                  @NotNull Long2ObjectMap<RangeMarker> ranges2markersCache) {
+                                                  @NotNull Long2ObjectMap<RangeMarker> range2markerCache) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     Project project = file.getProject();
     if (!HighlightInfoPostFilters.accept(project, info)) {
@@ -104,7 +104,7 @@ public final class UpdateHighlightersUtil {
                                                                 null, info.getActualStartOffset(), info.getActualEndOffset(),
                                                                 otherHighlightInTheWayProcessor);
     if (allIsClear) {
-      createOrReuseHighlighterFor(info, colorsScheme, document, group, file, (MarkupModelEx)markup, null, ranges2markersCache, severityRegistrar);
+      createOrReuseHighlighterFor(info, colorsScheme, document, group, file, (MarkupModelEx)markup, null, range2markerCache, severityRegistrar);
 
       clearWhiteSpaceOptimizationFlag(document);
       assertMarkupConsistent(markup, project);
@@ -236,7 +236,7 @@ public final class UpdateHighlightersUtil {
     };
     DaemonCodeAnalyzerEx.processHighlightsOverlappingOutside(document, project, priorityRange.getStartOffset(), priorityRange.getEndOffset(), processor);
 
-    Long2ObjectMap<RangeMarker> ranges2markersCache = new Long2ObjectOpenHashMap<>(10);
+    Long2ObjectMap<RangeMarker> range2markerCache = new Long2ObjectOpenHashMap<>(10);
     boolean[] changed = {false};
     SweepProcessor.Generator<HighlightInfo> generator = proc -> ContainerUtil.process(filteredInfos, proc);
     SweepProcessor.sweep(generator, (offset, info, atStart, overlappingIntervals) -> {
@@ -254,7 +254,7 @@ public final class UpdateHighlightersUtil {
       if (info.getStartOffset() < priorityRange.getStartOffset() || info.getEndOffset() > priorityRange.getEndOffset()) {
         EditorColorsScheme colorsScheme = session.getColorsScheme();
         createOrReuseHighlighterFor(info, colorsScheme, document, group, psiFile, (MarkupModelEx)markup, infosToRemove,
-                                      ranges2markersCache, severityRegistrar);
+                                      range2markerCache, severityRegistrar);
         changed[0] = true;
       }
       return true;
@@ -296,7 +296,7 @@ public final class UpdateHighlightersUtil {
 
     List<HighlightInfo> filteredInfos = HighlightInfoPostFilters.applyPostFilter(project, infos);
     ContainerUtil.quickSort(filteredInfos, BY_START_OFFSET_NO_DUPS);
-    Long2ObjectMap<RangeMarker> ranges2markersCache = new Long2ObjectOpenHashMap<>(10);
+    Long2ObjectMap<RangeMarker> range2markerCache = new Long2ObjectOpenHashMap<>(10);
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     boolean[] changed = {false};
     SweepProcessor.Generator<HighlightInfo> generator = processor -> ContainerUtil.process(filteredInfos, processor);
@@ -314,7 +314,7 @@ public final class UpdateHighlightersUtil {
       }
       if (info.getStartOffset() >= range.getStartOffset() && info.getEndOffset() <= range.getEndOffset()) {
         EditorColorsScheme colorsScheme = session.getColorsScheme();
-        createOrReuseHighlighterFor(info, colorsScheme, document, group, psiFile, markup, infosToRemove, ranges2markersCache, severityRegistrar);
+        createOrReuseHighlighterFor(info, colorsScheme, document, group, psiFile, markup, infosToRemove, range2markerCache, severityRegistrar);
         changed[0] = true;
       }
       return true;
@@ -394,7 +394,7 @@ public final class UpdateHighlightersUtil {
                                                   @NotNull PsiFile psiFile,
                                                   @NotNull MarkupModelEx markup,
                                                   @Nullable HighlightersRecycler infosToRemove,
-                                                  @NotNull Long2ObjectMap<RangeMarker> ranges2markersCache,
+                                                  @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
                                                   @NotNull SeverityRegistrar severityRegistrar) {
     int infoStartOffset = info.startOffset;
     int infoEndOffset = info.endOffset;
@@ -439,8 +439,8 @@ public final class UpdateHighlightersUtil {
       GutterMark renderer = info.getGutterIconRenderer();
       finalHighlighter.setGutterIconRenderer((GutterIconRenderer)renderer);
 
-      ranges2markersCache.put(finalInfoRange, finalHighlighter);
-      info.updateQuickFixFields(document, ranges2markersCache, finalInfoRange);
+      range2markerCache.put(finalInfoRange, finalHighlighter);
+      info.updateQuickFixFields(document, range2markerCache, finalInfoRange);
     };
 
     RangeHighlighterEx highlighter = infosToRemove == null ? null : (RangeHighlighterEx)infosToRemove.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer);
