@@ -89,10 +89,13 @@ class CsvGzippedMetricsExporter(writeToFile: Path) : MetricExporter {
     val logger = Logger.getInstance(CsvGzippedMetricsExporter::class.java)
 
     fun generateFileForConnectionMetrics(): Path {
-      val connectionMetricsPath = "open-telemetry-connection-metrics.gz"
+      val connectionMetricsPath = "open-telemetry-connection-metrics.csv.gz"
       val pathResolvedAgainstLogDir = PathManager.getLogDir().resolve(connectionMetricsPath).toAbsolutePath()
       val maxFilesToKeep = SystemProperties.getIntProperty("idea.diagnostic.opentelemetry.rdct.metrics.max-files-to-keep", 14)
 
+      return generatePath(pathResolvedAgainstLogDir, maxFilesToKeep)
+    }
+    private fun generatePath(pathResolvedAgainstLogDir: Path, maxFilesToKeep: Int): Path {
       return FileSetLimiter.inDirectory(pathResolvedAgainstLogDir.parent).withBaseNameAndDateFormatSuffix(
         pathResolvedAgainstLogDir.fileName.toString(), "yyyy-MM-dd-HH-mm-ss").removeOldFilesBut(maxFilesToKeep,
                                                                                                 FileSetLimiter.DELETE_ASYNC).createNewFile()
