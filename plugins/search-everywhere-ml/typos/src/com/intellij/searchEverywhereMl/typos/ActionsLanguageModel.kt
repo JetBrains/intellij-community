@@ -2,7 +2,6 @@ package com.intellij.searchEverywhereMl.typos
 
 import ai.grazie.spell.lists.FrequencyMetadata
 import com.intellij.ide.actions.ShowSettingsUtilImpl
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
@@ -20,13 +19,13 @@ import com.intellij.spellchecker.dictionary.Dictionary
 import com.intellij.spellchecker.dictionary.RuntimeDictionaryProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
-import kotlinx.coroutines.cancel
-import kotlin.coroutines.EmptyCoroutineContext
 
 @Service(Service.Level.APP)
-internal class ActionsLanguageModel(private val actionsDictionary: ActionsDictionary = ActionsDictionaryImpl()) : Disposable,
-                                                                                                                  Dictionary by actionsDictionary,
-                                                                                                                  FrequencyMetadata by actionsDictionary {
+internal class ActionsLanguageModel(coroutineScope: CoroutineScope,
+                                    private val actionsDictionary: ActionsDictionary) : Dictionary by actionsDictionary,
+                                                                                        FrequencyMetadata by actionsDictionary {
+
+  constructor(coroutineScope: CoroutineScope) : this(coroutineScope, ActionsDictionaryImpl())
 
   companion object {
     /**
@@ -37,8 +36,6 @@ internal class ActionsLanguageModel(private val actionsDictionary: ActionsDictio
       return service<ActionsLanguageModel>()
     }
   }
-
-  private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
   private val languageModelComputation = coroutineScope.async {
     val project = IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project ?: ProjectManager.getInstance().defaultProject
@@ -74,10 +71,6 @@ internal class ActionsLanguageModel(private val actionsDictionary: ActionsDictio
     .asSequence()
     .filterIsInstance<SearchableConfigurable>()
     .map { it.displayName }
-
-  override fun dispose() {
-    coroutineScope.cancel()
-  }
 
   internal interface ActionsDictionary : Dictionary, FrequencyMetadata {
     fun addWord(word: String)
