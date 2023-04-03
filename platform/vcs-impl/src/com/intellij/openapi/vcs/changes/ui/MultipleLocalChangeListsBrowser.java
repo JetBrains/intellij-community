@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -27,6 +28,7 @@ import com.intellij.openapi.vcs.changes.actions.RollbackDialogAction;
 import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
+import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -48,6 +50,7 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
@@ -61,6 +64,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   @NotNull private final MergingUpdateQueue myUpdateQueue =
     new MergingUpdateQueue("MultipleLocalChangeListsBrowser", 300, true, ANY_COMPONENT, this);
 
+  private final Collection<AbstractVcs> myAffectedVcses;
   private final boolean myEnableUnversioned;
   private final boolean myEnablePartialCommit;
   @Nullable private Supplier<? extends JComponent> myBottomDiffComponent;
@@ -77,11 +81,13 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   private final RollbackDialogAction myRollbackDialogAction;
 
   MultipleLocalChangeListsBrowser(@NotNull Project project,
+                                  @NotNull Collection<AbstractVcs> affectedVcses,
                                   boolean showCheckboxes,
                                   boolean highlightProblems,
                                   boolean enableUnversioned,
                                   boolean enablePartialCommit) {
     super(project, showCheckboxes, highlightProblems);
+    myAffectedVcses = affectedVcses;
     myEnableUnversioned = enableUnversioned;
     myEnablePartialCommit = enablePartialCommit;
 
@@ -151,8 +157,14 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     return group;
   }
 
-  protected List<? extends AnAction> createAdditionalRollbackActions() {
-    return Collections.emptyList();
+  private List<? extends AnAction> createAdditionalRollbackActions() {
+    List<AnAction> result = new ArrayList<>();
+    for (AbstractVcs vcs : myAffectedVcses) {
+      RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
+      if (rollbackEnvironment == null) continue;
+      result.addAll(rollbackEnvironment.createCustomRollbackActions());
+    }
+    return result;
   }
 
   @NotNull
