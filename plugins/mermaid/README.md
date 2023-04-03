@@ -2,14 +2,14 @@
 
 ## Plugin description
 
-**Note:** Links in plugin description have to be inlined.
+**Note:** Links in the plugin description section have to be inlined.
 
 [//]: # (Plugin description)
 
 Provides support for creating diagrams with [Mermaid](https://mermaid-js.github.io/).
 
 * Full support for Mermaid syntax: highlighting, completion, navigation, inspections, intentions, and much more
-* Dedicated file type: `.mermaid`
+* Dedicated file types: `.mmd` and `.mermaid`
 * Can be used with the [Markdown plugin](https://plugins.jetbrains.com/plugin/7793-markdown) to add assistance and rendering of Mermaid code blocks in Markdown files
 
 [//]: # (Plugin description end)
