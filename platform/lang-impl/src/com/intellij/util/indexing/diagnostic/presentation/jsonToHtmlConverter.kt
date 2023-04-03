@@ -1018,6 +1018,9 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
               tr { th("Name"); th("Data") }
             }
             tbody {
+              tr {
+                td("Activity"); td("Scanning")
+              }
               tr { td(TITLE_NUMBER_OF_FILE_PROVIDERS); td(fileCount.numberOfFileProviders.toString()) }
               tr { td(TITLE_NUMBER_OF_SCANNED_FILES); td(fileCount.numberOfScannedFiles.toString()) }
               tr {
@@ -1410,6 +1413,9 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
               tr { th("Name"); th("Data") }
             }
             tbody {
+              tr {
+                td("Activity"); td("Dumb indexing")
+              }
               tr {
                 td(TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRASTRUCTURE_EXTENSIONS_DURING_INDEXING)
                 td(fileCount.numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage.toString())
