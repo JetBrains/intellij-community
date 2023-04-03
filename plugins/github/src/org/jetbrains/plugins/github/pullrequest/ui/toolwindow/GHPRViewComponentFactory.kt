@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager.Companion.EDITOR_TAB_DIFF_PREVIEW
+import com.intellij.openapi.vcs.changes.ui.AsyncChangesTree
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.ui.ClientProperty
@@ -142,7 +143,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     }
 
   private class Controller(
-    private val tree: ChangesTree,
+    private val tree: AsyncChangesTree,
     private val changesProviderModel: SingleValueModel<GitParsedChangesBundle>,
     private val commitsVm: GHPRCommitsViewModel
   ) : GHPRCommitBrowserComponentController {
@@ -155,16 +156,18 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     override fun selectChange(oid: String?, filePath: String) {
       commitsVm.selectAllCommits()
 
-      if (oid == null) {
-        tree.selectFile(VcsUtil.getFilePath(filePath, false))
-      }
-      else {
-        val change = changesProviderModel.value.patchesByChange.findCumulativeChange(oid, filePath)
-        if (change == null) {
+      tree.invokeAfterRefresh {
+        if (oid == null) {
           tree.selectFile(VcsUtil.getFilePath(filePath, false))
         }
         else {
-          tree.selectChange(change)
+          val change = changesProviderModel.value.patchesByChange.findCumulativeChange(oid, filePath)
+          if (change == null) {
+            tree.selectFile(VcsUtil.getFilePath(filePath, false))
+          }
+          else {
+            tree.selectChange(change)
+          }
         }
       }
       CollaborationToolsUIUtil.focusPanel(tree)
@@ -277,7 +280,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     model: SingleValueModel<Collection<Change>>,
     emptyTextText: @Nls String,
     getCustomData: ChangesTree.(String) -> Any? = { null }
-  ): ChangesTree {
+  ): AsyncChangesTree {
     val tree = CodeReviewChangesTreeFactory(project, model).create(emptyTextText)
 
     val diffPreviewController = createAndSetupDiffPreview(tree, diffRequestProducer.changeProducerFactory, dataProvider,
