@@ -41,6 +41,7 @@ import javax.swing.text.*
 import javax.swing.text.View.X_AXIS
 import javax.swing.text.View.Y_AXIS
 import javax.swing.text.html.*
+import javax.swing.text.html.ParagraphView
 import kotlin.math.min
 
 @ApiStatus.Internal
@@ -448,7 +449,10 @@ private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder,
     foreground = JBUI.CurrentTheme.GotItTooltip.foreground(useContrastColors)
     background = JBUI.CurrentTheme.GotItTooltip.background(useContrastColors)
 
-    editorKit = createEditorKit(useContrastColors, iconsMap)
+    val increasedLineSpacing = htmlBuilder.toString().let {
+      it.contains("""<span class="code">""") || it.contains("""<span class="shortcut">""")
+    }
+    editorKit = createEditorKit(useContrastColors, if (increasedLineSpacing) 0.2f else 0.1f, iconsMap)
 
     putClientProperty("caretWidth", 0)
 
@@ -471,7 +475,7 @@ private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder,
     preferredSize = Dimension(width, root.getPreferredSpan(Y_AXIS).toInt())
   }
 
-  private fun createEditorKit(useContrastColors: Boolean, iconsMap: Map<Int, Icon>): HTMLEditorKit {
+  private fun createEditorKit(useContrastColors: Boolean, lineSpacing: Float, iconsMap: Map<Int, Icon>): HTMLEditorKit {
     val styleSheet = StyleSheet()
     val linkStyles = "a { color: #${ColorUtil.toHex(JBUI.CurrentTheme.GotItTooltip.linkForeground())} }"
     val shortcutStyles = ShortcutExtension.getStyles(JBUI.CurrentTheme.GotItTooltip.shortcutForeground(useContrastColors),
@@ -495,7 +499,10 @@ private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder,
 
     return HTMLEditorKitBuilder()
       .withStyleSheet(styleSheet)
-      .withViewFactoryExtensions(iconsExtension, ShortcutExtension(), InlineCodeExtension())
+      .withViewFactoryExtensions(iconsExtension,
+                                 ShortcutExtension(),
+                                 InlineCodeExtension(),
+                                 LineSpacingExtension(lineSpacing))
       .build()
   }
 
@@ -684,8 +691,8 @@ private class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
     }
 
     companion object {
-      private const val DEFAULT_HORIZONTAL_INDENT: Float = 3f
-      private const val DEFAULT_VERTICAL_INDENT: Float = -0.5f
+      private const val DEFAULT_HORIZONTAL_INDENT: Float = 2.5f
+      private const val DEFAULT_VERTICAL_INDENT: Float = 0.5f
       private const val DEFAULT_ARC: Float = 8.0f
 
       private val SHORTCUT_PART_REGEX = Regex("""[^ ${StringUtil.NON_BREAK_SPACE}]+""")
@@ -795,10 +802,33 @@ private class InlineCodeExtension : ExtendableHTMLViewFactory.Extension {
     }
 
     companion object {
-      private const val DEFAULT_HORIZONTAL_INDENT: Float = 3f
-      private const val DEFAULT_VERTICAL_INDENT: Float = -1f
+      private const val DEFAULT_HORIZONTAL_INDENT: Float = 2.5f
+      private const val DEFAULT_VERTICAL_INDENT: Float = 0f
       private const val DEFAULT_ARC: Float = 8.0f
     }
+  }
+}
+
+/**
+ * It is impossible to edit the line spacing of the paragraphs in JEditorPane when HTMLEditorKit are used.
+ * [CSS.Attribute.LINE_HEIGHT] is not taken into account, setting [AttributeSet] using [StyledDocument.setParagraphAttributes]
+ * also do not propagate [StyleConstants.LineSpacing] to the [ParagraphView].
+ * So, this is a workaround.
+ */
+private class LineSpacingExtension(val lineSpacing: Float) : ExtendableHTMLViewFactory.Extension {
+  override fun invoke(elem: Element, defaultView: View): View? {
+    return if (defaultView is ParagraphView) {
+      object : ParagraphView(elem) {
+        init {
+          super.setLineSpacing(lineSpacing)
+        }
+
+        override fun setLineSpacing(ls: Float) {
+          // do nothing to not override initial value
+        }
+      }
+    }
+    else null
   }
 }
 
