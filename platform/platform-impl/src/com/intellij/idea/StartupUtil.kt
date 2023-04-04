@@ -45,6 +45,7 @@ import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.accessibility.ScreenReader
+import com.jetbrains.JBR
 import kotlinx.coroutines.*
 import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.VisibleForTesting
@@ -194,6 +195,12 @@ fun CoroutineScope.startApplication(args: List<String>,
   if (System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {
     launch(CoroutineName("coroutine debug probes init")) {
       enableCoroutineDump()
+      JBR.getJstack()?.includeInfoFrom {
+        """
+$COROUTINE_DUMP_HEADER
+${dumpCoroutines(stripDump = false)}
+"""
+      }
     }
   }
 

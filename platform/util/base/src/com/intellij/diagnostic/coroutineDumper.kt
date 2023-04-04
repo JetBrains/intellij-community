@@ -22,7 +22,8 @@ import java.nio.charset.StandardCharsets
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
-internal const val COROUTINE_DUMP_HEADER: @NonNls String = "---------- Coroutine dump ----------"
+@Internal
+const val COROUTINE_DUMP_HEADER: @NonNls String = "---------- Coroutine dump ----------"
 internal const val COROUTINE_DUMP_HEADER_STRIPPED: @NonNls String = "---------- Coroutine dump (stripped) ----------"
 
 @Internal
