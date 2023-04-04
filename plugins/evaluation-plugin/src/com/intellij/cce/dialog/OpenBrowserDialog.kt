@@ -2,7 +2,7 @@ package com.intellij.cce.dialog
 
 import com.intellij.cce.EvaluationPluginBundle
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.panel
 import javax.swing.JComponent
 
 class OpenBrowserDialog(private val reportNames: List<String>) : DialogWrapper(true) {
@@ -19,16 +19,15 @@ class OpenBrowserDialog(private val reportNames: List<String>) : DialogWrapper(t
       return panel {
         row { label(EvaluationPluginBundle.message("evaluation.completed.open.browser.text")) }
       }
-    } else {
+    }
+    else {
       return panel {
         row { label(EvaluationPluginBundle.message("evaluation.completed.open.browser.select")) }
         for (reportName in reportNames) {
           row {
-            checkBox(reportName).apply {
-              component.addItemListener {
-                if (component.isSelected) reportNamesForOpening.add(component.text)
-                else reportNamesForOpening.remove(component.text)
-              }
+            checkBox(reportName).onChanged {
+              if (it.isSelected) reportNamesForOpening.add(it.text)
+              else reportNamesForOpening.remove(it.text)
             }
           }
         }
