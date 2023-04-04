@@ -1,8 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.execution;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
+import com.intellij.execution.target.TargetProgressIndicator;
+import com.intellij.execution.target.local.LocalTargetEnvironment;
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -24,6 +28,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.task.RunConfigurationTaskState;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -688,9 +693,29 @@ public class GradleExecutionHelper {
       );
       Map<String, String> map = new LinkedHashMap<>();
       map.put(prefix, initScript);
+      String taskStateInitScript = getTaskStateInitScript(configuration);
+      if (taskStateInitScript != null) {
+        map.put("ijtgttaskstate", taskStateInitScript);
+      }
       return map;
     }
     return Collections.emptyMap();
+  }
+
+  private static @Nullable String getTaskStateInitScript(@NonNls GradleRunConfiguration configuration) {
+    RunConfigurationTaskState taskState = configuration.getUserData(RunConfigurationTaskState.getKEY());
+    if (taskState == null) return null;
+
+    LocalTargetEnvironmentRequest request = new LocalTargetEnvironmentRequest();
+    TargetProgressIndicator progressIndicator = TargetProgressIndicator.EMPTY;
+    try {
+      taskState.prepareTargetEnvironmentRequest(request, progressIndicator);
+      LocalTargetEnvironment environment = request.prepareEnvironment(progressIndicator);
+      return taskState.handleCreatedTargetEnvironment(environment, progressIndicator);
+    }
+    catch (ExecutionException e) {
+      return null;
+    }
   }
 
   @Nullable
