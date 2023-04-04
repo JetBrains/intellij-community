@@ -1,6 +1,6 @@
-class AmbigousParameter {
+class AmbiguousParameter {
    public void caller() {
-     new JDialog( ((Frame)null), "Title", true);
+     new JDialog((Frame)null, "Title", true);
    }
 }
 

@@ -4,7 +4,7 @@ interface B {}
 
 class C implements A, B {}
 
-class AmbigousParameter {
+class AmbiguousParameter {
    void m(A a) {}
    void m(B b) {}
 

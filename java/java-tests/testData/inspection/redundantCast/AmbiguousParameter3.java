@@ -1,7 +1,7 @@
 interface A {}
 interface B {}
 
-class AmbigousParameter {
+class AmbiguousParameter {
    public void f(A a) {}
    public void f(B b) {}
    public void f(Object o) {}

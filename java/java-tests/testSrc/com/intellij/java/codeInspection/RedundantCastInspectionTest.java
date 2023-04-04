@@ -25,15 +25,15 @@ public class RedundantCastInspectionTest extends LightJavaCodeInsightFixtureTest
     myFixture.testHighlighting(getTestName(false) + ".java");
   }
 
-  public void testAmbigousParm1() { doTest(); }
+  public void testAmbiguousParameter1() { doTest(); }
 
-  public void testAmbigousParm2() { doTest(); }
+  public void testAmbiguousParameter2() { doTest(); }
 
-  public void testAmbigousParm3() { doTest(); }
+  public void testAmbiguousParameter3() { doTest(); }
 
-  public void testAmbigousParm4() { doTest(); }
+  public void testAmbiguousParameter4() { doTest(); }
 
-  public void testAmbigousParm5() { doTest(); }
+  public void testAmbiguousParameter5() { doTest(); }
 
   public void testConditionalNoType() { doTest(); }
 

@@ -4,7 +4,7 @@ interface B {}
 
 class C implements A, B {}
 
-class AmbigousParameter {
+class AmbiguousParameter {
    public void ua(A a) {}
 
    public void caller(C c) {
