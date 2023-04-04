@@ -4,43 +4,42 @@ package com.intellij.platform.impl.toolkit
 
 import org.jetbrains.annotations.ApiStatus
 import sun.awt.PlatformGraphicsInfo
-import sun.java2d.SunGraphicsEnvironment
 import java.awt.GraphicsDevice
+import java.awt.GraphicsEnvironment
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 
 @ApiStatus.Internal
 class LocalGraphicsEnvironment: ClientGraphicsEnvironment {
-  private val localGraphicsEnvironment: SunGraphicsEnvironment? = if (!IdeGraphicEnvironment.isRealHeadless) PlatformGraphicsInfo.createGE() as SunGraphicsEnvironment else null
+  private val platformGraphicsEnvironment: GraphicsEnvironment? =
+    if (!IdeGraphicEnvironment.isRealHeadless) PlatformGraphicsInfo.createGE() else null
 
+  private val lookup = MethodHandles.lookup()
   override fun isInitialized() = true
+  
   override fun getNumScreens(): Int {
-    localGraphicsEnvironment?.let {
-      it::class.java.getDeclaredMethod("getNumScreens").apply {
-        isAccessible = true
-        return invoke(localGraphicsEnvironment) as Int
-      }
+    val methodType = MethodType.methodType(Int::class.java)
+    platformGraphicsEnvironment?.let {
+      return lookup.findVirtual(it::class.java, "getNumScreens", methodType).invoke(it) as Int
     }
     return HeadlessDummyGraphicsEnvironment.instance.getNumScreens()
   }
 
   override fun makeScreenDevice(id: Int): GraphicsDevice {
-    localGraphicsEnvironment?.let {
-      it::class.java.getDeclaredMethod("makeScreenDevice", Int::class.java).apply {
-        isAccessible = true
-        return invoke(localGraphicsEnvironment, id) as GraphicsDevice
-      }
+    val methodType = MethodType.methodType(GraphicsDevice::class.java, Int::class.java)
+    platformGraphicsEnvironment?.let {
+      return lookup.findVirtual(it::class.java, "makeScreenDevice", methodType).invoke(it, id) as GraphicsDevice
     }
     return HeadlessDummyGraphicsEnvironment.instance.makeScreenDevice(id)
   }
 
   override fun isDisplayLocal(): Boolean {
-    localGraphicsEnvironment?.let {
-      it::class.java.getDeclaredMethod("isDisplayLocal").apply {
-        isAccessible = true
-        return invoke(localGraphicsEnvironment) as Boolean
-      }
+    val methodType = MethodType.methodType(Boolean::class.java)
+    platformGraphicsEnvironment?.let {
+      return lookup.findVirtual(it::class.java, "isDisplayLocal", methodType).invoke(it) as Boolean
     }
     return HeadlessDummyGraphicsEnvironment.instance.isDisplayLocal()
   }
 
-  override fun getScreenDevices(): Array<GraphicsDevice> = localGraphicsEnvironment?.screenDevices ?: HeadlessDummyGraphicsEnvironment.instance.getScreenDevices()
+  override fun getScreenDevices(): Array<GraphicsDevice> = platformGraphicsEnvironment?.screenDevices ?: HeadlessDummyGraphicsEnvironment.instance.getScreenDevices()
 }
