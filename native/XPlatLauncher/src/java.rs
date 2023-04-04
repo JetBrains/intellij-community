@@ -19,7 +19,6 @@ use anyhow::{bail, Context, Result};
 
 #[cfg(target_os = "windows")] use {
     utils::{canonical_non_unc, PathExt},
-    std::env
 };
 
 #[derive(Clone)]
