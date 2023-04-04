@@ -70,28 +70,8 @@ data class JsonProjectScanningHistory(
   override val projectName: String = "",
   override val times: JsonProjectScanningHistoryTimes = JsonProjectScanningHistoryTimes(),
   override val fileCount: JsonProjectScanningFileCount = JsonProjectScanningFileCount(),
-  val totalStatsPerIndexer: List<JsonStatsPerIndexer> = emptyList(),
   val scanningStatistics: List<JsonScanningStatistics> = emptyList()
-) : JsonProjectIndexingActivityHistory {
-
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  data class JsonStatsPerIndexer(
-    val indexId: String = "",
-    val partOfTotalIndexingTime: JsonPercentages = JsonPercentages(),
-    val totalNumberOfFiles: Int = 0,
-    val totalNumberOfFilesIndexedByExtensions: Int = 0,
-    val totalFilesSize: JsonFileSize = JsonFileSize(),
-    val indexValueChangerEvaluationSpeed: JsonProcessingSpeed = JsonProcessingSpeed(),
-    val snapshotInputMappingStats: JsonSnapshotInputMappingStats = JsonSnapshotInputMappingStats()
-  ) {
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    data class JsonSnapshotInputMappingStats(
-      val totalRequests: Long = 0,
-      val totalMisses: Long = 0,
-      val totalHits: Long = 0
-    )
-  }
-}
+) : JsonProjectIndexingActivityHistory
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)

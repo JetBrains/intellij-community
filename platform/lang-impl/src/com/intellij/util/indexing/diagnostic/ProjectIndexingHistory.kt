@@ -52,8 +52,6 @@ interface ProjectScanningHistory : ProjectIndexingActivityHistory {
   val indexingSessionId: Long
   val times: ScanningTimes
   val scanningStatistics: List<JsonScanningStatistics>
-  val totalStatsPerIndexer: Map<String, StatsPerIndexer>
-  val visibleTimeToAllThreadsTimeRatio: Double
 
   override val type
     get() = IndexDiagnosticDumper.IndexingActivityType.Scanning

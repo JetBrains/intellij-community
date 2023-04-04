@@ -379,29 +379,10 @@ data class ProjectScanningHistoryImpl(override val project: Project,
 
   override val scanningStatistics = arrayListOf<JsonScanningStatistics>()
 
-  override val totalStatsPerIndexer = hashMapOf<String /* Index ID */, StatsPerIndexerImpl>()
-
-  override var visibleTimeToAllThreadsTimeRatio: Double = 0.0
-
   private val events = mutableListOf<Event>()
 
   fun addScanningStatistics(statistics: ScanningStatistics) {
     scanningStatistics += statistics.toJsonStatistics()
-  }
-
-  fun addSnapshotInputMappingStatistics(snapshotInputMappingsStatistics: List<SnapshotInputMappingsStatistics>) {
-    for (mappingsStatistic in snapshotInputMappingsStatistics) {
-      val totalStats = totalStatsPerIndexer.getOrPut(mappingsStatistic.indexId.name) {
-        StatsPerIndexerImpl(
-          totalNumberOfFiles = 0,
-          totalNumberOfFilesIndexedByExtensions = 0,
-          totalBytes = 0,
-          totalIndexValueChangerEvaluationTimeInAllThreads = 0,
-          snapshotInputMappingStats = SnapshotInputMappingStatsImpl(requests = 0, misses = 0))
-      }
-      totalStats.snapshotInputMappingStats.requests += mappingsStatistic.totalRequests
-      totalStats.snapshotInputMappingStats.misses += mappingsStatistic.totalMisses
-    }
   }
 
   private sealed interface Event {

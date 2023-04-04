@@ -171,7 +171,6 @@ private fun ProjectScanningHistoryImpl.changeToJson(): JsonProjectScanningHistor
   projectName = project.name,
   times = times.toJson(),
   fileCount = getFileCount(),
-  totalStatsPerIndexer = aggregateStatsPerIndexer().sortedByDescending { it.partOfTotalIndexingTime.doublePercentages },
   scanningStatistics = scanningStatistics.sortedByDescending { it.scanningTime.nano }
 )
 
@@ -315,33 +314,6 @@ private fun ProjectIndexingHistoryImpl.aggregateStatsPerIndexer(): List<JsonProj
       totalFilesSize = JsonFileSize(stats.totalBytes),
       indexValueChangerEvaluationSpeed = indexIdToIndexValueChangerEvaluationSpeed.getValue(indexId),
       snapshotInputMappingStats = JsonProjectIndexingHistory.JsonStatsPerIndexer.JsonSnapshotInputMappingStats(
-        totalRequests = stats.snapshotInputMappingStats.requests,
-        totalMisses = stats.snapshotInputMappingStats.misses,
-        totalHits = stats.snapshotInputMappingStats.hits
-      )
-    )
-  }
-}
-
-private fun ProjectScanningHistoryImpl.aggregateStatsPerIndexer(): List<JsonProjectScanningHistory.JsonStatsPerIndexer> {
-  val totalIndexingTime = totalStatsPerIndexer.values.sumOf { it.totalIndexValueChangerEvaluationTimeInAllThreads }
-  val indexIdToIndexingTimePart = totalStatsPerIndexer.mapValues {
-    calculatePercentages(it.value.totalIndexValueChangerEvaluationTimeInAllThreads, totalIndexingTime)
-  }
-
-  val indexIdToIndexValueChangerEvaluationSpeed = totalStatsPerIndexer.mapValues {
-    JsonProcessingSpeed(it.value.totalBytes, it.value.totalIndexValueChangerEvaluationTimeInAllThreads)
-  }
-
-  return totalStatsPerIndexer.map { (indexId, stats) ->
-    JsonProjectScanningHistory.JsonStatsPerIndexer(
-      indexId = indexId,
-      partOfTotalIndexingTime = indexIdToIndexingTimePart.getValue(indexId),
-      totalNumberOfFiles = stats.totalNumberOfFiles,
-      totalNumberOfFilesIndexedByExtensions = stats.totalNumberOfFilesIndexedByExtensions,
-      totalFilesSize = JsonFileSize(stats.totalBytes),
-      indexValueChangerEvaluationSpeed = indexIdToIndexValueChangerEvaluationSpeed.getValue(indexId),
-      snapshotInputMappingStats = JsonProjectScanningHistory.JsonStatsPerIndexer.JsonSnapshotInputMappingStats(
         totalRequests = stats.snapshotInputMappingStats.requests,
         totalMisses = stats.snapshotInputMappingStats.misses,
         totalHits = stats.snapshotInputMappingStats.hits

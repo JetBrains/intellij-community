@@ -961,11 +961,6 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
             }
           }
           li {
-            a("#$SECTION_STATS_PER_INDEXER_ID") {
-              text(SECTION_STATS_PER_INDEXER_TITLE)
-            }
-          }
-          li {
             a("#$SECTION_SCANNING_ID") {
               text(SECTION_SCANNING_TITLE)
             }
@@ -1042,44 +1037,6 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
               tr { td("Scanning time"); td(times.scanFilesTime.presentableDuration()) }
               tr { td("Pushing properties time"); td(times.pushPropertiesTime.presentableDuration()) }
               tr { td("Running extensions time"); td(times.indexExtensionsTime.presentableDuration()) }
-            }
-          }
-        }
-
-        div(id = SECTION_STATS_PER_INDEXER_ID) {
-          h1(SECTION_STATS_PER_INDEXER_TITLE)
-          table {
-            thead {
-              tr {
-                th("Index")
-                th("Number of files")
-                th("Part of total indexing time")
-                th("Total number of files indexed by $INDEX_INFRA_EXTENSIONS")
-                th("Total files size")
-                th("Indexing speed")
-                th("Snapshot input mapping statistics")
-              }
-            }
-            tbody {
-              for (statsPerIndexer in totalStatsPerIndexer) {
-                tr(classes = getMinorDataClass(statsPerIndexer.partOfTotalIndexingTime.partition < 0.1)) {
-                  td(statsPerIndexer.indexId)
-                  td(statsPerIndexer.totalNumberOfFiles.toString())
-                  td(statsPerIndexer.partOfTotalIndexingTime.presentablePercentages())
-                  td(statsPerIndexer.totalNumberOfFilesIndexedByExtensions.toString())
-                  td(statsPerIndexer.totalFilesSize.presentableSize())
-                  td(statsPerIndexer.indexValueChangerEvaluationSpeed.presentableSpeed())
-
-                  fun JsonProjectScanningHistory.JsonStatsPerIndexer.JsonSnapshotInputMappingStats.presentable(): String {
-                    val hitsPercentages = JsonPercentages(totalHits, totalRequests)
-                    val missesPercentages = JsonPercentages(totalMisses, totalRequests)
-                    return "requests: $totalRequests, " +
-                           "hits: $totalHits (${hitsPercentages.presentablePercentages()}), " +
-                           "misses: $totalMisses (${missesPercentages.presentablePercentages()})"
-                  }
-                  td(statsPerIndexer.snapshotInputMappingStats.presentable())
-                }
-              }
             }
           }
         }
