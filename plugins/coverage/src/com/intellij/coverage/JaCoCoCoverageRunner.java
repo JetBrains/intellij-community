@@ -120,12 +120,9 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
           if (methodLineStatus == ICounter.EMPTY) continue;
           final LineData lineData = new LineData(i , desc);
           switch (methodLineStatus) {
-            case ICounter.FULLY_COVERED:
-              lineData.setStatus(LineCoverage.FULL);
-            case ICounter.PARTLY_COVERED:
-              lineData.setStatus(LineCoverage.PARTIAL);
-            default:
-              lineData.setStatus(LineCoverage.NONE);
+            case ICounter.FULLY_COVERED -> lineData.setStatus(LineCoverage.FULL);
+            case ICounter.PARTLY_COVERED -> lineData.setStatus(LineCoverage.PARTIAL);
+            default -> lineData.setStatus(LineCoverage.NONE);
           }
 
           lineData.setHits(methodLineStatus == ICounter.FULLY_COVERED || methodLineStatus == ICounter.PARTLY_COVERED ? 1 : 0);
