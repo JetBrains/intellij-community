@@ -56,10 +56,10 @@ internal constructor(private val project: Project,
         GHPullRequestDraftReviewThread(it, line + 1, filePath, side, startLine + 1, side)
       }
 
-      reviewDataProvider.createReview(EmptyProgressIndicator(), GHPullRequestReviewEvent.COMMENT, null, commitSha,
-                                      threads = listOf(thread)).successOnEdt {
-        hideCallback()
-      }
+      reviewDataProvider.createReview(EmptyProgressIndicator(), GHPullRequestReviewEvent.COMMENT, null, commitSha, listOf(thread))
+        .successOnEdt {
+          hideCallback()
+        }
     }
 
     return createCommentComponent(textFieldModel, GithubBundle.message("pull.request.diff.editor.review.comment"), hideCallback)
@@ -77,8 +77,7 @@ internal constructor(private val project: Project,
         GHPullRequestDraftReviewThread(it, line + 1, filePath, side, startLine + 1, side)
       }
 
-      reviewDataProvider.createReview(EmptyProgressIndicator(), null, null, commitSha,
-                                      threads = listOf(thread)).successOnEdt {
+      reviewDataProvider.createReview(EmptyProgressIndicator(), null, null, commitSha, listOf(thread)).successOnEdt {
         hideCallback()
       }
     }

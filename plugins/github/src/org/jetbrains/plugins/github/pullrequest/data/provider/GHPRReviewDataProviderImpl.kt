@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.collaboration.api.dto.GraphQLNodesDTO
-import com.intellij.collaboration.async.CompletableFutureUtil
 import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
@@ -21,7 +20,6 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingRev
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewState
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
-import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewComment
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThread
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewService
@@ -56,13 +54,12 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
                             event: GHPullRequestReviewEvent?,
                             body: String?,
                             commitSha: String?,
-                            comments: List<GHPullRequestDraftReviewComment>?,
                             threads: List<GHPullRequestDraftReviewThread>?): CompletableFuture<GHPullRequestPendingReview> {
-    val future = reviewService.createReview(progressIndicator, pullRequestId, event, body, commitSha, comments, threads).notifyReviews()
+    val future = reviewService.createReview(progressIndicator, pullRequestId, event, body, commitSha, threads).notifyReviews()
     if (event == null) {
       pendingReviewRequestValue.overrideProcess(future.successOnEdt { it })
     }
-    return if (comments.isNullOrEmpty() && threads.isNullOrEmpty()) future else future.dropReviews()
+    return if (threads.isNullOrEmpty()) future else future.dropReviews()
   }
 
   override fun submitReview(progressIndicator: ProgressIndicator,
@@ -116,6 +113,7 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
     return pendingReviewRequestValue.value.thenCompose {
       val reviewId = it?.id
       if (reviewId == null) {
+        // not having a review will produce a security error
         reviewService.createReview(progressIndicator, pullRequestId).thenCompose { review ->
           reviewService.addComment(progressIndicator, pullRequestId, review.id, replyToCommentId, body).thenCompose { comment ->
             reviewService.submitReview(progressIndicator, pullRequestId, review.id, GHPullRequestReviewEvent.COMMENT, null)
@@ -143,82 +141,24 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
       }
       null
     })
-    reviewThreadsRequestValue.combineResult(future) { list, _ ->
-      list.mapNotNull {
-        val comments = it.comments.filter { comment -> comment.id != commentId }
-        if (comments.isEmpty())
-          null
-        else
-          GHPullRequestReviewThread(it.id,
-                                    it.isResolved,
-                                    it.isOutdated,
-                                    it.path,
-                                    it.side,
-                                    it.line,
-                                    it.originalLine,
-                                    it.startSide,
-                                    it.startLine,
-                                    it.originalStartLine,
-                                    GraphQLNodesDTO(comments))
-      }
-    }
-
+    reviewThreadsRequestValue.combineResult(future) { list, _ -> removeComment(list, commentId) }
     return future
   }
 
   override fun updateComment(progressIndicator: ProgressIndicator, commentId: String, newText: String)
     : CompletableFuture<GHPullRequestReviewComment> {
     val future = reviewService.updateComment(progressIndicator, pullRequestId, commentId, newText)
-    reviewThreadsRequestValue.combineResult(future) { list, newComment ->
-      list.map {
-        GHPullRequestReviewThread(it.id,
-                                  it.isResolved,
-                                  it.isOutdated,
-                                  it.path,
-                                  it.side,
-                                  it.line,
-                                  it.originalLine,
-                                  it.startSide,
-                                  it.startLine,
-                                  it.originalStartLine,
-                                  GraphQLNodesDTO(it.comments.map { comment ->
-                                    if (comment.id == commentId)
-                                      GHPullRequestReviewComment(comment.id, comment.databaseId, comment.url, comment.author,
-                                                                 newComment.body, comment.createdAt,
-                                                                 comment.state, comment.commit,
-                                                                 comment.originalCommit, comment.replyTo,
-                                                                 comment.diffHunk,
-                                                                 comment.reviewId?.let { GHNode(it) }, comment.viewerCanDelete,
-                                                                 comment.viewerCanUpdate)
-                                    else comment
-                                  }))
-      }
-    }
+
+    reviewThreadsRequestValue.combineResult(future) { list, newComment -> updateCommentBody(list, commentId, newComment.body) }
     return future
   }
 
   override fun createThread(progressIndicator: ProgressIndicator,
-                            reviewId: String?, body: String, line: Int, side: Side, startLine: Int, fileName: String)
+                            reviewId: String, body: String, line: Int, side: Side, startLine: Int, fileName: String)
     : CompletableFuture<GHPullRequestReviewThread> {
+    val future = reviewService.addThread(progressIndicator, reviewId, body, line, side, startLine, fileName)
 
-    val future = if (reviewId == null) {
-      createReview(progressIndicator).thenCompose { review ->
-        reviewService.addThread(progressIndicator, review.id, body, line, side, startLine, fileName).thenCompose { thread ->
-          submitReview(progressIndicator, review.id, GHPullRequestReviewEvent.COMMENT, null).thenApply {
-            thread
-          }
-        }
-      }
-    }
-    else {
-      reviewService.addThread(progressIndicator, reviewId, body, line, side, startLine, fileName)
-    }.thenApplyAsync(
-      {
-        val stubThreadFuture = CompletableFuture.completedFuture(it)
-        reviewThreadsRequestValue.combineResult(stubThreadFuture) { threads, thread -> threads + thread }
-        it
-      }, CompletableFutureUtil.getEDTExecutor())
-
+    reviewThreadsRequestValue.combineResult(future) { threads, thread -> threads + thread }
     return future.completionOnEdt {
       pendingReviewRequestValue.drop()
     }.notifyReviews()
@@ -260,4 +200,47 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
     pendingReviewRequestValue.drop()
     reviewThreadsRequestValue.drop()
   }
+}
+
+private fun updateCommentBody(threads: List<GHPullRequestReviewThread>, commentId: String, newBody: String) =
+  threads.map {
+    GHPullRequestReviewThread(it.id,
+                              it.isResolved,
+                              it.isOutdated,
+                              it.path,
+                              it.side,
+                              it.line,
+                              it.originalLine,
+                              it.startSide,
+                              it.startLine,
+                              it.originalStartLine,
+                              GraphQLNodesDTO(it.comments.map { comment ->
+                                if (comment.id == commentId)
+                                  GHPullRequestReviewComment(comment.id, comment.databaseId, comment.url, comment.author,
+                                                             newBody, comment.createdAt,
+                                                             comment.state, comment.commit,
+                                                             comment.originalCommit, comment.replyTo,
+                                                             comment.diffHunk,
+                                                             comment.reviewId?.let { GHNode(it) }, comment.viewerCanDelete,
+                                                             comment.viewerCanUpdate)
+                                else comment
+                              }))
+  }
+
+private fun removeComment(threads: List<GHPullRequestReviewThread>, commentId: String) = threads.mapNotNull {
+  val comments = it.comments.filter { comment -> comment.id != commentId }
+  if (comments.isEmpty())
+    null
+  else
+    GHPullRequestReviewThread(it.id,
+                              it.isResolved,
+                              it.isOutdated,
+                              it.path,
+                              it.side,
+                              it.line,
+                              it.originalLine,
+                              it.startSide,
+                              it.startLine,
+                              it.originalStartLine,
+                              GraphQLNodesDTO(comments))
 }

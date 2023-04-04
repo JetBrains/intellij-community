@@ -12,7 +12,6 @@ import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
-import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewComment
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThread
 import java.util.concurrent.CompletableFuture
 
@@ -41,7 +40,6 @@ interface GHPRReviewDataProvider {
   fun createReview(progressIndicator: ProgressIndicator,
                    event: GHPullRequestReviewEvent? = null, body: String? = null,
                    commitSha: String? = null,
-                   comments: List<GHPullRequestDraftReviewComment>? = null,
                    threads: List<GHPullRequestDraftReviewThread>? = null)
     : CompletableFuture<GHPullRequestPendingReview>
 
@@ -78,7 +76,7 @@ interface GHPRReviewDataProvider {
 
   @RequiresEdt
   fun createThread(progressIndicator: ProgressIndicator,
-                   reviewId: String?,
+                   reviewId: String,
                    body: String,
                    line: Int,
                    side: Side,

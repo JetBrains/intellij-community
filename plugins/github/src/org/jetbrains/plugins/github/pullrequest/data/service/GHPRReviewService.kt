@@ -6,7 +6,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.pullrequest.*
-import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewComment
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThread
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import java.util.concurrent.CompletableFuture
@@ -29,7 +28,6 @@ interface GHPRReviewService {
                    event: GHPullRequestReviewEvent? = null,
                    body: String? = null,
                    commitSha: String? = null,
-                   comments: List<GHPullRequestDraftReviewComment>? = null,
                    threads: List<GHPullRequestDraftReviewThread>? = null): CompletableFuture<GHPullRequestPendingReview>
 
   @CalledInAny

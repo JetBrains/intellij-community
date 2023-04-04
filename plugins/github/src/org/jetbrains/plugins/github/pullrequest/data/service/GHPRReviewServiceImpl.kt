@@ -15,7 +15,6 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingRev
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewNewCommentDTO
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
-import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewComment
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThread
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -47,12 +46,11 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
                             event: GHPullRequestReviewEvent?,
                             body: String?,
                             commitSha: String?,
-                            comments: List<GHPullRequestDraftReviewComment>?,
                             threads: List<GHPullRequestDraftReviewThread>?): CompletableFuture<GHPullRequestPendingReview> =
     progressManager.submitIOTask(progressIndicator) {
       requestExecutor.execute(progressIndicator,
                               GHGQLRequests.PullRequest.Review.create(repository.serverPath, pullRequestId.id, event, body,
-                                                                      commitSha, comments, threads))
+                                                                      commitSha, threads))
     }.logError(LOG, "Error occurred while creating review")
 
   override fun submitReview(progressIndicator: ProgressIndicator,
@@ -119,7 +117,8 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
   override fun addThread(progressIndicator: ProgressIndicator, reviewId: String, body: String,
                          line: Int, side: Side, startLine: Int, fileName: String): CompletableFuture<GHPullRequestReviewThread> =
     progressManager.submitIOTask(progressIndicator) {
-      requestExecutor.execute(it, GHGQLRequests.PullRequest.Review.addThread(repository.serverPath, reviewId, body, line, side, startLine, fileName))
+      requestExecutor.execute(it, GHGQLRequests.PullRequest.Review.addThread(repository.serverPath, reviewId, body, line, side, startLine,
+                                                                             fileName))
     }.logError(LOG, "Error occurred while adding review thread")
 
   override fun resolveThread(progressIndicator: ProgressIndicator,

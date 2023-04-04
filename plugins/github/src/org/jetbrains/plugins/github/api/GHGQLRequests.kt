@@ -12,10 +12,8 @@ import org.jetbrains.plugins.github.api.data.*
 import org.jetbrains.plugins.github.api.data.graphql.query.GHGQLSearchQueryResponse
 import org.jetbrains.plugins.github.api.data.pullrequest.*
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
-import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewComment
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThread
 import org.jetbrains.plugins.github.api.util.GHSchemaPreview
-import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 
 object GHGQLRequests {
   object User {
@@ -267,13 +265,11 @@ object GHGQLRequests {
 
       fun create(server: GithubServerPath, pullRequestId: String,
                  event: GHPullRequestReviewEvent?, body: String?, commitSha: String?,
-                 comments: List<GHPullRequestDraftReviewComment>?,
                  threads: List<GHPullRequestDraftReviewThread>?): GQLQuery<GHPullRequestPendingReview> =
         GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.createReview,
                                  mapOf("pullRequestId" to pullRequestId,
                                        "event" to event,
                                        "commitOid" to commitSha,
-                                       "comments" to comments,
                                        "threads" to threads,
                                        "body" to body),
                                  GHPullRequestPendingReview::class.java,
