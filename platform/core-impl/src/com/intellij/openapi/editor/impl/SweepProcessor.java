@@ -38,13 +38,16 @@ public interface SweepProcessor<T> {
    *   (offset=5, atStart=false, overlapping=empty)
    * </pre>
    */
-  static <T extends Segment> boolean sweep(@NotNull Generator<? extends T> generator, @NotNull final SweepProcessor<T> sweepProcessor) {
+  static <T extends Segment> boolean sweep(@NotNull Generator<? extends T> generator, @NotNull SweepProcessor<T> sweepProcessor) {
     Queue<T> ends = new PriorityQueue<>(5, Comparator.comparingInt(Segment::getEndOffset));
     if (!generator.processAllInStartOffsetOrder(marker -> {
       // decide whether the previous marker ends here or the new marker begins
       int start = marker.getStartOffset();
       while (!ends.isEmpty()) {
         T previous = ends.peek();
+        if (start < previous.getStartOffset()) {
+          throw new IllegalStateException("Generator "+generator+" supplied segments in a wrong order: "+marker+" was received after "+previous);
+        }
         int prevEnd = previous.getEndOffset();
         if (prevEnd <= start) {
           if (!sweepProcessor.process(prevEnd, previous, false, ends)) return false;
