@@ -20,7 +20,7 @@ import javax.swing.JList
 import javax.swing.JPanel
 
 internal class SdkListPresenter2<T>(
-  combo: ComboBox<T>,
+  combo: ComboBox<T>?,
   private val modelSupplier: Supplier<SdkListModel>,
   private val listItemProducer: Function<T, SdkListItem>,
 ): GroupedComboBoxRenderer<T>(combo) {

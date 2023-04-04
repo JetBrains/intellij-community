@@ -38,7 +38,7 @@ public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
   private final @NotNull Producer<? extends SdkListModel> myGetModel;
 
   public static <T> ListCellRenderer<T> create(
-    ComboBox<T> combo,
+    @Nullable ComboBox<T> combo,
     Supplier<SdkListModel> modelSupplier,
     Function<T, SdkListItem> listItemProducer
   ) {
