@@ -433,6 +433,10 @@
     <registryKey key="markdown.experimental.show.frontmatter.in.preview"
                  defaultValue="false"
                  description="Enables displaying of front matter headers in the preview."/>
+
+    <registryKey key="markdown.experimental.allow.external.requests"
+                 defaultValue="true"
+                 description="Enables requests for external resources from the preview (e.g. non-local images)."/>
     <!--endregion-->
 
     <advancedSetting id="markdown.hide.floating.toolbar" default="false" groupKey="markdown.settings.name"/>
