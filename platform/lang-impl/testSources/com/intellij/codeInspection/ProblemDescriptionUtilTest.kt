@@ -42,17 +42,19 @@ class ProblemDescriptionUtilTest : LightPlatformTestCase() {
         return element
       }
 
+      override fun isPhysical(): Boolean {
+        return true // needed to avoid assertion in ProblemDescriptorBase which requires physical elements
+      }
+
       override fun getTextRange(): TextRange {
         return TextRange(0, element.length)
       }
     }
 
     val descriptorBase = object : ProblemDescriptorBase(psiElement, psiElement, message, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                               false, null, true, false) {
-      override fun assertPhysical(element: PsiElement) {}
+                                               false, null, true, false){
     }
     
-
     Assert.assertEquals(expectedEditorMessage, ProblemDescriptorUtil.renderDescriptionMessage (descriptorBase, psiElement))
     Assert.assertEquals(expectedTreeMessage,   ProblemDescriptorUtil.renderDescriptionMessage (descriptorBase, psiElement, ProblemDescriptorUtil.TRIM_AT_TREE_END))
   }

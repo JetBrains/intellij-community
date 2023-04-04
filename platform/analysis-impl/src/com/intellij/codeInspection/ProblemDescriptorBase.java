@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -28,6 +27,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
   @Nullable private final SmartPsiElementPointer<?> myEndSmartPointer; // null means it's the same as myStartSmartPointer
 
   private final ProblemHighlightType myHighlightType;
+  private final boolean myOnTheFly;
   private Navigatable myNavigatable;
   private final boolean myAfterEndOfLine;
   private final TextRange myTextRangeInElement;
@@ -35,7 +35,6 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
   private TextAttributesKey myEnforcedTextAttributes;
   private int myLineNumber = -1;
   private ProblemGroup myProblemGroup;
-  @Nullable private final Throwable myCreationTrace;
 
   public ProblemDescriptorBase(@NotNull PsiElement startElement,
                                @NotNull PsiElement endElement,
@@ -92,7 +91,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
 
     myAfterEndOfLine = isAfterEndOfLine;
     myTextRangeInElement = rangeInElement;
-    myCreationTrace = onTheFly ? null : ThrowableInterner.intern(new Throwable());
+    myOnTheFly = onTheFly;
   }
 
   private static void assertRange(@NotNull PsiElement element, TextRange range) {
@@ -107,7 +106,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
   }
 
   public boolean isOnTheFly() {
-    return myCreationTrace == null;
+    return myOnTheFly;
   }
 
   @Nullable
@@ -117,16 +116,11 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
            : startElement.getTextRange();
   }
 
-  protected void assertPhysical(@NotNull PsiElement element) {
+  private void assertPhysical(@NotNull PsiElement element) {
     if (!element.isPhysical()) {
       LOG.error("Non-physical PsiElement. Physical element is required to be able to anchor the problem in the source tree: " +
                 element + "; parent: " + element.getParent() +"; file: " + element.getContainingFile());
     }
-  }
-
-  @Nullable
-  public Throwable getCreationTrace() {
-    return myCreationTrace;
   }
 
   @Override
