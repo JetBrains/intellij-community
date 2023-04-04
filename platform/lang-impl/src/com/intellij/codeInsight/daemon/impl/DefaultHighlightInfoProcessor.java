@@ -116,7 +116,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
       if (project.isDisposed() || modificationStamp != document.getModificationStamp()) return;
 
       UpdateHighlightersUtil.setHighlightersOutsideRange(document, infos,
-                                                         restrictedRange.getStartOffset(), restrictedRange.getEndOffset(),
+                                                         restrictedRange,
                                                          priorityRange,
                                                          groupId, session);
       if (editor != null) {
