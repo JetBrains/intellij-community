@@ -1,6 +1,6 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-    <!-- Disabled Poetry gutter icon actions, to be re-considered -->
+     <!--Disabled Poetry gutter icon actions, to be re-considered -->
     <!--<runLineMarkerContributor language="TOML"-->
     <!--                          implementationClass="com.jetbrains.python.sdk.poetry.PoetryExtrasLineMarkerContributor"/>-->
     <!--<runLineMarkerContributor language="TOML"-->

@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.notebooks.visualization
 
+import com.intellij.lang.Language
 import com.intellij.openapi.editor.impl.EditorImpl
 import org.assertj.core.api.Assertions.assertThat
 
@@ -17,9 +18,9 @@ class CodeCellLinesChecker(private val description: String,
       markers = mutableListOf()
     }
 
-    fun marker(cellType: NotebookCellLines.CellType, offset: Int, length: Int) {
+    fun marker(cellType: NotebookCellLines.CellType, offset: Int, length: Int, language : Language? = null) {
       markers!!.add(
-        NotebookCellLinesLexer.Marker(ordinal = markers!!.size + markersStartOrdinal, type = cellType, offset = offset, length = length))
+        NotebookCellLinesLexer.Marker(ordinal = markers!!.size + markersStartOrdinal, type = cellType, offset = offset, length = length, language = language))
     }
   }
 
@@ -31,8 +32,8 @@ class CodeCellLinesChecker(private val description: String,
   }
 
   class IntervalsSetter(private val list: MutableList<NotebookCellLines.Interval>, private val startOrdinal: Int) {
-    fun interval(cellType: NotebookCellLines.CellType, lines: IntRange, markers: NotebookCellLines.MarkersAtLines) {
-      list += NotebookCellLines.Interval(list.size + startOrdinal, cellType, lines, markers, null)
+    fun interval(cellType: NotebookCellLines.CellType, lines: IntRange, markers: NotebookCellLines.MarkersAtLines, language : Language? = null) {
+      list += NotebookCellLines.Interval(list.size + startOrdinal, cellType, lines, markers, language)
     }
   }
 

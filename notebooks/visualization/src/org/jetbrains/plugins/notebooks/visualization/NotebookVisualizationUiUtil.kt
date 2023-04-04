@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.notebooks.visualization
 
+import com.intellij.lang.Language
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
@@ -100,21 +101,21 @@ val NotebookCellLines.Interval.contentLines: IntRange
 fun makeMarkersFromIntervals(document: Document, intervals: Iterable<NotebookCellLines.Interval>): List<NotebookCellLinesLexer.Marker> {
   val markers = ArrayList<NotebookCellLinesLexer.Marker>()
 
-  fun addMarker(line: Int, type: NotebookCellLines.CellType) {
+  fun addMarker(line: Int, type: NotebookCellLines.CellType, language: Language? = null) {
     val startOffset = document.getLineStartOffset(line)
     val endOffset =
       if (line + 1 < document.lineCount) document.getLineStartOffset(line + 1)
       else document.getLineEndOffset(line)
     val length = endOffset - startOffset
-    markers.add(NotebookCellLinesLexer.Marker(markers.size, type, startOffset, length))
+    markers.add(NotebookCellLinesLexer.Marker(markers.size, type, startOffset, length, language))
   }
 
   for (interval in intervals) {
     if (interval.markers.hasTopLine) {
-      addMarker(interval.lines.first, interval.type)
+      addMarker(interval.lines.first, interval.type, interval.language)
     }
     if (interval.markers.hasBottomLine) {
-      addMarker(interval.lines.last, interval.type)
+      addMarker(interval.lines.last, interval.type, interval.language)
     }
   }
 
