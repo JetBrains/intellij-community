@@ -4,9 +4,9 @@ package org.jetbrains.idea.devkit.util
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPsiElementPointer
@@ -22,11 +22,9 @@ val REQUIRES_BLOCKING_CONTEXT_ANNOTATION: String = RequiresBlockingContext::clas
 
 @Internal
 @IntellijInternalApi
-fun isInspectionForBlockingContextAvailable(file: PsiFile): Boolean {
-  if (!DevKitInspectionUtil.isAllowed(file)) return false
-  val facade = JavaPsiFacade.getInstance(file.project)
-  return facade.findClass(REQUIRES_BLOCKING_CONTEXT_ANNOTATION, file.resolveScope) != null
-}
+fun isInspectionForBlockingContextAvailable(holder: ProblemsHolder): Boolean =
+  DevKitInspectionUtil.isAllowed(holder.file) &&
+  DevKitInspectionUtil.isClassAvailable(holder, REQUIRES_BLOCKING_CONTEXT_ANNOTATION)
 
 @Internal
 @IntellijInternalApi

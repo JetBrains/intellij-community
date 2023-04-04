@@ -16,7 +16,7 @@ import org.jetbrains.idea.devkit.util.isInspectionForBlockingContextAvailable
 
 class CallingJavaMethodShouldBerRequiresBlockingContextInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-    return if (isInspectionForBlockingContextAvailable(holder.file)) {
+    return if (isInspectionForBlockingContextAvailable(holder)) {
       MethodVisitor(holder)
     } else {
       PsiElementVisitor.EMPTY_VISITOR

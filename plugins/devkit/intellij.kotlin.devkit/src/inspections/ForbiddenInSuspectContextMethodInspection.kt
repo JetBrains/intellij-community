@@ -60,7 +60,7 @@ private const val COROUTINE_SCOPE = "kotlinx.coroutines.CoroutineScope"
 
 class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-    return if (isInspectionForBlockingContextAvailable(holder.file)) {
+    return if (isInspectionForBlockingContextAvailable(holder)) {
       createFileVisitor(holder)
     }
     else {

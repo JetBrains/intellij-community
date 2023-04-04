@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 
 class CallingKtFunctionShouldBeRequiresBlockingContextInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-    return if (isInspectionForBlockingContextAvailable(holder.file)) {
+    return if (isInspectionForBlockingContextAvailable(holder)) {
       FunctionVisitor(holder)
     }
     else {
@@ -92,12 +92,10 @@ private class AnnotateFix(
 }
 
 private fun isAnnotated(function: KtNamedFunction): Boolean {
-  analyze(function) {
+  return analyze(function) {
     val functionSymbol = function.getFunctionLikeSymbol()
-    if (functionSymbol.hasAnnotation(requiresBlockingContextAnnotationId)) {
-      return true
-    }
 
-    return functionSymbol.getAllOverriddenSymbols().any { it.hasAnnotation(requiresBlockingContextAnnotationId) }
+    functionSymbol.hasAnnotation(requiresBlockingContextAnnotationId) ||
+    functionSymbol.getAllOverriddenSymbols().any { it.hasAnnotation(requiresBlockingContextAnnotationId) }
   }
 }
