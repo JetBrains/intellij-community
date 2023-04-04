@@ -213,14 +213,14 @@ internal fun createAggregateActivityHtml(
     }
     body {
       div(classes = "aggregate-report-content") {
-        h1("Project name")
-        text(projectName)
+        h3(classes = "aggregate-header") { text("Project name") }
+        div(classes = "project-name") { text(projectName) }
 
         div {
-          h1("Indexing history")
+          h3(classes = "aggregate-header") { text("History of scannings and indexings") }
           table(classes = "centered-text") {
             unsafe {
-              +"<caption style=\"caption-side: bottom; text-align: right; font-size: 14px\">Hover for details</caption>"
+              +"<caption style=\"caption-side: bottom; text-align: right; font-size: 14px\">Click for details</caption>"
             }
             thead {
               tr {
@@ -230,15 +230,15 @@ internal fun createAggregateActivityHtml(
                 th("Files") {
                   colSpan = "5"
                 }
-                th("Type") {
+                th("Scanning Type") {
                   rowSpan = "2"
                 }
               }
               tr {
                 th("Started")
                 th("Total")
-                th("Content loading")
                 th("Finished")
+                th("Content loading")
                 th("Scanned")
                 th("Shared indexes (w/o content loading)")
                 th("Scheduled for indexing")
@@ -268,7 +268,7 @@ internal fun createAggregateActivityHtml(
         if (sharedIndexEvents.isNotEmpty()) {
           val indexIdToEvents = sharedIndexEvents.groupBy { it.chunkUniqueId }
           div {
-            h1("Shared Indexes")
+            h3(classes = "aggregate-header") { text("Shared indexes") }
             table {
               thead {
                 tr {
@@ -309,7 +309,7 @@ internal fun createAggregateActivityHtml(
 
         if (changedFilesPushEvents.isNotEmpty()) {
           div {
-            h1("Scanning to push properties of changed files")
+            h3(classes = "aggregate-header") { text("Scanning to push properties of changed files") }
             table {
               thead {
                 tr {
@@ -354,8 +354,6 @@ private fun TR.printIndexingActivityRow(times: JsonProjectIndexingActivityHistor
   }
   td(times.asSafely<JsonProjectScanningHistoryTimes>()?.totalUpdatingTime?.presentableDuration()
      ?: times.asSafely<JsonProjectDumbIndexingHistoryTimes>()?.totalUpdatingTime?.presentableDuration() ?: "Unexpected times $times")
-  td(times.asSafely<JsonProjectDumbIndexingHistoryTimes>()?.contentLoadingVisibleTime?.presentableDuration()
-     ?: NOT_APPLICABLE)
   td {
     if (times.wasInterrupted) {
       strong("Cancelled")
@@ -363,6 +361,8 @@ private fun TR.printIndexingActivityRow(times: JsonProjectIndexingActivityHistor
     }
     text(times.updatingEnd.presentableLocalDateTime())
   }
+  td(times.asSafely<JsonProjectDumbIndexingHistoryTimes>()?.contentLoadingVisibleTime?.presentableDuration()
+     ?: NOT_APPLICABLE)
 
   // Files section.
   when (fileCount) {
@@ -1625,6 +1625,15 @@ private val CSS_STYLE = """
   
   .aggregate-report-content {
     margin-left: 10%;
+  }
+  
+  .aggregate-header {
+    margin-top: 20px;
+    margin-bottom: 15px;
+  }
+  
+  .project-name {
+    font-size: large;
   }
 
   .navigation-bar {
