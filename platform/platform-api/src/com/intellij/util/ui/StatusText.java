@@ -133,6 +133,14 @@ public abstract class StatusText {
   }
 
   public void setFont(@NotNull Font font) {
+    setFontImpl(font);
+  }
+
+  public void resetFont() {
+    setFontImpl(null);
+  }
+
+  private void setFontImpl(Font font) {
     myPrimaryColumn.fragments.forEach(fragment -> fragment.myComponent.setFont(font));
     mySecondaryColumn.fragments.forEach(fragment -> fragment.myComponent.setFont(font));
     myFont = font;
