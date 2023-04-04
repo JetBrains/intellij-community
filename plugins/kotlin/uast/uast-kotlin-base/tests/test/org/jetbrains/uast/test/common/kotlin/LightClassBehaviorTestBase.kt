@@ -7,11 +7,8 @@ import junit.framework.TestCase
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.uast.UClass
-import org.jetbrains.uast.UMethod
-import org.jetbrains.uast.UParameter
+import org.jetbrains.uast.*
 import org.jetbrains.uast.test.env.findElementByTextFromPsi
-import org.jetbrains.uast.toUElement
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 // NB: Similar to [UastResolveApiFixtureTestBase], but focusing on light classes, not `resolve`
@@ -320,6 +317,34 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
                 return super.visitParameter(node)
             }
         })
+    }
+
+    fun checkUpperBoundWildcardForVar(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                abstract class RoomDatabase {
+                  @JvmField
+                  protected var mCallbacks: List<Callback>? = null
+                  
+                  abstract class Callback {
+                    open fun onCreate(db: RoomDatabase) {}
+                  }
+                }
+
+                val sum: (Int) -> Int = { x: Int -> sum(x - 1) + x }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val fld = uFile.findElementByTextFromPsi<UField>("mCallbacks", strict = false)
+            .orFail("can't find var mCallbacks")
+        val mCallbacks = fld.javaPsi as? PsiField
+        TestCase.assertEquals("java.util.List<? extends RoomDatabase.Callback>", mCallbacks?.type?.canonicalText)
+
+        val top = uFile.findElementByTextFromPsi<UField>("sum", strict = false)
+            .orFail("can't find val sum")
+        val sum = top.javaPsi as? PsiField
+        TestCase.assertEquals("kotlin.jvm.functions.Function1<java.lang.Integer,java.lang.Integer>", sum?.type?.canonicalText)
     }
 
 }

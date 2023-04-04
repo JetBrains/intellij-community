@@ -46,4 +46,8 @@ class FE1LightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), Light
     fun testUpperBoundWildcardForEnum() {
         checkUpperBoundWildcardForEnum(myFixture)
     }
+
+    fun testUpperBoundWildcardForVar() {
+        checkUpperBoundWildcardForVar(myFixture)
+    }
 }

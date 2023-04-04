@@ -47,4 +47,8 @@ class FirLightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), Light
     fun testUpperBoundWildcardForEnum() {
         checkUpperBoundWildcardForEnum(myFixture)
     }
+
+    fun testUpperBoundWildcardForVar() {
+        checkUpperBoundWildcardForVar(myFixture)
+    }
 }

@@ -1,7 +1,7 @@
 UFile (package = ) [import java.util.stream.Stream...]
     UImportStatement (isOnDemand = false) [import java.util.stream.Stream]
     UClass (name = LambdasKt) [public final class LambdasKt {...}]
-        UField (name = lambdaVarWithType) [@org.jetbrains.annotations.NotNull private static var lambdaVarWithType: kotlin.jvm.functions.Function1<java.lang.String,java.lang.Integer> = { var it: java.lang.String ->...}]
+        UField (name = lambdaVarWithType) [@org.jetbrains.annotations.NotNull private static var lambdaVarWithType: kotlin.jvm.functions.Function1<? super java.lang.String,java.lang.Integer> = { var it: java.lang.String ->...}]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             ULambdaExpression [{ var it: java.lang.String ->...}] : PsiType:Function1<? super String, ? extends Integer>
                 UParameter (name = it) [var it: java.lang.String]

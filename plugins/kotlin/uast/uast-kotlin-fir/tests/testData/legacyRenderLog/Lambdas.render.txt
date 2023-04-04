@@ -1,7 +1,7 @@
 import java.util.stream.Stream
 
 public final class LambdasKt {
-    @org.jetbrains.annotations.NotNull private static var lambdaVarWithType: kotlin.jvm.functions.Function1<java.lang.String,java.lang.Integer> = { var it: java.lang.String ->
+    @org.jetbrains.annotations.NotNull private static var lambdaVarWithType: kotlin.jvm.functions.Function1<? super java.lang.String,java.lang.Integer> = { var it: java.lang.String ->
 
         return it.length
     }
