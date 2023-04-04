@@ -34,6 +34,7 @@ import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.ui.popup.util.PopupImplUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -726,6 +727,11 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     public void processKeyEvent(KeyEvent e) {
       e.setSource(this);
       super.processKeyEvent(e);
+    }
+
+    @Override
+    public boolean isFocusable() {
+      return ScreenReader.isActive();
     }
 
     @Override

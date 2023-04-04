@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.ComboBoxPopup;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,6 +99,9 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup, ComboBoxPopup.Co
     //noinspection unchecked
     T selectedItem = (T)myComboBox.getSelectedItem();
     myPopup = createPopup(selectedItem);
+    if (ScreenReader.isActive()) {
+      myPopup.setRequestFocus(true);
+    }
     myPopup.addListener(new JBPopupListener() {
 
       @Override
@@ -286,6 +290,7 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup, ComboBoxPopup.Co
   public AccessibleContext getAccessibleContext() {
     if (accessibleContext == null) {
       accessibleContext = new AccessibleDarculaJBPopupComboPopup();
+
     }
     return accessibleContext;
   }
