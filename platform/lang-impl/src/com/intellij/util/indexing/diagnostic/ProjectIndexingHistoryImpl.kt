@@ -379,8 +379,6 @@ data class ProjectScanningHistoryImpl(override val project: Project,
 
   override val scanningStatistics = arrayListOf<JsonScanningStatistics>()
 
-  override val totalStatsPerFileType = hashMapOf<String /* File type name */, StatsPerFileTypeImpl>()
-
   override val totalStatsPerIndexer = hashMapOf<String /* Index ID */, StatsPerIndexerImpl>()
 
   override var visibleTimeToAllThreadsTimeRatio: Double = 0.0
@@ -607,24 +605,6 @@ data class ProjectScanningHistoryImpl(override val project: Project,
       events.add(Event.SuspensionEvent(false, instant))
     }
   }
-
-  data class StatsPerFileTypeImpl(
-    override var totalNumberOfFiles: Int,
-    override var totalBytes: BytesNumber,
-    override var totalProcessingTimeInAllThreads: TimeNano,
-    override var totalContentLoadingTimeInAllThreads: TimeNano,
-    val biggestFileTypeContributors: LimitedPriorityQueue<BiggestFileTypeContributorImpl>
-  ) : StatsPerFileType {
-    override val biggestFileTypeContributorList: List<BiggestFileTypeContributor>
-      get() = biggestFileTypeContributors.biggestElements
-  }
-
-  data class BiggestFileTypeContributorImpl(
-    override val providerName: String,
-    override val numberOfFiles: Int,
-    override val totalBytes: BytesNumber,
-    override val processingTimeInAllThreads: TimeNano
-  ) : BiggestFileTypeContributor
 
   data class StatsPerIndexerImpl(
     override var totalNumberOfFiles: Int,

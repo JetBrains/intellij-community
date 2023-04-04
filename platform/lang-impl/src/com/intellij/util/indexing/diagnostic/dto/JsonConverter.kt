@@ -171,7 +171,6 @@ private fun ProjectScanningHistoryImpl.changeToJson(): JsonProjectScanningHistor
   projectName = project.name,
   times = times.toJson(),
   fileCount = getFileCount(),
-  totalStatsPerFileType = aggregateStatsPerFileType().sortedByDescending { it.partOfTotalProcessingTime.doublePercentages },
   totalStatsPerIndexer = aggregateStatsPerIndexer().sortedByDescending { it.partOfTotalIndexingTime.doublePercentages },
   scanningStatistics = scanningStatistics.sortedByDescending { it.scanningTime.nano }
 )
@@ -249,43 +248,6 @@ private fun ProjectIndexingHistoryImpl.aggregateStatsPerFileType(): List<JsonPro
       )
     }
     JsonProjectIndexingHistory.JsonStatsPerFileType(
-      fileType,
-      fileTypeToProcessingTimePart.getValue(fileType),
-      fileTypeToContentLoadingTimePart.getValue(fileType),
-      stats.totalNumberOfFiles,
-      JsonFileSize(stats.totalBytes),
-      fileTypeToProcessingSpeed.getValue(fileType),
-      jsonBiggestFileTypeContributors.sortedByDescending { it.partOfTotalProcessingTimeOfThisFileType.doublePercentages }
-    )
-  }
-}
-
-private fun ProjectScanningHistoryImpl.aggregateStatsPerFileType(): List<JsonProjectScanningHistory.JsonStatsPerFileType> {
-  val totalProcessingTime = totalStatsPerFileType.values.sumOf { it.totalProcessingTimeInAllThreads }
-  val fileTypeToProcessingTimePart = totalStatsPerFileType.mapValues {
-    calculatePercentages(it.value.totalProcessingTimeInAllThreads, totalProcessingTime)
-  }
-
-  @Suppress("DuplicatedCode")
-  val totalContentLoadingTime = totalStatsPerFileType.values.sumOf { it.totalContentLoadingTimeInAllThreads }
-  val fileTypeToContentLoadingTimePart = totalStatsPerFileType.mapValues {
-    calculatePercentages(it.value.totalContentLoadingTimeInAllThreads, totalContentLoadingTime)
-  }
-
-  val fileTypeToProcessingSpeed = totalStatsPerFileType.mapValues {
-    JsonProcessingSpeed(it.value.totalBytes, it.value.totalProcessingTimeInAllThreads)
-  }
-
-  return totalStatsPerFileType.map { (fileType, stats) ->
-    val jsonBiggestFileTypeContributors = stats.biggestFileTypeContributors.biggestElements.map {
-      JsonProjectScanningHistory.JsonStatsPerFileType.JsonBiggestFileTypeContributor(
-        it.providerName,
-        it.numberOfFiles,
-        JsonFileSize(it.totalBytes),
-        calculatePercentages(it.processingTimeInAllThreads, stats.totalProcessingTimeInAllThreads)
-      )
-    }
-    JsonProjectScanningHistory.JsonStatsPerFileType(
       fileType,
       fileTypeToProcessingTimePart.getValue(fileType),
       fileTypeToContentLoadingTimePart.getValue(fileType),

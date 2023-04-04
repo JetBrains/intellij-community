@@ -961,11 +961,6 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
             }
           }
           li {
-            a("#$SECTION_STATS_PER_FILE_TYPE_ID") {
-              text(SECTION_STATS_PER_FILE_TYPE_TITLE)
-            }
-          }
-          li {
             a("#$SECTION_STATS_PER_INDEXER_ID") {
               text(SECTION_STATS_PER_INDEXER_TITLE)
             }
@@ -1047,45 +1042,6 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
               tr { td("Scanning time"); td(times.scanFilesTime.presentableDuration()) }
               tr { td("Pushing properties time"); td(times.pushPropertiesTime.presentableDuration()) }
               tr { td("Running extensions time"); td(times.indexExtensionsTime.presentableDuration()) }
-            }
-          }
-        }
-
-        div(id = SECTION_STATS_PER_FILE_TYPE_ID) {
-          h1(SECTION_STATS_PER_FILE_TYPE_TITLE)
-          table {
-            thead {
-              tr {
-                th("File type")
-                th("Number of files")
-                th("Total processing time")
-                th("Total files size")
-                th("Total processing speed")
-                th("The biggest contributors")
-              }
-            }
-            tbody {
-              for (statsPerFileType in totalStatsPerFileType) {
-                val visibleIndexingTime = JsonDuration(
-                  (times.indexingTime.nano * statsPerFileType.partOfTotalProcessingTime.partition).toLong()
-                )
-                tr(classes = getMinorDataClass(visibleIndexingTime.milliseconds < 500)) {
-                  td(statsPerFileType.fileType)
-                  td(statsPerFileType.totalNumberOfFiles.toString())
-                  td(
-                    visibleIndexingTime.presentableDuration() + " (" + statsPerFileType.partOfTotalProcessingTime.presentablePercentages() + ")")
-                  td(statsPerFileType.totalFilesSize.presentableSize())
-                  td(statsPerFileType.totalProcessingSpeed.presentableSpeed())
-                  td(
-                    statsPerFileType.biggestContributors.joinToString("\n") {
-                      it.partOfTotalProcessingTimeOfThisFileType.presentablePercentages() + ": " +
-                      it.providerName + " " +
-                      it.numberOfFiles + " files of total size " +
-                      it.totalFilesSize.presentableSize()
-                    }
-                  )
-                }
-              }
             }
           }
         }

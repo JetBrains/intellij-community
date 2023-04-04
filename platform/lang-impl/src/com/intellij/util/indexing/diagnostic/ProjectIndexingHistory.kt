@@ -52,7 +52,6 @@ interface ProjectScanningHistory : ProjectIndexingActivityHistory {
   val indexingSessionId: Long
   val times: ScanningTimes
   val scanningStatistics: List<JsonScanningStatistics>
-  val totalStatsPerFileType: Map<String, StatsPerFileType>
   val totalStatsPerIndexer: Map<String, StatsPerIndexer>
   val visibleTimeToAllThreadsTimeRatio: Double
 
