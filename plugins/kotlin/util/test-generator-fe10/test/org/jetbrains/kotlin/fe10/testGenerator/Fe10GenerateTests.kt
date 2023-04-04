@@ -85,6 +85,7 @@ import org.jetbrains.kotlin.idea.intentions.AbstractK1IntentionTest
 import org.jetbrains.kotlin.idea.intentions.AbstractK1IntentionTest2
 import org.jetbrains.kotlin.idea.intentions.AbstractMultiFileIntentionTest
 import org.jetbrains.kotlin.idea.intentions.declarations.AbstractJoinLinesTest
+import org.jetbrains.kotlin.idea.internal.AbstractBytecodeToolWindowMultiplatformTest
 import org.jetbrains.kotlin.idea.internal.AbstractBytecodeToolWindowTest
 import org.jetbrains.kotlin.idea.kdoc.AbstractKDocHighlightingTest
 import org.jetbrains.kotlin.idea.kdoc.AbstractKDocTypingTest
@@ -900,6 +901,13 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractBytecodeToolWindowTest> {
             model("internal/toolWindow", isRecursive = false, pattern = DIRECTORY, testMethodName = "doTestWithIr", testClassName = "WithIR")
             model("internal/toolWindow", isRecursive = false, pattern = DIRECTORY, testMethodName = "doTestWithoutIr", testClassName = "WithoutIR")
+        }
+
+        testClass<AbstractBytecodeToolWindowMultiplatformTest> {
+            model("internal/toolWindowMultiplatform", isRecursive = false, pattern = DIRECTORY, testMethodName = "doTestWithIrCommon", testClassName = "WithIRCommon")
+            model("internal/toolWindowMultiplatform", isRecursive = false, pattern = DIRECTORY, testMethodName = "doTestWithoutIrCommon", testClassName = "WithoutIRCommon")
+            model("internal/toolWindowMultiplatform", isRecursive = false, pattern = DIRECTORY, testMethodName = "doTestWithIrJvm", testClassName = "WithIRJvm")
+            model("internal/toolWindowMultiplatform", isRecursive = false, pattern = DIRECTORY, testMethodName = "doTestWithoutIrJvm", testClassName = "WithoutIRJvm")
         }
 
         testClass<AbstractReferenceResolveTest>("org.jetbrains.kotlin.idea.kdoc.KdocResolveTestGenerated") {

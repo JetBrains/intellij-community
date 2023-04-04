@@ -25,9 +25,24 @@ public abstract class BytecodeToolWindowTestGenerated extends AbstractBytecodeTo
             KotlinTestUtils.runTest(this::doTestWithIr, this, testDataFilePath);
         }
 
+        @TestMetadata("companionObjectJvmField")
+        public void testCompanionObjectJvmField() throws Exception {
+            runTest("testData/internal/toolWindow/companionObjectJvmField/");
+        }
+
         @TestMetadata("componentInlineFun")
         public void testComponentInlineFun() throws Exception {
             runTest("testData/internal/toolWindow/componentInlineFun/");
+        }
+
+        @TestMetadata("defaultMethod")
+        public void testDefaultMethod() throws Exception {
+            runTest("testData/internal/toolWindow/defaultMethod/");
+        }
+
+        @TestMetadata("defaultMethodCompatibility")
+        public void testDefaultMethodCompatibility() throws Exception {
+            runTest("testData/internal/toolWindow/defaultMethodCompatibility/");
         }
 
         @TestMetadata("inlineFunctionBodyResolve")
@@ -65,6 +80,31 @@ public abstract class BytecodeToolWindowTestGenerated extends AbstractBytecodeTo
             runTest("testData/internal/toolWindow/iteratorFun/");
         }
 
+        @TestMetadata("jvmField")
+        public void testJvmField() throws Exception {
+            runTest("testData/internal/toolWindow/jvmField/");
+        }
+
+        @TestMetadata("jvmName")
+        public void testJvmName() throws Exception {
+            runTest("testData/internal/toolWindow/jvmName/");
+        }
+
+        @TestMetadata("jvmOverloads")
+        public void testJvmOverloads() throws Exception {
+            runTest("testData/internal/toolWindow/jvmOverloads/");
+        }
+
+        @TestMetadata("jvmStatic")
+        public void testJvmStatic() throws Exception {
+            runTest("testData/internal/toolWindow/jvmStatic/");
+        }
+
+        @TestMetadata("lateinitProp")
+        public void testLateinitProp() throws Exception {
+            runTest("testData/internal/toolWindow/lateinitProp/");
+        }
+
         @TestMetadata("multipleInlineFunctionCalls")
         public void testMultipleInlineFunctionCalls() throws Exception {
             runTest("testData/internal/toolWindow/multipleInlineFunctionCalls/");
@@ -73,6 +113,11 @@ public abstract class BytecodeToolWindowTestGenerated extends AbstractBytecodeTo
         @TestMetadata("objectInInlineFun")
         public void testObjectInInlineFun() throws Exception {
             runTest("testData/internal/toolWindow/objectInInlineFun/");
+        }
+
+        @TestMetadata("variantGeneric")
+        public void testVariantGeneric() throws Exception {
+            runTest("testData/internal/toolWindow/variantGeneric/");
         }
     }
 
@@ -83,9 +128,24 @@ public abstract class BytecodeToolWindowTestGenerated extends AbstractBytecodeTo
             KotlinTestUtils.runTest(this::doTestWithoutIr, this, testDataFilePath);
         }
 
+        @TestMetadata("companionObjectJvmField")
+        public void testCompanionObjectJvmField() throws Exception {
+            runTest("testData/internal/toolWindow/companionObjectJvmField/");
+        }
+
         @TestMetadata("componentInlineFun")
         public void testComponentInlineFun() throws Exception {
             runTest("testData/internal/toolWindow/componentInlineFun/");
+        }
+
+        @TestMetadata("defaultMethod")
+        public void testDefaultMethod() throws Exception {
+            runTest("testData/internal/toolWindow/defaultMethod/");
+        }
+
+        @TestMetadata("defaultMethodCompatibility")
+        public void testDefaultMethodCompatibility() throws Exception {
+            runTest("testData/internal/toolWindow/defaultMethodCompatibility/");
         }
 
         @TestMetadata("inlineFunctionBodyResolve")
@@ -123,6 +183,31 @@ public abstract class BytecodeToolWindowTestGenerated extends AbstractBytecodeTo
             runTest("testData/internal/toolWindow/iteratorFun/");
         }
 
+        @TestMetadata("jvmField")
+        public void testJvmField() throws Exception {
+            runTest("testData/internal/toolWindow/jvmField/");
+        }
+
+        @TestMetadata("jvmName")
+        public void testJvmName() throws Exception {
+            runTest("testData/internal/toolWindow/jvmName/");
+        }
+
+        @TestMetadata("jvmOverloads")
+        public void testJvmOverloads() throws Exception {
+            runTest("testData/internal/toolWindow/jvmOverloads/");
+        }
+
+        @TestMetadata("jvmStatic")
+        public void testJvmStatic() throws Exception {
+            runTest("testData/internal/toolWindow/jvmStatic/");
+        }
+
+        @TestMetadata("lateinitProp")
+        public void testLateinitProp() throws Exception {
+            runTest("testData/internal/toolWindow/lateinitProp/");
+        }
+
         @TestMetadata("multipleInlineFunctionCalls")
         public void testMultipleInlineFunctionCalls() throws Exception {
             runTest("testData/internal/toolWindow/multipleInlineFunctionCalls/");
@@ -131,6 +216,11 @@ public abstract class BytecodeToolWindowTestGenerated extends AbstractBytecodeTo
         @TestMetadata("objectInInlineFun")
         public void testObjectInInlineFun() throws Exception {
             runTest("testData/internal/toolWindow/objectInInlineFun/");
+        }
+
+        @TestMetadata("variantGeneric")
+        public void testVariantGeneric() throws Exception {
+            runTest("testData/internal/toolWindow/variantGeneric/");
         }
     }
 }
