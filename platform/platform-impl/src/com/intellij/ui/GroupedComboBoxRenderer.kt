@@ -26,7 +26,7 @@ import javax.swing.border.CompoundBorder
  * this renderer makes it possible to use [ComboBox]<[T]> and specify which items should be preceded
  * by a separator. (see [GroupedComboBoxRenderer.separatorFor])
  */
-abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>) : GroupedElementsRenderer(), ListCellRenderer<T> {
+abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>? = null) : GroupedElementsRenderer(), ListCellRenderer<T> {
 
   /**
    * @return The item title displayed in the combo
@@ -108,10 +108,8 @@ abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>) : GroupedEleme
     }
   }
 
-  // TODO: remove when old UI is not supported
-  @Suppress("UNNECESSARY_SAFE_CALL")
   private val enabled: Boolean
-    get() = combo?.isEnabled == true
+    get() = combo?.isEnabled ?: true
 
   override fun getBackground(): Color = if (enabled) UIUtil.getListBackground(false, false) else UIUtil.getComboBoxDisabledBackground()
   override fun getForeground(): Color = if (enabled) UIUtil.getListForeground(false, false) else UIUtil.getComboBoxDisabledForeground()
