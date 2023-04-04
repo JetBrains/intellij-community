@@ -43,7 +43,6 @@ import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.*
 import com.intellij.ui.components.*
-import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.Function
 import com.intellij.util.io.HttpRequests
@@ -269,9 +268,10 @@ open class IdeErrorsDialog internal constructor(private val myMessagePool: Messa
     val commentPanel = JPanel(BorderLayout())
     commentPanel.border = JBUI.Borders.emptyTop(5)
     commentPanel.add(scrollPane(myCommentArea, 0, 0), BorderLayout.CENTER)
-    val attachmentsPanel = JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
-                                      scrollPane(myAttachmentList, 150, 350),
-                                      scrollPane(myAttachmentArea, 500, 350))
+    val attachmentsPanel = JBSplitter(false, 0.3f).apply {
+      firstComponent = scrollPane(myAttachmentList, 150, 350)
+      secondComponent = scrollPane(myAttachmentArea, 500, 350)
+    }
     attachmentsPanel.border = JBUI.Borders.emptyTop(5)
     val accountRow = JPanel(GridBagLayout())
     accountRow.border = JBUI.Borders.empty(6, 0)
