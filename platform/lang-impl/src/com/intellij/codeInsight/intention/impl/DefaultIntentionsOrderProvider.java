@@ -28,7 +28,7 @@ public class DefaultIntentionsOrderProvider implements IntentionsOrderProvider {
     });
   }
 
-  public static int getPriorityWeight(@NotNull IntentionActionWithTextCaching action){
+  public static int getPriorityWeight(@NotNull IntentionActionWithTextCaching action) {
     IntentionAction nonDelegatedAction = findNonDelegatedAction(action.getAction());
     Priority priority = nonDelegatedAction instanceof PriorityAction ? ((PriorityAction)nonDelegatedAction).getPriority() : null;
     return getPriorityWeight(priority);

@@ -43,7 +43,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
                                            private val originalEditor: Editor) : PopupUpdateProcessor(project) {
   private var index: Int = LOADING_PREVIEW
   private var show = false
-  private var originalPopup : JBPopup? = null
+  private var originalPopup: JBPopup? = null
   private val editorsToRelease = mutableListOf<EditorEx>()
 
   private lateinit var popup: JBPopup
@@ -98,7 +98,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
       IntentionPreviewComputable(project, action, originalFile, originalEditor))
       .expireWith(popup)
       .coalesceBy(this)
-      .finishOnUiThread(ModalityState.defaultModalityState()) { renderPreview(it)}
+      .finishOnUiThread(ModalityState.defaultModalityState()) { renderPreview(it) }
       .submit(AppExecutorUtil.getAppExecutorService())
   }
 
@@ -238,7 +238,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
                           action: IntentionAction,
                           originalFile: PsiFile,
                           originalEditor: Editor): String {
-      return when(val info = getPreviewInfo(project, action, originalFile, originalEditor)) {
+      return when (val info = getPreviewInfo(project, action, originalFile, originalEditor)) {
         is IntentionPreviewDiffResult -> info.psiFile.text
         is Html -> info.content().toString()
         else -> ""

@@ -100,13 +100,19 @@ public final class CachedIntentions {
     return myHighlightInfoType;
   }
 
-  public static @NotNull CachedIntentions create(@NotNull Project project, @NotNull PsiFile file, @Nullable Editor editor, @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
+  public static @NotNull CachedIntentions create(@NotNull Project project,
+                                                 @NotNull PsiFile file,
+                                                 @Nullable Editor editor,
+                                                 @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
     CachedIntentions res = new CachedIntentions(project, file, editor);
     res.wrapAndUpdateActions(intentions, false);
     return res;
   }
 
-  public static @NotNull CachedIntentions createAndUpdateActions(@NotNull Project project, @NotNull PsiFile file, @Nullable Editor editor, @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
+  public static @NotNull CachedIntentions createAndUpdateActions(@NotNull Project project,
+                                                                 @NotNull PsiFile file,
+                                                                 @Nullable Editor editor,
+                                                                 @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
     CachedIntentions res = new CachedIntentions(project, file, editor);
     res.wrapAndUpdateActions(intentions, true);
     return res;
@@ -240,10 +246,12 @@ public final class CachedIntentions {
   @NotNull
   IntentionActionWithTextCaching wrapAction(@NotNull HighlightInfo.IntentionActionDescriptor descriptor,
                                             @NotNull PsiElement element,
-                                            @NotNull  PsiFile containingFile,
+                                            @NotNull PsiFile containingFile,
                                             @Nullable Editor containingEditor) {
-    IntentionActionWithTextCaching cachedAction = new IntentionActionWithTextCaching(descriptor.getAction(), descriptor.getDisplayName(), descriptor.getIcon(),
-                                                                                     (cached, action) -> {
+    IntentionActionWithTextCaching cachedAction =
+      new IntentionActionWithTextCaching(
+        descriptor.getAction(), descriptor.getDisplayName(), descriptor.getIcon(),
+        (cached, action) -> {
           if (action instanceof QuickFixWrapper) {
             // remove only inspection fixes after invocation,
             // since intention actions might be still available
@@ -257,7 +265,8 @@ public final class CachedIntentions {
       Pair<PsiFile, Editor> availableIn = ShowIntentionActionsHandler
         .chooseBetweenHostAndInjected(myFile, editor, containingFile, (f, e) -> ShowIntentionActionsHandler.availableFor(f, e, option));
       if (availableIn == null) continue;
-      IntentionActionWithTextCaching textCaching = new IntentionActionWithTextCaching(option, option.getText(), null, (__1, __2) -> {});
+      IntentionActionWithTextCaching textCaching = new IntentionActionWithTextCaching(option, option.getText(), null, (__1, __2) -> {
+      });
       boolean isErrorFix = myErrorFixes.contains(textCaching);
       if (isErrorFix) {
         cachedAction.addErrorFix(option);

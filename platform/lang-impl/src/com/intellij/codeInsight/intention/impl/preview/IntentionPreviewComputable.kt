@@ -48,13 +48,13 @@ internal class IntentionPreviewComputable(private val project: Project,
 
   private fun tryCreateFallbackDescriptionContent(): IntentionPreviewInfo {
     val originalAction = IntentionActionDelegate.unwrap(action)
-    val actionMetaData = IntentionsMetadataService.getInstance().getMetaData().singleOrNull {
-      md -> IntentionActionDelegate.unwrap(md.action).javaClass === originalAction.javaClass
+    val actionMetaData = IntentionsMetadataService.getInstance().getMetaData().singleOrNull { md ->
+      IntentionActionDelegate.unwrap(md.action).javaClass === originalAction.javaClass
     } ?: return IntentionPreviewInfo.EMPTY
     return try {
       IntentionPreviewInfo.Html(actionMetaData.description.text.replace(HTML_COMMENT_REGEX, ""))
     }
-    catch(ex: IOException) {
+    catch (ex: IOException) {
       IntentionPreviewInfo.EMPTY
     }
   }
@@ -94,7 +94,7 @@ internal class IntentionPreviewComputable(private val project: Project,
 
   private fun invokePreview(origFile: PsiFile, origEditor: Editor): IntentionPreviewInfo? {
     var info: IntentionPreviewInfo = IntentionPreviewInfo.EMPTY
-    var fileToCopy = action.getElementToMakeWritable(origFile) ?. containingFile ?: origFile
+    var fileToCopy = action.getElementToMakeWritable(origFile)?.containingFile ?: origFile
     val psiFileCopy: PsiFile
     val editorCopy: IntentionPreviewEditor
     val anotherFile = fileToCopy != origFile
@@ -108,7 +108,8 @@ internal class IntentionPreviewComputable(private val project: Project,
       psiFileCopy = IntentionPreviewUtils.obtainCopyForPreview(fileToCopy, origFile)
       editorCopy = IntentionPreviewEditor(psiFileCopy, originalEditor.settings)
       setupEditor(editorCopy, origFile, origEditor)
-    } else {
+    }
+    else {
       psiFileCopy = IntentionPreviewUtils.obtainCopyForPreview(fileToCopy)
       editorCopy = IntentionPreviewEditor(psiFileCopy, originalEditor.settings)
     }

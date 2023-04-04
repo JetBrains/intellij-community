@@ -121,7 +121,8 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
                           injectedFile.getUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION));
     PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(project).getInjectionHost(injectedFile.getViewProvider());
     myNewFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, SmartPointerManager.getInstance(project).createSmartPsiElementPointer(host));
-    myNewDocument = Objects.requireNonNull(PsiDocumentManager.getInstance(project).getDocument(myNewFile), "doc for file " + myNewFile.getName());
+    myNewDocument =
+      Objects.requireNonNull(PsiDocumentManager.getInstance(project).getDocument(myNewFile), "doc for file " + myNewFile.getName());
     EditorActionManager.getInstance().setReadonlyFragmentModificationHandler(myNewDocument, new MyQuietHandler());
     myOrigCreationStamp = myOrigDocument.getModificationStamp(); // store creation stamp for UNDO tracking
     EditorFactory editorFactory = Objects.requireNonNull(EditorFactory.getInstance());
@@ -332,7 +333,8 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
   private void commitToOriginal(DocumentEvent e) {
     myCommittingToOriginal = true;
     try {
-      PostprocessReformattingAspect.getInstance(myProject).disablePostprocessFormattingInside(() -> myEditChangesHandler.commitToOriginal(e));
+      PostprocessReformattingAspect.getInstance(myProject)
+        .disablePostprocessFormattingInside(() -> myEditChangesHandler.commitToOriginal(e));
       PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myOrigDocument);
     }
     finally {

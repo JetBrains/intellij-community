@@ -70,6 +70,7 @@ final class ResourceTextDescriptor implements TextDescriptor {
 
   @Override
   public @NotNull String getFileName() {
-    return Strings.trimEnd(myResourcePath.substring(myResourcePath.lastIndexOf('/') + 1), BeforeAfterActionMetaData.EXAMPLE_USAGE_URL_SUFFIX);
+    return Strings.trimEnd(myResourcePath.substring(myResourcePath.lastIndexOf('/') + 1),
+                           BeforeAfterActionMetaData.EXAMPLE_USAGE_URL_SUFFIX);
   }
 }

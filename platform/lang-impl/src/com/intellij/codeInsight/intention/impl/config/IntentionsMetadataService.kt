@@ -9,7 +9,6 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.util.containers.Interner
-import java.util.*
 
 private typealias MetaDataKey = Pair<String, String>
 
@@ -28,6 +27,7 @@ internal class IntentionsMetadataService {
 
   // guarded by this
   private val extensionMetaMap: MutableMap<IntentionActionBean, IntentionActionMetaData>
+
   // guarded by this, used only for legacy programmatically registered intentions
   private val dynamicRegistrationMeta: MutableList<IntentionActionMetaData>
 

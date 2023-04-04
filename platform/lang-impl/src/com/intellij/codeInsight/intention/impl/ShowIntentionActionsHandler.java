@@ -98,17 +98,21 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     showIntentionHint(project, editor, file, calcIntentions(project, editor, file), showFeedbackOnEmptyMenu);
   }
 
-  protected void showIntentionHint(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, @NotNull ShowIntentionsPass.IntentionsInfo intentions, boolean showFeedbackOnEmptyMenu) {
+  protected void showIntentionHint(@NotNull Project project,
+                                   @NotNull Editor editor,
+                                   @NotNull PsiFile file,
+                                   @NotNull ShowIntentionsPass.IntentionsInfo intentions,
+                                   boolean showFeedbackOnEmptyMenu) {
     if (!intentions.isEmpty()) {
       editor.getScrollingModel().runActionOnScrollingFinished(() -> {
-          CachedIntentions cachedIntentions = CachedIntentions.createAndUpdateActions(project, file, editor, intentions);
-          cachedIntentions.wrapAndUpdateGutters();
-          if (cachedIntentions.getAllActions().isEmpty()) {
-            showEmptyMenuFeedback(editor, showFeedbackOnEmptyMenu);
-          }
-          else {
-            IntentionHintComponent.showIntentionHint(project, file, editor, true, cachedIntentions);
-          }
+        CachedIntentions cachedIntentions = CachedIntentions.createAndUpdateActions(project, file, editor, intentions);
+        cachedIntentions.wrapAndUpdateGutters();
+        if (cachedIntentions.getAllActions().isEmpty()) {
+          showEmptyMenuFeedback(editor, showFeedbackOnEmptyMenu);
+        }
+        else {
+          IntentionHintComponent.showIntentionHint(project, file, editor, true, cachedIntentions);
+        }
       });
     }
     else {
@@ -124,18 +128,25 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   }
 
   @ApiStatus.Internal
-  public static @NotNull ShowIntentionsPass.IntentionsInfo calcIntentions(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public static @NotNull ShowIntentionsPass.IntentionsInfo calcIntentions(@NotNull Project project,
+                                                                          @NotNull Editor editor,
+                                                                          @NotNull PsiFile file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (ApplicationManager.getApplication().isWriteAccessAllowed()) throw new IllegalStateException("must not wait for intentions inside write action");
+    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      throw new IllegalStateException("must not wait for intentions inside write action");
+    }
     String progressTitle = CodeInsightBundle.message("progress.title.searching.for.context.actions");
     DumbService dumbService = DumbService.getInstance(project);
     boolean useAlternativeResolve = dumbService.isAlternativeResolveEnabled();
-    ThrowableComputable<ShowIntentionsPass.IntentionsInfo, RuntimeException> prioritizedRunnable = () -> ProgressManager.getInstance().computePrioritized(() ->  {
-      DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
-      return ReadAction.compute(() -> ShowIntentionsPass.getActionsToShow(editor, file, false));
-    });
-    ThrowableComputable<ShowIntentionsPass.IntentionsInfo, RuntimeException> process = useAlternativeResolve ?
-      () -> dumbService.computeWithAlternativeResolveEnabled(prioritizedRunnable) : prioritizedRunnable;
+    ThrowableComputable<ShowIntentionsPass.IntentionsInfo, RuntimeException> prioritizedRunnable =
+      () -> ProgressManager.getInstance().computePrioritized(() -> {
+        DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
+        return ReadAction.compute(() -> ShowIntentionsPass.getActionsToShow(editor, file, false));
+      });
+    ThrowableComputable<ShowIntentionsPass.IntentionsInfo, RuntimeException> process =
+      useAlternativeResolve
+      ? () -> dumbService.computeWithAlternativeResolveEnabled(prioritizedRunnable)
+      : prioritizedRunnable;
     ShowIntentionsPass.IntentionsInfo intentions =
       ProgressManager.getInstance().runProcessWithProgressSynchronously(process, progressTitle, true, project);
 

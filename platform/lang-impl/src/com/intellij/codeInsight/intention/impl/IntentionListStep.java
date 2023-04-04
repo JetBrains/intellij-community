@@ -88,7 +88,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   public boolean isFinal(IntentionActionWithTextCaching value) {
     IntentionAction a = IntentionActionDelegate.unwrap(value.getAction());
 
-    return  !(a instanceof AbstractEmptyIntentionAction) || !hasSubstep(value);
+    return !(a instanceof AbstractEmptyIntentionAction) || !hasSubstep(value);
   }
 
   @Override
@@ -100,7 +100,11 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     myFinalRunnable = () -> {
       HintManager.getInstance().hideAllHints();
       if (myProject.isDisposed()) return;
-      if (myEditor != null && (myEditor.isDisposed() || (!UIUtil.isShowing(myEditor.getComponent()) && !ApplicationManager.getApplication().isUnitTestMode()))) return;
+      if (myEditor != null &&
+          (myEditor.isDisposed() ||
+           (!UIUtil.isShowing(myEditor.getComponent()) && !ApplicationManager.getApplication().isUnitTestMode()))) {
+        return;
+      }
 
       if (DumbService.isDumb(myProject) && !DumbService.isDumbAware(cachedAction)) {
         DumbService.getInstance(myProject).showDumbModeNotification(
@@ -130,17 +134,20 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   IntentionListStep getSubStep(@NotNull IntentionActionWithTextCaching action, @NlsContexts.PopupTitle String title) {
     ShowIntentionsPass.IntentionsInfo intentions = new ShowIntentionsPass.IntentionsInfo();
     for (IntentionAction optionIntention : action.getOptionIntentions()) {
-      intentions.intentionsToShow.add(new HighlightInfo.IntentionActionDescriptor(optionIntention, null, null, getIcon(optionIntention), null, null, null));
+      intentions.intentionsToShow.add(
+        new HighlightInfo.IntentionActionDescriptor(optionIntention, null, null, getIcon(optionIntention), null, null, null));
     }
     for (IntentionAction optionFix : action.getOptionErrorFixes()) {
-      intentions.errorFixesToShow.add(new HighlightInfo.IntentionActionDescriptor(optionFix, null, null, getIcon(optionFix), null, null, null));
+      intentions.errorFixesToShow.add(
+        new HighlightInfo.IntentionActionDescriptor(optionFix, null, null, getIcon(optionFix), null, null, null));
     }
     for (IntentionAction optionFix : action.getOptionInspectionFixes()) {
-      intentions.inspectionFixesToShow.add(new HighlightInfo.IntentionActionDescriptor(optionFix, null, null, getIcon(optionFix), null, null, null));
+      intentions.inspectionFixesToShow.add(
+        new HighlightInfo.IntentionActionDescriptor(optionFix, null, null, getIcon(optionFix), null, null, null));
     }
 
     return new IntentionListStep(myPopup, myEditor, myFile, myProject,
-                                 CachedIntentions.create(myProject, myFile, myEditor, intentions)){
+                                 CachedIntentions.create(myProject, myFile, myEditor, intentions)) {
       @Override
       public String getTitle() {
         return title;
@@ -177,9 +184,9 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
 
       List<IntentionActionWithTextCaching> subActions = getSubStep(cached, cached.getToolName()).getValues();
       List<IntentionAction> options = subActions.stream()
-          .map(IntentionActionWithTextCaching::getAction)
-          .filter(option -> ShowIntentionActionsHandler.chooseFileForAction(myFile, myEditor, option) != null)
-          .collect(Collectors.toList());
+        .map(IntentionActionWithTextCaching::getAction)
+        .filter(option -> ShowIntentionActionsHandler.chooseFileForAction(myFile, myEditor, option) != null)
+        .collect(Collectors.toList());
       result.put(action, options);
     }
     return result;
@@ -230,6 +237,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
 
   @Override
   public int getDefaultOptionIndex() { return 0; }
+
   @Override
   public ListSeparator getSeparatorAbove(IntentionActionWithTextCaching value) {
     List<IntentionActionWithTextCaching> values = getValues();
@@ -242,20 +250,25 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     }
     return null;
   }
+
   @Override
   public boolean isMnemonicsNavigationEnabled() { return false; }
+
   @Override
   public MnemonicNavigationFilter<IntentionActionWithTextCaching> getMnemonicNavigationFilter() { return null; }
+
   @Override
   public boolean isSpeedSearchEnabled() { return true; }
+
   @Override
   public boolean isAutoSelectionEnabled() { return false; }
+
   @Override
   public SpeedSearchFilter<IntentionActionWithTextCaching> getSpeedSearchFilter() { return this; }
 
   //speed search filter
   @Override
-  public String getIndexedString(IntentionActionWithTextCaching value) { return getTextFor(value);}
+  public String getIndexedString(IntentionActionWithTextCaching value) { return getTextFor(value); }
 
 
   private @NotNull Dimension getMaxIconSize() {

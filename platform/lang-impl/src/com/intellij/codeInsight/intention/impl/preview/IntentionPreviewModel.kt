@@ -57,9 +57,7 @@ internal class IntentionPreviewModel {
         .createEditor(project, origFile.fileType, -1)
     }
 
-    private fun IntentionPreviewDiffResult.DiffInfo.createEditor(project: Project,
-                                                         fileType: FileType,
-                                                         maxLine: Int): EditorEx {
+    private fun IntentionPreviewDiffResult.DiffInfo.createEditor(project: Project, fileType: FileType, maxLine: Int): EditorEx {
       val editor = createEditor(project, fileType, fileText, startLine, maxLine)
       for (fragment in fragments) {
         val attr = when (fragment.type) {
@@ -92,7 +90,8 @@ internal class IntentionPreviewModel {
       }
 
       editor.backgroundColor = getEditorBackground()
-      editor.colorsScheme.setColor(EditorColors.LINE_NUMBER_ON_CARET_ROW_COLOR, editor.colorsScheme.getColor(EditorColors.LINE_NUMBERS_COLOR))
+      editor.colorsScheme.setColor(EditorColors.LINE_NUMBER_ON_CARET_ROW_COLOR,
+                                   editor.colorsScheme.getColor(EditorColors.LINE_NUMBERS_COLOR))
 
       editor.settings.isUseSoftWraps = true
       editor.scrollingModel.disableAnimation()

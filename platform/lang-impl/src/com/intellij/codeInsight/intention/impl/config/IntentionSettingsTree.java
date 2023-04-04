@@ -48,7 +48,7 @@ public abstract class IntentionSettingsTree {
     initTree();
   }
 
-  public JTree getTree(){
+  public JTree getTree() {
     return myTree;
   }
 
@@ -93,6 +93,7 @@ public abstract class IntentionSettingsTree {
   }
 
   protected abstract void selectionChanged(Object selected);
+
   protected abstract List<IntentionActionMetaData> filterModel(String filter, boolean force);
 
   public void filter(List<IntentionActionMetaData> intentionsToShow) {
@@ -100,7 +101,7 @@ public abstract class IntentionSettingsTree {
     reset(copyAndSort(intentionsToShow));
   }
 
-  public void reset(){
+  public void reset() {
     IntentionManagerImpl intentionManager = (IntentionManagerImpl)IntentionManager.getInstance();
     while (intentionManager.hasActiveRequests()) {
       TimeoutUtil.sleep(100);
@@ -212,7 +213,8 @@ public abstract class IntentionSettingsTree {
           if (name.equals(text)) {
             found.set(node);
           }
-        } else {
+        }
+        else {
           CheckedTreeNode child = findChildRecursively(node, name);
           if (child != null) {
             found.set(child);
@@ -256,7 +258,6 @@ public abstract class IntentionSettingsTree {
         }
       });
     }
-
   }
 
   private static void apply(CheckedTreeNode root) {
@@ -285,7 +286,7 @@ public abstract class IntentionSettingsTree {
       return enabled != root.isChecked();
     }
     else {
-      boolean[] modified = new boolean[] { false };
+      boolean[] modified = new boolean[]{false};
       visitChildren(root, new CheckedNodeVisitor() {
         @Override
         public void visit(CheckedTreeNode node) {
@@ -300,7 +301,7 @@ public abstract class IntentionSettingsTree {
     myFilter.dispose();
   }
 
-  public void setFilter(String filter){
+  public void setFilter(String filter) {
     myFilter.setFilter(filter);
   }
 
@@ -311,6 +312,7 @@ public abstract class IntentionSettingsTree {
   interface CheckedNodeVisitor {
     void visit(CheckedTreeNode node);
   }
+
   private static void visitChildren(TreeNode node, CheckedNodeVisitor visitor) {
     Enumeration<?> children = node.children();
     while (children.hasMoreElements()) {

@@ -642,7 +642,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
               .coalesceBy(popup)
               .finishOnUiThread(ModalityState.any(), Runnable::run)
               .submit(AppExecutorUtil.getAppExecutorService());
-          } else {
+          }
+          else {
             context.dropHighlight();
           }
         }
@@ -701,8 +702,9 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
     /**
      * Manages highlighting in the editor when action defines it.
-     * @see SuppressIntentionActionFromFix#getContainer(PsiElement) 
-     * @see CustomizableIntentionAction#getRangesToHighlight(Editor, PsiFile) 
+     *
+     * @see SuppressIntentionActionFromFix#getContainer(PsiElement)
+     * @see CustomizableIntentionAction#getRangesToHighlight(Editor, PsiFile)
      */
     private static final class HighlightingContext {
       private final IntentionPopup myPopup;
@@ -738,7 +740,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
           injectionHighlighter.dropHighlight();
         }
       }
-      
+
       boolean mayHaveHighlighting(@NotNull IntentionAction action) {
         return action instanceof SuppressIntentionActionFromFix || action instanceof CustomizableIntentionAction;
       }

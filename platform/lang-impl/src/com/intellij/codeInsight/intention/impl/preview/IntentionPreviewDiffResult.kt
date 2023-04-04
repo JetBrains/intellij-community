@@ -14,11 +14,11 @@ import com.intellij.psi.PsiFileFactory
 import one.util.streamex.StreamEx
 
 data class IntentionPreviewDiffResult(val psiFile: PsiFile,
-                                               val origFile: PsiFile,
-                                               val lineFragments: List<LineFragment>,
-                                               val normalDiff: Boolean = true,
-                                               val fileName: String? = null,
-                                               val policy: ComparisonPolicy) : IntentionPreviewInfo {
+                                      val origFile: PsiFile,
+                                      val lineFragments: List<LineFragment>,
+                                      val normalDiff: Boolean = true,
+                                      val fileName: String? = null,
+                                      val policy: ComparisonPolicy) : IntentionPreviewInfo {
   fun createDiffs(): List<DiffInfo> {
     val result = this
     val origFile = result.origFile
@@ -54,7 +54,8 @@ data class IntentionPreviewDiffResult(val psiFile: PsiFile,
           // only deleted
           return@mapNotNull DiffInfo(oldText, fragment.startLine1, fragment.endLine1 - fragment.startLine1,
                                      words.map { word ->
-                                       Fragment(HighlightingType.DELETED, word.startOffset1, word.endOffset1) })
+                                       Fragment(HighlightingType.DELETED, word.startOffset1, word.endOffset1)
+                                     })
         }
         else if (words.any { word -> word.startOffset2 == word.endOffset2 }) {
           return@mapNotNull DiffInfo(newText, fragment.startLine1, fragment.endLine2 - fragment.startLine2,
@@ -95,7 +96,7 @@ data class IntentionPreviewDiffResult(val psiFile: PsiFile,
   private fun getOffset(fileText: String, lineNumber: Int): Int {
     return StringUtil.lineColToOffset(fileText, lineNumber, 0).let { pos -> if (pos == -1) fileText.length else pos }
   }
-  
+
   companion object {
     @JvmStatic
     fun fromCustomDiff(project: Project, result: IntentionPreviewInfo.CustomDiff): IntentionPreviewDiffResult {
