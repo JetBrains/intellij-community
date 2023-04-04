@@ -3,11 +3,11 @@
 package org.jetbrains.kotlin.idea.actions
 
 import com.intellij.codeInsight.navigation.NavigationUtil
-import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionPlaces.PROJECT_VIEW_POPUP
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -26,6 +26,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
+import com.intellij.psi.impl.file.PsiDirectoryFactory
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.codeInsight.pathBeforeJavaToKotlinConversion
@@ -33,13 +34,14 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
 import org.jetbrains.kotlin.idea.configuration.ExperimentalFeatures
+import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.j2k.IdeaJavaToKotlinServices
 import org.jetbrains.kotlin.idea.j2k.J2kPostProcessor
 import org.jetbrains.kotlin.idea.statistics.ConversionType
 import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
-import org.jetbrains.kotlin.idea.util.getAllFilesRecursively
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.getAllFilesRecursively
 import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.j2k.ConverterSettings.Companion.defaultSettings
 import org.jetbrains.kotlin.j2k.FilesResult
@@ -282,20 +284,31 @@ class JavaToKotlinAction : AnAction() {
 
     private fun isEnabled(e: AnActionEvent): Boolean {
         if (KotlinPlatformUtils.isCidr) return false
-        val virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return false
+        val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return false
         val project = e.project ?: return false
-        e.getData(PlatformCoreDataKeys.MODULE) ?: return false
-        return isAnyJavaFileSelected(project, virtualFiles)
-    }
+        if (project.isDisposed) return false
+        if (e.getData(PlatformCoreDataKeys.MODULE) == null) return false
 
-    private fun isAnyJavaFileSelected(project: Project, files: Array<VirtualFile>): Boolean {
-        if (files.any { it.isSuitableDirectory() }) return true // Giving up on directories
-        val manager = PsiManager.getInstance(project)
-        return files.any { it.extension == JavaFileType.DEFAULT_EXTENSION && manager.findFile(it) is PsiJavaFile && it.isWritable }
-    }
+        fun isWritableJavaFile(file: VirtualFile): Boolean {
+            val psiManager = PsiManager.getInstance(project)
+            return file.extension == JavaFileType.DEFAULT_EXTENSION && psiManager.findFile(file) is PsiJavaFile && file.isWritable
+        }
 
-    private fun VirtualFile.isSuitableDirectory(): Boolean =
-        isDirectory && fileType !is ArchiveFileType && isWritable
+        fun isWritablePackageDirectory(file: VirtualFile): Boolean {
+            val directory = file.toPsiDirectory(project) ?: return false
+            return PsiDirectoryFactory.getInstance(project).isPackage(directory) && file.isWritable
+        }
+
+        if (e.place != PROJECT_VIEW_POPUP && files.any(::isWritablePackageDirectory)) {
+            // If a package is selected, we consider that it may contain Java files,
+            // but don't actually check, because this check is recursive and potentially expensive: KTIJ-12688.
+            //
+            // This logic is disabled for the project view popup to avoid cluttering it.
+            return true
+        }
+
+        return files.any(::isWritableJavaFile)
+    }
 
     private fun selectedJavaFiles(e: AnActionEvent): Sequence<PsiJavaFile> {
         val virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return sequenceOf()
