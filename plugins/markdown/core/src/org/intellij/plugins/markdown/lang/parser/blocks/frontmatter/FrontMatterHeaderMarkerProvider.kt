@@ -1,6 +1,5 @@
 package org.intellij.plugins.markdown.lang.parser.blocks.frontmatter
 
-import com.intellij.openapi.util.registry.Registry
 import org.intellij.markdown.MarkdownElementType
 import org.intellij.markdown.parser.LookaheadText
 import org.intellij.markdown.parser.MarkerProcessor
@@ -96,11 +95,6 @@ class FrontMatterHeaderMarkerProvider: MarkerBlockProvider<MarkerProcessor.State
 
     internal fun isTomlDelimiters(opening: String, closing: String): Boolean {
       return isTomlDelimiterLine(opening) && isTomlDelimiterLine(closing)
-    }
-
-    @JvmStatic
-    fun isFrontMatterSupportEnabled(): Boolean {
-      return Registry.`is`("markdown.experimental.frontmatter.support.enable", false)
     }
   }
 }
