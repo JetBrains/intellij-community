@@ -7,7 +7,9 @@ import com.intellij.execution.lineMarker.RunLineMarkerContributor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.psi.PsiElement
+import com.intellij.testIntegration.TestFramework
 import com.intellij.util.Function
+import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinBaseCodeInsightBundle
 import org.jetbrains.kotlin.idea.base.codeInsight.PsiOnlyKotlinMainFunctionDetector
@@ -16,7 +18,7 @@ import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
 import org.jetbrains.kotlin.idea.base.util.isGradleModule
 import org.jetbrains.kotlin.idea.base.util.isUnderKotlinSourceRootTypes
-import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework
+import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework
 import org.jetbrains.kotlin.konan.target.Architecture
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
@@ -40,8 +42,24 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
          */
         private fun KtNamedDeclaration.isIgnoredForGradleModule(module: Module, includeSlowProviders: Boolean): Boolean {
             val ktNamedFunction = this.safeAs<KtNamedFunction>().takeIf { module.isGradleModule } ?: return false
-            val testFramework = KotlinTestFramework.getApplicableFor(this, includeSlowProviders)
-            return testFramework?.isIgnoredMethod(ktNamedFunction) == true
+            val ktClassOrObject = ktNamedFunction.containingClassOrObject ?: return false
+
+            val testFramework = TestFramework.EXTENSION_NAME.extensionList.firstOrNull {
+                if (includeSlowProviders) {
+                    it !is KotlinPsiBasedTestFramework
+                } else if (it is KotlinPsiBasedTestFramework) {
+                    it.isTestClass(ktClassOrObject)
+                } else {
+                    false
+                }
+            }
+
+            return if (testFramework is KotlinPsiBasedTestFramework) {
+                testFramework.isIgnoredMethod(ktNamedFunction)
+            } else {
+                val lightMethod = ktNamedFunction.toLightMethods().firstOrNull() ?: return false
+                testFramework?.isIgnoredMethod(lightMethod) == true
+            }
         }
 
         fun getTestStateIcon(urls: List<String>, declaration: KtNamedDeclaration): Icon {

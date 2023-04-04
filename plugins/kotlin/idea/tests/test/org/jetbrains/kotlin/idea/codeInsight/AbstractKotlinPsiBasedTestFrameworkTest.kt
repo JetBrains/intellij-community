@@ -2,14 +2,12 @@
 package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.rt.execution.junit.FileComparisonFailure
-import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.ExtensionTestUtil.maskExtensions
 import com.intellij.testIntegration.TestFramework
-import org.jetbrains.kotlin.idea.junit.KotlinTestFrameworkAdapter
-import org.jetbrains.kotlin.idea.runConfigurations.jvm.KotlinDelegatingTestFramework
-import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework
+import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework
 
-abstract class AbstractLightTestRunLineMarkersTest: AbstractLineMarkersTest() {
-    fun doLightTest(path: String) {
+abstract class AbstractKotlinPsiBasedTestFrameworkTest: AbstractLineMarkersTest() {
+    fun doPsiBasedTest(path: String) {
         // to test LightTestFramework detection only
         // i.e. w/o fallback to LightClasses and TestFrameworks.detectFramework
         //
@@ -41,23 +39,12 @@ abstract class AbstractLightTestRunLineMarkersTest: AbstractLineMarkersTest() {
     }
 
     private fun doRunTest(lightClass: Boolean, task: () -> Unit) {
-        ExtensionTestUtil.maskExtensions(
-            KotlinTestFramework.EXTENSION_NAME,
-            KotlinTestFramework.EXTENSION_NAME.extensionList.filter {
-                val filter = it is KotlinDelegatingTestFramework
-                if (lightClass) filter else !filter
-            },
-            testRootDisposable
-        )
+        val applicableTestFrameworks = TestFramework.EXTENSION_NAME.extensionList.filter {
+            val filter = it is KotlinPsiBasedTestFramework
+            if (lightClass) !filter else filter
+        }
 
-        ExtensionTestUtil.maskExtensions(
-            TestFramework.EXTENSION_NAME,
-            TestFramework.EXTENSION_NAME.extensionList.filter {
-                !lightClass || it !is KotlinTestFrameworkAdapter
-            },
-            testRootDisposable
-        )
-
+        maskExtensions(TestFramework.EXTENSION_NAME, applicableTestFrameworks, testRootDisposable)
         task()
     }
 

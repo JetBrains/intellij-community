@@ -15,12 +15,6 @@
                    order="before junit5"/>
   </extensions>
 
-  <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <kotlinTestFramework id="junit5PsiFramework" order="before junit4PsiFramework" implementation="org.jetbrains.kotlin.idea.junit.framework.JUnit5KotlinTestFramework"/>
-    <kotlinTestFramework id="junit4PsiFramework" order="before junit3PsiFramework" implementation="org.jetbrains.kotlin.idea.junit.framework.JUnit4KotlinTestFramework"/>
-    <kotlinTestFramework id="junit3PsiFramework" implementation="org.jetbrains.kotlin.idea.junit.framework.JUnit3KotlinTestFramework"/>
-  </extensions>
-
   <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">
     <testFrameworkProvider implementation="org.jetbrains.kotlin.idea.junit.JunitKotlinTestFrameworkProvider"/>
   </extensions>

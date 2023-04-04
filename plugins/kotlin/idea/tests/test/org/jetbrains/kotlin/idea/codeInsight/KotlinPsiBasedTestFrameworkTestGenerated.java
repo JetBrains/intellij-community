@@ -17,12 +17,12 @@ import org.junit.runner.RunWith;
 @TestRoot("idea/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public abstract class LightTestRunLineMarkersTestGenerated extends AbstractLightTestRunLineMarkersTest {
+public abstract class KotlinPsiBasedTestFrameworkTestGenerated extends AbstractKotlinPsiBasedTestFrameworkTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/codeInsight/lineMarker/runMarkers")
-    public static class WithLightTestFramework extends AbstractLightTestRunLineMarkersTest {
+    public static class WithLightTestFramework extends AbstractKotlinPsiBasedTestFrameworkTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doLightTest, this, testDataFilePath);
+            KotlinTestUtils.runTest(this::doPsiBasedTest, this, testDataFilePath);
         }
 
         @TestMetadata("jUnit3TestFile.kt")
@@ -53,7 +53,7 @@ public abstract class LightTestRunLineMarkersTestGenerated extends AbstractLight
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/codeInsight/lineMarker/runMarkers")
-    public static class WithoutLightTestFramework extends AbstractLightTestRunLineMarkersTest {
+    public static class WithoutLightTestFramework extends AbstractKotlinPsiBasedTestFrameworkTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doPureTest, this, testDataFilePath);
         }

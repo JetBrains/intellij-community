@@ -758,8 +758,8 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("codeInsight/lineMarker", pattern = Patterns.forRegex("^(\\w+)\\.(kt|kts)$"))
         }
 
-        testClass<AbstractLightTestRunLineMarkersTest> {
-            model("codeInsight/lineMarker/runMarkers", pattern = Patterns.forRegex("^((jUnit|test)\\w*)\\.kt$"), testMethodName = "doLightTest", testClassName = "WithLightTestFramework")
+        testClass<AbstractKotlinPsiBasedTestFrameworkTest> {
+            model("codeInsight/lineMarker/runMarkers", pattern = Patterns.forRegex("^((jUnit|test)\\w*)\\.kt$"), testMethodName = "doPsiBasedTest", testClassName = "WithLightTestFramework")
             model("codeInsight/lineMarker/runMarkers", pattern = Patterns.forRegex("^((jUnit|test)\\w*)\\.kt$"), testMethodName = "doPureTest", testClassName = "WithoutLightTestFramework")
         }
 

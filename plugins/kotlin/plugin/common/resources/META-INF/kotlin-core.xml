@@ -50,10 +50,6 @@
             area="IDEA_PROJECT"
             dynamic="true"/>
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.kotlinTestFramework"
-            interface="org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework"
-            dynamic="true"/>
-    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.idea.caches.resolve.resolveOptimizingOptionsProvider"
             interface="org.jetbrains.kotlin.idea.caches.resolve.ResolveOptimizingOptionsProvider"
             dynamic="true"/>

@@ -6,17 +6,15 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework.Companion.KOTLIN_TEST_IGNORE
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import java.util.concurrent.ConcurrentHashMap
 
-abstract class AbstractKotlinTestFramework : KotlinTestFramework {
+abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework {
     abstract val markerClassFqn: String
     abstract val disabledTestAnnotation: String
-
-    override val isSlow: Boolean
-        get() = false
 
     protected fun isFrameworkAvailable(element: KtElement): Boolean {
         // TODO: migrate to JavaLibraryUtils
@@ -38,10 +36,7 @@ abstract class AbstractKotlinTestFramework : KotlinTestFramework {
 
         return when (declaration) {
             is KtClassOrObject -> isTestClass(declaration)
-            is KtNamedFunction -> {
-                val containingClass = declaration.containingClassOrObject ?: return false
-                return isTestClass(containingClass) && isTestMethod(declaration)
-            }
+            is KtNamedFunction -> (declaration.containingClassOrObject?.let(::isTestClass) ?: false) && isTestMethod(declaration)
             else -> false
         }
     }
@@ -65,21 +60,13 @@ abstract class AbstractKotlinTestFramework : KotlinTestFramework {
             declaration.hasModifier(KtTokens.ABSTRACT_KEYWORD) -> false
             declaration.isExtensionDeclaration() -> false
             declaration.containingClassOrObject?.isObjectLiteral() == true -> false
-            else -> true
+            else -> declaration.containingClass()?.let(::isTestClass) ?: false
         }
     }
 
     override fun isIgnoredMethod(declaration: KtNamedFunction): Boolean {
-        return isAnnotated(declaration, KotlinTestFramework.KOTLIN_TEST_IGNORE)
+        return isAnnotated(declaration, KOTLIN_TEST_IGNORE)
                 || isAnnotated(declaration, disabledTestAnnotation)
-    }
-
-    override fun qualifiedName(declaration: KtNamedDeclaration): String? {
-        return when (declaration) {
-            is KtClassOrObject -> declaration.fqName?.asString()
-            is KtNamedFunction -> declaration.containingClassOrObject?.fqName?.asString()
-            else -> null
-        }
     }
 
     protected fun checkNameMatch(file: KtFile, fqNames: Set<String>, shortName: String): Boolean {
