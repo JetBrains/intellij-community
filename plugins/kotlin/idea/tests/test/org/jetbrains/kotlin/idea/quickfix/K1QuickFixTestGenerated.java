@@ -10996,6 +10996,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/optIn/override.kt");
         }
 
+        @TestMetadata("propagateOptIn.kt")
+        public void testPropagateOptIn() throws Exception {
+            runTest("testData/quickfix/optIn/propagateOptIn.kt");
+        }
+
         @TestMetadata("propertyInConstructor.kt")
         public void testPropertyInConstructor() throws Exception {
             runTest("testData/quickfix/optIn/propertyInConstructor.kt");
