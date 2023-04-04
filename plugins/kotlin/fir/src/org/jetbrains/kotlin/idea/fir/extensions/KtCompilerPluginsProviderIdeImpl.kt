@@ -47,7 +47,6 @@ import java.io.File
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentMap
-import kotlin.io.path.name
 
 @OptIn(ExperimentalCompilerApi::class)
 internal class KtCompilerPluginsProviderIdeImpl(private val project: Project) : KtCompilerPluginsProvider(), Disposable {
@@ -200,7 +199,7 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project) : 
      * 2. Allow to use other compiler plugins only if [onlyBundledPluginsEnabled] is set to false; otherwise, filter them.
      */
     private fun substitutePluginJar(userSuppliedPluginJar: Path): Path? {
-        val bundledPlugin = KotlinK2BundledCompilerPlugins.findCorrespondingBundledPlugin(userSuppliedPluginJar.name)
+        val bundledPlugin = KotlinK2BundledCompilerPlugins.findCorrespondingBundledPlugin(userSuppliedPluginJar)
         if (bundledPlugin != null) return bundledPlugin.bundledJarLocation
 
         return userSuppliedPluginJar.takeUnless { onlyBundledPluginsEnabled }

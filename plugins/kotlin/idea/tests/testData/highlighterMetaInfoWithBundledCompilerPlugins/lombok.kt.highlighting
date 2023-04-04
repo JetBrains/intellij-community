@@ -1,4 +1,4 @@
-// COMPILER_ARGUMENTS: -Xplugin=non_existent_location/kotlin-lombok-dev.jar
+// COMPILER_ARGUMENTS: -Xplugin=$TEST_DIR/lombok_fake_plugin.jar
 // FILE: main.kt
 package test
 
