@@ -87,6 +87,7 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
     .put("mcall", PyHighlighter.PY_METHOD_CALL)
     .put("annotation", PyHighlighter.PY_ANNOTATION)
     .put("localVar", DefaultLanguageHighlighterColors.LOCAL_VARIABLE)
+    .put("globalVar", DefaultLanguageHighlighterColors.GLOBAL_VARIABLE)
     .putAll(RainbowHighlighter.createRainbowHLM())
     .build();
 
@@ -151,7 +152,7 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
       "    def <funcDef>make_sense</funcDef>(<self>self</self>, <param>whatever</param>):\n" +
       "        <self>self</self>.sense = <param>whatever</param>\n" +
       "\n" +
-      "<localVar>x</localVar> = <builtin>len</builtin>('abc')\n" +
+      "<globalVar>x</globalVar> = <builtin>len</builtin>('abc')\n" +
       "print(f.<predefinedUsage>__doc__</predefinedUsage>)"
     ;
   }
