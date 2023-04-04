@@ -14,7 +14,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 
 open class ComponentAdvertiser {
-  val component = JPanel(FlowLayout(FlowLayout.LEFT))
+  val component = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0))
   protected val multiPanel = MyPanel()
   protected var currentIndex = AtomicInteger(0)
 
