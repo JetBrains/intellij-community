@@ -429,6 +429,10 @@
     <registryKey key="markdown.validate.short.links"
                  defaultValue="false"
                  description="Enables validation for short style links by checking existing labeled link definitions in the current file."/>
+
+    <registryKey key="markdown.experimental.show.frontmatter.in.preview"
+                 defaultValue="false"
+                 description="Enables displaying of front matter headers in the preview."/>
     <!--endregion-->
 
     <advancedSetting id="markdown.hide.floating.toolbar" default="false" groupKey="markdown.settings.name"/>
