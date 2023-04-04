@@ -472,7 +472,7 @@ private const val SECTION_INDEXING_ID = "id-indexing"
 private const val SECTION_INDEXING_TITLE = "Indexing"
 
 /**
- * For now we have only Shared Indexes implementation of FileBasedIndexInfrastructureExtension,
+ * For now, we have only Shared Indexes implementation of FileBasedIndexInfrastructureExtension,
  * so for simplicity let's use this name instead of a general "index infrastructure extensions".
  */
 private const val INDEX_INFRA_EXTENSIONS = "shared indexes"
@@ -560,8 +560,8 @@ private fun FlowContent.printAppInfoForActivity(appInfo: JsonIndexDiagnosticAppI
   }
 }
 
-private const val hideMinorDataInitial = true
-private fun getMinorDataClass(isMinor: Boolean) = if (isMinor) "minor-data" + (if (hideMinorDataInitial) " invisible" else "") else ""
+private const val HIDE_MINOR_DATA_INITIAL = true
+private fun getMinorDataClass(isMinor: Boolean) = if (isMinor) "minor-data" + (if (HIDE_MINOR_DATA_INITIAL) " invisible" else "") else ""
 
 fun JsonIndexDiagnostic.generateHtml(target: Appendable): String {
   return target.appendHTML().html {
@@ -634,7 +634,7 @@ fun JsonIndexDiagnostic.generateHtml(target: Appendable): String {
               attributes["for"] = "id-hide-minor-data-checkbox"
               text("Hide minor data")
               input {
-                checked = hideMinorDataInitial
+                checked = HIDE_MINOR_DATA_INITIAL
                 id = "id-hide-minor-data-checkbox"
                 type = InputType.checkBox
                 onClick = "hideElementsHavingClass('minor-data', this.checked)"
@@ -1016,7 +1016,7 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
               attributes["for"] = "id-hide-minor-data-checkbox"
               text("Hide minor data")
               input {
-                checked = hideMinorDataInitial
+                checked = HIDE_MINOR_DATA_INITIAL
                 id = "id-hide-minor-data-checkbox"
                 type = InputType.checkBox
                 onClick = "hideElementsHavingClass('minor-data', this.checked)"
@@ -1228,7 +1228,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
               attributes["for"] = "id-hide-minor-data-checkbox"
               text("Hide minor data")
               input {
-                checked = hideMinorDataInitial
+                checked = HIDE_MINOR_DATA_INITIAL
                 id = "id-hide-minor-data-checkbox"
                 type = InputType.checkBox
                 onClick = "hideElementsHavingClass('minor-data', this.checked)"
@@ -1561,6 +1561,7 @@ private fun DIV.printProjectNameForActivity(projectName: String) {
 }
 
 
+@Suppress("CssUnusedSymbol")
 @Language("CSS")
 private val CSS_STYLE = """
   body {
