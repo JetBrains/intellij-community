@@ -158,6 +158,29 @@ class UnindexedFilesScannerTest {
       .assertOnlySpecificIndexesIndexedFiles("Should refresh only dirty index", contentIndexer)
   }
 
+  @Test
+  fun `test scanner does not schedule indexed files for indexing again (change contentlessIndexer_accept return value)`() {
+    val indexer = ConfigurableContentlessTextFileIndexer()
+    registerIndexer(indexer)
+
+    val filesAndDirs = setupSimpleRepresentativeFolderForIndexing()
+
+    // Index files
+    scanAndIndexFiles(filesAndDirs)
+    captureIndexingResults(indexer).assertAllIndexersIndexedFiles()
+
+    // Unindex files. Note that we don't need to increase indexer version. "Accepts" behavior may change, for example, after
+    // user changed the project model (e.g., file is no longe in sources dir)
+    indexer.additionalInputFilter = { false }
+    scanAndIndexFiles(filesAndDirs)
+    captureIndexingResults(indexer).assertNoIndexerIndexedFiles("Indexer should not be invoked to remove previously indexed values")
+
+    // Scan again after "unindexing"
+    val (scanningStat, _) = scanFiles(filesAndDirs)
+    captureIndexingResults(indexer).assertNoIndexerIndexedFiles("Nothing changed since last indexing. Should detect no files for indexing")
+    assertEquals(0, scanningStat.numberOfFilesForIndexing)
+  }
+
   private fun captureIndexingResults(vararg indexers: ConfigurableFileIndexerBase): IndexingResults {
     val map = mutableMapOf<ConfigurableFileIndexerBase, List<VirtualFile>>()
     for (indexer in indexers) {

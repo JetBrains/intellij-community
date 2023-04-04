@@ -1679,8 +1679,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
+  @ApiStatus.Internal
   @Nullable("null in case index value removal is not necessary or immediate removal failed")
-  private SingleIndexValueRemover createSingleIndexRemover(@NotNull ID<?, ?> indexId,
+  SingleIndexValueRemover createSingleIndexRemover(@NotNull ID<?, ?> indexId,
                                                            @Nullable VirtualFile file,
                                                            @Nullable FileContent fileContent,
                                                            int inputId,

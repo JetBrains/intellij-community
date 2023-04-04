@@ -8,6 +8,7 @@ import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -208,7 +209,7 @@ final class UnindexedFilesFinder {
 
         boolean mayMarkFileIndexed = true;
         long nowTime = System.nanoTime();
-        List<SingleIndexValueApplier<?>> appliers = applyIndexValuesSeparately ? new SmartList<>() : Collections.emptyList();
+        List<Computable<Boolean>> appliersAndRemovers = applyIndexValuesSeparately ? new SmartList<>() : Collections.emptyList();
         try {
           for (ID<?, ?> indexId : myFileBasedIndex.getContentLessIndexes(isDirectory)) {
             if (!RebuildStatus.isOk(indexId)) {
@@ -219,18 +220,28 @@ final class UnindexedFilesFinder {
               continue;
             }
             if (myFileBasedIndex.shouldIndexFile(indexedFile, indexId).updateRequired()) {
-              SingleIndexValueApplier<?> applier =
-                myFileBasedIndex.createSingleIndexValueApplier(indexId, file, inputId, new IndexedFileWrapper(indexedFile),
-                                                               applyIndexValuesSeparately);
-              if (applier == null) {
+              Computable<Boolean> applierOrRemover = null;
+              if (myFileBasedIndex.acceptsInput(indexId, indexedFile)) {
+                SingleIndexValueApplier<?> applier =
+                  myFileBasedIndex.createSingleIndexValueApplier(indexId, file, inputId, new IndexedFileWrapper(indexedFile),
+                                                                 applyIndexValuesSeparately);
+                if (applier != null) applierOrRemover = applier::apply;
+              } else {
+                SingleIndexValueRemover remover =
+                  myFileBasedIndex.createSingleIndexRemover(indexId, file, new IndexedFileWrapper(indexedFile), inputId,
+                                                                 applyIndexValuesSeparately);
+                if (remover != null) applierOrRemover = remover::remove;
+              }
+
+              if (applierOrRemover == null) {
                 continue;
               }
 
               if (applyIndexValuesSeparately) {
-                appliers.add(applier);
+                appliersAndRemovers.add(applierOrRemover);
               }
               else {
-                applier.apply();
+                applierOrRemover.compute();
               }
             }
           }
@@ -239,7 +250,7 @@ final class UnindexedFilesFinder {
           timeUpdatingContentLessIndexes.addAndGet(System.nanoTime() - nowTime);
         }
 
-        if (appliers.isEmpty()) {
+        if (appliersAndRemovers.isEmpty()) {
           finishGettingStatus(file, indexedFile, inputId, shouldIndex, mayMarkFileIndexed);
           finalization.set(EmptyRunnable.getInstance());
         }
@@ -248,8 +259,8 @@ final class UnindexedFilesFinder {
           finalization.set(() -> {
             long applyingStart = System.nanoTime();
             try {
-              for (SingleIndexValueApplier<?> applier : appliers) {
-                applier.apply();
+              for (Computable<Boolean> applierOrRemover : appliersAndRemovers) {
+                applierOrRemover.compute();
               }
             }
             finally {
