@@ -3,6 +3,7 @@ use anyhow::{bail, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::{env, fs, io, thread, time};
 use std::collections::HashMap;
+use std::fmt::{Debug, Formatter};
 use std::fs::File;
 use std::io::{BufReader, Read, Write};
 use std::path::{Path, PathBuf};
@@ -532,6 +533,15 @@ pub struct LauncherRunResult {
     pub exit_status: ExitStatus,
     pub dump: Option<IntellijMainDumpedLaunchParameters>,
     pub stdout: String,
+}
+
+impl Debug for LauncherRunResult {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!(
+            "exit code: {}, stdout: [[[{}]]]",
+            self.exit_status.code().unwrap_or(-1),
+            self.stdout.trim()))
+    }
 }
 
 #[allow(non_snake_case)]
