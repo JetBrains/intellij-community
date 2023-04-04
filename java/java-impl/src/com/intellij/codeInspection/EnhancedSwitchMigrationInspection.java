@@ -35,7 +35,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     return pane(
       checkbox("myWarnOnlyOnExpressionConversion", JavaBundle.message("inspection.switch.expression.migration.warn.only.on.expression")),
       number("myMaxNumberStatementsForBranch", JavaBundle.message("inspection.switch.expression.migration.expression.max.statements"),
-             1, 20));
+             1, 200));
   }
 
   private final static SwitchConversion[] ourInspections = new SwitchConversion[]{
