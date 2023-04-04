@@ -212,17 +212,18 @@ internal fun createAggregateActivityHtml(
       }
     }
     body {
-      div(classes = "aggregate-report-content") {
-        h3(classes = "aggregate-header") { text("Project name") }
-        div(classes = "project-name") { text(projectName) }
+      div(classes = "aggregate-activity-report-content") {
+        h1(classes = "aggregate-header") { text(projectName) }
 
         div {
-          h3(classes = "aggregate-header") { text("History of scannings and indexings") }
-          table(classes = "centered-text") {
+          table(classes = "centered-text table-with-margin activity-table") {
             unsafe {
               +"<caption style=\"caption-side: bottom; text-align: right; font-size: 14px\">Click for details</caption>"
             }
             thead {
+              tr {
+                th("History of scannings and indexings") { colSpan = "10" }
+              }
               tr {
                 th("Time") {
                   colSpan = "4"
@@ -268,9 +269,13 @@ internal fun createAggregateActivityHtml(
         if (sharedIndexEvents.isNotEmpty()) {
           val indexIdToEvents = sharedIndexEvents.groupBy { it.chunkUniqueId }
           div {
-            h3(classes = "aggregate-header") { text("Shared indexes") }
-            table {
+            table(classes = "table-with-margin activity-table") {
               thead {
+                tr {
+                  th("Shared indexes") {
+                    colSpan = "9"
+                  }
+                }
                 tr {
                   th("Time")
                   th("Kind")
@@ -309,9 +314,13 @@ internal fun createAggregateActivityHtml(
 
         if (changedFilesPushEvents.isNotEmpty()) {
           div {
-            h3(classes = "aggregate-header") { text("Scanning to push properties of changed files") }
-            table {
+            table(classes = "table-with-margin activity-table") {
               thead {
+                tr {
+                  th("Scanning to push properties of changed files") {
+                    colSpan = "5"
+                  }
+                }
                 tr {
                   th("Time")
                   th("Reason")
@@ -346,10 +355,6 @@ private fun TR.printIndexingActivityRow(times: JsonProjectIndexingActivityHistor
                                         fileCount: JsonProjectIndexingActivityFileCount) {
   // Time section
   td {
-    if (times.asSafely<JsonProjectScanningHistoryTimes>()?.indexingReason != null) {
-      strong(times.asSafely<JsonProjectScanningHistoryTimes>()?.indexingReason)
-      br()
-    }
     text(times.updatingStart.presentableLocalDateTime())
   }
   td(times.asSafely<JsonProjectScanningHistoryTimes>()?.totalUpdatingTime?.presentableDuration()
@@ -449,6 +454,7 @@ private const val SECTION_RUNTIME_INFO_TITLE = "Runtime"
 
 private const val SECTION_INDEXING_INFO_ID = "id-indexing-info"
 private const val SECTION_INDEXING_INFO_TITLE = "Indexing info"
+private const val SECTION_OVERVIEW_TITLE = "Overview"
 
 private const val SECTION_SLOW_FILES_ID = "id-slow-files"
 private const val SECTION_SLOW_FILES_TITLE = "Slowly indexed files"
@@ -498,12 +504,49 @@ private fun FlowContent.printRuntimeInfo(runtimeInfo: JsonRuntimeInfo) {
   }
 }
 
+private fun FlowContent.printRuntimeInfoForActivity(runtimeInfo: JsonRuntimeInfo) {
+  div(id = SECTION_RUNTIME_INFO_ID) {
+    table(classes = "two-columns table-with-margin narrow-activity-table") {
+      thead {
+        tr { th(SECTION_RUNTIME_INFO_TITLE) { colSpan = "2" } }
+      }
+      tbody {
+        tr { td("Max memory"); td(StringUtil.formatFileSize(runtimeInfo.maxMemory)) }
+        tr { td("Number of processors"); td(runtimeInfo.numberOfProcessors.toString()) }
+        tr { td("Max number of indexing threads"); td(runtimeInfo.maxNumberOfIndexingThreads.toString()) }
+        tr { td("Max size of file for analysis"); td(StringUtil.formatFileSize(runtimeInfo.maxSizeOfFileForIntelliSense.toLong())) }
+        tr {
+          td("Max size of file for content loading"); td(StringUtil.formatFileSize(runtimeInfo.maxSizeOfFileForContentLoading.toLong()))
+        }
+      }
+    }
+  }
+}
+
 private fun FlowContent.printAppInfo(appInfo: JsonIndexDiagnosticAppInfo) {
   div(id = SECTION_APP_INFO_ID) {
     h1(SECTION_APP_INFO_TITLE)
     table(classes = "two-columns") {
       thead {
         tr { th("Name"); th("Value") }
+      }
+      tbody {
+        tr { td("Build"); td(appInfo.build) }
+        tr { td("Build date"); td(appInfo.buildDate.presentableLocalDateTime()) }
+        tr { td("Product code"); td(appInfo.productCode) }
+        tr { td("Generated"); td(appInfo.generated.presentableLocalDateTime()) }
+        tr { td("OS"); td(appInfo.os) }
+        tr { td("Runtime"); td(appInfo.runtime) }
+      }
+    }
+  }
+}
+
+private fun FlowContent.printAppInfoForActivity(appInfo: JsonIndexDiagnosticAppInfo) {
+  div(id = SECTION_APP_INFO_ID) {
+    table(classes = "two-columns table-with-margin narrow-activity-table") {
+      thead {
+        tr { th(SECTION_APP_INFO_TITLE) { colSpan = "2" } }
       }
       tbody {
         tr { td("Build"); td(appInfo.build) }
@@ -957,7 +1000,7 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
           }
           li {
             a("#$SECTION_INDEXING_INFO_ID") {
-              text(SECTION_INDEXING_INFO_TITLE)
+              text(SECTION_OVERVIEW_TITLE)
             }
           }
           li {
@@ -993,20 +1036,15 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
         }
       }
 
-      div(classes = "stats-content") {
-        div(id = SECTION_PROJECT_NAME_ID) {
-          h1(SECTION_PROJECT_NAME_TITLE)
-          text(projectName)
-        }
-
-        printAppInfo(appInfo)
-        printRuntimeInfo(runtimeInfo)
+      div(classes = "stats-activity-content") {
+        printProjectNameForActivity(projectName)
+        printAppInfoForActivity(appInfo)
+        printRuntimeInfoForActivity(runtimeInfo)
 
         div(id = SECTION_INDEXING_INFO_ID) {
-          h1(SECTION_INDEXING_INFO_TITLE)
-          table(classes = "two-columns") {
+          table(classes = "two-columns table-with-margin narrow-activity-table") {
             thead {
-              tr { th("Name"); th("Data") }
+              tr { th(SECTION_OVERVIEW_TITLE) { colSpan = "2" } }
             }
             tbody {
               tr {
@@ -1044,9 +1082,16 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
         val shouldPrintScannedFiles = scanningStatistics.any { it.scannedFiles.orEmpty().isNotEmpty() }
         val shouldPrintProviderRoots = scanningStatistics.any { it.roots.isNotEmpty() }
         div(id = SECTION_SCANNING_ID) {
-          h1(SECTION_SCANNING_TITLE)
-          table {
+          table(classes = "table-with-margin activity-table") {
             thead {
+              tr {
+                th(SECTION_SCANNING_TITLE) {
+                  var spanValue = 10
+                  if (shouldPrintProviderRoots) spanValue++
+                  if (shouldPrintScannedFiles) spanValue++
+                  colSpan = spanValue.toString()
+                }
+              }
               tr {
                 th("Provider name")
                 th("Number of scanned files")
@@ -1145,7 +1190,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
           }
           li {
             a("#$SECTION_INDEXING_INFO_ID") {
-              text(SECTION_INDEXING_INFO_TITLE)
+              text(SECTION_OVERVIEW_TITLE)
             }
           }
           li {
@@ -1203,20 +1248,16 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
         }
       }
 
-      div(classes = "stats-content") {
-        div(id = SECTION_PROJECT_NAME_ID) {
-          h1(SECTION_PROJECT_NAME_TITLE)
-          text(projectName)
-        }
+      div(classes = "stats-activity-content") {
+        printProjectNameForActivity(projectName)
 
-        printAppInfo(appInfo)
-        printRuntimeInfo(runtimeInfo)
+        printAppInfoForActivity(appInfo)
+        printRuntimeInfoForActivity(runtimeInfo)
 
         div(id = SECTION_INDEXING_INFO_ID) {
-          h1(SECTION_INDEXING_INFO_TITLE)
-          table(classes = "two-columns") {
+          table(classes = "two-columns table-with-margin narrow-activity-table") {
             thead {
-              tr { th("Name"); th("Data") }
+              tr { th(SECTION_OVERVIEW_TITLE) { colSpan = "2" } }
             }
             tbody {
               tr {
@@ -1274,9 +1315,13 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
         }
 
         div(id = SECTION_SLOW_FILES_ID) {
-          h1("$SECTION_SLOW_FILES_TITLE (> ${IndexingFileSetStatistics.SLOW_FILE_PROCESSING_THRESHOLD_MS} ms)")
-          table {
+          table(classes = "table-with-margin activity-table") {
             thead {
+              tr {
+                th("$SECTION_SLOW_FILES_TITLE (> ${IndexingFileSetStatistics.SLOW_FILE_PROCESSING_THRESHOLD_MS} ms)") {
+                  colSpan = "5"
+                }
+              }
               tr {
                 th("Provider name")
                 th("File")
@@ -1303,9 +1348,13 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
         }
 
         div(id = SECTION_STATS_PER_FILE_TYPE_ID) {
-          h1(SECTION_STATS_PER_FILE_TYPE_TITLE)
-          table {
+          table(classes = "table-with-margin activity-table") {
             thead {
+              tr {
+                th(SECTION_STATS_PER_FILE_TYPE_TITLE) {
+                  colSpan = "7"
+                }
+              }
               tr {
                 th("File type")
                 th("Number of files")
@@ -1348,9 +1397,13 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
         }
 
         div(id = SECTION_STATS_PER_INDEXER_ID) {
-          h1(SECTION_STATS_PER_INDEXER_TITLE)
-          table {
+          table(classes = "table-with-margin activity-table") {
             thead {
+              tr {
+                th(SECTION_STATS_PER_INDEXER_TITLE) {
+                  colSpan = "7"
+                }
+              }
               tr {
                 th("Index")
                 th("Number of files")
@@ -1387,9 +1440,13 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
 
         val shouldPrintIndexedFiles = fileProviderStatistics.any { it.indexedFiles.orEmpty().isNotEmpty() }
         div(id = SECTION_INDEXING_ID) {
-          h1(SECTION_INDEXING_TITLE)
-          table {
+          table(classes = "table-with-margin activity-table") {
             thead {
+              tr {
+                th(SECTION_INDEXING_TITLE) {
+                  colSpan = if (shouldPrintIndexedFiles) "7" else "6"
+                }
+              }
               tr {
                 th("Provider name")
                 th("Total processing time")
@@ -1429,8 +1486,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
 
         if (scanningStatistics.numberOfScannedFiles != 0) {
           div(id = SECTION_SCANNING_ID) {
-            h1(SECTION_SCANNING_TITLE)
-            table {
+            table(classes = "table-with-margin narrow-activity-table") {
               thead {
                 tr {
                   th("Scanning of refreshed files") { colSpan = "2" }
@@ -1498,6 +1554,12 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
   }.toString()
 }
 
+private fun DIV.printProjectNameForActivity(projectName: String) {
+  div(id = SECTION_PROJECT_NAME_ID) {
+    h1(classes = "aggregate-header") { text(projectName) }
+  }
+}
+
 
 @Language("CSS")
 private val CSS_STYLE = """
@@ -1513,6 +1575,14 @@ private val CSS_STYLE = """
   
   table {
     width: 80%;
+  }
+  
+  table.activity-table {
+     width: 100%;
+  }
+    
+  table.narrow-activity-table {
+     width: 80%;
   }
   
   table.two-columns td {
@@ -1535,18 +1605,29 @@ private val CSS_STYLE = """
   .stats-content {
     margin-left: 20%;
   }
+    
+  .stats-activity-content {
+    margin-left: 20%;
+    margin-right: 5%;
+  }
   
   .aggregate-report-content {
     margin-left: 10%;
+  } 
+   
+  .aggregate-activity-report-content {
+    margin-left: 15%;
+    margin-right: 15%;
   }
   
   .aggregate-header {
-    margin-top: 20px;
-    margin-bottom: 15px;
+    padding-top: 1em;
+    margin-bottom: 0;
   }
   
-  .project-name {
-    font-size: large;
+  .table-with-margin{
+    margin-top: 2em;
+    margin-bottom: 2em;
   }
 
   .navigation-bar {
