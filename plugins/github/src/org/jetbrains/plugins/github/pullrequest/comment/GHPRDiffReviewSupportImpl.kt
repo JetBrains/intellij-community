@@ -15,7 +15,6 @@ import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.project.Project
 import git4idea.changes.GitTextFilePatchWithHistory
-import git4idea.changes.filePath
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
@@ -30,7 +29,6 @@ import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataS
 import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
-import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCreateDiffCommentParametersHelper
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import java.util.function.Function
@@ -79,14 +77,13 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
 
     loadReviewThreads(viewer)
 
-    val createCommentParametersHelper = GHPRCreateDiffCommentParametersHelper(diffData.patch.afterVersionId!!, diffData.patch.filePath)
     val suggestedChangesHelper = GHPRSuggestedChangeHelper(project,
                                                            viewer, repositoryDataService.remoteCoordinates.repository,
                                                            reviewDataProvider,
                                                            detailsDataProvider)
     val componentsFactory = GHPRDiffEditorReviewComponentsFactoryImpl(project,
                                                                       reviewDataProvider, avatarIconsProvider,
-                                                                      createCommentParametersHelper, suggestedChangesHelper,
+                                                                      diffData, suggestedChangesHelper,
                                                                       ghostUser,
                                                                       currentUser)
     when (viewer) {
