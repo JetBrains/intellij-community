@@ -124,6 +124,9 @@ class IndexDiagnosticDumper : Disposable {
                                           ApplicationManagerEx.isInIntegrationTest())
 
     @JvmStatic
+    val shouldPrintScanningRefreshedFilesInformationDuringIndexingActionInAggregateHtml = false
+
+    @JvmStatic
     private val shouldDumpAlternativeDiagnostics: Boolean
       get() =
         SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.alternative.diagnostics", false)

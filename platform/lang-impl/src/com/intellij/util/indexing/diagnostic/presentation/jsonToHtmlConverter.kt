@@ -365,19 +365,34 @@ private fun TR.printIndexingActivityRow(times: JsonProjectIndexingActivityHistor
   }
 
   // Files section.
-  td(fileCount.asSafely<JsonProjectScanningFileCount>()?.numberOfScannedFiles?.toString()
-     ?: fileCount.asSafely<JsonProjectDumbIndexingFileCount>()?.numberOfRefreshedScannedFiles?.toString()
-     ?: "Unexpected file count $fileCount")
-  td(
-    fileCount.asSafely<JsonProjectScanningFileCount>()?.numberOfFilesIndexedByInfrastructureExtensionsDuringScan?.toString()
-    ?: NOT_APPLICABLE)
-  td(fileCount.asSafely<JsonProjectScanningFileCount>()?.numberOfFilesScheduledForIndexingAfterScan?.toString()
-     ?: NOT_APPLICABLE)
-  td(
-    fileCount.asSafely<JsonProjectDumbIndexingFileCount>()?.numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage?.toString()
-    ?: NOT_APPLICABLE)
-  td(fileCount.asSafely<JsonProjectDumbIndexingFileCount>()?.numberOfFilesIndexedWithLoadingContent?.toString()
-     ?: NOT_APPLICABLE)
+  when (fileCount) {
+    is JsonProjectScanningFileCount -> {
+      td(fileCount.numberOfScannedFiles.toString())
+      td(fileCount.numberOfFilesIndexedByInfrastructureExtensionsDuringScan.toString())
+      td(fileCount.numberOfFilesScheduledForIndexingAfterScan.toString())
+      td(fileCount.numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage.toString())
+      td(fileCount.numberOfFilesIndexedWithLoadingContent.toString())
+    }
+    is JsonProjectDumbIndexingFileCount -> {
+      if (IndexDiagnosticDumper.shouldPrintScanningRefreshedFilesInformationDuringIndexingActionInAggregateHtml) {
+        td(fileCount.numberOfRefreshedScannedFiles.toString())
+        td(fileCount.numberOfRefreshedFilesIndexedByInfrastructureExtensionsDuringScan.toString())
+        td(fileCount.numberOfRefreshedFilesScheduledForIndexingAfterScan.toString())
+      }
+      else {
+        for (i in 1..3) {
+          td(NOT_APPLICABLE)
+        }
+      }
+      td(fileCount.numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage.toString())
+      td(fileCount.numberOfFilesIndexedWithLoadingContent.toString())
+    }
+    else -> {
+      for (i in 1..5) {
+        td("Unexpected fileCount $fileCount")
+      }
+    }
+  }
 
   //Indexing type section
   td(times.asSafely<JsonProjectScanningHistoryTimes>()?.scanningType?.name?.lowercase(Locale.ENGLISH)?.replace('_', ' ')

@@ -236,6 +236,8 @@ private fun ProjectScanningHistoryImpl.getFileCount() = JsonProjectScanningFileC
 
 private fun ProjectDumbIndexingHistoryImpl.getFileCount() = JsonProjectDumbIndexingFileCount(
   numberOfRefreshedScannedFiles = refreshedScanningStatistics.numberOfScannedFiles,
+  numberOfRefreshedFilesIndexedByInfrastructureExtensionsDuringScan = refreshedScanningStatistics.numberOfFilesFullyIndexedByInfrastructureExtensions,
+  numberOfRefreshedFilesScheduledForIndexingAfterScan = refreshedScanningStatistics.numberOfFilesForIndexing,
   numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage = providerStatistics.sumOf { it.totalNumberOfFilesFullyIndexedByExtensions },
   numberOfFilesIndexedWithLoadingContent = providerStatistics.sumOf { it.totalNumberOfIndexedFiles }
 )
