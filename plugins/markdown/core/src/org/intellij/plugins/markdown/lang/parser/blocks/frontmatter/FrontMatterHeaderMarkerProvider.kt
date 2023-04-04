@@ -19,7 +19,7 @@ class FrontMatterHeaderMarkerProvider: MarkerBlockProvider<MarkerProcessor.State
       return emptyList()
     }
     val possibleDelimiter = position.currentLine
-    return when (isDelimiterLine(possibleDelimiter)) {
+    return when (isOpeningDelimiterLine(possibleDelimiter)) {
       true -> listOf(FrontMatterHeaderBlock(position, stateInfo.currentConstraints, productionHolder, possibleDelimiter))
       else -> emptyList()
     }
@@ -39,16 +39,32 @@ class FrontMatterHeaderMarkerProvider: MarkerBlockProvider<MarkerProcessor.State
     @JvmField
     val FRONT_MATTER_HEADER_CONTENT = MarkdownElementType("FRONT_MATTER_HEADER_CONTENT", isToken = true)
 
-    fun isDelimiterLine(line: String): Boolean {
-      return isYamlDelimiterLine(line) || isTomlDelimiterLine(line)
+    internal fun isOpeningDelimiterLine(line: String): Boolean {
+      return isYamlDashedDelimiterLine(line) || isTomlDelimiterLine(line)
     }
 
-    fun isYamlDelimiterLine(line: String): Boolean {
+    internal fun isYamlDashedDelimiterLine(line: String): Boolean {
       return line.length >= 3 && line.all { it == '-' }
     }
 
-    fun isTomlDelimiterLine(line: String): Boolean {
+    internal fun canBePairedWithClosingDots(opening: String): Boolean {
+      return isYamlDashedDelimiterLine(opening)
+    }
+
+    internal fun isYamlDottedDelimiterLine(line: String): Boolean {
+      return line.length >= 3 && line.all { it == '.' }
+    }
+
+    internal fun isYamlDelimiters(opening: String, closing: String): Boolean {
+      return isYamlDashedDelimiterLine(opening) && (isYamlDashedDelimiterLine(closing) || isYamlDottedDelimiterLine(closing))
+    }
+
+    internal fun isTomlDelimiterLine(line: String): Boolean {
       return line.length >= 3 && line.all { it == '+' }
+    }
+
+    internal fun isTomlDelimiters(opening: String, closing: String): Boolean {
+      return isTomlDelimiterLine(opening) && isTomlDelimiterLine(closing)
     }
 
     @JvmStatic
