@@ -20,7 +20,7 @@ class CallingJavaMethodShouldBerRequiresBlockingContextInspectionTest : LightJav
       public @interface RequiresBlockingContext {}
     """.trimIndent())
 
-    myFixture.enableInspections(CallingJavaMethodShouldBerRequiresBlockingContextInspection::class.java)
+    myFixture.enableInspections(CallingMethodShouldBeRequiresBlockingContextInspection::class.java)
   }
 
   private val inspectionDescr = "Calling method should be annotated with '@RequiresBlockingContext'"

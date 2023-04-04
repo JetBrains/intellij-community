@@ -35,13 +35,6 @@
                      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.CompanionObjectInExtensionInspection"
                      key="inspections.companion.object.in.extension"/>
 
-    <localInspection language="kotlin" id="CallingMethodShouldBeRequiresBlockingContextKt"
-                     groupBundle="messages.DevKitBundle"
-                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
-                     enabledByDefault="false" level="WEAK WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.CallingKtFunctionShouldBeRequiresBlockingContextInspection"
-                     key="inspections.calling.method.should.be.rbc.annotated.kt"/>
-
     <localInspection language="kotlin" id="OpenOrNonInternalExtensionClassInspection"
                      groupBundle="messages.DevKitBundle"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
@@ -52,6 +45,8 @@
 
   <extensions defaultExtensionNs="DevKit.lang">
     <cancellationCheckProvider language="kotlin" implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KotlinCancellationCheckProvider"/>
+    <visitorProviderForRBCInspection
+      implementation="org.jetbrains.idea.devkit.kotlin.inspections.KtCallingFunctionShouldBeRequiresBlockingContextVisitorProvider"/>
   </extensions>
 
 </idea-plugin>

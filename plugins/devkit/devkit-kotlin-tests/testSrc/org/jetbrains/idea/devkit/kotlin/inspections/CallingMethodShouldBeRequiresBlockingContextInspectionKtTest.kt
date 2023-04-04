@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.inspections
 
+import org.jetbrains.idea.devkit.inspections.CallingMethodShouldBeRequiresBlockingContextInspection
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -8,14 +9,14 @@ import org.junit.runners.JUnit4
 import kotlin.test.assertNotNull as assertNotNullK
 
 @RunWith(JUnit4::class)
-class CallingKtFunctionShouldBeRequiresBlockingContextInspectionTest : KtBlockingContextInspectionTestCase() {
+class CallingMethodShouldBeRequiresBlockingContextInspectionKtTest : KtBlockingContextInspectionTestCase() {
   @Before
   fun enableInspection() {
-    myFixture.enableInspections(CallingKtFunctionShouldBeRequiresBlockingContextInspection::class.java)
+    myFixture.enableInspections(CallingMethodShouldBeRequiresBlockingContextInspection::class.java)
   }
 
-  private val inspectionDescr = "Calling function should be annotated with '@RequiresBlockingContext'"
-  private val inspectionFix = "Annotate calling function with '@RequiresBlockingContext'"
+  private val inspectionDescr = "Calling method should be annotated with '@RequiresBlockingContext'"
+  private val inspectionFix = "Annotate calling method with '@RequiresBlockingContext'"
 
   @Test
   fun `calling checkCanceled`() {

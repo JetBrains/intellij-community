@@ -330,11 +330,11 @@
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      implementationClass="org.jetbrains.idea.devkit.inspections.TokenSetInParserDefinitionInspection"/>
 
-    <localInspection language="JAVA" enabledByDefault="false" level="WEAK WARNING"
-                     key="inspections.calling.method.should.be.rbc.annotated.java"
+    <localInspection language="UAST" enabledByDefault="false" level="WEAK WARNING"
+                     key="inspections.calling.method.should.be.rbc.annotated"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
-                     shortName="CallingMethodShouldBeRequiresBlockingContextJava"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.CallingJavaMethodShouldBerRequiresBlockingContextInspection"/>
+                     shortName="CallingMethodShouldBeRequiresBlockingContext"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.CallingMethodShouldBeRequiresBlockingContextInspection"/>
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
@@ -459,6 +459,8 @@
   <extensions defaultExtensionNs="DevKit.lang">
     <goodCodeRedVisitor language="JAVA" implementationClass="org.jetbrains.idea.devkit.inspections.internal.JavaGoodCodeRedVisitor"/>
     <cancellationCheckProvider language="JAVA" implementationClass="org.jetbrains.idea.devkit.inspections.JavaCancellationCheckProvider"/>
+    <visitorProviderForRBCInspection
+      implementation="org.jetbrains.idea.devkit.inspections.CallingMethodShouldBeRequiresBlockingContextInspection$VisitorProviderForJava"/>
   </extensions>
 
   <extensionPoints>
@@ -472,6 +474,9 @@
                     dynamic="true">
     <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.CancellationCheckProvider"/>
     </extensionPoint>
+    <extensionPoint qualifiedName="DevKit.lang.visitorProviderForRBCInspection"
+                    interface="org.jetbrains.idea.devkit.inspections.CallingMethodShouldBeRequiresBlockingContextInspection$VisitorProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <actions>
