@@ -1804,6 +1804,10 @@ private val CSS_STYLE = """
   .scanning-table-row {
     background-color: aliceblue;
   }
+  
+  .not-applicable-data{
+    color: darkgrey;
+  }
 """.trimIndent()
 
 @Language("JavaScript")
@@ -1868,6 +1872,9 @@ private inline fun TR.th(value: String, crossinline block : TH.() -> Unit = {}) 
 }
 private inline fun TR.td(value: String, crossinline block : TD.() -> Unit = {}) {
   td {
+    if(value == NOT_APPLICABLE){
+      classes += "not-applicable-data"
+    }
     block()
     +value
   }
