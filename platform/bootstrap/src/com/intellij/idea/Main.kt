@@ -17,7 +17,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.platform.impl.toolkit.IdeToolkit
-import com.intellij.util.ReflectionUtil.getDeclaredField
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.UrlClassLoader
 import com.jetbrains.JBR
