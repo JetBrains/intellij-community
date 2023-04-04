@@ -16,7 +16,7 @@ interface GHPRReviewService {
 
   @CalledInAny
   fun loadPendingReview(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier)
-    : CompletableFuture<GHPullRequestPendingReview?>
+    : CompletableFuture<GHPullRequestPendingReviewDTO?>
 
   @CalledInAny
   fun loadReviewThreads(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier)
@@ -28,7 +28,7 @@ interface GHPRReviewService {
                    event: GHPullRequestReviewEvent? = null,
                    body: String? = null,
                    commitSha: String? = null,
-                   threads: List<GHPullRequestDraftReviewThread>? = null): CompletableFuture<GHPullRequestPendingReview>
+                   threads: List<GHPullRequestDraftReviewThread>? = null): CompletableFuture<GHPullRequestPendingReviewDTO>
 
   @CalledInAny
   fun submitReview(progressIndicator: ProgressIndicator,
@@ -49,12 +49,12 @@ interface GHPRReviewService {
                  reviewId: String,
                  replyToCommentId: String,
                  body: String)
-    : CompletableFuture<GHPullRequestReviewNewCommentDTO>
+    : CompletableFuture<GHPullRequestReviewComment>
 
   @CalledInAny
   fun addComment(progressIndicator: ProgressIndicator, reviewId: String,
                  body: String, commitSha: String, fileName: String, diffLine: Int)
-    : CompletableFuture<GHPullRequestReviewNewCommentDTO>
+    : CompletableFuture<GHPullRequestReviewComment>
 
   @CalledInAny
   fun addThread(progressIndicator: ProgressIndicator, reviewId: String,
@@ -64,7 +64,7 @@ interface GHPRReviewService {
   @CalledInAny
   fun deleteComment(progressIndicator: ProgressIndicator,
                     pullRequestId: GHPRIdentifier,
-                    commentId: String): CompletableFuture<GHPullRequestPendingReview>
+                    commentId: String): CompletableFuture<GHPullRequestPendingReviewDTO>
 
   @CalledInAny
   fun updateComment(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier, commentId: String, newText: String)

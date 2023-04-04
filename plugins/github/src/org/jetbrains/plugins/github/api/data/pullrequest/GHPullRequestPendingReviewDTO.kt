@@ -6,7 +6,7 @@ import com.intellij.collaboration.api.dto.GraphQLNodesDTO
 import org.jetbrains.plugins.github.api.data.GHNode
 
 @GraphQLFragment("/graphql/fragment/pullRequestPendingReview.graphql")
-open class GHPullRequestPendingReview(id: String,
-                                      val state: GHPullRequestReviewState,
-                                      val comments: GraphQLNodesDTO<GHPullRequestReviewComment>)
+class GHPullRequestPendingReviewDTO(id: String,
+                                    val state: GHPullRequestReviewState,
+                                    val comments: GraphQLNodesDTO<GHPullRequestReviewComment>)
   : GHNode(id)

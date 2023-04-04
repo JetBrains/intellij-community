@@ -11,9 +11,9 @@ import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReviewDTO
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewNewCommentDTO
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThread
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
@@ -46,7 +46,7 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
                             event: GHPullRequestReviewEvent?,
                             body: String?,
                             commitSha: String?,
-                            threads: List<GHPullRequestDraftReviewThread>?): CompletableFuture<GHPullRequestPendingReview> =
+                            threads: List<GHPullRequestDraftReviewThread>?): CompletableFuture<GHPullRequestPendingReviewDTO> =
     progressManager.submitIOTask(progressIndicator) {
       requestExecutor.execute(progressIndicator,
                               GHGQLRequests.PullRequest.Review.create(repository.serverPath, pullRequestId.id, event, body,
@@ -83,7 +83,7 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
                           pullRequestId: GHPRIdentifier,
                           reviewId: String,
                           replyToCommentId: String,
-                          body: String): CompletableFuture<GHPullRequestReviewNewCommentDTO> =
+                          body: String): CompletableFuture<GHPullRequestReviewComment> =
     progressManager.submitIOTask(progressIndicator) {
       requestExecutor.execute(
         it,
@@ -95,7 +95,7 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
 
   override fun addComment(progressIndicator: ProgressIndicator, reviewId: String,
                           body: String, commitSha: String, fileName: String, diffLine: Int)
-    : CompletableFuture<GHPullRequestReviewNewCommentDTO> =
+    : CompletableFuture<GHPullRequestReviewComment> =
     progressManager.submitIOTask(progressIndicator) {
       requestExecutor.execute(progressIndicator,
                               GHGQLRequests.PullRequest.Review.addComment(repository.serverPath,

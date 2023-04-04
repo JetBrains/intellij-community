@@ -174,7 +174,7 @@ internal class GHPRReviewFlowViewModelImpl(
 
     reviewDataProvider.addPendingReviewListener(disposable) {
       reviewDataProvider.loadPendingReview().thenAccept { pendingComments ->
-        _pendingCommentsState.value = pendingComments?.comments?.totalCount ?: 0
+        _pendingCommentsState.value = pendingComments?.commentsCount ?: 0
       }
     }
     reviewDataProvider.resetPendingReview()

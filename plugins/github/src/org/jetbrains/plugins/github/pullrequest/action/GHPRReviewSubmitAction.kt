@@ -35,8 +35,8 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
 import org.jetbrains.plugins.github.ui.component.GHSimpleErrorPanelModel
@@ -71,7 +71,7 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
         null
       }
       val pendingReview = review != null
-      val comments = review?.comments?.totalCount
+      val comments = review?.commentsCount
 
       e.presentation.text = getText(comments)
       e.presentation.putClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY, pendingReview)
@@ -237,7 +237,7 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
           isOpaque = false
           add(titleLabel, HorizontalLayout.LEFT)
           if (pendingReview != null) {
-            val commentsCount = pendingReview.comments.totalCount!!
+            val commentsCount = pendingReview.commentsCount
             add(Box.createRigidArea(JBDimension(5, 0)), HorizontalLayout.LEFT)
             val pendingCommentsLabel = JLabel(GithubBundle.message("pull.request.review.pending.comments.count", commentsCount)).apply {
               foreground = UIUtil.getContextHelpForeground()
