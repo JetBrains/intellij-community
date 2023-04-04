@@ -106,7 +106,7 @@ private class JdkVersionVendorCombobox: ComboBox<JdkVersionVendorItem>() {
         return null
       }
 
-      override fun customize(item: SimpleColoredComponent, value: JdkVersionVendorItem, index: Int) {
+      override fun customize(item: SimpleColoredComponent, value: JdkVersionVendorItem, index: Int, isSelected: Boolean, hasFocus: Boolean) {
         item.append(value.item.product.packagePresentationText, SimpleTextAttributes.REGULAR_ATTRIBUTES)
 
         val additionalInfo = mutableListOf<String>()

@@ -36,7 +36,7 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
     ClientProperty.put(this, ANIMATION_IN_RENDERER_ALLOWED, true);
     setRenderer(new GroupedComboBoxRenderer<>(this) {
       @Override
-      public void customize(@NotNull SimpleColoredComponent item, MyFontItem value, int index) {
+      public void customize(@NotNull SimpleColoredComponent item, MyFontItem value, int index, boolean isSelected, boolean hasFocus) {
         if (value != null) {
           if (value instanceof MyWarningItem) {
             item.append(value.getFamilyName(), SimpleTextAttributes.ERROR_ATTRIBUTES);

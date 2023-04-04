@@ -50,7 +50,11 @@ abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>) : GroupedEleme
   /**
    * Appends text fragments to the item [SimpleColoredComponent].
    */
-  open fun customize(item: SimpleColoredComponent, value: T, index: Int) {
+  open fun customize(item: SimpleColoredComponent,
+                     value: T,
+                     index: Int,
+                     isSelected: Boolean,
+                     cellHasFocus: Boolean) {
     val text = getText(value)
     item.append(text)
 
@@ -60,14 +64,6 @@ abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>) : GroupedEleme
     }
 
     item.icon = getIcon(value)
-  }
-
-  open fun customize(item: SimpleColoredComponent,
-                     value: T,
-                     index: Int,
-                     isSelected: Boolean,
-                     cellHasFocus: Boolean) {
-    customize(item, value, index)
   }
 
   /**
