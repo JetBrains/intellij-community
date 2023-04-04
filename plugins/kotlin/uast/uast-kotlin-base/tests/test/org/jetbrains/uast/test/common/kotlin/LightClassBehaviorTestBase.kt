@@ -255,6 +255,29 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
         }
     }
 
+    fun checkUpperBoundWildcardForCtor(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class FrameData(
+                  frameStartNanos: Long,
+                  frameDurationUiNanos: Long,
+                  isJank: Boolean,
+                  val states: List<StateInfo>
+                )
+                
+                class StateInfo(val key: String, val value: String)
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+
+        val cls = uFile.findElementByTextFromPsi<UClass>("FrameData", strict = false)
+            .orFail("can't find class FrameData")
+        val ctor = cls.javaPsi.constructors.single()
+        val states = ctor.parameterList.parameters.last()
+        TestCase.assertEquals("java.util.List<StateInfo>", states.type.canonicalText)
+    }
+
     fun checkUpperBoundWildcardForEnum(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "main.kt", """
