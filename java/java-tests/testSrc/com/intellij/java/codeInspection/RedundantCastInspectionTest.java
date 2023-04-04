@@ -3,6 +3,7 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -111,6 +112,9 @@ public class RedundantCastInspectionTest extends LightJavaCodeInsightFixtureTest
     myFixture.addClass("package a.b; public class B extends a.A { public void foo(){}}");
     doTest();
   }
+
+  @TestFor(issues = "IDEA-317124")
+  public void testInstanceofPattern() { doTest(); }
 
   public void testSwitchSelectorJava17() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest); }
 
