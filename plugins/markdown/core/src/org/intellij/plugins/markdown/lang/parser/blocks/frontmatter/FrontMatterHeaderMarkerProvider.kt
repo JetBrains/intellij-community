@@ -9,6 +9,37 @@ import org.intellij.markdown.parser.constraints.MarkdownConstraints
 import org.intellij.markdown.parser.markerblocks.MarkerBlock
 import org.intellij.markdown.parser.markerblocks.MarkerBlockProvider
 
+/**
+ * Provides support for front matter header blocks with:
+ * * TOML content (delimited with `+++`)
+ * * YAML content (delimited with `---`).
+ *
+ * Alternatively, YAML headers can be closed with triple dots (`...`)
+ * as per [YAML spec](https://yaml.org/spec/1.2.2/#structures).
+ *
+ * Front matter header should *always* precede the document content.
+ *
+ * Example of TOML header:
+ * ```markdown
+ * +++
+ * type: post
+ * title: Some post
+ * +++
+ *
+ * Some paragraph.
+ * ```
+ *
+ * Example of YAML header:
+ * ```markdown
+ * ---
+ * type: post
+ * title: Some post
+ * author: John
+ * ---
+ *
+ * Some paragraph.
+ * ```
+ */
 class FrontMatterHeaderMarkerProvider: MarkerBlockProvider<MarkerProcessor.StateInfo> {
   override fun createMarkerBlocks(
     position: LookaheadText.Position,
