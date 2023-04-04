@@ -55,9 +55,9 @@ internal class RetrievingServiceInspection : DevKitUastInspectionBase() {
       val tag = candidate.pointer.element ?: continue
       val element = domManager.getDomElement(tag) ?: continue
       if (element is Extension && hasServiceBeanFqn(element)) {
-        return when (element.extensionPoint?.name?.value) {
-          "applicationService" -> Level.APP
-          "projectService" -> Level.PROJECT
+        return when (element.extensionPoint?.effectiveQualifiedName) {
+          "com.intellij.applicationService" -> Level.APP
+          "com.intellij.projectService" -> Level.PROJECT
           else -> Level.NOT_SPECIFIED
         }
       }
