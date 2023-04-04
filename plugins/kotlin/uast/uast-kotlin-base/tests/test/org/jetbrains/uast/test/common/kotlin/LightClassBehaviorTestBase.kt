@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.test.common.kotlin
 
+import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.*
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import junit.framework.TestCase
@@ -128,6 +129,57 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
 
         TestCase.assertEquals(getAMethodModifierList.textOffset, ktPropertyAccessorModifierList.textOffset)
         TestCase.assertEquals(getAMethodModifierList.textRange, ktPropertyAccessorModifierList.textRange)
+    }
+
+    fun checkFinalModifierOnEnumMembers(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                enum class Event {
+                  ON_CREATE, ON_START, ON_STOP, ON_DESTROY;
+                  companion object {
+                    @JvmStatic
+                    fun upTo(state: State): Event? {
+                      return when(state) {
+                        State.ENQUEUED -> ON_CREATE
+                        State.RUNNING -> ON_START
+                        State.BLOCKED -> ON_STOP
+                        else -> null
+                      }
+                    }
+                  }
+                }
+                
+                enum class State {
+                  ENQUEUED, RUNNING, SUCCEEDED, FAILED, BLOCKED, CANCELLED;
+                  val isFinished: Boolean
+                    get() = this == SUCCEEDED || this == FAILED || this == CANCELLED
+                  fun isAtLeast(state: State): Boolean {
+                    return compareTo(state) >= 0
+                  }
+                  companion object {
+                    fun done(state: State) = state.isFinished
+                  }
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+
+        val upTo = uFile.findElementByTextFromPsi<UMethod>("upTo", strict = false)
+            .orFail("can't find fun upTo")
+        TestCase.assertTrue(upTo.javaPsi.hasModifier(JvmModifier.FINAL))
+
+        val isFinished = uFile.findElementByTextFromPsi<UMethod>("isFinished", strict = false)
+            .orFail("can't find accessor isFinished")
+        TestCase.assertTrue(isFinished.javaPsi.hasModifier(JvmModifier.FINAL))
+
+        val isAtLeast = uFile.findElementByTextFromPsi<UMethod>("isAtLeast", strict = false)
+            .orFail("can't find fun isAtLeast")
+        TestCase.assertTrue(isAtLeast.javaPsi.hasModifier(JvmModifier.FINAL))
+
+        val done = uFile.findElementByTextFromPsi<UMethod>("done", strict = false)
+            .orFail("can't find fun done")
+        TestCase.assertTrue(done.javaPsi.hasModifier(JvmModifier.FINAL))
     }
 
     fun checkThrowsList(myFixture: JavaCodeInsightTestFixture) {
