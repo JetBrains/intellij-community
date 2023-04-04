@@ -25,10 +25,11 @@ internal class IdeStdlibClassFinderImpl(
         val libScope = ProjectScope.getLibrariesScope(javaPsiFacade.project)
         val psiClass = javaPsiFacade.findClass(StandardClassIds.EnumEntries.asFqNameString(), libScope) ?: return null
 
-        return CachedValuesManager.getManager(project).getCachedValue(psiClass, CachedClassDescriptorProvider(psiClass))
+        return CachedValuesManager.getManager(project).getCachedValue(psiClass, CachedClassDescriptorProvider(project, psiClass))
     }
 
-    private inner class CachedClassDescriptorProvider(
+    private class CachedClassDescriptorProvider(
+        private val project: Project,
         private val psiClass: PsiClass
     ) : CachedValueProvider<ClassDescriptor> {
         override fun compute(): CachedValueProvider.Result<ClassDescriptor> {
