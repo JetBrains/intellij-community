@@ -1,1 +1,4 @@
 kotlin.stdlib.default.dependency = false
+
+# TODO temporary workaround for Kotlin 1.8.20+ (https://youtrack.jetbrains.com/issue/KT-57757)
+kotlin.incremental.useClasspathSnapshot=false
