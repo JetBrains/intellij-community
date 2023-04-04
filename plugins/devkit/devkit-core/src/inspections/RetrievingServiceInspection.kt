@@ -51,18 +51,42 @@ internal class RetrievingServiceInspection : DevKitUastInspectionBase() {
     if (serviceAnnotation != null) return getLevel(serviceAnnotation)
     val javaPsi = uClass.javaPsi
     val domManager = DomManager.getDomManager(project)
+    val levels = HashSet<String>()
     for (candidate in locateExtensionsByPsiClass(javaPsi)) {
       val tag = candidate.pointer.element ?: continue
       val element = domManager.getDomElement(tag) ?: continue
       if (element is Extension && hasServiceBeanFqn(element)) {
-        return when (element.extensionPoint?.effectiveQualifiedName) {
-          "com.intellij.applicationService" -> Level.APP
-          "com.intellij.projectService" -> Level.PROJECT
-          else -> Level.NOT_SPECIFIED
+        when (element.extensionPoint?.effectiveQualifiedName) {
+          "com.intellij.applicationService" -> levels.add(Service.Level.APP.name)
+          "com.intellij.projectService" -> levels.add(Service.Level.PROJECT.name)
+          else -> {}
         }
       }
     }
-    return null
+    return getLevel(levels)
+  }
+
+  private fun getLevel(annotation: UAnnotation): Level {
+    val levels = when (val value = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)) {
+      is UCallExpression ->
+        value.valueArguments
+          .mapNotNull { it.tryResolve() }
+          .filterIsInstance<PsiField>().filter {
+            it.containingClass?.qualifiedName == Service.Level::class.java.canonicalName &&
+            it.name in listOf(Service.Level.APP.name, Service.Level.PROJECT.name)
+          }.map { it.name }
+
+      is UReferenceExpression ->
+        value.tryResolve()
+          ?.let { it as PsiField }
+          ?.takeIf { it.containingClass?.qualifiedName == Service.Level::class.java.canonicalName }
+          ?.name
+          ?.let { setOf(it) }
+        ?: emptySet()
+
+      else -> emptySet()
+    }
+    return getLevel(levels)
   }
 
   private fun hasServiceBeanFqn(extension: Extension): Boolean {
@@ -101,29 +125,6 @@ internal class RetrievingServiceInspection : DevKitUastInspectionBase() {
     val message = DevKitBundle.message("inspection.retrieving.light.service.can.be.replaced.with", serviceName, method.name)
     holder.registerProblem(node.sourcePsi!!, message, ProblemHighlightType.WEAK_WARNING,
                            ReplaceWithGetInstanceCallFix(serviceName, method.name, isApplicationLevelService))
-  }
-
-  private fun getLevel(annotation: UAnnotation): Level {
-    val levels = when (val value = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)) {
-      is UCallExpression ->
-        value.valueArguments
-          .mapNotNull { it.tryResolve() }
-          .filterIsInstance<PsiField>().filter {
-            it.containingClass?.qualifiedName == Service.Level::class.java.canonicalName &&
-            it.name in listOf(Service.Level.APP.name, Service.Level.PROJECT.name)
-          }.map { it.name }
-
-      is UReferenceExpression ->
-        value.tryResolve()
-          ?.let { it as PsiField }
-          ?.takeIf { it.containingClass?.qualifiedName == Service.Level::class.java.canonicalName }
-          ?.name
-          ?.let { setOf(it) }
-        ?: emptySet()
-
-      else -> emptySet()
-    }
-    return getLevel(levels)
   }
 
   private fun findGetInstanceProjectLevel(uClass: UClass): UMethod? {
