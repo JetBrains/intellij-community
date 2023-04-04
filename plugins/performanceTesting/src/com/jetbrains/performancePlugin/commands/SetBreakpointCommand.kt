@@ -8,16 +8,21 @@ import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.xdebugger.breakpoints.XBreakpointProperties
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
+import com.intellij.xdebugger.impl.XSourcePositionImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import com.jetbrains.performancePlugin.PerformanceTestingBundle
 import com.jetbrains.performancePlugin.utils.AbstractCallbackBasedCommand
 import org.jetbrains.annotations.NonNls
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 
 class SetBreakpointCommand(text: String, line: Int) : AbstractCallbackBasedCommand(text, line, true) {
   override fun execute(callback: ActionCallback, context: PlaybackContext) {
     val project = context.project
+    var isLambdaBreakpoint = false
     val arguments = extractCommandList(PREFIX, ",")
     if (arguments.size == 0) {
       callback.reject("Usage %setBreakpoint &lt;line&gt; [&lt;relative_path&gt;]")
@@ -26,6 +31,10 @@ class SetBreakpointCommand(text: String, line: Int) : AbstractCallbackBasedComma
     val lineNumber = arguments[0].toInt()
 
     val file: VirtualFile
+    if (arguments.contains("lambda-type")) {
+      arguments.remove("lambda-type")
+      isLambdaBreakpoint = true
+    }
     if (arguments.size == 1) {
       val selectedEditor = FileEditorManager.getInstance(project).selectedEditor
       if (selectedEditor == null) {
@@ -36,7 +45,8 @@ class SetBreakpointCommand(text: String, line: Int) : AbstractCallbackBasedComma
     }
     else {
       val relativePath = arguments[1]
-      file = OpenFileCommand.findFile(relativePath, project) ?: error(PerformanceTestingBundle.message("command.file.not.found", relativePath))
+      file = OpenFileCommand.findFile(relativePath, project) ?: error(
+        PerformanceTestingBundle.message("command.file.not.found", relativePath))
     }
     val filePath = "file://" + file.path
     val breakpointTypes = XBreakpointUtil
@@ -45,12 +55,33 @@ class SetBreakpointCommand(text: String, line: Int) : AbstractCallbackBasedComma
       callback.reject("Impossible to set breakpoint on line ${lineNumber}")
       return
     }
+
     WriteAction.runAndWait<IOException> {
       val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
       VirtualFileManager.getInstance().refreshAndFindFileByUrl(filePath)
-      val breakpointType = breakpointTypes[0]
-      val breakpoint = breakpointManager.addLineBreakpoint(breakpointType, filePath, lineNumber - 1,
-                                                           breakpointType.createBreakpointProperties(file, lineNumber - 1))
+
+      val breakpointType: XLineBreakpointType<XBreakpointProperties<*>>
+      val breakpointProperties: XBreakpointProperties<*>
+      if (isLambdaBreakpoint) {
+        val it = XDebuggerUtilImpl.getLineBreakpointVariants(project, breakpointTypes, XSourcePositionImpl.create(file, lineNumber - 1))
+          .blockingGet(1, TimeUnit.MINUTES)!!
+
+        val lambdaVariants = it.filter { a -> !a.text.contains("Line") }
+
+        if (lambdaVariants.isEmpty()) {
+          callback.reject("Impossible to set lambda breakpoint to line $lineNumber")
+          return@runAndWait
+        }
+        val lambdaVariant = lambdaVariants[0]
+
+        breakpointType = lambdaVariant.type as XLineBreakpointType<XBreakpointProperties<*>>
+        breakpointProperties = lambdaVariant.createProperties()!!
+      }
+      else {
+        breakpointType = breakpointTypes[0]
+        breakpointProperties = breakpointType.createBreakpointProperties(file, lineNumber - 1)!!
+      }
+      val breakpoint = breakpointManager.addLineBreakpoint(breakpointType, filePath, lineNumber - 1, breakpointProperties)
       breakpointManager.updateBreakpointPresentation(breakpoint, null, null)
     }
     callback.setDone()
