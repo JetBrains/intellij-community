@@ -1420,6 +1420,11 @@ public abstract class K2IdeK1CodeKotlinSteppingTestGenerated extends AbstractK2I
             runTest("../testData/stepping/custom/smartStepIntoJavaSyntheticPropetyGetter.kt");
         }
 
+        @TestMetadata("smartStepIntoLabeledLambda.kt")
+        public void testSmartStepIntoLabeledLambda() throws Exception {
+            runTest("../testData/stepping/custom/smartStepIntoLabeledLambda.kt");
+        }
+
         @TestMetadata("smartStepIntoLambdaWithparametersDestructuring.kt")
         public void testSmartStepIntoLambdaWithparametersDestructuring() throws Exception {
             runTest("../testData/stepping/custom/smartStepIntoLambdaWithparametersDestructuring.kt");
