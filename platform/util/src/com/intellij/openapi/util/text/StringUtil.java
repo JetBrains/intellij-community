@@ -945,6 +945,11 @@ public class StringUtil extends StringUtilRt {
     return Strings.isCapitalized(s);
   }
 
+  @Contract(value = "null -> false", pure = true)
+  public static boolean canBeCapitalized(@Nullable String s) {
+    return isNotEmpty(s) && Character.isLowerCase(s.charAt(0));
+  }
+
   @Contract(pure = true)
   public static @NotNull String capitalizeWithJavaBeanConvention(@NotNull String s) {
     if (s.length() > 1 && Character.isUpperCase(s.charAt(1))) {
