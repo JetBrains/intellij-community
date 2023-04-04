@@ -23,14 +23,16 @@ class KotlinBuiltInsMetadataIndex : KotlinFileIndexBase() {
 
     override fun getVersion() = VERSION
 
-    private val VERSION = 3
+    private val VERSION = 4
 
     private val INDEXER = indexer { fileContent ->
-        val packageFqName = if (fileContent.fileType == KotlinBuiltInFileType &&
-            fileContent.fileName.endsWith(JvmBuiltInsPackageFragmentProvider.DOT_BUILTINS_METADATA_FILE_EXTENSION)) {
-            val builtins = BuiltInDefinitionFile.read(fileContent.content, fileContent.file.parent)
-            (builtins as? BuiltInDefinitionFile)?.packageFqName
-        } else null
+        val packageFqName =
+            if (fileContent.fileType == KotlinBuiltInFileType &&
+                fileContent.fileName.endsWith(JvmBuiltInsPackageFragmentProvider.DOT_BUILTINS_METADATA_FILE_EXTENSION)
+            ) {
+                val builtins = readKotlinMetadataDefinition(fileContent) as? BuiltInDefinitionFile
+                builtins?.packageFqName
+            } else null
         packageFqName
     }
 }
