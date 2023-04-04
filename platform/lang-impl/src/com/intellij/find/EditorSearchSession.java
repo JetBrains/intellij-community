@@ -9,8 +9,6 @@ import com.intellij.find.impl.livePreview.LivePreviewController;
 import com.intellij.find.impl.livePreview.SearchResults;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.lightEdit.LightEditCompatible;
-import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
@@ -40,7 +38,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.ComponentWithEmptyText;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
@@ -49,7 +46,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
@@ -672,19 +668,8 @@ public class EditorSearchSession implements SearchSession,
     @NotNull
     @Override
     public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-      JButton button = new JButton(myTitle);
-      button.setFocusable(false);
-      if (!UISettings.getInstance().getDisableMnemonicsInControls()) {
-        button.setMnemonic(myMnemonic);
-      }
-      button.setBorder(new DarculaButtonPainter() {
-        @Override
-        public Insets getBorderInsets(Component c) {
-          return JBUI.insets(1);
-        }
-      });
+      JButton button = new FindReplaceActionButton(myTitle, myMnemonic);
       button.addActionListener(this);
-      button.setContentAreaFilled(!ExperimentalUI.isNewUI());
       return button;
     }
 
