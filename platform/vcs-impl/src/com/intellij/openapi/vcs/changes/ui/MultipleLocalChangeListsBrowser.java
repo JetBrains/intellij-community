@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.ex.ThreeStateCheckboxAction;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
@@ -29,6 +30,7 @@ import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ThreeStateCheckBox.State;
@@ -255,16 +257,18 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   @NotNull
   @Override
   protected DefaultTreeModel buildTreeModel() {
-    PartialCommitChangeNodeDecorator decorator =
-      new PartialCommitChangeNodeDecorator(myProject, RemoteRevisionsCache.getInstance(myProject).getChangesNodeDecorator());
-    TreeModelBuilder builder = new TreeModelBuilder(myProject, getGrouping());
-    builder.setChanges(myChanges, decorator);
-    builder.setUnversioned(myUnversioned);
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307313, EA-736680")) {
+      PartialCommitChangeNodeDecorator decorator =
+        new PartialCommitChangeNodeDecorator(myProject, RemoteRevisionsCache.getInstance(myProject).getChangesNodeDecorator());
+      TreeModelBuilder builder = new TreeModelBuilder(myProject, getGrouping());
+      builder.setChanges(myChanges, decorator);
+      builder.setUnversioned(myUnversioned);
 
-    myViewer.getEmptyText()
-      .setText(DiffBundle.message("diff.count.differences.status.text", 0));
+      myViewer.getEmptyText()
+        .setText(DiffBundle.message("diff.count.differences.status.text", 0));
 
-    return builder.build();
+      return builder.build();
+    }
   }
 
   @Nullable
