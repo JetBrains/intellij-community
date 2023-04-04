@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
+import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.asContextElement
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -26,7 +28,8 @@ private class AutoScrollToSourceTaskManagerImpl : AutoScrollToSourceTaskManager 
 
     // task must be cancelled if the project is closed
     @Suppress("DEPRECATION")
-    (project?.coroutineScope ?: ApplicationManager.getApplication().coroutineScope).launch(Dispatchers.EDT) {
+    (project?.coroutineScope ?: ApplicationManager.getApplication().coroutineScope)
+      .launch(Dispatchers.EDT + ClientId.current.asContextElement()) {
       PlatformDataKeys.TOOL_WINDOW.getData(asyncDataContext)
         ?.getReady(handler)
         ?.await()
