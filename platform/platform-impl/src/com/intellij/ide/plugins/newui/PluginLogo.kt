@@ -170,7 +170,7 @@ private fun loadFileIcon(data: ByteArray): PluginLogoIconProvider? {
     return HiDPIPluginLogoIcon(JBImageIcon(images.get(0)), JBImageIcon(images.get(1)))
   }
   catch (e: IOException) {
-    LOG.warn(e)
+    LOG.debug(e)
     return null
   }
 }
@@ -195,7 +195,7 @@ private fun loadPluginIconsFromUrl(idPlugin: String, lazyIcon: LazyPluginLogoIco
     downloadFile(idPlugin, darkFile, "&theme=DARCULA")
   }
   catch (e: Exception) {
-    LOG.warn(e)
+    LOG.debug(e)
     putMissingIcon(idPlugin)
     return
   }
@@ -351,8 +351,8 @@ private fun tryLoadIcon(iconFile: Path): PluginLogoIconProvider? {
   }
   catch (ignore: NoSuchFileException) {
   }
-  catch (e: IOException) {
-    LOG.warn(e)
+  catch (e: Exception) {
+    LOG.debug(e)
   }
   return null
 }
