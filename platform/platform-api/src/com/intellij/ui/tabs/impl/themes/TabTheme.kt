@@ -56,13 +56,13 @@ open class DefaultTabTheme : TabTheme {
 
 class EditorTabTheme : TabTheme {
   override val topBorderThickness: Int
-    get() = newUIAware(1, super.topBorderThickness)
+    get() = if (ExperimentalUI.isNewUI()) 1 else super.topBorderThickness
 
   val globalScheme: EditorColorsScheme
     get() = EditorColorsManager.getInstance().globalScheme
 
   override val background: Color
-    get() = newUIAware(EditorColorsManager.getInstance().globalScheme.defaultBackground, JBUI.CurrentTheme.EditorTabs.background())
+    get() = JBUI.CurrentTheme.EditorTabs.background()
 
   override val borderColor: Color
     get() = JBColor.namedColor("EditorTabs.underTabsBorderColor", JBUI.CurrentTheme.EditorTabs.borderColor())
@@ -105,8 +105,6 @@ class EditorTabTheme : TabTheme {
 
   override val inactiveColoredTabBackground: Color
     get() = JBUI.CurrentTheme.EditorTabs.inactiveColoredFileBackground()
-
-  private fun <T> newUIAware(newUI: T, oldUI:T):T = if (ExperimentalUI.isNewUI()) newUI else oldUI
 }
 
 internal class ToolWindowTabTheme : DefaultTabTheme() {

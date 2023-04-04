@@ -241,6 +241,7 @@
     "EditorTabs": {
       "underlineArc": "4",
       "unselectedBlend": "0.9",
+      "background": "Grey14",
       "hoverBackground": "#FFFFFF00",
       "hoverInactiveBackground": "#FFFFFF00",
       "inactiveColoredFileBackground": "#FFFFFF80"
