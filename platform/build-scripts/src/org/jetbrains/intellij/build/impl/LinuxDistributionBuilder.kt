@@ -5,10 +5,9 @@ import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.diagnostic.telemetry.useWithScope2
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
-import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.*
@@ -21,7 +20,6 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import java.nio.file.attribute.PosixFilePermissions
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
 import kotlin.time.Duration.Companion.minutes
@@ -239,21 +237,12 @@ class LinuxDistributionBuilder(override val context: BuildContext,
           |# </${snapcraftConfig.name}>
         """.trimMargin())
 
-        FileSet(unixSnapDistPath)
-          .include("bin/*.sh")
-          .include("bin/*.py")
-          .include("bin/fsnotifier*")
-          .enumerate().forEach(::makeFileExecutable)
-
-        FileSet(runtimeDir)
-          .include("jbr/bin/*")
-          .enumerate().forEach(::makeFileExecutable)
-
-        if (!customizer.extraExecutables.isEmpty()) {
-          for (distPath in listOf(unixSnapDistPath, context.paths.distAllDir)) {
-            val fs = FileSet(distPath)
-            customizer.extraExecutables.forEach(fs::include)
-            fs.enumerateNoAssertUnusedPatterns().forEach(::makeFileExecutable)
+        coroutineScope {
+          val executableFilesMatchers = generateExecutableFilesMatchers(includeRuntime = true, arch).keys
+          for (distPath in listOf(unixSnapDistPath, context.paths.distAllDir, runtimeDir)) {
+            launch {
+              updateExecutablePermissions(distPath, executableFilesMatchers)
+            }
           }
         }
         val jsonText = generateProductJson(unixSnapDistPath, context, arch)
@@ -374,12 +363,6 @@ private fun generateVersionMarker(unixDistPath: Path, context: BuildContext) {
 private fun artifactName(buildContext: BuildContext, suffix: String?): String {
   val baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
   return "$baseName$suffix.tar.gz"
-}
-
-private fun makeFileExecutable(file: Path) {
-  Span.current().addEvent("set file permission to 0755", Attributes.of(AttributeKey.stringKey("file"), file.toString()))
-  @Suppress("SpellCheckingInspection")
-  Files.setPosixFilePermissions(file, PosixFilePermissions.fromString("rwxr-xr-x"))
 }
 
 private fun copyScript(sourceFile: Path,

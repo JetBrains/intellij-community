@@ -264,26 +264,28 @@ private fun findBrandingResource(relativePath: String, context: BuildContext): P
                          "nor in ${context.productProperties.brandingResourcePaths}")
 }
 
-private fun updateExecutablePermissions(destinationDir: Path, executableFilesMatchers: Collection<PathMatcher>) {
-  val executable = EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
-                              PosixFilePermission.OWNER_EXECUTE, PosixFilePermission.GROUP_READ,
-                              PosixFilePermission.GROUP_EXECUTE, PosixFilePermission.OTHERS_READ,
-                              PosixFilePermission.OTHERS_EXECUTE)
-  val regular = EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
-                           PosixFilePermission.GROUP_READ, PosixFilePermission.OTHERS_READ)
-  Files.walk(destinationDir).use { stream ->
-    for (file in stream) {
-      if (Files.isDirectory(file)) {
-        continue
-      }
-      if (SystemInfoRt.isUnix) {
-        val relativeFile = destinationDir.relativize(file)
-        val isExecutable = Files.getPosixFilePermissions(file).contains(PosixFilePermission.OWNER_EXECUTE) ||
-                           executableFilesMatchers.any { it.matches(relativeFile) }
-        Files.setPosixFilePermissions(file, if (isExecutable) executable else regular)
-      }
-      else {
-        (Files.getFileAttributeView(file, DosFileAttributeView::class.java) as DosFileAttributeView).setReadOnly(false)
+internal suspend fun updateExecutablePermissions(destinationDir: Path, executableFilesMatchers: Collection<PathMatcher>) {
+  spanBuilder("update executable permissions").setAttribute("dir", "$destinationDir").useWithScope(Dispatchers.IO) {
+    val executable = EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
+                                PosixFilePermission.OWNER_EXECUTE, PosixFilePermission.GROUP_READ,
+                                PosixFilePermission.GROUP_EXECUTE, PosixFilePermission.OTHERS_READ,
+                                PosixFilePermission.OTHERS_EXECUTE)
+    val regular = EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
+                             PosixFilePermission.GROUP_READ, PosixFilePermission.OTHERS_READ)
+    Files.walk(destinationDir).use { stream ->
+      for (file in stream) {
+        if (Files.isDirectory(file)) {
+          continue
+        }
+        if (SystemInfoRt.isUnix) {
+          val relativeFile = destinationDir.relativize(file)
+          val isExecutable = Files.getPosixFilePermissions(file).contains(PosixFilePermission.OWNER_EXECUTE) ||
+                             executableFilesMatchers.any { it.matches(relativeFile) }
+          Files.setPosixFilePermissions(file, if (isExecutable) executable else regular)
+        }
+        else {
+          (Files.getFileAttributeView(file, DosFileAttributeView::class.java) as DosFileAttributeView).setReadOnly(false)
+        }
       }
     }
   }
