@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.navigation.impl.PsiTargetPresentationRenderer;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
@@ -56,6 +57,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
 import java.util.*;
+import java.util.function.Supplier;
 
 public final class NavigationUtil {
   private static final ExtensionPointName<GotoRelatedProvider> GO_TO_EP_NAME = new ExtensionPointName<>("com.intellij.gotoRelatedProvider");
@@ -67,6 +69,19 @@ public final class NavigationUtil {
     return new PsiTargetNavigator<>(elements).createPopup(elements[0].getProject(), title);
   }
 
+  public static @NotNull JBPopup getPsiElementPopup(@NotNull Supplier<Collection<PsiElement>> elements,
+                                                    @NotNull PsiTargetPresentationRenderer<PsiElement> renderer,
+                                                    @PopupTitle String title,
+                                                    @NotNull Project project) {
+    return new PsiTargetNavigator<>(elements)
+      .presentationProvider(renderer)
+      .createPopup(project, title);
+  }
+
+  /**
+   * @deprecated Use {@link #getPsiElementPopup(Supplier, PsiTargetPresentationRenderer, String, Project)}
+   */
+  @Deprecated
   public static @NotNull JBPopup getPsiElementPopup(PsiElement @NotNull [] elements,
                                                     @NotNull PsiElementListCellRenderer<? super PsiElement> renderer,
                                                     @PopupTitle String title) {
