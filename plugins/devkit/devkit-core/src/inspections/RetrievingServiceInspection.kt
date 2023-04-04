@@ -131,9 +131,11 @@ internal class RetrievingServiceInspection : DevKitUastInspectionBase() {
   }
 
   private fun isGetInstanceProjectLevel(method: UMethod): Boolean {
-    if (!((method.isStatic || method.findAnnotation("kotlin.jvm.JvmStatic") != null) &&
+    if (!(method.isStaticOrJvmStatic &&
           method.visibility == UastVisibility.PUBLIC &&
-          method.uastParameters.size == 1)) return false
+          method.uastParameters.size == 1)) {
+      return false
+    }
     val param = method.uastParameters[0]
     if (param.type.canonicalText != Project::class.java.canonicalName) return false
     val qualifiedRef = getReturnExpression(method)?.returnExpression as? UQualifiedReferenceExpression ?: return false
@@ -146,13 +148,18 @@ internal class RetrievingServiceInspection : DevKitUastInspectionBase() {
   }
 
   private fun isGetInstanceApplicationLevel(method: UMethod): Boolean {
-    if (!(method.isStatic &&
+    if (!(method.isStaticOrJvmStatic &&
           method.visibility == UastVisibility.PUBLIC &&
-          method.uastParameters.isEmpty())) return false
+          method.uastParameters.isEmpty())) {
+      return false
+    }
     val qualifiedRef = getReturnExpression(method)?.returnExpression as? UQualifiedReferenceExpression ?: return false
     return COMPONENT_MANAGER_GET_SERVICE.uCallMatches(qualifiedRef.selector as? UCallExpression) &&
            qualifiedRef.receiver.getExpressionType()?.isInheritorOf(Application::class.java.canonicalName) == true
   }
+
+  private val UMethod.isStaticOrJvmStatic: Boolean
+    get() = this.isStatic || this.findAnnotation(JvmStatic::class.java.canonicalName) != null
 
   private fun getReturnExpression(method: UMethod): UReturnExpression? {
     return (method.uastBody as? UBlockExpression)?.expressions?.singleOrNull() as? UReturnExpression
