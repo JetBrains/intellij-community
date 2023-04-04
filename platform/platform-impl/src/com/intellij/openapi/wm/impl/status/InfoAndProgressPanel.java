@@ -323,12 +323,14 @@ public final class InfoAndProgressPanel implements CustomStatusBarWidget, UISett
   }
 
   private void openProcessPopup(boolean requestFocus) {
+    boolean shouldClosePopupAndOnProcessFinish;
     synchronized (myOriginals) {
       if (myPopup.isShowing()) return;
       myPopup.show(requestFocus);
-      myShouldClosePopupAndOnProcessFinish = hasProgressIndicators();
+      shouldClosePopupAndOnProcessFinish = hasProgressIndicators();
       myMainPanel.get().updateProgressState(true);
     }
+    myShouldClosePopupAndOnProcessFinish = shouldClosePopupAndOnProcessFinish;
   }
 
   void hideProcessPopup() {
@@ -492,7 +494,7 @@ public final class InfoAndProgressPanel implements CustomStatusBarWidget, UISett
     myMainPanel.get().uiSettingsChanged(uiSettings);
   }
 
-  private class InfoAndProgressPanelImpl extends JBPanel<JBPanel> implements UISettingsListener {
+  private class InfoAndProgressPanelImpl extends JBPanel<JBPanel<?>> implements UISettingsListener {
 
 
     private final @NotNull JLabel myRefreshIcon = new JLabel(new AnimatedIcon.FS());
