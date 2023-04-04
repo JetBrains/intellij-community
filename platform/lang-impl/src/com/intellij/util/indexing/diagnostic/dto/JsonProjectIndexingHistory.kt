@@ -72,9 +72,7 @@ data class JsonProjectScanningHistory(
   override val fileCount: JsonProjectScanningFileCount = JsonProjectScanningFileCount(),
   val totalStatsPerFileType: List<JsonStatsPerFileType> = emptyList(),
   val totalStatsPerIndexer: List<JsonStatsPerIndexer> = emptyList(),
-  val scanningStatistics: List<JsonScanningStatistics> = emptyList(),
-  val fileProviderStatistics: List<JsonFileProviderIndexStatistics> = emptyList(),
-  val visibleTimeToAllThreadTimeRatio: Double = 0.0
+  val scanningStatistics: List<JsonScanningStatistics> = emptyList()
 ) : JsonProjectIndexingActivityHistory {
 
   @JsonIgnoreProperties(ignoreUnknown = true)

@@ -106,13 +106,10 @@ fun ScanningTimes.toJson() =
     scanningType = scanningType,
     totalUpdatingTime = JsonDuration(totalUpdatingTime),
     indexingTime = JsonDuration(indexingDuration.toNanos()),
-    contentLoadingVisibleTime = JsonDuration(contentLoadingVisibleDuration.toNanos()),
     creatingIteratorsTime = JsonDuration(creatingIteratorsDuration.toNanos()),
     scanFilesTime = JsonDuration(scanFilesDuration.toNanos()),
     pushPropertiesTime = JsonDuration(pushPropertiesDuration.toNanos()),
     indexExtensionsTime = JsonDuration(indexExtensionsDuration.toNanos()),
-    isAppliedAllValuesSeparately = appliedAllValuesSeparately,
-    separateApplyingIndexesVisibleTime = JsonDuration(separateValueApplicationVisibleTime),
     updatingStart = JsonDateTime(updatingStart),
     updatingEnd = JsonDateTime(updatingEnd),
     totalSuspendedTime = JsonDuration(suspendedDuration.toNanos()),
@@ -170,28 +167,14 @@ fun ProjectIndexingActivityHistory.toJson(): JsonProjectIndexingActivityHistory 
     else -> throw IllegalStateException("Unexpected ProjectIndexingActivityHistory ${this}")
   }
 
-private fun ProjectScanningHistoryImpl.changeToJson(): JsonProjectScanningHistory {
-  val timesImpl = times as ProjectScanningHistoryImpl.ScanningTimesImpl
-  timesImpl.contentLoadingVisibleDuration = Duration.ofNanos(providerStatistics.sumOf { it.contentLoadingVisibleTime.nano })
-  if (providerStatistics.all { it.isAppliedAllValuesSeparately }) {
-    timesImpl.appliedAllValuesSeparately = true
-    timesImpl.separateValueApplicationVisibleTime = providerStatistics.sumOf { it.separateApplyingIndexesVisibleTime.nano }
-  }
-  else {
-    timesImpl.appliedAllValuesSeparately = false
-    timesImpl.separateValueApplicationVisibleTime = 0
-  }
-  return JsonProjectScanningHistory(
-    projectName = project.name,
-    times = times.toJson(),
-    fileCount = getFileCount(),
-    totalStatsPerFileType = aggregateStatsPerFileType().sortedByDescending { it.partOfTotalProcessingTime.doublePercentages },
-    totalStatsPerIndexer = aggregateStatsPerIndexer().sortedByDescending { it.partOfTotalIndexingTime.doublePercentages },
-    scanningStatistics = scanningStatistics.sortedByDescending { it.scanningTime.nano },
-    fileProviderStatistics = providerStatistics.sortedByDescending { it.totalIndexingVisibleTime.nano },
-    visibleTimeToAllThreadTimeRatio = visibleTimeToAllThreadsTimeRatio
-  )
-}
+private fun ProjectScanningHistoryImpl.changeToJson(): JsonProjectScanningHistory = JsonProjectScanningHistory(
+  projectName = project.name,
+  times = times.toJson(),
+  fileCount = getFileCount(),
+  totalStatsPerFileType = aggregateStatsPerFileType().sortedByDescending { it.partOfTotalProcessingTime.doublePercentages },
+  totalStatsPerIndexer = aggregateStatsPerIndexer().sortedByDescending { it.partOfTotalIndexingTime.doublePercentages },
+  scanningStatistics = scanningStatistics.sortedByDescending { it.scanningTime.nano }
+)
 
 private fun ProjectDumbIndexingHistoryImpl.changeToJson(): JsonProjectDumbIndexingHistory {
   val timesImpl = times as ProjectDumbIndexingHistoryImpl.DumbIndexingTimesImpl
@@ -229,9 +212,7 @@ private fun ProjectScanningHistoryImpl.getFileCount() = JsonProjectScanningFileC
   numberOfFileProviders = scanningStatistics.size,
   numberOfScannedFiles = scanningStatistics.sumOf { it.numberOfScannedFiles },
   numberOfFilesIndexedByInfrastructureExtensionsDuringScan = scanningStatistics.sumOf { it.numberOfFilesFullyIndexedByInfrastructureExtensions },
-  numberOfFilesScheduledForIndexingAfterScan = scanningStatistics.sumOf { it.numberOfFilesForIndexing },
-  numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage = providerStatistics.sumOf { it.totalNumberOfFilesFullyIndexedByExtensions },
-  numberOfFilesIndexedWithLoadingContent = providerStatistics.sumOf { it.totalNumberOfIndexedFiles }
+  numberOfFilesScheduledForIndexingAfterScan = scanningStatistics.sumOf { it.numberOfFilesForIndexing }
 )
 
 private fun ProjectDumbIndexingHistoryImpl.getFileCount() = JsonProjectDumbIndexingFileCount(

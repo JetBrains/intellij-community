@@ -40,13 +40,10 @@ data class JsonProjectScanningHistoryTimes(
   val scanningType: ScanningType = ScanningType.FULL,
   val totalUpdatingTime: JsonDuration = JsonDuration(),
   val indexingTime: JsonDuration = JsonDuration(),
-  val contentLoadingVisibleTime: JsonDuration = JsonDuration(),
   val creatingIteratorsTime: JsonDuration = JsonDuration(),
   val scanFilesTime: JsonDuration = JsonDuration(),
   val pushPropertiesTime: JsonDuration = JsonDuration(),
   val indexExtensionsTime: JsonDuration = JsonDuration(),
-  val isAppliedAllValuesSeparately: Boolean = true,
-  val separateApplyingIndexesVisibleTime: JsonDuration = JsonDuration(),
 
   override val updatingStart: JsonDateTime = JsonDateTime(),
   override val updatingEnd: JsonDateTime = JsonDateTime(),

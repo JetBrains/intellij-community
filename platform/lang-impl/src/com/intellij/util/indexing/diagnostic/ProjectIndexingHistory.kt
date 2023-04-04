@@ -52,7 +52,6 @@ interface ProjectScanningHistory : ProjectIndexingActivityHistory {
   val indexingSessionId: Long
   val times: ScanningTimes
   val scanningStatistics: List<JsonScanningStatistics>
-  val providerStatistics: List<JsonFileProviderIndexStatistics>
   val totalStatsPerFileType: Map<String, StatsPerFileType>
   val totalStatsPerIndexer: Map<String, StatsPerIndexer>
   val visibleTimeToAllThreadsTimeRatio: Double
@@ -174,14 +173,11 @@ interface ScanningTimes {
   val totalUpdatingTime: TimeNano
   val updatingEnd: ZonedDateTime
   val indexingDuration: Duration
-  val contentLoadingVisibleDuration: Duration
   val pushPropertiesDuration: Duration
   val indexExtensionsDuration: Duration
   var creatingIteratorsDuration: Duration
   val scanFilesDuration: Duration
   val suspendedDuration: Duration
-  val appliedAllValuesSeparately: Boolean
-  val separateValueApplicationVisibleTime: TimeNano
   val wasInterrupted: Boolean
 }
 

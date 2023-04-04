@@ -372,16 +372,12 @@ data class ProjectScanningHistoryImpl(override val project: Project,
 
   override val indexingSessionId = indexingSessionIdSequencer.getAndIncrement()
 
-  private val biggestContributorsPerFileTypeLimit = 10
-
   override val times: ScanningTimes by ::timesImpl
 
   private val timesImpl = ScanningTimesImpl(indexingReason = indexingReason, scanningType = scanningType,
                                             updatingStart = ZonedDateTime.now(ZoneOffset.UTC), totalUpdatingTime = System.nanoTime())
 
   override val scanningStatistics = arrayListOf<JsonScanningStatistics>()
-
-  override val providerStatistics = arrayListOf<JsonFileProviderIndexStatistics>()
 
   override val totalStatsPerFileType = hashMapOf<String /* File type name */, StatsPerFileTypeImpl>()
 
@@ -393,49 +389,6 @@ data class ProjectScanningHistoryImpl(override val project: Project,
 
   fun addScanningStatistics(statistics: ScanningStatistics) {
     scanningStatistics += statistics.toJsonStatistics()
-  }
-
-  fun addProviderStatistics(statistics: IndexingFileSetStatistics) {
-    // Convert to Json to release memory occupied by statistic values.
-    providerStatistics += statistics.toJsonStatistics(visibleTimeToAllThreadsTimeRatio)
-
-    for ((fileType, fileTypeStats) in statistics.statsPerFileType) {
-      val totalStats = totalStatsPerFileType.getOrPut(fileType) {
-        StatsPerFileTypeImpl(0, 0, 0, 0,
-                             LimitedPriorityQueue(biggestContributorsPerFileTypeLimit, compareBy { it.processingTimeInAllThreads }))
-      }
-      totalStats.totalNumberOfFiles += fileTypeStats.numberOfFiles
-      totalStats.totalBytes += fileTypeStats.totalBytes
-      totalStats.totalProcessingTimeInAllThreads += fileTypeStats.processingTimeInAllThreads
-      totalStats.totalContentLoadingTimeInAllThreads += fileTypeStats.contentLoadingTimeInAllThreads
-      totalStats.biggestFileTypeContributors.addElement(
-        BiggestFileTypeContributorImpl(
-          statistics.fileSetName,
-          fileTypeStats.numberOfFiles,
-          fileTypeStats.totalBytes,
-          fileTypeStats.processingTimeInAllThreads
-        )
-      )
-    }
-
-    for ((indexId, stats) in statistics.statsPerIndexer) {
-      val totalStats = totalStatsPerIndexer.getOrPut(indexId) {
-        StatsPerIndexerImpl(
-          totalNumberOfFiles = 0,
-          totalNumberOfFilesIndexedByExtensions = 0,
-          totalBytes = 0,
-          totalIndexValueChangerEvaluationTimeInAllThreads = 0,
-          snapshotInputMappingStats = SnapshotInputMappingStatsImpl(
-            requests = 0,
-            misses = 0
-          )
-        )
-      }
-      totalStats.totalNumberOfFiles += stats.numberOfFiles
-      totalStats.totalNumberOfFilesIndexedByExtensions += stats.numberOfFilesIndexedByExtensions
-      totalStats.totalBytes += stats.totalBytes
-      totalStats.totalIndexValueChangerEvaluationTimeInAllThreads += stats.evaluateIndexValueChangerTime
-    }
   }
 
   fun addSnapshotInputMappingStatistics(snapshotInputMappingsStatistics: List<SnapshotInputMappingsStatistics>) {
@@ -688,14 +641,11 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     override var totalUpdatingTime: TimeNano,
     override var updatingEnd: ZonedDateTime = updatingStart,
     override var indexingDuration: Duration = Duration.ZERO,
-    override var contentLoadingVisibleDuration: Duration = Duration.ZERO,
     override var pushPropertiesDuration: Duration = Duration.ZERO,
     override var indexExtensionsDuration: Duration = Duration.ZERO,
     override var creatingIteratorsDuration: Duration = Duration.ZERO,
     override var scanFilesDuration: Duration = Duration.ZERO,
     override var suspendedDuration: Duration = Duration.ZERO,
-    override var appliedAllValuesSeparately: Boolean = true,
-    override var separateValueApplicationVisibleTime: TimeNano = 0,
     override var wasInterrupted: Boolean = false
   ) : ScanningTimes
 
