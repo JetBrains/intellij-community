@@ -20,26 +20,25 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ex.MessagesEx
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.codeInsight.pathBeforeJavaToKotlinConversion
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
+import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
 import org.jetbrains.kotlin.idea.configuration.ExperimentalFeatures
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
-import org.jetbrains.kotlin.idea.formatter.commitAndUnblockDocument
 import org.jetbrains.kotlin.idea.j2k.IdeaJavaToKotlinServices
 import org.jetbrains.kotlin.idea.j2k.J2kPostProcessor
 import org.jetbrains.kotlin.idea.statistics.ConversionType
 import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
+import org.jetbrains.kotlin.idea.util.getAllFilesRecursively
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.j2k.ConverterSettings.Companion.defaultSettings
@@ -236,19 +235,20 @@ class JavaToKotlinAction : AnAction() {
         if (javaFiles.isEmpty()) {
             val statusBar = WindowManager.getInstance().getStatusBar(project)
             JBPopupFactory.getInstance()
-                .createHtmlTextBalloonBuilder(KotlinBundle.message("action.j2k.errornothing.to.convert"), MessageType.ERROR, null)
+                .createHtmlTextBalloonBuilder(KotlinBundle.message("action.j2k.error.nothing.to.convert"), MessageType.ERROR, null)
                 .createBalloon()
                 .showInCenterOf(statusBar.component)
+            return
         }
 
-        if (!J2kConverterExtension.extension(useNewJ2k = ExperimentalFeatures.NewJ2k.isEnabled)
-                .doCheckBeforeConversion(project, module)
-        ) return
+        if (!J2kConverterExtension.extension(useNewJ2k = ExperimentalFeatures.NewJ2k.isEnabled).doCheckBeforeConversion(project, module)) {
+            return
+        }
 
         val firstSyntaxError = javaFiles.asSequence().map { PsiTreeUtil.findChildOfType(it, PsiErrorElement::class.java) }.firstOrNull()
 
         if (firstSyntaxError != null) {
-            val count = javaFiles.filter { PsiTreeUtil.hasErrorElements(it) }.count()
+            val count = javaFiles.count { PsiTreeUtil.hasErrorElements(it) }
             assert(count > 0)
             val firstFileName = firstSyntaxError.containingFile.name
             val question = when (count) {
@@ -305,21 +305,8 @@ class JavaToKotlinAction : AnAction() {
 
     private fun allJavaFiles(filesOrDirs: Array<VirtualFile>, project: Project): Sequence<PsiJavaFile> {
         val manager = PsiManager.getInstance(project)
-        return allFiles(filesOrDirs)
+        return getAllFilesRecursively(filesOrDirs)
             .asSequence()
             .mapNotNull { manager.findFile(it) as? PsiJavaFile }
-    }
-
-    private fun allFiles(filesOrDirs: Array<VirtualFile>): Collection<VirtualFile> {
-        val result = ArrayList<VirtualFile>()
-        for (file in filesOrDirs) {
-            VfsUtilCore.visitChildrenRecursively(file, object : VirtualFileVisitor<Unit>() {
-                override fun visitFile(file: VirtualFile): Boolean {
-                    result.add(file)
-                    return true
-                }
-            })
-        }
-        return result
     }
 }
