@@ -5,7 +5,6 @@ import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.psi.PsiClass
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.xml.XmlTag
@@ -37,7 +36,7 @@ class ExtensionRegisteredAsServiceOrComponentInspection : DevKitUastInspectionBa
       val tag = candidate.pointer.element ?: continue
       val element = domManager.getDomElement(tag) ?: continue
       if (element is Extension) {
-        if (hasServiceBeanFqn(element)) {
+        if (ExtensionUtil.hasServiceBeanFqn(element)) {
           isService = true
         } else if (!isValueOfServiceAttribute(tag, psiClass.qualifiedName)) {
           isExtension = true
@@ -58,10 +57,6 @@ class ExtensionRegisteredAsServiceOrComponentInspection : DevKitUastInspectionBa
     }
 
     return ProblemDescriptor.EMPTY_ARRAY
-  }
-
-  private fun hasServiceBeanFqn(extension: Extension): Boolean {
-    return extension.extensionPoint?.beanClass?.stringValue == ServiceDescriptor::class.java.canonicalName
   }
 
   /**

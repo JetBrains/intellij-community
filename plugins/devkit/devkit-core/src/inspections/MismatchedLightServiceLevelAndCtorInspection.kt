@@ -2,11 +2,11 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.IntentionWrapper
-import com.intellij.lang.jvm.*
+import com.intellij.lang.jvm.DefaultJvmElementVisitor
+import com.intellij.lang.jvm.JvmClass
+import com.intellij.lang.jvm.JvmElementVisitor
+import com.intellij.lang.jvm.JvmMethod
 import com.intellij.lang.jvm.actions.*
-import com.intellij.lang.jvm.annotation.JvmAnnotationArrayValue
-import com.intellij.lang.jvm.annotation.JvmAnnotationConstantValue
-import com.intellij.lang.jvm.annotation.JvmAnnotationEnumFieldValue
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiAnnotation
@@ -26,13 +26,14 @@ internal class MismatchedLightServiceLevelAndCtorInspection : DevKitJvmInspectio
     return object : DefaultJvmElementVisitor<Boolean> {
       override fun visitMethod(method: JvmMethod): Boolean {
         if (!method.isConstructor) return true
+        val language = method.sourceElement?.language ?: return true
         val file: PsiFile = method.sourceElement?.containingFile ?: return true
         val containingClass = method.containingClass ?: return true
         val annotation = containingClass.getAnnotation(Service::class.java.canonicalName) ?: return true
-        val annotationName = (annotation as? PsiAnnotation)?.nameReferenceElement
-        val level = getLevel(annotation)
-        if (annotationName != null && level !in listOf(Level.PROJECT, Level.APP_AND_PROJECT)) {
-          val isProjectParamCtor = (method.parameters.singleOrNull()?.type as? PsiType)?.canonicalText == Project::class.java.canonicalName
+        val annotationName = (annotation as? PsiAnnotation)?.nameReferenceElement ?: return true
+        val levelType = ServiceUtil.getLevelType(annotation, language.id == "kotlin")
+        if (!levelType.isProject()) {
+          val isProjectParamCtor = isProjectParamCtor(method)
           if (isProjectParamCtor) {
             val projectLevelFqn = "${Service.Level::class.java.canonicalName}.${Service.Level.PROJECT}"
             val request = constantAttribute(DEFAULT_REFERENCED_METHOD_NAME, projectLevelFqn)
@@ -44,7 +45,7 @@ internal class MismatchedLightServiceLevelAndCtorInspection : DevKitJvmInspectio
                                    *fixes)
           }
         }
-        if (level == Level.APP || level == Level.APP_AND_PROJECT) {
+        if (levelType.isApp()) {
           if (!isAppLevelServiceCtor(method) && !hasAppLevelServiceCtor(containingClass)) {
             val elementFactory = PsiElementFactory.getInstance(project)
             val coroutineScopeType = elementFactory.createTypeByFQClassName(CoroutineScope::class.java.canonicalName,
@@ -66,51 +67,18 @@ internal class MismatchedLightServiceLevelAndCtorInspection : DevKitJvmInspectio
       }
 
       private fun isAppLevelServiceCtor(method: JvmMethod): Boolean {
-        return method.parameters.isEmpty() || (method.parameters.singleOrNull()?.type as? PsiType)?.canonicalText == CoroutineScope::class.java.canonicalName
+        assert(method.isConstructor)
+        return method.parameters.isEmpty() || method.hasSingleParamOfType(CoroutineScope::class.java)
       }
 
-      private fun getLevel(annotation: JvmAnnotation): Level {
-        val levels = when (val attributeValue = annotation.findAttribute(DEFAULT_REFERENCED_METHOD_NAME)?.attributeValue) {
-          is JvmAnnotationArrayValue -> {
-            val kotlinLevels = attributeValue.values
-              .filterIsInstance<JvmAnnotationConstantValue>()
-              .map { it.constantValue }
-              .filterIsInstance<Pair<*, *>>()
-              .filter { (classId, name) ->
-                classId.toString() == Service.Level::class.java.name.replace('.', '/').replace('$', '.') &&
-                name.toString() in listOf(Service.Level.APP.name, Service.Level.PROJECT.name)
-              }
-              .map { (_, name) -> name.toString() }
-            kotlinLevels.ifEmpty {
-              attributeValue.values
-                .filterIsInstance<JvmAnnotationEnumFieldValue>()
-                .filter {
-                  it.containingClassName == Service.Level::class.java.canonicalName &&
-                  it.fieldName in listOf(Service.Level.APP.name, Service.Level.PROJECT.name)
-                }
-                .map { it.fieldName!! }
-            }
-          }
-          is JvmAnnotationEnumFieldValue -> {
-            if (attributeValue.containingClassName == Service.Level::class.java.canonicalName &&
-                attributeValue.fieldName in listOf(Service.Level.APP.name, Service.Level.PROJECT.name))
-              setOf(attributeValue.fieldName!!) else emptySet()
-          }
-          else -> emptySet()
-        }
-        return getLevel(levels)
+      private fun isProjectParamCtor(method: JvmMethod): Boolean {
+        assert(method.isConstructor)
+        return method.hasSingleParamOfType(Project::class.java)
+      }
+
+      private fun JvmMethod.hasSingleParamOfType(clazz: Class<*>): Boolean {
+        return (this.parameters.singleOrNull()?.type as? PsiType)?.canonicalText == clazz.canonicalName
       }
     }
-  }
-}
-
-internal enum class Level { APP, PROJECT, APP_AND_PROJECT, NOT_SPECIFIED }
-
-internal fun getLevel(levels: Collection<String>): Level {
-  return when {
-    levels.containsAll(setOf(Service.Level.APP.name, Service.Level.PROJECT.name)) -> Level.APP_AND_PROJECT
-    levels.contains(Service.Level.APP.name) -> Level.APP
-    levels.contains(Service.Level.PROJECT.name) -> Level.PROJECT
-    else -> Level.NOT_SPECIFIED
   }
 }

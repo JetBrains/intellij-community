@@ -3,12 +3,12 @@ package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.util.xml.DomUtil
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil
+import org.jetbrains.idea.devkit.inspections.ExtensionUtil
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
 import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
@@ -63,13 +63,9 @@ class CompanionObjectInExtensionInspection : LocalInspectionTool() {
       val tag = candidate.pointer.element ?: continue
       val extension = DomUtil.findDomElement(tag, Extension::class.java, false) ?: continue
       // found an extension that is not a registered service
-      if (!hasServiceBeanFqn(extension)) return true
+      if (!ExtensionUtil.hasServiceBeanFqn(extension)) return true
     }
     return false
-  }
-
-  private fun hasServiceBeanFqn(extension: Extension): Boolean {
-    return extension.extensionPoint?.beanClass?.stringValue == ServiceDescriptor::class.java.canonicalName
   }
 
   private fun KtProperty.isLoggerInstance(): Boolean {
