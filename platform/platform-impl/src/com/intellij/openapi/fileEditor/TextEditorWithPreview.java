@@ -441,7 +441,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   }
 
   @Override
-  public final @NotNull ActionGroup getTabActions() {
+  public @NotNull ActionGroup getTabActions() {
     AnAction[] actions = createTabActions();
     return new ConditionalActionGroup(actions, () -> isShowActionsInTabs());
   }
