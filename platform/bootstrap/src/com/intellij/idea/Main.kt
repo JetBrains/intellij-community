@@ -4,7 +4,7 @@
 
 package com.intellij.idea
 
-import com.intellij.toolkit.IdeGraphicEnvironment
+import com.intellij.platform.impl.toolkit.IdeGraphicEnvironment
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.rootTask
