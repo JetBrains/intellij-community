@@ -39,11 +39,11 @@ import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.*;
-import com.intellij.xdebugger.impl.evaluate.XDebuggerEditorLinePainter;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
 import com.intellij.xdebugger.impl.inline.DebuggerInlayListener;
+import com.intellij.xdebugger.impl.inline.InlineDebugRenderer;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
@@ -1016,7 +1016,7 @@ public final class XDebugSessionImpl implements XDebugSession {
     myDispatcher.getMulticaster().sessionStopped();
     myDispatcher.getListeners().clear();
 
-    myProject.putUserData(XDebuggerEditorLinePainter.CACHE, null);
+    myProject.putUserData(InlineDebugRenderer.LinePainter.CACHE, null);
 
     synchronized (myRegisteredBreakpoints) {
       myRegisteredBreakpoints.clear();
