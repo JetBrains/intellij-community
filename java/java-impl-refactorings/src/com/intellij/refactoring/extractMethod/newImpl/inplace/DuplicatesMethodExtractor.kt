@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.JavaRefactoringSettings
@@ -161,6 +162,9 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
 
   private fun isGoodSignatureChange(callBefore: List<PsiElement>, initialParameters: List<InputParameter>,
                                     callAfter: List<PsiElement>, updatedParameters: List<InputParameter>): Boolean {
+    if (initialParameters.size == updatedParameters.size) {
+      return true
+    }
     val sizeAfter = callAfter.sumOf(::calculateCodeLeafs)
     val sizeBefore = callBefore.sumOf(::calculateCodeLeafs)
     val addedParameters = updatedParameters.size - initialParameters.size
@@ -191,8 +195,11 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
   }
 
   private fun findNewParameters(parameters: List<InputParameter>, duplicates: List<Duplicate>): List<InputParameter> {
-    return duplicates
-      .fold(parameters) { updatedParameters, duplicate -> updateParameters(updatedParameters, duplicate.changedExpressions) }
+    if (duplicates.isEmpty()) return parameters
+    val updatedParameters = duplicates.fold(parameters) { updatedParameters, duplicate ->
+      updateParameters(updatedParameters, duplicate.changedExpressions)
+    }
+    return ExtractMethodPipeline.foldParameters(updatedParameters, LocalSearchScope(duplicates.first().pattern.toTypedArray()))
   }
 
   private fun confirmDuplicates(project: Project, editor: Editor, duplicates: List<Duplicate>): List<Duplicate> {

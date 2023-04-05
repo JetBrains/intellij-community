@@ -488,6 +488,10 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     }
   }
 
+  fun testFoldParametersInDuplicates(){
+    doTest()
+  }
+
   fun testRefactoringListener(){
     templateTest {
       configureByFile("$BASE_PATH/${getTestName(false)}.java")
