@@ -622,10 +622,10 @@ final class ActionUpdater {
 
   static @NotNull List<AnAction> removeUnnecessarySeparators(@NotNull List<? extends AnAction> visible) {
     List<AnAction> result = new ArrayList<>();
-    for (AnAction child : visible) {
+    for (int i = 0; i < visible.size(); i++) {
+      AnAction child = visible.get(i);
       if (child instanceof Separator &&
-          (result.isEmpty() || ContainerUtil.getLastItem(result) instanceof Separator) &&
-          StringUtil.isEmpty(((Separator)child).getText())) {
+          (result.isEmpty() || i == visible.size() - 1 || visible.get(i + 1) instanceof Separator)) {
         continue;
       }
       result.add(child);
