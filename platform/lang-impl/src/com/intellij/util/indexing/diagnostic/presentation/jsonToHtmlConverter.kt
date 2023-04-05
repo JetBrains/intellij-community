@@ -1061,20 +1061,21 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
               tr { td("Suspended time"); td(times.totalSuspendedTime.presentableDuration()) }
               tr { td("Total time"); td(times.totalUpdatingTime.presentableDuration()) }
 
+              tr { td("Scanning stages: iterators creation time"); td(times.creatingIteratorsTime.presentableDuration()) }
+              tr { td("Scanning stages: pushing properties time"); td(times.pushPropertiesTime.presentableDuration()) }
+              tr { td("Scanning stages: time of collecting files to compute index values"); td(times.scanFilesTime.presentableDuration()) }
+              tr { td("Time of running $INDEX_INFRA_EXTENSIONS (without loading content)"); td(times.indexExtensionsTime.presentableDuration()) }
+
               tr { td(TITLE_NUMBER_OF_FILE_PROVIDERS); td(fileCount.numberOfFileProviders.toString()) }
               tr { td(TITLE_NUMBER_OF_SCANNED_FILES); td(fileCount.numberOfScannedFiles.toString()) }
               tr {
-                td(TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRA_EXTENSIONS_DURING_SCAN)
+                td("Number of files indexed by $INDEX_INFRA_EXTENSIONS (without loading content)")
                 td(fileCount.numberOfFilesIndexedByInfrastructureExtensionsDuringScan.toString())
               }
               tr {
                 td(TITLE_NUMBER_OF_FILES_SCHEDULED_FOR_INDEXING_AFTER_SCAN)
                 td(fileCount.numberOfFilesScheduledForIndexingAfterScan.toString())
               }
-              tr { td("Scanning stages: iterators creation time"); td(times.creatingIteratorsTime.presentableDuration()) }
-              tr { td("Scanning stages: pushing properties time"); td(times.pushPropertiesTime.presentableDuration()) }
-              tr { td("Scanning stages: time of collecting files to compute index values"); td(times.scanFilesTime.presentableDuration()) }
-              tr { td("Running extensions time"); td(times.indexExtensionsTime.presentableDuration()) }
             }
           }
         }
