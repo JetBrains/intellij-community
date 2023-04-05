@@ -133,7 +133,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
   private fun createCommitInfoPresenter(commit: GitLabCommitDTO): CommitPresenter {
     return CommitPresenter.SingleCommit(
       title = commit.title.orEmpty(),
-      author = commit.author.name,
+      author = commit.author?.name ?: commit.authorName,
       committedDate = commit.authoredDate
     )
   }
