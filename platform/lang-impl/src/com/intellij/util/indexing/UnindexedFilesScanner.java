@@ -85,6 +85,8 @@ public class UnindexedFilesScanner implements FilesScanningTask {
   private final PushedFilePropertiesUpdater myPusher;
   private final @Nullable StatusMark myProvidedStatusMark;
   private final @Nullable List<IndexableFilesIterator> myPredefinedIndexableFilesIterators;
+  private boolean flushQueueAfterScanning = true;
+
 
   public UnindexedFilesScanner(@NotNull Project project,
                                boolean startSuspended,
@@ -261,6 +263,12 @@ public class UnindexedFilesScanner implements FilesScanningTask {
       InitialRefreshKt.scheduleInitialVfsRefresh(myProject, LOG);
     }
 
+    if (flushQueueAfterScanning) {
+      flushPerProjectIndexingQueue(projectIndexingHistory, indicator);
+    }
+  }
+
+  private void flushPerProjectIndexingQueue(@NotNull ProjectIndexingHistoryImpl projectIndexingHistory, @NotNull ProgressIndicator indicator) {
     if (shouldScanInSmartMode()) {
       // Switch to dumb mode and index
       myProject.getService(PerProjectIndexingQueue.class).flushNow(myIndexingReason);
@@ -583,5 +591,10 @@ public class UnindexedFilesScanner implements FilesScanningTask {
   @Nullable
   List<IndexableFilesIterator> getPredefinedIndexableFilesIterators() {
     return myPredefinedIndexableFilesIterators;
+  }
+
+  @TestOnly
+  void setFlushQueueAfterScanning(boolean flushQueueAfterScanning) {
+    this.flushQueueAfterScanning = flushQueueAfterScanning;
   }
 }

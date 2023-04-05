@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.CountDownLatch
@@ -228,14 +229,21 @@ class PerProjectIndexingQueue(private val project: Project) : Disposable {
       else {
         LOG.info("Finished for " + project.name + ". No files to index with loading content.")
       }
-    } finally {
+    }
+    finally {
       currentLatch?.countDown()
     }
   }
 
   fun clear() {
-    val (_, _, currentLatch) = getAndResetQueuedFiles()
+    getFilesAndClear()
+  }
+
+  @VisibleForTesting
+  fun getFilesAndClear(): Map<IndexableFilesIterator, Collection<VirtualFile>> {
+    val (files, _, currentLatch) = getAndResetQueuedFiles()
     currentLatch?.countDown() // release DumbModeWhileScanning if it has already been queued or running
+    return files
   }
 
   private fun getAndResetQueuedFiles(): Triple<ConcurrentMap<IndexableFilesIterator, Collection<VirtualFile>>, Int, CountDownLatch?> {
