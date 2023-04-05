@@ -284,7 +284,7 @@ mod tests {
     }
 
     #[rstest]
-    #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::MainBin, java_type: JavaType::EnvVar})]
+    #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::MainBin, java_type: JavaType::JBR})]
     #[cfg(any(target_os = "macos", target_os = "linux"))]
     fn async_profiler_loading(#[case] layout_spec: &LayoutSpec) {
         let result = run_launcher_with_args(layout_spec, &["async-profiler"]);
