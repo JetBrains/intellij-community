@@ -131,7 +131,7 @@ class CodeVisionSelectionController private constructor(val lifetime: Lifetime,
 
   private fun entryLeftClickHandler(event: EditorMouseEvent){
     val mouseEvent = event.mouseEvent
-    if (!SwingUtilities.isLeftMouseButton(mouseEvent)) return
+    if (!SwingUtilities.isLeftMouseButton(mouseEvent) || mouseEvent.isShiftDown) return
     val entry = consumeEvent(event) ?: return
     val rangeLensesModel = findRangeLensesModel() ?: return
     logger.trace { "entryPressHandler :: isLeftMouseButton" }
