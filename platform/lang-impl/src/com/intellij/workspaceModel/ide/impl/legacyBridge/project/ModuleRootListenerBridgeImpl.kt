@@ -6,23 +6,37 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.util.indexing.EntityIndexingServiceEx
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleDependencyIndexImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleRootListenerBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 
-internal class ProjectRootsChangeListener(private val project: Project) {
-  fun beforeChanged(event: VersionedStorageChange) {
+internal object ModuleRootListenerBridgeImpl : ModuleRootListenerBridge {
+  override fun fireBeforeRootsChanged(project: Project, event: VersionedStorageChange) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     if (project.isDisposed) return
+
+    if (VirtualFileUrlWatcher.getInstance(project).isInsideFilePointersUpdate) {
+      //the old implementation doesn't fire rootsChanged event when roots are moved or renamed, let's keep this behavior for now
+      return
+    }
+    
     val projectRootManager = ProjectRootManager.getInstance(project)
     if (projectRootManager !is ProjectRootManagerBridge) return
     val performUpdate = shouldFireRootsChanged(event, project)
     if (performUpdate) projectRootManager.rootsChanged.beforeRootsChanged()
   }
 
-  fun changed(event: VersionedStorageChange) {
+  override fun fireRootsChanged(project: Project, event: VersionedStorageChange) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     if (project.isDisposed) return
+
+    if (VirtualFileUrlWatcher.getInstance(project).isInsideFilePointersUpdate) {
+      //the old implementation doesn't fire rootsChanged event when roots are moved or renamed, let's keep this behavior for now
+      return
+    }
+
     (ModuleDependencyIndex.getInstance(project) as ModuleDependencyIndexImpl).workspaceModelChanged(event)
     val projectRootManager = ProjectRootManager.getInstance(project)
     if (projectRootManager !is ProjectRootManagerBridge) return

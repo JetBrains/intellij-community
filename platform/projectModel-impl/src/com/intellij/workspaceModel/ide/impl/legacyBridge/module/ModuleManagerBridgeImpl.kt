@@ -11,17 +11,19 @@ import com.intellij.openapi.components.impl.stores.ModuleStore
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.*
-import com.intellij.openapi.module.impl.*
+import com.intellij.openapi.module.impl.LoadedModuleDescriptionImpl
+import com.intellij.openapi.module.impl.ModuleManagerEx
+import com.intellij.openapi.module.impl.UnloadedModulesListStorage
+import com.intellij.openapi.module.impl.createGrouper
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.workspaceModel.jps.CustomModuleEntitySource
 import com.intellij.platform.workspaceModel.jps.JpsFileDependentEntitySource
 import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
@@ -29,26 +31,55 @@ import com.intellij.platform.workspaceModel.jps.serialization.impl.ModulePath
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.precomputeExtensionModel
 import com.intellij.util.graph.*
-import com.intellij.workspaceModel.ide.*
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
+import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
+import com.intellij.workspaceModel.ide.toPath
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import kotlinx.coroutines.*
-import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import java.nio.file.Path
 import java.util.*
 
 @Suppress("OVERRIDE_DEPRECATION")
 @ApiStatus.Internal
-abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleManagerEx(), Disposable {
-  protected val unloadedModules: MutableMap<String, UnloadedModuleDescription> = LinkedHashMap()
-
+abstract class ModuleManagerBridgeImpl(private val project: Project, moduleRootListenerBridge: ModuleRootListenerBridge) : ModuleManagerEx(), Disposable {
+  private val unloadedModules: MutableMap<String, UnloadedModuleDescription> = LinkedHashMap()
+  
+  init {
+    // default project doesn't have modules
+    if (!project.isDefault) {
+      val busConnection = project.messageBus.connect(this)
+      busConnection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
+        override fun projectClosed(eventProject: Project) {
+          if (project == eventProject) {
+            for (module in modules()) {
+              module.projectClosed()
+            }
+          }
+        }
+      })
+      busConnection.subscribe(WorkspaceModelTopics.CHANGED, LegacyProjectModelListenersBridge(project, this, moduleRootListenerBridge))
+      busConnection.subscribe(WorkspaceModelTopics.CHANGED, LoadedModulesListUpdater())
+      busConnection.subscribe(WorkspaceModelTopics.UNLOADED_ENTITIES_CHANGED, object : WorkspaceModelChangeListener {
+        override fun changed(event: VersionedStorageChange) {
+          event.getChanges(ModuleEntity::class.java).forEach { change ->
+            change.oldEntity?.name?.let { unloadedModules.remove(it) }
+            change.newEntity?.let {
+              unloadedModules[it.name] = UnloadedModuleDescriptionBridge.createDescription(it)
+            }
+          }
+        }
+      })
+    }
+  }
+  
   override fun dispose() {
     modules().forEach(Disposer::dispose)
   }
@@ -59,15 +90,6 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
 
   override fun areModulesLoaded(): Boolean {
     return WorkspaceModelTopics.getInstance(project).modulesAreLoaded
-  }
-
-  protected fun fireEventAndDisposeModule(module: ModuleBridge) {
-    project.messageBus.syncPublisher(ProjectTopics.MODULES).moduleRemoved(project, module)
-    Disposer.dispose(module)
-  }
-
-  protected fun fireBeforeModuleRemoved(module: ModuleBridge) {
-    project.messageBus.syncPublisher(ProjectTopics.MODULES).beforeModuleRemoved(project, module)
   }
 
   override fun moduleDependencyComparator(): Comparator<Module> {
@@ -336,22 +358,6 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     }
   }
 
-  protected fun getModuleVirtualFileUrl(moduleEntity: ModuleEntity): VirtualFileUrl? {
-    return getImlFileDirectory(moduleEntity)?.append("${moduleEntity.name}.iml")
-  }
-
-  protected fun getImlFileDirectory(moduleEntity: ModuleEntity): VirtualFileUrl? {
-    val entitySource = when (val moduleSource = moduleEntity.entitySource) {
-      is JpsFileDependentEntitySource -> moduleSource.originalSource
-      is CustomModuleEntitySource -> moduleSource.internalSource
-      else -> moduleEntity.entitySource
-    }
-    if (entitySource !is JpsProjectFileEntitySource.FileInDirectory) {
-      return null
-    }
-    return entitySource.directory
-  }
-
   private fun createModuleInstanceWithoutCreatingComponents(
     moduleEntity: ModuleEntity,
     versionedStorage: VersionedEntityStorage,
@@ -422,6 +428,14 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
   ): ModuleBridge
 
   abstract fun initializeBridges(event: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage)
+  
+  private inner class LoadedModulesListUpdater : WorkspaceModelChangeListener {
+    override fun changed(event: VersionedStorageChange) {
+      if (event.getChanges(ModuleEntity::class.java).isNotEmpty() && unloadedModules.isNotEmpty()) {
+        AutomaticModuleUnloader.getInstance(project).setLoadedModules(modules.map { it.name })
+      }
+    }
+  }
 
   companion object {
     private val LOG = logger<ModuleManagerBridgeImpl>()
@@ -445,6 +459,9 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     @Deprecated("Use ModuleBridgeUtils#findModuleEntity instead")
     fun EntityStorage.findModuleEntity(module: ModuleBridge) = moduleMap.getFirstEntity(module) as ModuleEntity?
 
+    fun fireModulesAdded(project: Project, modules: List<Module>) {
+      project.messageBus.syncPublisher(ProjectTopics.MODULES).modulesAdded(project, modules)
+    }
 
     internal fun getModuleGroupPath(module: Module, entityStorage: VersionedEntityStorage): Array<String>? {
       val moduleEntity = (module as ModuleBridge).findModuleEntity(entityStorage.current) ?: return null
@@ -470,6 +487,16 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     }
     private val dependencyComparatorValue = CachedValue { storage ->
       DFSTBuilder(buildModuleGraph(storage, true)).comparator()
+    }
+
+    fun List<EntityChange<LibraryEntity>>.filterModuleLibraryChanges(): List<EntityChange<LibraryEntity>> = filter { it.isModuleLibrary() }
+
+    private fun EntityChange<LibraryEntity>.isModuleLibrary(): Boolean {
+      return when (this) {
+        is EntityChange.Added -> entity.tableId is LibraryTableId.ModuleLibraryTableId
+        is EntityChange.Removed -> entity.tableId is LibraryTableId.ModuleLibraryTableId
+        is EntityChange.Replaced -> oldEntity.tableId is LibraryTableId.ModuleLibraryTableId
+      }
     }
 
     @JvmStatic
@@ -501,6 +528,22 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
           }
         }
       }
+    }
+
+    fun getModuleVirtualFileUrl(moduleEntity: ModuleEntity): VirtualFileUrl? {
+      return getImlFileDirectory(moduleEntity)?.append("${moduleEntity.name}.iml")
+    }
+
+    fun getImlFileDirectory(moduleEntity: ModuleEntity): VirtualFileUrl? {
+      val entitySource = when (val moduleSource = moduleEntity.entitySource) {
+        is JpsFileDependentEntitySource -> moduleSource.originalSource
+        is CustomModuleEntitySource -> moduleSource.internalSource
+        else -> moduleEntity.entitySource
+      }
+      if (entitySource !is JpsProjectFileEntitySource.FileInDirectory) {
+        return null
+      }
+      return entitySource.directory
     }
 
     private fun buildModuleGraph(storage: EntityStorage, includeTests: Boolean): Graph<Module> {
