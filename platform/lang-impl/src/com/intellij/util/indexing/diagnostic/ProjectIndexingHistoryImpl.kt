@@ -546,11 +546,6 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     Scanning {
       override fun getProperty() = ScanningTimesImpl::scanFilesDuration
     },
-
-    Indexing {
-      override fun getProperty() = ScanningTimesImpl::indexingDuration
-    },
-
     PushProperties {
       override fun getProperty() = ScanningTimesImpl::pushPropertiesDuration
     };
@@ -601,7 +596,6 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     override val updatingStart: ZonedDateTime,
     override var totalUpdatingTime: TimeNano,
     override var updatingEnd: ZonedDateTime = updatingStart,
-    override var indexingDuration: Duration = Duration.ZERO,
     override var pushPropertiesDuration: Duration = Duration.ZERO,
     override var indexExtensionsDuration: Duration = Duration.ZERO,
     override var creatingIteratorsDuration: Duration = Duration.ZERO,

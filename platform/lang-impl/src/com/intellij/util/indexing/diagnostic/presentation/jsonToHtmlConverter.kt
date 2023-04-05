@@ -1050,6 +1050,17 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
               tr {
                 td("Activity"); td("Scanning")
               }
+
+              tr { td("Started at"); td(times.updatingStart.presentableLocalDateTime()) }
+              if (times.indexingReason != null) {
+                tr { td("Reason"); td(times.indexingReason) }
+              }
+              tr { td("Type"); td(times.scanningType.name.lowercase(Locale.ENGLISH).replace('_', ' ')) }
+              tr { td("Finished at"); td(times.updatingEnd.presentableLocalDateTime()) }
+              tr { td("Cancelled"); td(times.wasInterrupted.toString()) }
+              tr { td("Suspended time"); td(times.totalSuspendedTime.presentableDuration()) }
+              tr { td("Total time"); td(times.totalUpdatingTime.presentableDuration()) }
+
               tr { td(TITLE_NUMBER_OF_FILE_PROVIDERS); td(fileCount.numberOfFileProviders.toString()) }
               tr { td(TITLE_NUMBER_OF_SCANNED_FILES); td(fileCount.numberOfScannedFiles.toString()) }
               tr {
@@ -1060,20 +1071,9 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
                 td(TITLE_NUMBER_OF_FILES_SCHEDULED_FOR_INDEXING_AFTER_SCAN)
                 td(fileCount.numberOfFilesScheduledForIndexingAfterScan.toString())
               }
-
-              tr { td("Started at"); td(times.updatingStart.presentableLocalDateTime()) }
-              if (times.indexingReason != null) {
-                tr { td("Reason"); td(times.indexingReason) }
-              }
-              tr { td("Type"); td(times.scanningType.name.lowercase(Locale.ENGLISH).replace('_', ' ')) }
-              tr { td("Finished at"); td(times.updatingEnd.presentableLocalDateTime()) }
-              tr { td("Cancelled?"); td(times.wasInterrupted.toString()) }
-              tr { td("Suspended time"); td(times.totalSuspendedTime.presentableDuration()) }
-              tr { td("Total time"); td(times.totalUpdatingTime.presentableDuration()) }
-              tr { td("Indexing time"); td(times.indexingTime.presentableDuration()) }
-              tr { td("Iterators creation time"); td(times.creatingIteratorsTime.presentableDuration()) }
-              tr { td("Scanning time"); td(times.scanFilesTime.presentableDuration()) }
-              tr { td("Pushing properties time"); td(times.pushPropertiesTime.presentableDuration()) }
+              tr { td("Scanning stages: iterators creation time"); td(times.creatingIteratorsTime.presentableDuration()) }
+              tr { td("Scanning stages: pushing properties time"); td(times.pushPropertiesTime.presentableDuration()) }
+              tr { td("Scanning stages: time of collecting files to compute index values"); td(times.scanFilesTime.presentableDuration()) }
               tr { td("Running extensions time"); td(times.indexExtensionsTime.presentableDuration()) }
             }
           }

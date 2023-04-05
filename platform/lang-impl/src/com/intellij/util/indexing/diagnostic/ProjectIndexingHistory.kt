@@ -169,7 +169,6 @@ interface ScanningTimes {
   val updatingStart: ZonedDateTime
   val totalUpdatingTime: TimeNano
   val updatingEnd: ZonedDateTime
-  val indexingDuration: Duration
   val pushPropertiesDuration: Duration
   val indexExtensionsDuration: Duration
   var creatingIteratorsDuration: Duration

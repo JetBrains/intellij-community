@@ -105,7 +105,6 @@ fun ScanningTimes.toJson() =
     indexingReason = indexingReason,
     scanningType = scanningType,
     totalUpdatingTime = JsonDuration(totalUpdatingTime),
-    indexingTime = JsonDuration(indexingDuration.toNanos()),
     creatingIteratorsTime = JsonDuration(creatingIteratorsDuration.toNanos()),
     scanFilesTime = JsonDuration(scanFilesDuration.toNanos()),
     pushPropertiesTime = JsonDuration(pushPropertiesDuration.toNanos()),
