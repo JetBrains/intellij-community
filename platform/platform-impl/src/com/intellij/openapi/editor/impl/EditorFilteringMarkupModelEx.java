@@ -65,14 +65,6 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
     return new FilteringMarkupIterator<>(myDelegate.overlappingIterator(startOffset, endOffset), this::isAvailable);
   }
 
-  @NotNull
-  @Override
-  public MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset,
-                                                                int endOffset,
-                                                                boolean onlyRenderedInGutter) {
-    return new FilteringMarkupIterator<>(myDelegate.overlappingIterator(startOffset, endOffset, onlyRenderedInGutter), this::isAvailable);
-  }
-
   @Override
   public RangeHighlighter @NotNull [] getAllHighlighters() {
     List<RangeHighlighter> list = ContainerUtil.filter(myDelegate.getAllHighlighters(), IS_AVAILABLE);

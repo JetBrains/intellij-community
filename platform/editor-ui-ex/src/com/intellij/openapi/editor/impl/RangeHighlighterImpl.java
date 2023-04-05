@@ -454,6 +454,12 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   }
 
   @Override
+  public boolean isRenderedInGutter() {
+    RangeHighlighterTree.RHNode node = (RangeHighlighterTree.RHNode)(Object)myNode;
+    return node != null && node.isRenderedInGutter() || RangeHighlighterEx.super.isRenderedInGutter();
+  }
+
+  @Override
   @NonNls
   public String toString() {
     return "RangeHighlighter: ("+getStartOffset()+","+getEndOffset()+"); layer:"+getLayer()+"; tooltip: "+getErrorStripeTooltip() + (isValid() ? "" : "(invalid)");

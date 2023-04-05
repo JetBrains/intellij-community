@@ -176,14 +176,6 @@ public class MarkupModelWindow extends UserDataHolderBase implements MarkupModel
     return myHostModel.overlappingIterator(startOffset, endOffset);
   }
 
-  @NotNull
-  @Override
-  public MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset,
-                                                                int endOffset,
-                                                                boolean onlyRenderedInGutter) {
-    throw new UnsupportedOperationException();
-  }
-
   @Override
   public void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter, boolean renderersChanged, boolean fontStyleChanged) {
 

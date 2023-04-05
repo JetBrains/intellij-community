@@ -782,17 +782,6 @@ public final class ContainerUtil {
     }
   }
 
-  /**
-   * @return read-only list consisting of the elements from the input collection
-   */
-  @Unmodifiable
-  public static @NotNull <T> List<T> collect(@NotNull Iterator<? extends T> iterator) {
-    if (!iterator.hasNext()) return emptyList();
-    List<T> list = new ArrayList<>();
-    addAll(list, iterator);
-    return list;
-  }
-
   @Contract(pure = true)
   public static @NotNull <K, V> Map<K, V> newMapFromKeys(@NotNull Iterator<? extends K> keys, @NotNull Convertor<? super K, ? extends V> valueConvertor) {
     Map<K, V> map = new HashMap<>();
@@ -1242,12 +1231,38 @@ public final class ContainerUtil {
   }
 
   /**
+   * @return read-only list consisting of the elements from the input collection
+   */
+  @Unmodifiable
+  public static @NotNull <T> List<T> collect(@NotNull Iterator<? extends T> iterator) {
+    if (!iterator.hasNext()) return emptyList();
+    List<T> list = new ArrayList<>();
+    addAll(list, iterator);
+    return list;
+  }
+
+  /**
    * @return read-only list consisting of the elements from the {@code iterator} of the specified class
    */
   @Unmodifiable
   public static @NotNull <T> List<T> collect(@NotNull Iterator<?> iterator, @NotNull FilteringIterator.InstanceOf<T> instanceOf) {
     //noinspection unchecked
-    return collect(FilteringIterator.create((Iterator<T>)iterator, instanceOf));
+    return collect((Iterator<T>)iterator, t->instanceOf.value(t));
+  }
+  /**
+   * @return read-only list consisting of the elements from the {@code iterator} satisfying the {@code predicate}
+   */
+  @Unmodifiable
+  public static @NotNull <T> List<T> collect(@NotNull Iterator<? extends T> iterator, @NotNull java.util.function.Predicate<? super T> predicate) {
+    if (!iterator.hasNext()) return emptyList();
+    List<T> list = new ArrayList<>();
+    while (iterator.hasNext()) {
+      T o = iterator.next();
+      if (predicate.test(o)) {
+        list.add(o);
+      }
+    }
+    return unmodifiableOrEmptyList(list);
   }
 
   @Contract(mutates = "param1")

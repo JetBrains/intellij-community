@@ -143,13 +143,6 @@ public final class EmptyMarkupModel implements MarkupModelEx {
   }
 
   @Override
-  public @NotNull MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset,
-                                                                         int endOffset,
-                                                                         boolean onlyRenderedInGutter) {
-    return MarkupIterator.EMPTY;
-  }
-
-  @Override
   public void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter, boolean renderersChanged, boolean fontStyleChanged) {
 
   }

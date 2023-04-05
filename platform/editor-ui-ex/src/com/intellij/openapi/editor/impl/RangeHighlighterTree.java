@@ -25,9 +25,7 @@ final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
 
   @NotNull
   MarkupIterator<RangeHighlighterEx> overlappingIterator(@NotNull TextRange rangeInterval, boolean onlyRenderedInGutter) {
-    MarkupIterator<RangeHighlighterEx> iterator =
-      overlappingIterator(rangeInterval, node -> (!onlyRenderedInGutter || node.isFlagSet(RHNode.RENDERED_IN_GUTTER_FLAG)));
-
+    MarkupIterator<RangeHighlighterEx> iterator = overlappingIterator(rangeInterval, __->true);
     return new FilteringMarkupIterator<>(iterator, highlighter -> !onlyRenderedInGutter || highlighter.isRenderedInGutter());
   }
 
@@ -92,13 +90,13 @@ final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
         RangeHighlighterEx h = getter.get();
         renderedInGutter |= h.isRenderedInGutter();
       }
-      Node<RangeHighlighterEx> left = getLeft();
+      RHNode left = (RHNode)getLeft();
       if (left != null) {
-        renderedInGutter |= left.isFlagSet(RENDERED_IN_GUTTER_FLAG);
+        renderedInGutter |= left.isRenderedInGutter();
       }
-      Node<RangeHighlighterEx> right = getRight();
+      RHNode right = (RHNode)getRight();
       if (right != null) {
-        renderedInGutter |= right.isFlagSet(RENDERED_IN_GUTTER_FLAG);
+        renderedInGutter |= right.isRenderedInGutter();
       }
       setFlag(RENDERED_IN_GUTTER_FLAG, renderedInGutter);
     }
@@ -106,9 +104,9 @@ final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
     private void recalculateRenderFlagsUp() {
       RHNode n = this;
       while (n != null) {
-        boolean prevInGutter = n.isFlagSet(RENDERED_IN_GUTTER_FLAG);
+        boolean prevInGutter = n.isRenderedInGutter();
         n.recalculateRenderFlags();
-        if (n.isFlagSet(RENDERED_IN_GUTTER_FLAG) == prevInGutter) break;
+        if (n.isRenderedInGutter() == prevInGutter) break;
         n = (RHNode)n.getParent();
       }
     }
@@ -116,9 +114,13 @@ final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
     @Override
     void addInterval(@NotNull RangeHighlighterEx h) {
       super.addInterval(h);
-      if (!isFlagSet(RENDERED_IN_GUTTER_FLAG) && h.isRenderedInGutter()) {
+      if (!isRenderedInGutter() && h.isRenderedInGutter()) {
         recalculateRenderFlagsUp();
       }
+    }
+
+    boolean isRenderedInGutter() {
+      return isFlagSet(RENDERED_IN_GUTTER_FLAG);
     }
 
     @Override
