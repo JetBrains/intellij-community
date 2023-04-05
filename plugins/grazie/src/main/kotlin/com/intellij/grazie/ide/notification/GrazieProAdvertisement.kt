@@ -77,6 +77,7 @@ internal fun advertiseGrazieProfessional(project: Project) {
       .addAction(remindLaterAction)
       .addAction(ignoreAction)
       .setSuggestionType(true)
+      .setDisplayId("grazie.pro.advertisement")
       .notify(project)
   }
 }
