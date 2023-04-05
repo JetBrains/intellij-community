@@ -1052,8 +1052,8 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
               }
 
               tr { td("Started at"); td(times.updatingStart.presentableLocalDateTime()) }
-              if (times.indexingReason != null) {
-                tr { td("Reason"); td(times.indexingReason) }
+              if (times.scanningReason != null) {
+                tr { td("Reason"); td(times.scanningReason) }
               }
               tr { td("Type"); td(times.scanningType.name.lowercase(Locale.ENGLISH).replace('_', ' ')) }
               tr { td("Finished at"); td(times.updatingEnd.presentableLocalDateTime()) }

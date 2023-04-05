@@ -102,7 +102,7 @@ fun IndexingTimes.toJson() =
 
 fun ScanningTimes.toJson() =
   JsonProjectScanningHistoryTimes(
-    indexingReason = indexingReason,
+    scanningReason = scanningReason,
     scanningType = scanningType,
     totalUpdatingTime = JsonDuration(totalUpdatingTime),
     creatingIteratorsTime = JsonDuration(creatingIteratorsDuration.toNanos()),

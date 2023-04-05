@@ -48,7 +48,7 @@ interface ProjectIndexingActivityHistory {
 
 interface ProjectScanningHistory : ProjectIndexingActivityHistory {
   override val project: Project
-  val indexingReason: String?
+  val scanningReason: String?
   val indexingSessionId: Long
   val times: ScanningTimes
   val scanningStatistics: List<JsonScanningStatistics>
@@ -163,7 +163,7 @@ interface IndexingTimes {
 }
 
 interface ScanningTimes {
-  val indexingReason: String?
+  val scanningReason: String?
   val scanningType: ScanningType
   val updatingStart: ZonedDateTime
   val totalUpdatingTime: TimeNano

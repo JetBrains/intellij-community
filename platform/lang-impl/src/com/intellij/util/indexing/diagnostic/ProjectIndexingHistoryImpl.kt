@@ -363,7 +363,7 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
 
 @ApiStatus.Internal
 data class ProjectScanningHistoryImpl(override val project: Project,
-                                      override val indexingReason: String?,
+                                      override val scanningReason: String?,
                                       private val scanningType: ScanningType) : ProjectScanningHistory {
   private companion object {
     val indexingSessionIdSequencer = AtomicLong()
@@ -374,7 +374,7 @@ data class ProjectScanningHistoryImpl(override val project: Project,
 
   override val times: ScanningTimes by ::timesImpl
 
-  private val timesImpl = ScanningTimesImpl(indexingReason = indexingReason, scanningType = scanningType,
+  private val timesImpl = ScanningTimesImpl(scanningReason = scanningReason, scanningType = scanningType,
                                             updatingStart = ZonedDateTime.now(ZoneOffset.UTC), totalUpdatingTime = System.nanoTime())
 
   override val scanningStatistics = arrayListOf<JsonScanningStatistics>()
@@ -595,7 +595,7 @@ data class ProjectScanningHistoryImpl(override val project: Project,
   ) : StatsPerIndexer
 
   data class ScanningTimesImpl(
-    override val indexingReason: String?,
+    override val scanningReason: String?,
     override val scanningType: ScanningType,
     override val updatingStart: ZonedDateTime,
     override var totalUpdatingTime: TimeNano,
