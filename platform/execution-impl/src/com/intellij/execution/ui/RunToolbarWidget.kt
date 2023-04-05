@@ -78,7 +78,7 @@ private const val DEBUG: String = ToolWindowId.DEBUG
 
 private val recentLimit: Int get() = AdvancedSettings.getInt("max.recent.run.configurations")
 
-internal fun createRunConfigurationsActionGroup(project: Project): ActionGroup {
+internal fun createRunConfigurationsActionGroup(project: Project, e: AnActionEvent): ActionGroup {
   val actions = DefaultActionGroup()
   val registry = ExecutorRegistry.getInstance()
   val runExecutor = registry.getExecutorById(RUN) ?: error("No '${RUN}' executor found")
@@ -96,7 +96,7 @@ internal fun createRunConfigurationsActionGroup(project: Project): ActionGroup {
   }
 
   val createActionFn: (RunnerAndConfigurationSettings) -> AnAction = { configuration ->
-    createRunConfigurationWithInlines(runExecutor, debugExecutor, configuration, project) { shouldBeShown(configuration, it) }
+    createRunConfigurationWithInlines(runExecutor, debugExecutor, configuration, project, e) { shouldBeShown(configuration, it) }
   }
   val createFolderFn: (String) -> DefaultActionGroup = { folderName ->
     HideableDefaultActionGroup(folderName) { shouldBeShown(null, it) }
@@ -111,7 +111,7 @@ internal fun createRunConfigurationsActionGroup(project: Project): ActionGroup {
   if (shouldShowRecent) {
     actions.add(Separator.create(ExecutionBundle.message("run.toolbar.widget.dropdown.recent.separator.text")))
     for (conf in recents) {
-      val actionGroupWithInlineActions = createRunConfigurationWithInlines(runExecutor, debugExecutor, conf, project)
+      val actionGroupWithInlineActions = createRunConfigurationWithInlines(runExecutor, debugExecutor, conf, project, e)
       actions.add(actionGroupWithInlineActions)
     }
     actions.add(Separator.create())
@@ -194,6 +194,7 @@ private fun createRunConfigurationWithInlines(runExecutor: Executor,
                                               debugExecutor: Executor,
                                               conf: RunnerAndConfigurationSettings,
                                               project: Project,
+                                              e: AnActionEvent,
                                               shouldBeShown: (Boolean) -> Boolean = { true }
 ): SelectRunConfigurationWithInlineActions {
   val activeExecutor = getActiveExecutor(project, conf)
@@ -215,7 +216,7 @@ private fun createRunConfigurationWithInlines(runExecutor: Executor,
     val extraAction = ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(extraExecutor, conf, false)
     result.addAction(extraAction, Constraints.FIRST)
   }
-  addAdditionalActionsToRunConfigurationOptions(project, conf, result, false)
+  addAdditionalActionsToRunConfigurationOptions(project, e, conf, result, false)
   return result
 }
 

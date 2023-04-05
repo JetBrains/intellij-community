@@ -346,7 +346,7 @@ private class MoreRunToolbarActions : TogglePopupAction(
     val project = e.project ?: return null
     val selectedConfiguration = RunManager.getInstance(project).selectedConfiguration
     val result = createOtherRunnersSubgroup(selectedConfiguration, project)
-    addAdditionalActionsToRunConfigurationOptions(project, selectedConfiguration, result, true)
+    addAdditionalActionsToRunConfigurationOptions(project, e, selectedConfiguration, result, true)
     return result
   }
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -368,11 +368,12 @@ private fun createOtherRunnersSubgroup(runConfiguration: RunnerAndConfigurationS
 }
 
 internal fun addAdditionalActionsToRunConfigurationOptions(project: Project,
+                                                           e: AnActionEvent,
                                                            selectedConfiguration: RunnerAndConfigurationSettings?,
                                                            targetGroup: DefaultActionGroup,
                                                            isWidget: Boolean) {
   val additionalActions = AdditionalRunningOptions.getInstance(project).getAdditionalActions(selectedConfiguration, isWidget)
-  for (action in additionalActions.getChildren(null).reversed()) {
+  for (action in additionalActions.getChildren(e).reversed()) {
     targetGroup.add(action, Constraints.FIRST)
   }
 }
@@ -388,7 +389,7 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
 
   override fun getActionGroup(e: AnActionEvent): ActionGroup? {
     val project = e.project ?: return null
-    return createRunConfigurationsActionGroup(project)
+    return createRunConfigurationsActionGroup(project, e)
   }
 
   override fun createPopup(actionGroup: ActionGroup, e: AnActionEvent, disposeCallback: () -> Unit): ListPopup =
