@@ -7,15 +7,4 @@
             area="IDEA_PROJECT"
     />
   </extensionPoints>
-
-  <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <irGenerationExtension implementation="org.jetbrains.kotlin.parcelize.ParcelizeIrGeneratorExtension"/>
-    <syntheticResolveExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.parcelize.IdeParcelizeResolveExtension"/>
-    <storageComponentContainerContributor
-            implementation="org.jetbrains.kotlin.idea.compilerPlugin.parcelize.IdeParcelizeDeclarationCheckerComponentContainerContributor"/>
-
-    <ultraLightClassModifierExtension
-            implementation="org.jetbrains.kotlin.idea.compilerPlugin.parcelize.ParcelizeUltraLightClassModifierExtension"/>
-    <quickFixContributor implementation="org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.ParcelizeQuickFixContributor"/>
-  </extensions>
 </idea-plugin>

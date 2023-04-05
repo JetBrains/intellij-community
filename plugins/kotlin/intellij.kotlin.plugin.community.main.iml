@@ -79,6 +79,7 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.maven" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.scripting" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.common" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.k1" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.completion.api" exported="" />
     <orderEntry type="module" module-name="kotlin.completion.impl-shared" exported="" />
