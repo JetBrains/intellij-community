@@ -134,7 +134,7 @@ object InplaceExtractUtils {
       .toList()
     val conflictsInSameClass = PsiTreeUtil.findChildrenOfType(file, PsiClass::class.java).filter { psiClass -> psiClass.name == name }
     if (conflictsInSameClass.size + conflictsInParentClasses.size > 1) {
-      showErrorHint(editor, variableRange.endOffset, JavaRefactoringBundle.message("template.error.class.already.defined"))
+      showErrorHint(editor, variableRange.endOffset, JavaRefactoringBundle.message("template.error.class.already.defined", name))
       return false
     }
     return true
