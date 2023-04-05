@@ -20,7 +20,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ClientProperty;
-import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.SearchFieldWithExtension;
 import com.intellij.util.EventDispatcher;
@@ -47,8 +46,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
@@ -520,8 +517,6 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
   }
 
   protected static class TextFilterModel extends FilterModel.PairFilterModel<VcsLogTextFilter, VcsLogHashFilter> {
-    private @Nullable String myText;
-
     TextFilterModel(@NotNull MainVcsLogUiProperties properties,
                     @Nullable VcsLogFilterCollection filters,
                     @NotNull Disposable parentDisposable) {
@@ -581,30 +576,10 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
     @NotNull
     String getText() {
-      if (myText != null) {
-        return myText;
-      }
-      else if (getFilter1() != null) {
+      if (getFilter1() != null) {
         return getFilter1().getText();
       }
-      else {
-        return "";
-      }
-    }
-
-    void setUnsavedText(@NotNull String text) {
-      myText = text;
-    }
-
-    boolean hasUnsavedChanges() {
-      if (myText == null) return false;
-      return getFilter1() == null || !myText.equals(getFilter1().getText());
-    }
-
-    @Override
-    public void setFilter(@Nullable FilterPair<VcsLogTextFilter, VcsLogHashFilter> filter) {
-      super.setFilter(filter);
-      myText = null;
+      return "";
     }
 
     @Override
@@ -787,17 +762,6 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
       myTextFilterModel = model;
       setText(myTextFilterModel.getText());
       getTextEditor().addActionListener(e -> applyFilter());
-      addDocumentListener(new DocumentAdapter() {
-        @Override
-        protected void textChanged(@NotNull DocumentEvent e) {
-          try {
-            myTextFilterModel.setUnsavedText(e.getDocument().getText(0, e.getDocument().getLength()));
-          }
-          catch (BadLocationException ex) {
-            LOG.error(ex);
-          }
-        }
-      });
       myTextFilterModel.addSetFilterListener(() -> {
         String modelText = myTextFilterModel.getText();
         if (!Objects.equals(getText(), modelText)) setText(modelText);
@@ -825,7 +789,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
     @Override
     protected void onFocusLost() {
-      if (myTextFilterModel.hasUnsavedChanges()) {
+      if (!Objects.equals(getText(), myTextFilterModel.getText())) {
         applyFilter();
       }
     }
