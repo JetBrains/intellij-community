@@ -33,6 +33,7 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
   layout.withModule("intellij.platform.util.rt", "util_rt.jar")
   layout.withModule("intellij.platform.jps.build.launcher", "jps-launcher.jar")
 
+  layout.withModule("intellij.platform.runtime.repository", "platform-runtime-repository.jar")
   layout.withModules(listOf(
     "intellij.platform.jps.model",
     "intellij.platform.jps.model.impl",
@@ -66,6 +67,7 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
   layout.withModule("intellij.eclipse.jps", "eclipse-jps.jar")
   layout.withModule("intellij.eclipse.common", "eclipse-common.jar")
   layout.withModule("intellij.devkit.jps", "devkit-jps.jar")
+  layout.withModule("intellij.devkit.runtimeModuleRepository.jps", "devkit-runtimeModuleRepository-jps.jar")
   layout.withModule("intellij.java.langInjection.jps", "java-langInjection-jps.jar")
 
   layout.withModule("intellij.space.java.jps", "space-java-jps.jar")

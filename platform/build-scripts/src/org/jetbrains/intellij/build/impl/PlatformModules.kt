@@ -216,6 +216,7 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
   if (!productLayout.excludedModuleNames.contains("intellij.java.guiForms.rt")) {
     layout.withModule("intellij.java.guiForms.rt", "forms_rt.jar")
   }
+  addModule("platform-runtime-repository.jar", listOf("intellij.platform.runtime.repository"), productLayout = productLayout, layout = layout)
   addModule("jps-model.jar", listOf(
     "intellij.platform.jps.model",
     "intellij.platform.jps.model.serialization",

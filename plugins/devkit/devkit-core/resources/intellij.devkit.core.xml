@@ -23,6 +23,10 @@
     <runConfigurationExtension implementation="org.jetbrains.idea.devkit.run.DevKitApplicationPatcher"/>
     <compiler.buildTargetScopeProvider implementation="org.jetbrains.idea.devkit.build.PluginModuleBuildScopeProvider"/>
 
+    <registryKey key="devkit.generate.intellij.module.repository" defaultValue="false"
+                 description="Generate file with runtime module descriptors for IntelliJ project"/>
+    <compiler.buildTargetScopeProvider implementation="org.jetbrains.idea.devkit.build.IntelliJModuleRepositoryBuildScopeProvider"/>
+
     <xmlStructureViewBuilderProvider
       implementation="org.jetbrains.idea.devkit.navigation.structure.PluginDescriptorXmlStructureViewBuilderProvider"/>
 
@@ -64,7 +68,7 @@
     <moduleType id="PLUGIN_MODULE" implementationClass="org.jetbrains.idea.devkit.module.PluginModuleType" classpathProvider="true"/>
     <moduleBuilder builderClass="org.jetbrains.idea.devkit.module.IdePluginModuleBuilder"/>
     <sdkType implementation="org.jetbrains.idea.devkit.projectRoots.IdeaJdk"/>
-    <compileServer.plugin classpath="devkit-jps.jar"/>
+    <compileServer.plugin classpath="devkit-jps.jar;devkit-runtimeModuleRepository-jps.jar"/>
 
     <fileTemplateGroup implementation="org.jetbrains.idea.devkit.DevKitFileTemplatesFactory"/>
     <lang.documentationProvider language="XML"

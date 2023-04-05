@@ -9,6 +9,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.platform.runtime.repository.RuntimeModuleRepository;
 import com.intellij.tracing.Tracer;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -117,6 +118,7 @@ public final class ClasspathBootstrap {
 
     addToClassPath(ClassWriter.class, cp);  // asm
     addToClassPath(ClassVisitor.class, cp);  // asm-commons
+    addToClassPath(RuntimeModuleRepository.class, cp); // intellij.platform.runtime.repository
     addToClassPath(JpsModel.class, cp);  // intellij.platform.jps.model
     addToClassPath(JpsModelImpl.class, cp);  // intellij.platform.jps.model.impl
     addToClassPath(JpsProjectLoader.class, cp);  // intellij.platform.jps.model.serialization

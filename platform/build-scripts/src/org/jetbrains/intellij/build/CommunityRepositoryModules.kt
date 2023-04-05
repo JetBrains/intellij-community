@@ -201,6 +201,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.groovy.devkit")
       spec.withModule("intellij.kotlin.devkit")
       spec.withModule("intellij.devkit.jps")
+      spec.withModule("intellij.devkit.runtimeModuleRepository.jps")
       spec.withProjectLibrary("workspace-model-codegen")
     },
     plugin("intellij.eclipse") { spec ->
