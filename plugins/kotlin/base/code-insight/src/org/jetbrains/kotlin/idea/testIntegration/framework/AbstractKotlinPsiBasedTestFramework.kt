@@ -70,6 +70,8 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
     }
 
     protected fun checkNameMatch(file: KtFile, fqNames: Set<String>, shortName: String): Boolean {
+        if ("${file.packageFqName}.$shortName" in fqNames) return true
+
         for (importDirective in file.importDirectives) {
             if (!importDirective.isValidImport) {
                 continue
