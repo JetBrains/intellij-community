@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history
 
 import com.intellij.diagnostic.telemetry.TraceManager
@@ -8,13 +8,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
-import com.intellij.util.Consumer
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.impl.HashImpl
 import git4idea.GitCommit
 import git4idea.commands.Git
 import git4idea.commands.GitLineHandler
+import java.util.function.Consumer
 
 internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetadata>(protected val project: Project,
                                                                                      protected val root: VirtualFile,
@@ -55,7 +55,7 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
         val parents = firstRecord.parentsHashes
 
         if (parents.isEmpty() || parents.size == records.size) {
-          commitConsumer.consume(createCommit(records, factory, requirements))
+          commitConsumer.accept(createCommit(records, factory, requirements))
         }
         else {
           LOG.warn("Not enough records for commit ${firstRecord.hash} " +
@@ -69,7 +69,7 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
     }
     else {
       val consumer = Consumer<R> { record ->
-        commitConsumer.consume(createCommit(mutableListOf(record), factory, requirements))
+        commitConsumer.accept(createCommit(mutableListOf(record), factory, requirements))
       }
 
       readRecordsFromHandler(handler, consumer, *commandParameters)

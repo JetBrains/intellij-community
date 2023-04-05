@@ -1,12 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history
 
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.util.CollectConsumer
-import com.intellij.util.Consumer
 import com.intellij.vcs.log.VcsFullCommitDetails
-import git4idea.GitCommit
 import git4idea.config.GitVersion
 import git4idea.history.GitCommitRequirements.DiffInMergeCommits
 import git4idea.history.GitCommitRequirements.DiffRenameLimit
@@ -51,7 +49,7 @@ class GitLogUtilTest : GitSingleRepoTest() {
     expected.reverse()
 
     val actualHashes = mutableListOf<String>()
-    GitLogUtil.readFullDetails(project, repo.root, Consumer<GitCommit> { actualHashes.add(it.id.asString()) }, "--max-count=$commitCount")
+    GitLogUtil.readFullDetails(project, repo.root, { actualHashes.add(it.id.asString()) }, "--max-count=$commitCount")
     assertEquals(expected, actualHashes)
   }
 

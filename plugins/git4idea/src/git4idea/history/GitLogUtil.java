@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
 import com.intellij.diagnostic.telemetry.TraceManager;
@@ -9,7 +9,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CollectConsumer;
-import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
@@ -29,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.function.Consumer;
 
 import static com.intellij.diagnostic.telemetry.TraceUtil.runWithSpanThrows;
 import static git4idea.history.GitLogParser.GitLogOption.*;
@@ -91,15 +91,15 @@ public final class GitLogUtil {
     GitLogOutputSplitter<GitLogRecord> handlerListener = new GitLogOutputSplitter<>(handler, parser, record -> {
       Hash hash = HashImpl.build(record.getHash());
       List<Hash> parents = ContainerUtil.map(record.getParentsHashes(), factory::createHash);
-      commitConsumer.consume(factory.createTimedCommit(hash, parents, record.getCommitTime()));
+      commitConsumer.accept(factory.createTimedCommit(hash, parents, record.getCommitTime()));
 
       if (refConsumer != null) {
         for (VcsRef ref : parseRefs(record.getRefs(), hash, factory, root)) {
-          refConsumer.consume(ref);
+          refConsumer.accept(ref);
         }
       }
 
-      if (userConsumer != null) userConsumer.consume(factory.createUser(record.getAuthorName(), record.getAuthorEmail()));
+      if (userConsumer != null) userConsumer.accept(factory.createUser(record.getAuthorName(), record.getAuthorEmail()));
     });
     Git.getInstance().runCommandWithoutCollectingOutput(handler);
     handlerListener.reportErrors();
@@ -138,10 +138,10 @@ public final class GitLogUtil {
         parents.add(HashImpl.build(parent));
       }
       record.setUsedHandler(h);
-      consumer.consume(factory.createCommitMetadata(HashImpl.build(record.getHash()), parents, record.getCommitTime(), root,
-                                                    record.getSubject(), record.getAuthorName(), record.getAuthorEmail(),
-                                                    record.getFullMessage(),
-                                                    record.getCommitterName(), record.getCommitterEmail(), record.getAuthorTimeStamp()));
+      consumer.accept(factory.createCommitMetadata(HashImpl.build(record.getHash()), parents, record.getCommitTime(), root,
+                                                   record.getSubject(), record.getAuthorName(), record.getAuthorEmail(),
+                                                   record.getFullMessage(),
+                                                   record.getCommitterName(), record.getCommitterEmail(), record.getAuthorTimeStamp()));
     });
 
     Git.getInstance().runCommandWithoutCollectingOutput(h).throwOnError();
@@ -211,12 +211,12 @@ public final class GitLogUtil {
                                               @NotNull VirtualFile root,
                                               @NotNull List<String> hashes,
                                               @NotNull GitCommitRequirements requirements,
-                                              @NotNull Consumer<? super GitCommit> commitConsumer) throws VcsException {
+                                              @NotNull com.intellij.util.Consumer<? super GitCommit> commitConsumer) throws VcsException {
     if (hashes.isEmpty()) {
       return;
     }
     new GitFullDetailsCollector(project, root, new InternedGitLogRecordBuilder())
-      .readFullDetailsForHashes(hashes, requirements, false, commitConsumer);
+      .readFullDetailsForHashes(hashes, requirements, false, commitConsumer::consume);
   }
 
   @NotNull

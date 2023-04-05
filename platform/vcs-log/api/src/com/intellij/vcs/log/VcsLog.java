@@ -42,7 +42,7 @@ public interface VcsLog {
   List<VcsFullCommitDetails> getSelectedDetails();
 
   /**
-   * @deprecated Use {@link VcsLogCommitSelection#requestFullDetails(Consumer)} instead.
+   * @deprecated Use {@link VcsLogCommitSelection#requestFullDetails(java.util.function.Consumer)} instead.
    */
   @RequiresEdt
   @Deprecated
