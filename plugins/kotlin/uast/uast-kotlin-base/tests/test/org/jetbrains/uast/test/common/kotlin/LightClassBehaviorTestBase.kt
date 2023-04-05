@@ -168,6 +168,7 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
         val upTo = uFile.findElementByTextFromPsi<UMethod>("upTo", strict = false)
             .orFail("can't find fun upTo")
         TestCase.assertTrue(upTo.javaPsi.hasModifier(JvmModifier.FINAL))
+        TestCase.assertTrue(upTo.javaPsi.parameterList.parameters[0].annotations.any { it.isNotNull })
 
         val isFinished = uFile.findElementByTextFromPsi<UMethod>("isFinished", strict = false)
             .orFail("can't find accessor isFinished")
@@ -176,10 +177,12 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
         val isAtLeast = uFile.findElementByTextFromPsi<UMethod>("isAtLeast", strict = false)
             .orFail("can't find fun isAtLeast")
         TestCase.assertTrue(isAtLeast.javaPsi.hasModifier(JvmModifier.FINAL))
+        TestCase.assertTrue(isAtLeast.javaPsi.parameterList.parameters[0].annotations.any { it.isNotNull })
 
         val done = uFile.findElementByTextFromPsi<UMethod>("done", strict = false)
             .orFail("can't find fun done")
         TestCase.assertTrue(done.javaPsi.hasModifier(JvmModifier.FINAL))
+        TestCase.assertTrue(done.javaPsi.parameterList.parameters[0].annotations.any { it.isNotNull })
     }
 
     fun checkThrowsList(myFixture: JavaCodeInsightTestFixture) {
