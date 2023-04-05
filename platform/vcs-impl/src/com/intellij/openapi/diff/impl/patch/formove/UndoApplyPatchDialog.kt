@@ -30,19 +30,22 @@ internal class UndoApplyPatchDialog(
       row {
         label(VcsBundle.message("patch.apply.rollback.prompt", numFiles))
       }
-      if (shouldInformAboutBinaries) {
-        row {
-          label(VcsBundle.message("patch.apply.rollback.will.not.affect.binaries.info", numFiles)).applyToComponent {
-            icon = UIUtil.getBalloonWarningIcon()
-          }
-        }
-      }
       if (numFiles > 0) {
         val browser: ChangesTree = ChangesTreeImpl.FilePaths(project, false, false, failedFilePaths)
         row {
           scrollCell(browser)
             .align(Align.FILL)
         }.resizableRow()
+      }
+      row {
+        label(VcsBundle.message("patch.apply.rollback.prompt.bottom"))
+      }
+      if (shouldInformAboutBinaries) {
+        row {
+          label(VcsBundle.message("patch.apply.rollback.will.not.affect.binaries.info", numFiles)).applyToComponent {
+            icon = UIUtil.getBalloonWarningIcon()
+          }
+        }
       }
     }
   }
