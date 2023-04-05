@@ -1264,6 +1264,35 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
               tr {
                 td("Activity"); td("Dumb indexing")
               }
+
+              val times = times
+              tr { td("Started at"); td(times.updatingStart.presentableLocalDateTime()) }
+              tr { td("Finished at"); td(times.updatingEnd.presentableLocalDateTime()) }
+              tr { td("Cancelled?"); td(times.wasInterrupted.toString()) }
+              tr { td("Suspended time"); td(times.totalSuspendedTime.presentableDuration()) }
+              tr { td("Total time"); td(times.totalUpdatingTime.presentableDuration()) }
+              tr { td("Indexing time"); td(times.indexingTime.presentableDuration()) }
+              if (IndexDiagnosticDumper.shouldProvideVisibleAndAllThreadsTimeInfo) {
+                tr {
+                  td("Total processing visible time")
+                  td(JsonDuration(fileProviderStatistics.sumOf { stat -> stat.totalIndexingVisibleTime.nano }).presentableDuration())
+                }
+                tr {
+                  td("All threads time to visible time ratio")
+                  td(String.format("%.2f", visibleTimeToAllThreadTimeRatio))
+                }
+              }
+              tr { td("Scanning time for refreshed files"); td(times.refreshedFilesScanTime.presentableDuration()) }
+              tr { td("Content loading time"); td(times.contentLoadingVisibleTime.presentableDuration()) }
+              tr {
+                td("Index writing time")
+                td(if (times.isAppliedAllValuesSeparately)
+                     StringUtil.formatDuration(times.separateApplyingIndexesVisibleTime.milliseconds)
+                   else
+                     "Applied under read lock"
+                )
+              }
+
               tr {
                 td(TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRASTRUCTURE_EXTENSIONS_DURING_INDEXING)
                 td(fileCount.numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage.toString())
@@ -1275,37 +1304,6 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
               tr {
                 td("Number of too large for indexing files")
                 td(fileProviderStatistics.sumOf { it.numberOfTooLargeForIndexingFiles }.toString())
-              }
-
-              val times = times
-              tr { td("Started at"); td(times.updatingStart.presentableLocalDateTime()) }
-              tr { td("Finished at"); td(times.updatingEnd.presentableLocalDateTime()) }
-              tr { td("Cancelled?"); td(times.wasInterrupted.toString()) }
-              tr { td("Suspended time"); td(times.totalSuspendedTime.presentableDuration()) }
-              tr { td("Total time"); td(times.totalUpdatingTime.presentableDuration()) }
-              tr { td("Indexing time"); td(times.indexingTime.presentableDuration()) }
-              tr { td("Iterators creation time"); td(times.creatingIteratorsTime.presentableDuration()) }
-              if (IndexDiagnosticDumper.shouldProvideVisibleAndAllThreadsTimeInfo) {
-                tr {
-                  td("Total processing visible time")
-                  td(JsonDuration(fileProviderStatistics.sumOf { stat -> stat.totalIndexingVisibleTime.nano }).presentableDuration())
-                }
-                tr {
-                  td("All threads time to visible time ratio")
-                  td(String.format("%.2f", visibleTimeToAllThreadTimeRatio))
-                }
-              }
-              tr { td("Scanning time"); td(times.scanFilesTime.presentableDuration()) }
-              tr { td("Content loading time"); td(times.contentLoadingVisibleTime.presentableDuration()) }
-              tr { td("Pushing properties time"); td(times.pushPropertiesTime.presentableDuration()) }
-              tr { td("Running extensions time"); td(times.indexExtensionsTime.presentableDuration()) }
-              tr {
-                td("Index writing time")
-                td(if (times.isAppliedAllValuesSeparately)
-                     StringUtil.formatDuration(times.separateApplyingIndexesVisibleTime.milliseconds)
-                   else
-                     "Applied under read lock"
-                )
               }
             }
           }

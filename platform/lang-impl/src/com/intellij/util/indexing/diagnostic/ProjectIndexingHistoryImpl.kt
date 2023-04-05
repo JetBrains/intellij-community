@@ -857,19 +857,8 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
 
   /** Just a stage, don't have to cover whole indexing period, may intersect **/
   enum class Stage {
-    CreatingIterators {
-      override fun getProperty(): KMutableProperty1<DumbIndexingTimesImpl, Duration> = DumbIndexingTimesImpl::creatingIteratorsDuration
-    },
-    Scanning {
-      override fun getProperty() = DumbIndexingTimesImpl::refreshedScanFilesDuration
-    },
-
     Indexing {
       override fun getProperty() = DumbIndexingTimesImpl::indexingDuration
-    },
-
-    PushProperties {
-      override fun getProperty() = DumbIndexingTimesImpl::pushPropertiesDuration
     };
 
 
@@ -936,9 +925,6 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
     override var updatingEnd: ZonedDateTime = updatingStart,
     override var indexingDuration: Duration = Duration.ZERO,
     override var contentLoadingVisibleDuration: Duration = Duration.ZERO,
-    override var pushPropertiesDuration: Duration = Duration.ZERO,
-    override var indexExtensionsDuration: Duration = Duration.ZERO,
-    override var creatingIteratorsDuration: Duration = Duration.ZERO,
     override var refreshedScanFilesDuration: Duration = Duration.ZERO,
     override var suspendedDuration: Duration = Duration.ZERO,
     override var appliedAllValuesSeparately: Boolean = true,

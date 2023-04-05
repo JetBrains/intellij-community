@@ -182,9 +182,6 @@ interface DumbIndexingTimes {
   val updatingEnd: ZonedDateTime
   val indexingDuration: Duration
   val contentLoadingVisibleDuration: Duration
-  val pushPropertiesDuration: Duration
-  val indexExtensionsDuration: Duration
-  var creatingIteratorsDuration: Duration
   val refreshedScanFilesDuration: Duration
   val suspendedDuration: Duration
   val appliedAllValuesSeparately: Boolean
