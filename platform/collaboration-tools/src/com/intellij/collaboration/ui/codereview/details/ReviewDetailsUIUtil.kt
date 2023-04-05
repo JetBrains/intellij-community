@@ -3,7 +3,7 @@ package com.intellij.collaboration.ui.codereview.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
-import com.intellij.collaboration.ui.codereview.details.data.RequestState
+import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
 import com.intellij.collaboration.ui.codereview.details.data.ReviewState
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.NlsSafe
@@ -12,11 +12,11 @@ import java.awt.Insets
 import javax.swing.Icon
 
 object ReviewDetailsUIUtil {
-  fun getRequestStateText(state: RequestState): @NlsSafe String = when (state) {
-    RequestState.OPENED -> CollaborationToolsBundle.message("review.details.review.state.open")
-    RequestState.CLOSED -> CollaborationToolsBundle.message("review.details.review.state.closed")
-    RequestState.MERGED -> CollaborationToolsBundle.message("review.details.review.state.merged")
-    RequestState.DRAFT -> CollaborationToolsBundle.message("review.details.review.state.draft")
+  fun getRequestStateText(state: ReviewRequestState): @NlsSafe String = when (state) {
+    ReviewRequestState.OPENED -> CollaborationToolsBundle.message("review.details.review.state.open")
+    ReviewRequestState.CLOSED -> CollaborationToolsBundle.message("review.details.review.state.closed")
+    ReviewRequestState.MERGED -> CollaborationToolsBundle.message("review.details.review.state.merged")
+    ReviewRequestState.DRAFT -> CollaborationToolsBundle.message("review.details.review.state.draft")
   }
 
   fun getReviewStateIcon(reviewState: ReviewState): Icon = when (reviewState) {

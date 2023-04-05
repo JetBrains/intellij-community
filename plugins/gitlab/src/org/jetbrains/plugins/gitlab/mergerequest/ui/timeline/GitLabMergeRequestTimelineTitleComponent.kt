@@ -4,10 +4,10 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.codereview.CodeReviewTitleUIUtil
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
-import com.intellij.collaboration.ui.codereview.details.data.RequestState
 import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
-import com.intellij.collaboration.ui.util.bindTextIn
+import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
 import com.intellij.collaboration.ui.util.bindTextHtmlIn
+import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.ui.util.emptyBorders
 import com.intellij.util.ui.JBFont
@@ -45,15 +45,17 @@ internal object GitLabMergeRequestTimelineTitleComponent {
       font = JBFont.small()
       foreground = UIUtil.getContextHelpForeground()
       border = JBUI.Borders.empty(0, 4)
-      bindTextIn(scope, mr.requestState.map { requestState ->
-        ReviewDetailsUIUtil.getRequestStateText(requestState)
+      bindTextIn(scope, mr.reviewRequestState.map { reviewRequestState ->
+        ReviewDetailsUIUtil.getRequestStateText(reviewRequestState)
       })
     }.let {
       RoundedPanel(SingleComponentCenteringLayout(), 4).apply {
         border = JBUI.Borders.empty()
         background = UIUtil.getPanelBackground()
-        bindVisibilityIn(scope, mr.requestState.map { mergeState ->
-          mergeState == RequestState.CLOSED || mergeState == RequestState.MERGED || mergeState == RequestState.DRAFT
+        bindVisibilityIn(scope, mr.reviewRequestState.map { reviewRequestState ->
+          reviewRequestState == ReviewRequestState.CLOSED ||
+          reviewRequestState == ReviewRequestState.MERGED ||
+          reviewRequestState == ReviewRequestState.DRAFT
         })
         add(it)
       }

@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.action.ReviewMergeCommitMessageDialog
-import com.intellij.collaboration.ui.codereview.details.data.RequestState
+import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRole
 import com.intellij.collaboration.ui.codereview.details.data.ReviewState
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewFlowViewModel
@@ -32,7 +32,7 @@ internal interface GitLabMergeRequestReviewFlowViewModel : CodeReviewFlowViewMod
   val approvedBy: Flow<List<GitLabUserDTO>>
   val reviewers: StateFlow<List<GitLabUserDTO>>
   val role: Flow<ReviewRole>
-  val requestState: Flow<RequestState>
+  val reviewRequestState: Flow<ReviewRequestState>
   val isApproved: StateFlow<Boolean>
   val reviewState: Flow<ReviewState>
 
@@ -87,7 +87,7 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
     }
   }
 
-  override val requestState: Flow<RequestState> = mergeRequest.requestState
+  override val reviewRequestState: Flow<ReviewRequestState> = mergeRequest.reviewRequestState
 
   override val isApproved: StateFlow<Boolean> = approvedBy
     .map { it.isNotEmpty() }

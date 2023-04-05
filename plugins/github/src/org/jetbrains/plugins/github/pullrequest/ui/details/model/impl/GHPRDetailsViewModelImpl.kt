@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details.model.impl
 
-import com.intellij.collaboration.ui.codereview.details.data.RequestState
+import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewDetailsViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,12 +25,12 @@ internal class GHPRDetailsViewModelImpl(
 
   private val _isDraftState: MutableStateFlow<Boolean> = MutableStateFlow(stateModel.isDraft)
 
-  override val requestState: Flow<RequestState> = combine(_reviewMergeState, _isDraftState) { reviewMergeState, isDraft ->
-    if (isDraft) return@combine RequestState.DRAFT
+  override val reviewRequestState: Flow<ReviewRequestState> = combine(_reviewMergeState, _isDraftState) { reviewMergeState, isDraft ->
+    if (isDraft) return@combine ReviewRequestState.DRAFT
     return@combine when (reviewMergeState) {
-      GHPullRequestState.CLOSED -> RequestState.CLOSED
-      GHPullRequestState.MERGED -> RequestState.MERGED
-      GHPullRequestState.OPEN -> RequestState.OPENED
+      GHPullRequestState.CLOSED -> ReviewRequestState.CLOSED
+      GHPullRequestState.MERGED -> ReviewRequestState.MERGED
+      GHPullRequestState.OPEN -> ReviewRequestState.OPENED
     }
   }
 

@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 import com.intellij.collaboration.api.HttpStatusErrorException
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.modelFlow
-import com.intellij.collaboration.ui.codereview.details.data.RequestState
+import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
@@ -34,7 +34,7 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   val sourceBranch: StateFlow<String>
   val hasConflicts: Flow<Boolean>
   val isDraft: Flow<Boolean>
-  val requestState: Flow<RequestState>
+  val reviewRequestState: Flow<ReviewRequestState>
   val approvedBy: Flow<List<GitLabUserDTO>>
   val reviewers: Flow<List<GitLabUserDTO>>
   val pipeline: Flow<GitLabPipelineDTO?>
@@ -99,13 +99,14 @@ internal class LoadedGitLabMergeRequest(
   override val sourceBranch: StateFlow<String> = mergeRequestDetailsState.mapState(cs) { it.sourceBranch }
   override val hasConflicts: Flow<Boolean> = mergeRequestDetailsState.map { it.conflicts }
   override val isDraft: Flow<Boolean> = mergeRequestDetailsState.map { it.draft }
-  override val requestState: Flow<RequestState> = combine(isDraft, mergeRequestDetailsState.map { it.state }) { isDraft, requestState ->
-    if (isDraft) return@combine RequestState.DRAFT
+  override val reviewRequestState: Flow<ReviewRequestState> = combine(isDraft,
+                                                                      mergeRequestDetailsState.map { it.state }) { isDraft, requestState ->
+    if (isDraft) return@combine ReviewRequestState.DRAFT
     return@combine when (requestState) {
-      GitLabMergeRequestState.CLOSED -> RequestState.CLOSED
-      GitLabMergeRequestState.MERGED -> RequestState.MERGED
-      GitLabMergeRequestState.OPENED -> RequestState.OPENED
-      else -> RequestState.OPENED // to avoid null state
+      GitLabMergeRequestState.CLOSED -> ReviewRequestState.CLOSED
+      GitLabMergeRequestState.MERGED -> ReviewRequestState.MERGED
+      GitLabMergeRequestState.OPENED -> ReviewRequestState.OPENED
+      else -> ReviewRequestState.OPENED // to avoid null state
     }
   }
   override val approvedBy: Flow<List<GitLabUserDTO>> = mergeRequestDetailsState.map { it.approvedBy }

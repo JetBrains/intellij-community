@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
-import com.intellij.collaboration.ui.codereview.details.data.RequestState
+import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewDetailsViewModel
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
@@ -36,7 +36,7 @@ internal class GitLabMergeRequestDetailsInfoViewModelImpl(
   override val description: Flow<String> = mergeRequest.description
   override val targetBranch: Flow<String> = mergeRequest.targetBranch
   override val sourceBranch: Flow<String> = mergeRequest.sourceBranch
-  override val requestState: Flow<RequestState> = mergeRequest.requestState
+  override val reviewRequestState: Flow<ReviewRequestState> = mergeRequest.reviewRequestState
 
   private val _showTimelineRequests = MutableSharedFlow<Unit>()
   override val showTimelineRequests: Flow<Unit> = _showTimelineRequests.asSharedFlow()

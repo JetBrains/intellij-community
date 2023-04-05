@@ -55,7 +55,7 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
         }
 
         return@map CodeReviewDetailsActionsComponentFactory.createActionsComponent(
-          scope, reviewFlowVm.requestState,
+          scope, reviewFlowVm.reviewRequestState,
           openedStatePanel = mainPanel,
           CodeReviewDetailsActionsComponentFactory.createActionsForMergedReview(),
           CodeReviewDetailsActionsComponentFactory.createActionsForClosedReview(reviewActions.reopenReviewAction),

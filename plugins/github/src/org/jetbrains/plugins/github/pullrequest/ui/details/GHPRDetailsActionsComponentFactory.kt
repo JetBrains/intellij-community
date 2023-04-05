@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsActionsComponentFactory
-import com.intellij.collaboration.ui.codereview.details.data.RequestState
+import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRole
 import com.intellij.collaboration.ui.codereview.details.data.ReviewState
 import com.intellij.collaboration.ui.util.bindContentIn
@@ -36,7 +36,7 @@ internal object GHPRDetailsActionsComponentFactory {
 
   fun create(
     scope: CoroutineScope,
-    requestState: Flow<RequestState>,
+    reviewRequestState: Flow<ReviewRequestState>,
     reviewFlowVm: GHPRReviewFlowViewModel,
     dataProvider: GHPRDataProvider
   ): JComponent {
@@ -64,7 +64,7 @@ internal object GHPRDetailsActionsComponentFactory {
         }
 
         return@map CodeReviewDetailsActionsComponentFactory.createActionsComponent(
-          scope, requestState,
+          scope, reviewRequestState,
           openedStatePanel = mainPanel,
           CodeReviewDetailsActionsComponentFactory.createActionsForMergedReview(),
           CodeReviewDetailsActionsComponentFactory.createActionsForClosedReview(reviewActions.reopenReviewAction),

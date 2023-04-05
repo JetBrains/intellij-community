@@ -3,7 +3,7 @@ package com.intellij.collaboration.ui.codereview.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
-import com.intellij.collaboration.ui.codereview.details.data.RequestState
+import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
 import com.intellij.collaboration.ui.codereview.details.data.ReviewState
 import com.intellij.collaboration.ui.util.bindContentIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
@@ -102,19 +102,19 @@ object CodeReviewDetailsActionsComponentFactory {
 
   fun createActionsComponent(
     scope: CoroutineScope,
-    requestState: Flow<RequestState>,
+    reviewRequestState: Flow<ReviewRequestState>,
     openedStatePanel: JComponent,
     mergedStatePanel: JComponent,
     closedStatePanel: JComponent,
     draftedStatePanel: JComponent
   ): JComponent {
     return Wrapper().apply {
-      bindContentIn(scope, requestState.map { requestState ->
+      bindContentIn(scope, reviewRequestState.map { requestState ->
         when (requestState) {
-          RequestState.OPENED -> openedStatePanel
-          RequestState.MERGED -> mergedStatePanel
-          RequestState.CLOSED -> closedStatePanel
-          RequestState.DRAFT -> draftedStatePanel
+          ReviewRequestState.OPENED -> openedStatePanel
+          ReviewRequestState.MERGED -> mergedStatePanel
+          ReviewRequestState.CLOSED -> closedStatePanel
+          ReviewRequestState.DRAFT -> draftedStatePanel
         }
       })
     }
