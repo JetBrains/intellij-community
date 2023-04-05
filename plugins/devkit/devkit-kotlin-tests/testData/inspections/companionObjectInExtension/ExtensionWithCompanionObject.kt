@@ -1,8 +1,9 @@
 class ExtensionWithCompanionObject : MyExtension {
-  <error descr="Companion objects must not be used in extensions">companion object {
+  <error descr="Companion objects in extensions can only contain a logger and constants">companion</error> object {
     private val s = ""
+
     fun foo() { }
-  }</error>
+  }
 
   object NestedObject {
     private val u = ""

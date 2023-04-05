@@ -8,6 +8,7 @@
 
   <extensions defaultExtensionNs="com.intellij.example">
     <myExtension implementation="ExtensionWithCompanionObject"/>
+    <myExtension implementation="ExtensionWithLoggerAndConstVal"/>
   </extensions>
 
 </idea-plugin>

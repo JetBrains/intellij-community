@@ -42,6 +42,16 @@ class KtCompanionObjectInExtensionInspectionTest : PluginModuleTestCase() {
         public @interface Service { }
       """.trimIndent()
     )
+
+    myFixture.addClass(
+      //language=java
+      """
+        package com.intellij.openapi.diagnostic;
+
+        public class Logger { }
+      """.trimIndent()
+    )
+
     myFixture.enableInspections(CompanionObjectInExtensionInspection::class.java)
   }
 
@@ -53,6 +63,11 @@ class KtCompanionObjectInExtensionInspectionTest : PluginModuleTestCase() {
   fun testExtensionWithCompanionObjects() {
     setPluginXml("plugin.xml")
     myFixture.testHighlighting("ExtensionWithCompanionObject.kt")
+  }
+
+  fun testExtensionWithLoggerAndConstVal() {
+    setPluginXml("plugin.xml")
+    myFixture.testHighlighting("ExtensionWithLoggerAndConstVal.kt")
   }
 
 }
