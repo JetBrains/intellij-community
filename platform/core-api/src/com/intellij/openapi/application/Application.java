@@ -66,10 +66,8 @@ public interface Application extends ComponentManager {
   void invokeLaterOnWriteThread(@NotNull Runnable action);
 
   /**
-   * <p>
    * See <b>obsolescence notice</b> on {@link #invokeLaterOnWriteThread(Runnable)}.
-   * </p>
-   *
+   * <p>
    * Causes {@code runnable} to be executed asynchronously under Write Intent lock on some thread,
    * when IDE is in the specified modality state (or a state with less modal dialogs open).
    *
@@ -80,10 +78,8 @@ public interface Application extends ComponentManager {
   void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal);
 
   /**
-   * <p>
    * See <b>obsolescence notice</b> on {@link #invokeLaterOnWriteThread(Runnable)}.
-   * </p>
-   *
+   * <p>
    * Causes {@code runnable} to be executed asynchronously under Write Intent lock on some thread,
    * when IDE is in the specified modality state (or a state with less modal dialogs open)
    * - unless the expiration condition is fulfilled.
@@ -196,34 +192,34 @@ public interface Application extends ComponentManager {
   }
 
   /**
-   * Asserts whether read access is allowed.
+   * Asserts that read access is allowed.
    */
   void assertReadAccessAllowed();
 
   /**
-   * Asserts whether write access is allowed.
+   * Asserts that write access is allowed.
    */
   void assertWriteAccessAllowed();
 
   /**
-   * Asserts whether read access is not allowed.
+   * Asserts that read access is not allowed.
    */
   @ApiStatus.Experimental
   void assertReadAccessNotAllowed();
 
   /**
-   * Asserts whether the method is being called from the event dispatch thread.
+   * Asserts that the method is being called from the event dispatch thread.
    */
   void assertIsDispatchThread();
 
   /**
-   * Asserts whether the method is being called from any thread outside EDT.
+   * Asserts that the method is being called from any thread outside EDT.
    */
   @ApiStatus.Experimental
   void assertIsNonDispatchThread();
 
   /**
-   * Asserts whether the method is being called from under the write-intent lock.
+   * Asserts that the method is being called from under the write-intent lock.
    */
   @ApiStatus.Experimental
   void assertWriteIntentLockAcquired();
@@ -281,8 +277,8 @@ public interface Application extends ComponentManager {
   /**
    * Checks if the current thread is the event dispatch thread and has IW lock acquired.
    *
-   * @see #isWriteIntentLockAcquired()
    * @return {@code true} if the current thread is the Swing dispatch thread with IW lock, {@code false} otherwise.
+   * @see #isWriteIntentLockAcquired()
    */
   @Contract(pure = true)
   boolean isDispatchThread();
@@ -526,6 +522,7 @@ public interface Application extends ComponentManager {
   }
 
   //<editor-fold desc="Deprecated stuff">
+
   /**
    * @deprecated this scope will die only with the application => plugin coroutines which use it will leak on unloading.
    * Instead, use <a href="https://youtrack.jetbrains.com/articles/IJPL-A-44/Coroutine-Scopes#service-scopes">service constructor injection</a>.
