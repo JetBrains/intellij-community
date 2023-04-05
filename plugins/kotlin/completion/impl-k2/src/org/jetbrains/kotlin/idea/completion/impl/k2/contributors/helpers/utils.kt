@@ -57,7 +57,7 @@ internal fun KtAnalysisSession.collectNonExtensionsFromScopeContext(
                 symbolFilter
             )
         } else {
-            collectNonExtensionsFromScope(scopeWithKind.scope, visibilityChecker, scopeNameFilter, symbolFilter).map {
+            collectNonExtensionsFromScope(scopeWithKind.scope, visibilityChecker, scopeNameFilter, excludeEnumEntries, symbolFilter).map {
                 KtSymbolWithContainingScopeKind(it, kind)
             }
         }
@@ -89,6 +89,7 @@ internal fun KtAnalysisSession.collectNonExtensionsForType(
             it,
             visibilityChecker,
             scopeNameFilter,
+            excludeEnumEntries,
             symbolFilter
         ).filterIsInstance<KtSyntheticJavaPropertySymbol>()
     }.orEmpty()
@@ -110,7 +111,7 @@ internal fun KtAnalysisSession.collectNonExtensionsForType(
         yieldAll(syntheticProperties.map {
             KtSymbolWithContainingScopeKind(it, indexInTower?.let { KtScopeKind.SyntheticJavaPropertiesScope(indexInTower) })
         })
-    }.applyIf(excludeEnumEntries) { filterNot { isEnumEntriesProperty(it.symbol)} }
+    }.applyIf(excludeEnumEntries) { filterNot { isEnumEntriesProperty(it.symbol) } }
 }
 
 /**
@@ -121,9 +122,11 @@ internal fun KtAnalysisSession.collectNonExtensionsFromScope(
     scope: KtScope,
     visibilityChecker: CompletionVisibilityChecker,
     scopeNameFilter: KtScopeNameFilter,
+    excludeEnumEntries: Boolean,
     symbolFilter: (KtCallableSymbol) -> Boolean = { true }
 ): Sequence<KtCallableSymbol> = scope.getCallableSymbols(scopeNameFilter.getAndSetAware())
     .filterNonExtensions(visibilityChecker, symbolFilter)
+    .applyIf(excludeEnumEntries) { filterNot { isEnumEntriesProperty(it) } }
 
 context(KtAnalysisSession)
 private fun Sequence<KtCallableSymbol>.filterNonExtensions(

@@ -185,7 +185,8 @@ internal open class FirCallableCompletionContributor(
                 val nonExtensions = collectNonExtensionsFromScope(
                     symbol.getStaticMemberScope(),
                     visibilityChecker,
-                    scopeNameFilter
+                    scopeNameFilter,
+                    excludeEnumEntries,
                 )
 
                 nonExtensions.forEach { memberSymbol ->
@@ -413,8 +414,12 @@ internal class FirCallableReferenceCompletionContributor(
                 ) { filter(it) }
 
                 val staticScope = listOfNotNull(symbol.companionObject?.getMemberScope(), symbol.getStaticMemberScope()).asCompositeScope()
-                val staticMembers = collectNonExtensionsFromScope(staticScope, visibilityChecker, scopeNameFilter) { filter(it) }
-                    .map { KtSymbolWithContainingScopeKind(it, scopeKind = null) }
+                val staticMembers = collectNonExtensionsFromScope(
+                    staticScope,
+                    visibilityChecker,
+                    scopeNameFilter,
+                    excludeEnumEntries
+                ) { filter(it) }.map { KtSymbolWithContainingScopeKind(it, scopeKind = null) }
 
                 (nonExtensionMembers + staticMembers).forEach { (callableSymbol, scopeKind) ->
                     addCallableSymbolToCompletion(context.withoutExpectedType(), callableSymbol, getOptions(callableSymbol), scopeKind)
