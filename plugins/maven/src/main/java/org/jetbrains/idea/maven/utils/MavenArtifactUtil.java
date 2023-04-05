@@ -104,12 +104,29 @@ public final class MavenArtifactUtil {
       dir = getArtifactDirectory(localRepository, groupId, artifactId);
     }
 
-    if (null == version) {
-      version = "";
-    }
-    version = version.trim();
+    version = removeIllegalPathChars(version);
     if (StringUtil.isEmpty(version)) version = resolveVersion(dir);
     return dir.resolve(version).resolve(artifactId + "-" + version + "." + type);
+  }
+
+  private static String removeIllegalPathChars(String text) {
+    if (null == text) return "";
+
+    var result = new StringBuilder();
+    for (var i = 0; i < text.length(); i++) {
+      var ch = text.charAt(i);
+      if (isAllowedPathChar(ch)) {
+        result.append(ch);
+      }
+    }
+
+    return result.toString();
+  }
+
+  private static final Set<Character> FORBIDDEN_PATH_CHARS = Set.of('<', '>', ':', '"', '/', '\\', '|', '?', '*');
+
+  private static boolean isAllowedPathChar(char c) {
+    return !FORBIDDEN_PATH_CHARS.contains(c) && c >= ' ';
   }
 
   private static Path getArtifactDirectory(File localRepository,
