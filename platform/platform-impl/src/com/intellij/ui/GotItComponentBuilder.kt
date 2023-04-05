@@ -673,16 +673,18 @@ private class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
         val text = element.document.getText(startOffset, element.endOffset - startOffset)
         val horIndent = horizontalIndent
         val vertIndent = verticalIndent
-        return SHORTCUT_PART_REGEX.findAll(text)
-          .map {
-            val range = it.range
-            val textRect = modelToView(startOffset + range.first, Position.Bias.Forward,
-                                       startOffset + range.last + 1, Position.Bias.Backward, allocation).bounds2D
-            RoundRectangle2D.Double(textRect.x - horIndent, textRect.y - vertIndent,
-                                    textRect.width + 2 * horIndent, textRect.height + 2 * vertIndent,
-                                    arcSize.toDouble(), arcSize.toDouble())
-          }
-          .toList()
+        val parts = text.split(SHORTCUT_PART_REGEX)
+        val rectangles = mutableListOf<RoundRectangle2D>()
+        var curInd = 0
+        for (part in parts) {
+          val textRect = modelToView(startOffset + curInd, Position.Bias.Forward,
+                                     startOffset + curInd + part.length, Position.Bias.Backward, allocation).bounds2D
+          rectangles.add(RoundRectangle2D.Double(textRect.x - horIndent, textRect.y - vertIndent,
+                                                 textRect.width + 2 * horIndent, textRect.height + 2 * vertIndent,
+                                                 arcSize.toDouble(), arcSize.toDouble()))
+          curInd += part.length + ShortcutsRenderingUtil.SHORTCUT_PART_SEPARATOR.length
+        }
+        return rectangles
       }
       catch (ex: BadLocationException) {
         // ignore
@@ -695,7 +697,7 @@ private class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
       private const val DEFAULT_VERTICAL_INDENT: Float = 0.5f
       private const val DEFAULT_ARC: Float = 8.0f
 
-      private val SHORTCUT_PART_REGEX = Regex("""[^ ${StringUtil.NON_BREAK_SPACE}]+""")
+      private val SHORTCUT_PART_REGEX = Regex(ShortcutsRenderingUtil.SHORTCUT_PART_SEPARATOR)
     }
   }
 }
