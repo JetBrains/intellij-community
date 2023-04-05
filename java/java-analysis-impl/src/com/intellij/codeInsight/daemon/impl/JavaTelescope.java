@@ -13,6 +13,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -25,7 +26,7 @@ import java.util.function.Consumer;
 final class JavaTelescope {
   private static final int TOO_MANY_USAGES = -1;
 
-  static String usagesHint(@NotNull PsiMember member, @NotNull PsiFile file) {
+  static @Nls String usagesHint(@NotNull PsiMember member, @NotNull PsiFile file) {
     int totalUsageCount = UsagesCountManager.getInstance(member.getProject()).countMemberUsages(file, member);
     if (totalUsageCount == TOO_MANY_USAGES) return null;
     if (!Registry.is("code.lens.java.show.0.usages") && totalUsageCount == 0) return null;

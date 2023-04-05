@@ -22,7 +22,7 @@ class JavaReferencesCodeVisionProvider : ReferencesCodeVisionProvider() {
 
   override fun getHint(element: PsiElement, file: PsiFile): String? {
     val inspection = UnusedDeclarationInspectionBase.findUnusedDeclarationInspection(element)
-    if (inspection.isEntryPoint(element)) return null;
+    if (inspection.isEntryPoint(element)) return null
     return JavaTelescope.usagesHint(element as PsiMember, file)
   }
 
