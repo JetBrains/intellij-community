@@ -33,7 +33,6 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -122,12 +121,6 @@ public final class ActionMenu extends JBMenu {
     BegMenuItemUI.registerMultiChoiceSupport(getPopupMenu(), popupMenu -> {
       Utils.updateMenuItems(popupMenu, getDataContext(), myPlace, myPresentationFactory);
     });
-  }
-
-  @Override
-  protected Graphics getComponentGraphics(Graphics graphics) {
-    if (!(getParent() instanceof JMenuBar)) return super.getComponentGraphics(graphics);
-    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
 
   public @NotNull AnAction getAnAction() { return myGroup.getAction(); }

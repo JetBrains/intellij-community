@@ -125,10 +125,6 @@ open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDi
     }
   }
 
-  override fun getComponentGraphics(graphics: Graphics): Graphics {
-    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics))
-  }
-
   // JMenuBar calls getBorder on init before our own init (super is called before our constructor).
   fun getState(): State {
     return state
