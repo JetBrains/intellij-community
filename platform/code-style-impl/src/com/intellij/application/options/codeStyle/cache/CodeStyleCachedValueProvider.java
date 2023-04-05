@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
@@ -81,7 +82,14 @@ final class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyl
   @Nullable
   @Override
   public Result<CodeStyleSettings> compute() {
-    CodeStyleSettings settings = myComputation.getCurrResult();
+    CodeStyleSettings settings;
+    try {
+      settings = myComputation.getCurrResult();
+    }
+    catch (ProcessCanceledException pce) {
+      myComputation.reset();
+      return new Result<>(null, ModificationTracker.EVER_CHANGED);
+    }
     if (settings != null) {
       logCached(settings);
       return new Result<>(settings, getDependencies(settings, myComputation));
@@ -219,14 +227,6 @@ final class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyl
         if (LOG.isDebugEnabled()) {
           LOG.debug("Computation ended for " + file.getName());
         }
-      }
-      catch (ProcessCanceledException pce) {
-        // CodeStyleSettingsModifier extensions (aka [modifier]) can produce PCE while not ready.
-        // But often this procedure is performed under an externally canceled progress,
-        // so we return to the initial state
-        cancel();
-        reset();
-        throw pce;
       }
       finally {
         myComputationLock.unlock();
