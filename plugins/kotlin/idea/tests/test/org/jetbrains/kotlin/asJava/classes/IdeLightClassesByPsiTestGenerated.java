@@ -221,6 +221,11 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/dollarsInNameLocal.kt"));
         }
 
+        @TestMetadata("enumMembers.kt")
+        public void testEnumMembers() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/enumMembers.kt"));
+        }
+
         @TestMetadata("enums.kt")
         public void testEnums() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/enums.kt"));
