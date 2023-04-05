@@ -14,10 +14,14 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.CompilerModuleExtension
+import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.OrderEnumerator
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.util.PairConsumer
 import com.intellij.util.PathUtil
 import org.jdom.Element
 import org.jdom.Text
@@ -145,6 +149,17 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         }
 
         configureFacet(mavenProject, modifiableModelsProvider, module)
+    }
+
+    override fun collectSourceRoots(mavenProject: MavenProject, result: PairConsumer<String, JpsModuleSourceRootType<*>>) {
+        val directories = collectSourceDirectories(mavenProject)
+        for ((type, dir) in directories) {
+            val jpsType: JpsModuleSourceRootType<*> = when (type) {
+                SourceType.TEST -> JavaSourceRootType.TEST_SOURCE
+                SourceType.PROD -> JavaSourceRootType.SOURCE
+            }
+            result.consume(dir, jpsType)
+        }
     }
 
     private fun scheduleDownloadStdlibSources(mavenProject: MavenProject, module: Module) {
