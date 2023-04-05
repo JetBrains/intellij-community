@@ -4,11 +4,9 @@ package org.jetbrains.plugins.github.ui.component
 import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.collaboration.ui.util.getName
-import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.HyperlinkAdapter
 import com.intellij.util.ui.NamedColorUtil
 import org.jetbrains.annotations.Nls
@@ -17,11 +15,7 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.KeyEvent
-import javax.swing.Action
-import javax.swing.JComponent
-import javax.swing.JEditorPane
-import javax.swing.KeyStroke
-import javax.swing.SwingConstants
+import javax.swing.*
 import javax.swing.event.HyperlinkEvent
 
 object GHHtmlErrorPanel {
@@ -37,18 +31,14 @@ object GHHtmlErrorPanel {
 
   fun create(model: GHErrorPanelModel, horizontalAlignment: Int = SwingConstants.CENTER): JComponent {
 
-    val pane = SimpleHtmlPane().apply {
+    val pane = SimpleHtmlPane(addBrowserListener = false).apply {
       foreground = NamedColorUtil.getErrorForeground()
       isFocusable = true
 
-      removeHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
       addHyperlinkListener(object : HyperlinkAdapter() {
         override fun hyperlinkActivated(e: HyperlinkEvent) {
           if (e.description == ERROR_ACTION_HREF) {
             model.errorAction?.actionPerformed(ActionEvent(this@apply, ActionEvent.ACTION_PERFORMED, "perform"))
-          }
-          else {
-            BrowserUtil.browse(e.description)
           }
         }
       })

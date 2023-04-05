@@ -324,12 +324,11 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
 
   private fun createErrorAlreadyExistsLabel(loadingModel: GHSimpleLoadingModel<GHPRIdentifier?>): JComponent {
     val iconLabel = JLabel(AllIcons.Ide.FatalError)
-    val textPane = SimpleHtmlPane().apply {
+    val textPane = SimpleHtmlPane(addBrowserListener = false).apply {
       setHtmlBody(HtmlBuilder()
                     .append(GithubBundle.message("pull.request.create.already.exists"))
                     .appendLink("VIEW", GithubBundle.message("pull.request.create.already.exists.view"))
                     .toString())
-      removeHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
       addHyperlinkListener(object : HyperlinkAdapter() {
         override fun hyperlinkActivated(e: HyperlinkEvent) {
           if (e.description == "VIEW") {
@@ -370,7 +369,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
         panel.isVisible = commits == 0 && loadingModel.error == null
         val base = directionModel.baseBranch?.name.orEmpty()
         val head = directionModel.headBranch?.name.orEmpty()
-        textPane.setHtmlBody(GithubBundle.message("pull.request.create.no.changes", base, head))
+        textPane.text = GithubBundle.message("pull.request.create.no.changes", base, head)
       }
 
       commitsCountModel.addAndInvokeListener { update() }

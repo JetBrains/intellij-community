@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.ui
 
 import com.intellij.collaboration.ui.SimpleHtmlPane
-import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -15,8 +14,7 @@ class HtmlInfoPanel : Wrapper() {
   private var currentSeverity: Severity? = null
   private var currentLinkActivationListener: ((HyperlinkEvent) -> Unit)? = null
 
-  private val errorPane = SimpleHtmlPane().apply {
-    removeHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
+  private val errorPane = SimpleHtmlPane(addBrowserListener = false).apply {
     addHyperlinkListener { e ->
       if (e.eventType == HyperlinkEvent.EventType.ACTIVATED) {
         currentLinkActivationListener?.invoke(e)
