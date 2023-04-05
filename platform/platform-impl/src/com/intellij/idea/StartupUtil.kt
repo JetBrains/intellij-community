@@ -777,7 +777,8 @@ private fun CoroutineScope.lockSystemDirs(configImportNeededDeferred: Job, args:
         val currentDir = Path.of(System.getenv(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR) ?: "").toAbsolutePath()
         when (val result = directoryLock.lockOrActivate(currentDir, args)) {
           null -> ShutDownTracker.getInstance().registerShutdownTask {
-            directoryLock.dispose()
+            try { directoryLock.dispose() }
+            catch (t: Throwable) { Logger.getInstance(DirectoryLock::class.java).error(t) }
           }
           else -> {
             result.message?.let { println(it) }
