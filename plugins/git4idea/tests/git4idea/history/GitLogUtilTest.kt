@@ -5,7 +5,6 @@ import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.util.CollectConsumer
 import com.intellij.util.Consumer
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.VcsFullCommitDetails
 import git4idea.GitCommit
 import git4idea.config.GitVersion
@@ -27,7 +26,7 @@ class GitLogUtilTest : GitSingleRepoTest() {
 
     GitLogUtil.readFullDetails(myProject, repo.root, CollectConsumer(details))
 
-    val lastCommit = ContainerUtil.getFirstItem(details)
+    val lastCommit = details.firstOrNull()
     assertNotNull(lastCommit)
     assertEquals(message, lastCommit!!.fullMessage)
   }
@@ -66,7 +65,7 @@ class GitLogUtilTest : GitSingleRepoTest() {
 
     GitFullDetailsCollector(myProject, repo.root).readFullDetails(CollectConsumer(details),
                                                                   GitCommitRequirements(diffRenameLimit = DiffRenameLimit.NoRenames), false)
-    val lastCommit = ContainerUtil.getFirstItem(details)
+    val lastCommit = details.firstOrNull()
     assertNotNull(lastCommit)
     assertTrue(lastCommit!!.changes.all { !it.isRenamed })
   }
@@ -110,17 +109,17 @@ class GitLogUtilTest : GitSingleRepoTest() {
 
     val details = mutableListOf<VcsFullCommitDetails>()
     GitFullDetailsCollector(myProject, repo.root).readFullDetails(CollectConsumer(details),
-                                                              GitCommitRequirements(diffInMergeCommits = diffInMergeCommits), false)
-    val lastCommit = ContainerUtil.getFirstItem(details)
+                                                                  GitCommitRequirements(diffInMergeCommits = diffInMergeCommits), false)
+    val lastCommit = details.firstOrNull()
 
     assertNotNull(lastCommit)
 
     when (diffInMergeCommits) {
-      DiffInMergeCommits.NO_DIFF -> TestCase.assertTrue(lastCommit.changes.isEmpty())
+      DiffInMergeCommits.NO_DIFF -> TestCase.assertTrue(lastCommit!!.changes.isEmpty())
       DiffInMergeCommits.COMBINED_DIFF -> TestCase.assertEquals(listOf(conflictedFile),
-                                                                ChangesUtil.getPaths(lastCommit.changes).map { it.name })
+                                                                ChangesUtil.getPaths(lastCommit!!.changes).map { it.name })
       DiffInMergeCommits.DIFF_TO_PARENTS -> {
-        TestCase.assertEquals(listOf(conflictedFile), ChangesUtil.getPaths(lastCommit.changes).map { it.name })
+        TestCase.assertEquals(listOf(conflictedFile), ChangesUtil.getPaths(lastCommit!!.changes).map { it.name })
         TestCase.assertEquals(setOf(file1, conflictedFile),
                               ChangesUtil.getPaths(lastCommit.getChanges(0)).mapTo(mutableSetOf()) { it.name })
         TestCase.assertEquals(setOf(file2, conflictedFile),
