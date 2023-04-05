@@ -74,6 +74,11 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
     return selectedContent == null ? null : get(ProblemsViewPanel.class, selectedContent);
   }
 
+  public static @Nullable ProblemsViewTab getSelectedTab(@NotNull Project project) {
+    Content selectedContent = getSelectedContent(project);
+    return selectedContent == null ? null : get(ProblemsViewTab.class, selectedContent);
+  }
+
   private static @Nullable Content getSelectedContent(@NotNull Project project) {
     ToolWindow window = getToolWindow(project);
     ContentManager manager = window == null ? null : window.getContentManagerIfCreated();
