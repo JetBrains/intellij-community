@@ -310,7 +310,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             assertImporterStatePresent()
 
             assertSources("project", "src/main/java", "src/main/kotlin")
-            assertTestSources("project", "src/test/java", "src/test/kotlin")
+            assertTestSources("project", "src/test/java", "src/test/kotlin", "target/generated-sources/kapt/test")
         }
     }
 
@@ -3574,6 +3574,91 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                 ).map { it.toJpsVersionAgnosticKotlinBundledPath() },
                 facetSettings.compilerArguments?.pluginClasspaths?.sorted()
             )
+        }
+    }
+
+    class CollectSourceRootsInCompoundModule : AbstractKotlinMavenImporterTest() {
+        @Test
+        fun testCollectSourceRootsInCompoundModule() {
+            createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
+
+            importProject(
+                """
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <properties>
+                        <maven.compiler.release>8</maven.compiler.release>
+                        <maven.compiler.testRelease>11</maven.compiler.testRelease>
+                    </properties>
+                    <build>
+                        <plugins>
+                            <plugin>
+                                <artifactId>maven-compiler-plugin</artifactId>
+                                <version>3.11.0</version>
+                            </plugin>
+                            <plugin>
+                                <groupId>org.jetbrains.kotlin</groupId>
+                                <artifactId>kotlin-maven-plugin</artifactId>
+                                <version>1.8.10</version>
+                                <executions>
+                                    <execution>
+                                        <id>compile</id>
+                                        <goals>
+                                            <goal>compile</goal>
+                                        </goals>
+                                        <configuration>
+                                            <sourceDirs>
+                                                <sourceDir>${"$"}{project.basedir}/src/main/kotlin</sourceDir>
+                                                <sourceDir>${"$"}{project.basedir}/src/main/java</sourceDir>
+                                            </sourceDirs>
+                                        </configuration>
+                                    </execution>
+                                    <execution>
+                                        <id>test-compile</id>
+                                        <goals>
+                                            <goal>test-compile</goal>
+                                        </goals>
+                                        <configuration>
+                                            <sourceDirs>
+                                                <sourceDir>${"$"}{project.basedir}/src/test/kotlin</sourceDir>
+                                                <sourceDir>${"$"}{project.basedir}/src/test/java</sourceDir>
+                                            </sourceDirs>
+                                        </configuration>
+                                    </execution>
+                                </executions>
+                            </plugin>
+                        </plugins>
+                    </build>
+            """
+            )
+
+            val mainModule = "project.main"
+            val testModule = "project.test"
+            val compoundModule = "project"
+
+            assertModules(compoundModule, mainModule, testModule)
+            assertImporterStatePresent()
+
+            val mainKotlinFolder = "$projectPath/src/main/kotlin"
+            val mainContentRoots = arrayOf(
+                mainKotlinFolder,
+                "$projectPath/src/main/java",
+                "$projectPath/src/main/resources",
+            )
+
+            val testKotlinFolder = "$projectPath/src/test/kotlin"
+            val testContentRoots = arrayOf(
+                testKotlinFolder,
+                "$projectPath/src/test/java",
+                "$projectPath/src/test/resources",
+            )
+
+            assertContentRoots(mainModule, *mainContentRoots)
+            assertContentRootSources(mainModule, mainKotlinFolder, "")
+
+            assertContentRoots(testModule, *testContentRoots)
+            assertContentRootTestSources(testModule, testKotlinFolder, "")
         }
     }
 }
