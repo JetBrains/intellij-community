@@ -107,6 +107,12 @@
                      key="jvm.inspection.logging.condition.disagrees.with.log.statement.display.name"
                      implementationClass="com.intellij.codeInspection.logging.LoggingConditionDisagreesWithLogLevelStatementInspection"/>
     <inspectionElementsMerger implementation="com.intellij.codeInspection.logging.LoggingConditionDisagreesWithLogLevelStatementInspectionMerger"/>
+    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="LoggingPlaceholderCountMatchesArgumentCount"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.logging.frameworks.group.name"
+                     key="jvm.inspection.logging.placeholder.count.matches.argument.count.display.name"
+                     implementationClass="com.intellij.codeInspection.logging.LoggingPlaceholderCountMatchesArgumentCountInspection"/>
+    <inspectionElementsMerger implementation="com.intellij.codeInspection.logging.LoggingPlaceholderCountMatchesArgumentCountInspectionMerger"/>
 
     <!-- Performance -->
     <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="UrlHashCode"

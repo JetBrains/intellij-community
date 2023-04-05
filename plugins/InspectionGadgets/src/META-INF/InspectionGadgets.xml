@@ -1426,10 +1426,6 @@
     <localInspection groupPath="Java" language="JAVA" suppressId="NonConstantLogger" shortName="NonStaticFinalLogger" bundle="messages.InspectionGadgetsBundle"
                      key="non.constant.logger.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.logging.issues"
                      enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.logging.NonStaticFinalLoggerInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="PlaceholderCountMatchesArgumentCount" bundle="messages.InspectionGadgetsBundle"
-                     key="placeholder.count.matches.argument.count.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.logging.issues" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.logging.PlaceholderCountMatchesArgumentCountInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="PublicMethodWithoutLogging" bundle="messages.InspectionGadgetsBundle"
                      key="public.method.without.logging.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.logging.issues" enabledByDefault="false" level="WARNING"

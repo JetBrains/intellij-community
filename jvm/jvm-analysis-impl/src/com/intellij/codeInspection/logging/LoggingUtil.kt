@@ -7,13 +7,13 @@ import org.jetbrains.uast.*
 
 internal class LoggingUtil {
   companion object {
-    private const val SLF4J_LOGGER = "org.slf4j.Logger"
+    internal const val SLF4J_LOGGER = "org.slf4j.Logger"
 
-    private const val LOG4J_LOGGER = "org.apache.logging.log4j.Logger"
+    internal const val LOG4J_LOGGER = "org.apache.logging.log4j.Logger"
 
-    private const val LOG4J_LOG_BUILDER = "org.apache.logging.log4j.LogBuilder"
+    internal const val LOG4J_LOG_BUILDER = "org.apache.logging.log4j.LogBuilder"
 
-    private const val SLF4J_EVENT_BUILDER = "org.slf4j.spi.LoggingEventBuilder"
+    internal const val SLF4J_EVENT_BUILDER = "org.slf4j.spi.LoggingEventBuilder"
 
     private const val LEGACY_LOG4J_LOGGER = "org.apache.log4j.Logger"
     private const val LEGACY_CATEGORY_LOGGER = "org.apache.log4j.Category"
@@ -35,6 +35,10 @@ internal class LoggingUtil {
       LOG4J_BUILDER_MATCHER,
       SLF4J_BUILDER_MATCHER,
     )
+
+    internal val FORMATTED_LOG4J: CallMatcher = CallMatcher.staticCall("org.apache.logging.log4j.LogManager", "getFormatterLogger")
+
+    internal const val LOG_4_J_LOGGER = "org.apache.logging.slf4j.Log4jLogger"
 
     internal val LEGACY_LOG_MATCHERS: CallMatcher = CallMatcher.anyOf(
       CallMatcher.instanceCall(LEGACY_LOG4J_LOGGER, "trace", "debug", "info", "warn", "error", "fatal", "log", "l7dlog"),
@@ -173,7 +177,7 @@ internal class LoggingUtil {
 
     private fun getLoggerQualifier(call: UCallExpression?): UElement? {
       if (call == null) return null
-      var receiver: UExpression? = call.receiver
+      var receiver: UExpression? = call.receiver?.skipParenthesizedExprDown()
       if (receiver is UCallExpression) {
         receiver = receiver.receiver
       }
@@ -201,7 +205,6 @@ internal class LoggingUtil {
             return resolvedReceiver
           }
         }
-
       }
       return null
     }
