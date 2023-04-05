@@ -44,13 +44,15 @@ class IncorrectParentDisposableInspection : DevKitUastInspectionBase() {
 
       val project = argumentType.project
       val facade = JavaPsiFacade.getInstance(project)
+      val callSiteResolveScope = holder.file.resolveScope
+
       @NlsSafe val typeName: String? =
         when {
-          InheritanceUtil.isInheritorOrSelf(argumentType, facade.findClass(Project::class.java.name, psiMethod.resolveScope),
+          InheritanceUtil.isInheritorOrSelf(argumentType, facade.findClass(Project::class.java.name, callSiteResolveScope),
                                             true) -> "Project"
-          InheritanceUtil.isInheritorOrSelf(argumentType, facade.findClass(Application::class.java.name, psiMethod.resolveScope),
+          InheritanceUtil.isInheritorOrSelf(argumentType, facade.findClass(Application::class.java.name, callSiteResolveScope),
                                             true) -> "Application"
-          InheritanceUtil.isInheritorOrSelf(argumentType, facade.findClass(Module::class.java.name, psiMethod.resolveScope),
+          InheritanceUtil.isInheritorOrSelf(argumentType, facade.findClass(Module::class.java.name, callSiteResolveScope),
                                             true) -> "Module"
           else -> null
         }
