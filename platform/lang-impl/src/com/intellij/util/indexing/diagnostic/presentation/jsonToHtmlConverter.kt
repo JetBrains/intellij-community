@@ -222,11 +222,11 @@ internal fun createAggregateActivityHtml(
             }
             thead {
               tr {
-                th("History of scannings and indexings") { colSpan = "10" }
+                th("History of scannings and indexings") { colSpan = "11" }
               }
               tr {
                 th("Time") {
-                  colSpan = "4"
+                  colSpan = "5"
                 }
                 th("Files") {
                   colSpan = "5"
@@ -237,7 +237,8 @@ internal fun createAggregateActivityHtml(
               }
               tr {
                 th("Started")
-                th("Total")
+                th("Total wall time with pauses")
+                th("Pauses wall time")
                 th("Finished")
                 th("Content loading")
                 th("Scanned")
@@ -354,11 +355,12 @@ internal fun createAggregateActivityHtml(
 private fun TR.printIndexingActivityRow(times: JsonProjectIndexingActivityHistoryTimes,
                                         fileCount: JsonProjectIndexingActivityFileCount) {
   // Time section
-  td {
-    text(times.updatingStart.presentableLocalDateTime())
-  }
-  td(times.asSafely<JsonProjectScanningHistoryTimes>()?.totalUpdatingTime?.presentableDuration()
-     ?: times.asSafely<JsonProjectDumbIndexingHistoryTimes>()?.totalUpdatingTime?.presentableDuration() ?: "Unexpected times $times")
+  td(times.updatingStart.presentableLocalDateTime())
+
+  td(times.asSafely<JsonProjectScanningHistoryTimes>()?.totalWallTimeWithPauses?.presentableDuration()
+     ?: times.asSafely<JsonProjectDumbIndexingHistoryTimes>()?.totalWallTimeWithPauses?.presentableDuration()
+     ?: "Unexpected times $times")
+  td(times.totalPausedWallTime.presentableDuration())
   td {
     if (times.wasInterrupted) {
       strong("Cancelled")
@@ -1058,13 +1060,18 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
               tr { td("Type"); td(times.scanningType.name.lowercase(Locale.ENGLISH).replace('_', ' ')) }
               tr { td("Finished at"); td(times.updatingEnd.presentableLocalDateTime()) }
               tr { td("Cancelled"); td(times.wasInterrupted.toString()) }
-              tr { td("Suspended time"); td(times.totalSuspendedTime.presentableDuration()) }
-              tr { td("Total time"); td(times.totalUpdatingTime.presentableDuration()) }
+              tr { td("Total wall time with pauses"); td(times.totalWallTimeWithPauses.presentableDuration()) }
+              tr { td("Pauses wall time"); td(times.totalPausedWallTime.presentableDuration()) }
 
-              tr { td("Scanning stages: iterators creation time"); td(times.creatingIteratorsTime.presentableDuration()) }
-              tr { td("Scanning stages: pushing properties time"); td(times.pushPropertiesTime.presentableDuration()) }
-              tr { td("Scanning stages: time of collecting files to compute index values"); td(times.scanFilesTime.presentableDuration()) }
-              tr { td("Time of running $INDEX_INFRA_EXTENSIONS (without loading content)"); td(times.indexExtensionsTime.presentableDuration()) }
+              tr { td("Scanning stages w/o pauses: iterators creation time"); td(times.creatingIteratorsTime.presentableDuration()) }
+              tr { td("Scanning stages w/o pauses: pushing properties time"); td(times.pushPropertiesTime.presentableDuration()) }
+              tr {
+                td("Scanning stages w/o pauses: time of collecting files to compute index values"); td(
+                times.scanFilesTime.presentableDuration())
+              }
+              tr {
+                td("Time of running $INDEX_INFRA_EXTENSIONS (without loading content)"); td(times.indexExtensionsTime.presentableDuration())
+              }
 
               tr { td(TITLE_NUMBER_OF_FILE_PROVIDERS); td(fileCount.numberOfFileProviders.toString()) }
               tr { td(TITLE_NUMBER_OF_SCANNED_FILES); td(fileCount.numberOfScannedFiles.toString()) }
@@ -1269,8 +1276,8 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
               tr { td("Started at"); td(times.updatingStart.presentableLocalDateTime()) }
               tr { td("Finished at"); td(times.updatingEnd.presentableLocalDateTime()) }
               tr { td("Cancelled?"); td(times.wasInterrupted.toString()) }
-              tr { td("Suspended time"); td(times.totalSuspendedTime.presentableDuration()) }
-              tr { td("Total time"); td(times.totalUpdatingTime.presentableDuration()) }
+              tr { td("Total wall time with pauses"); td(times.totalWallTimeWithPauses.presentableDuration()) }
+              tr { td("Pauses wall time"); td(times.totalPausedWallTime.presentableDuration()) }
               tr { td("Indexing time"); td(times.indexingTime.presentableDuration()) }
               if (IndexDiagnosticDumper.shouldProvideVisibleAndAllThreadsTimeInfo) {
                 tr {

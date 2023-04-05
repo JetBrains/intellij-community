@@ -172,7 +172,7 @@ interface ScanningTimes {
   val indexExtensionsDuration: Duration
   var creatingIteratorsDuration: Duration
   val scanFilesDuration: Duration
-  val suspendedDuration: Duration
+  val pausedDuration: Duration
   val wasInterrupted: Boolean
 }
 
@@ -183,7 +183,7 @@ interface DumbIndexingTimes {
   val indexingDuration: Duration
   val contentLoadingVisibleDuration: Duration
   val refreshedScanFilesDuration: Duration
-  val suspendedDuration: Duration
+  val pausedDuration: Duration
   val appliedAllValuesSeparately: Boolean
   val separateValueApplicationVisibleTime: TimeNano
   val wasInterrupted: Boolean

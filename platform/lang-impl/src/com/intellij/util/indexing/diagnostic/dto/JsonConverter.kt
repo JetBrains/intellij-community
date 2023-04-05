@@ -104,20 +104,20 @@ fun ScanningTimes.toJson() =
   JsonProjectScanningHistoryTimes(
     scanningReason = scanningReason,
     scanningType = scanningType,
-    totalUpdatingTime = JsonDuration(totalUpdatingTime),
+    totalWallTimeWithPauses = JsonDuration(totalUpdatingTime),
     creatingIteratorsTime = JsonDuration(creatingIteratorsDuration.toNanos()),
     scanFilesTime = JsonDuration(scanFilesDuration.toNanos()),
     pushPropertiesTime = JsonDuration(pushPropertiesDuration.toNanos()),
     indexExtensionsTime = JsonDuration(indexExtensionsDuration.toNanos()),
     updatingStart = JsonDateTime(updatingStart),
     updatingEnd = JsonDateTime(updatingEnd),
-    totalSuspendedTime = JsonDuration(suspendedDuration.toNanos()),
+    totalPausedWallTime = JsonDuration(pausedDuration.toNanos()),
     wasInterrupted = wasInterrupted
   )
 
 fun DumbIndexingTimes.toJson() =
   JsonProjectDumbIndexingHistoryTimes(
-    totalUpdatingTime = JsonDuration(totalUpdatingTime),
+    totalWallTimeWithPauses = JsonDuration(totalUpdatingTime),
     indexingTime = JsonDuration(indexingDuration.toNanos()),
     contentLoadingVisibleTime = JsonDuration(contentLoadingVisibleDuration.toNanos()),
     refreshedFilesScanTime = JsonDuration(refreshedScanFilesDuration.toNanos()),
@@ -125,7 +125,7 @@ fun DumbIndexingTimes.toJson() =
     separateApplyingIndexesVisibleTime = JsonDuration(separateValueApplicationVisibleTime),
     updatingStart = JsonDateTime(updatingStart),
     updatingEnd = JsonDateTime(updatingEnd),
-    totalSuspendedTime = JsonDuration(suspendedDuration.toNanos()),
+    totalPausedWallTime = JsonDuration(pausedDuration.toNanos()),
     wasInterrupted = wasInterrupted
   )
 

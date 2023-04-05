@@ -29,7 +29,7 @@ data class JsonProjectIndexingHistoryTimes(
 interface JsonProjectIndexingActivityHistoryTimes {
   val updatingStart: JsonDateTime
   val updatingEnd: JsonDateTime
-  val totalSuspendedTime: JsonDuration
+  val totalPausedWallTime: JsonDuration
   val wasInterrupted: Boolean
 }
 
@@ -38,7 +38,7 @@ interface JsonProjectIndexingActivityHistoryTimes {
 data class JsonProjectScanningHistoryTimes(
   val scanningReason: String? = null,
   val scanningType: ScanningType = ScanningType.FULL,
-  val totalUpdatingTime: JsonDuration = JsonDuration(),
+  val totalWallTimeWithPauses: JsonDuration = JsonDuration(),
   val creatingIteratorsTime: JsonDuration = JsonDuration(),
   val scanFilesTime: JsonDuration = JsonDuration(),
   val pushPropertiesTime: JsonDuration = JsonDuration(),
@@ -46,14 +46,14 @@ data class JsonProjectScanningHistoryTimes(
 
   override val updatingStart: JsonDateTime = JsonDateTime(),
   override val updatingEnd: JsonDateTime = JsonDateTime(),
-  override val totalSuspendedTime: JsonDuration = JsonDuration(),
+  override val totalPausedWallTime: JsonDuration = JsonDuration(),
   override val wasInterrupted: Boolean = false
 ) : JsonProjectIndexingActivityHistoryTimes
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class JsonProjectDumbIndexingHistoryTimes(
-  val totalUpdatingTime: JsonDuration = JsonDuration(),
+  val totalWallTimeWithPauses: JsonDuration = JsonDuration(),
   val indexingTime: JsonDuration = JsonDuration(),
   val contentLoadingVisibleTime: JsonDuration = JsonDuration(),
   val refreshedFilesScanTime: JsonDuration = JsonDuration(),
@@ -62,6 +62,6 @@ data class JsonProjectDumbIndexingHistoryTimes(
 
   override val updatingStart: JsonDateTime = JsonDateTime(),
   override val updatingEnd: JsonDateTime = JsonDateTime(),
-  override val totalSuspendedTime: JsonDuration = JsonDuration(),
+  override val totalPausedWallTime: JsonDuration = JsonDuration(),
   override val wasInterrupted: Boolean = false
 ) : JsonProjectIndexingActivityHistoryTimes

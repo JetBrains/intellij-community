@@ -497,7 +497,7 @@ data class ProjectScanningHistoryImpl(override val project: Project,
 
   private fun writeStagesToDurations() {
     val normalizedEvents = getNormalizedEvents()
-    var suspendedDuration = Duration.ZERO
+    var pausedDuration = Duration.ZERO
     val startMap = hashMapOf<ScanningStage, Instant>()
     val durationMap = hashMapOf<ScanningStage, Duration>()
     for (stage in ScanningStage.values()) {
@@ -516,7 +516,7 @@ data class ProjectScanningHistoryImpl(override val project: Project,
           }
           else {
             if (suspendStart != null) {
-              suspendedDuration = suspendedDuration.plus(Duration.between(suspendStart, event.instant))
+              pausedDuration = pausedDuration.plus(Duration.between(suspendStart, event.instant))
               suspendStart = null
             }
             startMap.replaceAll { _, _ -> event.instant } //happens strictly after suspension start event, startMap shouldn't change
@@ -538,7 +538,7 @@ data class ProjectScanningHistoryImpl(override val project: Project,
       for (stage in ScanningStage.values()) {
         stage.getProperty().set(timesImpl, durationMap[stage]!!)
       }
-      timesImpl.suspendedDuration = suspendedDuration
+      timesImpl.pausedDuration = pausedDuration
     }
   }
 
@@ -604,7 +604,7 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     override var creatingIteratorsDuration: Duration = Duration.ZERO,
     override var scanFilesDuration: Duration = Duration.ZERO,
     override var indexExtensionsDuration: Duration = Duration.ZERO,
-    override var suspendedDuration: Duration = Duration.ZERO,
+    override var pausedDuration: Duration = Duration.ZERO,
     override var wasInterrupted: Boolean = false
   ) : ScanningTimes
 
@@ -851,7 +851,7 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
       for (stage in Stage.values()) {
         stage.getProperty().set(timesImpl, durationMap[stage]!!)
       }
-      timesImpl.suspendedDuration = suspendedDuration
+      timesImpl.pausedDuration = suspendedDuration
     }
   }
 
@@ -926,7 +926,7 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
     override var indexingDuration: Duration = Duration.ZERO,
     override var contentLoadingVisibleDuration: Duration = Duration.ZERO,
     override var refreshedScanFilesDuration: Duration = Duration.ZERO,
-    override var suspendedDuration: Duration = Duration.ZERO,
+    override var pausedDuration: Duration = Duration.ZERO,
     override var appliedAllValuesSeparately: Boolean = true,
     override var separateValueApplicationVisibleTime: TimeNano = 0,
     override var wasInterrupted: Boolean = false
