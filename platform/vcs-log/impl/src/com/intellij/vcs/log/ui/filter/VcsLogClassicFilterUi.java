@@ -16,10 +16,12 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ClientProperty;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.SearchFieldWithExtension;
 import com.intellij.util.EventDispatcher;
@@ -46,6 +48,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
@@ -761,7 +764,13 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
       super(VCS_LOG_TEXT_FILTER_HISTORY);
       myTextFilterModel = model;
       setText(myTextFilterModel.getText());
-      getTextEditor().addActionListener(e -> applyFilter());
+      getTextEditor().addActionListener(e -> applyFilter(true));
+      addDocumentListener(new DocumentAdapter() {
+        @Override
+        protected void textChanged(@NotNull DocumentEvent e) {
+          if (isFilterOnTheFlyEnabled()) applyFilter(false);
+        }
+      });
       myTextFilterModel.addSetFilterListener(() -> {
         String modelText = myTextFilterModel.getText();
         if (!Objects.equals(getText(), modelText)) setText(modelText);
@@ -777,9 +786,9 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
       return XmlStringUtil.wrapInHtml(text + shortcut);
     }
 
-    protected void applyFilter() {
+    private void applyFilter(boolean addToHistory) {
       myTextFilterModel.setFilterText(getText());
-      addCurrentTextToHistory();
+      if (addToHistory) addCurrentTextToHistory();
     }
 
     @Override
@@ -789,9 +798,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
     @Override
     protected void onFocusLost() {
-      if (!Objects.equals(getText(), myTextFilterModel.getText())) {
-        applyFilter();
-      }
+      if (!Objects.equals(getText(), myTextFilterModel.getText())) applyFilter(isFilterOnTheFlyEnabled());
     }
 
     @Override
@@ -800,6 +807,10 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
         return myUiProperties;
       }
       return null;
+    }
+
+    private static boolean isFilterOnTheFlyEnabled() {
+      return Registry.is("vcs.log.filter.text.on.the.fly");
     }
   }
 }
