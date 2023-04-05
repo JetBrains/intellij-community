@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes
 
 import org.jetbrains.kotlin.idea.quickfix.QuickFixContributor
@@ -8,7 +7,7 @@ import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFix
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.parcelize.diagnostic.ErrorsParcelize
 
-class ParcelizeQuickFixContributor : QuickFixContributor {
+class K1ParcelizeQuickFixContributor : QuickFixContributor {
     override fun registerQuickFixes(quickFixes: QuickFixes) {
         quickFixes.register(
             ErrorsParcelize.PARCELABLE_CANT_BE_INNER_CLASS,
