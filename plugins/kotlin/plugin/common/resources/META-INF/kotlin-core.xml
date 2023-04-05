@@ -242,6 +242,11 @@
               topic="com.intellij.workspaceModel.ide.WorkspaceModelChangeListener"/>
   </projectListeners>
 
+  <applicationListeners>
+    <listener class="org.jetbrains.kotlin.idea.macros.KotlinBundledPathMacroContributor"
+              topic="com.intellij.openapi.project.ProjectCloseListener"/>
+  </applicationListeners>
+
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <versionInfoProvider implementation="org.jetbrains.kotlin.idea.base.compilerPreferences.facet.KotlinVersionInfoProviderByModuleDependencies"/>
 
