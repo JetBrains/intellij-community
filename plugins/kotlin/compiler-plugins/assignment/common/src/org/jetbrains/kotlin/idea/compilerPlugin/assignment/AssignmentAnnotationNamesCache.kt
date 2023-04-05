@@ -13,6 +13,8 @@ import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.assignment.plugin.AssignmentPluginNames.ANNOTATION_OPTION_NAME
 import org.jetbrains.kotlin.assignment.plugin.AssignmentPluginNames.PLUGIN_ID
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.Freezable
+import org.jetbrains.kotlin.cli.common.arguments.copyCommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.idea.compilerPlugin.CachedAnnotationNames
 import org.jetbrains.kotlin.psi.KtFile
@@ -73,7 +75,11 @@ internal class AssignmentAnnotationNamesCache(project: Project) {
     }
 
     private fun ScriptDefinition.getSpecialAnnotations(annotationPrefix: String): List<String> {
-        val arguments = object : CommonCompilerArguments() {}
+        class CommonCompilerArgumentsHolder: CommonCompilerArguments() {
+            override fun copyOf(): Freezable = copyCommonCompilerArguments(this, CommonCompilerArgumentsHolder())
+        }
+
+        val arguments = CommonCompilerArgumentsHolder()
         parseCommandLineArguments(compilerOptions.toList(), arguments)
         return arguments.pluginOptions
             ?.filter { it.startsWith(annotationPrefix) }

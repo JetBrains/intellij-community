@@ -52,15 +52,22 @@ fun KotlinFacetSettings.initializeIfNeeded(
     if (compilerArguments == null) {
         val targetPlatform = platform ?: getDefaultTargetPlatform(module, rootModel)
 
-        compilerArguments = targetPlatform.createArguments {
-            val argumentsForPlatform = IdePlatformKindProjectStructure.getInstance(project)
-                .getCompilerArguments(targetPlatform.idePlatformKind)
+        val argumentsForPlatform = IdePlatformKindProjectStructure.getInstance(project)
+            .getCompilerArguments(targetPlatform.idePlatformKind)
 
+        compilerArguments = targetPlatform.createArguments {
             if (argumentsForPlatform != null) {
-                mergeBeans(argumentsForPlatform, this)
+                when {
+                    argumentsForPlatform is K2JVMCompilerArguments &&
+                            this is K2JVMCompilerArguments -> copyK2JVMCompilerArguments(argumentsForPlatform, this)
+                    argumentsForPlatform is K2JSCompilerArguments &&
+                            this is K2JSCompilerArguments -> copyK2JSCompilerArguments(argumentsForPlatform, this)
+
+                    else -> error("Unsupported copy arguments combination: ${argumentsForPlatform.javaClass.name} and ${javaClass.name}")
+                }
             }
 
-            mergeBeans(commonArguments, this)
+            copyCommonCompilerArguments(commonArguments, this)
         }
 
         this.targetPlatform = targetPlatform
@@ -144,7 +151,7 @@ fun applyCompilerArgumentsToFacet(
     with(kotlinFacet.configuration.settings) {
         val compilerArguments = this.compilerArguments ?: return
 
-        val defaultCompilerArguments = defaultArguments?.let { copyBean(it) } ?: compilerArguments::class.java.newInstance()
+        val defaultCompilerArguments = defaultArguments?.copyOf() ?: compilerArguments::class.java.newInstance()
         defaultCompilerArguments.convertPathsToSystemIndependent()
 
         val oldPluginOptions = compilerArguments.pluginOptions
