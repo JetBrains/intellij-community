@@ -6,6 +6,8 @@
       "filterdups.svg": "toolbar/filterdups.svg",
       "generated.svg": "actions/generatedFolder.svg",
       "groupByMethod.svg": "actions/groupByMethod.svg",
+      "groupByModule.svg": "actions/GroupByModule.svg",
+      "groupByTestProduction.svg": "actions/groupByTestProduction.svg",
       "install.svg": "actions/install.svg",
       "newFolder.svg": "actions/newFolder.svg",
       "playFirst.svg": "actions/play_first.svg",
@@ -132,6 +134,7 @@
     "fileTypes": {
       "actionScript.svg": "fileTypes/as.svg",
       "angularJS.svg": "icons/AngularJS.svg",
+      "anyType.svg": "fileTypes/any_type.svg",
       "archive.svg": [
         "fileTypes/archive.svg",
         "nodes/ppJar.svg"
@@ -372,7 +375,8 @@
       "feedbackRating.svg": "ide/feedbackRating.svg",
       "feedbackRatingFocused.svg": "ide/feedbackRatingFocused.svg",
       "feedbackRatingFocusedOn.svg": "ide/feedbackRatingFocusedOn.svg",
-      "feedbackRatingOn.svg": "ide/feedbackRatingOn.svg"
+      "feedbackRatingOn.svg": "ide/feedbackRatingOn.svg",
+      "localScope.svg": "ide/localScope.svg"
     },
     "image": {
       "actualZoom.svg": "graph/actualZoom.svg",
@@ -456,6 +460,7 @@
       "classInitializer.svg": "nodes/classInitializer.svg",
       "constant.svg": "nodes/constant.svg",
       "controller.svg": "nodes/controller.svg",
+      "copyOfFolder.svg": "nodes/copyOfFolder.svg",
       "dataColumn.svg": "nodes/dataColumn.svg",
       "dataSchema.svg": "nodes/dataSchema.svg",
       "desktop.svg": "nodes/desktop.svg",
@@ -521,6 +526,9 @@
       "warningIntroduction.svg": "nodes/warningIntroduction.svg"
     },
     "objectBrowser": {
+      "compactEmptyPackages.svg": "objectBrowser/compactEmptyPackages.svg",
+      "flattenModules.svg": "objectBrowser/flattenModules.svg",
+      "flattenPackages.svg": "objectBrowser/flattenPackages.svg",
       "sortAlphabetically.svg": "objectBrowser/sorted.svg",
       "sortByType.svg": "objectBrowser/sortByType.svg",
       "sortByUsage.svg": "objectBrowser/sortedByUsage.svg",
