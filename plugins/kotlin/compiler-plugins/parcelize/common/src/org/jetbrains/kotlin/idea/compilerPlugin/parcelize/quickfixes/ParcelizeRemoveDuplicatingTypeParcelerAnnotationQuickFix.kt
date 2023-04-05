@@ -6,8 +6,8 @@ import org.jetbrains.kotlin.idea.compilerPlugin.parcelize.KotlinParcelizeBundle
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
-class ParcelizeRemoveDuplicatingTypeParcelerAnnotationQuickFix(anno: KtAnnotationEntry) : AbstractParcelizeQuickFix<KtAnnotationEntry>(anno) {
-    object Factory : AbstractFactory({ findElement<KtAnnotationEntry>()?.let(::ParcelizeRemoveDuplicatingTypeParcelerAnnotationQuickFix) })
+class ParcelizeRemoveDuplicatingTypeParcelerAnnotationQuickFix(anno: KtAnnotationEntry) : AbstractParcelizePsiOnlyQuickFix<KtAnnotationEntry>(anno) {
+    object Factory : AbstractQuickFixFactory({ findElement<KtAnnotationEntry>()?.let(::ParcelizeRemoveDuplicatingTypeParcelerAnnotationQuickFix) })
 
     override fun getText() = KotlinParcelizeBundle.message("parcelize.fix.remove.redundant.type.parceler.annotation")
 

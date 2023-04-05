@@ -154,9 +154,9 @@ class ParcelMigrateToParcelizeQuickFix(function: KtClass) : AbstractParcelizeQui
             ?.constructor?.declarationDescriptor?.fqNameSafe?.asString()
     }
 
-    object FactoryForWrite : AbstractFactory({ findElement<KtClass>()?.let { ParcelMigrateToParcelizeQuickFix(it) } })
+    object FactoryForWrite : AbstractQuickFixFactory({ findElement<KtClass>()?.let { ParcelMigrateToParcelizeQuickFix(it) } })
 
-    object FactoryForCREATOR : AbstractFactory({
+    object FactoryForCREATOR : AbstractQuickFixFactory({
                                                    findElement<KtObjectDeclaration>()?.getStrictParentOfType<KtClass>()
                                                        ?.let { ParcelMigrateToParcelizeQuickFix(it) }
                                                })

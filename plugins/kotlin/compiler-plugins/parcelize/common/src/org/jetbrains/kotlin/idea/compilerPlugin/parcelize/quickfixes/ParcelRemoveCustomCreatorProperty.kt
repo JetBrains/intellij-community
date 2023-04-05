@@ -6,8 +6,8 @@ import org.jetbrains.kotlin.idea.compilerPlugin.parcelize.KotlinParcelizeBundle
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
-class ParcelRemoveCustomCreatorProperty(property: KtProperty) : AbstractParcelizeQuickFix<KtProperty>(property) {
-    object Factory : AbstractFactory(f@ {
+class ParcelRemoveCustomCreatorProperty(property: KtProperty) : AbstractParcelizePsiOnlyQuickFix<KtProperty>(property) {
+    object Factory : AbstractQuickFixFactory(f@ {
         // KtProperty or its name identifier
         psiElement as? KtProperty ?: (psiElement.parent as? KtProperty) ?: return@f null
         findElement<KtProperty>()?.let(::ParcelRemoveCustomCreatorProperty)
