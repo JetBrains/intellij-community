@@ -20,6 +20,7 @@ import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.HeaderToolbarButtonLook
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.MainMenuButton
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.Graphics2DDelegate
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -66,6 +67,10 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
         }
         .toList()
     }
+  }
+
+  override fun getComponentGraphics(g: Graphics): Graphics = super.getComponentGraphics(g).let {
+    if (it is Graphics2DDelegate) it.delegate else it
   }
 
   // Separate init because first, as part of IdeRootPane creation, we add bare component to allocate space and then,
