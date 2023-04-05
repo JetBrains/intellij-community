@@ -499,6 +499,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
         return ImmutableSet.<String>builder().addAll(super.getTags())
           .add("-python2")
           .add("-django")
+          .add("-python3.11") // PY-57113
           .build();
       }
     });
