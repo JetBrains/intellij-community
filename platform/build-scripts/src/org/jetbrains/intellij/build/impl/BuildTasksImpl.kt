@@ -242,7 +242,7 @@ private suspend fun layoutShared(context: BuildContext) {
       context.productProperties.copyAdditionalFiles(context, context.paths.getDistAll())
     }
   }
-  checkClassFiles(context.paths.distAllDir, context)
+  checkClassFiles(context.paths.distAllDir, context, isDistAll = true)
 }
 
 private fun findBrandingResource(relativePath: String, context: BuildContext): Path {
@@ -365,6 +365,7 @@ private suspend fun buildOsSpecificDistributions(context: BuildContext): List<Di
         spanBuilder(stepId).useWithScope2 {
           val osAndArchSpecificDistDirectory = getOsAndArchSpecificDistDirectory(os, arch, context)
           builder.buildArtifacts(osAndArchSpecificDistDirectory, arch)
+          checkClassFiles(osAndArchSpecificDistDirectory, context, isDistAll = false)
           DistributionForOsTaskResult(builder, arch, osAndArchSpecificDistDirectory)
         }
       }
@@ -1014,26 +1015,21 @@ private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>
   return targetFile
 }
 
-private suspend fun checkClassFiles(targetFile: Path, context: BuildContext) {
-  val versionCheckerConfig = if (context.isStepSkipped(BuildOptions.VERIFY_CLASS_FILE_VERSIONS)) {
+private suspend fun checkClassFiles(targetFile: Path, context: BuildContext, isDistAll: Boolean) {
+  // version checking patterns are only for dist all (all non-os and non-arch specific files)
+  val versionCheckerConfig = if (context.isStepSkipped(BuildOptions.VERIFY_CLASS_FILE_VERSIONS) || !isDistAll) {
     emptyMap()
   }
   else {
     context.productProperties.versionCheckerConfig
   }
 
-  val forbiddenSubPaths = if (context.proprietaryBuildTools.scrambleTool == null) {
-    emptyList()
+  val forbiddenSubPaths = context.productProperties.forbiddenClassFileSubPaths
+  if (forbiddenSubPaths.isNotEmpty()) {
+    context.messages.warning("checkClassFiles: forbiddenSubPaths: ${forbiddenSubPaths.joinToString()}")
   }
   else {
-    context.productProperties.forbiddenClassFileSubPaths
-  }
-
-  if (forbiddenSubPaths.isNotEmpty()) {
-    require(context.productProperties.scrambleMainJar) {
-      "productProperties.scrambleMainJar is set to false, but productProperties.forbiddenClassFileSubPaths is not empty " +
-      "(forbiddenClassFileSubPaths=$forbiddenSubPaths)"
-    }
+    context.messages.warning("checkClassFiles: forbiddenSubPaths: EMPTY (no scrambling checks will be done)")
   }
 
   if (versionCheckerConfig.isNotEmpty() || forbiddenSubPaths.isNotEmpty()) {
@@ -1041,6 +1037,10 @@ private suspend fun checkClassFiles(targetFile: Path, context: BuildContext) {
                     forbiddenSubPaths = forbiddenSubPaths,
                     root = targetFile,
                     messages = context.messages)
+  }
+
+  if (forbiddenSubPaths.isNotEmpty()) {
+    context.messages.warning("checkClassFiles: SUCCESS for forbiddenSubPaths: ${forbiddenSubPaths.joinToString()}")
   }
 }
 
