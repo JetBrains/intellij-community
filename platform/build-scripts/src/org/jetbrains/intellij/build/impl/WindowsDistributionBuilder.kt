@@ -348,15 +348,13 @@ private suspend fun checkThatExeInstallerAndZipWithJbrAreTheSame(zipPath: Path,
     withContext(Dispatchers.IO) {
       try {
         runProcess(args = listOf("7z", "x", "-bd", exePath.toString()), workingDir = tempExe)
-        runProcess(args = listOf("unzip", "-q", zipPath.toString()), workingDir = tempZip)
+        // deleting NSIS-related files that appear after manual unpacking of .exe installer and do not belong to its contents
         @Suppress("SpellCheckingInspection")
         NioFiles.deleteRecursively(tempExe.resolve("\$PLUGINSDIR"))
-        // TODO: Remove this workaround once IDEA-297735 fixed
-        NioFiles.deleteRecursively(tempExe.resolve("bin/Uninstall.exe.nsis"))
-        /**
-         * bin/Uninstall.exe is optional, see [PatchBuilderBuildTarget.buildPatch]
-         */
-        NioFiles.deleteRecursively(tempExe.resolve("bin/Uninstall.exe"))
+        Files.deleteIfExists(tempExe.resolve("bin/Uninstall.exe.nsis"))
+        Files.deleteIfExists(tempExe.resolve("bin/Uninstall.exe"))
+
+        runProcess(args = listOf("unzip", "-q", zipPath.toString()), workingDir = tempZip)
 
         runProcess(args = listOf("diff", "-q", "-r", tempZip.toString(), tempExe.toString()))
       }
