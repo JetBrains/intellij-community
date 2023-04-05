@@ -91,13 +91,13 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
   }
 
   private static void selectionChanged(boolean selected, @NotNull Content content) {
-    ProblemsViewPanel panel = get(ProblemsViewPanel.class, content);
-    if (panel != null) panel.selectionChangedTo(selected);
+    var problemsViewTab = get(ProblemsViewTab.class, content);
+    if (problemsViewTab != null) problemsViewTab.selectionChangedTo(selected);
   }
 
   private static void visibilityChanged(boolean visible, @NotNull Content content) {
-    ProblemsViewPanel panel = get(ProblemsViewPanel.class, content);
-    if (panel != null) panel.visibilityChangedTo(visible);
+    var problemsViewTab = get(ProblemsViewTab.class, content);
+    if (problemsViewTab != null) problemsViewTab.visibilityChangedTo(visible);
   }
 
   private static <T> @Nullable T get(@NotNull Class<T> type, @NotNull Content content) {
@@ -193,8 +193,8 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
         boolean vertical = !window.getAnchor().isHorizontal();
         if (vertical != orientation.getAndSet(vertical)) {
           for (Content content : window.getContentManager().getContents()) {
-            ProblemsViewPanel panel = get(ProblemsViewPanel.class, content);
-            if (panel != null) panel.orientationChangedTo(vertical);
+            var problemsViewTab = get(ProblemsViewTab.class, content);
+            if (problemsViewTab != null) problemsViewTab.orientationChangedTo(vertical);
           }
         }
         boolean visible = window.isVisible();

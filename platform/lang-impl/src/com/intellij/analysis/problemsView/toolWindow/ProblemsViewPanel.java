@@ -370,7 +370,8 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     return true;
   }
 
-  void orientationChangedTo(boolean vertical) {
+  @Override
+  public void orientationChangedTo(boolean vertical) {
     setOrientation(vertical);
     myPanel.remove(myToolbar.getComponent());
     myToolbar.setOrientation(vertical ? SwingConstants.HORIZONTAL : SwingConstants.VERTICAL);
@@ -380,7 +381,8 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     updatePreview();
   }
 
-  void selectionChangedTo(boolean selected) {
+  @Override
+  public void selectionChangedTo(boolean selected) {
     if (selected) {
       myTreeModel.setComparator(createComparator());
       updatePreview();
@@ -394,7 +396,8 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     visibilityChangedTo(selected);
   }
 
-  void visibilityChangedTo(boolean visible) {
+  @Override
+  public void visibilityChangedTo(boolean visible) {
     if (visible) {
       myShowTime.set(System.nanoTime());
       ProblemsViewStatsCollector.tabShown(this);
