@@ -14,7 +14,6 @@ import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentF
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.collaboration.ui.util.ActivatableCoroutineScopeProvider
 import com.intellij.collaboration.ui.util.DimensionRestrictions
-import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.logger
@@ -25,7 +24,6 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.buildChildren
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.AnimatedIcon
-import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.Wrapper
@@ -134,15 +132,12 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
         }
         builder.toString()
       }.map { text ->
-        SimpleHtmlPane(text).apply {
-          removeHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
+        SimpleHtmlPane(addBrowserListener = false).apply {
+          setHtmlBody(text)
           onHyperlinkActivated {
             val href = it.description
             if (href.startsWith(COMMIT_HREF_PREFIX)) {
               selectInToolWindowHelper.selectCommit(href.removePrefix(COMMIT_HREF_PREFIX))
-            }
-            else {
-              BrowserUtil.browse(href)
             }
           }
         }
