@@ -26,6 +26,8 @@ class KotlinTestProperties private constructor(
     val agpVersion: String
         get() = devModeTweaks?.overrideAgpVersion ?: agpVersionFromEnv
 
+
+
     fun substituteKotlinTestPropertiesInText(text: String, sourceFile: File): String {
         val simpleProperties =  SimpleProperties(gradleVersion, kotlinGradlePluginVersion)
 
