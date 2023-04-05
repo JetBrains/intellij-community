@@ -156,9 +156,8 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
           for ((name, entity) in entities.toSortedMap()) {
             row(name) {
               checkBox("visible")
-                .applyToComponent {
-                  isSelected = true
-                }.onChanged {
+                .selected(true)
+                .onChanged {
                   when (entity) {
                     is Cell<*> -> entity.visible(it.isSelected)
                     is Row -> entity.visible(it.isSelected)
@@ -166,9 +165,8 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
                   }
                 }
               checkBox("enabled")
-                .applyToComponent {
-                  isSelected = true
-                }.onChanged {
+                .selected(true)
+                .onChanged {
                   when (entity) {
                     is Cell<*> -> entity.enabled(it.isSelected)
                     is Row -> entity.enabled(it.isSelected)
@@ -186,9 +184,9 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
 
         row {
           checkBoxRow = checkBox("Row")
-            .applyToComponent { isSelected = true }
+            .selected(true)
           checkBoxText = checkBox("textField")
-            .applyToComponent { isSelected = true }
+            .selected(true)
         }
 
         row("visibleIf test row") {

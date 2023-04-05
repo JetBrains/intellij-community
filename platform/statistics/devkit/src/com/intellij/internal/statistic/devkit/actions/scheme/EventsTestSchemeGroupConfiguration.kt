@@ -99,16 +99,16 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
       buttonsGroup {
         row {
           allowAllEventsRadioButton = radioButton(StatisticsBundle.message("stats.allow.all.events"))
+            .selected(!initialGroup.useCustomRules)
             .applyToComponent {
-              isSelected = !initialGroup.useCustomRules
               addChangeListener { updateRulesOption() }
             }.component
         }
         row {
           customRulesRadioButton = radioButton(StatisticsBundle.message("stats.use.custom.validation.rules"))
             .gap(RightGap.SMALL)
+            .selected(initialGroup.useCustomRules)
             .applyToComponent {
-              isSelected = initialGroup.useCustomRules
               addChangeListener { updateRulesOption() }
             }.component
           contextHelp(StatisticsBundle.message("stats.test.scheme.custom.rules.help"))

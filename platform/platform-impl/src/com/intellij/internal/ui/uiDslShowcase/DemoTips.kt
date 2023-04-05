@@ -115,7 +115,7 @@ fun demoTips(parentDisposable: Disposable): DialogPanel {
             }
             row {
               radioButton("Value = 2, isSelected = true", 2)
-                .applyToComponent { isSelected = true }
+                .selected(true)
                 .comment("Initial bounded value is 0, this RadioButton is selected because initial bound variable value is not equal to values of RadioButton in the group and isSelected = true", maxLineLength = 40)
             }
           }.bind({ value }, { value = it })

@@ -284,7 +284,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             }
             else {
               val enableColorBlindness = checkBox(UIBundle.message("color.blindness.combobox.text"))
-                .applyToComponent { isSelected = colorBlindnessProperty.get() != null }
+                .selected(colorBlindnessProperty.get() != null)
               comboBox(supportedValues)
                 .enabledIf(enableColorBlindness.selected)
                 .applyToComponent { renderer = SimpleListCellRenderer.create("") { PlatformEditorBundle.message(it.key) } }

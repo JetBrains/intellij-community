@@ -5,6 +5,7 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
 
@@ -20,27 +21,23 @@ internal class GroupsPanel {
     group(title = "Group at top, no gap before") {
             row {
               group1Visibility = checkBox("Group1 visibility")
-                .applyToComponent {
-                  isSelected = true
-                }.component
+                .selected(true)
+                .component
               group1Enabled = checkBox("Group1 enabled")
-                .applyToComponent {
-                  isSelected = true
-                }.component
+                .selected(true)
+                .component
             }
             indent {
               row {
                 group1RowVisibility = checkBox("Group1 label1 visibility")
-                  .applyToComponent {
-                    isSelected = true
-                  }.component
+                  .selected(true)
+                  .component
               }
             }
             row {
               group2Visibility = checkBox("Group2 visibility")
-                .applyToComponent {
-                  isSelected = true
-                }.component
+                .selected(true)
+                .component
             }
           }
 

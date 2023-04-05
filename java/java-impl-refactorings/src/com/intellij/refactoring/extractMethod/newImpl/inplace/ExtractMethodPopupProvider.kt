@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.LayoutFocusTraversalPolicy
@@ -59,8 +60,8 @@ class ExtractMethodPopupProvider(val annotateDefault: Boolean? = null,
       if (annotate != null) {
         row {
           checkBox(JavaRefactoringBundle.message("extract.method.checkbox.annotate"))
+            .selected(annotate ?: false)
             .applyToComponent {
-              isSelected = annotate ?: false
               addActionListener {
                 annotate = isSelected
                 changeListener.invoke()
@@ -71,8 +72,8 @@ class ExtractMethodPopupProvider(val annotateDefault: Boolean? = null,
       if (makeStatic != null) {
         row {
           checkBox(makeStaticLabel)
+            .selected(makeStatic ?: false)
             .applyToComponent {
-              isSelected = makeStatic ?: false
               addActionListener {
                 makeStatic = isSelected
                 changeListener.invoke()

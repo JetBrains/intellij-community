@@ -92,13 +92,13 @@ internal class PyIdeCommonOptionsPanel(data: PyCommonOptionsFormData, showModule
 
         row {
           addContentRootsCheckbox = checkBox(PyBundle.message("runcfg.labels.add.content.roots.to.pythonpath"))
-            .applyToComponent { isSelected = true }
+            .selected(true)
             .component
         }
 
         row {
           addSourceRootsCheckbox = checkBox(PyBundle.message("runcfg.labels.add.source.roots.to.pythonpath"))
-            .applyToComponent { isSelected = true }
+            .selected(true)
             .component
         }
       }.apply {

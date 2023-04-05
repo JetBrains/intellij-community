@@ -138,9 +138,8 @@ class ValidationRefactoringPanel(parentDisposable: Disposable) {
 
   private fun Row.checkBoxValidation(validation: CellValidation<*>) {
     checkBox("Enable")
-      .applyToComponent {
-        isSelected = true
-      }.onChanged { validation.enabled = it.isSelected }
+      .selected(true)
+      .onChanged { validation.enabled = it.isSelected }
   }
 
   private fun validationInfo(component: JTextField, place: String): ValidationInfo? {

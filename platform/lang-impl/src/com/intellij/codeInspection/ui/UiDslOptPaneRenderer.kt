@@ -216,9 +216,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
     return when (component) {
         is OptCheckbox -> {
           checkBox(component.label.label())
-            .applyToComponent {
-              isSelected = context.getOption(component.bindId) as Boolean
-            }
+            .selected(context.getOption(component.bindId) as Boolean)
             .onChanged { context.setOption(component.bindId, it.isSelected) }
         }
 
