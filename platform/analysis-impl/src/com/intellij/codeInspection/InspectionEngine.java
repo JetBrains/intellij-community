@@ -223,7 +223,7 @@ public final class InspectionEngine {
                                  @NotNull TextRange priorityRange,
                                  boolean isOnTheFly,
                                  @NotNull Consumer<? super LocalInspectionToolSession> runnable) {
-    LocalInspectionToolSession session = new LocalInspectionToolSession(file, priorityRange);
+    LocalInspectionToolSession session = new LocalInspectionToolSession(file, priorityRange, restrictRange);
     runnable.accept(session);
   }
 

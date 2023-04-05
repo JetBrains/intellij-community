@@ -2,13 +2,9 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.searches.ReferencesSearch
-import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.inspections.collections.isMap
 import org.jetbrains.kotlin.idea.intentions.getArguments
@@ -19,16 +15,23 @@ import org.jetbrains.kotlin.idea.util.RangeKtExpressionType.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.util.match
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 /**
  * Tests:
  * [org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.ReplaceManualRangeWithIndicesCalls]
  */
 class ReplaceManualRangeWithIndicesCallsInspection : AbstractRangeInspection() {
-    override fun visitRange(range: KtExpression, context: Lazy<BindingContext>, type: RangeKtExpressionType, holder: ProblemsHolder) {
+    override fun visitRange(
+        range: KtExpression,
+        context: Lazy<BindingContext>,
+        type: RangeKtExpressionType,
+        holder: ProblemsHolder,
+        session: LocalInspectionToolSession
+    ) {
         val (left, right) = range.getArguments() ?: return
         if (left == null) return
         if (right == null) return
