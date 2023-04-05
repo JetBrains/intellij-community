@@ -66,8 +66,55 @@ tasks.register("hello-module") {
     assertThat(output).contains("expected!");
   }
 
-  private fun runTask(taskData: TaskData): String {
+  // Checks the workaround for IDEA-316566 IDEA-317008
+  @Test
+  fun `run task from misconfigured subproject with explicit script parameter`() {
+    val properSettingsFilePaths = createProjectSubFile("settings.gradle", """
+      rootProject.name = "rootProject"
+      include('projectA')
+      include('projectB')
+    """.trimIndent()).canonicalPath
+    createProjectSubFile("projectB/build.gradle", """
+    """.trimIndent())
+    createProjectSubFile("projectA/build.gradle", """
+      plugins {
+        id 'java-library'
+      }
+      
+      dependencies {
+        implementation(project(':projectB'))
+      }
+      
+      tasks.register("hello") {
+          doLast {
+              configurations.implementation.allArtifacts
+              logger.lifecycle("expected!")
+          }
+      }
+    """.trimIndent())
+     //--- following settings.gradle files are not expected in regular gradle projects
+     //but may appear e.g. when IDEA "new module" wizard creates a spring subproject using vendor's API
+    createProjectSubFile("projectA/settings.gradle", """
+      rootProject.name = "projectA"
+    """.trimIndent())
+    createProjectSubFile("projectB/settings.gradle", """
+      rootProject.name = "projectB"
+    """.trimIndent())
+
+    importProject()
+
+    val taskData: TaskData = ExternalSystemApiUtil
+                               .findProjectTasks(myProject, GradleConstants.SYSTEM_ID, "$projectPath/projectA")
+                               .find { it.name == "hello" } ?: throw AssertionFailedError("Task 'hello' not found")
+
+    // this script parameter allows to skip malicious settings.gradle files.
+    val output = runTask(taskData, "--settings-file \"$properSettingsFilePaths\"")
+    assertThat(output).contains("expected!")
+  }
+
+  private fun runTask(taskData: TaskData, scriptParameters: String = ""): String {
     val taskExecutionInfo = ExternalSystemActionUtil.buildTaskInfo(taskData)
+    taskExecutionInfo.settings.scriptParameters = scriptParameters
 
     val notificationManager = ApplicationManager.getApplication().getService(
       ExternalSystemProgressNotificationManager::class.java)

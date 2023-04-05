@@ -111,6 +111,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     taskSettings.externalProjectPath = gradleModuleData?.directoryToRunTask ?: GradleRunnerUtil.resolveProjectPath(module)
     val runAppTaskName = mainClass.name!! + ".main()"
     taskSettings.taskNames = listOf((gradleModuleData?.getTaskPath(runAppTaskName) ?: runAppTaskName))
+    customiseTaskExecutionsSettings(taskSettings, module)
 
     val executorId = executor?.id ?: DefaultRunExecutor.EXECUTOR_ID
     val environment = ExternalSystemUtil.createExecutionEnvironment(project, GradleConstants.SYSTEM_ID, taskSettings, executorId)
@@ -137,6 +138,8 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
       .filter { it.providerId !== CompileStepBeforeRun.ID }
     return environment
   }
+
+  protected open fun customiseTaskExecutionsSettings(taskSettings: ExternalSystemTaskExecutionSettings, module: Module) {}
 
   companion object {
     fun createEscapedParameters(parameters: List<String>, prefix: String): String {
