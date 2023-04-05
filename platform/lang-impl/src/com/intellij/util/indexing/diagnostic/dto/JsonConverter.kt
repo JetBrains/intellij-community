@@ -29,7 +29,7 @@ fun ScanningStatistics.toJsonStatistics(): JsonScanningStatistics {
     scanningTime = JsonDuration(scanningTime),
     timeProcessingUpToDateFiles = JsonDuration(timeProcessingUpToDateFiles),
     timeUpdatingContentLessIndexes = JsonDuration(timeUpdatingContentLessIndexes),
-    timeIndexingWithoutContent = JsonDuration(timeIndexingWithoutContent),
+    timeIndexingWithoutContentViaInfrastructureExtension = JsonDuration(timeIndexingWithoutContentViaInfrastructureExtension),
     roots = providerRoots,
     scannedFiles = jsonScannedFiles
   )

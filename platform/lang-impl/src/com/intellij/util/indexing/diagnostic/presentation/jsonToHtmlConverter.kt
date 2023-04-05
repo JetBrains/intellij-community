@@ -883,7 +883,7 @@ fun JsonIndexDiagnostic.generateHtml(target: Appendable): String {
                   td(scanningStats.scanningTime.presentableDuration())
                   td(scanningStats.timeProcessingUpToDateFiles.presentableDuration())
                   td(scanningStats.timeUpdatingContentLessIndexes.presentableDuration())
-                  td(scanningStats.timeIndexingWithoutContent.presentableDuration())
+                  td(scanningStats.timeIndexingWithoutContentViaInfrastructureExtension.presentableDuration())
                   if (shouldPrintProviderRoots) {
                     td {
                       textArea(scanningStats.roots.sorted().joinToString("\n"))
@@ -1124,7 +1124,7 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
                   td(scanningStats.scanningTime.presentableDuration())
                   td(scanningStats.timeProcessingUpToDateFiles.presentableDuration())
                   td(scanningStats.timeUpdatingContentLessIndexes.presentableDuration())
-                  td(scanningStats.timeIndexingWithoutContent.presentableDuration())
+                  td(scanningStats.timeIndexingWithoutContentViaInfrastructureExtension.presentableDuration())
                   if (shouldPrintProviderRoots) {
                     td {
                       textArea(scanningStats.roots.sorted().joinToString("\n"))
@@ -1521,7 +1521,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
                   td("Time updating content-less indexes"); td(scanningStatistics.timeUpdatingContentLessIndexes.presentableDuration())
                 }
                 tr(classes = classes) {
-                  td("Time indexing without content"); td(scanningStatistics.timeIndexingWithoutContent.presentableDuration())
+                  td("Time indexing without content"); td(scanningStatistics.timeIndexingWithoutContentViaInfrastructureExtension.presentableDuration())
                 }
                 if (scanningStatistics.roots.isNotEmpty()) {
                   tr(classes = classes) {

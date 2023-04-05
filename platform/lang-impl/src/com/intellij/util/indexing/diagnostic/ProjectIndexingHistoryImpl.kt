@@ -431,6 +431,10 @@ data class ProjectScanningHistoryImpl(override val project: Project,
 
   fun scanningFinished() {
     writeStagesToDurations()
+
+    timesImpl.indexExtensionsDuration = scanningStatistics.map { stat -> stat.timeIndexingWithoutContentViaInfrastructureExtension.nano }.sumOf { it }.let {
+      Duration.ofNanos(it)
+    }
   }
 
   fun setWasInterrupted() {
@@ -597,9 +601,9 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     override var totalUpdatingTime: TimeNano,
     override var updatingEnd: ZonedDateTime = updatingStart,
     override var pushPropertiesDuration: Duration = Duration.ZERO,
-    override var indexExtensionsDuration: Duration = Duration.ZERO,
     override var creatingIteratorsDuration: Duration = Duration.ZERO,
     override var scanFilesDuration: Duration = Duration.ZERO,
+    override var indexExtensionsDuration: Duration = Duration.ZERO,
     override var suspendedDuration: Duration = Duration.ZERO,
     override var wasInterrupted: Boolean = false
   ) : ScanningTimes

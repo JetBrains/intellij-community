@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ReadAction;
@@ -81,7 +81,7 @@ final class UnindexedFilesFinder {
       AtomicBoolean indexesWereProvidedByInfrastructureExtension = new AtomicBoolean();
       AtomicLong timeProcessingUpToDateFiles = new AtomicLong();
       AtomicLong timeUpdatingContentLessIndexes = new AtomicLong();
-      AtomicLong timeIndexingWithoutContent = new AtomicLong();
+      AtomicLong timeIndexingWithoutContentViaInfrastructureExtension = new AtomicLong();
 
       IndexedFileImpl indexedFile = new IndexedFileImpl(file, fileType, myProject);
       int inputId = FileBasedIndex.getFileId(file);
@@ -113,7 +113,7 @@ final class UnindexedFilesFinder {
                                          false,
                                          timeProcessingUpToDateFiles.get(),
                                          timeUpdatingContentLessIndexes.get(),
-                                         timeIndexingWithoutContent.get());
+                                         timeIndexingWithoutContentViaInfrastructureExtension.get());
         }
       }
 
@@ -125,7 +125,7 @@ final class UnindexedFilesFinder {
                                        indexesWereProvidedByInfrastructureExtension.get(),
                                        timeProcessingUpToDateFiles.get(),
                                        timeUpdatingContentLessIndexes.get(),
-                                       timeIndexingWithoutContent.get());
+                                       timeIndexingWithoutContentViaInfrastructureExtension.get());
       }
       Ref<Runnable> finalization = new Ref<>();
       ((FileTypeManagerImpl)ex).freezeFileTypeTemporarilyWithProvidedValueIn(file, fileType, () -> {
@@ -179,7 +179,7 @@ final class UnindexedFilesFinder {
                       wasIndexedByInfrastructure = tryIndexWithoutContentViaInfrastructureExtension(indexedFile, inputId, indexId);
                     }
                     finally {
-                      timeIndexingWithoutContent.addAndGet(System.nanoTime() - nowTime);
+                      timeIndexingWithoutContentViaInfrastructureExtension.addAndGet(System.nanoTime() - nowTime);
                     }
                     if (wasIndexedByInfrastructure) {
                       indexesWereProvidedByInfrastructureExtension.set(true);
@@ -276,7 +276,7 @@ final class UnindexedFilesFinder {
                                      indexesWereProvidedByInfrastructureExtension.get(),
                                      timeProcessingUpToDateFiles.get(),
                                      timeUpdatingContentLessIndexes.get(),
-                                     timeIndexingWithoutContent.get());
+                                     timeIndexingWithoutContentViaInfrastructureExtension.get());
     });
   }
 
