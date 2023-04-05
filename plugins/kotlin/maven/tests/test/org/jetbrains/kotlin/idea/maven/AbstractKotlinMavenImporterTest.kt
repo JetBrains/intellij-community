@@ -643,7 +643,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                                 <arg>-Xcoroutines=enable</arg>
                             </args>
                             <jvmTarget>1.8</jvmTarget>
-                            <classpath>foobar.jar</classpath>
+                            <classpath>foo.jar${File.pathSeparator}bar.jar</classpath>
                         </configuration>
                     </plugin>
                 </plugins>
@@ -664,7 +664,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                 Assert.assertEquals(true, compilerArguments!!.suppressWarnings)
                 Assert.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
                 Assert.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
-                Assert.assertEquals("foobar.jar", (compilerArguments as K2JVMCompilerArguments).classpath)
+                Assert.assertEquals(listOf("foo.jar", "bar.jar"), (compilerArguments as K2JVMCompilerArguments).classpath?.toList())
                 Assert.assertEquals(
                     "",
                     compilerSettings!!.additionalArguments
@@ -819,7 +819,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                     Assert.assertEquals("commonjs", moduleKind)
                 }
                 Assert.assertEquals(
-                    "-meta-info -output test.js",
+                    "-output test.js",
                     compilerSettings!!.additionalArguments
                 )
             }
@@ -958,7 +958,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                                     <args>
                                         <arg>-Xcoroutines=enable</arg>
                                     </args>
-                                    <classpath>foobar.jar</classpath>
+                                    <classpath>foo.jar${File.pathSeparator}bar.jar</classpath>
                                 </configuration>
                             </execution>
                         </executions>
@@ -984,7 +984,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                 Assert.assertEquals(true, compilerArguments!!.suppressWarnings)
                 Assert.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
                 Assert.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
-                Assert.assertEquals("foobar.jar", (compilerArguments as K2JVMCompilerArguments).classpath)
+                Assert.assertEquals(listOf("foo.jar", "bar.jar"), (compilerArguments as K2JVMCompilerArguments).classpath?.toList())
                 Assert.assertEquals("", compilerSettings!!.additionalArguments)
             }
         }
@@ -996,7 +996,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
 
             importProject(
-                """
+                /* xml = */ """
             <groupId>test</groupId>
             <artifactId>project</artifactId>
             <version>1.0.0</version>
@@ -1028,7 +1028,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                         </executions>
                         <configuration>
                             <args>
-                                -jvm-target 1.8 -Xcoroutines=enable -classpath "c:\program files\jdk1.8"
+                                -jvm-target 1.8 -Xcoroutines=enable -classpath "my\programm files\jdk8"
                             </args>
                         </configuration>
                     </plugin>
@@ -1043,7 +1043,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             with(facetSettings) {
                 Assert.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
                 Assert.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
-                Assert.assertEquals("c:/program files/jdk1.8", (compilerArguments as K2JVMCompilerArguments).classpath)
+                Assert.assertEquals(listOf("my/programm files/jdk8"), (compilerArguments as K2JVMCompilerArguments).classpath?.toList())
             }
         }
 
@@ -1099,7 +1099,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                         </executions>
                         <configuration>
                             <args>
-                                -jvm-target 1.8 -Xcoroutines=enable -classpath "c:\program files\jdk1.8"
+                                -jvm-target 1.8 -Xcoroutines=enable -classpath "my\programm files\jdk8"
                             </args>
                         </configuration>
                     </plugin>
@@ -2157,11 +2157,11 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
     }
 
     class JpsCompilerMultiModule : AbstractKotlinMavenImporterTest() {
-      override fun runInDispatchThread(): Boolean {
-        return false
-      }
+        override fun runInDispatchThread(): Boolean {
+            return false
+        }
 
-      @Test
+        @Test
         fun testJpsCompilerMultiModule() {
             createProjectSubDirs(
                 "src/main/kotlin",
@@ -3100,7 +3100,9 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                                 <arg>1.8</arg>
                                 <arg>-Xcoroutines=enable</arg>
                                 <arg>-classpath</arg>
-                                <arg>c:\program files\jdk1.8</arg>
+                                <arg>my\programm files\jdk8${File.pathSeparator}my\libs\foo.jar</arg>
+                                <arg>-classpath</arg>
+                                <arg>my\libs\bar.jar</arg>
                             </args>
                         </configuration>
                     </plugin>
@@ -3115,7 +3117,10 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             with(facetSettings) {
                 Assert.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
                 Assert.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
-                Assert.assertEquals("c:/program files/jdk1.8", (compilerArguments as K2JVMCompilerArguments).classpath)
+                Assert.assertEquals(
+                    listOf("my/programm files/jdk8", "my/libs/foo.jar", "my/libs/bar.jar"),
+                    (compilerArguments as K2JVMCompilerArguments).classpath?.toList()
+                )
             }
         }
     }
