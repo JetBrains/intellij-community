@@ -162,6 +162,11 @@ public class WindowWrapperBuilder {
     }
 
     @Override
+    public boolean isDisposed() {
+      return myDialog.isDisposed();
+    }
+
+    @Override
     public void setTitle(@Nullable String title) {
       myDialog.setTitle(StringUtil.notNullize(title));
     }
@@ -299,6 +304,11 @@ public class WindowWrapperBuilder {
     @Override
     public Window getWindow() {
       return myFrame.getFrame();
+    }
+
+    @Override
+    public boolean isDisposed() {
+      return myFrame.isDisposed();
     }
 
     @Override
