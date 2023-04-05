@@ -12,6 +12,7 @@
       "playBack.svg": "actions/play_back.svg",
       "playForward.svg": "actions/play_forward.svg",
       "playLast.svg": "actions/play_last.svg",
+      "projectDirectory.svg": "actions/projectDirectory.svg",
       "showWriteAccess.svg": "actions/showWriteAccess.svg",
       "showReadAccess.svg": "actions/showReadAccess.svg",
       "showImportStatements.svg": "actions/showImportStatements.svg",
@@ -457,6 +458,7 @@
       "controller.svg": "nodes/controller.svg",
       "dataColumn.svg": "nodes/dataColumn.svg",
       "dataSchema.svg": "nodes/dataSchema.svg",
+      "desktop.svg": "nodes/desktop.svg",
       "editFolder.svg": "modules/editFolder.svg",
       "enum.svg": "nodes/enum.svg",
       "errorIntroduction.svg": "nodes/errorIntroduction.svg",
@@ -470,6 +472,7 @@
       "generatedSource.svg": "modules/generatedSourceRoot.svg",
       "generatedTestRoot.svg": "modules/generatedTestRoot.svg",
       "gvariable.svg": "nodes/gvariable.svg",
+      "homeFolder.svg": "nodes/homeFolder.svg",
       "interface.svg": "nodes/interface.svg",
       "jdk.svg": "nodes/ppJdk.svg",
       "lambda.svg": "nodes/lambda.svg",
@@ -479,7 +482,10 @@
       "methodAbstract.svg": "nodes/abstractMethod.svg",
       "methodReference.svg": "nodes/methodReference.svg",
       "modelClass.svg": "nodes/modelClass.svg",
-      "module.svg": "nodes/Module.svg",
+      "module.svg": [
+        "nodes/Module.svg",
+        "actions/moduleDirectory.svg"
+      ],
       "moduleGroup.svg": "nodes/moduleGroup.svg",
       "package.svg": "nodes/package.svg",
       "parameter.svg": [
@@ -498,6 +504,7 @@
       ],
       "record.svg": "nodes/record.svg",
       "resourcesRoot.svg": "modules/resourcesRoot.svg",
+      "servlet.svg": "nodes/servlet.svg",
       "sourceRoot.svg": "modules/sourceRoot.svg",
       "star.svg": "nodes/favorite.svg",
       "starEmpty.svg": "nodes/notFavoriteOnHover.svg",
@@ -509,6 +516,7 @@
       "testSourceFolder.svg": "nodes/testSourceFolder.svg",
       "type.svg": "nodes/type.svg",
       "unloadedModule.svg": "modules/unloadedModule.svg",
+      "upFolder.svg": "nodes/upFolder.svg",
       "variable.svg": "nodes/variable.svg",
       "warningIntroduction.svg": "nodes/warningIntroduction.svg"
     },
