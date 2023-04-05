@@ -98,9 +98,8 @@ private const val DISABLE_IMPLICIT_READ_ON_EDT_PROPERTY = "idea.disable.implicit
 private const val DISABLE_AUTOMATIC_WIL_ON_DIRTY_UI_PROPERTY = "idea.disable.automatic.wil.on.dirty.ui"
 private const val MAGIC_MAC_PATH = "/AppTranslocation/"
 
-private val commandProcessor: AtomicReference<(List<String>) -> Deferred<CliResult>> = AtomicReference {
-  CompletableDeferred(CliResult(AppExitCodes.ACTIVATE_NOT_INITIALIZED, IdeBundle.message("activation.not.initialized")))
-}
+private val commandProcessor: AtomicReference<(List<String>) -> Deferred<CliResult>> =
+  AtomicReference { CompletableDeferred(CliResult(AppExitCodes.ACTIVATE_NOT_INITIALIZED, IdeBundle.message("activation.not.initialized"))) }
 
 // checked - using a Deferred type doesn't lead to loading this class on StartupUtil init
 internal var shellEnvDeferred: Deferred<Boolean?>? = null
@@ -136,7 +135,7 @@ fun CoroutineScope.startApplication(args: List<String>,
 
   // LookAndFeel type is not specified to avoid class loading
   val initAwtToolkitAndEventQueueJob = launch {
-    // this should happen before UI initialization - if we're not going to show UI (in case another IDE instance is already running),
+    // this should happen before UI initialization - if we're not going to show the UI (in case another IDE instance is already running),
     // we shouldn't initialize AWT toolkit in order to avoid unnecessary focus stealing and space switching on macOS.
     initAwtToolkit(lockSystemDirsJob, busyThread).join()
 
@@ -238,7 +237,7 @@ ${dumpCoroutines(stripDump = false)}
       rwLockHolder
     }
 
-    // logging must be initialized before creating application
+    // logging must be initialized before creating the application
     val log = logDeferred.await()
     if (!configImportNeededDeferred.await()) {
       runPreAppClass(log, args)
@@ -365,9 +364,8 @@ private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job, appInfoDeferr
   }
 }
 
-fun processWindowsLauncherCommandLine(currentDirectory: String, args: Array<String>): Int {
-  return EXTERNAL_LISTENER.apply(currentDirectory, args)
-}
+fun processWindowsLauncherCommandLine(currentDirectory: String, args: Array<String>): Int =
+  EXTERNAL_LISTENER.apply(currentDirectory, args)
 
 internal val isImplicitReadOnEDTDisabled: Boolean
   get() = java.lang.Boolean.getBoolean(DISABLE_IMPLICIT_READ_ON_EDT_PROPERTY)
@@ -395,9 +393,7 @@ private fun runPreAppClass(log: Logger, args: List<String>) {
   }
 }
 
-private suspend fun importConfig(args: List<String>, log: Logger,
-                                 appStarter: AppStarter,
-                                 euaDocumentDeferred: Deferred<EndUserAgreement.Document?>) {
+private suspend fun importConfig(args: List<String>, log: Logger, appStarter: AppStarter, euaDocumentDeferred: Deferred<EndUserAgreement.Document?>) {
   var activity = StartUpMeasurer.startActivity("screen reader checking")
   try {
     withContext(RawSwingDispatcher) { AccessibilityUtils.enableScreenReaderSupportIfNecessary() }
@@ -836,11 +832,8 @@ fun logEssentialInfoAboutIde(log: Logger, appInfo: ApplicationInfo, args: List<S
     log.info("desktop: ${System.getenv("XDG_CURRENT_DESKTOP")}")
   }
 
-  // looks like exception here leads to deadlock on IDE start (happens from time to time in perf tests)
   try {
-    ManagementFactory.getRuntimeMXBean().inputArguments?.let {
-      log.info("JVM options: ${it}")
-    }
+    ManagementFactory.getRuntimeMXBean().inputArguments?.let { log.info("JVM options: ${it}") }
   }
   catch (e: Exception) {
     log.error("Failed to get JVM options", e)
