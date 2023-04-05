@@ -5,10 +5,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.util.indexing.EntityIndexingServiceEx
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleDependencyIndexImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleRootListenerBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 
@@ -37,7 +35,6 @@ internal object ModuleRootListenerBridgeImpl : ModuleRootListenerBridge {
       return
     }
 
-    (ModuleDependencyIndex.getInstance(project) as ModuleDependencyIndexImpl).workspaceModelChanged(event)
     val projectRootManager = ProjectRootManager.getInstance(project)
     if (projectRootManager !is ProjectRootManagerBridge) return
     val performUpdate = shouldFireRootsChanged(event, project)
