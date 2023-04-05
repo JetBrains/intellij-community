@@ -1,7 +1,8 @@
 package com.intellij.tools.launch
 
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.SystemProperties
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
+import org.jetbrains.intellij.build.dependencies.JdkDownloader
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import java.io.File
 
@@ -36,10 +37,9 @@ interface PathsProvider {
     get() = communityRootFolder.resolve("bin")
 
   val javaExecutable: File
-    get() = when {
-      SystemInfo.isWindows -> javaHomeFolder.resolve("bin").resolve("java.exe")
-      else -> javaHomeFolder.resolve("bin").resolve("java")
-    }
+    get() = JdkDownloader.getJavaExecutable(
+      JdkDownloader.getJdkHome(BuildDependenciesCommunityRoot(communityRootFolder.toPath()))
+    ).normalize().toFile()
 
   val dockerVolumesToWritable: Map<File, Boolean>
     get() = emptyMap()

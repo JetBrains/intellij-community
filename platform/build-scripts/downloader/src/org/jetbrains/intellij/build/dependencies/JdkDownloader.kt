@@ -7,10 +7,7 @@ import java.nio.file.Path
 import java.util.logging.Logger
 
 /**
- * Provides a reasonable stable version of JDK for current platform
- *
- * JDK is used for compiling and running build scripts, compiling intellij project
- * It's currently fixed here to be the same on all build agents and also in Docker images
+ * Provides a current JBR SDK
  */
 object JdkDownloader {
   @JvmStatic
