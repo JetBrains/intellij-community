@@ -53,8 +53,6 @@ data class JsonProjectScanningHistoryTimes(
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class JsonProjectDumbIndexingHistoryTimes(
-  val indexingReason: String? = null,
-  val scanningType: ScanningType = ScanningType.FULL,
   val totalUpdatingTime: JsonDuration = JsonDuration(),
   val indexingTime: JsonDuration = JsonDuration(),
   val contentLoadingVisibleTime: JsonDuration = JsonDuration(),

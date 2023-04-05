@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
-import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -190,7 +189,7 @@ class PerProjectIndexingQueue(private val project: Project) {
     val (filesInQueue, totalFiles) = getAndResetQueuedFiles()
     if (totalFiles > 0) {
       val indexingReason = projectIndexingHistory.indexingReason ?: "Flushing queue of project ${project.name}"
-      val projectDumbIndexingHistory = ProjectDumbIndexingHistoryImpl(project, null, ScanningType.REFRESH)
+      val projectDumbIndexingHistory = ProjectDumbIndexingHistoryImpl(project)
       try {
         UnindexedFilesIndexer(project, filesInQueue, indexingReason).indexFiles(projectIndexingHistory, projectDumbIndexingHistory, indicator)
       }

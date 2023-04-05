@@ -242,7 +242,7 @@ class DumbServiceImplTest {
             IndexUpdateRunner(index, 1)
               .indexFiles(project, listOf(IndexUpdateRunner.FileSet(project, "child", listOf(child))),
                           indicator, ProjectIndexingHistoryImpl(project, "Testing", ScanningType.PARTIAL),
-                          ProjectDumbIndexingHistoryImpl(project, "Testing", ScanningType.PARTIAL))
+                          ProjectDumbIndexingHistoryImpl(project))
           }
         }
         catch (e: ProcessCanceledException) {

@@ -117,8 +117,6 @@ fun ScanningTimes.toJson() =
 
 fun DumbIndexingTimes.toJson() =
   JsonProjectDumbIndexingHistoryTimes(
-    indexingReason = indexingReason,
-    scanningType = scanningType,
     totalUpdatingTime = JsonDuration(totalUpdatingTime),
     indexingTime = JsonDuration(indexingDuration.toNanos()),
     contentLoadingVisibleTime = JsonDuration(contentLoadingVisibleDuration.toNanos()),

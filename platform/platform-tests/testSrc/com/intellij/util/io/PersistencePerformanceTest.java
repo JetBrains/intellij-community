@@ -111,7 +111,7 @@ public class PersistencePerformanceTest extends BasePlatformTestCase {
       new IndexUpdateRunner(index, UnindexedFilesUpdater.getNumberOfIndexingThreads())
         .indexFiles(getProject(), Collections.singletonList(new IndexUpdateRunner.FileSet(getProject(), "test files", files)),
                     new EmptyProgressIndicator(), new ProjectIndexingHistoryImpl(getProject(), "Testing", ScanningType.PARTIAL),
-                    new ProjectDumbIndexingHistoryImpl(getProject(), "Testing", ScanningType.PARTIAL));
+                    new ProjectDumbIndexingHistoryImpl(getProject()));
     }
     for (Future<Boolean> future : futures) {
       assertTrue(future.get());
