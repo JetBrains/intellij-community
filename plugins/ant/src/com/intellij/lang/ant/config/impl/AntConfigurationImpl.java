@@ -256,7 +256,8 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
         queueLater(new Task.Backgroundable(getProject(), title, false) {
           @Override
           public void run(@NotNull final ProgressIndicator indicator) {
-            if (getProject().isDisposed()) {
+            Project project = getProject();
+            if (project == null || project.isDisposed()) {
               return;
             }
 
@@ -267,7 +268,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
               myInitThread = Thread.currentThread();
 
               // first, remove existing files
-              ReadAction.run(() -> {
+              runNonBlocking(() -> {
                 for (AntBuildFile file : myBuildFiles) {
                   removeBuildFileImpl(file);
                 }
@@ -324,7 +325,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
                     }
                     if (event != null) {
                       try {
-                        event.readExternal(e, getProject());
+                        event.readExternal(e, project);
                         setTargetForEvent(buildFile, targetName, event);
                       }
                       catch (InvalidDataException readFailed) {
@@ -336,7 +337,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
               }
               ReadAction.run(() -> {
                 try {
-                  AntWorkspaceConfiguration.getInstance(getProject()).loadFileProperties();
+                  AntWorkspaceConfiguration.getInstance(project).loadFileProperties();
                 }
                 catch (InvalidDataException e) {
                   LOG.error(e);
