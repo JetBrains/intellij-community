@@ -15,14 +15,13 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.ProjectRule
-import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.util.application
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
+import com.intellij.util.indexing.mocks.ConfigurableTextFileIndexer
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import org.junit.*
@@ -79,13 +78,53 @@ class UnindexedFilesScannerTest {
   fun `test scanner does not schedule indexed files for indexing again`() {
     val filesAndDirs = setupSimpleRepresentativeFolderForIndexing()
 
-    val (_, dirtyFiles1) = scanFiles(filesAndDirs)
-    indexFiles(filesAndDirs, dirtyFiles1)
+    scanAndIndexFiles(filesAndDirs)
 
-    val (scanningStat, dirtyFiles2) = scanFiles(filesAndDirs)
+    val (scanningStat, dirtyFiles) = scanFiles(filesAndDirs)
 
-    assertThat(dirtyFiles2).isEmpty()
+    assertThat(dirtyFiles).isEmpty()
     assertEquals(0, scanningStat.numberOfFilesForIndexing)
+  }
+
+  @Test
+  fun `test scanner does not schedule indexed files for indexing again (change indexer#accept return value)`() {
+    val indexer = ConfigurableTextFileIndexer()
+    registerIndexer(indexer)
+
+    val filesAndDirs = setupSimpleRepresentativeFolderForIndexing()
+
+    // Index files
+    scanAndIndexFiles(filesAndDirs)
+    assertThat(indexer.getAndResetIndexedFiles()).isNotEmpty()
+
+    // Unindex files. Note that we don't need to increase indexer version. "Accepts" behavior may change, for example, after
+    // user changed the project model (e.g., file is no longe in sources dir)
+    indexer.additionalInputFilter = { false }
+    scanAndIndexFiles(filesAndDirs)
+    assertThat(indexer.getAndResetIndexedFiles())
+      .withFailMessage("Indexer should not be invoked to remove previously indexed values")
+      .isEmpty()
+
+    // Scan again after "unindexing"
+    val (scanningStat, dirtyFiles) = scanFiles(filesAndDirs)
+    assertThat(dirtyFiles)
+      .withFailMessage("Nothing changed since last indexing. Should detect no files for indexing")
+      .isEmpty()
+    assertEquals(0, scanningStat.numberOfFilesForIndexing)
+  }
+
+  private fun registerIndexer(indexer: FileBasedIndexExtension<*, *>) {
+    runInEdtAndWait {
+      val tumbler = FileBasedIndexTumbler("test")
+      tumbler.turnOff()
+      application.registerExtension(FileBasedIndexExtension.EXTENSION_POINT_NAME, indexer, testRootDisposable)
+      tumbler.turnOn()
+    }
+  }
+
+  private fun scanAndIndexFiles(filesAndDirs: SingleRootIndexableFilesIterator) {
+    val (_, dirtyFiles) = scanFiles(filesAndDirs)
+    indexFiles(filesAndDirs, dirtyFiles)
   }
 
   private fun indexFiles(provider: SingleRootIndexableFilesIterator, dirtyFiles: Collection<VirtualFile>) {
@@ -104,7 +143,9 @@ class UnindexedFilesScannerTest {
     val (history, dirtyFilesPerOrigin) = scanFiles(filesAndDirs as IndexableFilesIterator)
 
     assertThat(dirtyFilesPerOrigin.size).isLessThanOrEqualTo(1)
-    val dirtyFiles = dirtyFilesPerOrigin[filesAndDirs] ?: emptyList()
+    val dirtyFiles = dirtyFilesPerOrigin[filesAndDirs] ?: emptyList<VirtualFile>().also {
+      assertThat(dirtyFilesPerOrigin).isEmpty()
+    }
 
     assertEquals(1, history.scanningStatistics.size)
     val scanningStat = history.scanningStatistics[0]

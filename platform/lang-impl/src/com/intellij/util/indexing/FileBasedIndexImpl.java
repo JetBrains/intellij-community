@@ -1499,7 +1499,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         boolean shouldClearAllIndexedStates = fc == null;
         for (ID<?, ?> indexId : currentIndexedStates) {
           ProgressManager.checkCanceled();
-          if (shouldClearAllIndexedStates || getIndex(indexId).getIndexingStateForFile(inputId, fc).updateRequired()) {
+          if (shouldClearAllIndexedStates || shouldIndexFile(fc, indexId).updateRequired()) {
             ProgressManager.checkCanceled();
             SingleIndexValueRemover remover = createSingleIndexRemover(indexId, file, fc, inputId, writeIndexSeparately);
             if (remover == null) {
