@@ -101,10 +101,9 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     myStructureFilterModel = new FileFilterModel(myLogData.getLogProviders().keySet(), myUiProperties, filters);
     myTextFilterModel = new TextFilterModel(myUiProperties, filters, parentDisposable);
 
-    TextFilterField myFilterField = new TextFilterField(myTextFilterModel, parentDisposable);
-
-    ActionToolbar toolbar = createTextActionsToolbar(myFilterField.getTextEditor());
-    mySearchComponent = new SearchFieldWithExtension(toolbar.getComponent(), myFilterField);
+    TextFilterField textFilterField = new TextFilterField(myTextFilterModel, parentDisposable);
+    ActionToolbar toolbar = createTextActionsToolbar(textFilterField.getTextEditor());
+    mySearchComponent = new SearchFieldWithExtension(toolbar.getComponent(), textFilterField);
 
     FilterModel[] models = {myBranchFilterModel, myUserFilterModel, myDateFilterModel, myStructureFilterModel, myTextFilterModel};
     for (FilterModel<?> model : models) {
