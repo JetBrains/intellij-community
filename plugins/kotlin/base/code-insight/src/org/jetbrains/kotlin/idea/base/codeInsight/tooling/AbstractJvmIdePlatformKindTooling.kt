@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.base.codeInsight.tooling
 
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
+import com.intellij.openapi.util.Key
 import com.intellij.testIntegration.TestFramework
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
@@ -36,7 +37,29 @@ abstract class AbstractJvmIdePlatformKindTooling : IdePlatformKindTooling() {
     override fun acceptsAsEntryPoint(function: KtFunction) = true
 
     override fun getTestIcon(declaration: KtNamedDeclaration, allowSlowOperations: Boolean): Icon? {
-        val urls = calculateUrls(declaration, allowSlowOperations)
+        val calculatedTestFrameworkName = declaration.getUserData(TEST_FRAMEWORK_NAME_KEY)
+        if (calculatedTestFrameworkName != null && allowSlowOperations) {
+            // testframework has been provided on `allowSlowOperations=false` state
+            return null
+        }
+        val testFramework =
+            calculatedTestFrameworkName?.let { name ->
+                TestFramework.EXTENSION_NAME.extensionList.first { name == it.name }
+            } ?: TestFramework.EXTENSION_NAME.extensionList.firstOrNull { framework ->
+                if (framework is KotlinPsiBasedTestFramework) {
+                    framework.responsibleFor(declaration)
+                } else if (allowSlowOperations) {
+                    when (declaration) {
+                        is KtClassOrObject -> declaration.toLightClass()?.let(framework::isTestClass) ?: false
+                        is KtNamedFunction -> declaration.toLightMethods().firstOrNull()?.let { framework.isTestMethod(it, false) } ?: false
+                        else -> false
+                    }
+                } else {
+                    false
+                }
+            } ?: return null
+        declaration.putUserData(TEST_FRAMEWORK_NAME_KEY, testFramework.name)
+        val urls = calculateUrls(declaration)
 
         return if (urls != null) {
             KotlinTestRunLineMarkerContributor.getTestStateIcon(urls, declaration)
@@ -47,23 +70,7 @@ abstract class AbstractJvmIdePlatformKindTooling : IdePlatformKindTooling() {
         }
     }
 
-    private fun calculateUrls(declaration: KtNamedDeclaration, allowSlowOperations: Boolean): List<String>? {
-        val testFramework = TestFramework.EXTENSION_NAME.extensionList.firstOrNull { framework ->
-            if (framework is KotlinPsiBasedTestFramework) {
-                framework.responsibleFor(declaration)
-            } else if (allowSlowOperations) {
-                when (declaration) {
-                    is KtClassOrObject -> declaration.toLightClass()?.let(framework::isTestClass) ?: false
-                    is KtNamedFunction -> declaration.toLightMethods().firstOrNull()?.let { framework.isTestMethod(it, false) } ?: false
-                    else -> false
-                }
-            } else {
-                false
-            }
-        }
-        // to filter out irrelevant provider
-        if (testFramework == null || allowSlowOperations && testFramework is KotlinPsiBasedTestFramework) return null
-
+    private fun calculateUrls(declaration: KtNamedDeclaration): List<String>? {
         val qualifiedName = when (declaration) {
             is KtClassOrObject -> declaration.fqName?.asString()
             is KtNamedFunction -> declaration.containingClassOrObject?.fqName?.asString()
@@ -78,5 +85,9 @@ abstract class AbstractJvmIdePlatformKindTooling : IdePlatformKindTooling() {
             )
             else -> null
         }
+    }
+
+    private companion object {
+        val TEST_FRAMEWORK_NAME_KEY = Key.create<String>("TestFramework:name")
     }
 }
