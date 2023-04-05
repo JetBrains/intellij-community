@@ -216,6 +216,7 @@ internal fun createAggregateActivityHtml(
         h1(classes = "aggregate-header") { text(projectName) }
 
         div {
+          text("All durations are wall time; total and content loading time include pauses")
           table(classes = "centered-text table-with-margin activity-table") {
             unsafe {
               +"<caption style=\"caption-side: bottom; text-align: right; font-size: 14px\">Click for details</caption>"
@@ -237,8 +238,8 @@ internal fun createAggregateActivityHtml(
               }
               tr {
                 th("Started")
-                th("Total wall time with pauses")
-                th("Pauses wall time")
+                th("Total time")
+                th("Pauses time")
                 th("Finished")
                 th("Content loading")
                 th("Scanned")
@@ -1040,6 +1041,7 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
 
       div(classes = "stats-activity-content") {
         printProjectNameForActivity(projectName)
+        printDurationDescription()
         printAppInfoForActivity(appInfo)
         printRuntimeInfoForActivity(runtimeInfo)
 
@@ -1060,8 +1062,8 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
               tr { td("Type"); td(times.scanningType.name.lowercase(Locale.ENGLISH).replace('_', ' ')) }
               tr { td("Finished at"); td(times.updatingEnd.presentableLocalDateTime()) }
               tr { td("Cancelled"); td(times.wasInterrupted.toString()) }
-              tr { td("Total wall time with pauses"); td(times.totalWallTimeWithPauses.presentableDuration()) }
-              tr { td("Pauses wall time"); td(times.totalPausedWallTime.presentableDuration()) }
+              tr { td("Total with pauses"); td(times.totalWallTimeWithPauses.presentableDuration()) }
+              tr { td("Pauses time"); td(times.totalPausedWallTime.presentableDuration()) }
 
               tr { td("Scanning stages w/o pauses: iterators creation time"); td(times.creatingIteratorsTime.presentableDuration()) }
               tr { td("Scanning stages w/o pauses: pushing properties time"); td(times.pushPropertiesTime.presentableDuration()) }
@@ -1161,6 +1163,10 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
   }.toString()
 }
 
+private fun DIV.printDurationDescription() {
+  text("All durations are wall time; they include pauses unless specified otherwise")
+}
+
 private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appendable,
                                                                     appInfo: JsonIndexDiagnosticAppInfo,
                                                                     runtimeInfo: JsonRuntimeInfo): String {
@@ -1258,7 +1264,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
 
       div(classes = "stats-activity-content") {
         printProjectNameForActivity(projectName)
-
+        printDurationDescription()
         printAppInfoForActivity(appInfo)
         printRuntimeInfoForActivity(runtimeInfo)
 
@@ -1276,8 +1282,8 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
               tr { td("Started at"); td(times.updatingStart.presentableLocalDateTime()) }
               tr { td("Finished at"); td(times.updatingEnd.presentableLocalDateTime()) }
               tr { td("Cancelled?"); td(times.wasInterrupted.toString()) }
-              tr { td("Total wall time with pauses"); td(times.totalWallTimeWithPauses.presentableDuration()) }
-              tr { td("Pauses wall time"); td(times.totalPausedWallTime.presentableDuration()) }
+              tr { td("Total time with pauses"); td(times.totalWallTimeWithPauses.presentableDuration()) }
+              tr { td("Pauses time"); td(times.totalPausedWallTime.presentableDuration()) }
               tr { td("Indexing time"); td(times.indexingTime.presentableDuration()) }
               if (IndexDiagnosticDumper.shouldProvideVisibleAndAllThreadsTimeInfo) {
                 tr {
@@ -1625,11 +1631,12 @@ private val CSS_STYLE = """
   
   .aggregate-header {
     padding-top: 1em;
+    padding-bottom: 1em;
     margin-bottom: 0;
   }
   
   .table-with-margin{
-    margin-top: 2em;
+    margin-top: 1em;
     margin-bottom: 2em;
   }
 
