@@ -10,7 +10,7 @@ import java.awt.Component
 import java.awt.Insets
 import javax.swing.JButton
 
-class FindReplaceActionButton(
+internal class FindReplaceActionButton(
   @NlsActions.ActionText text: String,
   myMnemonic: Char,
 ) : JButton(text) {
