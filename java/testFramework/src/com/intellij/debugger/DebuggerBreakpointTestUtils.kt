@@ -67,7 +67,7 @@ fun ExecutionWithDebuggerToolsTestCase.processBreakpoints(test: suspend Sequence
   // Make test as sequence of code blocks that separated by waitAndResumeBreakpoint call
   val iterator = iterator(test)
   // Register listener that will called when every breakpoint is reached in target program
-  onBreakpoints { context ->
+  onEveryBreakpoint { context ->
     // Resume breakpoint in target program
     resume(context)
     // Current thread is DebuggerManagerThread we cannot block it to make test,

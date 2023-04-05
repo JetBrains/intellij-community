@@ -149,8 +149,8 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
    * <p>
    * The actions added here are run after the one-time action from {@link #onBreakpoint(SuspendContextRunnable)}.
    */
-  protected void onBreakpoints(SuspendContextRunnable runnable) {
-    getBreakpointProvider().onBreakpoints(runnable);
+  protected void onEveryBreakpoint(SuspendContextRunnable runnable) {
+    getBreakpointProvider().onEveryBreakpoint(runnable);
   }
 
   /**
@@ -525,7 +525,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
   protected class BreakpointProvider extends DebugProcessAdapterImpl {
     private final DebugProcessImpl myDebugProcess;
-    private final List<SuspendContextRunnable> myBreakpointListeners = new ArrayList<>();
+    private final List<SuspendContextRunnable> myRepeatingRunnables = new ArrayList<>();
     private final Queue<SuspendContextRunnable> myScriptRunnables = new ArrayDeque<>();
 
     public BreakpointProvider(DebugProcessImpl debugProcess) {
@@ -536,14 +536,14 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
       myScriptRunnables.add(runnable);
     }
 
-    public void onBreakpoints(SuspendContextRunnable runnable) {
-      myBreakpointListeners.add(runnable);
+    public void onEveryBreakpoint(SuspendContextRunnable runnable) {
+      myRepeatingRunnables.add(runnable);
     }
 
     @Override
     public void paused(SuspendContextImpl suspendContext) {
       try {
-        if (myScriptRunnables.isEmpty() && myBreakpointListeners.isEmpty()) {
+        if (myScriptRunnables.isEmpty() && myRepeatingRunnables.isEmpty()) {
           print("resuming ", ProcessOutputTypes.SYSTEM);
           printContext(suspendContext);
           resume(suspendContext);
@@ -553,7 +553,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
         if (suspendContextRunnable != null) {
           suspendContextRunnable.run(suspendContext);
         }
-        for (SuspendContextRunnable it : myBreakpointListeners) {
+        for (SuspendContextRunnable it : myRepeatingRunnables) {
           it.run(suspendContext);
         }
       }
