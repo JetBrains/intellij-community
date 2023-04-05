@@ -104,12 +104,12 @@ public final class MavenArtifactUtil {
       dir = getArtifactDirectory(localRepository, groupId, artifactId);
     }
 
-    version = removeIllegalPathChars(version);
+    version = removeForbiddenPathChars(version);
     if (StringUtil.isEmpty(version)) version = resolveVersion(dir);
     return dir.resolve(version).resolve(artifactId + "-" + version + "." + type);
   }
 
-  private static String removeIllegalPathChars(String text) {
+  private static String removeForbiddenPathChars(String text) {
     if (null == text) return "";
 
     var result = new StringBuilder();
