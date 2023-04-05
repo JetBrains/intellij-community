@@ -31,15 +31,15 @@ public class RedundantCastInspectionLambdaTest extends LightDaemonAnalyzerTestCa
   public void testEnumConstantArgument() { doTest(); }
   public void testCastInMultidimensionalArrayIndex() { doTest(); }
   public void testCastWithClassHierarchyWithPrivateMethods() { doTest(); }
-  public void testFieldInitializer() { doTest();}
-  public void testDiamondWithUpperBounds() { doTest();}
-  public void testBinaryConversions() { doTest();}
-  public void testInferenceIncompatibilityWithoutCast() { doTest();}
-  public void testCastToPrimitive() { doTest();}
-  public void testParenthesisAroundConditional() { doTest();}
-  public void testMiscStatements() { doTest();}
-  public void testSameSubstitutor() { doTest();}
-  public void testSameUpperBounds() { doTest();}
-  public void testSameResolveWithConditionalBranches() { doTest();}
-  public void testIgnoreMessageFormatCall() { doTest();}
+  public void testFieldInitializer() { doTest(); }
+  public void testDiamondWithUpperBounds() { doTest(); }
+  public void testBinaryConversions() { doTest(); }
+  public void testInferenceIncompatibilityWithoutCast() { doTest(); }
+  public void testCastToPrimitive() { doTest(); }
+  public void testParenthesisAroundConditional() { doTest(); }
+  public void testMiscStatements() { doTest(); }
+  public void testSameSubstitutor() { doTest(); }
+  public void testSameUpperBounds() { doTest(); }
+  public void testSameResolveWithConditionalBranches() { doTest(); }
+  public void testIgnoreMessageFormatCall() { doTest(); }
 }

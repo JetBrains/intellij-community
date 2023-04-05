@@ -42,23 +42,23 @@ public class RedundantCastInspectionGenericsTest extends LightJavaCodeInsightFix
 
   public void testEnumConstant() { doTest(); }
 
-  public void testRawCast() { doTest();}
-  public void testCastToUnboundWildcard() { doTest();}
+  public void testRawCast() { doTest(); }
+  public void testCastToUnboundWildcard() { doTest(); }
 
-  public void testCastCast() { doTest();}
-  public void testReturnValue() { doTest();}
+  public void testCastCast() { doTest(); }
+  public void testReturnValue() { doTest(); }
 
-  public void testIDEA22899() { doTest();}
-  public void testRawCast1() { doTest();}
-  public void testInferenceFromCast() { doTest();}
-  public void testGetClassProcessing() { doTest();}
-  public void testInstanceOfChecks() { doTest();}
-  public void testForEachValue() { doTest();}
-  public void testForEachValueIDEA126166() { doTest();}
-  public void testCaseThrowable() { doTest();}
-  public void testSafeTempVarName() { doTest();}
-  public void testBinaryComparison() { doTest();}
-  public void testQualifierWithCapture() { doTest();}
+  public void testIDEA22899() { doTest(); }
+  public void testRawCast1() { doTest(); }
+  public void testInferenceFromCast() { doTest(); }
+  public void testGetClassProcessing() { doTest(); }
+  public void testInstanceOfChecks() { doTest(); }
+  public void testForEachValue() { doTest(); }
+  public void testForEachValueIDEA126166() { doTest(); }
+  public void testCaseThrowable() { doTest(); }
+  public void testSafeTempVarName() { doTest(); }
+  public void testBinaryComparison() { doTest(); }
+  public void testQualifierWithCapture() { doTest(); }
 
   public void testTypeParameterAccessChecksJava7() {
     doTest();
@@ -81,8 +81,9 @@ public class RedundantCastInspectionGenericsTest extends LightJavaCodeInsightFix
     myFixture.enableInspections(castInspection);
     myFixture.testHighlighting(getTestName(false) + ".java");
   }
-  public void testDifferentNullness() { doTest();}
-  public void testSuspiciousVarargsCall() { doTest();}
+
+  public void testDifferentNullness() { doTest(); }
+  public void testSuspiciousVarargsCall() { doTest(); }
 
   public void testPrimitiveWidening() { doTest(); }
   public void testCastLongLiteral() { doTest(); }

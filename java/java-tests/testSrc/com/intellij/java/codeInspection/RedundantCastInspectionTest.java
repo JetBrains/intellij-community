@@ -101,13 +101,16 @@ public class RedundantCastInspectionTest extends LightJavaCodeInsightFixtureTest
   public void testIDEADEV15170() { doTest(); }
 
   public void testIDEADEV25675() { doTest(); }
+
   public void testFieldAccessOnTheLeftOfAssignment() { doTest(); }
 
   public void testNestedCast() { doTest(); }
+
   public void testPrimitiveInsideSynchronized() { doTest(); }
 
-  public void testInConditionalPreserveResolve() { doTest();}
-  public void testArrayAccess() { doTest();}
+  public void testInConditionalPreserveResolve() { doTest(); }
+
+  public void testArrayAccess() { doTest(); }
 
   public void testPackagePrivate() {
     myFixture.addClass("package a; public class A {void foo() {}}");
