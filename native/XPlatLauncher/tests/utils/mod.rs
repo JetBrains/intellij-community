@@ -533,13 +533,15 @@ pub struct LauncherRunResult {
     pub exit_status: ExitStatus,
     pub dump: Option<IntellijMainDumpedLaunchParameters>,
     pub stdout: String,
+    pub stderr: String
 }
 
 impl Debug for LauncherRunResult {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!(
-            "exit code: {}, stdout: [[[{}]]]",
+            "\n** exit code: {}\n** stderr: [[[{}]]]\n** stdout: [[[{}]]]",
             self.exit_status.code().unwrap_or(-1),
+            self.stderr.trim(),
             self.stdout.trim()))
     }
 }
@@ -557,13 +559,13 @@ pub const TEST_OUTPUT_FILE_NAME: &str = "output.json";
 
 fn run_launcher_impl(test: &TestEnvironment, args: &[&str], envs: HashMap<&str, &str>, dump_file: Option<&Path>) -> Result<LauncherRunResult> {
     let stdout_file_path = test.test_root_dir.path().join("out.txt");
-    let stdout_file = File::create(&stdout_file_path)?;
-    let stdio = Stdio::from(stdout_file);
+    let stderr_file_path = test.test_root_dir.path().join("err.txt");
 
     let mut launcher_process = Command::new(&test.launcher_path)
         .current_dir(&test.test_root_dir)
         .args(args)
-        .stdout(stdio)
+        .stdout(Stdio::from(File::create(&stdout_file_path)?))
+        .stderr(Stdio::from(File::create(&stderr_file_path)?))
         .envs(envs)
         .spawn()
         .context("Failed to spawn launcher process")?;
@@ -586,7 +588,8 @@ fn run_launcher_impl(test: &TestEnvironment, args: &[&str], envs: HashMap<&str, 
                     dump: if !es.success() { None }
                           else if let Some(file) = dump_file { Some(read_launcher_run_result(file)?) }
                           else { None },
-                    stdout: fs::read_to_string(&stdout_file_path).context("can't open stdout file")?
+                    stdout: fs::read_to_string(&stdout_file_path).context("can't open stdout file")?,
+                    stderr: fs::read_to_string(&stderr_file_path).context("can't open stdout file")?
                 }),
             },
             Err(e) => {
