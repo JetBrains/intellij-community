@@ -244,7 +244,8 @@
       "background": "Grey14",
       "hoverBackground": "#FFFFFF00",
       "hoverInactiveBackground": "#FFFFFF00",
-      "inactiveColoredFileBackground": "#FFFFFF80"
+      "inactiveColoredFileBackground": "#FFFFFF80",
+      "underlinedTabBackground": "Grey14"
     },
 
     "Editor": {
