@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.CommonBundle;
@@ -25,10 +25,8 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ui.GridBag;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,13 +40,15 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
+import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
+
 public final class ExistingTemplatesComponent {
   private static final Pattern SPLIT = Pattern.compile("(?<!/)/(?!/)"); // slash not preceded or followed by another slash
 
   private final Tree patternTree;
+  private final JBScrollPane myScrollPane;
   private final DefaultTreeModel patternTreeModel;
   private final JComponent panel;
-  private final JComponent myToolbar;
   private Supplier<? extends Configuration> myConfigurationProducer;
   private Supplier<? extends EditorTextField> mySearchEditorProducer;
   private Runnable myExportRunnable;
@@ -169,19 +169,18 @@ public final class ExistingTemplatesComponent {
     actionGroup.add(exportAction);
     actionGroup.add(importAction);
 
-    final var optionsToolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar("ExistingTemplatesComponent", actionGroup, true);
-    optionsToolbar.setTargetComponent(patternTree);
-    optionsToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-    optionsToolbar.setForceMinimumSize(true);
-    myToolbar = optionsToolbar.getComponent();
+    final ActionToolbarImpl toolbar =
+      (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar("ExistingTemplatesComponent", actionGroup, true);
+    toolbar.setTargetComponent(patternTree);
+    toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    toolbar.setForceMinimumSize(true);
+    toolbar.setBorder(JBUI.Borders.empty(3));
 
     panel = new JPanel(new GridBagLayout());
-    final var constraints = new GridBag()
-      .setDefaultWeightX(1.0);
-    panel.add(myToolbar, constraints.nextLine().fillCellHorizontally());
-    final var scrollPane = new JBScrollPane(patternTree);
-    scrollPane.setBorder(JBUI.Borders.empty());
-    panel.add(scrollPane, constraints.nextLine().weighty(1.0).fillCell());
+    final var constraints = new GridBag().setDefaultWeightX(1.0);
+    panel.add(toolbar, constraints.nextLine().fillCellHorizontally().insets(JBInsets.create(0, DEFAULT_HGAP)));
+    myScrollPane = new JBScrollPane(patternTree);
+    panel.add(myScrollPane, constraints.nextLine().weighty(1.0).fillCell());
     panel.setBorder(JBUI.Borders.empty());
   }
 
@@ -431,7 +430,6 @@ public final class ExistingTemplatesComponent {
   }
 
   public void updateColors() {
-    myToolbar.setBorder(JBUI.Borders.compound(JBUI.Borders.customLineBottom(JBUI.CurrentTheme.Editor.BORDER_COLOR),
-                                              JBUI.Borders.empty(3)));
+    myScrollPane.setBorder(JBUI.Borders.customLineTop(JBUI.CurrentTheme.Editor.BORDER_COLOR));
   }
 }

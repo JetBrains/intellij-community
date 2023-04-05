@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.highlighting.HighlightHandlerBase;
@@ -84,6 +84,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.textCompletion.TextCompletionUtil;
 import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TextTransferable;
 import org.jdom.JDOMException;
@@ -102,6 +103,8 @@ import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
+import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
+import static java.awt.GridBagConstraints.*;
 
 /**
  * This dialog is used in two ways:
@@ -410,13 +413,13 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     }
 
     final var centerConstraint = new GridBag()
-      .setDefaultFill(GridBagConstraints.BOTH)
+      .setDefaultFill(BOTH)
       .setDefaultWeightX(1.0)
       .setDefaultWeightY(1.0);
     final JPanel centerPanel = new JPanel(new GridBagLayout());
     centerPanel.add(searchPanel, centerConstraint.nextLine());
     centerPanel.add(myReplacePanel, centerConstraint.nextLine());
-    centerPanel.add(myScopePanel, centerConstraint.nextLine().weighty(0.0).insets(8, DEFAULT_HGAP, 8, DEFAULT_HGAP));
+    centerPanel.add(myScopePanel, centerConstraint.nextLine().weighty(0.0));
 
     myExistingTemplatesComponent = new ExistingTemplatesComponent(myProject);
     myExistingTemplatesComponent.onConfigurationSelected(this::loadConfiguration);
@@ -564,6 +567,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     myOptionsToolbar.setTargetComponent(mySearchCriteriaEdit);
     myOptionsToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     myOptionsToolbar.setForceMinimumSize(true);
+    myOptionsToolbar.setBorder(JBUI.Borders.empty(3));
 
     // Search editor panel, 1st splitter element
     final var searchEditorPanel = new JPanel(new GridBagLayout());
@@ -607,7 +611,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     mySearchWrapper = new JPanel(new BorderLayout()); // needed for border
     mySearchWrapper.add(mySearchEditorPanel, BorderLayout.CENTER);
 
-    final var searchConstraint = new GridBag().setDefaultInsets(10, DEFAULT_HGAP, 10, 0);
+    final var searchConstraint = new GridBag().setDefaultInsets(DEFAULT_VGAP, DEFAULT_HGAP, DEFAULT_VGAP, 0);
     searchEditorPanel.add(mySearchCriteriaEdit, searchConstraint
       .nextLine().fillCell().coverLine()
       .weightx(1.0).weighty(1.0)
@@ -615,17 +619,15 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     searchEditorPanel.add(searchTargetLabel, searchConstraint.nextLine());
     searchEditorPanel.add(myTargetComboBox, searchConstraint);
     searchEditorPanel.add(myInjected, searchConstraint);
-    searchEditorPanel.add(myMatchCase, searchConstraint.anchor(GridBagConstraints.WEST).insetRight(DEFAULT_HGAP));
+    searchEditorPanel.add(myMatchCase, searchConstraint.anchor(WEST).insetRight(DEFAULT_HGAP));
 
     mySearchEditorPanel.setSecondComponent(myFilterPanel.getComponent());
     myComponentsWithEditorBackground.add(myFilterPanel.getTable());
 
     final JPanel searchPanel = new JPanel(new GridBagLayout());
-    final var northConstraint = new GridBag()
-      .setDefaultWeightX(1.0)
-      .setDefaultInsets(6, 0, 6, 0);
-    searchPanel.add(searchTemplateLabel, northConstraint.nextLine().weightx(0.0).insetLeft(DEFAULT_HGAP));
-    searchPanel.add(myOptionsToolbar.getComponent(), northConstraint.anchor(GridBagConstraints.EAST).insetRight(DEFAULT_HGAP));
+    final var northConstraint = new GridBag().setDefaultWeightX(1.0);
+    searchPanel.add(searchTemplateLabel, northConstraint.nextLine().weightx(0.0).insets(JBInsets.create(0, DEFAULT_HGAP)));
+    searchPanel.add(myOptionsToolbar, northConstraint.anchor(EAST));
     searchPanel.add(mySearchWrapper, northConstraint.nextLine().coverLine().fillCell().emptyInsets().weighty(1.0));
     return searchPanel;
   }
@@ -653,12 +655,12 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     myReplaceWrapper.add(myReplaceCriteriaEdit, wrapperConstraint.nextLine().emptyInsets().fillCell().coverLine().weightx(1.0).weighty(1.0));
     myReplaceWrapper.add(myShortenFqn, wrapperConstraint.nextLine());
     myReplaceWrapper.add(myStaticImport, wrapperConstraint);
-    myReplaceWrapper.add(myReformat, wrapperConstraint.weightx(1.0).anchor(GridBagConstraints.WEST));
+    myReplaceWrapper.add(myReformat, wrapperConstraint.weightx(1.0).anchor(WEST));
 
     final JPanel replacePanel = new JPanel(new GridBagLayout());
     final var replaceConstraint = new GridBag()
       .setDefaultWeightX(1.0);
-    replacePanel.add(replacementTemplateLabel, replaceConstraint.nextLine().anchor(GridBagConstraints.WEST).insets(16, DEFAULT_HGAP, 14, 0));
+    replacePanel.add(replacementTemplateLabel, replaceConstraint.nextLine().anchor(WEST).insets(16, DEFAULT_HGAP, 14, 0));
     replacePanel.add(myReplaceWrapper, replaceConstraint.nextLine().fillCell().weighty(1.0));
     return replacePanel;
   }
@@ -883,7 +885,8 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
       return Collections.emptyList();
     }
     final List<ValidationInfo> errors = new SmartList<>();
-    final MatchOptions matchOptions = getConfiguration().getMatchOptions();
+    saveConfiguration();
+    final MatchOptions matchOptions = myConfiguration.getMatchOptions();
     try {
       CompiledPattern compiledPattern = null;
       try {
