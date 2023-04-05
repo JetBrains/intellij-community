@@ -3,11 +3,11 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -29,7 +29,7 @@ final class JavaTelescope {
   static @Nls String usagesHint(@NotNull PsiMember member, @NotNull PsiFile file) {
     int totalUsageCount = UsagesCountManager.getInstance(member.getProject()).countMemberUsages(file, member);
     if (totalUsageCount == TOO_MANY_USAGES) return null;
-    if (!Registry.is("code.lens.java.show.0.usages") && totalUsageCount == 0) return null;
+    if (totalUsageCount < AdvancedSettings.getInt("code.vision.java.minimal.usages")) return null;
     return JavaBundle.message("usages.telescope", totalUsageCount);
   }
 
