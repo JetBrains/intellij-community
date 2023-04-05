@@ -11,6 +11,7 @@ import org.intellij.lang.annotations.Language
 import java.awt.*
 import java.awt.image.ImageObserver
 import javax.swing.JEditorPane
+import javax.swing.JTextPane
 import javax.swing.event.HyperlinkEvent
 import javax.swing.text.DefaultCaret
 import javax.swing.text.Element
@@ -25,8 +26,8 @@ import javax.swing.text.html.StyleSheet
  * Read-only editor pane intended to display simple HTML snippet
  */
 @Suppress("FunctionName")
-fun SimpleHtmlPane(additionalStyleSheet: StyleSheet? = null, @Language("HTML") body: String? = null): JEditorPane =
-  JEditorPane().apply {
+fun SimpleHtmlPane(additionalStyleSheet: StyleSheet? = null, addBrowserListener: Boolean = true): JEditorPane =
+  JTextPane().apply {
     editorKit = HTMLEditorKitBuilder().withViewFactoryExtensions(
       ExtendableHTMLViewFactory.Extensions.WORD_WRAP,
       HtmlEditorPaneUtil.CONTENT_TOOLTIP,
@@ -42,24 +43,24 @@ fun SimpleHtmlPane(additionalStyleSheet: StyleSheet? = null, @Language("HTML") b
 
     isEditable = false
     isOpaque = false
-    addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
+    if (addBrowserListener) {
+      addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
+    }
     margin = JBInsets.emptyInsets()
     GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent())
 
     (caret as DefaultCaret).updatePolicy = DefaultCaret.NEVER_UPDATE
 
     name = "Simple HTML Pane"
-
-    if (body != null) {
-      setHtmlBody(body)
-    }
   }
 
 /**
  * Read-only editor pane intended to display simple HTML snippet
  */
 @Suppress("FunctionName")
-fun SimpleHtmlPane(@Language("HTML") body: String? = null): JEditorPane = SimpleHtmlPane(null, body)
+fun SimpleHtmlPane(@Language("HTML") body: String): JEditorPane = SimpleHtmlPane().apply {
+  setHtmlBody(body)
+}
 
 fun JEditorPane.setHtmlBody(@Language("HTML") body: String) {
   if (body.isEmpty()) {
