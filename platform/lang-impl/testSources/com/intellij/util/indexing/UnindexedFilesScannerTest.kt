@@ -1,7 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.service
+import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -21,9 +26,7 @@ import com.intellij.util.application
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
-import com.intellij.util.indexing.mocks.ConfigurableContentlessTextFileIndexer
-import com.intellij.util.indexing.mocks.ConfigurableFileIndexerBase
-import com.intellij.util.indexing.mocks.ConfigurableTextFileIndexer
+import com.intellij.util.indexing.mocks.*
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import org.junit.*
@@ -100,8 +103,8 @@ class UnindexedFilesScannerTest {
 
   @Test
   fun `test scanner does not schedule indexed files for indexing again (change contentIndexer_accept return value)`() {
-    val indexer = ConfigurableTextFileIndexer()
-    registerIndexer(indexer)
+    val indexer = ConfigurableTextFileIndexer(dependsOnContent = true)
+    registerIndexers(indexer)
 
     val filesAndDirs = setupSimpleRepresentativeFolderForIndexing()
 
@@ -126,9 +129,9 @@ class UnindexedFilesScannerTest {
   }
 
   @Test
-  fun `test contentless indexes applied only while scanning (1)`() {
-    val indexer = ConfigurableContentlessTextFileIndexer()
-    registerIndexer(indexer)
+  fun `test contentless indexes applied only while scanning`() {
+    val indexer = ConfigurableTextFileIndexer(dependsOnContent = false)
+    registerIndexers(indexer)
 
     val filesAndDirs = setupSimpleRepresentativeFolderForIndexing()
 
@@ -138,40 +141,38 @@ class UnindexedFilesScannerTest {
       .isNotEmpty()
 
     indexFiles(filesAndDirs, dirtyFiles)
-    assertThat(indexer.getAndResetIndexedFiles())
-      .withFailMessage("Contentless indexes are applied during scanning. Avoid double indexing.")
-      .isEmpty()
+    captureIndexingResults(indexer).assertNoIndexerIndexedFiles("Contentless indexes are applied during scanning. Avoid double indexing.")
   }
 
   @Test
   fun `test up-to-date indexes not refreshed (contentless)`() {
-    val contentIndexer = ConfigurableTextFileIndexer()
-    val contentlessIndexer = ConfigurableContentlessTextFileIndexer()
-    registerIndexer(contentIndexer)
-    registerIndexer(contentlessIndexer)
+    val contentIndexer = ConfigurableTextFileIndexer(dependsOnContent = true)
+    val contentlessIndexer = ConfigurableTextFileIndexer(dependsOnContent = false)
+    val indexers = listOf(contentIndexer, contentlessIndexer)
+    registerIndexers(indexers)
 
     val filesAndDirs = setupSimpleRepresentativeFolderForIndexing()
     scanAndIndexFiles(filesAndDirs)
-    captureIndexingResults(contentIndexer, contentlessIndexer)
+    captureIndexingResults(indexers)
       .assertAllIndexersIndexedFiles()
 
     // Invalidate content index only
     contentIndexer.additionalInputFilter = { false }
     scanAndIndexFiles(filesAndDirs)
-    captureIndexingResults(contentIndexer, contentlessIndexer)
+    captureIndexingResults(indexers)
       .assertNoIndexerIndexedFiles("Indexer should not be invoked to remove previously indexed values")
 
     // all the text files now dirty because of content indexer. We should refresh only dirty index in this case.
     contentIndexer.additionalInputFilter = { true }
     scanAndIndexFiles(filesAndDirs)
-    captureIndexingResults(contentIndexer, contentlessIndexer)
+    captureIndexingResults(indexers)
       .assertOnlySpecificIndexesIndexedFiles("Should refresh only dirty index", contentIndexer)
   }
 
   @Test
   fun `test scanner does not schedule indexed files for indexing again (change contentlessIndexer_accept return value)`() {
-    val indexer = ConfigurableContentlessTextFileIndexer()
-    registerIndexer(indexer)
+    val indexer = ConfigurableTextFileIndexer(dependsOnContent = false)
+    registerIndexers(indexer)
 
     val filesAndDirs = setupSimpleRepresentativeFolderForIndexing()
 
@@ -191,6 +192,66 @@ class UnindexedFilesScannerTest {
     assertEquals(0, scanningStat.numberOfFilesForIndexing)
   }
 
+  @Test
+  fun `test indexes for filetype do not delete data by indexes with no filetype`() {
+    // setup is the following: we have files with unique filetype (recognized by unique file extension) and exactly one content indexer
+    // associated with the filetype, and at least one contentless indexer not associated with any filetype.
+    val filetype = FakeFileType()
+    registerFiletype(filetype)
+
+    val indexers = listOf(
+      ConfigurableFiletypeSpecificFileIndexer(filetype),
+      ConfigurableNoFiletypeFileIndexer(dependsOnContent = true)
+    )
+    registerIndexers(indexers)
+
+    val filesAndDirs = setupSimpleRepresentativeFolderForIndexing(filetype)
+
+    // We check that file with unique extension is indexed by contentless indexer (during scanning), and then by content indexer
+    // (during indexing), and while indexing content, data by contentless indexer is not accidentally erased. This is the first run:
+    scanAndIndexFiles(filesAndDirs)
+    captureIndexingResults(indexers).assertAllIndexersIndexedFiles()
+
+    // this is the second run. If data was removed, contentless indexer will be applied during scanning and this will fail the test
+    scanAndIndexFiles(filesAndDirs)
+    captureIndexingResults(indexers).assertNoIndexerIndexedFiles()
+  }
+
+  @Test
+  fun `test indexes for filetype do not delete data by indexes with no filetype (2)`() {
+    // setup is the following: we have files with unique filetype (recognized by unique file extension) and no indexers associated with
+    // the filetype. Additionally, there is at least one content and at least one contentless indexer willing to index these files.
+    val filetype = FakeFileType()
+    registerFiletype(filetype)
+
+    val indexers = listOf(
+      ConfigurableNoFiletypeFileIndexer(dependsOnContent = true),
+      ConfigurableNoFiletypeFileIndexer(dependsOnContent = false)
+    )
+    registerIndexers(indexers)
+
+    val filesAndDirs = setupSimpleRepresentativeFolderForIndexing(filetype)
+
+    // We check that file with unique extension is indexed by contentless indexer (during scanning), and then by content indexer
+    // (during indexing), and while indexing content, data by contentless indexer is not accidentally erased. This is the first run:
+    scanAndIndexFiles(filesAndDirs)
+    captureIndexingResults(indexers).assertAllIndexersIndexedFiles()
+
+    // this is the second run. If data was removed, contentless indexer will be applied during scanning and this will fail the test
+    scanAndIndexFiles(filesAndDirs)
+    captureIndexingResults(indexers).assertNoIndexerIndexedFiles()
+  }
+
+  private fun registerFiletype(filetype: FakeFileType) {
+    runInEdtAndWait {
+      (FileTypeManager.getInstance() as FileTypeManagerImpl).registerFileType(
+        filetype, listOf(ExtensionFileNameMatcher(filetype.defaultExtension)),
+        testRootDisposable, PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID)!!
+      )
+    }
+  }
+
+  private fun captureIndexingResults(indexers: Collection<ConfigurableFileIndexerBase>) = captureIndexingResults(*indexers.toTypedArray())
   private fun captureIndexingResults(vararg indexers: ConfigurableFileIndexerBase): IndexingResults {
     val map = mutableMapOf<ConfigurableFileIndexerBase, List<VirtualFile>>()
     for (indexer in indexers) {
@@ -237,11 +298,14 @@ class UnindexedFilesScannerTest {
 
   }
 
-  private fun registerIndexer(indexer: FileBasedIndexExtension<*, *>) {
+  private fun registerIndexers(indexers: Collection<FileBasedIndexExtension<*, *>>) = registerIndexers(*indexers.toTypedArray())
+  private fun registerIndexers(vararg indexers: FileBasedIndexExtension<*, *>) {
     runInEdtAndWait {
       val tumbler = FileBasedIndexTumbler("test")
       tumbler.turnOff()
-      application.registerExtension(FileBasedIndexExtension.EXTENSION_POINT_NAME, indexer, testRootDisposable)
+      indexers.forEach { indexer ->
+        application.registerExtension(FileBasedIndexExtension.EXTENSION_POINT_NAME, indexer, testRootDisposable)
+      }
       tumbler.turnOn()
     }
   }
@@ -301,13 +365,20 @@ class UnindexedFilesScannerTest {
    *   * non-empty directory
    *   * txt file in non-top-level directory
    *   * non-txt file in non-top-level directory
+   *
+   * and optionally two files: one in top-level and one in non-top-level directory with default extension of given [filetype]
    */
-  private fun setupSimpleRepresentativeFolderForIndexing(): SingleRootIndexableFilesIterator {
+  private fun setupSimpleRepresentativeFolderForIndexing(filetype: FileType? = null): SingleRootIndexableFilesIterator {
     val dir = tempDir.createDir()
     val testData = getTestDataPath().resolve("simpleRepresentativeFolder")
     FileUtil.copyDir(testData.toFile(), dir.toFile())
     Files.createDirectory(dir.resolve("empty"))
     Files.createDirectories(dir.resolve("dir/empty"))
+
+    filetype?.defaultExtension?.let {
+      Files.createFile(dir.resolve("file_top_level.$it"))
+      Files.createFile(dir.resolve("dir/file2.$it"))
+    }
 
     return SingleRootIndexableFilesIterator(dir.toUri().toString())
   }

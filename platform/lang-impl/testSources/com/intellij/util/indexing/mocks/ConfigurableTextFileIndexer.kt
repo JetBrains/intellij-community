@@ -2,21 +2,8 @@
 package com.intellij.util.indexing.mocks
 
 import com.intellij.openapi.fileTypes.PlainTextFileType
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.indexing.*
-import com.intellij.util.io.DataExternalizer
-import com.intellij.util.io.IOUtil
-import java.io.DataInput
-import java.io.DataOutput
-import java.util.*
-import java.util.concurrent.ConcurrentLinkedQueue
 
-open class ConfigurableTextFileIndexer : ConfigurableFileIndexerBase() {
-  private val fileTypeAwareInputFilter = object : DefaultFileTypeSpecificInputFilter(PlainTextFileType.INSTANCE) {
-    override fun acceptInput(file: VirtualFile): Boolean {
-      return additionalInputFilter(file) && super.acceptInput(file)
-    }
-  }
-
-  override fun getInputFilter(): FileBasedIndex.InputFilter = fileTypeAwareInputFilter
+open class ConfigurableTextFileIndexer(private val dependsOnContent: Boolean)
+  : ConfigurableFiletypeSpecificFileIndexer(PlainTextFileType.INSTANCE) {
+  override fun dependsOnFileContent(): Boolean = dependsOnContent
 }
