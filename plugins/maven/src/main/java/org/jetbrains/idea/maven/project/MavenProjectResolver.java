@@ -76,7 +76,7 @@ public class MavenProjectResolver {
         }
         boolean updateSnapshots = MavenProjectsManager.getInstance(project).getForceUpdateSnapshots();
         updateSnapshots = updateSnapshots ? updateSnapshots : generalSettings.isAlwaysUpdateSnapshots();
-        embedder.customizeForResolve(myTree.getWorkspaceMap(), console, process, updateSnapshots, userProperties);
+        embedder.customizeForResolve(console, process, updateSnapshots, myTree.getWorkspaceMap(), userProperties);
         doResolve(project, entry.getValue(), generalSettings, embedder, context, process);
       }
       catch (Throwable t) {
@@ -225,7 +225,7 @@ public class MavenProjectResolver {
     process.setText(MavenProjectBundle.message("maven.downloading.pom.plugins", firstProject.getDisplayName()));
 
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_PLUGINS_RESOLVE, baseDir);
-    embedder.customizeForResolve(console, process, forceUpdateSnapshots);
+    embedder.customizeForResolve(console, process, forceUpdateSnapshots,  null,  null);
 
     Set<MavenId> unresolvedPluginIds;
     Set<Path> filesToRefresh = new HashSet<>();
@@ -357,7 +357,7 @@ public class MavenProjectResolver {
       String baseDir = entry.getKey().toString();
       MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD, baseDir);
       try {
-        embedder.customizeForResolve(console, process);
+        embedder.customizeForResolve(console, process, false, null, null);
         MavenArtifactDownloader.DownloadResult result1 =
           MavenArtifactDownloader.download(project, myTree, projects, artifacts, downloadSources, downloadDocs, embedder, process);
 
@@ -389,7 +389,7 @@ public class MavenProjectResolver {
                                   @NotNull MavenProgressIndicator process,
                                   @NotNull EmbedderTask task) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(mavenProject, embedderKind);
-    embedder.customizeForResolve(myTree.getWorkspaceMap(), console, process, false);
+    embedder.customizeForResolve(console, process, false, myTree.getWorkspaceMap(), null);
     try {
       task.run(embedder);
     }

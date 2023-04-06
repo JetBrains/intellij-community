@@ -31,8 +31,8 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   private ScheduledFuture<?> myProgressPullingFuture;
   private AtomicInteger myFails = new AtomicInteger(0);
 
-  public MavenEmbedderWrapper(@NotNull Project project, @Nullable RemoteObjectWrapper<?> parent) {
-    super(parent);
+  MavenEmbedderWrapper(@NotNull Project project) {
+    super(null);
     myProject = project;
   }
 
@@ -44,63 +44,28 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     }
   }
 
-  public void customizeForResolve(MavenConsole console, MavenProgressIndicator indicator) {
-    boolean alwaysUpdateSnapshots =
-      MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().getGeneralSettings().isAlwaysUpdateSnapshots();
-    setCustomization(console, indicator, null, alwaysUpdateSnapshots, null);
-    perform(() -> {
-      doCustomize();
-      return null;
-    });
-  }
-
-  public void customizeForResolve(MavenConsole console, MavenProgressIndicator indicator, boolean forceUpdateSnapshots) {
+  public void customizeForResolve(MavenConsole console,
+                                  MavenProgressIndicator indicator,
+                                  boolean forceUpdateSnapshots,
+                                  @Nullable MavenWorkspaceMap workspaceMap,
+                                  @Nullable Properties userProperties) {
     boolean alwaysUpdateSnapshots =
       forceUpdateSnapshots
       ? forceUpdateSnapshots
       : MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().getGeneralSettings().isAlwaysUpdateSnapshots();
-    setCustomization(console, indicator, null, alwaysUpdateSnapshots, null);
-    perform(() -> {
-      doCustomize();
-      return null;
-    });
-  }
-
-  public void customizeForResolve(MavenWorkspaceMap workspaceMap,
-                                  MavenConsole console,
-                                  MavenProgressIndicator indicator,
-                                  boolean alwaysUpdateSnapshot) {
-    customizeForResolve(workspaceMap, console, indicator, alwaysUpdateSnapshot, null);
-  }
-
-  public void customizeForResolve(MavenWorkspaceMap workspaceMap, MavenConsole console, MavenProgressIndicator indicator,
-                                  boolean alwaysUpdateSnapshot, @Nullable Properties userProperties) {
-
     MavenWorkspaceMap serverWorkspaceMap = convertWorkspaceMap(workspaceMap);
-    setCustomization(console, indicator, serverWorkspaceMap, alwaysUpdateSnapshot, userProperties);
+    setCustomization(console, indicator, serverWorkspaceMap, alwaysUpdateSnapshots, userProperties);
     perform(() -> {
       doCustomize();
       return null;
     });
   }
 
-  private MavenWorkspaceMap convertWorkspaceMap(MavenWorkspaceMap map) {
+  private MavenWorkspaceMap convertWorkspaceMap(@Nullable MavenWorkspaceMap map) {
+    if (null == map) return null;
     Transformer transformer = RemotePathTransformerFactory.createForProject(myProject);
     if (transformer == Transformer.ID) return map;
     return MavenWorkspaceMap.copy(map, transformer::toRemotePath);
-  }
-
-  public void customizeForResolve(MavenWorkspaceMap workspaceMap,
-                                  MavenConsole console,
-                                  MavenProgressIndicator indicator) {
-    MavenWorkspaceMap serverWorkspaceMap = convertWorkspaceMap(workspaceMap);
-    boolean alwaysUpdateSnapshots =
-      MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().getGeneralSettings().isAlwaysUpdateSnapshots();
-    setCustomization(console, indicator, serverWorkspaceMap, alwaysUpdateSnapshots, null);
-    perform(() -> {
-      doCustomize();
-      return null;
-    });
   }
 
   private synchronized void doCustomize() throws RemoteException {
@@ -157,7 +122,7 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     if (myProgressPullingFuture != null) myProgressPullingFuture.cancel(true);
     int count = myFails.get();
     if (count != 0) {
-       MavenLog.LOG.warn("Maven embedder download listener was failed: " + count + " times");
+       MavenLog.LOG.warn("Maven embedder download listener failed: " + count + " times");
     }
     super.cleanup();
   }
