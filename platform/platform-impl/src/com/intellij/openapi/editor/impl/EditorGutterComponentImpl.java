@@ -44,6 +44,7 @@ import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.event.EditorGutterHoverEvent;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
@@ -194,6 +195,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   });
   @NotNull private final EventDispatcher<EditorGutterListener> myEditorGutterListeners = EventDispatcher.create(EditorGutterListener.class);
   private int myHoveredFreeMarkersLine = -1;
+  @Nullable private GutterIconRenderer myCurrentHoveringGutterRenderer;
 
   EditorGutterComponentImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
@@ -1919,6 +1921,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     else {
       computeTooltipInBackground(pointInfo);
     }
+
+    updateHover(pointInfo == null ? null : pointInfo.renderer);
+
     if (debug()) {
       repaint();
     }
@@ -2011,6 +2016,20 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
 
     UIUtil.setCursor(this, Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+  }
+
+  private void updateHover(@Nullable GutterIconRenderer hoverGutterRenderer)
+  {
+    if (hoverGutterRenderer == myCurrentHoveringGutterRenderer)
+      return;
+    if (myCurrentHoveringGutterRenderer != null) {
+      myEditorGutterListeners.getMulticaster().hoverEnded(new EditorGutterHoverEvent(this, myCurrentHoveringGutterRenderer));
+      myCurrentHoveringGutterRenderer = null;
+    }
+    if (hoverGutterRenderer != null) {
+      myCurrentHoveringGutterRenderer = hoverGutterRenderer;
+      myEditorGutterListeners.getMulticaster().hoverStarted(new EditorGutterHoverEvent(this, myCurrentHoveringGutterRenderer));
+    }
   }
 
   void validateMousePointer(@NotNull MouseEvent e) {
@@ -2552,6 +2571,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   public void mouseExited(MouseEvent e) {
     TooltipController.getInstance().cancelTooltip(GUTTER_TOOLTIP_GROUP, e, false);
     updateFreePainters(e);
+	updateHover(null);
   }
 
   private int convertPointToLineNumber(final Point p) {
