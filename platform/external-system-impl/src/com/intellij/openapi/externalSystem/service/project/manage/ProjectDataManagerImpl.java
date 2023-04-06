@@ -43,6 +43,8 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
 
   private final Lock myLock = new ReentrantLock();
 
+  private static final ExternalSystemSyncDiagnostic syncMetrics = ExternalSystemSyncDiagnostic.getInstance();
+
   public static ProjectDataManagerImpl getInstance() {
     return (ProjectDataManagerImpl)ProjectDataManager.getInstance();
   }
@@ -128,8 +130,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
     long allStartTime = System.currentTimeMillis();
     long activityId = trace.getId();
 
-    ExternalSystemSyncDiagnostic.getOrStartSpan(Phase.DATA_SERVICES.name(), (builder) ->
-      builder.setParent(ExternalSystemSyncDiagnostic.getSpanContext(ExternalSystemSyncDiagnostic.gradleSyncSpanName)));
+    syncMetrics.getOrStartSpan(Phase.DATA_SERVICES.name(), ExternalSystemSyncDiagnostic.gradleSyncSpanName);
     ExternalSystemSyncActionsCollector.logPhaseStarted(project, activityId, Phase.DATA_SERVICES);
 
     boolean importSucceeded = false;
@@ -198,11 +199,10 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
 
       long timeMs = System.currentTimeMillis() - allStartTime;
       trace.logPerformance("Data import total", timeMs);
-      ExternalSystemSyncDiagnostic.endSpan(Phase.DATA_SERVICES.name());
+      syncMetrics.endSpan(Phase.DATA_SERVICES.name());
       ExternalSystemSyncActionsCollector.logPhaseFinished(project, activityId, Phase.DATA_SERVICES, timeMs, errorsCount);
       ExternalSystemSyncActionsCollector.logSyncFinished(project, activityId, importSucceeded);
-      ExternalSystemSyncDiagnostic.endSpan(ExternalSystemSyncDiagnostic.gradleSyncSpanName,
-                                           (span) -> span.setAttribute("project", project.getName()));
+      syncMetrics.endSpan(ExternalSystemSyncDiagnostic.gradleSyncSpanName, (span) -> span.setAttribute("project", project.getName()));
 
       Application app = ApplicationManager.getApplication();
       if (!app.isUnitTestMode() && !app.isHeadlessEnvironment()) {
@@ -435,8 +435,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
     ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
       @Override
       public void execute() {
-        ExternalSystemSyncDiagnostic.getOrStartSpan(Phase.WORKSPACE_MODEL_APPLY.name(), (builder) ->
-          builder.setParent(ExternalSystemSyncDiagnostic.getSpanContext(ExternalSystemSyncDiagnostic.gradleSyncSpanName)));
+        syncMetrics.getOrStartSpan(Phase.WORKSPACE_MODEL_APPLY.name(), ExternalSystemSyncDiagnostic.gradleSyncSpanName);
 
         if (activityId != null) {
           ExternalSystemSyncActionsCollector.logPhaseStarted(project, activityId, Phase.WORKSPACE_MODEL_APPLY);
@@ -445,7 +444,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
         modelsProvider.commit();
         final long timeInMs = System.currentTimeMillis() - startTime;
         if (activityId != null) {
-          ExternalSystemSyncDiagnostic.endSpan(Phase.WORKSPACE_MODEL_APPLY.name());
+          syncMetrics.endSpan(Phase.WORKSPACE_MODEL_APPLY.name());
           ExternalSystemSyncActionsCollector.logPhaseFinished(project, activityId, Phase.WORKSPACE_MODEL_APPLY, timeInMs);
         }
         LOG.debug(String.format("%s committed in %d ms", commitDesc, timeInMs));

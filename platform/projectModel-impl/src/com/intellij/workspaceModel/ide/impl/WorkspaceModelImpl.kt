@@ -25,10 +25,15 @@ import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
+import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.jps.diagnostic.JpsMetrics
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.measureTimeMillis
+
+val jpsMetrics: JpsMetrics by lazy { JpsMetrics.getInstance() }
 
 open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposable {
   @Volatile
@@ -52,6 +57,7 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
 
   init {
     log.debug { "Loading workspace model" }
+    val start = System.currentTimeMillis()
 
     val initialContent = WorkspaceModelInitialTestContent.pop()
     val cache = WorkspaceModelCache.getInstance(project)
@@ -89,6 +95,7 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
     entityStorage = VersionedEntityStorageImpl(projectEntities.toSnapshot())
     unloadedEntitiesStorage = VersionedEntityStorageImpl(unloadedEntities)
     entityTracer.subscribe(project)
+    loadingTimeMs.addAndGet(System.currentTimeMillis() - start)
   }
 
   override val currentSnapshotOfUnloadedEntities: EntityStorageSnapshot
@@ -140,7 +147,11 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
         newStorage.assertConsistency()
       }
       entityStorage.replace(newStorage, changes, this::onBeforeChanged, this::onChanged)
+    }.apply {
+      totalUpdatesTimeMs.addAndGet(this)
+      updatesCounter.incrementAndGet()
     }
+
     log.info("Project model updated to version ${entityStorage.pointer.version} in $generalTime ms: $description")
     if (generalTime > 1000) {
       log.info(
@@ -181,7 +192,11 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
         newStorage.assertConsistency()
       }
       entityStorage.replaceSilently(newStorage)
+    }.apply {
+      totalUpdatesTimeMs.addAndGet(this)
+      updatesCounter.incrementAndGet()
     }
+
     log.info("Project model updated silently to version ${entityStorage.pointer.version} in $generalTime ms: $description")
     if (generalTime > 1000) {
       log.info("Project model update details: Updater code: $updateTimeMillis ms, To snapshot: $toSnapshotTimeMillis m")
@@ -192,6 +207,8 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
   }
 
   private fun checkRecursiveUpdate() {
+    val start = System.currentTimeMillis()
+
     val stackStraceIterator = RuntimeException().stackTrace.iterator()
     // Skip two methods of the current update
     repeat(2) { stackStraceIterator.next() }
@@ -200,11 +217,13 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
       if ((frame.methodName == updateModelMethodName || frame.methodName == updateModelSilentMethodName)
           && frame.className == WorkspaceModelImpl::class.qualifiedName) {
         log.error("Trying to update project model twice from the same version. Maybe recursive call of 'updateProjectModel'?")
-      } else if (frame.methodName == onChangedMethodName && frame.className == WorkspaceModelImpl::class.qualifiedName) {
+      }
+      else if (frame.methodName == onChangedMethodName && frame.className == WorkspaceModelImpl::class.qualifiedName) {
         // It's fine to update the project method in "after update" listeners
         return
       }
     }
+    checkRecursiveUpdateTimeMs.addAndGet(System.currentTimeMillis() - start)
   }
 
   override fun updateUnloadedEntities(description: @NonNls String, updater: (MutableEntityStorage) -> Unit) {
@@ -219,7 +238,8 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
       val changes = builder.collectChanges(before)
       val newStorage = builder.toSnapshot()
       unloadedEntitiesStorage.replace(newStorage, changes, ::onBeforeUnloadedEntitiesChanged, ::onUnloadedEntitiesChanged)
-    }
+    }.apply { updateUnloadedEntitiesTimeMs.addAndGet(this) }
+
     log.info("Unloaded entity storage updated in $time ms: $description")
   }
 
@@ -233,9 +253,12 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
 
     if (entityStorage.version != replacement.version) return false
 
-    val builder = replacement.builder
-    this.initializeBridges(replacement.changes, builder)
-    entityStorage.replace(builder.toSnapshot(), replacement.changes, this::onBeforeChanged, this::onChanged)
+    replaceProjectModelTimeMs.addAndGet(
+      measureTimeMillis {
+        val builder = replacement.builder
+        this.initializeBridges(replacement.changes, builder)
+        entityStorage.replace(builder.toSnapshot(), replacement.changes, this::onBeforeChanged, this::onChanged)
+      })
 
     return true
   }
@@ -245,17 +268,21 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
   private fun initializeBridges(change: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     if (project.isDisposed) return
-    logErrorOnEventHandling {
-      if (!GlobalLibraryTableBridge.isEnabled()) return@logErrorOnEventHandling
-      // To handle changes made directly in project level workspace model
-      (GlobalLibraryTableBridge.getInstance() as GlobalLibraryTableBridgeImpl).initializeLibraryBridges(change, builder)
-    }
-    logErrorOnEventHandling {
-      (project.serviceOrNull<ProjectLibraryTable>() as? ProjectLibraryTableBridgeImpl)?.initializeLibraryBridges(change, builder)
-    }
-    logErrorOnEventHandling {
-      (project.serviceOrNull<ModuleManager>() as? ModuleManagerBridgeImpl)?.initializeBridges(change, builder)
-    }
+
+    initializeBridgesTimeMs.addAndGet(
+      measureTimeMillis {
+        logErrorOnEventHandling {
+          if (!GlobalLibraryTableBridge.isEnabled()) return@logErrorOnEventHandling
+          // To handle changes made directly in project level workspace model
+          (GlobalLibraryTableBridge.getInstance() as GlobalLibraryTableBridgeImpl).initializeLibraryBridges(change, builder)
+        }
+        logErrorOnEventHandling {
+          (project.serviceOrNull<ProjectLibraryTable>() as? ProjectLibraryTableBridgeImpl)?.initializeLibraryBridges(change, builder)
+        }
+        logErrorOnEventHandling {
+          (project.serviceOrNull<ModuleManager>() as? ModuleManagerBridgeImpl)?.initializeBridges(change, builder)
+        }
+      })
   }
 
   /**
@@ -275,7 +302,8 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
     if (project.isDisposed) return
     //it is important to update WorkspaceFileIndex before other listeners are called because they may rely on it
     logErrorOnEventHandling {
-      (project.serviceIfCreated<WorkspaceFileIndex>() as? WorkspaceFileIndexImpl)?.indexData?.onEntitiesChanged(change, EntityStorageKind.MAIN)
+      (project.serviceIfCreated<WorkspaceFileIndex>() as? WorkspaceFileIndexImpl)?.indexData?.onEntitiesChanged(change,
+                                                                                                                EntityStorageKind.MAIN)
     }
 
     logErrorOnEventHandling {
@@ -292,7 +320,8 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
   private fun onUnloadedEntitiesChanged(change: VersionedStorageChange) {
     //it is important to update WorkspaceFileIndex before other listeners are called because they may rely on it
     logErrorOnEventHandling {
-      (project.serviceIfCreated<WorkspaceFileIndex>() as? WorkspaceFileIndexImpl)?.indexData?.onEntitiesChanged(change, EntityStorageKind.UNLOADED)
+      (project.serviceIfCreated<WorkspaceFileIndex>() as? WorkspaceFileIndexImpl)?.indexData?.onEntitiesChanged(change,
+                                                                                                                EntityStorageKind.UNLOADED)
     }
     logErrorOnEventHandling {
       project.messageBus.syncPublisher(WorkspaceModelTopics.UNLOADED_ENTITIES_CHANGED).changed(change)
@@ -324,12 +353,14 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
   private fun logErrorOnEventHandling(action: () -> Unit) {
     try {
       action.invoke()
-    } catch (e: Throwable) {
+    }
+    catch (e: Throwable) {
       if (e is AlreadyDisposedException) throw e
       val message = "Exception at Workspace Model event handling"
       if (userWarningLoggingLevel) {
         log.warn(message, e)
-      } else {
+      }
+      else {
         log.error(message, e)
       }
     }
@@ -338,7 +369,62 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
   companion object {
     private val log = logger<WorkspaceModelImpl>()
 
-    private val PRE_UPDATE_HANDLERS = ExtensionPointName.create<WorkspaceModelPreUpdateHandler>("com.intellij.workspaceModel.preUpdateHandler")
+    private val PRE_UPDATE_HANDLERS = ExtensionPointName.create<WorkspaceModelPreUpdateHandler>(
+      "com.intellij.workspaceModel.preUpdateHandler")
     private const val PRE_UPDATE_LOOP_BLOCK = 100
+
+    private val loadingTimeMs: AtomicLong = AtomicLong()
+    private val updatesCounter: AtomicLong = AtomicLong()
+    private val totalUpdatesTimeMs: AtomicLong = AtomicLong()
+    private val checkRecursiveUpdateTimeMs: AtomicLong = AtomicLong()
+    private val updateUnloadedEntitiesTimeMs: AtomicLong = AtomicLong()
+    private val replaceProjectModelTimeMs: AtomicLong = AtomicLong()
+    private val initializeBridgesTimeMs: AtomicLong = AtomicLong()
+
+    /**
+     * This setup is in static part because meters will not be collected if the same instrument (gauge, counter ...) are registered more then once.
+     * In that case WARN by OpenTelemetry will be logged 'Instrument XYZ has recorded multiple values for the same attributes.'
+     * https://github.com/airbytehq/airbyte-platform/pull/213/files
+     */
+    private fun setupOpenTelemetryReporting(meter: Meter): Unit {
+      val loadingGauge = meter.gaugeBuilder("workspaceModel.loading.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+      val updatesGauge = meter.gaugeBuilder("workspaceModel.updates.count")
+        .ofLongs().setDescription("How many times workspace model was updated").buildObserver()
+
+      val totalUpdatesTimeGauge = meter.gaugeBuilder("workspaceModel.updates.ms")
+        .ofLongs().setDescription("Total time spent on workspace model updates").buildObserver()
+
+      val checkRecursiveUpdateTimeGauge = meter.gaugeBuilder("workspaceModel.check.recursive.update.ms")
+        .ofLongs().setDescription("Total time spent in checkRecursiveUpdate").buildObserver()
+
+      val updateUnloadedEntitiesTimeGauge = meter.gaugeBuilder("workspaceModel.update.unloaded.entities.ms")
+        .ofLongs().setDescription("Total time spent in updateUnloadedEntities").buildObserver()
+
+      val replaceProjectModelTimeGauge = meter.gaugeBuilder("workspaceModel.replace.project.model.ms")
+        .ofLongs().setDescription("Total time spent in replaceProjectModel").buildObserver()
+
+      val initializeBridgesTimeGauge = meter.gaugeBuilder("workspaceModel.init.bridges.ms")
+        .ofLongs().setDescription("Total time spent on initializeBridges").buildObserver()
+
+      meter.batchCallback(
+        {
+          loadingGauge.record(loadingTimeMs.get())
+          updatesGauge.record(updatesCounter.get())
+          totalUpdatesTimeGauge.record(totalUpdatesTimeMs.get())
+          checkRecursiveUpdateTimeGauge.record(checkRecursiveUpdateTimeMs.get())
+          updateUnloadedEntitiesTimeGauge.record(updateUnloadedEntitiesTimeMs.get())
+          replaceProjectModelTimeGauge.record(replaceProjectModelTimeMs.get())
+          initializeBridgesTimeGauge.record(initializeBridgesTimeMs.get())
+        },
+        loadingGauge, updatesGauge, totalUpdatesTimeGauge, checkRecursiveUpdateTimeGauge, updateUnloadedEntitiesTimeGauge,
+        replaceProjectModelTimeGauge, initializeBridgesTimeGauge
+      )
+    }
+
+    init {
+      setupOpenTelemetryReporting(jpsMetrics.meter)
+    }
   }
 }

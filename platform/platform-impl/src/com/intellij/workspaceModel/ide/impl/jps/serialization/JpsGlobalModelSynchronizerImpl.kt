@@ -7,14 +7,18 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.workspaceModel.jps.JpsGlobalFileEntitySource
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
+import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.atomic.AtomicLong
+import kotlin.system.measureTimeMillis
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -40,14 +44,16 @@ import kotlin.time.Duration.Companion.seconds
  * 2) Call initialization of bridges after cache loading
  * 3) Reading .xml on delayed sync
  */
-class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope): JpsGlobalModelSynchronizer {
+class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope) : JpsGlobalModelSynchronizer {
   private var loadedFromDisk: Boolean = false
   private val prohibited: Boolean
     get() = !forceEnableLoading && ApplicationManager.getApplication().isUnitTestMode
 
   override fun loadInitialState(mutableStorage: MutableEntityStorage, initialEntityStorage: VersionedEntityStorage,
                                 loadedFromCache: Boolean): () -> Unit {
-    return if (loadedFromCache) {
+    val start = System.currentTimeMillis()
+
+    val callback = if (loadedFromCache) {
       val callback = GlobalLibraryTableBridge.getInstance().initializeLibraryBridgesAfterLoading(mutableStorage, initialEntityStorage)
       coroutineScope.launch {
         delay(10.seconds)
@@ -58,16 +64,22 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
     else {
       loadGlobalEntitiesToEmptyStorage(mutableStorage, initialEntityStorage)
     }
+
+    jpsLoadInitialStateMs.addAndGet(System.currentTimeMillis() - start)
+    return callback
   }
 
   fun saveGlobalEntities(writer: JpsFileContentWriter) {
-    val serializer = createSerializer()
-    val entityStorage = GlobalWorkspaceModel.getInstance().entityStorage.current
-    val libraryEntities = entityStorage.entities(LibraryEntity::class.java).toList()
-    if (serializer != null) {
-      LOG.info("Saving global entities to files")
-      serializer.saveEntities(libraryEntities, emptyMap(), entityStorage, writer)
-    }
+    jpsSaveGlobalEntitiesMs.addAndGet(
+      measureTimeMillis {
+        val serializer = createSerializer()
+        val entityStorage = GlobalWorkspaceModel.getInstance().entityStorage.current
+        val libraryEntities = entityStorage.entities(LibraryEntity::class.java).toList()
+        if (serializer != null) {
+          LOG.info("Saving global entities to files")
+          serializer.saveEntities(libraryEntities, emptyMap(), entityStorage, writer)
+        }
+      })
   }
 
   private suspend fun delayLoadGlobalWorkspaceModel() {
@@ -84,7 +96,8 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
     }
   }
 
-  private fun loadGlobalEntitiesToEmptyStorage(mutableStorage: MutableEntityStorage, initialEntityStorage: VersionedEntityStorage): () -> Unit {
+  private fun loadGlobalEntitiesToEmptyStorage(mutableStorage: MutableEntityStorage,
+                                               initialEntityStorage: VersionedEntityStorage): () -> Unit {
     val contentReader = (ApplicationManager.getApplication().stateStore as ApplicationStoreJpsContentReader).createContentReader()
     val serializer = createSerializer()
     val errorReporter = object : ErrorReporter {
@@ -122,6 +135,29 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
       finally {
         forceEnableLoading = false
       }
+    }
+
+    private val jpsLoadInitialStateMs: AtomicLong = AtomicLong()
+    private val jpsSaveGlobalEntitiesMs: AtomicLong = AtomicLong()
+
+    private fun setupOpenTelemetryReporting(meter: Meter): Unit {
+      val jpsLoadInitialStateGauge = meter.gaugeBuilder("jps.load.initial.state.ms")
+        .ofLongs().setDescription("Total time spent in loadInitialState").buildObserver()
+
+      val jpsSaveGlobalEntitiesGauge = meter.gaugeBuilder("jps.save.global.entities.ms")
+        .ofLongs().setDescription("Total time spent on jps saving global entities").buildObserver()
+
+      meter.batchCallback(
+        {
+          jpsLoadInitialStateGauge.record(jpsLoadInitialStateMs.get())
+          jpsSaveGlobalEntitiesGauge.record(jpsSaveGlobalEntitiesMs.get())
+        },
+        jpsLoadInitialStateGauge, jpsSaveGlobalEntitiesGauge
+      )
+    }
+
+    init {
+      setupOpenTelemetryReporting(jpsMetrics.meter)
     }
   }
 }

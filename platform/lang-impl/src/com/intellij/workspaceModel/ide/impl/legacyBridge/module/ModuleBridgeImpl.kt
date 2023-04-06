@@ -21,6 +21,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader.isModulePropertiesBridgeEnabled
+import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.TestModulePropertiesBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
@@ -35,6 +36,31 @@ import com.intellij.workspaceModel.storage.bridgeEntities.addModuleCustomImlData
 import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnStorage
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import io.opentelemetry.api.metrics.Meter
+import java.util.concurrent.atomic.AtomicLong
+import kotlin.system.measureTimeMillis
+
+private val moduleBridgeBeforeChangedTimeMs: AtomicLong = AtomicLong()
+private val facetsInitializationTimeMs: AtomicLong = AtomicLong()
+private val updateOptionTimeMs: AtomicLong = AtomicLong()
+
+private fun setupOpenTelemetryReporting(meter: Meter): Unit {
+  val moduleBridgeBeforeChangedTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridge.before.changed.ms")
+    .ofLongs().setDescription("Total time spent in method").buildObserver()
+  val facetsInitializationTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridge.facet.initialization.ms")
+    .ofLongs().setDescription("Total time spent in method").buildObserver()
+  val updateOptionTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridge.update.option.ms")
+    .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+  meter.batchCallback(
+    {
+      moduleBridgeBeforeChangedTimeGauge.record(moduleBridgeBeforeChangedTimeMs.get())
+      facetsInitializationTimeGauge.record(facetsInitializationTimeMs.get())
+      updateOptionTimeGauge.record(updateOptionTimeMs.get())
+    },
+    moduleBridgeBeforeChangedTimeGauge, facetsInitializationTimeGauge, updateOptionTimeGauge
+  )
+}
 
 @Suppress("OVERRIDE_DEPRECATION")
 internal class ModuleBridgeImpl(
@@ -50,6 +76,8 @@ internal class ModuleBridgeImpl(
     if (!project.isDefault && !project.isDisposed) {
       project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
         override fun beforeChanged(event: VersionedStorageChange) {
+          val start = System.currentTimeMillis()
+
           event.getChanges(ModuleEntity::class.java).filterIsInstance<EntityChange.Removed<ModuleEntity>>().forEach {
             if (it.entity.symbolicId != moduleEntityId) return@forEach
 
@@ -64,6 +92,8 @@ internal class ModuleBridgeImpl(
               "Cannot resolve module $moduleEntityId. Current store: $currentStore"
             }
           }
+
+          moduleBridgeBeforeChangedTimeMs.addAndGet(System.currentTimeMillis() - start)
         }
       })
     }
@@ -74,7 +104,8 @@ internal class ModuleBridgeImpl(
                                ?: error("Core plugin with id: ${PluginManagerCore.CORE_ID} should be available")
     if (isModulePropertiesBridgeEnabled) {
       registerService(TestModuleProperties::class.java, TestModulePropertiesBridge::class.java, corePluginDescriptor, false)
-    } else {
+    }
+    else {
       val classLoader = javaClass.classLoader
       val implClass = classLoader.loadClass("com.intellij.openapi.roots.impl.TestModulePropertiesImpl")
       registerService(TestModuleProperties::class.java, implClass, corePluginDescriptor, false)
@@ -103,7 +134,8 @@ internal class ModuleBridgeImpl(
                                   app: Application?,
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
                                   listenerCallbacks: MutableList<in Runnable>?) {
-    registerComponents(modules.find { it.pluginId == PluginManagerCore.CORE_ID }, modules, precomputedExtensionModel, app, listenerCallbacks)
+    registerComponents(modules.find { it.pluginId == PluginManagerCore.CORE_ID }, modules, precomputedExtensionModel, app,
+                       listenerCallbacks)
   }
 
   override fun callCreateComponents() {
@@ -116,7 +148,10 @@ internal class ModuleBridgeImpl(
   }
 
   override fun initFacets() {
-    FacetManager.getInstance(this).allFacets.forEach(Facet<*>::initFacet)
+    facetsInitializationTimeMs.addAndGet(
+      measureTimeMillis {
+        FacetManager.getInstance(this).allFacets.forEach(Facet<*>::initFacet)
+      })
   }
 
   override fun registerComponents(corePlugin: IdeaPluginDescriptor?,
@@ -164,6 +199,8 @@ internal class ModuleBridgeImpl(
       }
     }
 
+    val start = System.currentTimeMillis()
+
     val diff = diff
     if (diff != null) {
       val entity = this.findModuleEntity(entityStorage.current)
@@ -184,7 +221,14 @@ internal class ModuleBridgeImpl(
         }
       }
     }
-    return
 
+    updateOptionTimeMs.addAndGet(System.currentTimeMillis() - start)
+    return
+  }
+
+  companion object {
+    init {
+      setupOpenTelemetryReporting(jpsMetrics.meter)
+    }
   }
 }

@@ -23,20 +23,40 @@ import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
+import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.concurrent.atomic.AtomicLong
 
 private val LOG = logger<ModuleBridgeLoaderService>()
+
+private val modulesLoadingTimeMs: AtomicLong = AtomicLong()
+
+private fun setupOpenTelemetryReporting(meter: Meter): Unit {
+  val modulesLoadingTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridgeLoader.loading.modules.ms")
+    .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+  meter.batchCallback(
+    {
+      modulesLoadingTimeGauge.record(modulesLoadingTimeMs.get())
+    },
+    modulesLoadingTimeGauge
+  )
+}
 
 private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedListener {
   override suspend fun execute(project: Project) {
     val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project)
     val workspaceModel = project.serviceAsync<WorkspaceModel>().await() as WorkspaceModelImpl
+
+    val start = System.currentTimeMillis()
+
     if (workspaceModel.loadedFromCache) {
       val activity = StartUpMeasurer.startActivity("modules loading with cache")
       if (projectModelSynchronizer.hasNoSerializedJpsModules()) {
@@ -91,7 +111,15 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
         (project.serviceAsync<WorkspaceFileIndex>().await() as WorkspaceFileIndexEx).initialize()
       }
     }
+
+    modulesLoadingTimeMs.addAndGet(System.currentTimeMillis() - start)
     WorkspaceModelTopics.getInstance(project).notifyModulesAreLoaded()
+  }
+
+  companion object {
+    init {
+      setupOpenTelemetryReporting(jpsMetrics.meter)
+    }
   }
 }
 

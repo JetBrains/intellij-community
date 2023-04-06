@@ -71,11 +71,13 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.delete
+import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.jps.diagnostic.JpsMetrics
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
@@ -92,7 +94,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     @TestOnly
     @JvmStatic
     fun isLight(project: Project): Boolean = project is ProjectEx && project.isLight
-
 
     internal suspend fun dispatchEarlyNotifications() {
       val notificationManager = NotificationsManager.getNotificationsManager() as NotificationsManagerImpl
@@ -524,6 +525,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   final override suspend fun openProjectAsync(projectStoreBaseDir: Path, options: OpenProjectTask): Project? {
+    jpsMetrics.startNewSpan("project.opening", JpsMetrics.jpsSyncSpanName)
+
     if (LOG.isDebugEnabled && !ApplicationManager.getApplication().isUnitTestMode) {
       LOG.debug("open project: $options", Exception())
     }
@@ -720,6 +723,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     LifecycleUsageTriggerCollector.onProjectOpened(project)
 
     options.callback?.projectOpened(project, module ?: ModuleManager.getInstance(project).modules[0])
+
+    jpsMetrics.endSpan("project.opening")
     return project
   }
 
