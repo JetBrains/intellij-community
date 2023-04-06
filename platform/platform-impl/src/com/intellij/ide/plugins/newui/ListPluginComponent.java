@@ -797,7 +797,6 @@ public final class ListPluginComponent extends JPanel {
       ((JCheckBox)myEnableDisableButton).setSelected(
         myPluginModel.isEnabled(getDescriptorForActions()));
     }
-    myNameComponent.setIcon(AllIcons.General.ProjectConfigurable);
   }
 
   public void updateAfterUninstall(boolean needRestartForUninstall) {
