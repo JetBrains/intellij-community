@@ -424,12 +424,18 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
 
 
         internal class X {
-          fun foo() {
-              val logger = LoggerFactory.getLogger()
-              logger.info( "<warning descr="Fewer arguments provided (1) than placeholders specified (2)">string {} {}</warning>" , 1, RuntimeException())
-              logger.atError().log( "<warning descr="Fewer arguments provided (0) than placeholders specified (1)">{}</warning>" , RuntimeException("test"))
-              LoggerFactory.getLogger().atError().log( "<warning descr="Fewer arguments provided (1) than placeholders specified (2)">{} {}</warning>" , 1, RuntimeException("test"))
-              LoggerFactory.getLogger().atError().log("{}", 1, RuntimeException("test"))
+          fun foo(s: String) {
+            val logger = LoggerFactory.getLogger()
+            logger.info( "<warning descr="Fewer arguments provided (1) than placeholders specified (2)">string {} {}</warning>" , 1, RuntimeException())
+            logger.info(<warning descr="Fewer arguments provided (1) than placeholders specified (at least 2)">s + "string {} {}"</warning> , 1, RuntimeException())
+            logger.info(s + "string {} {}" , 1, 2)
+            logger.atError().log( "<warning descr="Fewer arguments provided (0) than placeholders specified (1)">{}</warning>" , RuntimeException("test"))
+            LoggerFactory.getLogger().atError().log( "<warning descr="Fewer arguments provided (1) than placeholders specified (2)">{} {}</warning>" , 1, RuntimeException("test"))
+            LoggerFactory.getLogger().atError().log("{}", 1, RuntimeException("test"))
+            LoggerFactory.getLogger().atError().log(s + "{}", 1, RuntimeException("test"))
+            LoggerFactory.getLogger().atError().log(s + "{}", 1, 2)
+            LoggerFactory.getLogger().atError().log(<warning descr="More arguments provided (1) than placeholders specified (0)">""</warning>, 1, RuntimeException("test"))
+            LoggerFactory.getLogger().atError().log(<warning descr="Fewer arguments provided (1) than placeholders specified (at least 2)">s + "{} {} {}"</warning>, 1, RuntimeException("test"))
           }
         }
         """.trimIndent().commentsToWarn())
@@ -509,7 +515,7 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
       myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.slf4j.LoggerFactory
       import java.util.*
-      
+
       internal class X {
           var logger = LoggerFactory.getLogger()
           fun m(t: String) {
@@ -530,14 +536,14 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
               temp = "{}${'$'}t"
               logger.info(temp, 1)
           }
-      
+
           fun m(i: Int, s: String) {
               logger.info( "<warning descr="Fewer arguments provided (0) than placeholders specified (1)">test1 {}</warning>" )
               logger.info( <warning descr="Fewer arguments provided (0) than placeholders specified (at least 1)">"test1 {}${'$'}s"</warning> )
               logger.info( <warning descr="Fewer arguments provided (0) than placeholders specified (1)">"test1 {}${'$'}i"</warning> )
           }
 
-      
+
           companion object {
               private val logText = "{} {}" + something
               private val logText2 = "{} {}" + 1 + "{}" + something
