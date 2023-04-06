@@ -740,7 +740,7 @@ public final class HighlightMethodUtil {
     return null;
   }
 
-  /* see also PsiReferenceExpressionImpl.hasValidQualifier() */
+  /* see also PsiReferenceExpressionImpl.hasValidQualifier(), StaticImportResolveProcessor.filterStaticMethodsFromOtherInterfaces() */
   private static @NlsContexts.DetailedDescription String checkStaticInterfaceMethodCallQualifier(@NotNull PsiJavaCodeReferenceElement ref,
                                                                                                  @Nullable PsiElement scope,
                                                                                                  @NotNull PsiClass containingClass) {
