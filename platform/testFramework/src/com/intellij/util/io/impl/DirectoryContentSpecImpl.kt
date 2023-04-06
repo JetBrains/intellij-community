@@ -302,6 +302,7 @@ private fun createSpecByPath(path: Path, originalFile: Path?): DirectoryContentS
     ZipUtil.extract(path, dirForExtracted, null)
     val spec = if (path.extension == "jar") JarSpec() else ZipSpec()
     fillSpecFromDirectory(spec, dirForExtracted, null) 
+    FileUtil.delete(dirForExtracted)
     return spec
   }
   return FileSpec(Files.readAllBytes(path), originalFile)
