@@ -53,10 +53,14 @@ internal class VcsLogNewUiTableCellRenderer(
       selectionArc = 0
       selectionArcCorners = SelectionArcCorners.ALL
 
-      if ((isLeft || isRight)) {
+      if (isLeft || isRight) {
         when {
           isSelected -> getSelectedRowType(table, row).tune(selectablePanel, isLeft, isRight, hasRootColumn)
           isHovered -> SelectedRowType.SINGLE.tune(selectablePanel, isLeft, isRight, hasRootColumn)
+          else -> {
+            selectionArc = ARC // Allow rounded hint
+            selectionArcCorners = SelectionArcCorners.NONE
+          }
         }
       }
     }
@@ -223,7 +227,8 @@ internal class VcsLogNewUiTableCellRenderer(
 
     MIDDLE {
       override fun SelectablePanel.tuneArcAndCorners(isLeft: Boolean, isRight: Boolean) {
-        selectionArc = 0
+        selectionArc = ARC // Allow rounded hint
+        selectionArcCorners = SelectionArcCorners.NONE
       }
     },
 
