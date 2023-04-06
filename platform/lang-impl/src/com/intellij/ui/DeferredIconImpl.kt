@@ -23,6 +23,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Component
 import java.awt.Graphics
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import javax.swing.Icon
 import javax.swing.JTree
@@ -54,8 +55,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
   private var evaluator: ((T) -> Icon?)?
   private var scheduledRepaints: Set<RepaintRequest>? = null
 
-  @Volatile
-  private var isScheduled = false
+  private val isScheduled = AtomicBoolean(false)
 
   @JvmField
   val param: T
@@ -74,7 +74,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     scaledDelegateIcon = icon.delegateIcon
     cachedScaledIcon = null
     evaluator = icon.evaluator
-    isScheduled = icon.isScheduled
+    isScheduled.set(icon.isScheduled.get())
     param = icon.param
     isNeedReadAction = icon.isNeedReadAction
     isDone = icon.isDone
@@ -180,10 +180,9 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
       }
     }
 
-    if (isScheduled) {
+    if (isScheduled.getAndSet(true)) {
       return null
     }
-    isScheduled = true
 
     @Suppress("OPT_IN_USAGE")
     val coroutineScope = serviceOrNull<IconCalculatingService>()?.coroutineScope ?: GlobalScope
