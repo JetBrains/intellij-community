@@ -26,6 +26,9 @@ public class Main {
         case "async-profiler" -> {
           asyncProfiler();
         }
+        case "exit-code" -> {
+          exitCode(args);
+        }
         case "sigsegv" -> {
           segmentationViolation();
         }
@@ -34,7 +37,9 @@ public class Main {
             "unexpected command: " + Arrays.toString(args) + '\n' +
             "usage: " + Main.class.getName() + " [command [options ...]]\n" +
             "commands:\n" +
-            "  dump-launch-parameters  [test-args ...] --output /path/to/output/file\n" +
+            "  dump-launch-parameters [test-args ...] --output /path/to/output/file\n" +
+            "  async-profiler\n" +
+            "  exit-code <number>\n" +
             "  sigsegv");
           System.exit(1);
         }
@@ -84,6 +89,11 @@ public class Main {
     finally {
       Files.deleteIfExists(tempFile);
     }
+  }
+
+  private static void exitCode(String[] args) {
+    if (args.length != 2) throw new IllegalArgumentException("Invalid parameters: " + Arrays.toString(args));
+    System.exit(Integer.parseInt(args[1]));
   }
 
   private static void segmentationViolation() throws NoSuchFieldException, IllegalAccessException {

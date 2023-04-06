@@ -291,4 +291,11 @@ mod tests {
         assert!(result.exit_status.success(), "The exit status of the launcher is not successful: {:?}", result);
         assert!(result.stdout.contains("version="), "Profiler version is missing from the output: {:?}", result);
     }
+
+    #[rstest]
+    #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::MainBin, java_type: JavaType::JBR})]
+    fn exit_code_passing(#[case] layout_spec: &LayoutSpec) {
+        let result = run_launcher_with_args(layout_spec, &["exit-code", "42"]);
+        assert_eq!(result.exit_status.code(), Some(42), "The exit code of the launcher is unexpected: {:?}", result);
+    }
 }
