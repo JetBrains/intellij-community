@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.util.resolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.ReferenceVariantsHelper
 import org.jetbrains.kotlin.idea.completion.implCommon.keywords.BreakContinueKeywordHandler
+import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.StringTemplateCompletion.checkQualifiedThisInStringTemplateCompletion
 import org.jetbrains.kotlin.idea.completion.keywords.DefaultCompletionKeywordHandlerProvider
 import org.jetbrains.kotlin.idea.completion.keywords.createLookups
 import org.jetbrains.kotlin.idea.completion.smart.*
@@ -646,7 +647,20 @@ class BasicCompletionSession(
                                     expression,
                                     prefix,
                                     resolutionFacade
-                                ).map { it.createLookupElement() })
+                                ).map { it.createLookupElement().withInsertHandler {
+
+                                        context, item ->
+                                    if(item.lookupString== "this" ||!checkQualifiedThisInStringTemplateCompletion(parameters) )return@withInsertHandler
+
+                                    val document = context.editor.document
+
+                                    val caretOffset = context.editor.caretModel.offset
+                                    document.insertString(context.startOffset,"{")
+
+                                    val tailOffset = context.tailOffset
+                                    document.insertString(tailOffset, "}")
+
+                                } })
                         } else {
                             // for completion in secondary constructor delegation call
                             collector.addElement(lookupElement)
