@@ -62,6 +62,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     this.description = format(structure.toString());
     this.invoker = invoker;
     this.comparator = comparator == null ? null : wrapToNodeComparator(comparator);
+    Disposer.register(this, invoker);
     Disposer.register(parent, this);
   }
 
