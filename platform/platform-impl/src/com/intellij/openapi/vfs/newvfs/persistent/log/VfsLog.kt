@@ -30,10 +30,12 @@ class VfsLog(
   init {
     version.let {
       if (it != VERSION) {
-        LOG.warn("VFS Log version differs from the implementation version: log $it vs implementation $VERSION")
+        if (it != null) {
+          LOG.info("VFS Log version differs from the implementation version: log $it vs implementation $VERSION")
+        }
         if (!readOnly) {
-          LOG.warn("Upgrading storage, old data will be lost")
           if (it != null) {
+            LOG.info("Upgrading storage, old data will be lost")
             clear()
           }
           version = VERSION
