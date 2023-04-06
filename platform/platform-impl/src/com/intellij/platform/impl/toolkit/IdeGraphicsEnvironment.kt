@@ -4,15 +4,17 @@ package com.intellij.platform.impl.toolkit
 
 import com.intellij.openapi.application.ApplicationManager
 import org.jetbrains.annotations.ApiStatus.Internal
+import sun.awt.AWTAccessor
 import sun.awt.PlatformGraphicsInfo
 import sun.java2d.SunGraphicsEnvironment
+import java.awt.Frame
 import java.awt.Rectangle
 
 @Internal
-class IdeGraphicEnvironment: SunGraphicsEnvironment() {
+class IdeGraphicsEnvironment: SunGraphicsEnvironment() {
   companion object {
     @JvmStatic
-    val instance: IdeGraphicEnvironment = IdeGraphicEnvironment()
+    val instance: IdeGraphicsEnvironment = IdeGraphicsEnvironment()
 
     @JvmStatic
     val isRealHeadless

@@ -12,7 +12,7 @@ import java.lang.invoke.MethodType
 @ApiStatus.Internal
 class LocalGraphicsEnvironment: ClientGraphicsEnvironment {
   private val platformGraphicsEnvironment: GraphicsEnvironment? =
-    if (!IdeGraphicEnvironment.isRealHeadless) PlatformGraphicsInfo.createGE() else null
+    if (!IdeGraphicsEnvironment.isRealHeadless) PlatformGraphicsInfo.createGE() else null
 
   private val lookup = MethodHandles.lookup()
   override fun isInitialized() = true
