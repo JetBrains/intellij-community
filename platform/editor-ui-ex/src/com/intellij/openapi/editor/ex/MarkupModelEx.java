@@ -31,12 +31,12 @@ public interface MarkupModelEx extends MarkupModel {
   @Nullable
   RangeHighlighterEx addPersistentLineHighlighter(int lineNumber, int layer, @Nullable TextAttributes textAttributes);
 
-  void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter, boolean renderersChanged, boolean fontStyleOrColorChanged);
-
-  void fireAfterAdded(@NotNull RangeHighlighterEx segmentHighlighter);
-
-  void fireBeforeRemoved(@NotNull RangeHighlighterEx segmentHighlighter);
-
+  /**
+   * @deprecated use {@code RangeHighlighterEx.setXXX()} methods to fire changes
+   */
+  @Deprecated
+  default void fireAttributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleOrColorChanged) {}
+  
   boolean containsHighlighter(@NotNull RangeHighlighter highlighter);
 
   void addRangeHighlighter(@NotNull RangeHighlighterEx marker,

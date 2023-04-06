@@ -5,6 +5,7 @@ package com.intellij.openapi.editor.ex;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.impl.MarkupModelImpl;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -102,7 +103,7 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
   }
 
   /**
-   * Put user data and call {@link MarkupModelEx#fireAttributesChanged(RangeHighlighterEx, boolean, boolean)}
+   * Put user data and call {@link MarkupModelImpl#fireAttributesChanged(RangeHighlighterEx, boolean, boolean, boolean)}
    */
   @ApiStatus.Experimental
   default <T> void putUserDataAndFireChanged(@NotNull Key<T> key, @Nullable T value) {

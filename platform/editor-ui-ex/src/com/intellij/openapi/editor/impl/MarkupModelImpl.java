@@ -256,30 +256,31 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     ((RangeHighlighterEx)highlighter).setTextAttributes(textAttributes);
   }
 
+  /**
+   * @deprecated use {@code RangeHighlighterEx.setXXX()} methods to fire changes
+   */
+  @Deprecated
   @Override
-  public void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter,
-                                    boolean renderersChanged, boolean fontStyleOrColorChanged) {
-    fireAttributesChanged(segmentHighlighter, renderersChanged, fontStyleOrColorChanged, fontStyleOrColorChanged);
+  public void fireAttributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleOrColorChanged) {
+    fireAttributesChanged(highlighter, renderersChanged, fontStyleOrColorChanged, fontStyleOrColorChanged);
   }
 
-  void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter,
+  void fireAttributesChanged(@NotNull RangeHighlighterEx highlighter,
                              boolean renderersChanged, boolean fontStyleChanged, boolean foregroundColorChanged) {
-    if (segmentHighlighter.isValid()) {
+    if (highlighter.isValid()) {
       for (MarkupModelListener listener : myListeners) {
-        listener.attributesChanged(segmentHighlighter, renderersChanged, fontStyleChanged, foregroundColorChanged);
+        listener.attributesChanged(highlighter, renderersChanged, fontStyleChanged, foregroundColorChanged);
       }
     }
   }
 
-  @Override
-  public void fireAfterAdded(@NotNull RangeHighlighterEx segmentHighlighter) {
+  private void fireAfterAdded(@NotNull RangeHighlighterEx segmentHighlighter) {
     for (MarkupModelListener listener : myListeners) {
       listener.afterAdded(segmentHighlighter);
     }
   }
 
-  @Override
-  public void fireBeforeRemoved(@NotNull RangeHighlighterEx segmentHighlighter) {
+  void fireBeforeRemoved(@NotNull RangeHighlighterEx segmentHighlighter) {
     for (MarkupModelListener listener : myListeners) {
       listener.beforeRemoved(segmentHighlighter);
     }

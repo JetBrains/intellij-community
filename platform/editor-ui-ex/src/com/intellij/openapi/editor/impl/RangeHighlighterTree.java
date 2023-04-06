@@ -2,18 +2,15 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ex.MarkupIterator;
-import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
-import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
 
 final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
-  private final MarkupModelEx myMarkupModel;
+  private final MarkupModelImpl myMarkupModel;
 
-  RangeHighlighterTree(@NotNull Document document, @NotNull MarkupModelEx markupModel) {
+  RangeHighlighterTree(@NotNull Document document, @NotNull MarkupModelImpl markupModel) {
     super(document);
     myMarkupModel = markupModel;
   }
@@ -23,13 +20,7 @@ final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
     return false;
   }
 
-  @NotNull
-  MarkupIterator<RangeHighlighterEx> overlappingIterator(@NotNull TextRange rangeInterval, boolean onlyRenderedInGutter) {
-    MarkupIterator<RangeHighlighterEx> iterator = overlappingIterator(rangeInterval, __->true);
-    return new FilteringMarkupIterator<>(iterator, highlighter -> !onlyRenderedInGutter || highlighter.isRenderedInGutter());
-  }
-
-  void updateRenderedFlags(RangeHighlighterEx highlighter) {
+  void updateRenderedFlags(@NotNull RangeHighlighterEx highlighter) {
     RHNode node = (RHNode)lookupNode(highlighter);
     if (node != null) node.recalculateRenderFlagsUp();
   }
