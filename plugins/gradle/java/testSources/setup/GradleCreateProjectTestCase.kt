@@ -128,26 +128,28 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
     }
   }
 
-  private fun createAndConfigureWizard(
+  private suspend fun createAndConfigureWizard(
     group: String,
     project: Project?,
     configure: NewProjectWizardStep.() -> Unit
   ): AbstractProjectWizard {
-    return invokeAndWaitIfNeeded {
-      val modulesProvider = DefaultModulesProvider.createForProject(project)
-      val wizard = NewProjectWizard(project, modulesProvider, null)
-      try {
-        wizard.runWizard {
-          this as ProjectTypeStep
-          Assertions.assertTrue(setSelectedTemplate(group, null))
-          val step = customStep as NewProjectWizardStep
-          step.configure()
+    return blockingContext {
+      invokeAndWaitIfNeeded {
+        val modulesProvider = DefaultModulesProvider.createForProject(project)
+        val wizard = NewProjectWizard(project, modulesProvider, null)
+        try {
+          wizard.runWizard {
+            this as ProjectTypeStep
+            Assertions.assertTrue(setSelectedTemplate(group, null))
+            val step = customStep as NewProjectWizardStep
+            step.configure()
+          }
         }
+        finally {
+          Disposer.dispose(wizard.disposable)
+        }
+        wizard
       }
-      finally {
-        Disposer.dispose(wizard.disposable)
-      }
-      wizard
     }
   }
 
