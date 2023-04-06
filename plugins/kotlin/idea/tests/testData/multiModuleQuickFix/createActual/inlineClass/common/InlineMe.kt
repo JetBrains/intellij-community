@@ -1,3 +1,3 @@
-// "Create actual class for module testModule_JVM (JVM)" "true"
+// "Add missing actual declarations" "true"
 
 expect inline class Inline<caret>Me(val x: Int)
