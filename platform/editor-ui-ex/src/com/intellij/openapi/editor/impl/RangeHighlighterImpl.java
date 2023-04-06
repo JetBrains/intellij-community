@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
@@ -22,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Objects;
 
 /**
  * Implementation of the markup element for the editor and document.
@@ -87,14 +87,15 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
 
   // take one bit specified by mask from value and store it to myFlags; all other bits remain intact
   private void setFlag(@Flag byte mask, boolean value) {
+    //noinspection MagicConstant
     myFlags = BitUtil.set(myFlags, mask, value);
   }
 
   // take bits specified by mask from value and store them to myFlags; all other bits remain intact
   private void setMask(@Mask int mask, @Mask int value) {
+    //noinspection MagicConstant
     myFlags = (byte)(myFlags & ~mask | value);
   }
-
 
   @Override
   public TextAttributesKey getTextAttributesKey() {
@@ -133,9 +134,9 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
         old == null && myTextAttributesKey != null) {
       fireChanged(false, true, true);
     }
-    else if (!Comparing.equal(old, textAttributes)) {
+    else if (!Objects.equals(old, textAttributes)) {
       fireChanged(false, getFontStyle(old) != getFontStyle(textAttributes),
-                  !Comparing.equal(getForegroundColor(old), getForegroundColor(textAttributes)));
+                  !Objects.equals(getForegroundColor(old), getForegroundColor(textAttributes)));
     }
   }
 
@@ -143,7 +144,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   public void setTextAttributesKey(@NotNull TextAttributesKey textAttributesKey) {
     TextAttributesKey old = myTextAttributesKey;
     myTextAttributesKey = textAttributesKey;
-    if (!Comparing.equal(old, textAttributesKey)) {
+    if (!textAttributesKey.equals(old)) {
       fireChanged(false, myForcedTextAttributes == null, myForcedTextAttributes == null);
     }
   }
@@ -156,12 +157,6 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   @Override
   public boolean isVisibleIfFolded() {
     return VISIBLE_IF_FOLDED.isIn(this);
-  }
-
-  @Override
-  public <T> void putUserDataAndFireChanged(@NotNull Key<T> key, @Nullable T value) {
-    putUserData(key, value);
-    fireChanged(false, false, false);
   }
 
   private static int getFontStyle(@Nullable TextAttributes textAttributes) {
@@ -191,7 +186,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     if (isRenderedInGutter() != oldRenderedInGutter) {
       myModel.treeFor(this).updateRenderedFlags(this);
     }
-    if (!Comparing.equal(old, renderer)) {
+    if (!Objects.equals(old, renderer)) {
       fireChanged(true, false, false);
     }
   }
@@ -205,7 +200,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   public void setCustomRenderer(CustomHighlighterRenderer renderer) {
     CustomHighlighterRenderer old = myCustomRenderer;
     myCustomRenderer = renderer;
-    if (!Comparing.equal(old, renderer)) {
+    if (!Objects.equals(old, renderer)) {
       fireChanged(true, false, false);
     }
   }
@@ -223,7 +218,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     if (isRenderedInGutter() != oldRenderedInGutter) {
       myModel.treeFor(this).updateRenderedFlags(this);
     }
-    if (!Comparing.equal(old, renderer)) {
+    if (!Objects.equals(old, renderer)) {
       fireChanged(true, false, false);
     }
   }
@@ -242,7 +237,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     if (color == null) color = NULL_COLOR;
     Color old = myErrorStripeColor;
     myErrorStripeColor = color;
-    if (!Comparing.equal(old, color)) {
+    if (!Objects.equals(old, color)) {
       fireChanged(false, false, false);
     }
   }
@@ -257,7 +252,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     ApplicationManager.getApplication().assertIsDispatchThread();
     Object old = myErrorStripeTooltip;
     myErrorStripeTooltip = tooltipObject;
-    if (!Comparing.equal(old, tooltipObject)) {
+    if (!Objects.equals(old, tooltipObject)) {
       fireChanged(false, false, false);
     }
   }
@@ -286,7 +281,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   public void setLineSeparatorColor(Color color) {
     Color old = myLineSeparatorColor;
     myLineSeparatorColor = color;
-    if (!Comparing.equal(old, color)) {
+    if (!Objects.equals(old, color)) {
       fireChanged(false, false, false);
     }
   }
@@ -300,7 +295,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   public void setLineSeparatorPlacement(@Nullable SeparatorPlacement placement) {
     SeparatorPlacement old = mySeparatorPlacement;
     mySeparatorPlacement = placement;
-    if (!Comparing.equal(old, placement)) {
+    if (!Objects.equals(old, placement)) {
       fireChanged(false, false, false);
     }
   }
@@ -425,7 +420,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   public void setLineSeparatorRenderer(LineSeparatorRenderer renderer) {
     LineSeparatorRenderer old = myLineSeparatorRenderer;
     myLineSeparatorRenderer = renderer;
-    if (!Comparing.equal(old, renderer)) {
+    if (!Objects.equals(old, renderer)) {
       fireChanged(true, false, false);
     }
   }
