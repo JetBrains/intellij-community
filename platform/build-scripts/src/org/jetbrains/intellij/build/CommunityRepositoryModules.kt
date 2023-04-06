@@ -222,7 +222,7 @@ object CommunityRepositoryModules {
     plugin("intellij.terminal") { spec ->
       spec.withResource("resources/zsh/.zshenv", "zsh")
       spec.withResource("resources/zsh/hooks.zsh", "zsh")
-      spec.withResource("resources/jediterm-bash.in", "")
+      spec.withResource("resources/bash/jediterm-bash.in", "bash")
       spec.withResource("resources/fish/init.fish", "fish")
     },
     plugin("intellij.emojipicker") { spec ->
