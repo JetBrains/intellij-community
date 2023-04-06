@@ -18,6 +18,7 @@
     <orderEntry type="module" module-name="kotlin.base.facet" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.java.impl" />
+    <orderEntry type="module" module-name="kotlin.project-configuration" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-test-junit" level="project" />

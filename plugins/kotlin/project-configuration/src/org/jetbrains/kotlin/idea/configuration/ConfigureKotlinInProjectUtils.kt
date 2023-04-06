@@ -26,6 +26,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
@@ -46,6 +47,10 @@ import org.jetbrains.kotlin.idea.vfilefinder.KlibMetaFileIndex
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinJavaScriptMetaFileIndex
 import org.jetbrains.kotlin.idea.vfilefinder.hasSomethingInPackage
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.platform.isCommon
+import org.jetbrains.kotlin.platform.isJs
+import org.jetbrains.kotlin.platform.jvm.isJvm
+import org.jetbrains.kotlin.platform.konan.isNative
 
 private val LOG = Logger.getInstance("#org.jetbrains.kotlin.idea.configuration.ConfigureKotlinInProjectUtils")
 
@@ -315,6 +320,7 @@ fun hasAnyKotlinRuntimeInScope(module: Module): Boolean {
                     || runReadAction { hasKotlinJsKjsmFile(LibraryKindSearchScope(module, scope, KotlinJavaScriptLibraryKind)) }
                     || hasKotlinCommonRuntimeInScope(scope)
                     || hasKotlinJsRuntimeInScope(module)
+                    || hasKotlinWasmRuntimeInScope(module)
                     || hasKotlinNativeRuntimeInScope(module)
         })
     }
@@ -322,6 +328,20 @@ fun hasAnyKotlinRuntimeInScope(module: Module): Boolean {
 
 fun isStdlibModule(module: Module): Boolean {
     return KotlinPackageIndexUtils.packageExists(FqName("kotlin"), module.moduleProductionSourceScope)
+}
+
+fun getPlatform(module: Module): String {
+    return when {
+        module.platform.isJvm() -> {
+            if (module.name.contains("android")) "jvm.android"
+            else "jvm"
+        }
+        module.platform.isJs() && hasKotlinWasmRuntimeInScope(module) -> "wasm"
+        module.platform.isJs() && hasKotlinJsRuntimeInScope(module) -> "js"
+        module.platform.isCommon() -> "common"
+        module.platform.isNative() -> "native." + (module.platform?.componentPlatforms?.first()?.targetName ?: "unknown")
+        else -> "unknown"
+    }
 }
 
 fun hasKotlinJvmRuntimeInScope(module: Module): Boolean {
@@ -350,6 +370,10 @@ fun hasKotlinJsRuntimeInScope(module: Module): Boolean {
     return hasKotlinPlatformRuntimeInScope(module, KOTLIN_JS_FQ_NAME, KotlinJavaScriptLibraryKind)
 }
 
+fun hasKotlinWasmRuntimeInScope(module: Module): Boolean {
+    return hasKotlinPlatformRuntimeInScope(module, KOTLIN_WASM_FQ_NAME, KotlinJavaScriptLibraryKind)
+}
+
 fun hasKotlinNativeRuntimeInScope(module: Module): Boolean {
     return hasKotlinPlatformRuntimeInScope(module, KOTLIN_NATIVE_FQ_NAME, KotlinNativeLibraryKind)
 }
@@ -366,6 +390,7 @@ fun hasKotlinPlatformRuntimeInScope(
 }
 
 private val KOTLIN_JS_FQ_NAME = FqName("kotlin.js")
+private val KOTLIN_WASM_FQ_NAME = FqName("kotlin.wasm")
 
 private val KOTLIN_NATIVE_FQ_NAME = FqName("kotlin.native")
 
