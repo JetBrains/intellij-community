@@ -1,22 +1,21 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
+import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.ui.Gray;
-import com.intellij.ui.components.ScrollBarPainter;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.components.ScrollBarPainter;
 import com.intellij.util.LazyInitializer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.ide.ui.UISettingsUtils;
 
 import java.awt.*;
 import java.io.IOException;
@@ -34,6 +33,8 @@ public final class JBCefScrollbarsHelper {
     return readResource("resources/overlayscrollbars/overlayscrollbars.browser.es6.js");
   });
 
+  private static final String TRANSPARENT_CSS_COLOR = "rgba(0, 0, 0, 0.0)";
+
   public static @NotNull String getOverlayScrollbarsSourceCSS() {
     return OVERLAY_SCROLLBARS_CSS.get();
   }
@@ -44,22 +45,22 @@ public final class JBCefScrollbarsHelper {
 
   public static @NotNull String buildScrollbarsStyle() {
     var backgroundColor = getCssColor(ScrollBarPainter.BACKGROUND);
-    var trackColor = getCssColor(ScrollBarPainter.TRACK_BACKGROUND);
-    var trackHoveredColor = getCssColor(ScrollBarPainter.TRACK_HOVERED_BACKGROUND);
+    var trackColor = getCssColor(ScrollBarPainter.TRACK_OPAQUE_BACKGROUND);
+    var trackHoveredColor = getCssColor(ScrollBarPainter.TRACK_OPAQUE_HOVERED_BACKGROUND);
 
-    var thumbColor = getCssColor(ScrollBarPainter.THUMB_BACKGROUND);
-    var thumbHoveredColor = getCssColor(ScrollBarPainter.THUMB_HOVERED_BACKGROUND);
-    var thumbBorderColor = getCssColor(ScrollBarPainter.THUMB_FOREGROUND);
+    var thumbColor = getCssColor(ScrollBarPainter.THUMB_OPAQUE_BACKGROUND);
+    var thumbHoveredColor = getCssColor(ScrollBarPainter.THUMB_OPAQUE_HOVERED_BACKGROUND);
+    var thumbBorderColor = getCssColor(ScrollBarPainter.THUMB_OPAQUE_FOREGROUND);
 
     if (thumbBorderColor.equals(thumbColor)) {
       // See com.intellij.ui.components.ScrollBarPainter#Thumb. In this case we ignore the borders
-      thumbBorderColor = buildCssColor(Gray.TRANSPARENT);
+      thumbBorderColor = TRANSPARENT_CSS_COLOR;
     }
 
-    var thumbBorderHoveredColor = getCssColor(ScrollBarPainter.THUMB_HOVERED_FOREGROUND);
+    var thumbBorderHoveredColor = getCssColor(ScrollBarPainter.THUMB_OPAQUE_HOVERED_FOREGROUND);
     if (thumbBorderHoveredColor.equals(thumbHoveredColor)) {
       // See com.intellij.ui.components.ScrollBarPainter#Thumb. In this case we ignore the borders
-      thumbBorderHoveredColor = buildCssColor(Gray.TRANSPARENT);
+      thumbBorderHoveredColor = TRANSPARENT_CSS_COLOR;
     }
 
     int trackSizePx = getTrackSizePx();
@@ -143,12 +144,12 @@ public final class JBCefScrollbarsHelper {
 
     if (thumbBorderColor.equals(thumbColor)) {
       // See com.intellij.ui.components.ScrollBarPainter#Thumb. In this case we ignore the borders
-      thumbBorderColor = buildCssColor(Gray.TRANSPARENT);
+      thumbBorderColor = TRANSPARENT_CSS_COLOR;
     }
 
     if (thumbBorderHoveredColor.equals(thumbHoveredColor)) {
       // See com.intellij.ui.components.ScrollBarPainter#Thumb. In this case we ignore the borders
-      thumbBorderHoveredColor = buildCssColor(Gray.TRANSPARENT);
+      thumbBorderHoveredColor = TRANSPARENT_CSS_COLOR;
     }
 
     final int thumbBorderWidthPx = 1;
@@ -226,10 +227,6 @@ public final class JBCefScrollbarsHelper {
     double alpha = ObjectUtils.notNull(getScrollbarAlpha(key), color.getAlpha()) / 255.0;
 
     return String.format(Locale.ROOT, "rgba(%d, %d, %d, %f)", color.getRed(), color.getBlue(), color.getBlue(), alpha);
-  }
-
-  private static @NotNull String buildCssColor(@NotNull Color color) {
-    return String.format(Locale.ROOT, "rgba(%d, %d, %d, %f)", color.getRed(), color.getBlue(), color.getBlue(), color.getAlpha() / 255.0);
   }
 
   private static @NotNull String readResource(@NotNull String path) {
