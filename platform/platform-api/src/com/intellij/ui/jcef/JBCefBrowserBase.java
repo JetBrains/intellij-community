@@ -7,20 +7,15 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.IconUtil;
 import com.intellij.util.LazyInitializer;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.ssl.CertificateListener;
 import com.intellij.util.net.ssl.CertificateManager;
 import com.intellij.util.ui.UIUtil;
@@ -44,12 +39,10 @@ import java.beans.PropertyChangeListener;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.Objects;
-import java.util.Vector;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -284,41 +277,6 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     };
 
     CertificateManager.getInstance().getCustomTrustManager().addListener(myCertificateListener);
-
-    // Vladimir.Kharitonov@jetbrains.com
-    // This CefDialogHandler is a temporary workaround for JBR-5420 JCEF: IDEA crashes on opening file chooser dialog
-    // Calling a native choose file dialog via cef leads to a crash.
-    // This handler is fallback to call the dialog via IDEA in case user handler is not defined(most likely).
-
-    // There is a limitation. acceptFilters have quite advance format. Like providing MIME types (e.g. "text/*" or "image/*") or specifying
-    // combined description and file extension delimited using "|" and ";" (e.g. "Image Types|.png;.gif;.jpg"). It's not supported.
-    // So, no filters.
-
-    // To be removed after JBR is updated.
-    myCefClient.getCefClient().addDialogHandler(new CefDialogHandler() {
-      @Override
-      public boolean onFileDialog(CefBrowser browser,
-                                  FileDialogMode mode,
-                                  String title,
-                                  String defaultFilePath,
-                                  Vector<String> acceptFilters,
-                                  CefFileDialogCallback callback) {
-        FileChooserDescriptor descriptor =
-          new FileChooserDescriptor(true, true, false, false, false, mode == FileDialogMode.FILE_DIALOG_OPEN_MULTIPLE)
-            .withTitle(title);
-
-        ApplicationManager.getApplication().invokeLater(() -> {
-          FileChooser.chooseFiles(descriptor, ProjectManager.getInstance().getDefaultProject(),
-                                  VfsUtil.findFile(Path.of(defaultFilePath), true),
-                                  result -> {
-                                    //noinspection UseOfObsoleteCollectionType
-                                    callback.Continue(new Vector<>(
-                                      ContainerUtil.map(result, f -> f.getPath())));
-                                  });
-        });
-        return true;
-      }
-    });
   }
 
   private @NotNull CefBrowserOsrWithHandler createOsrBrowser(@NotNull JBCefOSRHandlerFactory factory,
