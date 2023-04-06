@@ -57,20 +57,29 @@ class LiteralConversion(context: NewJ2kConverterContext) : RecursiveApplicableCo
         }
     }
 
-    private fun JKLiteralExpression.toDoubleLiteral(): String =
-        literal.cleanFloatAndDoubleLiterals().let { text ->
-            if (!text.contains(".") && !text.contains("e", true))
-                "$text."
-            else text
-        }.let { text ->
-            if (text.endsWith(".")) "${text}0" else text
+    private fun JKLiteralExpression.toDoubleLiteral(): String {
+        var text = literal.cleanFloatAndDoubleLiterals()
+        if (text.isHexLiteral()) {
+            // Java supports hexadecimal floating point literals, which should be converted to decimal in Kotlin
+            text = text.toDouble().toString()
         }
+        if (!text.contains(".") && !text.contains("e", ignoreCase = true)) text = "$text."
+        if (text.endsWith(".")) text = "${text}0"
+        return text
+    }
 
-    private fun JKLiteralExpression.toFloatLiteral(): String =
-        literal.cleanFloatAndDoubleLiterals().let { text ->
-            if (!text.endsWith("f")) "${text}f"
-            else text
+    private fun String.isHexLiteral(): Boolean =
+        startsWith("0x", ignoreCase = true)
+
+    private fun JKLiteralExpression.toFloatLiteral(): String {
+        var text = literal.cleanFloatAndDoubleLiterals()
+        if (text.isHexLiteral()) {
+            // Java supports hexadecimal floating point literals, which should be converted to decimal in Kotlin
+            text = text.toFloat().toString()
         }
+        if (!text.endsWith("f")) text = "${text}f"
+        return text
+    }
 
     private fun JKLiteralExpression.toLongLiteral(): String =
         literal
@@ -87,7 +96,7 @@ class LiteralConversion(context: NewJ2kConverterContext) : RecursiveApplicableCo
             .convertOctalLiteral(isLongLiteral = false)
 
     private fun String.convertHexLiteral(isLongLiteral: Boolean): String {
-        if (!startsWith("0x", ignoreCase = true)) return this
+        if (!isHexLiteral()) return this
         val value = BigInteger(drop(2), 16)
         return when {
             isLongLiteral && value.bitLength() > 63 ->
