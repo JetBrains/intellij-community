@@ -98,8 +98,14 @@ public final class ExistingTemplatesComponent {
     final DumbAwareAction saveTemplateAction = new DumbAwareAction(SSRBundle.message("save.template.action.text")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        ConfigurationManager.getInstance(project).showSaveTemplateAsDialog(myConfigurationProducer.get());
-        reloadUserTemplates(configurationManager);
+        Configuration configuration = myConfigurationProducer.get();
+        if (ConfigurationManager.getInstance(project).showSaveTemplateAsDialog(configuration)) {
+          reloadUserTemplates(configurationManager);
+          DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(myUserTemplatesNode, configuration);
+          if (node != null) {
+            TreeUtil.selectNode(patternTree, node);
+          }
+        }
       }
     };
     final DumbAwareAction saveInspectionAction = new DumbAwareAction(SSRBundle.message("save.inspection.action.text")) {
@@ -202,10 +208,9 @@ public final class ExistingTemplatesComponent {
 
   private void reloadUserTemplates(ConfigurationManager configurationManager) {
     myUserTemplatesNode.removeAllChildren();
-    for (final Configuration config : configurationManager.getConfigurations()) {
+    for (Configuration config : configurationManager.getConfigurations()) {
       myUserTemplatesNode.add(new DefaultMutableTreeNode(config));
     }
-    patternTree.expandPath(new TreePath(new Object[]{patternTreeModel.getRoot(), myUserTemplatesNode}));
     patternTreeModel.reload(myUserTemplatesNode);
   }
 
