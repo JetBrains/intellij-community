@@ -1015,7 +1015,7 @@ private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>
   return targetFile
 }
 
-private suspend fun checkClassFiles(targetFile: Path, context: BuildContext, isDistAll: Boolean) {
+private suspend fun checkClassFiles(root: Path, context: BuildContext, isDistAll: Boolean) {
   // version checking patterns are only for dist all (all non-os and non-arch specific files)
   val versionCheckerConfig = if (context.isStepSkipped(BuildOptions.VERIFY_CLASS_FILE_VERSIONS) || !isDistAll) {
     emptyMap()
@@ -1035,12 +1035,12 @@ private suspend fun checkClassFiles(targetFile: Path, context: BuildContext, isD
   if (versionCheckerConfig.isNotEmpty() || forbiddenSubPaths.isNotEmpty()) {
     checkClassFiles(versionCheckConfig = versionCheckerConfig,
                     forbiddenSubPaths = forbiddenSubPaths,
-                    root = targetFile,
+                    root = root,
                     messages = context.messages)
   }
 
   if (forbiddenSubPaths.isNotEmpty()) {
-    context.messages.warning("checkClassFiles: SUCCESS for forbiddenSubPaths: ${forbiddenSubPaths.joinToString()}")
+    context.messages.warning("checkClassFiles: SUCCESS for forbiddenSubPaths at '$root': ${forbiddenSubPaths.joinToString()}")
   }
 }
 

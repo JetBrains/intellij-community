@@ -89,7 +89,7 @@ internal suspend fun checkClassFiles(versionCheckConfig: Map<String, String>,
       }
       check(errorCount == 0) {
         throw ClassFileCheckError(
-          "Failed with $errorCount problems. Max 5 of them:\n" +
+          "Failed with $errorCount problems. First 5 of them:\n" +
           errors.take(5).joinToString("\n"),
           errors)
       }
