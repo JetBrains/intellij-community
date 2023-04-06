@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.runtimeModuleRepository.jps.build
 
+import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
@@ -115,7 +116,7 @@ class RuntimeModuleRepositoryBuilderTest : JpsBuildTestCase() {
 
   private fun buildRepository(): Map<String, RawRuntimeModuleDescriptor> {
     doBuild(CompileScopeTestBuilder.make().targetTypes(RuntimeModuleRepositoryTarget)).assertSuccessful()
-    val zipPath = orCreateProjectDir.toPath().resolve("out/${RuntimeModuleRepositoryBuilder.JAR_REPOSITORY_FILE_NAME}")
+    val zipPath = orCreateProjectDir.toPath().resolve("out/${JAR_REPOSITORY_FILE_NAME}")
     return RuntimeModuleRepositorySerialization.loadFromJar(zipPath)
   }
 

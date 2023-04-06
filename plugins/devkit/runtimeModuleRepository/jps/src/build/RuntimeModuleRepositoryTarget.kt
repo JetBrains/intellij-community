@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.runtimeModuleRepository.jps.build
 
+import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME
 import com.intellij.devkit.runtimeModuleRepository.jps.impl.DevkitRuntimeModuleRepositoryJpsBundle
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.text.StringUtil
@@ -51,7 +52,7 @@ internal class RuntimeModuleRepositoryTarget(val project: JpsProject) : BuildTar
   override fun getOutputRoots(context: CompileContext): Collection<File> {
     val project = context.projectDescriptor.project
     val outputUrl = JpsJavaExtensionService.getInstance().getProjectExtension(project)?.outputUrl ?: return emptyList()
-    return listOf(File(JpsPathUtil.urlToFile(outputUrl), RuntimeModuleRepositoryBuilder.JAR_REPOSITORY_FILE_NAME))
+    return listOf(File(JpsPathUtil.urlToFile(outputUrl), JAR_REPOSITORY_FILE_NAME))
   }
 
   override fun writeConfiguration(pd: ProjectDescriptor, out: PrintWriter) {
@@ -60,7 +61,7 @@ internal class RuntimeModuleRepositoryTarget(val project: JpsProject) : BuildTar
       digest = computeDependenciesDigest(pd)
     }
     LOG.info("Dependencies digest computed in ${time}ms")
-    out.println("${JarFileSerializer.SPECIFICATION_VERSION}.${RuntimeModuleRepositoryBuilder.GENERATOR_VERSION}")
+    out.println("${JarFileSerializer.SPECIFICATION_VERSION}.${RuntimeModuleRepositoryBuildConstants.GENERATOR_VERSION}")
     out.println(StringUtil.toHexString(digest))
   }
 

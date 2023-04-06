@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.runtimeModuleRepository.jps.build
 
+import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.GENERATOR_VERSION
+import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME
 import com.intellij.devkit.runtimeModuleRepository.jps.impl.DevkitRuntimeModuleRepositoryJpsBundle
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.runtime.repository.RuntimeModuleId
@@ -36,13 +38,10 @@ import kotlin.system.measureTimeMillis
 internal class RuntimeModuleRepositoryBuilder 
   : TargetBuilder<BuildRootDescriptor, RuntimeModuleRepositoryTarget>(listOf(RuntimeModuleRepositoryTarget)) {
   companion object {
-    const val JAR_REPOSITORY_FILE_NAME: String = "module-descriptors.jar"
-
     /**
      * Specifies whether descriptors for 'tests' parts of modules should be generated.  
      */
     const val GENERATE_DESCRIPTORS_FOR_TEST_MODULES = false
-    internal const val GENERATOR_VERSION = 1
     private val LOG = logger<RuntimeModuleRepositoryBuilder>()
 
     internal fun enumerateRuntimeDependencies(module: JpsModule): JpsJavaDependenciesEnumerator {

@@ -27,7 +27,7 @@ class IntelliJModuleRepositoryBuildScopeProvider : BuildTargetScopeProvider() {
   
   companion object {
     /**
-     * Must be equal to targetTypeId in [com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryTarget].
+     * Must be equal to [com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.TARGET_TYPE_ID].
      */
     private const val TARGET_TYPE_ID = "intellij-runtime-module-repository"
   }
