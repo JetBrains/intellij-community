@@ -1,0 +1,12 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
+class Outer{
+    inner class Inner {
+
+
+        fun String.doSomething() {
+            "${this@Inner<caret>}"
+        }
+    }
+}
+// ELEMENT: this@Inner
