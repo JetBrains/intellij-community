@@ -319,9 +319,9 @@
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.CancellationCheckInLoopsInspection"/>
 
-    <localInspection language="JAVA" shortName="ApplicationServiceAsStaticFinalField" groupPathKey="inspections.group.path"
+    <localInspection language="UAST" shortName="ApplicationServiceAsStaticFinalField" groupPathKey="inspections.group.path"
                      key="inspections.application.service.as.static.final.field.display.name" groupKey="inspections.group.code"
-                     enabledByDefault="true" level="WARNING"
+                     enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.ApplicationServiceAsStaticFinalFieldInspection"/>
 
     <localInspection language="UAST" enabledByDefault="false" level="ERROR"

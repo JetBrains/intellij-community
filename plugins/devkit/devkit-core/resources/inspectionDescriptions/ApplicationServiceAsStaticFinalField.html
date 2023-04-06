@@ -1,6 +1,6 @@
 <html>
 <body>
-Reports assignments of application services to static final fields.
+Reports assignments of application services to static final fields/properties.
 <p>
   Such assignments contribute to global state and make it impossible to tear down an application and set up another one in tests,
   therefore, repeated tests in the same process may fail.
@@ -14,15 +14,9 @@ Reports assignments of application services to static final fields.
 </code></pre>
 <pre><code>
   // Correct way
-  private static ManagingFS ourInstance = CachedSingletonsRegistry.markCachedField(ManagingFS.class);
-
-  public static @NotNull ManagingFS getInstance() {
-    var instance = ourInstance;
-    if (instance == null) {
-      ourInstance = instance = ApplicationManager.getApplication().getService(ManagingFS.class);
-    }
-    return instance;
-  }
+  private static final Supplier&lt;ManagingFS&gt; ourInstance = CachedSingletonsRegistry.lazy(() -> {
+    return ApplicationManager.getApplication().getService(ManagingFS.class);
+  });
 </code></pre>
 <pre><code>
   // Exception
