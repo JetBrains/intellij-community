@@ -11,44 +11,12 @@ import java.io.DataOutput
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
-class ConfigurableTextFileIndexer : SingleEntryFileBasedIndexExtension<String>() {
-  companion object {
-    private var cnt: Int = 0
-  }
-
-  private val INDEX_ID = ID.create<Int, String>("com.intellij.util.indexing.mocks.ConfigurableTextFileIndexer.${cnt++}")
-
-  var indexValue: (FileContent) -> String? = { "hello" }
-  var indexVersion: Int = 1
-  var additionalInputFilter: (VirtualFile) -> Boolean = { true }
-  val indexedFiles: Queue<VirtualFile> = ConcurrentLinkedQueue()
-
-  private val dataExternalizer = object : DataExternalizer<String> {
-    override fun save(out: DataOutput, value: String?) = IOUtil.writeString(value, out)
-    override fun read(`in`: DataInput): String = IOUtil.readString(`in`)
-  }
-
+open class ConfigurableTextFileIndexer : ConfigurableFileIndexerBase() {
   private val fileTypeAwareInputFilter = object : DefaultFileTypeSpecificInputFilter(PlainTextFileType.INSTANCE) {
     override fun acceptInput(file: VirtualFile): Boolean {
       return additionalInputFilter(file) && super.acceptInput(file)
     }
   }
 
-  private val singleEntryIndexer = object : SingleEntryIndexer<String>(true) {
-    override fun computeValue(inputData: FileContent): String? {
-      indexedFiles.add(inputData.file)
-      return indexValue(inputData)
-    }
-  }
-
-  override fun getName(): ID<Int, String> = INDEX_ID
-  override fun getIndexer(): SingleEntryIndexer<String> = singleEntryIndexer
-  override fun getValueExternalizer(): DataExternalizer<String> = dataExternalizer
-  override fun getVersion(): Int = indexVersion
   override fun getInputFilter(): FileBasedIndex.InputFilter = fileTypeAwareInputFilter
-  fun getAndResetIndexedFiles(): List<VirtualFile> {
-    return indexedFiles.toList().also {
-      indexedFiles.clear()
-    }
-  }
 }

@@ -21,6 +21,8 @@ import com.intellij.util.application
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
+import com.intellij.util.indexing.mocks.ConfigurableContentlessTextFileIndexer
+import com.intellij.util.indexing.mocks.ConfigurableFileIndexerBase
 import com.intellij.util.indexing.mocks.ConfigurableTextFileIndexer
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
@@ -87,7 +89,7 @@ class UnindexedFilesScannerTest {
   }
 
   @Test
-  fun `test scanner does not schedule indexed files for indexing again (change indexer#accept return value)`() {
+  fun `test scanner does not schedule indexed files for indexing again (change contentIndexer_accept return value)`() {
     val indexer = ConfigurableTextFileIndexer()
     registerIndexer(indexer)
 
@@ -111,6 +113,95 @@ class UnindexedFilesScannerTest {
       .withFailMessage("Nothing changed since last indexing. Should detect no files for indexing")
       .isEmpty()
     assertEquals(0, scanningStat.numberOfFilesForIndexing)
+  }
+
+  @Test
+  fun `test contentless indexes applied only while scanning (1)`() {
+    val indexer = ConfigurableContentlessTextFileIndexer()
+    registerIndexer(indexer)
+
+    val filesAndDirs = setupSimpleRepresentativeFolderForIndexing()
+
+    val (_, dirtyFiles) = scanFiles(filesAndDirs)
+    assertThat(indexer.getAndResetIndexedFiles())
+      .withFailMessage("Contentless indexes are applied during scanning")
+      .isNotEmpty()
+
+    indexFiles(filesAndDirs, dirtyFiles)
+    assertThat(indexer.getAndResetIndexedFiles())
+      .withFailMessage("Contentless indexes are applied during scanning. Avoid double indexing.")
+      .isEmpty()
+  }
+
+  @Test
+  fun `test up-to-date indexes not refreshed (contentless)`() {
+    val contentIndexer = ConfigurableTextFileIndexer()
+    val contentlessIndexer = ConfigurableContentlessTextFileIndexer()
+    registerIndexer(contentIndexer)
+    registerIndexer(contentlessIndexer)
+
+    val filesAndDirs = setupSimpleRepresentativeFolderForIndexing()
+    scanAndIndexFiles(filesAndDirs)
+    captureIndexingResults(contentIndexer, contentlessIndexer)
+      .assertAllIndexersIndexedFiles()
+
+    // Invalidate content index only
+    contentIndexer.additionalInputFilter = { false }
+    scanAndIndexFiles(filesAndDirs)
+    captureIndexingResults(contentIndexer, contentlessIndexer)
+      .assertNoIndexerIndexedFiles("Indexer should not be invoked to remove previously indexed values")
+
+    // all the text files now dirty because of content indexer. We should refresh only dirty index in this case.
+    contentIndexer.additionalInputFilter = { true }
+    scanAndIndexFiles(filesAndDirs)
+    captureIndexingResults(contentIndexer, contentlessIndexer)
+      .assertOnlySpecificIndexesIndexedFiles("Should refresh only dirty index", contentIndexer)
+  }
+
+  private fun captureIndexingResults(vararg indexers: ConfigurableFileIndexerBase): IndexingResults {
+    val map = mutableMapOf<ConfigurableFileIndexerBase, List<VirtualFile>>()
+    for (indexer in indexers) {
+      map[indexer] = indexer.getAndResetIndexedFiles()
+    }
+    return IndexingResults(map)
+  }
+
+  private class IndexingResults(private val dirtyFiles: Map<ConfigurableFileIndexerBase, List<VirtualFile>>) {
+    fun assertAllIndexersIndexedFiles(message: String = "") {
+      for (indexer in dirtyFiles.keys) {
+        assertIndexerIndexedFiles(message, indexer)
+      }
+    }
+
+    fun assertNoIndexerIndexedFiles(message: String = "") {
+      for (indexer in dirtyFiles.keys) {
+        assertIndexerIndexedNoFiles(message, indexer)
+      }
+    }
+
+    fun assertOnlySpecificIndexesIndexedFiles(message: String = "", vararg activeIndexers: ConfigurableFileIndexerBase) {
+      for (indexer in dirtyFiles.keys) {
+        if (activeIndexers.contains(indexer)) {
+          assertIndexerIndexedFiles(message, indexer)
+        }
+        else {
+          assertIndexerIndexedNoFiles(message, indexer)
+        }
+      }
+    }
+
+    fun assertIndexerIndexedFiles(message: String = "", indexer: ConfigurableFileIndexerBase) {
+      assertThat(dirtyFiles[indexer]!!)
+        .withFailMessage("$message%nIndexed did not index anything: ${indexer}")
+        .isNotEmpty
+    }
+
+    fun assertIndexerIndexedNoFiles(message: String = "", indexer: ConfigurableFileIndexerBase) {
+      assertThat(dirtyFiles[indexer]!!)
+        .withFailMessage("$message%nIndexed indexed some files: ${indexer}")
+        .isEmpty()
+    }
+
   }
 
   private fun registerIndexer(indexer: FileBasedIndexExtension<*, *>) {
