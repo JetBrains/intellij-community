@@ -69,9 +69,7 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
     }
   }
 
-  override fun getComponentGraphics(g: Graphics): Graphics = super.getComponentGraphics(g).let {
-    if (it is Graphics2DDelegate) it.delegate else it
-  }
+  override fun getComponentGraphics(g: Graphics): Graphics = unwrap(super.getComponentGraphics(g))
 
   // Separate init because first, as part of IdeRootPane creation, we add bare component to allocate space and then,
   // as part of EDT task scheduled in a start-up activity, do fill it. That's to avoid flickering due to resizing.
@@ -127,6 +125,8 @@ private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: Layout
   init {
     updateFont()
   }
+
+  override fun getComponentGraphics(g: Graphics): Graphics = unwrap(super.getComponentGraphics(g))
 
   override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) {
     super.calculateBounds(size2Fit, bounds)
@@ -240,3 +240,5 @@ private class HeaderIconUpdater {
     })
   }
 }
+
+private fun unwrap(g: Graphics): Graphics = if (g is Graphics2DDelegate) g.delegate else g
