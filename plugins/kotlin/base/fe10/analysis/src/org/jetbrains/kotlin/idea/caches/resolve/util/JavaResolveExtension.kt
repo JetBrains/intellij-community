@@ -87,14 +87,24 @@ fun PsiMember.getJavaOrKotlinMemberDescriptor(resolutionFacade: ResolutionFacade
     }
 }
 
-fun PsiParameter.getParameterDescriptor(): ValueParameterDescriptor? = javaResolutionFacade()?.let {
+fun PsiParameter.getParameterDescriptor(): ParameterDescriptor? = javaResolutionFacade()?.let {
     getParameterDescriptor(it)
 }
 
-fun PsiParameter.getParameterDescriptor(resolutionFacade: ResolutionFacade): ValueParameterDescriptor? {
+fun PsiParameter.getParameterDescriptor(resolutionFacade: ResolutionFacade): ParameterDescriptor? {
     val method = declarationScope as? PsiMethod ?: return null
     val methodDescriptor = method.getJavaMethodDescriptor(resolutionFacade) ?: return null
-    return methodDescriptor.valueParameters[parameterIndex()]
+    val index = parameterIndex()
+
+    return when {
+        index == 0 && methodDescriptor.extensionReceiverParameter != null ->
+            methodDescriptor.extensionReceiverParameter
+
+        methodDescriptor.valueParameters.size > index ->
+            methodDescriptor.valueParameters[index]
+
+        else -> throw AssertionError("Can't get parameter descriptor with index = $index")
+    }
 }
 
 fun PsiClass.resolveToDescriptor(

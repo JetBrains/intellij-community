@@ -2669,6 +2669,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/function/overrideAndOpen.java");
         }
 
+        @TestMetadata("overrideExtensionFunction.java")
+        public void testOverrideExtensionFunction() throws Exception {
+            runTest("testData/newJ2k/function/overrideExtensionFunction.java");
+        }
+
         @TestMetadata("overrideObject.java")
         public void testOverrideObject() throws Exception {
             runTest("testData/newJ2k/function/overrideObject.java");
