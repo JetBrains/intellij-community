@@ -29,7 +29,6 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTree<T> {
@@ -50,9 +49,9 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     int delta;  // delta of startOffset. getStartOffset() = myStartOffset + Sum of deltas up to root
 
     private volatile long cachedDeltaUpToRoot; // field (packed to long for atomicity) containing deltaUpToRoot, node modCount and allDeltasUpAreNull flag
-    // fields are packed as following
+    // These fields are packed inside cachedDeltaUpToRoot, as follows:
     //  private int modCount; // if it equals to the com.intellij.openapi.editor.impl.RedBlackTree.modCount then deltaUpToRoot can be used, otherwise it is expired
-    //  private int deltaUpToRoot; // sum of all deltas up to the root (including this node' delta). Has valid value only if modCount == IntervalTreeImpl.this.modCount
+    //  private int deltaUpToRoot; // sum of all deltas up to the root (including this node.delta). Has valid value only if modCount == IntervalTreeImpl.this.modCount
     //  private boolean allDeltasUpAreNull;  // true if all deltas up the tree (including this node) are 0. Has valid value only if modCount == IntervalTreeImpl.this.modCount
 
     @NotNull
@@ -119,7 +118,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
       return hasAliveInterval;
     }
 
-    // removes interval and the node, if node became empty
+    // removes the interval and the node, if node became empty
     // returns true if node was removed
     private boolean removeInterval(@NotNull E key) {
       myIntervalTree.checkBelongsToTheTree(key, true);
@@ -220,7 +219,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
             node = parent;
             height++;
           }
-          // path to this node fits to long
+          // the path to this node should fit to long
           assert height < 63 : height;
 
           // cache deltas in every node from the root down this
@@ -237,7 +236,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
             if (node == this) break;
             node = (path & 1) == 0 ? node.getLeft() : node.getRight();
             path >>= 1;
-            if (node == null) return deltaUp; // can only happen in case of concurrently modification
+            if (node == null) return deltaUp; // can only happen in case of concurrent modification
           }
 
           assert deltaUp == 0 || !allDeltasAreNull;
@@ -249,12 +248,11 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
       }
     }
 
-    int changeDelta(int change) {
+    void changeDelta(int change) {
       if (change != 0) {
         setCachedValues(0, false, 0); // deltaUpToRoot is not valid anymore
-        return delta += change;
+        delta += change;
       }
-      return delta;
     }
     void clearDelta() {
       if (delta != 0) {
@@ -435,8 +433,8 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
   }
 
   private boolean process(@Nullable IntervalNode<T> root,
-                          final int modCountBefore,
-                          @NotNull final Processor<? super T> processor) {
+                          int modCountBefore,
+                          @NotNull Processor<? super T> processor) {
     if (root == null) return true;
 
     WalkingState.TreeGuide<IntervalNode<T>> guide = getGuide();
@@ -575,21 +573,21 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
   }
 
   @NotNull
-  MarkupIterator<T> overlappingIterator(@NotNull final TextRange rangeInterval, @Nullable Predicate<? super IntervalNode<T>> nodeFilter) {
+  MarkupIterator<T> overlappingIterator(@NotNull TextRange rangeInterval) {
     l.readLock().lock();
 
     try {
-      final int startOffset = rangeInterval.getStartOffset();
-      final int endOffset = rangeInterval.getEndOffset();
-      final IntervalNode<T> firstOverlap = findMinOverlappingWith(getRoot(), rangeInterval, getModCount(), 0, nodeFilter);
+      int startOffset = rangeInterval.getStartOffset();
+      int endOffset = rangeInterval.getEndOffset();
+      IntervalNode<T> firstOverlap = findMinOverlappingWith(getRoot(), rangeInterval, getModCount(), 0);
       if (firstOverlap == null) {
         l.readLock().unlock();
         //noinspection unchecked
         return MarkupIterator.EMPTY;
       }
-      final int firstOverlapDelta = firstOverlap.computeDeltaUpToRoot();
-      final int firstOverlapStart = firstOverlap.intervalStart() + firstOverlapDelta;
-      final int modCountBefore = getModCount();
+      int firstOverlapDelta = firstOverlap.computeDeltaUpToRoot();
+      int firstOverlapStart = firstOverlap.intervalStart() + firstOverlapDelta;
+      int modCountBefore = getModCount();
 
       return new MarkupIterator<T>() {
         private IntervalNode<T> currentNode = firstOverlap;
@@ -670,14 +668,12 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
 
           // try to go right down
           IntervalNode<T> right = root.getRight();
-          if (right != null && (nodeFilter == null || nodeFilter.test(right))) {
+          if (right != null) {
             int rightMaxEnd = maxEndOf(right, delta);
             if (startOffset <= rightMaxEnd) {
               int rightDelta = delta + right.delta;
               IntervalNode<T> left;
-              while ((left = right.getLeft()) != null &&
-                     (nodeFilter == null || nodeFilter.test(left)) &&
-                     startOffset <= maxEndOf(left, rightDelta)) {
+              while ((left = right.getLeft()) != null && startOffset <= maxEndOf(left, rightDelta)) {
                 right = left;
                 rightDelta += right.delta;
               }
@@ -790,7 +786,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     l.writeLock().lock();
     try {
       if (firingBeforeRemove) {
-        throw new IncorrectOperationException("Must not add rangemarker from within beforeRemoved listener");
+        throw new IncorrectOperationException("Must not add range marker from within beforeRemoved listener");
       }
       checkMax(true);
       processReferenceQueue();
@@ -814,11 +810,13 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
   }
 
   // returns true if all markers are valid
-  boolean checkMax(boolean assertInvalid) {
-    return VERIFY && doCheckMax(assertInvalid);
+  void checkMax(boolean assertInvalid) {
+    if (VERIFY) {
+      doCheckMax(assertInvalid);
+    }
   }
 
-  private boolean doCheckMax(boolean assertInvalid) {
+  private void doCheckMax(boolean assertInvalid) {
     try {
       l.readLock().lock();
 
@@ -832,7 +830,6 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
         assert keySize == keyCounter[0] : "key size: "+ keySize +"; actual: "+keyCounter[0];
         assert keySize >= nodeSize() : keySize + "; "+nodeSize();
       }
-      return allValid.get();
     }
     finally {
       l.readLock().unlock();
@@ -981,7 +978,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     }
   }
 
-  // run under write lock
+  // run under the "write lock"
   void removeNode(@NotNull IntervalNode<T> node) {
     deleteNode(node);
     IntervalNode<T> parent = node.getParent();
@@ -1007,36 +1004,33 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
   }
 
   // returns true if all deltas involved are still 0
-  boolean pushDelta(@Nullable IntervalNode<T> root) {
-    if (root == null || !root.isValid()) return true;
+  void pushDelta(@Nullable IntervalNode<T> root) {
+    if (root == null || !root.isValid()) return;
     IntervalNode<T> parent = root.getParent();
     assertAllDeltasAreNull(parent);
     int delta = root.delta;
     root.setCachedValues(0, true, 0);
-    if (delta != 0) {
+    if (delta == 0) {
+      root.setCachedValues(0, true, getModCount());
+    }
+    else {
       root.setRange(TextRangeScalarUtil.shift(root.toScalarRange(), delta, delta));
       root.maxEnd += delta;
       root.delta = 0;
       //noinspection NonShortCircuitBooleanExpression
-      return
-      incDelta(root.getLeft(), delta) &
+      incDelta(root.getLeft(), delta);
       incDelta(root.getRight(), delta);
     }
-    root.setCachedValues(0, true, getModCount());
-    return true;
   }
 
   // returns true if all deltas involved are still 0
-  private boolean incDelta(@Nullable IntervalNode<T> root, int delta) {
-    if (root == null) return true;
+  private void incDelta(@Nullable IntervalNode<T> root, int delta) {
+    if (root == null) return;
     if (root.isValid()) {
-      int newDelta = root.changeDelta(delta);
-      return newDelta == 0;
+      root.changeDelta(delta);
     }
     else {
-      //noinspection NonShortCircuitBooleanExpression
-      return
-      incDelta(root.getLeft(), delta) &
+      incDelta(root.getLeft(), delta);
       incDelta(root.getRight(), delta);
     }
   }
@@ -1047,22 +1041,18 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     checkMax(false);
     IntervalNode<T> a = (IntervalNode<T>)root;
     IntervalNode<T> d = (IntervalNode<T>)maxPred;
-    boolean acolor = a.isBlack();
-    boolean dcolor = d.isBlack();
+    boolean aColor = a.isBlack();
+    boolean dColor = d.isBlack();
     assert !a.isValid() || a.delta == 0 : a.delta;
     for (IntervalNode<T> n = a.getLeft(); n != null; n = n.getRight()) {
       assert !n.isValid() || n.delta == 0 : n.delta;
     }
     swapNodes(a, d);
 
-    // set range of the key to be deleted so it wont disrupt maxes
+    // set range of the key to be deleted, so it won't disrupt maxes
     a.setValid(false);
-    //a.key.setIntervalStart(d.key.intervalStart());
-    //a.key.setIntervalEnd(d.key.intervalEnd());
-
-    //correctMaxUp(a);
-    a.setColor(dcolor);
-    d.setColor(acolor);
+    a.setColor(dColor);
+    d.setColor(aColor);
     correctMaxUp(a);
 
     checkMax(false);
@@ -1115,7 +1105,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     return Math.max(maxEndOf(node.getLeft(), deltaUpToRootExclusive), maxEndOf(node.getRight(), deltaUpToRootExclusive));
   }
 
-  // max of n.left's maxend, n.right's maxend and its own interval endOffset
+  // max of n.left's maxEnd, n.right's maxEnd and its own interval endOffset
   void correctMax(@NotNull IntervalNode<T> node, int deltaUpToRoot) {
     if (!node.isValid()) return;
     int realMax = Math.max(Math.max(maxEndOf(node.getLeft(), deltaUpToRoot), maxEndOf(node.getRight(), deltaUpToRoot)),
@@ -1214,23 +1204,18 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
   private IntervalNode<T> findMinOverlappingWith(@Nullable IntervalNode<T> root,
                                                  @NotNull TextRange interval,
                                                  int modCountBefore,
-                                                 int deltaUpToRootExclusive,
-                                                 @Nullable Predicate<? super IntervalNode<T>> nodeFilter) {
+                                                 int deltaUpToRootExclusive) {
     if (root == null) {
       return null;
     }
     assert root.isValid();
-
-    if (nodeFilter != null && !nodeFilter.test(root)) {
-      return null;
-    }
 
     int delta = deltaUpToRootExclusive + root.delta;
     if (interval.getStartOffset() > maxEndOf(root, deltaUpToRootExclusive)) {
       return null; // right of the rightmost interval in the subtree
     }
 
-    IntervalNode<T> inLeft = findMinOverlappingWith(root.getLeft(), interval, modCountBefore, delta, nodeFilter);
+    IntervalNode<T> inLeft = findMinOverlappingWith(root.getLeft(), interval, modCountBefore, delta);
     if (inLeft != null) return inLeft;
     int myStartOffset = root.intervalStart() + delta;
     int myEndOffset = root.intervalEnd() + delta;
@@ -1242,7 +1227,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
       return null; // left of the root, cant be in the right subtree
     }
 
-    return findMinOverlappingWith(root.getRight(), interval, modCountBefore, delta, nodeFilter);
+    return findMinOverlappingWith(root.getRight(), interval, modCountBefore, delta);
   }
 
   void changeData(@NotNull T interval, int start, int end,
@@ -1367,7 +1352,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
   private static final IntervalTreeGuide<?> INTERVAL_TREE_GUIDE_INSTANCE = new IntervalTreeGuide<>();
   @NotNull
   private static <T> WalkingState.TreeGuide<IntervalNode<T>> getGuide() {
-    //noinspection unchecked
+    //noinspection unchecked,rawtypes
     return (WalkingState.TreeGuide)INTERVAL_TREE_GUIDE_INSTANCE;
   }
 
@@ -1380,15 +1365,15 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     return root == null ? 0 : 1 + Math.max(maxHeight(root.left), maxHeight(root.right));
   }
 
-  // combines iterators for two trees in one using specified comparator
+  // combines iterators for two trees in one using the specified comparator
   @NotNull
   static <T> MarkupIterator<T> mergingOverlappingIterator(@NotNull IntervalTreeImpl<T> tree1,
                                                           @NotNull TextRange tree1Range,
                                                           @NotNull IntervalTreeImpl<T> tree2,
                                                           @NotNull TextRange tree2Range,
                                                           @NotNull Comparator<? super T> comparator) {
-    MarkupIterator<T> exact = tree1.overlappingIterator(tree1Range, null);
-    MarkupIterator<T> lines = tree2.overlappingIterator(tree2Range, null);
+    MarkupIterator<T> exact = tree1.overlappingIterator(tree1Range);
+    MarkupIterator<T> lines = tree2.overlappingIterator(tree2Range);
     return MarkupIterator.mergeIterators(exact, lines, comparator);
   }
 

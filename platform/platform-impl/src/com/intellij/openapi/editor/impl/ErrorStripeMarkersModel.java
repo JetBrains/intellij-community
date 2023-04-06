@@ -25,6 +25,7 @@ import java.util.NoSuchElementException;
 final class ErrorStripeMarkersModel {
   private static final Logger LOG = Logger.getInstance(ErrorStripeMarkersModel.class);
 
+  @NotNull
   private final EditorImpl myEditor;
   private final ErrorStripeRangeMarkerTree myTree;
   private final ErrorStripeRangeMarkerTree myTreeForLines;
@@ -187,7 +188,7 @@ final class ErrorStripeMarkersModel {
     ApplicationManager.getApplication().assertIsDispatchThread();
     int offset = highlighter.getStartOffset();
     MarkupIterator<ErrorStripeMarkerImpl> iterator = treeFor(highlighter).overlappingIterator(
-      new ProperTextRange(lookEverywhere ? 0 : offset, lookEverywhere ? myEditor.getDocument().getTextLength() : offset), null);
+      new ProperTextRange(lookEverywhere ? 0 : offset, lookEverywhere ? myEditor.getDocument().getTextLength() : offset));
     try {
       return ContainerUtil.find(iterator, marker -> marker.getHighlighter() == highlighter);
     }
@@ -225,9 +226,9 @@ final class ErrorStripeMarkersModel {
       endOffset = Math.max(startOffset, endOffset);
 
       MarkupIterator<ErrorStripeMarkerImpl> exact = myTree
-        .overlappingIterator(new ProperTextRange(startOffset, endOffset), null);
+        .overlappingIterator(new ProperTextRange(startOffset, endOffset));
       MarkupIterator<ErrorStripeMarkerImpl> lines = myTreeForLines
-        .overlappingIterator(MarkupModelImpl.roundToLineBoundaries(myEditor.getDocument(), startOffset, endOffset), null);
+        .overlappingIterator(MarkupModelImpl.roundToLineBoundaries(myEditor.getDocument(), startOffset, endOffset));
       myDelegate = MarkupIterator.mergeIterators(exact, lines, BY_AFFECTED_START_OFFSET);
 
       advance();

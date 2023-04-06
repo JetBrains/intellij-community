@@ -108,6 +108,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
 
   @Override
   protected void setNode(@NotNull T key, IntervalNode<T> intervalNode) {
+    //noinspection unchecked
     ((RangeMarkerImpl)key).myNode = (RMNode<RangeMarkerEx>)intervalNode;
   }
 
@@ -240,7 +241,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
       RangeMarkerImpl marker = (RangeMarkerImpl)key.get();
       if (marker != null) {
         if (marker.isValid()) return marker;
-        // marker can become invalid on its own, e.g. FoldRegion
+        // marker can become invalid on its own, e.g., FoldRegion
         node.removeIntervalInternal(i);
       }
     }
@@ -249,7 +250,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
 
   private void findOrInsertWithIntervals(IntervalNode<T> node) {
     IntervalNode<T> insertedNode = findOrInsert(node);
-    // can change if two range become the one
+    // can change if two ranges become the one
     if (insertedNode != node) {
       // merge happened
       insertedNode.addIntervalsFrom(node);
@@ -288,7 +289,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
     else {
       if (start <= root.intervalEnd()) {
         // unlucky enough so that change affects the interval
-        if (hasAliveKeys) affected.add(root); // otherwise we've already added it
+        if (hasAliveKeys) affected.add(root); // otherwise, we've already added it
         root.setValid(false);  //make invisible
       }
 
@@ -300,7 +301,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
 
   // All intervals contained in (e.getMoveOffset(), e.getMoveOffset() + e.getNewLength())
   // will be shifted by (e.getOffset() - e.getMoveOffset()).
-  // That's what happens when you "move" text in document, e.g. ctrl-shift-up/down the selection.
+  // That's what happens when you "move" text in the document, e.g. ctrl-shift-up/down the selection.
   private void reTargetMarkersOnChange(@NotNull DocumentEvent e) {
     checkMax(true);
 
