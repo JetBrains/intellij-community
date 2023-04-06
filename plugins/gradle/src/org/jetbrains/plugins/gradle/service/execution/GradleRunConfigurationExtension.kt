@@ -30,8 +30,8 @@ class GradleRunConfigurationExtension
       GradleBundle.message("gradle.tasks.reattach.debug.process"),
       GradleBundle.message("gradle.settings.title"),
       GradleBundle.message("gradle.tasks.reattach.debug.process.comment"),
-      GradleRunConfiguration::isReattachDebugProcess,
-      GradleRunConfiguration::setReattachDebugProcess
+      { !isReattachDebugProcess },
+      { isReattachDebugProcess = !it }
     )
     addTag(
       "gradle.tasks.debugging.all.fragment",
