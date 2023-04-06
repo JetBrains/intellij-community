@@ -19,6 +19,7 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBScalableIcon
 import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Component
 import java.awt.Graphics
@@ -180,6 +181,13 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
       }
     }
 
+    if (isScheduled.get()) {
+      return null
+    }
+    return scheduleCalculationIfNeeded()
+  }
+
+  private fun scheduleCalculationIfNeeded(): Job? {
     if (isScheduled.getAndSet(true)) {
       return null
     }
@@ -202,6 +210,11 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
       checkDelegationDepth()
       processRepaints(oldWidth = oldWidth, result = result)
     }
+  }
+
+  @ApiStatus.Internal
+  fun triggerEvaluation() {
+    scheduleCalculationIfNeeded()
   }
 
   private suspend fun processRepaints(oldWidth: Int, result: Icon) {
