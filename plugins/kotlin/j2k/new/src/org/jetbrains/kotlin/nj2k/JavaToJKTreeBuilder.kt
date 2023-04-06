@@ -48,7 +48,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.resolve.QualifiedExpressionResolver
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class JavaToJKTreeBuilder constructor(
+class JavaToJKTreeBuilder(
     private val symbolProvider: JKSymbolProvider,
     private val typeFactory: JKTypeFactory,
     converterServices: NewJavaToKotlinServices,

@@ -40,7 +40,7 @@ class JavaUtilAbstractList(context: DefaultExecutionContext) :
             getMethod.value(value, context, context.vm.mirrorOf(index))
 }
 
-class WeakReference constructor(context: DefaultExecutionContext) :
+class WeakReference(context: DefaultExecutionContext) :
         BaseMirror<ObjectReference, MirrorOfWeakReference>("java.lang.ref.WeakReference", context) {
     val get by MethodDelegate<ObjectReference>("get")
 
