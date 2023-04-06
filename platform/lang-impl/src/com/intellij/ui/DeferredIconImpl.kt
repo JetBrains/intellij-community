@@ -66,8 +66,6 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
   var isDone: Boolean = false
     private set
 
-  private var lastCalcTime: Long = 0
-  private var lastTimeSpent: Long = 0
   private var modificationCount = AtomicLong(0)
   private val evalListener: ((DeferredIconImpl<T>, Icon) -> Unit)?
 
@@ -80,8 +78,6 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     param = icon.param
     isNeedReadAction = icon.isNeedReadAction
     isDone = icon.isDone
-    lastCalcTime = icon.lastCalcTime
-    lastTimeSpent = icon.lastTimeSpent
     evalListener = icon.evalListener
     modificationCount = icon.modificationCount
   }
