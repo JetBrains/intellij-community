@@ -11,7 +11,7 @@ mod tests {
 
     #[rstest]
     #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::MainBin, java_type: JavaType::JBR})]
-    #[case::plugins_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::JBR})]
+    #[case::plugins_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginBin, java_type: JavaType::JBR})]
     fn correct_launcher_startup_test(#[case] layout_spec: &LayoutSpec) {
         let result = run_launcher(layout_spec);
         assert!(result.exit_status.success(), "The exit status of the launcher is not successful: {:?}", result);
@@ -19,7 +19,7 @@ mod tests {
 
     #[rstest]
     #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::MainBin, java_type: JavaType::JBR})]
-    #[case::plugins_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::JBR})]
+    #[case::plugins_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginBin, java_type: JavaType::JBR})]
     fn classpath_test(#[case] layout_spec: &LayoutSpec) {
         let test = prepare_test_env(layout_spec);
         let dump = run_launcher_and_get_dump_default(&test);
@@ -33,7 +33,7 @@ mod tests {
 
     #[rstest]
     #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::MainBin, java_type: JavaType::JBR})]
-    #[case::plugins_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::JBR})]
+    #[case::plugins_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginBin, java_type: JavaType::JBR})]
     fn additional_jvm_arguments_in_product_info_test(#[case] layout_spec: &LayoutSpec) {
         let test = prepare_test_env(layout_spec);
         let dump = run_launcher_and_get_dump_default(&test);
@@ -47,7 +47,7 @@ mod tests {
 
     #[rstest]
     #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::MainBin, java_type: JavaType::JBR})]
-    #[case::plugins_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::JBR})]
+    #[case::plugins_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginBin, java_type: JavaType::JBR})]
     fn arguments_test(#[case] layout_spec: &LayoutSpec) {
         let test = prepare_test_env(layout_spec);
 
@@ -70,7 +70,7 @@ mod tests {
     #[cfg(target_os = "freebsd")]
     #[rstest]
     #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::MainBin, java_type: JavaType::EnvVar})]
-    #[case::plugins_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::EnvVar})]
+    #[case::plugins_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginBin, java_type: JavaType::EnvVar})]
     fn jre_is_idea_jdk_test(#[case] layout_spec: &LayoutSpec) {
         let test = prepare_test_env(layout_spec);
 
@@ -106,7 +106,7 @@ mod tests {
     // fi
     #[rstest]
     #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::MainBin, java_type: JavaType::UserJRE})]
-    #[case::plugins_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::UserJRE})]
+    #[case::plugins_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginBin, java_type: JavaType::UserJRE})]
     #[cfg(target_os = "macos")]
     fn jre_is_user_jre_test(#[case] layout_spec: &LayoutSpec) {
         let test = prepare_test_env(layout_spec);
@@ -133,7 +133,7 @@ mod tests {
 
     #[rstest]
     #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::MainBin, java_type: JavaType::UserJRE})]
-    #[case::plugins_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::UserJRE})]
+    #[case::plugins_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginBin, java_type: JavaType::UserJRE})]
     #[cfg(any(target_os = "windows", target_os = "linux"))]
     fn jre_is_user_jre_test(#[case] layout_spec: &LayoutSpec) {
         let test = prepare_test_env(layout_spec);
@@ -165,7 +165,7 @@ mod tests {
     // fi
     #[rstest]
     #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::MainBin, java_type: JavaType::JBR})]
-    #[case::plugins_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::JBR})]
+    #[case::plugins_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginBin, java_type: JavaType::JBR})]
     fn jre_is_jbr_test(#[case] layout_spec: &LayoutSpec) {
         let test = prepare_test_env(layout_spec);
         let dump = run_launcher_and_get_dump_default(&test);
@@ -205,7 +205,7 @@ mod tests {
 
     #[rstest]
     #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::MainBin, java_type: JavaType::EnvVar})]
-    #[case::plugins_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::EnvVar})]
+    #[case::plugins_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginBin, java_type: JavaType::EnvVar})]
     fn jre_is_jdk_home_test(#[case] layout_spec: &LayoutSpec) {
         let test = prepare_test_env(layout_spec);
         let dump = run_launcher_and_get_dump_with_java_env(&test, "JDK_HOME");
@@ -243,7 +243,7 @@ mod tests {
     #[cfg(target_os = "freebsd")]
     #[rstest]
     #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::MainBin, java_type: JavaType::EnvVar})]
-    #[case::plugins_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::EnvVar})]
+    #[case::plugins_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginBin, java_type: JavaType::EnvVar})]
     fn jre_is_java_home_test(#[case] layout_spec: &LayoutSpec) {
         let test = prepare_test_env(layout_spec);
         let dump = run_launcher_and_get_dump_with_java_env(&test, "JAVA_HOME");
