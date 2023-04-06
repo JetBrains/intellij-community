@@ -17,11 +17,7 @@ import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -251,11 +247,11 @@ public class EditorHyperlinkSupport {
                                          @Nullable TextAttributes followedHyperlinkAttributes,
                                          boolean fireChanged) {
     HyperlinkInfoTextAttributes attributes = new HyperlinkInfoTextAttributes(hyperlinkInfo, followedHyperlinkAttributes);
+    highlighter.putUserData(HYPERLINK, attributes);
     if (fireChanged) {
-      ((RangeHighlighterEx)highlighter).putUserDataAndFireChanged(HYPERLINK, attributes);
-    }
-    else {
-      highlighter.putUserData(HYPERLINK, attributes);
+      MarkupEditorFilter filter = highlighter.getEditorFilter();
+      highlighter.setEditorFilter(__ -> true);
+      highlighter.setEditorFilter(filter); // to fireChanged
     }
   }
 
