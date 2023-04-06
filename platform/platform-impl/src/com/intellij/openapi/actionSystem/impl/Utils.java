@@ -32,12 +32,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.ClientProperty;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.GroupHeaderSeparator;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.mac.screenmenu.Menu;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import io.opentelemetry.api.OpenTelemetry;
@@ -426,7 +429,7 @@ public final class Utils {
       if (action instanceof Separator) {
         String text = ((Separator)action).getText();
         if (!StringUtil.isEmpty(text) || (i > 0 && i < size - 1)) {
-          JPopupMenu.Separator separator = createSeparator(text);
+          JPopupMenu.Separator separator = createSeparator(text, children.isEmpty());
           component.add(separator);
           children.add(separator);
           if (nativePeer != null) nativePeer.add(null);
@@ -588,10 +591,21 @@ public final class Utils {
     return Boolean.TRUE.equals(presentation.getClientProperty(ActionUpdater.SUPPRESS_SUBMENU_IMPL));
   }
 
-  private static @NotNull JPopupMenu.Separator createSeparator(@NlsContexts.Separator String text) {
+  private static @NotNull JPopupMenu.Separator createSeparator(@NlsContexts.Separator String text, boolean first) {
     return new JPopupMenu.Separator() {
-      private final JMenuItem myMenu = !StringUtil.isEmpty(text) ? new JMenuItem(text) : null;
-
+      private final GroupHeaderSeparator myMenu;
+      {
+        if (StringUtil.isNotEmpty(text)) {
+          Insets labelInsets = ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Popup.separatorLabelInsets() :
+                               JBUI.CurrentTheme.ActionsList.cellPadding();
+          myMenu = new GroupHeaderSeparator(labelInsets);
+          myMenu.setCaption(text);
+          myMenu.setHideLine(first);
+        }
+        else {
+          myMenu = null;
+        }
+      }
       @Override
       public void doLayout() {
         super.doLayout();
