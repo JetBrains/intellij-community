@@ -250,10 +250,14 @@ public final class ExistingTemplatesComponent {
         break;
       }
     }
-    final int[] rows = patternTree.getSelectionRows();
-    if (rows != null && rows.length > 0) {
-      patternTree.addSelectionRow(rows[0] - 1);
+    DefaultMutableTreeNode sibling = node.getNextSibling();
+    if (sibling == null) {
+      sibling = node.getPreviousSibling();
     }
+    if (sibling == null) {
+      sibling = myUserTemplatesNode;
+    }
+    TreeUtil.selectNode(patternTree, sibling);
     patternTreeModel.removeNodeFromParent(node);
     ConfigurationManager.getInstance(project).removeConfiguration(configuration);
   }
