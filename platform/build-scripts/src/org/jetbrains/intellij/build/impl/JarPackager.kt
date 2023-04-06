@@ -11,8 +11,13 @@ import com.jetbrains.util.filetype.FileType
 import com.jetbrains.util.filetype.FileTypeDetector.DetectFileType
 import io.opentelemetry.api.common.AttributeKey
 import kotlinx.collections.immutable.*
-import kotlinx.coroutines.*
-import org.jetbrains.intellij.build.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.SignNativeFileMode
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.PackageIndexBuilder
@@ -304,7 +309,8 @@ class JarPackager private constructor(private val outputDir: Path, private val c
 
       for (file in files) {
         sources.add(ZipSource(file) { size ->
-          libraryEntries.add(ModuleLibraryFileEntry(path = targetFile, moduleName = moduleName, libraryFile = file, size = size))
+          libraryEntries.add(ModuleLibraryFileEntry(path = targetFile, moduleName = moduleName, 
+                                                    libraryName = LibraryLicensesListGenerator.getLibraryName(library), libraryFile = file, size = size))
         })
       }
     }
@@ -404,6 +410,7 @@ class JarPackager private constructor(private val outputDir: Path, private val c
           ModuleLibraryFileEntry(
             path = targetFile,
             moduleName = it,
+            libraryName = LibraryLicensesListGenerator.getLibraryName(library),
             libraryFile = file,
             size = size,
           )

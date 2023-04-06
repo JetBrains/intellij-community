@@ -1021,7 +1021,7 @@ private fun addArtifactMapping(artifact: JpsArtifact, entries: MutableCollection
       val library = element.libraryReference.resolve()
       val parentReference = library!!.createReference().parentReference
       if (parentReference is JpsModuleReference) {
-        entries.add(ModuleLibraryFileEntry(path = artifactFile, moduleName = parentReference.moduleName, libraryFile = null, size = 0))
+        entries.add(ModuleLibraryFileEntry(path = artifactFile, moduleName = parentReference.moduleName, libraryName = LibraryLicensesListGenerator.getLibraryName(library), libraryFile = null, size = 0))
       }
       else {
         val libraryData = ProjectLibraryData(library.name, LibraryPackMode.MERGED)
