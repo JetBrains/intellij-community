@@ -15,11 +15,13 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextComponentAccessor;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +29,7 @@ import static com.intellij.openapi.util.NlsContexts.Label;
 import static com.intellij.openapi.util.NlsContexts.DialogTitle;
 
 public class TextFieldWithHistoryWithBrowseButton extends ComponentWithBrowseButton<TextFieldWithHistory> {
+  private final Disposable myDisposable = Disposer.newDisposable();
   public TextFieldWithHistoryWithBrowseButton() {
     super(new TextFieldWithHistory(), null);
   }
@@ -38,7 +41,7 @@ public class TextFieldWithHistoryWithBrowseButton extends ComponentWithBrowseBut
                                       FileChooserDescriptor fileChooserDescriptor,
                                       TextComponentAccessor<? super TextFieldWithHistory> accessor) {
     super.addBrowseFolderListener(title, description, project, fileChooserDescriptor, accessor);
-    FileChooserFactory.getInstance().installFileCompletion(getChildComponent().getTextEditor(), fileChooserDescriptor, false, project);
+    FileChooserFactory.getInstance().installFileCompletion(getChildComponent().getTextEditor(), fileChooserDescriptor, false, myDisposable);
   }
 
   @Override
@@ -49,7 +52,13 @@ public class TextFieldWithHistoryWithBrowseButton extends ComponentWithBrowseBut
                                       TextComponentAccessor<? super TextFieldWithHistory> accessor,
                                       boolean autoRemoveOnHide) {
     addBrowseFolderListener(title, description, project, fileChooserDescriptor, accessor);
-    FileChooserFactory.getInstance().installFileCompletion(getChildComponent().getTextEditor(), fileChooserDescriptor, false, project);
+    FileChooserFactory.getInstance().installFileCompletion(getChildComponent().getTextEditor(), fileChooserDescriptor, false, myDisposable);
+  }
+
+  @Override
+  public void removeNotify() {
+    super.removeNotify();
+    Disposer.dispose(myDisposable);
   }
 
   public String getText() {
