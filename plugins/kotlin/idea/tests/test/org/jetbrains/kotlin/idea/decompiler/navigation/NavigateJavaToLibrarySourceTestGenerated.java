@@ -28,6 +28,56 @@ public class NavigateJavaToLibrarySourceTestGenerated extends AbstractNavigateJa
         runTest("testData/decompiler/navigation/userJavaCode/ClassAndConstuctors.java");
     }
 
+    @TestMetadata("ClassWithConstructor.java")
+    public void testClassWithConstructor() throws Exception {
+        runTest("testData/decompiler/navigation/userJavaCode/ClassWithConstructor.java");
+    }
+
+    @TestMetadata("EnumElements.java")
+    public void testEnumElements() throws Exception {
+        runTest("testData/decompiler/navigation/userJavaCode/EnumElements.java");
+    }
+
+    @TestMetadata("ExplicitOverloads.java")
+    public void testExplicitOverloads() throws Exception {
+        runTest("testData/decompiler/navigation/userJavaCode/ExplicitOverloads.java");
+    }
+
+    @TestMetadata("ExtensionFunction.java")
+    public void testExtensionFunction() throws Exception {
+        runTest("testData/decompiler/navigation/userJavaCode/ExtensionFunction.java");
+    }
+
+    @TestMetadata("ExtensionProperty.java")
+    public void testExtensionProperty() throws Exception {
+        runTest("testData/decompiler/navigation/userJavaCode/ExtensionProperty.java");
+    }
+
+    @TestMetadata("FunWithTypeParam.java")
+    public void testFunWithTypeParam() throws Exception {
+        runTest("testData/decompiler/navigation/userJavaCode/FunWithTypeParam.java");
+    }
+
+    @TestMetadata("GenericFunctionWithArgs.java")
+    public void testGenericFunctionWithArgs() throws Exception {
+        runTest("testData/decompiler/navigation/userJavaCode/GenericFunctionWithArgs.java");
+    }
+
+    @TestMetadata("GenericFunctionWithInferred.java")
+    public void testGenericFunctionWithInferred() throws Exception {
+        runTest("testData/decompiler/navigation/userJavaCode/GenericFunctionWithInferred.java");
+    }
+
+    @TestMetadata("GlobalProperty.java")
+    public void testGlobalProperty() throws Exception {
+        runTest("testData/decompiler/navigation/userJavaCode/GlobalProperty.java");
+    }
+
+    @TestMetadata("NamedObject.java")
+    public void testNamedObject() throws Exception {
+        runTest("testData/decompiler/navigation/userJavaCode/NamedObject.java");
+    }
+
     @TestMetadata("OverloadedFun.java")
     public void testOverloadedFun() throws Exception {
         runTest("testData/decompiler/navigation/userJavaCode/OverloadedFun.java");
@@ -36,5 +86,10 @@ public class NavigateJavaToLibrarySourceTestGenerated extends AbstractNavigateJa
     @TestMetadata("RenamedElements.java")
     public void testRenamedElements() throws Exception {
         runTest("testData/decompiler/navigation/userJavaCode/RenamedElements.java");
+    }
+
+    @TestMetadata("WithCompanionObject.java")
+    public void testWithCompanionObject() throws Exception {
+        runTest("testData/decompiler/navigation/userJavaCode/WithCompanionObject.java");
     }
 }

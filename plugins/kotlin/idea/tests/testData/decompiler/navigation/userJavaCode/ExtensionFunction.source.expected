@@ -1,0 +1,9 @@
+ExtensionFunctionKt.class
+<2>// IntelliJ API Decompiler stub source generated from a class file
+// Implementation of methods is not available
+
+package testData.libraries
+
+public inline fun <T> T.<3>filter(predicate: (T) -> kotlin.Boolean): T? { /* compiled code */ }
+ Integer.class
+public final class <1>Integer extends Number implements Comparable<Integer> {
