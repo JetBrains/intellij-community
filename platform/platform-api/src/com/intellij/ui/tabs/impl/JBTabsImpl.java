@@ -2088,7 +2088,7 @@ public class JBTabsImpl extends JComponent
       Dimension base = super.getPreferredSize();
       TabLabel label = tabs.myInfo2Label.get(info);
       if (tabs.myHorizontalSide && tabs.mySideComponentOnTabs && label != null && base.height > 0) {
-        return new Dimension(base.width, label.getPreferredSize().height - tabs.getBorderThickness());
+        return new Dimension(base.width, label.getPreferredSize().height);
       }
       return base;
     }
@@ -2516,8 +2516,6 @@ public class JBTabsImpl extends JComponent
         max.myLabel.width = Math.min(max.myLabel.width, mySplitter.getSideTabsLimit());
       }
     }
-
-    max.myToolbar.height++;
 
     return max;
   }
