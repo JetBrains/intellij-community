@@ -868,6 +868,7 @@
 
     <library.type implementation="com.intellij.jarRepository.RepositoryLibraryType"/>
     <library.type implementation="com.intellij.externalSystem.ImportedLibraryType"/>
+    <postStartupActivity implementation="com.intellij.codeInsight.daemon.impl.IdeaLibDependencyNotifier" />
     <postStartupActivity implementation="com.intellij.jarRepository.RepositoryLibrarySynchronizer"/>
     <projectConfigurable groupId="build" groupWeight="120" instance="com.intellij.jarRepository.settings.RemoteRepositoriesConfigurable"
                          order="last"/>
@@ -2368,6 +2369,7 @@
     <notificationGroup id="Setup SDK" displayType="BALLOON" bundle="messages.JavaBundle" key="notification.group.setup.sdk"/>
     <notificationGroup id="External annotations" displayType="BALLOON" bundle="messages.JavaBundle" key="notification.group.setup.external.annotations"/>
     <notificationGroup id="Test integration" displayType="BALLOON" bundle="messages.JavaBundle" key="notification.group.testintegration"/>
+    <notificationGroup id="Legacy Library" displayType="TOOL_WINDOW" bundle="messages.JavaBundle" key="notification.group.legacy.library" />
 
     <compiler.task execute="BEFORE" implementation="com.intellij.jarRepository.CompilationDependenciesResolutionTask"/>
     <compiler.task execute="AFTER" implementation="com.intellij.execution.scratch.JavaScratchCompilationSupport"/>
