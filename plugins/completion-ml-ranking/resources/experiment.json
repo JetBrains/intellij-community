@@ -121,7 +121,7 @@
     },
     {
       "id": "C#",
-      "experimentBucketsCount": 8,
+      "experimentBucketsCount": 16,
       "includeGroups": [ 7, 8, 12],
       "shouldLogElementFeatures": false
     },
