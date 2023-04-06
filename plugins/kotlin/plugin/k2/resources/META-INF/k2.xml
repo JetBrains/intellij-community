@@ -121,7 +121,6 @@
 
 
   <extensions defaultExtensionNs="com.intellij">
-    <cachesInvalidator implementation="org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProviderInvalidator"/>
     <library.type implementation="org.jetbrains.kotlin.idea.base.platforms.library.JSLibraryType"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.resolve.jvm.modules.JavaModuleResolver"
