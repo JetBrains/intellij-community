@@ -773,7 +773,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
       });
       myTextFilterModel.addSetFilterListener(() -> {
         String modelText = myTextFilterModel.getText();
-        if (!Objects.equals(getText(), modelText)) setText(modelText);
+        if (!isSameFilterAs(modelText)) setText(modelText);
       });
 
       getTextEditor().setToolTipText(createTooltipText());
@@ -798,7 +798,13 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
     @Override
     protected void onFocusLost() {
-      if (!Objects.equals(getText(), myTextFilterModel.getText())) applyFilter(isFilterOnTheFlyEnabled());
+      if (!isSameFilterAs(myTextFilterModel.getText())) applyFilter(isFilterOnTheFlyEnabled());
+    }
+
+    private boolean isSameFilterAs(@NotNull String otherText) {
+      String thisText = getText();
+      if (StringUtil.isEmptyOrSpaces(thisText)) return StringUtil.isEmptyOrSpaces(otherText);
+      return Objects.equals(thisText, otherText);
     }
 
     @Override
