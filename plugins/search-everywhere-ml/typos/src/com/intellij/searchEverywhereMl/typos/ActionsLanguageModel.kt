@@ -18,7 +18,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.spellchecker.dictionary.Dictionary
 import com.intellij.spellchecker.dictionary.RuntimeDictionaryProvider
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 
 @Service(Service.Level.APP)
 internal class ActionsLanguageModel(coroutineScope: CoroutineScope,
@@ -37,7 +37,7 @@ internal class ActionsLanguageModel(coroutineScope: CoroutineScope,
     }
   }
 
-  private val languageModelComputation = coroutineScope.async {
+  private val languageModelComputation = coroutineScope.launch {
     val project = IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project ?: ProjectManager.getInstance().defaultProject
 
     withBackgroundProgress(project, TyposBundle.getMessage("progress.title.computing.language.model"), true) {
