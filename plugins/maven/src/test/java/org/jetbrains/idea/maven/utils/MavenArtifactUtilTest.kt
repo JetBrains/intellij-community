@@ -19,11 +19,11 @@ class MavenArtifactUtilTest : MavenTestCase() {
   }
 
   @Test
-  fun `test get artifact path with illegal &lt char in version`() {
+  fun `test get artifact path with illegal &rt char in version`() {
     val groupId = "groupId"
     val artifactId = "artifactId"
     val version = "3.1.0"
-    val incorrectVersion = "<$version"
+    val incorrectVersion = ">$version"
     val path = MavenArtifactUtil.getArtifactNioPath(myDir, groupId, artifactId, incorrectVersion, "pom").toString()
     TestCase.assertTrue(path.contains(groupId))
     TestCase.assertTrue(path.contains(artifactId))
