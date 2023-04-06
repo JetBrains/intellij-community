@@ -136,10 +136,7 @@ class KotlinCompletionContributor : CompletionContributor() {
             return
         }
         
-        StringTemplateCompletion.checkQualifiedThisInStringTemplateCompletion(parameters)?.let { parameters ->
-            doComplete(parameters, result, ::wrapLookupElementForStringTemplateQualifiedThis)
-            return
-        }
+       
 
         DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
             doComplete(parameters, result)
