@@ -80,6 +80,8 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
 
       "intellij.bigdatatools.visualisation" -> IntellijIconClassGeneratorModuleConfig(className = "BigdatatoolsVisualisationIcons",
                                                                                       packageName = "com.intellij.bigdatatools.visualization")
+      "intellij.bigdatatools.emr" -> IntellijIconClassGeneratorModuleConfig(className = "BigdatatoolsEmrIcons",
+                                                                                      packageName = "com.intellij.bigdatatools.emr")
       "intellij.bigdatatools.zeppelin" -> IntellijIconClassGeneratorModuleConfig(className = "BigdatatoolsZeppelinIcons",
                                                                                  packageName = "com.intellij.bigdatatools.zeppelin")
       "intellij.bigdatatools.tencent.cos" -> IntellijIconClassGeneratorModuleConfig(className = "BigdatatoolsTencentCosIcons",
