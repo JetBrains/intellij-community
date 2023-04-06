@@ -6,12 +6,10 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
-import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.statistics.KotlinLanguageFeaturesFUSCollector.Companion.kotlinLanguageVersionField
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -20,9 +18,8 @@ class KotlinLanguageFeaturesFUSCollector : CounterUsagesCollector() {
 
     companion object {
         // Collector ID
-        private val GROUP = EventLogGroup("kotlin.ide.inspections", 1)
+        private val GROUP = EventLogGroup("kotlin.ide.inspections", 2)
 
-        val pluginInfo = EventFields.PluginInfo.with(getPluginInfoById(KotlinIdePlugin.id))
         val inspectionTypeField = EventFields.Enum<KotlinLanguageFeatureInspectionType>("inspection_type") { it.name.lowercase() }
         val kotlinLanguageVersionField = EventFields.StringValidatedByRegexp("kotlin_language_version", "version_lang_api")
 
@@ -31,14 +28,12 @@ class KotlinLanguageFeaturesFUSCollector : CounterUsagesCollector() {
 
         private val applyQuickFixEvent = GROUP.registerVarargEvent(
             "apply.quick_fix",
-            EventFields.PluginInfo,
             EventFields.AnonymizedPath,
             inspectionTypeField
         )
 
         private val inspectionUpdatedEvent = GROUP.registerVarargEvent(
             "update.inspection",
-            EventFields.PluginInfo,
             EventFields.AnonymizedPath,
             hasDeprecatedFeatureField,
             hasNewFeatureField,
@@ -164,7 +159,6 @@ class LanguageFeatureDeprecationCollector<T : InspectionData>(
             EventFields.AnonymizedPath.with(file.virtualFilePath),
             kotlinLanguageVersionField.with(languageVersion.versionString),
             KotlinLanguageFeaturesFUSCollector.inspectionTypeField.with(inspectionType),
-            KotlinLanguageFeaturesFUSCollector.pluginInfo,
             *data.toEventPairs().toTypedArray()
         )
     }
@@ -173,8 +167,7 @@ class LanguageFeatureDeprecationCollector<T : InspectionData>(
         if (file !is KtFile || file.virtualFile == null) return
         inspectionAppliedEvent.log(
             EventFields.AnonymizedPath.with(file.virtualFilePath),
-            KotlinLanguageFeaturesFUSCollector.inspectionTypeField.with(inspectionType),
-            KotlinLanguageFeaturesFUSCollector.pluginInfo
+            KotlinLanguageFeaturesFUSCollector.inspectionTypeField.with(inspectionType)
         )
     }
 }
