@@ -8,11 +8,11 @@ import org.junit.Test
 class GradleQuickFixTest : AbstractGradleMultiFileQuickFixTest() {
     @Test
     @PluginTargetVersions(pluginVersion = "1.5.31+")
-    fun testCreateActualForJs() = doMultiFileQuickFixTest()
+    fun testCreateActualForJsAndJvm() = doMultiFileQuickFixTest()
 
     @Test
     @PluginTargetVersions(pluginVersion = "1.5.31+")
-    fun testCreateActualForJsTest() = doMultiFileQuickFixTest()
+    fun testCreateActualForJsAndJvmTest() = doMultiFileQuickFixTest()
 
     @Test
     @PluginTargetVersions(pluginVersion = "1.5.31+")
