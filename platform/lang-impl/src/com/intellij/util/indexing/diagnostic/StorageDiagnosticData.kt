@@ -289,6 +289,11 @@ object StorageDiagnosticData {
     val directBufferAllocatorDisposed = otelMeter.counterBuilder("DirectByteBufferAllocator.disposed").buildObserver()
     val directBufferAllocatorTotalSizeCached = otelMeter.gaugeBuilder("DirectByteBufferAllocator.totalSizeOfBuffersCachedInBytes")
       .ofLongs()
+      .setUnit("bytes")
+      .buildObserver()
+    val directBufferAllocatorTotalSizeAllocated = otelMeter.gaugeBuilder("DirectByteBufferAllocator.totalSizeOfBuffersAllocatedInBytes")
+      .ofLongs()
+      .setUnit("bytes")
       .buildObserver()
 
     otelMeter.batchCallback(
@@ -318,7 +323,9 @@ object StorageDiagnosticData {
           directBufferAllocatorMisses.record(bufferAllocatorStats.misses.toLong())
           directBufferAllocatorReclaimed.record(bufferAllocatorStats.reclaimed.toLong())
           directBufferAllocatorDisposed.record(bufferAllocatorStats.disposed.toLong())
-          directBufferAllocatorTotalSizeCached.record(bufferAllocatorStats.totalSizeOfBuffersCachedInBytes.toLong())
+
+          directBufferAllocatorTotalSizeCached.record(bufferAllocatorStats.totalSizeOfBuffersCachedInBytes)
+          directBufferAllocatorTotalSizeAllocated.record(bufferAllocatorStats.totalSizeOfBuffersAllocatedInBytes)
         }
         catch (_: AlreadyDisposedException) {
 
@@ -331,7 +338,7 @@ object StorageDiagnosticData {
 
       directBufferAllocatorHits, directBufferAllocatorMisses,
       directBufferAllocatorReclaimed, directBufferAllocatorDisposed,
-      directBufferAllocatorTotalSizeCached
+      directBufferAllocatorTotalSizeAllocated, directBufferAllocatorTotalSizeCached
     )
   }
 }
