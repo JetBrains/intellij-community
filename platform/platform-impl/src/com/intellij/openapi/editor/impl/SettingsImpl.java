@@ -23,6 +23,7 @@ import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.codeStyle.CodeStyleConstraints;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.PatternUtil;
@@ -156,9 +157,13 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public boolean isRightMarginShown() {
-    return myIsRightMarginShown != null
-           ? myIsRightMarginShown.booleanValue()
-           : EditorSettingsExternalizable.getInstance().isRightMarginShown();
+    if (myIsRightMarginShown != null) {
+      return myIsRightMarginShown.booleanValue();
+    }
+    if (myEditor != null && getRightMargin(myEditor.getProject()) == CodeStyleConstraints.MAX_RIGHT_MARGIN) {
+      return false;
+    }
+    return EditorSettingsExternalizable.getInstance().isRightMarginShown();
   }
 
   @Override
@@ -824,8 +829,8 @@ public class SettingsImpl implements EditorSettings {
 
   private abstract class CacheableBackgroundComputable<T> {
 
-    private @Nullable       T myOverwrittenValue;
-    private @Nullable       T myCachedValue;
+    private @Nullable T myOverwrittenValue;
+    private @Nullable T myCachedValue;
 
 
     private final AtomicReference<NonBlockingReadAction<T>> myCurrentReadActionRef = new AtomicReference<>();
