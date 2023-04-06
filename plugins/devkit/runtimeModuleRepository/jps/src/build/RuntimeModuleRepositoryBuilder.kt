@@ -61,7 +61,7 @@ internal class RuntimeModuleRepositoryBuilder
     }
     LOG.info("${descriptors.size} descriptors are created in ${timeToCreateDescriptors}ms")
     
-    validateDescriptors(descriptors, context) 
+    RuntimeModuleRepositoryValidator.validate(descriptors) { context.reportError(it) } 
     
     val outputUrl = JpsJavaExtensionService.getInstance().getProjectExtension(project)?.outputUrl
     if (outputUrl.isNullOrEmpty()) {
