@@ -14,10 +14,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
+import com.intellij.util.progress.CancellationUtil;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,9 +35,11 @@ import org.jetbrains.plugins.textmate.language.syntax.lexer.SyntaxMatchUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
@@ -47,6 +49,7 @@ import static org.jetbrains.plugins.textmate.bundles.BundleReaderKt.readTextMate
 import static org.jetbrains.plugins.textmate.bundles.VSCBundleReaderKt.readVSCBundle;
 
 public final class TextMateServiceImpl extends TextMateService {
+
   public static Path getBundledBundlePath() {
     return PluginPathManager.getPluginHome("textmate").toPath().resolve("lib/bundles").normalize();
   }
@@ -63,8 +66,10 @@ public final class TextMateServiceImpl extends TextMateService {
   private final PreferencesRegistryImpl myPreferencesRegistry = new PreferencesRegistryImpl();
   private final ShellVariablesRegistryImpl myShellVariablesRegistry = new ShellVariablesRegistryImpl();
   private final Interner<CharSequence> myInterner = Interner.createWeakInterner();
+  private final CoroutineScope myScope;
 
-  public TextMateServiceImpl() {
+  public TextMateServiceImpl(CoroutineScope scope) {
+    myScope = scope;
     Application application = ApplicationManager.getApplication();
     Runnable checkCancelled = application != null && !application.isUnitTestMode() ? ProgressManager::checkCanceled : null;
     SyntaxMatchUtils.setCheckCancelledCallback(checkCancelled);
@@ -85,43 +90,43 @@ public final class TextMateServiceImpl extends TextMateService {
       if (settings == null) {
         return;
       }
-      Map<TextMateFileNameMatcher, CharSequence> newExtensionsMapping = new HashMap<>();
+      Map<TextMateFileNameMatcher, CharSequence> newExtensionsMapping = new ConcurrentHashMap<>();
 
       if (!ourBuiltinBundlesDisabled) {
         TextMateBuiltinBundlesSettings builtinBundlesSettings = TextMateBuiltinBundlesSettings.getInstance();
         if (builtinBundlesSettings != null) {
           Set<String> turnedOffBundleNames = builtinBundlesSettings.getTurnedOffBundleNames();
-          for (Path bundlePath : discoverBuiltinBundles(builtinBundlesSettings)) {
-            if (!turnedOffBundleNames.contains(bundlePath.getFileName().toString())) {
-              VirtualFile bundleFile = LocalFileSystem.getInstance().findFileByNioFile(bundlePath);
-              if (!registerBundle(bundleFile, newExtensionsMapping)) {
-                LOG.error("Cannot load builtin textmate bundle", bundlePath.toString());
-              }
-            }
-          }
+          List<Path> builtInBundles = discoverBuiltinBundles(builtinBundlesSettings);
+          List<Path> bundlesToEnable = turnedOffBundleNames.isEmpty()
+                                       ? builtInBundles
+                                       : ContainerUtil.filter(builtInBundles, bundlePath -> !turnedOffBundleNames.contains(bundlePath.getFileName().toString()));
+          TextMateBundlesLoader.registerBundlesInParallel(myScope,
+                                                          bundlesToEnable,
+                                                          bundlePath -> registerBundle(bundlePath, newExtensionsMapping));
         }
       }
 
       Map<String, TextMatePersistentBundle> userBundles = settings.getBundles();
-      userBundles.forEach((path, bundle) -> {
-        if (bundle.getEnabled()) {
-          VirtualFile bundleFile = LocalFileSystem.getInstance().findFileByPath(path);
-          boolean result = registerBundle(bundleFile, newExtensionsMapping);
-          if (!result) {
-            String bundleName = PathUtil.getFileName(path);
-            String errorMessage = bundleFile != null ? TextMateBundle.message("textmate.cant.register.bundle", bundleName)
-                                                     : TextMateBundle.message("textmate.cant.find.bundle", bundleName);
-            new Notification("TextMate Bundles", TextMateBundle.message("textmate.bundle.load.error", bundleName), errorMessage,
-                             NotificationType.ERROR)
-              .addAction(NotificationAction
-                           .createSimpleExpiring(TextMateBundle.message("textmate.disable.bundle.notification.action", bundleName),
-                                                 () -> {
-                                                   settings.disableBundle(path);
-                                                 }))
-              .notify(null);
+      if (!userBundles.isEmpty()) {
+        List<@NotNull Path> paths = ContainerUtil.mapNotNull(userBundles.entrySet(), entry -> {
+          if (!entry.getValue().getEnabled()) return null;
+          try {
+            return Path.of(entry.getKey());
           }
-        }
-      });
+          catch (InvalidPathException e) {
+            return null;
+          }
+        });
+        TextMateBundlesLoader.registerBundlesInParallel(myScope, paths, bundlePath -> {
+          return registerBundle(bundlePath, newExtensionsMapping);
+        }, path -> {
+          String bundleName = path.getFileName().toString();
+          String errorMessage = TextMateBundle.message("textmate.cant.register.bundle", bundleName);
+          new Notification("TextMate Bundles", TextMateBundle.message("textmate.bundle.load.error", bundleName), errorMessage, NotificationType.ERROR)
+            .addAction(NotificationAction.createSimpleExpiring(TextMateBundle.message("textmate.disable.bundle.notification.action", bundleName), () -> settings.disableBundle(path.toString())))
+            .notify(null);
+        });
+      }
 
       if (fireEvents && !oldExtensionsMapping.equals(newExtensionsMapping)) {
         fireFileTypesChangedEvent("old mappings = " + oldExtensionsMapping + ", new mappings" + newExtensionsMapping, () -> {
@@ -237,16 +242,15 @@ public final class TextMateServiceImpl extends TextMateService {
   }
 
   @Override
-  public @Nullable TextMateBundleReader readBundle(@Nullable VirtualFile directory) {
+  public @Nullable TextMateBundleReader readBundle(@Nullable Path directory) {
     if (directory != null) {
-      Path path = directory.toNioPath();
-      BundleType bundleType = BundleType.detectBundleType(path);
+      BundleType bundleType = BundleType.detectBundleType(directory);
       return switch (bundleType) {
-        case TEXTMATE -> readTextMateBundle(path);
-        case SUBLIME -> readSublimeBundle(path);
+        case TEXTMATE -> readTextMateBundle(directory);
+        case SUBLIME -> readSublimeBundle(directory);
         case VSCODE -> readVSCBundle(relativePath -> {
           try {
-            return Files.newInputStream(path.resolve(relativePath));
+            return Files.newInputStream(directory.resolve(relativePath));
           }
           catch (NoSuchFileException e) {
             return null;
@@ -276,7 +280,7 @@ public final class TextMateServiceImpl extends TextMateService {
     }
   }
 
-  private boolean registerBundle(@Nullable VirtualFile directory, @NotNull Map<TextMateFileNameMatcher, CharSequence> extensionsMapping) {
+  private boolean registerBundle(@Nullable Path directory, @NotNull Map<TextMateFileNameMatcher, CharSequence> extensionsMapping) {
     TextMateBundleReader reader = readBundle(directory);
     if (reader != null) {
       registerLanguageSupport(reader, extensionsMapping);
