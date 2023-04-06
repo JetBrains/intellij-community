@@ -1,4 +1,4 @@
-// "Create actual class for module testModule_JS (JS)" "true"
+// "Add missing actual declarations" "true"
 
 expect sealed class <caret>Sealed() {
     object Obj : Sealed
