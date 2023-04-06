@@ -60,24 +60,23 @@ public final class ExistingTemplatesComponent {
   private boolean myDraftTemplateAutoselect = false;
 
   ExistingTemplatesComponent(Project project) {
-    final DefaultMutableTreeNode root = new DefaultMutableTreeNode(null);
+    final DefaultMutableTreeNode root = new DefaultMutableTreeNode();
+    myDraftTemplateNode = new DefaultMutableTreeNode(SSRBundle.message("draft.template.node")); // 'New Template' node
+    myRecentNode = new DefaultMutableTreeNode(SSRBundle.message("recent.category")); // 'Recent' node
+    myUserTemplatesNode = new DefaultMutableTreeNode(SSRBundle.message("user.defined.category")); // 'Saved templates' node
+
+    root.add(myDraftTemplateNode);
+    root.add(myRecentNode);
+    root.add(myUserTemplatesNode);
+
     patternTreeModel = new DefaultTreeModel(root);
     patternTree = createTree(patternTreeModel);
 
     final ConfigurationManager configurationManager = ConfigurationManager.getInstance(project);
-
-    // 'New Template' node
-    root.add(myDraftTemplateNode = new DraftTemplateNode());
-
-    // 'Recent' node
-    root.add(myRecentNode = new DefaultMutableTreeNode(SSRBundle.message("recent.category")));
-    for (final Configuration config : configurationManager.getHistoryConfigurations()) {
+    for (Configuration config : configurationManager.getHistoryConfigurations()) {
       myRecentNode.add(new DefaultMutableTreeNode(config));
     }
     patternTree.expandPath(new TreePath(new Object[]{patternTreeModel.getRoot(), myRecentNode}));
-
-    // 'Saved templates' node
-    root.add(myUserTemplatesNode = new DefaultMutableTreeNode(SSRBundle.message("user.defined.category")));
     reloadUserTemplates(configurationManager);
 
     // Predefined templates
@@ -316,7 +315,7 @@ public final class ExistingTemplatesComponent {
     return (DefaultMutableTreeNode)selection;
   }
 
-  private static Tree createTree(TreeModel treeModel) {
+  private Tree createTree(TreeModel treeModel) {
     final Tree tree = new Tree(treeModel);
 
     tree.setRootVisible(false);
@@ -349,12 +348,12 @@ public final class ExistingTemplatesComponent {
       false,
       treePath -> {
         final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)treePath.getLastPathComponent();
-        if (treeNode instanceof DraftTemplateNode) return SSRBundle.message("draft.template.node");
+        if (treeNode == myDraftTemplateNode) return SSRBundle.message("draft.template.node");
         final Object userObject = treeNode.getUserObject();
         return (userObject instanceof Configuration) ? ((Configuration)userObject).getName() : userObject.toString();
       }
     );
-    tree.setCellRenderer(new ExistingTemplatesTreeCellRenderer(speedSearch));
+    tree.setCellRenderer(new ExistingTemplatesTreeCellRenderer(speedSearch, myDraftTemplateNode));
 
     return tree;
   }
@@ -363,14 +362,14 @@ public final class ExistingTemplatesComponent {
     return panel;
   }
 
-  private static class DraftTemplateNode extends DefaultMutableTreeNode {}
-
   private static class ExistingTemplatesTreeCellRenderer extends ColoredTreeCellRenderer {
 
     private final TreeSpeedSearch mySpeedSearch;
+    private final TreeNode myDraftNode;
 
-    ExistingTemplatesTreeCellRenderer(TreeSpeedSearch speedSearch) {
+    ExistingTemplatesTreeCellRenderer(@NotNull TreeSpeedSearch speedSearch, @NotNull TreeNode draftNode) {
       mySpeedSearch = speedSearch;
+      myDraftNode = draftNode;
     }
 
     @Override
@@ -383,14 +382,14 @@ public final class ExistingTemplatesComponent {
                                       boolean hasFocus) {
       final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;
       final Object userObject = treeNode.getUserObject();
-      if (userObject == null && !(treeNode instanceof DraftTemplateNode)) return;
+      if (userObject == null && treeNode != myDraftNode) return;
 
       final Color background = UIUtil.getTreeBackground(selected, hasFocus);
       final Color foreground = UIUtil.getTreeForeground(selected, hasFocus);
 
       final String text;
       final int style;
-      if (treeNode instanceof DraftTemplateNode) {
+      if (treeNode == myDraftNode) {
         text = SSRBundle.message("draft.template.node");
         style = SimpleTextAttributes.STYLE_BOLD;
       }
