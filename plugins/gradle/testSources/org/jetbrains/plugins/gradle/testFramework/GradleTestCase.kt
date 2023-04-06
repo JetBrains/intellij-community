@@ -39,21 +39,10 @@ import kotlin.io.path.name
 
 abstract class GradleTestCase : GradleBaseTestCase() {
 
-  suspend fun <R> awaitProjectReload(wait: Boolean = true, action: suspend () -> R): R {
-    if (!wait) {
-      return action()
-    }
-    return gradleReload.withAllowedReload {
-      org.jetbrains.plugins.gradle.util.awaitProjectReload {
-        action()
-      }
-    }
-  }
-
   suspend fun openProject(relativePath: String, wait: Boolean = true): Project {
     val projectRoot = testRoot.getDirectory(relativePath)
     return closeOpenedProjectsIfFailAsync {
-      awaitProjectReload(wait = wait) {
+      awaitAnyGradleProjectReload(wait = wait) {
         openProjectAsync(projectRoot, UnlinkedProjectStartupActivity())
       }
     }
@@ -61,7 +50,7 @@ abstract class GradleTestCase : GradleBaseTestCase() {
 
   suspend fun linkProject(project: Project, relativePath: String) {
     val projectRoot = testRoot.getDirectory(relativePath)
-    awaitProjectReload {
+    awaitAnyGradleProjectReload {
       linkAndRefreshGradleProject(projectRoot.path, project)
     }
   }
@@ -71,7 +60,7 @@ abstract class GradleTestCase : GradleBaseTestCase() {
     relativePath: String,
     configure: ImportSpecBuilder.() -> Unit
   ) {
-    awaitProjectReload {
+    awaitAnyGradleProjectReload {
       ExternalSystemUtil.refreshProject(
         testRoot.getDirectory(relativePath).path,
         ImportSpecBuilder(project, SYSTEM_ID)
@@ -112,17 +101,12 @@ abstract class GradleTestCase : GradleBaseTestCase() {
   }
 
   open fun assertProjectState(project: Project, vararg projectsInfo: ProjectInfo) {
-    assertReloadState()
     assertNotificationIsVisible(project, false)
     assertProjectStructure(project, *projectsInfo)
     for (projectInfo in projectsInfo) {
       assertDefaultProjectSettings(project, projectInfo)
       assertBuildFiles(projectInfo)
     }
-  }
-
-  fun assertReloadState() {
-    gradleReload.assertReloadState()
   }
 
   fun assertProjectStructure(project: Project, vararg projectsInfo: ProjectInfo) {

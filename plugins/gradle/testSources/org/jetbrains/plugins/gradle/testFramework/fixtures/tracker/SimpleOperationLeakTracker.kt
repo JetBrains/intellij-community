@@ -6,32 +6,34 @@ import com.intellij.openapi.observable.operation.core.ObservableOperationTrace
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.IdeaTestFixture
-import org.jetbrains.plugins.gradle.util.getGradleReloadOperation
 
-class ESReloadLeakTracker : IdeaTestFixture {
+
+class SimpleOperationLeakTracker(
+  private val getOperation: (Disposable) -> ObservableOperationTrace
+) : IdeaTestFixture {
 
   private lateinit var testDisposable: Disposable
 
-  private lateinit var operationTracker: ESOperationLeakTracker
+  private lateinit var operationTracker: OperationLeakTracker
 
-  private lateinit var reloadOperation: ObservableOperationTrace
+  private lateinit var operation: ObservableOperationTrace
 
   override fun setUp() {
     testDisposable = Disposer.newDisposable()
 
-    reloadOperation = getGradleReloadOperation(testDisposable)
+    operation = getOperation(testDisposable)
 
-    operationTracker = ESOperationLeakTracker()
+    operationTracker = OperationLeakTracker()
     operationTracker.setUp()
-    operationTracker.installOperationWatcher(reloadOperation, testDisposable)
+    operationTracker.installOperationWatcher(operation, testDisposable)
   }
 
-  suspend fun <R> withAllowedReload(numReloads: Int = 1, action: suspend () -> R): R {
-    return operationTracker.withAllowedOperation(reloadOperation, numReloads, action)
+  fun <R> withAllowedOperation(numTasks: Int, action: () -> R): R {
+    return operationTracker.withAllowedOperation(operation, numTasks, action)
   }
 
-  fun assertReloadState() {
-    operationTracker.assertOperationAllOperationsState()
+  suspend fun <R> withAllowedOperationAsync(numTasks: Int, action: suspend () -> R): R {
+    return operationTracker.withAllowedOperationAsync(operation, numTasks, action)
   }
 
   override fun tearDown() {

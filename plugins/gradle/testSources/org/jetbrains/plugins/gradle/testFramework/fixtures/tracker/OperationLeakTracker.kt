@@ -8,13 +8,14 @@ import com.intellij.openapi.observable.operation.core.whenOperationScheduled
 import com.intellij.openapi.observable.operation.core.whenOperationStarted
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.IdeaTestFixture
+import org.jetbrains.plugins.gradle.testFramework.util.dumpThreads
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
-class ESOperationLeakTracker : IdeaTestFixture {
+class OperationLeakTracker : IdeaTestFixture {
 
   private lateinit var allowedOperations: ConcurrentHashMap<ObservableOperationTrace, OperationState>
 
@@ -23,7 +24,7 @@ class ESOperationLeakTracker : IdeaTestFixture {
   }
 
   override fun tearDown() {
-    assertOperationAllOperationsState()
+    assertOperationAllOperationStates()
   }
 
   @BeforeEach
@@ -35,22 +36,40 @@ class ESOperationLeakTracker : IdeaTestFixture {
     operation.whenOperationScheduled(parentDisposable) {
       val state = getState(operation)
       Assertions.assertTrue(state.isAllowed.get()) {
-        "Unexpected operation $operation"
+        "Unexpected operation $operation\n" +
+        dumpThreads(operation.name) + "\n"
       }
     }
     operation.whenOperationStarted(parentDisposable) {
       val state = getState(operation)
       state.actualCounter.incrementAndGet()
       Assertions.assertTrue(state.isAllowed.get()) {
-        "Unexpected operation $operation"
+        "Unexpected operation $operation\n" +
+        dumpThreads(operation.name) + "\n"
       }
     }
   }
 
-  suspend fun <R> withAllowedOperation(
+  fun <R> withAllowedOperation(
+    operation: ObservableOperationTrace,
+    numTasks: Int,
+    action: () -> R
+  ): R {
+    return withAllowedOperationImpl(operation, numTasks) { action() }
+  }
+
+  suspend fun <R> withAllowedOperationAsync(
     operation: ObservableOperationTrace,
     numTasks: Int,
     action: suspend () -> R
+  ): R {
+    return withAllowedOperationImpl(operation, numTasks) { action() }
+  }
+
+  private inline fun <R> withAllowedOperationImpl(
+    operation: ObservableOperationTrace,
+    numTasks: Int,
+    action: () -> R
   ): R {
     val state = allowedOperations.computeIfAbsent(operation) { OperationState() }
 
@@ -67,7 +86,7 @@ class ESOperationLeakTracker : IdeaTestFixture {
     return result
   }
 
-  fun assertOperationAllOperationsState() {
+  private fun assertOperationAllOperationStates() {
     runAll(allowedOperations.entries) { (operation, state) ->
       assertOperationState(operation, state)
     }
@@ -79,10 +98,12 @@ class ESOperationLeakTracker : IdeaTestFixture {
 
   private fun assertOperationState(operation: ObservableOperationTrace, state: OperationState) {
     Assertions.assertFalse(state.isAllowed.get()) {
-      "Operation should be completed before assertion $operation"
+      "Operation should be completed before assertion $operation\n" +
+      dumpThreads(operation.name) + "\n"
     }
     Assertions.assertTrue(operation.isOperationCompleted()) {
-      "Operation should be completed before assertion $operation"
+      "Operation should be completed before assertion $operation\n" +
+      dumpThreads(operation.name) + "\n"
     }
     Assertions.assertEquals(state.expectedCounter.get(), state.actualCounter.get()) {
       "Operation counter assertion $operation"

@@ -15,7 +15,8 @@ import com.intellij.testFramework.utils.vfs.createDirectory
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
 import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.ESListenerLeakTracker
-import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.ESReloadLeakTracker
+import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.SimpleOperationLeakTracker
+import org.jetbrains.plugins.gradle.util.getGradleProjectReloadOperation
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
@@ -24,7 +25,7 @@ import org.junit.jupiter.api.TestInfo
 abstract class GradleBaseTestCase {
 
   private lateinit var listenerLeakTracker: ESListenerLeakTracker
-  private lateinit var reloadLeakTracker: ESReloadLeakTracker
+  private lateinit var reloadLeakTracker: SimpleOperationLeakTracker
 
   lateinit var testDisposable: Disposable
 
@@ -39,15 +40,12 @@ abstract class GradleBaseTestCase {
   val gradleVersion: GradleVersion
     get() = GradleVersion.current()
 
-  val gradleReload: ESReloadLeakTracker
-    get() = reloadLeakTracker
-
   @BeforeEach
   fun setUpGradleBaseTestCase(testInfo: TestInfo) {
     listenerLeakTracker = ESListenerLeakTracker()
     listenerLeakTracker.setUp()
 
-    reloadLeakTracker = ESReloadLeakTracker()
+    reloadLeakTracker = SimpleOperationLeakTracker { getGradleProjectReloadOperation(it) }
     reloadLeakTracker.setUp()
 
     testDisposable = Disposer.newDisposable()
@@ -75,5 +73,16 @@ abstract class GradleBaseTestCase {
       { reloadLeakTracker.tearDown() },
       { listenerLeakTracker.tearDown() }
     )
+  }
+
+  suspend fun <R> awaitAnyGradleProjectReload(wait: Boolean = true, action: suspend () -> R): R {
+    if (!wait) {
+      return action()
+    }
+    return reloadLeakTracker.withAllowedOperationAsync(1) {
+      org.jetbrains.plugins.gradle.testFramework.util.awaitAnyGradleProjectReload {
+        action()
+      }
+    }
   }
 }

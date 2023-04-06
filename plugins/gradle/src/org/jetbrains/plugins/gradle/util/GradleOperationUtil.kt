@@ -23,26 +23,40 @@ import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
 
 
-fun getGradleReloadOperation(externalProjectPath: String, parentDisposable: Disposable): ObservableOperationTrace {
-  return getGradleReloadOperation(parentDisposable) { it == externalProjectPath }
+private val ID_KEY = OperationExecutionContext.createKey<ExternalSystemTaskId>("ID")
+private val PATH_KEY = OperationExecutionContext.createKey<String?>("PATH")
+
+fun getGradleProjectReloadOperation(externalProjectPath: String, parentDisposable: Disposable): ObservableOperationTrace {
+  return getGradleProjectReloadOperation(parentDisposable) { _, path -> path == externalProjectPath }
 }
 
-fun getGradleReloadOperation(parentDisposable: Disposable): ObservableOperationTrace {
-  return getGradleReloadOperation(parentDisposable) { true }
+fun getGradleProjectReloadOperation(project: Project, parentDisposable: Disposable): ObservableOperationTrace {
+  return getGradleProjectReloadOperation(parentDisposable) { id, _ -> id.findProject() == project }
 }
 
-fun getGradleExecutionOperation(parentDisposable: Disposable): ObservableOperationTrace {
-  return getGradleExecutionOperation(parentDisposable) { true }
+fun getGradleProjectReloadOperation(parentDisposable: Disposable): ObservableOperationTrace {
+  return getGradleProjectReloadOperation(parentDisposable) { _, _ -> true }
 }
 
-private fun getGradleReloadOperation(parentDisposable: Disposable, isRelevant: (String?) -> Boolean): ObservableOperationTrace {
-  val operation = AtomicOperationTrace(name = "Gradle Reload")
+fun getGradleTaskExecutionOperation(project: Project, parentDisposable: Disposable): ObservableOperationTrace {
+  return getGradleTaskExecutionOperation(parentDisposable) { id, _ -> id.findProject() == project }
+}
+
+fun getGradleTaskExecutionOperation(parentDisposable: Disposable): ObservableOperationTrace {
+  return getGradleTaskExecutionOperation(parentDisposable) { _, _ -> true }
+}
+
+fun getGradleProjectReloadOperation(
+  parentDisposable: Disposable,
+  isRelevant: (ExternalSystemTaskId, String?) -> Boolean
+): ObservableOperationTrace {
+  val operation = AtomicOperationTrace("Gradle Reload")
   val executionIds = HashMap<ExternalSystemTaskId, OperationExecutionId>()
   whenExternalSystemTaskStarted(parentDisposable) { id, path ->
-    if (isResolveTask(id) && isRelevant(path)) {
+    if (isResolveTask(id) && isRelevant(id, path)) {
       val executionId = OperationExecutionId.createId {
-        putData(OperationExecutionContext.createKey("ID"), id)
-        putData(OperationExecutionContext.createKey("PATH"), path)
+        putData(ID_KEY, id)
+        putData(PATH_KEY, path)
       }
       executionIds[id] = executionId
       operation.traceStart(executionId)
@@ -62,7 +76,7 @@ private fun getGradleReloadOperation(parentDisposable: Disposable, isRelevant: (
       }
       val loadDisposable = Disposer.newDisposable(parentDisposable)
       whenProjectDataLoadFinished(project, loadDisposable) { path, loadStatus ->
-        if (isRelevant(path)) {
+        if (isRelevant(id, path)) {
           Disposer.dispose(loadDisposable)
           operation.traceFinish(executionId, loadStatus)
         }
@@ -72,14 +86,17 @@ private fun getGradleReloadOperation(parentDisposable: Disposable, isRelevant: (
   return operation
 }
 
-private fun getGradleExecutionOperation(parentDisposable: Disposable, isRelevant: (String?) -> Boolean): ObservableOperationTrace {
-  val operation = AtomicOperationTrace(name = "Gradle Execution")
+fun getGradleTaskExecutionOperation(
+  parentDisposable: Disposable,
+  isRelevant: (ExternalSystemTaskId, String?) -> Boolean
+): ObservableOperationTrace {
+  val operation = AtomicOperationTrace("Gradle Task Execution")
   val executionIds = HashMap<ExternalSystemTaskId, OperationExecutionId>()
   whenExternalSystemTaskStarted(parentDisposable) { id, path ->
-    if (isExecuteTask(id) && isRelevant(path)) {
+    if (isExecuteTask(id) && isRelevant(id, path)) {
       val executionId = OperationExecutionId.createId {
-        putData(OperationExecutionContext.createKey("ID"), id)
-        putData(OperationExecutionContext.createKey("PATH"), path)
+        putData(ID_KEY, id)
+        putData(PATH_KEY, path)
       }
       executionIds[id] = executionId
       operation.traceStart(executionId)

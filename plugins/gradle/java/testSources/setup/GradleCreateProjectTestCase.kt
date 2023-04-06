@@ -96,7 +96,7 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
   ): Project {
     val wizard = createAndConfigureWizard(group, null, configure)
     return closeOpenedProjectsIfFailAsync {
-      awaitProjectReload(wait = wait) {
+      awaitAnyGradleProjectReload(wait = wait) {
         blockingContext {
           invokeAndWaitIfNeeded {
             val project = NewProjectUtil.createFromWizard(wizard, null)!!
@@ -116,7 +116,7 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
   ): Module? {
     val wizard = createAndConfigureWizard(group, project, configure)
     return closeOpenedProjectsIfFailAsync {
-      awaitProjectReload(wait = wait) {
+      awaitAnyGradleProjectReload(wait = wait) {
         blockingContext {
           invokeAndWaitIfNeeded {
             val module = NewModuleAction().createModuleFromWizard(project, null, wizard)
