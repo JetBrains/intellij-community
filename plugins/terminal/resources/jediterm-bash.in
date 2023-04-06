@@ -90,3 +90,11 @@ function configureCommandHistory {
   fi
 }
 configureCommandHistory
+
+BASHIN=$(readlink -f "${BASH_SOURCE[0]}")
+HOOKSDIR=$(dirname "$BASHIN")
+
+if [ -r "${HOOKSDIR}/hooks.sh" ]
+then
+  source "${HOOKSDIR}/hooks.sh"
+fi
