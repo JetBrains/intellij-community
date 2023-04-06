@@ -39,6 +39,16 @@ class UnindexedFilesScannerTest {
     @ClassRule
     @JvmField
     val p: ProjectRule = ProjectRule(true, false, null)
+
+    @AfterClass
+    @JvmStatic
+    fun resetRegisteredIndexes() {
+      runInEdtAndWait {
+        val tumbler = FileBasedIndexTumbler("test")
+        tumbler.turnOff()
+        tumbler.turnOn()
+      }
+    }
   }
 
   @Rule
