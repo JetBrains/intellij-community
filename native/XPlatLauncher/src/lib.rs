@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 #![warn(
 absolute_paths_not_starting_with_crate,
 elided_lifetimes_in_paths,
@@ -30,53 +30,55 @@ unused_results,
 variant_size_differences
 )]
 
+use std::collections::HashMap;
+use std::env;
+use std::path::PathBuf;
+
+use anyhow::{bail, Result};
+use log::{debug, error, LevelFilter, warn};
+use native_dialog::{MessageDialog, MessageType};
+use serde::{Deserialize, Serialize};
+use simplelog::{Config, SimpleLogger};
+use utils::get_current_exe;
+
+#[cfg(target_os = "windows")] use {
+    windows::core::GUID,
+    windows::Win32::Foundation::HANDLE,
+    windows::Win32::UI::Shell::KF_FLAG_CREATE,
+    windows::Win32::UI::Shell::SHGetKnownFolderPath
+};
+
+use crate::default::DefaultLaunchConfiguration;
+use crate::remote_dev::RemoteDevLaunchConfiguration;
+
 mod java;
 mod remote_dev;
 mod default;
 mod docker;
 
-use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
-use std::env;
-use std::fs::File;
-use std::path::PathBuf;
-use log::{debug, error, LevelFilter, warn};
-use native_dialog::{MessageDialog, MessageType};
-use simplelog::{ColorChoice, CombinedLogger, Config, TerminalMode, TermLogger, WriteLogger};
-use crate::default::DefaultLaunchConfiguration;
-use anyhow::{bail, Result};
-use utils::get_current_exe;
-use crate::remote_dev::RemoteDevLaunchConfiguration;
-
-#[cfg(target_os = "windows")] use {
-    windows::core::GUID,
-    windows::Win32::Foundation::HANDLE,
-    windows::Win32::UI::Shell::SHGetKnownFolderPath,
-    windows::Win32::UI::Shell::KF_FLAG_CREATE
-};
-
 pub fn main_lib() {
-    let show_error_ui = match env::var(DO_NOT_SHOW_ERROR_UI_ENV_VAR) {
-        Ok(_) => false,
-        Err(_) => !is_remote_dev(),
-    };
-
-    let main_result = main_impl();
+    let remote_dev = is_remote_dev();
+    let show_error_ui = env::var(DO_NOT_SHOW_ERROR_UI_ENV_VAR).is_err() && !remote_dev;
+    let verbose = env::var(VERBOSE_LOGGING_ENV_VAR).is_ok() || remote_dev;
+    let main_result = main_impl(remote_dev, verbose);
     unwrap_with_human_readable_error(main_result, show_error_ui);
 }
 
-fn main_impl() -> Result<()> {
-    println!("Initializing logger");
+fn is_remote_dev() -> bool {
+    let exe_path = get_current_exe();
+    if let Some(exe_name_value) = exe_path.file_name() {
+        exe_name_value.to_string_lossy().starts_with("remote-dev-server")
+    } else if let Some(exe_name_value) = env::args_os().next() {
+        exe_name_value.to_string_lossy().starts_with("remote-dev-server")
+    } else {
+        false
+    }
+}
 
-    let term_logger = TermLogger::new(LevelFilter::Debug, Config::default(), TerminalMode::Mixed, ColorChoice::Auto);
-
-    // TODO: do not crash if failed to create a log file?
-    let file_logger = WriteLogger::new(LevelFilter::Debug, Config::default(), File::create("launcher.log")?);
-
-    // TODO: set agreed configuration (probably simple logger instead of pretty colors for terminal) or replace the lib with our own code
-    let loggers: Vec<Box<dyn simplelog::SharedLogger>> = vec![ term_logger, file_logger ];
-
-    CombinedLogger::init(loggers)?;
+fn main_impl(remote_dev: bool, verbose: bool) -> Result<()> {
+    let level = if verbose { LevelFilter::Debug } else { LevelFilter::Error };
+    SimpleLogger::init(level, Config::default()).expect("Cannot initialize the logger");
+    debug!("Mode: {}", if remote_dev { "remote-dev" } else { "standard" });
 
     // lets the panic on JVM thread crash the launcher (or not?)
     let orig_hook = std::panic::take_hook();
@@ -91,18 +93,17 @@ fn main_impl() -> Result<()> {
         std::process::exit(1);
     }));
 
-    debug!("Launching");
+    debug!("** Preparing configuration");
+    let configuration = &get_configuration(remote_dev)?;
 
-    let configuration = &get_configuration()?;
-
-    debug!("Preparing runtime");
+    debug!("** Preparing runtime");
     let java_home = &configuration.prepare_for_launch()?;
     debug!("Resolved runtime: {java_home:?}");
 
-    debug!("Resolving vm options");
+    debug!("** Resolving VM options");
     let vm_options = get_full_vm_options(configuration)?;
 
-    debug!("Resolving args for vm launch");
+    debug!("** Launching JVM");
     let args = configuration.get_args();
 
     let result = java::run_jvm_and_event_loop(java_home, vm_options, args.to_vec());
@@ -172,23 +173,11 @@ trait LaunchConfiguration {
     fn prepare_for_launch(&self) -> Result<PathBuf>;
 }
 
-pub fn is_remote_dev() -> bool {
-    let current_exe_path = get_current_exe();
-    debug!("Executable path: {:?}", current_exe_path);
-    let current_exe_name = current_exe_path.file_name()
-        .expect("Failed to get current exe filename");
-    debug!("Executable name: {:?}", current_exe_name);
-
-    current_exe_name.to_string_lossy().starts_with("remote-dev-server")
-}
-
-fn get_configuration() -> Result<Box<dyn LaunchConfiguration>> {
+fn get_configuration(is_remote_dev: bool) -> Result<Box<dyn LaunchConfiguration>> {
     let cmd_args: Vec<String> = env::args().collect();
-    
-    let is_remote_dev = is_remote_dev();
-    debug!("is_remote_dev={is_remote_dev}");
+    debug!("args={:?}", &cmd_args[1..]);
 
-    let (remote_dev_project_path, ij_args) = match is_remote_dev {
+    let (remote_dev_project_path, jvm_args) = match is_remote_dev {
         true => {
             let remote_dev_args = RemoteDevLaunchConfiguration::parse_remote_dev_args(&cmd_args)?;
             (remote_dev_args.project_path, remote_dev_args.ij_args)
@@ -202,7 +191,7 @@ fn get_configuration() -> Result<Box<dyn LaunchConfiguration>> {
         RemoteDevLaunchConfiguration::setup_font_config()?;
     }
 
-    let default = DefaultLaunchConfiguration::new(ij_args)?;
+    let default = DefaultLaunchConfiguration::new(jvm_args)?;
 
     match remote_dev_project_path {
         None => Ok(Box::new(default)),
@@ -214,6 +203,7 @@ fn get_configuration() -> Result<Box<dyn LaunchConfiguration>> {
 }
 
 pub const DO_NOT_SHOW_ERROR_UI_ENV_VAR: &str = "DO_NOT_SHOW_ERROR_UI";
+pub const VERBOSE_LOGGING_ENV_VAR: &str = "IJ_LAUNCHER_DEBUG";
 
 fn unwrap_with_human_readable_error<S>(result: Result<S>, show_error_ui: bool) -> S {
     match result {
@@ -339,7 +329,6 @@ fn show_fail_to_start_message(title: &str, text: &str) {
         }
     }
 }
-
 
 #[cfg(target_os = "windows")]
 pub fn get_config_home() -> Result<PathBuf> {

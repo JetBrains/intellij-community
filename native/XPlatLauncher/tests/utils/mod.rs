@@ -618,7 +618,10 @@ pub fn run_launcher(layout_specification: &LayoutSpec) -> LauncherRunResult {
 /// - std_out of launcher
 pub fn run_launcher_with_args(layout_specification: &LayoutSpec, args: &[&str]) -> LauncherRunResult {
     let test = prepare_test_env(layout_specification);
-    let env = HashMap::from([(xplat_launcher::DO_NOT_SHOW_ERROR_UI_ENV_VAR, "1")]);
+    let env = HashMap::from([
+        (xplat_launcher::DO_NOT_SHOW_ERROR_UI_ENV_VAR, "1"),
+        (xplat_launcher::VERBOSE_LOGGING_ENV_VAR, "1"),
+    ]);
 
     let result = match run_launcher_impl(&test, args, &env, None) {
         Ok(launcher_run_result) => launcher_run_result,
@@ -641,7 +644,10 @@ fn run_launcher_and_get_dump(test: &TestEnvironment, args: &[&str], env: &HashMa
     let mut full_args = vec!["dump-launch-parameters", "--output", &output_file_path_str];
     full_args.extend_from_slice(args);
 
-    let mut full_env: HashMap<&str, &str> = HashMap::from([(xplat_launcher::DO_NOT_SHOW_ERROR_UI_ENV_VAR, "1")]);
+    let mut full_env: HashMap<&str, &str> = HashMap::from([
+        (xplat_launcher::DO_NOT_SHOW_ERROR_UI_ENV_VAR, "1"),
+        (xplat_launcher::VERBOSE_LOGGING_ENV_VAR, "1")
+    ]);
     full_env.extend(env.into_iter());
 
     let result = match run_launcher_impl(&test, &full_args, &full_env, Some(&output_file)) {
