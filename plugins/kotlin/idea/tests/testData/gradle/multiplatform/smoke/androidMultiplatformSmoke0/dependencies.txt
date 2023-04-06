@@ -316,7 +316,6 @@ project.multiplatformAndroidJvmIosLibrary.jvmTest
     multiplatformAndroidJvmIosLibrary.androidAndJvmMain (friend, TEST)
     multiplatformAndroidJvmIosLibrary.commonMain (friend, TEST)
     multiplatformAndroidJvmIosLibrary.commonTest (refines, TEST)
-    multiplatformAndroidJvmIosLibrary.jvmMain (friend, RUNTIME)
     multiplatformAndroidJvmIosLibrary.jvmMain (friend, TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
@@ -324,21 +323,13 @@ project.multiplatformAndroidJvmIosLibrary.jvmTest
     org.jetbrains:annotations:13.0 (TEST)
 
 project.multiplatformAndroidJvmIosLibrary.linuxX64Main
-    Kotlin/Native {{KGP_VERSION}} - builtin | linux_x64 (PROVIDED)
-    Kotlin/Native {{KGP_VERSION}} - iconv | linux_x64 (PROVIDED)
-    Kotlin/Native {{KGP_VERSION}} - linux | linux_x64 (PROVIDED)
-    Kotlin/Native {{KGP_VERSION}} - posix | linux_x64 (PROVIDED)
-    Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
-    Kotlin/Native {{KGP_VERSION}} - zlib | linux_x64 (PROVIDED)
+    Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
+    Kotlin/Native: stdlib (COMPILE)
     multiplatformAndroidJvmIosLibrary.commonMain (refines, COMPILE)
 
 project.multiplatformAndroidJvmIosLibrary.linuxX64Test
-    Kotlin/Native {{KGP_VERSION}} - builtin | linux_x64 (PROVIDED)
-    Kotlin/Native {{KGP_VERSION}} - iconv | linux_x64 (PROVIDED)
-    Kotlin/Native {{KGP_VERSION}} - linux | linux_x64 (PROVIDED)
-    Kotlin/Native {{KGP_VERSION}} - posix | linux_x64 (PROVIDED)
-    Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
-    Kotlin/Native {{KGP_VERSION}} - zlib | linux_x64 (PROVIDED)
+    Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
+    Kotlin/Native: stdlib (TEST)
     multiplatformAndroidJvmIosLibrary.commonMain (friend, TEST)
     multiplatformAndroidJvmIosLibrary.commonTest (refines, TEST)
     multiplatformAndroidJvmIosLibrary.linuxX64Main (friend, TEST)
@@ -364,7 +355,6 @@ project.multiplatformAndroidJvmIosLibrary.unitTest
 project.multiplatformAndroidJvmIosLibrary2
 
 project.multiplatformAndroidJvmIosLibrary2.androidAndJvmMain
-    com.squareup.okio:okio-jvm:3.2.0 (RUNTIME)
     multiplatformAndroidJvmIosLibrary.androidAndJvmMain (COMPILE)
     multiplatformAndroidJvmIosLibrary.commonMain (COMPILE)
     multiplatformAndroidJvmIosLibrary2.commonMain (refines, COMPILE)
@@ -396,16 +386,12 @@ project.multiplatformAndroidJvmIosLibrary2.commonTest
     org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (TEST)
 
 project.multiplatformAndroidJvmIosLibrary2.jvmMain
-    com.squareup.okio:okio-jvm:3.2.0 (RUNTIME)
     jvmLibrary.main (COMPILE)
     multiplatformAndroidJvmIosLibrary.androidAndJvmMain (COMPILE)
-    multiplatformAndroidJvmIosLibrary.androidAndJvmMain (COMPILE)
-    multiplatformAndroidJvmIosLibrary.commonMain (COMPILE)
     multiplatformAndroidJvmIosLibrary.commonMain (COMPILE)
     multiplatformAndroidJvmIosLibrary.jvmMain (COMPILE)
     multiplatformAndroidJvmIosLibrary2.androidAndJvmMain (refines, COMPILE)
     multiplatformAndroidJvmIosLibrary2.commonMain (refines, COMPILE)
-    multiplatformJvmLibrary.commonMain (COMPILE)
     multiplatformJvmLibrary.commonMain (COMPILE)
     multiplatformJvmLibrary.jvmMain (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
@@ -414,19 +400,14 @@ project.multiplatformAndroidJvmIosLibrary2.jvmMain
     org.jetbrains:annotations:13.0 (COMPILE)
 
 project.multiplatformAndroidJvmIosLibrary2.jvmTest
-    com.squareup.okio:okio-jvm:3.2.0 (RUNTIME)
     jvmLibrary.main (TEST)
     multiplatformAndroidJvmIosLibrary.androidAndJvmMain (TEST)
-    multiplatformAndroidJvmIosLibrary.androidAndJvmMain (TEST)
-    multiplatformAndroidJvmIosLibrary.commonMain (TEST)
     multiplatformAndroidJvmIosLibrary.commonMain (TEST)
     multiplatformAndroidJvmIosLibrary.jvmMain (TEST)
     multiplatformAndroidJvmIosLibrary2.androidAndJvmMain (friend, TEST)
     multiplatformAndroidJvmIosLibrary2.commonMain (friend, TEST)
     multiplatformAndroidJvmIosLibrary2.commonTest (refines, TEST)
-    multiplatformAndroidJvmIosLibrary2.jvmMain (friend, RUNTIME)
     multiplatformAndroidJvmIosLibrary2.jvmMain (friend, TEST)
-    multiplatformJvmLibrary.commonMain (TEST)
     multiplatformJvmLibrary.commonMain (TEST)
     multiplatformJvmLibrary.jvmMain (TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
@@ -435,23 +416,15 @@ project.multiplatformAndroidJvmIosLibrary2.jvmTest
     org.jetbrains:annotations:13.0 (TEST)
 
 project.multiplatformAndroidJvmIosLibrary2.linuxX64Main
-    Kotlin/Native {{KGP_VERSION}} - builtin | linux_x64 (PROVIDED)
-    Kotlin/Native {{KGP_VERSION}} - iconv | linux_x64 (PROVIDED)
-    Kotlin/Native {{KGP_VERSION}} - linux | linux_x64 (PROVIDED)
-    Kotlin/Native {{KGP_VERSION}} - posix | linux_x64 (PROVIDED)
-    Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
-    Kotlin/Native {{KGP_VERSION}} - zlib | linux_x64 (PROVIDED)
+    Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
+    Kotlin/Native: stdlib (COMPILE)
     multiplatformAndroidJvmIosLibrary.commonMain (COMPILE)
     multiplatformAndroidJvmIosLibrary.linuxX64Main (COMPILE)
     multiplatformAndroidJvmIosLibrary2.commonMain (refines, COMPILE)
 
 project.multiplatformAndroidJvmIosLibrary2.linuxX64Test
-    Kotlin/Native {{KGP_VERSION}} - builtin | linux_x64 (PROVIDED)
-    Kotlin/Native {{KGP_VERSION}} - iconv | linux_x64 (PROVIDED)
-    Kotlin/Native {{KGP_VERSION}} - linux | linux_x64 (PROVIDED)
-    Kotlin/Native {{KGP_VERSION}} - posix | linux_x64 (PROVIDED)
-    Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
-    Kotlin/Native {{KGP_VERSION}} - zlib | linux_x64 (PROVIDED)
+    Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
+    Kotlin/Native: stdlib (TEST)
     multiplatformAndroidJvmIosLibrary.commonMain (TEST)
     multiplatformAndroidJvmIosLibrary.linuxX64Main (TEST)
     multiplatformAndroidJvmIosLibrary2.commonMain (friend, TEST)
@@ -522,9 +495,8 @@ project.multiplatformJvmLibrary
 
 project.multiplatformJvmLibrary.commonMain
     com.squareup.okio:okio-jvm:3.2.0 (COMPILE)
+    com.squareup.okio:okio:commonMain:3.2.0 (COMPILE)
     multiplatformAndroidJvmIosLibrary.androidAndJvmMain (COMPILE)
-    multiplatformAndroidJvmIosLibrary.androidAndJvmMain (COMPILE)
-    multiplatformAndroidJvmIosLibrary.commonMain (COMPILE)
     multiplatformAndroidJvmIosLibrary.commonMain (COMPILE)
     multiplatformAndroidJvmIosLibrary.jvmMain (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
@@ -534,13 +506,11 @@ project.multiplatformJvmLibrary.commonMain
 
 project.multiplatformJvmLibrary.commonTest
     com.squareup.okio:okio-jvm:3.2.0 (TEST)
+    com.squareup.okio:okio:commonMain:3.2.0 (TEST)
     multiplatformAndroidJvmIosLibrary.androidAndJvmMain (TEST)
-    multiplatformAndroidJvmIosLibrary.androidAndJvmMain (TEST)
-    multiplatformAndroidJvmIosLibrary.commonMain (TEST)
     multiplatformAndroidJvmIosLibrary.commonMain (TEST)
     multiplatformAndroidJvmIosLibrary.jvmMain (TEST)
     multiplatformJvmLibrary.commonMain (friend, TEST)
-    multiplatformJvmLibrary.jvmMain (friend, RUNTIME)
     multiplatformJvmLibrary.jvmMain (friend, TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
@@ -550,8 +520,6 @@ project.multiplatformJvmLibrary.commonTest
 project.multiplatformJvmLibrary.jvmMain
     com.squareup.okio:okio-jvm:3.2.0 (COMPILE)
     multiplatformAndroidJvmIosLibrary.androidAndJvmMain (COMPILE)
-    multiplatformAndroidJvmIosLibrary.androidAndJvmMain (COMPILE)
-    multiplatformAndroidJvmIosLibrary.commonMain (COMPILE)
     multiplatformAndroidJvmIosLibrary.commonMain (COMPILE)
     multiplatformAndroidJvmIosLibrary.jvmMain (COMPILE)
     multiplatformJvmLibrary.commonMain (refines, COMPILE)
@@ -563,13 +531,10 @@ project.multiplatformJvmLibrary.jvmMain
 project.multiplatformJvmLibrary.jvmTest
     com.squareup.okio:okio-jvm:3.2.0 (TEST)
     multiplatformAndroidJvmIosLibrary.androidAndJvmMain (TEST)
-    multiplatformAndroidJvmIosLibrary.androidAndJvmMain (TEST)
-    multiplatformAndroidJvmIosLibrary.commonMain (TEST)
     multiplatformAndroidJvmIosLibrary.commonMain (TEST)
     multiplatformAndroidJvmIosLibrary.jvmMain (TEST)
     multiplatformJvmLibrary.commonMain (friend, TEST)
     multiplatformJvmLibrary.commonTest (refines, TEST)
-    multiplatformJvmLibrary.jvmMain (friend, RUNTIME)
     multiplatformJvmLibrary.jvmMain (friend, TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
