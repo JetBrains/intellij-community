@@ -37,6 +37,7 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -57,6 +58,7 @@ public final class ExistingTemplatesComponent {
   private final DefaultMutableTreeNode myDraftTemplateNode;
   private final DefaultMutableTreeNode myRecentNode;
   private final DefaultMutableTreeNode myUserTemplatesNode;
+  private final DefaultMutableTreeNode myProjectTemplatesNode;
   private boolean myTemplateChanged = false;
   private boolean myDraftTemplateAutoselect = false;
 
@@ -65,6 +67,7 @@ public final class ExistingTemplatesComponent {
     myDraftTemplateNode = new DefaultMutableTreeNode(SSRBundle.message("draft.template.node")); // 'New Template' node
     myRecentNode = new DefaultMutableTreeNode(SSRBundle.message("recent.category")); // 'Recent' node
     myUserTemplatesNode = new DefaultMutableTreeNode(SSRBundle.message("user.defined.category")); // 'Saved templates' node
+    myProjectTemplatesNode = new DefaultMutableTreeNode(SSRBundle.message("project.templates.category"));
 
     root.add(myDraftTemplateNode);
     root.add(myRecentNode);
@@ -207,9 +210,17 @@ public final class ExistingTemplatesComponent {
   }
 
   private void reloadUserTemplates(ConfigurationManager configurationManager) {
+    myProjectTemplatesNode.removeAllChildren();
     myUserTemplatesNode.removeAllChildren();
-    for (Configuration config : configurationManager.getConfigurations()) {
+    for (Configuration config : configurationManager.getIdeConfigurations()) {
       myUserTemplatesNode.add(new DefaultMutableTreeNode(config));
+    }
+    List<Configuration> projectConfigurations = configurationManager.getProjectConfigurations();
+    if (!projectConfigurations.isEmpty()) {
+      myUserTemplatesNode.insert(myProjectTemplatesNode, 0);
+      for (Configuration config : projectConfigurations) {
+        myProjectTemplatesNode.add(new DefaultMutableTreeNode(config));
+      }
     }
     patternTreeModel.reload(myUserTemplatesNode);
   }
@@ -262,8 +273,13 @@ public final class ExistingTemplatesComponent {
       sibling = myUserTemplatesNode;
     }
     TreeUtil.selectNode(patternTree, sibling);
+    TreeNode parent = node.getParent();
     patternTreeModel.removeNodeFromParent(node);
-    ConfigurationManager.getInstance(project).removeConfiguration(configuration);
+    if (parent == myProjectTemplatesNode && parent.getChildCount() == 0) {
+      // hide project-templates node when there are no project templates anymore
+      patternTreeModel.removeNodeFromParent((MutableTreeNode)parent);
+    }
+    ConfigurationManager.getInstance(project).removeConfiguration(configuration, parent == myUserTemplatesNode);
   }
 
   public void selectFileType(LanguageFileType fileType) {
