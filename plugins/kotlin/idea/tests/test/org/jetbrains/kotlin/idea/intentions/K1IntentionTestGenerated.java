@@ -8774,9 +8774,19 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertToRawStringTemplate/basic.kt");
         }
 
+        @TestMetadata("consecutiveBreaks.kt")
+        public void testConsecutiveBreaks() throws Exception {
+            runTest("testData/intentions/convertToRawStringTemplate/consecutiveBreaks.kt");
+        }
+
         @TestMetadata("octalEscape.kt")
         public void testOctalEscape() throws Exception {
             runTest("testData/intentions/convertToRawStringTemplate/octalEscape.kt");
+        }
+
+        @TestMetadata("spaceBeforeBreak.kt")
+        public void testSpaceBeforeBreak() throws Exception {
+            runTest("testData/intentions/convertToRawStringTemplate/spaceBeforeBreak.kt");
         }
     }
 
