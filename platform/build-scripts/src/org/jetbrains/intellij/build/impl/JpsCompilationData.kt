@@ -9,6 +9,7 @@ class JpsCompilationData(val dataStorageRoot: Path, val buildLogFile: Path, cate
   val builtArtifacts: MutableSet<String> = LinkedHashSet()
   var statisticsReported: Boolean = false
   var projectDependenciesResolved: Boolean = false
+  var runtimeModuleRepositoryGenerated: Boolean = false
 
   val categoriesWithDebugLevel: String = categoriesWithDebugLevelNullable ?: ""
   fun reset() {

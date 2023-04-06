@@ -160,6 +160,13 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
       }
     }
     createBuildThirdPartyLibraryListJob(entries, context)
+    if (context.productProperties.generateRuntimeModuleRepository) {
+      launch(Dispatchers.IO) {
+        spanBuilder("generate runtime module repository").useWithScope2 { 
+          generateRuntimeModuleRepository(entries, context)
+        }
+      }
+    }
   }
   entries
 }

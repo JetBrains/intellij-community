@@ -153,6 +153,13 @@ abstract class ProductProperties {
   var buildCrossPlatformDistribution: Boolean = false
 
   /**
+   * Determines whether descriptors for [com.intellij.platform.runtime.repository.RuntimeModuleRepository] should be included into the 
+   * distributions.
+   */
+  @ApiStatus.Experimental
+  var generateRuntimeModuleRepository: Boolean = false
+
+  /**
    * Specifies name of cross-platform ZIP archive if `[buildCrossPlatformDistribution]` is set to `true`.
    */
   open fun getCrossPlatformZipFileName(applicationInfo: ApplicationInfoProperties, buildNumber: String): String =

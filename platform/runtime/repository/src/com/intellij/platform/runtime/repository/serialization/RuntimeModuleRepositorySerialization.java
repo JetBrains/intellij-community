@@ -24,7 +24,7 @@ public final class RuntimeModuleRepositorySerialization {
     }
   }
 
-  public static @NotNull Map<String, RawRuntimeModuleDescriptor> loadFromJar(@NotNull Path jarPath) {
+  public static @NotNull Map<String, RawRuntimeModuleDescriptor> loadFromJar(@NotNull Path jarPath) throws MalformedRepositoryException {
     try {
       return JarFileSerializer.loadFromJar(jarPath);
     }

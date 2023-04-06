@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.application.PathManager
+import com.intellij.util.SystemProperties
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.impl.BuildContextImpl
@@ -15,10 +16,12 @@ class IdeaCommunityBuildTest {
   fun testBuild() {
     val homePath = PathManager.getHomeDirFor(javaClass)!!
     val communityHomePath = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
+    val productProperties = IdeaCommunityProperties(communityHomePath.communityRoot)
+    productProperties.generateRuntimeModuleRepository = SystemProperties.getBooleanProperty("intellij.build.test.generate.runtime.repository", false)
     runTestBuild(
       homePath = homePath,
       communityHomePath = communityHomePath,
-      productProperties = IdeaCommunityProperties(communityHomePath.communityRoot),
+      productProperties = productProperties,
     ) {
       it.classesOutputDirectory = System.getProperty(BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY)
                                   ?: "$homePath/out/classes"
