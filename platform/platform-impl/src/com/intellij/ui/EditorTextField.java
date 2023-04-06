@@ -270,10 +270,18 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     installDocumentListener();
     Editor editor = getEditor();
     if (editor != null) {
+      IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
+      boolean wasFocused = focusManager.getFocusOwner() == editor.getComponent();
+
       EditorEx newEditor = createEditor();
       scheduleEditorRelease();
       myEditor = newEditor;
       add(newEditor.getComponent(), BorderLayout.CENTER);
+
+      if (wasFocused) {
+        focusManager.requestFocus(newEditor.getComponent(), true);
+      }
+
       releaseScheduledEditors();
 
       validate();
