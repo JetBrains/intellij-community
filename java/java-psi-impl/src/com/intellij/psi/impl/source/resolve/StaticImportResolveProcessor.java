@@ -87,6 +87,7 @@ public class StaticImportResolveProcessor implements PsiScopeProcessor, NameHint
 
   public JavaResolveResult @NotNull [] getResults() {
     if (myResults.size() + myFieldResults.size() + myClassResult.size() > 1) {
+      filterStaticMethodsFromOtherInterfaces(myResults);
       filterInvalid(myResults);
       filterInvalid(myFieldResults);
       filterInvalid(myClassResult);
@@ -98,6 +99,39 @@ public class StaticImportResolveProcessor implements PsiScopeProcessor, NameHint
       myResults.addAll(myClassResult);
     }
     return myResults.toArray(JavaResolveResult.EMPTY_ARRAY);
+  }
+
+  /**
+   * If the length of results is 1, do nothing. If this result has errors, it will be checked later. <br>
+   * (See HighlightMethodUtil.checkStaticInterfaceMethodCallQualifier()) <br>
+   * Otherwise results with methods from other interfaces should be deleted <br>
+   * (see JavaMethodsConflictResolver.checkStaticMethodsOfInterfaces())
+   */
+  private void filterStaticMethodsFromOtherInterfaces(List<JavaResolveResult> results) {
+    if (results.size() <= 1) {
+      return;
+    }
+    ListIterator<JavaResolveResult> iterator = results.listIterator();
+    PsiElement qualifier = myReference.getQualifier();
+    if (!(qualifier instanceof PsiReference)) {
+      return;
+    }
+    PsiElement resolved = ((PsiReference)qualifier).resolve();
+    if (!(resolved instanceof PsiClass)) {
+      return;
+    }
+    while (iterator.hasNext()) {
+      JavaResolveResult result = iterator.next();
+      if (!(result.getElement() instanceof PsiMethod)) {
+        continue;
+      }
+      PsiClass containingClass = ((PsiMethod)result.getElement()).getContainingClass();
+      if (containingClass != null && containingClass.isInterface()) {
+        if (!containingClass.getManager().areElementsEquivalent(resolved, containingClass)) {
+          iterator.remove();
+        }
+      }
+    }
   }
 
   private static void filterInvalid(final List<JavaResolveResult> resultList) {
