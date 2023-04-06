@@ -7,11 +7,13 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
 class ParcelRemoveCustomWriteToParcel(function: KtFunction) : AbstractParcelizePsiOnlyQuickFix<KtFunction>(function) {
-    object Factory : AbstractQuickFixFactory({ findElement<KtFunction>()?.let(::ParcelRemoveCustomWriteToParcel) })
-
     override fun getText() = KotlinParcelizeBundle.message("parcelize.fix.remove.custom.write.to.parcel.function")
 
     override fun invoke(ktPsiFactory: KtPsiFactory, element: KtFunction) {
         element.delete()
+    }
+
+    companion object {
+        val FACTORY = factory(::ParcelRemoveCustomWriteToParcel)
     }
 }

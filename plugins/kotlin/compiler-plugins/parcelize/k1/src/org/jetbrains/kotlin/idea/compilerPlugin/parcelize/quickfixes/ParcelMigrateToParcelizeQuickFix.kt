@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes
 
@@ -37,6 +37,11 @@ class ParcelMigrateToParcelizeQuickFix(function: KtClass) : AbstractParcelizeQui
         private val PARCELER_WRITE_FUNCTION_NAME = Name.identifier("write")
         private val PARCELER_CREATE_FUNCTION_NAME = Name.identifier("create")
         private val LOG = Logger.getInstance(ParcelMigrateToParcelizeQuickFix::class.java)
+
+        val FACTORY_FOR_WRITE = factory(::ParcelMigrateToParcelizeQuickFix)
+        val FACTORY_FOR_CREATOR = factory<KtObjectDeclaration> {
+            it.getStrictParentOfType<KtClass>()?.let(::ParcelMigrateToParcelizeQuickFix)
+        }
 
         private fun KtClass.findParcelerCompanionObject(): Pair<KtObjectDeclaration, ClassDescriptor>? {
             for (obj in companionObjects) {
@@ -153,13 +158,6 @@ class ParcelMigrateToParcelizeQuickFix(function: KtClass) : AbstractParcelizeQui
         private fun KtTypeReference.getFqName(): String? = analyze(BodyResolveMode.PARTIAL)[BindingContext.TYPE, this]
             ?.constructor?.declarationDescriptor?.fqNameSafe?.asString()
     }
-
-    object FactoryForWrite : AbstractQuickFixFactory({ findElement<KtClass>()?.let { ParcelMigrateToParcelizeQuickFix(it) } })
-
-    object FactoryForCREATOR : AbstractQuickFixFactory({
-                                                   findElement<KtObjectDeclaration>()?.getStrictParentOfType<KtClass>()
-                                                       ?.let { ParcelMigrateToParcelizeQuickFix(it) }
-                                               })
 
     override fun getText() = KotlinParcelizeBundle.message("parcelize.fix.migrate.to.parceler.companion.object")
 

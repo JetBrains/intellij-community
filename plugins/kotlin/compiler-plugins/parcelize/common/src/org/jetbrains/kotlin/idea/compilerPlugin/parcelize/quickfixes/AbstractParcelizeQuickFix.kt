@@ -2,14 +2,14 @@
 
 package org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes
 
-import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.diagnostics.Diagnostic
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinPsiOnlyQuickFixAction
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
-import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixActionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.quickFixesPsiBasedFactory
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -51,10 +51,6 @@ abstract class AbstractParcelizePsiOnlyQuickFix<T : KtElement>(element: T) : Kot
     }
 }
 
-abstract class AbstractQuickFixFactory(private val f: Diagnostic.() -> IntentionAction?) : KotlinSingleIntentionActionFactory() {
-    companion object {
-        inline fun <reified T : KtElement> Diagnostic.findElement() = psiElement.getNonStrictParentOfType<T>()
-    }
-
-    override fun createAction(diagnostic: Diagnostic) = f(diagnostic)
+inline fun <reified T : KtElement> factory(crossinline constructor: (T) -> QuickFixActionBase<*>?) = quickFixesPsiBasedFactory<PsiElement> {
+    listOfNotNull(it.getNonStrictParentOfType<T>()?.let(constructor))
 }

@@ -8,8 +8,6 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createPrimaryConstructorIfAbsent
 
 class ParcelizeAddPrimaryConstructorQuickFix(clazz: KtClass) : AbstractParcelizePsiOnlyQuickFix<KtClass>(clazz) {
-    object Factory : AbstractQuickFixFactory({ findElement<KtClass>()?.let(::ParcelizeAddPrimaryConstructorQuickFix) })
-
     override fun getText() = KotlinParcelizeBundle.message("parcelize.fix.add.empty.primary.constructor")
 
     override fun invoke(ktPsiFactory: KtPsiFactory, element: KtClass) {
@@ -22,5 +20,9 @@ class ParcelizeAddPrimaryConstructorQuickFix(clazz: KtClass) : AbstractParcelize
                 secondaryConstructor.addAfter(ktPsiFactory.createExpression("this()"), colon)
             }
         }
+    }
+
+    companion object {
+        val FACTORY = factory(::ParcelizeAddPrimaryConstructorQuickFix)
     }
 }

@@ -10,14 +10,11 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlinc.kotlin-stdlib" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
-    <orderEntry type="library" name="kotlinc.kotlin-compiler-fe10" level="project" />
     <orderEntry type="library" name="kotlinc.parcelize-compiler-plugin" level="project" />
     <orderEntry type="module" module-name="kotlin.base.util" />
     <orderEntry type="module" module-name="kotlin.base.project-structure" />
     <orderEntry type="module" module-name="kotlin.base.analysis" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" />
-    <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />
-    <orderEntry type="module" module-name="kotlin.base.fe10.code-insight" />
     <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="kotlin.idea" />
     <orderEntry type="module" module-name="intellij.java.psi.impl" />
