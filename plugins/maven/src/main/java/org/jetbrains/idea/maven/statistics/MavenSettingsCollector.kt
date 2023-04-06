@@ -114,7 +114,7 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("build.maven.state", 7)
+    private val GROUP = EventLogGroup("build.maven.state", 8)
     private val HAS_MAVEN_PROJECT = GROUP.registerEvent("hasMavenProject", EventFields.Enabled)
     private val ALWAYS_UPDATE_SNAPSHOTS = GROUP.registerEvent("alwaysUpdateSnapshots", EventFields.Enabled)
     private val NON_RECURSIVE = GROUP.registerEvent("nonRecursive", EventFields.Enabled)
