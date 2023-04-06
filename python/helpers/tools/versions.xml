@@ -6,6 +6,8 @@
 		<module>TYPES</module>
 		<module>__hello__</module>
 		<module>__phello__</module>
+		<module>__phello__.ham</module>
+		<module>__phello__.ham.eggs</module>
 		<module>__phello__.spam</module>
 		<module>_abc</module>
 		<module>_aix_support</module>
@@ -43,9 +45,11 @@
 		<module>_py_abc</module>
 		<module>_pydecimal</module>
 		<module>_pyio</module>
+		<module>_pylong</module>
 		<module>_queue</module>
 		<module>_scproxy</module>
 		<module>_sha1</module>
+		<module>_sha2</module>
 		<module>_sha256</module>
 		<module>_sha3</module>
 		<module>_sha512</module>
@@ -59,9 +63,12 @@
 		<module>_sysconfigdata__linux_x86_64-linux-gnu</module>
 		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
 		<module>_testbuffer</module>
+		<module>_testclinic</module>
+		<module>_testconsole</module>
 		<module>_testimportmultiple</module>
 		<module>_testinternalcapi</module>
 		<module>_testmultiphase</module>
+		<module>_testsinglephase</module>
 		<module>_thread</module>
 		<module>_tkinter</module>
 		<module>_tokenize</module>
@@ -70,6 +77,7 @@
 		<module>_uuid</module>
 		<module>_weakrefset</module>
 		<module>_winapi</module>
+		<module>_xxinterpchannels</module>
 		<module>_xxsubinterpreters</module>
 		<module>_xxtestfuzz</module>
 		<module>_zoneinfo</module>
@@ -699,6 +707,15 @@
 		<module>socketserver</module>
 		<module>sqlite3.__main__</module>
 		<module>sqlite3.test.backup</module>
+		<module>sqlite3.test.test_backup</module>
+		<module>sqlite3.test.test_dbapi</module>
+		<module>sqlite3.test.test_dump</module>
+		<module>sqlite3.test.test_factory</module>
+		<module>sqlite3.test.test_hooks</module>
+		<module>sqlite3.test.test_regression</module>
+		<module>sqlite3.test.test_transactions</module>
+		<module>sqlite3.test.test_types</module>
+		<module>sqlite3.test.test_userfunctions</module>
 		<module>statistics</module>
 		<module>sysconfig</module>
 		<module>tkinter</module>
@@ -823,6 +840,8 @@
 		<module>xxlimited</module>
 		<module>xxlimited_35</module>
 		<module>zipapp</module>
+		<module>zipfile.__main__</module>
+		<module>zipfile._path</module>
 		<module>zoneinfo</module>
 		<module>zoneinfo._common</module>
 		<module>zoneinfo._tzpath</module>
@@ -863,6 +882,8 @@
 	<python version="2.7">
 		<module>__hello__</module>
 		<module>__phello__</module>
+		<module>__phello__.ham</module>
+		<module>__phello__.ham.eggs</module>
 		<module>__phello__.spam</module>
 		<module>_abc</module>
 		<module>_aix_support</module>
@@ -897,9 +918,11 @@
 		<module>_posixsubprocess</module>
 		<module>_py_abc</module>
 		<module>_pydecimal</module>
+		<module>_pylong</module>
 		<module>_queue</module>
 		<module>_scproxy</module>
 		<module>_sha1</module>
+		<module>_sha2</module>
 		<module>_sha256</module>
 		<module>_sha3</module>
 		<module>_sha512</module>
@@ -912,9 +935,12 @@
 		<module>_sysconfigdata__linux_x86_64-linux-gnu</module>
 		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
 		<module>_testbuffer</module>
+		<module>_testclinic</module>
+		<module>_testconsole</module>
 		<module>_testimportmultiple</module>
 		<module>_testinternalcapi</module>
 		<module>_testmultiphase</module>
+		<module>_testsinglephase</module>
 		<module>_thread</module>
 		<module>_tkinter</module>
 		<module>_tokenize</module>
@@ -922,6 +948,7 @@
 		<module>_typing</module>
 		<module>_uuid</module>
 		<module>_winapi</module>
+		<module>_xxinterpchannels</module>
 		<module>_xxsubinterpreters</module>
 		<module>_xxtestfuzz</module>
 		<module>_zoneinfo</module>
@@ -1184,6 +1211,15 @@
 		<module>socketserver</module>
 		<module>sqlite3.__main__</module>
 		<module>sqlite3.test.backup</module>
+		<module>sqlite3.test.test_backup</module>
+		<module>sqlite3.test.test_dbapi</module>
+		<module>sqlite3.test.test_dump</module>
+		<module>sqlite3.test.test_factory</module>
+		<module>sqlite3.test.test_hooks</module>
+		<module>sqlite3.test.test_regression</module>
+		<module>sqlite3.test.test_transactions</module>
+		<module>sqlite3.test.test_types</module>
+		<module>sqlite3.test.test_userfunctions</module>
 		<module>statistics</module>
 		<module>tkinter</module>
 		<module>tkinter.__main__</module>
@@ -1282,6 +1318,8 @@
 		<module>xxlimited</module>
 		<module>xxlimited_35</module>
 		<module>zipapp</module>
+		<module>zipfile.__main__</module>
+		<module>zipfile._path</module>
 		<module>zoneinfo</module>
 		<module>zoneinfo._common</module>
 		<module>zoneinfo._tzpath</module>
@@ -1355,20 +1393,24 @@
 		<module>__hello__</module>
 		<module>__main__</module>
 		<module>__phello__</module>
+		<module>__phello__.ham</module>
+		<module>__phello__.ham.eggs</module>
 		<module>__phello__.spam</module>
 		<module>_abcoll</module>
 		<module>_bytesio</module>
-		<module>_dbm</module>
 		<module>_dummy_thread</module>
 		<module>_fileio</module>
 		<module>_hotshot</module>
 		<module>_peg_parser</module>
-		<module>_scproxy</module>
+		<module>_pylong</module>
+		<module>_sha2</module>
 		<module>_sysconfigdata</module>
 		<module>_sysconfigdata__darwin_darwin</module>
 		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
+		<module>_testsinglephase</module>
 		<module>_tokenize</module>
 		<module>_typing</module>
+		<module>_xxinterpchannels</module>
 		<module>anydbm</module>
 		<module>asyncio.compat</module>
 		<module>asyncio.taskgroups</module>
@@ -1522,7 +1564,6 @@
 		<module>idlelib.idle_test.test_searchdialog</module>
 		<module>idlelib.idle_test.test_searchdialogbase</module>
 		<module>idlelib.idle_test.test_undodelegator</module>
-		<module>idlelib.idle_test.test_util</module>
 		<module>idlelib.idle_test.test_widgetredir</module>
 		<module>idlelib.idlever</module>
 		<module>idlelib.keybindingDialog</module>
@@ -1532,7 +1573,6 @@
 		<module>idlelib.tabbedpages</module>
 		<module>idlelib.testcode</module>
 		<module>idlelib.textView</module>
-		<module>idlelib.util</module>
 		<module>ihooks</module>
 		<module>importlib._itertools</module>
 		<module>importlib._legacy</module>
@@ -1897,6 +1937,15 @@
 		<module>sha</module>
 		<module>sqlite3.__main__</module>
 		<module>sqlite3.test.py25tests</module>
+		<module>sqlite3.test.test_backup</module>
+		<module>sqlite3.test.test_dbapi</module>
+		<module>sqlite3.test.test_dump</module>
+		<module>sqlite3.test.test_factory</module>
+		<module>sqlite3.test.test_hooks</module>
+		<module>sqlite3.test.test_regression</module>
+		<module>sqlite3.test.test_transactions</module>
+		<module>sqlite3.test.test_types</module>
+		<module>sqlite3.test.test_userfunctions</module>
 		<module>sre</module>
 		<module>statvfs</module>
 		<module>stringold</module>
@@ -1924,6 +1973,8 @@
 		<module>wsgiref.types</module>
 		<module>xmllib</module>
 		<module>xmlrpclib</module>
+		<module>zipfile.__main__</module>
+		<module>zipfile._path</module>
 		<func>BaseExceptionGroup</func>
 		<func>ExceptionGroup</func>
 		<func>StandardError</func>
@@ -1982,23 +2033,20 @@
 		<module>_abcoll</module>
 		<module>_bootlocale</module>
 		<module>_bytesio</module>
-		<module>_dbm</module>
 		<module>_dummy_thread</module>
 		<module>_fileio</module>
 		<module>_hotshot</module>
-		<module>_msi</module>
-		<module>_overlapped</module>
 		<module>_peg_parser</module>
-		<module>_scproxy</module>
+		<module>_pylong</module>
+		<module>_sha2</module>
 		<module>_sysconfigdata</module>
 		<module>_sysconfigdata__darwin_darwin</module>
 		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
-		<module>_winapi</module>
+		<module>_testsinglephase</module>
+		<module>_xxinterpchannels</module>
 		<module>anydbm</module>
 		<module>asyncio.compat</module>
-		<module>asyncio.taskgroups</module>
 		<module>asyncio.test_utils</module>
-		<module>asyncio.timeouts</module>
 		<module>audiodev</module>
 		<module>binhex</module>
 		<module>bsddb</module>
@@ -2154,7 +2202,6 @@
 		<module>idlelib.idle_test.test_searchdialog</module>
 		<module>idlelib.idle_test.test_searchdialogbase</module>
 		<module>idlelib.idle_test.test_undodelegator</module>
-		<module>idlelib.idle_test.test_util</module>
 		<module>idlelib.idle_test.test_widgetredir</module>
 		<module>idlelib.idlever</module>
 		<module>idlelib.keybindingDialog</module>
@@ -2164,15 +2211,7 @@
 		<module>idlelib.tabbedpages</module>
 		<module>idlelib.testcode</module>
 		<module>idlelib.textView</module>
-		<module>idlelib.util</module>
 		<module>ihooks</module>
-		<module>importlib.resources._adapters</module>
-		<module>importlib.resources._common</module>
-		<module>importlib.resources._itertools</module>
-		<module>importlib.resources._legacy</module>
-		<module>importlib.resources.abc</module>
-		<module>importlib.resources.readers</module>
-		<module>importlib.resources.simple</module>
 		<module>imputil</module>
 		<module>json.tests</module>
 		<module>json.tests.test_check_circular</module>
@@ -2201,17 +2240,11 @@
 		<module>mhlib</module>
 		<module>mimetools</module>
 		<module>mimify</module>
-		<module>msilib</module>
-		<module>msilib.schema</module>
-		<module>msilib.sequence</module>
-		<module>msilib.text</module>
-		<module>msvcrt</module>
 		<module>multifile</module>
 		<module>multiprocessing.forking</module>
 		<module>multiprocessing.semaphore_tracker</module>
 		<module>mutex</module>
 		<module>new</module>
-		<module>nt</module>
 		<module>os2emxpath</module>
 		<module>parser</module>
 		<module>pip</module>
@@ -2519,10 +2552,6 @@
 		<module>popen2</module>
 		<module>posixfile</module>
 		<module>pydoc_topics</module>
-		<module>re._casefix</module>
-		<module>re._compiler</module>
-		<module>re._constants</module>
-		<module>re._parser</module>
 		<module>repr</module>
 		<module>rexec</module>
 		<module>rfc822</module>
@@ -2531,7 +2560,6 @@
 		<module>sgmllib</module>
 		<module>sha</module>
 		<module>sqlite3.__main__</module>
-		<module>sqlite3.test</module>
 		<module>sqlite3.test.backup</module>
 		<module>sqlite3.test.dbapi</module>
 		<module>sqlite3.test.dump</module>
@@ -2555,26 +2583,18 @@
 		<module>tkFont</module>
 		<module>tkMessageBox</module>
 		<module>tkSimpleDialog</module>
-		<module>tkinter.test.runtktests</module>
-		<module>tkinter.test.test_ttk.test_functions</module>
 		<module>toaiff</module>
-		<module>tomllib</module>
-		<module>tomllib._parser</module>
-		<module>tomllib._re</module>
-		<module>tomllib._types</module>
 		<module>ttk</module>
 		<module>turtledemo.wikipedia</module>
 		<module>urllib2</module>
 		<module>urlparse</module>
 		<module>user</module>
 		<module>whichdb</module>
-		<module>winreg</module>
-		<module>winsound</module>
-		<module>wsgiref.types</module>
 		<module>xmllib</module>
 		<module>xmlrpclib</module>
+		<module>zipfile.__main__</module>
+		<module>zipfile._path</module>
 		<func>StandardError</func>
-		<func>WindowsError</func>
 		<func>apply</func>
 		<func>basestring</func>
 		<func>buffer</func>
@@ -2627,6 +2647,8 @@
 		<module>__builtin__</module>
 		<module>__main__</module>
 		<module>__phello__.foo</module>
+		<module>__phello__.ham</module>
+		<module>__phello__.ham.eggs</module>
 		<module>_abcoll</module>
 		<module>_bootlocale</module>
 		<module>_bootsubprocess</module>
@@ -2641,6 +2663,7 @@
 		<module>_sysconfigdata</module>
 		<module>_sysconfigdata__linux_x86_64-linux-gnu</module>
 		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
+		<module>_testconsole</module>
 		<module>_winapi</module>
 		<module>anydbm</module>
 		<module>asyncio.compat</module>
@@ -2918,7 +2941,6 @@
 		<module>new</module>
 		<module>nt</module>
 		<module>os2emxpath</module>
-		<module>ossaudiodev</module>
 		<module>parser</module>
 		<module>pip</module>
 		<module>pip.__main__</module>
@@ -3233,7 +3255,6 @@
 		<module>sgmllib</module>
 		<module>sha</module>
 		<module>smtpd</module>
-		<module>spwd</module>
 		<module>sqlite3.test</module>
 		<module>sqlite3.test.backup</module>
 		<module>sqlite3.test.dbapi</module>
@@ -3242,6 +3263,15 @@
 		<module>sqlite3.test.hooks</module>
 		<module>sqlite3.test.py25tests</module>
 		<module>sqlite3.test.regression</module>
+		<module>sqlite3.test.test_backup</module>
+		<module>sqlite3.test.test_dbapi</module>
+		<module>sqlite3.test.test_dump</module>
+		<module>sqlite3.test.test_factory</module>
+		<module>sqlite3.test.test_hooks</module>
+		<module>sqlite3.test.test_regression</module>
+		<module>sqlite3.test.test_transactions</module>
+		<module>sqlite3.test.test_types</module>
+		<module>sqlite3.test.test_userfunctions</module>
 		<module>sqlite3.test.transactions</module>
 		<module>sqlite3.test.types</module>
 		<module>sqlite3.test.userfunctions</module>
@@ -3371,6 +3401,8 @@
 		<module>__hello__</module>
 		<module>__main__</module>
 		<module>__phello__</module>
+		<module>__phello__.ham</module>
+		<module>__phello__.ham.eggs</module>
 		<module>__phello__.spam</module>
 		<module>_abc</module>
 		<module>_abcoll</module>
@@ -3388,19 +3420,25 @@
 		<module>_peg_parser</module>
 		<module>_posixshmem</module>
 		<module>_py_abc</module>
+		<module>_pylong</module>
 		<module>_queue</module>
 		<module>_scproxy</module>
+		<module>_sha2</module>
 		<module>_sha3</module>
 		<module>_statistics</module>
 		<module>_sysconfigdata__darwin_darwin</module>
 		<module>_sysconfigdata__linux_x86_64-linux-gnu</module>
 		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
+		<module>_testclinic</module>
+		<module>_testconsole</module>
 		<module>_testinternalcapi</module>
+		<module>_testsinglephase</module>
 		<module>_tkinter</module>
 		<module>_tokenize</module>
 		<module>_typing</module>
 		<module>_uuid</module>
 		<module>_winapi</module>
+		<module>_xxinterpchannels</module>
 		<module>_xxsubinterpreters</module>
 		<module>_xxtestfuzz</module>
 		<module>_zoneinfo</module>
@@ -3990,6 +4028,15 @@
 		<module>sqlite3.__main__</module>
 		<module>sqlite3.test.backup</module>
 		<module>sqlite3.test.py25tests</module>
+		<module>sqlite3.test.test_backup</module>
+		<module>sqlite3.test.test_dbapi</module>
+		<module>sqlite3.test.test_dump</module>
+		<module>sqlite3.test.test_factory</module>
+		<module>sqlite3.test.test_hooks</module>
+		<module>sqlite3.test.test_regression</module>
+		<module>sqlite3.test.test_transactions</module>
+		<module>sqlite3.test.test_types</module>
+		<module>sqlite3.test.test_userfunctions</module>
 		<module>sre</module>
 		<module>statvfs</module>
 		<module>stringold</module>
@@ -4027,6 +4074,8 @@
 		<module>xmllib</module>
 		<module>xmlrpclib</module>
 		<module>xxlimited_35</module>
+		<module>zipfile.__main__</module>
+		<module>zipfile._path</module>
 		<module>zoneinfo</module>
 		<module>zoneinfo._common</module>
 		<module>zoneinfo._tzpath</module>
@@ -4093,6 +4142,8 @@
 		<module>__hello__</module>
 		<module>__main__</module>
 		<module>__phello__</module>
+		<module>__phello__.ham</module>
+		<module>__phello__.ham.eggs</module>
 		<module>__phello__.spam</module>
 		<module>_abc</module>
 		<module>_abcoll</module>
@@ -4108,18 +4159,24 @@
 		<module>_peg_parser</module>
 		<module>_posixshmem</module>
 		<module>_py_abc</module>
+		<module>_pylong</module>
 		<module>_queue</module>
 		<module>_scproxy</module>
+		<module>_sha2</module>
 		<module>_statistics</module>
 		<module>_sysconfigdata</module>
 		<module>_sysconfigdata__darwin_darwin</module>
 		<module>_sysconfigdata__linux_x86_64-linux-gnu</module>
+		<module>_testclinic</module>
+		<module>_testconsole</module>
 		<module>_testinternalcapi</module>
+		<module>_testsinglephase</module>
 		<module>_tkinter</module>
 		<module>_tokenize</module>
 		<module>_typing</module>
 		<module>_uuid</module>
 		<module>_winapi</module>
+		<module>_xxinterpchannels</module>
 		<module>_xxsubinterpreters</module>
 		<module>_xxtestfuzz</module>
 		<module>_zoneinfo</module>
@@ -4676,6 +4733,15 @@
 		<module>sqlite3.__main__</module>
 		<module>sqlite3.test.backup</module>
 		<module>sqlite3.test.py25tests</module>
+		<module>sqlite3.test.test_backup</module>
+		<module>sqlite3.test.test_dbapi</module>
+		<module>sqlite3.test.test_dump</module>
+		<module>sqlite3.test.test_factory</module>
+		<module>sqlite3.test.test_hooks</module>
+		<module>sqlite3.test.test_regression</module>
+		<module>sqlite3.test.test_transactions</module>
+		<module>sqlite3.test.test_types</module>
+		<module>sqlite3.test.test_userfunctions</module>
 		<module>sre</module>
 		<module>statvfs</module>
 		<module>stringold</module>
@@ -4713,6 +4779,8 @@
 		<module>xmllib</module>
 		<module>xmlrpclib</module>
 		<module>xxlimited_35</module>
+		<module>zipfile.__main__</module>
+		<module>zipfile._path</module>
 		<module>zoneinfo</module>
 		<module>zoneinfo._common</module>
 		<module>zoneinfo._tzpath</module>
@@ -4778,6 +4846,8 @@
 		<module>__hello__</module>
 		<module>__main__</module>
 		<module>__phello__</module>
+		<module>__phello__.ham</module>
+		<module>__phello__.ham.eggs</module>
 		<module>__phello__.spam</module>
 		<module>_abcoll</module>
 		<module>_aix_support</module>
@@ -4789,15 +4859,21 @@
 		<module>_overlapped</module>
 		<module>_peg_parser</module>
 		<module>_posixshmem</module>
+		<module>_pylong</module>
 		<module>_scproxy</module>
+		<module>_sha2</module>
 		<module>_statistics</module>
 		<module>_sysconfigdata</module>
 		<module>_sysconfigdata__darwin_darwin</module>
 		<module>_sysconfigdata__linux_x86_64-linux-gnu</module>
+		<module>_testclinic</module>
+		<module>_testconsole</module>
 		<module>_testinternalcapi</module>
+		<module>_testsinglephase</module>
 		<module>_tokenize</module>
 		<module>_typing</module>
 		<module>_winapi</module>
+		<module>_xxinterpchannels</module>
 		<module>_xxsubinterpreters</module>
 		<module>_zoneinfo</module>
 		<module>anydbm</module>
@@ -5346,6 +5422,15 @@
 		<module>sha</module>
 		<module>sqlite3.__main__</module>
 		<module>sqlite3.test.py25tests</module>
+		<module>sqlite3.test.test_backup</module>
+		<module>sqlite3.test.test_dbapi</module>
+		<module>sqlite3.test.test_dump</module>
+		<module>sqlite3.test.test_factory</module>
+		<module>sqlite3.test.test_hooks</module>
+		<module>sqlite3.test.test_regression</module>
+		<module>sqlite3.test.test_transactions</module>
+		<module>sqlite3.test.test_types</module>
+		<module>sqlite3.test.test_userfunctions</module>
 		<module>sre</module>
 		<module>statvfs</module>
 		<module>stringold</module>
@@ -5382,6 +5467,8 @@
 		<module>xmllib</module>
 		<module>xmlrpclib</module>
 		<module>xxlimited_35</module>
+		<module>zipfile.__main__</module>
+		<module>zipfile._path</module>
 		<module>zoneinfo</module>
 		<module>zoneinfo._common</module>
 		<module>zoneinfo._tzpath</module>
@@ -5446,6 +5533,8 @@
 		<module>__hello__</module>
 		<module>__main__</module>
 		<module>__phello__</module>
+		<module>__phello__.ham</module>
+		<module>__phello__.ham.eggs</module>
 		<module>__phello__.spam</module>
 		<module>_abcoll</module>
 		<module>_aix_support</module>
@@ -5456,13 +5545,19 @@
 		<module>_msi</module>
 		<module>_overlapped</module>
 		<module>_peg_parser</module>
+		<module>_pylong</module>
 		<module>_scproxy</module>
+		<module>_sha2</module>
 		<module>_sysconfigdata</module>
 		<module>_sysconfigdata__darwin_darwin</module>
 		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
+		<module>_testclinic</module>
+		<module>_testconsole</module>
+		<module>_testsinglephase</module>
 		<module>_tokenize</module>
 		<module>_typing</module>
 		<module>_winapi</module>
+		<module>_xxinterpchannels</module>
 		<module>_zoneinfo</module>
 		<module>anydbm</module>
 		<module>asyncio.compat</module>
@@ -6010,6 +6105,15 @@
 		<module>sha</module>
 		<module>sqlite3.__main__</module>
 		<module>sqlite3.test.py25tests</module>
+		<module>sqlite3.test.test_backup</module>
+		<module>sqlite3.test.test_dbapi</module>
+		<module>sqlite3.test.test_dump</module>
+		<module>sqlite3.test.test_factory</module>
+		<module>sqlite3.test.test_hooks</module>
+		<module>sqlite3.test.test_regression</module>
+		<module>sqlite3.test.test_transactions</module>
+		<module>sqlite3.test.test_types</module>
+		<module>sqlite3.test.test_userfunctions</module>
 		<module>sre</module>
 		<module>statvfs</module>
 		<module>stringold</module>
@@ -6041,6 +6145,8 @@
 		<module>xmllib</module>
 		<module>xmlrpclib</module>
 		<module>xxlimited_35</module>
+		<module>zipfile.__main__</module>
+		<module>zipfile._path</module>
 		<module>zoneinfo</module>
 		<module>zoneinfo._common</module>
 		<module>zoneinfo._tzpath</module>
@@ -6105,6 +6211,8 @@
 		<module>__hello__</module>
 		<module>__main__</module>
 		<module>__phello__</module>
+		<module>__phello__.ham</module>
+		<module>__phello__.ham.eggs</module>
 		<module>__phello__.spam</module>
 		<module>_abcoll</module>
 		<module>_bytesio</module>
@@ -6112,12 +6220,18 @@
 		<module>_dummy_thread</module>
 		<module>_fileio</module>
 		<module>_hotshot</module>
+		<module>_pylong</module>
 		<module>_scproxy</module>
+		<module>_sha2</module>
 		<module>_sysconfigdata</module>
 		<module>_sysconfigdata__darwin_darwin</module>
 		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
+		<module>_testclinic</module>
+		<module>_testconsole</module>
+		<module>_testsinglephase</module>
 		<module>_tokenize</module>
 		<module>_typing</module>
+		<module>_xxinterpchannels</module>
 		<module>anydbm</module>
 		<module>asyncio.compat</module>
 		<module>asyncio.mixins</module>
@@ -6656,6 +6770,15 @@
 		<module>sha</module>
 		<module>sqlite3.__main__</module>
 		<module>sqlite3.test.py25tests</module>
+		<module>sqlite3.test.test_backup</module>
+		<module>sqlite3.test.test_dbapi</module>
+		<module>sqlite3.test.test_dump</module>
+		<module>sqlite3.test.test_factory</module>
+		<module>sqlite3.test.test_hooks</module>
+		<module>sqlite3.test.test_regression</module>
+		<module>sqlite3.test.test_transactions</module>
+		<module>sqlite3.test.test_types</module>
+		<module>sqlite3.test.test_userfunctions</module>
 		<module>sre</module>
 		<module>statvfs</module>
 		<module>stringold</module>
@@ -6684,6 +6807,8 @@
 		<module>xmllib</module>
 		<module>xmlrpclib</module>
 		<module>xxlimited_35</module>
+		<module>zipfile.__main__</module>
+		<module>zipfile._path</module>
 		<func>BaseExceptionGroup</func>
 		<func>EncodingWarning</func>
 		<func>ExceptionGroup</func>
