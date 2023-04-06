@@ -336,10 +336,14 @@ public final class MavenProjectsTree {
     return result;
   }
 
-  public boolean isIgnored(MavenProject project) {
+  public boolean isIgnored(@NotNull MavenProject project) {
     String path = project.getPath();
+    return isIgnored(path);
+  }
+
+  private boolean isIgnored(String projectPath) {
     synchronized (myStateLock) {
-      return myIgnoredFilesPaths.contains(path) || matchesIgnoredFilesPatterns(path);
+      return myIgnoredFilesPaths.contains(projectPath) || matchesIgnoredFilesPatterns(projectPath);
     }
   }
 
@@ -525,6 +529,10 @@ public final class MavenProjectsTree {
     }
 
     private boolean startUpdate(VirtualFile mavenProjectFile, boolean forceRead) {
+      String projectPath = mavenProjectFile.getPath();
+
+      if (tree.isIgnored(projectPath)) return false;
+
       Ref<Boolean> previousUpdateRef = new Ref<>();
       updated.compute(mavenProjectFile, (file, value) -> {
         previousUpdateRef.set(value);
@@ -537,7 +545,7 @@ public final class MavenProjectsTree {
         MavenLog.LOG.debug("Has already been updated (%s): %s; forceRead: %s".formatted(previousUpdate, mavenProjectFile, forceRead));
         return false;
       }
-      process.setText(MavenProjectBundle.message("maven.reading.pom", mavenProjectFile.getPath()));
+      process.setText(MavenProjectBundle.message("maven.reading.pom", projectPath));
       process.setText2("");
       return true;
     }
