@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
  * Deprecated. Use {@link java.util.function.Consumer} with {@code @Nullable} annotation on the type parameter instead.
  */
 @ApiStatus.Obsolete
+@FunctionalInterface
 public interface NullableConsumer<T> extends Consumer<T> {
   void consume(@Nullable T t);
 }

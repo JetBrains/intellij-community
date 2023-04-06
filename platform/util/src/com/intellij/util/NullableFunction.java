@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
  * Deprecated. Use {@link java.util.function.Function} with {@code @Nullable} annotation on the second type parameter instead.
  */
 @ApiStatus.Obsolete
+@FunctionalInterface
 public interface NullableFunction<Param, Result> extends Function<Param, Result> {
   @Override
   @Nullable

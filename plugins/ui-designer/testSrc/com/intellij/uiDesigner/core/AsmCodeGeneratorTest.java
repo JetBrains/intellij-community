@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.rt.execution.application.AppMainV2;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -95,7 +96,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     appendPath(cp, NotNullProducer.class);  // intellij.platform.util
     appendPath(cp, Strings.class);  // intellij.platform.util.base
     appendPath(cp, XmlDomReader.class);  // intellij.platform.util.xmlDom
-    appendPath(cp, NotNullFunction.class);  // intellij.platform.util.rt
+    appendPath(cp, FileUtilRt.class);  // intellij.platform.util.rt
     appendPath(cp, SimpleTextAttributes.class);
     appendPath(cp, UISettings.class);
     myClassFinder = new MyClassFinder(new URL[]{url}, cp.toArray(new URL[0]));

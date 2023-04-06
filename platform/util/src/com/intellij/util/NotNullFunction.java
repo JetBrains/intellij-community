@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
  * Deprecated. Use {@link java.util.function.Function} with {@code @NotNull} annotation on the second type parameter instead.
  */
 @ApiStatus.Obsolete
+@FunctionalInterface
 public interface NotNullFunction<Param, Result> extends NullableFunction<Param, Result> {
   @Override
   @NotNull
