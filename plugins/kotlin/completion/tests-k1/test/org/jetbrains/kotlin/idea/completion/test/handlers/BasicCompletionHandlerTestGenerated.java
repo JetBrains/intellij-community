@@ -753,6 +753,22 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
         public void testValInObject() throws Exception {
             runTest("../testData/handlers/basic/stringTemplate/ValInObject.kt");
         }
+        
+        @TestMetadata("QualifiedThis.kt")
+        public void testQualifiedThis() throws Exception {
+            runTest("../testData/handlers/basic/stringTemplate/QualifiedThis.kt");
+        }
+
+        @TestMetadata("QualifiedThis2.kt")
+        public void testQualifiedThis2() throws Exception {
+            runTest("../testData/handlers/basic/stringTemplate/QualifiedThis2.kt");
+        }
+        
+        @TestMetadata("QualifiedThis3.kt")
+        public void testQualifiedThis3() throws Exception {
+            runTest("../testData/handlers/basic/stringTemplate/QualifiedThis3.kt");
+        }
+        
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
