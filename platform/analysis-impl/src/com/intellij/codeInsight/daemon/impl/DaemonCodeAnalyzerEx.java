@@ -13,7 +13,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,10 +67,6 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
     });
   }
 
-  static boolean hasErrors(@NotNull Project project, @NotNull Document document) {
-    return !processHighlights(document, project, HighlightSeverity.ERROR, 0, document.getTextLength(),
-                              CommonProcessors.alwaysFalse());
-  }
   public abstract boolean hasVisibleLightBulbOrPopup();
 
   @NotNull

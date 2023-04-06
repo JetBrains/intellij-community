@@ -6,15 +6,15 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class RangeMarkerSpy implements DocumentListener {
+abstract class RangeMarkerSpy implements DocumentListener {
   private final RangeMarker myMarker;
 
-  public RangeMarkerSpy(RangeMarker marker) {
+  RangeMarkerSpy(@NotNull RangeMarker marker) {
     myMarker = marker;
     assert myMarker.isValid();
   }
 
-  protected abstract void invalidated(DocumentEvent e);
+  protected abstract void invalidated(@NotNull DocumentEvent e);
 
   @Override
   public void documentChanged(@NotNull DocumentEvent e) {

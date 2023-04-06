@@ -138,7 +138,7 @@ final class ErrorStripeMarkersModel {
     }
   }
 
-  public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean documentMarkupModel) {
+  void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean documentMarkupModel) {
     ErrorStripeMarkerImpl existingErrorStripeMarker = findErrorStripeMarker(highlighter, false);
     boolean hasErrorStripe = isAvailable(highlighter, documentMarkupModel);
 

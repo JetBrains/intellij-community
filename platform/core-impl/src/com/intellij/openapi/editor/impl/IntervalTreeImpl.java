@@ -837,17 +837,18 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
   }
 
   private static final class IntTrinity {
-    private final int first;
-    private final int second;
-    private final int third;
+    private final int minStart;
+    private final int maxStart;
+    private final int maxEnd;
 
-    private IntTrinity(int first, int second, int third) {
-      this.first = first;
-      this.second = second;
-      this.third = third;
+    private IntTrinity(int minStart, int maxStart, int maxEnd) {
+      this.minStart = minStart;
+      this.maxStart = maxStart;
+      this.maxEnd = maxEnd;
     }
   }
 
+  @NotNull
   // returns real (minStart, maxStart, maxEnd)
   private IntTrinity checkMax(@Nullable IntervalNode<T> root,
                               int deltaUpToRootExclusive,
@@ -880,13 +881,13 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     nodeCounter[0]++;
     int delta = deltaUpToRootExclusive + (root.isValid() ? root.delta : 0);
     IntTrinity l = checkMax(root.getLeft(), delta, assertInvalid, allValid, keyCounter, nodeCounter, ids, root.delta == 0 && allDeltasUpAreNull);
-    int minLeftStart = l.first;
-    int maxLeftStart = l.second;
-    int maxLeftEnd = l.third;
+    int minLeftStart = l.minStart;
+    int maxLeftStart = l.maxStart;
+    int maxLeftEnd = l.maxEnd;
     IntTrinity r = checkMax(root.getRight(), delta, assertInvalid, allValid, keyCounter, nodeCounter, ids, root.delta == 0 && allDeltasUpAreNull);
-    int maxRightEnd = r.third;
-    int minRightStart = r.first;
-    int maxRightStart = r.second;
+    int maxRightEnd = r.maxEnd;
+    int minRightStart = r.minStart;
+    int maxRightStart = r.maxStart;
     if (!root.isValid()) {
       allValid.set(false);
       if (assertInvalid) assert false : root;
@@ -1311,7 +1312,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
   // must be called under l.writeLock()
   void beforeRemove(@NotNull T markerEx, @NonNls @NotNull Object reason) {
     if (firingBeforeRemove) {
-      throw new IllegalStateException();
+      throw new IllegalStateException("must not remove range markers from within beforeRemove() listener");
     }
     firingBeforeRemove = true;
     try {
