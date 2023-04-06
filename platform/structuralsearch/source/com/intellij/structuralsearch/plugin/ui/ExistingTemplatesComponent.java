@@ -117,7 +117,10 @@ public final class ExistingTemplatesComponent {
       @Override
       public void update(@NotNull AnActionEvent e) {
         final DefaultMutableTreeNode selectedNode = getSelectedNode();
-        e.getPresentation().setEnabled(selectedNode != null && selectedNode.isNodeAncestor(myUserTemplatesNode));
+        boolean enabled = selectedNode != null &&
+                          selectedNode.getUserObject() instanceof Configuration &&
+                          selectedNode.isNodeAncestor(myUserTemplatesNode);
+        e.getPresentation().setEnabled(enabled);
       }
 
       @Override
