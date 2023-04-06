@@ -48,7 +48,7 @@ class GradleTasksExecutionTest : GradleImportingTestCase() {
   @Test
   fun `run task from subproject`() {
     createProjectSubFile("settings.gradle", "include('m1:m2:m3')")
-    createProjectSubFile("buildSrc/settings.gradle", "// ---")
+    createProjectSubFile("buildSrc/settings.gradle", "rootProject.name='my-conventions'")
     createProjectSubFile("m1/m2/m3/build.gradle", """
 tasks.register("hello-module") {
     doLast {
