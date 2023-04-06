@@ -63,6 +63,7 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.findAll;
@@ -181,7 +182,7 @@ public final class GradleManager
 
       for (BuildParticipant buildParticipant : compositeBuild.getCompositeParticipants()) {
         if (pathsEqual(buildParticipant.getRootPath(), projectPath)) continue;
-        if (GradleConstants.BUILD_SRC_NAME.equals(buildParticipant.getRootProjectName())) continue;
+        if (Path.of(buildParticipant.getRootPath()).endsWith(GradleConstants.BUILD_SRC_NAME)) continue;
         if (buildParticipant.getProjects().stream().anyMatch(path -> pathsEqual(path, projectPath))) {
           continue;
         }
