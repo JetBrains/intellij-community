@@ -36,10 +36,12 @@ class CommandHistoryPresenter(private val project: Project, private val editor: 
       override fun currentItemChanged(event: LookupEvent) {
         val selectedCommand = event.item?.lookupString ?: return
         invokeLater {
-          runWriteAction {
-            lookup.performGuardedChange {
-              editor.document.setText(selectedCommand)
-              editor.caretModel.moveToOffset(selectedCommand.length)
+          if (!lookup.isLookupDisposed) {
+            runWriteAction {
+              lookup.performGuardedChange {
+                editor.document.setText(selectedCommand)
+                editor.caretModel.moveToOffset(selectedCommand.length)
+              }
             }
           }
         }
