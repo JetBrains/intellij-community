@@ -8,11 +8,14 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.components.JBList
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.ListCellRenderer
 
-internal class SearchEverywhereMlServiceImpl : SearchEverywhereMlService() {
+
+@ApiStatus.Internal
+class SearchEverywhereMlServiceImpl : SearchEverywhereMlService() {
   companion object {
     internal const val RECORDER_CODE = "MLSE"
 
@@ -34,7 +37,7 @@ internal class SearchEverywhereMlServiceImpl : SearchEverywhereMlService() {
     return experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.USE_EXPERIMENTAL_MODEL
   }
 
-  fun getCurrentSession(): SearchEverywhereMLSearchSession? {
+  internal fun getCurrentSession(): SearchEverywhereMLSearchSession? {
     if (isEnabled()) {
       return activeSession.get()
     }
