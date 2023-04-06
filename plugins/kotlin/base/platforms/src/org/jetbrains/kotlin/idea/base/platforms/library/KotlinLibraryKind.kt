@@ -50,7 +50,7 @@ object KotlinNativeLibraryKind : PersistentLibraryKind<DummyLibraryProperties>("
  * Its only purpose it to prevent repeated evaluation of (absent) PersistentLibraryKind for Kotlin JVM libraries.
  * com.intellij.externalSystem.ImportedLibraryType's persistent kind is expected to be preserved for them when exists.
  */
-object KotlinJvmEffectiveLibraryKind : PersistentLibraryKind<DummyLibraryProperties>("kotlin.jvm"), KotlinLibraryKind {
+internal object KotlinJvmEffectiveLibraryKind : PersistentLibraryKind<DummyLibraryProperties>("kotlin.jvm"), KotlinLibraryKind {
     override val compilerPlatform: TargetPlatform
         get() = JvmPlatforms.defaultJvmPlatform
 

@@ -81,10 +81,10 @@ class IdePlatformKindProjectStructure(private val project: Project) {
             }
         }
 
-        fun getLibraryKind(platformKind: IdePlatformKind): PersistentLibraryKind<*>? {
+        fun getLibraryKind(platformKind: IdePlatformKind): PersistentLibraryKind<*> {
             return when (platformKind) {
                 is CommonIdePlatformKind -> KotlinCommonLibraryKind
-                is JvmIdePlatformKind -> null
+                is JvmIdePlatformKind -> KotlinJvmEffectiveLibraryKind
                 is JsIdePlatformKind -> KotlinJavaScriptLibraryKind
                 is NativeIdePlatformKind -> KotlinNativeLibraryKind
                 else -> error("Unsupported platform kind: $platformKind")
