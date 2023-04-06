@@ -15,6 +15,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchUtil;
@@ -228,25 +229,29 @@ public final class ExistingTemplatesComponent {
       return;
     }
     final String configurationName = configuration.getName();
-    for (Configuration otherConfiguration : ConfigurationManager.getInstance(project).getConfigurations()) {
-      final MatchVariableConstraint constraint =
-        otherConfiguration.getMatchOptions().getVariableConstraint(Configuration.CONTEXT_VAR_NAME);
-      if (constraint == null) {
-        continue;
-      }
-      final String within = constraint.getWithinConstraint();
-      if (configurationName.equals(within)) {
-        if (Messages.CANCEL == Messages.showOkCancelDialog(
-          project,
-          SSRBundle.message("template.in.use.message", configurationName, otherConfiguration.getName()),
-          SSRBundle.message("template.in.use.title", configurationName),
-          CommonBundle.message("button.remove"),
-          Messages.getCancelButton(),
-          AllIcons.General.WarningDialog
-        )) {
-          return;
+    outer:
+    for (Configuration otherConfiguration : ConfigurationManager.getInstance(project).getAllConfigurations()) {
+      MatchOptions matchOptions = otherConfiguration.getMatchOptions();
+      for (String name : matchOptions.getVariableConstraintNames()) {
+        MatchVariableConstraint constraint = matchOptions.getVariableConstraint(name);
+        if (constraint == null) {
+          continue;
         }
-        break;
+        if (configurationName.equals(constraint.getWithinConstraint()) ||
+            configurationName.equals(constraint.getContainsConstraint()) ||
+            configurationName.equals(constraint.getReferenceConstraint())) {
+          if (Messages.CANCEL == Messages.showOkCancelDialog(
+            project,
+            SSRBundle.message("template.in.use.message", configurationName, otherConfiguration.getName()),
+            SSRBundle.message("template.in.use.title", configurationName),
+            CommonBundle.message("button.remove"),
+            Messages.getCancelButton(),
+            AllIcons.General.WarningDialog
+          )) {
+            return;
+          }
+          break outer;
+        }
       }
     }
     DefaultMutableTreeNode sibling = node.getNextSibling();
