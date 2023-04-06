@@ -45,7 +45,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   private CustomHighlighterRenderer myCustomRenderer;
   private LineSeparatorRenderer myLineSeparatorRenderer;
 
-  @Flags
+  @Mask
   private byte myFlags;
 
   private static final byte AFTER_END_OF_LINE_MASK = 1;
@@ -59,11 +59,11 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
 
   @MagicConstant(intValues = {AFTER_END_OF_LINE_MASK, ERROR_STRIPE_IS_THIN_MASK, TARGET_AREA_IS_EXACT_MASK, IN_BATCH_CHANGE_MASK,
     CHANGED_MASK, RENDERERS_CHANGED_MASK, FONT_STYLE_CHANGED_MASK, FOREGROUND_COLOR_CHANGED_MASK})
-  private @interface FlagConstant {}
+  private @interface Flag {}
 
   @MagicConstant(flags = {AFTER_END_OF_LINE_MASK, ERROR_STRIPE_IS_THIN_MASK, TARGET_AREA_IS_EXACT_MASK, IN_BATCH_CHANGE_MASK,
       CHANGED_MASK, RENDERERS_CHANGED_MASK, FONT_STYLE_CHANGED_MASK, FOREGROUND_COLOR_CHANGED_MASK})
-  private @interface Flags {}
+  private @interface Mask {}
 
   RangeHighlighterImpl(@NotNull MarkupModelImpl model,
                        int start,
@@ -81,12 +81,18 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     registerInTree(start, end, greedyToLeft, greedyToRight, layer);
   }
 
-  private boolean isFlagSet(@FlagConstant byte mask) {
+  private boolean isFlagSet(@Flag byte mask) {
     return BitUtil.isSet(myFlags, mask);
   }
 
-  private void setFlag(@FlagConstant byte mask, boolean value) {
+  // take one bit specified by mask from value and store it to myFlags; all other bits remain intact
+  private void setFlag(@Flag byte mask, boolean value) {
     myFlags = BitUtil.set(myFlags, mask, value);
+  }
+
+  // take bits specified by mask from value and store them to myFlags; all other bits remain intact
+  private void setMask(@Mask int mask, @Mask int value) {
+    myFlags = (byte)(myFlags & ~mask | value);
   }
 
 
@@ -354,10 +360,12 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
 
   private void fireChanged(boolean renderersChanged, boolean fontStyleChanged, boolean foregroundColorChanged) {
     if (isFlagSet(IN_BATCH_CHANGE_MASK)) {
-      setFlag(CHANGED_MASK, true);
-      if (renderersChanged) setFlag(RENDERERS_CHANGED_MASK, true);
-      if (fontStyleChanged) setFlag(FONT_STYLE_CHANGED_MASK, true);
-      if (foregroundColorChanged) setFlag(FOREGROUND_COLOR_CHANGED_MASK, true);
+      int changedFlags = CHANGED_MASK|RENDERERS_CHANGED_MASK|FONT_STYLE_CHANGED_MASK|FOREGROUND_COLOR_CHANGED_MASK;
+      int value = CHANGED_MASK
+        | (renderersChanged ? RENDERERS_CHANGED_MASK : 0)
+        | (fontStyleChanged ? FONT_STYLE_CHANGED_MASK : 0)
+        | (foregroundColorChanged ? FOREGROUND_COLOR_CHANGED_MASK : 0);
+      setMask(changedFlags, value);
     }
     else {
       myModel.fireAttributesChanged(this, renderersChanged, fontStyleChanged, foregroundColorChanged);
@@ -392,25 +400,18 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     };
   }
 
-  @Flags
+  @Mask
   byte changeAttributesNoEvents(@NotNull Consumer<? super RangeHighlighterEx> change) {
     assert !isFlagSet(IN_BATCH_CHANGE_MASK);
     assert !isFlagSet(CHANGED_MASK);
-    setFlag(IN_BATCH_CHANGE_MASK, true);
-    setFlag(RENDERERS_CHANGED_MASK, false);
-    setFlag(FONT_STYLE_CHANGED_MASK, false);
-    setFlag(FOREGROUND_COLOR_CHANGED_MASK, false);
+    setMask(IN_BATCH_CHANGE_MASK | RENDERERS_CHANGED_MASK | FONT_STYLE_CHANGED_MASK | FOREGROUND_COLOR_CHANGED_MASK, IN_BATCH_CHANGE_MASK);
     byte result;
     try {
       change.consume(this);
     }
     finally {
       result = myFlags;
-      setFlag(IN_BATCH_CHANGE_MASK, false);
-      setFlag(CHANGED_MASK, false);
-      setFlag(RENDERERS_CHANGED_MASK, false);
-      setFlag(FONT_STYLE_CHANGED_MASK, false);
-      setFlag(FOREGROUND_COLOR_CHANGED_MASK, false);
+      setMask(IN_BATCH_CHANGE_MASK|CHANGED_MASK|RENDERERS_CHANGED_MASK|FONT_STYLE_CHANGED_MASK|FOREGROUND_COLOR_CHANGED_MASK,0);
     }
     return result;
   }
