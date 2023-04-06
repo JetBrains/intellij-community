@@ -13,8 +13,8 @@ import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleTypeProvider
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyTargetExpression
+import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.types.TypeEvalContext
-import java.util.*
 
 class PyNamedTupleInspection : PyInspection() {
 
@@ -85,11 +85,14 @@ class PyNamedTupleInspection : PyInspection() {
                      ProblemHighlightType.GENERIC_ERROR)
           }
         }
-        fieldsProcessor.fieldsWithDefaultValue.headSet(fieldsWithoutDefaultNotOverriden.last()).forEach {
-          callback(it,
-                   "Fields with a default value must come after any fields without a default.",
-                   ProblemHighlightType.GENERIC_ERROR)
-        }
+        val lastFieldWithoutDefault = fieldsWithoutDefaultNotOverriden.last()
+        fieldsProcessor.fieldsWithDefaultValue
+          .takeWhile { PyPsiUtils.isBefore(it, lastFieldWithoutDefault) }
+          .forEach {
+            callback(it,
+                     "Fields with a default value must come after any fields without a default.",
+                     ProblemHighlightType.GENERIC_ERROR)
+          }
       }
     }
 
@@ -125,8 +128,8 @@ class PyNamedTupleInspection : PyInspection() {
 
   private class LocalFieldsProcessor(private val filter: (PyTargetExpression) -> Boolean,
                                      private val hasAssignedValue: (PyTargetExpression) -> Boolean) : PsiScopeProcessor {
-    val fieldsWithDefaultValue = TreeSet(compareBy(PyTargetExpression::getTextOffset))
-    val fieldsWithoutDefaultValue = TreeSet(compareBy(PyTargetExpression::getTextOffset))
+    val fieldsWithDefaultValue = mutableListOf<PyTargetExpression>()
+    val fieldsWithoutDefaultValue = mutableListOf<PyTargetExpression>()
 
     override fun execute(element: PsiElement, state: ResolveState): Boolean {
       if (element is PyTargetExpression && filter(element)) {
