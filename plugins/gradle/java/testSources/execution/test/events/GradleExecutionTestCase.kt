@@ -137,7 +137,7 @@ abstract class GradleExecutionTestCase : GradleProjectTestCase() {
     }
   }
 
-  fun <R> waitForAnyGradleTaskExecution(action: () -> R) {
+  open fun <R> waitForAnyGradleTaskExecution(action: () -> R) {
     executionEnvironmentFixture.assertExecutionEnvironmentIsReady {
       waitForGradleEventDispatcherClosing {
         waitForAnyExecution(project) {
@@ -160,6 +160,10 @@ abstract class GradleExecutionTestCase : GradleProjectTestCase() {
 
   fun assertTestConsoleContains(expected: String) {
     executionConsoleFixture.assertTestConsoleContains(expected)
+  }
+
+  fun assertTestConsoleDoesNotContain(expected: String) {
+    executionConsoleFixture.assertTestConsoleDoesNotContain(expected)
   }
 
   fun assertRunTreeView(assert: TreeAssertion.Node<Nothing?>.() -> Unit) {

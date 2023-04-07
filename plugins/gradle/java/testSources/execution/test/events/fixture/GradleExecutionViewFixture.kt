@@ -99,7 +99,18 @@ class GradleExecutionViewFixture(
     val actual = getTestConsoleText()
     if (expected !in actual) {
       throw AssertionFailureBuilder.assertionFailure()
-        .message("Test execution console doesn't contain")
+        .message("Test execution console doesn't contain but should")
+        .expected(expected)
+        .actual(actual)
+        .build()
+    }
+  }
+
+  fun assertTestConsoleDoesNotContain(expected: String) {
+    val actual = getTestConsoleText()
+    if (expected in actual) {
+      throw AssertionFailureBuilder.assertionFailure()
+        .message("Test execution console contains but shouldn't")
         .expected(expected)
         .actual(actual)
         .build()
