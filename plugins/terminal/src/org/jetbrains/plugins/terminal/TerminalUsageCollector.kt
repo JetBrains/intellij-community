@@ -12,13 +12,14 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
 import com.intellij.terminal.TerminalShellCommandHandler
 import com.intellij.util.PathUtil
+import org.jetbrains.plugins.terminal.fus.TerminalCommandUsageStatistics
 import java.util.*
 
 class TerminalUsageTriggerCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup(GROUP_ID, 5)
+    internal val GROUP = EventLogGroup(GROUP_ID, 6)
 
     private val TERMINAL_COMMAND_HANDLER_FIELD = EventFields.StringValidatedByCustomRule("terminalCommandHandler",
                                                                                          ClassNameRuleValidator::class.java)
@@ -26,7 +27,6 @@ class TerminalUsageTriggerCollector : CounterUsagesCollector() {
                                                                                       ClassNameRuleValidator::class.java)
 
     private val sshExecEvent = GROUP.registerEvent("ssh.exec")
-    private val terminalCommandExecutedEvent = GROUP.registerEvent("terminal.command.executed")
     private val terminalSmartCommandExecutedEvent = GROUP.registerVarargEvent("terminal.smart.command.executed",
                                                                               TERMINAL_COMMAND_HANDLER_FIELD,
                                                                               RUN_ANYTHING_PROVIDER_FIELD)
@@ -41,7 +41,9 @@ class TerminalUsageTriggerCollector : CounterUsagesCollector() {
     fun triggerSshShellStarted(project: Project) = sshExecEvent.log(project)
 
     @JvmStatic
-    fun triggerCommandExecuted(project: Project) = terminalCommandExecutedEvent.log(project)
+    fun triggerCommandExecuted(project: Project, userCommandLine: String) {
+      TerminalCommandUsageStatistics.triggerCommandExecuted(project, userCommandLine)
+    }
 
     @JvmStatic
     fun triggerSmartCommand(project: Project,
