@@ -586,6 +586,18 @@ public final class RedundantCastUtil {
             return  (PsiCall)PsiTreeUtil.releaseMark(callCopy, marker);
           }
           else {
+            //it is possible that in several cases there is not enough content, let's add more
+            UpperParent contextParent = getContextParent(expression);
+            if (contextParent != null && contextParent.hasPath()) {
+              RecaptureTypeMapper.encode(encoded = contextParent.parent());
+              PsiElement copy = contextParent.getElementCopy();
+              if (copy instanceof PsiCall psiCall) {
+                return psiCall;
+              }
+              else {
+                return null;
+              }
+            }
             RecaptureTypeMapper.encode(encoded = expression);
             return (PsiCall)expression.copy();
           }
@@ -598,6 +610,53 @@ public final class RedundantCastUtil {
         if (encoded != null) {
           RecaptureTypeMapper.clean(encoded);
         }
+      }
+    }
+
+    @Nullable
+    private static UpperParent getContextParent(@NotNull PsiCall expression) {
+      PsiElement parent = expression.getParent();
+      List<Integer> indexes = new ArrayList<>();
+      int index = -1;
+      PsiElement currentChild = expression;
+      while (parent instanceof PsiIfStatement || parent instanceof PsiConditionalExpression || parent instanceof PsiLoopStatement) {
+        PsiElement[] children = parent.getChildren();
+        for (int i = 0; i < children.length; i++) {
+          PsiElement child = children[i];
+          if (child == currentChild) {
+            index = i;
+            break;
+          }
+        }
+        if (index != -1) {
+          indexes.add(index);
+        }
+        else {
+          return null;
+        }
+        index = -1;
+        currentChild = parent;
+        parent = parent.getParent();
+      }
+      return new UpperParent(currentChild, indexes);
+    }
+
+    private record UpperParent(PsiElement parent, List<Integer> indexes) {
+      public PsiElement getElementCopy() {
+        PsiElement result = parent.copy();
+        for (Integer nextIndex : indexes) {
+          if (result != null && result.getChildren().length > nextIndex) {
+            result = result.getChildren()[nextIndex];
+          }
+          else {
+            return null;
+          }
+        }
+        return result;
+      }
+
+      public boolean hasPath() {
+        return !indexes.isEmpty();
       }
     }
 
