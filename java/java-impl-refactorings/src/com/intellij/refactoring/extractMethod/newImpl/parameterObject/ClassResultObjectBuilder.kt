@@ -5,10 +5,10 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.siyeh.ig.psiutils.TypeUtils
 
-class ClassParameterObjectBuilder(private val pojoClass: PsiClass): ParameterObjectBuilder {
+class ClassResultObjectBuilder(private val pojoClass: PsiClass): ResultObjectBuilder {
   companion object {
-    fun create(variables: List<PsiVariable>): ClassParameterObjectBuilder {
-      return ClassParameterObjectBuilder(createPojoClass(variables))
+    fun create(variables: List<PsiVariable>): ClassResultObjectBuilder {
+      return ClassResultObjectBuilder(createPojoClass(variables))
     }
 
     private fun createPojoClass(variables: List<PsiVariable>): PsiClass {

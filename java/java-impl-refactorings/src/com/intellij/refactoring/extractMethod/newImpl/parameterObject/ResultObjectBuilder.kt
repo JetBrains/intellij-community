@@ -6,7 +6,7 @@ import com.intellij.psi.PsiDeclarationStatement
 import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiReferenceExpression
 
-interface ParameterObjectBuilder {
+interface ResultObjectBuilder {
   fun createClass(): PsiClass
   fun createDeclaration(): PsiDeclarationStatement
   fun createReferenceReplacement(reference: PsiReferenceExpression): PsiExpression

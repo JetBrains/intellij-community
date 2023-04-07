@@ -4,12 +4,12 @@ package com.intellij.refactoring.extractMethod.newImpl.parameterObject
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 
-class RecordParameterObjectBuilder(private val record: PsiClass): ParameterObjectBuilder {
+class RecordResultObjectBuilder(private val record: PsiClass): ResultObjectBuilder {
 
   companion object {
 
-    fun create(variables: List<PsiVariable>): RecordParameterObjectBuilder {
-      return RecordParameterObjectBuilder(createRecord(variables))
+    fun create(variables: List<PsiVariable>): RecordResultObjectBuilder {
+      return RecordResultObjectBuilder(createRecord(variables))
     }
 
     private fun createRecord(variables: List<PsiVariable>): PsiClass {
