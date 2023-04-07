@@ -1259,17 +1259,21 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       return
     }
 
-    // First, apply the new info to all windows, including unavailable ones
-    // (so they're shown in their appropriate places if they ARE shown later by some user action).
-    for (item in list) {
-      item.entry.applyWindowInfo(item.new)
-    }
-
-    // For unavailable windows, stop right here (we don't want to try to move their stripe buttons, for example).
-    list.removeAll { !it.entry.toolWindow.isAvailable }
-
     // Now, show/hide/dock/undock/rearrange tool windows and their stripe buttons.
-    for (item in list) {
+    val iterator = list.iterator()
+    while (iterator.hasNext()) {
+      val item = iterator.next()
+
+      // Apply the new info to all windows, including unavailable ones
+      // (so they're shown in their appropriate places if they ARE shown later by some user action).
+      item.entry.applyWindowInfo(item.new)
+
+      // Then remove unavailable tool windows to exclude them from further processing.
+      if (!item.entry.toolWindow.isAvailable) {
+        iterator.remove()
+        continue
+      }
+
       if (item.old.isVisible && !item.new.isVisible) {
         updateStateAndRemoveDecorator(item.new, item.entry, dirtyMode = true)
       }
@@ -1312,7 +1316,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     }
 
     // Now that the windows are shown/hidden/docked/whatever, we can adjust their sizes properly:
-
     for (item in list) {
       if (item.new.isVisible && item.new.isDocked) {
         val toolWindowPane = getToolWindowPane(item.entry.toolWindow)
