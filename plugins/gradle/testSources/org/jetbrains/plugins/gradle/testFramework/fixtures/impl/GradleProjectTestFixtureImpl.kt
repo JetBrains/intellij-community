@@ -13,6 +13,7 @@ import com.intellij.testFramework.closeProjectAsync
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.SdkTestFixture
 import com.intellij.testFramework.openProjectAsync
+import com.intellij.testFramework.useProjectAsync
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.project.wizard.util.generateGradleWrapper
@@ -83,16 +84,12 @@ internal class GradleProjectTestFixtureImpl private constructor(
   companion object {
 
     private suspend fun createProjectCaches(projectRoot: VirtualFile) {
-      val project = closeOpenedProjectsIfFailAsync {
+      closeOpenedProjectsIfFailAsync {
         awaitAnyGradleProjectReload {
           openProjectAsync(projectRoot)
         }
-      }
-      try {
+      }.useProjectAsync(save = true) {
         projectRoot.refreshAndAwait()
-      }
-      finally {
-        project.closeProjectAsync(save = true)
       }
     }
   }
