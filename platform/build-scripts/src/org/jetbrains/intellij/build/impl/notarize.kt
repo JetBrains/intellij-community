@@ -72,5 +72,6 @@ internal suspend fun notarize(sitFile: Path, context: BuildContext) {
         context.messages.error("Notarization of $sitFile failed, see logs above")
       }
     }
+    context.notifyArtifactBuilt(logFile)
   }
 }

@@ -151,12 +151,16 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
     launch(Dispatchers.IO) {
       spanBuilder("generate content report").useWithScope2 {
         Files.createDirectories(context.paths.artifactDir)
+        val contentMappingJson = context.paths.artifactDir.resolve("content-mapping.json")
         writeProjectStructureReport(entries = entries,
-                                    file = context.paths.artifactDir.resolve("content-mapping.json"),
+                                    file = contentMappingJson,
                                     buildPaths = context.paths)
-        Files.newOutputStream(context.paths.artifactDir.resolve("content.json")).use {
+        val contentJson = context.paths.artifactDir.resolve("content.json")
+        Files.newOutputStream(contentJson).use {
           buildJarContentReport(entries = entries, out = it, buildPaths = context.paths)
         }
+        context.notifyArtifactBuilt(contentMappingJson)
+        context.notifyArtifactBuilt(contentJson)
       }
     }
     createBuildThirdPartyLibraryListJob(entries, context)
