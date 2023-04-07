@@ -40,5 +40,25 @@ is not used later:
     return res++;
   }
 </code></pre>
+<p>
+Use the <b>Report pattern variables whose values are never used</b> option to report the cases when values of pattern variables
+are not used:
+</p>
+<pre><code>
+  if (object instanceof String s) {
+      s = "hello";
+      System.out.println(s);
+  }
+</code></pre>
+<p>
+Use the <b>Report iteration parameters whose values are never used</b> option to report the cases when values of iteration parameters
+  of enhanced `for` statements are not used:
+</p>
+<pre><code>
+  for (String  arg : args) {
+      arg = "test";
+      System.out.println(arg);
+  }
+</code></pre>
 </body>
 </html>

@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -31,8 +32,23 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean REPORT_PREFIX_EXPRESSIONS;
   public boolean REPORT_POSTFIX_EXPRESSIONS = true;
   public boolean REPORT_REDUNDANT_INITIALIZER = true;
+  public boolean REPORT_PATTERN_VARIABLE = true;
+  public boolean REPORT_FOR_EACH_PARAMETER = true;
 
   public static final String SHORT_NAME = "UnusedAssignment";
+
+  @Override
+  public void writeSettings(@NotNull Element node) {
+    super.writeSettings(node);
+    for (Element child : new ArrayList<>(node.getChildren())) {
+      String name = child.getAttributeValue("name");
+      String value = child.getAttributeValue("value");
+      if (Set.of("REPORT_PATTERN_VARIABLE", "REPORT_FOR_EACH_PARAMETER").contains(name) &&
+          "true".equals(value)) {
+        node.removeContent(child);
+      }
+    }
+  }
 
   @Override
   @NotNull
@@ -92,11 +108,16 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
           }
           reportAssignmentProblem(psiVariable, (PsiAssignmentExpression)context, holder);
         }
-        else {
-          if (context instanceof PsiPrefixExpression && REPORT_PREFIX_EXPRESSIONS ||
-              context instanceof PsiPostfixExpression && REPORT_POSTFIX_EXPRESSIONS) {
-            holder.registerProblem(context, JavaBundle.message("inspection.unused.assignment.problem.descriptor4"));
-          }
+        else if (context instanceof PsiPrefixExpression && REPORT_PREFIX_EXPRESSIONS ||
+                 context instanceof PsiPostfixExpression && REPORT_POSTFIX_EXPRESSIONS) {
+          holder.registerProblem(context, JavaBundle.message("inspection.unused.assignment.problem.descriptor4"));
+        }
+        else if (REPORT_PATTERN_VARIABLE && psiVariable instanceof PsiPatternVariable) {
+          holder.registerProblem(psiVariable.getNameIdentifier(), JavaBundle.message("inspection.unused.assignment.problem.descriptor5"));
+        }
+        else if (REPORT_FOR_EACH_PARAMETER && context instanceof PsiForeachStatement foreachStatement &&
+                  foreachStatement.getIterationParameter() == psiVariable && psiVariable.getNameIdentifier() != null) {
+          holder.registerProblem(psiVariable.getNameIdentifier(), JavaBundle.message("inspection.unused.assignment.problem.descriptor6"));
         }
       }
     }
@@ -341,7 +362,9 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
     return OptPane.pane(
       OptPane.checkbox("REPORT_REDUNDANT_INITIALIZER", JavaBundle.message("inspection.unused.assignment.option2")),
       OptPane.checkbox("REPORT_PREFIX_EXPRESSIONS", JavaBundle.message("inspection.unused.assignment.option")),
-      OptPane.checkbox("REPORT_POSTFIX_EXPRESSIONS", JavaBundle.message("inspection.unused.assignment.option1"))
+      OptPane.checkbox("REPORT_POSTFIX_EXPRESSIONS", JavaBundle.message("inspection.unused.assignment.option1")),
+      OptPane.checkbox("REPORT_PATTERN_VARIABLE", JavaBundle.message("inspection.unused.assignment.option3")),
+      OptPane.checkbox("REPORT_FOR_EACH_PARAMETER", JavaBundle.message("inspection.unused.assignment.option4"))
     );
   }
 

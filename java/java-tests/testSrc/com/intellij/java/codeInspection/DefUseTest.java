@@ -64,11 +64,12 @@ public class DefUseTest extends LightJavaCodeInsightFixtureTestCase {
   public void testAssignmentInCatch() { doTest(); }
 
   public void testFieldCouldBeUsedOutside() { doTest(); }
-
+  public void testForEachIterationParameter()  { doTest(); }
+  public void testPatternVariable()  { doTest(); }
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_17;
+    return JAVA_20;
   }
 
   private void doTest() {
