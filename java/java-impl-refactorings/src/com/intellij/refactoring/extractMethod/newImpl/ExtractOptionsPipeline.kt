@@ -125,7 +125,7 @@ object ExtractMethodPipeline {
     if (statement != null && JavaHighlightUtil.isSuperOrThisCall(statement, true, true)) {
       return extractOptions.copy(isStatic = true)
     }
-    val shouldBeStatic = PsiUtil.getEnclosingStaticElement(extractOptions.elements.first(), null) != null
+    val shouldBeStatic = PsiUtil.getEnclosingStaticElement(extractOptions.elements.first(), extractOptions.targetClass) != null
     return extractOptions.copy(isStatic = shouldBeStatic)
   }
 

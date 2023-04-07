@@ -492,6 +492,18 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     doTest()
   }
 
+  fun testTypeParametersInNonStaticTarget(){
+    JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD = true
+    shouldSelectTargetClass("Inner in Test")
+    doTest()
+  }
+
+  fun testNonStaticExtractFromStaticInner(){
+    shouldSelectTargetClass("Inner in Test")
+    JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD = false
+    doTest()
+  }
+
   fun testRefactoringListener(){
     templateTest {
       configureByFile("$BASE_PATH/${getTestName(false)}.java")
