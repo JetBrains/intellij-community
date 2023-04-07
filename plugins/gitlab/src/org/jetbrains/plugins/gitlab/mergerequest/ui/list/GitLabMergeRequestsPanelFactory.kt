@@ -1,15 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.list
 
-import com.intellij.collaboration.async.nestedDisposable
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.ui.*
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.scroll.BoundedRangeModelThresholdListener
-import com.intellij.vcs.log.ui.frame.ProgressStripe
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
@@ -28,12 +27,11 @@ internal class GitLabMergeRequestsPanelFactory {
 
     val listModel = collectMergeRequests(scope, listVm)
     val listMergeRequests = GitLabMergeRequestsListComponentFactory.create(listModel, listVm.avatarIconsProvider).also { list ->
-      DataManager.registerDataProvider(list) {
-        if (GitLabMergeRequestsActionKeys.SELECTED.`is`(it)) {
-          list.selectedValue
-        }
-        else {
-          null
+      DataManager.registerDataProvider(list) { dataId ->
+        when {
+          GitLabMergeRequestsActionKeys.SELECTED.`is`(dataId) -> list.selectedValue
+          GitLabMergeRequestsActionKeys.REVIEW_LIST_VM.`is`(dataId) -> listVm
+          else -> null
         }
       }
 
@@ -44,22 +42,13 @@ internal class GitLabMergeRequestsPanelFactory {
     }
 
     val listLoaderPanel = createListLoaderPanel(scope, listVm, listMergeRequests)
-    val progressStripe = ProgressStripe(
-      listLoaderPanel,
-      scope.nestedDisposable(),
-      ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
-    ).apply {
-      scope.launch {
-        listVm.loadingState.collect {
-          if (it) startLoadingImmediately() else stopLoading()
-        }
-      }
-    }
+    val listWrapper = Wrapper()
+    val progressStripe = CollaborationToolsUIUtil.wrapWithProgressStripe(scope, listVm.loadingState, listWrapper)
     ScrollableContentBorder.setup(listLoaderPanel, Side.TOP, progressStripe)
 
     val searchPanel = createSearchPanel(scope, listVm)
 
-    GitLabMergeRequestsListController(project, scope, listVm, listMergeRequests.emptyText, listLoaderPanel, progressStripe)
+    GitLabMergeRequestsListController(project, scope, listVm, listMergeRequests.emptyText, listLoaderPanel, listWrapper)
 
     return JBUI.Panels.simplePanel(progressStripe)
       .addToTop(searchPanel)

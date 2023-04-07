@@ -45,6 +45,10 @@
   </extensions>
 
   <actions>
+    <action id="GitLab.Merge.Request.List.Refresh"
+            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestListRefreshAction"
+            use-shortcut-of="Refresh"
+            icon="AllIcons.Actions.Refresh"/>
     <action id="GitLab.Merge.Request.Refresh"
             class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestRefreshAction"
             use-shortcut-of="Refresh"/>
@@ -58,6 +62,8 @@
     <group id="GitLab.Merge.Request.List.Actions">
       <reference id="GitLab.Merge.Request.Show"/>
       <reference id="GitLab.Merge.Request.Open.In.Browser"/>
+      <separator/>
+      <reference id="GitLab.Merge.Request.List.Refresh"/>
     </group>
 
     <group id="GitLab.Merge.Request.Details.Popup">
