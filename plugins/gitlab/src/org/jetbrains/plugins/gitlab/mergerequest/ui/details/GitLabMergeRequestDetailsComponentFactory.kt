@@ -49,7 +49,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
           is GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Result -> {
             val detailsVm = loadingState.detailsVm
             val detailsPanel = createDetailsComponent(project, contentCs, detailsVm, avatarIconsProvider).apply {
-              val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Requests.Details.Popup") as ActionGroup
+              val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Request.Details.Popup") as ActionGroup
               PopupHandler.installPopupMenu(this, actionGroup, "GitLabMergeRequestDetailsPanelPopup")
               DataManager.registerDataProvider(this) { dataId ->
                 when {
@@ -85,7 +85,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
       })
       add(GitLabMergeRequestDetailsBranchComponentFactory.create(project, cs, detailsInfoVm, repository))
     }
-    val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Requests.Details.Popup") as ActionGroup
+    val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Request.Details.Popup") as ActionGroup
 
     val layout = MigLayout(
       LC()

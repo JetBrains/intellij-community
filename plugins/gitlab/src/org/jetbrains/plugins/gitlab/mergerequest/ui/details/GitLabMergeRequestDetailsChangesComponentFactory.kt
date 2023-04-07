@@ -61,7 +61,7 @@ internal class GitLabMergeRequestDetailsChangesComponentFactory(private val proj
         }
         vm.updateSelectedChanges(VcsTreeModelData.getListSelectionOrAll(it).map { it as? Change })
 
-        it.installPopupHandler(ActionManager.getInstance().getAction("GitLab.Merge.Requests.Changes.Popup") as ActionGroup)
+        it.installPopupHandler(ActionManager.getInstance().getAction("GitLab.Merge.Request.Changes.Popup") as ActionGroup)
       }
   }
 }
