@@ -22,6 +22,8 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.util.resolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.ReferenceVariantsHelper
+import org.jetbrains.kotlin.idea.completion.handlers.KotlinPropertyInsertHandler
+import org.jetbrains.kotlin.idea.completion.handlers.surroundWithBracesIfInStringTemplate
 import org.jetbrains.kotlin.idea.completion.implCommon.keywords.BreakContinueKeywordHandler
 import org.jetbrains.kotlin.idea.completion.keywords.DefaultCompletionKeywordHandlerProvider
 import org.jetbrains.kotlin.idea.completion.keywords.createLookups
@@ -646,7 +648,15 @@ class BasicCompletionSession(
                                     expression,
                                     prefix,
                                     resolutionFacade
-                                ).map { it.createLookupElement() })
+                                ).map {
+                                    var lookupElementBuilder = it.createLookupElement()
+                                    if (lookupElementBuilder.lookupString != "this") {
+                                        lookupElementBuilder = lookupElementBuilder.withInsertHandler { context, _ ->
+                                            surroundWithBracesIfInStringTemplate(context)
+                                        }
+                                    }
+                                    lookupElementBuilder
+                                })
                         } else {
                             // for completion in secondary constructor delegation call
                             collector.addElement(lookupElement)
