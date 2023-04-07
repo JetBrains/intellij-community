@@ -21,8 +21,6 @@ interface FileTestFixture : IdeaTestFixture {
 
   fun rollbackAll()
 
-  fun suppressErrors(isSuppressedErrors: Boolean)
-
   fun addIllegalOperationError(message: String)
 
   interface Builder : TestFilesConfiguration {

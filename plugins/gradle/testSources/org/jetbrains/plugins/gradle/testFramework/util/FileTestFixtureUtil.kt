@@ -6,18 +6,7 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 
-
-fun <R> FileTestFixture.withSuppressedErrors(action: () -> R): R {
-  suppressErrors(true)
-  try {
-    return action()
-  }
-  finally {
-    suppressErrors(false)
-  }
-}
 
 suspend fun VirtualFile.refreshAndAwait() {
   writeAction {
