@@ -45,6 +45,7 @@ public final class RemoveUnusedVariableUtil {
     List<PsiElement> sideEffects = new ArrayList<>();
     boolean hasSideEffects = checkSideEffects(element, variableToIgnore, sideEffects);
     if (!hasSideEffects || sideEffects.isEmpty()) return RemoveMode.DELETE_ALL;
+    if (!PsiUtil.isStatement(element)) return RemoveMode.DELETE_ALL;
     return RemoveMode.MAKE_STATEMENT;
   }
 
