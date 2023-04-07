@@ -25,14 +25,11 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
@@ -41,7 +38,6 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -61,10 +57,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
@@ -74,10 +67,8 @@ import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.tree.TreeVisitor;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
@@ -99,7 +90,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static com.intellij.application.options.OptionId.PROJECT_VIEW_SHOW_VISIBILITY_ICONS;
 import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
@@ -1178,7 +1168,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     return myCurrentViewId;
   }
 
-  private @Nullable SelectInTarget getCurrentSelectInTarget() {
+  @Nullable SelectInTarget getCurrentSelectInTarget() {
     return getSelectInTarget(getCurrentViewId());
   }
 
@@ -1734,17 +1724,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     void scrollFromSource(@Nullable FileEditor fileEditor, boolean requestFocus) {
-      var editorsToCheck = fileEditor == null ? allEditors() : List.of(fileEditor);
-      SelectorInCurrentTarget selector = new SelectorInCurrentTarget(editorsToCheck);
-      selector.selectInCurrentTarget(requestFocus);
-    }
-
-    private List<@Nullable FileEditor> allEditors() {
-      FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
-      var result = new ArrayList<@Nullable FileEditor>();
-      result.add(fileEditorManager.getSelectedEditor());
-      result.addAll(Arrays.asList(fileEditorManager.getSelectedEditors()));
-      return result;
+      myProject.getService(SelectInProjectViewImpl.class).selectInCurrentTarget(fileEditor, requestFocus);
     }
 
     private boolean isCurrentProjectViewPaneFocused() {
@@ -1770,163 +1750,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     @Override
     protected String getActionDescription() {
       return ActionsBundle.message("action.ProjectView.AutoscrollFromSource.description");
-    }
-  }
-
-  private class SelectorInCurrentTarget {
-
-    private final List<@Nullable FileEditor> myEditors;
-    private int myEditorIndex = 0;
-
-    SelectorInCurrentTarget(List<@Nullable FileEditor> editors) {
-      myEditors = editors;
-    }
-
-    public void selectInCurrentTarget(boolean requestFocus) {
-      var psiFileSupplierAndEditor = findNextPsiFileSupplierAndEditor();
-      if (psiFileSupplierAndEditor == null) return;
-      ReadAction
-        .nonBlocking(psiFileSupplierAndEditor.psiFileSupplier::get)
-        .withDocumentsCommitted(myProject)
-        .finishOnUiThread(ModalityState.defaultModalityState(), psiFile -> {
-          if (psiFile == null) {
-            ++myEditorIndex;
-            selectInCurrentTarget(requestFocus);
-          }
-          else {
-            createSelectInContext(psiFile, psiFileSupplierAndEditor.editor).selectInCurrentTarget(requestFocus);
-          }
-        })
-        .coalesceBy(SelectorInCurrentTarget.class, ProjectViewImpl.this)
-        .submit(AppExecutorUtil.getAppExecutorService());
-    }
-
-    private record PsiFileSupplierAndEditor(Supplier<PsiFile> psiFileSupplier, FileEditor editor) { }
-
-    private @Nullable PsiFileSupplierAndEditor findNextPsiFileSupplierAndEditor() {
-      Supplier<@Nullable PsiFile> psiFileSupplier = null;
-      @Nullable FileEditor editor = null;
-      while (myEditorIndex < myEditors.size()) {
-        editor = myEditors.get(myEditorIndex);
-        psiFileSupplier = getPsiFileSupplier(editor);
-        if (psiFileSupplier != null) {
-          break;
-        }
-        ++myEditorIndex;
-      }
-      if (psiFileSupplier == null) {
-        return null;
-      }
-      return new PsiFileSupplierAndEditor(psiFileSupplier, editor);
-    }
-
-    private @Nullable Supplier<@Nullable PsiFile> getPsiFileSupplier(@Nullable FileEditor fileEditor) {
-      if (fileEditor == null || !fileEditor.isValid()) {
-        return null;
-      }
-      if (fileEditor instanceof TextEditor textEditor) {
-        // EDT code
-        Editor editor = textEditor.getEditor();
-        if (editor.isDisposed()) {
-          return null;
-        }
-        Document document = editor.getDocument();
-        return () -> { // BGT code
-          var psiDocumentManager = PsiDocumentManager.getInstance(myProject);
-          if (psiDocumentManager == null) {
-            return null;
-          }
-          return psiDocumentManager.getPsiFile(document);
-        };
-      }
-      else {
-        // EDT code
-        VirtualFile file = fileEditor.getFile();
-        return () -> { // BGT code
-          if (file == null || !file.isValid()) {
-            return null;
-          }
-          return PsiManager.getInstance(myProject).findFile(file);
-        };
-      }
-    }
-
-    private @NotNull SimpleSelectInContext createSelectInContext(@NotNull PsiFile file, FileEditor fileEditor) {
-      if (fileEditor instanceof TextEditor textEditor) {
-        return new EditorSelectInContext(file, textEditor.getEditor());
-      }
-      else {
-        return new SimpleSelectInContext(file);
-      }
-    }
-
-  }
-
-  private class SimpleSelectInContext extends SmartSelectInContext {
-    SimpleSelectInContext(@NotNull PsiFile psiFile) {
-      super(psiFile, psiFile);
-    }
-
-    void selectInCurrentTarget(boolean requestFocus) {
-      SelectInTarget target = getCurrentSelectInTarget();
-      if (target != null && getPsiFile() != null) {
-        target.selectIn(this, requestFocus);
-      }
-    }
-
-    @Override
-    @NotNull
-    public FileEditorProvider getFileEditorProvider() {
-      return () -> ArrayUtil.getFirstElement(FileEditorManager.getInstance(myProject).openFile(getVirtualFile(), false));
-    }
-  }
-
-  private class EditorSelectInContext extends SimpleSelectInContext {
-    private final Editor editor;
-
-    EditorSelectInContext(@NotNull PsiFile psiFile, @NotNull Editor editor) {
-      super(psiFile);
-      this.editor = editor;
-    }
-
-    @Override
-    void selectInCurrentTarget(boolean requestFocus) {
-      if (PsiDocumentManager.getInstance(getProject()) == null) return;
-
-      runWhenPsiAtCaretIsParsed(() -> super.selectInCurrentTarget(requestFocus));
-    }
-
-    private void runWhenPsiAtCaretIsParsed(Runnable runnable) {
-      int offset = editor.getCaretModel().getOffset();
-      ReadAction
-        .nonBlocking(() -> {
-          PsiFile file = getPsiFile();
-          return file == null ? null : file.findElementAt(offset);
-        })
-        .withDocumentsCommitted(getProject())
-        .finishOnUiThread(ModalityState.defaultModalityState(), parsedLeaf -> {
-          if (editor.getCaretModel().getOffset() != offset) {
-            runWhenPsiAtCaretIsParsed(runnable);
-          } else {
-            runnable.run();
-          }
-        })
-        .coalesceBy(EditorSelectInContext.class, ProjectViewImpl.this)
-        .expireWhen(editor::isDisposed)
-        .submit(AppExecutorUtil.getAppExecutorService());
-    }
-
-    @Override
-    public Object getSelectorInFile() {
-      PsiFile file = getPsiFile();
-      if (file != null) {
-        int offset = editor.getCaretModel().getOffset();
-        PsiDocumentManager manager = PsiDocumentManager.getInstance(getProject());
-        LOG.assertTrue(manager.isCommitted(editor.getDocument()));
-        PsiElement element = file.findElementAt(offset);
-        if (element != null) return element;
-      }
-      return file;
     }
   }
 
