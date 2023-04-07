@@ -26,6 +26,10 @@ class FirUastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         doCheck("AssigningArrayElementType", ::checkAssigningArrayElementType)
     }
 
+    fun testArgumentForParameter_smartcast() {
+        doCheck("ArgumentForParameter_smartcast", ::checkArgumentForParameter_smartcast)
+    }
+
     fun testDivByZero() {
         doCheck("DivByZero", ::checkDivByZero)
     }
