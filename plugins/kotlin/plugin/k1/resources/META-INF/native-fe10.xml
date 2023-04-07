@@ -2,8 +2,4 @@
   <extensions defaultExtensionNs="com.intellij">
     <psi.classFileDecompiler implementation="org.jetbrains.kotlin.ide.konan.decompiler.KotlinNativeMetadataDecompiler"/>
   </extensions>
-
-  <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <idePlatformKindResolution implementation="org.jetbrains.kotlin.ide.konan.NativePlatformKindResolution"/>
-  </extensions>
 </idea-plugin>

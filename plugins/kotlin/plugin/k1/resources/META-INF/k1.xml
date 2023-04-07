@@ -31,6 +31,7 @@
   <xi:include href="jvm-debugger-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="scripting-base.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="facets-base.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="platform-kind-resolution-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <!--suppress XmlPathReference -->
   <xi:include href="ultimate-plugin.xml" xpointer="xpointer(/idea-plugin/*)">
