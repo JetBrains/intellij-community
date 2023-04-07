@@ -41,7 +41,7 @@ internal class HierarchyView(
   override fun getSuperClass(): PsiClass? = GrClassImplUtil.getSuperClass(myCodeClass, myExtendsTypes)
   override fun isInheritor(baseClass: PsiClass, checkDeep: Boolean): Boolean = InheritanceImplUtil.isInheritor(this, baseClass, checkDeep)
 
-  override fun getDelegate(): PsiClass = error("must not be called")
+  override fun getDelegate(): PsiClass = myCodeClass
   override fun copy(): PsiElement = error("must not be called")
   override fun toString(): String = "[Hierarchy view] $name"
 }
