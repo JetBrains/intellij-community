@@ -93,8 +93,7 @@ def handle_breakpoint_expression(breakpoint, info, new_frame):
         except:
             val = sys.exc_info()[1]
     finally:
-        if val is not None:
-            info.pydev_message = str(val)
+        info.pydev_message = str(val)
 
 
 #=======================================================================================================================
@@ -479,6 +478,8 @@ class PyDBFrame:
             return None
 
         try:
+            # clear previous message
+            info.pydev_message = None
             info.is_tracing = True
             line = frame.f_lineno
             line_cache_key = (frame_cache_key, line)
