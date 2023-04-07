@@ -22,7 +22,6 @@ import java.util.concurrent.atomic.AtomicLong;
  * In VFS/Index/PersistentMap storages typically we use 8kb, 1mb and 10mb pages.
  */
 @ApiStatus.Internal
-@SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
 public final class DirectByteBufferAllocator {
   // Fixes IDEA-222358 Linux native memory leak. Please do not replace to BoundedTaskExecutor
   private static final ExecutorService ourAllocator =

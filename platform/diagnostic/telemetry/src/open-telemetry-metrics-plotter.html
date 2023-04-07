@@ -218,12 +218,12 @@ as an example
     /* open/close markers */
     div > div.caption::before {
       content: '-';
-      font-family: Monospace;
+      font-family: monospaced;
     }
 
     div.hidden > div.caption::before {
       content: '+';
-      font-family: Monospace;
+      font-family: monospaced;
     }
 
     div.plot {
@@ -566,14 +566,15 @@ as an example
       const pageLoadsTimeUs = extractTimeSeries("FilePageCache.totalPageLoadsUs")
       const pageDisposalTimeUs = extractTimeSeries("FilePageCache.totalPageDisposalsUs")
 
-      const timeRange = document.loadedAndParsedData.dateRange
+      const bufferCacheHits = extractTimeSeries("DirectByteBufferAllocator.hits")
+      const bufferCacheMisses = extractTimeSeries("DirectByteBufferAllocator.misses")
+      const buffersReclaimed = extractTimeSeries("DirectByteBufferAllocator.reclaimed")
+      const buffersDisposed = extractTimeSeries("DirectByteBufferAllocator.disposed")
+      const totalSizeOfBuffersInCacheBytes = extractTimeSeries("DirectByteBufferAllocator.totalSizeOfBuffersCachedInBytes")
+      const totalSizeOfBuffersAllocatedBytes = extractTimeSeries("DirectByteBufferAllocator.totalSizeOfBuffersAllocatedInBytes")
+
 
       console.log("FPC fast hits: " + pageFastHits)
-      console.log("FPC hits: " + pageHits)
-      console.log("FPC misses: " + pageMisses)
-      console.log("FPC Loads: " + pageLoads)
-      console.log("FPC load times: " + pageLoadsTimeUs)
-      console.log("FPC disposal times: " + pageDisposalTimeUs)
 
       const totalPagesRequested = pageFastHits.plus(pageHits).plus(pageMisses).plus(pageLoads)
       const pageFastHitsPercent = pageFastHits.div(totalPagesRequested).mulScalar(100)
@@ -607,6 +608,37 @@ as an example
           autorange: true
         }
       )
+
+      //DirectBufferAllocator charts:
+
+      plotTimeSeries(
+        'DirectBufferAllocator: caching stats',
+        $("#directBufferAllocator_Counts_Chart"),
+        [
+          {name: 'Cache hits', color: 'green', series: bufferCacheHits},
+          {name: 'Cache misses', color: 'red', series: bufferCacheMisses},
+          //RC: buffers disposed & re-used are quite niche -- turn them off by default:
+          {name: 'Buffers disposed', color: 'yellow', series: buffersDisposed, visible: 'legendonly'},
+          {name: 'Buffers re-used', color: 'blue', series: buffersReclaimed, visible: 'legendonly'},
+        ],
+        /*yaxis: */ {
+          title: '',
+          autorange: true
+        }
+      )
+
+      plotTimeSeries(
+        'DirectBufferAllocator: native memory usage',
+        $("#directBufferAllocator_Bytes_Chart"),
+        [
+          {name: 'ByteBuffers allocated, Mb', color: 'red', series: totalSizeOfBuffersAllocatedBytes.mulScalar(1/1024/1024)},
+          {name: 'ByteBuffers in cache, Mb', color: 'green', series: totalSizeOfBuffersInCacheBytes.mulScalar(1/1024/1024)}
+        ],
+        /*yaxis: */ {
+          title: 'Mb',
+          autorange: true
+        }
+      )
     }
 
     function plotAWTQueueCharts() {
@@ -616,9 +648,9 @@ as an example
       }
 
       const awtEventsCount = extractTimeSeries("AWTEventQueue.eventsDispatched")
-      const awtDispatchTimeMaxMs = extractTimeSeries("AWTEventQueue.dispatchTimeMaxNs").mulScalar(0.000_001 /* ns-> ms */)
-      const awtDispatchTime90PMs = extractTimeSeries("AWTEventQueue.dispatchTime90PNs").mulScalar(0.000_001 /* ns-> ms */)
-      const awtDispatchTimeAvgMs = extractTimeSeries("AWTEventQueue.dispatchTimeAvgNs").mulScalar(0.000_001 /* ns-> ms */)
+      const awtDispatchTimeMaxMs = extractTimeSeries("AWTEventQueue.dispatchTimeMaxNs").mulScalar(1e-6 /* ns-> ms */)
+      const awtDispatchTime90PMs = extractTimeSeries("AWTEventQueue.dispatchTime90PNs").mulScalar(1e-6 /* ns-> ms */)
+      const awtDispatchTimeAvgMs = extractTimeSeries("AWTEventQueue.dispatchTimeAvgNs").mulScalar(1e-6 /* ns-> ms */)
 
       console.log("AWT events: " + awtEventsCount)
       console.log("AWT dispatch time avg: " + awtDispatchTimeAvgMs)
@@ -738,101 +770,7 @@ as an example
         }
       )
 
-      /*
-      TODO RC: a lot of issues with shared-axis plots, decided to avoid them for now
-      awtEventsDispatched.plot = Plotly.newPlot(awtEventsDispatched,
-          /!* data: *!/     [{
-              type: 'scatter',
-              mode: 'lines+markers',
-              name: 'Events dispatched',
-              line: {
-                  color: 'blue',
-                  width: 1.5
-              },
-              marker: {
-                  color: 'blue',
-                  size: 2
-              },
-              connectgaps: true,
-              x: awtEventsCount.timestamps(),
-              y: awtEventsCount.values(),
-              xaxis: 'x',
-              yaxis: 'y1'
-          }, {
-              type: 'scatter',
-              mode: 'lines+markers',
-              name: 'Event dispatch time, avg (ms)',
-              line: {
-                  color: 'green',
-                  width: 1.5
-              },
-              marker: {
-                  color: 'green',
-                  size: 2
-              },
-              x: awtDispatchTimeAvgMs.timestamps(),
-              y: awtDispatchTimeAvgMs.values(),
-              xaxis: 'x',
-              yaxis: 'y2'
-          }, {
-              type: 'scatter',
-              mode: 'lines+markers',
-              name: 'Event dispatch time, 90% (ms)',
-              line: {
-                  color: 'orange',
-                  width: 1.5
-              },
-              marker: {
-                  color: 'orange',
-                  size: 2
-              },
-              x: awtDispatchTime90PMs.timestamps(),
-              y: awtDispatchTime90PMs.values(),
-              xaxis: 'x',
-              yaxis: 'y2'
-          }, {
-              type: 'scatter',
-              mode: 'lines+markers',
-              name: 'Event dispatch time, MAX (ms)',
-              line: {
-                  color: 'red',
-                  width: 1.5
-              },
-              marker: {
-                  color: 'red',
-                  size: 2
-              },
-              x: awtDispatchTimeMaxMs.timestamps(),
-              y: awtDispatchTimeMaxMs.values(),
-              xaxis: 'x',
-              yaxis: 'y2'
-          }],
-          /!* layout: *!/   {
-              template: 'seaborn',
-              // title: 'AWT event queue: events count',
-              showlegend: true,
-              legend: {x: 1, y: 1, xanchor: 'right'},
-              margin: {l: 40, r: 20, t: 40, b: 40},
-              grid: {
-                  rows: 2,
-                  columns: 1,
-                  subplots: [['xy1'], ['xy2']]
-              },
-              xaxis: {
-                  type: 'date',
-                  range: timeRange
-              },
-              yaxis1: {
-                  title: 'events',
-                  autorange: true
-              },
-              yaxis2: {
-                  title: 'ms',
-                  autorange: true
-              }
-          },
-          PLOTLY_CONFIG
-      );*/
+
     }
 
     function plotNonBlockingReadActionChart() {
@@ -913,7 +851,7 @@ as an example
         .combine(entriesIndexLookupsMaxMs, Math.max)
 
       plotTimeSeries(
-        'Indexes lookups count: stub, entries, allKeys',
+        'Indexes lookups count',
         'indexes_Lookups_Chart',
         [{
           name: 'Stub lookups',
@@ -934,7 +872,7 @@ as an example
       )
 
       plotTimeSeries(
-        'Indexes lookup duration: total (stub+entries+allKeys), and MAX(stub,entries,allKeys)',
+        'Indexes lookup duration: total(stub+entries+allKeys), and MAX(stub,entries,allKeys)',
         'indexes_Durations_Chart',
         [{
           name: 'total time spent, sec',
@@ -1008,6 +946,8 @@ as an example
       plotFilePageCacheCharts,
       () => {//Initialize 'custom plot' with something, so it doesn't look empty:
         const names = document.loadedAndParsedData.names
+        //TODO check #timeSeriesChooser selected options, and if there are options present in names --
+        //     plot them. 
         if (names && names.length > 0) {
           extractAndPlotCustomTimeSeries([names[0]])
         }
@@ -1169,13 +1109,19 @@ as an example
 
       //Enhance default html <select multi> with nice UI:
       const timeSeriesChooser = $("#timeSeriesChooser")
+      //TODO: keep 'selected' options if there are some (i.e. if it is not the first file loaded in a session)
+      timeSeriesChooser.html("")
       for (const name of names.sort()) {
         timeSeriesChooser.append(`<option value="${name}">${name}</option>`)
       }
       timeSeriesChooser.SumoSelect({
         placeholder: 'Choose time series to plot...',
         max: 6,
-        csvDispCount: 6
+        csvDispCount: 6,
+
+        search: true
+
+        // clearAll: true -- has some issues
       })
 
 
@@ -1193,6 +1139,7 @@ as an example
       // }
     }
   </script>
+  <title>OTel.Metrics Plotter (*.csv)</title>
 </head>
 <body>
 
@@ -1231,14 +1178,14 @@ as an example
 
           <dt>Why do I need it?</dt>
           <dd>Maybe you don't need it. But it is quite easy to try and see yourself: drag-n-drop
-            any <span style="font-family: Monospace">open-telemetry-metrics.*.csv</span>
+            any <span style="font-family: monospaced">open-telemetry-metrics.*.csv</span>
             file onto the page.
           </dd>
 
           <dt>There to find <span style="font-family: Monospace">open-telemetry-metrics.*.csv</span>
             files?
           </dt>
-          <dd>In IDE logs folder (menu: <span style="font-family: Monospace">Help/Show logs in Finder</span>)</dd>
+          <dd>In IDE logs folder (menu: <span style="font-family: monospaced">Help/Show logs in Finder</span>)</dd>
         </dl>
       </div>
     </div>
@@ -1320,6 +1267,11 @@ as an example
 
     <div id="filePageCache_HitsMisses_Chart" class="plot hideable"></div>
     <div id="filePageCache_Times_Chart" class="plot hideable"></div>
+
+    <div id="directBufferAllocator_Counts_Chart" class="plot hideable"></div>
+    <div id="directBufferAllocator_Bytes_Chart" class="plot hideable"></div>
+
+
   </div>
 
   <div id="custom" class="blockOfPlots">
