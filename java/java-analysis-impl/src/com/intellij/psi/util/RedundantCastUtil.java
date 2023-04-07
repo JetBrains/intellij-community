@@ -586,7 +586,7 @@ public final class RedundantCastUtil {
             return  (PsiCall)PsiTreeUtil.releaseMark(callCopy, marker);
           }
           else {
-            //it is possible that in several cases there is not enough content, let's add more
+            //it is possible that in several cases there is not enough context, let's add more
             UpperParent contextParent = getContextParent(expression);
             if (contextParent != null && contextParent.hasPath()) {
               RecaptureTypeMapper.encode(encoded = contextParent.parent());
