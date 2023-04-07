@@ -115,6 +115,9 @@ public final class GradleRunnerUtil {
     if (comparisonPair == null) {
       comparisonPair = parseComparisonMessage(exceptionMsg, "\n[Ee]xpected: \"(.*)\"\n\\s*but:? was:? \"(.*)\"");
     }
+    if (comparisonPair == null) {
+      comparisonPair = parseComparisonMessage(exceptionMsg, "\r?\nexpected: \"(.*)\"\r?\n\\s*but was: \"(.*)\"");
+    }
     return comparisonPair;
   }
 
