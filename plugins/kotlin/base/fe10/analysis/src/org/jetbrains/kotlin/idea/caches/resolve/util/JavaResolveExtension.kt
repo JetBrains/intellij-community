@@ -94,17 +94,22 @@ fun PsiParameter.getParameterDescriptor(): ParameterDescriptor? = javaResolution
 fun PsiParameter.getParameterDescriptor(resolutionFacade: ResolutionFacade): ParameterDescriptor? {
     val method = declarationScope as? PsiMethod ?: return null
     val methodDescriptor = method.getJavaMethodDescriptor(resolutionFacade) ?: return null
-    val index = parameterIndex()
+    var parameterIndex = parameterIndex()
 
-    return when {
-        index == 0 && methodDescriptor.extensionReceiverParameter != null ->
-            methodDescriptor.extensionReceiverParameter
-
-        methodDescriptor.valueParameters.size > index ->
-            methodDescriptor.valueParameters[index]
-
-        else -> throw AssertionError("Can't get parameter descriptor with index = $index")
+    methodDescriptor.extensionReceiverParameter?.let {
+        if (parameterIndex == 0) {
+            return it
+        } else {
+            // compensate for extension receiver as a virtual first parameter
+            parameterIndex--
+        }
     }
+
+    if (methodDescriptor.valueParameters.size > parameterIndex) {
+        return methodDescriptor.valueParameters[parameterIndex]
+    }
+
+    throw AssertionError("Can't get parameter descriptor with index = $parameterIndex")
 }
 
 fun PsiClass.resolveToDescriptor(
