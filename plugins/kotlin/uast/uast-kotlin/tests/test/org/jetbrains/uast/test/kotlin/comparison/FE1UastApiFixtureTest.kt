@@ -19,6 +19,10 @@ class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         checkAssigningArrayElementType(myFixture)
     }
 
+    fun testArgumentForParameter_smartcast() {
+        checkArgumentForParameter_smartcast(myFixture)
+    }
+
     fun testDivByZero() {
         checkDivByZero(myFixture)
     }
