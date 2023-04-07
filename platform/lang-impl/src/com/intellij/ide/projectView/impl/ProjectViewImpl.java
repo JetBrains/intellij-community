@@ -25,6 +25,8 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -69,6 +71,7 @@ import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
@@ -90,6 +93,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static com.intellij.application.options.OptionId.PROJECT_VIEW_SHOW_VISIBILITY_ICONS;
 import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
@@ -515,6 +519,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final SplitterProportionsData splitterProportions = new SplitterProportionsDataImpl();
   private final Map<String, Element> myUninitializedPaneState = new HashMap<>();
   private final Map<String, MySelectInTarget> mySelectInTargets = new ConcurrentHashMap<>();
+
   private record MySelectInTarget(SelectInTarget target, int weight) {}
   private static final Comparator<MySelectInTarget> TARGET_WEIGHT_COMPARATOR = Comparator.comparingInt(MySelectInTarget::weight);
   private ContentManager myContentManager;
@@ -1144,6 +1149,21 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       myAutoScrollOnFocusEditor.set(!requestFocus);
       viewPane.select(element, file, requestFocus);
     }
+  }
+
+  void select(
+    @NotNull Supplier<Object> elementSupplier,
+    @NotNull VirtualFile virtualFile,
+    boolean requestFocus,
+    @NotNull ActionCallback result
+  ) {
+    ReadAction
+      .nonBlocking(elementSupplier::get)
+      .finishOnUiThread(
+        ModalityState.defaultModalityState(),
+        element -> selectCB(element, virtualFile, requestFocus).notify(result)
+      ).coalesceBy("ProjectViewImpl.select", this)
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   @NotNull

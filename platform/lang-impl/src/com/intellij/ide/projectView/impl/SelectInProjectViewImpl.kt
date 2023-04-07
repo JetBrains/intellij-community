@@ -16,11 +16,15 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
+import java.util.function.Supplier
 
 @Service
+@ApiStatus.Internal
 class SelectInProjectViewImpl(
   private val project: Project,
   private val coroutineScope: CoroutineScope,
@@ -84,6 +88,36 @@ class SelectInProjectViewImpl(
     else {
       SimpleSelectInContext(project, psiFilePointer, fileEditor)
     }
+
+  fun ensureSelected(
+    paneId: String,
+    virtualFile: VirtualFile,
+    elementSupplier: Supplier<Any>,
+    requestFocus: Boolean,
+    result: ActionCallback
+  ) {
+    coroutineScope.launch(CoroutineName("ProjectView.ensureSelected(pane=$paneId,virtualFile=$virtualFile,focus=$requestFocus))")) {
+      val projectView = project.serviceOrNull<ProjectView>() as ProjectViewImpl?
+      if (projectView == null) {
+        result.setRejected()
+        return@launch
+      }
+      val visibleAndSelectedUserObject = withContext(Dispatchers.EDT) {
+        val pane = if (requestFocus) null else projectView.getProjectViewPaneById(paneId)
+        pane?.visibleAndSelectedUserObject
+      }
+      val isAlreadyVisibleAndSelected = readAction {
+        visibleAndSelectedUserObject != null && visibleAndSelectedUserObject.canRepresent(elementSupplier.get())
+      }
+      if (isAlreadyVisibleAndSelected) {
+        result.setDone()
+        return@launch
+      }
+      withContext(Dispatchers.EDT) {
+        projectView.select(elementSupplier, virtualFile, requestFocus, result)
+      }
+    }
+  }
 
 }
 
