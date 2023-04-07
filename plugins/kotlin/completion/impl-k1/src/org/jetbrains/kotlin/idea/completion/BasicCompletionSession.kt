@@ -654,7 +654,6 @@ class BasicCompletionSession(
 
                                     val document = context.editor.document
 
-                                    val caretOffset = context.editor.caretModel.offset
                                     document.insertString(context.startOffset,"{")
 
                                     val tailOffset = context.tailOffset
