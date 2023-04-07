@@ -228,7 +228,7 @@ object ExtractMethodPipeline {
     val name = member.name ?: return null
     val type = when (member) {
       is PsiField -> member.type
-      is PsiClass -> PsiTypesUtil.getClassType(member)
+      is PsiClass -> usages.firstOrNull()?.type ?: PsiTypesUtil.getClassType(member)
       else -> return null
     }
     return InputParameter(usages, StringUtil.decapitalize(name), type)
