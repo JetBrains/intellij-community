@@ -126,6 +126,13 @@ class PyLocalGlobalHighlightingTest : PyTestCase() {
              """.trimIndent())
   }
 
+  fun testNoEndlessResolveLoopForNonlocalTarget() {
+    doTest("""
+            def func():
+                nonlocal p
+    """.trimIndent())
+  }
+
   private fun doTest(text: String) {
     val scheme = EditorColorsManager.getInstance().globalScheme
     val lAttributes = scheme.getAttributes(DefaultLanguageHighlighterColors.LOCAL_VARIABLE)

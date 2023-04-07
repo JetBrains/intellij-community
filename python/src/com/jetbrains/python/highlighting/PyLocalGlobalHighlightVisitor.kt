@@ -98,7 +98,7 @@ class PyLocalGlobalHighlightVisitor: HighlightVisitor {
     if (parent is PyGlobalStatement) return targetExpression.containingFile
     if (parent is PyNonlocalStatement) {
       val outerResolved = targetExpression.reference.resolve()
-      return if (outerResolved is PyTargetExpression) getTargetContext(outerResolved) else null
+      return if (outerResolved is PyTargetExpression && outerResolved != targetExpression) getTargetContext(outerResolved) else null
     }
 
     val context = TypeEvalContext.codeInsightFallback(targetExpression.project)
