@@ -33,9 +33,9 @@ internal class RetrievingServiceInspection : DevKitUastInspectionBase() {
         val receiverType = node.receiver.getExpressionType() ?: return true
         val array = listOf(
           MismatchReceivingChecker(Project::class.java.canonicalName, LevelType.APP,
-                                   "inspection.retrieving.light.service.mismatch.for.app.level"),
+                                   "inspection.retrieving.service.mismatch.for.app.level"),
           MismatchReceivingChecker(Application::class.java.canonicalName, LevelType.PROJECT,
-                                   "inspection.retrieving.light.service.mismatch.for.project.level"))
+                                   "inspection.retrieving.service.mismatch.for.project.level"))
         val hasError = array.any { it.check(levelType, receiverType, toHighlight, holder) }
         if (!hasError) checkIfCanBeReplacedWithGetInstance(uClass, receiverType, holder, node)
         return true
@@ -71,7 +71,7 @@ internal class RetrievingServiceInspection : DevKitUastInspectionBase() {
     val method = if (isApplicationLevelService) findGetInstanceApplicationLevel(uClass) else findGetInstanceProjectLevel(uClass)
     val qualifiedName = method?.getContainingUClass()?.qualifiedName ?: return
     val serviceName = StringUtil.getShortName(qualifiedName)
-    val message = DevKitBundle.message("inspection.retrieving.light.service.can.be.replaced.with", serviceName, method.name)
+    val message = DevKitBundle.message("inspection.retrieving.service.can.be.replaced.with", serviceName, method.name)
     holder.registerProblem(node.sourcePsi!!, message, ProblemHighlightType.WEAK_WARNING,
                            ReplaceWithGetInstanceCallFix(serviceName, method.name, isApplicationLevelService))
   }
@@ -119,7 +119,7 @@ internal class RetrievingServiceInspection : DevKitUastInspectionBase() {
                                       private val methodName: String,
                                       private val isApplicationLevelService: Boolean) : LocalQuickFix {
 
-    override fun getFamilyName(): String = DevKitBundle.message("inspection.retrieving.light.service.replace.with", serviceName, methodName)
+    override fun getFamilyName(): String = DevKitBundle.message("inspection.retrieving.service.replace.with", serviceName, methodName)
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
       val oldCall = descriptor.psiElement.toUElement() as? UQualifiedReferenceExpression ?: return
