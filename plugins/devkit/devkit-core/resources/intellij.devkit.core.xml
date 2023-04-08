@@ -245,7 +245,7 @@
                      key="inspection.mismatched.light.service.level.and.ctor.display.name"/>
     <localInspection language="UAST" shortName="RetrievingService"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
-                     enabledByDefault="true" level="WARNING"
+                     enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.RetrievingServiceInspection"
                      key="inspection.retrieving.light.service.display.name"/>
     <localInspection language="JVM" shortName="ExtensionClassShouldBeFinalAndPackagePrivate"
