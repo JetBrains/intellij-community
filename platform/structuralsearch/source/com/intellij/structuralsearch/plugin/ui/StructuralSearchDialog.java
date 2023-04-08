@@ -421,7 +421,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     centerPanel.add(myReplacePanel, centerConstraint.nextLine());
     centerPanel.add(myScopePanel, centerConstraint.nextLine().weighty(0.0));
 
-    myExistingTemplatesComponent = new ExistingTemplatesComponent(myProject);
+    myExistingTemplatesComponent = new ExistingTemplatesComponent(myProject, getContentPanel());
     myExistingTemplatesComponent.onConfigurationSelected(this::loadConfiguration);
     myExistingTemplatesComponent.setConfigurationProducer(() -> getConfiguration());
     myExistingTemplatesComponent.setSearchEditorProducer(() -> mySearchCriteriaEdit);

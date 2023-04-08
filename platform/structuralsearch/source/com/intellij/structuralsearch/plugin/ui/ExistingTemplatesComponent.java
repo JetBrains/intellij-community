@@ -62,7 +62,7 @@ public final class ExistingTemplatesComponent {
   private boolean myTemplateChanged = false;
   private boolean myDraftTemplateAutoselect = false;
 
-  ExistingTemplatesComponent(Project project) {
+  ExistingTemplatesComponent(Project project, JComponent keyboardShortcutRoot) {
     final DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     myDraftTemplateNode = new DefaultMutableTreeNode(SSRBundle.message("draft.template.node")); // 'New Template' node
     myRecentNode = new DefaultMutableTreeNode(SSRBundle.message("recent.category")); // 'Recent' node
@@ -92,12 +92,6 @@ public final class ExistingTemplatesComponent {
     final TreeExpander treeExpander = new DefaultTreeExpander(patternTree);
 
     // Toolbar actions
-    final CommonActionsManager actionManager = CommonActionsManager.getInstance();
-    final DefaultActionGroup actionGroup = new DefaultActionGroup();
-    final DefaultActionGroup saveGroup = new DefaultActionGroup(SSRBundle.messagePointer("save.template"),
-                                                                SSRBundle.messagePointer("save.template.description.button"),
-                                                                AllIcons.Actions.MenuSaveall);
-
     final DumbAwareAction saveTemplateAction = new DumbAwareAction(SSRBundle.message("save.template.action.text")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -118,11 +112,13 @@ public final class ExistingTemplatesComponent {
       }
     };
 
+    final DefaultActionGroup saveGroup = new DefaultActionGroup(SSRBundle.messagePointer("save.template"),
+                                                                SSRBundle.messagePointer("save.template.description.button"),
+                                                                AllIcons.Actions.MenuSaveall);
     saveGroup.addAll(saveTemplateAction, saveInspectionAction);
     saveGroup.setPopup(true);
 
-    final DumbAwareAction removeAction = new DumbAwareAction(SSRBundle.messagePointer("remove.template"),
-                                                             AllIcons.General.Remove) {
+    final DumbAwareAction removeAction = new DumbAwareAction(SSRBundle.messagePointer("remove.template"), AllIcons.General.Remove) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         final DefaultMutableTreeNode selectedNode = getSelectedNode();
@@ -172,17 +168,16 @@ public final class ExistingTemplatesComponent {
       }
     };
 
-    actionGroup.add(saveGroup);
-    actionGroup.add(removeAction);
-    actionGroup.add(Separator.getInstance());
-    actionGroup.addAll(actionManager.createExpandAllAction(treeExpander, patternTree),
-                       actionManager.createCollapseAllAction(treeExpander, patternTree));
-    actionGroup.add(Separator.getInstance());
-    actionGroup.add(exportAction);
-    actionGroup.add(importAction);
+    final DefaultActionGroup actionGroup = new DefaultActionGroup();
+    final CommonActionsManager commonActionsManager = CommonActionsManager.getInstance();
+    actionGroup.addAll(saveGroup, removeAction, Separator.getInstance(),
+                       commonActionsManager.createExpandAllAction(treeExpander, patternTree),
+                       commonActionsManager.createCollapseAllAction(treeExpander, patternTree),
+                       Separator.getInstance(), exportAction, importAction);
 
+    ActionManager actionManager = ActionManager.getInstance();
     final ActionToolbarImpl toolbar =
-      (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar("ExistingTemplatesComponent", actionGroup, true);
+      (ActionToolbarImpl)actionManager.createActionToolbar("ExistingTemplatesComponent", actionGroup, true);
     toolbar.setTargetComponent(patternTree);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     toolbar.setForceMinimumSize(true);
@@ -194,6 +189,11 @@ public final class ExistingTemplatesComponent {
     myScrollPane = new JBScrollPane(patternTree);
     panel.add(myScrollPane, constraints.nextLine().weighty(1.0).fillCell());
     panel.setBorder(JBUI.Borders.empty());
+
+    saveGroup.registerCustomShortcutSet(actionManager.getAction("SaveAll").getShortcutSet(), keyboardShortcutRoot);
+    removeAction.registerCustomShortcutSet(actionManager.getAction(IdeActions.ACTION_DELETE).getShortcutSet(), panel);
+    importAction.registerCustomShortcutSet(actionManager.getAction(IdeActions.ACTION_PASTE).getShortcutSet(), panel);
+    exportAction.registerCustomShortcutSet(actionManager.getAction(IdeActions.ACTION_COPY).getShortcutSet(), panel);
   }
 
   public TreeState getTreeState() {
