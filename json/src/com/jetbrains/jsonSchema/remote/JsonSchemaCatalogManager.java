@@ -46,7 +46,7 @@ public final class JsonSchemaCatalogManager {
   private final @NotNull Project myProject;
   private final @NotNull JsonSchemaRemoteContentProvider myRemoteContentProvider;
   private @Nullable VirtualFile myCatalog = null;
-  private final @NotNull ConcurrentMap<String, String> myResolvedMappings = new ConcurrentHashMap<>();
+  private final @NotNull ConcurrentMap<VirtualFile, String> myResolvedMappings = new ConcurrentHashMap<>();
   private static final String NO_CACHE = "$_$_WS_NO_CACHE_$_$";
   private static final String EMPTY = "$_$_WS_EMPTY_$_$";
   private VirtualFile myTestSchemaStoreFile;
@@ -74,7 +74,7 @@ public final class JsonSchemaCatalogManager {
       myCatalog = myTestSchemaStoreFile;
       return;
     }
-    // ignore schema catalog when remote activity is disabled (when we're in tests or it is off in settings)
+    // ignore schema catalog when remote activity is disabled (when we're in tests, or it is off in settings)
     myCatalog = !JsonFileResolver.isRemoteEnabled(myProject) ? null : JsonFileResolver.urlToFile(DEFAULT_CATALOG);
   }
 
@@ -97,16 +97,14 @@ public final class JsonSchemaCatalogManager {
       return null;
     }
 
-    String name = file.getName();
-    String schemaUrl = null;
-    if (myResolvedMappings.containsKey(name)) {
-      schemaUrl = myResolvedMappings.get(name);
-      if (EMPTY.equals(schemaUrl)) return null;
+    String schemaUrl = myResolvedMappings.get(file);
+    if (EMPTY.equals(schemaUrl)) {
+      return null;
     }
-    else if (myCatalog != null) {
+    if (schemaUrl == null && myCatalog != null) {
       schemaUrl = resolveSchemaFile(file, myCatalog, myProject);
       if (NO_CACHE.equals(schemaUrl)) return null;
-      myResolvedMappings.put(name, StringUtil.notNullize(schemaUrl, EMPTY));
+      myResolvedMappings.put(file, StringUtil.notNullize(schemaUrl, EMPTY));
     }
 
     if (schemaUrl == null || isIgnoredAsHavingTooManyVariants(schemaUrl)) {
@@ -116,7 +114,7 @@ public final class JsonSchemaCatalogManager {
   }
 
   private static boolean isIgnoredAsHavingTooManyVariants(@NotNull String schemaUrl) {
-    return SCHEMA_URL_PREFIXES_WITH_TOO_MANY_VARIANTS.stream().anyMatch(prefix -> schemaUrl.startsWith(prefix));
+    return ContainerUtil.exists(SCHEMA_URL_PREFIXES_WITH_TOO_MANY_VARIANTS, prefix -> schemaUrl.startsWith(prefix));
   }
 
   public List<JsonSchemaCatalogEntry> getAllCatalogEntries() {
@@ -225,12 +223,13 @@ public final class JsonSchemaCatalogManager {
       return myMatcher.matches(filePath);
     }
 
-    private static @NotNull PathMatcher buildPathMatcher(@NotNull Collection<String> fileMatches) {
-      if (fileMatches.size() == 1) {
-        return FileSystems.getDefault().getPathMatcher("glob:" + ContainerUtil.getFirstItem(fileMatches));
+    private static @NotNull PathMatcher buildPathMatcher(@NotNull Collection<String> fileMasks) {
+      List<String> refinedFileMasks = ContainerUtil.map(fileMasks, fileMask -> StringUtil.trimStart(fileMask, "**/"));
+      if (refinedFileMasks.size() == 1) {
+        return FileSystems.getDefault().getPathMatcher("glob:" + ContainerUtil.getFirstItem(refinedFileMasks));
       }
-      if (fileMatches.size() > 0) {
-        return FileSystems.getDefault().getPathMatcher("glob:{" + StringUtil.join(fileMatches, ",") + "}");
+      if (refinedFileMasks.size() > 0) {
+        return FileSystems.getDefault().getPathMatcher("glob:{" + StringUtil.join(refinedFileMasks, ",") + "}");
       }
       return path -> false;
     }
