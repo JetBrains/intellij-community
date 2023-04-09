@@ -7,7 +7,7 @@ import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 import org.jetbrains.idea.devkit.inspections.quickfix.LightServiceMustBeFinalInspectionTestBase
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/lightServiceMustBeFinal")
-class LightServiceMustBeFinalInspectionTest : LightServiceMustBeFinalInspectionTestBase() {
+internal class LightServiceMustBeFinalInspectionTest : LightServiceMustBeFinalInspectionTestBase() {
 
   private val MAKE_FINAL_FIX_NAME = QuickFixBundle.message("add.modifier.fix", "MyService", "final")
   override fun getBasePath() = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/lightServiceMustBeFinal/"

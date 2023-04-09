@@ -6,7 +6,7 @@ import org.jetbrains.idea.devkit.inspections.quickfix.RetrievingServiceInspectio
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/retrievingService")
-class KtRetrievingServiceInspectionTest : RetrievingServiceInspectionTestBase() {
+internal class KtRetrievingServiceInspectionTest : RetrievingServiceInspectionTestBase() {
 
   override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/retrievingService/"
 

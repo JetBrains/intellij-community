@@ -7,7 +7,7 @@ import org.jetbrains.idea.devkit.inspections.quickfix.LightServiceMustBeFinalIns
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/lightServiceMustBeFinal")
-class KtLightServiceMustBeFinalInspectionTest : LightServiceMustBeFinalInspectionTestBase() {
+internal class KtLightServiceMustBeFinalInspectionTest : LightServiceMustBeFinalInspectionTestBase() {
 
   private val fixName = QuickFixBundle.message("remove.modifier.fix", "MyService", "open")
 
