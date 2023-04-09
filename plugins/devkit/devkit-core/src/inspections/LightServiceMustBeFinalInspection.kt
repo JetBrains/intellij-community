@@ -8,6 +8,7 @@ import com.intellij.lang.jvm.actions.createModifierActions
 import com.intellij.lang.jvm.actions.modifierRequest
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiClass
 import org.jetbrains.idea.devkit.DevKitBundle
 
 internal class LightServiceMustBeFinalInspection : DevKitJvmInspection() {
@@ -15,13 +16,18 @@ internal class LightServiceMustBeFinalInspection : DevKitJvmInspection() {
   override fun buildVisitor(project: Project, sink: HighlightSink, isOnTheFly: Boolean): JvmElementVisitor<Boolean> {
     return object : DefaultJvmElementVisitor<Boolean> {
       override fun visitClass(clazz: JvmClass): Boolean {
+        if (clazz !is PsiClass) return true
         if (clazz.classKind != JvmClassKind.CLASS || clazz.hasModifier(JvmModifier.FINAL)) return true
         val file = clazz.sourceElement?.containingFile ?: return true
         val hasServiceAnnotation = clazz.hasAnnotation(Service::class.java.canonicalName)
         if (hasServiceAnnotation) {
           val actions = createModifierActions(clazz, modifierRequest(JvmModifier.FINAL, true))
           val fixes = IntentionWrapper.wrapToQuickFixes(actions.toTypedArray(), file)
-          sink.highlight(DevKitBundle.message("inspection.light.service.must.be.final.message"), ProblemHighlightType.GENERIC_ERROR, *fixes)
+          val message = when (clazz.language.id) {
+            "kotlin" -> DevKitBundle.message("inspection.light.service.must.not.be.open.message")
+            else -> DevKitBundle.message("inspection.light.service.must.be.final.message")
+          }
+          sink.highlight(message, ProblemHighlightType.GENERIC_ERROR, *fixes)
         }
         return true
       }
