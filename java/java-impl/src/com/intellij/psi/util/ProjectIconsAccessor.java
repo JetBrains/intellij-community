@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.SVGLoader;
 import com.intellij.util.containers.SLRUMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -145,6 +146,10 @@ public class ProjectIconsAccessor {
   private static Icon createOrFindBetterIcon(VirtualFile file, boolean useIconLoader) throws IOException {
     if (useIconLoader) {
       return IconLoader.findIcon(new File(file.getPath()).toURI().toURL());
+    }
+    if (StringUtil.equalsIgnoreCase(file.getExtension(), "svg")) {
+      var svg = SVGLoader.load(file.getInputStream(), 1.0f);
+      return new ImageIcon(svg);
     }
     return new ImageIcon(file.contentsToByteArray());
   }
