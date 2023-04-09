@@ -54,11 +54,13 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
                 }
             }
 
-            return if (testFramework is KotlinPsiBasedTestFramework) {
-                testFramework.isIgnoredMethod(ktNamedFunction)
-            } else {
-                val lightMethod = ktNamedFunction.toLightMethods().firstOrNull() ?: return false
-                testFramework?.isIgnoredMethod(lightMethod) == true
+            return when {
+              testFramework is KotlinPsiBasedTestFramework -> testFramework.isIgnoredMethod(ktNamedFunction)
+              includeSlowProviders -> {
+                  val lightMethod = ktNamedFunction.toLightMethods().firstOrNull() ?: return false
+                  testFramework?.isIgnoredMethod(lightMethod) == true
+              }
+              else -> false
             }
         }
 
