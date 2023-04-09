@@ -127,7 +127,7 @@ internal class RetrievingServiceInspection : DevKitUastInspectionBase() {
       val factory = generationPlugin.getElementFactory(project)
       val serviceName = oldCall.getExpressionType()?.canonicalText ?: return
       val parameters = if (isApplicationLevelService) emptyList() else listOf(oldCall.receiver)
-      val newCall = factory.createCallExpression(receiver = factory.createQualifiedReference(serviceName, null),
+      val newCall = factory.createCallExpression(receiver = factory.createSimpleReference(serviceName, oldCall.sourcePsi),
                                                  methodName = methodName,
                                                  parameters = parameters,
                                                  expectedReturnType = oldCall.getExpressionType(),
