@@ -1,4 +1,3 @@
-// FIR_COMPARISON
 package x.y.z
 
 class Outer {

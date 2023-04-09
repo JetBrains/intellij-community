@@ -1,3 +1,4 @@
+// IGNORE_FIR
 package a.b.c
 
 fun test(n: Int) {

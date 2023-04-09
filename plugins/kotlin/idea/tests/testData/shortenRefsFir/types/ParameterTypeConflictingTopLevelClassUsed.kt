@@ -1,4 +1,4 @@
-// FIR_IGNORE
+// IGNORE_FIR
 package test
 
 class Foo

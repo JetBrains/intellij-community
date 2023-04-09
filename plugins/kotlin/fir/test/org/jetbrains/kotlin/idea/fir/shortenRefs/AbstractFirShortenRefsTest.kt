@@ -51,7 +51,7 @@ abstract class AbstractFirShortenRefsTest : AbstractImportsTest() {
     override val runTestInWriteCommand: Boolean = false
 
     protected fun doTestWithMuting(unused: String) {
-        IgnoreTests.runTestIfEnabledByFileDirective(dataFile().toPath(), IgnoreTests.DIRECTIVES.FIR_COMPARISON, ".after") {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(dataFile().toPath(), IgnoreTests.DIRECTIVES.IGNORE_FIR, ".after") {
             doTest(unused)
         }
     }

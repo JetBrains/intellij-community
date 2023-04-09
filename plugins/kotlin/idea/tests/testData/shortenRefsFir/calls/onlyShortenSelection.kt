@@ -1,4 +1,3 @@
-// FIR_COMPARISON
 package foo.bar
 
 class A

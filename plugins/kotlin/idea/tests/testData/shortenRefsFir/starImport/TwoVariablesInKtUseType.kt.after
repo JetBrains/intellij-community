@@ -1,4 +1,3 @@
-// FIR_COMPARISON
 // SHORTEN_AND_STAR_IMPORT
 package a.b.c
 

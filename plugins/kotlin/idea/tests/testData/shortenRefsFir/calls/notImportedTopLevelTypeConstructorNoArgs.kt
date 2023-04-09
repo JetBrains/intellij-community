@@ -1,4 +1,3 @@
-// FIR_IGNORE
 package test
 
 fun usage() {
