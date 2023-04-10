@@ -16,19 +16,15 @@ internal class MismatchedLightServiceLevelAndCtorInspectionTest : MismatchedLigh
 
   override fun getFileExtension() = "java"
 
-  fun testMakeProjectLevel1() {
-    doTest(annotateAsServiceFixName)
-  }
+  fun testFromAppToProjectLevel() { doTest(annotateAsServiceFixName) }
 
-  fun testMakeProjectLevel2() {
-    doTest(annotateAsServiceFixName)
-  }
+  fun testFromDefaultToProjectLevel() { doTest(annotateAsServiceFixName) }
 
-  fun testRemoveProjectParam() {
-    doTest(NO_ARG_CTOR_FIX_NAME)
-  }
+  fun testFromAppWrappedInArrayToProjectLevel() { doTest(annotateAsServiceFixName) }
 
-  fun testChangeParamToCoroutineScope() {
-    doTest(COROUTINE_SCOPE_PARAM_CTOR_FIX_NAME)
-  }
+  fun testFromEmptyArrayToProjectLevel() { doTest(annotateAsServiceFixName) }
+
+  fun testRemoveProjectParam() { doTest(NO_ARG_CTOR_FIX_NAME) }
+
+  fun testChangeParamToCoroutineScope() { doTest(COROUTINE_SCOPE_PARAM_CTOR_FIX_NAME) }
 }

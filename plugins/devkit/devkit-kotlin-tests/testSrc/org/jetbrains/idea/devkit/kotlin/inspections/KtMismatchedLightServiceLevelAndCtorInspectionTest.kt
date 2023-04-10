@@ -15,21 +15,17 @@ internal class KtMismatchedLightServiceLevelAndCtorInspectionTest : MismatchedLi
 
   override fun getFileExtension() = "kt"
 
-  fun testMakeProjectLevel1() {
-    doTest(annotateAsServiceFixName)
-  }
+  fun testFromAppToProjectLevel() { doTest(annotateAsServiceFixName) }
 
-  fun testMakeProjectLevel2() {
-    doTest(annotateAsServiceFixName)
-  }
+  fun testFromDefaultToProjectLevel() { doTest(annotateAsServiceFixName) }
 
-  fun testRemoveProjectParam() {
-    doTest(QuickFixBundle.message("remove.parameter.from.usage.text", 1, "parameter", "constructor", "MyService"))
-  }
+  fun testFromAppWrappedInArrayToProjectLevel() { doTest(annotateAsServiceFixName) }
+
+  fun testFromEmptyArrayToProjectLevel() { doTest(annotateAsServiceFixName) }
+
+  fun testRemoveProjectParam() { doTest(QuickFixBundle.message("remove.parameter.from.usage.text", 1, "parameter", "constructor", "MyService")) }
 
   fun testChangeParamToCoroutineScope() {
-    doTest(
-      QuickFixBundle.message("change.parameter.from.usage.text", 1, "parameter", "constructor", "MyService", Project::class.java.simpleName,
-                             CoroutineScope::class.java.simpleName))
-  }
+    doTest(QuickFixBundle.message("change.parameter.from.usage.text", 1, "parameter", "constructor", "MyService", Project::class.java.simpleName,
+                             CoroutineScope::class.java.simpleName)) }
 }
