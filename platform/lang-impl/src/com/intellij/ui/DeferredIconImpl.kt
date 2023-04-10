@@ -35,6 +35,8 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
   companion object {
     internal val EMPTY_ICON: Icon by lazy { EmptyIcon.create(16).withIconPreScaled(false) }
 
+    private val nextDeferredIconId = AtomicLong(1)
+
     fun <T> withoutReadAction(baseIcon: Icon?, param: T, evaluator: (T) -> Icon?): DeferredIcon {
       return DeferredIconImpl(baseIcon = baseIcon, param = param, needReadAction = false, evaluator = evaluator, listener = null)
     }
@@ -60,6 +62,9 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
 
   @JvmField
   val param: T
+
+  @ApiStatus.Internal
+  val uniqueId: Long = nextDeferredIconId.getAndIncrement()
 
   val isNeedReadAction: Boolean
 
