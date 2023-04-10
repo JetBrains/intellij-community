@@ -4916,6 +4916,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/postProcessing/MapGetOrDefault.java");
         }
 
+        @TestMetadata("mutablePropertyAnnotatedWithJpaColumn.java")
+        public void testMutablePropertyAnnotatedWithJpaColumn() throws Exception {
+            runTest("testData/newJ2k/postProcessing/mutablePropertyAnnotatedWithJpaColumn.java");
+        }
+
         @TestMetadata("NotIs.java")
         public void testNotIs() throws Exception {
             runTest("testData/newJ2k/postProcessing/NotIs.java");
