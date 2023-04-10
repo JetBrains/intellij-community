@@ -76,9 +76,13 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
           if (key != NO_PREVIEW) {
             size = Dimension(size.width.coerceAtLeast(MIN_WIDTH), size.height)
           }
-          popup.content.preferredSize = size
-          adjustPosition(originalPopup)
-          popup.size = size
+          if (popup.content.preferredSize != size) {
+            popup.content.preferredSize = size
+            adjustPosition(originalPopup)
+          }
+          if (popup.size != size) {
+            popup.size = size
+          }
         }
       })
       adjustPosition(originalPopup)
