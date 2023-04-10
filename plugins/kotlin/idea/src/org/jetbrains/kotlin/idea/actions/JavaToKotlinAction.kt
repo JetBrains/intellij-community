@@ -321,5 +321,6 @@ class JavaToKotlinAction : AnAction() {
         return getAllFilesRecursively(filesOrDirs)
             .asSequence()
             .mapNotNull { manager.findFile(it) as? PsiJavaFile }
+            .filter { it.fileType == JavaFileType.INSTANCE } // skip .jsp files
     }
 }
