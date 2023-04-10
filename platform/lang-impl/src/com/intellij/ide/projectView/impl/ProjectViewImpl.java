@@ -2,7 +2,10 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.application.options.OptionsApplicabilityFilter;
-import com.intellij.ide.*;
+import com.intellij.ide.CopyPasteDelegator;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeView;
+import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.bookmark.BookmarksListener;
 import com.intellij.ide.impl.DataValidators;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
@@ -69,6 +72,7 @@ import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -844,15 +848,15 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   private void showPane(@NotNull AbstractProjectViewPane newPane) {
     AbstractProjectViewPane currentPane = getCurrentProjectViewPane();
-    PsiElement selectedPsiElement = null;
+    Object selectedUserObject;
     if (currentPane != null) {
       if (currentPane != newPane) {
         currentPane.saveExpandedPaths();
       }
-      final PsiElement[] elements = currentPane.getSelectedPSIElements();
-      if (elements.length > 0) {
-        selectedPsiElement = elements[0];
-      }
+      selectedUserObject = ArrayUtil.getFirstElement(currentPane.getSelectedUserObjects());
+    }
+    else {
+      selectedUserObject = null;
     }
     myViewContentPanel.removeAll();
     JComponent component = newPane.createComponent();
@@ -871,12 +875,14 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     newPane.restoreExpandedPaths();
-    if (selectedPsiElement != null && newSubId != null) {
-      final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(selectedPsiElement);
-      ProjectViewSelectInTarget target = virtualFile == null ? null : getProjectViewSelectInTarget(newPane);
-      if (target != null && target.isSubIdSelectable(newSubId, new FileSelectInContext(myProject, virtualFile, null))) {
-        newPane.select(selectedPsiElement, virtualFile, true);
-      }
+    if (selectedUserObject != null && newSubId != null) {
+      myProject.getService(SelectInProjectViewImpl.class).ensureSelected(
+        myCurrentViewId,
+        null,
+        () -> ContainerUtil.getFirstItem(newPane.getElementsFromNode(selectedUserObject)),
+        true,
+        null
+      );
     }
     myProject.getMessageBus().syncPublisher(ProjectViewListener.TOPIC).paneShown(newPane, currentPane);
 
@@ -1155,13 +1161,18 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     @NotNull Supplier<Object> elementSupplier,
     @NotNull VirtualFile virtualFile,
     boolean requestFocus,
-    @NotNull ActionCallback result
+    @Nullable ActionCallback result
   ) {
     ReadAction
       .nonBlocking(elementSupplier::get)
       .finishOnUiThread(
         ModalityState.defaultModalityState(),
-        element -> selectCB(element, virtualFile, requestFocus).notify(result)
+        element -> {
+          var callback = selectCB(element, virtualFile, requestFocus);
+          if (result != null) {
+            callback.notify(result);
+          }
+        }
       ).coalesceBy("ProjectViewImpl.select", this)
       .submit(AppExecutorUtil.getAppExecutorService());
   }

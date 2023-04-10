@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
+import com.intellij.psi.util.PsiUtilCore
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
@@ -91,30 +92,38 @@ class SelectInProjectViewImpl(
 
   fun ensureSelected(
     paneId: String,
-    virtualFile: VirtualFile,
+    virtualFile: VirtualFile?,
     elementSupplier: Supplier<Any>,
     requestFocus: Boolean,
-    result: ActionCallback
+    result: ActionCallback?
   ) {
     coroutineScope.launch(CoroutineName("ProjectView.ensureSelected(pane=$paneId,virtualFile=$virtualFile,focus=$requestFocus))")) {
       val projectView = project.serviceOrNull<ProjectView>() as ProjectViewImpl?
       if (projectView == null) {
-        result.setRejected()
+        result?.setRejected()
         return@launch
       }
       val visibleAndSelectedUserObject = withContext(Dispatchers.EDT) {
         val pane = if (requestFocus) null else projectView.getProjectViewPaneById(paneId)
         pane?.visibleAndSelectedUserObject
       }
-      val isAlreadyVisibleAndSelected = readAction {
-        visibleAndSelectedUserObject != null && visibleAndSelectedUserObject.canRepresent(elementSupplier.get())
+      data class SelectionContext(
+        val isAlreadyVisibleAndSelected: Boolean,
+        val virtualFile: VirtualFile?,
+      )
+      val context = readAction {
+        val elementToSelect = elementSupplier.get()
+        SelectionContext(
+visibleAndSelectedUserObject != null && visibleAndSelectedUserObject.canRepresent(elementToSelect),
+virtualFile ?: (elementToSelect as? PsiElement)?.virtualFile
+        )
       }
-      if (isAlreadyVisibleAndSelected) {
-        result.setDone()
+      if (context.isAlreadyVisibleAndSelected || context.virtualFile == null) {
+        result?.setDone()
         return@launch
       }
       withContext(Dispatchers.EDT) {
-        projectView.select(elementSupplier, virtualFile, requestFocus, result)
+        projectView.select(elementSupplier, context.virtualFile, requestFocus, result)
       }
     }
   }
@@ -180,5 +189,6 @@ private class EditorSelectInContext(
 private fun <T : FileEditor> T.nullIfInvalid(): T? = if (isValid) this else null
 private fun <T : Editor> T.nullIfDisposed(): T? = if (isDisposed) null else this
 private fun <T : VirtualFile> T.nullIfInvalid(): T? = if (isValid) this else null
+private val PsiElement.virtualFile: VirtualFile? get() = PsiUtilCore.getVirtualFile(this)
 
 private val LOG = logger<SelectInProjectViewImpl>()
