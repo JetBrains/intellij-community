@@ -244,6 +244,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     isDone = true
     evaluator = null
     scheduledRepaints = null
+    ApplicationManager.getApplication().messageBus.syncPublisher(DeferredIconListener.TOPIC).evaluated(this, result)
   }
 
   override fun retrieveIcon(): Icon {
