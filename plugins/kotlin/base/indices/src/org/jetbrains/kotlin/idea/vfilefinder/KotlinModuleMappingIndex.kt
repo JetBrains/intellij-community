@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.serialization.deserialization.DeserializationConfigu
 import java.io.DataInput
 import java.io.DataOutput
 
+internal const val MAPPING_FILE_DOT_FILE_EXTENSION = ".${ModuleMapping.MAPPING_FILE_EXT}"
 class KotlinModuleMappingIndex internal constructor() : FileBasedIndexExtension<String, PackageParts>() {
     companion object {
         val NAME: ID<String, PackageParts> = ID.create(KotlinModuleMappingIndex::class.java.canonicalName)
@@ -55,7 +56,7 @@ class KotlinModuleMappingIndex internal constructor() : FileBasedIndexExtension<
     override fun getValueExternalizer() = VALUE_EXTERNALIZER
 
     override fun getInputFilter(): FileBasedIndex.InputFilter = FileBasedIndex.InputFilter { file ->
-        file.extension == ModuleMapping.MAPPING_FILE_EXT
+        file.nameSequence.endsWith(MAPPING_FILE_DOT_FILE_EXTENSION)
     }
 
     override fun getVersion(): Int = 5
