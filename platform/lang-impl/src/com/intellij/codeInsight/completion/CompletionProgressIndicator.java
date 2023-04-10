@@ -240,6 +240,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
 
   private void addDefaultAdvertisements(CompletionParameters parameters) {
+    if (Registry.get("full.line.path.to.zip.trigger.model").isChangedFromDefault()) return;
     if (DumbService.isDumb(getProject())) {
       addAdvertisement(IdeBundle.message("dumb.mode.results.might.be.incomplete"), AllIcons.General.Warning);
       return;
