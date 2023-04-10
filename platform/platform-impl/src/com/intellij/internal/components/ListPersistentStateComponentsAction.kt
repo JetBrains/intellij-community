@@ -10,7 +10,8 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.JBUI
 import javax.swing.JComponent
@@ -43,8 +44,9 @@ internal class ListPersistentStateComponentsAction : AnAction() {
       }
       return panel {
         row {
-          scrollPane(componentTable)
-        }
+          scrollCell(componentTable)
+            .align(Align.FILL)
+        }.resizableRow()
       }
     }
 
