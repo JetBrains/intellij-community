@@ -18,7 +18,7 @@ class Base2:
 class Derived2(Base2):
     b: int
 
-Derived2(<arg2>)
+Derived2(<arg2>) # non-working case
 
 @dataclass(kw_only=True)
 class Base3:
