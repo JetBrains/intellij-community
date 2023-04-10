@@ -103,8 +103,7 @@ final class BackgroundHighlighter implements StartupActivity, DumbAware {
       public void documentChanged(@NotNull DocumentEvent e) {
         myAlarm.cancelAllRequests();
         EditorFactory.getInstance().editors(e.getDocument(), project).forEach(
-          editor ->
-            myAlarm.addRequest(() -> updateHighlighted(project, editor), 300)
+          editor -> submitUpdateHighlighted(project, editor)
         );
       }
     };
@@ -146,7 +145,15 @@ final class BackgroundHighlighter implements StartupActivity, DumbAware {
     if (editor.getProject() != project || selectionModel.hasSelection()) {
       return;
     }
-    updateHighlighted(project, editor);
+    submitUpdateHighlighted(project, editor);
+  }
+
+  private void submitUpdateHighlighted(@NotNull Project project, @NotNull Editor editor) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      updateHighlighted(project, editor);
+    } else {
+      myAlarm.addRequest(() -> updateHighlighted(project, editor), 300);
+    }
   }
 
   private void updateHighlighted(@NotNull Project project, @NotNull Editor editor) {
