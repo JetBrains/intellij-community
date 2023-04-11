@@ -28,6 +28,9 @@ suspend fun renderBlock(
   cacheId: String,
   content: String
 ): Node? {
+  val blockParent = block.findParentDivContainer()
+  if (content.isBlank() && nodeToLastValidHtml[blockParent] == null) return null
+
   val id = "mermaid-generated-$cacheId"
   try {
     // Remove when `mermaid.render` will throw correct error messages
