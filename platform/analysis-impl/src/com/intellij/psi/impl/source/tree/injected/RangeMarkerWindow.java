@@ -6,7 +6,6 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ProperTextRange;
@@ -85,10 +84,6 @@ class RangeMarkerWindow implements RangeMarkerEx {
     myHostMarker.putUserData(key, value);
   }
 
-  @Override
-  public void documentChanged(@NotNull DocumentEvent e) {
-    myHostMarker.documentChanged(e);
-  }
   @Override
   public long getId() {
     return myHostMarker.getId();

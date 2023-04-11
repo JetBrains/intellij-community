@@ -184,8 +184,21 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     return node != null && node.isStickingToRight();
   }
 
-  @Override
+  /**
+   * @deprecated do not use because it can mess internal offsets
+   */
+  @Deprecated
   public final void documentChanged(@NotNull DocumentEvent e) {
+    TextRange newRange = applyChange(e, intervalStart(), intervalEnd(), isGreedyToLeft(), isGreedyToRight(), isStickingToRight());
+    if (newRange == null) {
+      invalidate(e);
+    }
+    else {
+      setRange(TextRangeScalarUtil.toScalarRange(newRange));
+    }
+  }
+
+  final void onDocumentChanged(@NotNull DocumentEvent e) {
     int oldStart = intervalStart();
     int oldEnd = intervalEnd();
     int docLength = e.getDocument().getTextLength();

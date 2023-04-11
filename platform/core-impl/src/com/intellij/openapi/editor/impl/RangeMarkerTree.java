@@ -216,7 +216,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
       if (marker == null) continue; // node remains removed from the tree
 
       if (reTargetShift == 0) {
-        marker.documentChanged(e);
+        marker.onDocumentChanged(e);
       }
       else {
         marker.onReTarget(e);
