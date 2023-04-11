@@ -2942,9 +2942,30 @@ public class StringUtil extends StringUtilRt {
     protected abstract void checkCanceled();
 
     @Override
-    public @NotNull CharSequence subSequence(int i, int i1) {
+    public @NotNull CharSequence subSequence(int start, int end) {
       check();
-      return delegate.subSequence(i, i1);
+      CharSequence subSequence = delegate.subSequence(start, end);
+      return new ChildBombedCharSequence(subSequence, this);
+    }
+  }
+
+  private static class ChildBombedCharSequence extends BombedCharSequence {
+    private final BombedCharSequence myBombedParent;
+
+    ChildBombedCharSequence(@NotNull CharSequence sequence,
+                            @NotNull BombedCharSequence bombedParent) {
+      super(sequence);
+      myBombedParent = bombedParent;
+    }
+
+    @Override
+    protected void check() {
+      myBombedParent.check();
+    }
+
+    @Override
+    protected void checkCanceled() {
+      throw new UnsupportedOperationException();
     }
   }
 
