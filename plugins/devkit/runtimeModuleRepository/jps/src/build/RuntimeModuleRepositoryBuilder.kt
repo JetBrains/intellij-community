@@ -179,7 +179,13 @@ internal class RuntimeModuleRepositoryBuilder
     val dependencies = LinkedHashSet<String>()
     val processedDummyTestDependencies = HashSet<String>()
     collectDependencies(module, test, dependencies, processedDummyTestDependencies, runtimeModuleNameGenerator)
-    val resourcePaths = listOf("../${if (test) "test" else "production"}/${module.name}")
+    val sourceRootTypes = if (test) JavaModuleSourceRootTypes.TESTS else JavaModuleSourceRootTypes.SOURCES
+    val resourcePaths = if (module.sourceRoots.any { it.rootType in sourceRootTypes }) {
+      listOf("../${if (test) "test" else "production"}/${module.name}")
+    }
+    else {
+      emptyList()
+    }
     return RawRuntimeModuleDescriptor(runtimeModuleNameGenerator(module, test), resourcePaths, dependencies.toList())
   }
 

@@ -30,7 +30,7 @@ class RuntimeModuleRepositoryBuilderTest : JpsBuildTestCase() {
   fun `test module without sources`() {
     addModule("a", withTests = false, withSources = false)
     buildAndCheck { 
-      descriptor("a")
+      descriptor("a", resourceDirName = null)
     }
   }
 
@@ -147,8 +147,9 @@ class RuntimeModuleRepositoryBuilderTest : JpsBuildTestCase() {
   private class RawDescriptorListBuilder {
     val descriptors = ArrayList<RawRuntimeModuleDescriptor>()
     
-    fun descriptor(id: String, vararg dependencies: String) {
-      descriptor(id, listOf("../production/$id"), dependencies.asList())
+    fun descriptor(id: String, vararg dependencies: String, resourceDirName: String? = id) {
+      val resources = if (resourceDirName != null) listOf("../production/$resourceDirName") else emptyList()
+      descriptor(id, resources, dependencies.asList())
     }
 
     fun testDescriptor(id: String, vararg dependencies: String, resourceDirName: String = id.removeSuffix(RuntimeModuleId.TESTS_NAME_SUFFIX)) {
