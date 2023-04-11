@@ -2,6 +2,7 @@
 package com.intellij.ui.mac
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -55,11 +56,20 @@ object MacFullScreenControlsManager {
     }
   }
 
-  fun updateForPresentationMode(frame: ProjectFrameHelper) {
-    if (frame.isInFullScreen && enabled()) {
+  fun updateForCompactMode(e: AnActionEvent) {
+    if (enabled()) {
+      val helper = ProjectFrameHelper.getFrameHelper(WindowManager.getInstance().getFrame(e.project))
+      if (helper != null) {
+        updateForPresentationMode(helper)
+      }
+    }
+  }
+
+  fun updateForPresentationMode(helper: ProjectFrameHelper) {
+    if (helper.isInFullScreen && enabled()) {
       ApplicationManager.getApplication().invokeLater {
         Foundation.executeOnMainThread(true, false) {
-          val window = MacUtil.getWindowFromJavaWindow(frame.frame)
+          val window = MacUtil.getWindowFromJavaWindow(helper.frame)
           val delegate = Foundation.invoke(window, "delegate")
           if (Foundation.invoke(delegate, "respondsToSelector:", Foundation.createSelector("updateFullScreenButtons")).booleanValue()) {
             Foundation.invoke(delegate, "updateFullScreenButtons")
