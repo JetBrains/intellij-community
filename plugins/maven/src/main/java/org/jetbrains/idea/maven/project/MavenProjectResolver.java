@@ -207,37 +207,6 @@ public class MavenProjectResolver {
     projectsManager.schedulePluginResolution(task);
   }
 
-  public void resolveFolders(@NotNull final MavenProject mavenProject,
-                             @NotNull final MavenImportingSettings importingSettings,
-                             @NotNull final MavenEmbeddersManager embeddersManager,
-                             @NotNull final MavenConsole console,
-                             @NotNull final MavenProgressIndicator process) throws MavenProcessCanceledException {
-    var task = new MavenEmbeddersManager.EmbedderTask() {
-      @Override
-      public void run(MavenEmbedderWrapper embedder) throws MavenProcessCanceledException {
-        process.checkCanceled();
-        process.setText(MavenProjectBundle.message("maven.updating.folders.pom", mavenProject.getDisplayName()));
-        process.setText2("");
-
-        var resolveResult = mavenProject.resolveFolders(embedder, importingSettings, console);
-        if (resolveResult.first) {
-          if (myTree != null) {
-            myTree.fireFoldersResolved(Pair.create(mavenProject, resolveResult.second));
-          }
-        }
-      }
-    };
-
-    embeddersManager.execute(
-      mavenProject,
-      myTree,
-      MavenEmbeddersManager.FOR_FOLDERS_RESOLVE,
-      console,
-      process,
-      task
-    );
-  }
-
   public @NotNull MavenArtifactDownloader.DownloadResult downloadSourcesAndJavadocs(@NotNull Project project,
                                                                                     @NotNull Collection<MavenProject> projects,
                                                                                     @Nullable Collection<MavenArtifact> artifacts,

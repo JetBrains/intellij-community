@@ -277,8 +277,9 @@ class MavenImportFlow {
         }
       }
     }, d)
+    val folderResolver = MavenFolderResolver()
     projects.foreachParallel {
-      resolver.resolveFolders(it, importingSettings, embeddersManager, consoleToBeRemoved, indicator)
+      folderResolver.resolveFolders(it, projectTree, importingSettings, embeddersManager, consoleToBeRemoved, indicator)
     }
 
     Disposer.dispose(d)

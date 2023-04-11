@@ -16,13 +16,10 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -43,7 +40,7 @@ public class MavenProjectsProcessorFoldersResolvingTask extends MavenProjectsPro
   @Override
   public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
-    myResolver.resolveFolders(myMavenProject, myImportingSettings, embeddersManager, console, indicator);
+    new MavenFolderResolver().resolveFolders(myMavenProject, myTree, myImportingSettings, embeddersManager, console, indicator);
     //actually a fix for https://youtrack.jetbrains.com/issue/IDEA-286455 to be rewritten, see IDEA-294209
     MavenUtil.restartMavenConnectors(project, false, c -> {
       Sdk sdk = c.getJdk();
