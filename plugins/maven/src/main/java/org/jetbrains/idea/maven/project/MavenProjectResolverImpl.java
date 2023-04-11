@@ -125,8 +125,6 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
       doResolve(result, artifactIdToMavenProjects, generalSettings, embedder, projectsWithUnresolvedPlugins);
     });
 
-    myProjectsManager.schedulePluginResolution(projectsWithUnresolvedPlugins);
-
     return projectsWithUnresolvedPlugins;
   }
 

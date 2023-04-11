@@ -574,12 +574,15 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     }, this);
   }
 
-  @ApiStatus.Internal
-  public void schedulePluginResolution(@NotNull Collection<MavenProjectWithHolder> pluginResolutionRequests) {
+  private void schedulePluginResolution(@NotNull Map<String, Collection<MavenProjectWithHolder>> projectsWithUnresolvedPlugins) {
     runWhenFullyOpen(
-      () -> myPluginsResolvingProcessor.scheduleTask(
-        new MavenProjectsProcessorPluginsResolvingTask(pluginResolutionRequests, new MavenPluginResolver(getProjectsTree()))
-      )
+      () -> {
+        for (var pluginResolutionRequests : projectsWithUnresolvedPlugins.values()) {
+          myPluginsResolvingProcessor.scheduleTask(
+            new MavenProjectsProcessorPluginsResolvingTask(pluginResolutionRequests, new MavenPluginResolver(getProjectsTree()))
+          );
+        }
+      }
     );
   }
 
@@ -1076,7 +1079,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         return;
       }
 
-      Runnable onCompletion = () -> {
+      Consumer<MavenProjectResolver.MavenProjectResolutionResult> onCompletion = resolutionResult -> {
+        schedulePluginResolution(resolutionResult.projectsWithUnresolvedPlugins());
         if (hasScheduledProjects()) {
           scheduleImportChangedProjects().processed(result);
         }
