@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.model.search
 
 import com.intellij.util.Query
@@ -18,6 +18,7 @@ import org.jetbrains.annotations.ApiStatus.OverrideOnly
  * @see PsiSymbolReferenceSearcher
  * @see PsiSymbolDeclarationSearcher
  */
+@OverrideOnly
 interface Searcher<P : SearchParameters<R>, R : Any> {
 
   /**
@@ -43,7 +44,6 @@ interface Searcher<P : SearchParameters<R>, R : Any> {
    *
    * @return query to be executed when the search is run with [parameters]
    */
-  @OverrideOnly
   @RequiresReadLock
   fun collectSearchRequest(parameters: P): Query<out R>? {
     return null
