@@ -4,6 +4,7 @@ package com.intellij.navigation;
 import com.intellij.model.Symbol;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus.Experimental;
+import org.jetbrains.annotations.ApiStatus.OverrideOnly;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -15,6 +16,7 @@ import java.util.Collection;
  * @see NavigatableSymbol
  */
 @Experimental
+@OverrideOnly
 public interface SymbolNavigationProvider {
 
   @NotNull
