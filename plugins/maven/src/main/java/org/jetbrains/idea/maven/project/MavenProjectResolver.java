@@ -125,7 +125,9 @@ public class MavenProjectResolver {
     ParallelRunner.<MavenProjectReaderResult, MavenProcessCanceledException>runInParallelRethrow(results, result -> {
       doResolve(project, tree, result, artifactIdToMavenProjects, generalSettings, embedder, context, pluginResolutionRequests);
     });
-    schedulePluginResolution(project, tree, pluginResolutionRequests);
+
+    var projectsManager = MavenProjectsManager.getInstance(project);
+    projectsManager.schedulePluginResolution(pluginResolutionRequests);
   }
 
   private static void doResolve(@NotNull Project project,
@@ -178,16 +180,6 @@ public class MavenProjectResolver {
         pluginResolutionRequests.add(Pair.create(mavenProjectCandidate, nativeMavenProject));
       }
     }
-  }
-
-  private void schedulePluginResolution(
-    @NotNull Project project,
-    @NotNull MavenProjectsTree tree,
-    @NotNull Collection<Pair<MavenProject, NativeMavenProjectHolder>> pluginResolutionRequests
-  ) {
-    var projectsManager = MavenProjectsManager.getInstance(project);
-    var task = new MavenProjectsProcessorPluginsResolvingTask(pluginResolutionRequests, new MavenPluginResolver(tree));
-    projectsManager.schedulePluginResolution(task);
   }
 
   @NotNull
