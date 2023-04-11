@@ -2363,7 +2363,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                             "xxx"),
               myProjectPom);
 
-    myProjectResolver = new MavenProjectResolver(myTree);
+    myProjectResolver = new MavenProjectResolver();
     MavenProject project = myTree.findProject(myProjectPom);
     assertUnorderedElementsAreEqual(project.getActivatedProfilesIds().getEnabledProfiles(),
                                     "projectProfileXml",
@@ -2601,8 +2601,8 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                        @NotNull MavenEmbeddersManager embeddersManager,
                        @NotNull MavenConsole console,
                        @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
-    var resolver = new MavenProjectResolver(tree);
-    resolver.resolve(project, List.of(mavenProject), generalSettings, embeddersManager, console, new ResolveContext(myTree), process);
+    var resolver = new MavenProjectResolver();
+    resolver.resolve(project, tree, List.of(mavenProject), generalSettings, embeddersManager, console, new ResolveContext(myTree), process);
   }
 
   private static ListenerLog log() {

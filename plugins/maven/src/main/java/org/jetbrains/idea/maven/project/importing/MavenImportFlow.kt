@@ -200,9 +200,15 @@ class MavenImportFlow {
       }
     }, d)
 
-    val resolver = MavenProjectResolver(context.projectsTree)
-    resolver.resolve(context.project, context.toResolve, context.initialContext.generalSettings, embeddersManager, consoleToBeRemoved,
-                     resolveContext, context.initialContext.indicator)
+    val resolver = MavenProjectResolver()
+    resolver.resolve(context.project,
+                     context.projectsTree,
+                     context.toResolve,
+                     context.initialContext.generalSettings,
+                     embeddersManager,
+                     consoleToBeRemoved,
+                     resolveContext,
+                     context.initialContext.indicator)
     Disposer.dispose(d)
     return MavenResolvedContext(context.project, resolveContext.getUserData(MavenProjectResolver.UNRESOLVED_ARTIFACTS) ?: emptySet(),
                                 projectsToImport.toList(), nativeProjectStorage.toList(), context)

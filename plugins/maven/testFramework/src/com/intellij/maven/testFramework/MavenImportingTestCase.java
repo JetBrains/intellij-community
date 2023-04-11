@@ -709,7 +709,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   protected void initProjectsManager(boolean enableEventHandling) {
     myProjectsManager.initForTests();
-    myProjectResolver = new MavenProjectResolver(myProjectsManager.getProjectsTree());
+    myProjectResolver = new MavenProjectResolver();
     if (enableEventHandling) {
       myProjectsManager.enableAutoImportInTests();
     }

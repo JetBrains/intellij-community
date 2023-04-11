@@ -28,7 +28,7 @@ public class MavenProjectsProcessorResolvingTask implements MavenProjectsProcess
   @Nullable private final Runnable myOnCompletion;
   @NotNull private final ResolveContext myContext;
   @NotNull private final Collection<MavenProject> myMavenProjects;
-  @NotNull private final MavenProjectResolver myResolver;
+  @NotNull private final MavenProjectsTree myTree;
 
   public MavenProjectsProcessorResolvingTask(@NotNull Collection<MavenProject> mavenProjects,
                                              @NotNull MavenProjectsTree tree,
@@ -36,16 +36,17 @@ public class MavenProjectsProcessorResolvingTask implements MavenProjectsProcess
                                              @Nullable Runnable onCompletion,
                                              @NotNull ResolveContext context) {
     myMavenProjects = mavenProjects;
+    myTree = tree;
     myGeneralSettings = generalSettings;
     myOnCompletion = onCompletion;
     myContext = context;
-    myResolver = new MavenProjectResolver(tree);
   }
 
   @Override
   public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
-    myResolver.resolve(project, myMavenProjects, myGeneralSettings, embeddersManager, console, myContext, indicator);
+    var resolver = new MavenProjectResolver();
+    resolver.resolve(project, myTree, myMavenProjects, myGeneralSettings, embeddersManager, console, myContext, indicator);
     if (myOnCompletion != null) myOnCompletion.run();
   }
 
