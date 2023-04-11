@@ -48,7 +48,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.dsl.builder.DslComponentProperty;
 import com.intellij.ui.dsl.builder.VerticalComponentGap;
-import com.intellij.ui.dsl.gridLayout.UnscaledGaps;
+import com.intellij.ui.dsl.gridLayout.UnscaledGapsKt;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.LineSeparator;
@@ -153,7 +153,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
         if (myEditor == null) initEditor();
       }
     });
-    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, new UnscaledGaps(3, 3, 3, 3));
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGapsKt.UnscaledGaps(3));
     putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
     putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, this); // Disable warning in Kotlin UI DSL, see IDEA-309743
   }
