@@ -2,9 +2,6 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.ide.plugins.advertiser.PluginFeatureEnabler;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -18,9 +15,11 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.execution.RunnerBundle;
 import org.jetbrains.idea.maven.importing.MavenImporter;
-import org.jetbrains.idea.maven.model.*;
+import org.jetbrains.idea.maven.model.MavenArtifact;
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
+import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.server.MavenConfigParseException;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
@@ -395,21 +394,6 @@ public class MavenProjectResolver {
     }
     finally {
       embeddersManager.release(embedder);
-    }
-  }
-
-  public static void showNotificationInvalidConfig(@NotNull Project project, @Nullable MavenProject mavenProject, String message) {
-    VirtualFile configFile = mavenProject == null ? null : MavenUtil.getConfigFile(mavenProject, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH);
-    if (configFile != null) {
-      new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, RunnerBundle.message("maven.invalid.config.file.with.link", message),
-                       NotificationType.ERROR)
-        .setListener((notification, event) -> FileEditorManager.getInstance(project).openFile(configFile, true))
-        .notify(project);
-    }
-    else {
-      new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "", RunnerBundle.message("maven.invalid.config.file", message),
-                       NotificationType.ERROR)
-        .notify(project);
     }
   }
 
