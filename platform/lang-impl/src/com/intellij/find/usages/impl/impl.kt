@@ -67,6 +67,7 @@ fun buildUsageViewQuery(
       val access = when (it.access) {
         UsageAccess.Read -> ReadWriteAccessDetector.Access.Read
         UsageAccess.Write -> ReadWriteAccessDetector.Access.Write
+        UsageAccess.ReadWrite -> ReadWriteAccessDetector.Access.ReadWrite
         null -> null
       }
 

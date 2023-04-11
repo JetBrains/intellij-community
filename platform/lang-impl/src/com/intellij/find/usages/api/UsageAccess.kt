@@ -5,5 +5,7 @@ package com.intellij.find.usages.api
  * @see Usage
  */
 enum class UsageAccess {
-  Read, Write
+  Read,
+  Write,
+  ReadWrite
 }

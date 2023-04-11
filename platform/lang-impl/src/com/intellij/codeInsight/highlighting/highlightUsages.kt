@@ -124,8 +124,8 @@ private fun getSymbolUsageRanges(file: PsiFile, symbol: Symbol): UsageRanges? {
     }
     val collector: ArrayList<TextRange> = when (Pair(usage.access ?: UsageAccess.Read, usage.declaration)) {
       Pair(UsageAccess.Read, true) -> readDeclarationRanges
-      Pair(UsageAccess.Write, true) -> writeDeclarationRanges
-      Pair(UsageAccess.Write, false) -> writeRanges
+      Pair(UsageAccess.Write, true), Pair(UsageAccess.ReadWrite, true) -> writeDeclarationRanges
+      Pair(UsageAccess.Write, false), Pair(UsageAccess.ReadWrite, false) -> writeRanges
       else -> readRanges
     }
     HighlightUsagesHandler.collectHighlightRanges(usage.file, usage.range, collector)
