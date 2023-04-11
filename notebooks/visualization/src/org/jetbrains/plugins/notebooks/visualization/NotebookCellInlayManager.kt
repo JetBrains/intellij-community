@@ -106,9 +106,11 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
     val appMessageBus = ApplicationManager.getApplication().messageBus.connect(editor.disposable)
 
     appMessageBus.subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
+      updateAll()
       refreshHighlightersLookAndFeel()
     })
     appMessageBus.subscribe(LafManagerListener.TOPIC, LafManagerListener {
+      updateAll()
       refreshHighlightersLookAndFeel()
     })
 
