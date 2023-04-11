@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
@@ -134,11 +134,11 @@ final class FileTrees {
     return new FileTrees(myFile, null, myTreeElementPointer, null);
   }
 
-  FileTrees withAst(@NotNull Supplier<? extends FileElement> ast) {
+  FileTrees withAst(@NotNull Supplier<? extends FileElement> ast) throws StubTreeLoader.StubTreeAndIndexUnmatchCoarseException {
     return new FileTrees(myFile, myStub, ast, myRefToPsi).reconcilePsi(derefStub(), ast.get(), true);
   }
 
-  FileTrees withStub(@NotNull StubTree stub, @Nullable FileElement ast) {
+  FileTrees withStub(@NotNull StubTree stub, @Nullable FileElement ast) throws StubTreeLoader.StubTreeAndIndexUnmatchCoarseException {
     assert derefTreeElement() == ast;
     return new FileTrees(myFile, new SoftReference<>(stub), myTreeElementPointer, myRefToPsi)
       .reconcilePsi(stub, ast, false);
@@ -153,7 +153,8 @@ final class FileTrees {
    * In case several sources already have PSI (e.g. created during AST parsing), overwrites them with the "correct" one,
    * which is taken from {@link #myRefToPsi} if exists, otherwise from either stubs or AST depending on {@code takePsiFromStubs}.
    */
-  private FileTrees reconcilePsi(@Nullable StubTree stubTree, @Nullable FileElement astRoot, boolean takePsiFromStubs) {
+  private FileTrees reconcilePsi(@Nullable StubTree stubTree, @Nullable FileElement astRoot, boolean takePsiFromStubs)
+    throws StubTreeLoader.StubTreeAndIndexUnmatchCoarseException {
     assert stubTree != null || astRoot != null;
 
     if ((stubTree == null || astRoot == null) && !hasCachedPsi()) {
@@ -187,7 +188,7 @@ final class FileTrees {
     catch (Throwable e) {
       myFile.clearContent(PsiFileImpl.STUB_PSI_MISMATCH);
       myFile.rebuildStub();
-      throw StubTreeLoader.getInstance().stubTreeAndIndexDoNotMatch(stubTree, myFile, e);
+      throw StubTreeLoader.getInstance().createCoarseExceptionStubTreeAndIndexDoNotMatch(stubTree, myFile, e);
     }
   }
 
