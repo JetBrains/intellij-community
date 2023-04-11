@@ -210,11 +210,11 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
 
   enum class TabOrderWeight(val tabName: String?, val weight: Int) {
     LOCAL_CHANGES(ChangesViewContentManager.LOCAL_CHANGES, 10),
-    CONSOLE(ChangesViewContentManager.CONSOLE, 15),
     REPOSITORY(ChangesViewContentManager.REPOSITORY, 20),
     INCOMING(ChangesViewContentManager.INCOMING, 30),
     SHELF(ChangesViewContentManager.SHELF, 40),
     BRANCHES(ChangesViewContentManager.BRANCHES, 50),
+    CONSOLE(ChangesViewContentManager.CONSOLE, 60),
     OTHER(null, 100),
     LAST(null, Integer.MAX_VALUE)
   }
