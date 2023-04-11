@@ -26,27 +26,24 @@ import java.util.Collection;
 public class MavenProjectsProcessorResolvingTask implements MavenProjectsProcessorTask {
   @NotNull private final MavenGeneralSettings myGeneralSettings;
   @Nullable private final Runnable myOnCompletion;
-  @NotNull private final ResolveContext myContext;
   @NotNull private final Collection<MavenProject> myMavenProjects;
   @NotNull private final MavenProjectsTree myTree;
 
   public MavenProjectsProcessorResolvingTask(@NotNull Collection<MavenProject> mavenProjects,
                                              @NotNull MavenProjectsTree tree,
                                              @NotNull MavenGeneralSettings generalSettings,
-                                             @Nullable Runnable onCompletion,
-                                             @NotNull ResolveContext context) {
+                                             @Nullable Runnable onCompletion) {
     myMavenProjects = mavenProjects;
     myTree = tree;
     myGeneralSettings = generalSettings;
     myOnCompletion = onCompletion;
-    myContext = context;
   }
 
   @Override
   public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
     var resolver = new MavenProjectResolver();
-    resolver.resolve(project, myTree, myMavenProjects, myGeneralSettings, embeddersManager, console, myContext, indicator);
+    resolver.resolve(project, myTree, myMavenProjects, myGeneralSettings, embeddersManager, console, indicator);
     if (myOnCompletion != null) myOnCompletion.run();
   }
 

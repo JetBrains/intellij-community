@@ -183,7 +183,6 @@ class MavenImportFlow {
     val embeddersManager = projectManager.embeddersManager
     val consoleToBeRemoved = BTWMavenConsole(context.project, context.initialContext.generalSettings.outputLevel,
                                              context.initialContext.generalSettings.isPrintErrorStackTraces)
-    val resolveContext = ResolveContext(context.projectsTree)
     val d = Disposer.newDisposable("MavenImportFlow:resolveDependencies:treeListener")
     Disposer.register(context.initialContext.importDisposable, d)
     val projectsToImport = ConcurrentLinkedQueue(context.toResolve)
@@ -207,7 +206,6 @@ class MavenImportFlow {
                      context.initialContext.generalSettings,
                      embeddersManager,
                      consoleToBeRemoved,
-                     resolveContext,
                      context.initialContext.indicator)
     Disposer.dispose(d)
     return MavenResolvedContext(context.project, projectsToImport.toList(), nativeProjectStorage.toList(), context)

@@ -319,8 +319,7 @@ public class MavenAnnotationProcessorConfigurator extends MavenImporter implemen
   public void resolve(Project project,
                       MavenProject mavenProject,
                       NativeMavenProjectHolder nativeMavenProject,
-                      MavenEmbedderWrapper embedder,
-                      ResolveContext context) throws MavenProcessCanceledException {
+                      MavenEmbedderWrapper embedder) throws MavenProcessCanceledException {
     Element config = getConfig(mavenProject, "annotationProcessorPaths");
     if (config == null) return;
 
@@ -330,8 +329,10 @@ public class MavenAnnotationProcessorConfigurator extends MavenImporter implemen
     }
     
     List<MavenArtifactInfo> externalArtifacts = new ArrayList<>();
+    var mavenProjectsManager = MavenProjectsManager.getInstance(project);
+    var tree = mavenProjectsManager.getProjectsTree();
     for (MavenArtifactInfo info : artifactsInfo) {
-      MavenProject mavenArtifact = context.getMavenProjectsTree().findProject(new MavenId(info.getGroupId(), info.getArtifactId(), info.getVersion()));
+      MavenProject mavenArtifact = tree.findProject(new MavenId(info.getGroupId(), info.getArtifactId(), info.getVersion()));
       if (mavenArtifact == null) {
         externalArtifacts.add(info);
       }

@@ -2602,7 +2602,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                        @NotNull MavenConsole console,
                        @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
     var resolver = new MavenProjectResolver();
-    resolver.resolve(project, tree, List.of(mavenProject), generalSettings, embeddersManager, console, new ResolveContext(myTree), process);
+    resolver.resolve(project, tree, List.of(mavenProject), generalSettings, embeddersManager, console, process);
   }
 
   private static ListenerLog log() {

@@ -36,7 +36,6 @@ public class MavenProjectResolver {
                       @NotNull MavenGeneralSettings generalSettings,
                       @NotNull MavenEmbeddersManager embeddersManager,
                       @NotNull MavenConsole console,
-                      @NotNull ResolveContext context,
                       @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
     MultiMap<Path, MavenProject> projectMultiMap = groupByBasedir(mavenProjects, tree);
 
@@ -54,7 +53,7 @@ public class MavenProjectResolver {
         boolean updateSnapshots = MavenProjectsManager.getInstance(project).getForceUpdateSnapshots();
         updateSnapshots = updateSnapshots ? updateSnapshots : generalSettings.isAlwaysUpdateSnapshots();
         embedder.customizeForResolve(console, process, updateSnapshots, tree.getWorkspaceMap(), userProperties);
-        doResolve(project, tree, entry.getValue(), generalSettings, embedder, context, process);
+        doResolve(project, tree, entry.getValue(), generalSettings, embedder, process);
       }
       catch (Throwable t) {
         MavenConfigParseException cause = findParseException(t);
@@ -94,7 +93,6 @@ public class MavenProjectResolver {
                          @NotNull Collection<MavenProject> mavenProjects,
                          @NotNull MavenGeneralSettings generalSettings,
                          @NotNull MavenEmbedderWrapper embedder,
-                         @NotNull ResolveContext context,
                          @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
     if (mavenProjects.isEmpty()) return;
 
@@ -117,7 +115,7 @@ public class MavenProjectResolver {
       .collect(Collectors.groupingBy(mavenProject -> mavenProject.getMavenId().getArtifactId()));
     var pluginResolutionRequests = new ConcurrentLinkedQueue<Pair<MavenProject, NativeMavenProjectHolder>>();
     ParallelRunner.<MavenProjectReaderResult, MavenProcessCanceledException>runInParallelRethrow(results, result -> {
-      doResolve(project, tree, result, artifactIdToMavenProjects, generalSettings, embedder, context, pluginResolutionRequests);
+      doResolve(project, tree, result, artifactIdToMavenProjects, generalSettings, embedder, pluginResolutionRequests);
     });
 
     var projectsManager = MavenProjectsManager.getInstance(project);
@@ -130,7 +128,6 @@ public class MavenProjectResolver {
                                 @NotNull Map<String, List<MavenProject>> artifactIdToMavenProjects,
                                 @NotNull MavenGeneralSettings generalSettings,
                                 @NotNull MavenEmbedderWrapper embedder,
-                                @NotNull ResolveContext context,
                                 @NotNull ConcurrentLinkedQueue<Pair<MavenProject, NativeMavenProjectHolder>> pluginResolutionRequests)
     throws MavenProcessCanceledException {
     var mavenId = result.mavenModel.getMavenId();
@@ -160,7 +157,7 @@ public class MavenProjectResolver {
       PluginFeatureEnabler.getInstance(project).scheduleEnableSuggested();
 
       for (MavenImporter eachImporter : MavenImporter.getSuitableImporters(mavenProjectCandidate)) {
-        eachImporter.resolve(project, mavenProjectCandidate, nativeMavenProject, embedder, context);
+        eachImporter.resolve(project, mavenProjectCandidate, nativeMavenProject, embedder);
       }
     }
     // project may be modified by MavenImporters, so we need to collect the changes after them:
