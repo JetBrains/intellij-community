@@ -11,12 +11,22 @@ import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 
 class KotlinSerializationGradleImportHandler : GradleProjectImportHandler {
     override fun importBySourceSet(facet: KotlinFacet, sourceSetNode: DataNode<GradleSourceSetData>) {
-        KotlinSerializationImportHandler.modifyCompilerArguments(facet, PLUGIN_GRADLE_JAR)
+        KotlinSerializationImportHandler.modifyCompilerArguments(facet, pluginJarRegex)
     }
 
     override fun importByModule(facet: KotlinFacet, moduleNode: DataNode<ModuleData>) {
-        KotlinSerializationImportHandler.modifyCompilerArguments(facet, PLUGIN_GRADLE_JAR)
+        KotlinSerializationImportHandler.modifyCompilerArguments(facet, pluginJarRegex)
     }
 
-    private val PLUGIN_GRADLE_JAR = "kotlin-serialization"
+    private val pluginJarRegex = listOf(
+        "$PLUGIN_COMPILER_EMBEDDABLE_JAR_NAME-.*\\.jar".toRegex(),
+        "$PLUGIN_COMPILER_JAR_NAME-.*\\.jar".toRegex(),
+        "$PLUGIN_GRADLE_JAR_NAME-.*\\.jar".toRegex()
+    )
+
+    companion object {
+        private const val PLUGIN_GRADLE_JAR_NAME = "kotlin-serialization"
+        private const val PLUGIN_COMPILER_EMBEDDABLE_JAR_NAME = "kotlinx-serialization-compiler-plugin-embeddable"
+        private const val PLUGIN_COMPILER_JAR_NAME = "kotlinx-serialization-compiler-plugin"
+    }
 }
