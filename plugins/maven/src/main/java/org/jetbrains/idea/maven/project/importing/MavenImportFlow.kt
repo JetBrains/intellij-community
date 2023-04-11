@@ -199,10 +199,8 @@ class MavenImportFlow {
       }
     }, d)
 
-    val resolver = MavenProjectResolver()
-    resolver.resolve(context.project,
-                     context.projectsTree,
-                     context.toResolve,
+    val resolver = MavenProjectResolver.getInstance(context.project)
+    resolver.resolve(context.toResolve,
                      context.initialContext.generalSettings,
                      embeddersManager,
                      consoleToBeRemoved,

@@ -15,10 +15,11 @@
  */
 package org.jetbrains.idea.maven.project.importing;
 
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
 
 import java.io.IOException;
@@ -34,7 +35,7 @@ public abstract class MavenProjectsTreeTestCase extends MavenMultiVersionImporti
   @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
-    myTree = new MavenProjectsTree(myProject);
+    myTree = MavenProjectsManager.getInstance(myProject).getProjectsTree();
   }
 
   protected void updateAll(VirtualFile... files) {

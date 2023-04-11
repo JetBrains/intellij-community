@@ -91,6 +91,9 @@
 
     <applicationService serviceImplementation="org.jetbrains.idea.maven.server.MavenWrapperMapping"/>
 
+    <projectService serviceInterface="org.jetbrains.idea.maven.project.MavenProjectResolver"
+                    serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectResolverImpl"/>
+
     <projectService serviceImplementation="org.jetbrains.idea.maven.server.MavenDistributionsCache"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.project.importing.MavenImportingManager"/>
 

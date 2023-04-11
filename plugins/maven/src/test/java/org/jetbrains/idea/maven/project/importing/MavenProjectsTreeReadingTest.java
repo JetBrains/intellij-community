@@ -718,7 +718,6 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
         }
       }, getTestRootDisposable());
       resolve(myProject,
-              myTree,
               project,
               getMavenGeneralSettings(),
               embeddersManager,
@@ -774,7 +773,6 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
         }
       }, getTestRootDisposable());
       resolve(myProject,
-              myTree,
               parentProject,
               getMavenGeneralSettings(),
               embeddersManager,
@@ -2166,7 +2164,6 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     MavenEmbeddersManager embeddersManager = new MavenEmbeddersManager(myProject);
     try {
       resolve(myProject,
-              myTree,
               parentProject,
               getMavenGeneralSettings(),
               embeddersManager,
@@ -2259,7 +2256,6 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     MavenEmbeddersManager embeddersManager = new MavenEmbeddersManager(myProject);
     try {
       resolve(myProject,
-              myTree,
               myTree.getRootProjects().get(0),
               getMavenGeneralSettings(),
               embeddersManager,
@@ -2363,7 +2359,6 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                             "xxx"),
               myProjectPom);
 
-    myProjectResolver = new MavenProjectResolver();
     MavenProject project = myTree.findProject(myProjectPom);
     assertUnorderedElementsAreEqual(project.getActivatedProfilesIds().getEnabledProfiles(),
                                     "projectProfileXml",
@@ -2377,7 +2372,6 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     MavenEmbeddersManager embeddersManager = new MavenEmbeddersManager(myProject);
     try {
       resolve(myProject,
-              myTree,
               project,
               getMavenGeneralSettings(),
               embeddersManager,
@@ -2578,7 +2572,6 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     MavenEmbeddersManager embeddersManager = new MavenEmbeddersManager(myProject);
     try {
       resolve(myProject,
-              myTree,
               project,
               getMavenGeneralSettings(),
               embeddersManager,
@@ -2595,14 +2588,13 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
   }
 
   private void resolve(@NotNull Project project,
-                       @NotNull MavenProjectsTree tree,
                        @NotNull MavenProject mavenProject,
                        @NotNull MavenGeneralSettings generalSettings,
                        @NotNull MavenEmbeddersManager embeddersManager,
                        @NotNull MavenConsole console,
                        @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
-    var resolver = new MavenProjectResolver();
-    resolver.resolve(project, tree, List.of(mavenProject), generalSettings, embeddersManager, console, process);
+    var resolver = MavenProjectResolver.getInstance(project);
+    resolver.resolve(List.of(mavenProject), generalSettings, embeddersManager, console, process);
   }
 
   private static ListenerLog log() {

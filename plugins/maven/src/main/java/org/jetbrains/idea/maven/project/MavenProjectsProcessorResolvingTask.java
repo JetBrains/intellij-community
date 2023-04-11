@@ -27,14 +27,11 @@ public class MavenProjectsProcessorResolvingTask implements MavenProjectsProcess
   @NotNull private final MavenGeneralSettings myGeneralSettings;
   @Nullable private final Runnable myOnCompletion;
   @NotNull private final Collection<MavenProject> myMavenProjects;
-  @NotNull private final MavenProjectsTree myTree;
 
   public MavenProjectsProcessorResolvingTask(@NotNull Collection<MavenProject> mavenProjects,
-                                             @NotNull MavenProjectsTree tree,
                                              @NotNull MavenGeneralSettings generalSettings,
                                              @Nullable Runnable onCompletion) {
     myMavenProjects = mavenProjects;
-    myTree = tree;
     myGeneralSettings = generalSettings;
     myOnCompletion = onCompletion;
   }
@@ -42,8 +39,8 @@ public class MavenProjectsProcessorResolvingTask implements MavenProjectsProcess
   @Override
   public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
-    var resolver = new MavenProjectResolver();
-    resolver.resolve(project, myTree, myMavenProjects, myGeneralSettings, embeddersManager, console, indicator);
+    var resolver = MavenProjectResolver.getInstance(project);
+    resolver.resolve(myMavenProjects, myGeneralSettings, embeddersManager, console, indicator);
     if (myOnCompletion != null) myOnCompletion.run();
   }
 

@@ -1093,12 +1093,12 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         while (it.hasNext()) {
           MavenProject each = it.next();
           myResolvingProcessor.scheduleTask(new MavenProjectsProcessorResolvingTask(
-            Collections.singleton(each), myProjectsTree, getGeneralSettings(), it.hasNext() ? null : onCompletion));
+            Collections.singleton(each), getGeneralSettings(), it.hasNext() ? null : onCompletion));
         }
       }
       else {
         myResolvingProcessor.scheduleTask(
-          new MavenProjectsProcessorResolvingTask(toResolve, myProjectsTree, getGeneralSettings(), onCompletion));
+          new MavenProjectsProcessorResolvingTask(toResolve, getGeneralSettings(), onCompletion));
       }
     });
     return result;

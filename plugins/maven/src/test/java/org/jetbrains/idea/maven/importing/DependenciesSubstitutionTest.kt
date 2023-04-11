@@ -58,7 +58,7 @@ open class DependenciesSubstitutionTest : MavenMultiVersionImportingTestCase() {
     val files = listOf(file)
 
     myProjectsManager.initForTests()
-    myProjectResolver = MavenProjectResolver()
+    myProjectResolver = MavenProjectResolver.getInstance(myProject)
 
     myProjectsManager.addManagedFilesWithProfiles(files, MavenExplicitProfiles(emptyList(), emptyList()), null)
 
