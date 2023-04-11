@@ -165,7 +165,6 @@ object KotlinPluginBuilder {
     "kotlin.code-insight.line-markers-shared",
     "kotlin.searching.base",
     "kotlin.highlighting",
-    "kotlin.navigation",
     "kotlin.refactorings.common",
   )
 
