@@ -24,7 +24,7 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
                 LOGGER.info( <warning descr="Fewer arguments provided (1) than placeholders specified (at least 4)">"abd"+a2</warning> , 1)
             }
         }
-      """.trimIndent().commentsToWarn())
+      """.trimIndent())
     }
     fun `test variables`() {
       myFixture.testHighlighting(JvmLanguage.KOTLIN, """
@@ -61,7 +61,7 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
             }
 
           }
-      """.trimIndent().commentsToWarn())
+      """.trimIndent())
     }
     fun `test fewer and more placeholders`() {
       myFixture.testHighlighting(JvmLanguage.KOTLIN, """
@@ -73,7 +73,7 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
               logger.info( "<warning descr="More arguments provided (1) than placeholders specified (0)">string</warning>" , 1)
           }
       }
-        """.trimIndent().commentsToWarn())
+        """.trimIndent())
     }
 
     fun `test escaping`() {
@@ -88,7 +88,7 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
                 LOG.info( <warning descr="More arguments provided (2) than placeholders specified (1)">"Created key {}\\{}"</warning> , 1, 2)
             }
         }
-        """.trimIndent().commentsToWarn())
+        """.trimIndent())
     }
 
     fun `test non constant string`() {
@@ -107,7 +107,7 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
                 private const val S = "{}"
             }
         }
-        """.trimIndent().commentsToWarn())
+        """.trimIndent())
     }
 
     fun `test 1 exception and several placeholder`() {
@@ -124,7 +124,7 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
               logger.info("string {}", 1)
           }
       }
-        """.trimIndent().commentsToWarn())
+        """.trimIndent())
     }
 
     fun `test throwable`() {
@@ -137,7 +137,7 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
               logger.info("string {}", 1, RuntimeException())
           }
       }
-        """.trimIndent().commentsToWarn())
+        """.trimIndent())
     }
 
     fun `test multi catch`() {
@@ -164,7 +164,7 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
               private val logger = LoggerFactory.getLogger()
           }
       }
-        """.trimIndent().commentsToWarn())
+        """.trimIndent())
     }
 
     fun `test no slf4j`() {
@@ -178,7 +178,7 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
               fun info(firstParameter: String?, secondParameter: Any?)
           }
       }
-         """.trimIndent().commentsToWarn())
+         """.trimIndent())
     }
 
     fun `test array argument`() {
@@ -192,7 +192,7 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
             LOG.info("<warning descr="More arguments provided (4) than placeholders specified (3)">test {} for test {} in test {}</warning>", *arrayOf(a, b, c, 1))
           }
       }
-         """.trimIndent().commentsToWarn())
+         """.trimIndent())
     }
 
     fun `test uncountable array`() {
@@ -205,7 +205,7 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
               LOG.info("test {} test text {} text {}", *objects)
           }
       }
-         """.trimIndent().commentsToWarn())
+         """.trimIndent())
     }
   }
 
@@ -234,7 +234,7 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
                   private val LOG = LogManager.getLogger()
               }
           }
-          """.trimIndent().commentsToWarn())
+          """.trimIndent())
     }
 
     fun `test log4j2`() {
@@ -262,7 +262,7 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
               logger?.info("test {} {}", {},  {}, {RuntimeException()})
               logger?.info("test {} {}", {}, {RuntimeException()})
           }
-        """.trimIndent().commentsToWarn())
+        """.trimIndent())
     }
 
     fun `test log4j2 builder`() {
@@ -292,7 +292,7 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
             }
         }
 
-        """.trimIndent().commentsToWarn())
+        """.trimIndent())
     }
 
     fun `test log4j2LogBuilder 2`() {
@@ -311,7 +311,7 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
                 private val LOG = LogManager.getLogger()
             }
         }
-      """.trimIndent().commentsToWarn())
+      """.trimIndent())
     }
 
     fun `test formatted log4j`() {
@@ -330,7 +330,7 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
             LogManager.getFormatterLogger().info( "<warning descr="Fewer arguments provided (1) than placeholders specified (2)">My %s text, %s</warning>" , "test1")
           }
       }
-      """.trimIndent().commentsToWarn())
+      """.trimIndent())
     }
 
     fun `test Log4j2 with exception in suppliers`() {
@@ -364,7 +364,7 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
                 private val LOG = LogManager.getLogger()
             }
         }
-      """.trimIndent().commentsToWarn())
+      """.trimIndent())
     }
 
 
@@ -387,7 +387,7 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
               }
           }
 
-      """.trimIndent().commentsToWarn())
+      """.trimIndent())
     }
 
     fun `test log4j with partial known strings`() {
@@ -404,7 +404,7 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
               logger.info("{}" + t + 1 + "{}", 1, 1)
             }
         }
-      """.trimIndent().commentsToWarn())
+      """.trimIndent())
     }
   }
 
@@ -438,7 +438,7 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
             LoggerFactory.getLogger().atError().log(<warning descr="Fewer arguments provided (1) than placeholders specified (at least 2)">s + "{} {} {}"</warning>, 1, RuntimeException("test"))
           }
         }
-        """.trimIndent().commentsToWarn())
+        """.trimIndent())
     }
 
     fun `test slf4j auto slf4jToLog4J2Type`() {
@@ -470,7 +470,7 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
                 LoggerFactory.getLogger().atError().log( "<warning descr="More arguments provided (2) than placeholders specified (1)">{}</warning>" , 1, RuntimeException("test"))
             }
         }
-        """.trimIndent().commentsToWarn())
+        """.trimIndent())
     }
 
     fun `test slf4j`() {
@@ -508,7 +508,7 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
           logger?.trace("<warning descr="Fewer arguments provided (2) than placeholders specified (3)">test {} {} {}</warning>", 1, 2) //warn
           logger?.warn("<warning descr="Fewer arguments provided (2) than placeholders specified (3)">test {} {} {}</warning>", 1, 2) //warn
         }
-      """.trimIndent().commentsToWarn())
+      """.trimIndent())
     }
 
     fun `test slf4j with partial known strings`() {
@@ -552,7 +552,7 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
                   get() = if (Random().nextBoolean()) "{}" else ""
           }
       }
-      """.trimIndent().commentsToWarn())
+      """.trimIndent())
     }
 
     fun `test slf4j builder`() {
@@ -570,7 +570,7 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
       
       private val logger2 = LoggerFactory.getLogger()
       private val builder: LoggingEventBuilder = logger2.atError()
-      """.trimIndent().commentsToWarn())
+      """.trimIndent())
     }
   }
 }

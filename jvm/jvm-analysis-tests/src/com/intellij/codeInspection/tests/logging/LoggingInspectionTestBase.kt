@@ -4,12 +4,6 @@ import com.intellij.codeInspection.tests.JvmInspectionTestBase
 
 abstract class LoggingInspectionTestBase : JvmInspectionTestBase() {
 
-  protected fun String.commentsToWarn(): String {
-    return this.replace("/**/", "</warning>")
-      .replace("/*", "<warning descr=\"")
-      .replace("*/", "\">")
-  }
-
   override fun setUp() {
     super.setUp()
     myFixture.addClass("""

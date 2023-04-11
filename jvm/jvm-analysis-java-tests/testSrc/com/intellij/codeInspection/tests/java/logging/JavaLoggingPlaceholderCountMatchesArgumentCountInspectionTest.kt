@@ -13,12 +13,12 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
      class Logging {
        private static final Logger LOG = LogManager.getLogger();
        void m(int i) {
-         LOG.info(/*Fewer arguments provided (1) than placeholders specified (3)*/"test? {}{}{}"/**/, i);
-         LogManager.getLogger().fatal(/*More arguments provided (1) than placeholders specified (0)*/"test"/**/, i);
+         LOG.info(<warning descr="Fewer arguments provided (1) than placeholders specified (3)">"test? {}{}{}"</warning>, i);
+         LogManager.getLogger().fatal(<warning descr="More arguments provided (1) than placeholders specified (0)">"test"</warning>, i);
          LOG.error(() -> "", new Exception());
        }
      }
-    """.trimIndent().commentsToWarn())
+    """.trimIndent())
   }
 
   fun `test log4j2LogBuilder`() {
@@ -27,12 +27,12 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
      class Logging {
        private static final Logger LOG = LogManager.getLogger();
        void m(int i) {
-         LOG.atInfo().log(/*Fewer arguments provided (1) than placeholders specified (3)*/"test? {}{}{}"/**/, i);
-         LOG.atFatal().log(/*More arguments provided (2) than placeholders specified (0)*/"test "/**/, i, i);
-         LOG.atError().log(/*More arguments provided (1) than placeholders specified (0)*/"test? "/**/, () -> "");
+         LOG.atInfo().log(<warning descr="Fewer arguments provided (1) than placeholders specified (3)">"test? {}{}{}"</warning>, i);
+         LOG.atFatal().log(<warning descr="More arguments provided (2) than placeholders specified (0)">"test "</warning>, i, i);
+         LOG.atError().log(<warning descr="More arguments provided (1) than placeholders specified (0)">"test? "</warning>, () -> "");
        }
      }
-    """.trimIndent().commentsToWarn())
+    """.trimIndent())
   }
 
   fun `test 1 exception and 1 placeholder`() {
@@ -41,10 +41,10 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       class X {
         void foo() {
           RuntimeException e = new RuntimeException();
-          LoggerFactory.getLogger(X.class).info(/*Fewer arguments provided (0) than placeholders specified (1)*/"this: {}"/**/, e);
+          LoggerFactory.getLogger(X.class).info(<warning descr="Fewer arguments provided (0) than placeholders specified (1)">"this: {}"</warning>, e);
         }
       }    
-        """.trimIndent().commentsToWarn())
+        """.trimIndent())
   }
 
   fun `test 1 exception and 2 placeholder`() {
@@ -56,7 +56,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
           LoggerFactory.getLogger(X.class).info("1: {} e: {}", 1, e);
         }
       }
-        """.trimIndent().commentsToWarn())
+        """.trimIndent())
   }
 
   fun `test 1 exception and 3 placeholder`() {
@@ -65,10 +65,10 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       class X {
         void foo() {
           RuntimeException e = new RuntimeException();
-          LoggerFactory.getLogger(X.class).info(/*Fewer arguments provided (1) than placeholders specified (3)*/"1: {} {} {}"/**/, 1, e);
+          LoggerFactory.getLogger(X.class).info(<warning descr="Fewer arguments provided (1) than placeholders specified (3)">"1: {} {} {}"</warning>, 1, e);
         }
       }
-        """.trimIndent().commentsToWarn())
+        """.trimIndent())
   }
 
   fun `test no warn`() {
@@ -80,7 +80,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
           logger.info("string {}", 1);
         }
       }
-        """.trimIndent().commentsToWarn())
+        """.trimIndent())
   }
 
   fun `test more placeholders`() {
@@ -89,10 +89,10 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       class X {
         void foo() {
           Logger logger = LoggerFactory.getLogger(X.class);
-          logger.info(/*Fewer arguments provided (1) than placeholders specified (2)*/"string {}{}"/**/, 1);
+          logger.info(<warning descr="Fewer arguments provided (1) than placeholders specified (2)">"string {}{}"</warning>, 1);
         }
       }
-        """.trimIndent().commentsToWarn())
+        """.trimIndent())
   }
 
   fun `test fewer placeholders`() {
@@ -101,10 +101,10 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       class X {
         void foo() {
           Logger logger = LoggerFactory.getLogger(X.class);
-          logger.info(/*More arguments provided (1) than placeholders specified (0)*/"string"/**/, 1);
+          logger.info(<warning descr="More arguments provided (1) than placeholders specified (0)">"string"</warning>, 1);
         }
       }
-        """.trimIndent().commentsToWarn())
+        """.trimIndent())
   }
 
   fun `test throwable`() {
@@ -116,7 +116,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
           logger.info("string {}", 1, new RuntimeException());
         }
       }
-        """.trimIndent().commentsToWarn())
+        """.trimIndent())
   }
 
   fun `test multi catch`() {
@@ -135,7 +135,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
          public static class FirstException extends Exception { }
          public static class SecondException extends Exception { }
          }
-        """.trimIndent().commentsToWarn())
+        """.trimIndent())
   }
 
   fun `test no slf4j`() {
@@ -148,7 +148,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
              void info( String firstParameter, Object secondParameter );
          }
      }
-         """.trimIndent().commentsToWarn())
+         """.trimIndent())
   }
 
   fun `test array argument`() {
@@ -160,7 +160,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
           LOG.info("test {} for test {} in test {}", new Object[] {a, b, c});
         }
       }
-         """.trimIndent().commentsToWarn())
+         """.trimIndent())
   }
 
   fun `test uncountable array`() {
@@ -172,7 +172,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
           LOG.info("test {} test text {} text {}", objects);
         }
       }
-         """.trimIndent().commentsToWarn())
+         """.trimIndent())
   }
 
   fun `test constant`() {
@@ -182,10 +182,10 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
         Logger LOG = LoggerFactory.getLogger(X.class);
         private static final String message = "HELLO {}";
         void m() {
-          LOG.info(/*Fewer arguments provided (0) than placeholders specified (1)*/message/**/);
+          LOG.info(<warning descr="Fewer arguments provided (0) than placeholders specified (1)">message</warning>);
         }
       }
-      """.trimIndent().commentsToWarn())
+      """.trimIndent())
   }
   fun `test non constant string`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
@@ -194,10 +194,10 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
         Logger LOG = LoggerFactory.getLogger(X.class);
         private static final String S = "{}";
         void m() {
-          LOG.info(/*Fewer arguments provided (0) than placeholders specified (3)*/S +"{}" + (1 + 2) + '{' + '}' +Integer.class/**/);
+          LOG.info(<warning descr="Fewer arguments provided (0) than placeholders specified (3)">S +"{}" + (1 + 2) + '{' + '}' +Integer.class</warning>);
         }
       }
-      """.trimIndent().commentsToWarn())
+      """.trimIndent())
   }
 
   fun `test escaping 1`() {
@@ -209,7 +209,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
           LOG.info("Created key {}\\\\{}", 1, 2);
         }
       }
-      """.trimIndent().commentsToWarn())
+      """.trimIndent())
   }
 
   fun `test escaping 2`() {
@@ -218,10 +218,10 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       class X {
         Logger LOG = LoggerFactory.getLogger(X.class);
         void m() {
-          LOG.info(/*More arguments provided (2) than placeholders specified (1)*/"Created key {}\\{}"/**/, 1, 2);
+          LOG.info(<warning descr="More arguments provided (2) than placeholders specified (1)">"Created key {}\\{}"</warning>, 1, 2);
         }
       }
-      """.trimIndent().commentsToWarn())
+      """.trimIndent())
   }
 
   fun `test null argument`() {
@@ -234,7 +234,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
           LOG.info("", new Exception());
         }
       }
-      """.trimIndent().commentsToWarn())
+      """.trimIndent())
   }
 
   fun `test log4j2 with text variables`() {
@@ -245,17 +245,17 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
         private static final Logger LOG = LogManager.getLogger();
         void m(int i) {
           String text = "test {}{}{}";
-          LOG.info(/*Fewer arguments provided (1) than placeholders specified (3)*/text/**/, i);
+          LOG.info(<warning descr="Fewer arguments provided (1) than placeholders specified (3)">text</warning>, i);
           final String text2 = "test ";
-          LOG.fatal(/*More arguments provided (1) than placeholders specified (0)*/text2/**/, i);
-          LOG.fatal(/*Fewer arguments provided (1) than placeholders specified (6)*/text + text/**/, i);
-          LOG.fatal(/*Fewer arguments provided (1) than placeholders specified (18)*/text + text + text + text + text + text/**/, i);
-          LOG.info(/*More arguments provided (1) than placeholders specified (0)*/FINAL_TEXT/**/, i);
+          LOG.fatal(<warning descr="More arguments provided (1) than placeholders specified (0)">text2</warning>, i);
+          LOG.fatal(<warning descr="Fewer arguments provided (1) than placeholders specified (6)">text + text</warning>, i);
+          LOG.fatal(<warning descr="Fewer arguments provided (1) than placeholders specified (18)">text + text + text + text + text + text</warning>, i);
+          LOG.info(<warning descr="More arguments provided (1) than placeholders specified (0)">FINAL_TEXT</warning>, i);
           String sum = "first {}" + "second {}" + 1;
-          LOG.info(/*Fewer arguments provided (1) than placeholders specified (2)*/sum/**/, i);
+          LOG.info(<warning descr="Fewer arguments provided (1) than placeholders specified (2)">sum</warning>, i);
         }
       }
-      """.trimIndent().commentsToWarn())
+      """.trimIndent())
   }
 
   fun `test log4j2 builder`() {
@@ -267,13 +267,13 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
          try {
            throw new RuntimeException();
          } catch (Throwable t) {
-          LOG.atError().log(/*More arguments provided (2) than placeholders specified (1)*/"'{}'"/**/, "bar", new Exception());
+          LOG.atError().log(<warning descr="More arguments provided (2) than placeholders specified (1)">"'{}'"</warning>, "bar", new Exception());
           LOG.atError().log("'{}' '{}'", "bar", new Exception());
           LOG.atError().log("'{}'", "bar");
          }
         }
       }
-      """.trimIndent().commentsToWarn())
+      """.trimIndent())
   }
   fun `test slf4j disable slf4jToLog4J2Type`() {
     val currentProfile = ProjectInspectionProfileManager.getInstance(project).currentProfile
@@ -290,13 +290,13 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       class X {
         void foo() {
           Logger logger = LoggerFactory.getLogger(X.class);
-          logger.info(/*Fewer arguments provided (1) than placeholders specified (2)*/"string {} {}"/**/, 1, new RuntimeException());
-          logger.atError().log(/*Fewer arguments provided (0) than placeholders specified (1)*/"{}"/**/, new RuntimeException("test"));
-          LoggerFactory.getLogger(X.class).atError().log(/*Fewer arguments provided (1) than placeholders specified (2)*/"{} {}"/**/, 1, new RuntimeException("test"));
+          logger.info(<warning descr="Fewer arguments provided (1) than placeholders specified (2)">"string {} {}"</warning>, 1, new RuntimeException());
+          logger.atError().log(<warning descr="Fewer arguments provided (0) than placeholders specified (1)">"{}"</warning>, new RuntimeException("test"));
+          LoggerFactory.getLogger(X.class).atError().log(<warning descr="Fewer arguments provided (1) than placeholders specified (2)">"{} {}"</warning>, 1, new RuntimeException("test"));
           LoggerFactory.getLogger(X.class).atError().log("{}", 1, new RuntimeException("test"));
         }
       }
-      """.trimIndent().commentsToWarn())
+      """.trimIndent())
   }
 
   fun `test variable`() {
@@ -322,7 +322,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
               logger.info(<warning descr="Fewer arguments provided (1) than placeholders specified (2)">con + t + "1"</warning>, 1);
           }
       }
-      """.trimIndent().commentsToWarn())
+      """.trimIndent())
   }
   fun `test slf4j auto slf4jToLog4J2Type`() {
     val currentProfile = ProjectInspectionProfileManager.getInstance(project).currentProfile
@@ -348,10 +348,10 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
           logger.info("string {} {}", 1, new RuntimeException());
           logger.atError().log("{}", new RuntimeException("test"));
           LoggerFactory.getLogger(X.class).atError().log("{} {}", 1, new RuntimeException("test"));
-          LoggerFactory.getLogger(X.class).atError().log(/*More arguments provided (2) than placeholders specified (1)*/"{}"/**/, 1, new RuntimeException("test"));
+          LoggerFactory.getLogger(X.class).atError().log(<warning descr="More arguments provided (2) than placeholders specified (1)">"{}"</warning>, 1, new RuntimeException("test"));
         }
       }
-      """.trimIndent().commentsToWarn())
+      """.trimIndent())
   }
   fun `test slf4j builder`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
@@ -365,12 +365,12 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
           Logger logger = LoggerFactory.getLogger(X.class);
           LoggerFactory.getLogger(X.class).atError().log("{}", new RuntimeException("test"));
           LoggerFactory.getLogger(X.class).atError().log("{} {}", 1, new RuntimeException("test"));
-          LoggerFactory.getLogger(X.class).atError().log(/*More arguments provided (2) than placeholders specified (1)*/"{}"/**/, 1, new RuntimeException("test"));
+          LoggerFactory.getLogger(X.class).atError().log(<warning descr="More arguments provided (2) than placeholders specified (1)">"{}"</warning>, 1, new RuntimeException("test"));
 
           builder.log(<warning descr="Fewer arguments provided (1) than placeholders specified (2)">"{} {}"</warning>, 1);
         }
       }
-      """.trimIndent().commentsToWarn())
+      """.trimIndent())
   }
 
   fun `test formatted log4j`() {
@@ -384,14 +384,14 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
          } catch (Throwable t) {
             Logger LOG2 = LogManager.getFormatterLogger();
             LOG.info("My %s text", "test", t);
-            LOG.info(/*Illegal format string specifier*/"My %i text"/**/, "test");
-            LOG.info(/*More arguments provided (2) than placeholders specified (1)*/"My %s text"/**/, "test1", "test2");
+            LOG.info(<warning descr="Illegal format string specifier">"My %i text"</warning>, "test");
+            LOG.info(<warning descr="More arguments provided (2) than placeholders specified (1)">"My %s text"</warning>, "test1", "test2");
             LOG2.info("My %s text, %s", "test1"); //skip because LOG2 is not final
-            LogManager.getFormatterLogger().info(/*Fewer arguments provided (1) than placeholders specified (2)*/"My %s text, %s"/**/, "test1");
+            LogManager.getFormatterLogger().info(<warning descr="Fewer arguments provided (1) than placeholders specified (2)">"My %s text, %s"</warning>, "test1");
           }
         }
       }
-      """.trimIndent().commentsToWarn())
+      """.trimIndent())
   }
 
   fun `test Log4j2 with exception in suppliers`() {
@@ -404,10 +404,10 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
          try {
            throw new RuntimeException();
          } catch (IllegalArgumentException | IllegalStateException t) {
-             LOG.info(/*More arguments provided (3) than placeholders specified (1)*/"test {}"/**/, () -> "test", () -> "test", () -> t);
+             LOG.info(<warning descr="More arguments provided (3) than placeholders specified (1)">"test {}"</warning>, () -> "test", () -> "test", () -> t);
          } catch (Throwable t) {
              LOG.info("test {}", () -> "test", () -> t);
-             LOG.info(/*More arguments provided (3) than placeholders specified (1)*/"test {}"/**/, () -> "test", () -> "test", () -> t);
+             LOG.info(<warning descr="More arguments provided (3) than placeholders specified (1)">"test {}"</warning>, () -> "test", () -> "test", () -> t);
              Supplier<Throwable> s = () -> t;
              LOG.info("test {}", () -> "test", s);
              Supplier<?> s2 = () -> t;
@@ -419,7 +419,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
          }
         }
       }
-      """.trimIndent().commentsToWarn())
+      """.trimIndent())
   }
 
   fun `test slf4j with partial known strings`() {
@@ -439,30 +439,30 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
 
        void m(String t) {
         logger.info("{} {}", 1, 2);
-        logger.info(/*Fewer arguments provided (0) than placeholders specified (at least 2)*/"{}" + t + 1 + "{}"/**/);
-        logger.info(/*Fewer arguments provided (0) than placeholders specified (at least 1)*/"{}" + t + 1/**/);
-        logger.info(/*Fewer arguments provided (0) than placeholders specified (at least 1)*/"{}" + t + "{}"/**/);
+        logger.info(<warning descr="Fewer arguments provided (0) than placeholders specified (at least 2)">"{}" + t + 1 + "{}"</warning>);
+        logger.info(<warning descr="Fewer arguments provided (0) than placeholders specified (at least 1)">"{}" + t + 1</warning>);
+        logger.info(<warning descr="Fewer arguments provided (0) than placeholders specified (at least 1)">"{}" + t + "{}"</warning>);
         logger.info("{}" + t + "{}", 1, 2);
         logger.info("{}" + t + "{}", 1, 2, 3);
         String temp1 = "{} {}" + t;
         String temp = "{} {}" + t;
-        logger.info(/*Fewer arguments provided (1) than placeholders specified (at least 2)*/temp1/**/, 1);
+        logger.info(<warning descr="Fewer arguments provided (1) than placeholders specified (at least 2)">temp1</warning>, 1);
         logger.info(temp, 1, 2, 3);
         logger.info(logText, 1, 2, 3);
-        logger.info(/*Fewer arguments provided (1) than placeholders specified (at least 2)*/logText/**/, 1);
-        logger.info(/*Fewer arguments provided (1) than placeholders specified (at least 3)*/logText2/**/, 1);
-        logger.info(/*Fewer arguments provided (1) than placeholders specified (3)*/logText3/**/, 1);
+        logger.info(<warning descr="Fewer arguments provided (1) than placeholders specified (at least 2)">logText</warning>, 1);
+        logger.info(<warning descr="Fewer arguments provided (1) than placeholders specified (at least 3)">logText2</warning>, 1);
+        logger.info(<warning descr="Fewer arguments provided (1) than placeholders specified (3)">logText3</warning>, 1);
         temp = "{}" + t;
         logger.info(temp , 1);
        }
 
        void m(int i, String s) {
-        logger.info(/*Fewer arguments provided (0) than placeholders specified (1)*/"test1 {}"/**/);
-        logger.info(/*Fewer arguments provided (0) than placeholders specified (at least 1)*/"test1 {}" + s/**/);
-        logger.info(/*Fewer arguments provided (0) than placeholders specified (1)*/"test1 {}" + i/**/);
+        logger.info(<warning descr="Fewer arguments provided (0) than placeholders specified (1)">"test1 {}"</warning>);
+        logger.info(<warning descr="Fewer arguments provided (0) than placeholders specified (at least 1)">"test1 {}" + s</warning>);
+        logger.info(<warning descr="Fewer arguments provided (0) than placeholders specified (1)">"test1 {}" + i</warning>);
        }
       }
-      """.trimIndent().commentsToWarn())
+      """.trimIndent())
   }
 
   fun `test log4j builder with partial known strings`() {
@@ -478,30 +478,30 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
          return new Random().nextBoolean() ? "{}" : "";
        }
        static {
-        LOG.atError().log(/*Fewer arguments provided (1) than placeholders specified (at least 2)*/logText/**/, 1);
-        LOG.atError().log(/*Fewer arguments provided (1) than placeholders specified (at least 4)*/logText + logText2/**/, 1);
+        LOG.atError().log(<warning descr="Fewer arguments provided (1) than placeholders specified (at least 2)">logText</warning>, 1);
+        LOG.atError().log(<warning descr="Fewer arguments provided (1) than placeholders specified (at least 4)">logText + logText2</warning>, 1);
        }
        public static void test(String t) {
         LogBuilder logger = LOG.atError();
         logger.log("{} {}", 1, 2);
-        logger.log(/*Fewer arguments provided (0) than placeholders specified (at least 2)*/"{}" + t + 1 + "{}"/**/);
-        logger.log(/*Fewer arguments provided (0) than placeholders specified (at least 1)*/"{}" + t + 1/**/);
-        logger.log(/*Fewer arguments provided (0) than placeholders specified (at least 1)*/"{}" + t + "{}"/**/);
+        logger.log(<warning descr="Fewer arguments provided (0) than placeholders specified (at least 2)">"{}" + t + 1 + "{}"</warning>);
+        logger.log(<warning descr="Fewer arguments provided (0) than placeholders specified (at least 1)">"{}" + t + 1</warning>);
+        logger.log(<warning descr="Fewer arguments provided (0) than placeholders specified (at least 1)">"{}" + t + "{}"</warning>);
         logger.log("{}" + t + "{}", 1, 2);
         logger.log("{}" + t + "{}", 1, 2, 3);
         String temp = "{} {}" + t;
         String temp1 = "{} {}" + t;
-        logger.log(/*Fewer arguments provided (1) than placeholders specified (at least 2)*/temp1/**/, 1);
+        logger.log(<warning descr="Fewer arguments provided (1) than placeholders specified (at least 2)">temp1</warning>, 1);
         logger.log(temp, 1, 2, 3);
         logger.log(logText, 1, 2, 3);
-        logger.log(/*Fewer arguments provided (1) than placeholders specified (at least 2)*/logText/**/, 1);
-        logger.log(/*Fewer arguments provided (1) than placeholders specified (at least 3)*/logText2/**/, 1);
-        logger.log(/*Fewer arguments provided (1) than placeholders specified (3)*/logText3/**/, 1);
+        logger.log(<warning descr="Fewer arguments provided (1) than placeholders specified (at least 2)">logText</warning>, 1);
+        logger.log(<warning descr="Fewer arguments provided (1) than placeholders specified (at least 3)">logText2</warning>, 1);
+        logger.log(<warning descr="Fewer arguments provided (1) than placeholders specified (3)">logText3</warning>, 1);
         temp = "{}" + t;
         logger.log(temp , 1);
        }
       }
-      """.trimIndent().commentsToWarn())
+      """.trimIndent())
   }
 
   fun `test formatted log4j with partial known strings`() {
@@ -510,8 +510,8 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       class Logging {
        private static final Logger logger = LogManager.getFormatterLogger();
        public static void test(String t) {
-        logger.info(/*Fewer arguments provided (0) than placeholders specified (at least 1)*/"%s" + t + 1 + "%s "/**/);
-        logger.info(/*Fewer arguments provided (0) than placeholders specified (at least 2)*/"%s %s" + t + 1/**/);
+        logger.info(<warning descr="Fewer arguments provided (0) than placeholders specified (at least 1)">"%s" + t + 1 + "%s "</warning>);
+        logger.info(<warning descr="Fewer arguments provided (0) than placeholders specified (at least 2)">"%s %s" + t + 1</warning>);
         logger.info("%s" + t + "%s", 1);
         logger.atDebug().log("%s t", 1);
         final LogBuilder logBuilder = logger.atDebug();
@@ -521,7 +521,7 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
         logger.info(<warning descr="More arguments provided (2) than placeholders specified (1)">"%s t"</warning>, 2, 3); //warn
        }
       }
-      """.trimIndent().commentsToWarn())
+      """.trimIndent())
   }
 
   fun `test log4j with partial known strings`() {
@@ -530,14 +530,14 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       class Logging {
        private static final Logger logger = LogManager.getLogger();
        public static void test(String t) {
-         logger.info(/*Fewer arguments provided (0) than placeholders specified (at least 2)*/"{}" + t + 1 + "{}"/**/);
-         logger.info(/*Fewer arguments provided (0) than placeholders specified (at least 2)*/"{}" + t + 1 + "{}"/**/, new RuntimeException());
-         logger.info(/*Fewer arguments provided (1) than placeholders specified (at least 3)*/"{} {}" + t + 1 + "{}"/**/, 1, new RuntimeException());
+         logger.info(<warning descr="Fewer arguments provided (0) than placeholders specified (at least 2)">"{}" + t + 1 + "{}"</warning>);
+         logger.info(<warning descr="Fewer arguments provided (0) than placeholders specified (at least 2)">"{}" + t + 1 + "{}"</warning>, new RuntimeException());
+         logger.info(<warning descr="Fewer arguments provided (1) than placeholders specified (at least 3)">"{} {}" + t + 1 + "{}"</warning>, 1, new RuntimeException());
          logger.info("{}" + t + 1 + "{}", 1, new RuntimeException());
          logger.info("{}" + t + 1 + "{}", 1, 1);
        }
       }
-      """.trimIndent().commentsToWarn())
+      """.trimIndent())
   }
 
   fun `test many variables`() {
@@ -563,14 +563,14 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
                LOGGER.info("abd" + a10, 1);
                LOGGER.info("abd" + a10, 1);
                LOGGER.info("abd" + a10, 1);
-               LOGGER.info(/*Fewer arguments provided (1) than placeholders specified (at least 9)*/"abd" + a2/**/, 1);
-               LOGGER.info(/*Fewer arguments provided (1) than placeholders specified (at least 9)*/"abd" + a2/**/, 1);
-               LOGGER.info(/*Fewer arguments provided (1) than placeholders specified (at least 9)*/"abd" + a2/**/, 1);
-               LOGGER.info(/*Fewer arguments provided (1) than placeholders specified (at least 9)*/"abd" + a2/**/, 1);
-               LOGGER.info(/*Fewer arguments provided (1) than placeholders specified (at least 9)*/"abd" + a2/**/, 1);
+               LOGGER.info(<warning descr="Fewer arguments provided (1) than placeholders specified (at least 9)">"abd" + a2</warning>, 1);
+               LOGGER.info(<warning descr="Fewer arguments provided (1) than placeholders specified (at least 9)">"abd" + a2</warning>, 1);
+               LOGGER.info(<warning descr="Fewer arguments provided (1) than placeholders specified (at least 9)">"abd" + a2</warning>, 1);
+               LOGGER.info(<warning descr="Fewer arguments provided (1) than placeholders specified (at least 9)">"abd" + a2</warning>, 1);
+               LOGGER.info(<warning descr="Fewer arguments provided (1) than placeholders specified (at least 9)">"abd" + a2</warning>, 1);
            }
       }
-      """.trimIndent().commentsToWarn())
+      """.trimIndent())
   }
 }
 

@@ -7,10 +7,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.util.InspectionMessage
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.psi.*
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.uast.UastHintedVisitorAdapter
 import com.siyeh.ig.callMatcher.CallMapper
@@ -55,40 +52,37 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
     private fun hasBridgeFromSlf4jToLog4j2(element: UElement): Boolean {
       val file = element.getContainingUFile() ?: return true
       val sourcePsi = file.sourcePsi
-      return CachedValuesManager.getCachedValue(sourcePsi) {
-        val project = sourcePsi.project
-        val aClass = JavaPsiFacade.getInstance(project).findClass(LoggingUtil.LOG_4_J_LOGGER, sourcePsi.resolveScope)
-        CachedValueProvider.Result(aClass != null, ProjectRootManager.getInstance(project))
-      }
+      val project = sourcePsi.project
+      return JavaPsiFacade.getInstance(project).findClass(LoggingUtil.LOG_4_J_LOGGER, sourcePsi.resolveScope) != null
     }
 
     override fun visitCallExpression(node: UCallExpression): Boolean {
-      val searcher: LoggerTypeSearcher = LOGGER_TYPE_SEARCHERS.mapFirst(node) ?: return true
+      val searcher = LOGGER_TYPE_SEARCHERS.mapFirst(node) ?: return true
       val log4jAsImplementationForSlf4j = when (slf4jToLog4J2Type) {
         Slf4jToLog4J2Type.AUTO -> hasBridgeFromSlf4jToLog4j2(node)
         Slf4jToLog4J2Type.YES -> true
         Slf4jToLog4J2Type.NO -> false
       }
-      val loggerType: LoggerType = searcher.findType(node, LoggerContext(log4jAsImplementationForSlf4j)) ?: return true
-      val method: UMethod = node.resolveToUElement() as? UMethod ?: return true
-      val parameters: List<UParameter> = method.uastParameters
+      val loggerType = searcher.findType(node, LoggerContext(log4jAsImplementationForSlf4j)) ?: return true
+      val method = node.resolveToUElement() as? UMethod ?: return true
+      val parameters = method.uastParameters
       if (parameters.isEmpty()) {
         return true
       }
-      val index: Int = getIndex(parameters) ?: return true
+      val index = getIndex(parameters) ?: return true
 
-      val arguments: List<UExpression> = node.valueArguments
+      val arguments = node.valueArguments
       var argumentCount = arguments.size - index
       var lastArgumentIsException = hasThrowableType(arguments[arguments.size - 1])
       var lastArgumentIsSupplier = couldBeThrowableSupplier(loggerType, parameters[parameters.size - 1], arguments[arguments.size - 1])
 
       if (argumentCount == 1 && parameters.size > 1) {
         val lastParameter = parameters.last()
-        val argument: UExpression = arguments[index]
+        val argument = arguments[index]
         val argumentType = argument.getExpressionType()
         if (argumentType is PsiArrayType && lastParameter.type is PsiArrayType) {
           if (isArrayCreation(argument)) {
-            val initializers: List<UExpression> = getInitializers(argument) ?: return true
+            val initializers = getInitializers(argument) ?: return true
             argumentCount = initializers.size
             lastArgumentIsException = argumentCount > 0 && hasThrowableType(initializers[initializers.size - 1])
             lastArgumentIsSupplier = argumentCount > 0 && couldBeThrowableSupplier(loggerType, parameters[parameters.size - 1],
@@ -99,7 +93,7 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
           }
         }
       }
-      val logStringArgument: UExpression = arguments[index - 1]
+      val logStringArgument = arguments[index - 1]
       val parts = collectParts(logStringArgument) ?: return true
 
       val placeholderCountHolder = solvePlaceholderCount(loggerType, argumentCount, parts)
@@ -112,7 +106,7 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
       }
 
 
-      val resultType: ResultType = when (loggerType) {
+      val resultType = when (loggerType) {
         LoggerType.SLF4J -> { //according to the reference, an exception should not have a placeholder
           argumentCount = if (lastArgumentIsException) argumentCount - 1 else argumentCount
           if (placeholderCountHolder.status == PlaceholdersStatus.PARTIAL) {
@@ -201,7 +195,7 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
         if (prefix.isEmpty()) {
           return PlaceholderCountResult(0, PlaceholdersStatus.EMPTY)
         }
-        val validators: Array<FormatDecode.Validator> = try {
+        val validators = try {
           if (full) {
             FormatDecode.decode(prefix.toString(), argumentCount)
           }
@@ -259,24 +253,38 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
     }
 
     private fun getInitializers(argument: UExpression): List<UExpression>? {
-      val sourcePsi = argument.sourcePsi
-      if (sourcePsi is PsiNewExpression) {
-        val arrayInitializer = sourcePsi.arrayInitializer ?: return null
-        val uElements = arrayInitializer.initializers.map { it.toUElement() }
-        if (uElements.any { it == null || it !is UExpression }) return null
-        return uElements.mapNotNull { it as? UExpression }
+      //mostly for java
+      if (argument is UCallExpression && argument.kind == UastCallKind.NEW_ARRAY_WITH_INITIALIZER) {
+        return argument.valueArguments
       }
+      //mostly for scala
+      if (argument is UBinaryExpressionWithType) {
+        return (argument.operand as? UCallExpression)?.valueArguments
+      }
+      //mostly for kotlin
       if (argument is UCallExpression) {
         return argument.valueArguments
       }
+      //for others, don't check further
       return null
     }
 
     private fun isArrayCreation(argument: UExpression): Boolean {
       val argumentType = argument.getExpressionType() as? PsiArrayType ?: return false
-      val sourcePsi = argument.sourcePsi
-      return (argumentType.equalsToText("java.lang.Object[]") && sourcePsi is PsiNewExpression) ||
-             (argument is UCallExpression && argument.receiver == null && argument.resolve() == null && argument.methodName == "arrayOf")
+      //mostly for java
+      if (argumentType.equalsToText(
+          "java.lang.Object[]") && argument is UCallExpression && argument.kind == UastCallKind.NEW_ARRAY_WITH_INITIALIZER) return true
+      //mostly for kotlin
+      if (argument is UCallExpression) {
+        if (argument.receiver == null && argument.resolve() == null && argument.methodName == "arrayOf") return true
+      }
+      //mostly for scala
+      if (argument is UBinaryExpressionWithType && argument.operationKind == UastBinaryExpressionWithTypeKind.TypeCast.INSTANCE) {
+        val operand = argument.operand
+        if (operand is UCallExpression && operand.methodName == "Array" && operand.resolve()?.containingClass?.name == "Array$") return true
+      }
+      //for others, don't check further
+      return false
     }
 
     private fun couldBeThrowableSupplier(loggerType: LoggerType, lastParameter: UParameter?, lastArgument: UExpression?): Boolean {
@@ -306,13 +314,16 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
           }
         }
         return true
-      } //java reference expression
+      }
+      //java reference expression
       if (sourcePsi is PsiMethodReferenceExpression) {
         val psiType = PsiMethodReferenceUtil.getMethodReferenceReturnType(sourcePsi) ?: return false
         return throwable.isConvertibleFrom(psiType)
-      } //java and kotlin functional interface
-      val type = lastArgument.getExpressionType() ?: return false
-      val functionalReturnType = LambdaUtil.getFunctionalInterfaceReturnType(type) ?: return false
+      }
+      //for other languages with functional interface,
+      //if the type is not defined, then it can be exception supplier
+      val type = lastArgument.getExpressionType() ?: return true
+      val functionalReturnType = LambdaUtil.getFunctionalInterfaceReturnType(type) ?: return true
       return throwable.isConvertibleFrom(functionalReturnType)
     }
 
@@ -358,7 +369,7 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
     fun findType(expression: UCallExpression, context: LoggerContext): LoggerType?
   }
 
-  private val SLF4J_HOLDER: LoggerTypeSearcher = object : LoggerTypeSearcher {
+  private val SLF4J_HOLDER = object : LoggerTypeSearcher {
     override fun findType(expression: UCallExpression, context: LoggerContext): LoggerType {
       return if (context.log4jAsImplementationForSlf4j) { //use old style as more common
         LoggerType.LOG4J_OLD_STYLE
@@ -392,7 +403,7 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
   }
 
 
-  private val SLF4J_BUILDER_HOLDER: LoggerTypeSearcher = object : LoggerTypeSearcher {
+  private val SLF4J_BUILDER_HOLDER = object : LoggerTypeSearcher {
     override fun findType(expression: UCallExpression, context: LoggerContext): LoggerType {
       if (context.log4jAsImplementationForSlf4j) {
         return LoggerType.EQUAL_PLACEHOLDERS
@@ -401,7 +412,7 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
     }
   }
 
-  private val LOG4J_HOLDER: LoggerTypeSearcher = object : LoggerTypeSearcher {
+  private val LOG4J_HOLDER = object : LoggerTypeSearcher {
     override fun findType(expression: UCallExpression, context: LoggerContext): LoggerType? {
       val qualifierExpression = getImmediateLoggerQualifier(expression)
       var initializer: UExpression? = null
