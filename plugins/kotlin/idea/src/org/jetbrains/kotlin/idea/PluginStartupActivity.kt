@@ -24,7 +24,10 @@ import java.util.concurrent.Callable
 internal class PluginStartupActivity : StartupActivity.Background {
     override fun runActivity(project: Project) {
         excludedFromUpdateCheckPlugins.add("org.jetbrains.kotlin")
+/* Android Studio (b/261747757): this compatibility check is inconvenient during the IJ merge process,
+ * and its value is limited anyway because we generally disallow out-of-band Kotlin plugin updates.
         checkPluginCompatibility()
+ */
         setupReportingFromRelease()
 
         //todo[Sedunov]: wait for fix in platform to avoid misunderstood from Java newbies (also ConfigureKotlinInTempDirTest)
