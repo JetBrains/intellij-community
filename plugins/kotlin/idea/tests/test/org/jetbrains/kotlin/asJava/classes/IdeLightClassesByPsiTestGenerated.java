@@ -351,6 +351,11 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/strangeIdentifiers.kt"));
         }
 
+        @TestMetadata("targetAnnotation.kt")
+        public void testTargetAnnotation() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/targetAnnotation.kt"));
+        }
+
         @TestMetadata("throwsAnnotation.kt")
         public void testThrowsAnnotation() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/throwsAnnotation.kt"));
@@ -376,9 +381,19 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/typealiasInTypeArguments.kt"));
         }
 
+        @TestMetadata("unresolvedGenericSupertypes.kt")
+        public void testUnresolvedGenericSupertypes() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/unresolvedGenericSupertypes.kt"));
+        }
+
         @TestMetadata("unresolvedWithAliasedImport.kt")
         public void testUnresolvedWithAliasedImport() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/unresolvedWithAliasedImport.kt"));
+        }
+
+        @TestMetadata("unsafePropertyInitializers.kt")
+        public void testUnsafePropertyInitializers() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/unsafePropertyInitializers.kt"));
         }
 
         @TestMetadata("valueClassInSignature.kt")
