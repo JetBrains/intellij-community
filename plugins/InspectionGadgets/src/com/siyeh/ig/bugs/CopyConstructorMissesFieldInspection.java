@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -66,6 +67,9 @@ public class CopyConstructorMissesFieldInspection extends BaseInspection {
       final List<PsiField> assignedFields = new SmartList<>();
       final Set<PsiMethod> methodsOneLevelDeep = new HashSet<>();
       if (!PsiTreeUtil.processElements(method, e -> collectAssignedFields(e, parameter, methodsOneLevelDeep, assignedFields))) {
+        return;
+      }
+      if (aClass.isRecord() && ContainerUtil.exists(methodsOneLevelDeep, m -> JavaPsiRecordUtil.isCanonicalConstructor(m))) {
         return;
       }
       for (PsiMethod calledMethod : methodsOneLevelDeep) {

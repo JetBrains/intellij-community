@@ -1,5 +1,4 @@
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 class CopyConstructorMissesField {
 
@@ -75,5 +74,14 @@ class FinalField {
 
   public FinalField(FinalField ff) {
     this();
+  }
+}
+record MapTile(Map<Integer, Void> visible) {
+  public MapTile() {
+    this(new HashMap<>());
+  }
+
+  public MapTile(MapTile that) {
+    this(new HashMap<>(that.visible));
   }
 }
