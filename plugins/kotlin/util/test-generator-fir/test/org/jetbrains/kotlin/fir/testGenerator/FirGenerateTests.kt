@@ -82,7 +82,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractFirReferenceResolveWithLibTest> {
-            model("resolve/referenceWithLib", pattern = KT_WITHOUT_DOTS, isRecursive = false)
+            model("resolve/referenceWithLib", pattern = DIRECTORY, isRecursive = false)
         }
 
         testClass<AbstractFirReferenceResolveInJavaTest> {

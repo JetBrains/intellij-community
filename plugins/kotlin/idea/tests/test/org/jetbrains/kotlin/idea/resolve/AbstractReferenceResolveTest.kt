@@ -28,8 +28,7 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
         KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceWithStdlibJdk8()
 
     protected open fun doTest(path: String) {
-        assert(path.endsWith(".kt")) { path }
-        myFixture.configureWithExtraFile(path, ".Data")
+        configureTest(path)
         val controlDirective = if (isFirPlugin()) {
             IgnoreTests.DIRECTIVES.IGNORE_FIR
         } else {
@@ -38,6 +37,11 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
         IgnoreTests.runTestIfNotDisabledByFileDirective(dataFile().toPath(), controlDirective) {
             performChecks()
         }
+    }
+
+    protected open fun configureTest(path: String) {
+        assert(path.endsWith(".kt")) { path }
+        myFixture.configureWithExtraFile(path, ".Data")
     }
 
     protected open fun performAdditionalResolveChecks(results: List<PsiElement>) {}

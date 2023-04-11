@@ -639,7 +639,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractReferenceResolveWithLibTest> {
-            model("resolve/referenceWithLib", isRecursive = false)
+            model("resolve/referenceWithLib", pattern = DIRECTORY, isRecursive = false)
         }
 
         testClass<AbstractReferenceResolveInLibrarySourcesTest> {
