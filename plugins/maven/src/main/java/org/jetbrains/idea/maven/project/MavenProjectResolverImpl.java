@@ -58,8 +58,7 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
             mavenImporter.customizeUserProperties(myProject, mavenProject, userProperties);
           }
         }
-        boolean updateSnapshots = myProjectsManager.getForceUpdateSnapshots();
-        updateSnapshots = updateSnapshots ? updateSnapshots : generalSettings.isAlwaysUpdateSnapshots();
+        boolean updateSnapshots = myProjectsManager.getForceUpdateSnapshots() || generalSettings.isAlwaysUpdateSnapshots();
         embedder.customizeForResolve(console, process, updateSnapshots, getProjectsTree().getWorkspaceMap(), userProperties);
         doResolve(entry.getValue(), generalSettings, embedder, process);
       }
