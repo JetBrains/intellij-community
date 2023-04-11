@@ -236,6 +236,14 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
           }
           
           @org.junit.jupiter.api.Test
+          void testExtractingNoHighlightLambda() {
+              Assertions.assertThat(Integer.valueOf(1))
+                      .as("Mapping to String")
+                      .extracting((value) -> value.toString())
+                      .isEqualTo("1");
+          }          
+          
+          @org.junit.jupiter.api.Test
           void testDescribeAs() {
               Assertions.assertThat(Integer.valueOf(1))
                       .describedAs("Mapping to String")

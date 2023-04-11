@@ -33,15 +33,15 @@ class AssertBetweenInconvertibleTypesInspection : AbstractBaseUastLocalInspectio
 
 private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: ProblemsHolder) : AbstractUastNonRecursiveVisitor() {
   override fun visitCallExpression(node: UCallExpression): Boolean {
-    processAssertHint(createAssertEqualsHint(node), node, holder)
-    processAssertHint(createAssertNotEqualsHint(node), node, holder)
-    processAssertHint(createAssertSameHint(node), node, holder)
-    processAssertHint(createAssertNotSameHint(node), node, holder)
+    processAssertHint(createAssertEqualsHint(node), node)
+    processAssertHint(createAssertNotEqualsHint(node), node)
+    processAssertHint(createAssertSameHint(node), node)
+    processAssertHint(createAssertNotSameHint(node), node)
     processAssertJ(node)
     return true
   }
 
-  private fun processAssertHint(assertHint: UAssertHint?, expression: UCallExpression, holder: ProblemsHolder) {
+  private fun processAssertHint(assertHint: UAssertHint?, expression: UCallExpression) {
     if (assertHint == null) return
     val firstArgument = assertHint.firstArgument
     val secondArgument = assertHint.secondArgument
@@ -49,19 +49,18 @@ private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: P
     if (firstParameter == null || !TypeUtils.isJavaLangObject(firstParameter.type)) return
     val secondParameter = expression.getParameterForArgument(secondArgument)
     if (secondParameter == null || !TypeUtils.isJavaLangObject(secondParameter.type)) return
-    checkConvertibleTypes(expression, firstArgument, secondArgument, holder)
+    checkConvertibleTypes(expression, firstArgument, secondArgument)
   }
 
-  private fun checkConvertibleTypes(
-    expression: UCallExpression,
-    firstArgument: UExpression,
-    secondArgument: UExpression,
-    holder: ProblemsHolder
-  ) {
+  private fun checkConvertibleTypes(expression: UCallExpression, firstArgument: UExpression, secondArgument: UExpression) {
     if (firstArgument.isNullLiteral() || secondArgument.isNullLiteral()) return
     val type1 = firstArgument.getExpressionType() ?: return
     val type2 = secondArgument.getExpressionType() ?: return
-    val mismatch = InconvertibleTypesChecker.checkTypes(type1, type2, LookForMutualSubclass.IF_CHEAP)
+    checkMismatch(expression, type1, type2)
+  }
+
+  private fun checkMismatch(expression: UCallExpression, firstType: PsiType, secondType: PsiType) {
+    val mismatch = InconvertibleTypesChecker.checkTypes(firstType, secondType, LookForMutualSubclass.IF_CHEAP)
     if (mismatch != null) {
       val name = expression.methodIdentifier?.sourcePsi ?: return
       if (mismatch.isConvertible == Convertible.CONVERTIBLE_MUTUAL_SUBCLASS_UNKNOWN) {
@@ -80,16 +79,27 @@ private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: P
   private fun processAssertJ(call: UCallExpression) {
     if (!ASSERTJ_ASSERT_THAT_MATCHER.uCallMatches(call)) return
     val chain = call.getOutermostQualified().getQualifiedChain()
-    val isEqualsCall = chain.findLast {
+    val checkCall = chain.findLast {
       it is UCallExpression && ASSERTJ_IS_EQUALS_MATCHER.uCallMatches(it)
-    }.asSafely<UCallExpression>() ?: return
-    val extractingCall = chain.findLast {
-      it is UCallExpression && ASSERTJ_EXTRACTING_MATCHER.uCallMatches(it)
     }.asSafely<UCallExpression>()
-    val sourceCall = extractingCall ?: call
-    val sourceArg = sourceCall.valueArguments.firstOrNull() ?: return
-    val checkArg = isEqualsCall.valueArguments.firstOrNull() ?: return
-    checkConvertibleTypes(isEqualsCall, sourceArg, checkArg, holder)
+    val checkType = checkCall?.valueArguments?.firstOrNull()?.getExpressionType() ?: return
+    var sourceType = call.valueArguments.firstOrNull()?.getExpressionType() ?: return
+    for (elem in chain) {
+      if (elem !is UCallExpression) continue
+      sourceType = when {
+        ASSERTJ_EXTRACTING_REF_MATCHER.uCallMatches(elem) -> return // not supported
+        ASSERTJ_EXTRACTING_FUN_MATCHER.uCallMatches(elem) -> {
+          val arg = elem.valueArguments.firstOrNull() ?: return
+          when (arg) {
+            is ULambdaExpression -> arg.body.getExpressionType() ?: return
+            is UCallableReferenceExpression -> arg.qualifierExpression?.getExpressionType() ?: return
+            else -> return
+          }
+        }
+        else -> sourceType
+      }
+    }
+    checkMismatch(checkCall, sourceType, checkType)
   }
 
   fun buildErrorString(methodName: String, left: PsiType, right: PsiType): @Nls String {
@@ -116,7 +126,11 @@ private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: P
       "org.assertj.core.api.Assert", "isEqualTo", "isSameAs", "isNotEqualTo", "isNotSameAs"
     ).parameterTypes(CommonClassNames.JAVA_LANG_OBJECT)
 
-    private val ASSERTJ_EXTRACTING_MATCHER: CallMatcher = CallMatcher.instanceCall(
+    private val ASSERTJ_EXTRACTING_REF_MATCHER: CallMatcher = CallMatcher.instanceCall(
+      "org.assertj.core.api.AbstractObjectAssert", "extracting"
+    ).parameterTypes("java.lang.String")
+
+    private val ASSERTJ_EXTRACTING_FUN_MATCHER: CallMatcher = CallMatcher.instanceCall(
       "org.assertj.core.api.AbstractObjectAssert", "extracting"
     )
 
