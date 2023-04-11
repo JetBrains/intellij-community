@@ -68,11 +68,15 @@ object MacFullScreenControlsManager {
   fun updateForPresentationMode(helper: ProjectFrameHelper) {
     if (helper.isInFullScreen && enabled()) {
       ApplicationManager.getApplication().invokeLater {
+        val frames = getAllFrameWindows()
         Foundation.executeOnMainThread(true, false) {
-          val window = MacUtil.getWindowFromJavaWindow(helper.frame)
-          val delegate = Foundation.invoke(window, "delegate")
-          if (Foundation.invoke(delegate, "respondsToSelector:", Foundation.createSelector("updateFullScreenButtons")).booleanValue()) {
-            Foundation.invoke(delegate, "updateFullScreenButtons")
+          val selector = Foundation.createSelector("updateFullScreenButtons")
+          for (frameOrTab in frames) {
+            val window = MacUtil.getWindowFromJavaWindow((frameOrTab as ProjectFrameHelper).frame)
+            val delegate = Foundation.invoke(window, "delegate")
+            if (Foundation.invoke(delegate, "respondsToSelector:", selector).booleanValue()) {
+              Foundation.invoke(delegate, "updateFullScreenButtons")
+            }
           }
         }
       }
@@ -91,15 +95,21 @@ object MacFullScreenControlsManager {
       val frame = WindowManager.getInstance().getIdeFrame(project)
       if (frame != null && frame.isInFullScreen && (enter || !fromZendMode)) {
         ApplicationManager.getApplication().invokeLater {
+          val frames = getAllFrameWindows()
           Foundation.executeOnMainThread(true, false) {
-            val window = MacUtil.getWindowFromJavaWindow((frame as ProjectFrameHelper).frame)
-            val delegate = Foundation.invoke(window, "delegate")
-            if (Foundation.invoke(delegate, "respondsToSelector:", Foundation.createSelector("updateFullScreenButtons:")).booleanValue()) {
-              Foundation.invoke(delegate, "updateFullScreenButtons:", if (enter) 1 else 0)
+            val selector = Foundation.createSelector("updateFullScreenButtons:")
+            for (frameOrTab in frames) {
+              val window = MacUtil.getWindowFromJavaWindow((frameOrTab as ProjectFrameHelper).frame)
+              val delegate = Foundation.invoke(window, "delegate")
+              if (Foundation.invoke(delegate, "respondsToSelector:", selector).booleanValue()) {
+                Foundation.invoke(delegate, "updateFullScreenButtons:", if (enter) 1 else 0)
+              }
             }
           }
         }
       }
     }
   }
+
+  private fun getAllFrameWindows() = WindowManager.getInstance().allProjectFrames.filter { it.isInFullScreen }
 }
