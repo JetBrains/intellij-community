@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.fasterxml.jackson.jr.ob.JSON;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
+import com.intellij.ide.ui.laf.UIThemeBasedLookAndFeelInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -45,6 +46,7 @@ public final class UITheme {
   private String author;
   private String id;
   private String editorScheme;
+  private @Nullable String parentTheme;
   private String[] additionalEditorSchemes;
   private Map<String, Object> ui;
   private @Nullable Map<String, Object> icons;
@@ -90,7 +92,7 @@ public final class UITheme {
                                               @NotNull Function<? super String, String> iconsMapper) throws IOException {
     UITheme theme = JSON_READER.beanFrom(UITheme.class, stream);
     theme.id = themeId;
-    return postProcessTheme(theme, null, provider, iconsMapper);
+    return postProcessTheme(theme, findParentTheme(theme), provider, iconsMapper);
   }
 
   public static @NotNull UITheme loadFromJson(byte[] data,
@@ -99,7 +101,7 @@ public final class UITheme {
                                               @NotNull Function<? super String, String> iconsMapper) throws IOException {
     UITheme theme = JSON_READER.beanFrom(UITheme.class, data);
     theme.id = themeId;
-    return postProcessTheme(theme, null, provider, iconsMapper);
+    return postProcessTheme(theme, findParentTheme(theme), provider, iconsMapper);
   }
 
   public static @NotNull UITheme loadFromJson(@Nullable UITheme parentTheme,
@@ -122,6 +124,21 @@ public final class UITheme {
     }
     putDefaultsIfAbsent(theme);
     return loadFromJson(theme, provider, iconsMapper);
+  }
+
+  private static @Nullable UITheme findParentTheme(@NotNull UITheme theme) {
+    String parentTheme = theme.parentTheme;
+    if (parentTheme != null) {
+      for (UIManager.LookAndFeelInfo laf : LafManager.getInstance().getInstalledLookAndFeels()) {
+        if (laf instanceof UIThemeBasedLookAndFeelInfo) {
+          UITheme uiTheme = ((UIThemeBasedLookAndFeelInfo)laf).getTheme();
+          if (uiTheme.getName().equals(parentTheme)) {
+            return uiTheme;
+          }
+        }
+      }
+    }
+    return null;
   }
 
   /**
@@ -832,6 +849,11 @@ public final class UITheme {
   @SuppressWarnings("unused")
   private void setIcons(@Nullable Map<String, Object> icons) {
     this.icons = icons;
+  }
+
+  @SuppressWarnings("unused")
+  private void setParentTheme(@Nullable String parentTheme) {
+    this.parentTheme = parentTheme;
   }
 
   @SuppressWarnings("unused")
