@@ -1076,7 +1076,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         return;
       }
 
-      final ResolveContext context = new ResolveContext(getProjectsTree());
       Runnable onCompletion = () -> {
         if (hasScheduledProjects()) {
           scheduleImportChangedProjects().processed(result);
@@ -1087,19 +1086,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         }
       };
 
-      final boolean useSinglePomResolver = Boolean.getBoolean("idea.maven.use.single.pom.resolver");
-      if (useSinglePomResolver) {
-        Iterator<MavenProject> it = toResolve.iterator();
-        while (it.hasNext()) {
-          MavenProject each = it.next();
-          myResolvingProcessor.scheduleTask(new MavenProjectsProcessorResolvingTask(
-            Collections.singleton(each), getGeneralSettings(), it.hasNext() ? null : onCompletion));
-        }
-      }
-      else {
-        myResolvingProcessor.scheduleTask(
-          new MavenProjectsProcessorResolvingTask(toResolve, getGeneralSettings(), onCompletion));
-      }
+      myResolvingProcessor.scheduleTask(new MavenProjectsProcessorResolvingTask(toResolve, getGeneralSettings(), onCompletion));
     });
     return result;
   }
