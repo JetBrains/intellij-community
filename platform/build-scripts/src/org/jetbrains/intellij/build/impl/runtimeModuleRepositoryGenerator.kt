@@ -32,7 +32,7 @@ internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry
   if (!repositoryForCompiledModulesPath.exists()) {
     context.messages.error("Runtime module repository wasn't generated during compilation: $repositoryForCompiledModulesPath doesn't exist")
   }
-  val compiledModulesDescriptors: MutableMap<String, RawRuntimeModuleDescriptor>
+  val compiledModulesDescriptors: Map<String, RawRuntimeModuleDescriptor>
   try {
     compiledModulesDescriptors = RuntimeModuleRepositorySerialization.loadFromJar(repositoryForCompiledModulesPath)
   }
@@ -51,6 +51,12 @@ internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry
       resourcePathMapping.putValue(moduleId, targetPath)
     }
   }
+
+  addMappingsForDuplicatingLibraries(resourcePathMapping, compiledModulesDescriptors)
+
+  val transitiveDependencies = LinkedHashSet<String>()
+  collectTransitiveDependencies(resourcePathMapping.keySet(), compiledModulesDescriptors, transitiveDependencies)
+
   for ((moduleId, resourcePaths) in resourcePathMapping.entrySet()) {
     val descriptor = compiledModulesDescriptors[moduleId]
     if (descriptor == null) {
@@ -59,6 +65,18 @@ internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry
     }
     distDescriptors.add(RawRuntimeModuleDescriptor(moduleId, resourcePaths.toList(), descriptor.dependencies))
   }
+
+  /* include descriptors of aggregating modules which don't have own resources (and therefore don't have DistributionFileEntry),
+     but used from other modules */
+  for (dependencyId in transitiveDependencies) {
+    if (!resourcePathMapping.containsKey(dependencyId)) {
+      val descriptor = compiledModulesDescriptors[dependencyId]
+      if (descriptor != null && descriptor.resourcePaths.isEmpty()) {
+        distDescriptors.add(descriptor)
+      }
+    }
+  }
+
   RuntimeModuleRepositoryValidator.validate(distDescriptors) { context.messages.warning("Runtime module repository problem: $it") }
   try {
     RuntimeModuleRepositorySerialization.saveToJar(distDescriptors, context.paths.distAllDir.resolve(JAR_REPOSITORY_FILE_NAME),
@@ -66,6 +84,43 @@ internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry
   }
   catch (e: IOException) {
     context.messages.error("Failed to save runtime module repository: ${e.message}", e)
+  }
+}
+
+/**
+ * Adds mappings for libraries which aren't explicitly included in the distribution, but their JARs are included as part of other libraries.  
+ */
+private fun addMappingsForDuplicatingLibraries(resourcePathMapping: MultiMap<String, String>,
+                                               compiledModulesDescriptors: Map<String, RawRuntimeModuleDescriptor>) {
+  val descriptorsByResource = HashMap<String, MutableList<RawRuntimeModuleDescriptor>>()
+  compiledModulesDescriptors.values.forEach { descriptor ->
+    descriptor.resourcePaths.groupByTo(descriptorsByResource, { it }) { descriptor }
+  }
+  val includedInMapping = resourcePathMapping.keySet().toMutableSet()
+  for ((moduleId, resourcePathsInDist) in resourcePathMapping.entrySet().toList()) {
+    val includedDescriptor = compiledModulesDescriptors[moduleId]
+    includedDescriptor?.resourcePaths?.forEach { resourcePath ->
+      descriptorsByResource[resourcePath]?.forEach { anotherDescriptor ->
+        if (anotherDescriptor.id != includedDescriptor.id
+            && includedDescriptor.resourcePaths.containsAll(anotherDescriptor.resourcePaths)
+            && (includedDescriptor.resourcePaths == anotherDescriptor.resourcePaths || resourcePathsInDist.size == 1)
+            && includedInMapping.add(anotherDescriptor.id)) {
+          resourcePathMapping.putValues(anotherDescriptor.id, resourcePathsInDist)
+        }
+      }
+    }
+  }
+}
+
+private fun collectTransitiveDependencies(moduleIds: Collection<String>, descriptorMap: Map<String, RawRuntimeModuleDescriptor>, 
+                                          result: MutableSet<String>) {
+  for (moduleId in moduleIds) {
+    if (result.add(moduleId)) {
+      val descriptor = descriptorMap[moduleId]
+      if (descriptor != null) {
+        collectTransitiveDependencies(descriptor.dependencies, descriptorMap, result)
+      }
+    }
   }
 }
 
