@@ -43,3 +43,13 @@ fun List<NamedFailure>.asDynamicTests(testNameForSuccess: String, testNameForMan
     })
   }
 }
+
+/**
+ * A simplified variant of [asDynamicTests] which uses one string to compose the both "no errors" and "too many errors" test names.
+ * @param problemMessage prepended with `"no "` prefix to get the test name in case of success, and with `"too many "` prefix to get the test 
+ * name when more than [threshold] checks failed.
+ */
+@JvmOverloads
+fun List<NamedFailure>.asDynamicTests(problemMessage: String, threshold: Int = 50): List<DynamicTest> {
+  return asDynamicTests("no $problemMessage", "too many $problemMessage", threshold)
+}
