@@ -2,9 +2,6 @@
 package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.components.KtExtensionApplicabilityResult
-import org.jetbrains.kotlin.analysis.api.components.KtExtensionApplicabilityResult.ApplicableAsExtensionCallable
-import org.jetbrains.kotlin.analysis.api.components.KtExtensionApplicabilityResult.ApplicableAsFunctionalVariableCall
 import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
@@ -172,10 +169,13 @@ internal class ShadowedCallablesFilter {
 
             return extensions
                 .map { applicableExtension ->
-                    val (signature, applicabilityResult) = applicableExtension
-                    val receiverType = when (applicabilityResult) {
-                        is ApplicableAsExtensionCallable -> signature.receiverType
-                        is ApplicableAsFunctionalVariableCall -> (signature.returnType as? KtFunctionalType)?.receiverType
+                    val signature = applicableExtension.signature
+                    val insertionStrategy = applicableExtension.insertionOptions.insertionStrategy
+                    val receiverType = when {
+                        signature is KtVariableLikeSignature<*> && insertionStrategy is CallableInsertionStrategy.AsCall ->
+                            (signature.returnType as? KtFunctionalType)?.receiverType
+
+                        else -> signature.receiverType
                     }
                     val receiverId = receiverType?.let { ReceiverId.create(it) }
                     applicableExtension to receiverId
@@ -183,7 +183,7 @@ internal class ShadowedCallablesFilter {
                 .sortedWith(compareBy(
                     { (_, receiverId) -> indexOfReceiverFromContext[receiverId] ?: Int.MAX_VALUE },
                     { (_, receiverId) -> indexInClassHierarchy[receiverId] ?: Int.MAX_VALUE },
-                    { (applicableExtension, _) -> applicableExtension.applicabilityResult is ApplicableAsFunctionalVariableCall }
+                    { (applicableExtension, _) -> applicableExtension.signature is KtVariableLikeSignature<*> }
                 ))
                 .map { (applicableExtension, _) -> applicableExtension }
         }

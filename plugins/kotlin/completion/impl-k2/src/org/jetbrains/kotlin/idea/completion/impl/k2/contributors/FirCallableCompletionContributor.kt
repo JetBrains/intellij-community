@@ -198,11 +198,9 @@ internal open class FirCallableCompletionContributor(
         //
         availableLocalAndMemberNonExtensions.forEach { yield(createCallableWithMetadata(it.signature, it.scopeKind)) }
 
-        extensionsWhichCanBeCalled.forEach { (signatureWithScopeKind, applicabilityResult) ->
+        extensionsWhichCanBeCalled.forEach { (signatureWithScopeKind, insertionOptions) ->
             val signature = signatureWithScopeKind.signature
-            getExtensionOptions(signature, applicabilityResult)?.let {
-                yield(createCallableWithMetadata(signature, signatureWithScopeKind.scopeKind, options = it))
-            }
+            yield(createCallableWithMetadata(signature, signatureWithScopeKind.scopeKind, options = insertionOptions))
         }
         availableStaticAndTopLevelNonExtensions.forEach { yield(createCallableWithMetadata(it.signature, it.scopeKind)) }
 
@@ -228,9 +226,9 @@ internal open class FirCallableCompletionContributor(
             visibilityChecker,
             sessionParameters,
         )
-            .forEach { (signature, applicabilityResult) ->
-                val extensionOptions = getExtensionOptions(signature, applicabilityResult) ?: return@forEach
-                yield(createCallableWithMetadata(signature, CompletionSymbolOrigin.Index, extensionOptions))
+            .forEach { applicableExtension ->
+                val signature = applicableExtension.signature
+                yield(createCallableWithMetadata(signature, CompletionSymbolOrigin.Index, applicableExtension.insertionOptions))
             }
     }
 
@@ -381,12 +379,10 @@ internal open class FirCallableCompletionContributor(
             yield(callableWithMetadata)
         }
 
-        extensionNonMembers.forEach { (signatureWithScopeKind, applicabilityResult) ->
+        extensionNonMembers.forEach { (signatureWithScopeKind, insertionOptions) ->
             val signature = signatureWithScopeKind.signature
             val scopeKind = signatureWithScopeKind.scopeKind
-            getExtensionOptions(signature, applicabilityResult)?.let {
-                yield(createCallableWithMetadata(signature, scopeKind, noImportRequired = false, options = it, explicitReceiverTypeHint))
-            }
+            yield(createCallableWithMetadata(signature, scopeKind, noImportRequired = false, insertionOptions, explicitReceiverTypeHint))
         }
 
         collectTopLevelExtensionsFromIndexAndResolveExtensionScope(
@@ -395,13 +391,11 @@ internal open class FirCallableCompletionContributor(
             visibilityChecker,
             sessionParameters
         )
-            .filter { (signature, _) -> filter(signature.symbol, sessionParameters) }
-            .forEach { (signature, applicabilityResult) ->
-                val extensionOptions = getExtensionOptions(signature, applicabilityResult) ?: return@forEach
-                val callableWithMetadata = createCallableWithMetadata(
-                    signature,
+            .filter { filter(it.signature.symbol, sessionParameters) }
+            .forEach { applicableExtension ->val callableWithMetadata = createCallableWithMetadata(
+                    applicableExtension.signature,
                     CompletionSymbolOrigin.Index,
-                    extensionOptions,
+                    applicableExtension.insertionOptions,
                     explicitReceiverTypeHint = explicitReceiverTypeHint
                 )
                 yield(callableWithMetadata)
@@ -438,14 +432,12 @@ internal open class FirCallableCompletionContributor(
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
         explicitReceiverType: KtType? = null,
-    ): Sequence<Pair<KtCallableSignatureWithContainingScopeKind, KtExtensionApplicabilityResult.Applicable>> {
+    ): Sequence<Pair<KtCallableSignatureWithContainingScopeKind, CallableInsertionOptions>> {
         val receiversTypes = explicitReceiverType?.let { listOf(it) } ?: scopeContext.implicitReceivers.map { it.type }
 
         return scopeContext.scopes.asSequence().flatMap { scopeWithKind ->
             collectSuitableExtensions(scopeWithKind.scope, receiversTypes, extensionChecker, visibilityChecker, sessionParameters)
-                .map { (signature, applicability) ->
-                    KtCallableSignatureWithContainingScopeKind(signature, scopeWithKind.kind) to applicability
-                }
+                .map { KtCallableSignatureWithContainingScopeKind(it.signature, scopeWithKind.kind) to it.insertionOptions }
         }
     }
 
@@ -464,17 +456,18 @@ internal open class FirCallableCompletionContributor(
             .let { ShadowedCallablesFilter.sortExtensions(it.toList(), receiverTypes) }
 
     /**
-     * If [callableSymbol] is applicable returns substituted signature and applicability result, otherwise, null.
+     * If [callableSymbol] is applicable returns substituted signature and insertion options, otherwise, null.
      */
     context(KtAnalysisSession)
     private fun checkApplicabilityAndSubstitute(
         callableSymbol: KtCallableSymbol,
         extensionChecker: ExtensionApplicabilityChecker
     ): ApplicableExtension? {
-        val applicabilityResult = extensionChecker.checkApplicability(callableSymbol)
-        return if (applicabilityResult is KtExtensionApplicabilityResult.Applicable) {
-            ApplicableExtension(callableSymbol.substitute(applicabilityResult.substitutor), applicabilityResult)
-        } else null
+        val applicabilityResult = extensionChecker.checkApplicability(callableSymbol) as? KtExtensionApplicabilityResult.Applicable
+            ?: return null
+        val signature = callableSymbol.substitute(applicabilityResult.substitutor)
+        val insertionOptions = getExtensionOptions(signature, applicabilityResult) ?: return null
+        return ApplicableExtension(signature, insertionOptions)
     }
 
     private fun KtAnalysisSession.findAllNamesOfTypes(implicitReceiversTypes: List<KtType>) =
