@@ -126,9 +126,9 @@ internal class LoggingUtil {
 
     internal fun getGuardedCondition(call: UCallExpression?): UExpression? {
       if (call == null) return null
-      val loggerSource: UElement = getLoggerQualifier(call) ?: return null
-      val ifExpression: UIfExpression? = call.getParentOfType<UIfExpression>()
-      var condition = ifExpression?.condition?.skipParenthesizedExprDown() ?: return null
+      val loggerSource = getLoggerQualifier(call) ?: return null
+      val ifExpression = call.getParentOfType<UIfExpression>() ?: return null
+      var condition = ifExpression.condition.skipParenthesizedExprDown()
       if (condition is UPrefixExpression) {
         if (condition.operator != UastPrefixOperator.LOGICAL_NOT) return null
         val elseExpression = ifExpression.elseExpression
@@ -177,7 +177,7 @@ internal class LoggingUtil {
 
     private fun getLoggerQualifier(call: UCallExpression?): UElement? {
       if (call == null) return null
-      var receiver: UExpression? = call.receiver?.skipParenthesizedExprDown()
+      var receiver = call.receiver?.skipParenthesizedExprDown()
       if (receiver is UCallExpression) {
         receiver = receiver.receiver
       }
@@ -237,7 +237,7 @@ internal class LoggingUtil {
         if (levelTypeFromLog != null) {
           return levelTypeFromLog
         }
-        var receiver: UElement = uCall.receiver ?: return null
+        var receiver = uCall.receiver ?: return null
         if (receiver is UQualifiedReferenceExpression) {
           receiver = receiver.selector
         }

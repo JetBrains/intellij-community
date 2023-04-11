@@ -31,7 +31,6 @@ class KotlinLoggingConditionDisagreesWithLogLevelStatementInspectionTest : Loggi
   fun `test log4j2`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.apache.logging.log4j.LogManager
-      
       internal class Y {
           fun m() {
               if (LOG.isWarnEnabled()) {
