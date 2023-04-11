@@ -8,7 +8,9 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.registerUProblem
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.uast.UastHintedVisitorAdapter
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UReferenceExpression
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 class LoggingConditionDisagreesWithLogLevelStatementInspection : AbstractBaseUastLocalInspectionTool() {
@@ -37,8 +39,8 @@ class LoggingConditionDisagreesWithLogLevelStatementInspection : AbstractBaseUas
 
     private fun processActualLoggers(call: UCallExpression) {
       val guardedCondition = LoggingUtil.getGuardedCondition(call) ?: return
-      val loggerLevel = LoggingUtil.getLoggerLevel(call)?: return
-      val levelFromCondition = LoggingUtil.getLevelFromCondition(guardedCondition)?: return
+      val loggerLevel = LoggingUtil.getLoggerLevel(call) ?: return
+      val levelFromCondition = LoggingUtil.getLevelFromCondition(guardedCondition) ?: return
       if (!LoggingUtil.isGuardedIn(levelFromCondition, loggerLevel)) {
         registerProblem(guardedCondition, levelFromCondition.name, loggerLevel.name)
       }
@@ -46,8 +48,8 @@ class LoggingConditionDisagreesWithLogLevelStatementInspection : AbstractBaseUas
 
     private fun processLegacyLoggers(call: UCallExpression) {
       val guardedCondition = LoggingUtil.getGuardedCondition(call) ?: return
-      val loggerLevel = LoggingUtil.getLegacyLoggerLevel(call)?: return
-      val levelFromCondition = LoggingUtil.getLegacyLevelFromCondition(guardedCondition)?: return
+      val loggerLevel = LoggingUtil.getLegacyLoggerLevel(call) ?: return
+      val levelFromCondition = LoggingUtil.getLegacyLevelFromCondition(guardedCondition) ?: return
       if (!LoggingUtil.isLegacyGuardedIn(levelFromCondition, loggerLevel)) {
         registerProblem(guardedCondition, levelFromCondition.name, loggerLevel.name)
       }
