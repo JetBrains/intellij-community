@@ -15,12 +15,13 @@ import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.HeaderToolbarButtonLook
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.MainMenuButton
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.Graphics2DDelegate
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -44,6 +45,7 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
     background = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true)
     isOpaque = true
     mainMenuButton = if (IdeRootPane.isMenuButtonInToolbar) MainMenuButton() else null
+    ClientProperty.put(this, IdeBackgroundUtil.NO_BACKGROUND, true)
   }
 
   companion object {
@@ -69,7 +71,7 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
     }
   }
 
-  override fun getComponentGraphics(g: Graphics): Graphics = unwrap(super.getComponentGraphics(g))
+  override fun getComponentGraphics(g: Graphics): Graphics = super.getComponentGraphics(IdeBackgroundUtil.getOriginalGraphics(g))
 
   // Separate init because first, as part of IdeRootPane creation, we add bare component to allocate space and then,
   // as part of EDT task scheduled in a start-up activity, do fill it. That's to avoid flickering due to resizing.
@@ -124,9 +126,8 @@ private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: Layout
 
   init {
     updateFont()
+    ClientProperty.put(this, IdeBackgroundUtil.NO_BACKGROUND, true)
   }
-
-  override fun getComponentGraphics(g: Graphics): Graphics = unwrap(super.getComponentGraphics(g))
 
   override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) {
     super.calculateBounds(size2Fit, bounds)
@@ -198,6 +199,9 @@ private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: Layout
   override fun addImpl(comp: Component, constraints: Any?, index: Int) {
     super.addImpl(comp, constraints, index)
     comp.font = font
+    if (comp is JComponent) {
+      ClientProperty.put(comp, IdeBackgroundUtil.NO_BACKGROUND, true)
+    }
   }
 
   private fun updateFont() {
@@ -240,5 +244,3 @@ private class HeaderIconUpdater {
     })
   }
 }
-
-private fun unwrap(g: Graphics): Graphics = if (g is Graphics2DDelegate) g.delegate else g
