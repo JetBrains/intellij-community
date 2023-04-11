@@ -1124,15 +1124,8 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     if (productCode == null) {
       if (myUpdateDescriptor != null && myUpdateDescriptor.getProductCode() != null &&
           !LicensePanel.isEA2Product(myUpdateDescriptor.getProductCode())) {
-        String message;
-        if (myUpdateDescriptor instanceof PluginNode && ((PluginNode)myUpdateDescriptor).getTags().contains(Tags.Freemium.name())) {
-          message = IdeBundle.message("label.next.plugin.version.is.freemium");
-        }
-        else {
-          message = IdeBundle.message("label.next.plugin.version.is.paid.use.the.trial.for.up.to.30.days.or");
-        }
-        myLicensePanel.setText(message, true, false);
-        myLicensePanel.showBuyPlugin(() -> myUpdateDescriptor);
+        myLicensePanel.setText(IdeBundle.message("label.next.plugin.version.is"), true, false);
+        myLicensePanel.showBuyPlugin(() -> myUpdateDescriptor, true);
         myLicensePanel.setVisible(true);
       }
       else {
@@ -1148,7 +1141,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
         message = IdeBundle.message("label.use.the.trial.for.up.to.30.days.or");
       }
       myLicensePanel.setText(message, false, false);
-      myLicensePanel.showBuyPlugin(() -> plugin);
+      myLicensePanel.showBuyPlugin(() -> plugin, false);
 
       // if the plugin requires commercial IDE, we do not show trial/price message
       boolean requiresCommercialIde = plugin instanceof PluginNode
