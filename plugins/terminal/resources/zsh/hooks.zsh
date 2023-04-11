@@ -25,7 +25,7 @@ __intellij_encode_large() {
 }
 
 __intellij_cmd_preexec() {
-  builtin local entered_command=$1
+  builtin local entered_command="$1"
   builtin local current_directory="$PWD"
   builtin printf '\e]1341;command_started;command=%s;current_directory=%s\a' "$(__intellij_encode "${entered_command}")" "$(__intellij_encode "${current_directory}")"
 }
