@@ -14,7 +14,7 @@ internal class LightServiceMustBeFinalInspectionTest : LightServiceMustBeFinalIn
 
   override fun getFileExtension() = "java"
 
-  fun testMakeFinal() {
-    doTest(MAKE_FINAL_FIX_NAME)
-  }
+  fun testMakeFinal() { doTest(MAKE_FINAL_FIX_NAME) }
+
+  fun testMakeFinalMultiLineModifierList() { doTest(MAKE_FINAL_FIX_NAME) }
 }
