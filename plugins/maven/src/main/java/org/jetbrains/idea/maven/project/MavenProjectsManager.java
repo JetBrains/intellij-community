@@ -1113,35 +1113,34 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
         indicator.setText(MavenProjectBundle.message("maven.project.importing.evaluating.effective.pom"));
 
-        myMavenProjectResolver.executeWithEmbedder(mavenProject,
-                                                   getEmbeddersManager(),
-                                                   MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE,
-                                                   console,
-                                                   indicator,
-                                                   new MavenProjectResolver.EmbedderTask() {
-                                                     @Override
-                                                     public void run(MavenEmbedderWrapper embedder) throws MavenProcessCanceledException {
-                                                       try {
-                                                         MavenExplicitProfiles profiles = mavenProject.getActivatedProfilesIds();
-                                                         VirtualFile virtualFile = mavenProject.getFile();
-                                                         File projectFile = MavenWslUtil.resolveWslAware(myProject,
-                                                                                                         () -> new File(
-                                                                                                           virtualFile.getPath()),
-                                                                                                         wsl -> MavenWslUtil.getWslFile(wsl,
-                                                                                                                                        new File(
-                                                                                                                                          virtualFile.getPath())));
-                                                         String res =
-                                                           embedder
-                                                             .evaluateEffectivePom(projectFile, profiles.getEnabledProfiles(),
-                                                                                   profiles.getDisabledProfiles());
-                                                         consumer.consume(res);
-                                                       }
-                                                       catch (UnsupportedOperationException e) {
-                                                         e.printStackTrace();
-                                                         consumer.consume(null); // null means UnsupportedOperationException
-                                                       }
-                                                     }
-                                                   });
+        MavenEmbeddersManager.EmbedderTask task = new MavenEmbeddersManager.EmbedderTask() {
+          @Override
+          public void run(MavenEmbedderWrapper embedder) throws MavenProcessCanceledException {
+            try {
+              MavenExplicitProfiles profiles = mavenProject.getActivatedProfilesIds();
+              VirtualFile virtualFile = mavenProject.getFile();
+              File projectFile = MavenWslUtil.resolveWslAware(
+                myProject,
+                () -> new File(virtualFile.getPath()),
+                wsl -> MavenWslUtil.getWslFile(wsl, new File(virtualFile.getPath()))
+              );
+              String res = embedder.evaluateEffectivePom(projectFile, profiles.getEnabledProfiles(), profiles.getDisabledProfiles());
+              consumer.consume(res);
+            }
+            catch (UnsupportedOperationException e) {
+              MavenLog.LOG.error(e);
+              consumer.consume(null); // null means UnsupportedOperationException
+            }
+          }
+        };
+
+        getEmbeddersManager().execute(
+          mavenProject,
+          myProjectsTree,
+          MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE,
+          console,
+          indicator,
+          task);
       }
     }));
   }

@@ -11,6 +11,8 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.HashSet;
@@ -114,5 +116,25 @@ public class MavenEmbeddersManager {
       if (!includeInUse && myEmbeddersInUse.contains(embedder)) continue;
       func.fun(embedder);
     }
+  }
+
+  public void execute(@NotNull MavenProject mavenProject,
+                      @NotNull MavenProjectsTree tree,
+                      @NotNull Key embedderKind,
+                      @NotNull MavenConsole console,
+                      @NotNull MavenProgressIndicator process,
+                      @NotNull MavenEmbeddersManager.EmbedderTask task) throws MavenProcessCanceledException {
+    MavenEmbedderWrapper embedder = getEmbedder(mavenProject, embedderKind);
+    embedder.customizeForResolve(console, process, false, tree.getWorkspaceMap(), null);
+    try {
+      task.run(embedder);
+    }
+    finally {
+      release(embedder);
+    }
+  }
+
+  public interface EmbedderTask {
+    void run(MavenEmbedderWrapper embedder) throws MavenProcessCanceledException;
   }
 }

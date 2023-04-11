@@ -212,26 +212,30 @@ public class MavenProjectResolver {
                              @NotNull final MavenEmbeddersManager embeddersManager,
                              @NotNull final MavenConsole console,
                              @NotNull final MavenProgressIndicator process) throws MavenProcessCanceledException {
-    executeWithEmbedder(mavenProject,
-                        embeddersManager,
-                        MavenEmbeddersManager.FOR_FOLDERS_RESOLVE,
-                        console,
-                        process,
-                        new MavenProjectResolver.EmbedderTask() {
-                          @Override
-                          public void run(MavenEmbedderWrapper embedder) throws MavenProcessCanceledException {
-                            process.checkCanceled();
-                            process.setText(MavenProjectBundle.message("maven.updating.folders.pom", mavenProject.getDisplayName()));
-                            process.setText2("");
+    var task = new MavenEmbeddersManager.EmbedderTask() {
+      @Override
+      public void run(MavenEmbedderWrapper embedder) throws MavenProcessCanceledException {
+        process.checkCanceled();
+        process.setText(MavenProjectBundle.message("maven.updating.folders.pom", mavenProject.getDisplayName()));
+        process.setText2("");
 
-                            Pair<Boolean, MavenProjectChanges> resolveResult = mavenProject.resolveFolders(embedder,
-                                                                                                           importingSettings,
-                                                                                                           console);
-                            if (resolveResult.first) {
-                              myTree.fireFoldersResolved(Pair.create(mavenProject, resolveResult.second));
-                            }
-                          }
-                        });
+        var resolveResult = mavenProject.resolveFolders(embedder, importingSettings, console);
+        if (resolveResult.first) {
+          if (myTree != null) {
+            myTree.fireFoldersResolved(Pair.create(mavenProject, resolveResult.second));
+          }
+        }
+      }
+    };
+
+    embeddersManager.execute(
+      mavenProject,
+      myTree,
+      MavenEmbeddersManager.FOR_FOLDERS_RESOLVE,
+      console,
+      process,
+      task
+    );
   }
 
   public @NotNull MavenArtifactDownloader.DownloadResult downloadSourcesAndJavadocs(@NotNull Project project,
@@ -272,25 +276,5 @@ public class MavenProjectResolver {
   @NotNull
   private MultiMap<Path, MavenProject> groupByBasedir(@NotNull Collection<MavenProject> projects) {
     return ContainerUtil.groupBy(projects, p -> MavenUtil.getBaseDir(myTree.findRootProject(p).getDirectoryFile()));
-  }
-
-  public void executeWithEmbedder(@NotNull MavenProject mavenProject,
-                                  @NotNull MavenEmbeddersManager embeddersManager,
-                                  @NotNull Key embedderKind,
-                                  @NotNull MavenConsole console,
-                                  @NotNull MavenProgressIndicator process,
-                                  @NotNull EmbedderTask task) throws MavenProcessCanceledException {
-    MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(mavenProject, embedderKind);
-    embedder.customizeForResolve(console, process, false, myTree.getWorkspaceMap(), null);
-    try {
-      task.run(embedder);
-    }
-    finally {
-      embeddersManager.release(embedder);
-    }
-  }
-
-  public interface EmbedderTask {
-    void run(MavenEmbedderWrapper embedder) throws MavenProcessCanceledException;
   }
 }
