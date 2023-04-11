@@ -29,7 +29,7 @@ class KotlinQuickFixIntentionPreviewTest : KotlinLightCodeInsightFixtureTestCase
                 val code = "intention"
                 println(<caret>"Hello World!" + code)
             }""".trimIndent(),
-            "Convert 'String' concatenation to a template",
+            "Convert concatenation to template",
             """
             fun main() {
                 val code = "intention"
