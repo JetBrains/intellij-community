@@ -71,7 +71,7 @@ class PyPostfixTemplateEditor(provider: PyPostfixTemplateProvider) : PostfixTemp
           if (!popup.closedCorrectly) {
             return
           }
-          val chosenElement = popup.chosenElement!!
+          val chosenElement = popup.chosenElement
           if (chosenElement is PyClass) {
             val condition = create(chosenElement)
             if (condition != null) {
