@@ -3911,10 +3911,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         EVENT_LOG.debug(e.toString());
       }
       runMouseExitedCommand(e);
-      EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
-      if (event.getArea() == EditorMouseEventArea.LINE_MARKERS_AREA) {
-        myGutterComponent.mouseExited(e);
-      }
+      myGutterComponent.mouseExited(e);
     }
 
     private void runMousePressedCommand(final @NotNull MouseEvent e) {

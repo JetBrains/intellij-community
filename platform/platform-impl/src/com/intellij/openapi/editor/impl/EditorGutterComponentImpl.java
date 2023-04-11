@@ -1891,9 +1891,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   @Override
   public void mouseMoved(final MouseEvent e) {
-    if (ExperimentalUI.isNewUI() && Registry.is("ide.gutter.update.free.markers.on.hover")) {
-      updateFreePainters(e);
-    }
+    updateFreePainters(e);
+
     Point point = e.getPoint();
     PointInfo pointInfo = getPointInfo(point);
     if (pointInfo == null) {
@@ -1926,18 +1925,23 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   private void updateFreePainters(MouseEvent e) {
-    if (!isLineMarkersShown()) return;
+    if (!isLineMarkersShown() ||
+        !ExperimentalUI.isNewUI() ||
+        !Registry.is("ide.gutter.update.free.markers.on.hover")) {
+      return;
+    }
+
     Point point = e.getPoint();
     int x = convertX(point.x);
     int y = point.y;
     if (x >= getLineMarkerAreaOffset() &&
         x <= getLineMarkerAreaOffset() + getLeftFreePaintersAreaWidth() + getRightFreePaintersAreaWidth()) {
       myHoveredFreeMarkersLine = getEditor().xyToLogicalPosition(point).line;
-      repaint();
     }
     else {
       myHoveredFreeMarkersLine = -1;
     }
+    repaint();
   }
 
   private static boolean debug() {
@@ -2532,6 +2536,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   @Override
   public void mouseExited(MouseEvent e) {
     TooltipController.getInstance().cancelTooltip(GUTTER_TOOLTIP_GROUP, e, false);
+    updateFreePainters(e);
   }
 
   private int convertPointToLineNumber(final Point p) {
