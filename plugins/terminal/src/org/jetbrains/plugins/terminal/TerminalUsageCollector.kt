@@ -19,7 +19,7 @@ class TerminalUsageTriggerCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    internal val GROUP = EventLogGroup(GROUP_ID, 6)
+    private val GROUP = EventLogGroup(GROUP_ID, 7)
 
     private val TERMINAL_COMMAND_HANDLER_FIELD = EventFields.StringValidatedByCustomRule("terminalCommandHandler",
                                                                                          ClassNameRuleValidator::class.java)
@@ -37,12 +37,16 @@ class TerminalUsageTriggerCollector : CounterUsagesCollector() {
                                                      EventFields.StringValidatedByRegexp("os-version", "version"),
                                                      EventFields.String("shell", KNOWN_SHELLS.toList()))
 
+    private val commandExecutedEvent = GROUP.registerEvent("terminal.command.executed",
+                                                           TerminalCommandUsageStatistics.commandExecutableField,
+                                                           TerminalCommandUsageStatistics.subCommandField)
+
     @JvmStatic
     fun triggerSshShellStarted(project: Project) = sshExecEvent.log(project)
 
     @JvmStatic
     fun triggerCommandExecuted(project: Project, userCommandLine: String) {
-      TerminalCommandUsageStatistics.triggerCommandExecuted(project, userCommandLine)
+      TerminalCommandUsageStatistics.triggerCommandExecuted(commandExecutedEvent, project, userCommandLine)
     }
 
     @JvmStatic

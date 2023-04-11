@@ -2,31 +2,30 @@
 package org.jetbrains.plugins.terminal.fus
 
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventId2
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.AllowedItemsResourceWeakRefStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.execution.ParametersListUtil
-import org.jetbrains.plugins.terminal.TerminalUsageTriggerCollector.Companion.GROUP
 
 internal object TerminalCommandUsageStatistics {
 
-  private val relativePathCommand = EventData("<relative path>", null)
-  private val absolutePathCommand = EventData("<absolute path>", null)
+  private val relativePathCommand = TerminalCommandEventData("<relative path>", null)
+  private val absolutePathCommand = TerminalCommandEventData("<absolute path>", null)
   private val knownCommandToSubCommandsMap: Map<String, List<String>> = buildKnownCommandToSubCommandMap()
 
-  private val commandExecutableField = EventFields.String("command", listOf(relativePathCommand.command, absolutePathCommand.command)
-                                                                     + knownCommandToSubCommandsMap.keys.toList())
-  private val subCommandField = EventFields.String("subCommand", knownCommandToSubCommandsMap.values.flatten())
-  private val terminalCommandExecutedEvent = GROUP.registerEvent("terminal.command.executed", commandExecutableField, subCommandField)
+  internal val commandExecutableField = EventFields.String("command", listOf(relativePathCommand.command, absolutePathCommand.command)
+                                                                     + knownCommandToSubCommandsMap.keys)
+  internal val subCommandField = EventFields.String("subCommand", knownCommandToSubCommandsMap.values.flatten())
 
-  fun triggerCommandExecuted(project: Project, userCommandLine: String) {
+  fun triggerCommandExecuted(commandExecutedEvent: EventId2<String?, String?>, project: Project, userCommandLine: String) {
     val eventData = toEventData(ParametersListUtil.parse(userCommandLine))
-    terminalCommandExecutedEvent.log(project, eventData?.command, eventData?.subCommand)
+    commandExecutedEvent.log(project, eventData?.command, eventData?.subCommand)
   }
 
-  private fun toEventData(userCommand: List<String>): EventData? {
+  private fun toEventData(userCommand: List<String>): TerminalCommandEventData? {
     toKnownCommand(userCommand)?.let {
       return it
     }
@@ -44,7 +43,7 @@ internal object TerminalCommandUsageStatistics {
     return executable.startsWith("./") || SystemInfo.isWindows && executable.startsWith(".\\")
   }
 
-  private fun toKnownCommand(userCommand: List<String>): EventData? {
+  private fun toKnownCommand(userCommand: List<String>): TerminalCommandEventData? {
     val executable: String = (userCommand.getOrNull(0) ?: return null).let {
       if (SystemInfo.isWindows) it.removeSuffix(".exe") else it
     }
@@ -52,7 +51,7 @@ internal object TerminalCommandUsageStatistics {
     val subCommand = userCommand.getOrNull(1)?.let {
       if (knownSubCommands.contains(it)) it else null
     }
-    return EventData(executable, subCommand)
+    return TerminalCommandEventData(executable, subCommand)
   }
 
   private fun buildKnownCommandToSubCommandMap(): Map<String, List<String>> {
@@ -65,5 +64,5 @@ internal object TerminalCommandUsageStatistics {
     return result.map { it.key to it.value.filterNotNull().toList() }.associateTo(HashMap(result.size)) { it }
   }
 
-  private class EventData(val command: String, val subCommand: String?)
+  private class TerminalCommandEventData(val command: String, val subCommand: String?)
 }
