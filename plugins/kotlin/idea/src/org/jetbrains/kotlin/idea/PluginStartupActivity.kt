@@ -65,7 +65,8 @@ internal class PluginStartupActivity : ProjectPostStartupActivity {
         val rawVersion = KotlinIdePlugin.version
         val kotlinPluginVersion = KotlinIdePluginVersion.parse(rawVersion).getOrNull() ?: return
 
-        if (kotlinPluginVersion.platformVersion != platformVersion || kotlinPluginVersion.isAndroidStudio != isAndroidStudio) {
+        if ((kotlinPluginVersion.platformVersion != platformVersion && !isAndroidStudio)  // Android Studio version diverges from IDEA
+            || kotlinPluginVersion.isAndroidStudio != isAndroidStudio) {
             val ideName = ApplicationInfo.getInstance().versionName
 
             runInEdt {
