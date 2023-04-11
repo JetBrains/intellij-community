@@ -23,20 +23,23 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 import java.util.Collection;
 
-public class MavenProjectsProcessorResolvingTask extends MavenProjectsBatchProcessorBasicTask {
+public class MavenProjectsProcessorResolvingTask implements MavenProjectsProcessorTask {
   @NotNull private final MavenGeneralSettings myGeneralSettings;
   @Nullable private final Runnable myOnCompletion;
   @NotNull private final ResolveContext myContext;
+  @NotNull private final Collection<MavenProject> myMavenProjects;
+  @NotNull private final MavenProjectResolver myResolver;
 
-  public MavenProjectsProcessorResolvingTask(@NotNull Collection<MavenProject> projects,
+  public MavenProjectsProcessorResolvingTask(@NotNull Collection<MavenProject> mavenProjects,
                                              @NotNull MavenProjectsTree tree,
                                              @NotNull MavenGeneralSettings generalSettings,
                                              @Nullable Runnable onCompletion,
                                              @NotNull ResolveContext context) {
-    super(projects, tree);
+    myMavenProjects = mavenProjects;
     myGeneralSettings = generalSettings;
     myOnCompletion = onCompletion;
     myContext = context;
+    myResolver = new MavenProjectResolver(tree);
   }
 
   @Override
@@ -44,5 +47,17 @@ public class MavenProjectsProcessorResolvingTask extends MavenProjectsBatchProce
     throws MavenProcessCanceledException {
     myResolver.resolve(project, myMavenProjects, myGeneralSettings, embeddersManager, console, myContext, indicator);
     if (myOnCompletion != null) myOnCompletion.run();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    return myMavenProjects.equals(((MavenProjectsProcessorResolvingTask)o).myMavenProjects);
+  }
+
+  @Override
+  public int hashCode() {
+    return myMavenProjects.hashCode();
   }
 }
