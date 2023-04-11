@@ -77,4 +77,5 @@ public final class JUnitCommonClassNames {
   public static final String ORG_JUNIT_JUPITER_API_AFTER_EACH = "org.junit.jupiter.api.AfterEach";
   public static final String ORG_JUNIT_EXPERIMENTAL_THEORIES_DATAPOINT = "org.junit.experimental.theories.DataPoint";
   public static final String ORG_JUNIT_EXPERIMENTAL_THEORIES_DATAPOINTS = "org.junit.experimental.theories.DataPoints";
+  public static final String ORG_JUNIT_EXPERIMENTAL_RUNNERS_ENCLOSED = "org.junit.experimental.runners.Enclosed";
 }

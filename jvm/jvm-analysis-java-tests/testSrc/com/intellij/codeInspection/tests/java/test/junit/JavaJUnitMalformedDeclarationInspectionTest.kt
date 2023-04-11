@@ -46,13 +46,13 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       class A {
         @org.junit.jupiter.api.Nested
-        static class <warning descr="Class 'B' annotated with '@Nested' should be non-static">B</warning> { }
+        static class <warning descr="Tests in nested class will not be executed">B</warning> { }
         
         @org.junit.jupiter.api.Nested
-        private class <warning descr="Class 'C' annotated with '@Nested' should be non-private">C</warning> { }
+        private class <warning descr="Tests in nested class will not be executed">C</warning> { }
         
         @org.junit.jupiter.api.Nested
-        private static class <warning descr="Class 'D' annotated with '@Nested' should be non-static and non-private">D</warning> { }
+        private static class <warning descr="Tests in nested class will not be executed">D</warning> { }
       }
     """.trimIndent())
   }
@@ -82,7 +82,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
     """.trimIndent(), "Fix class signature")
   }
   fun `test malformed nested class preview`() {
-    myFixture.testPreview(JvmLanguage.JAVA, """
+    myFixture.testQuickFixWithPreview(JvmLanguage.JAVA, """
       class A {
         @org.junit.jupiter.api.Nested
         static class <caret>B { }
@@ -94,8 +94,67 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
       }
     """.trimIndent(), "Fix 'B' class signature")
   }
-
-
+  fun `test highlighting non executable JUnit 4 nested class`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      class A { 
+        public class <warning descr="Tests in nested class will not be executed">B</warning> { 
+          @org.junit.Test
+          public void testFoo() { }
+        }
+      }  
+    """.trimIndent())
+  }
+  fun `test quickfix no nested annotation in JUnit 4`() {
+    myFixture.testQuickFixWithPreview(JvmLanguage.JAVA, """ 
+      class A {
+          public class <caret>B { 
+              @org.junit.Test
+              public void testFoo() { }
+          }
+      }
+    """.trimIndent(), """ 
+      import org.junit.experimental.runners.Enclosed;
+      import org.junit.runner.RunWith;
+      
+      @RunWith(Enclosed.class)
+      class A {
+          public static class B { 
+              @org.junit.Test
+              public void testFoo() { }
+          }
+      }
+    """.trimIndent(), "Fix class signatures")
+  }
+  fun `test highlighting no nested annotation in JUnit 5`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      class A {
+        class <warning descr="Tests in nested class will not be executed">B</warning> { 
+          @org.junit.jupiter.api.Test
+          public void testFoo() { }
+        }
+      }  
+    """.trimIndent())
+  }
+  fun `test quickfix no nested annotation in JUnit 5`() {
+    myFixture.testQuickFixWithPreview(JvmLanguage.JAVA, """
+      class A {
+          class B<caret> { 
+              @org.junit.jupiter.api.Test
+              public void testFoo() { }
+          }
+      }
+    """.trimIndent(), """
+      import org.junit.jupiter.api.Nested;
+      
+      class A {
+          @Nested
+          class B { 
+              @org.junit.jupiter.api.Test
+              public void testFoo() { }
+          }
+      }
+    """.trimIndent(), "Fix 'B' class signature")
+  }
 
   /* Malformed parameterized */
   fun `test malformed parameterized no highlighting`() {

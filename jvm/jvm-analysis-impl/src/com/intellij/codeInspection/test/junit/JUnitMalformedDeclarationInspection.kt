@@ -41,7 +41,6 @@ import com.siyeh.ig.psiutils.TestUtils
 import com.siyeh.ig.psiutils.TypeUtils
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
-import java.util.*
 import kotlin.streams.asSequence
 
 class JUnitMalformedDeclarationInspection : AbstractBaseUastLocalInspectionTool() {
@@ -294,25 +293,67 @@ private class JUnitMalformedSignatureVisitor(
     val javaClass = aClass.javaPsi
     if (!javaClass.hasModifier(JvmModifier.PUBLIC) && !aClass.isAnonymousOrLocal()) {
       val message = JvmAnalysisBundle.message("jvm.inspections.unconstructable.test.case.not.public.descriptor")
-      val fixes = createModifierQuickfixes(aClass, modifierRequest(JvmModifier.PUBLIC, true)) ?: return
+      val fixes = createModifierQuickfixes(aClass, modifierRequest(JvmModifier.PUBLIC, true))
       holder.registerUProblem(aClass, message, *fixes)
-      return
     }
   }
 
   private fun checkMalformedNestedClass(aClass: UClass) {
+    val outer = aClass.outerClass() ?: return
+    if (aClass == outer) return
+    checkMalformedJUnit4NestedClass(aClass, outer)
+    checkMalformedJUnit5NestedClass(aClass)
+  }
+
+  private fun UClass.outerClass(): UClass? {
+    val containingClass = getContainingUClass()
+    return if (containingClass == null) this else containingClass.outerClass()
+  }
+
+  private fun checkMalformedJUnit4NestedClass(aClass: UClass, outerClass: UClass) {
+    if (aClass.methods.any { it.javaPsi.hasAnnotation(ORG_JUNIT_TEST) }) {
+      val runWith = outerClass.uAnnotations.firstOrNull { it.qualifiedName == ORG_JUNIT_RUNNER_RUN_WITH }
+      if (runWith == null) {
+        val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.missing.nested.annotation.descriptor")
+        holder.registerUProblem(aClass, message, MakeJUnit4InnerClassRunnableFix(aClass))
+      }
+    }
+  }
+
+  private inner class MakeJUnit4InnerClassRunnableFix(aClass: UClass) : ClassSignatureQuickFix(
+    aClass.javaPsi.name, true, aClass.visibility != UastVisibility.PRIVATE, null
+  ) {
+    override fun getName(): String = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.fix.class.signature.multi")
+
+    override fun getActions(project: Project, descriptor: ProblemDescriptor): List<(JvmModifiersOwner) -> List<IntentionAction>> {
+      val list = super.getActions(project, descriptor).toMutableList()
+      list.add { owner ->
+        val outerClass = owner.sourceElement?.toUElementOfType<UClass>()?.outerClass()!!
+        val request = annotationRequest(ORG_JUNIT_RUNNER_RUN_WITH, classAttribute("value", ORG_JUNIT_EXPERIMENTAL_RUNNERS_ENCLOSED))
+        createAddAnnotationActions(outerClass.javaPsi, request)
+      }
+      return list
+    }
+
+    override fun getFamilyName(): String = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.fix.class.signature.multi")
+
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+      val uClass = getUParentForIdentifier(descriptor.psiElement)?.asSafely<UClass>() ?: return
+      applyFixes(project, descriptor, uClass.javaPsi.asSafely<PsiClass>() ?: return)
+    }
+  }
+
+  private fun checkMalformedJUnit5NestedClass(aClass: UClass) {
     val javaClass = aClass.javaPsi
-    val containingClass = javaClass.containingClass
-    if (containingClass == null || !javaClass.hasAnnotation(ORG_JUNIT_JUPITER_API_NESTED)) return
-    val problems = mutableListOf<JvmModifier>()
-    if (aClass.isStatic) problems.add(JvmModifier.STATIC)
-    if (aClass.visibility == UastVisibility.PRIVATE) problems.add(JvmModifier.PRIVATE)
-    if (problems.isEmpty()) return
-    val message = JvmAnalysisBundle.message(
-      "jvm.inspections.junit.malformed.nested.class.descriptor",
-      problems.size, problems.first().toString().lowercase(Locale.US), problems.last().toString().lowercase(Locale.US)
+    if (!javaClass.hasAnnotation(ORG_JUNIT_JUPITER_API_NESTED) && !aClass.methods.any { it.javaPsi.hasAnnotation(ORG_JUNIT_JUPITER_API_TEST) }) return
+    if (javaClass.hasAnnotation(ORG_JUNIT_JUPITER_API_NESTED) && !aClass.isStatic && aClass.visibility != UastVisibility.PRIVATE) return
+    val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.missing.nested.annotation.descriptor", )
+    val fix = ClassSignatureQuickFix(
+      aClass.javaPsi.name ?: return,
+      false,
+      aClass.visibility == UastVisibility.PRIVATE,
+      if (javaClass.hasAnnotation(ORG_JUNIT_JUPITER_API_NESTED)) null else ORG_JUNIT_JUPITER_API_NESTED
     )
-    val fix = ClassSignatureQuickFix(aClass.javaPsi.name ?: return, false, aClass.visibility == UastVisibility.PRIVATE)
     holder.registerUProblem(aClass, message, fix)
   }
 
@@ -324,7 +365,7 @@ private class JUnitMalformedSignatureVisitor(
         && type.isInheritorOf(ORG_JUNIT_JUPITER_API_EXTENSION_BEFORE_ALL_CALLBACK, ORG_JUNIT_JUPITER_API_EXTENSION_AFTER_ALL_CALLBACK)
     ) {
       val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.extension.class.level.descriptor", type.presentableText)
-      val fixes = createModifierQuickfixes(field, modifierRequest(JvmModifier.STATIC, shouldBePresent = true)) ?: return
+      val fixes = createModifierQuickfixes(field, modifierRequest(JvmModifier.STATIC, shouldBePresent = true))
       holder.registerUProblem(field, message, *fixes)
     }
   }
@@ -1056,10 +1097,11 @@ private class JUnitMalformedSignatureVisitor(
     }
   }
 
-  private class ClassSignatureQuickFix(
-    private val name: @NlsSafe String,
-    private val makeStatic: Boolean?,
-    private val makePublic: Boolean?,
+  private open class ClassSignatureQuickFix(
+    private val name: @NlsSafe String?,
+    private val makeStatic: Boolean? = null,
+    private val makePublic: Boolean? = null,
+    private val annotation: String? = null
   ) : CompositeIntentionQuickFix() {
     override fun getFamilyName(): String = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.fix.class.signature")
 
@@ -1082,6 +1124,9 @@ private class JUnitMalformedSignatureVisitor(
       }
       if (makePublic != null) {
         actions.add { jvmClass -> createModifierActions(jvmClass, modifierRequest(JvmModifier.PUBLIC, makePublic))}
+      }
+      if (annotation != null) {
+        actions.add { jvmClass -> createAddAnnotationActions(jvmClass, annotationRequest(annotation)) }
       }
       return actions
     }
