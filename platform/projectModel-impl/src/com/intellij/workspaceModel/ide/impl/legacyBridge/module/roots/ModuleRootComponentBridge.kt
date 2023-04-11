@@ -117,6 +117,11 @@ class ModuleRootComponentBridge(
     accessor,
     cacheStorageResult)
 
+  @ApiStatus.Internal
+  fun getModifiableModelWithoutCaching(): ModifiableRootModel {
+    return getModifiableModel(MutableEntityStorage.from(moduleBridge.entityStorage.current), RootConfigurationAccessor.DEFAULT_INSTANCE)
+  }
+
   fun getModifiableModel(diff: MutableEntityStorage, accessor: RootConfigurationAccessor): ModifiableRootModel {
     return ModifiableRootModelBridgeImpl(diff, moduleBridge, accessor, false)
   }
