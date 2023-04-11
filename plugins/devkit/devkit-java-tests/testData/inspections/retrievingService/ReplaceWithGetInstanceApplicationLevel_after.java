@@ -8,7 +8,6 @@ final class MyService {
   }
 
   void foo() {
-    System.out.println(42);
     MyService service = MyService.getInstance();
   }
 }

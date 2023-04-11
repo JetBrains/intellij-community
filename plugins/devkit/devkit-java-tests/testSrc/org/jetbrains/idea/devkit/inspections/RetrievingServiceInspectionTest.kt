@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.testFramework.TestDataPath
+import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 import org.jetbrains.idea.devkit.inspections.quickfix.RetrievingServiceInspectionTestBase
 
@@ -21,10 +22,10 @@ internal class RetrievingServiceInspectionTest : RetrievingServiceInspectionTest
   }
 
   fun testReplaceWithGetInstanceApplicationLevel() {
-    doTest()
+    doTest(DevKitBundle.message("inspection.retrieving.service.replace.with", "MyService", "getInstance"))
   }
 
   fun testReplaceWithGetInstanceProjectLevel() {
-    doTest()
+    doTest(DevKitBundle.message("inspection.retrieving.service.replace.with", "MyService", "getInstance"))
   }
 }

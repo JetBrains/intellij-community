@@ -8,7 +8,6 @@ final class MyService {
   }
 
   void foo() {
-    System.out.println(42);
     MyService service = <weak_warning descr="Can be replaced with 'MyService.getInstance()' call">ApplicationManager.getApplication().getService<caret>(MyService.class)</weak_warning>;
   }
 }

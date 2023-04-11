@@ -9,7 +9,6 @@ final class MyService {
   }
 
   void foo(Project project) {
-    System.out.println(42);
     MyService service = MyService.getInstance(project);
   }
 }
