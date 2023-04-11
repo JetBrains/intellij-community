@@ -1211,8 +1211,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/ml-completion/tests/kotlin.ml-completion.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/ml-completion/tests/kotlin.ml-completion.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/native/kotlin.native.iml" filepath="$PROJECT_DIR$/plugins/kotlin/native/kotlin.native.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/native/tests/kotlin.native.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/native/tests/kotlin.native.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/navigation/kotlin.navigation.iml" filepath="$PROJECT_DIR$/plugins/kotlin/navigation/kotlin.navigation.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/navigation/tests/kotlin.navigation.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/navigation/tests/kotlin.navigation.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/performance-tests/kotlin.performance-tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/performance-tests/kotlin.performance-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/performance-tests/performance-test-utils/kotlin.performance-tests.performance-test-utils.iml" filepath="$PROJECT_DIR$/plugins/kotlin/performance-tests/performance-test-utils/kotlin.performance-tests.performance-test-utils.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/plugin/kotlin.plugin.iml" filepath="$PROJECT_DIR$/plugins/kotlin/plugin/kotlin.plugin.iml" />
