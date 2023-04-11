@@ -2,6 +2,7 @@
 package com.intellij.refactoring.rename.impl
 
 import com.intellij.find.usages.api.PsiUsage
+import com.intellij.find.usages.api.ReadWriteUsage
 import com.intellij.find.usages.api.UsageAccess
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.TextRange
@@ -17,8 +18,6 @@ internal class TextRenameUsage(
   override val fileUpdater: FileUpdater,
   val context: ReplaceTextTargetContext,
 ) : PsiRenameUsage, ModifiableRenameUsage {
-
-  override val access: UsageAccess? get() = psiUsage.access
 
   override val declaration: Boolean get() = psiUsage.declaration
 

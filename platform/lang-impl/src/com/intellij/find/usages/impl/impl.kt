@@ -56,6 +56,10 @@ fun symbolSearchTarget(project: Project, symbol: Symbol): SearchTarget? {
   return null
 }
 
+internal fun usageAccess(usage: Usage): UsageAccess? {
+  return if (usage is ReadWriteUsage) usage.computeAccess() else null
+}
+
 @ApiStatus.Internal
 fun buildUsageViewQuery(
   project: Project,
@@ -64,7 +68,7 @@ fun buildUsageViewQuery(
 ): Query<out UVUsage> {
   return buildQuery(project, target, allOptions).transforming {
     if (it is PsiUsage && !it.declaration) {
-      val access = when (it.access) {
+      val access = when (usageAccess(it)) {
         UsageAccess.Read -> ReadWriteAccessDetector.Access.Read
         UsageAccess.Write -> ReadWriteAccessDetector.Access.Write
         UsageAccess.ReadWrite -> ReadWriteAccessDetector.Access.ReadWrite

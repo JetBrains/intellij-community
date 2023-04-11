@@ -6,13 +6,11 @@ package com.intellij.codeInsight.highlighting
 import com.intellij.find.FindManager
 import com.intellij.find.findUsages.FindUsagesHandler
 import com.intellij.find.impl.FindManagerImpl
-import com.intellij.find.usages.api.PsiUsage
-import com.intellij.find.usages.api.Usage
-import com.intellij.find.usages.api.UsageAccess
-import com.intellij.find.usages.api.UsageOptions
+import com.intellij.find.usages.api.*
 import com.intellij.find.usages.impl.AllSearchOptions
 import com.intellij.find.usages.impl.buildQuery
 import com.intellij.find.usages.impl.symbolSearchTarget
+import com.intellij.find.usages.impl.usageAccess
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiSymbolService
@@ -122,7 +120,7 @@ private fun getSymbolUsageRanges(file: PsiFile, symbol: Symbol): UsageRanges? {
     if (usage !is PsiUsage) {
       continue
     }
-    val collector: ArrayList<TextRange> = when (Pair(usage.access ?: UsageAccess.Read, usage.declaration)) {
+    val collector: ArrayList<TextRange> = when (Pair(usageAccess(usage) ?: UsageAccess.Read, usage.declaration)) {
       Pair(UsageAccess.Read, true) -> readDeclarationRanges
       Pair(UsageAccess.Write, true), Pair(UsageAccess.ReadWrite, true) -> writeDeclarationRanges
       Pair(UsageAccess.Write, false), Pair(UsageAccess.ReadWrite, false) -> writeRanges

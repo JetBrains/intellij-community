@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.api
 
-import com.intellij.find.usages.api.UsageAccess
 import com.intellij.model.Pointer
 import com.intellij.usages.impl.rules.UsageType
 
@@ -14,12 +13,6 @@ import com.intellij.usages.impl.rules.UsageType
 interface RenameUsage {
 
   fun createPointer(): Pointer<out RenameUsage>
-
-  /**
-   * Whether this usage represents a read or write access.
-   */
-  val access: UsageAccess?
-    get() = null
 
   /**
    * Whether this usage is a declaration (`true`).

@@ -2,6 +2,7 @@
 package com.intellij.refactoring.rename.impl
 
 import com.intellij.find.usages.api.PsiUsage
+import com.intellij.find.usages.api.ReadWriteUsage
 import com.intellij.find.usages.api.UsageAccess
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.TextRange
@@ -11,14 +12,16 @@ import com.intellij.usages.impl.rules.UsageType
 
 internal class DefaultPsiRenameUsage(
   private val psiUsage: PsiUsage
-) : PsiRenameUsage {
+) : PsiRenameUsage, ReadWriteUsage {
 
   override fun createPointer(): Pointer<out DefaultPsiRenameUsage> = Pointer.delegatingPointer(
     psiUsage.createPointer(),
     ::DefaultPsiRenameUsage
   )
 
-  override val access: UsageAccess? get() = psiUsage.access
+  override fun computeAccess(): UsageAccess? {
+    return if (psiUsage is ReadWriteUsage) psiUsage.computeAccess() else null
+  }
 
   override val declaration: Boolean get() = psiUsage.declaration
 

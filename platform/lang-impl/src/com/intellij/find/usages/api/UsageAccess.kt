@@ -2,7 +2,7 @@
 package com.intellij.find.usages.api
 
 /**
- * @see Usage
+ * @see ReadWriteUsage
  */
 enum class UsageAccess {
   Read,
