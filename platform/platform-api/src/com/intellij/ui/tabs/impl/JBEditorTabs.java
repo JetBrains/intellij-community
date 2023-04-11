@@ -10,9 +10,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.tabs.JBEditorTabsBase;
 import com.intellij.ui.tabs.JBTabsPresentation;
-import com.intellij.ui.tabs.impl.singleRow.CompressibleSingleRowLayout;
-import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
-import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,8 +25,6 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
 
   public JBEditorTabs(@Nullable Project project, @Nullable IdeFocusManager focusManager, @NotNull Disposable parentDisposable) {
     super(project, focusManager, parentDisposable);
-
-    setSupportsCompression(true);
   }
 
   @Override
@@ -49,16 +44,6 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
                       @Nullable IdeFocusManager focusManager,
                       @NotNull Disposable parent) {
     this(project, focusManager, parent);
-  }
-
-  @Override
-  protected SingleRowLayout createSingleRowLayout() {
-    if (!UISettings.getInstance().getHideTabsIfNeeded() && supportsCompression()) {
-      return new CompressibleSingleRowLayout(this);
-    }
-    else {
-      return new ScrollableSingleRowLayout(this);
-    }
   }
 
   @Override

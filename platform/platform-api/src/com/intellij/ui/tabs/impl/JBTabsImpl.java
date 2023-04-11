@@ -541,6 +541,7 @@ public class JBTabsImpl extends JComponent
   /**
    * @deprecated override {@link JBTabsImpl#createMultiRowLayout()} instead
    */
+  @SuppressWarnings("removal")
   @Deprecated(forRemoval = true)
   protected TableLayout createTableLayout() {
     return createMultiRowLayout();
@@ -602,6 +603,11 @@ public class JBTabsImpl extends JComponent
     return false;
   }
 
+
+  /**
+   * @deprecated look at {@link JBTabsImpl#setSupportsCompression} Java Doc
+   */
+  @Deprecated(forRemoval = true)
   public boolean supportsCompression() {
     return mySupportsCompression;
   }
@@ -2131,8 +2137,8 @@ public class JBTabsImpl extends JComponent
           divider.setBounds(location, 0, 1, getHeight());
         }
       }
-      else if (myLayout instanceof TableLayout tableLayout) {
-        myLastLayoutPass = tableLayout.layoutTable(visible);
+      else if (myLayout instanceof MultiRowLayout multiRowLayout) {
+        myLastLayoutPass = multiRowLayout.layoutTable(visible);
       }
 
       centerizeEntryPointToolbarPosition();
@@ -3506,6 +3512,11 @@ public class JBTabsImpl extends JComponent
     return this;
   }
 
+  /**
+   * @deprecated to make tabs compressible override {@link JBTabsImpl#useMultiRowLayout()} and specify condition for it.
+   * Then override {@link JBTabsImpl#createMultiRowLayout()} and create {@link com.intellij.ui.tabs.impl.multiRow.CompressibleMultiRowLayout}.
+   */
+  @Deprecated
   @Override
   public JBTabsPresentation setSupportsCompression(boolean supportsCompression) {
     mySupportsCompression = supportsCompression;

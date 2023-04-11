@@ -26,7 +26,6 @@ public class JBTabsPaneImpl implements TabbedPane {
     myTabs = JBTabsFactory.createEditorTabs(project, parent);
     myTabs.getPresentation()
       .setAlphabeticalMode(false)
-      .setSupportsCompression(false)
       .setPaintFocus(StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())
       .setFirstTabOffset(10);
 

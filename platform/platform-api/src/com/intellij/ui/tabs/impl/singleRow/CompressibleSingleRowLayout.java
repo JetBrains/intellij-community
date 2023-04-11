@@ -8,6 +8,10 @@ import com.intellij.ui.tabs.impl.TabLabel;
 
 import java.util.Iterator;
 
+/**
+ * @deprecated use {@link com.intellij.ui.tabs.impl.multiRow.CompressibleMultiRowLayout} with showPinnedTabsSeparately = false instead
+ */
+@Deprecated(forRemoval = true)
 public class CompressibleSingleRowLayout extends SingleRowLayout {
   public CompressibleSingleRowLayout(JBTabsImpl tabs) {
     super(tabs);

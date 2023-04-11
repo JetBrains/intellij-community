@@ -9,6 +9,12 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
+/**
+ * @deprecated use {@link com.intellij.ui.tabs.impl.multiRow.MultiRowLayout}
+ * with {@link com.intellij.ui.tabs.impl.multiRow.MultiRowPassInfo} instead
+ */
+@SuppressWarnings("removal")
+@Deprecated(forRemoval = true)
 public class TablePassInfo extends LayoutPassInfo {
   final List<TableRow> table = new ArrayList<>();
   public final Rectangle toFitRec;

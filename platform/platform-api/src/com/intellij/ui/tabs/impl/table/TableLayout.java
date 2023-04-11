@@ -22,6 +22,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * @deprecated use inheritors of {@link com.intellij.ui.tabs.impl.multiRow.MultiRowLayout} instead
+ */
+@SuppressWarnings("removal")
+@Deprecated(forRemoval = true)
 public class TableLayout extends TabLayout {
   private int myScrollOffset = 0;
 
