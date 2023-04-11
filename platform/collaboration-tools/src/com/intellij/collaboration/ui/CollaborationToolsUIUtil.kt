@@ -31,8 +31,7 @@ import kotlinx.coroutines.CoroutineScope
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
-import java.awt.Color
-import java.awt.Shape
+import java.awt.*
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.util.function.Supplier
@@ -286,15 +285,41 @@ object CollaborationToolsUIUtil {
 
 @Suppress("FunctionName")
 fun VerticalListPanel(gap: Int = 0): JPanel =
-  JPanel(ListLayout.vertical(gap)).apply {
+  ScrollablePanel(ListLayout.vertical(gap), SwingConstants.VERTICAL).apply {
     isOpaque = false
   }
 
 @Suppress("FunctionName")
 fun HorizontalListPanel(gap: Int = 0): JPanel =
-  JPanel(ListLayout.horizontal(gap)).apply {
+  ScrollablePanel(ListLayout.horizontal(gap), SwingConstants.HORIZONTAL).apply {
     isOpaque = false
   }
+
+private class ScrollablePanel(layout: LayoutManager?, private val orientation: Int)
+  : JPanel(layout), Scrollable {
+
+  private var verticalUnit = 1
+  private var horizontalUnit = 1
+
+  override fun addNotify() {
+    super.addNotify()
+    val fontMetrics = getFontMetrics(font)
+    verticalUnit = fontMetrics.maxAscent + fontMetrics.maxDescent
+    horizontalUnit = fontMetrics.charWidth('W')
+  }
+
+  override fun getScrollableUnitIncrement(visibleRect: Rectangle, orientation: Int, direction: Int): Int =
+    if (orientation == SwingConstants.HORIZONTAL) horizontalUnit else verticalUnit
+
+  override fun getScrollableBlockIncrement(visibleRect: Rectangle, orientation: Int, direction: Int): Int =
+    if (orientation == SwingConstants.HORIZONTAL) visibleRect.width else visibleRect.height
+
+  override fun getPreferredScrollableViewportSize(): Dimension? = preferredSize
+
+  override fun getScrollableTracksViewportWidth(): Boolean = orientation == SwingConstants.VERTICAL
+
+  override fun getScrollableTracksViewportHeight(): Boolean = orientation == SwingConstants.HORIZONTAL
+}
 
 /**
  * Loading label with animated icon
