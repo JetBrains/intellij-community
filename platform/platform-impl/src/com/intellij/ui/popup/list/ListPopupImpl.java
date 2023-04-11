@@ -527,6 +527,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     Point point = myList.indexToLocation(myList.getSelectedIndex());
     SwingUtilities.convertPointToScreen(point, myList);
     myChild = createPopup(this, nextStep, parentValue);
+    if (ScreenReader.isActive()) myChild.setRequestFocus(true);
     if (myChild instanceof ListPopup child) {
       for (ListSelectionListener listener : myList.getListSelectionListeners()) {
         child.addListSelectionListener(listener);
