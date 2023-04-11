@@ -4568,6 +4568,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/nullability/kt-12050.java");
         }
 
+        @TestMetadata("ktij-16493.java")
+        public void testKtij_16493() throws Exception {
+            runTest("testData/newJ2k/nullability/ktij-16493.java");
+        }
+
         @TestMetadata("LocalValReassignment.java")
         public void testLocalValReassignment() throws Exception {
             runTest("testData/newJ2k/nullability/LocalValReassignment.java");
