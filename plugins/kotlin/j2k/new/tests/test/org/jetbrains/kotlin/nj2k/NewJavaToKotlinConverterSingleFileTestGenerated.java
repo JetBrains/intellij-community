@@ -1557,6 +1557,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/detectProperties/AssignFieldInsideSetter2.java");
         }
 
+        @TestMetadata("callPropertySetterWithoutArguments.java")
+        public void testCallPropertySetterWithoutArguments() throws Exception {
+            runTest("testData/newJ2k/detectProperties/callPropertySetterWithoutArguments.java");
+        }
+
         @TestMetadata("CannotDropOnlySetter.java")
         public void testCannotDropOnlySetter() throws Exception {
             runTest("testData/newJ2k/detectProperties/CannotDropOnlySetter.java");
