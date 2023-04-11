@@ -27,12 +27,6 @@ public abstract class MavenProjectsProcessorBasicTask implements MavenProjectsPr
     myResolver = new MavenProjectResolver(myTree);
   }
 
-  public MavenProjectsProcessorBasicTask(MavenProject mavenProject, MavenProjectsTree tree, MavenProjectResolver resolver) {
-    myMavenProject = mavenProject;
-    myTree = tree;
-    myResolver = resolver;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
