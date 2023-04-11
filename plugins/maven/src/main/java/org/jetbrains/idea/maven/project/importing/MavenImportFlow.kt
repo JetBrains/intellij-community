@@ -210,8 +210,7 @@ class MavenImportFlow {
                      resolveContext,
                      context.initialContext.indicator)
     Disposer.dispose(d)
-    return MavenResolvedContext(context.project, resolveContext.getUserData(MavenProjectResolver.UNRESOLVED_ARTIFACTS) ?: emptySet(),
-                                projectsToImport.toList(), nativeProjectStorage.toList(), context)
+    return MavenResolvedContext(context.project, projectsToImport.toList(), nativeProjectStorage.toList(), context)
   }
 
   fun resolvePlugins(context: MavenResolvedContext): MavenPluginResolvedContext {

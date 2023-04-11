@@ -6,7 +6,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.concurrency.Promise
-import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.jetbrains.idea.maven.project.*
@@ -58,7 +57,6 @@ class MavenReadContext internal constructor(project: Project,
 }
 
 class MavenResolvedContext internal constructor(project: Project,
-                                                val unresolvedArtifacts: Collection<MavenArtifact>,
                                                 val projectsToImport: List<MavenProject>,
                                                 val nativeProjectHolder: List<Pair<MavenProject, NativeMavenProjectHolder>>,
                                                 val readContext: MavenReadContext) : MavenImportContext(project) {

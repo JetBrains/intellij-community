@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.ide.plugins.advertiser.PluginFeatureEnabler;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -12,7 +11,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.importing.MavenImporter;
-import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.server.MavenConfigParseException;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
@@ -29,8 +27,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
 public class MavenProjectResolver {
-  public static final Key<Collection<MavenArtifact>> UNRESOLVED_ARTIFACTS = new Key<>("Unresolved Artifacts");
-
   public MavenProjectResolver() {
   }
 
@@ -115,8 +111,6 @@ public class MavenProjectResolver {
 
     MavenResolveResultProblemProcessor.MavenResolveProblemHolder problems = MavenResolveResultProblemProcessor.getProblems(results);
     MavenResolveResultProblemProcessor.notifySyncForProblem(project, problems);
-
-    context.putUserData(UNRESOLVED_ARTIFACTS, problems.unresolvedArtifacts);
 
     var artifactIdToMavenProjects = mavenProjects.stream()
       .filter(mavenProject -> null != mavenProject.getMavenId().getArtifactId())
