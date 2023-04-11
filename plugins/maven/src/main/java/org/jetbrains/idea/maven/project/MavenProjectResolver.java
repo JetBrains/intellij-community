@@ -7,15 +7,19 @@ import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 import java.util.Collection;
+import java.util.Map;
 
 public interface MavenProjectResolver {
-  void resolve(@NotNull Collection<MavenProject> mavenProjects,
-               @NotNull MavenGeneralSettings generalSettings,
-               @NotNull MavenEmbeddersManager embeddersManager,
-               @NotNull MavenConsole console,
-               @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException;
+  MavenProjectResolutionResult resolve(@NotNull Collection<MavenProject> mavenProjects,
+                                       @NotNull MavenGeneralSettings generalSettings,
+                                       @NotNull MavenEmbeddersManager embeddersManager,
+                                       @NotNull MavenConsole console,
+                                       @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException;
 
   static MavenProjectResolver getInstance(@NotNull Project project) {
     return project.getService(MavenProjectResolver.class);
+  }
+
+  record MavenProjectResolutionResult(@NotNull Map<String, Collection<MavenProjectWithHolder>> projectsWithUnresolvedPlugins) {
   }
 }

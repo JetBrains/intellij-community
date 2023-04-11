@@ -575,7 +575,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   @ApiStatus.Internal
-  public void schedulePluginResolution(@NotNull Collection<Pair<MavenProject, NativeMavenProjectHolder>> pluginResolutionRequests) {
+  public void schedulePluginResolution(@NotNull Collection<MavenProjectWithHolder> pluginResolutionRequests) {
     runWhenFullyOpen(
       () -> myPluginsResolvingProcessor.scheduleTask(
         new MavenProjectsProcessorPluginsResolvingTask(pluginResolutionRequests, new MavenPluginResolver(getProjectsTree()))

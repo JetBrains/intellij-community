@@ -30,7 +30,7 @@ public class MavenPluginResolver {
     myProject = tree == null ? null : tree.getProject();
   }
 
-  public void resolvePlugins(@NotNull Collection<Pair<MavenProject, NativeMavenProjectHolder>> mavenProjects,
+  public void resolvePlugins(@NotNull Collection<MavenProjectWithHolder> mavenProjects,
                              @NotNull MavenEmbeddersManager embeddersManager,
                              @NotNull MavenConsole console,
                              @NotNull MavenProgressIndicator process,
@@ -38,7 +38,7 @@ public class MavenPluginResolver {
                              boolean forceUpdateSnapshots) throws MavenProcessCanceledException {
     if (mavenProjects.isEmpty()) return;
 
-    var firstProject = sortAndGetFirst(mavenProjects).first;
+    var firstProject = sortAndGetFirst(mavenProjects).mavenProject();
     var baseDir = MavenUtil.getBaseDir(firstProject.getDirectoryFile()).toString();
     process.setText(MavenProjectBundle.message("maven.downloading.pom.plugins", firstProject.getDisplayName()));
 
@@ -72,7 +72,7 @@ public class MavenPluginResolver {
         reportUnresolvedPlugins(unresolvedPluginIds);
       }
 
-      var updatedMavenProjects = mavenProjects.stream().map(pair -> pair.first).collect(Collectors.toSet());
+      var updatedMavenProjects = mavenProjects.stream().map(p -> p.mavenProject()).collect(Collectors.toSet());
       for (var mavenProject : updatedMavenProjects) {
         mavenProject.resetCache();
         myTree.firePluginsResolved(mavenProject);
@@ -87,14 +87,14 @@ public class MavenPluginResolver {
   }
 
   private static Collection<Pair<MavenId, NativeMavenProjectHolder>> collectMavenPluginIdsToResolve(
-    @NotNull Collection<Pair<MavenProject, NativeMavenProjectHolder>> mavenProjects
+    @NotNull Collection<MavenProjectWithHolder> mavenProjects
   ) {
     var mavenPluginIdsToResolve = new HashSet<Pair<MavenId, NativeMavenProjectHolder>>();
 
     if (Registry.is("maven.plugins.use.cache")) {
-      var pluginIdsToProjects = new HashMap<MavenId, List<Pair<MavenProject, NativeMavenProjectHolder>>>();
+      var pluginIdsToProjects = new HashMap<MavenId, List<MavenProjectWithHolder>>();
       for (var projectData : mavenProjects) {
-        var mavenProject = projectData.first;
+        var mavenProject = projectData.mavenProject();
         for (MavenPlugin mavenPlugin : mavenProject.getDeclaredPlugins()) {
           var mavenPluginId = mavenPlugin.getMavenId();
           pluginIdsToProjects.putIfAbsent(mavenPluginId, new ArrayList<>());
@@ -102,13 +102,13 @@ public class MavenPluginResolver {
         }
       }
       for (var entry : pluginIdsToProjects.entrySet()) {
-        mavenPluginIdsToResolve.add(Pair.create(entry.getKey(), sortAndGetFirst(entry.getValue()).second));
+        mavenPluginIdsToResolve.add(Pair.create(entry.getKey(), sortAndGetFirst(entry.getValue()).mavenProjectHolder()));
       }
     }
     else {
       for (var projectData : mavenProjects) {
-        var mavenProject = projectData.first;
-        var nativeMavenProject = projectData.second;
+        var mavenProject = projectData.mavenProject();
+        var nativeMavenProject = projectData.mavenProjectHolder();
         for (MavenPlugin mavenPlugin : mavenProject.getDeclaredPlugins()) {
           mavenPluginIdsToResolve.add(Pair.create(mavenPlugin.getMavenId(), nativeMavenProject));
         }
@@ -127,9 +127,9 @@ public class MavenPluginResolver {
     }
   }
 
-  private static Pair<MavenProject, NativeMavenProjectHolder> sortAndGetFirst(@NotNull Collection<Pair<MavenProject, NativeMavenProjectHolder>> mavenProjects) {
+  private static MavenProjectWithHolder sortAndGetFirst(@NotNull Collection<MavenProjectWithHolder> mavenProjects) {
     return mavenProjects.stream()
-      .min(Comparator.comparing(p -> p.first.getDirectoryFile().getPath()))
+      .min(Comparator.comparing(p -> p.mavenProject().getDirectoryFile().getPath()))
       .orElse(null);
   }
 }

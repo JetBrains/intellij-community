@@ -218,7 +218,7 @@ class MavenImportFlow {
                                              context.initialContext.generalSettings.isPrintErrorStackTraces)
 
     resolver.resolvePlugins(
-      context.nativeProjectHolder.map { Pair.create(it.first, it.second) },
+      context.nativeProjectHolder.map { MavenProjectWithHolder(it.first, it.second) },
       embeddersManager,
       consoleToBeRemoved,
       context.initialContext.indicator,
