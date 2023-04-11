@@ -48,13 +48,9 @@ class MermaidEnterBetweenPairHandler : EnterHandlerDelegateAdapter() {
     documentText: CharSequence,
     caretOffset: Int
   ): Boolean {
-    return isLBraceToken(file, editor, documentText, caretOffset) && isRBraceToken(
-      file,
-      editor,
-      documentText,
-      caretOffset
-    )
-      && isValidOffset(caretOffset, documentText)
+    return isValidOffset(caretOffset, documentText)
+      && isLBraceToken(file, editor, documentText, caretOffset)
+      && isRBraceToken(file, editor, documentText, caretOffset)
   }
 
   private fun isLBraceToken(
@@ -98,6 +94,6 @@ class MermaidEnterBetweenPairHandler : EnterHandlerDelegateAdapter() {
   }
 
   private fun isValidOffset(offset: Int, text: CharSequence): Boolean {
-    return offset in text.indices
+    return offset in text.indices && (offset - 1) in text.indices
   }
 }
