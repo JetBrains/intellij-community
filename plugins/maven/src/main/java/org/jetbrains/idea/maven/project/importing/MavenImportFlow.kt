@@ -181,7 +181,6 @@ class MavenImportFlow {
     assertNonDispatchThread()
     val projectManager = MavenProjectsManager.getInstance(context.project)
     val embeddersManager = projectManager.embeddersManager
-    val resolver = MavenProjectResolver(context.projectsTree)
     val consoleToBeRemoved = BTWMavenConsole(context.project, context.initialContext.generalSettings.outputLevel,
                                              context.initialContext.generalSettings.isPrintErrorStackTraces)
     val resolveContext = ResolveContext(context.projectsTree)
@@ -200,6 +199,8 @@ class MavenImportFlow {
         }
       }
     }, d)
+
+    val resolver = MavenProjectResolver(context.projectsTree)
     resolver.resolve(context.project, context.toResolve, context.initialContext.generalSettings, embeddersManager, consoleToBeRemoved,
                      resolveContext, context.initialContext.indicator)
     Disposer.dispose(d)
@@ -271,7 +272,6 @@ class MavenImportFlow {
     val projectManager = MavenProjectsManager.getInstance(project)
     val embeddersManager = projectManager.embeddersManager
     val projectTree = loadOrCreateProjectTree(projectManager)
-    val resolver = MavenProjectResolver(loadOrCreateProjectTree(projectManager))
     val generalSettings = MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings()
     val importingSettings = MavenWorkspaceSettingsComponent.getInstance(project).settings.getImportingSettings()
     val consoleToBeRemoved = BTWMavenConsole(project, generalSettings.outputLevel,
