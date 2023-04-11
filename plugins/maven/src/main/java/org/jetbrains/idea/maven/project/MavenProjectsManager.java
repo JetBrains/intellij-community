@@ -1188,7 +1188,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
     runWhenFullyOpen(() -> myArtifactsDownloadingProcessor
       .scheduleTask(
-        new MavenProjectsProcessorArtifactsDownloadingTask(projects, artifacts, myMavenProjectResolver, sources, docs, result)));
+        new MavenProjectsProcessorArtifactsDownloadingTask(projects, myProjectsTree, artifacts, sources, docs, result)));
   }
 
   private void scheduleImportSettings() {

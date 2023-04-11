@@ -815,8 +815,14 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     AsyncPromise<MavenArtifactDownloader.DownloadResult> promise = new AsyncPromise<>();
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
-        promise.setResult(new MavenImportFlow().downloadSpecificArtifacts(myProject, projects, artifacts, true, true,
-                                                                          new MavenProgressIndicator(myProject, null)));
+        promise.setResult(new MavenImportFlow().downloadSpecificArtifacts(
+          myProject,
+          myProjectsManager.getProjectsTree(),
+          projects,
+          artifacts,
+          true,
+          true,
+          new MavenProgressIndicator(myProject, null)));
       }
       catch (Throwable e) {
         promise.setError(e);

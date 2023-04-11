@@ -231,15 +231,20 @@ class MavenImportFlow {
     if (!(sources || javadocs)) return MavenArtifactDownloader.DownloadResult()
     val projectManager = MavenProjectsManager.getInstance(context.project)
     val embeddersManager = projectManager.embeddersManager
-    val resolver = MavenProjectResolver(context.readContext.projectsTree)
+    val downloader = MavenArtifactDownloader(
+      context.project,
+      context.readContext.projectsTree,
+      context.projectsToImport,
+      null,
+      context.initialContext.indicator)
     val consoleToBeRemoved = BTWMavenConsole(context.project, context.initialContext.generalSettings.outputLevel,
                                              context.initialContext.generalSettings.isPrintErrorStackTraces)
-    return resolver.downloadSourcesAndJavadocs(context.project, context.projectsToImport, null, sources, javadocs, embeddersManager,
-                                               consoleToBeRemoved, context.initialContext.indicator)
+    return downloader.downloadSourcesAndJavadocs(sources, javadocs, embeddersManager, consoleToBeRemoved)
 
   }
 
   fun downloadSpecificArtifacts(project: Project,
+                                projectsTree: MavenProjectsTree,
                                 mavenProjects: Collection<MavenProject>,
                                 mavenArtifacts: Collection<MavenArtifact>?,
                                 sources: Boolean,
@@ -249,11 +254,15 @@ class MavenImportFlow {
     if (!(sources || javadocs)) return MavenArtifactDownloader.DownloadResult()
     val projectManager = MavenProjectsManager.getInstance(project)
     val embeddersManager = projectManager.embeddersManager
-    val resolver = MavenProjectResolver(projectManager.projectsTree)
+    val downloader = MavenArtifactDownloader(
+      project,
+      projectsTree,
+      mavenProjects,
+      mavenArtifacts,
+      indicator)
     val settings = MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings()
     val consoleToBeRemoved = BTWMavenConsole(project, settings.outputLevel, settings.isPrintErrorStackTraces)
-    return resolver.downloadSourcesAndJavadocs(project, mavenProjects, mavenArtifacts, sources, javadocs, embeddersManager,
-                                               consoleToBeRemoved, indicator)
+    return downloader.downloadSourcesAndJavadocs(sources, javadocs, embeddersManager, consoleToBeRemoved)
 
   }
 

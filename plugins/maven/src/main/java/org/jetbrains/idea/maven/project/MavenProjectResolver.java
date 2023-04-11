@@ -207,41 +207,6 @@ public class MavenProjectResolver {
     projectsManager.schedulePluginResolution(task);
   }
 
-  public @NotNull MavenArtifactDownloader.DownloadResult downloadSourcesAndJavadocs(@NotNull Project project,
-                                                                                    @NotNull Collection<MavenProject> projects,
-                                                                                    @Nullable Collection<MavenArtifact> artifacts,
-                                                                                    boolean downloadSources,
-                                                                                    boolean downloadDocs,
-                                                                                    @NotNull MavenEmbeddersManager embeddersManager,
-                                                                                    @NotNull MavenConsole console,
-                                                                                    @NotNull MavenProgressIndicator process)
-    throws MavenProcessCanceledException {
-    MultiMap<Path, MavenProject> projectMultiMap = groupByBasedir(projects);
-    MavenArtifactDownloader.DownloadResult result = new MavenArtifactDownloader.DownloadResult();
-    for (Map.Entry<Path, Collection<MavenProject>> entry : projectMultiMap.entrySet()) {
-      String baseDir = entry.getKey().toString();
-      MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD, baseDir);
-      try {
-        embedder.customizeForResolve(console, process, false, null, null);
-        MavenArtifactDownloader.DownloadResult result1 =
-          MavenArtifactDownloader.download(project, myTree, projects, artifacts, downloadSources, downloadDocs, embedder, process);
-
-        for (MavenProject each : projects) {
-          myTree.fireArtifactsDownloaded(each);
-        }
-
-        result.resolvedDocs.addAll(result1.resolvedDocs);
-        result.resolvedSources.addAll(result1.resolvedSources);
-        result.unresolvedDocs.addAll(result1.unresolvedDocs);
-        result.unresolvedSources.addAll(result1.unresolvedSources);
-      }
-      finally {
-        embeddersManager.release(embedder);
-      }
-    }
-    return result;
-  }
-
   @NotNull
   private MultiMap<Path, MavenProject> groupByBasedir(@NotNull Collection<MavenProject> projects) {
     return ContainerUtil.groupBy(projects, p -> MavenUtil.getBaseDir(myTree.findRootProject(p).getDirectoryFile()));

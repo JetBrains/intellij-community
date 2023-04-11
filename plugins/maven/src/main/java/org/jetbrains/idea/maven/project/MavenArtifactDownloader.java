@@ -1,12 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -19,6 +20,7 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -40,7 +42,6 @@ public final class MavenArtifactDownloader {
   private final Collection<MavenProject> myMavenProjects;
   private final Collection<MavenArtifact> myArtifacts;
   private final MavenProgressIndicator myProgress;
-  private final MavenEmbedderWrapper myEmbedder;
 
   public static DownloadResult download(@NotNull Project project,
                                         MavenProjectsTree projectsTree,
@@ -50,24 +51,58 @@ public final class MavenArtifactDownloader {
                                         boolean downloadDocs,
                                         MavenEmbedderWrapper embedder,
                                         MavenProgressIndicator p) throws MavenProcessCanceledException {
-    return new MavenArtifactDownloader(project, projectsTree, mavenProjects, artifacts, embedder, p).download(downloadSources, downloadDocs);
+    return new MavenArtifactDownloader(project, projectsTree, mavenProjects, artifacts, p).download(embedder, downloadSources, downloadDocs);
   }
 
-  private MavenArtifactDownloader(@NotNull Project project,
-                                  MavenProjectsTree projectsTree,
-                                  Collection<MavenProject> mavenProjects,
-                                  Collection<MavenArtifact> artifacts,
-                                  MavenEmbedderWrapper embedder,
-                                  MavenProgressIndicator p) {
+  public MavenArtifactDownloader(@NotNull Project project,
+                                 MavenProjectsTree projectsTree,
+                                 Collection<MavenProject> mavenProjects,
+                                 Collection<MavenArtifact> artifacts,
+                                 MavenProgressIndicator progressIndicator) {
     myProject = project;
     myProjectsTree = projectsTree;
     myMavenProjects = mavenProjects;
     myArtifacts = artifacts == null ? null : new HashSet<>(artifacts);
-    myEmbedder = embedder;
-    myProgress = p;
+    myProgress = progressIndicator;
   }
 
-  private DownloadResult download(boolean downloadSources, boolean downloadDocs) throws MavenProcessCanceledException {
+  public @NotNull DownloadResult downloadSourcesAndJavadocs(boolean downloadSources,
+                                                            boolean downloadDocs,
+                                                            @NotNull MavenEmbeddersManager embeddersManager,
+                                                            @NotNull MavenConsole console)
+    throws MavenProcessCanceledException {
+    MultiMap<Path, MavenProject> projectMultiMap = groupByBasedir(myMavenProjects);
+    DownloadResult result = new DownloadResult();
+    for (Map.Entry<Path, Collection<MavenProject>> entry : projectMultiMap.entrySet()) {
+      String baseDir = entry.getKey().toString();
+      MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD, baseDir);
+      try {
+        embedder.customizeForResolve(console, myProgress, false, null, null);
+        var result1 = download(embedder, downloadSources, downloadDocs);
+
+        for (MavenProject each : myMavenProjects) {
+          myProjectsTree.fireArtifactsDownloaded(each);
+        }
+
+        result.resolvedDocs.addAll(result1.resolvedDocs);
+        result.resolvedSources.addAll(result1.resolvedSources);
+        result.unresolvedDocs.addAll(result1.unresolvedDocs);
+        result.unresolvedSources.addAll(result1.unresolvedSources);
+      }
+      finally {
+        embeddersManager.release(embedder);
+      }
+    }
+    return result;
+  }
+
+  @NotNull
+  private MultiMap<Path, MavenProject> groupByBasedir(@NotNull Collection<MavenProject> projects) {
+    return ContainerUtil.groupBy(projects, p -> MavenUtil.getBaseDir(myProjectsTree.findRootProject(p).getDirectoryFile()));
+  }
+
+  private DownloadResult download(MavenEmbedderWrapper embedder, boolean downloadSources, boolean downloadDocs)
+    throws MavenProcessCanceledException {
     List<File> downloadedFiles = new ArrayList<>();
     try {
       List<MavenExtraArtifactType> types = new ArrayList<>(2);
@@ -82,7 +117,7 @@ public final class MavenArtifactDownloader {
       myProgress.setText(caption);
 
       Map<MavenId, DownloadData> artifacts = collectArtifactsToDownload(types);
-      return download(artifacts, downloadedFiles);
+      return download(embedder, artifacts, downloadedFiles);
     }
     finally {
       boolean isAsync = !MavenUtil.isMavenUnitTestModeEnabled();
@@ -144,8 +179,9 @@ public final class MavenArtifactDownloader {
     return result;
   }
 
-  private DownloadResult download(final Map<MavenId, DownloadData> toDownload,
-                                  final List<File> downloadedFiles) throws MavenProcessCanceledException {
+  private DownloadResult download(MavenEmbedderWrapper embedder,
+                                  Map<MavenId, DownloadData> toDownload,
+                                  List<File> downloadedFiles) throws MavenProcessCanceledException {
     List<Future> futures = new ArrayList<>();
 
     final AtomicInteger downloaded = new AtomicInteger();
@@ -174,8 +210,8 @@ public final class MavenArtifactDownloader {
               myProgress.checkCanceled();
               myProgress.setFraction(((double)downloaded.getAndIncrement()) / finalTotal);
 
-              MavenArtifact a = myEmbedder.resolve(new MavenArtifactInfo(id, eachElement.extension, eachElement.classifier),
-                                                   new ArrayList<>(data.repositories));
+              MavenArtifact a = embedder.resolve(new MavenArtifactInfo(id, eachElement.extension, eachElement.classifier),
+                                                 new ArrayList<>(data.repositories));
               File file = a.getFile();
               if (file.exists()) {
                 synchronized (downloadedFiles) {
