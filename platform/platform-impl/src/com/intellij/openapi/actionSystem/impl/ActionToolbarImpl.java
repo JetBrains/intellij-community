@@ -48,6 +48,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.CancellablePromise;
+import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -1139,6 +1140,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     private MySeparator(String text) {
       myText = text;
       setFont(JBUI.Fonts.toolbarSmallComboBoxFont());
+      UISettings.setupComponentAntialiasing(this);
     }
 
     @Override
@@ -1152,7 +1154,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         if (myText != null) {
           FontMetrics fontMetrics = getFontMetrics(getFont());
 
-          int textWidth = getTextWidth(fontMetrics, myText, getGraphics());
+          int textWidth = SwingUtilities2.stringWidth(this, fontMetrics, myText);
           return new JBDimension(width + gap * 2 + textWidth,
                                  Math.max(fontMetrics.getHeight(), height), true);
         }
@@ -1188,29 +1190,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         if (myText != null) {
           FontMetrics fontMetrics = getFontMetrics(getFont());
           int top = (getHeight() - fontMetrics.getHeight()) / 2;
-          UISettings.setupAntialiasing(g);
           g.setColor(JBColor.foreground());
-          g.drawString(myText, gap * 2 + center + gap, top + fontMetrics.getAscent());
+          SwingUtilities2.drawString(this, g, myText, gap * 2 + center + gap, top + fontMetrics.getAscent());
         }
       }
       else {
         LinePainter2D.paint((Graphics2D)g, gap, center, ActionToolbarImpl.this.getWidth() - gap * 2 - offset, center);
-      }
-    }
-
-    private static int getTextWidth(@NotNull FontMetrics fontMetrics, @NotNull String text, @Nullable Graphics graphics) {
-      if (graphics == null) {
-        return fontMetrics.stringWidth(text);
-      }
-      else {
-        Graphics g = graphics.create();
-        try {
-          UISettings.setupAntialiasing(g);
-          return fontMetrics.getStringBounds(text, g).getBounds().width;
-        }
-        finally {
-          g.dispose();
-        }
       }
     }
   }

@@ -2157,7 +2157,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     }
 
     if (sizeFromHeader == null) {
-      int minimumSize = myWindow.getGraphics().getFontMetrics(myHeaderPanel.getFont()).getHeight();
+      int minimumSize = myWindow.getFontMetrics(myHeaderPanel.getFont()).getHeight();
       sizeFromHeader = new Dimension(minimumSize, minimumSize);
     }
     return sizeFromHeader;
