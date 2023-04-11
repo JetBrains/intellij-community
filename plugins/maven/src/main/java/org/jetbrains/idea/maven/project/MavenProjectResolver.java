@@ -12,7 +12,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
@@ -23,7 +22,10 @@ import org.jetbrains.idea.maven.utils.*;
 
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
@@ -36,16 +38,6 @@ public class MavenProjectResolver {
   public MavenProjectResolver(@Nullable MavenProjectsTree tree) {
     myTree = tree;
     myProject = tree == null ? null : tree.getProject();
-  }
-
-  @TestOnly
-  public void resolve(@NotNull Project project,
-                      @NotNull MavenProject mavenProject,
-                      @NotNull MavenGeneralSettings generalSettings,
-                      @NotNull MavenEmbeddersManager embeddersManager,
-                      @NotNull MavenConsole console,
-                      @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
-    resolve(project, Collections.singletonList(mavenProject), generalSettings, embeddersManager, console, new ResolveContext(myTree), process);
   }
 
   public void resolve(@NotNull Project project,
@@ -76,7 +68,6 @@ public class MavenProjectResolver {
       catch (Throwable t) {
         MavenConfigParseException cause = findParseException(t);
         if (cause != null) {
-
           MavenLog.LOG.warn("Cannot parse maven config", cause);
         }
         else {
