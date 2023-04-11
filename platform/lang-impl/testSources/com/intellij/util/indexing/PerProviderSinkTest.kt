@@ -11,7 +11,6 @@ import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import junit.framework.TestCase
 import java.util.concurrent.ConcurrentMap
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Phaser
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -33,7 +32,7 @@ class PerProviderSinkTest : LightPlatformTestCase() {
     queue.getSink(provider).use { sink ->
       sink.commit()
     }
-    val (filesInQueue, totalFiles, currentLatch) = getAndResetQueuedFiles(queue)
+    val (filesInQueue, totalFiles) = getAndResetQueuedFiles(queue)
     TestCase.assertEquals(0, filesInQueue.size)
   }
 
@@ -42,7 +41,7 @@ class PerProviderSinkTest : LightPlatformTestCase() {
       sink.addFile(LightVirtualFile("f1"))
       sink.commit()
     }
-    val (filesInQueue, totalFiles, currentLatch) = getAndResetQueuedFiles(queue)
+    val (filesInQueue) = getAndResetQueuedFiles(queue)
     TestCase.assertEquals(1, filesInQueue.size)
     TestCase.assertEquals(1, filesInQueue[provider]?.size)
   }
@@ -51,7 +50,7 @@ class PerProviderSinkTest : LightPlatformTestCase() {
     queue.getSink(provider).use { sink ->
       sink.addFile(LightVirtualFile("f1"))
     }
-    val (filesInQueue, totalFiles, currentLatch) = getAndResetQueuedFiles(queue)
+    val (filesInQueue, totalFiles) = getAndResetQueuedFiles(queue)
     TestCase.assertEquals(0, filesInQueue.size)
   }
 
@@ -61,7 +60,7 @@ class PerProviderSinkTest : LightPlatformTestCase() {
       sink.clear()
       sink.commit()
     }
-    val (filesInQueue, totalFiles, currentLatch) = getAndResetQueuedFiles(queue)
+    val (filesInQueue, totalFiles) = getAndResetQueuedFiles(queue)
     TestCase.assertEquals(0, filesInQueue.size)
   }
 
@@ -71,7 +70,7 @@ class PerProviderSinkTest : LightPlatformTestCase() {
       sink.commit()
       sink.commit()
     }
-    val (filesInQueue, totalFiles, currentLatch) = getAndResetQueuedFiles(queue)
+    val (filesInQueue, totalFiles) = getAndResetQueuedFiles(queue)
     TestCase.assertEquals(1, filesInQueue.size)
     TestCase.assertEquals(1, filesInQueue[provider]?.size)
   }
@@ -88,7 +87,7 @@ class PerProviderSinkTest : LightPlatformTestCase() {
       sink.addFile(LightVirtualFile("f2"))
       sink.commit()
     }
-    val (filesInQueue, totalFiles, currentLatch) = getAndResetQueuedFiles(queue)
+    val (filesInQueue, totalFiles) = getAndResetQueuedFiles(queue)
     TestCase.assertEquals(2, filesInQueue.size)
     TestCase.assertEquals(1, filesInQueue[provider]?.size)
     TestCase.assertEquals(1, filesInQueue[provider2]?.size)
@@ -211,7 +210,7 @@ class PerProviderSinkTest : LightPlatformTestCase() {
         queue.cancelAllTasksAndWait()
       }
 
-      val (filesInQueue, totalFiles, currentLatch) = getAndResetQueuedFiles(queue)
+      val (filesInQueue, totalFiles) = getAndResetQueuedFiles(queue)
       // Don't test latch: it is always `null` because in unit tests [UnindexedFilesScanner.shouldScanInSmartMode()] reports `false`
       //TestCase.assertTrue("Total files: $totalFiles, latch: $currentLatch", (totalFiles < DUMB_MODE_THRESHOLD) == (currentLatch == null))
       val totalFilesInThisQueue = filesInQueue.values.sumOf(Collection<*>::size)
@@ -220,17 +219,17 @@ class PerProviderSinkTest : LightPlatformTestCase() {
       Thread.sleep(50)
     }
 
-    val (filesInQueue, totalFiles, currentLatch) = getAndResetQueuedFiles(queue)
+    val (filesInQueue, totalFiles) = getAndResetQueuedFiles(queue)
     TestCase.assertEquals(0, filesInQueue.size)
     TestCase.assertEquals(0, totalFiles)
-    TestCase.assertNull(currentLatch)
+    TestCase.assertEquals(0, queue.estimatedFilesCount().value)
 
     TestCase.assertEquals(threadsCompleted.get(), threadsCount)
     TestCase.assertEquals(filesSubmitted.get(), totalFilesSum)
   }
 
   private fun getAndResetQueuedFiles(queue: PerProjectIndexingQueue):
-    Triple<ConcurrentMap<IndexableFilesIterator, Collection<VirtualFile>>, Int, CountDownLatch?> =
+    Pair<ConcurrentMap<IndexableFilesIterator, Collection<VirtualFile>>, Int> =
     PerProjectIndexingQueue.TestCompanion(queue).getAndResetQueuedFiles()
 
   private class FakeIterator : IndexableFilesIterator {
