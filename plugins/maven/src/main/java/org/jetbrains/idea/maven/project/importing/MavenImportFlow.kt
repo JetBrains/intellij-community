@@ -186,7 +186,6 @@ class MavenImportFlow {
     val d = Disposer.newDisposable("MavenImportFlow:resolveDependencies:treeListener")
     Disposer.register(context.initialContext.importDisposable, d)
     val projectsToImport = ConcurrentLinkedQueue(context.toResolve)
-    val nativeProjectStorage = ConcurrentLinkedQueue<kotlin.Pair<MavenProject, NativeMavenProjectHolder>>()
     context.projectsTree.addListener(object : MavenProjectsTree.Listener {
       override fun projectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>,
                                    nativeMavenProject: NativeMavenProjectHolder?) {
@@ -194,19 +193,19 @@ class MavenImportFlow {
           if (shouldScheduleProject(projectWithChanges.first, projectWithChanges.second)) {
             projectsToImport.add(projectWithChanges.first)
           }
-          nativeProjectStorage.add(projectWithChanges.first to nativeMavenProject)
         }
       }
     }, d)
 
     val resolver = MavenProjectResolver.getInstance(context.project)
-    resolver.resolve(context.toResolve,
-                     context.initialContext.generalSettings,
-                     embeddersManager,
-                     consoleToBeRemoved,
-                     context.initialContext.indicator)
+    val resolutionResult = resolver.resolve(context.toResolve,
+                                            context.initialContext.generalSettings,
+                                            embeddersManager,
+                                            consoleToBeRemoved,
+                                            context.initialContext.indicator)
     Disposer.dispose(d)
-    return MavenResolvedContext(context.project, projectsToImport.toList(), nativeProjectStorage.toList(), context)
+    val projectsWithUnresolvedPlugins = resolutionResult.projectsWithUnresolvedPlugins.values.flatten()
+    return MavenResolvedContext(context.project, projectsToImport.toList(), projectsWithUnresolvedPlugins, context)
   }
 
   fun resolvePlugins(context: MavenResolvedContext): MavenPluginResolvedContext {
@@ -218,7 +217,7 @@ class MavenImportFlow {
                                              context.initialContext.generalSettings.isPrintErrorStackTraces)
 
     resolver.resolvePlugins(
-      context.nativeProjectHolder.map { MavenProjectWithHolder(it.first, it.second) },
+      context.projectsWithUnresolvedPlugins,
       embeddersManager,
       consoleToBeRemoved,
       context.initialContext.indicator,
