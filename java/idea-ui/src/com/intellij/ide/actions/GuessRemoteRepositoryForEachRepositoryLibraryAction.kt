@@ -17,6 +17,6 @@ class GuessRemoteRepositoryForEachRepositoryLibraryAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    RepositoryLibraryUtils.getInstance(project).guessAndBindRemoteRepositoriesModal()
+    RepositoryLibraryUtils.getInstance(project).guessAndBindRemoteRepositoriesBackground()
   }
 }

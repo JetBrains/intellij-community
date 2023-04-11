@@ -17,6 +17,6 @@ class UnbindRemoteRepositoryForAllRepositoryLibrariesAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    RepositoryLibraryUtils.getInstance(project).unbindRemoteRepositoriesModal()
+    RepositoryLibraryUtils.getInstance(project).unbindRemoteRepositoriesBackground()
   }
 }
