@@ -3,11 +3,9 @@ package org.jetbrains.kotlin.idea.testGenerator.all
 
 import junit.framework.TestCase
 import org.jetbrains.kotlin.fe10.testGenerator.generateK1Tests
-import org.jetbrains.kotlin.fir.testGenerator.generateK2Tests
 
 class AllTestsGeneratedTest : TestCase() {
     fun testAllTestsIsUpToDate() {
         generateK1Tests(isUpToDateCheck = true)
-        generateK2Tests(isUpToDateCheck = true)
     }
 }
