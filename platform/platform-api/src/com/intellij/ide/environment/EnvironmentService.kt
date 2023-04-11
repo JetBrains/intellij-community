@@ -35,7 +35,7 @@ interface EnvironmentService {
    * suspend fun getMyAwesomeSdkPath(): String {
    *   val value: String = service<EnvironmentService>.getValue(MY_AWESOME_SDK_KEY, null)
    *   // if we are in a headless environment and we have no value for a key,
-   *   // then the next line will not be executed because of an exception being thrown
+   *   // then the next line will not be executed because `getValue` resumes with CancellationException
    *   if (value != null) {
    *     return value
    *   }

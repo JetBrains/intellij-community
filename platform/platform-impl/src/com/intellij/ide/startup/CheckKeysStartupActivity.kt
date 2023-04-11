@@ -23,8 +23,8 @@ class CheckKeysStartupActivity : ProjectActivity {
     var exceptionOccurred = false
     for (registry in blockingContext { EnvironmentKeyProvider.EP_NAME.extensionList }) {
       for (requiredKey in registry.getRequiredKeys(project)) {
-        val value = environmentService.getValue(requiredKey, undefined)
-        if (value == undefined) {
+        val value = environmentService.getValue(requiredKey, UNDEFINED)
+        if (value == UNDEFINED) {
           exceptionOccurred = true
           messageBuilder.appendLine(HeadlessEnvironmentService.MissingEnvironmentKeyException(requiredKey).message)
         }
@@ -36,6 +36,6 @@ class CheckKeysStartupActivity : ProjectActivity {
   }
 
   companion object {
-    const val undefined : String = "!!!___***undefined***___!!!";
+    private const val UNDEFINED : String = "!!!___***undefined***___!!!"
   }
 }
