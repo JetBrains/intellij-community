@@ -17,8 +17,10 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.ui.mac.MacFullScreenControlsManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -28,6 +30,13 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction implements 
   private static final String BEFORE = "BEFORE.DISTRACTION.MODE.";
   private static final String AFTER = "AFTER.DISTRACTION.MODE.";
   private static final String LAST_ENTER_VALUE = "DISTRACTION.MODE.ENTER.VALUE";
+
+  private boolean myFromZendMode;
+
+  public @NotNull ToggleDistractionFreeModeAction setFromZendMode(boolean fromZendMode) {
+    myFromZendMode = fromZendMode;
+    return this;
+  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -60,6 +69,10 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction implements 
     }
 
     PropertiesComponent.getInstance().setValue(LAST_ENTER_VALUE, String.valueOf(enter));
+
+    if (SystemInfo.isMac) {
+      MacFullScreenControlsManager.INSTANCE.updateForDistractionFreeMode(enter, myFromZendMode, e.getProject());
+    }
 
     applyAndSave(PropertiesComponent.getInstance(),
                  UISettings.getInstance(),

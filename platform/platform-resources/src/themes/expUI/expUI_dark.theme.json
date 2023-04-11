@@ -693,7 +693,9 @@
       "hoverBackground": "#1A1A1B",
       "separatorColor": "Grey2",
       "borderColor": "Grey1"
-    }
+    },
+
+    "MainWindow.FullScreeControl.Background": "#575A5C"
   },
 
   "icons": {

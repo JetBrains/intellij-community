@@ -2005,6 +2005,9 @@
     },
     {
       "key": "MainWindow.Tab.borderColor"
+    },
+    {
+      "key": "MainWindow.FullScreeControl.Background"
     }
   ]
 }
