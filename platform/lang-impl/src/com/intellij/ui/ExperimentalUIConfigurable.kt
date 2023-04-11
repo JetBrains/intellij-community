@@ -13,6 +13,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
+import com.intellij.util.PlatformUtils
 
 /**
  * @author Konstantin Bulenkov
@@ -46,6 +47,7 @@ open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.me
             { ExperimentalUI.isNewUI() },
             { ExperimentalUI.setNewUI(it) })
           .comment(IdeBundle.message("checkbox.enable.new.ui.description"))
+          .enabled(PlatformUtils.isAqua().not()) // the new UI is always enabled for Aqua and cannot be disabled
       }.comment(IdeBundle.message("ide.restart.required.comment"))
 
       indent {
