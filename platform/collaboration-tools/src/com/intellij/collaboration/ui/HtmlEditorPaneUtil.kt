@@ -1,21 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui
 
+import com.intellij.collaboration.ui.html.ResizingHtmlImageView
 import com.intellij.ide.ui.AntialiasingType
 import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.BrowserHyperlinkListener
-import com.intellij.ui.Graphics2DDelegate
 import com.intellij.ui.HyperlinkAdapter
 import com.intellij.util.ui.*
 import org.intellij.lang.annotations.Language
 import java.awt.*
-import java.awt.image.ImageObserver
 import javax.swing.JEditorPane
 import javax.swing.JTextPane
 import javax.swing.event.HyperlinkEvent
 import javax.swing.text.DefaultCaret
 import javax.swing.text.Element
-import javax.swing.text.FlowView
 import javax.swing.text.View
 import javax.swing.text.html.HTML
 import javax.swing.text.html.ImageView
@@ -97,7 +95,7 @@ object HtmlEditorPaneUtil {
   val INLINE_ICON_EXTENSION: ExtendableHTMLViewFactory.Extension = InlineIconExtension
 
   /**
-   * Handles image scaling
+   * Handles image loading and scaling
    */
   val IMAGES_EXTENSION: ExtendableHTMLViewFactory.Extension = ScalingImageExtension
 }
@@ -154,82 +152,8 @@ private object InlineIconExtension : ExtendableHTMLViewFactory.Extension {
 private object ScalingImageExtension : ExtendableHTMLViewFactory.Extension {
   override fun invoke(elem: Element, view: View): View {
     if (view is ImageView) {
-      return MyScalingImageView(elem)
+      return ResizingHtmlImageView(elem)
     }
     return view
-  }
-
-  // Copied from: com.intellij.codeInsight.documentation.render.DocRenderer.MyScalingImageView
-  private class MyScalingImageView(element: Element) : ImageView(element) {
-
-    private var myAvailableWidth = 0
-
-    override fun getResizeWeight(axis: Int) = 1
-
-    override fun getMaximumSpan(axis: Int) = getPreferredSpan(axis)
-
-    override fun getPreferredSpan(axis: Int): Float {
-      val baseSpan = super.getPreferredSpan(axis)
-      if (axis == X_AXIS) return baseSpan
-
-      var availableWidth = getAvailableWidth()
-      if (availableWidth <= 0) return baseSpan
-
-      val baseXSpan = super.getPreferredSpan(X_AXIS)
-      if (baseXSpan <= 0) return baseSpan
-
-      if (availableWidth > baseXSpan) {
-        availableWidth = baseXSpan.toInt()
-      }
-      if (myAvailableWidth > 0 && availableWidth != myAvailableWidth) {
-        preferenceChanged(null, false, true)
-      }
-      myAvailableWidth = availableWidth
-
-      return baseSpan * availableWidth / baseXSpan
-    }
-
-    private fun getAvailableWidth(): Int {
-      var v: View? = this
-      while (v != null) {
-        val parent = v.parent
-        if (parent is FlowView) {
-          val childCount = parent.getViewCount()
-          for (i in 0 until childCount) {
-            if (parent.getView(i) === v) {
-              return parent.getFlowSpan(i)
-            }
-          }
-        }
-        v = parent
-      }
-      return 0
-    }
-
-    override fun paint(g: Graphics, a: Shape) {
-      val targetRect = if (a is Rectangle) a else a.bounds
-      val scalingGraphics = object : Graphics2DDelegate(g as Graphics2D) {
-        override fun drawImage(img: Image, x: Int, y: Int, width: Int, height: Int, observer: ImageObserver): Boolean {
-          var newWidth = width
-          var newHeight = height
-
-          val maxWidth = 0.coerceAtLeast(targetRect.width - 2 * (x - targetRect.x)) // assuming left and right insets are the same
-          val maxHeight = 0.coerceAtLeast(targetRect.height - 2 * (y - targetRect.y)) // assuming top and bottom insets are the same
-
-          if (width > maxWidth) {
-            newHeight = height * maxWidth / width
-            newWidth = maxWidth
-          }
-
-          if (height > maxHeight) {
-            newWidth = width * maxHeight / height
-            newHeight = maxHeight
-          }
-
-          return super.drawImage(img, x, y, newWidth, newHeight, observer)
-        }
-      }
-      super.paint(scalingGraphics, a)
-    }
   }
 }
