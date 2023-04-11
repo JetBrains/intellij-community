@@ -56,7 +56,8 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
 
     private fun doSingleResolveTest() {
         forEachCaret { index, offset ->
-            val expectedResolveData = readResolveData(myFixture.file.text, index, refMarkerText)
+            val fileText = myFixture.file.text
+            val expectedResolveData = readResolveData(fileText, getExpectedReferences(fileText, index))
             val psiReference = wrapReference(myFixture.file.findReferenceAt(offset))
             checkReferenceResolve(expectedResolveData, offset, psiReference, render  = { this.render(it) }) { resolveTo ->
                 checkResolvedTo(resolveTo)
@@ -78,7 +79,7 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
 
     private fun doMultiResolveTest() {
         forEachCaret { index, offset ->
-            val expectedReferences = getExpectedReferences(myFixture.file.text, index, refMarkerText)
+            val expectedReferences = getExpectedReferences(myFixture.file.text, index)
 
             val psiReference = myFixture.file.findReferenceAt(offset)
             assertTrue(psiReference is PsiPolyVariantReference)
@@ -112,37 +113,38 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
 
     override fun getDefaultProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceNoSources()
 
-    open val refMarkerText: String = "REF"
+    protected open fun getExpectedReferences(text: String, index: Int): List<String> {
+        return getExpectedReferences(text, index, "REF")
+    }
 
     companion object {
         const val MULTIRESOLVE: String = "MULTIRESOLVE"
         const val REF_EMPTY: String = "REF_EMPTY"
 
-        fun readResolveData(fileText: String, index: Int, refMarkerText: String = "REF"): ExpectedResolveData {
+        fun readResolveData(fileText: String, expectedReferences: List<String>): ExpectedResolveData {
             val shouldBeUnresolved = InTextDirectivesUtils.isDirectiveDefined(fileText, REF_EMPTY)
-            val refs = getExpectedReferences(fileText, index, refMarkerText)
 
             val referenceToString: String
             if (shouldBeUnresolved) {
-                Assert.assertTrue("REF: directives will be ignored for $REF_EMPTY test: $refs", refs.isEmpty())
+                Assert.assertTrue("REF: directives will be ignored for $REF_EMPTY test: $expectedReferences", expectedReferences.isEmpty())
                 referenceToString = "<empty>"
             } else {
                 assertTrue(
-                    refs.size == 1,
-                    "Must be a single ref: $refs.\nUse $MULTIRESOLVE if you need multiple refs\nUse $REF_EMPTY for an unresolved reference"
+                    expectedReferences.size == 1,
+                    "Must be a single ref: $expectedReferences.\n" +
+                            "Use $MULTIRESOLVE if you need multiple refs\nUse $REF_EMPTY for an unresolved reference"
                 )
-                referenceToString = refs[0]
+                referenceToString = expectedReferences[0]
                 Assert.assertNotNull("Test data wasn't found, use \"// REF: \" directive", referenceToString)
             }
 
             return ExpectedResolveData(shouldBeUnresolved, referenceToString)
         }
 
-        // purpose of this helper is to deal with the case when navigation element is a file
-        // see ReferenceResolveInJavaTestGenerated.testPackageFacade()
-        private fun getExpectedReferences(text: String, index: Int, refMarkerText: String): List<String> {
+        fun getExpectedReferences(fileText: String, index: Int, refMarkerText: String): List<String> {
+            // Navigation element might be a file (see ReferenceResolveInJavaTestGenerated.testPackageFacade())
             val prefix = if (index > 0) "// $refMarkerText$index:" else "// $refMarkerText:"
-            return InTextDirectivesUtils.findLinesWithPrefixesRemoved(text, prefix)
+            return InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, prefix)
         }
 
         fun checkReferenceResolve(

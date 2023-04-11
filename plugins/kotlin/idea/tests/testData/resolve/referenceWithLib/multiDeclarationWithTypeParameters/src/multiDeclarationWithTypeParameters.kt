@@ -7,5 +7,5 @@ fun <Int> f(l: List<Int>) {
 }
 
 // ALLOW_AST_ACCESS
-// REF: el1
 
+// REF: el1

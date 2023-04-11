@@ -7,4 +7,7 @@ fun foo() {
 }
 
 // ALLOW_AST_ACCESS
-// REF: (dependency).test(kotlin.String)
+
+// REF: (dependency).test(String)
+
+// CLS_REF: (dependency).test(kotlin.String)

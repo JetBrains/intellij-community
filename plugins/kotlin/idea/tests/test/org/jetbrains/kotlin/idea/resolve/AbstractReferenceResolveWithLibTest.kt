@@ -16,6 +16,9 @@ abstract class AbstractReferenceResolveWithLibTest : AbstractReferenceResolveTes
     protected val testDirectoryPath: String
         get() = KotlinTestUtils.getTestDataFileName(this::class.java, this.name)!!
 
+    protected open val attachLibrarySources: Boolean
+        get() = true
+
     override fun fileName(): String {
         return KotlinTestUtils.getTestDataFileName(this::class.java, this.name) + "/src/" + getTestName(true) + ".kt"
     }
@@ -24,7 +27,7 @@ abstract class AbstractReferenceResolveWithLibTest : AbstractReferenceResolveTes
         super.setUp()
 
         val libraryDir = testDataDirectory.resolve(testDirectoryPath).resolve("lib")
-        mockLibraryFacility = MockLibraryFacility(libraryDir, attachSources = false).apply { setUp(module) }
+        mockLibraryFacility = MockLibraryFacility(libraryDir, attachLibrarySources).apply { setUp(module) }
     }
 
     override fun tearDown() {
@@ -53,4 +56,20 @@ abstract class AbstractReferenceResolveWithLibTest : AbstractReferenceResolveTes
             }
         }
     }
+
+    override fun getExpectedReferences(text: String, index: Int): List<String> {
+        if (!attachLibrarySources) {
+            val decompiledReferences = getExpectedReferences(text, index, "CLS_REF")
+            if (decompiledReferences.isNotEmpty()) {
+                return decompiledReferences
+            }
+        }
+
+        return super.getExpectedReferences(text, index)
+    }
+}
+
+abstract class AbstractReferenceResolveWithCompiledLibTest : AbstractReferenceResolveWithLibTest() {
+    override val attachLibrarySources: Boolean
+        get() = false
 }
