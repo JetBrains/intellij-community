@@ -7,7 +7,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
@@ -272,14 +271,7 @@ class VcsLogChangesBrowser internal constructor(project: Project,
       return CompositeDataProvider.compose({ slowId -> getSlowData(slowId, roots, selectedData) }, superProvider)
     }
     else if (QuickActionProvider.KEY.`is`(dataId)) {
-      return object : QuickActionProvider {
-        override fun getActions(originalProvider: Boolean): List<AnAction> {
-          return SimpleToolWindowPanel.collectActions(this@VcsLogChangesBrowser)
-        }
-
-        override fun getComponent() = this@VcsLogChangesBrowser
-        override fun getName() = null
-      }
+      return ComponentQuickActionProvider(this@VcsLogChangesBrowser)
     }
     return super.getData(dataId)
   }
