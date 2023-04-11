@@ -6,6 +6,7 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.productInfo.CustomProperty
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
@@ -275,6 +276,12 @@ abstract class ProductProperties {
    */
   @ApiStatus.Internal
   open fun addRemoteDevelopmentLibraries(): Boolean = productLayout.bundledPluginModules.contains("intellij.remoteDevServer")
+
+  /**
+   * Checks whether some necessary conditions specific for the product are met and report errors via [BuildContext.messages] if they aren't.
+   */
+  @ApiStatus.Experimental
+  open fun validateLayout(platformLayout: PlatformLayout, context: BuildContext) {}
 
   /**
    * Build steps which are always skipped for this product.

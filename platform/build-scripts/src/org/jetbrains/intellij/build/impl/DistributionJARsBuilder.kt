@@ -60,8 +60,8 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
                                        context: BuildContext,
                                        isUpdateFromSources: Boolean = false): List<DistributionFileEntry> = coroutineScope {
   validateModuleStructure(state.platform, context)
+  context.productProperties.validateLayout(state.platform, context)
   createBuildBrokenPluginListJob(context)
-  validateMercuryModuleUsage(state.platform, context)
 
   val flatIdeClassPath = createIdeClassPath(state.platform, context)
   if (context.productProperties.buildDocAuthoringAssets) {
@@ -1216,32 +1216,4 @@ suspend fun buildSearchableOptions(ideClassPath: Set<String>,
   span.setAttribute(AttributeKey.stringArrayKey("modulesWithSearchableOptions"),
                     modules.map { targetDirectory.relativize(it).toString() })
   return targetDirectory
-}
-
-private fun validateMercuryModuleUsage(platform: PlatformLayout, context: BuildContext) {
-  if (context.applicationInfo.productName != "FleetBackend") {
-    return
-  }
-
-  val buildWithMercury = System.getenv()["BUILD_FLEET_WITH_MERCURY"].toBoolean()
-  if (buildWithMercury) {
-    return
-  }
-
-  val fleetMercuryModuleNames = setOf(
-    "fleet.plugins.mercury.backend",
-    "fleet.plugins.mercury.protocol",
-    "intellij.appcode",
-    "intellij.kmm.plugin",
-    "intellij.kmm.android",
-    "kotlin-ultimate.appcode-kmm",
-    "kotlin-ultimate.mobile-native",
-    "kotlin-ultimate.kotlin-ocswift",
-  )
-  val includedModuleNames = platform.includedModules.map { it.moduleName }.toSet()
-  check(fleetMercuryModuleNames.intersect(includedModuleNames).isEmpty()) {
-    "Fleet Backend was requested to be built without Mercury modules, the platform layout contained one of:\n${
-      fleetMercuryModuleNames.joinToString("\n") { " - $it" }
-    }"
-  }
 }
