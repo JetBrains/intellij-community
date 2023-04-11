@@ -13,6 +13,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.ApiStatus.Experimental;
+import org.jetbrains.annotations.ApiStatus.OverrideOnly;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -450,6 +451,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @see com.intellij.model.psi.PsiSymbolDeclarationProvider
    */
   @Experimental
+  @OverrideOnly
   default @NotNull Collection<? extends @NotNull PsiSymbolDeclaration> getOwnDeclarations() {
     return Collections.emptyList();
   }
@@ -472,6 +474,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @see com.intellij.model.psi.PsiSymbolReferenceService#getReferences(PsiElement)
    */
   @Experimental
+  @OverrideOnly
   default @NotNull Collection<? extends @NotNull PsiSymbolReference> getOwnReferences() {
     return Collections.emptyList();
   }
