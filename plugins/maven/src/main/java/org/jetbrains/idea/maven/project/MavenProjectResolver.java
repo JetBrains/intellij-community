@@ -5,9 +5,7 @@ import com.intellij.ide.plugins.advertiser.PluginFeatureEnabler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -18,11 +16,8 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
-import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.server.MavenConfigParseException;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.*;
 
@@ -208,110 +203,8 @@ public class MavenProjectResolver {
 
   private void schedulePluginResolution(@NotNull Collection<Pair<MavenProject, NativeMavenProjectHolder>> pluginResolutionRequests) {
     var projectsManager = MavenProjectsManager.getInstance(myProject);
-    projectsManager.schedulePluginResolution(new MavenProjectsProcessorPluginsResolvingTask(pluginResolutionRequests, this));
-  }
-
-  public void resolvePlugins(@NotNull Collection<Pair<MavenProject, NativeMavenProjectHolder>> mavenProjects,
-                             @NotNull MavenEmbeddersManager embeddersManager,
-                             @NotNull MavenConsole console,
-                             @NotNull MavenProgressIndicator process,
-                             boolean reportUnresolvedToSyncConsole,
-                             boolean forceUpdateSnapshots) throws MavenProcessCanceledException {
-    if (mavenProjects.isEmpty()) return;
-
-    var firstProject = sortAndGetFirst(mavenProjects).first;
-    var baseDir = MavenUtil.getBaseDir(firstProject.getDirectoryFile()).toString();
-    process.setText(MavenProjectBundle.message("maven.downloading.pom.plugins", firstProject.getDisplayName()));
-
-    MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_PLUGINS_RESOLVE, baseDir);
-    embedder.customizeForResolve(console, process, forceUpdateSnapshots,  null,  null);
-
-    Set<MavenId> unresolvedPluginIds;
-    Set<Path> filesToRefresh = new HashSet<>();
-
-    try {
-      var mavenPluginIdsToResolve = collectMavenPluginIdsToResolve(mavenProjects);
-      var resolutionResults = embedder.resolvePlugins(mavenPluginIdsToResolve);
-      var artifacts = resolutionResults.stream()
-        .flatMap(resolutionResult -> resolutionResult.getArtifacts().stream())
-        .collect(Collectors.toSet());
-
-      for (MavenArtifact artifact : artifacts) {
-        Path pluginJar = artifact.getFile().toPath();
-        Path pluginDir = pluginJar.getParent();
-        if (pluginDir != null) {
-          filesToRefresh.add(pluginDir); // Refresh both *.pom and *.jar files.
-        }
-      }
-
-      unresolvedPluginIds = resolutionResults.stream()
-        .filter(resolutionResult -> !resolutionResult.isResolved())
-        .map(resolutionResult -> resolutionResult.getMavenPluginId())
-        .collect(Collectors.toSet());
-
-      if (reportUnresolvedToSyncConsole && myProject != null) {
-        reportUnresolvedPlugins(unresolvedPluginIds);
-      }
-
-      var updatedMavenProjects = mavenProjects.stream().map(pair -> pair.first).collect(Collectors.toSet());
-      for (var mavenProject : updatedMavenProjects) {
-        mavenProject.resetCache();
-        myTree.firePluginsResolved(mavenProject);
-      }
-    }
-    finally {
-      if (filesToRefresh.size() > 0) {
-        LocalFileSystem.getInstance().refreshNioFiles(filesToRefresh);
-      }
-      embeddersManager.release(embedder);
-    }
-  }
-
-  private static Collection<Pair<MavenId, NativeMavenProjectHolder>> collectMavenPluginIdsToResolve(
-    @NotNull Collection<Pair<MavenProject, NativeMavenProjectHolder>> mavenProjects
-  ) {
-    var mavenPluginIdsToResolve = new HashSet<Pair<MavenId, NativeMavenProjectHolder>>();
-
-    if (Registry.is("maven.plugins.use.cache")) {
-      var pluginIdsToProjects = new HashMap<MavenId, List<Pair<MavenProject, NativeMavenProjectHolder>>>();
-      for (var projectData : mavenProjects) {
-        var mavenProject = projectData.first;
-        for (MavenPlugin mavenPlugin : mavenProject.getDeclaredPlugins()) {
-          var mavenPluginId = mavenPlugin.getMavenId();
-          pluginIdsToProjects.putIfAbsent(mavenPluginId, new ArrayList<>());
-          pluginIdsToProjects.get(mavenPluginId).add(projectData);
-        }
-      }
-      for (var entry : pluginIdsToProjects.entrySet()) {
-        mavenPluginIdsToResolve.add(Pair.create(entry.getKey(), sortAndGetFirst(entry.getValue()).second));
-      }
-    }
-    else {
-      for (var projectData : mavenProjects) {
-        var mavenProject = projectData.first;
-        var nativeMavenProject = projectData.second;
-        for (MavenPlugin mavenPlugin : mavenProject.getDeclaredPlugins()) {
-          mavenPluginIdsToResolve.add(Pair.create(mavenPlugin.getMavenId(), nativeMavenProject));
-        }
-      }
-    }
-    return mavenPluginIdsToResolve;
-  }
-
-  private void reportUnresolvedPlugins(Set<MavenId> unresolvedPluginIds) {
-    if (!unresolvedPluginIds.isEmpty()) {
-      for (var mavenPluginId : unresolvedPluginIds) {
-        MavenProjectsManager.getInstance(myProject)
-          .getSyncConsole().getListener(MavenServerProgressIndicator.ResolveType.PLUGIN)
-          .showArtifactBuildIssue(mavenPluginId.getKey(), null);
-      }
-    }
-  }
-
-  private static Pair<MavenProject, NativeMavenProjectHolder> sortAndGetFirst(@NotNull Collection<Pair<MavenProject, NativeMavenProjectHolder>> mavenProjects) {
-    return mavenProjects.stream()
-      .min(Comparator.comparing(p -> p.first.getDirectoryFile().getPath()))
-      .orElse(null);
+    var task = new MavenProjectsProcessorPluginsResolvingTask(pluginResolutionRequests, new MavenPluginResolver(myTree));
+    projectsManager.schedulePluginResolution(task);
   }
 
   public void resolveFolders(@NotNull final MavenProject mavenProject,

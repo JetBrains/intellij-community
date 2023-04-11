@@ -776,12 +776,15 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                                 NULL_MAVEN_CONSOLE,
                                 getMavenProgressIndicator()
       );
-      myProjectResolver.resolvePlugins(List.of(Pair.create(parentProject, nativeProject[0])),
-                                       embeddersManager,
-                                       NULL_MAVEN_CONSOLE,
-                                       getMavenProgressIndicator(),
-                                       false,
-                                       false);
+
+      var pluginResolver = new MavenPluginResolver(myTree);
+      pluginResolver.resolvePlugins(List.of(Pair.create(parentProject, nativeProject[0])),
+                                    embeddersManager,
+                                    NULL_MAVEN_CONSOLE,
+                                    getMavenProgressIndicator(),
+                                    false,
+                                    false);
+
       myProjectResolver
         .resolveFolders(parentProject, getMavenImporterSettings(), embeddersManager, NULL_MAVEN_CONSOLE, getMavenProgressIndicator());
     }

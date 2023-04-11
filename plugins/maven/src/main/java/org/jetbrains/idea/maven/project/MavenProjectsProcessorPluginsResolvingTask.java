@@ -26,10 +26,9 @@ import java.util.Collection;
 
 public class MavenProjectsProcessorPluginsResolvingTask implements MavenProjectsProcessorTask {
   private final @NotNull Collection<Pair<MavenProject, NativeMavenProjectHolder>> myMavenProjects;
-  private final @NotNull MavenProjectResolver myResolver;
+  private final @NotNull MavenPluginResolver myResolver;
 
-  public MavenProjectsProcessorPluginsResolvingTask(@NotNull Collection<Pair<MavenProject, NativeMavenProjectHolder>> projects,
-                                                    @NotNull MavenProjectResolver resolver) {
+  public MavenProjectsProcessorPluginsResolvingTask(@NotNull Collection<Pair<MavenProject, NativeMavenProjectHolder>> projects, MavenPluginResolver resolver) {
     myMavenProjects = projects;
     myResolver = resolver;
   }

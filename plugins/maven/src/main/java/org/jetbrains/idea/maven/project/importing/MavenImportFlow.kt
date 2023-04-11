@@ -211,7 +211,7 @@ class MavenImportFlow {
     assertNonDispatchThread()
     val projectManager = MavenProjectsManager.getInstance(context.project)
     val embeddersManager = projectManager.embeddersManager
-    val resolver = MavenProjectResolver(context.readContext.projectsTree)
+    val resolver = MavenPluginResolver(context.readContext.projectsTree)
     val consoleToBeRemoved = BTWMavenConsole(context.project, context.initialContext.generalSettings.outputLevel,
                                              context.initialContext.generalSettings.isPrintErrorStackTraces)
 
