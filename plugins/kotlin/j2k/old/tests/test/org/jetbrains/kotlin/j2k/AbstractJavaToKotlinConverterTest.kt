@@ -35,7 +35,7 @@ abstract class AbstractJavaToKotlinConverterTest : KotlinLightCodeInsightFixture
         addFile("KotlinApi.kt", "kotlinApi")
         addFile("JavaApi.java", "javaApi")
         addJavaLangRecordClass()
-        addJpaColumnAnnotation()
+        addJpaColumnAnnotations()
     }
 
     override fun tearDown() {
@@ -74,10 +74,22 @@ abstract class AbstractJavaToKotlinConverterTest : KotlinLightCodeInsightFixture
         )
     }
 
-    private fun addJpaColumnAnnotation() {
+    private fun addJpaColumnAnnotations() {
         myFixture.addClass(
             """
             package javax.persistence;
+            
+            import java.lang.annotation.Target;
+            import static java.lang.annotation.ElementType.FIELD;
+            import static java.lang.annotation.ElementType.METHOD;
+            
+            @Target({METHOD, FIELD})
+            public @interface Column {}
+            """.trimIndent()
+        )
+        myFixture.addClass(
+            """
+            package jakarta.persistence;
             
             import java.lang.annotation.Target;
             import static java.lang.annotation.ElementType.FIELD;

@@ -241,7 +241,10 @@ internal class UnresolvedVariableReferenceFromInitializerToThisReferenceProcessi
 
 internal class VarToValProcessing : InspectionLikeProcessingForElement<KtProperty>(KtProperty::class.java) {
     companion object {
-        private val JPA_COLUMN_ANNOTATION = FqName("javax.persistence.Column")
+        private val JPA_COLUMN_ANNOTATIONS: Set<FqName> = setOf(
+            FqName("javax.persistence.Column"),
+            FqName("jakarta.persistence.Column"),
+        )
     }
 
     private fun KtProperty.hasWriteUsages(): Boolean =
@@ -260,7 +263,12 @@ internal class VarToValProcessing : InspectionLikeProcessingForElement<KtPropert
         if (!element.isPrivate()) return false
         val descriptor = element.resolveToDescriptorIfAny() as? PropertyDescriptor ?: return false
         if (descriptor.overriddenDescriptors.any { it.safeAs<VariableDescriptor>()?.isVar == true }) return false
-        if (descriptor.backingField?.annotations?.hasAnnotation(JPA_COLUMN_ANNOTATION) == true) return false
+
+        descriptor.backingField?.annotations?.let { annotations ->
+            JPA_COLUMN_ANNOTATIONS.forEach {
+                if (annotations.hasAnnotation(it)) return false
+            }
+        }
         return !element.hasWriteUsages()
     }
 
