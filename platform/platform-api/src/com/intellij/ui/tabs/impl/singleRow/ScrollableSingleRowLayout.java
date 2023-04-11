@@ -75,6 +75,11 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
         }
         else {
           int maxLength = passInfo.toFitLength - getMoreRectAxisSize();
+          Insets actionInsets = myTabs.getActionsInsets();
+          if (myTabs.getEntryPointPreferredSize().width == 0) {
+            maxLength -= myTabs.isHorizontalTabs() ? actionInsets.left + actionInsets.right
+                                                   : actionInsets.top + actionInsets.bottom;
+          }
           if (!ExperimentalUI.isNewUI() && getStrategy() instanceof SingleRowLayoutStrategy.Vertical) {
             maxLength -= passInfo.entryPointAxisSize;
           }

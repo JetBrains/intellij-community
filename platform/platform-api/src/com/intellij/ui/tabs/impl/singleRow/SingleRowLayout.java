@@ -212,6 +212,8 @@ public abstract class SingleRowLayout extends TabLayout {
   protected abstract void recomputeToLayout(final SingleRowPassInfo data);
 
   protected void calculateRequiredLength(SingleRowPassInfo data) {
+    data.requiredLength += myTabs.isHorizontalTabs() ? data.insets.left + data.insets.right
+                                                     : data.insets.top + data.insets.bottom;
     for (TabInfo eachInfo : data.myVisibleInfos) {
       data.requiredLength += getRequiredLength(eachInfo);
       data.toLayout.add(eachInfo);

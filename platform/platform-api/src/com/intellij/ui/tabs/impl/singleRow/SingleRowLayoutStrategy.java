@@ -113,6 +113,7 @@ public abstract class SingleRowLayoutStrategy {
       } else {
         length = myTabs.getWidth() - data.insets.left - data.insets.right;
       }
+      length += getStartPosition(data);
       int entryPointWidth = myTabs.getEntryPointPreferredSize().width;
       Insets toolbarInsets = myTabs.getActionsInsets();
       int insets = toolbarInsets.left + toolbarInsets.right;
