@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
+import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,6 +23,7 @@ internal class GHPRDataContext(val scope: CoroutineScope,
                                val repositoryDataService: GHPRRepositoryDataService,
                                val creationService: GHPRCreationService,
                                val detailsService: GHPRDetailsService,
+                               val htmlImageLoader: AsyncHtmlImageLoader,
                                val avatarIconsProvider: GHAvatarIconsProvider,
                                val filesManager: GHPRFilesManager,
                                val newPRDiffModel: GHPRDiffRequestModel) {

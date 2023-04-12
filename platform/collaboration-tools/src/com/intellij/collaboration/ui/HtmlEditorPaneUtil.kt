@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui
 
+import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.collaboration.ui.html.ResizingHtmlImageView
 import com.intellij.ide.ui.AntialiasingType
 import com.intellij.openapi.util.IconLoader
@@ -24,7 +25,11 @@ import javax.swing.text.html.StyleSheet
  * Read-only editor pane intended to display simple HTML snippet
  */
 @Suppress("FunctionName")
-fun SimpleHtmlPane(additionalStyleSheet: StyleSheet? = null, addBrowserListener: Boolean = true): JEditorPane =
+fun SimpleHtmlPane(
+  additionalStyleSheet: StyleSheet? = null,
+  addBrowserListener: Boolean = true,
+  customImageLoader: AsyncHtmlImageLoader? = null
+): JEditorPane =
   JTextPane().apply {
     editorKit = HTMLEditorKitBuilder().withViewFactoryExtensions(
       ExtendableHTMLViewFactory.Extensions.WORD_WRAP,
@@ -48,6 +53,10 @@ fun SimpleHtmlPane(additionalStyleSheet: StyleSheet? = null, addBrowserListener:
     GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent())
 
     (caret as DefaultCaret).updatePolicy = DefaultCaret.NEVER_UPDATE
+
+    if (customImageLoader != null) {
+      document.putProperty(AsyncHtmlImageLoader.KEY, customImageLoader)
+    }
 
     name = "Simple HTML Pane"
   }

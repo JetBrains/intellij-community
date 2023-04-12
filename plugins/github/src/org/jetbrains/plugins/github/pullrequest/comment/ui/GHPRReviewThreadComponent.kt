@@ -15,6 +15,7 @@ import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsCompo
 import com.intellij.collaboration.ui.codereview.timeline.TimelineDiffComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
+import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.collaboration.ui.icon.OverlaidOffsetIconsIcon
 import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.diff.util.LineRange
@@ -52,6 +53,7 @@ object GHPRReviewThreadComponent {
   fun createForInlay(project: Project,
                      thread: GHPRReviewThreadModel,
                      reviewDataProvider: GHPRReviewDataProvider,
+                     htmlImageLoader: AsyncHtmlImageLoader,
                      avatarIconsProvider: GHAvatarIconsProvider,
                      suggestedChangeHelper: GHPRSuggestedChangeHelper,
                      ghostUser: GHUser,
@@ -59,6 +61,7 @@ object GHPRReviewThreadComponent {
     val panel = VerticalListPanel()
     val commentComponentFactory = GHPRReviewCommentComponent.factory(project, thread, ghostUser,
                                                                      reviewDataProvider,
+                                                                     htmlImageLoader,
                                                                      avatarIconsProvider,
                                                                      suggestedChangeHelper,
                                                                      INLAY_COMPONENT_TYPE)

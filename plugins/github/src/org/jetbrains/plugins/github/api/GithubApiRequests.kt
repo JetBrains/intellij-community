@@ -17,6 +17,16 @@ import java.awt.image.BufferedImage
  * TODO: improve url building (DSL?)
  */
 object GithubApiRequests {
+
+  @JvmStatic
+  fun getBytes(url: String): GithubApiRequest<ByteArray> = object : Get<ByteArray>(url) {
+    override fun extractResult(response: GithubApiResponse): ByteArray {
+      return response.handleBody(ThrowableConvertor {
+        it.readAllBytes()
+      })
+    }
+  }
+
   object CurrentUser : Entity("/user") {
     @JvmStatic
     fun get(server: GithubServerPath) = get(getUrl(server, urlSuffix))
@@ -25,7 +35,7 @@ object GithubApiRequests {
     fun get(url: String) = Get.json<GithubAuthenticatedUser>(url).withOperationName("get profile information")
 
     @JvmStatic
-    fun getAvatar(url: String) = object : Get<BufferedImage>(url) {
+    fun getAvatar(url: String): GithubApiRequest<BufferedImage> = object : Get<BufferedImage>(url) {
       override fun extractResult(response: GithubApiResponse): BufferedImage {
         return response.handleBody(ThrowableConvertor {
           GithubApiContentHelper.loadImage(it)

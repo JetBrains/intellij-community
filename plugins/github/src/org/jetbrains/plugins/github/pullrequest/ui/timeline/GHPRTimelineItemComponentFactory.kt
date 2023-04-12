@@ -12,6 +12,7 @@ import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil.Title
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
+import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.collaboration.ui.util.ActivatableCoroutineScopeProvider
 import com.intellij.collaboration.ui.util.DimensionRestrictions
 import com.intellij.openapi.application.ApplicationBundle
@@ -73,6 +74,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
                                        private val detailsDataProvider: GHPRDetailsDataProvider,
                                        private val commentsDataProvider: GHPRCommentsDataProvider,
                                        private val reviewDataProvider: GHPRReviewDataProvider,
+                                       private val htmlImageLoader: AsyncHtmlImageLoader,
                                        private val avatarIconsProvider: GHAvatarIconsProvider,
                                        private val reviewsThreadsModelsProvider: GHPRReviewsThreadsModelsProvider,
                                        private val selectInToolWindowHelper: GHPRSelectInToolWindowHelper,
@@ -82,7 +84,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
                                        private val currentUser: GHUser)
   : (GHPRTimelineItem) -> JComponent {
 
-  private val eventComponentFactory = GHPRTimelineEventComponentFactoryImpl(avatarIconsProvider, ghostUser)
+  private val eventComponentFactory = GHPRTimelineEventComponentFactoryImpl(htmlImageLoader, avatarIconsProvider, ghostUser)
 
   override fun invoke(item: GHPRTimelineItem): JComponent {
     try {
@@ -176,7 +178,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     val contentPanel: JPanel?
     val actionsPanel: JPanel?
     if (details is GHPullRequest) {
-      val textPane = SimpleHtmlPane()
+      val textPane = SimpleHtmlPane(customImageLoader = htmlImageLoader)
       fun JEditorPane.updateText(body: @Nls String) {
         val text = body.takeIf { it.isNotBlank() }?.convertToHtml(project) ?: noDescriptionHtmlText
         setHtmlBody(text)
@@ -206,7 +208,9 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
   }
 
   private fun createComponent(comment: GHIssueComment): JComponent {
-    val textPane = SimpleHtmlPane(comment.body.convertToHtml(project))
+    val textPane = SimpleHtmlPane(customImageLoader = htmlImageLoader).apply {
+      setHtmlBody(comment.body.convertToHtml(project))
+    }
     val panelHandle = GHEditableHtmlPaneHandle(project, textPane, comment::body) { newText ->
       commentsDataProvider.updateComment(EmptyProgressIndicator(), comment.id, newText)
         .successOnEdt { textPane.setHtmlBody(it.convertToHtml(project)) }
@@ -307,7 +311,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     }
 
     val commentComponentFactory = GHPRReviewCommentComponent.factory(project, thread, ghostUser,
-                                                                     reviewDataProvider, avatarIconsProvider,
+                                                                     reviewDataProvider, htmlImageLoader, avatarIconsProvider,
                                                                      suggestedChangeHelper,
                                                                      CodeReviewChatItemUIUtil.ComponentType.FULL_SECONDARY,
                                                                      false,
@@ -379,7 +383,8 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
           }
           else {
             val commentComponent = GHPRReviewCommentComponent
-              .createCommentBodyComponent(project, suggestedChangeHelper, thread, text, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
+              .createCommentBodyComponent(project, suggestedChangeHelper, thread, htmlImageLoader,
+                                          text, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
             bodyPanel.setContent(commentComponent)
             add(diff)
             add(panelHandle.panel)
@@ -437,7 +442,9 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
   private fun createReviewContentItem(review: GHPullRequestReview): JComponent {
     val panelHandle: GHEditableHtmlPaneHandle?
     if (review.body.isNotEmpty()) {
-      val textPane = SimpleHtmlPane(review.body.convertToHtml(project))
+      val textPane = SimpleHtmlPane(customImageLoader = htmlImageLoader).apply {
+        setHtmlBody(review.body.convertToHtml(project))
+      }
       panelHandle =
         GHEditableHtmlPaneHandle(project, textPane, review::body) { newText ->
           reviewDataProvider.updateReviewBody(EmptyProgressIndicator(), review.id, newText)
