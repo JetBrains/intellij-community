@@ -260,17 +260,17 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
     return null;
   } 
   
-  static class MergedGutterIconNavigationHandler implements GutterIconNavigationHandler<PsiElement> {
+  private static class MergedGutterIconNavigationHandler implements GutterIconNavigationHandler<PsiElement> {
     private final List<LineMarkerInfo<?>> myInfos;
 
-    MergedGutterIconNavigationHandler(@NotNull List<? extends MergeableLineMarkerInfo<?>> markers) {
+    private MergedGutterIconNavigationHandler(@NotNull List<? extends MergeableLineMarkerInfo<?>> markers) {
       List<LineMarkerInfo<?>> infos = new ArrayList<>(markers);
       infos.sort(Comparator.comparingInt(o -> o.startOffset));
       myInfos = Collections.unmodifiableList(infos);
     }
 
     @NotNull
-    List<LineMarkerInfo<?>> getMergedLineMarkersInfos() {
+    private List<LineMarkerInfo<?>> getMergedLineMarkersInfos() {
       return myInfos;
     }
 
