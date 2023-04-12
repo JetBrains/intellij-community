@@ -198,13 +198,11 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
 
   private fun runBackgroundProcessWithSuspender(visibleIndicator: ProgressIndicator): SubmissionReceipt? {
     // Only one thread can execute this method at the same time at this point.
-    try {
-      (ProgressManager.getInstance() as ProgressManagerImpl).markProgressSafe((visibleIndicator as UserDataHolder))
+    val progressManager = ProgressManager.getInstance()
+    if (visibleIndicator is UserDataHolder && progressManager is ProgressManagerImpl) {
+      progressManager.markProgressSafe(visibleIndicator)
     }
-    catch (throwable: Throwable) {
-      // PCE is not expected
-      LOG.error(throwable)
-    }
+
     ProgressSuspender.markSuspendable(visibleIndicator, mySuspendedText).use { suspender ->
       return ShutDownTracker.getInstance().computeWithStopperThread<SubmissionReceipt?, RuntimeException>(
         Thread.currentThread()) { processTasksWithProgress(suspender, visibleIndicator, null) }
