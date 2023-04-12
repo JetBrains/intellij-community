@@ -24,23 +24,31 @@ import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-public class MavenProjectsProcessorFoldersResolvingTask extends MavenProjectsProcessorBasicTask {
+import java.util.Collection;
+
+public class MavenProjectsProcessorFoldersResolvingTask implements MavenProjectsProcessorTask {
+  @NotNull private final Collection<MavenProject> myMavenProjects;
   @NotNull private final MavenImportingSettings myImportingSettings;
+  @NotNull private final MavenProjectsTree myTree;
   @Nullable private final Runnable myOnCompletion;
 
-  public MavenProjectsProcessorFoldersResolvingTask(@NotNull MavenProject project,
+  public MavenProjectsProcessorFoldersResolvingTask(@NotNull Collection<MavenProject> mavenProjects,
                                                     @NotNull MavenImportingSettings importingSettings,
                                                     @NotNull MavenProjectsTree tree,
                                                     @Nullable Runnable onCompletion) {
-    super(project, tree);
+    myMavenProjects = mavenProjects;
     myImportingSettings = importingSettings;
+    myTree = tree;
     myOnCompletion = onCompletion;
   }
 
   @Override
   public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
-    new MavenFolderResolver().resolveFolders(myMavenProject, myTree, myImportingSettings, embeddersManager, console, indicator);
+    var resolver = new MavenFolderResolver();
+    for (var myMavenProject : myMavenProjects) {
+      resolver.resolveFolders(myMavenProject, myTree, myImportingSettings, embeddersManager, console, indicator);
+    }
     //actually a fix for https://youtrack.jetbrains.com/issue/IDEA-286455 to be rewritten, see IDEA-294209
     MavenUtil.restartMavenConnectors(project, false, c -> {
       Sdk sdk = c.getJdk();

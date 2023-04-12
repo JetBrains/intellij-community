@@ -593,7 +593,7 @@ public final class MavenProjectReader {
                                                          MavenImportingSettings importingSettings,
                                                          VirtualFile file,
                                                          MavenExplicitProfiles profiles,
-                                                         MavenConsole console) throws MavenProcessCanceledException {
+                                                         MavenConsole console) {
     try {
       List<String> goals = Collections.singletonList(importingSettings.getUpdateFoldersOnImportPhase());
       MavenServerExecutionResult result = embedder.execute(file, profiles.getEnabledProfiles(), profiles.getDisabledProfiles(), goals);

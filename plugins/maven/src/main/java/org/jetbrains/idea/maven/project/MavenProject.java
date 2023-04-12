@@ -656,7 +656,7 @@ public class MavenProject {
 
   public @NotNull Pair<Boolean, MavenProjectChanges> resolveFolders(@NotNull MavenEmbedderWrapper embedder,
                                                                     @NotNull MavenImportingSettings importingSettings,
-                                                                    @NotNull MavenConsole console) throws MavenProcessCanceledException {
+                                                                    @NotNull MavenConsole console) {
     MavenProjectReaderResult result = MavenProjectReader.generateSources(embedder,
                                                                          importingSettings,
                                                                          getFile(),

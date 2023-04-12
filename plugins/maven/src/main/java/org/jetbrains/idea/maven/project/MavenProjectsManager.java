@@ -1149,22 +1149,18 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     scheduleResolveInTests(getProjects());
   }
 
-  public Promise<?> scheduleFoldersResolve(final Collection<MavenProject> projects) {
+  public Promise<?> scheduleFoldersResolve(@NotNull Collection<MavenProject> projects) {
     if (MavenUtil.isLinearImportEnabled()) {
       return MavenImportingManager.getInstance(myProject).resolveFolders(projects);
     }
     AsyncPromise<Void> result = new AsyncPromise<>();
     runWhenFullyOpen(() -> {
-      Iterator<MavenProject> it = projects.iterator();
-      while (it.hasNext()) {
-        MavenProject each = it.next();
-        Runnable onCompletion = it.hasNext() ? null : () -> {
-          result.setResult(null);
-          if (hasScheduledProjects()) scheduleImportChangedProjects();
-        };
-        myFoldersResolvingProcessor.scheduleTask(
-          new MavenProjectsProcessorFoldersResolvingTask(each, getImportingSettings(), myProjectsTree, onCompletion));
-      }
+      Runnable onCompletion = () -> {
+        result.setResult(null);
+        if (hasScheduledProjects()) scheduleImportChangedProjects();
+      };
+      myFoldersResolvingProcessor.scheduleTask(
+        new MavenProjectsProcessorFoldersResolvingTask(projects, getImportingSettings(), myProjectsTree, onCompletion));
     });
     return result;
   }
