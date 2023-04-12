@@ -41,7 +41,7 @@ fun UnscaledGaps(top: Int = 0, left: Int = 0, bottom: Int = 0, right: Int = 0): 
   return UnscaledGapsImpl(top, left, bottom, right)
 }
 
-fun Insets.toUnscaledGaps(): UnscaledGaps = toGaps().toUnscaled()
+fun Insets.toUnscaledGaps(): UnscaledGaps = unscale().let { UnscaledGaps(it.top, it.left, it.bottom, it.right) }
 
 @ApiStatus.Internal
 fun Int.unscale(): Int = (this / JBUIScale.scale(1f)).roundToInt()
