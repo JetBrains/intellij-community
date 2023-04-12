@@ -16,8 +16,8 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import com.jetbrains.performancePlugin.PerformanceTestingBundle
 import com.jetbrains.performancePlugin.utils.AbstractCallbackBasedCommand
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.concurrency.asCompletableFuture
 import java.io.IOException
-import java.util.concurrent.TimeUnit
 
 class SetBreakpointCommand(text: String, line: Int) : AbstractCallbackBasedCommand(text, line, true) {
   override fun execute(callback: ActionCallback, context: PlaybackContext) {
@@ -25,7 +25,7 @@ class SetBreakpointCommand(text: String, line: Int) : AbstractCallbackBasedComma
     var isLambdaBreakpoint = false
     val arguments = extractCommandList(PREFIX, ",")
     if (arguments.size == 0) {
-      callback.reject("Usage %setBreakpoint &lt;line&gt; [&lt;relative_path&gt;]")
+      callback.reject("Usage %setBreakpoint &lt;line&gt; [&lt;relative_path&gt;, lambda-type]")
       return
     }
     val lineNumber = arguments[0].toInt()
@@ -64,7 +64,7 @@ class SetBreakpointCommand(text: String, line: Int) : AbstractCallbackBasedComma
       val breakpointProperties: XBreakpointProperties<*>
       if (isLambdaBreakpoint) {
         val it = XDebuggerUtilImpl.getLineBreakpointVariants(project, breakpointTypes, XSourcePositionImpl.create(file, lineNumber - 1))
-          .blockingGet(1, TimeUnit.MINUTES)!!
+          .asCompletableFuture().get()
 
         val lambdaVariants = it.filter { a -> !a.text.contains("Line") }
 
@@ -72,13 +72,13 @@ class SetBreakpointCommand(text: String, line: Int) : AbstractCallbackBasedComma
           callback.reject("Impossible to set lambda breakpoint to line $lineNumber")
           return@runAndWait
         }
-        val lambdaVariant = lambdaVariants[0]
+        val lambdaVariant = lambdaVariants.first()
 
         breakpointType = lambdaVariant.type as XLineBreakpointType<XBreakpointProperties<*>>
         breakpointProperties = lambdaVariant.createProperties()!!
       }
       else {
-        breakpointType = breakpointTypes[0]
+        breakpointType = breakpointTypes.first()
         breakpointProperties = breakpointType.createBreakpointProperties(file, lineNumber - 1)!!
       }
       val breakpoint = breakpointManager.addLineBreakpoint(breakpointType, filePath, lineNumber - 1, breakpointProperties)

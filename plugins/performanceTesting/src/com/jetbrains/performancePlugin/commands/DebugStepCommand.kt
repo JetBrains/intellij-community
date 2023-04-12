@@ -1,6 +1,6 @@
 package com.jetbrains.performancePlugin.commands
 
-import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.Ref
@@ -9,9 +9,9 @@ import com.intellij.xdebugger.XDebuggerManager
 import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.utils.AbstractCallbackBasedCommand
 import io.opentelemetry.api.trace.Span
+import io.opentelemetry.context.Context
 import io.opentelemetry.context.Scope
 import org.jetbrains.annotations.NonNls
-import java.io.IOException
 
 
 class DebugStepCommand(text: String, line: Int) : AbstractCallbackBasedCommand(text, line, true) {
@@ -50,7 +50,7 @@ class DebugStepCommand(text: String, line: Int) : AbstractCallbackBasedCommand(t
       }
     })
 
-    WriteAction.runAndWait<IOException> {
+    ApplicationManager.getApplication().runWriteAction(Context.current().wrap(Runnable {
       spanRef.set(spanBuilder.startSpan())
       scopeRef.set(spanRef.get().makeCurrent())
       when (debugStepType) {
@@ -58,11 +58,12 @@ class DebugStepCommand(text: String, line: Int) : AbstractCallbackBasedCommand(t
         DebugStepTypes.INTO -> debugSession.stepInto()
         DebugStepTypes.OUT -> debugSession.stepOut()
       }
-    }
+    }))
   }
 
   companion object {
     private enum class DebugStepTypes { OVER, INTO, OUT }
+
     const val PREFIX: @NonNls String = CMD_PREFIX + "debugStep"
     const val SPAN_NAME: @NonNls String = "debugStep"
   }

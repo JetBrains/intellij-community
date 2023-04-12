@@ -6,7 +6,7 @@ import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.impl.RunManagerImpl.Companion.getInstanceImpl
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
-import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.Ref
@@ -17,13 +17,13 @@ import com.intellij.xdebugger.XDebuggerManagerListener
 import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.utils.AbstractCallbackBasedCommand
 import io.opentelemetry.api.trace.Span
+import io.opentelemetry.context.Context
 import io.opentelemetry.context.Scope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.NonNls
-import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 class DebugRunConfigurationCommand(text: String, line: Int) : AbstractCallbackBasedCommand(text, line, true) {
@@ -79,14 +79,14 @@ class DebugRunConfigurationCommand(text: String, line: Int) : AbstractCallbackBa
       }
     })
 
-    WriteAction.runAndWait<IOException> {
+    ApplicationManager.getApplication().runWriteAction(Context.current().wrap(Runnable {
       val runnerAndConfigurationSettings = RunnerAndConfigurationSettingsImpl(runManager, configurationToRun)
       spanRef.set(spanBuilder.startSpan())
       scopeRef.set(spanRef.get().makeCurrent())
       ExecutionManager.getInstance(context.project).restartRunProfile(context.project, DefaultDebugExecutor(),
                                                                       DefaultExecutionTarget.INSTANCE, runnerAndConfigurationSettings,
                                                                       null)
-    }
+    }))
   }
 
   companion object {
