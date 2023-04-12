@@ -70,6 +70,7 @@ abstract class AbstractNavigateJavaToLibrarySourceTest : AbstractNavigateToLibra
     protected val mockLibraryFacility = MockLibraryFacility(
         source = IDEA_TEST_DATA_DIR.resolve("decompiler/navigation/fromJavaSource"),
         attachSources = false,
+        options = listOf("-Xcontext-receivers")
     )
 
     override val expectedFileExt: String = ".source.expected"
@@ -86,7 +87,8 @@ abstract class AbstractNavigateJavaToLibrarySourceTest : AbstractNavigateToLibra
 }
 
 abstract class AbstractNavigateToLibrarySourceTestWithJS : AbstractNavigateToLibrarySourceTest() {
-    private val mockLibraryFacility = MockLibraryFacility(IDEA_TEST_DATA_DIR.resolve("decompiler/navigation/fromJavaSource"))
+    private val mockLibraryFacility = MockLibraryFacility(IDEA_TEST_DATA_DIR.resolve("decompiler/navigation/fromJavaSource"),
+                                                          options = listOf("-Xcontext-receivers"))
 
     override fun tearDown() = runAll(
         ThrowableRunnable { mockLibraryFacility.tearDown(module) },
@@ -154,18 +156,3 @@ class NavigationChecker(val file: PsiFile, val referenceTargetChecker: (PsiEleme
         }
     }
 }
-
-public val String.exProp : String
-    get() {
-        return this
-    }
-
-public val Int.exProp : Int
-    get() {
-        return this
-    }
-
-public val <T> Pair<T, T>.exProp : String
-    get() {
-        return "${this.first} : ${this.second}"
-    }

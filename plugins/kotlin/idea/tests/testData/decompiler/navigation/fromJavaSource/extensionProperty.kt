@@ -14,3 +14,9 @@ public val <T> java.util.List<T>.exProp : String
   get() {
     return ""
   }
+
+context(String)
+public val <T> java.util.List<T>.exPropWithContextReceiver : String
+  get() {
+    return ""
+  }
