@@ -60,7 +60,6 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
     readConfigurations(element, configurations, tmp);
     migrate(configurations);
     for (Configuration configuration : tmp) {
-      configuration.getMatchOptions().initScope(myProject);
       addHistoryConfiguration(configuration);
     }
     Collections.reverse(historyConfigurations);
@@ -224,6 +223,9 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
 
   @NotNull
   public List<Configuration> getHistoryConfigurations() {
+    for (Configuration configuration : historyConfigurations) {
+      configuration.getMatchOptions().initScope(myProject);
+    }
     return Collections.unmodifiableList(historyConfigurations);
   }
 
