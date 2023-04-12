@@ -6,6 +6,7 @@ import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.parseComparisonMe
 import org.junit.Test
 
 class GradleRunnerUtilTest {
+
   @Test
   fun `parse comparison message test`() {
     fun check(pattern: String, first: String, second: String) {
@@ -26,5 +27,7 @@ class GradleRunnerUtilTest {
     check("the problem ==> expected: <foo> but was: <Foo >", "foo", "Foo ")
 
     check("\nexpected: \"foo\"\n but was: \"Foo\"", "foo", "Foo")
+
+    check("expected: <1\n2> but was: <1\\n2>", "1\n2", "1\\n2")
   }
 }

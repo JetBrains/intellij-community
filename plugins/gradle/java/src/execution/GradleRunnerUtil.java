@@ -97,7 +97,6 @@ public final class GradleRunnerUtil {
     return GradleConstants.EXTENSION.equals(virtualFile.getExtension());
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   public static Couple<String> parseComparisonMessage(String exceptionMsg) {
     Couple<String> comparisonPair = parseComparisonMessage(exceptionMsg, "\nExpected: is \"(.*)\"\n\\s*got: \"(.*)\"\n");
     if (comparisonPair == null) {
@@ -121,7 +120,7 @@ public final class GradleRunnerUtil {
   private static Couple<String> parseComparisonMessage(String message, final String regex) {
     final Matcher matcher = Pattern.compile(regex, Pattern.DOTALL | Pattern.CASE_INSENSITIVE).matcher(message);
     if (matcher.matches()) {
-      return Couple.of(matcher.group(1).replaceAll("\\\\n", "\n"), matcher.group(2).replaceAll("\\\\n", "\n"));
+      return Couple.of(matcher.group(1), matcher.group(2));
     }
     return null;
   }
