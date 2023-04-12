@@ -30,7 +30,7 @@
                          instance="org.jetbrains.plugins.gitlab.GitLabSettingsConfigurable"/>
 
     <!--TODO: correct icon-->
-    <toolWindow id="Merge Requests" icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo"
+    <toolWindow id="Merge Requests" icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabToolWindow"
                 anchor="left" doNotActivateOnStart="true"
                 factoryClass="org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabToolWindowFactory"
                 canCloseContents="true"/>
