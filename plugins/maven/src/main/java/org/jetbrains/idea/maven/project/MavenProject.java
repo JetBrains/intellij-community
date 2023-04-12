@@ -226,14 +226,13 @@ public class MavenProject {
   }
 
   @ApiStatus.Internal
-  public MavenProjectChanges setFolders(MavenProjectReaderResult readerResult) {
+  public MavenProjectChanges setFolders(MavenModel model) {
     State newState = myState.clone();
     doSetFolders(newState, readerResult);
     return setState(newState);
   }
 
-  private static void doSetFolders(State newState, MavenProjectReaderResult readerResult) {
-    MavenModel model = readerResult.mavenModel;
+  private static void doSetFolders(State newState, MavenModel model) {
     newState.mySources = model.getBuild().getSources();
     newState.myTestSources = model.getBuild().getTestSources();
 

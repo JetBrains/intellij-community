@@ -154,7 +154,7 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
     if (mavenProjectCandidate == null) return;
 
     MavenProject.Snapshot snapshot = mavenProjectCandidate.getSnapshot();
-    var resetArtifacts = MavenProjectReaderResult.shouldResetDependenciesAndFolders(result);
+    var resetArtifacts = MavenUtil.shouldResetDependenciesAndFolders(result.readingProblems);
     mavenProjectCandidate.set(result, generalSettings, false, resetArtifacts, false);
     NativeMavenProjectHolder nativeMavenProject = result.nativeMavenProject;
     if (nativeMavenProject != null) {

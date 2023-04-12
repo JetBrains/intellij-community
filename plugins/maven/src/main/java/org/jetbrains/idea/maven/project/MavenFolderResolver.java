@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.server.MavenEmbedderExecutionRequest;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -63,16 +62,8 @@ public class MavenFolderResolver {
             var projectData = result.projectData;
             if (projectData == null) continue;
 
-            var readerResult = new MavenProjectReaderResult(
-              projectData.mavenModel,
-              projectData.mavenModelMap,
-              new MavenExplicitProfiles(projectData.activatedProfiles, profiles.getDisabledProfiles()),
-              projectData.nativeMavenProject,
-              result.problems,
-              result.unresolvedArtifacts);
-
-            if (MavenProjectReaderResult.shouldResetDependenciesAndFolders(readerResult)) {
-              MavenProjectChanges changes = mavenProject.setFolders(readerResult);
+            if (MavenUtil.shouldResetDependenciesAndFolders(result.problems)) {
+              MavenProjectChanges changes = mavenProject.setFolders(projectData.mavenModel);
               tree.fireFoldersResolved(Pair.create(mavenProject, changes));
             }
           }
