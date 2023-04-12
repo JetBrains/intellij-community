@@ -3,6 +3,8 @@
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.documentation.actions.ShowQuickDocInfoAction.Companion.CODEASSISTS_QUICKJAVADOC_CTRLN_FEATURE
+import com.intellij.codeInsight.documentation.actions.ShowQuickDocInfoAction.Companion.CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.LookupEx
@@ -10,6 +12,7 @@ import com.intellij.codeInsight.lookup.LookupListener
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
+import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.ide.util.propComponentProperty
 import com.intellij.lang.documentation.ide.ui.toolWindowUI
 import com.intellij.openapi.Disposable
@@ -72,8 +75,11 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
       return
     }
 
-    val secondaryPopupContext = lookupPopupContext(editor)
-                                ?: quickSearchPopupContext(project)
+    val secondaryPopupContext = lookupPopupContext(editor)?.also {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE)
+    } ?: quickSearchPopupContext(project)?.also {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKJAVADOC_CTRLN_FEATURE)
+    }
     if (secondaryPopupContext == null) {
       // no popups
       if (toolWindowManager.focusVisibleReusableTab()) {
