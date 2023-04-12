@@ -46,6 +46,17 @@ internal class DependencyGraphBuilder private constructor(
     }
   }
 
+  override fun visitCallableReferenceExpression(node: UCallableReferenceExpression): Boolean {
+    val reference = node.tryToRetrieveSimpleNameReference() ?: return true
+    val type = reference.resolveToUElement()
+
+    if (type is ULocalVariable) {
+      registerDependenciesForIdentifier(reference.identifier, node)
+    }
+
+    return true
+  }
+
   override fun visitLambdaExpression(node: ULambdaExpression): Boolean = checkedDepthCall(node) {
     ProgressManager.checkCanceled()
 
@@ -815,6 +826,14 @@ private class LocalScopeContext(
       }
     }
   }
+}
+
+private fun UCallableReferenceExpression.tryToRetrieveSimpleNameReference(): USimpleNameReferenceExpression? {
+  val qualifiedExpression = qualifierExpression as? USimpleNameReferenceExpression
+
+  if (qualifiedExpression != null) return qualifiedExpression
+
+  return sourcePsi?.firstChild.toUElementOfType<USimpleNameReferenceExpression>()
 }
 
 private fun combineEvidences(ownEvidence: DependencyEvidence, otherEvidence: DependencyEvidence): DependencyEvidence =
