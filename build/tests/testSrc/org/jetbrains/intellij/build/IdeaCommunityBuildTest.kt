@@ -6,8 +6,8 @@ import com.intellij.util.SystemProperties
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.impl.BuildContextImpl
-import org.jetbrains.intellij.build.testFramework.createBuildOptionsForTest
-import org.jetbrains.intellij.build.testFramework.runTestBuild
+import com.intellij.platform.buildScripts.testFramework.createBuildOptionsForTest
+import com.intellij.platform.buildScripts.testFramework.runTestBuild
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
 

@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.testFramework.binaryReproducibility
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.buildScripts.testFramework.binaryReproducibility
 
 import com.intellij.openapi.util.io.NioFiles
 import kotlinx.coroutines.channels.Channel
