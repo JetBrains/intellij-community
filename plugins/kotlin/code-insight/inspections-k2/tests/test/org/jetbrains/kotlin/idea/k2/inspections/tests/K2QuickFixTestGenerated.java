@@ -759,6 +759,21 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             runTest("../../../idea/tests/testData/quickfix/removeAnnotation/jvmOverloadsOnAnnotationClassConstructor.kt");
         }
 
+        @TestMetadata("setTargetOnGetter.kt")
+        public void testSetTargetOnGetter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeAnnotation/setTargetOnGetter.kt");
+        }
+
+        @TestMetadata("useSiteGetDoesntHaveAnyEffect.kt")
+        public void testUseSiteGetDoesntHaveAnyEffect() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeAnnotation/useSiteGetDoesntHaveAnyEffect.kt");
+        }
+
+        @TestMetadata("useSiteGetOnClass.kt")
+        public void testUseSiteGetOnClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeAnnotation/useSiteGetOnClass.kt");
+        }
+
         @TestMetadata("wrongExtenstionFunctionType.kt")
         public void testWrongExtenstionFunctionType() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/removeAnnotation/wrongExtenstionFunctionType.kt");

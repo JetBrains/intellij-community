@@ -6,12 +6,15 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinPsiOnlyQuickFixAction
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.PsiElementSuitabilityCheckers
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtDeclarationModifierList
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
 
 class RemoveAnnotationFix(@Nls private val text: String, annotationEntry: KtAnnotationEntry) :
     KotlinPsiOnlyQuickFixAction<KtAnnotationEntry>(annotationEntry) {
@@ -37,6 +40,15 @@ class RemoveAnnotationFix(@Nls private val text: String, annotationEntry: KtAnno
     object ExtensionFunctionType : QuickFixesPsiBasedFactory<KtAnnotationEntry>(KtAnnotationEntry::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
         override fun doCreateQuickFix(psiElement: KtAnnotationEntry): List<IntentionAction> =
             listOf(RemoveAnnotationFix(KotlinBundle.message("remove.extension.function.type.annotation"), psiElement))
+    }
+
+    object UseSiteGetDoesntHaveAnyEffect : QuickFixesPsiBasedFactory<KtAnnotationEntry>(KtAnnotationEntry::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
+        override fun doCreateQuickFix(psiElement: KtAnnotationEntry): List<IntentionAction> =
+            when (psiElement.let { it.parent as? KtDeclarationModifierList }?.let { it.parent as? KtPropertyAccessor }?.isGetter == true &&
+                    psiElement.useSiteTarget?.getAnnotationUseSiteTarget() == AnnotationUseSiteTarget.PROPERTY_GETTER) {
+                true -> listOf(RemoveAnnotationFix(KotlinBundle.message("remove.annotation.doesnt.have.any.effect"), psiElement))
+                false -> emptyList()
+            }
     }
 
     companion object : QuickFixesPsiBasedFactory<KtAnnotationEntry>(KtAnnotationEntry::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {

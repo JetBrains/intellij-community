@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFi
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixesList
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KtQuickFixesListBuilder
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ChangeVariableMutabilityFix
+import org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix
 import org.jetbrains.kotlin.idea.quickfix.fixes.*
 
 class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
@@ -209,6 +210,11 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerApplicator(ChangeVisibilityFixFactories.noExplicitVisibilityInApiModeWarning)
     }
 
+    private val other = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerPsiQuickFixes(KtFirDiagnostic.InapplicableTargetOnPropertyWarning::class, RemoveAnnotationFix.UseSiteGetDoesntHaveAnyEffect)
+        registerPsiQuickFixes(KtFirDiagnostic.InapplicableTargetOnProperty::class, RemoveAnnotationFix.UseSiteGetDoesntHaveAnyEffect)
+    }
+
     override val list: KotlinQuickFixesList = KotlinQuickFixesList.createCombined(
         keywords,
         propertyInitialization,
@@ -222,5 +228,6 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         superKeyword,
         vararg,
         visibility,
+        other,
     )
 }

@@ -11978,6 +11978,21 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/removeAnnotation/jvmOverloadsOnAnnotationClassConstructor.kt");
         }
 
+        @TestMetadata("setTargetOnGetter.kt")
+        public void testSetTargetOnGetter() throws Exception {
+            runTest("testData/quickfix/removeAnnotation/setTargetOnGetter.kt");
+        }
+
+        @TestMetadata("useSiteGetDoesntHaveAnyEffect.kt")
+        public void testUseSiteGetDoesntHaveAnyEffect() throws Exception {
+            runTest("testData/quickfix/removeAnnotation/useSiteGetDoesntHaveAnyEffect.kt");
+        }
+
+        @TestMetadata("useSiteGetOnClass.kt")
+        public void testUseSiteGetOnClass() throws Exception {
+            runTest("testData/quickfix/removeAnnotation/useSiteGetOnClass.kt");
+        }
+
         @TestMetadata("wrongExtenstionFunctionType.kt")
         public void testWrongExtenstionFunctionType() throws Exception {
             runTest("testData/quickfix/removeAnnotation/wrongExtenstionFunctionType.kt");
