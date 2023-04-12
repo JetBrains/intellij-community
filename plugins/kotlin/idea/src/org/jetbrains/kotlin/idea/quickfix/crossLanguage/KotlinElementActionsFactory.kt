@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeIn
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.idea.util.resolveToKotlinType
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
@@ -169,6 +170,13 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
     override fun createChangeOverrideActions(target: JvmModifiersOwner, shouldBePresent: Boolean): List<IntentionAction> {
         val kModifierOwner = target.toKtElement<KtModifierListOwner>() ?: return emptyList()
         return createChangeModifierActions(kModifierOwner, KtTokens.OVERRIDE_KEYWORD, shouldBePresent)
+    }
+
+    override fun createRemoveAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> {
+        val declaration = target.safeAs<KtLightElement<*, *>>()?.kotlinOrigin.safeAs<KtModifierListOwner>()?.takeIf {
+            it.language == KotlinLanguage.INSTANCE
+        } ?: return emptyList()
+        return listOf(RemoveAnnotationAction(declaration, request))
     }
 
     override fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> {
@@ -489,6 +497,39 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
         init {
             pointer = annotationEntry.createSmartPointer()
             qualifiedName = annotationEntry.toLightAnnotation()?.qualifiedName ?: throw IllegalStateException("r")
+        }
+    }
+
+    private class RemoveAnnotationAction(target: KtModifierListOwner, val request: AnnotationRequest) : IntentionAction {
+
+        private val pointer = target.createSmartPointer()
+
+        override fun startInWriteAction(): Boolean = true
+
+        override fun getText(): String {
+            val shortName = StringUtilRt.getShortName(request.qualifiedName)
+            return QuickFixBundle.message("remove.annotation.fix.text", shortName)
+        }
+
+        override fun getFamilyName(): String = QuickFixBundle.message("remove.annotation.fix.family")
+
+        override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean = pointer.element != null
+
+        override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+            PsiTreeUtil.findSameElementInCopy(pointer.element, file)?.removeAnnotation()
+            return IntentionPreviewInfo.DIFF
+        }
+
+        override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+            pointer.element?.removeAnnotation()
+        }
+
+        private fun KtModifierListOwner.removeAnnotation() {
+            val annotationName = FqName(request.qualifiedName)
+            val annotation = this.findAnnotation(annotationName)
+            annotation?.delete() ?: return
+            val importList = (this.containingFile as? KtFile)?.importList
+            importList?.imports?.find { it.importedFqName == annotationName }?.delete()
         }
     }
 

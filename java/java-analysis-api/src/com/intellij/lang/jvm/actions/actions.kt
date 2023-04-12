@@ -35,6 +35,12 @@ fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationReq
   }
 }
 
+fun createRemoveAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> {
+  return createActions {
+    it.createRemoveAnnotationActions(target, request)
+  }
+}
+
 fun createChangeAnnotationAttributeActions(annotation: JvmAnnotation,
                                            attributeIndex: Int,
                                            request: AnnotationAttributeRequest): List<IntentionAction> {

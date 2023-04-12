@@ -3,8 +3,13 @@ package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.lang.jvm.*
+import com.intellij.lang.jvm.DefaultJvmElementVisitor
+import com.intellij.lang.jvm.JvmClass
+import com.intellij.lang.jvm.JvmElementVisitor
+import com.intellij.lang.jvm.JvmModifier
+import com.intellij.lang.jvm.actions.annotationRequest
 import com.intellij.lang.jvm.actions.createModifierActions
+import com.intellij.lang.jvm.actions.createRemoveAnnotationActions
 import com.intellij.lang.jvm.actions.modifierRequest
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
@@ -16,14 +21,23 @@ internal class LightServiceMustBeFinalInspection : DevKitJvmInspection() {
   override fun buildVisitor(project: Project, sink: HighlightSink, isOnTheFly: Boolean): JvmElementVisitor<Boolean> {
     return object : DefaultJvmElementVisitor<Boolean> {
       override fun visitClass(clazz: JvmClass): Boolean {
-        if (clazz !is PsiClass) return true
-        if (clazz.classKind != JvmClassKind.CLASS || clazz.hasModifier(JvmModifier.FINAL)) return true
-        val file = clazz.sourceElement?.containingFile ?: return true
-        val hasServiceAnnotation = clazz.hasAnnotation(Service::class.java.canonicalName)
-        if (hasServiceAnnotation) {
-          val actions = createModifierActions(clazz, modifierRequest(JvmModifier.FINAL, true))
+        val sourceElement = clazz.sourceElement
+        if (sourceElement !is PsiClass) return true
+        if (sourceElement.isAnnotationType || sourceElement.isEnum || sourceElement.hasModifier(JvmModifier.FINAL)) return true
+        val file = sourceElement.containingFile ?: return true
+        val serviceAnnotation = sourceElement.getAnnotation(Service::class.java.canonicalName) ?: return true
+        val elementToReport = serviceAnnotation.nameReferenceElement ?: return true
+        if (sourceElement.isInterface || sourceElement.hasModifier(JvmModifier.ABSTRACT)) {
+          val actions = createRemoveAnnotationActions(sourceElement, annotationRequest(Service::class.java.canonicalName))
           val fixes = IntentionWrapper.wrapToQuickFixes(actions.toTypedArray(), file)
-          val message = when (clazz.language.id) {
+          val message = DevKitBundle.message("inspection.light.service.must.be.concrete.class.message")
+          val holder = (sink as HighlightSinkImpl).holder
+          holder.registerProblem(elementToReport, message, ProblemHighlightType.GENERIC_ERROR, *fixes)
+        }
+        else {
+          val actions = createModifierActions(sourceElement, modifierRequest(JvmModifier.FINAL, true))
+          val fixes = IntentionWrapper.wrapToQuickFixes(actions.toTypedArray(), file)
+          val message = when (sourceElement.language.id) {
             "kotlin" -> DevKitBundle.message("inspection.light.service.must.not.be.open.message")
             else -> DevKitBundle.message("inspection.light.service.must.be.final.message")
           }

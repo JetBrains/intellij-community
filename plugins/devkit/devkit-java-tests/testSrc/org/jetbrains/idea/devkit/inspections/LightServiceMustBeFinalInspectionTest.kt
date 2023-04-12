@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
+import com.intellij.openapi.components.Service
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 import org.jetbrains.idea.devkit.inspections.quickfix.LightServiceMustBeFinalInspectionTestBase
@@ -17,4 +18,8 @@ internal class LightServiceMustBeFinalInspectionTest : LightServiceMustBeFinalIn
   fun testMakeFinal() { doTest(MAKE_FINAL_FIX_NAME) }
 
   fun testMakeFinalMultiLineModifierList() { doTest(MAKE_FINAL_FIX_NAME) }
+
+  fun testAbstractClass() { doTest(QuickFixBundle.message("remove.annotation.fix.text", Service::class.java.simpleName)) }
+
+  fun testInterface() { doTest(QuickFixBundle.message("remove.annotation.fix.text", Service::class.java.simpleName)) }
 }

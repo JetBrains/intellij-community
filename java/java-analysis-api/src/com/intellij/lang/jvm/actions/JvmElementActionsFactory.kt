@@ -21,6 +21,8 @@ abstract class JvmElementActionsFactory {
 
   open fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> = emptyList()
 
+  open fun createRemoveAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> = emptyList()
+
   open fun createChangeAnnotationAttributeActions(annotation: JvmAnnotation,
                                                   attributeIndex: Int,
                                                   request: AnnotationAttributeRequest): List<IntentionAction> = emptyList()

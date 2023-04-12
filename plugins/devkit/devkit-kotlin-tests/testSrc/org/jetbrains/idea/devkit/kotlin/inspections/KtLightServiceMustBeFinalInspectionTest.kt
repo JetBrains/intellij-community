@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
+import com.intellij.openapi.components.Service
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.idea.devkit.inspections.quickfix.LightServiceMustBeFinalInspectionTestBase
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
@@ -15,7 +16,9 @@ internal class KtLightServiceMustBeFinalInspectionTest : LightServiceMustBeFinal
 
   override fun getFileExtension() = "kt"
 
-  fun testMakeNotOpen() {
-    doTest(fixName)
-  }
+  fun testMakeNotOpen() { doTest(fixName) }
+
+  fun testAbstractClass() { doTest(QuickFixBundle.message("remove.annotation.fix.text", Service::class.java.simpleName)) }
+
+  fun testInterface() { doTest(QuickFixBundle.message("remove.annotation.fix.text", Service::class.java.simpleName)) }
 }

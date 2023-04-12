@@ -7,13 +7,17 @@ import com.intellij.codeInsight.intention.AddAnnotationPsiFix
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.java.actions.*
 import com.intellij.lang.jvm.*
 import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.psi.*
+import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.suggested.createSmartPointer
@@ -28,14 +32,17 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
     return listOf(ChangeModifierFix(declaration, request))
   }
 
-  private class RemoveAnnotationFix(private val fqn: String, element: PsiModifierListOwner) : IntentionAction {
+  private open class RemoveAnnotationFix(private val fqn: String,
+                                         element: PsiModifierListOwner,
+                                         @IntentionName private val text: String,
+                                         @IntentionFamilyName private val familyName: String) : IntentionAction {
     val pointer = element.createSmartPointer()
 
     override fun startInWriteAction(): Boolean = true
 
-    override fun getText(): String = QuickFixBundle.message("remove.override.fix.text")
+    override fun getText(): String = text
 
-    override fun getFamilyName(): String = QuickFixBundle.message("remove.override.fix.family")
+    override fun getFamilyName(): String = familyName
 
     override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = pointer.element != null
 
@@ -50,16 +57,27 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
 
     private fun PsiModifierListOwner.deleteAnnotation() {
       getAnnotation(fqn)?.delete()
+      val file = this.containingFile as? PsiJavaFile ?: return
+      JavaCodeStyleManager.getInstance(project).removeRedundantImports(file)
     }
   }
+
+  private class RemoveOverrideAnnotationFix(element: PsiModifierListOwner) :
+    RemoveAnnotationFix(
+      CommonClassNames.JAVA_LANG_OVERRIDE,
+      element,
+      QuickFixBundle.message("remove.override.fix.text"),
+      QuickFixBundle.message("remove.override.fix.family")
+    )
 
   override fun createChangeOverrideActions(target: JvmModifiersOwner, shouldBePresent: Boolean): List<IntentionAction> {
     val psiElement = target.asSafely<PsiModifierListOwner>() ?: return emptyList()
     if (psiElement.language != JavaLanguage.INSTANCE) return emptyList()
     return if (shouldBePresent) {
       createAddAnnotationActions(target, annotationRequest(CommonClassNames.JAVA_LANG_OVERRIDE))
-    } else {
-      listOf(RemoveAnnotationFix(CommonClassNames.JAVA_LANG_OVERRIDE, psiElement))
+    }
+    else {
+      listOf(RemoveOverrideAnnotationFix(psiElement))
     }
   }
 
@@ -83,6 +101,15 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
       return emptyList()
     }
     return listOf(CreateAnnotationAction(declaration, request))
+  }
+
+  override fun createRemoveAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> {
+    val declaration = target as? PsiModifierListOwner ?: return emptyList()
+    if (declaration.language != JavaLanguage.INSTANCE) return emptyList()
+    val shortName = StringUtilRt.getShortName(request.qualifiedName)
+    val text = QuickFixBundle.message("remove.annotation.fix.text", shortName)
+    val familyName = QuickFixBundle.message("remove.annotation.fix.family")
+    return listOf(RemoveAnnotationFix(request.qualifiedName, target, text, familyName))
   }
 
   override fun createChangeAnnotationAttributeActions(annotation: JvmAnnotation,
