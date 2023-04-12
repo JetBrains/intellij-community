@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.ColorUtil
 import java.awt.Color
@@ -42,9 +43,10 @@ interface HtmlSyntaxHighlighter {
     fun colorHtmlChunk(project: Project?, language: Language, rawContent: @NlsSafe String): HtmlChunk {
       val html = HtmlBuilder()
       parseContent(project, language, rawContent) { content: @NlsSafe String, _, color ->
+        val escapedContent = StringUtil.escapeXmlEntities(content)
         html.append(
-          if (color != null) HtmlChunk.span("color:${ColorUtil.toHtmlColor(color)}").addText(content)
-          else HtmlChunk.text(content)
+          if (color != null) HtmlChunk.span("color:${ColorUtil.toHtmlColor(color)}").addRaw(escapedContent)
+          else HtmlChunk.raw(escapedContent)
         )
       }
 
