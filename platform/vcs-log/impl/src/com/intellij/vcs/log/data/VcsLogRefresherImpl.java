@@ -37,9 +37,7 @@ import static com.intellij.diagnostic.telemetry.TraceUtil.computeWithSpanThrows;
 import static com.intellij.diagnostic.telemetry.TraceUtil.runWithSpanThrows;
 
 public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
-
   private static final Logger LOG = Logger.getInstance(VcsLogRefresherImpl.class);
-
 
   private final @NotNull Project myProject;
   private final @NotNull VcsLogStorage myStorage;
@@ -273,8 +271,8 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
       });
     }
 
-    private @NotNull Map<VirtualFile, CompressedRefs> getAllNewRefs(@NotNull LogInfo newInfo,
-                                                                    @NotNull Map<VirtualFile, CompressedRefs> previousRefs) {
+    private static @NotNull Map<VirtualFile, CompressedRefs> getAllNewRefs(@NotNull LogInfo newInfo,
+                                                                           @NotNull Map<VirtualFile, CompressedRefs> previousRefs) {
       Map<VirtualFile, CompressedRefs> result = new HashMap<>();
       for (VirtualFile root : previousRefs.keySet()) {
         CompressedRefs newInfoRefs = newInfo.getRefs().get(root);
@@ -293,9 +291,9 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
       }
     }
 
-    private @NotNull Map<VirtualFile, VcsLogProvider.Requirements> prepareRequirements(@NotNull Collection<? extends VirtualFile> roots,
-                                                                                       int commitCount,
-                                                                                       @NotNull Map<VirtualFile, CompressedRefs> prevRefs) {
+    private static @NotNull Map<VirtualFile, VcsLogProvider.Requirements> prepareRequirements(@NotNull Collection<? extends VirtualFile> roots,
+                                                                                              int commitCount,
+                                                                                              @NotNull Map<VirtualFile, CompressedRefs> prevRefs) {
       Map<VirtualFile, VcsLogProvider.Requirements> requirements = new HashMap<>();
       for (VirtualFile root : roots) {
         requirements.put(root, new RequirementsImpl(commitCount, true, prevRefs.get(root).getRefs()));
