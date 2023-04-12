@@ -336,16 +336,28 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
         return@coroutineScope
       }
 
-      rawProgressReporterOrError.text(JavaUiBundle.message("repository.library.utils.progress.text.verifying.resolution.after.update"))
-      logger.info("Building libraries properties progressed: started checking resolution after update")
-      if (bindRepositories && !tryResolveUnresolvedLibs(entities.asSequence(), snapshot, afterPropertiesUpdate = true)) {
-        logger.info("Building libraries properties progressed: verifying resolution after update complete, resolution failed")
-      }
-      else {
+      if (!bindRepositories) {
         logger.info("Building libraries properties complete: ${updatedCounter.get()} libraries updated successfully")
         showNotification(
           JavaUiBundle.message("repository.library.utils.notification.content.library.properties.built", updatedCounter.get()),
           NotificationType.INFORMATION, disableInfoNotifications)
+        return@coroutineScope
+      }
+
+      rawProgressReporterOrError.text(JavaUiBundle.message("repository.library.utils.progress.text.verifying.resolution.after.update"))
+      logger.info("Building libraries properties progressed: started checking resolution after update")
+      // Check libraries' resolution with updated properties -> refresh required
+      val snapshotAfterUpdate = workspaceModel.currentSnapshot
+      val entitiesAfterUpdate = entities.mapNotNull { snapshotAfterUpdate.resolve(it.library.symbolicId)?.libraryProperties }
+
+      if (tryResolveUnresolvedLibs(entitiesAfterUpdate.asSequence(), snapshotAfterUpdate, afterPropertiesUpdate = true)) {
+        logger.info("Building libraries properties complete: ${updatedCounter.get()} libraries updated successfully")
+        showNotification(
+          JavaUiBundle.message("repository.library.utils.notification.content.library.properties.built", updatedCounter.get()),
+          NotificationType.INFORMATION, disableInfoNotifications)
+      }
+      else {
+        logger.info("Building libraries properties progressed: verifying resolution after update complete, resolution failed")
       }
     }
 
@@ -370,7 +382,10 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
                                                  snapshot: EntityStorage,
                                                  afterPropertiesUpdate: Boolean): Boolean {
       // forcibly re-resolve libraries after property update to ensure bind repositories are guessed correctly
-      val failedList = resolve(entities.map { it.library }.filter { afterPropertiesUpdate || !it.isCompiledArtifactsResolved() })
+      val failedList =
+        if (afterPropertiesUpdate) resolve(entities.map { it.library })
+        else resolve(entities.map { it.library }.filter { !it.isCompiledArtifactsResolved() })
+
       if (failedList.isNotEmpty()) showFailedToResolveNotification(failedList, snapshot) { libsList, leftNotDisplayedSize ->
         if (afterPropertiesUpdate) JavaUiBundle.message(
           "repository.library.utils.notification.content.libraries.resolve.fail.after.update", libsList, leftNotDisplayedSize
