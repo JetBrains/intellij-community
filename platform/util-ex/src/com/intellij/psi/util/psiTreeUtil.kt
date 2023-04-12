@@ -345,6 +345,20 @@ fun <T : PsiElement> PsiElement.contextOfType(vararg classes: KClass<out T>): T?
   return PsiTreeUtil.getContextOfType(this, *classes.map { it.java }.toTypedArray())
 }
 
+/**
+ * @param withSelf whether to include [this] element into the sequence
+ * @return a sequence of contexts, starting with [this] (or context, depending on [withSelf])
+ * and walking up to and including the containing file
+ */
+fun PsiElement.contexts(withSelf: Boolean): Sequence<PsiElement> {
+  val seed = if (withSelf) this else contextWithoutWalkingDirectories(this)
+  return generateSequence(seed, ::contextWithoutWalkingDirectories)
+}
+
+private fun contextWithoutWalkingDirectories(element: PsiElement): PsiElement? {
+  return if (element is PsiFile) null else element.context
+}
+
 fun <T : PsiElement> Sequence<T>.skipTokens(tokens: TokenSet): Sequence<T> {
   return filter { it.node.elementType !in tokens }
 }
