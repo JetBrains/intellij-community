@@ -17,7 +17,6 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.Function;
-import com.intellij.util.indexing.IndexUpToDateCheckIn;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -190,7 +189,7 @@ public abstract class StubTreeLoader {
     @NotNull
     private RuntimeException doCreateCompleteException() {
       StubTreeLoader instance = getInstance();
-      StubTree stubTreeFromIndex = IndexUpToDateCheckIn.disableUpToDateCheckIn(() -> (StubTree)instance.readFromVFile(project, file));
+      StubTree stubTreeFromIndex = (StubTree)instance.readFromVFile(project, file);
 
       String msg = coarseMessage;
       msg += "\nlatestIndexedStub=" + stubTreeFromIndex;
