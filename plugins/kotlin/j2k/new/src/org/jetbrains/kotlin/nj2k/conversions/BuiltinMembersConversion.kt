@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.nj2k.symbols.JKUnresolvedField
 import org.jetbrains.kotlin.nj2k.symbols.deepestFqName
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKLiteralExpression.LiteralType.STRING
+import org.jetbrains.kotlin.nj2k.types.JKClassType
 import org.jetbrains.kotlin.nj2k.types.isArrayType
 import org.jetbrains.kotlin.nj2k.types.isNull
 import org.jetbrains.kotlin.nj2k.types.isStringType
@@ -345,6 +346,19 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
 
             Method("java.lang.Object.getClass") convertTo Field("kotlin.jvm.javaClass"),
+
+            Method("java.lang.Object.notify")
+                    convertTo castReceiverToJavaLangObject()
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER
+                    withFilter ::filterReceiverCastToJavaLangObject,
+            Method("java.lang.Object.notifyAll")
+                    convertTo castReceiverToJavaLangObject()
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER
+                    withFilter ::filterReceiverCastToJavaLangObject,
+            Method("java.lang.Object.wait")
+                    convertTo castReceiverToJavaLangObject()
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER
+                    withFilter ::filterReceiverCastToJavaLangObject,
 
             Method("java.util.Map.entrySet") convertTo Field("kotlin.collections.Map.entries"),
             Method("java.util.Map.keySet") convertTo Field("kotlin.collections.Map.keys"),
@@ -684,6 +698,31 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER
                     withFilter ::isSystemOutCall
         ).groupBy { it.from.fqName }
+
+    private fun castReceiverToJavaLangObject() = CustomExpression { expr ->
+        val parent = expr.parent!!
+        val (receiver, selector) = if (parent is JKQualifiedExpression) {
+            parent.receiver.detach(parent)
+            parent.selector.detach(parent)
+            parent.receiver to parent.selector
+        } else {
+            JKThisExpression(JKLabelEmpty()) to expr.copyTreeAndDetach()
+        }
+
+        val cast = JKTypeCastExpression(
+            receiver,
+            JKTypeElement(JKClassType(symbolProvider.provideClassSymbol("java.lang.Object")))
+        ).parenthesize()
+
+        JKQualifiedExpression(cast, selector)
+    }
+
+    private fun filterReceiverCastToJavaLangObject(expr: JKExpression): Boolean {
+        val parent = expr.parent as? JKQualifiedExpression ?: return true
+        val receiver = parent.receiver as? JKParenthesizedExpression ?: return true
+        val cast = receiver.expression as? JKTypeCastExpression ?: return true
+        return (cast.type.type as? JKClassType)?.classReference?.fqName != "java.lang.Object"
+    }
 
     private fun numericValueOfReplacement() = CustomExpression { expression ->
         val arguments = (expression as JKCallExpression).arguments

@@ -3571,6 +3571,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         public void testCloneable2() throws Exception {
             runTest("testData/newJ2k/javaStandardMethods/cloneable2.java");
         }
+
+        @TestMetadata("notAvailableInAny.java")
+        public void testNotAvailableInAny() throws Exception {
+            runTest("testData/newJ2k/javaStandardMethods/notAvailableInAny.java");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
