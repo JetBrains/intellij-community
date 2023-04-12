@@ -241,19 +241,6 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   }
 
   @NotNull
-  public MavenServerExecutionResult execute(@NotNull final VirtualFile file,
-                                            @NotNull final Collection<String> activeProfiles,
-                                            @NotNull final Collection<String> inactiveProfiles,
-                                            @NotNull final List<String> goals,
-                                            @NotNull final List<String> selectedProjects,
-                                            final boolean alsoMake,
-                                            final boolean alsoMakeDependents) throws MavenProcessCanceledException {
-    return performCancelable(() -> getOrCreateWrappee()
-      .execute(new File(file.getPath()), activeProfiles, inactiveProfiles, goals, selectedProjects, alsoMake, alsoMakeDependents,
-               ourToken));
-  }
-
-  @NotNull
   public Set<MavenRemoteRepository> resolveRepositories(@NotNull Collection<MavenRemoteRepository> repositories)
     throws MavenProcessCanceledException {
     return perform(() -> getOrCreateWrappee().resolveRepositories(repositories, ourToken));
