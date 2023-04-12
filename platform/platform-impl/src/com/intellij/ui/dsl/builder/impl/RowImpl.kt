@@ -31,7 +31,6 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.ui.dsl.gridLayout.unscale
 import com.intellij.ui.layout.ComponentPredicate
-import com.intellij.ui.popup.PopupState
 import com.intellij.util.Function
 import com.intellij.util.MathUtil
 import com.intellij.util.ui.JBEmptyBorder
@@ -477,6 +476,8 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   private fun <T : JComponent> cellImpl(component: T, viewComponent: JComponent): CellImpl<T> {
     val result = CellImpl(dialogPanelConfig, component, this, viewComponent)
     cells.add(result)
+
+    registerCreationStacktrace(component)
 
     if (component is JRadioButton) {
       @Suppress("UNCHECKED_CAST")

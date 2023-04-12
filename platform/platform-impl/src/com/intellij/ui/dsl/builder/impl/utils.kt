@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder.impl
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.TextWithMnemonic
@@ -32,7 +33,14 @@ internal enum class DslComponentPropertyInternal {
    *
    * Value: IntRange
    */
-  INT_TEXT_RANGE
+  INT_TEXT_RANGE,
+
+  /**
+   * Place where the component was added into Kotlin UI DSL builder (for example [Row.cell]). Used in internal mode only
+   *
+   * Value: Throwable
+   */
+  CREATION_STACKTRACE
 }
 
 /**
@@ -156,5 +164,11 @@ internal fun warn(message: String) {
   }
   else {
     LOG.warn(message)
+  }
+}
+
+internal fun registerCreationStacktrace(component: JComponent) {
+  if (ApplicationManager.getApplication().isInternal) {
+    component.putClientProperty(DslComponentPropertyInternal.CREATION_STACKTRACE, Throwable())
   }
 }

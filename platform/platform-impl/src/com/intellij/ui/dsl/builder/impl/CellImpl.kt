@@ -153,7 +153,9 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun comment(@NlsContexts.DetailedDescription comment: String?, maxLineLength: Int, action: HyperlinkEventAction): CellImpl<T> {
-    this.comment = if (comment == null) null else createComment(comment, maxLineLength, action)
+    this.comment = if (comment == null) null else createComment(comment, maxLineLength, action).apply {
+      registerCreationStacktrace(this)
+    }
     return this
   }
 
@@ -165,6 +167,7 @@ internal class CellImpl<T : JComponent>(
     this.label = label
     labelPosition = position
     label.putClientProperty(DslComponentPropertyInternal.CELL_LABEL, true)
+    registerCreationStacktrace(label)
     return this
   }
 
