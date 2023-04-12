@@ -2,18 +2,12 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.IntentionWrapper
-import com.intellij.lang.jvm.DefaultJvmElementVisitor
-import com.intellij.lang.jvm.JvmClass
-import com.intellij.lang.jvm.JvmElementVisitor
-import com.intellij.lang.jvm.JvmMethod
+import com.intellij.lang.jvm.*
 import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.*
 import com.intellij.psi.PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME
-import com.intellij.psi.PsiElementFactory
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiType
 import com.intellij.psi.search.GlobalSearchScope
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.idea.devkit.DevKitBundle
@@ -26,38 +20,17 @@ internal class MismatchedLightServiceLevelAndCtorInspection : DevKitJvmInspectio
     return object : DefaultJvmElementVisitor<Boolean> {
       override fun visitMethod(method: JvmMethod): Boolean {
         if (!method.isConstructor) return true
-        val language = method.sourceElement?.language ?: return true
-        val file: PsiFile = method.sourceElement?.containingFile ?: return true
+        val sourceElement = method.sourceElement ?: return true
+        val file = sourceElement.containingFile ?: return true
         val containingClass = method.containingClass ?: return true
         val annotation = containingClass.getAnnotation(Service::class.java.canonicalName) ?: return true
-        val annotationName = (annotation as? PsiAnnotation)?.nameReferenceElement ?: return true
-        val levelType = ServiceUtil.getLevelType(annotation, language.id == "kotlin")
-        if (!levelType.isProject()) {
-          val isProjectParamCtor = isProjectParamCtor(method)
-          if (isProjectParamCtor) {
-            val projectLevelFqn = "${Service.Level::class.java.canonicalName}.${Service.Level.PROJECT}"
-            val request = constantAttribute(DEFAULT_REFERENCED_METHOD_NAME, projectLevelFqn)
-            val actions = createChangeAnnotationAttributeActions(annotation, 0, request)
-            val fixes = IntentionWrapper.wrapToQuickFixes(actions.toTypedArray(), file)
-            val holder = (sink as HighlightSinkImpl).holder
-            holder.registerProblem(annotationName,
-                                   DevKitBundle.message("inspection.mismatched.light.service.level.and.ctor.project.level.required"),
-                                   *fixes)
-          }
+        val elementToReport = (annotation as? PsiAnnotation)?.nameReferenceElement ?: return true
+        val levelType = ServiceUtil.getLevelType(annotation, sourceElement.language.id == "kotlin")
+        if (!levelType.isProject() && isProjectParamCtor(method)) {
+          registerProblemProjectLevelRequired(annotation, elementToReport, file)
         }
-        if (levelType.isApp()) {
-          if (!isAppLevelServiceCtor(method) && !hasAppLevelServiceCtor(containingClass)) {
-            val elementFactory = PsiElementFactory.getInstance(project)
-            val coroutineScopeType = elementFactory.createTypeByFQClassName(CoroutineScope::class.java.canonicalName,
-                                                                            GlobalSearchScope.allScope(project))
-            val methodParametersRequest: ChangeParametersRequest = setMethodParametersRequest(
-              linkedMapOf(COROUTINE_SCOPE_PARAM_NAME to coroutineScopeType).entries)
-            val actions = createChangeParametersActions(method, setMethodParametersRequest(emptyList())) + createChangeParametersActions(
-              method, methodParametersRequest)
-            val fixes = IntentionWrapper.wrapToQuickFixes(actions.toTypedArray(), file)
-            val message = DevKitBundle.message("inspection.mismatched.light.service.level.and.ctor.app.level.ctor.required")
-            sink.highlight(message, *fixes)
-          }
+        if (levelType.isApp() && !isAppLevelServiceCtor(method) && !hasAppLevelServiceCtor(containingClass)) {
+          registerProblemApplicationLevelRequired(method, file)
         }
         return true
       }
@@ -78,6 +51,32 @@ internal class MismatchedLightServiceLevelAndCtorInspection : DevKitJvmInspectio
 
       private fun JvmMethod.hasSingleParamOfType(clazz: Class<*>): Boolean {
         return (this.parameters.singleOrNull()?.type as? PsiType)?.canonicalText == clazz.canonicalName
+      }
+
+      private fun registerProblemProjectLevelRequired(annotation: JvmAnnotation,
+                                                      elementToReport: PsiJavaCodeReferenceElement,
+                                                      file: PsiFile) {
+        val projectLevelFqn = "${Service.Level::class.java.canonicalName}.${Service.Level.PROJECT}"
+        val request = constantAttribute(DEFAULT_REFERENCED_METHOD_NAME, projectLevelFqn)
+        val actions = createChangeAnnotationAttributeActions(annotation, 0, request)
+        val fixes = IntentionWrapper.wrapToQuickFixes(actions.toTypedArray(), file)
+        val holder = (sink as HighlightSinkImpl).holder
+        holder.registerProblem(elementToReport,
+                               DevKitBundle.message("inspection.mismatched.light.service.level.and.ctor.project.level.required"),
+                               *fixes)
+      }
+
+      private fun registerProblemApplicationLevelRequired(method: JvmMethod, file: PsiFile) {
+        val elementFactory = PsiElementFactory.getInstance(project)
+        val coroutineScopeType = elementFactory.createTypeByFQClassName(CoroutineScope::class.java.canonicalName,
+                                                                        GlobalSearchScope.allScope(project))
+        val methodParametersRequest: ChangeParametersRequest = setMethodParametersRequest(
+          linkedMapOf(COROUTINE_SCOPE_PARAM_NAME to coroutineScopeType).entries)
+        val actions = createChangeParametersActions(method, setMethodParametersRequest(emptyList())) + createChangeParametersActions(
+          method, methodParametersRequest)
+        val fixes = IntentionWrapper.wrapToQuickFixes(actions.toTypedArray(), file)
+        val message = DevKitBundle.message("inspection.mismatched.light.service.level.and.ctor.app.level.ctor.required")
+        sink.highlight(message, *fixes)
       }
     }
   }
