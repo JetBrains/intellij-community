@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
-import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ClickListener
 import com.intellij.ui.ComponentUtil
@@ -9,6 +8,7 @@ import com.intellij.ui.LayeredIcon
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.ColorIcon
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import java.awt.*
@@ -97,15 +97,10 @@ abstract class HoverChangesTree(val tree: ChangesTree) {
       val hovered = hoverData?.node == node
       if (!hovered && !(selected && hasFocus)) return null
 
-      val baseIcon = when {
+      val foreground = when {
         hovered -> hoverData!!.hoverIcon.icon
         selected -> getHoverIcon(node)?.icon ?: return null
         else -> return null
-      }
-
-      val foreground = when {
-        hovered && hoverData!!.isOverOperationIcon -> baseIcon
-        else -> IconLoader.getDisabledIcon(baseIcon)
       }
 
       val componentWidth = getComponentWidth(foreground)
@@ -113,14 +108,28 @@ abstract class HoverChangesTree(val tree: ChangesTree) {
       val background = ColorIcon(componentWidth, componentHeight, componentWidth, componentHeight,
                                  tree.getBackground(row, selected), false)
 
-      val icon = LayeredIcon(2).apply {
-        setIcon(background, 0)
-        setIcon(foreground, 1, SwingConstants.WEST)
+      val icon = if (hovered && hoverData!!.isOverOperationIcon) {
+        val highlight = ColorIcon(foreground.iconWidth, componentHeight, foreground.iconWidth, foreground.iconHeight,
+                                  JBUI.CurrentTheme.ActionButton.hoverBackground(),
+                                  JBUI.CurrentTheme.ActionButton.hoverBorder(), JBUI.scale(4))
+        createLayeredIcon(background, highlight, foreground)
+      }
+      else {
+        createLayeredIcon(background, foreground)
       }
 
       val location = getComponentXCoordinate(componentWidth) - (TreeUtil.getNodeRowX(tree, row) + tree.insets.left)
 
       return FloatingIcon(icon, location)
+    }
+
+    private fun createLayeredIcon(background: Icon, vararg foreground: Icon): Icon {
+      return LayeredIcon(foreground.size + 1).apply {
+        setIcon(background, 0)
+        for ((i, f) in foreground.withIndex()) {
+          setIcon(f, i + 1, SwingConstants.WEST)
+        }
+      }
     }
   }
 
