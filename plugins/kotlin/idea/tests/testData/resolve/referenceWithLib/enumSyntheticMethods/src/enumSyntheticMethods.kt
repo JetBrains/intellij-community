@@ -2,6 +2,7 @@ package test
 
 import dependency.*
 
+@kotlin.ExperimentalStdlibApi
 fun foo() {
     LibraryEnum.<caret>values()
     LibraryEnum.<caret>valueOf("ONE")
