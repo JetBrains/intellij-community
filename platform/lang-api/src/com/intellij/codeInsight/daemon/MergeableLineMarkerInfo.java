@@ -29,6 +29,7 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
@@ -251,6 +252,14 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
     }
   }
 
+  @TestOnly
+  public static @Nullable List<LineMarkerInfo<?>> getMergedLineMarkerInfos(@NotNull GutterIconNavigationHandler<?> handler) {
+    if (handler instanceof MergedGutterIconNavigationHandler mergedGutterIconNavigationHandler) {
+      return mergedGutterIconNavigationHandler.getMergedLineMarkersInfos(); 
+    }
+    return null;
+  } 
+  
   static class MergedGutterIconNavigationHandler implements GutterIconNavigationHandler<PsiElement> {
     private final List<LineMarkerInfo<?>> myInfos;
 
