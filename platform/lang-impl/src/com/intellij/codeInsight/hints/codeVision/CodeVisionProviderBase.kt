@@ -37,6 +37,15 @@ abstract class CodeVisionProviderBase : DaemonBoundCodeVisionProvider {
   abstract fun getHint(element: PsiElement, file: PsiFile): String?
 
   /**
+   * The default text-only implementation. Override to provide the correct count.
+   * @return text, count of and the completeness state for a given element as a code lens
+   */
+  open fun getVisionInfo(element: PsiElement, file: PsiFile): CodeVisionInfo? {
+    val hint = getHint(element, file) ?: return null
+    return CodeVisionInfo(hint)
+  }
+
+  /**
    * @param hint result of [getHint]
    */
   open fun logClickToFUS(element: PsiElement, hint: String) {}
@@ -94,4 +103,11 @@ abstract class CodeVisionProviderBase : DaemonBoundCodeVisionProvider {
 
   override val defaultAnchor: CodeVisionAnchorKind
     get() = CodeVisionAnchorKind.Default
+
+  class CodeVisionInfo(
+    @Nls @get:Nls
+    val text: String,
+    val count: Int? = null,
+    val complete: Boolean = true
+  )
 }
