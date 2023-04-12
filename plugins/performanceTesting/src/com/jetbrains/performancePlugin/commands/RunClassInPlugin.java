@@ -75,7 +75,11 @@ public class RunClassInPlugin extends AbstractCommand {
     ClassLoader loader = plugin.getClassLoader();
     URL[] cp = myClasspath.stream().map(f -> {
       try {
-        return f.toURI().toURL();
+        URL fileURL = f.toURI().toURL();
+        if (!fileURL.getProtocol().equals("file")) {
+          throw new RuntimeException("Remote resources are not allowed in the classpath: " + fileURL);
+        }
+        return fileURL;
       }
       catch (MalformedURLException e) {
         throw new RuntimeException("Failed to get URL for " + f + ". " + e.getMessage(), e);
