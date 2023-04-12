@@ -155,15 +155,8 @@ public final class QuickDocUtil {
     });
   }
 
-  private static volatile boolean useDocumentationV1 = false;
-
-  @ApiStatus.Internal
-  public static void forceEnableDocumentationV1() {
-    useDocumentationV1 = true;
-  }
-
   @ApiStatus.Internal
   public static boolean isDocumentationV2Enabled() {
-    return !useDocumentationV1;
+    return true;
   }
 }
