@@ -31,6 +31,7 @@ import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
 import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.plugins.api.MavenModelPropertiesPatcher;
+import org.jetbrains.idea.maven.server.MavenEmbedderExecutionResult;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.*;
 
@@ -133,7 +134,7 @@ public class MavenProject {
     newState.myOutputDirectory = model.getBuild().getOutputDirectory();
     newState.myTestOutputDirectory = model.getBuild().getTestOutputDirectory();
 
-    doSetFolders(newState, readerResult);
+    doSetFolders(newState, readerResult.mavenModel.getBuild());
 
     newState.myFilters = model.getBuild().getFilters();
     newState.myProperties = model.getProperties();
@@ -226,18 +227,26 @@ public class MavenProject {
   }
 
   @ApiStatus.Internal
-  public MavenProjectChanges setFolders(MavenModel model) {
+  public MavenProjectChanges setFolders(MavenEmbedderExecutionResult.Folders folders) {
     State newState = myState.clone();
-    doSetFolders(newState, readerResult);
+    doSetFolders(newState, folders.getSources(), folders.getTestSources(), folders.getResources(), folders.getTestResources());
     return setState(newState);
   }
 
-  private static void doSetFolders(State newState, MavenModel model) {
-    newState.mySources = model.getBuild().getSources();
-    newState.myTestSources = model.getBuild().getTestSources();
+  private static void doSetFolders(State newState, MavenBuild build) {
+    doSetFolders(newState, build.getSources(), build.getTestSources(), build.getResources(), build.getTestResources());
+  }
 
-    newState.myResources = model.getBuild().getResources();
-    newState.myTestResources = model.getBuild().getTestResources();
+  private static void doSetFolders(State newState,
+                                   List<String> sources,
+                                   List<String> testSources,
+                                   List<MavenResource> resources,
+                                   List<MavenResource> testResources) {
+    newState.mySources = sources;
+    newState.myTestSources = testSources;
+
+    newState.myResources = resources;
+    newState.myTestResources = testResources;
   }
 
   private Map<String, String> collectModulePathsAndNames(MavenModel mavenModel, String baseDir) {

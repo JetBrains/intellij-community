@@ -1317,6 +1317,25 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     return new MavenServerExecutionResult(data, problems, Collections.emptySet(), unresolvedProblems);
   }
 
+  @NotNull
+  private MavenEmbedderExecutionResult createEmbedderExecutionResult(@Nullable File file, MavenExecutionResult result)
+    throws RemoteException {
+    Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
+
+    collectProblems(file, result.getExceptions(), result.getModelProblems(), problems);
+
+    MavenEmbedderExecutionResult.Folders folders = new MavenEmbedderExecutionResult.Folders();
+    MavenProject mavenProject = result.getMavenProject();
+    if (mavenProject == null) return new MavenEmbedderExecutionResult(false, folders, problems);
+
+    folders.setSources(mavenProject.getCompileSourceRoots());
+    folders.setTestSources(mavenProject.getTestCompileSourceRoots());
+    folders.setResources(MavenModelConverter.convertResources(mavenProject.getModel().getBuild().getResources()));
+    folders.setTestResources(MavenModelConverter.convertResources(mavenProject.getModel().getBuild().getTestResources()));
+
+    return new MavenEmbedderExecutionResult(true, folders, problems);
+  }
+
   private void collectProblems(@Nullable File file,
                                @NotNull Collection<? extends Exception> exceptions,
                                @NotNull List<? extends ModelProblem> modelProblems,
@@ -1805,12 +1824,12 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   @NotNull
   @Override
-  public List<MavenServerExecutionResult> execute(@NotNull Collection<MavenEmbedderExecutionRequest> requests,
+  public List<MavenEmbedderExecutionResult> execute(@NotNull Collection<MavenEmbedderExecutionRequest> requests,
                                                   @NotNull String goal,
                                                   MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);
-    List<MavenServerExecutionResult> results = new ArrayList<>();
+    List<MavenEmbedderExecutionResult> results = new ArrayList<>();
     for (MavenEmbedderExecutionRequest request : requests) {
       try {
         File file = request.file();
@@ -1818,7 +1837,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         MavenExecutionResult result =
           doExecute(file, new ArrayList<>(profiles.getEnabledProfiles()), new ArrayList<>(profiles.getDisabledProfiles()), goal);
 
-        results.add(createExecutionResult(file, result, null));
+        results.add(createEmbedderExecutionResult(file, result));
       }
       catch (Exception e) {
         throw wrapToSerializableRuntimeException(e);

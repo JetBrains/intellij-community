@@ -857,7 +857,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
     Set<MavenId> unresolvedArtifacts = new HashSet<MavenId>();
 
-    validate(file, result.getExceptions(), problems, unresolvedArtifacts);
+    collectProblems(file, result.getExceptions(), problems);
 
     MavenProject mavenProject = result.getMavenProject();
     if (mavenProject == null) return new MavenServerExecutionResult(null, problems, unresolvedArtifacts);
@@ -884,7 +884,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       }
     }
     catch (Exception e) {
-      validate(mavenProject.getFile(), Collections.singleton(e), problems, null);
+      collectProblems(mavenProject.getFile(), Collections.singleton(e), problems);
     }
 
     RemoteNativeMavenProjectHolder holder = new RemoteNativeMavenProjectHolder(mavenProject);
@@ -903,10 +903,28 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     return new MavenServerExecutionResult(data, problems, unresolvedArtifacts);
   }
 
-  private void validate(@Nullable File file,
-                        @NotNull Collection<Exception> exceptions,
-                        @NotNull Collection<MavenProjectProblem> problems,
-                        @Nullable Collection<MavenId> unresolvedArtifacts) throws RemoteException {
+  @NotNull
+  private MavenEmbedderExecutionResult createEmbedderExecutionResult(@Nullable File file, MavenExecutionResult result)
+    throws RemoteException {
+    Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
+
+    collectProblems(file, result.getExceptions(), problems);
+
+    MavenEmbedderExecutionResult.Folders folders = new MavenEmbedderExecutionResult.Folders();
+    MavenProject mavenProject = result.getMavenProject();
+    if (mavenProject == null) return new MavenEmbedderExecutionResult(false, folders, problems);
+
+    folders.setSources(mavenProject.getCompileSourceRoots());
+    folders.setTestSources(mavenProject.getTestCompileSourceRoots());
+    folders.setResources(MavenModelConverter.convertResources(mavenProject.getModel().getBuild().getResources()));
+    folders.setTestResources(MavenModelConverter.convertResources(mavenProject.getModel().getBuild().getTestResources()));
+
+    return new MavenEmbedderExecutionResult(true, folders, problems);
+  }
+
+  private void collectProblems(@Nullable File file,
+                               @NotNull Collection<Exception> exceptions,
+                               @NotNull Collection<MavenProjectProblem> problems) throws RemoteException {
     for (Throwable each : exceptions) {
       if (each == null) continue;
 
@@ -1100,19 +1118,19 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
   @NotNull
   @Override
-  public List<MavenServerExecutionResult> execute(@NotNull Collection<MavenEmbedderExecutionRequest> requests,
-                                                  @NotNull String goal,
-                                                  MavenToken token)
+  public List<MavenEmbedderExecutionResult> execute(@NotNull Collection<MavenEmbedderExecutionRequest> requests,
+                                                    @NotNull String goal,
+                                                    MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);
-    List<MavenServerExecutionResult> results = new ArrayList<>();
+    List<MavenEmbedderExecutionResult> results = new ArrayList<>();
     for (MavenEmbedderExecutionRequest request : requests) {
       File file = request.file();
       MavenExplicitProfiles profiles = request.profiles();
       MavenExecutionResult result =
         doExecute(file, new ArrayList<>(profiles.getEnabledProfiles()), new ArrayList<>(profiles.getDisabledProfiles()), goal);
 
-      results.add(createExecutionResult(file, result, null));
+      results.add(createEmbedderExecutionResult(file, result));
     }
     return results;
   }

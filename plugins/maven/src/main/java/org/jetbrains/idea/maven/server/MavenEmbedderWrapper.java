@@ -232,8 +232,8 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   }
 
   @NotNull
-  public List<MavenServerExecutionResult> execute(@NotNull Collection<MavenEmbedderExecutionRequest> requests,
-                                                  @NotNull String goal) throws MavenProcessCanceledException {
+  public List<MavenEmbedderExecutionResult> execute(@NotNull Collection<MavenEmbedderExecutionRequest> requests,
+                                                    @NotNull String goal) throws MavenProcessCanceledException {
     return performCancelable(() -> getOrCreateWrappee().execute(requests, goal, ourToken));
   }
 

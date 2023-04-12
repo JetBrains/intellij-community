@@ -59,11 +59,8 @@ public class MavenFolderResolver {
             var request = new MavenEmbedderExecutionRequest(new File(file.getPath()), profiles);
             var result = embedder.execute(List.of(request), goal).get(0);
 
-            var projectData = result.projectData;
-            if (projectData == null) continue;
-
             if (MavenUtil.shouldResetDependenciesAndFolders(result.problems)) {
-              MavenProjectChanges changes = mavenProject.setFolders(projectData.mavenModel);
+              MavenProjectChanges changes = mavenProject.setFolders(result.folders);
               tree.fireFoldersResolved(Pair.create(mavenProject, changes));
             }
           }
