@@ -231,7 +231,7 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
         if (myTargetRenderer != null) {
           navigator.presentationProvider(myTargetRenderer.get());
         }
-        navigator.navigate(event, myPopupTitle, myProject, element -> getElementProcessor(event).execute(element));
+        navigator.navigate(new RelativePoint(event), myPopupTitle, myProject, element -> getElementProcessor(event).execute(element));
         return;
       }
       PsiElement[] elements = PsiUtilCore.toPsiElementArray(getTargetElements());

@@ -68,8 +68,9 @@ class PsiTargetNavigator<T: PsiElement>(val supplier: Supplier<Collection<T>>) {
   fun navigate(e: MouseEvent, @PopupTitle title: String?, project: Project): Boolean {
     return navigate(project, title, { element -> EditSourceUtil.navigateToPsiElement(element) }, Consumer { it.show(RelativePoint(e)) })
   }
-  fun navigate(e: MouseEvent, @PopupTitle title: String?, project: Project, processor: (element: T) -> Boolean): Boolean {
-    return navigate(project, title, processor, Consumer { it.show(RelativePoint(e)) })
+
+  fun navigate(point: RelativePoint?, @PopupTitle title: String?, project: Project, processor: (element: T) -> Boolean): Boolean {
+    return navigate(project, title, processor, Consumer { if (point == null) it.showInFocusCenter() else it.show(point) })
   }
 
   private fun getPredicate(processor: PsiElementProcessor<T>) = Predicate<ItemWithPresentation> {
