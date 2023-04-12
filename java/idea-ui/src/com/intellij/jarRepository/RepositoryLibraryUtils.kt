@@ -132,11 +132,19 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
   fun resolveAllBackground(): Deferred<Boolean> {
     return runBackground(JavaUiBundle.message("repository.library.utils.progress.title.resolving.all.libraries")) {
       val snapshot = WorkspaceModel.getInstance(project).currentSnapshot
-      val failedToResolve = resolve(snapshot.entities(LibraryEntity::class.java))
-      if (failedToResolve.isNotEmpty()) showFailedToResolveNotification(failedToResolve, snapshot) { libsList, leftNotDisplayedSize ->
-        JavaUiBundle.message("repository.library.utils.notification.content.libraries.resolve.fail", libsList, leftNotDisplayedSize)
+      val libraries = snapshot.entities(LibraryEntity::class.java).toList()
+      val failedToResolve = resolve(libraries.asSequence(), reportProgress = true)
+      if (failedToResolve.isEmpty()) {
+        showNotification(JavaUiBundle.message("repository.library.utils.notification.content.libraries.resolve.success", libraries.size),
+                         NotificationType.INFORMATION)
       }
-      logger.info("resolveAllBackground complete, failed to resolve ${failedToResolve.size} libraries")
+      else {
+        logger.info("resolveAllBackground complete, failed to resolve ${failedToResolve.size} libraries")
+        showFailedToResolveNotification(failedToResolve, snapshot) { libsList, leftNotDisplayedSize ->
+          JavaUiBundle.message("repository.library.utils.notification.content.libraries.resolve.fail", libsList, leftNotDisplayedSize)
+        }
+      }
+
       failedToResolve.isEmpty()
     }
   }
@@ -185,9 +193,16 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
   /**
    * @return A list of library entities failed to resolve or an empty list if resolution is successful.
    */
-  private suspend fun resolve(libraries: Sequence<LibraryEntity>): List<LibraryEntity> {
+  private suspend fun resolve(libraries: Sequence<LibraryEntity>, reportProgress: Boolean): List<LibraryEntity> = coroutineScope {
+    val librariesAsList = libraries.toList()
+    if (librariesAsList.isEmpty()) return@coroutineScope emptyList<LibraryEntity>()
+
+    val total = librariesAsList.size
+    val completeCounter = AtomicInteger(0)
+    if (reportProgress) updateProgressDetailsFraction(completeCounter, total)
+
     val failedList: MutableList<LibraryEntity> = CopyOnWriteArrayList()
-    libraries.map { lib ->
+    librariesAsList.map { lib ->
       val entity = lib.libraryProperties ?: return@map resolvedPromise()
       val properties = entity.toRepositoryLibraryProperties() ?: return@map resolvedPromise()
 
@@ -199,9 +214,12 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
           if (it == null || it.isEmpty()) rejectedPromise() else resolvedPromise(it)
         }
       promise.onError { failedList.add(lib) }
+      if (reportProgress) promise.onProcessed { updateProgressDetailsFraction(completeCounter, total) }
       promise
-    }.toList().collectResults(ignoreErrors = true).await() // We're collecting errors manually, fail silently
-    return failedList
+    }.collectResults(ignoreErrors = true).await() // We're collecting errors manually, fail silently
+
+    if (reportProgress) resetProgressDetailsFraction()
+    return@coroutineScope failedList
   }
 
   /**
@@ -275,6 +293,18 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
     }
   }
 
+  private fun CoroutineScope.updateProgressDetailsFraction(counter: AtomicInteger, total: Int) {
+    val current = counter.get()
+    rawProgressReporterOrError.details(JavaUiBundle.message("repository.library.utils.progress.details.complete.for", current, total))
+    rawProgressReporterOrError.fraction(current.toDouble() / total)
+    counter.incrementAndGet()
+  }
+
+  private fun CoroutineScope.resetProgressDetailsFraction() {
+    rawProgressReporterOrError.details(null)
+    rawProgressReporterOrError.fraction(null)
+  }
+
   private inner class BuildExtendedLibraryPropertiesJob(
     private val buildMissingChecksums: Boolean,
     private val bindRepositories: Boolean,
@@ -305,7 +335,7 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
       // Try to resolve libraries with missing roots silently
       rawProgressReporterOrError.text(JavaUiBundle.message("repository.library.utils.progress.text.resolving.before.update"))
       logger.info("Building libraries properties progressed: library list collected, resolving before update")
-      if (!tryResolveUnresolvedLibs(entities.asSequence(), snapshot, afterPropertiesUpdate = false)) {
+      if (!tryResolveLibraries(entities.asSequence(), snapshot, afterPropertiesUpdate = false)) {
         logger.info("Building libraries properties progressed: resolving before update failed, cancelling operation")
         return@coroutineScope
       }
@@ -359,7 +389,7 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
       val snapshotAfterUpdate = workspaceModel.currentSnapshot
       val entitiesAfterUpdate = entities.mapNotNull { snapshotAfterUpdate.resolve(it.library.symbolicId)?.libraryProperties }
 
-      if (tryResolveUnresolvedLibs(entitiesAfterUpdate.asSequence(), snapshotAfterUpdate, afterPropertiesUpdate = true)) {
+      if (tryResolveLibraries(entitiesAfterUpdate.asSequence(), snapshotAfterUpdate, afterPropertiesUpdate = true)) {
         logger.info("Building libraries properties complete: ${updatedCounter.get()} libraries updated successfully")
         showNotification(
           JavaUiBundle.message("repository.library.utils.notification.content.library.properties.built", updatedCounter.get()),
@@ -370,30 +400,19 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
       }
     }
 
-    private fun CoroutineScope.updateProgressDetailsFraction(counter: AtomicInteger, total: Int) {
-      val current = counter.get()
-      rawProgressReporterOrError.details(JavaUiBundle.message("repository.library.utils.progress.details.complete.for", current, total))
-      rawProgressReporterOrError.fraction(current.toDouble() / total)
-      counter.incrementAndGet()
-    }
-
-    private fun CoroutineScope.resetProgressDetailsFraction() {
-      rawProgressReporterOrError.details(null)
-      rawProgressReporterOrError.fraction(null)
-    }
-
     private fun LibraryEntity.getHashableRoots() =
       roots.asSequence().filter { it.type == LibraryRootTypeId.COMPILED }.map { JpsPathUtil.urlToFile(it.url.url) }
 
     private fun LibraryEntity.isCompiledArtifactsResolved() = getHashableRoots().all { it.exists() }
 
-    private suspend fun tryResolveUnresolvedLibs(entities: Sequence<LibraryPropertiesEntity>,
-                                                 snapshot: EntityStorage,
-                                                 afterPropertiesUpdate: Boolean): Boolean {
-      // forcibly re-resolve libraries after property update to ensure bind repositories are guessed correctly
+    private suspend fun tryResolveLibraries(entities: Sequence<LibraryPropertiesEntity>,
+                                            snapshot: EntityStorage,
+                                            afterPropertiesUpdate: Boolean): Boolean {
+      // re-resolve libraries before update to ensure compile artifacts present and after update to ensure the library can be
+      // resolved from bind repository
       val failedList =
-        if (afterPropertiesUpdate) resolve(entities.map { it.library })
-        else resolve(entities.map { it.library }.filter { !it.isCompiledArtifactsResolved() })
+        if (afterPropertiesUpdate) resolve(entities.map { it.library }, reportProgress = true)
+        else resolve(entities.map { it.library }.filter { !it.isCompiledArtifactsResolved() }, reportProgress = true)
 
       if (failedList.isNotEmpty()) showFailedToResolveNotification(failedList, snapshot) { libsList, leftNotDisplayedSize ->
         if (afterPropertiesUpdate) JavaUiBundle.message(
