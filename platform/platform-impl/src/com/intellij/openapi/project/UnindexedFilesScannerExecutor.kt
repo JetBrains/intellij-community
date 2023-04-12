@@ -76,7 +76,7 @@ class UnindexedFilesScannerExecutor(project: Project)
 
   fun cancelAllTasksAndWait() {
     cancelAllTasks() // this also cancels running task even if they paused by ProgressSuspender
-    while (isRunning().value && !project.isDisposed) {
+    while (isRunning.value && !project.isDisposed) {
       PingProgress.interactWithEdtProgress()
       LockSupport.parkNanos(50_000_000)
     }

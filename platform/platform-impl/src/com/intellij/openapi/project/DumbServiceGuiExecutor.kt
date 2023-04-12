@@ -20,6 +20,9 @@ class DumbServiceGuiExecutor(project: Project, queue: DumbServiceMergingTaskQueu
   : MergingQueueGuiExecutor<DumbModeTask>(project, queue, listener,
                                           IndexingBundle.message("progress.indexing"),
                                           IndexingBundle.message("progress.indexing.paused")) {
+
+  internal fun guiSuspender(): MergingQueueGuiSuspender = super.guiSuspender
+
   override fun processTasksWithProgress(suspender: ProgressSuspender,
                                         visibleIndicator: ProgressIndicator,
                                         parentActivity: StructuredIdeActivity?): SubmissionReceipt? {

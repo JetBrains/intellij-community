@@ -10,6 +10,7 @@ import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt
 import com.intellij.openapi.project.MergingTaskQueueTest.LoggingTask
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.testFramework.ProjectRule
 import com.intellij.util.SystemProperties
 import junit.framework.TestCase
@@ -111,10 +112,19 @@ class MergingQueueGuiExecutorTest {
   private lateinit var project: Project
   private lateinit var testDisposable: CheckedDisposable
 
-  companion object{
+  companion object {
     @ClassRule
     @JvmField
     val p: ProjectRule = ProjectRule(true, false, null)
+  }
+
+  private class BareMergingQueueGuiExecutor<T : MergeableQueueTask<T>>(project: Project,
+                                                                       taskQueue: MergingTaskQueue<T>,
+                                                                       listener: ExecutorStateListener,
+                                                                       progressTitle: @NlsContexts.ProgressTitle String,
+                                                                       suspendedText: @NlsContexts.ProgressText String
+  ) : MergingQueueGuiExecutor<T>(project, taskQueue, listener, progressTitle, suspendedText) {
+    fun guiSuspender() = super.guiSuspender
   }
 
   @Before
@@ -135,7 +145,7 @@ class MergingQueueGuiExecutorTest {
     val exceptionRef = AtomicReference<Throwable>()
     val listener = ValidatingListener(exceptionRef)
     val queue = MergingTaskQueue<LoggingTask>()
-    val executor = MergingQueueGuiExecutor(
+    val executor = BareMergingQueueGuiExecutor(
       project, queue, listener, "title", "suspend"
     )
 
@@ -168,7 +178,7 @@ class MergingQueueGuiExecutorTest {
     val exceptionRef = AtomicReference<Throwable>()
     val listener = ValidatingListener(exceptionRef)
     val queue = MergingTaskQueue<WaitingTask>()
-    val executor = MergingQueueGuiExecutor(
+    val executor = BareMergingQueueGuiExecutor(
       project, queue, listener, "title", "suspend"
     )
 
@@ -197,7 +207,7 @@ class MergingQueueGuiExecutorTest {
     val exceptionRef = AtomicReference<Throwable>()
     val listener = ValidatingListener(exceptionRef)
     val queue = MergingTaskQueue<LoggingTask>()
-    val executor = MergingQueueGuiExecutor(
+    val executor = BareMergingQueueGuiExecutor(
       project, queue, listener, "title", "suspend"
     )
 
@@ -225,12 +235,12 @@ class MergingQueueGuiExecutorTest {
     executor.startBackgroundProcess()
     firstTaskPhaser.arriveAndAwaitAdvanceWithTimeout() // 1 background task started
 
-    executor.guiSuspender.suspendAndRun("Suspended in test to check cancellation", Runnable {
+    executor.guiSuspender().suspendAndRun("Suspended in test to check cancellation", Runnable {
       firstTaskPhaser.arriveAndAwaitAdvanceWithTimeout() // 2
       Thread.sleep(10) // wait a bit to make sure that background thread suspends
 
       queue.cancelAllTasks()
-      executor.guiSuspender.resumeProgressIfPossible()
+      executor.guiSuspender().resumeProgressIfPossible()
       waitForExecutorToCompleteSubmittedTasks(executor, 3)
 
       assertEquals(1, performLog.size, "first task should start, second should not")
@@ -250,7 +260,7 @@ class MergingQueueGuiExecutorTest {
     val exceptionRef = AtomicReference<Throwable>()
     val listener = ValidatingListener(exceptionRef)
     val queue = MergingTaskQueue<LoggingTask>()
-    val executor = MergingQueueGuiExecutor(
+    val executor = BareMergingQueueGuiExecutor(
       project, queue, listener, "title", "suspend"
     )
 
@@ -291,7 +301,7 @@ class MergingQueueGuiExecutorTest {
     val queue = MergingTaskQueue<LoggingTask>()
     val id = AtomicInteger()
     val listener = ValidatingListener(exceptionRef)
-    val executor = MergingQueueGuiExecutor(
+    val executor = BareMergingQueueGuiExecutor(
       project, queue, listener, "title", "suspend"
     )
 
@@ -330,7 +340,7 @@ class MergingQueueGuiExecutorTest {
 
     val listener = PhasedListener(exceptionRef, phaser)
     val queue = MergingTaskQueue<LoggingTask>()
-    val executor = MergingQueueGuiExecutor(
+    val executor = BareMergingQueueGuiExecutor(
       project, queue, listener, "title", "suspend"
     )
 

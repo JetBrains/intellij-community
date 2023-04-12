@@ -121,7 +121,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       myProject.service<DumbServiceScanningListener>().subscribe()
     }
     if (Registry.`is`("vfs.refresh.should.pause.dumb.queue", true)) {
-      DumbServiceVfsBatchListener(myProject, myGuiDumbTaskRunner.guiSuspender)
+      DumbServiceVfsBatchListener(myProject, myGuiDumbTaskRunner.guiSuspender())
     }
     myBalloon = DumbServiceBalloon(myProject, this)
     myAlternativeResolveTracker = DumbServiceAlternativeResolveTracker()
@@ -162,7 +162,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   }
 
   override suspend fun suspendIndexingAndRun(activityName: @NlsContexts.ProgressText String, activity: suspend () -> Unit) {
-    myGuiDumbTaskRunner.guiSuspender.suspendAndRun(activityName, activity)
+    myGuiDumbTaskRunner.guiSuspender().suspendAndRun(activityName, activity)
   }
 
   override var isDumb: Boolean
@@ -306,7 +306,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       // isRunning will be false eventually, because we are on EDT, and no new task can be queued outside the EDT
       // (we only wait for currently running task to terminate).
       myGuiDumbTaskRunner.cancelAllTasks()
-      while (myGuiDumbTaskRunner.isRunning().value && !myProject.isDisposed) {
+      while (myGuiDumbTaskRunner.isRunning.value && !myProject.isDisposed) {
         PingProgress.interactWithEdtProgress()
         LockSupport.parkNanos(50000000)
       }
