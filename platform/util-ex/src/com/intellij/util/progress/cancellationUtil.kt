@@ -68,6 +68,12 @@ fun <T> Lock.withLockCancellable(action: () -> T): T {
 
 @RequiresBackgroundThread(generateAssertion = false)
 @RequiresBlockingContext
+fun Lock.withLockCancellable(action: Runnable) {
+  withLockCancellable(action::run)
+}
+
+@RequiresBackgroundThread(generateAssertion = false)
+@RequiresBlockingContext
 fun pollCancellable(waiter: () -> Boolean) {
   runBlockingCancellable {
     while (true) {
