@@ -52,11 +52,11 @@ public class MavenFolderResolver {
           process.setText(MavenProjectBundle.message("maven.updating.folders.pom", mavenProject.getDisplayName()));
           process.setText2("");
 
-          var file = mavenProject.getFile();
+          var file = new File(mavenProject.getFile().getPath());
           var profiles = mavenProject.getActivatedProfilesIds();
 
           try {
-            var request = new MavenEmbedderExecutionRequest(new File(file.getPath()), profiles);
+            var request = new MavenEmbedderExecutionRequest(file, profiles);
             var result = embedder.execute(List.of(request), goal).get(0);
 
             if (MavenUtil.shouldResetDependenciesAndFolders(result.problems)) {
