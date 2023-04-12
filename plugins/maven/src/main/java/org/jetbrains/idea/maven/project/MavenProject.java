@@ -31,7 +31,6 @@ import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
 import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.plugins.api.MavenModelPropertiesPatcher;
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.*;
 
@@ -226,7 +225,8 @@ public class MavenProject {
     state.myAnnotationProcessors = new ArrayList<>(newAnnotationProcessors);
   }
 
-  private MavenProjectChanges setFolders(MavenProjectReaderResult readerResult) {
+  @ApiStatus.Internal
+  public MavenProjectChanges setFolders(MavenProjectReaderResult readerResult) {
     State newState = myState.clone();
     doSetFolders(newState, readerResult);
     return setState(newState);
@@ -652,21 +652,6 @@ public class MavenProject {
                                            @NotNull MavenProjectReader reader,
                                            @NotNull MavenProjectReaderProjectLocator locator) {
     return set(reader.readProject(generalSettings, myFile, profiles, locator), generalSettings, true, false, true);
-  }
-
-  public @NotNull Pair<Boolean, MavenProjectChanges> resolveFolders(@NotNull MavenEmbedderWrapper embedder,
-                                                                    @NotNull MavenImportingSettings importingSettings,
-                                                                    @NotNull MavenConsole console) {
-    MavenProjectReaderResult result = MavenProjectReader.generateSources(embedder,
-                                                                         importingSettings,
-                                                                         getFile(),
-                                                                         getActivatedProfilesIds(),
-                                                                         console);
-    if (result == null || !MavenProjectReaderResult.shouldResetDependenciesAndFolders(result)) {
-      return Pair.create(false, MavenProjectChanges.NONE);
-    }
-    MavenProjectChanges changes = setFolders(result);
-    return Pair.create(true, changes);
   }
 
   public void resetCache() {

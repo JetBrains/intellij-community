@@ -21,9 +21,15 @@ public class MavenFolderResolver {
         process.setText(MavenProjectBundle.message("maven.updating.folders.pom", mavenProject.getDisplayName()));
         process.setText2("");
 
-        var resolveResult = mavenProject.resolveFolders(embedder, importingSettings, console);
-        if (resolveResult.first) {
-          tree.fireFoldersResolved(Pair.create(mavenProject, resolveResult.second));
+        MavenProjectReaderResult result = MavenProjectReader.generateSources(embedder,
+                                                                             importingSettings,
+                                                                             mavenProject.getFile(),
+                                                                             mavenProject.getActivatedProfilesIds(),
+                                                                             console);
+
+        if (result != null && MavenProjectReaderResult.shouldResetDependenciesAndFolders(result)) {
+          MavenProjectChanges changes = mavenProject.setFolders(result);
+          tree.fireFoldersResolved(Pair.create(mavenProject, changes));
         }
       }
     };
