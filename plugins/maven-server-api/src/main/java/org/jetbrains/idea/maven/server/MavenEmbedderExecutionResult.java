@@ -22,7 +22,7 @@ public class MavenEmbedderExecutionResult implements Serializable {
     this.problems = problems;
   }
 
-  public static class Folders {
+  public static class Folders implements Serializable {
     private List<String> mySources = Collections.emptyList();
     private List<String> myTestSources = Collections.emptyList();
     private List<MavenResource> myResources = Collections.emptyList();
