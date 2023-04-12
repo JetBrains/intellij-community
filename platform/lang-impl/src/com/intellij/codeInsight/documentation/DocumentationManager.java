@@ -1820,7 +1820,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           return HtmlChunk.p().children(
             GRAYED_ELEMENT.addText(CodeInsightBundle.message("documentation.file.scope.label")),
             HtmlChunk.nbsp(),
-            HtmlChunk.span().attr("bgcolor", ColorUtil.toHex(color)).addText(scope.getPresentableName())
+            HtmlChunk.span().attr("bgcolor", "#" + ColorUtil.toHex(color)).addText(scope.getPresentableName())
           );
         }
       }
