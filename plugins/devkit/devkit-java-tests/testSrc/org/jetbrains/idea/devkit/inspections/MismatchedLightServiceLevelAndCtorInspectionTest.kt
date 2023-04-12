@@ -10,7 +10,6 @@ import org.jetbrains.idea.devkit.inspections.quickfix.MismatchedLightServiceLeve
 internal class MismatchedLightServiceLevelAndCtorInspectionTest : MismatchedLightServiceLevelAndCtorInspectionTestBase() {
 
   private val NO_ARG_CTOR_FIX_NAME = QuickFixBundle.message("change.method.parameters.text", "()")
-  private val COROUTINE_SCOPE_PARAM_CTOR_FIX_NAME = QuickFixBundle.message("change.method.parameters.text", "(CoroutineScope scope)")
 
   override fun getBasePath() = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/mismatchedLightServiceLevelAndCtor/"
 
@@ -25,6 +24,4 @@ internal class MismatchedLightServiceLevelAndCtorInspectionTest : MismatchedLigh
   fun testFromEmptyArrayToProjectLevel() { doTest(annotateAsServiceFixName) }
 
   fun testRemoveProjectParam() { doTest(NO_ARG_CTOR_FIX_NAME) }
-
-  fun testChangeParamToCoroutineScope() { doTest(COROUTINE_SCOPE_PARAM_CTOR_FIX_NAME) }
 }

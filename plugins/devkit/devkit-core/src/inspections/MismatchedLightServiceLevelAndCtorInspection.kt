@@ -3,18 +3,21 @@ package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.lang.jvm.*
-import com.intellij.lang.jvm.actions.*
+import com.intellij.lang.jvm.actions.constantAttribute
+import com.intellij.lang.jvm.actions.createChangeAnnotationAttributeActions
+import com.intellij.lang.jvm.actions.createChangeParametersActions
+import com.intellij.lang.jvm.actions.setMethodParametersRequest
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME
-import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiJavaCodeReferenceElement
+import com.intellij.psi.PsiType
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.idea.devkit.DevKitBundle
 
 internal class MismatchedLightServiceLevelAndCtorInspection : DevKitJvmInspection() {
-
-  private val COROUTINE_SCOPE_PARAM_NAME = "scope"
 
   override fun buildVisitor(project: Project, sink: HighlightSink, isOnTheFly: Boolean): JvmElementVisitor<Boolean> {
     return object : DefaultJvmElementVisitor<Boolean> {
@@ -67,13 +70,7 @@ internal class MismatchedLightServiceLevelAndCtorInspection : DevKitJvmInspectio
       }
 
       private fun registerProblemApplicationLevelRequired(method: JvmMethod, file: PsiFile) {
-        val elementFactory = PsiElementFactory.getInstance(project)
-        val coroutineScopeType = elementFactory.createTypeByFQClassName(CoroutineScope::class.java.canonicalName,
-                                                                        GlobalSearchScope.allScope(project))
-        val methodParametersRequest: ChangeParametersRequest = setMethodParametersRequest(
-          linkedMapOf(COROUTINE_SCOPE_PARAM_NAME to coroutineScopeType).entries)
-        val actions = createChangeParametersActions(method, setMethodParametersRequest(emptyList())) + createChangeParametersActions(
-          method, methodParametersRequest)
+        val actions = createChangeParametersActions(method, setMethodParametersRequest(emptyList()))
         val fixes = IntentionWrapper.wrapToQuickFixes(actions.toTypedArray(), file)
         val message = DevKitBundle.message("inspection.mismatched.light.service.level.and.ctor.app.level.ctor.required")
         sink.highlight(message, *fixes)

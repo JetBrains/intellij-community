@@ -2,9 +2,7 @@
 package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
-import com.intellij.openapi.project.Project
 import com.intellij.testFramework.TestDataPath
-import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.idea.devkit.inspections.quickfix.MismatchedLightServiceLevelAndCtorInspectionTestBase
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 
@@ -24,8 +22,4 @@ internal class KtMismatchedLightServiceLevelAndCtorInspectionTest : MismatchedLi
   fun testFromEmptyArrayToProjectLevel() { doTest(annotateAsServiceFixName) }
 
   fun testRemoveProjectParam() { doTest(QuickFixBundle.message("remove.parameter.from.usage.text", 1, "parameter", "constructor", "MyService")) }
-
-  fun testChangeParamToCoroutineScope() {
-    doTest(QuickFixBundle.message("change.parameter.from.usage.text", 1, "parameter", "constructor", "MyService", Project::class.java.simpleName,
-                             CoroutineScope::class.java.simpleName)) }
 }
