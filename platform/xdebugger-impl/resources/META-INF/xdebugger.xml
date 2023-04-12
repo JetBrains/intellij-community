@@ -122,11 +122,17 @@
       <add-to-group group-id="RunMenu" anchor="before" relative-to-action="editRunConfigurations"/>
     </group>
 
-    <group id="RunToolbarDebugMoreActionGroupName">
+    <group>
       <separator text="Debug"/>
       <group id="RunToolbarDebugMoreActionSubGroupName"/>
       <reference ref="XDebugger.AttachGroup"/>
-      <add-to-group group-id="RunToolbarMainMoreActionGroup"/>
+      <add-to-group group-id="RunToolbarMainMoreActionGroup" anchor="last"/>
+    </group>
+
+    <group>
+      <separator text="Debug"/>
+      <reference ref="XDebugger.AttachGroup"/>
+      <add-to-group group-id="AdditionalRunningOptionsGroupMain"/>
     </group>
 
     <group id="RunToolbarDebuggerAdditionalActions">

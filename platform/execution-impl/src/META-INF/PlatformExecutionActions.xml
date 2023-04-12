@@ -55,6 +55,10 @@
 
     <group id="RunTab.TopToolbar.More" class="com.intellij.openapi.actionSystem.impl.MoreActionGroup"/>
 
+    <!-- New UI Run Widget -->
+    <group id="AdditionalRunningOptionsGroup" popup="false"/>
+    <group id="AdditionalRunningOptionsGroupMain" popup="false"/>
+
   </actions>
   <extensions defaultExtensionNs="com.intellij">
     <actionPromoter implementation="com.intellij.execution.runToolbar.RunToolbarActionPromoter"/>
