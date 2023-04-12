@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.fir.resolve
 
 import org.jetbrains.kotlin.idea.resolve.AbstractReferenceResolveWithCompiledLibTest
+import org.jetbrains.kotlin.idea.resolve.AbstractReferenceResolveWithCrossLibTest
 import org.jetbrains.kotlin.idea.resolve.AbstractReferenceResolveWithLibTest
 
 abstract class AbstractFirReferenceResolveWithLibTest : AbstractReferenceResolveWithLibTest() {
@@ -10,5 +11,9 @@ abstract class AbstractFirReferenceResolveWithLibTest : AbstractReferenceResolve
 }
 
 abstract class AbstractFirReferenceResolveWithCompiledLibTest : AbstractReferenceResolveWithCompiledLibTest() {
+    override fun isFirPlugin(): Boolean = true
+}
+
+abstract class AbstractFirReferenceResolveWithCrossLibTest : AbstractReferenceResolveWithCrossLibTest() {
     override fun isFirPlugin(): Boolean = true
 }

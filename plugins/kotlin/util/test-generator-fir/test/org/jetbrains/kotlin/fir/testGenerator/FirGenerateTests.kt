@@ -89,6 +89,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("resolve/referenceWithLib", pattern = DIRECTORY, isRecursive = false)
         }
 
+        testClass<AbstractFirReferenceResolveWithCrossLibTest> {
+            model("resolve/referenceWithLib", pattern = DIRECTORY, isRecursive = false)
+        }
+
         testClass<AbstractFirReferenceResolveInJavaTest> {
             model("resolve/referenceInJava/binaryAndSource", pattern = JAVA)
             model("resolve/referenceInJava/sourceOnly", pattern = JAVA)
