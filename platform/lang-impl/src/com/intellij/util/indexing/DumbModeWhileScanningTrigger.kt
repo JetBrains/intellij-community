@@ -13,6 +13,7 @@ import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.CountDownLatch
 
 class DumbModeWhileScanningSubscriber : StartupActivity.RequiredForSmartMode {
@@ -27,6 +28,12 @@ class DumbModeWhileScanningSubscriber : StartupActivity.RequiredForSmartMode {
   }
 }
 
+/**
+ * Tracks [PerProjectIndexingQueue] state and starts dumb mode if too many dirty files in the queue.
+ * You don't need this service except for statistics, because dumb mode can start for many different reasons, not only because of scanning.
+ * Use [com.intellij.openapi.project.DumbService] to schedule tasks in smart mode.
+ */
+@Internal
 @Service(Service.Level.PROJECT)
 class DumbModeWhileScanningTrigger(private val project: Project, private val cs: CoroutineScope) {
   private val dumbModeForScanningIsActive = MutableStateFlow(false)
