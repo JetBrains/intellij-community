@@ -232,12 +232,9 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   }
 
   @NotNull
-  public MavenServerExecutionResult execute(@NotNull VirtualFile file,
-                                            @NotNull Collection<String> activeProfiles,
-                                            @NotNull Collection<String> inactiveProfiles,
-                                            @NotNull String goal) throws MavenProcessCanceledException {
-    return performCancelable(() -> getOrCreateWrappee()
-      .execute(new File(file.getPath()), activeProfiles, inactiveProfiles, goal, ourToken));
+  public List<MavenServerExecutionResult> execute(@NotNull Collection<MavenEmbedderExecutionRequest> requests,
+                                                  @NotNull String goal) throws MavenProcessCanceledException {
+    return performCancelable(() -> getOrCreateWrappee().execute(requests, goal, ourToken));
   }
 
   @NotNull

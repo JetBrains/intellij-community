@@ -4,13 +4,16 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
+import org.jetbrains.idea.maven.server.MavenEmbedderExecutionRequest;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
+import java.io.File;
 import java.util.Collection;
+import java.util.List;
 
 public class MavenFolderResolver {
   public void resolveFolders(@NotNull Collection<MavenProject> mavenProjects,
@@ -40,6 +43,8 @@ public class MavenFolderResolver {
                               @NotNull MavenEmbeddersManager embeddersManager,
                               @NotNull MavenConsole console,
                               @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
+    var goal = importingSettings.getUpdateFoldersOnImportPhase();
+
     var task = new MavenEmbeddersManager.EmbedderTask() {
       @Override
       public void run(MavenEmbedderWrapper embedder) throws MavenProcessCanceledException {
@@ -52,9 +57,8 @@ public class MavenFolderResolver {
           var profiles = mavenProject.getActivatedProfilesIds();
 
           try {
-            var goal = importingSettings.getUpdateFoldersOnImportPhase();
-
-            var result = embedder.execute(file, profiles.getEnabledProfiles(), profiles.getDisabledProfiles(), goal);
+            var request = new MavenEmbedderExecutionRequest(new File(file.getPath()), profiles);
+            var result = embedder.execute(List.of(request), goal).get(0);
 
             var projectData = result.projectData;
             if (projectData == null) continue;

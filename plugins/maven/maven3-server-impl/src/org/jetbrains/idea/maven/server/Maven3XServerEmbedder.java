@@ -1805,22 +1805,26 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   @NotNull
   @Override
-  public MavenServerExecutionResult execute(@NotNull File file,
-                                            @NotNull Collection<String> activeProfiles,
-                                            @NotNull Collection<String> inactiveProfiles,
-                                            @NotNull String goal,
-                                            MavenToken token)
+  public List<MavenServerExecutionResult> execute(@NotNull Collection<MavenEmbedderExecutionRequest> requests,
+                                                  @NotNull String goal,
+                                                  MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);
-    try {
-      MavenExecutionResult result =
-        doExecute(file, new ArrayList<>(activeProfiles), new ArrayList<>(inactiveProfiles), goal);
+    List<MavenServerExecutionResult> results = new ArrayList<>();
+    for (MavenEmbedderExecutionRequest request : requests) {
+      try {
+        File file = request.file();
+        MavenExplicitProfiles profiles = request.profiles();
+        MavenExecutionResult result =
+          doExecute(file, new ArrayList<>(profiles.getEnabledProfiles()), new ArrayList<>(profiles.getDisabledProfiles()), goal);
 
-      return createExecutionResult(file, result, null);
+        results.add(createExecutionResult(file, result, null));
+      }
+      catch (Exception e) {
+        throw wrapToSerializableRuntimeException(e);
+      }
     }
-    catch (Exception e) {
-      throw wrapToSerializableRuntimeException(e);
-    }
+    return results;
   }
 
   private MavenExecutionResult doExecute(@NotNull final File file,
