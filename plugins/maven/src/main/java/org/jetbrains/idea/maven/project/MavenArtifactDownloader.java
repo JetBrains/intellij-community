@@ -6,8 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -20,7 +18,6 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -71,11 +68,11 @@ public final class MavenArtifactDownloader {
                                                             @NotNull MavenEmbeddersManager embeddersManager,
                                                             @NotNull MavenConsole console)
     throws MavenProcessCanceledException {
-    MultiMap<Path, MavenProject> projectMultiMap = groupByBasedir(myMavenProjects);
+    var projectMultiMap = MavenUtil.groupByBasedir(myMavenProjects, myProjectsTree);
     DownloadResult result = new DownloadResult();
-    for (Map.Entry<Path, Collection<MavenProject>> entry : projectMultiMap.entrySet()) {
-      String baseDir = entry.getKey().toString();
-      MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD, baseDir);
+    for (var entry : projectMultiMap.entrySet()) {
+      var baseDir = entry.getKey();
+      var embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD, baseDir);
       try {
         embedder.customizeForResolve(console, myProgress, false, null, null);
         var result1 = download(embedder, downloadSources, downloadDocs);
@@ -94,11 +91,6 @@ public final class MavenArtifactDownloader {
       }
     }
     return result;
-  }
-
-  @NotNull
-  private MultiMap<Path, MavenProject> groupByBasedir(@NotNull Collection<MavenProject> projects) {
-    return ContainerUtil.groupBy(projects, p -> MavenUtil.getBaseDir(myProjectsTree.findRootProject(p).getDirectoryFile()));
   }
 
   private DownloadResult download(MavenEmbedderWrapper embedder, boolean downloadSources, boolean downloadDocs)

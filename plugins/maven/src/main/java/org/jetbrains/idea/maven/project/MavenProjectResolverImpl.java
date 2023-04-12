@@ -42,7 +42,7 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
                                               @NotNull MavenConsole console,
                                               @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
     var projectsWithUnresolvedPlugins = new HashMap<String, Collection<MavenProjectWithHolder>>();
-    MultiMap<String, MavenProject> projectMultiMap = groupByBasedir(mavenProjects);
+    MultiMap<String, MavenProject> projectMultiMap = MavenUtil.groupByBasedir(mavenProjects, getProjectsTree());
 
     for (var entry : projectMultiMap.entrySet()) {
       String baseDir = entry.getKey();
@@ -175,11 +175,6 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
         projectsWithUnresolvedPlugins.add(new MavenProjectWithHolder(mavenProjectCandidate, nativeMavenProject));
       }
     }
-  }
-
-  @NotNull
-  private MultiMap<String, MavenProject> groupByBasedir(@NotNull Collection<MavenProject> projects) {
-    return ContainerUtil.groupBy(projects, p -> MavenUtil.getBaseDir(getProjectsTree().findRootProject(p).getDirectoryFile()).toString());
   }
 }
 
