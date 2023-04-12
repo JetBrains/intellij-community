@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation.render
 
 import com.intellij.codeInsight.documentation.DocumentationManager
@@ -13,9 +13,7 @@ import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.ui.popup.PopupFactoryImpl
 import java.awt.geom.Rectangle2D
-import javax.swing.JEditorPane
 import javax.swing.event.HyperlinkEvent
-import javax.swing.text.BadLocationException
 
 internal object DocRenderDefaultLinkActivationHandler : DocRenderLinkActivationHandler {
   override fun activateLink(event: HyperlinkEvent, renderer: DocRenderer) {
