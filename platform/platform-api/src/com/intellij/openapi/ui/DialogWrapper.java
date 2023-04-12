@@ -228,7 +228,7 @@ public abstract class DialogWrapper {
     myCreateSouthSection = createSouth;
     initResizeListener();
     createDefaultActions();
-    if(myPeer.getWindow() != null) {
+    if(myPeer.getWindow() != null && LoadingState.COMPONENTS_LOADED.isOccurred()) {
       ToolbarUtil.setTransparentTitleBar(myPeer.getWindow(), myPeer.getRootPane(),
                                          runnable -> Disposer.register(myDisposable, () -> runnable.run()));
     }
