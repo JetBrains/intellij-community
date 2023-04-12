@@ -15547,6 +15547,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryClassTwoMarkers.kt");
         }
 
+        @TestMetadata("necessaryCompanion.kt")
+        public void testNecessaryCompanion() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryCompanion.kt");
+        }
+
         @TestMetadata("necessaryDerivedClass.kt")
         public void testNecessaryDerivedClass() throws Exception {
             runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryDerivedClass.kt");

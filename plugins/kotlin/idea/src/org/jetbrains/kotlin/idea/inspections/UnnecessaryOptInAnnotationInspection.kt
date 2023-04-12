@@ -9,10 +9,8 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.config.ApiVersion
-import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
@@ -284,6 +282,14 @@ private class MarkerCollector(private val resolutionFacade: ResolutionFacade) {
      * @param moduleApiVersion the API version of the current module to check `@WasExperimental` annotations
      */
     private fun DeclarationDescriptor.collectMarkers(moduleApiVersion: ApiVersion) {
+        annotations.collectMarkers(moduleApiVersion, module)
+        if (isCompanionObject()) {
+            containingDeclaration?.let { it.annotations.collectMarkers(moduleApiVersion, it.module) }
+        }
+    }
+
+    private fun Annotations.collectMarkers(moduleApiVersion: ApiVersion, module: ModuleDescriptor) {
+        val annotations = this
         for (ann in annotations) {
             val annotationFqName = ann.fqName ?: continue
             val annotationClass = ann.annotationClass ?: continue
