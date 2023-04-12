@@ -39,7 +39,6 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
   internal val artifactWithDiffs: MutableList<ArtifactBridge> = mutableListOf()
 
   init {
-    (ArtifactPointerManager.getInstance(project) as ArtifactPointerManagerImpl).setArtifactManager(this)
     DynamicArtifactExtensionsLoaderBridge(this).installListeners(this)
   }
 
