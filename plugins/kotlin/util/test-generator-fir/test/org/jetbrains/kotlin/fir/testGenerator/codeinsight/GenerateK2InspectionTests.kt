@@ -58,6 +58,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/quickfix/redundantModalityModifier", pattern = pattern)
             model("${idea}/quickfix/removeToStringInStringTemplate", pattern = pattern)
             model("${idea}/quickfix/suppress", pattern = pattern)
+            model("${idea}/quickfix/removeAnnotation", pattern = pattern)
             model("${idea}/quickfix/protectedInFinal", pattern = pattern)
         }
     }

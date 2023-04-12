@@ -1,0 +1,46 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
+package org.jetbrains.kotlin.idea.inspections
+
+import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinPsiOnlyQuickFixAction
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.PsiElementSuitabilityCheckers
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtFile
+
+class RemoveAnnotationFix(@Nls private val text: String, annotationEntry: KtAnnotationEntry) :
+    KotlinPsiOnlyQuickFixAction<KtAnnotationEntry>(annotationEntry) {
+
+    override fun getText() = text
+
+    override fun getFamilyName() = text
+
+    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
+        element?.delete()
+    }
+
+    object JvmOverloads : QuickFixesPsiBasedFactory<KtAnnotationEntry>(KtAnnotationEntry::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
+        override fun doCreateQuickFix(psiElement: KtAnnotationEntry): List<IntentionAction> =
+            listOf(RemoveAnnotationFix(KotlinBundle.message("remove.jvmoverloads.annotation"), psiElement))
+    }
+
+    object JvmField : QuickFixesPsiBasedFactory<KtAnnotationEntry>(KtAnnotationEntry::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
+        override fun doCreateQuickFix(psiElement: KtAnnotationEntry): List<IntentionAction> =
+            listOf(RemoveAnnotationFix(KotlinBundle.message("remove.jvmfield.annotation"), psiElement))
+    }
+
+    object ExtensionFunctionType : QuickFixesPsiBasedFactory<KtAnnotationEntry>(KtAnnotationEntry::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
+        override fun doCreateQuickFix(psiElement: KtAnnotationEntry): List<IntentionAction> =
+            listOf(RemoveAnnotationFix(KotlinBundle.message("remove.extension.function.type.annotation"), psiElement))
+    }
+
+    companion object : QuickFixesPsiBasedFactory<KtAnnotationEntry>(KtAnnotationEntry::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
+        override fun doCreateQuickFix(psiElement: KtAnnotationEntry): List<IntentionAction> =
+            listOf(RemoveAnnotationFix(KotlinBundle.message("fix.remove.annotation.text"), annotationEntry = psiElement))
+    }
+}

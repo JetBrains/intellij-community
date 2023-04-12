@@ -733,6 +733,44 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/removeAnnotation")
+    public static class RemoveAnnotation extends AbstractK2QuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("jvmField.kt")
+        public void testJvmField() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeAnnotation/jvmField.kt");
+        }
+
+        @TestMetadata("jvmFieldOnOverridingProperty.kt")
+        public void testJvmFieldOnOverridingProperty() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeAnnotation/jvmFieldOnOverridingProperty.kt");
+        }
+
+        @TestMetadata("jvmOverloads.kt")
+        public void testJvmOverloads() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeAnnotation/jvmOverloads.kt");
+        }
+
+        @TestMetadata("jvmOverloadsOnAnnotationClassConstructor.kt")
+        public void testJvmOverloadsOnAnnotationClassConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeAnnotation/jvmOverloadsOnAnnotationClassConstructor.kt");
+        }
+
+        @TestMetadata("wrongExtenstionFunctionType.kt")
+        public void testWrongExtenstionFunctionType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeAnnotation/wrongExtenstionFunctionType.kt");
+        }
+
+        @TestMetadata("wrongExtenstionFunctionTypeWarning.kt")
+        public void testWrongExtenstionFunctionTypeWarning() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeAnnotation/wrongExtenstionFunctionTypeWarning.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/protectedInFinal")
     public static class ProtectedInFinal extends AbstractK2QuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
