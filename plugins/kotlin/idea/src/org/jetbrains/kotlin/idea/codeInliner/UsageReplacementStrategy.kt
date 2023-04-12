@@ -86,7 +86,15 @@ fun UsageReplacementStrategy.replaceUsages(usages: Collection<KtReferenceExpress
 
         file.forEachDescendantOfType<KtSimpleNameExpression> { it.putCopyableUserData(UsageReplacementStrategy.KEY, null) }
 
+        if (importsToDelete.isEmpty()) continue
+
         importsToDelete.forEach { it.delete() }
+        val importList = (file as? KtFile)?.importList
+        if (importList != null && importList.imports.isEmpty()) {
+            val newList = importList.copy()
+            importList.delete()
+            file.addAfter(newList, file.packageDirective)
+        }
     }
 }
 

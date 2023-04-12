@@ -82,7 +82,10 @@ abstract class AbstractCreateDeclarationFix<D : KtNamedDeclaration>(
                         val oldPackageDirective = resultTargetFile.packageDirective
                         val newPackageDirective = packageDirective.copy() as KtPackageDirective
                         if (oldPackageDirective != null) {
-                            if (oldPackageDirective.text.isEmpty()) resultTargetFile.addAfter(factory.createNewLine(2), oldPackageDirective)
+                            if (oldPackageDirective.text.isEmpty()) {
+                                resultTargetFile.addAfter(factory.createNewLine(2), resultTargetFile.importList ?: oldPackageDirective)
+                            }
+
                             oldPackageDirective.replace(newPackageDirective)
                         } else {
                             resultTargetFile.add(newPackageDirective)
@@ -98,7 +101,10 @@ abstract class AbstractCreateDeclarationFix<D : KtNamedDeclaration>(
                         else
                             resultTargetClass.addDeclaration(generated as KtNamedDeclaration)
                     }
-                    else -> resultTargetFile.add(generated) as KtElement
+                    else -> {
+                        resultTargetFile.add(factory.createNewLine(1))
+                        resultTargetFile.add(generated) as KtElement
+                    }
                 }
 
                 ShortenReferences.DEFAULT.process(generatedDeclaration.reformatted() as KtElement)

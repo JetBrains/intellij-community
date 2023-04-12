@@ -262,4 +262,9 @@ public class AddImportTestGenerated extends AbstractAddImportTest {
     public void testStdlibImportsLast() throws Exception {
         runTest("testData/addImport/StdlibImportsLast.kt");
     }
+
+    @TestMetadata("WithoutFormatter.kt")
+    public void testWithoutFormatter() throws Exception {
+        runTest("testData/addImport/WithoutFormatter.kt");
+    }
 }
