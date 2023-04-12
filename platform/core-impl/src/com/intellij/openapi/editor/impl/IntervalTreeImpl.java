@@ -870,8 +870,10 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
       if (t == null) continue;
       liveInterval = t;
       checkBelongsToTheTree(t, false);
-      boolean added = ids.add(((RangeMarkerImpl)t).getId());
-      assert added : t;
+      if (((RangeMarkerImpl)t).isValid()) {
+        boolean added = ids.add(((RangeMarkerImpl)t).getId());
+        assert added : t;
+      }
     }
     if (assertInvalid && liveInterval != null) {
       checkBelongsToTheTree(liveInterval, true);

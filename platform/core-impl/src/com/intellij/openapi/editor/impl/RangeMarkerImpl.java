@@ -28,7 +28,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   private final Object myDocumentOrFile; // either VirtualFile (if any) or DocumentEx if no file associated
   RangeMarkerTree.RMNode<RangeMarkerEx> myNode;
 
-  private final long myId;
+  private volatile long myId;
   private static final StripedIDGenerator counter = new StripedIDGenerator();
 
   RangeMarkerImpl(@NotNull DocumentEx document, int start, int end, boolean register, boolean forceDocumentStrongReference) {
@@ -85,31 +85,45 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
   @Override
   public long getId() {
+    RangeMarkerTree.RMNode<?> node = myNode;
+    if (node == null) {
+      throw new IllegalStateException("Already disposed");
+    }
     return myId;
   }
 
   @Override
   public void dispose() {
-    unregisterInTree();
+    RangeMarkerTree.RMNode<?> node = myNode;
+    if (node != null) {
+      // store current offsets to give async listeners the ability to get offsets
+      int delta = node.computeDeltaUpToRoot();
+      long range = TextRangeScalarUtil.shift(node.toScalarRange(), delta, delta);
+      int startOffset = Math.max(0, TextRangeScalarUtil.startOffset(range));
+      int endOffset = Math.max(startOffset, TextRangeScalarUtil.endOffset(range));
+      // piggyback myId to store offsets, to conserve memory
+      myId = TextRangeScalarUtil.toScalarRange(startOffset, endOffset); // avoid invalid range
+      unregisterInTree();
+    }
   }
 
   @Override
   public int getStartOffset() {
     RangeMarkerTree.RMNode<?> node = myNode;
-    return node == null ? -1 : node.intervalStart() + node.computeDeltaUpToRoot();
+    return node == null ? TextRangeScalarUtil.startOffset(myId) : node.intervalStart() + node.computeDeltaUpToRoot();
   }
 
   @Override
   public int getEndOffset() {
     RangeMarkerTree.RMNode<?> node = myNode;
-    return node == null ? -1 : node.intervalEnd() + node.computeDeltaUpToRoot();
+    return node == null ? TextRangeScalarUtil.endOffset(myId) : node.intervalEnd() + node.computeDeltaUpToRoot();
   }
 
   @Override
   public @NotNull TextRange getTextRange() {
     RangeMarkerTree.RMNode<?> node = myNode;
     if (node == null) {
-      return TextRange.EMPTY_RANGE;
+      return TextRangeScalarUtil.create(myId);
     }
     int delta = node.computeDeltaUpToRoot();
     return TextRangeScalarUtil.create(TextRangeScalarUtil.shift(node.toScalarRange(), delta, delta));
@@ -366,7 +380,8 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   public String toString() {
     return "RangeMarker" + (isGreedyToLeft() ? "[" : "(")
            + (isValid() ? "" : "invalid:") + getStartOffset() + "," + getEndOffset()
-           + (isGreedyToRight() ? "]" : ")") + " " + getId();
+           + (isGreedyToRight() ? "]" : ")")
+           + " " + (isValid() ? getId() : "");
   }
 
   void setRange(long scalarRange) {

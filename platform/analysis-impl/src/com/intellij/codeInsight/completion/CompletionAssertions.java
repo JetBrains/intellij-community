@@ -25,6 +25,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.text.ImmutableCharSequence;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -190,7 +191,7 @@ final class CompletionAssertions {
       tailWatcher.setGreedyToRight(true);
       spy = new RangeMarkerSpy(tailWatcher) {
         @Override
-        protected void invalidated(DocumentEvent e) {
+        protected void invalidated(@NotNull DocumentEvent e) {
           if (invalidateTrace == null) {
             invalidateTrace = new Throwable();
             killer = e;
@@ -202,7 +203,10 @@ final class CompletionAssertions {
 
     void stopWatching() {
       if (tailWatcher != null) {
-        getDocument().removeDocumentListener(spy);
+        if (spy != null) {
+          getDocument().removeDocumentListener(spy);
+          spy = null;
+        }
         tailWatcher.dispose();
       }
     }

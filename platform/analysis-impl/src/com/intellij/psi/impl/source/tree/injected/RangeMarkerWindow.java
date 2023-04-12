@@ -113,6 +113,6 @@ class RangeMarkerWindow implements RangeMarkerEx {
   public String toString() {
     return "RangeMarkerWindow" + (isGreedyToLeft() ? "[" : "(") + (isValid() ? "valid" : "invalid") + "," +
            getStartOffset() + "," + getEndOffset() + 
-           (isGreedyToRight() ? "]" : ")") + " " + getId();
+           (isGreedyToRight() ? "]" : ")") + " " + (isValid() ? getId() : "");
   }
 }

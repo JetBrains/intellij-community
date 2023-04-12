@@ -1631,4 +1631,13 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     }
     future.get();
   }
+
+  public void testRangeMarkerMustPreserveItsOffsetsSomeTimeAfterDeath() {
+    RangeMarkerEx marker = createMarker("xxxxx", 1, 3);
+    assertTrue(marker.isValid());
+    assertEquals(TextRange.create(1,3), marker.getTextRange());
+    marker.dispose();
+    assertFalse(marker.isValid());
+    assertEquals(TextRange.create(1,3), marker.getTextRange());
+  }
 }
