@@ -1,0 +1,17 @@
+<html>
+<body>
+Reports <code>java.lang.ThreadLocal.set()</code> with null as an argument.
+<p>This call does not free the resources, and it may cause a memory leak.</p>
+<p><code>java.lang.ThreadLocal.remove()</code> should be used to free the resources.</p>
+<p>Example:</p>
+<pre><code>
+  ThreadLocal&lt;Integer&gt; threadLocal = new ThreadLocal&lt;&gt;();
+  threadLocal.set(null);
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  threadLocal.remove();
+</code></pre>
+<p><small>New in 2023.2</small></p>
+</body>
+</html>

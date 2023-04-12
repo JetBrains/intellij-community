@@ -2630,6 +2630,10 @@
                      bundle="messages.InspectionGadgetsBundle" key="static.initializer.references.subclass.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.threading.issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.threading.StaticInitializerReferencesSubClassInspection"/>
+    <localInspection groupPath="Java" language="JAVA" bundle="messages.InspectionGadgetsBundle"
+                     key="thread.local.set.with.null.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.threading.issues" enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="com.siyeh.ig.threading.ThreadLocalSetWithNullInspection"/>
 
     <!-- group.names.verbose.or.redundant.code.constructs -->
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantCompareCall"
