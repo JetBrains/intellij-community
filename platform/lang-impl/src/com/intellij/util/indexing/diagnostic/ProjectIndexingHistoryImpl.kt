@@ -446,10 +446,6 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     timesImpl.totalUpdatingTime = System.nanoTime() - timesImpl.totalUpdatingTime
   }
 
-  fun setScanFilesDuration(duration: Duration) {
-    timesImpl.scanFilesDuration = duration
-  }
-
   /**
    * Some StageEvent may appear between begin and end of suspension, because it actually takes place only on ProgressIndicator's check.
    * These normalizations move moment of suspension start from declared to after all other events between it and suspension end:
@@ -586,14 +582,6 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     }
   }
 
-  data class StatsPerIndexerImpl(
-    override var totalNumberOfFiles: Int,
-    override var totalNumberOfFilesIndexedByExtensions: Int,
-    override var totalBytes: BytesNumber,
-    override var totalIndexValueChangerEvaluationTimeInAllThreads: TimeNano,
-    override var snapshotInputMappingStats: SnapshotInputMappingStatsImpl
-  ) : StatsPerIndexer
-
   data class ScanningTimesImpl(
     override val scanningReason: String?,
     override val scanningType: ScanningType,
@@ -607,10 +595,6 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     override var pausedDuration: Duration = Duration.ZERO,
     override var wasInterrupted: Boolean = false
   ) : ScanningTimes
-
-  data class SnapshotInputMappingStatsImpl(override var requests: Long, override var misses: Long) : SnapshotInputMappingStats {
-    override val hits: Long get() = requests - misses
-  }
 }
 
 @ApiStatus.Internal

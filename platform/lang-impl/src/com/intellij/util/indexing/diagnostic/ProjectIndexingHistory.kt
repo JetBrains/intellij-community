@@ -107,12 +107,10 @@ enum class ScanningType(val isFull: Boolean) {
   REFRESH(false);
 
   companion object {
-    fun merge(first: ScanningType, second: ScanningType): ScanningType = returnFirstFound(first, second,
-                                                                                          FULL_FORCED, FULL_ON_PROJECT_OPEN, FULL,
-                                                                                          PARTIAL_FORCED, PARTIAL,
-                                                                                          REFRESH)
+    fun merge(first: ScanningType, second: ScanningType): ScanningType = returnFirstFound(first, second)
 
-    private fun returnFirstFound(first: ScanningType, second: ScanningType, vararg types: ScanningType): ScanningType {
+    private fun returnFirstFound(first: ScanningType, second: ScanningType): ScanningType {
+      val types = listOf(FULL_FORCED, FULL_ON_PROJECT_OPEN, FULL, PARTIAL_FORCED, PARTIAL, REFRESH)
       for (type in types) {
         if (first == type || second == type) return type
       }

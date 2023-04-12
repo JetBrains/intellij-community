@@ -6,10 +6,6 @@ import java.time.Duration
 
 fun TimeNano.toMillis(): TimeMillis = this / 1_000_000
 
-// Int value that is greater than zero.
-// Can be used to skip int value from JSON if it is equal to 0 (to not pollute the JSON report).
-typealias PositiveInt = Int?
-
 fun ScanningStatistics.toJsonStatistics(): JsonScanningStatistics {
   val jsonScannedFiles = if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
     scannedFiles.map { it.toJson() }
