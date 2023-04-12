@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
 import java.util.function.Supplier;
 
 class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> implements PrioritizedDocumentListener {
@@ -147,6 +148,27 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
     @Override
     public String toString() {
       return (isGreedyToLeft() ? "[" : "(") + intervalStart() + "," + intervalEnd() + (isGreedyToRight() ? "]" : ")");
+    }
+
+    void invalidate(@NotNull Object reason) {
+      setValid(false);
+      IntervalTreeImpl<T> tree = getTree();
+      tree.assertUnderWriteLock();
+      processAliveKeys(markerEx -> {
+        tree.beforeRemove(markerEx, reason);
+        return true;
+      });
+    }
+
+    void invalidateUnderLock(@NotNull String reason) {
+      Lock l = getTree().l.writeLock();
+      l.lock();
+      try {
+        invalidate(reason);
+      }
+      finally {
+        l.unlock();
+      }
     }
   }
 

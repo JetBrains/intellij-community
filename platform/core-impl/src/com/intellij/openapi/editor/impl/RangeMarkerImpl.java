@@ -116,14 +116,9 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   }
 
   void invalidate(@NotNull final Object reason) {
-    setValid(false);
-    RangeMarkerTree.RMNode<?> node = myNode;
-
+    RangeMarkerTree.RMNode<RangeMarkerEx> node = myNode;
     if (node != null) {
-      node.processAliveKeys(markerEx -> {
-        myNode.getTree().beforeRemove(markerEx, reason);
-        return true;
-      });
+      node.invalidate(reason);
     }
   }
 
@@ -436,15 +431,8 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     return myNode.getTree().findRangeMarkerBefore(this);
   }
 
-  // re-register myself in the document tree (e.g. after document load)
-  void reRegister(@NotNull DocumentImpl document, int tabSize) {
-    int startOffset = getStartOffset();
-    int endOffset = getEndOffset();
-    if (startOffset <= endOffset && endOffset <= document.getTextLength()) {
-      document.registerRangeMarker(this, startOffset, endOffset, isGreedyToLeft(), isGreedyToRight(), 0);
-    }
-    else {
-      invalidate("document was gc-ed and re-created with invalid offsets: ("+startOffset+","+endOffset+"): "+document.getTextLength());
-    }
+  @NotNull
+  TextRange reCalcTextRangeAfterReload(@NotNull DocumentImpl document, int tabSize) {
+    return getTextRange();
   }
 }

@@ -377,7 +377,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     }
   }
 
-  private void assertUnderWriteLock() {
+  void assertUnderWriteLock() {
     if (DEBUG && !ApplicationManagerEx.isInStressTest()) {
       assert isAcquired(l.writeLock()) : l.writeLock();
     }
@@ -929,7 +929,8 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     IntervalNode<T> root = lookupNode(interval);
     if (root == null) return;
     //noinspection NumberEquality
-    assert root.getTree() == this : root.getTree() +"; this: "+this;
+    assert root.getTree() == this : root.getTree() + " ("+root.getTree().getClass()+")"+
+                                    "; this: "+this + "("+getClass()+")";
     if (!VERIFY) return;
 
     if (assertInvalid) {

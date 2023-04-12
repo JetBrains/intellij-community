@@ -7,10 +7,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.TextRangeScalarUtil;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -205,14 +202,16 @@ class PersistentRangeMarker extends RangeMarkerImpl {
   }
 
   @Override
-  void reRegister(@NotNull DocumentImpl document, int tabSize) {
+  @NotNull
+  TextRange reCalcTextRangeAfterReload(@NotNull DocumentImpl document, int tabSize) {
     // have to convert line/col back to offset if the persistent range marker was created with line/col only
     LinesCols linesCols = myLinesCols;
     int startOffset = DocumentUtil.calculateOffset(document, linesCols.myStartLine, linesCols.myStartColumn, tabSize);
     int endOffset = DocumentUtil.calculateOffset(document, linesCols.myEndLine, linesCols.myEndColumn, tabSize);
-    document.registerRangeMarker(this, startOffset, endOffset, isGreedyToLeft(), isGreedyToRight(), 0);
     documentLoaded = true;
+    return new UnfairTextRange(startOffset, endOffset);
   }
+  
   private boolean isDocumentLoaded() {
     return documentLoaded;
   }

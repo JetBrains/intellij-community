@@ -164,15 +164,21 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     }
 
     // Some old tree was saved in the virtual file. Have to transfer markers from there.
-    oldTree.processAll(r -> {
-      if (r.isValid()) {
-        ((RangeMarkerImpl)r).reRegister(this, tabSize);
+    List<RangeMarkerEx> oldMarkers = new ArrayList<>(oldTree.size());
+    oldTree.processAll(r -> oldMarkers.add(r));
+    for (RangeMarkerEx r : oldMarkers) {
+      TextRange newRange = ((RangeMarkerImpl)r).reCalcTextRangeAfterReload(this, tabSize);
+      RangeMarkerTree.RMNode<RangeMarkerEx> node = ((RangeMarkerImpl)r).myNode;
+      if (node == null) continue;
+      int startOffset = newRange.getStartOffset();
+      int endOffset = newRange.getEndOffset();
+      if (r.isValid() && TextRange.isProperRange(startOffset, endOffset) && endOffset <= getTextLength()) {
+        registerRangeMarker(r, startOffset, endOffset, r.isGreedyToLeft(), r.isGreedyToRight(), 0);
       }
       else {
-        ((RangeMarkerImpl)r).invalidate("document was gc-ed and re-created");
+        node.invalidateUnderLock("document was gc-ed and re-created with invalid offsets: (" + startOffset + "," + endOffset + "): " + getTextLength());
       }
-      return true;
-    });
+    }
   }
 
   // track GC of RangeMarkerTree: means no-one is interested in range markers for this file anymore
