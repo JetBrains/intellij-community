@@ -108,7 +108,7 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
     }
   }
 
-  open fun processTasksWithProgress(suspender: ProgressSuspender,
+  open fun processTasksWithProgress(suspender: ProgressSuspender?,
                                     visibleIndicator: ProgressIndicator,
                                     activity: StructuredIdeActivity?): SubmissionReceipt? {
     return guiSuspender.setCurrentSuspenderAndSuspendIfRequested(suspender, Supplier<SubmissionReceipt> {
@@ -124,7 +124,7 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
           if (task == null) return@Supplier submittedTaskCount
           val taskIndicator = task.indicator as AbstractProgressIndicatorExBase
           val relayToVisibleIndicator: ProgressIndicatorEx = RelayUiToDelegateIndicator(visibleIndicator)
-          suspender.attachToProgress(taskIndicator)
+          suspender?.attachToProgress(taskIndicator)
           taskIndicator.addStateDelegate(relayToVisibleIndicator)
           try {
             runSingleTask(task, activity)

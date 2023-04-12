@@ -23,17 +23,20 @@ class DumbServiceGuiExecutor(project: Project, queue: DumbServiceMergingTaskQueu
 
   internal fun guiSuspender(): MergingQueueGuiSuspender = super.guiSuspender
 
-  override fun processTasksWithProgress(suspender: ProgressSuspender,
+  override fun processTasksWithProgress(suspender: ProgressSuspender?,
                                         visibleIndicator: ProgressIndicator,
                                         parentActivity: StructuredIdeActivity?): SubmissionReceipt? {
     val childActivity = createChildActivity(parentActivity)
+    var taskCompletedNormally = false
     return try {
       DumbServiceAppIconProgress.registerForProgress(project, visibleIndicator as ProgressIndicatorEx)
       project.service<DumbModeProgressTitle>().attachDumbModeProgress(visibleIndicator)
-      super.processTasksWithProgress(suspender, visibleIndicator, childActivity)
+      super.processTasksWithProgress(suspender, visibleIndicator, childActivity).also {
+        taskCompletedNormally = true
+      }
     }
     finally {
-      logProcessFinished(childActivity, if (suspender.isClosed) IndexingFinishType.TERMINATED else IndexingFinishType.FINISHED)
+      logProcessFinished(childActivity, if (taskCompletedNormally) IndexingFinishType.FINISHED else IndexingFinishType.TERMINATED)
       project.service<DumbModeProgressTitle>().removeDumbModeProgress(visibleIndicator)
     }
   }

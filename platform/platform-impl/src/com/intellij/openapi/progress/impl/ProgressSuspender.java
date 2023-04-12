@@ -70,8 +70,17 @@ public final class ProgressSuspender implements AutoCloseable {
     }
   }
 
-  public static @NotNull ProgressSuspender markSuspendable(@NotNull ProgressIndicator indicator, @NotNull @NlsContexts.ProgressText String suspendedText) {
-    return new ProgressSuspender((ProgressIndicatorEx)indicator, suspendedText);
+  public static @NotNull ProgressSuspender markSuspendable(@NotNull ProgressIndicatorEx indicator, @NotNull @NlsContexts.ProgressText String suspendedText) {
+    return new ProgressSuspender(indicator, suspendedText);
+  }
+
+  @Nullable("When progress indicator cannot be made suspendable (e.g. EmptyProgressIndicator)")
+  public static ProgressSuspender markSuspendable(@NotNull ProgressIndicator indicator, @NotNull @NlsContexts.ProgressText String suspendedText) {
+    if (indicator instanceof ProgressIndicatorEx indicatorEx) {
+      return markSuspendable(indicatorEx, suspendedText);
+    } else {
+      return null;
+    }
   }
 
   public void executeNonSuspendableSection(@NotNull ProgressIndicator indicator, @NotNull Runnable runnable) {

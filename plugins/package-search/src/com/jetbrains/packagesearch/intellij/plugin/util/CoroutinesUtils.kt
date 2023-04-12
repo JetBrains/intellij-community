@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.impl.ProgressManagerImpl
 import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.util.flow.throttle
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.data.LoadingContainer
@@ -214,7 +215,7 @@ internal suspend fun showBackgroundLoadingBar(
                 @Suppress("HardCodedStringLiteral")
                 val channelsJob = launch {
                     if (isPausable) {
-                        ProgressSuspender.markSuspendable(indicator, PackageSearchBundle.message("packagesearch.ui.resume"))
+                        ProgressSuspender.markSuspendable(indicator as ProgressIndicatorEx, PackageSearchBundle.message("packagesearch.ui.resume"))
                             .isSuspendedFLow
                             .collectIn(this, isSuspendedChannel)
                     }

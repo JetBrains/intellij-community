@@ -43,7 +43,9 @@ class MergingQueueGuiSuspender {
     }
   }
 
-  fun <T> setCurrentSuspenderAndSuspendIfRequested(suspender: ProgressSuspender, runnable: Supplier<T>): T {
+  fun <T> setCurrentSuspenderAndSuspendIfRequested(suspender: ProgressSuspender?, runnable: Supplier<T>): T {
+    if (suspender == null) return runnable.get()
+
     LOG.assertTrue(myCurrentSuspender == null, "Already suspended in another thread, or recursive invocation.")
     return try {
       myCurrentSuspender = suspender
