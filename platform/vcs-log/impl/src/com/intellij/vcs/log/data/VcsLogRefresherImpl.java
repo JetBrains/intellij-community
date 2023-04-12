@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
@@ -30,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static com.intellij.diagnostic.telemetry.TraceKt.computeWithSpan;
@@ -77,7 +77,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
 
     mySingleTaskController = new SingleTaskController<>("permanent", dataPack -> {
       myDataPack = dataPack;
-      dataPackUpdateHandler.consume(dataPack);
+      dataPackUpdateHandler.accept(dataPack);
     }, this) {
       @Override
       protected @NotNull SingleTask startNewBackgroundTask() {
