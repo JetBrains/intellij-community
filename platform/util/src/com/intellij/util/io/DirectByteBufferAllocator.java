@@ -42,7 +42,7 @@ public final class DirectByteBufferAllocator {
         return ourAllocator.submit(computable::compute).get();
       }
       catch (InterruptedException e) {
-        Logger.getInstance(DirectByteBufferAllocator.class).error(e);
+        Logger.getInstance(DirectByteBufferAllocator.class).error("ByteBuffer allocation in dedicated thread was interrupted", e);
         return computable.compute();
       }
       catch (ExecutionException e) {

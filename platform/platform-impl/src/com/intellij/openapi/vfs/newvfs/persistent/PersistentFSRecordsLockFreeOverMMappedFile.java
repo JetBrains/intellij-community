@@ -31,14 +31,15 @@ import static java.nio.file.StandardOpenOption.*;
 @ApiStatus.Internal
 public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSRecordsStorage, IPersistentFSRecordsStorage {
 
-  /* ================ RECORD FIELDS LAYOUT (in ints = 4 bytes) ======================================== */
-
+  /* ================ FILE HEADER FIELDS LAYOUT ======================================================= */
   /**
    * For mmapped implementation file size is page-aligned, we can't calculate records size from it. Instead
    * we store allocated records count in header, in a reserved field (HEADER_RESERVED_4BYTES_OFFSET)
    */
   private static final int HEADER_RECORDS_ALLOCATED = HEADER_VERSION_OFFSET + Integer.BYTES;
   public static final int HEADER_SIZE = PersistentFSHeaders.HEADER_SIZE;
+
+  /* ================ RECORD FIELDS LAYOUT  =========================================================== */
 
   private static final int PARENT_REF_OFFSET = 0;
   private static final int PARENT_REF_SIZE = Integer.BYTES;
@@ -60,6 +61,8 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
 
   public static final int RECORD_SIZE_IN_BYTES = LENGTH_OFFSET + LENGTH_SIZE;
 
+  /* ================ RECORD FIELDS LAYOUT end             ======================================== */
+
   public static final int DEFAULT_MAPPED_CHUNK_SIZE = SystemProperties.getIntProperty("vfs.records-storage.memory-mapped.mapped-chunk-size", 1 << 26);//64Mb
 
   private static final VarHandle INT_HANDLE = MethodHandles.byteBufferViewVarHandle(int[].class, ByteOrder.nativeOrder());
@@ -68,7 +71,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
 
 
 
-  /* ================ RECORD FIELDS LAYOUT end             ======================================== */
+
 
   private final @NotNull MMappedFileStorage storage;
 

@@ -20,10 +20,11 @@ import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSHeaders.*;
 public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFSRecordsStorage, IPersistentFSRecordsStorage {
 
 
-
-  /* ================ RECORD FIELDS LAYOUT (in ints = 4 bytes) ======================================== */
-
+  /* ================ FILE HEADER FIELDS LAYOUT ======================================================= */
+  
   public static final int HEADER_SIZE = PersistentFSHeaders.HEADER_SIZE;
+
+  /* ================ RECORD FIELDS LAYOUT  =========================================================== */
 
   private static final int PARENT_REF_OFFSET = 0;
   private static final int PARENT_REF_SIZE = Integer.BYTES;
@@ -44,7 +45,6 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
   private static final int LENGTH_SIZE = Long.BYTES;
 
   public static final int RECORD_SIZE_IN_BYTES = LENGTH_OFFSET + LENGTH_SIZE;
-
 
   /* ================ RECORD FIELDS LAYOUT end             ======================================== */
 
