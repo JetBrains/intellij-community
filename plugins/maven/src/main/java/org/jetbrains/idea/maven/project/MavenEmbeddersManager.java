@@ -124,7 +124,17 @@ public class MavenEmbeddersManager {
                       @NotNull MavenConsole console,
                       @NotNull MavenProgressIndicator process,
                       @NotNull MavenEmbeddersManager.EmbedderTask task) throws MavenProcessCanceledException {
-    MavenEmbedderWrapper embedder = getEmbedder(mavenProject, embedderKind);
+    var baseDir = MavenUtil.getBaseDir(mavenProject.getDirectoryFile()).toString();
+    execute(baseDir, tree, embedderKind, console, process, task);
+  }
+
+  public void execute(@NotNull String baseDir,
+                      @NotNull MavenProjectsTree tree,
+                      @NotNull Key embedderKind,
+                      @NotNull MavenConsole console,
+                      @NotNull MavenProgressIndicator process,
+                      @NotNull MavenEmbeddersManager.EmbedderTask task) throws MavenProcessCanceledException {
+    MavenEmbedderWrapper embedder = getEmbedder(embedderKind, baseDir);
     embedder.customizeForResolve(console, process, false, tree.getWorkspaceMap(), null);
     try {
       task.run(embedder);
