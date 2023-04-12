@@ -1809,15 +1809,12 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
                                             @NotNull Collection<String> activeProfiles,
                                             @NotNull Collection<String> inactiveProfiles,
                                             @NotNull List<String> goals,
-                                            @NotNull List<String> selectedProjects,
-                                            boolean alsoMake,
-                                            boolean alsoMakeDependents, MavenToken token)
+                                            MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);
     try {
       MavenExecutionResult result =
-        doExecute(file, new ArrayList<String>(activeProfiles), new ArrayList<String>(inactiveProfiles), goals, selectedProjects, alsoMake,
-                  alsoMakeDependents);
+        doExecute(file, new ArrayList<>(activeProfiles), new ArrayList<>(inactiveProfiles), goals);
 
       return createExecutionResult(file, result, null);
     }
@@ -1829,25 +1826,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   private MavenExecutionResult doExecute(@NotNull final File file,
                                          @NotNull final List<String> activeProfiles,
                                          @NotNull final List<String> inactiveProfiles,
-                                         @NotNull final List<String> goals,
-                                         @NotNull final List<String> selectedProjects,
-                                         boolean alsoMake,
-                                         boolean alsoMakeDependents) throws RemoteException {
+                                         @NotNull final List<String> goals) throws RemoteException {
     MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, goals);
-
-    if (!selectedProjects.isEmpty()) {
-      request.setRecursive(true);
-      request.setSelectedProjects(selectedProjects);
-      if (alsoMake && alsoMakeDependents) {
-        request.setMakeBehavior(ReactorManager.MAKE_BOTH_MODE);
-      }
-      else if (alsoMake) {
-        request.setMakeBehavior(ReactorManager.MAKE_MODE);
-      }
-      else if (alsoMakeDependents) {
-        request.setMakeBehavior(ReactorManager.MAKE_DEPENDENTS_MODE);
-      }
-    }
 
     org.apache.maven.execution.MavenExecutionResult executionResult = safeExecute(request, getComponent(Maven.class));
 

@@ -237,7 +237,7 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
                                             @NotNull final Collection<String> inactiveProfiles,
                                             @NotNull final List<String> goals) throws MavenProcessCanceledException {
     return performCancelable(() -> getOrCreateWrappee()
-      .execute(new File(file.getPath()), activeProfiles, inactiveProfiles, goals, Collections.emptyList(), false, false, ourToken));
+      .execute(new File(file.getPath()), activeProfiles, inactiveProfiles, goals, ourToken));
   }
 
   @NotNull

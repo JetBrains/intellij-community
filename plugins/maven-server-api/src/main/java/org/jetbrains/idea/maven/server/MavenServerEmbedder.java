@@ -75,9 +75,7 @@ public interface MavenServerEmbedder extends Remote {
                                      @NotNull Collection<String> activeProfiles,
                                      @NotNull Collection<String> inactiveProfiles,
                                      @NotNull List<String> goals,
-                                     @NotNull final List<String> selectedProjects,
-                                     boolean alsoMake,
-                                     boolean alsoMakeDependents, MavenToken token)
+                                     MavenToken token)
     throws RemoteException, MavenServerProcessCanceledException;
 
   void reset(MavenToken token) throws RemoteException;

@@ -69,9 +69,6 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
                        activeProfiles: Collection<String>,
                        inactiveProfiles: Collection<String>,
                        goals: List<String>,
-                       selectedProjects: List<String>,
-                       alsoMake: Boolean,
-                       alsoMakeDependents: Boolean,
                        token: MavenToken?): MavenServerExecutionResult {
     return MavenServerExecutionResult(null, emptySet(), emptySet())
   }
