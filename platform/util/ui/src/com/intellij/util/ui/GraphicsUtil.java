@@ -128,6 +128,7 @@ public final class GraphicsUtil {
   }
 
   public static boolean isProjectorEnvironment() {
-    return GraphicsEnvironment.getLocalGraphicsEnvironment().getClass().getSimpleName().equals("PGraphicsEnvironment");
+    String geClassName = GraphicsEnvironment.getLocalGraphicsEnvironment().getClass().getSimpleName();
+    return geClassName.equals("PGraphicsEnvironment") || geClassName.equals("IdeGraphicsEnvironment");
   }
 }
