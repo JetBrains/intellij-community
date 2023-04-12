@@ -15692,6 +15692,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryPropertySetter9.kt");
         }
 
+        @TestMetadata("necessaryProvideDelegate.kt")
+        public void testNecessaryProvideDelegate() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryProvideDelegate.kt");
+        }
+
         @TestMetadata("necessaryTypeAlias1.kt")
         public void testNecessaryTypeAlias1() throws Exception {
             runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryTypeAlias1.kt");
