@@ -68,7 +68,6 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
 
   private var testCoroutineScope: CoroutineScope? = null
   private val myCoroutineScope: CoroutineScope get() = testCoroutineScope ?: cs
-  private val workspaceModel = WorkspaceModel.getInstance(project)
 
   /**
    * Should be used only in tests. Required to promote errors to tests via [testScope].
@@ -89,20 +88,22 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
    *
    * See [JpsMavenRepositoryLibraryDescriptor.getJarRepositoryId], [RemoteRepositoriesConfiguration].
    */
-  fun guessAndBindRemoteRepositoriesBackground() =
-    runBackground(JavaUiBundle.message("repository.library.utils.progress.title.binding.remote.repos")) {
+  fun guessAndBindRemoteRepositoriesBackground(): Deferred<Unit> {
+    return runBackground(JavaUiBundle.message("repository.library.utils.progress.title.binding.remote.repos")) {
       BuildExtendedLibraryPropertiesJob(buildMissingChecksums = false, bindRepositories = true, disableInfoNotifications = false).run()
     }
+  }
 
   /**
    * Unbinds remote repositories from all the [RepositoryLibraryType] libraries of project. Global libraries are excluded.
    *
    * See [JpsMavenRepositoryLibraryDescriptor.getJarRepositoryId], [RemoteRepositoriesConfiguration].
    */
-  fun unbindRemoteRepositoriesBackground() =
-    runBackground(JavaUiBundle.message("repository.library.utils.progress.title.unbinding.remote.repos")) {
+  fun unbindRemoteRepositoriesBackground(): Deferred<Unit> {
+    return runBackground(JavaUiBundle.message("repository.library.utils.progress.title.unbinding.remote.repos")) {
       ClearExtendedLibraryPropertiesJob(unbindRepositories = true, removeExistingChecksums = false, disableInfoNotifications = false).run()
     }
+  }
 
   /**
    * Enable and build SHA256 checksums for all [RepositoryLibraryType] libraries for which checksums were not enabled.
@@ -111,24 +112,26 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
    *
    * See [JpsMavenRepositoryLibraryDescriptor.ArtifactVerification], [JpsMavenRepositoryLibraryDescriptor.isVerifySha256Checksum].
    */
-  fun buildMissingSha256ChecksumsBackground() =
-    runBackground(JavaUiBundle.message("repository.library.utils.progress.title.building.sha256sum")) {
+  fun buildMissingSha256ChecksumsBackground(): Deferred<Unit> {
+    return runBackground(JavaUiBundle.message("repository.library.utils.progress.title.building.sha256sum")) {
       BuildExtendedLibraryPropertiesJob(buildMissingChecksums = true, bindRepositories = false, disableInfoNotifications = false).run()
     }
+  }
 
   /**
    * Disable SHA256 checksum for all [RepositoryLibraryType] libraries. Global libraries are excluded.
    *
    * See [JpsMavenRepositoryLibraryDescriptor.ArtifactVerification], [JpsMavenRepositoryLibraryDescriptor.isVerifySha256Checksum].
    */
-  fun removeSha256ChecksumsBackground() =
-    runBackground(JavaUiBundle.message("repository.library.utils.progress.title.removing.sha256sum")) {
+  fun removeSha256ChecksumsBackground(): Deferred<Unit> {
+    return runBackground(JavaUiBundle.message("repository.library.utils.progress.title.removing.sha256sum")) {
       ClearExtendedLibraryPropertiesJob(removeExistingChecksums = true, unbindRepositories = false, disableInfoNotifications = false).run()
     }
+  }
 
-  fun resolveAllBackground(): Deferred<Boolean> =
-    runBackground(JavaUiBundle.message("repository.library.utils.progress.title.resolving.all.libraries")) {
-      val snapshot = workspaceModel.currentSnapshot
+  fun resolveAllBackground(): Deferred<Boolean> {
+    return runBackground(JavaUiBundle.message("repository.library.utils.progress.title.resolving.all.libraries")) {
+      val snapshot = WorkspaceModel.getInstance(project).currentSnapshot
       val failedToResolve = resolve(snapshot.entities(LibraryEntity::class.java))
       if (failedToResolve.isNotEmpty()) showFailedToResolveNotification(failedToResolve, snapshot) { libsList, leftNotDisplayedSize ->
         JavaUiBundle.message("repository.library.utils.notification.content.libraries.resolve.fail", libsList, leftNotDisplayedSize)
@@ -136,6 +139,7 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
       logger.info("resolveAllBackground complete, failed to resolve ${failedToResolve.size} libraries")
       failedToResolve.isEmpty()
     }
+  }
 
   /**
    * Build SHA256 checksums if [buildSha256Checksum]` == true`. Checksums are always rebuilt, event if ones exist.
@@ -147,14 +151,18 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
    */
   fun computeExtendedPropertiesFor(libraries: Set<LibraryEntity>,
                                    buildSha256Checksum: Boolean,
-                                   guessAndBindRemoteRepository: Boolean): Job? =
-    if (!buildSha256Checksum && !guessAndBindRemoteRepository) null
-    else runBackground(JavaUiBundle.message("repository.library.utils.progress.title.libraries.changed")) {
+                                   guessAndBindRemoteRepository: Boolean): Job? {
+    if (!buildSha256Checksum && !guessAndBindRemoteRepository) {
+      return null
+    }
+
+    return runBackground(JavaUiBundle.message("repository.library.utils.progress.title.libraries.changed")) {
       BuildExtendedLibraryPropertiesJob(buildMissingChecksums = buildSha256Checksum,
                                         bindRepositories = guessAndBindRemoteRepository,
                                         disableInfoNotifications = true,
                                         preFilter = { it in libraries }).run()
     }
+  }
 
 
   private fun <T> runBackground(title: @NlsContexts.ProgressTitle String, action: suspend () -> T): Deferred<T> {
@@ -255,7 +263,7 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
     Notifications.Bus.notify(notification, project)
   }
 
-  private suspend fun commitBuilderIfModified(builder: MutableEntityStorage) {
+  private suspend fun commitBuilderIfModified(workspaceModel: WorkspaceModel, builder: MutableEntityStorage) {
     if (!builder.hasChanges()) return
 
     withContext(Dispatchers.EDT) {
@@ -273,13 +281,14 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
     private val disableInfoNotifications: Boolean,
     private val preFilter: (LibraryEntity) -> Boolean = { true }
   ) {
-    private val repositoriesConfiguration = RemoteRepositoriesConfiguration.getInstance(project)
 
     suspend fun run() = coroutineScope {
       if (!buildMissingChecksums && !bindRepositories) return@coroutineScope
       logger.info("Building libraries properties started: buildMissingChecksums=$buildMissingChecksums, bindRepositories=$bindRepositories")
 
+      val repositoriesConfiguration = RemoteRepositoriesConfiguration.getInstance(project)
       val repositories = repositoriesConfiguration.repositories
+      val workspaceModel = WorkspaceModel.getInstance(project)
       val snapshot = workspaceModel.currentSnapshot
 
       val entities = snapshot.entities(LibraryPropertiesEntity::class.java).filter {
@@ -325,7 +334,7 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
 
       resetProgressDetailsFraction()
       rawProgressReporterOrError.text(JavaUiBundle.message("repository.library.utils.progress.text.saving.changes"))
-      commitBuilderIfModified(builder)
+      commitBuilderIfModified(workspaceModel, builder)
       logger.info("Building libraries properties progressed: computing properties complete, ${updatedCounter.get()} libraries changed")
 
       if (updatedCounter.get() == 0) {
@@ -447,6 +456,7 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
       logger.info("Clear libraries properties started: " +
                   "removeExistingChecksums=$removeExistingChecksums, unbindRepositories=$unbindRepositories")
 
+      val workspaceModel = WorkspaceModel.getInstance(project)
       val snapshot = workspaceModel.currentSnapshot
       val entitiesAndProperties = snapshot.entities(LibraryPropertiesEntity::class.java)
         .filter { it.library.tableId !is LibraryTableId.GlobalLibraryTableId && it.isRepositoryLibraryProperties() }
@@ -473,7 +483,7 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
 
       logger.info("Clear libraries properties progressed: computing properties complete")
       rawProgressReporterOrError.text(JavaUiBundle.message("repository.library.utils.progress.text.saving.changes"))
-      commitBuilderIfModified(builder)
+      commitBuilderIfModified(workspaceModel, builder)
 
       logger.info("Clear libraries properties complete: ${updatedCounter.get()} libraries updated")
       showNotification(
