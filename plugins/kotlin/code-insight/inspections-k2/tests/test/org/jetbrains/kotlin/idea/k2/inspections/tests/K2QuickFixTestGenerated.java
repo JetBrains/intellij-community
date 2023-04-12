@@ -786,6 +786,34 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/removeUseSiteTarget")
+    public static class RemoveUseSiteTarget extends AbstractK2QuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("setTargetOnGetter.kt")
+        public void testSetTargetOnGetter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeUseSiteTarget/setTargetOnGetter.kt");
+        }
+
+        @TestMetadata("useSiteGetDoesntHaveAnyEffect.kt")
+        public void testUseSiteGetDoesntHaveAnyEffect() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeUseSiteTarget/useSiteGetDoesntHaveAnyEffect.kt");
+        }
+
+        @TestMetadata("useSiteGetOnClass.kt")
+        public void testUseSiteGetOnClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeUseSiteTarget/useSiteGetOnClass.kt");
+        }
+
+        @TestMetadata("whitespaces.kt")
+        public void testWhitespaces() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeUseSiteTarget/whitespaces.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/protectedInFinal")
     public static class ProtectedInFinal extends AbstractK2QuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {

@@ -42,17 +42,25 @@ class RemoveAnnotationFix(@Nls private val text: String, annotationEntry: KtAnno
             listOf(RemoveAnnotationFix(KotlinBundle.message("remove.extension.function.type.annotation"), psiElement))
     }
 
-    object UseSiteGetDoesntHaveAnyEffect : QuickFixesPsiBasedFactory<KtAnnotationEntry>(KtAnnotationEntry::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
-        override fun doCreateQuickFix(psiElement: KtAnnotationEntry): List<IntentionAction> =
-            when (psiElement.let { it.parent as? KtDeclarationModifierList }?.let { it.parent as? KtPropertyAccessor }?.isGetter == true &&
-                    psiElement.useSiteTarget?.getAnnotationUseSiteTarget() == AnnotationUseSiteTarget.PROPERTY_GETTER) {
-                true -> listOf(RemoveAnnotationFix(KotlinBundle.message("remove.annotation.doesnt.have.any.effect"), psiElement))
-                false -> emptyList()
-            }
+    object UseSiteGetDoesntHaveAnyEffect : AbstractUseSiteGetDoesntHaveAnyEffectQuickFixesFactory() {
+        override fun doCreateQuickFixImpl(psiElement: KtAnnotationEntry): IntentionAction =
+            RemoveAnnotationFix(KotlinBundle.message("remove.annotation.doesnt.have.any.effect"), psiElement)
     }
 
     companion object : QuickFixesPsiBasedFactory<KtAnnotationEntry>(KtAnnotationEntry::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
         override fun doCreateQuickFix(psiElement: KtAnnotationEntry): List<IntentionAction> =
             listOf(RemoveAnnotationFix(KotlinBundle.message("fix.remove.annotation.text"), annotationEntry = psiElement))
     }
+}
+
+abstract class AbstractUseSiteGetDoesntHaveAnyEffectQuickFixesFactory :
+    QuickFixesPsiBasedFactory<KtAnnotationEntry>(KtAnnotationEntry::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
+    final override fun doCreateQuickFix(psiElement: KtAnnotationEntry): List<IntentionAction> =
+        when (psiElement.let { it.parent as? KtDeclarationModifierList }?.let { it.parent as? KtPropertyAccessor }?.isGetter == true &&
+                psiElement.useSiteTarget?.getAnnotationUseSiteTarget() == AnnotationUseSiteTarget.PROPERTY_GETTER) {
+            true -> listOf(doCreateQuickFixImpl(psiElement))
+            false -> emptyList()
+        }
+
+    protected abstract fun doCreateQuickFixImpl(psiElement: KtAnnotationEntry): IntentionAction
 }

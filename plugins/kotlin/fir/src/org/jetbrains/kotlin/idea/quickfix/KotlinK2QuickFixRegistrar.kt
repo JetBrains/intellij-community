@@ -211,8 +211,16 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
     }
 
     private val other = KtQuickFixesListBuilder.registerPsiQuickFix {
-        registerPsiQuickFixes(KtFirDiagnostic.InapplicableTargetOnPropertyWarning::class, RemoveAnnotationFix.UseSiteGetDoesntHaveAnyEffect)
-        registerPsiQuickFixes(KtFirDiagnostic.InapplicableTargetOnProperty::class, RemoveAnnotationFix.UseSiteGetDoesntHaveAnyEffect)
+        registerPsiQuickFixes(
+            KtFirDiagnostic.InapplicableTargetOnPropertyWarning::class,
+            RemoveAnnotationFix.UseSiteGetDoesntHaveAnyEffect,
+            RemoveUseSiteTargetFix.UseSiteGetDoesntHaveAnyEffect
+        )
+        registerPsiQuickFixes(
+            KtFirDiagnostic.InapplicableTargetOnProperty::class,
+            RemoveAnnotationFix.UseSiteGetDoesntHaveAnyEffect,
+            RemoveUseSiteTargetFix.UseSiteGetDoesntHaveAnyEffect
+        )
     }
 
     override val list: KotlinQuickFixesList = KotlinQuickFixesList.createCombined(

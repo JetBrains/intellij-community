@@ -12525,6 +12525,34 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/removeUseSiteTarget")
+    public static class RemoveUseSiteTarget extends AbstractK1QuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("setTargetOnGetter.kt")
+        public void testSetTargetOnGetter() throws Exception {
+            runTest("testData/quickfix/removeUseSiteTarget/setTargetOnGetter.kt");
+        }
+
+        @TestMetadata("useSiteGetDoesntHaveAnyEffect.kt")
+        public void testUseSiteGetDoesntHaveAnyEffect() throws Exception {
+            runTest("testData/quickfix/removeUseSiteTarget/useSiteGetDoesntHaveAnyEffect.kt");
+        }
+
+        @TestMetadata("useSiteGetOnClass.kt")
+        public void testUseSiteGetOnClass() throws Exception {
+            runTest("testData/quickfix/removeUseSiteTarget/useSiteGetOnClass.kt");
+        }
+
+        @TestMetadata("whitespaces.kt")
+        public void testWhitespaces() throws Exception {
+            runTest("testData/quickfix/removeUseSiteTarget/whitespaces.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/renameToRem")
     public static class RenameToRem extends AbstractK1QuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {

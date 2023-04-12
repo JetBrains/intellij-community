@@ -169,8 +169,14 @@ class QuickFixRegistrar : QuickFixContributor {
         NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER.registerFactory(ImportForMismatchingArgumentsFix)
         TYPE_INFERENCE_NO_INFORMATION_FOR_PARAMETER.registerFactory(ImportForMismatchingArgumentsFix)
 
-        INAPPLICABLE_TARGET_ON_PROPERTY.registerFactory(RemoveAnnotationFix.UseSiteGetDoesntHaveAnyEffect)
-        INAPPLICABLE_TARGET_ON_PROPERTY_WARNING.registerFactory(RemoveAnnotationFix.UseSiteGetDoesntHaveAnyEffect)
+        INAPPLICABLE_TARGET_ON_PROPERTY.registerFactory(
+            RemoveAnnotationFix.UseSiteGetDoesntHaveAnyEffect,
+            RemoveUseSiteTargetFix.UseSiteGetDoesntHaveAnyEffect
+        )
+        INAPPLICABLE_TARGET_ON_PROPERTY_WARNING.registerFactory(
+            RemoveAnnotationFix.UseSiteGetDoesntHaveAnyEffect,
+            RemoveUseSiteTargetFix.UseSiteGetDoesntHaveAnyEffect
+        )
 
         INFERRED_INTO_DECLARED_UPPER_BOUNDS.registerFactory(InsertExplicitTypeArgumentsIntention)
 
