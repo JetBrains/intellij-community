@@ -2,20 +2,28 @@
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.assertWriteAccessAllowed
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
+import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.storage.CachedValue
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
+import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.impl.DummyVersionedEntityStorage
+import java.util.concurrent.LinkedBlockingQueue
+import kotlin.system.measureTimeMillis
 
 class DisposableCachedValue<R : Disposable>(
   private val entityStorage: () -> VersionedEntityStorage,
   private val cachedValue: CachedValue<R>,
   private val cacheName: String = "-",
+  private val project: Project,
 ) : Disposable {
 
   private var latestValue: R? = null
@@ -42,12 +50,8 @@ class DisposableCachedValue<R : Disposable>(
 
       val oldValue = latestValue
       if (oldValue !== currentValue && oldValue != null) {
-        log.debug { "Dispose old value. Cache name: `$cacheName`. Store type: ${storage.javaClass}. Store version: ${storage.version}" }
-        invokeLater {
-          runWriteAction {
-            Disposer.dispose(oldValue)
-          }
-        }
+        log.debug { "Request cached value disposal. Cache name: `$cacheName`. Store type: ${storage.javaClass}. Store version: ${storage.version}" }
+        CachedValuesDisposer.getInstance(project).requestDispose(oldValue)
       }
       latestValue = currentValue
 
@@ -71,5 +75,52 @@ class DisposableCachedValue<R : Disposable>(
 
   companion object {
     private val log = logger<DisposableCachedValue<*>>()
+  }
+}
+
+/**
+ * This service processes a queue of values that should be disposed.
+ * The values will be disposed on the next write action caused by change of the workspace model.
+ * This approach is rather hacky and should be replaced with a different solution based on Workspace Model read trace
+ */
+@Service(Service.Level.PROJECT)
+class CachedValuesDisposer(project: Project) : Disposable {
+  private val toBeDisposedValues = LinkedBlockingQueue<Disposable>()
+
+  init {
+    project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+      override fun changed(event: VersionedStorageChange) {
+        assertWriteAccessAllowed()
+        disposeValuesInQueue()
+      }
+    })
+  }
+
+  // On my pretty fast computer (mac m2 max), the 2500 items are disposed in 15-20 ms.
+  //   what seems to be acceptable.
+  // However, we have a goal to get rid of DisposableCachedValue that is reset on every workspace model change
+  //   and replace it with an implementation that disposes value only on change of the associated entity
+  private fun disposeValuesInQueue() {
+    val currentValues = ArrayList<Disposable>()
+    val time = measureTimeMillis {
+      toBeDisposedValues.drainTo(currentValues)
+      currentValues.forEach { disposable -> Disposer.dispose(disposable) }
+    }
+    log.debug { "Disposing ${currentValues.size} cached values in $time ms" }
+  }
+
+  fun requestDispose(disposable: Disposable) {
+    toBeDisposedValues.add(disposable)
+  }
+
+  override fun dispose() {
+    val currentValues = ArrayList<Disposable>()
+    toBeDisposedValues.drainTo(currentValues)
+    currentValues.forEach { disposable -> Disposer.dispose(disposable) }
+  }
+
+  companion object {
+    fun getInstance(project: Project): CachedValuesDisposer = project.service()
+    val log = logger<CachedValuesDisposer>()
   }
 }

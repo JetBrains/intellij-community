@@ -42,7 +42,7 @@ class ModuleRootComponentBridge(
         rootModel = this,
         updater = null
       )
-    }, "Root Model Bridge (${currentModule.name})").also { Disposer.register(this, it) }
+    }, "Root Model Bridge (${currentModule.name})", currentModule.project).also { Disposer.register(this, it) }
 
   internal val moduleLibraryTable: ModuleLibraryTableBridgeImpl = ModuleLibraryTableBridgeImpl(moduleBridge)
 
