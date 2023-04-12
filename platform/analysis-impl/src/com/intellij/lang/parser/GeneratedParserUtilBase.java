@@ -752,8 +752,9 @@ public class GeneratedParserUtilBase {
     Builder b = (Builder)builder;
     PsiBuilderImpl.ProductionMarker marker = ContainerUtil.getLastItem(b.getProductions());
     if (marker == null) return null;
-    IElementType type = marker.getTokenType();
-    return type != null && marker instanceof PsiBuilder.Marker && b.isExtensibleMarkerType(type) ? marker : null;
+    PsiBuilder delegate = b.getDelegate();
+    if (delegate instanceof PsiBuilderImpl delegateImpl && delegateImpl.isCollapsed(marker)) return null;
+    return marker.getTokenType() != null && marker instanceof PsiBuilder.Marker ? marker : null;
   }
 
   private static boolean reportError(PsiBuilder builder,
@@ -903,10 +904,6 @@ public class GeneratedParserUtilBase {
     @NotNull
     public List<PsiBuilderImpl.ProductionMarker> getProductions() {
       return ((PsiBuilderImpl)myDelegate).getProductions();
-    }
-
-    public boolean isExtensibleMarkerType(@NotNull IElementType type) {
-      return true;
     }
   }
 
