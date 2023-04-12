@@ -239,7 +239,7 @@ private class HeaderIconUpdater {
     updateIcon(presentation, getter, setter)
     presentation.addPropertyChangeListener(PropertyChangeListener { evt ->
       if (evt.propertyName != propName) return@PropertyChangeListener
-      if (evt.newValue in iconsCache) return@PropertyChangeListener
+      if (evt.newValue != null && evt.newValue in iconsCache) return@PropertyChangeListener
       updateIcon(presentation, getter, setter)
     })
   }
