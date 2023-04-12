@@ -249,6 +249,18 @@ private class MarkerCollector(private val resolutionFacade: ResolutionFacade) {
     }
 
     /**
+     * Collect experimental markers for property delegate and add them to [foundMarkers].
+     *
+     * @param delegate the property delegate to process
+     */
+    fun collectMarkers(delegate: KtPropertyDelegate) {
+        val moduleApiVersion = delegate.languageVersionSettings.apiVersion
+        delegate.resolveMainReferenceToDescriptors().forEach { descriptor ->
+            descriptor.collectMarkers(moduleApiVersion)
+        }
+    }
+
+    /**
      * Collect markers from a declaration descriptor corresponding to a Kotlin type.
      *
      * @receiver the type to collect markers
@@ -344,6 +356,11 @@ private class OptInMarkerVisitor : KtTreeVisitor<MarkerCollector>() {
     override fun visitClassOrObject(expression: KtClassOrObject, markerCollector: MarkerCollector): Void? {
         markerCollector.collectMarkers(expression)
         return super.visitClassOrObject(expression, markerCollector)
+    }
+
+    override fun visitPropertyDelegate(delegate: KtPropertyDelegate, markerCollector: MarkerCollector): Void? {
+        markerCollector.collectMarkers(delegate)
+        return super.visitPropertyDelegate(delegate, markerCollector)
     }
 }
 
