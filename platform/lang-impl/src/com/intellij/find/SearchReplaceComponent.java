@@ -97,7 +97,6 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   @NotNull private @NlsContexts.Label String myStatusText = "";
   @NotNull private Color myStatusColor = ExperimentalUI.isNewUI() ? UIUtil.getLabelInfoForeground() : UIUtil.getLabelForeground();
   private final AnAction modeAction = new ModeAction();
-  private static final Color EDITOR_BACKGROUND = JBColor.lazy(() -> EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
 
   @Nullable private final ShortcutSet findActionShortcutSet;
   @Nullable private final ShortcutSet replaceActionShortcutSet;
@@ -224,11 +223,6 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     mySearchActionsToolbar.setForceShowFirstComponent(true);
     mySearchToolbarWrapper.add(mySearchActionsToolbar, BorderLayout.CENTER);
 
-    if (ExperimentalUI.isNewUI()) {
-      mySearchActionsToolbar.setBackground(EDITOR_BACKGROUND);
-      mySearchToolbarWrapper.setBackground(EDITOR_BACKGROUND);
-    }
-
     myReplaceActionsToolbar = createReplaceToolbar1(replaceToolbar1Actions);
     myReplaceActionsToolbar.setBorder(JBUI.Borders.empty());
     myReplaceActionsToolbar.setOpaque(!isNewUI);
@@ -249,8 +243,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       modeToolbarComponent.setOpaque(false);
 
       myModePanel = JBUI.Panels.simplePanel().addToTop(modeToolbar.getComponent());
-      myModePanel.setOpaque(true);
-      myModePanel.setBackground(EDITOR_BACKGROUND);
+      myModePanel.setOpaque(false);
       add(myModePanel, BorderLayout.WEST);
     }
     else {
@@ -268,13 +261,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       }
       mySplitter.setFirstComponent(leftPanel);
       mySplitter.setSecondComponent(rightPanel);
-      if (ExperimentalUI.isNewUI()) {
-        mySearchActionsToolbar.setBackground(EDITOR_BACKGROUND);
-        mySplitter.setBackground(EDITOR_BACKGROUND);
-        mySplitter.setOpaque(true);
-      } else {
-        mySplitter.setOpaque(false);
-      }
+      mySplitter.setOpaque(false);
       mySplitter.getDivider().setOpaque(false);
       add(mySplitter, BorderLayout.CENTER);
 
@@ -324,6 +311,10 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       touchbarActions.add(new PrevOccurrenceAction());
       touchbarActions.add(new NextOccurrenceAction());
       Touchbar.setActions(this, touchbarActions);
+    }
+
+    if (ExperimentalUI.isNewUI()) {
+      setBackground(JBColor.namedColor("Editor.SearchField.background", JBColor.background()));
     }
 
     updateUI();
@@ -727,6 +718,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, group, true);
     toolbar.setTargetComponent(this);
     toolbar.setLayoutPolicy(ActionToolbar.AUTO_LAYOUT_POLICY);
+    if (ExperimentalUI.isNewUI()) toolbar.setOpaque(false);
     Utils.setSmallerFontForChildren(toolbar);
     return toolbar;
   }
