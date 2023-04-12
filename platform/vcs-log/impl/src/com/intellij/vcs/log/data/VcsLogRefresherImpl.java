@@ -118,19 +118,18 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
 
   private @NotNull LogInfo loadRecentData(final @NotNull Map<VirtualFile, VcsLogProvider.Requirements> requirements) throws VcsException {
     return computeWithSpanThrows(myTracer, "loading commits", __ -> {
-      final LogInfo logInfo = new LogInfo(myStorage);
-      new ProviderIterator() {
-        @Override
-        public void each(@NotNull VirtualFile root, @NotNull VcsLogProvider provider) throws VcsException {
-          runWithSpanThrows(myTracer, "loading commits", spanForRoot -> {
-            spanForRoot.setAttribute("rootName", root.getName());
-            VcsLogProvider.DetailedLogData data = provider.readFirstBlock(root, requirements.get(root));
-            logInfo.put(root, compactCommits(data.getCommits(), root));
-            logInfo.put(root, data.getRefs());
-            storeUsersAndDetails(data.getCommits());
-          });
-        }
-      }.iterate(getProvidersForRoots(requirements.keySet()));
+      LogInfo logInfo = new LogInfo(myStorage);
+      for (Map.Entry<VirtualFile, VcsLogProvider> entry : getProvidersForRoots(requirements.keySet()).entrySet()) {
+        VirtualFile root = entry.getKey();
+        VcsLogProvider provider = entry.getValue();
+        runWithSpanThrows(myTracer, "loading commits", spanForRoot -> {
+          spanForRoot.setAttribute("rootName", root.getName());
+          VcsLogProvider.DetailedLogData data = provider.readFirstBlock(root, requirements.get(root));
+          logInfo.put(root, compactCommits(data.getCommits(), root));
+          logInfo.put(root, data.getRefs());
+          storeUsersAndDetails(data.getCommits());
+        });
+      }
       myUserRegistry.flush();
       myIndex.scheduleIndex(false);
       return logInfo;
@@ -350,19 +349,18 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
 
     private @NotNull LogInfo readFullLogFromVcs() throws VcsException {
       return computeWithSpanThrows(myTracer, "read full log from VCS", span -> {
-        final LogInfo logInfo = new LogInfo(myStorage);
-        new ProviderIterator() {
-          @Override
-          void each(final @NotNull VirtualFile root, @NotNull VcsLogProvider provider) throws VcsException {
-            runWithSpanThrows(myTracer, "read full log from VCS for " + root.getName(), scopeSpan -> {
-              final List<GraphCommit<Integer>> graphCommits = new ArrayList<>();
-              VcsLogProvider.LogData data = provider.readAllHashes(root, commit -> graphCommits.add(compactCommit(commit, root)));
-              logInfo.put(root, graphCommits);
-              logInfo.put(root, data.getRefs());
-              myUserRegistry.addUsers(data.getUsers());
-            });
-          }
-        }.iterate(myProviders);
+        LogInfo logInfo = new LogInfo(myStorage);
+        for (Map.Entry<VirtualFile, VcsLogProvider> entry : myProviders.entrySet()) {
+          VirtualFile root = entry.getKey();
+          VcsLogProvider provider = entry.getValue();
+          runWithSpanThrows(myTracer, "read full log from VCS for " + root.getName(), scopeSpan -> {
+            List<GraphCommit<Integer>> graphCommits = new ArrayList<>();
+            VcsLogProvider.LogData data = provider.readAllHashes(root, commit -> graphCommits.add(compactCommit(commit, root)));
+            logInfo.put(root, graphCommits);
+            logInfo.put(root, data.getRefs());
+            myUserRegistry.addUsers(data.getUsers());
+          });
+        }
         myUserRegistry.flush();
         myIndex.scheduleIndex(true);
         return logInfo;
@@ -386,16 +384,6 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     @Override
     public String toString() {
       return "{" + rootsToRefresh + "}";
-    }
-  }
-
-  private abstract static class ProviderIterator {
-    abstract void each(@NotNull VirtualFile root, @NotNull VcsLogProvider provider) throws VcsException;
-
-    final void iterate(@NotNull Map<VirtualFile, VcsLogProvider> providers) throws VcsException {
-      for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
-        each(entry.getKey(), entry.getValue());
-      }
     }
   }
 
