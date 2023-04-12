@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.comment
 
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.diff.DiffMappedValue
+import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 import com.intellij.diff.tools.simple.SimpleOnesideDiffViewer
 import com.intellij.diff.tools.util.base.DiffViewerBase
@@ -39,6 +40,7 @@ import kotlin.properties.Delegates.observable
 class GHPRDiffReviewSupportImpl(private val project: Project,
                                 private val reviewDataProvider: GHPRReviewDataProvider,
                                 private val detailsDataProvider: GHPRDetailsDataProvider,
+                                private val htmlImageLoader: AsyncHtmlImageLoader,
                                 private val avatarIconsProvider: GHAvatarIconsProvider,
                                 private val repositoryDataService: GHPRRepositoryDataService,
                                 private val diffData: GitTextFilePatchWithHistory,
@@ -85,7 +87,8 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
                                                            reviewDataProvider,
                                                            detailsDataProvider)
     val componentsFactory = GHPRDiffEditorReviewComponentsFactoryImpl(project,
-                                                                      reviewDataProvider, avatarIconsProvider,
+                                                                      reviewDataProvider,
+                                                                      htmlImageLoader, avatarIconsProvider,
                                                                       createCommentParametersHelper, suggestedChangesHelper,
                                                                       ghostUser,
                                                                       currentUser)

@@ -4,11 +4,12 @@ package com.intellij.collaboration.ui.html
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.util.containers.ComparatorUtil.min
-import com.intellij.util.resettableLazy
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.StartupUiUtil
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
+import java.awt.image.BufferedImage
 import java.awt.image.ImageObserver
 import java.net.URL
 import java.util.*
@@ -29,6 +30,8 @@ private val notLoadedIcon: Icon
  * Custom image view to be used with [com.intellij.util.ui.ExtendableHTMLViewFactory]
  *
  * Images are automatically resized to fit the panel width
+ *
+ * Image loading can be customized via [AsyncHtmlImageLoader.KEY] property in a document
  */
 //TODO: handle HTML props - h/vspace, h/valign
 //TODO: handle CSS props - max-width/height to control the resize behavior
@@ -36,14 +39,23 @@ private val notLoadedIcon: Icon
 @ApiStatus.Experimental
 class ResizingHtmlImageView(element: Element) : View(element) {
 
-  private var _loader = resettableLazy(::createImageLoader)
-  private val loader: ImageLoader? by _loader
+  private var _loader: ImageLoader? = null
+    set(value) {
+      field?.cancel()
+      field = value
+    }
+  private val loader: ImageLoader
+    get() = _loader ?: run {
+      createImageLoader().also {
+        _loader = it
+      }
+    }
 
   private var cachedContainer: Container? = null
   private var lastPaintedRectangle: Rectangle? = null
 
   override fun getPreferredSpan(axis: Int): Float =
-    when (val state = loader?.state ?: ImageLoader.State.NotLoaded) {
+    when (val state = loader.state) {
       ImageLoader.State.NotLoaded -> notLoadedIcon.getSpan(axis)
       is ImageLoader.State.Loading -> state.dimension?.getSpan(axis) ?: loadingIcon.getSpan(axis)
       is ImageLoader.State.Loaded -> state.dimension.getSpan(axis)
@@ -53,12 +65,12 @@ class ResizingHtmlImageView(element: Element) : View(element) {
    * If the image was loaded we ALWAYS "break" this view to scale the image properly - [breakView]
    */
   override fun getBreakWeight(axis: Int, pos: Float, len: Float): Int {
-    return if (axis == X_AXIS && loader?.state is ImageLoader.State.Loaded) ForcedBreakWeight
+    return if (axis == X_AXIS && loader.state is ImageLoader.State.Loaded) ForcedBreakWeight
     else BadBreakWeight
   }
 
   override fun breakView(axis: Int, offset: Int, pos: Float, len: Float): View {
-    val state = loader?.state
+    val state = loader.state
     if (axis == X_AXIS && state is ImageLoader.State.Loaded) {
       preferenceChanged(null, false, true)
       val imageWidth = state.dimension.width.toFloat()
@@ -80,7 +92,7 @@ class ResizingHtmlImageView(element: Element) : View(element) {
 
   override fun paint(g: Graphics, allocation: Shape) {
     val rect = if (allocation is Rectangle) allocation else allocation.bounds
-    when (val state = loader?.state ?: ImageLoader.State.NotLoaded) {
+    when (val state = loader.state) {
       ImageLoader.State.NotLoaded -> notLoadedIcon.paintIcon(null, g, rect.x, rect.y)
       is ImageLoader.State.Loading -> loadingIcon.paintIcon(null, g, rect.x, rect.y)
       is ImageLoader.State.Loaded -> StartupUiUtil.drawImage(g, state.image, rect, null)
@@ -89,7 +101,7 @@ class ResizingHtmlImageView(element: Element) : View(element) {
 
   override fun changedUpdate(e: DocumentEvent?, a: Shape?, f: ViewFactory?) {
     super.changedUpdate(e, a, f)
-    _loader.reset()
+    _loader = null
     preferenceChanged(null, true, true)
   }
 
@@ -119,11 +131,12 @@ class ResizingHtmlImageView(element: Element) : View(element) {
     }
   }
 
-  private fun createImageLoader(): ImageLoader? {
-    val src = element.attributes.getAttribute(HTML.Attribute.SRC) as? String ?: return null
+  private fun createImageLoader(): ImageLoader {
+    val src = element.attributes.getAttribute(HTML.Attribute.SRC) as? String
     val base = (document as HTMLDocument).base
+    val asyncLoader = document.getProperty(AsyncHtmlImageLoader.KEY) as? AsyncHtmlImageLoader
 
-    return ImageLoader(base, src, { cachedContainer?.isShowing ?: false }) { old, new ->
+    return ImageLoader(base, src, asyncLoader, { cachedContainer?.isShowing ?: false }) { old, new ->
       if (old != new) {
         preferenceChanged(null, true, true)
       }
@@ -171,36 +184,75 @@ class ResizingHtmlImageView(element: Element) : View(element) {
 
 private class ImageLoader(
   private val baseUrl: URL?,
-  private val src: String,
+  private val src: String?,
+  private val asyncLoader: AsyncHtmlImageLoader?,
   private val isActual: () -> Boolean,
   private val onStateChange: (old: State, new: State) -> Unit
 ) : ImageObserver {
 
-  private val image: Image? = createImage()
+  private val loadingJob: Job = requestImage()
   private val dimension = Dimension(-1, -1)
 
-  var state: State by observable(if (image != null) State.Loading(null) else State.NotLoaded) { _, old, new ->
+  var state: State by observable(State.NotLoaded) { _, old, new ->
     onStateChange(old, new)
   }
+    private set
 
-  private fun createImage(): Image? {
-    if (src.startsWith("data:image") && src.contains("base64")) {
-      return tryReadBase64Image(src)
+  private fun requestImage(): Job {
+    if (src == null) {
+      return Job().apply { cancel() }
     }
 
-    val url = baseUrl?.let { URL(it, src) } ?: URL(src)
     val toolkit = Toolkit.getDefaultToolkit()
-    return toolkit.createImage(url).also {
-      toolkit.prepareImage(it, -1, -1, this)
+    if (src.startsWith("data:image") && src.contains("base64")) {
+      val result = Job()
+      val base64Image = tryCreateBase64Image(src)
+      if (base64Image != null) {
+        toolkit.prepareImage(base64Image, -1, -1, this)
+        result.complete()
+      }
+      else {
+        result.cancel()
+      }
+      return result
+    }
+
+    if (asyncLoader != null) {
+      return requestImageAsync(asyncLoader, baseUrl, src)
+    }
+    else {
+      val url = baseUrl?.let { URL(it, src) } ?: URL(src)
+      return toolkit.createImage(url).also {
+        toolkit.prepareImage(it, -1, -1, this)
+      }.let {
+        Job().apply { complete() }
+      }
     }
   }
 
-  override fun imageUpdate(img: Image, flags: Int, x: Int, y: Int, width: Int, height: Int): Boolean {
-    if (img !== image) return false
-    return invokeAndWaitIfNeeded {
-      if (isActual()) doUpdate(img, flags, width, height) else false
+  @OptIn(DelicateCoroutinesApi::class)
+  private fun requestImageAsync(loader: AsyncHtmlImageLoader, baseUrl: URL?, src: String): Job =
+    GlobalScope.launch(Dispatchers.Main + CoroutineName("HTML image requestor")) {
+      state = State.Loading()
+      val image = try {
+        loader.load(baseUrl, src)!!
+      }
+      catch (e: Exception) {
+        state = State.NotLoaded
+        throw CancellationException("Image loading cancelled", e)
+      }
+      if (image is BufferedImage) {
+        state = State.Loaded(image, Dimension(image.width, image.height))
+      }
+      else {
+        Toolkit.getDefaultToolkit().prepareImage(image, -1, -1, this@ImageLoader)
+      }
     }
-  }
+
+  override fun imageUpdate(img: Image, flags: Int, x: Int, y: Int, width: Int, height: Int): Boolean =
+    invokeAndWaitIfNeeded {
+      if (!loadingJob.isCancelled && isActual()) doUpdate(img, flags, width, height) else false
+    }
 
   private fun doUpdate(img: Image, flags: Int, width: Int, height: Int): Boolean {
     if (flags and (ImageObserver.ABORT or ImageObserver.ERROR) != 0) {
@@ -227,6 +279,10 @@ private class ImageLoader(
     return flags and ImageObserver.ALLBITS == 0
   }
 
+  fun cancel() {
+    loadingJob.cancel()
+  }
+
   sealed interface State {
     object NotLoaded : State
     class Loading(val dimension: Dimension? = null) : State
@@ -235,8 +291,13 @@ private class ImageLoader(
 }
 
 // example: "data:image/png;base64,ENCODED_IMAGE_HERE"
-private fun tryReadBase64Image(src: String): Image? {
-  val encodedImage = src.split(',').takeIf { it.size == 2 }?.get(1) ?: return null
-  val decodedImage = Base64.getDecoder().decode(encodedImage)
-  return Toolkit.getDefaultToolkit().createImage(decodedImage)
+private fun tryCreateBase64Image(src: String): Image? {
+  try {
+    val encodedImage = src.split(',').takeIf { it.size == 2 }?.get(1) ?: return null
+    val decodedImage = Base64.getDecoder().decode(encodedImage)
+    return Toolkit.getDefaultToolkit().createImage(decodedImage)
+  }
+  catch (e: Exception) {
+    return null
+  }
 }
