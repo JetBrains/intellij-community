@@ -54,6 +54,5 @@
     <orderEntry type="library" name="kotlin-reflect" level="project" />
     <orderEntry type="library" name="rd-gen" level="project" />
     <orderEntry type="library" name="opentelemetry" level="project" />
-    <orderEntry type="module" module-name="intellij.rd.ide.model.generated" />
   </component>
 </module>
