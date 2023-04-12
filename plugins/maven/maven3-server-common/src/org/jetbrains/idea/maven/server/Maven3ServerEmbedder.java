@@ -433,7 +433,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
   public abstract MavenExecutionRequest createRequest(File file,
                                                       List<String> activeProfiles,
                                                       List<String> inactiveProfiles,
-                                                      List<String> goals)
+                                                      String goal)
     throws RemoteException;
 
   protected static void warn(String message, Throwable e) {

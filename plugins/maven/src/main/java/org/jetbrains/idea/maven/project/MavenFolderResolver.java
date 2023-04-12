@@ -11,7 +11,6 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.Collection;
-import java.util.List;
 
 public class MavenFolderResolver {
   public void resolveFolders(@NotNull Collection<MavenProject> mavenProjects,
@@ -53,9 +52,9 @@ public class MavenFolderResolver {
           var profiles = mavenProject.getActivatedProfilesIds();
 
           try {
-            var goals = List.of(importingSettings.getUpdateFoldersOnImportPhase());
+            var goal = importingSettings.getUpdateFoldersOnImportPhase();
 
-            var result = embedder.execute(file, profiles.getEnabledProfiles(), profiles.getDisabledProfiles(), goals);
+            var result = embedder.execute(file, profiles.getEnabledProfiles(), profiles.getDisabledProfiles(), goal);
 
             var projectData = result.projectData;
             if (projectData == null) continue;

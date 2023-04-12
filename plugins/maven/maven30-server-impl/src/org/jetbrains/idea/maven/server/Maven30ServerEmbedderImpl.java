@@ -804,7 +804,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   public MavenExecutionRequest createRequest(@Nullable File file,
                                              @Nullable List<String> activeProfiles,
                                              @Nullable List<String> inactiveProfiles,
-                                             @Nullable List<String> goals)
+                                             @Nullable String goal)
     throws RemoteException {
 
     MavenExecutionRequest result = new DefaultMavenExecutionRequest();
@@ -812,7 +812,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     try {
       getComponent(MavenExecutionRequestPopulator.class).populateFromSettings(result, myMavenSettings);
 
-      result.setGoals(goals == null ? Collections.emptyList() : goals);
+      result.setGoals(goal == null ? Collections.emptyList() : Collections.singletonList(goal));
 
       result.setPom(file);
 
@@ -1103,12 +1103,12 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   public MavenServerExecutionResult execute(@NotNull File file,
                                             @NotNull Collection<String> activeProfiles,
                                             @NotNull Collection<String> inactiveProfiles,
-                                            @NotNull List<String> goals,
+                                            @NotNull String goal,
                                             MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);
     MavenExecutionResult result =
-      doExecute(file, new ArrayList<>(activeProfiles), new ArrayList<>(inactiveProfiles), goals);
+      doExecute(file, new ArrayList<>(activeProfiles), new ArrayList<>(inactiveProfiles), goal);
 
     return createExecutionResult(file, result, null);
   }
@@ -1116,8 +1116,8 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   private MavenExecutionResult doExecute(@NotNull final File file,
                                          @NotNull final List<String> activeProfiles,
                                          @NotNull final List<String> inactiveProfiles,
-                                         @NotNull final List<String> goals) throws RemoteException {
-    MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, goals);
+                                         @NotNull final String goal) throws RemoteException {
+    MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, goal);
 
     org.apache.maven.execution.MavenExecutionResult executionResult = safeExecute(request, getComponent(Maven.class));
 
