@@ -537,7 +537,7 @@ public class RefManagerImpl extends RefManager {
     List<RefElement> answer = myCachedSortedRefs;
     if (answer != null) return answer;
 
-    answer = new ArrayList<>(myRefTable.values());
+    answer = getElements();
     List<RefElement> list = answer;
     ReadAction.run(() -> ContainerUtil.quickSort(list, (o1, o2) -> {
       VirtualFile v1 = ((RefElementImpl)o1).getVirtualFile();
@@ -552,6 +552,10 @@ public class RefManagerImpl extends RefManager {
     }));
     myCachedSortedRefs = answer = Collections.unmodifiableList(answer);
     return answer;
+  }
+
+  public @NotNull List<RefElement> getElements() {
+    return new ArrayList<>(myRefTable.values());
   }
 
   @Override
