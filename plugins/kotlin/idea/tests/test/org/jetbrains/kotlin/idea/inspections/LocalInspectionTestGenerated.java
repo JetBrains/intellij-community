@@ -10067,6 +10067,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public void testRecursiveCall() throws Exception {
             runTest("testData/inspectionsLocal/redundantSuspend/recursiveCall.kt");
         }
+
+        @TestMetadata("selfCallWithDifferentReceiver.kt")
+        public void testSelfCallWithDifferentReceiver() throws Exception {
+            runTest("testData/inspectionsLocal/redundantSuspend/selfCallWithDifferentReceiver.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
