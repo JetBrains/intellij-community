@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -1076,14 +1076,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   public @NlsSafe String generateDocumentation(@NotNull PsiElement element, @Nullable PsiElement originalElement, boolean onHover) {
     return new MyCollector(myProject, element, originalElement, null, onHover, false).getDocumentation();
-  }
-
-  @NotNull
-  public Pair<@NlsSafe String, @Nullable DocumentationProvider> getDocumentationAndProvider(@NotNull PsiElement element,
-                                                                                            @Nullable PsiElement originalElement,
-                                                                                            boolean onHover) {
-    MyCollector collector = new MyCollector(myProject, element, originalElement, null, onHover, false);
-    return Pair.create(collector.getDocumentation(), collector.provider);
   }
 
   @Nullable

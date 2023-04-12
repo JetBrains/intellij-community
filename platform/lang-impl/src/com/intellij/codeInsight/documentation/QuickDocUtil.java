@@ -26,7 +26,10 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -153,10 +156,5 @@ public final class QuickDocUtil {
         }
       }
     });
-  }
-
-  @ApiStatus.Internal
-  public static boolean isDocumentationV2Enabled() {
-    return true;
   }
 }

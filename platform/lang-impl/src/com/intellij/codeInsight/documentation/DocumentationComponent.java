@@ -73,8 +73,6 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enabled;
-
 /**
  * @see com.intellij.lang.documentation.ide.ui.DocumentationUI
  * @see com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
@@ -137,18 +135,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     @NotNull PsiElement element,
     @NotNull Disposable disposable
   ) {
-    if (isDocumentationV2Enabled()) {
-      DocumentationRequest request;
-      try (AccessToken ignored = SlowOperations.allowSlowOperations(SlowOperations.GENERIC)) {
-        request = ImplKt.documentationRequest(new PsiElementDocumentationTarget(project, element)); // old API fallback
-      }
-      return DocumentationUtil.documentationComponent(project, request, disposable);
+    DocumentationRequest request;
+    try (AccessToken ignored = SlowOperations.allowSlowOperations(SlowOperations.GENERIC)) {
+      request = ImplKt.documentationRequest(new PsiElementDocumentationTarget(project, element)); // old API fallback
     }
-    DocumentationManager manager = DocumentationManager.getInstance(project);
-    DocumentationComponent component = new DocumentationComponent(manager);
-    Disposer.register(disposable, component);
-    manager.fetchDocInfo(element, component);
-    return component;
+    return DocumentationUtil.documentationComponent(project, request, disposable);
   }
 
   public DocumentationComponent(DocumentationManager manager) {

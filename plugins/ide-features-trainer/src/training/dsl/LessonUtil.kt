@@ -1,9 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.dsl
 
-import com.intellij.codeInsight.documentation.DocumentationComponent
 import com.intellij.codeInsight.documentation.DocumentationEditorPane
-import com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enabled
 import com.intellij.execution.RunManager
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.configurations.RunConfiguration
@@ -73,13 +71,19 @@ import training.ui.LearningUiUtil.findComponentWithTimeout
 import training.util.getActionById
 import training.util.learningToolWindow
 import training.util.surroundWithNonBreakSpaces
-import java.awt.*
+import java.awt.Component
+import java.awt.Point
+import java.awt.Rectangle
+import java.awt.Window
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JList
+import javax.swing.JWindow
+import javax.swing.KeyStroke
 
 object LessonUtil {
   val productName: String get() {
@@ -693,12 +697,7 @@ fun <ComponentType : Component> LessonContext.highlightAllFoundUiWithClass(compo
 }
 
 fun TaskContext.triggerOnQuickDocumentationPopup() {
-  if (isDocumentationV2Enabled()) {
-    triggerUI().component { _: DocumentationEditorPane -> true }
-  }
-  else {
-    triggerUI().component { _: DocumentationComponent -> true }
-  }
+  triggerUI().component { _: DocumentationEditorPane -> true }
 }
 
 fun TaskContext.triggerOnEditorText(text: String, centerOffset: Int? = null, highlightBorder: Boolean = false) {
