@@ -334,7 +334,13 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
         point = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
         editor.getCaretModel().moveToOffset(previousOffset);
       }
-      balloon.show(point, Balloon.Position.below);
+      if (getLine(editor, linkInfo.myReason) < getLine(editor, linkInfo.myTarget)) {
+        Point previousPoint = point.getPoint();
+        balloon.show(new RelativePoint(point.getComponent(), new Point(previousPoint.x, previousPoint.y - editor.getLineHeight())), Balloon.Position.above);
+      }
+      else {
+        balloon.show(point, Balloon.Position.below);
+      }
       editor.getScrollingModel().addVisibleAreaListener(e -> {
         //skip when IDEA opens a new file and redraws it
         if (e.getNewRectangle().equals(e.getOldRectangle())) {
@@ -342,6 +348,18 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
         }
         Disposer.dispose(balloon);
       }, balloon);
+    }
+
+    private static long getLine(@NotNull Editor editor, @Nullable PsiElement psiElement) {
+      if (psiElement == null) {
+        return -1;
+      }
+      Document document = editor.getDocument();
+      TextRange range = psiElement.getTextRange();
+      if (range == null) {
+        return -1;
+      }
+      return document.getLineNumber(range.getStartOffset());
     }
 
     @Nullable
