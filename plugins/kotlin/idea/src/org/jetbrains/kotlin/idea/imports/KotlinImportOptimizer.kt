@@ -260,10 +260,12 @@ class KotlinImportOptimizer : ImportOptimizer {
             val oldImports = importList.imports
             val psiFactory = KtPsiFactory(file.project)
             for (importPath in imports) {
-                importList.addBefore(
+                val newImport = importList.addBefore(
                     psiFactory.createImportDirective(importPath),
                     oldImports.lastOrNull()
                 ) // insert into the middle to keep collapsed state
+
+                importList.addAfter(psiFactory.createWhiteSpace("\n"), newImport)
             }
 
             // remove old imports after adding new ones to keep imports folding state

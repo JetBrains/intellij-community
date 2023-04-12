@@ -658,6 +658,11 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
             public void testWithAlias2() throws Exception {
                 runTest("testData/editor/optimizeImports/common/WithAlias2.kt");
             }
+
+            @TestMetadata("WithoutFormatter.kt")
+            public void testWithoutFormatter() throws Exception {
+                runTest("testData/editor/optimizeImports/common/WithoutFormatter.kt");
+            }
         }
     }
 }
