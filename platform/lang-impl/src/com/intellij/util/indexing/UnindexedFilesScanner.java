@@ -166,7 +166,7 @@ public class UnindexedFilesScanner implements FilesScanningTask {
                     @NotNull ProgressIndicator indicator,
                     @NotNull Ref<? super StatusMark> markRef) {
     projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.PushProperties);
-    scanningHistory.startStage(ProjectScanningHistoryImpl.ScanningStage.PushProperties);
+    scanningHistory.startStage(ProjectScanningHistoryImpl.ScanningStage.DelayedPushProperties);
     try {
       if (myPusher instanceof PushedFilePropertiesUpdaterImpl) {
         ((PushedFilePropertiesUpdaterImpl)myPusher).performDelayedPushTasks();
@@ -174,7 +174,7 @@ public class UnindexedFilesScanner implements FilesScanningTask {
     }
     finally {
       projectIndexingHistory.stopStage(ProjectIndexingHistoryImpl.Stage.PushProperties);
-      scanningHistory.stopStage(ProjectScanningHistoryImpl.ScanningStage.PushProperties);
+      scanningHistory.stopStage(ProjectScanningHistoryImpl.ScanningStage.DelayedPushProperties);
     }
     LOG.info(snapshot.getLogResponsivenessSinceCreationMessage("Performing delayed pushing properties tasks for " + myProject.getName()));
 

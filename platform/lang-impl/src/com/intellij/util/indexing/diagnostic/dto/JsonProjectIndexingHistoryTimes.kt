@@ -41,7 +41,7 @@ data class JsonProjectScanningHistoryTimes(
   val totalWallTimeWithPauses: JsonDuration = JsonDuration(),
   val creatingIteratorsTime: JsonDuration = JsonDuration(),
   val scanFilesTime: JsonDuration = JsonDuration(),
-  val pushPropertiesTime: JsonDuration = JsonDuration(),
+  val delayedPushPropertiesStageTime: JsonDuration = JsonDuration(),
   val indexExtensionsTime: JsonDuration = JsonDuration(),
 
   override val updatingStart: JsonDateTime = JsonDateTime(),
