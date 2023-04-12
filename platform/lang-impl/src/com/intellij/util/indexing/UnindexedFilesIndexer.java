@@ -79,13 +79,11 @@ class UnindexedFilesIndexer extends DumbModeTask {
     myIndex.resetSnapshotInputMappingStatistics();
 
     projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.Indexing);
-    projectDumbIndexingHistory.startStage(ProjectDumbIndexingHistoryImpl.Stage.Indexing);
     try {
       doIndexFiles(projectIndexingHistory, projectDumbIndexingHistory, poweredIndicator);
     }
     finally {
       projectIndexingHistory.stopStage(ProjectIndexingHistoryImpl.Stage.Indexing);
-      projectDumbIndexingHistory.stopStage(ProjectDumbIndexingHistoryImpl.Stage.Indexing);
     }
 
     LOG.info(

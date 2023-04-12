@@ -1284,7 +1284,6 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
               tr { td("Cancelled?"); td(times.wasInterrupted.toString()) }
               tr { td("Total time with pauses"); td(times.totalWallTimeWithPauses.presentableDuration()) }
               tr { td("Pauses time"); td(times.totalPausedWallTime.presentableDuration()) }
-              tr { td("Indexing time"); td(times.indexingTime.presentableDuration()) }
               if (IndexDiagnosticDumper.shouldProvideVisibleAndAllThreadsTimeInfo) {
                 tr {
                   td("Total processing visible time")
@@ -1376,7 +1375,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
             tbody {
               for (statsPerFileType in totalStatsPerFileType) {
                 val visibleIndexingTime = JsonDuration(
-                  (times.indexingTime.nano * statsPerFileType.partOfTotalProcessingTime.partition).toLong()
+                  (times.totalWallTimeWithPauses.nano * statsPerFileType.partOfTotalProcessingTime.partition).toLong()
                 )
                 val visibleContentLoadingTime = JsonDuration(
                   (times.contentLoadingVisibleTime.nano * statsPerFileType.partOfTotalContentLoadingTime.partition).toLong()

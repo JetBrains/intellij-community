@@ -54,7 +54,6 @@ data class JsonProjectScanningHistoryTimes(
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class JsonProjectDumbIndexingHistoryTimes(
   val totalWallTimeWithPauses: JsonDuration = JsonDuration(),
-  val indexingTime: JsonDuration = JsonDuration(),
   val contentLoadingVisibleTime: JsonDuration = JsonDuration(),
   val refreshedFilesScanTime: JsonDuration = JsonDuration(),
   val isAppliedAllValuesSeparately: Boolean = true,

@@ -118,7 +118,6 @@ fun ScanningTimes.toJson() =
 fun DumbIndexingTimes.toJson() =
   JsonProjectDumbIndexingHistoryTimes(
     totalWallTimeWithPauses = JsonDuration(totalUpdatingTime),
-    indexingTime = JsonDuration(indexingDuration.toNanos()),
     contentLoadingVisibleTime = JsonDuration(contentLoadingVisibleDuration.toNanos()),
     refreshedFilesScanTime = JsonDuration(refreshedScanFilesDuration.toNanos()),
     isAppliedAllValuesSeparately = appliedAllValuesSeparately,
