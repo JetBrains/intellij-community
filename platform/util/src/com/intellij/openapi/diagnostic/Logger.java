@@ -20,6 +20,7 @@ import java.util.function.Function;
  * Production mode:
  * <ul>
  * <li>The log messages go to {@code %system%/log/idea.log}.
+ * <li>Error and warning messages go to {@link System#err}. To suppress them, set {@code -Didea.log.console=false}.
  * <li>Error, warning and info messages go to the log file.
  * <li>Debug and trace messages are dropped by default.
  * <li>In EAP versions or if the {@code idea.fatal.error.notification} system property is set to {@code true},
