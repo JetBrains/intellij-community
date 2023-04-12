@@ -10,14 +10,14 @@ import org.jetbrains.kotlin.tools.projectWizard.settings.version.Version
 @Suppress("ClassName", "SpellCheckingInspection")
 object Versions {
     val KOTLIN = version("1.5.0") // used as fallback version
-    val GRADLE = version("7.5.1")
-    val KTOR = version("2.2.1")
+    val GRADLE = version("7.6.1")
+    val KTOR = version("2.2.4")
     val JUNIT = version("4.13.2")
-    val JUNIT5 = version("5.9.1")
+    val JUNIT5 = version("5.9.2")
 
     object ANDROID {
-        val ANDROID_MATERIAL = version("1.7.0")
-        val ANDROIDX_APPCOMPAT = version("1.5.1")
+        val ANDROID_MATERIAL = version("1.8.0")
+        val ANDROIDX_APPCOMPAT = version("1.6.1")
         val ANDROIDX_CONSTRAINTLAYOUT = version("2.1.4")
     }
 
@@ -29,17 +29,17 @@ object Versions {
     object JS_WRAPPERS {
         val KOTLIN_REACT = wrapperVersion("18.2.0")
         val KOTLIN_REACT_DOM = KOTLIN_REACT
-        val KOTLIN_EMOTION = wrapperVersion("11.10.5")
-        val KOTLIN_REACT_ROUTER_DOM = wrapperVersion("6.3.0")
+        val KOTLIN_EMOTION = wrapperVersion("11.10.6")
+        val KOTLIN_REACT_ROUTER_DOM = wrapperVersion("6.10.0")
         val KOTLIN_REDUX = wrapperVersion("4.1.2")
         val KOTLIN_REACT_REDUX = wrapperVersion("7.2.6")
 
         private fun wrapperVersion(version: String): Version =
-            version("$version-pre.467")
+            version("$version-pre.535")
     }
 
     object GRADLE_PLUGINS {
-        val ANDROID = version("7.3.1")
+        val ANDROID = version("7.4.2")
     }
 
     object MAVEN_PLUGINS {
