@@ -110,9 +110,9 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   /**
-   * NOTE: if client sets forUseInNonAWTThread to true it's supposed that client will completely control document and its listeners.
-   * The noticeable peculiarity of DocumentImpl behavior in this mode is that DocumentImpl won't suppress ProcessCancelledException
-   * thrown from listeners during changedUpdate event, so the exception will be rethrown and rest of the listeners WON'T be notified.
+   * NOTE: if the client sets forUseInNonAWTThread to "true", then it's their responsibility to control the document and its listeners.
+   * The noticeable peculiarity of DocumentImpl behavior in this mode is that it won't suppress ProcessCancelledException
+   * thrown from listeners during "changedUpdate" event, so the exceptions will be rethrown and the remaining listeners WON'T be notified.
    */
   public DocumentImpl(@NotNull CharSequence chars, boolean forUseInNonAWTThread) {
     this(chars, false, forUseInNonAWTThread);
@@ -139,7 +139,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   // are some range markers retained by strong references?
   public static boolean areRangeMarkersRetainedFor(@NotNull VirtualFile f) {
     processQueue();
-    // if a marker is retained then so is its node and the whole tree
+    // if a marker is retained, then so is its node and the whole tree
     // (ignore the race when marker is gc-ed right after this call - it's harmless)
     return SoftReference.dereference(f.getUserData(RANGE_MARKERS_KEY)) != null
            || SoftReference.dereference(f.getUserData(PERSISTENT_RANGE_MARKERS_KEY)) != null;
@@ -158,12 +158,12 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     RangeMarkerTree<RangeMarkerEx> oldTree = SoftReference.dereference(oldRef);
 
     if (oldTree == null) {
-      // no tree was saved in virtual file before. happens when created new document.
+      // no tree was saved in virtual file before (happens when a new document is created).
       // or the old tree got gc-ed, because no reachable markers retaining it are left alive. good riddance.
       return;
     }
 
-    // old tree was saved in the virtual file. Have to transfer markers from there.
+    // Some old tree was saved in the virtual file. Have to transfer markers from there.
     oldTree.processAll(r -> {
       if (r.isValid()) {
         ((RangeMarkerImpl)r).reRegister(this, tabSize);
@@ -197,7 +197,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   /**
-   * makes range marker without creating document (which could be expensive)
+   * makes range marker without creating the document (which could be expensive)
    */
   @NotNull
   static RangeMarker createRangeMarkerForVirtualFile(@NotNull VirtualFile file,
@@ -277,7 +277,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   /**
-   * @return true if stripping was completed successfully, false if the document prevented stripping by e.g. caret(s) being in the way
+   * @return true if stripping was completed successfully, false if the document prevented stripping by e.g., caret(s) being in the way
    */
   boolean stripTrailingSpaces(@Nullable final Project project, boolean inChangedLinesOnly, int @Nullable [] caretOffsets) {
     if (!isStripTrailingSpacesEnabled) {
@@ -352,7 +352,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
       }
     }
     int finalTargetOffsetPos = targetOffsetPos;
-    // document must be unblocked by now. If not, some Save handler attempted to modify PSI
+    // Document must be unblocked by now. If not, some Save handler attempted to modify PSI
     // which should have been caught by assertion in com.intellij.pom.core.impl.PomModelImpl.runTransaction
     DocumentUtil.writeInRunUndoTransparentAction(new DocumentRunnable(this, project) {
       @Override
@@ -459,10 +459,11 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public RangeMarker getOffsetGuard(int offset) {
-    // Way too many garbage is produced otherwise in AbstractList.iterator()
+    List<RangeMarker> guardedBlocks = myGuardedBlocks;
+    // Way too much garbage would be produced otherwise in AbstractList.iterator()
     //noinspection ForLoopReplaceableByForEach
-    for (int i = 0; i < myGuardedBlocks.size(); i++) {
-      RangeMarker block = myGuardedBlocks.get(i);
+    for (int i = 0; i < guardedBlocks.size(); i++) {
+      RangeMarker block = guardedBlocks.get(i);
       if (offsetInRange(offset, block.getStartOffset(), block.getEndOffset())) return block;
     }
 
@@ -471,9 +472,13 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public RangeMarker getRangeGuard(int start, int end) {
-    for (RangeMarker block : myGuardedBlocks) {
+    List<RangeMarker> guardedBlocks = myGuardedBlocks;
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < guardedBlocks.size(); i++) {
+      RangeMarker block = guardedBlocks.get(i);
       if (rangesIntersect(start, end, true, true,
-                          block.getStartOffset(), block.getEndOffset(), block.isGreedyToLeft(), block.isGreedyToRight())) {
+                          block.getStartOffset(), block.getEndOffset(),
+                          block.isGreedyToLeft(), block.isGreedyToRight())) {
         return block;
       }
     }
@@ -591,7 +596,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     String replacement = getCharsSequence().subSequence(srcStart, srcEnd).toString();
     int shift = dstOffset < srcStart ? srcEnd - srcStart : 0;
 
-    // a pair of insert remove modifications
+    // a pair of insert/remove modifications
     replaceString(dstOffset, dstOffset, srcStart + shift, replacement, LocalTimeCounter.currentTime(), false);
     replaceString(srcStart + shift, srcEnd + shift, dstOffset, "", LocalTimeCounter.currentTime(), false);
   }
@@ -734,10 +739,10 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
    * <p/>
    * There is a possible case that {@code 'before change'} notification produces new change. We have a problem then - imagine
    * that initial change was {@code 'replace particular range at document end'} and {@code 'nested change'} was to
-   * {@code 'remove text at document end'}. That means that when initial change will be actually performed, the document may be
+   * {@code 'remove text at document end'}. That means that when initial change is actually performed, the document may be
    * not long enough to contain target range.
    * <p/>
-   * Current method allows to check if document change is a {@code 'nested call'}.
+   * Current method allows checking if document change is a {@code 'nested call'}.
    *
    * @throws IllegalStateException if this method is called during a {@code 'nested document modification'}
    */
@@ -819,7 +824,8 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
       myTextString = null;
       ImmutableCharSequence prevText = myText;
       myText = newText;
-      sequence.incrementAndGet(); // increment sequence before firing events so that modification sequence on commit will match this sequence now
+      // increment sequence before firing events, so that the modification sequence on commit will match this sequence now
+      sequence.incrementAndGet();
       changedUpdate(event, newModificationStamp, prevText, exceptions);
     }
     finally {
@@ -1023,7 +1029,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public int getLineStartOffset(final int line) {
-    if (line == 0) return 0; // otherwise it crashed for zero-length document
+    if (line == 0) return 0; // otherwise, it would crash for the zero-length document
     return getLineSet().getLineStart(line);
   }
 
