@@ -510,7 +510,7 @@ public class JBTabsImpl extends JComponent
   }
 
   private void updateRowLayout() {
-    if (getTabsPosition() != JBTabsPosition.top) {
+    if (!isHorizontalTabs()) {
       mySingleRow = true;
     }
     TabLayout layout = useMultiRowLayout() ? createMultiRowLayout() : createSingleRowLayout();

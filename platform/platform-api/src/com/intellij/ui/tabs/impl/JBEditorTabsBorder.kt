@@ -83,10 +83,9 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
     val myInfo2Label = tabs.myInfo2Label
     val firstLabel = myInfo2Label[tabs.visibleInfos[0]] ?: return
 
-    val startY = firstLabel.y - if (tabs.position == JBTabsPosition.bottom) 0 else thickness
-
     when (tabs.position) {
       JBTabsPosition.top -> {
+        val startY = firstLabel.y - if (tabs.position == JBTabsPosition.bottom) 0 else thickness
         val startRow = if (ExperimentalUI.isNewUI()) 1 else 0
         val lastRow = tabs.lastLayoutPass.rowCount
         for (eachRow in startRow until lastRow) {
@@ -99,7 +98,11 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
         }
       }
       JBTabsPosition.bottom -> {
-        tabs.tabPainter.paintBorderLine(g, thickness, Point(x, startY), Point(x + width, startY))
+        val rowCount = tabs.lastLayoutPass.rowCount
+        for (rowInd in 0 until rowCount) {
+          val curY = height - (rowInd + 1) * tabs.myHeaderFitSize.height
+          tabs.tabPainter.paintBorderLine(g, thickness, Point(x, curY), Point(x + width, curY))
+        }
       }
       JBTabsPosition.right -> {
         val lx = firstLabel.x
