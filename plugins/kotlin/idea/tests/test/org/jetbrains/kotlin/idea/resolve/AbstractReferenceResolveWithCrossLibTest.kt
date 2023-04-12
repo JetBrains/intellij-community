@@ -50,8 +50,8 @@ abstract class AbstractReferenceResolveWithCrossLibTest : AbstractReferenceResol
         )
     }
 
-    override fun configureTest(path: String) {
-        super.configureTest(path)
+    override fun configureTest() {
+        super.configureTest()
         val caretsAndSelections = myFixture.editor.caretModel.caretsAndSelections
 
         // Open the same file, but inside a library

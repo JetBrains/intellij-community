@@ -7,7 +7,7 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.idea.completion.test.ExpectedCompletionUtils
 import org.jetbrains.kotlin.idea.completion.test.addCharacterCodingException
-import org.jetbrains.kotlin.idea.completion.test.configureWithExtraFile
+import org.jetbrains.kotlin.idea.completion.test.configureByFilesWithSuffixes
 import org.jetbrains.kotlin.idea.formatter.kotlinCommonSettings
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.jetbrains.kotlin.idea.test.configureCodeStyleAndRun
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.utils.addToStdlib.indexOfOrNull
-import java.io.File
 
 abstract class AbstractCompletionHandlerTest(private val defaultCompletionType: CompletionType) : CompletionHandlerTestBase() {
     companion object {
@@ -28,16 +27,14 @@ abstract class AbstractCompletionHandlerTest(private val defaultCompletionType: 
         const val CODE_STYLE_SETTING_PREFIX = "CODE_STYLE_SETTING:"
     }
 
-    protected open fun handleTestPath(path: String): File = File(path)
-
     protected open fun doTest(testPath: String) {
-        val actualTestFile = handleTestPath(testPath)
-        setUpFixture(actualTestFile.name)
+        val testFile = dataFile()
+        setUpFixture(testFile.name)
         try {
             configureCodeStyleAndRun(project) {
-                val fileText = FileUtil.loadFile(actualTestFile)
+                val fileText = FileUtil.loadFile(testFile)
                 withCustomCompilerOptions(fileText, project, module) {
-                    assertTrue("\"<caret>\" is missing in file \"$actualTestFile\"", fileText.contains("<caret>"))
+                    assertTrue("\"<caret>\" is missing in file \"$testFile\"", fileText.contains("<caret>"))
 
                     val invocationCount = InTextDirectivesUtils.getPrefixedInt(fileText, INVOCATION_COUNT_PREFIX) ?: 1
                     val lookupString = InTextDirectivesUtils.findStringWithPrefixes(fileText, LOOKUP_STRING_PREFIX)
@@ -76,7 +73,7 @@ abstract class AbstractCompletionHandlerTest(private val defaultCompletionType: 
                         itemText,
                         tailText,
                         completionChars,
-                        actualTestFile.name + ".after",
+                        testFile.name + ".after",
                     )
                 }
             }
@@ -89,7 +86,7 @@ abstract class AbstractCompletionHandlerTest(private val defaultCompletionType: 
         // this class is missing in mockJDK-1.8
         fixture.addCharacterCodingException()
 
-        fixture.configureWithExtraFile(testPath, ".dependency", ".dependency.1", ".dependency.2")
+        fixture.configureByFilesWithSuffixes(dataFile(), testDataDirectory, ".dependency", ".dependency.1", ".dependency.2")
     }
 
     protected open fun tearDownFixture() {

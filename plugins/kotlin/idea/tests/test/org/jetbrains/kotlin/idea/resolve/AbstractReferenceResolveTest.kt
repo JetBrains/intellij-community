@@ -9,10 +9,11 @@ import com.intellij.psi.PsiPolyVariantReference
 import com.intellij.psi.PsiReference
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.PathUtil
-import org.jetbrains.kotlin.idea.completion.test.configureWithExtraFile
+import org.jetbrains.kotlin.idea.completion.test.configureByFilesWithSuffixes
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.test.util.renderAsGotoImplementation
 import org.jetbrains.kotlin.test.utils.IgnoreTests
+import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import org.junit.Assert
 import kotlin.test.assertTrue
 
@@ -28,7 +29,7 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
         KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceWithStdlibJdk8()
 
     protected open fun doTest(path: String) {
-        configureTest(path)
+        configureTest()
         val controlDirective = if (isFirPlugin()) {
             IgnoreTests.DIRECTIVES.IGNORE_FIR
         } else {
@@ -39,9 +40,10 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
         }
     }
 
-    protected open fun configureTest(path: String) {
-        assert(path.endsWith(".kt")) { path }
-        myFixture.configureWithExtraFile(path, ".Data")
+    protected open fun configureTest() {
+        val mainFile = dataFile()
+        assert(mainFile.extension.toLowerCaseAsciiOnly() == "kt") { "Kotlin file expected: $mainFile" }
+        myFixture.configureByFilesWithSuffixes(mainFile, testDataDirectory, ".Data")
     }
 
     protected open fun performAdditionalResolveChecks(results: List<PsiElement>) {}
