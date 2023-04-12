@@ -310,7 +310,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
                                         : new ReplaceConfiguration(template);
     if (!myEditConfigOnly) {
       final MatchOptions matchOptions = result.getMatchOptions();
-      matchOptions.setSearchInjectedCode(false);
+      matchOptions.setSearchInjectedCode(myInjected.isSelected());
       matchOptions.setCaseSensitiveMatch(myMatchCase.isSelected());
 
       final ReplaceOptions replaceOptions = result.getReplaceOptions();
