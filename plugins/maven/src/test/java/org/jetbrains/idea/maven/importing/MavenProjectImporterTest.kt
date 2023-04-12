@@ -1,21 +1,18 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.importing;
+package org.jetbrains.idea.maven.importing
 
-import com.intellij.openapi.module.ModuleManager;
-import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
-import org.junit.Test;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.openapi.module.ModuleManager
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles
+import org.junit.Test
 
-import java.util.Collections;
-import java.util.List;
-
-public class MavenProjectImporterTest extends DependenciesSubstitutionTest {
+class MavenProjectImporterTest : MavenMultiVersionImportingTestCase() {
   @Test
-  public void testMavenImportModulesProperlyNamed() {
-    var previewModule = MavenImportUtil.createPreviewModule(myProject, myProjectRoot);
+  fun `test maven import modules properly named`() {
+    val previewModule = MavenImportUtil.createPreviewModule(myProject, myProjectRoot)
+    myProjectsManager.addManagedFilesWithProfiles(listOf(myProjectRoot), MavenExplicitProfiles(emptyList(), emptyList()), previewModule)
 
-    myProjectsManager.addManagedFilesWithProfiles(List.of(myProjectRoot), new MavenExplicitProfiles(Collections.emptyList(), Collections.emptyList()), previewModule);
-
-    var parentFile = createProjectPom("""
+    val parentFile = createProjectPom("""
                 <groupId>group</groupId>
                 <artifactId>parent</artifactId>
                 <version>1</version>
@@ -23,27 +20,27 @@ public class MavenProjectImporterTest extends DependenciesSubstitutionTest {
                 <modules>
                   <module>project</module>
                 </modules>
-                """);
-    var projectFile = createModulePom("project", """
+                """.trimIndent())
+
+    val projectFile = createModulePom("project", """
                 <artifactId>project</artifactId>
                 <version>1</version>
                 <parent>
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
                 </parent>
-                """);
-    importProject();
+                """.trimIndent())
 
-    var moduleManager = ModuleManager.getInstance(myProject);
+    importProject()
 
-    var modules = moduleManager.getModules();
-    assertEquals(2, modules.length);
+    val moduleManager = ModuleManager.getInstance(myProject)
+    val modules = moduleManager.modules
+    assertEquals(2, modules.size)
 
-    var parentModule = moduleManager.findModuleByName("parent");
-    assertNotNull(parentModule);
+    val parentModule = moduleManager.findModuleByName("parent")
+    assertNotNull(parentModule)
 
-    var projectModule = moduleManager.findModuleByName("project");
-    assertNotNull(projectModule);
+    val projectModule = moduleManager.findModuleByName("project")
+    assertNotNull(projectModule)
   }
-
 }
