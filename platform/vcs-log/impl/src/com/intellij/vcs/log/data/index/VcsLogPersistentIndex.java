@@ -638,7 +638,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     }
 
     private void indexOneByOne(@NotNull IntStream commits, @NotNull ProgressIndicator indicator, VcsLogWriter mutator) throws VcsException {
-      // We pass hashes to VcsLogProvider#readFullDetails in batchesf
+      // We pass hashes to VcsLogProvider#readFullDetails in batches
       // in order to avoid allocating too much memory for these hashes
       // a batch of 20k will occupy ~2.4Mb
       IntCollectionUtil.processBatches(commits, BATCH_SIZE, batch -> {
