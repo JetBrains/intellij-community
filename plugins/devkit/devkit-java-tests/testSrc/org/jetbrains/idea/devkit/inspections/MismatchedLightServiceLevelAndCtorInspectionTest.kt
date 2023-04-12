@@ -24,4 +24,10 @@ internal class MismatchedLightServiceLevelAndCtorInspectionTest : MismatchedLigh
   fun testFromEmptyArrayToProjectLevel() { doTest(annotateAsServiceFixName) }
 
   fun testRemoveProjectParam() { doTest(NO_ARG_CTOR_FIX_NAME) }
+
+  fun testAppLevelDefaultCtor() { doTest() }
+
+  fun testAppLevelNoArgCtor() { doTest() }
+
+  fun testAppLevelCoroutineScopeCtor() { doTest() }
 }

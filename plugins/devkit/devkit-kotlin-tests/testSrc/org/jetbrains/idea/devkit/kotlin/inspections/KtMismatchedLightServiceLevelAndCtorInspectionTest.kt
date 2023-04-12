@@ -22,4 +22,14 @@ internal class KtMismatchedLightServiceLevelAndCtorInspectionTest : MismatchedLi
   fun testFromEmptyArrayToProjectLevel() { doTest(annotateAsServiceFixName) }
 
   fun testRemoveProjectParam() { doTest(QuickFixBundle.message("remove.parameter.from.usage.text", 1, "parameter", "constructor", "MyService")) }
+
+  fun testAppLevelDefaultCtor() { doTest() }
+
+  fun testAppLevelPrimaryNoArgCtor() { doTest() }
+
+  fun testAppLevelSecondaryNoArgCtor() { doTest() }
+
+  fun testAppLevelPrimaryCoroutineScopeCtor() { doTest() }
+
+  fun testAppLevelSecondaryCoroutineScopeCtor() { doTest() }
 }
