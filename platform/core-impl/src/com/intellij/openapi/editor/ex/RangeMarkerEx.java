@@ -19,5 +19,9 @@ package com.intellij.openapi.editor.ex;
 import com.intellij.openapi.editor.RangeMarker;
 
 public interface RangeMarkerEx extends RangeMarker {
+  /**
+   * @return identifier unique across all live range markers.
+   * Must not be called for the disposed range marker.
+   */
   long getId();
 }
