@@ -60,6 +60,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
@@ -337,8 +338,16 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
         final Document document = editor.getDocument();
         final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
         if (file != null) {
-          final Language language = file.getLanguage();
+          final PsiElement start = file.findElementAt(selectionModel.getSelectionStart());
+          final PsiElement end = file.findElementAt(selectionModel.getSelectionEnd() - 1);
+          final PsiElement element = (start == null || end == null || start.getContainingFile() != end.getContainingFile())
+                                     ? null
+                                     : PsiTreeUtil.findCommonParent(start, end);
+          final Language language = (element == null) ? file.getLanguage() : element.getLanguage();
           myFileTypeChooser.setSelectedItem(language.getAssociatedFileType(), language, null);
+          if (language != file.getLanguage() && !myInjected.isSelected()) {
+            myInjected.doClick();
+          }
         }
         ApplicationManager.getApplication().invokeLater(() -> startTemplate());
         return;
