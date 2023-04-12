@@ -1933,15 +1933,20 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
     Point point = e.getPoint();
     int x = convertX(point.x);
-    int y = point.y;
+
+    int hoveredLine;
     if (x >= getLineMarkerAreaOffset() &&
         x <= getLineMarkerAreaOffset() + getLeftFreePaintersAreaWidth() + getRightFreePaintersAreaWidth()) {
-      myHoveredFreeMarkersLine = getEditor().xyToLogicalPosition(point).line;
+      hoveredLine = getEditor().xyToLogicalPosition(point).line;
     }
     else {
-      myHoveredFreeMarkersLine = -1;
+      hoveredLine = -1;
     }
-    repaint();
+
+    if (myHoveredFreeMarkersLine != hoveredLine) {
+      myHoveredFreeMarkersLine = hoveredLine;
+      repaint();
+    }
   }
 
   private static boolean debug() {
