@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
+import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSHeaders.CONNECTED_MAGIC;
 import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.joining;
 import static org.junit.Assert.*;
@@ -348,12 +349,46 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
     }
   }
 
+  @Test
+  public void manyRecordsWritten_DoesntOverrideHeaderFields() throws Exception {
+    //Assign some storage.header fields and check the assigned values are not changed
+    // after many records are inserted into storage:
+    final int version = 1;
+    storage.setVersion(version);
+    final long createdTimestamp = storage.getTimestamp();
+    storage.setConnectionStatus(CONNECTED_MAGIC);
+
+    final FSRecord[] records = new FSRecord[maxRecordsToInsert];
+    for (int i = 0; i < records.length; i++) {
+      final int recordId = storage.allocateRecord();
+      records[i] = generateRecordFields(recordId);
+      records[i].updateInStorage(storage);
+    }
+
+    assertEquals(
+      "storage.version must keep value assigned initially",
+      version,
+      storage.getVersion()
+    );
+    assertEquals(
+      "storage.timestamp must not change since initially",
+      createdTimestamp,
+      storage.getTimestamp()
+    );
+    assertEquals(
+      "storage.connectedStatus must keep value assigned initially",
+      CONNECTED_MAGIC,
+      storage.getConnectionStatus()
+    );
+  }
+
+
   /* =================== PERSISTENCE: values are kept through close-and-reopen =============================== */
 
   @Test
   public void emptyStorageRemains_EmptyButHeaderFieldsStillRestored_AfterStorageClosedAndReopened() throws IOException {
     final int version = 10;
-    final int connectionStatus = PersistentFSHeaders.CONNECTED_MAGIC;
+    final int connectionStatus = CONNECTED_MAGIC;
 
     storage.setVersion(version);
     storage.setConnectionStatus(connectionStatus);
