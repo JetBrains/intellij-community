@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.nio.file.StandardOpenOption.*;
 
@@ -91,7 +92,7 @@ public final class CsvMetricsExporter implements MetricExporter {
     final CompletableResultCode result = new CompletableResultCode();
     final List<String> lines = metrics.stream()
       .flatMap(MetricsExporterUtils::toCsvStream)
-      .toList();
+      .collect(Collectors.toList());
 
     try {
       Files.write(writeToFile, lines, CREATE, APPEND);
