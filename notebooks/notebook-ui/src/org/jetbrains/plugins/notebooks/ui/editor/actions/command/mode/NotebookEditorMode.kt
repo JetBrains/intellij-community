@@ -119,10 +119,13 @@ fun setMode(mode: NotebookEditorMode) {
   // Although LAB-50 is marked as closed, the checks still aren't added to classes written in Kotlin.
   ApplicationManager.getApplication().assertIsDispatchThread()
 
+  val modeChanged = mode != currentMode_
   currentMode_ = mode
 
   // may be call should be skipped if mode == currentMode_
-  ApplicationManager.getApplication().messageBus.syncPublisher(NOTEBOOK_EDITOR_MODE).onModeChange(mode)
+  if (modeChanged) {
+    ApplicationManager.getApplication().messageBus.syncPublisher(NOTEBOOK_EDITOR_MODE).onModeChange(mode)
+  }
 }
 
 @Volatile
