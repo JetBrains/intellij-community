@@ -19,6 +19,7 @@ import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -33,10 +34,11 @@ import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebugSession
-import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
-import org.jetbrains.kotlin.config.JvmTarget
-import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinEvaluator
 import org.jetbrains.kotlin.idea.debugger.test.preference.*
 import org.jetbrains.kotlin.idea.debugger.test.util.BreakpointCreator
@@ -142,6 +144,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
         atDebuggerTearDown { oldValues = null }
         atDebuggerTearDown { invokeAndWaitIfNeeded { oldValues?.revertValues() } }
         atDebuggerTearDown { KotlinEvaluator.LOG_COMPILATIONS = false }
+        atDebuggerTearDown { restoreIdeCompilerSettings() }
     }
 
     protected fun dataFile(fileName: String): File = File(getTestDataPath(), fileName)
@@ -200,6 +203,8 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
         val languageVersion = chooseLanguageVersionForCompilation(compileWithK2)
         val enabledLanguageFeatures = preferences[DebuggerPreferenceKeys.ENABLED_LANGUAGE_FEATURE]
             .map { LanguageFeature.fromString(it) ?: error("Not found language feature $it") }
+
+        updateIdeCompilerSettingsForEvaluator(languageVersion, enabledLanguageFeatures)
 
         val compilerFacility = createDebuggerTestCompilerFacility(
             testFiles, jvmTarget,
@@ -372,6 +377,26 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
             finally {
                 model.commit()
             }
+        }
+    }
+
+    private fun updateIdeCompilerSettingsForEvaluator(languageVersion: LanguageVersion?, enabledLanguageFeatures: List<LanguageFeature>) {
+        if (languageVersion != null) {
+            KotlinCommonCompilerArgumentsHolder.getInstance(project).update {
+                this.languageVersion = languageVersion.versionString
+            }
+        }
+        KotlinCompilerSettings.getInstance(project).update {
+            this.additionalArguments = enabledLanguageFeatures.joinToString(" ") { "-XXLanguage:+${it.name}" }
+        }
+    }
+
+    private fun restoreIdeCompilerSettings() = runInEdt {
+        KotlinCommonCompilerArgumentsHolder.getInstance(project).update {
+            this.languageVersion = KotlinPluginLayout.standaloneCompilerVersion.languageVersion.versionString
+        }
+        KotlinCompilerSettings.getInstance(project).update {
+            this.additionalArguments = CompilerSettings.DEFAULT_ADDITIONAL_ARGUMENTS
         }
     }
 
