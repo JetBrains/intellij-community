@@ -80,6 +80,8 @@ public final class PluginManagerCore {
 
   private static volatile boolean IGNORE_COMPATIBILITY = Boolean.getBoolean("idea.ignore.plugin.compatibility");
 
+  private static final boolean QODANA_PLUGINS_THIRD_PARTY_ACCEPT = Boolean.getBoolean("idea.qodana.thirdpartyplugins.accept");
+
   private static final String THIRD_PARTY_PLUGINS_FILE = "alien_plugins.txt";
   private static volatile @Nullable Boolean thirdPartyPluginsNoteAccepted = null;
 
@@ -859,6 +861,11 @@ public final class PluginManagerCore {
 
   private static void check3rdPartyPluginsPrivacyConsent(@NotNull List<IdeaPluginDescriptorImpl> aliens) {
     if (GraphicsEnvironment.isHeadless()) {
+      if (QODANA_PLUGINS_THIRD_PARTY_ACCEPT) {
+        thirdPartyPluginsNoteAccepted = Boolean.TRUE;
+        System.out.println("AJAJSOKQOWDKOWAKDOAKOWDKAOWKDOAKKWD");
+        return;
+      }
       getLogger().info("3rd-party plugin privacy note not accepted yet; disabling plugins for this headless session");
       aliens.forEach(descriptor -> descriptor.setEnabled(false));
     }
