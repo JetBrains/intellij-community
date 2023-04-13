@@ -308,9 +308,6 @@ public final class GradleBuildSrcProjectsResolver {
             node -> maybeUpdateNonBuildSrcModuleDependencies(includedModulesPaths, node.getData()));
         }
       }
-      else {
-        GradleModuleDataKt.setBuildSrcModule(includedModule.getData());
-      }
     }
     if (buildSrcModuleNode != null) {
       addBuildSrcToBuildScriptClasspathData(buildClasspathNodes, buildSrcModules, buildSrcModuleNode);
