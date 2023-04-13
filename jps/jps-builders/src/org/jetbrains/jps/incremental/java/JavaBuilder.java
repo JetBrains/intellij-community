@@ -886,7 +886,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       }
     }
 
-    if (customArgs != null) {
+    if (customArgs != null && !customArgs.isEmpty()) {
       BiConsumer<List<String>, String> appender = List::add;
       final JpsModule module = chunk.representativeTarget().getModule();
       final File baseDirectory = JpsModelSerializationDataService.getBaseDirectory(module);
