@@ -6,10 +6,10 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
+import com.jetbrains.python.debugger.state.PyRuntime
 import com.jetbrains.python.debugger.values.DataFrameDebugValue
 import com.jetbrains.python.debugger.values.completePandasDataFrameColumns
 import java.util.concurrent.Callable
-import javax.swing.tree.TreeNode
 
 enum class PyRuntimeCompletionType {
   DYNAMIC_CLASS, DATA_FRAME_COLUMNS
@@ -44,12 +44,6 @@ interface PyRuntimeCompletionRetrievalService {
    */
   fun canComplete(parameters: CompletionParameters): Boolean
 
-
-  /**
-   * This function returns python environment state variables represented by TreeNode
-   */
-  fun nodesFromRuntimeState(parameters: CompletionParameters): List<TreeNode>?
-
   fun extractItemsForCompletion(result: Pair<XValueNodeImpl, List<String>>?,
                                 candidate: PyObjectCandidate): CompletionResultData? {
     val (node, listOfCalls) = result ?: return null
@@ -63,16 +57,19 @@ interface PyRuntimeCompletionRetrievalService {
   }
 }
 
-fun createCompletionResultSet(service: PyRuntimeCompletionRetrievalService, parameters: CompletionParameters): List<LookupElement> {
-  if (!service.canComplete(parameters)) return emptyList()
-
-  val treeNodeList = service.nodesFromRuntimeState(parameters) ?: return emptyList()
+fun createCompletionResultSet(retrievalService: PyRuntimeCompletionRetrievalService,
+                              runtimeService: PyRuntime,
+                              parameters: CompletionParameters): List<LookupElement> {
+  if (!retrievalService.canComplete(parameters)) return emptyList()
+  val project = parameters.editor.project ?: return emptyList()
+  val treeNodeList = runtimeService.getGlobalPythonVariables(parameters.originalFile.virtualFile, project, parameters.editor)
+                     ?: return emptyList()
   val pyObjectCandidates = getCompleteAttribute(parameters)
 
   return ApplicationUtil.runWithCheckCanceled(Callable {
     return@Callable pyObjectCandidates.flatMap { candidate ->
       getSetOfChildrenByListOfCall(getParentNodeByName(treeNodeList, candidate.psiName), candidate.pyQualifiedExpressionList)
-        .let { service.extractItemsForCompletion(it, candidate) }
+        .let { retrievalService.extractItemsForCompletion(it, candidate) }
         ?.let { postProcessingChildren(it, candidate, parameters) }
       ?: emptyList()
     }
