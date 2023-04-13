@@ -71,7 +71,7 @@ public final class MavenProjectsTree {
 
   private final List<MavenProject> myRootProjects = new ArrayList<>();
 
-  private final Map<MavenProject, MavenProjectTimestamp> myTimestamps = new HashMap<>();
+  private final Map<VirtualFile, MavenProjectTimestamp> myTimestamps = new HashMap<>();
   private final MavenWorkspaceMap myWorkspaceMap = new MavenWorkspaceMap();
   private final Map<MavenId, MavenProject> myMavenIdToProjectMapping = new HashMap<>();
   private final Map<VirtualFile, MavenProject> myVirtualFileToProjectMapping = new HashMap<>();
@@ -154,7 +154,7 @@ public final class MavenProjectsTree {
       List<MavenProject> modules = readProjectsRecursively(in, tree);
       if (project != null) {
         result.add(project);
-        tree.myTimestamps.put(project, timestamp);
+        tree.myTimestamps.put(project.getFile(), timestamp);
         tree.myVirtualFileToProjectMapping.put(project.getFile(), project);
         tree.fillIDMaps(project);
         if (!modules.isEmpty()) {
@@ -188,7 +188,7 @@ public final class MavenProjectsTree {
     out.writeInt(list.size());
     for (MavenProject each : list) {
       each.write(out);
-      myTimestamps.get(each).write(out);
+      myTimestamps.get(each.getFile()).write(out);
       writeProjectsRecursively(out, getModules(each));
     }
   }
@@ -554,7 +554,7 @@ public final class MavenProjectsTree {
 
     private boolean readPomIfNeeded(MavenProject mavenProject, boolean forceRead) {
       var timestamp = tree.calculateTimestamp(mavenProject, explicitProfiles, generalSettings);
-      boolean timeStampChanged = !timestamp.equals(tree.myTimestamps.get(mavenProject));
+      boolean timeStampChanged = !timestamp.equals(tree.myTimestamps.get(mavenProject.getFile()));
       boolean readPom = forceRead || timeStampChanged;
 
       if (readPom) {
@@ -568,12 +568,12 @@ public final class MavenProjectsTree {
         });
 
         if (Comparing.equal(oldParentId, mavenProject.getParentId())) {
-          tree.myTimestamps.put(mavenProject, timestamp);
+          tree.myTimestamps.put(mavenProject.getFile(), timestamp);
         }
         else {
           // ensure timestamp reflects actual parent's timestamp
           var newTimestamp = tree.calculateTimestamp(mavenProject, explicitProfiles, generalSettings);
-          tree.myTimestamps.put(mavenProject, newTimestamp);
+          tree.myTimestamps.put(mavenProject.getFile(), newTimestamp);
         }
 
         var forcedChanges = forceRead ? MavenProjectChanges.ALL : MavenProjectChanges.NONE;
@@ -825,7 +825,7 @@ public final class MavenProjectsTree {
       else {
         myRootProjects.remove(project);
       }
-      myTimestamps.remove(project);
+      myTimestamps.remove(project.getFile());
       myVirtualFileToProjectMapping.remove(project.getFile());
       clearIDMaps(project.getMavenId());
       myAggregatorToModuleMapping.remove(project);
