@@ -157,9 +157,11 @@ public final class MavenProjectsTree {
         tree.myTimestamps.put(project, timestamp);
         tree.myVirtualFileToProjectMapping.put(project.getFile(), project);
         tree.fillIDMaps(project);
-        tree.myAggregatorToModuleMapping.put(project, modules);
-        for (MavenProject eachModule : modules) {
-          tree.myModuleToAggregatorMapping.put(eachModule, project);
+        if (!modules.isEmpty()) {
+          tree.myAggregatorToModuleMapping.put(project, modules);
+          for (MavenProject eachModule : modules) {
+            tree.myModuleToAggregatorMapping.put(eachModule, project);
+          }
         }
       }
     }
@@ -1128,6 +1130,9 @@ public final class MavenProjectsTree {
       List<MavenProject> modules = myAggregatorToModuleMapping.get(aggregator);
       if (modules == null) return;
       modules.remove(module);
+      if (modules.isEmpty()) {
+        myAggregatorToModuleMapping.remove(aggregator);
+      }
       myModuleToAggregatorMapping.remove(module);
     });
   }
