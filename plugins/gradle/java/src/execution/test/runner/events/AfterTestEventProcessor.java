@@ -140,7 +140,7 @@ public class AfterTestEventProcessor extends AbstractTestEventProcessor {
     }
     else {
       LOG.error("Undefined test failure type: " + failure.getClass().getName());
-      var message = ObjectUtils.chooseNotNull(ObjectUtils.doIfNotNull(failure, it -> it.getMessage()), "");
+      var message = ObjectUtils.doIfNotNull(failure, it -> it.getMessage());
       var description = ObjectUtils.doIfNotNull(failure, it -> it.getDescription());
       testProxy.setTestFailed(message, description, true);
     }
@@ -150,25 +150,28 @@ public class AfterTestEventProcessor extends AbstractTestEventProcessor {
   }
 
   private static void processTestFailureResult(@NotNull SMTestProxy testProxy, @NotNull TestFailure failure) {
-    var message = ObjectUtils.chooseNotNull(ObjectUtils.doIfNotNull(failure, it -> it.getMessage()), "");
+    var message = ObjectUtils.doIfNotNull(failure, it -> it.getMessage());
     var stackTrace = failure.getStackTrace();
-    var comparisonResult = AssertionParser.parse(message);
+    var comparisonResult = ObjectUtils.doIfNotNull(message, it -> AssertionParser.parse(it));
     if (failure instanceof TestAssertionFailure assertionFailure) {
-      var localizedMessage = comparisonResult == null ? message : ObjectUtils.chooseNotNull(comparisonResult.getMessage(), "");
+      var localizedMessage = comparisonResult == null ? message : comparisonResult.getMessage();
       var actualText = assertionFailure.getActualText();
       var expectedText = assertionFailure.getExpectedText();
       var actualFile = assertionFailure.getActualFile();
       var expectedFile = assertionFailure.getExpectedFile();
       testProxy.setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, actualFile, expectedFile, true);
-      return;
     }
-    if (comparisonResult != null && failure.getCauses().isEmpty()) {
-      var localizedMessage = ObjectUtils.chooseNotNull(comparisonResult.getMessage(), "");
+    else if (comparisonResult != null && failure.getCauses().isEmpty()) {
+      var localizedMessage = comparisonResult.getMessage();
       var actualText = comparisonResult.getActual();
       var expectedText = comparisonResult.getExpected();
       testProxy.setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText);
-      return;
     }
-    testProxy.setTestFailed(message, stackTrace, failure.isTestError());
+    else if (message != null && stackTrace != null && StringUtil.contains(stackTrace, message)) {
+      testProxy.setTestFailed(null, stackTrace, failure.isTestError());
+    }
+    else {
+      testProxy.setTestFailed(message, stackTrace, failure.isTestError());
+    }
   }
 }

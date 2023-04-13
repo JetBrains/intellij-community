@@ -537,14 +537,14 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     }
   }
 
-  public void setTestComparisonFailed(@NotNull final String localizedMessage,
+  public void setTestComparisonFailed(@Nullable final String localizedMessage,
                                       @Nullable final String stackTrace,
                                       @NotNull final String actualText,
                                       @NotNull final String expectedText) {
     setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, null, null, true);
   }
 
-  public void setTestComparisonFailed(@NotNull final String localizedMessage,
+  public void setTestComparisonFailed(@Nullable final String localizedMessage,
                                       @Nullable final String stackTrace,
                                       @NotNull final String actualText,
                                       @NotNull final String expectedText,
@@ -556,7 +556,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     comparisonFailedState.setToDeleteActualFile(event.isActualFileTemp());
   }
 
-  public TestComparisionFailedState setTestComparisonFailed(@NotNull final String localizedMessage,
+  public TestComparisionFailedState setTestComparisonFailed(@Nullable final String localizedMessage,
                                                             @Nullable final String stackTrace,
                                                             @NotNull final String actualText,
                                                             @NotNull final String expectedText,
