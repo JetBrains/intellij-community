@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.FileIconPatcher
 import com.intellij.ide.FileIconProvider
 import com.intellij.ide.TypePresentationService
+import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.fileTypes.DirectoryFileType
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.DumbService
@@ -154,7 +155,10 @@ object IconUtil {
    * @return a deferred icon for the file, taking into account [FileIconProvider] and [FileIconPatcher] extensions.
    */
   @JvmStatic
-  fun computeFileIcon(file: VirtualFile, @IconFlags flags: Int, project: Project?): Icon {
+  fun computeFileIcon(file: VirtualFile, @IconFlags flags: Int, project: Project?): Icon =
+    computeFileIconImpl(BackedVirtualFile.getOriginFileIfBacked(file), project, flags)
+
+  private fun computeFileIconImpl(file: VirtualFile, project: Project?, flags: Int): Icon {
     if (!file.isValid || project != null && (project.isDisposed || !wasEverInitialized(project))) {
       return AllIcons.FileTypes.Unknown
     }
@@ -188,7 +192,10 @@ object IconUtil {
    * Use [computeFileIcon] where possible (e.g. in background threads) to get a non-deferred icon.
    */
   @JvmStatic
-  fun getIcon(file: VirtualFile, @IconFlags flags: Int, project: Project?): Icon {
+  fun getIcon(file: VirtualFile, @IconFlags flags: Int, project: Project?): Icon =
+    getIconImpl(BackedVirtualFile.getOriginFileIfBacked(file), flags, project)
+
+  private fun getIconImpl(file: VirtualFile, flags: Int, project: Project?): Icon {
     val lastIcon = LastComputedIconCache.get(file, flags)
     val base = lastIcon ?: computeBaseFileIcon(file)
     return IconManager.getInstance().createDeferredIcon(base, FileIconKey(file, project, flags), ICON_NULLABLE_FUNCTION)
