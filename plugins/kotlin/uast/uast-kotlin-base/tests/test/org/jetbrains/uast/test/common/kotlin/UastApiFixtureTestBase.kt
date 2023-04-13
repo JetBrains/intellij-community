@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.uast.*
-import org.jetbrains.uast.test.env.findElementByTextFromPsi
+import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
 import org.jetbrains.uast.util.isConstructorCall
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 

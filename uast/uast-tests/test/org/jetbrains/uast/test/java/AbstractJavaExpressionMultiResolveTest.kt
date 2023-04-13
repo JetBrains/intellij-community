@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiIdentifier
 import com.intellij.psi.PsiModifierListOwner
 import org.jetbrains.uast.*
-import org.jetbrains.uast.test.common.visitUFileAndGetResult
+import com.intellij.platform.uast.testFramework.common.visitUFileAndGetResult
 import com.intellij.testFramework.assertEqualsToFile
 import org.jetbrains.uast.util.IndentedPrintingVisitor
 import java.io.File

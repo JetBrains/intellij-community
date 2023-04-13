@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.uast.test.common
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.uast.testFramework.common
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
@@ -11,7 +11,7 @@ import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.util.parents
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UastFacade
-import org.jetbrains.uast.test.common.UastMappingsAccountant.computeMappingsInSeveralViewsSimultaneously
+import com.intellij.platform.uast.testFramework.common.UastMappingsAccountant.computeMappingsInSeveralViewsSimultaneously
 import java.nio.file.Path
 
 

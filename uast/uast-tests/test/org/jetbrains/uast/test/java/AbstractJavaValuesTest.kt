@@ -2,7 +2,7 @@
 package org.jetbrains.uast.test.java
 
 import org.jetbrains.uast.evaluation.UEvaluatorExtension
-import org.jetbrains.uast.test.common.ValuesTestBase
+import com.intellij.platform.uast.testFramework.common.ValuesTestBase
 
 abstract class AbstractJavaValuesTest : AbstractJavaUastTest(), ValuesTestBase {
   private var _evaluatorExtension: UEvaluatorExtension? = null

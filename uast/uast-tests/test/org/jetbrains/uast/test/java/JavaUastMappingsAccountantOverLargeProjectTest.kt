@@ -2,11 +2,11 @@
 package org.jetbrains.uast.test.java
 
 import com.intellij.ide.highlighter.JavaFileType
-import org.jetbrains.uast.test.common.PsiClassToString
-import org.jetbrains.uast.test.common.UastMappingsAccountantSingleTestBase
-import org.jetbrains.uast.test.common.UastMappingsAccountantTest
-import org.jetbrains.uast.test.common.sourcesFromLargeProject
-import org.jetbrains.uast.test.env.AbstractLargeProjectTest
+import com.intellij.platform.uast.testFramework.common.PsiClassToString
+import com.intellij.platform.uast.testFramework.common.UastMappingsAccountantSingleTestBase
+import com.intellij.platform.uast.testFramework.common.UastMappingsAccountantTest
+import com.intellij.platform.uast.testFramework.common.sourcesFromLargeProject
+import com.intellij.platform.uast.testFramework.env.AbstractLargeProjectTest
 import org.junit.Ignore
 import org.junit.Test
 import java.nio.file.Path

@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.utils.sure
 import org.jetbrains.uast.*
-import org.jetbrains.uast.test.env.findElementByTextFromPsi
+import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 import org.junit.Assert
 import java.lang.IllegalStateException

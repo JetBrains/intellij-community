@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.groovy.uast
 
 import org.jetbrains.uast.UFile
-import org.jetbrains.uast.test.common.RenderLogTestBase
+import com.intellij.platform.uast.testFramework.common.RenderLogTestBase
 import org.junit.Test
 
 

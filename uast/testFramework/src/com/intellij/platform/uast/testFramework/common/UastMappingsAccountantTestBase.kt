@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.uast.test.common
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.uast.testFramework.common
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
@@ -177,48 +177,48 @@ class UastMappingsAccountantTest(
         val byPsiInAnyContext = byPsiWithNotFullyRenderedTargets.mapValues { it.value.values.toSet() }
 
         @Suppress("UNCHECKED_CAST")
-        AllRenderedUastMappings(
-          byPsiWithNotFullyRenderedTargets
-            .mapValues { (psiClass, innerMap) ->
-              innerMap.foldKeysByLevel(level = 0, keyBuilder = { it }, keyFolder = {
-                when (byPsiInAnyContext.getValue(psiClass).size) {
-                  1 -> listOf("ALWAYS")
-                  else -> null
-                }
-              })
-            }
-            .mapValues { (psiClass, innerMap) ->
-              innerMap.foldKeysByLevel(level = 1, keyBuilder = { it }, keyFolder = kf@{ context ->
-                if (context.isEmpty())
-                  return@kf null
-                val allTargetsWithSameFirstContextElement = byPsiWithNotFullyRenderedTargets
-                  .getValue(psiClass)
-                  .entries.mapNotNullTo(mutableSetOf()) { (key, value) ->
-                    key.firstOrNull()?.run { if (equals(context[0])) value else null }
-                  }
-                when (allTargetsWithSameFirstContextElement.size) {
-                  1 -> listOf("ANY_CONTEXT")
-                  else -> null
-                }
-              })
-            } as RenderedMappings,
-
-          byUast.mapValues { (uastClass, innerMap) ->
-            innerMap.foldKeysByLevel(level = 1, keyBuilder = { it }, keyFolder = kf@{ context ->
-              if (context.isEmpty())
-                return@kf null
-              when (byPsiInAnyContext
-                .getValue(context[0]).singleOrNull()
-                ?.mapTo(mutableSetOf()) { it.value }?.singleOrNull()
-                ?.singleOrNull()
-                ?.first?.equals(uastClass)
-              ) {
-                true -> listOf("ANY_CONTEXT")
-                else -> null
-              }
-            })
+        (AllRenderedUastMappings(
+    byPsiWithNotFullyRenderedTargets
+      .mapValues { (psiClass, innerMap) ->
+        innerMap.foldKeysByLevel(level = 0, keyBuilder = { it }, keyFolder = {
+          when (byPsiInAnyContext.getValue(psiClass).size) {
+            1 -> listOf("ALWAYS")
+            else -> null
           }
-        )
+        })
+      }
+      .mapValues { (psiClass, innerMap) ->
+        innerMap.foldKeysByLevel(level = 1, keyBuilder = { it }, keyFolder = kf@{ context ->
+          if (context.isEmpty())
+            return@kf null
+          val allTargetsWithSameFirstContextElement = byPsiWithNotFullyRenderedTargets
+            .getValue(psiClass)
+            .entries.mapNotNullTo(mutableSetOf()) { (key, value) ->
+              key.firstOrNull()?.run { if (equals(context[0])) value else null }
+            }
+          when (allTargetsWithSameFirstContextElement.size) {
+            1 -> listOf("ANY_CONTEXT")
+            else -> null
+          }
+        })
+      } as RenderedMappings,
+
+    byUast.mapValues { (uastClass, innerMap) ->
+      innerMap.foldKeysByLevel(level = 1, keyBuilder = { it }, keyFolder = kf@{ context ->
+        if (context.isEmpty())
+          return@kf null
+        when (byPsiInAnyContext
+          .getValue(context[0]).singleOrNull()
+          ?.mapTo(mutableSetOf()) { it.value }?.singleOrNull()
+          ?.singleOrNull()
+          ?.first?.equals(uastClass)
+        ) {
+          true -> listOf("ANY_CONTEXT")
+          else -> null
+        }
+      })
+    }
+  ))
       }
 
   private val computedMappings

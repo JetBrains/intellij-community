@@ -37,7 +37,7 @@ import org.jetbrains.uast.kotlin.KotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.evaluation.KotlinEvaluatorExtension
 import org.jetbrains.uast.kotlin.internal.CliKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.internal.UastAnalysisHandlerExtension
-import org.jetbrains.uast.test.env.AbstractCoreEnvironment
+import com.intellij.platform.uast.testFramework.env.AbstractCoreEnvironment
 import org.jetbrains.uast.test.kotlin.env.AbstractUastTest
 import java.io.File
 

@@ -2,7 +2,7 @@
 package org.jetbrains.uast.test.java
 
 import org.jetbrains.uast.UFile
-import org.jetbrains.uast.test.common.RenderLogTestBase
+import com.intellij.platform.uast.testFramework.common.RenderLogTestBase
 import org.junit.Test
 
 class SimpleJavaRenderLogTest : AbstractJavaRenderLogTest(), RenderLogTestBase {

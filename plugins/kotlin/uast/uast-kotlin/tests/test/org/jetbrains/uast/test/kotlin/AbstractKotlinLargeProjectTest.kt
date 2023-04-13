@@ -2,7 +2,7 @@
 package org.jetbrains.uast.test.kotlin
 
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
-import org.jetbrains.uast.test.env.AbstractLargeProjectTest
+import com.intellij.platform.uast.testFramework.env.AbstractLargeProjectTest
 
 abstract class AbstractKotlinLargeProjectTest : AbstractLargeProjectTest() {
     override val projectLibraries
