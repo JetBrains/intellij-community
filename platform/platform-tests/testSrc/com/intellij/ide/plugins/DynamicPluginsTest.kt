@@ -28,7 +28,6 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.extensions.ExtensionPointChangeListener
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
@@ -57,6 +56,7 @@ import com.intellij.util.xmlb.annotations.Attribute
 import org.junit.Rule
 import org.junit.Test
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.random.Random
 
 @RunsInEdt
 class DynamicPluginsTest {
@@ -821,39 +821,44 @@ class DynamicPluginsTest {
     /**
      * This is a tricky one & possibly flaky. The point here is to make sure that registry keys, that are declared in the same config,
      * are initialized before other extensions: there might be tricky cases of extension point listeners triggering some plugin's internal
-     * logic that tries to access registry.
+     * logic that tries to access the registry.
      * See https://youtrack.jetbrains.com/issue/IDEA-254324
      *
-     * So the problem in current implementation is that extensions are initialized in an order that
+     * So the problem in the current implementation is that extensions are initialized in an order that
      * HashMap<String (extension point name), Collection<ExtensionDescriptor>> gives. So if there is an extension point with such a name
      * that precedes com.intellij.registryKey in this map, it will be initialized before the registry keys.
      *
      * This scenario might become obsolete if HashMap implementation changes so that the order of keys changes or if plugin initialization
-     * code changes. This test breaks as of revision 6b7726ecbb051ab6bd2e073b460cf813dba2364a.
+     * code changes. This test breaks as of revision 6be3a648dd07e4f675d40ab9553709446b06717c.
      */
-    val id = "test.plugin"
+    val rnd = Random(239)
+    val pool: List<Char> = ('a'..'z') + ('A'..'Z')
+
     val idParent = "test.batya"
-    val antiHashMap = "roGjzgGTyI" // this one goes before com.intellij.registryKey
-    //val antiHashMap = "OMEBtHDTCw" // this one goes after com.intellij.registryKey, so the test is green in this case
-    val parentPlugin = PluginBuilder()
-      .id(idParent)
-      .extensionPoints("""<extensionPoint qualifiedName="$idParent.$antiHashMap" interface="java.lang.Runnable" dynamic="true"/>""")
+    val antiHashMapKeys = listOf(
+      "roGjzgGTyI", // this one goes before com.intellij.registryKey
+      "OMEBtHDTCw" // this one goes after com.intellij.registryKey, so the test is green in this case
+    ) + (0..10).map { (0 until 10).map { pool.random(rnd) }.joinToString("") }
 
-    loadPluginWithText(parentPlugin).use {
-      val ep = ApplicationManager.getApplication().extensionArea.getExtensionPoint<Runnable>("$idParent.$antiHashMap")
-      ep.addExtensionPointListener(
-        ExtensionPointChangeListener {
-          ep.extensionList.forEach(Runnable::run)
-        }, false, it)
-      val plugin = PluginBuilder()
-        .id(id)
-        .depends(parentPlugin.id)
-        .extensions("""<registryKey key="test.plugin.registry.key" defaultValue="true" description="sample text"/>""")
-        .extensions("""<$antiHashMap implementation="${MyServiceAccessor::class.java.name}"/>""", idParent)
-        .extensions("""<applicationService serviceImplementation="${MyRegistryAccessor::class.java.name}"/>""")
+    for (antiHashMap in antiHashMapKeys) {
+      val parentPlugin = PluginBuilder()
+        .id(idParent)
+        .extensionPoints("""<extensionPoint qualifiedName="$idParent.$antiHashMap" interface="java.lang.Runnable" dynamic="true"/>""")
 
-      loadPluginWithText(plugin).use {
-        check(service<MyRegistryAccessor>().invocations > 0)
+      val id = "test.plugin"
+      loadPluginWithText(parentPlugin).use {
+        val ep = ApplicationManager.getApplication().extensionArea.getExtensionPoint<Runnable>("$idParent.$antiHashMap")
+        ep.addChangeListener({ ep.extensionList.forEach(Runnable::run) }, it)
+        val plugin = PluginBuilder()
+          .id(id)
+          .depends(parentPlugin.id)
+          .extensions("""<registryKey key="test.plugin.registry.key" defaultValue="true" description="sample text"/>""")
+          .extensions("""<$antiHashMap implementation="${MyServiceAccessor::class.java.name}"/>""", idParent)
+          .extensions("""<applicationService serviceImplementation="${MyRegistryAccessor::class.java.name}"/>""")
+
+        loadPluginWithText(plugin).use {
+          check(service<MyRegistryAccessor>().invocations == 1)
+        }
       }
     }
   }
@@ -862,8 +867,7 @@ class DynamicPluginsTest {
 @InternalIgnoreDependencyViolation
 private class MyServiceAccessor : Runnable {
   override fun run() {
-    ApplicationManager.getApplication()
-      .getService(MyRegistryAccessor::class.java)!!.accessRegistry()
+    service<MyRegistryAccessor>().accessRegistry()
   }
 }
 
