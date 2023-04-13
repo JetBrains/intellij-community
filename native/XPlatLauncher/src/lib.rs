@@ -36,15 +36,26 @@ use std::path::PathBuf;
 
 use anyhow::{bail, Result};
 use log::{debug, error, LevelFilter, warn};
-use native_dialog::{MessageDialog, MessageType};
 use serde::{Deserialize, Serialize};
 use utils::get_current_exe;
 
-#[cfg(target_os = "windows")] use {
+#[cfg(target_os = "windows")]
+use {
     windows::core::GUID,
     windows::Win32::Foundation::HANDLE,
     windows::Win32::UI::Shell::KF_FLAG_CREATE,
     windows::Win32::UI::Shell::SHGetKnownFolderPath
+};
+
+#[cfg(not(target_os = "macos"))]
+use native_dialog::{MessageDialog, MessageType};
+
+#[cfg(target_os = "macos")]
+use {
+    core_foundation::base::{CFOptionFlags, SInt32, TCFType},
+    core_foundation::date::CFTimeInterval,
+    core_foundation::string::{CFString, CFStringRef},
+    core_foundation::url::CFURLRef
 };
 
 use crate::default::DefaultLaunchConfiguration;
@@ -56,12 +67,23 @@ mod remote_dev;
 mod default;
 mod docker;
 
+const CANNOT_START_TITLE: &'static str = "Cannot start the IDE";
+
 pub fn main_lib() {
     let remote_dev = is_remote_dev();
     let show_error_ui = env::var(DO_NOT_SHOW_ERROR_UI_ENV_VAR).is_err() && !remote_dev;
     let verbose = env::var(VERBOSE_LOGGING_ENV_VAR).is_ok() || remote_dev;
-    let main_result = main_impl(remote_dev, verbose);
-    unwrap_with_human_readable_error(main_result, show_error_ui);
+    if let Err(e) = main_impl(remote_dev, verbose) {
+        let text = format!("{:?}", e);
+        if show_error_ui {
+            show_fail_to_start_message(text.as_str())
+        } else if verbose {
+            error!("{}", text);
+        } else {
+            eprintln!("{}\n{}", CANNOT_START_TITLE, text);
+        }
+        std::process::exit(1);
+    }
 }
 
 fn is_remote_dev() -> bool {
@@ -205,22 +227,6 @@ fn get_configuration(is_remote_dev: bool) -> Result<Box<dyn LaunchConfiguration>
 pub const DO_NOT_SHOW_ERROR_UI_ENV_VAR: &str = "DO_NOT_SHOW_ERROR_UI";
 pub const VERBOSE_LOGGING_ENV_VAR: &str = "IJ_LAUNCHER_DEBUG";
 
-fn unwrap_with_human_readable_error<S>(result: Result<S>, show_error_ui: bool) -> S {
-    match result {
-        Ok(x) => { x }
-        Err(e) => {
-            eprintln!("{e:?}");
-            error!("{e:?}");
-
-            if show_error_ui {
-                show_fail_to_start_message("Failed to start", format!("{e:?}").as_str())
-            }
-
-            std::process::exit(1);
-        }
-    }
-}
-
 fn get_full_vm_options(configuration: &Box<dyn LaunchConfiguration>) -> Result<Vec<String>> {
     let mut full_vm_options: Vec<String> = Vec::new();
 
@@ -314,19 +320,43 @@ fn get_class_path_separator<'a>() -> &'a str {
     ";"
 }
 
-fn show_fail_to_start_message(title: &str, text: &str) {
+#[cfg(target_os = "macos")]
+#[allow(non_snake_case, unused_variables, unused_results)]
+fn show_fail_to_start_message(text: &str) {
+    extern "C" {
+        fn CFUserNotificationDisplayAlert(
+            timeout: CFTimeInterval,
+            flags: CFOptionFlags,
+            iconURL: CFURLRef, soundURL: CFURLRef, localizationURL: CFURLRef,
+            alertHeader: CFStringRef, alertMessage: CFStringRef,
+            defaultButtonTitle: CFStringRef, alternateButtonTitle: CFStringRef, otherButtonTitle: CFStringRef,
+            responseFlags: *mut CFOptionFlags,
+        ) -> SInt32;
+    }
+
+    let title = CFString::from_static_string(CANNOT_START_TITLE);
+    let message = CFString::new(text);
+    unsafe {
+        CFUserNotificationDisplayAlert(
+            0.0,
+            0,  // kCFUserNotificationStopAlertLevel
+            std::ptr::null(), std::ptr::null(), std::ptr::null(),
+            title.as_concrete_TypeRef(), message.as_concrete_TypeRef(),
+            std::ptr::null(), std::ptr::null(), std::ptr::null(),
+            std::ptr::null_mut())
+    };
+}
+
+#[cfg(not(target_os = "macos"))]
+fn show_fail_to_start_message(text: &str) {
     let result = MessageDialog::new()
-        .set_title(title)
+        .set_title(CANNOT_START_TITLE)
         .set_text(text)
         .set_type(MessageType::Error)
         .show_alert();
-
-    match result {
-        Ok(_) => { }
-        Err(e) => {
-            // TODO: proper message
-            error!("Failed to show error message: {e:?}")
-        }
+    if let Err(e) = result {
+        error!("Failed to show error message: {:?}", e);
+        eprintln!("{}\n{}", CANNOT_START_TITLE, text);
     }
 }
 
