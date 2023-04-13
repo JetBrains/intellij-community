@@ -147,7 +147,7 @@ abstract class BaseIdeaProperties : ProductProperties() {
         "intellij.platform.testFramework.common",
         "intellij.platform.testFramework.junit5",
         "intellij.platform.testFramework",
-        "intellij.platform.uast.tests",
+        "intellij.platform.uast.testFramework",
         "intellij.tools.testsBootstrap",
       )) {
         if (!productLayout.productApiModules.contains(moduleName) && !productLayout.productImplementationModules.contains(moduleName)) {

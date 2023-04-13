@@ -37,7 +37,7 @@ private val nonPathAttributes = hashSetOf(
 
 private val pathElements = hashSetOf("interface-class", "implementation-class")
 private val predefinedTypes = hashSetOf("java.lang.Object")
-private val ignoreModules = hashSetOf("intellij.java.testFramework", "intellij.platform.uast.tests")
+private val ignoreModules = hashSetOf("intellij.java.testFramework", "intellij.platform.uast.testFramework")
 
 class ModuleStructureValidator(private val context: BuildContext, modules: Collection<ModuleItem>) {
   // filter out jars with relative paths in name
