@@ -8,11 +8,11 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.Objects;
 
-public final class MavenEmbedderExecutionRequest implements Serializable {
+public final class MavenGoalExecutionRequest implements Serializable {
   @NotNull private final File file;
   @NotNull private final MavenExplicitProfiles profiles;
 
-  public MavenEmbedderExecutionRequest(@NotNull File file, @NotNull MavenExplicitProfiles profiles) {
+  public MavenGoalExecutionRequest(@NotNull File file, @NotNull MavenExplicitProfiles profiles) {
     this.file = file;
     this.profiles = profiles;
   }
@@ -25,7 +25,7 @@ public final class MavenEmbedderExecutionRequest implements Serializable {
   public boolean equals(Object obj) {
     if (obj == this) return true;
     if (obj == null || obj.getClass() != this.getClass()) return false;
-    MavenEmbedderExecutionRequest that = (MavenEmbedderExecutionRequest)obj;
+    MavenGoalExecutionRequest that = (MavenGoalExecutionRequest)obj;
     return Objects.equals(this.file, that.file) &&
            Objects.equals(this.profiles, that.profiles);
   }

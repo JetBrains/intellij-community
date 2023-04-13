@@ -65,9 +65,9 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
     return emptyList()
   }
 
-  override fun execute(requests: Collection<MavenEmbedderExecutionRequest>,
-                       goal: String,
-                       token: MavenToken?): List<MavenEmbedderExecutionResult> {
+  override fun executeGoal(requests: Collection<MavenGoalExecutionRequest>,
+                           goal: String,
+                           token: MavenToken?): List<MavenGoalExecutionResult> {
     return emptyList()
   }
 

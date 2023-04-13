@@ -31,7 +31,7 @@ import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
 import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.plugins.api.MavenModelPropertiesPatcher;
-import org.jetbrains.idea.maven.server.MavenEmbedderExecutionResult;
+import org.jetbrains.idea.maven.server.MavenGoalExecutionResult;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.*;
 
@@ -227,7 +227,7 @@ public class MavenProject {
   }
 
   @ApiStatus.Internal
-  public MavenProjectChanges setFolders(MavenEmbedderExecutionResult.Folders folders) {
+  public MavenProjectChanges setFolders(MavenGoalExecutionResult.Folders folders) {
     State newState = myState.clone();
     doSetFolders(newState, folders.getSources(), folders.getTestSources(), folders.getResources(), folders.getTestResources());
     return setState(newState);

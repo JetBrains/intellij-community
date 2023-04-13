@@ -4,8 +4,8 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.server.MavenEmbedderExecutionRequest;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.server.MavenGoalExecutionRequest;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -56,10 +56,10 @@ public class MavenFolderResolver {
 
         var requests = ContainerUtil.map(
           fileToProject.entrySet(),
-          entry -> new MavenEmbedderExecutionRequest(entry.getKey(), entry.getValue().getActivatedProfilesIds())
+          entry -> new MavenGoalExecutionRequest(entry.getKey(), entry.getValue().getActivatedProfilesIds())
         );
 
-        var results = embedder.execute(requests, goal);
+        var results = embedder.executeGoal(requests, goal);
 
         for (var result : results) {
           var mavenProject = fileToProject.getOrDefault(result.file, null);

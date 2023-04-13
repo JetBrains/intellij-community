@@ -12,13 +12,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class MavenEmbedderExecutionResult implements Serializable {
+public class MavenGoalExecutionResult implements Serializable {
   public final boolean success;
   @NotNull public final File file;
   @NotNull public final Folders folders;
   @NotNull public final Collection<MavenProjectProblem> problems;
 
-  public MavenEmbedderExecutionResult(boolean success, @NotNull File file, @NotNull Folders folders, @NotNull Collection<MavenProjectProblem> problems) {
+  public MavenGoalExecutionResult(boolean success, @NotNull File file, @NotNull Folders folders, @NotNull Collection<MavenProjectProblem> problems) {
     this.success = success;
     this.file = file;
     this.folders = folders;
