@@ -9,16 +9,20 @@ object AssertionParser {
   @JvmStatic
   fun parse(assertionMessage: String): Result? {
     return null
-           // JUnit5: org.junit.jupiter.api.Assertions
+           // JUnit 5: assertEquals | assertSame: org.junit.jupiter.api.Assertions
            ?: parse(assertionMessage, "((?<message>.+) ==> )?expected: <(?<expected>.*)> but was: <(?<actual>.*)>")
            ?: parse(assertionMessage, "((?<message>.+) ==> )?expected: (?<expected>[^<]+<(.*)>) but was: (?<actual>[^<]+<(.*)>)")
-           // JUnit 4: org.junit.Assert | junit.framework.Assert | junit.framework.TestCase | org.testng.AssertJUnit
+           // JUnit 4: assertEquals: org.junit.Assert | junit.framework.Assert | junit.framework.TestCase | org.testng.AssertJUnit
            ?: parse(assertionMessage, "((?<message>.+) )?expected:<(?<expected>.*)> but was:<(?<actual>.*)>")
            ?: parse(assertionMessage, "((?<message>.+) )?expected: (?<expected>[^<]+<.*>) but was: (?<actual>[^<]+<.*>)")
-           // AssertJ: org.assertj.core.api.Assertions
+           // JUnit 4: assertSame: org.junit.Assert | junit.framework.Assert | junit.framework.TestCase | org.testng.AssertJUnit
+           ?: parse(assertionMessage, "((?<message>.+) )?expected same:<(?<expected>.*)> was not:<(?<actual>.*)>")
+           // AssertJ: assertEquals: org.assertj.core.api.Assertions
            ?: parse(assertionMessage, "(?<message>)\nexpected: \"(?<expected>.*)\"\n but was: \"(?<actual>.*)\"")
            ?: parse(assertionMessage, "(?<message>)\nexpected: (?<expected>.*)\n but was: (?<actual>.*)")
-           // Test NG: org.testng.Assert
+           // AssertJ: assertSame: org.assertj.core.api.Assertions
+           ?: parse(assertionMessage, "(?<message>)\nExpecting actual:\n {2}(?<actual>.*)\nand:\n {2}(?<expected>.*)\nto refer to the same object")
+           // Test NG: assertEquals | assertSame: org.testng.Assert
            ?: parse(assertionMessage, "((?<message>.+) )?expected \\[(?<expected>.*)] but found \\[(?<actual>.*)]")
   }
 

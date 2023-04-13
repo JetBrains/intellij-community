@@ -9,7 +9,7 @@ class AssertionParserTest {
 
   @Test
   fun `parse comparison message test`() {
-    // JUnit 4: org.junit.Assert | junit.framework.Assert | junit.framework.TestCase | org.testng.AssertJUnit
+    // JUnit 4: assertEquals: org.junit.Assert | junit.framework.Assert | junit.framework.TestCase | org.testng.AssertJUnit
     assertComparisonParsing("expected:<1> but was:<2>", "1", "2")
     assertComparisonParsing("expected:<expected> but was:<actual>", "expected", "actual")
     assertComparisonParsing("expected:<<expected>> but was:<<actual>>", "<expected>", "<actual>")
@@ -22,7 +22,17 @@ class AssertionParserTest {
     assertComparisonParsing("expected: org.example.Class<string> but was: org.example.Class<string>",
                             "org.example.Class<string>", "org.example.Class<string>")
 
-    // JUnit5: org.junit.jupiter.api.Assertions
+    // JUnit 4: assertSame: org.junit.Assert | junit.framework.Assert | junit.framework.TestCase | org.testng.AssertJUnit
+    assertComparisonParsing("expected same:<expected> was not:<actual>", "expected", "actual")
+    assertComparisonParsing("expected same:<<expected>> was not:<<actual>>", "<expected>", "<actual>")
+    assertComparisonParsing("expected same:<[expected]> was not:<[actual]>", "[expected]", "[actual]")
+    assertComparisonParsing("expected same:<exp\nected> was not:<a\nctual>", "exp\nected", "a\nctual")
+    assertComparisonParsing("expected same:<exp\\nected> was not:<act\\nual>", "exp\\nected", "act\\nual")
+    assertComparisonParsing("expected same:<\nexpected\n> was not:<\nactual\n>", "\nexpected\n", "\nactual\n")
+    assertComparisonParsing("expected same:< expected > was not:< actual >", " expected ", " actual ")
+    assertComparisonParsing("assertion message expected same:<expected> was not:<actual>", "expected", "actual", "assertion message")
+
+    // JUnit5: assertEquals | assertSame: org.junit.jupiter.api.Assertions
     assertComparisonParsing("expected: <1> but was: <2>", "1", "2")
     assertComparisonParsing("expected: <expected> but was: <actual>", "expected", "actual")
     assertComparisonParsing("expected: <<expected>> but was: <<actual>>", "<expected>", "<actual>")
@@ -37,7 +47,7 @@ class AssertionParserTest {
     assertComparisonParsing("assertion message ==> expected: org.example.Class@5a2d131d<string> but was: org.example.Class@14fc1f0<string>",
                             "org.example.Class@5a2d131d<string>", "org.example.Class@14fc1f0<string>", "assertion message")
 
-    // AssertJ: org.assertj.core.api.Assertions
+    // AssertJ: assertEquals: org.assertj.core.api.Assertions
     assertComparisonParsing("\nexpected: 1\n but was: 2", "1", "2")
     assertComparisonParsing("\nexpected: \"expected\"\n but was: \"actual\"", "expected", "actual")
     assertComparisonParsing("\nexpected: \"<expected>\"\n but was: \"<actual>\"", "<expected>", "<actual>")
@@ -49,7 +59,16 @@ class AssertionParserTest {
     assertComparisonParsing("\nexpected: \"string (org.example.Class@31bcf236)\"\n but was: \"string (org.example.Class@4b3ed2f0)\"",
                             "string (org.example.Class@31bcf236)", "string (org.example.Class@4b3ed2f0)")
 
-    // Test NG: org.testng.Assert
+    // AssertJ: assertSame: org.assertj.core.api.Assertions
+    assertComparisonParsing("\nExpecting actual:\n  actual\nand:\n  expected\nto refer to the same object", "expected", "actual")
+    assertComparisonParsing("\nExpecting actual:\n  <actual>\nand:\n  <expected>\nto refer to the same object", "<expected>", "<actual>")
+    assertComparisonParsing("\nExpecting actual:\n  [actual]\nand:\n  [expected]\nto refer to the same object", "[expected]", "[actual]")
+    assertComparisonParsing("\nExpecting actual:\n  a\nctual\nand:\n  exp\nected\nto refer to the same object", "exp\nected", "a\nctual")
+    assertComparisonParsing("\nExpecting actual:\n  act\\nual\nand:\n  exp\\nected\nto refer to the same object", "exp\\nected", "act\\nual")
+    assertComparisonParsing("\nExpecting actual:\n  \nactual\n\nand:\n  \nexpected\n\nto refer to the same object", "\nexpected\n", "\nactual\n")
+    assertComparisonParsing("\nExpecting actual:\n   actual \nand:\n   expected \nto refer to the same object", " expected ", " actual ")
+
+    // Test NG: assertEquals | assertSame: org.testng.Assert
     assertComparisonParsing("expected [1] but found [2]", "1", "2")
     assertComparisonParsing("expected [expected] but found [actual]", "expected", "actual")
     assertComparisonParsing("expected [<expected>] but found [<actual>]", "<expected>", "<actual>")
