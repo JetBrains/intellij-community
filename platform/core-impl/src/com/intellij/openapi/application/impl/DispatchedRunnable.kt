@@ -3,6 +3,7 @@ package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.util.Conditions
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Job
 import java.util.concurrent.atomic.AtomicReference
@@ -47,7 +48,7 @@ internal class DispatchedRunnable(job: Job, runnable: Runnable) : Runnable {
     else {
       // Reschedule the original runnable ignoring the modality state
       // to give the cancelled coroutine a chance to clean its resources and complete.
-      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any())
+      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any(), Conditions.alwaysFalse<Nothing?>())
     }
   }
 }
