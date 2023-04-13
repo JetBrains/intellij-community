@@ -30,12 +30,13 @@ class DebugRunConfigurationCommand(text: String, line: Int) : AbstractCallbackBa
 
   override fun execute(callback: ActionCallback, context: PlaybackContext) {
     val arguments = extractCommandList(PREFIX, ",")
-    if (arguments.size < 2) {
-      callback.reject("Usage %debugStep &lt;configuration_name&gt; &lt;timeout_in_seconds&gt;")
+    if (arguments.isEmpty()) {
+      callback.reject("Usage %debugStep &lt;configuration_name&gt; [&lt;timeout_in_seconds&gt;]")
       return
     }
     val configurationNameToRun = arguments[0]
-    val timeoutInSeconds = arguments[1].toLong()
+    var timeoutInSeconds: Long? = null
+    if (arguments.size > 1) timeoutInSeconds = arguments[1].toLong()
 
     val breakpointManager = XDebuggerManager.getInstance(context.project).breakpointManager
     val nonDefaultBreakpoints = breakpointManager.allBreakpoints.filter { !breakpointManager.isDefaultBreakpoint(it) }
@@ -55,14 +56,16 @@ class DebugRunConfigurationCommand(text: String, line: Int) : AbstractCallbackBa
     val scopeRef = Ref<Scope>()
 
     val connection = context.project.messageBus.connect()
-    var job: Job
+    var job: Job? = null
     connection.subscribe(XDebuggerManager.TOPIC, object : XDebuggerManagerListener {
       override fun processStarted(debugProcess: XDebugProcess) {
-        job = CoroutineScope(Dispatchers.IO).launch {
-          if (!Waiter.checkCondition { callback.isDone || callback.isRejected }.await(timeoutInSeconds, TimeUnit.SECONDS)) {
-            callback.reject(
-              "Debug run configuration $configurationNameToRun was started $timeoutInSeconds seconds ago but was not paused by any breakpoint yet")
-            connection.disconnect()
+        if (timeoutInSeconds != null) {
+          job = CoroutineScope(Dispatchers.IO).launch {
+            if (!Waiter.checkCondition { callback.isDone || callback.isRejected }.await(timeoutInSeconds, TimeUnit.SECONDS)) {
+              callback.reject(
+                "Debug run configuration $configurationNameToRun was started $timeoutInSeconds seconds ago but was not paused by any breakpoint yet")
+              connection.disconnect()
+            }
           }
         }
 
@@ -73,7 +76,7 @@ class DebugRunConfigurationCommand(text: String, line: Int) : AbstractCallbackBa
             spanRef.get().end()
             scopeRef.get().close()
             connection.disconnect()
-            job.cancel()
+            job?.cancel()
           }
         })
       }
