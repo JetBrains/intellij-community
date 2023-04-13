@@ -32,7 +32,7 @@ internal sealed class EdtCoroutineDispatcher : MainCoroutineDispatcher() {
     else {
       DispatchedRunnable(context.job, block)
     }
-    ApplicationManager.getApplication().invokeLater(runnable, state, Conditions.alwaysFalse<Nothing?>())
+    ApplicationManager.getApplication().invokeLaterRaw(runnable, state, Conditions.alwaysFalse<Nothing?>())
   }
 
   companion object : EdtCoroutineDispatcher() {

@@ -349,6 +349,14 @@ public interface Application extends ComponentManager {
   void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition<?> expired);
 
   /**
+   * @see com.intellij.util.concurrency.ContextPropagatingExecutor#executeRaw
+   */
+  @ApiStatus.Internal
+  default void invokeLaterRaw(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition<?> expired) {
+    invokeLater(runnable, state, expired);
+  }
+
+  /**
    * <p>Causes {@code runnable.run()} to be executed synchronously on the
    * AWT event dispatching thread under Write Intent lock, when the IDE is in the specified modality
    * state (or a state with less modal dialogs open). This call blocks until all pending AWT events have been processed and (then)
