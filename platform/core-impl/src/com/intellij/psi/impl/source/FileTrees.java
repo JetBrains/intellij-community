@@ -9,11 +9,11 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.stubs.*;
-import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Objects;
@@ -21,6 +21,9 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import static com.intellij.reference.SoftReference.deref;
+import static com.intellij.reference.SoftReference.dereference;
 
 final class FileTrees {
   private static final Logger LOG = Logger.getInstance(FileTrees.class);
@@ -44,12 +47,12 @@ final class FileTrees {
 
   @Nullable
   StubTree derefStub() {
-    return SoftReference.dereference(myStub);
+    return dereference(myStub);
   }
 
   @Nullable
   FileElement derefTreeElement() {
-    return SoftReference.deref(myTreeElementPointer);
+    return deref(myTreeElementPointer);
   }
 
   FileTrees switchToStrongRefs() {
@@ -101,7 +104,7 @@ final class FileTrees {
       for (int i = firstNonFilePsiIndex; i < refToPsi.length; i++) {
         StubBasedPsiElementBase<?> psi = (StubBasedPsiElementBase<?>)Objects.requireNonNull(spine.get(i));
         psi.setSubstrateRef(new SpineRef(myFile, i));
-        StubBasedPsiElementBase<?> existing = SoftReference.dereference(refToPsi[i]);
+        StubBasedPsiElementBase<?> existing = dereference(refToPsi[i]);
         if (existing != null) {
           assert existing == psi : "Duplicate PSI found";
         }
@@ -204,7 +207,7 @@ final class FileTrees {
   private void bindSubstratesToCachedPsi(List<StubElement<?>> stubList, List<? extends CompositeElement> nodeList) {
     assert myRefToPsi != null;
     for (int i = firstNonFilePsiIndex; i < myRefToPsi.length; i++) {
-      StubBasedPsiElementBase<?> cachedPsi = SoftReference.dereference(myRefToPsi[i]);
+      StubBasedPsiElementBase<?> cachedPsi = dereference(myRefToPsi[i]);
       if (cachedPsi != null) {
         if (stubList != null) {
           // noinspection unchecked

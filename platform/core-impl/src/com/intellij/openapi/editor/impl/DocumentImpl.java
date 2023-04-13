@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.core.CoreBundle;
@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -37,11 +36,14 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
+import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 public final class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private static final Logger LOG = Logger.getInstance(DocumentImpl.class);
@@ -141,8 +143,8 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     processQueue();
     // if a marker is retained, then so is its node and the whole tree
     // (ignore the race when marker is gc-ed right after this call - it's harmless)
-    return SoftReference.dereference(f.getUserData(RANGE_MARKERS_KEY)) != null
-           || SoftReference.dereference(f.getUserData(PERSISTENT_RANGE_MARKERS_KEY)) != null;
+    return dereference(f.getUserData(RANGE_MARKERS_KEY)) != null
+           || dereference(f.getUserData(PERSISTENT_RANGE_MARKERS_KEY)) != null;
   }
 
   private void getSaveRMTree(@NotNull VirtualFile f,
@@ -155,7 +157,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
       oldRef = f.getUserData(key);
     }
     while (!f.replace(key, oldRef, freshRef));
-    RangeMarkerTree<RangeMarkerEx> oldTree = SoftReference.dereference(oldRef);
+    RangeMarkerTree<RangeMarkerEx> oldTree = dereference(oldRef);
 
     if (oldTree == null) {
       // no tree was saved in virtual file before (happens when a new document is created).
@@ -222,7 +224,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     RangeMarkerTree<RangeMarkerEx> tree;
     while (true) {
       Reference<RangeMarkerTree<RangeMarkerEx>> oldRef = file.getUserData(key);
-      tree = SoftReference.dereference(oldRef);
+      tree = dereference(oldRef);
       if (tree != null) break;
       tree = new RangeMarkerTree<>();
       RMTreeReference reference = new RMTreeReference(tree, file);
@@ -953,7 +955,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @NotNull
   private String doGetText() {
-    String s = SoftReference.dereference(myTextString);
+    String s = dereference(myTextString);
     if (s == null) {
       myTextString = new SoftReference<>(s = myText.toString());
     }
@@ -1233,7 +1235,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
       synchronized (myLineSetLock) {
         frozen = myFrozen;
         if (frozen == null) {
-          myFrozen = frozen = new FrozenDocument(myText, myLineSet, myModificationStamp, SoftReference.dereference(myTextString));
+          myFrozen = frozen = new FrozenDocument(myText, myLineSet, myModificationStamp, dereference(myTextString));
         }
       }
     }

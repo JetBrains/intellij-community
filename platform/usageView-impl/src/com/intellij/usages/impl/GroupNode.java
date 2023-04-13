@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.ide.tags.TagManager;
@@ -10,7 +10,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
-import com.intellij.reference.SoftReference;
 import com.intellij.ui.ColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usages.TextChunk;
@@ -36,8 +35,11 @@ import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.util.List;
 import java.util.*;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 public class GroupNode extends Node implements Navigatable, Comparable<GroupNode> {
   private static final NodeComparator COMPARATOR = new NodeComparator();
@@ -395,7 +397,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
 
   @Override
   public @Nullable UsageNodePresentation getCachedPresentation() {
-    return SoftReference.dereference(myCachedPresentation);
+    return dereference(myCachedPresentation);
   }
 
   @Override

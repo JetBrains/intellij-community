@@ -1,9 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
-import com.intellij.reference.SoftReference
 import com.intellij.util.text.CharSequenceReader
 import com.intellij.util.xmlb.Constants
 import org.jdom.Document
@@ -16,6 +15,7 @@ import org.xml.sax.InputSource
 import java.io.CharArrayReader
 import java.io.IOException
 import java.io.InputStream
+import java.lang.ref.SoftReference
 
 fun Element.getOrCreate(@NonNls name: String): Element {
   var element = getChild(name)
@@ -54,7 +54,7 @@ private val cachedSpecialSaxBuilder = ThreadLocal<SoftReference<SAXBuilder>>()
 @Suppress("DEPRECATION")
 private fun getSpecialSaxBuilder(): SAXBuilder {
   val reference = cachedSpecialSaxBuilder.get()
-  var saxBuilder = SoftReference.dereference(reference)
+  var saxBuilder = reference?.get()
   if (saxBuilder == null) {
     saxBuilder = SAXBuilder()
     saxBuilder.setEntityResolver(EntityResolver { _, _ -> InputSource(CharArrayReader(ArrayUtilRt.EMPTY_CHAR_ARRAY)) })

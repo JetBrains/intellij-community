@@ -1,14 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.designSurface;
 
-import com.intellij.uiDesigner.radComponents.RadContainer;
-import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.reference.SoftReference;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
 
 import java.awt.*;
+import java.lang.ref.SoftReference;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 
 public final class CachedGridImage {
@@ -174,7 +176,7 @@ public final class CachedGridImage {
   public static Image getGridImage(final RadContainer container) {
     //noinspection unchecked
     SoftReference<CachedGridImage> imageRef = (SoftReference<CachedGridImage>) container.getDelegee().getClientProperty(CACHED_GRID_IMAGE_KEY);
-    CachedGridImage gridImage = SoftReference.dereference(imageRef);
+    CachedGridImage gridImage = dereference(imageRef);
     if (gridImage != null && gridImage.sizeEquals(container)) {
       gridImage.update(container);
     }

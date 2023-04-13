@@ -16,11 +16,19 @@ import java.util.function.Supplier;
 public class SoftReference<T> extends java.lang.ref.SoftReference<T> implements Supplier<T> {
   //private final T myReferent;
 
+  /**
+   * @deprecated use {@link java.lang.ref.SoftReference#SoftReference(Object)}
+   */
+  @Deprecated
   public SoftReference(final T referent) {
     super(referent);
     //myReferent = referent;
   }
 
+  /**
+   * @deprecated use {@link java.lang.ref.SoftReference#SoftReference(Object, ReferenceQueue)}
+   */
+  @Deprecated
   public SoftReference(final T referent, final ReferenceQueue<? super T> q) {
     super(referent, q);
     //myReferent = referent;

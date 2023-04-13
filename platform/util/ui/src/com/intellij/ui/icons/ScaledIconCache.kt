@@ -5,7 +5,6 @@ package com.intellij.ui.icons
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.ScalableIcon
-import com.intellij.reference.SoftReference
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
@@ -18,6 +17,7 @@ import org.jetbrains.annotations.TestOnly
 import java.awt.Component
 import java.awt.Graphics
 import java.awt.Image
+import java.lang.ref.SoftReference
 import javax.swing.Icon
 
 private const val SCALED_ICONS_CACHE_LIMIT = 5

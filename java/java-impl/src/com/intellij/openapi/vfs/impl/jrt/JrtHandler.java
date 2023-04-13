@@ -1,19 +1,21 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.jrt;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
-import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.ref.SoftReference;
 import java.net.URI;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 @SuppressWarnings("SynchronizeOnThis")
 public class JrtHandler extends ArchiveHandler {
@@ -29,7 +31,7 @@ public class JrtHandler extends ArchiveHandler {
   public void clearCaches() {
     super.clearCaches();
     synchronized (this) {
-      FileSystem fs = SoftReference.dereference(myFileSystem);
+      FileSystem fs = dereference(myFileSystem);
       if (fs != null) {
         myFileSystem = null;
         try {
@@ -43,7 +45,7 @@ public class JrtHandler extends ArchiveHandler {
   }
 
   protected synchronized FileSystem getFileSystem() throws IOException {
-    FileSystem fs = SoftReference.dereference(myFileSystem);
+    FileSystem fs = dereference(myFileSystem);
     if (fs == null) {
       String path = getFile().getPath();
       try {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs.impl;
 
 import com.intellij.psi.JavaPsiFacade;
@@ -10,10 +10,13 @@ import com.intellij.psi.impl.java.stubs.PsiImportStatementStub;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.BitUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
+
+import java.lang.ref.SoftReference;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 public class PsiImportStatementStubImpl extends StubBase<PsiImportStatementBase> implements PsiImportStatementStub {
   private final byte myFlags;
@@ -55,7 +58,7 @@ public class PsiImportStatementStubImpl extends StubBase<PsiImportStatementBase>
   @Override
   @Nullable
   public PsiJavaCodeReferenceElement getReference() {
-    PsiJavaCodeReferenceElement ref = SoftReference.dereference(myReference);
+    PsiJavaCodeReferenceElement ref = dereference(myReference);
     if (ref == null) {
       ref = isStatic() ? getStaticReference() : getRegularReference();
       myReference = new SoftReference<>(ref);

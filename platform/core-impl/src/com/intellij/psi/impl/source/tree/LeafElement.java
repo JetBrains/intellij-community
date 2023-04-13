@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree;
 
@@ -23,11 +9,14 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.lang.ref.SoftReference;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 public abstract class LeafElement extends TreeElement {
   private static final Logger LOG = Logger.getInstance(LeafElement.class);
@@ -66,7 +55,7 @@ public abstract class LeafElement extends TreeElement {
   public String getText() {
     CharSequence text = myText;
     if (text.length() > 1000 && !(text instanceof String)) { // e.g. a large text file
-      String cachedText = SoftReference.dereference(getUserData(CACHED_TEXT));
+      String cachedText = dereference(getUserData(CACHED_TEXT));
       if (cachedText == null) {
         cachedText = text.toString();
         putUserData(CACHED_TEXT, new SoftReference<>(cachedText));

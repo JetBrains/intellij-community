@@ -1,10 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
-import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
+import java.lang.ref.SoftReference;
 
 /**
  * Soft keys hash map.
