@@ -63,14 +63,11 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
 
   /* ================ RECORD FIELDS LAYOUT end             ======================================== */
 
-  public static final int DEFAULT_MAPPED_CHUNK_SIZE = SystemProperties.getIntProperty("vfs.records-storage.memory-mapped.mapped-chunk-size", 1 << 26);//64Mb
+  public static final int DEFAULT_MAPPED_CHUNK_SIZE =
+    SystemProperties.getIntProperty("vfs.records-storage.memory-mapped.mapped-chunk-size", 1 << 26);//64Mb
 
   private static final VarHandle INT_HANDLE = MethodHandles.byteBufferViewVarHandle(int[].class, ByteOrder.nativeOrder());
   private static final VarHandle LONG_HANDLE = MethodHandles.byteBufferViewVarHandle(long[].class, ByteOrder.nativeOrder());
-
-
-
-
 
 
   private final @NotNull MMappedFileStorage storage;
@@ -122,7 +119,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
     final long recordOffsetInFile = recordOffsetInFile(recordId);
     final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
     try (final Page page = storage.pageByOffset(recordOffsetInFile)) {
-      final RecordAccessor recordAccessor = new RecordAccessor(recordId, recordOffsetOnPage, page);
+      final RecordAccessor recordAccessor = new RecordAccessor(recordId, recordOffsetOnPage, page, allocatedRecordsCount);
       return reader.readRecord(recordAccessor);
     }
   }
@@ -137,7 +134,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
     final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
     try (final Page page = storage.pageByOffset(recordOffsetInFile)) {
       //RC: hope EscapeAnalysis removes the allocation here:
-      final RecordAccessor recordAccessor = new RecordAccessor(recordId, recordOffsetOnPage, page);
+      final RecordAccessor recordAccessor = new RecordAccessor(recordId, recordOffsetOnPage, page, allocatedRecordsCount);
       final boolean updated = updater.updateRecord(recordAccessor);
       if (updated) {
         incrementRecordVersion(recordAccessor.pageBuffer, recordOffsetOnPage);
@@ -148,6 +145,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
 
   @Override
   public <R, E extends Throwable> R readHeader(final @NotNull HeaderReader<R, E> reader) throws E, IOException {
+    //'acquire' page in advance -- ensure page will not be evicted during .readHeader()
     try (final Page page = storage.pageByOffset(0)) {
       return reader.readHeader(headerAccessor);
     }
@@ -167,13 +165,16 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
     private final int recordId;
     private final int recordOffsetInPage;
     private final transient ByteBuffer pageBuffer;
+    private final AtomicInteger allocatedRecordsCount;
 
     private RecordAccessor(final int recordId,
                            final int recordOffsetInPage,
-                           final Page recordPage) {
+                           final Page recordPage,
+                           final AtomicInteger allocatedRecordsCount) {
       this.recordId = recordId;
       this.recordOffsetInPage = recordOffsetInPage;
       pageBuffer = recordPage.rawPageBuffer();
+      this.allocatedRecordsCount = allocatedRecordsCount;
     }
 
     @Override
@@ -224,19 +225,19 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
 
     @Override
     public void setAttributeRecordId(final int attributeRecordId) {
-      if (attributeRecordId < NULL_ID) {
-        throw new IllegalArgumentException("file[id: " + recordId + "].attributeRecordId(=" + attributeRecordId + ") must be >=0");
-      }
+      checkValidIdField(recordId, attributeRecordId, "attributeRecordId");
       setIntField(ATTR_REF_OFFSET, attributeRecordId);
     }
 
     @Override
     public void setParent(final int parentId) {
+      checkParentIdIsValid(parentId);
       setIntField(PARENT_REF_OFFSET, parentId);
     }
 
     @Override
     public void setNameId(final int nameId) {
+      checkValidIdField(recordId, nameId, "nameId");
       setIntField(NAME_REF_OFFSET, nameId);
     }
 
@@ -257,6 +258,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
 
     @Override
     public boolean setContentRecordId(final int contentRecordId) {
+      checkValidIdField(recordId, contentRecordId, "contentRecordId");
       return setIntFieldIfChanged(CONTENT_REF_OFFSET, contentRecordId);
     }
 
@@ -294,6 +296,14 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
         return true;
       }
       return false;
+    }
+
+    private void checkParentIdIsValid(final int parentId) throws IndexOutOfBoundsException {
+      final int recordsAllocatedSoFar = allocatedRecordsCount.get();
+      if (!(NULL_ID <= parentId && parentId <= recordsAllocatedSoFar)) {
+        throw new IndexOutOfBoundsException(
+          "parentId(=" + parentId + ") is outside of allocated IDs range [0, " + recordsAllocatedSoFar + "]");
+      }
     }
   }
 
@@ -346,11 +356,9 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
 
   @Override
   public void setAttributeRecordId(final int recordId,
-                                   final int recordRef) throws IOException {
-    if (recordRef < NULL_ID) {
-      throw new IllegalArgumentException("file[id: " + recordId + "].attributeRecordId(=" + recordRef + ") must be >=0");
-    }
-    setIntField(recordId, ATTR_REF_OFFSET, recordRef);
+                                   final int attributeRecordId) throws IOException {
+    checkValidIdField(recordId, attributeRecordId, "attributeRecordId");
+    setIntField(recordId, ATTR_REF_OFFSET, attributeRecordId);
   }
 
   @Override
@@ -366,7 +374,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
   @Override
   public void setParent(final int recordId,
                         final int parentId) throws IOException {
-    checkRecordIdIsValid(parentId);
+    checkParentIdIsValid(parentId);
     setIntField(recordId, PARENT_REF_OFFSET, parentId);
   }
 
@@ -425,7 +433,6 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
   }
 
 
-
   @Override
   public long getTimestamp(final int recordId) throws IOException {
     return getLongField(recordId, TIMESTAMP_OFFSET);
@@ -455,12 +462,13 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
 
   @Override
   public boolean setContentRecordId(final int recordId,
-                                    final int newContentRef) throws IOException {
+                                    final int newContentRecordId) throws IOException {
+    checkValidIdField(recordId, newContentRecordId, "contentRecordId");
     final long recordOffsetInFile = recordOffsetInFile(recordId);
     final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
     try (final Page page = storage.pageByOffset(recordOffsetInFile)) {
       final ByteBuffer pageBuffer = page.rawPageBuffer();
-      return setIntFieldIfChanged(pageBuffer, recordOffsetOnPage, CONTENT_REF_OFFSET, newContentRef);
+      return setIntFieldIfChanged(pageBuffer, recordOffsetOnPage, CONTENT_REF_OFFSET, newContentRecordId);
     }
   }
 
@@ -653,6 +661,22 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
     if (!(NULL_ID < recordId && recordId <= recordsAllocatedSoFar)) {
       throw new IndexOutOfBoundsException(
         "recordId(=" + recordId + ") is outside of allocated IDs range (0, " + recordsAllocatedSoFar + "]");
+    }
+  }
+
+  private void checkParentIdIsValid(final int parentId) throws IndexOutOfBoundsException {
+    final int recordsAllocatedSoFar = allocatedRecordsCount.get();
+    if (!(NULL_ID <= parentId && parentId <= recordsAllocatedSoFar)) {
+      throw new IndexOutOfBoundsException(
+        "parentId(=" + parentId + ") is outside of allocated IDs range [0, " + recordsAllocatedSoFar + "]");
+    }
+  }
+
+  private static void checkValidIdField(int recordId,
+                                        int idFieldValue,
+                                        @NotNull String fieldName) {
+    if (idFieldValue < NULL_ID) {
+      throw new IllegalArgumentException("file[id: " + recordId + "]." + fieldName + "(=" + idFieldValue + ") must be >=0");
     }
   }
 

@@ -11,6 +11,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 
@@ -61,6 +62,47 @@ public class VFSRebuildingTriggersTest {
       "VFS should not be rebuild -- it should successfully load persisted version from disk",
       reopenedConnection.getRecords().recordsCount(),
       recordsCountBeforeClose
+    );
+  }
+
+  @Test
+  public void connection_ReopenedWithSameVersion_HasTimestampFromPreviousTurn() throws IOException, InterruptedException {
+    final Path cachesDir = temporaryDirectory.createDir();
+    final int version = 1;
+
+    final PersistentFSConnection connection = PersistentFSConnector.tryInit(
+      cachesDir,
+      version,
+      true,
+      new InvertedNameIndex(),
+      Collections.emptyList()
+    );
+    final PersistentFSRecordsStorage records = connection.getRecords();
+    assertEquals(
+      "connection.records.version == tryInit(version)",
+      records.getVersion(),
+      version
+    );
+    //create few dummy records
+    createRecords(connection, 3);
+    final long fsRecordsCreationTimestampBeforeDisconnect = records.getTimestamp();
+
+    PersistentFSConnector.disconnect(connection);
+
+    Thread.sleep(1000);
+
+    final PersistentFSConnection reopenedConnection = PersistentFSConnector.tryInit(
+      cachesDir,
+      version,
+      true,
+      new InvertedNameIndex(),
+      Collections.emptyList()
+    );
+
+    assertEquals(
+      "VFS should NOT be rebuild -- reopened VFS should have creation timestamp of VFS before disconnect",
+      reopenedConnection.getRecords().getTimestamp(),
+      fsRecordsCreationTimestampBeforeDisconnect
     );
   }
 
@@ -135,7 +177,7 @@ public class VFSRebuildingTriggersTest {
           new VfsLog(cachesDir.resolve("vfslog"), /*readOnly*/true)
         );
         final long reopenedVfsCreationTimestamp = reopenedRecords.getCreationTimestamp();
-        
+
 
         if (kindBefore == kindAfter) {
           assertEquals(
@@ -172,5 +214,24 @@ public class VFSRebuildingTriggersTest {
       records.cleanRecord(records.allocateRecord());
     }
     connection.markDirty();
+  }
+
+  public static void main(String[] args) throws IOException {
+    Path cachesDir = Paths.get("/Users/cheremin.ruslan/Documents/Development/tmp/caches");
+    int version = 1;
+
+    PersistentFSConnection connection = PersistentFSConnector.tryInit(
+      cachesDir,
+      version,
+      true,
+      new InvertedNameIndex(),
+      Collections.emptyList()
+    );
+    try {
+      System.out.println("VFS creation timestamp: " + connection.getTimestamp());
+    }
+    finally {
+      PersistentFSConnector.disconnect(connection);
+    }
   }
 }
