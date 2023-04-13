@@ -158,7 +158,9 @@ public class EditorMouseHoverPopupManager implements Disposable {
                                   boolean requestFocus) {
     ProgressIndicatorBase progress = new ProgressIndicatorBase();
     progress.setModalityProgress(null);
-    myCurrentProgress = progress;
+    if (!forceShowing) { // myCurrentProgress is cancelled on every mouse moved - do not use it for forceShowing mode
+      myCurrentProgress = progress;
+    }
     myAlarm.addRequest(() -> {
       ProgressManager.getInstance().executeProcessUnderProgress(() -> {
         // errors are stored in the top level editor markup model, not the injected one
@@ -166,7 +168,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
 
         EditorHoverInfo info = context.calcInfo(topLevelEditor);
         ApplicationManager.getApplication().invokeLater(() -> {
-          if (progress != myCurrentProgress) {
+          if (!forceShowing && progress != myCurrentProgress) {
             return;
           }
 

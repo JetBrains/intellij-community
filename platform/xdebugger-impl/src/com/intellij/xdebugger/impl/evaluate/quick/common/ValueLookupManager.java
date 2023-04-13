@@ -183,6 +183,9 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
       if (myRequest != null && myRequest.equals(hint)) {
         return;
       }
+      if (event != null) {
+        hint.setEditorMouseEvent(event);
+      }
       UIUtil.invokeLaterIfNeeded(() -> {
         if (!hint.canShowHint()) {
           return;

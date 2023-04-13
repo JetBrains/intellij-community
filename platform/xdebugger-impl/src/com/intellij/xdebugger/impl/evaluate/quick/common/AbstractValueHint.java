@@ -5,7 +5,6 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.navigation.NavigationUtil;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.TooltipEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -22,13 +21,15 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.IconUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
@@ -50,6 +51,7 @@ import java.awt.event.*;
 import java.util.EventObject;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public abstract class AbstractValueHint {
   private static final Logger LOG = Logger.getInstance(AbstractValueHint.class);
@@ -69,7 +71,12 @@ public abstract class AbstractValueHint {
   private final Editor myEditor;
   private final ValueHintType myType;
   protected final Point myPoint;
-  protected LightweightHint myCurrentHint;
+  private EditorMouseEvent myEditorMouseEvent;
+
+  // TODO: now hint could be shown as a LightweightHint or a JBPopup
+  private LightweightHint myCurrentHint;
+  private JBPopup myCurrentPopup;
+
   private boolean myHintHidden;
   private TextRange myCurrentRange;
   private Runnable myHideRunnable;
@@ -107,10 +114,7 @@ public abstract class AbstractValueHint {
       myEditor.getContentComponent().removeKeyListener(myEditorKeyListener);
     }
 
-    if (myCurrentHint != null) {
-      myCurrentHint.hide();
-      myCurrentHint = null;
-    }
+    hideCurrentHint();
     disposeHighlighter();
   }
 
@@ -188,12 +192,12 @@ public abstract class AbstractValueHint {
     return Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
   }
 
-  public Project getProject() {
+  public final Project getProject() {
     return myProject;
   }
 
   @NotNull
-  protected Editor getEditor() {
+  protected final Editor getEditor() {
     return myEditor;
   }
 
@@ -201,13 +205,22 @@ public abstract class AbstractValueHint {
     return myType;
   }
 
+  protected final void hideCurrentHint() {
+    if (myCurrentHint != null) {
+      myCurrentHint.hide();
+      myCurrentHint = null;
+    }
+    if (myCurrentPopup != null) {
+      myCurrentPopup.cancel();
+      myCurrentPopup = null;
+    }
+  }
+
   private boolean myInsideShow = false;
 
   protected boolean showHint(final JComponent component) {
     myInsideShow = true;
-    if (myCurrentHint != null) {
-      myCurrentHint.hide();
-    }
+    hideCurrentHint();
     myCurrentHint = new LightweightHint(component) {
       @Override
       protected boolean canAutoHideOn(TooltipEvent event) {
@@ -292,9 +305,7 @@ public abstract class AbstractValueHint {
             }
           }
           else {
-            if (myCurrentHint != null) {
-              myCurrentHint.hide();
-            }
+            hideCurrentHint();
             expand.run();
           }
           return true;
@@ -345,15 +356,21 @@ public abstract class AbstractValueHint {
     return null;
   }
 
+  protected boolean isShowing() {
+    return myCurrentHint != null || myCurrentPopup != null;
+  }
+
   public boolean isInsideHint(Editor editor, Point point) {
     return myCurrentHint != null && myCurrentHint.isInsideHint(new RelativePoint(editor.getContentComponent(), point));
   }
 
-  protected <D> void showTreePopup(@NotNull DebuggerTreeCreator<D> creator, @NotNull D descriptor) {
+  private void showPopup(Function<Point, JBPopup> popupPresenter) {
     if (myEditor.isDisposed() || !isCurrentRangeValid()) {
       hideHint();
       return;
     }
+
+    hideCurrentHint();
 
     createHighlighter();
     setHighlighterAttributes();
@@ -362,13 +379,20 @@ public abstract class AbstractValueHint {
     Point point = myEditor.visualPositionToXY(myEditor.xyToVisualPosition(myPoint));
     point.translate(0, myEditor.getLineHeight());
 
-    var popup = new XDebuggerTreePopup<>(creator, myEditor, point, getProject(), () -> {
-      disposeHighlighter();
-      if (myHideRunnable != null) {
-        myHideRunnable.run();
+    myCurrentPopup = popupPresenter.apply(point);
+    myCurrentPopup.addListener(new JBPopupListener() {
+      @Override
+      public void onClosed(@NotNull LightweightWindowEvent event) {
+        if (myHideRunnable != null) {
+          myHideRunnable.run();
+        }
+        onHintHidden();
       }
     });
-    popup.show(descriptor);
+  }
+
+  protected <D> void showTreePopup(@NotNull DebuggerTreeCreator<D> creator, @NotNull D descriptor) {
+    showPopup(point -> new XDebuggerTreePopup<>(creator, myEditor, point, myProject, null).show(descriptor));
   }
 
   @ApiStatus.Experimental
@@ -376,29 +400,14 @@ public abstract class AbstractValueHint {
                                @NotNull Pair<XValue, String> descriptor,
                                @NotNull String initialText,
                                @Nullable XFullValueEvaluator evaluator) {
-    if (myEditor.isDisposed() || !isCurrentRangeValid()) {
-      hideHint();
-      return;
-    }
+    showPopup(point ->
+                new XDebuggerTextPopup<>(evaluator, descriptor.first, creator, descriptor, myEditor, point, myProject, null)
+                  .show(initialText)
+    );
+  }
 
-    createHighlighter();
-    setHighlighterAttributes();
-
-    Project project = getProject();
-    Editor editor = getEditor();
-
-    Point point = editor.visualPositionToXY(editor.xyToVisualPosition(myPoint));
-    point.translate(0, editor.getLineHeight());
-
-    Runnable hideRunnable = () -> {
-      disposeHighlighter();
-      if (myHideRunnable != null) {
-        myHideRunnable.run();
-      }
-    };
-
-    var popup = new XDebuggerTextPopup<>(evaluator, descriptor.first, creator, descriptor, editor, point, project, hideRunnable);
-    popup.show(initialText);
+  protected void showTooltipPopup(JComponent component) {
+    showPopup(point -> new XDebuggerTooltipPopup(myEditor, point).show(component, myEditorMouseEvent));
   }
 
   @Override
@@ -419,5 +428,9 @@ public abstract class AbstractValueHint {
   @Override
   public int hashCode() {
     return Objects.hash(myProject, myEditor, myType, myCurrentRange);
+  }
+
+  void setEditorMouseEvent(EditorMouseEvent editorMouseEvent) {
+    myEditorMouseEvent = editorMouseEvent;
   }
 }
