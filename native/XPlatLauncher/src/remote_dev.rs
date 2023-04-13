@@ -1,12 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 use std::{env, fs};
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::{Path, PathBuf};
-use log::{debug, info};
+
 use anyhow::{bail, Context, Result};
+use log::{debug, info};
 use utils::{canonical_non_unc, get_current_exe, get_path_from_env_var, read_file_to_end};
-use crate::{DefaultLaunchConfiguration, get_cache_home, get_config_home, get_known_intellij_commands, get_logs_home, get_remote_dev_env_vars, IjStarterCommand, LaunchConfiguration};
+
+use crate::{DefaultLaunchConfiguration, get_cache_home, get_config_home, get_logs_home, LaunchConfiguration};
 use crate::docker::is_running_in_docker;
 
 pub struct RemoteDevLaunchConfiguration {
@@ -420,6 +423,77 @@ impl RemoteDevLaunchConfiguration {
         // TODO: implement
         Ok(())
     }
+}
+
+#[allow(non_snake_case)]
+#[derive(Debug)]
+struct IjStarterCommand {
+    pub ij_command: String,
+    pub is_project_path_required: bool,
+    pub is_arguments_required: bool,
+}
+
+impl std::fmt::Display for IjStarterCommand {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let path = if self.is_project_path_required {"/path/to/project"} else { "" };
+        let args = if self.is_arguments_required {"[arguments...]"} else { "" };
+        write!(f, "{} {}", path, args)
+    }
+}
+
+fn get_known_intellij_commands() -> HashMap<&'static str, IjStarterCommand> {
+    std::collections::HashMap::from([
+        ("run", IjStarterCommand {ij_command: "cwmHostNoLobby".to_string(), is_project_path_required: true, is_arguments_required: true}),
+        ("status", IjStarterCommand {ij_command: "cwmHostStatus".to_string(), is_project_path_required: false, is_arguments_required: false}),
+        ("cwmHostStatus", IjStarterCommand {ij_command: "cwmHostStatus".to_string(), is_project_path_required: false, is_arguments_required: false}),
+        ("remoteDevStatus", IjStarterCommand {ij_command: "remoteDevStatus".to_string(), is_project_path_required: false, is_arguments_required: false}),
+        ("dumpLaunchParameters", IjStarterCommand {ij_command: "dump-launch-parameters".to_string(), is_project_path_required: false, is_arguments_required: false}),
+        ("warmup", IjStarterCommand {ij_command: "warmup".to_string(), is_project_path_required: true, is_arguments_required: true}),
+        ("warm-up", IjStarterCommand {ij_command: "warmup".to_string(), is_project_path_required: true, is_arguments_required: true}),
+        ("invalidate-caches", IjStarterCommand {ij_command: "invalidateCaches".to_string(), is_project_path_required: true, is_arguments_required: false}),
+        ("installPlugins", IjStarterCommand {ij_command: "installPlugins".to_string(), is_project_path_required: false, is_arguments_required: true}),
+        ("stop", IjStarterCommand {ij_command: "exit".to_string(), is_project_path_required: true, is_arguments_required: false}),
+        ("registerBackendLocationForGateway", IjStarterCommand {ij_command: "".to_string(), is_project_path_required: false, is_arguments_required: false}),
+        ("help", IjStarterCommand{ij_command: "".to_string(), is_project_path_required: false, is_arguments_required: false}),
+    ])
+}
+
+#[allow(non_snake_case)]
+#[derive(Debug)]
+struct RemoteDevEnvVar {
+    pub name: String,
+    pub description: String,
+}
+
+#[allow(non_snake_case)]
+#[derive(Debug)]
+struct RemoteDevEnvVars(Vec<RemoteDevEnvVar>);
+
+impl std::fmt::Display for RemoteDevEnvVars {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let max_len = self
+            .0
+            .iter()
+            .map(|remote_dev_env_var| remote_dev_env_var.name.len())
+            .max()
+            .unwrap_or(0);
+
+        for remote_dev_env_var in &self.0 {
+            write!(f, "\t{:max_len$} {}\n", remote_dev_env_var.name, remote_dev_env_var.description)?;
+        }
+        Ok(())
+    }
+}
+
+fn get_remote_dev_env_vars() -> RemoteDevEnvVars {
+    RemoteDevEnvVars(vec![
+        RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_TRACE".to_string(), description: "set to any value to get more debug output from the startup script".to_string()},
+        RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_JCEF_ENABLED".to_string(), description: "set to '1' to enable JCEF (embedded chromium) in IDE".to_string()},
+        RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_USE_SELF_CONTAINED_LIBS".to_string(), description: "set to '0' to skip using bundled X11 and other linux libraries from plugins/remote-dev-server/selfcontained. Use everything from the system. by default bundled libraries are used".to_string()},
+        RemoteDevEnvVar {name: "REMOTE_DEV_LAUNCHER_NAME_FOR_USAGE".to_string(), description: "set to any value to use as the script name in this output".to_string()},
+        RemoteDevEnvVar {name: "REMOTE_DEV_TRUST_PROJECTS".to_string(), description: "set to any value to skip project trust warning (will execute build scripts automatically)".to_string()},
+        RemoteDevEnvVar {name: "REMOTE_DEV_NON_INTERACTIVE".to_string(), description: "set to any value to skip all interactive shell prompts (set automatically if running without TTY)".to_string()},
+    ])
 }
 
 struct IdeProperty {
