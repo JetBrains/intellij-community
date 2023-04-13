@@ -360,4 +360,10 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
     }
     collectNodesToRetarget(root.getRight(), start, end, affected);
   }
+
+  @Override
+  public boolean removeInterval(@NotNull T interval) {
+    ((RangeMarkerImpl)interval).storeOffsetsBeforeDying();
+    return super.removeInterval(interval);
+  }
 }

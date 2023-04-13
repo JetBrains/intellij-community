@@ -47,6 +47,8 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 public class RangeMarkerTest extends LightPlatformTestCase {
@@ -1633,11 +1635,46 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   }
 
   public void testRangeMarkerMustPreserveItsOffsetsSomeTimeAfterDeath() {
-    RangeMarkerEx marker = createMarker("xxxxx", 1, 3);
+    createRemoveCheck(
+      () -> createMarker("xxxxx", 1, 3),
+      RangeMarker::dispose);
+
+    createRemoveCheck(
+      () -> createMarker("xxxxx", 2, 3),
+      marker -> ((DocumentEx)marker.getDocument()).removeRangeMarker((RangeMarkerEx)marker));
+
+    createRemoveCheck(
+      () -> DocumentMarkupModel.forDocument(document, getProject(), true).addRangeHighlighter(2, 4, 0, null, HighlighterTargetArea.EXACT_RANGE),
+      highlighter -> highlighter.dispose());
+
+    createRemoveCheck(
+      () -> DocumentMarkupModel.forDocument(document, getProject(), true).addRangeHighlighter(2, 4, 0, null, HighlighterTargetArea.EXACT_RANGE),
+      highlighter -> DocumentMarkupModel.forDocument(document, getProject(), true).removeHighlighter((RangeHighlighter)highlighter));
+
+    createRemoveCheck(
+      () -> {
+        VirtualFile virtualFile = createFile("x.txt", "xxx").getVirtualFile();
+        return LazyRangeMarkerFactory.getInstance(getProject()).createRangeMarker(virtualFile, 2);
+      },
+      RangeMarker::dispose);
+    
+    createRemoveCheck(
+      () -> {
+        VirtualFile virtualFile = createFile("x.txt", "xxx").getVirtualFile();
+        return LazyRangeMarkerFactory.getInstance(getProject()).createRangeMarker(virtualFile, 2);
+      },
+      marker -> {
+        gcDocument();
+        marker.dispose();
+      });
+  }
+
+  private void createRemoveCheck(Supplier<? extends RangeMarker> creator, Consumer<? super RangeMarker> remover) {
+    RangeMarker marker = creator.get();
     assertTrue(marker.isValid());
-    assertEquals(TextRange.create(1,3), marker.getTextRange());
-    marker.dispose();
+    TextRange range = marker.getTextRange();
+    remover.accept(marker);
     assertFalse(marker.isValid());
-    assertEquals(TextRange.create(1,3), marker.getTextRange());
+    assertEquals(range, marker.getTextRange());
   }
 }

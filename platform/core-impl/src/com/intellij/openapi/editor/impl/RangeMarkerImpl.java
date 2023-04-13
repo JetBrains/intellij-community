@@ -75,6 +75,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     tree.checkMax(true);
     DocumentEx document = getCachedDocument();
     if (document == null) {
+      storeOffsetsBeforeDying();
       myNode = null;
     }
     else {
@@ -94,17 +95,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
   @Override
   public void dispose() {
-    RangeMarkerTree.RMNode<?> node = myNode;
-    if (node != null) {
-      // store current offsets to give async listeners the ability to get offsets
-      int delta = node.computeDeltaUpToRoot();
-      long range = TextRangeScalarUtil.shift(node.toScalarRange(), delta, delta);
-      int startOffset = Math.max(0, TextRangeScalarUtil.startOffset(range));
-      int endOffset = Math.max(startOffset, TextRangeScalarUtil.endOffset(range));
-      // piggyback myId to store offsets, to conserve memory
-      myId = TextRangeScalarUtil.toScalarRange(startOffset, endOffset); // avoid invalid range
-      unregisterInTree();
-    }
+    unregisterInTree();
   }
 
   @Override
@@ -449,5 +440,18 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   @NotNull
   TextRange reCalcTextRangeAfterReload(@NotNull DocumentImpl document, int tabSize) {
     return getTextRange();
+  }
+
+  void storeOffsetsBeforeDying() {
+    RangeMarkerTree.RMNode<?> node = myNode;
+    if (node != null) {
+      // store current offsets to give async listeners the ability to get offsets
+      int delta = node.computeDeltaUpToRoot();
+      long range = TextRangeScalarUtil.shift(node.toScalarRange(), delta, delta);
+      int startOffset = Math.max(0, TextRangeScalarUtil.startOffset(range));
+      int endOffset = Math.max(startOffset, TextRangeScalarUtil.endOffset(range));
+      // piggyback myId to store offsets, to conserve memory
+      myId = TextRangeScalarUtil.toScalarRange(startOffset, endOffset); // avoid invalid range
+    }
   }
 }
