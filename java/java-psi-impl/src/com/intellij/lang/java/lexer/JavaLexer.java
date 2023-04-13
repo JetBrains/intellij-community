@@ -28,21 +28,19 @@ public final class JavaLexer extends LexerBase {
 
   private static final Set<CharSequence> JAVA9_KEYWORDS = CollectionFactory.createCharSequenceSet(Arrays.asList(OPEN, MODULE, REQUIRES, EXPORTS, OPENS, USES, PROVIDES, TRANSITIVE, TO, WITH));
 
-  public static boolean isKeyword(String id, @NotNull LanguageLevel level) {
+  public static boolean isKeyword(@NotNull String id, @NotNull LanguageLevel level) {
     return KEYWORDS.contains(id) ||
            level.isAtLeast(LanguageLevel.JDK_1_4) && ASSERT.equals(id) ||
            level.isAtLeast(LanguageLevel.JDK_1_5) && ENUM.equals(id);
   }
 
-  public static boolean isSoftKeyword(CharSequence id, @NotNull LanguageLevel level) {
-    return id != null &&
-           (level.isAtLeast(LanguageLevel.JDK_1_9) && JAVA9_KEYWORDS.contains(id) ||
-            level.isAtLeast(LanguageLevel.JDK_10) && VAR.contentEquals(id) ||
-            level.isAtLeast(LanguageLevel.JDK_16) && RECORD.contentEquals(id) ||
-            level.isAtLeast(LanguageLevel.JDK_14) && YIELD.contentEquals(id) ||
-            (level.isAtLeast(LanguageLevel.JDK_17) && (SEALED.contentEquals(id) || PERMITS.contentEquals(id))) ||
-            level.isAtLeast(LanguageLevel.JDK_19_PREVIEW) && WHEN.contentEquals(id)
-           );
+  public static boolean isSoftKeyword(@NotNull CharSequence id, @NotNull LanguageLevel level) {
+    return level.isAtLeast(LanguageLevel.JDK_1_9) && JAVA9_KEYWORDS.contains(id) ||
+           level.isAtLeast(LanguageLevel.JDK_10) && VAR.contentEquals(id) ||
+           level.isAtLeast(LanguageLevel.JDK_16) && RECORD.contentEquals(id) ||
+           level.isAtLeast(LanguageLevel.JDK_14) && YIELD.contentEquals(id) ||
+           level.isAtLeast(LanguageLevel.JDK_17) && (SEALED.contentEquals(id) || PERMITS.contentEquals(id)) ||
+           level.isAtLeast(LanguageLevel.JDK_19_PREVIEW) && WHEN.contentEquals(id);
   }
 
   private final _JavaLexer myFlexLexer;
