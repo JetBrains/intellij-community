@@ -68,13 +68,18 @@ public class ByteCodeViewerComponent extends JPanel implements Disposable {
     setText(bytecode, 0);
   }
 
-  public void setText(@NonNls final String bytecode, PsiElement element) {
+  public void setText(@NonNls final String bytecode, PsiElement element, int lineNumber) {
     int offset = -1;
     VirtualFile file = PsiUtilCore.getVirtualFile(element);
     if (file != null) {
       final Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document != null) {
-        int lineNumber = document.getLineNumber(element.getTextOffset()) + 1;
+        if (lineNumber == -1) {
+          lineNumber = document.getLineNumber(element.getTextOffset());
+        }
+
+        // Use 1-based line numbers from here:
+        lineNumber++;
 
         LineNumbersMapping mapping = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY);
         if (mapping != null) {
