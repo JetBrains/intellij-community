@@ -308,7 +308,7 @@ public final class GradleBuildSrcProjectsResolver {
         }
       }
       else {
-        GradleModuleDataKt.setBuildSrcModule(includedModule.getData());
+        GradleModuleDataKt.setIncludedBuild(includedModule.getData(), true);
       }
     }
     if (buildSrcModuleNode != null) {

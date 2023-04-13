@@ -20,11 +20,14 @@ import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTrackerSe
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -35,6 +38,7 @@ import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
+import org.jetbrains.plugins.gradle.util.GradleModuleDataKt;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 import org.junit.Test;
 
@@ -110,6 +114,32 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
       assertTasksProjectPath("my-app-name", path("../my-app"));
       assertTasksProjectPath("my-utils", path("../my-utils"));
     }
+  }
+
+  @Test
+  @TargetVersions("6.0+")
+  public void testIncludedBuildWithBuildSrc() throws Exception {
+    createSettingsFile("""
+                         rootProject.name='adhoc'
+
+                         includeBuild 'my-app'
+                         """);
+
+    createProjectSubFile("my-app/settings.gradle", "rootProject.name = 'my-app'\n");
+    createProjectSubFile("my-app/build.gradle",
+                         createBuildScriptBuilder()
+                           .generate());
+
+    createProjectSubFile("buildSrc/build.gradle",
+                         createBuildScriptBuilder()
+                           .generate());
+
+    importProject();
+
+    DataNode<ModuleData> data = GradleUtil.findGradleModuleData(getModule("my-app"));
+
+    assertFalse(GradleModuleDataKt.isBuildSrcModule(data.getData()));
+    assertTrue(GradleModuleDataKt.isIncludedBuild(data.getData()));
   }
 
   @Test
