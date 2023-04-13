@@ -2,17 +2,17 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.server.MavenEmbedderExecutionRequest;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.List;
+import java.util.stream.Collectors;
 
 public class MavenFolderResolver {
   public void resolveFolders(@NotNull Collection<MavenProject> mavenProjects,
@@ -47,26 +47,25 @@ public class MavenFolderResolver {
     var task = new MavenEmbeddersManager.EmbedderTask() {
       @Override
       public void run(MavenEmbedderWrapper embedder) throws MavenProcessCanceledException {
-        for (var mavenProject : mavenProjects) {
-          process.checkCanceled();
-          process.setText(MavenProjectBundle.message("maven.updating.folders.pom", mavenProject.getDisplayName()));
-          process.setText2("");
+        process.checkCanceled();
+        process.setText(MavenProjectBundle.message("maven.updating.folders"));
+        process.setText2("");
 
-          var file = new File(mavenProject.getFile().getPath());
-          var profiles = mavenProject.getActivatedProfilesIds();
+        var fileToProject = mavenProjects.stream()
+          .collect(Collectors.toMap(mavenProject -> new File(mavenProject.getFile().getPath()), mavenProject -> mavenProject));
 
-          try {
-            var request = new MavenEmbedderExecutionRequest(file, profiles);
-            var result = embedder.execute(List.of(request), goal).get(0);
+        var requests = ContainerUtil.map(
+          fileToProject.entrySet(),
+          entry -> new MavenEmbedderExecutionRequest(entry.getKey(), entry.getValue().getActivatedProfilesIds())
+        );
 
-            if (MavenUtil.shouldResetDependenciesAndFolders(result.problems)) {
-              MavenProjectChanges changes = mavenProject.setFolders(result.folders);
-              tree.fireFoldersResolved(Pair.create(mavenProject, changes));
-            }
-          }
-          catch (Throwable e) {
-            console.printException(e);
-            MavenLog.LOG.warn(e);
+        var results = embedder.execute(requests, goal);
+
+        for (var result : results) {
+          var mavenProject = fileToProject.getOrDefault(result.file, null);
+          if (null != mavenProject && MavenUtil.shouldResetDependenciesAndFolders(result.problems)) {
+            var changes = mavenProject.setFolders(result.folders);
+            tree.fireFoldersResolved(Pair.create(mavenProject, changes));
           }
         }
       }
