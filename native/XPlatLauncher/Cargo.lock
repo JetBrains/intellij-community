@@ -2475,17 +2475,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "45bb67a18fa91266cc7807181f62f9178a6873bfad7dc788c42e6430db40184f"
 
 [[package]]
-name = "simplelog"
-version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "48dfff04aade74dd495b007c831cd6f4e0cee19c344dd9dc0884c0289b70a786"
-dependencies = [
- "log",
- "termcolor",
- "time",
-]
-
-[[package]]
 name = "sized-chunks"
 version = "0.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3286,7 +3275,6 @@ dependencies = [
  "rstest",
  "serde",
  "serde_json",
- "simplelog",
  "tempfile",
  "utils",
  "windows",

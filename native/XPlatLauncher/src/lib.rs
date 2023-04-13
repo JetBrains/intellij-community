@@ -38,7 +38,6 @@ use anyhow::{bail, Result};
 use log::{debug, error, LevelFilter, warn};
 use native_dialog::{MessageDialog, MessageType};
 use serde::{Deserialize, Serialize};
-use simplelog::{Config, SimpleLogger};
 use utils::get_current_exe;
 
 #[cfg(target_os = "windows")] use {
@@ -51,6 +50,7 @@ use utils::get_current_exe;
 use crate::default::DefaultLaunchConfiguration;
 use crate::remote_dev::RemoteDevLaunchConfiguration;
 
+mod mini_logger;
 mod java;
 mod remote_dev;
 mod default;
@@ -77,7 +77,7 @@ fn is_remote_dev() -> bool {
 
 fn main_impl(remote_dev: bool, verbose: bool) -> Result<()> {
     let level = if verbose { LevelFilter::Debug } else { LevelFilter::Error };
-    SimpleLogger::init(level, Config::default()).expect("Cannot initialize the logger");
+    mini_logger::init(level).expect("Cannot initialize the logger");
     debug!("Mode: {}", if remote_dev { "remote-dev" } else { "standard" });
 
     // lets the panic on JVM thread crash the launcher (or not?)
