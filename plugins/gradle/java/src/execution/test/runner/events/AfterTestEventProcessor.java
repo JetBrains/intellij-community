@@ -23,9 +23,9 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
 
-/**
- * @author Vladislav.Soroka
- */
+import java.util.Collections;
+import java.util.List;
+
 public class AfterTestEventProcessor extends AbstractTestEventProcessor {
 
   private static final Logger LOG = Logger.getInstance(AfterTestEventProcessor.class);
@@ -37,11 +37,65 @@ public class AfterTestEventProcessor extends AbstractTestEventProcessor {
   @Override
   public void process(@NotNull ExternalSystemProgressEvent<? extends TestOperationDescriptor> testEvent) {
     var finishEvent = (ExternalSystemFinishEvent<? extends TestOperationDescriptor>)testEvent;
+    var testId = finishEvent.getEventId();
+    var testResult = finishEvent.getOperationResult();
+    process(testId, testResult);
+  }
 
-    var testId = testEvent.getEventId();
-    var result = finishEvent.getOperationResult();
-    var startTime = result.getStartTime();
-    var endTime = result.getEndTime();
+  @Override
+  public void process(@NotNull TestEventXmlView eventXml) throws TestEventXmlView.XmlParserException, NumberFormatException {
+    var testId = eventXml.getTestId();
+    var testResult = convertTestResult(eventXml);
+    process(testId, testResult);
+  }
+
+  private @NotNull OperationResult convertTestResult(
+    @NotNull TestEventXmlView eventXml
+  ) throws TestEventXmlView.XmlParserException, NumberFormatException {
+    var startTime = Long.parseLong(eventXml.getEventTestResultStartTime());
+    var endTime = Long.parseLong(eventXml.getEventTestResultEndTime());
+    var resultType = TestEventResult.fromValue(eventXml.getTestEventResultType());
+
+    if (resultType == TestEventResult.SUCCESS) {
+      return new SuccessResultImpl(startTime, endTime, false);
+    }
+    if (resultType == TestEventResult.SKIPPED) {
+      return new SkippedResultImpl(startTime, endTime);
+    }
+    if (resultType == TestEventResult.FAILURE) {
+      var failureType = eventXml.getEventTestResultFailureType();
+      var message = decode(eventXml.getEventTestResultErrorMsg()); //NON-NLS
+      var stackTrace = decode(eventXml.getEventTestResultStackTrace()); //NON-NLS
+      var description = decode(eventXml.getTestEventTestDescription()); //NON-NLS
+      if ("comparison".equals(failureType)) {
+        var actualText = decode(eventXml.getEventTestResultActual());
+        var expectedText = decode(eventXml.getEventTestResultExpected());
+        var expectedFilePath = StringUtil.nullize(decode(eventXml.getEventTestResultFilePath()));
+        var actualFilePath = StringUtil.nullize(decode(eventXml.getEventTestResultActualFilePath()));
+        var assertionFailure = new TestAssertionFailure(
+          message, stackTrace, description, ContainerUtil.emptyList(), expectedText, actualText, expectedFilePath, actualFilePath
+        );
+        return new FailureResultImpl(startTime, endTime, List.of(assertionFailure));
+      }
+      if ("assertionFailed".equals(failureType)) {
+        var failure = new TestFailure(message, stackTrace, description, Collections.emptyList(), false);
+        return new FailureResultImpl(startTime, endTime, List.of(failure));
+      }
+      if ("error".equals(failureType)) {
+        var failure = new TestFailure(message, stackTrace, description, Collections.emptyList(), true);
+        return new FailureResultImpl(startTime, endTime, List.of(failure));
+      }
+      LOG.error("Undefined test failure type: " + failureType);
+      var failure = new FailureImpl(message, stackTrace, Collections.emptyList());
+      return new FailureResultImpl(startTime, endTime, List.of(failure));
+    }
+    LOG.error("Undefined test result type: " + resultType);
+    return new DefaultOperationResult(startTime, endTime);
+  }
+
+  private void process(@NotNull String testId, @NotNull OperationResult testResult) {
+    var startTime = testResult.getStartTime();
+    var endTime = testResult.getEndTime();
 
     var testProxy = findTestProxy(testId);
     if (testProxy == null) {
@@ -51,76 +105,34 @@ public class AfterTestEventProcessor extends AbstractTestEventProcessor {
 
     testProxy.setDuration(endTime - startTime);
 
-    if (result instanceof SuccessResult) {
+    if (testResult instanceof SuccessResult) {
       testProxy.setFinished();
       getResultsViewer().onTestFinished(testProxy);
       getExecutionConsole().getEventPublisher().onTestFinished(testProxy);
     }
-    else if (result instanceof SkippedResult) {
+    else if (testResult instanceof SkippedResult) {
       testProxy.setTestIgnored(null, null);
       getResultsViewer().onTestIgnored(testProxy);
       getExecutionConsole().getEventPublisher().onTestIgnored(testProxy);
       getResultsViewer().onTestFinished(testProxy);
       getExecutionConsole().getEventPublisher().onTestFinished(testProxy);
     }
-    else if (result instanceof FailureResult failureResult) {
+    else if (testResult instanceof FailureResult failureResult) {
       var failure = ContainerUtil.getFirstItem(failureResult.getFailures());
+      var message = ObjectUtils.chooseNotNull(ObjectUtils.doIfNotNull(failure, it -> it.getMessage()), "");
+      var description = ObjectUtils.doIfNotNull(failure, it -> it.getDescription());
       if (failure instanceof TestAssertionFailure assertionFailure) {
-        var message = assertionFailure.getMessage();
-        var description = ObjectUtils.doIfNotNull(failure, it -> it.getDescription());
+        var comparisonResult = AssertionParser.parse(message);
+        var localizedMessage = comparisonResult == null ? message : ObjectUtils.chooseNotNull(comparisonResult.getMessage(), "");
+        var stackTrace = assertionFailure.getStackTrace();
         var actualText = assertionFailure.getActualText();
         var expectedText = assertionFailure.getExpectedText();
         var actualFile = assertionFailure.getActualFile();
         var expectedFile = assertionFailure.getExpectedFile();
-        testProxy.setTestComparisonFailed(message, description, actualText, expectedText, actualFile, expectedFile, true);
+        testProxy.setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, actualFile, expectedFile, true);
       }
-      else {
-        var message = ObjectUtils.doIfNotNull(failure, it -> it.getMessage());
-        var description = ObjectUtils.doIfNotNull(failure, it -> it.getDescription());
-        testProxy.setTestFailed(message, description, false);
-      }
-      getResultsViewer().onTestFailed(testProxy);
-      getExecutionConsole().getEventPublisher().onTestFailed(testProxy);
-      getResultsViewer().onTestFinished(testProxy);
-      getExecutionConsole().getEventPublisher().onTestFinished(testProxy);
-    }
-    else {
-      LOG.error("Undefined test result: " + result.getClass().getName());
-    }
-  }
-
-  @Override
-  public void process(@NotNull final TestEventXmlView eventXml) throws TestEventXmlView.XmlParserException, NumberFormatException {
-    var testId = eventXml.getTestId();
-    var startTime = Long.parseLong(eventXml.getEventTestResultStartTime());
-    var endTime = Long.parseLong(eventXml.getEventTestResultEndTime());
-    var resultType = TestEventResult.fromValue(eventXml.getTestEventResultType());
-
-    var testProxy = findTestProxy(testId);
-    if (testProxy == null) {
-      LOG.error("Cannot find test proxy for: " + testId);
-      return;
-    }
-
-    testProxy.setDuration(endTime - startTime);
-
-    if (resultType == TestEventResult.SUCCESS) {
-      testProxy.setFinished();
-      getResultsViewer().onTestFinished(testProxy);
-      getExecutionConsole().getEventPublisher().onTestFinished(testProxy);
-    }
-    else if (resultType == TestEventResult.FAILURE) {
-      var failureType = eventXml.getEventTestResultFailureType();
-      var message = decode(eventXml.getEventTestResultErrorMsg());
-      var stackTrace = decode(eventXml.getEventTestResultStackTrace());
-      if ("comparison".equals(failureType)) {
-        var actualText = decode(eventXml.getEventTestResultActual());
-        var expectedText = decode(eventXml.getEventTestResultExpected());
-        var filePath = StringUtil.nullize(decode(eventXml.getEventTestResultFilePath()));
-        var actualFilePath = StringUtil.nullize(decode(eventXml.getEventTestResultActualFilePath()));
-        testProxy.setTestComparisonFailed(message, stackTrace, actualText, expectedText, filePath, actualFilePath, true);
-      }
-      else {
+      else if (failure instanceof TestFailure testFailure) {
+        var stackTrace = testFailure.getStackTrace();
         var comparisonResult = AssertionParser.parse(message);
         if (comparisonResult != null) {
           var localizedMessage = ObjectUtils.chooseNotNull(comparisonResult.getMessage(), "");
@@ -129,23 +141,22 @@ public class AfterTestEventProcessor extends AbstractTestEventProcessor {
           testProxy.setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText);
         }
         else {
-          testProxy.setTestFailed(message, stackTrace, "error".equals(failureType));
+          testProxy.setTestFailed(message, stackTrace, testFailure.isTestError());
         }
+      }
+      else {
+        LOG.error("Undefined test failure type: " + failure.getClass().getName());
+        testProxy.setTestFailed(message, description, true);
       }
       getResultsViewer().onTestFailed(testProxy);
       getExecutionConsole().getEventPublisher().onTestFailed(testProxy);
       getResultsViewer().onTestFinished(testProxy);
       getExecutionConsole().getEventPublisher().onTestFinished(testProxy);
     }
-    else if (resultType == TestEventResult.SKIPPED) {
-      testProxy.setTestIgnored(null, null);
-      getResultsViewer().onTestIgnored(testProxy);
-      getExecutionConsole().getEventPublisher().onTestIgnored(testProxy);
+    else {
+      LOG.error("Undefined test result: " + testResult.getClass().getName());
       getResultsViewer().onTestFinished(testProxy);
       getExecutionConsole().getEventPublisher().onTestFinished(testProxy);
-    }
-    else {
-      LOG.error("Undefined test result: " + resultType);
     }
   }
 }

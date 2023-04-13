@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
+import java.util.Collections;
 import java.util.StringJoiner;
 
 /**
@@ -121,10 +122,8 @@ public final class GradleProgressEventConverter {
     if (event instanceof TestFinishEvent finishEvent) {
       var result = finishEvent.getResult();
       var operationResult = convertTestProgressEventResult(result);
-      if (operationResult != null) {
-        var esEvent = new ExternalSystemFinishEventImpl<>(eventId, parentEventId, descriptor, operationResult);
-        return new ExternalSystemTaskExecutionEvent(taskId, esEvent);
-      }
+      var esEvent = new ExternalSystemFinishEventImpl<>(eventId, parentEventId, descriptor, operationResult);
+      return new ExternalSystemTaskExecutionEvent(taskId, esEvent);
     }
     if (event instanceof TestOutputEvent outputEvent) {
       var outputDescriptor = outputEvent.getDescriptor();
@@ -138,7 +137,7 @@ public final class GradleProgressEventConverter {
     return null;
   }
 
-  private static @Nullable OperationResult convertTestProgressEventResult(@NotNull TestOperationResult result) {
+  private static @NotNull OperationResult convertTestProgressEventResult(@NotNull TestOperationResult result) {
     var startTime = result.getStartTime();
     var endTime = result.getEndTime();
     if (result instanceof TestSuccessResult) {
@@ -151,8 +150,8 @@ public final class GradleProgressEventConverter {
     if (result instanceof TestSkippedResult) {
       return new SkippedResultImpl(startTime, endTime);
     }
-    LOG.warn("Undefined test operation result " + result.getClass().getSimpleName() + " " + result);
-    return null;
+    LOG.warn("Undefined test operation result " + result.getClass().getName());
+    return new DefaultOperationResult(startTime, endTime);
   }
 
   private static @NotNull Failure convertTestFailure(@NotNull org.gradle.tooling.Failure failure) {
@@ -160,13 +159,19 @@ public final class GradleProgressEventConverter {
     var description = failure.getDescription();
     var causes = ContainerUtil.map(failure.getCauses(), it -> convertTestFailure(it));
     if (failure instanceof org.gradle.tooling.TestAssertionFailure assertionFailure) {
+      var stackTrace = assertionFailure.getStacktrace();
       var expectedText = assertionFailure.getExpected();
       var actualText = assertionFailure.getActual();
       if (message != null && expectedText != null && actualText != null) {
-        return new TestAssertionFailure(message, description, causes, expectedText, actualText, null, null);
+        return new TestAssertionFailure(message, stackTrace, description, causes, expectedText, actualText, null, null);
       }
     }
-    return new FailureImpl(message, description, causes);
+    if (failure instanceof org.gradle.tooling.TestFailure testFailure) {
+      var stackTrace = testFailure.getStacktrace();
+      return new TestFailure(message, stackTrace, description, causes, false);
+    }
+    LOG.warn("Undefined test failure type " + failure.getClass().getName());
+    return new FailureImpl(message, description, Collections.emptyList());
   }
 
   private static @NotNull TestOperationDescriptor convertTestDescriptor(@NotNull ProgressEvent event) {
