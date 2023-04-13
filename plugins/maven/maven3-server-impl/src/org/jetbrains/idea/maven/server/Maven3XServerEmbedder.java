@@ -1318,7 +1318,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   @NotNull
-  private MavenEmbedderExecutionResult createEmbedderExecutionResult(@Nullable File file, MavenExecutionResult result)
+  private MavenEmbedderExecutionResult createEmbedderExecutionResult(@NotNull File file, MavenExecutionResult result)
     throws RemoteException {
     Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
 
@@ -1326,14 +1326,14 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
     MavenEmbedderExecutionResult.Folders folders = new MavenEmbedderExecutionResult.Folders();
     MavenProject mavenProject = result.getMavenProject();
-    if (mavenProject == null) return new MavenEmbedderExecutionResult(false, folders, problems);
+    if (mavenProject == null) return new MavenEmbedderExecutionResult(false, file, folders, problems);
 
     folders.setSources(mavenProject.getCompileSourceRoots());
     folders.setTestSources(mavenProject.getTestCompileSourceRoots());
     folders.setResources(MavenModelConverter.convertResources(mavenProject.getModel().getBuild().getResources()));
     folders.setTestResources(MavenModelConverter.convertResources(mavenProject.getModel().getBuild().getTestResources()));
 
-    return new MavenEmbedderExecutionResult(true, folders, problems);
+    return new MavenEmbedderExecutionResult(true, file, folders, problems);
   }
 
   private void collectProblems(@Nullable File file,
@@ -1825,8 +1825,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   @NotNull
   @Override
   public List<MavenEmbedderExecutionResult> execute(@NotNull Collection<MavenEmbedderExecutionRequest> requests,
-                                                  @NotNull String goal,
-                                                  MavenToken token)
+                                                    @NotNull String goal,
+                                                    MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);
     List<MavenEmbedderExecutionResult> results = new ArrayList<>();

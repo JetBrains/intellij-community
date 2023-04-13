@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
 import org.jetbrains.idea.maven.model.MavenResource;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,11 +14,13 @@ import java.util.List;
 
 public class MavenEmbedderExecutionResult implements Serializable {
   public final boolean success;
+  @NotNull public final File file;
   @NotNull public final Folders folders;
   @NotNull public final Collection<MavenProjectProblem> problems;
 
-  public MavenEmbedderExecutionResult(boolean success, @NotNull Folders folders, @NotNull Collection<MavenProjectProblem> problems) {
+  public MavenEmbedderExecutionResult(boolean success, @NotNull File file, @NotNull Folders folders, @NotNull Collection<MavenProjectProblem> problems) {
     this.success = success;
+    this.file = file;
     this.folders = folders;
     this.problems = problems;
   }
