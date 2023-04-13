@@ -480,6 +480,7 @@ open class EditorsSplitters internal constructor(
   internal suspend fun updateFileName(updatedFile: VirtualFile?) {
     for (window in windows) {
       val composites = withContext(Dispatchers.EDT) {
+        // update names for other files with the same name, as it might affect UniqueNameEditorTabTitleProvider
         window.getComposites().filter { updatedFile == null || it.file.nameSequence.contentEquals(updatedFile.nameSequence) }.toList()
       }
       for (composite in composites) {
