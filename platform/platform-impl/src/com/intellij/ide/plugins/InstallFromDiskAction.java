@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -80,10 +81,20 @@ class InstallFromDiskAction extends DumbAwareAction {
       return;
     }
 
+    VirtualFile toSelect = null;
+    VirtualFile contextFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    if (contextFile != null && contextFile.isInLocalFileSystem() &&
+        (contextFile.getName().endsWith(".zip") || contextFile.getName().endsWith(".jar"))) {
+      toSelect = contextFile;
+    }
+    if (toSelect == null) {
+      toSelect = getFileToSelect(PropertiesComponent.getInstance().getValue(PLUGINS_PRESELECTION_PATH));
+    }
+
     FileChooser.chooseFile(new FileChooserDescriptorImpl(),
                            project,
                            myParentComponent,
-                           getFileToSelect(PropertiesComponent.getInstance().getValue(PLUGINS_PRESELECTION_PATH)),
+                           toSelect,
                            virtualFile -> {
                              File file = VfsUtilCore.virtualToIoFile(virtualFile);
                              PropertiesComponent.getInstance().setValue(PLUGINS_PRESELECTION_PATH,
