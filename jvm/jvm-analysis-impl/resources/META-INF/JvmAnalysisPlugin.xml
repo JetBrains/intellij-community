@@ -126,6 +126,10 @@
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.unstable.api.usage.display.name"
                      implementationClass="com.intellij.codeInspection.UnstableApiUsageInspection"/>
+    <localInspection language="UAST" enabledByDefault="true" level="TEXT ATTRIBUTES" shortName="UsagesOfObsoleteApi"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="jvm.inspections.usages.of.obsolete.api.display.name"
+                     implementationClass="com.intellij.codeInspection.ObsoleteApiUsageInspection"/>
     <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="UnstableTypeUsedInSignature"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.unstable.type.used.in.signature.display.name"

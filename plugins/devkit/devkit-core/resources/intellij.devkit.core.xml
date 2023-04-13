@@ -303,12 +303,6 @@
                      key="inspections.action.update.thread.display.name" groupKey="inspections.group.code" enabledByDefault="true"
                      level="WARNING" implementationClass="org.jetbrains.idea.devkit.inspections.MissingActionUpdateThread"/>
 
-    <localInspection language="UAST" enabledByDefault="true" level="TEXT ATTRIBUTES" shortName="UsagesOfObsoleteApi"
-                     editorAttributes="DEPRECATED_ATTRIBUTES"
-                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
-                     key="jvm.inspections.usages.of.obsolete.api.display.name"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.UsagesOfObsoleteApiInspection"/>
-
     <localInspection language="UAST" enabledByDefault="true" level="ERROR" shortName="ExtensionRegisteredAsServiceOrComponent"
                      key="inspection.extension.registered.as.service.or.component.display.name"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
