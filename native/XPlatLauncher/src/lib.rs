@@ -68,6 +68,11 @@ mod docker;
 
 const CANNOT_START_TITLE: &'static str = "Cannot start the IDE";
 
+#[cfg(target_os = "windows")]
+const CLASS_PATH_SEPARATOR: &'static str = ";";
+#[cfg(target_family = "unix")]
+const CLASS_PATH_SEPARATOR: &'static str = ":";
+
 pub fn main_lib() {
     let remote_dev = is_remote_dev();
     let show_error_ui = env::var(DO_NOT_SHOW_ERROR_UI_ENV_VAR).is_err() && !remote_dev;
@@ -126,7 +131,6 @@ fn main_impl(remote_dev: bool, verbose: bool) -> Result<()> {
 
     debug!("** Launching JVM");
     let args = configuration.get_args();
-
     let result = java::run_jvm_and_event_loop(java_home, vm_options, args.to_vec());
 
     log::logger().flush();
@@ -225,8 +229,7 @@ fn get_full_vm_options(configuration: &Box<dyn LaunchConfiguration>) -> Result<V
 
     debug!("Resolving classpath");
     // 2. classpath
-    let class_path_separator = get_class_path_separator();
-    let class_path = configuration.get_class_path()?.join(class_path_separator);
+    let class_path = configuration.get_class_path()?.join(CLASS_PATH_SEPARATOR);
     let class_path_vm_option = "-Djava.class.path=".to_string() + class_path.as_str();
     full_vm_options.push(class_path_vm_option);
 
