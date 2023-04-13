@@ -5,21 +5,28 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-// java highlighting: color names like "reassigned variables"/fields/statics etc.
+// java "decorative" highlighting:
+// - color names, like "reassigned variables"/fields/statics etc.
+// - soft keywords
 // NO COMPILATION ERRORS
-// for highlighting error see HighlightVisitorImpl
+// for other highlighting errors see HighlightVisitorImpl
 class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightVisitor {
   private HighlightInfoHolder myHolder;
   private PsiFile myFile;
+  private LanguageLevel myLanguageLevel;
+  private boolean shouldHighlightSoftKeywords;
 
   @NotNull
   @Override
@@ -56,6 +63,8 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
   private void prepare(@NotNull HighlightInfoHolder holder, @NotNull PsiFile file) {
     myHolder = holder;
     myFile = file;
+    myLanguageLevel = PsiUtil.getLanguageLevel(file);
+    shouldHighlightSoftKeywords = PsiJavaModule.MODULE_INFO_FILE.equals(file.getName()) || myLanguageLevel.isAtLeast(LanguageLevel.JDK_10);
   }
 
   @Override
@@ -134,6 +143,14 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
           }
         }
       }
+    }
+  }
+
+  @Override
+  public void visitKeyword(@NotNull PsiKeyword keyword) {
+    if (shouldHighlightSoftKeywords &&
+        (JavaLexer.isSoftKeyword(keyword.getNode().getChars(), myLanguageLevel) || JavaTokenType.NON_SEALED_KEYWORD == keyword.getTokenType())) {
+      myHolder.add(HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.JAVA_KEYWORD).range(keyword).create());
     }
   }
 
