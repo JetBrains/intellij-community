@@ -3,9 +3,9 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectCloseListener;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
 import com.intellij.openapi.startup.StartupActivity;
@@ -38,10 +38,8 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
     fileBasedIndex.waitUntilIndicesAreInitialized();
 
     // schedule dumb mode start after the read action we're currently in
-    if (fileBasedIndex instanceof FileBasedIndexImpl) {
-      boolean suspended = IndexInfrastructure.isIndexesInitializationSuspended();
-      UnindexedFilesScanner.scanAndIndexProjectAfterOpen(project, suspended, "On project open");
-    }
+    boolean suspended = IndexInfrastructure.isIndexesInitializationSuspended();
+    UnindexedFilesScanner.scanAndIndexProjectAfterOpen(project, suspended, "On project open");
 
     // done mostly for tests. In real life this is no-op, because the set was removed on project closing
     Disposer.register(project, () -> removeProjectIndexableSet(project));
