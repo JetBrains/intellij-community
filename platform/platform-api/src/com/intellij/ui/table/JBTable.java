@@ -1409,6 +1409,14 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
    * are created in all code paths.
    */
   protected class AccessibleJBTable extends AccessibleJTable {
+
+    @Override
+    public Accessible getAccessibleAt(int r, int c) {
+      if (r >= 0 && c < 0) c = 0;
+      if (r < 0 && c >= 0) r = 0;
+      return super.getAccessibleAt(r, c);
+    }
+
     @Override
     public Accessible getAccessibleChild(int i) {
       if (i < 0 || i >= getAccessibleChildrenCount()) {
