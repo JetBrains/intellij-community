@@ -223,11 +223,11 @@ internal fun createAggregateActivityHtml(
             }
             thead {
               tr {
-                th("History of scannings and indexings") { colSpan = "11" }
+                th("History of scannings and indexings") { colSpan = "14" }
               }
               tr {
                 th("Time") {
-                  colSpan = "5"
+                  colSpan = "8"
                 }
                 th("Files") {
                   colSpan = "5"
@@ -238,9 +238,12 @@ internal fun createAggregateActivityHtml(
               }
               tr {
                 th("Started")
-                th("Total time")
-                th("Pauses time")
+                th("Started dumb mode")
                 th("Finished")
+                th("Total time")
+                th("Time spent on pause")
+                th("Full dumb mode time")
+                th("Dumb mode time w/o pauses")
                 th("Content loading")
                 th("Scanned")
                 th("Shared indexes (w/o content loading)")
@@ -358,10 +361,8 @@ private fun TR.printIndexingActivityRow(times: JsonProjectIndexingActivityHistor
   // Time section
   td(times.updatingStart.presentableLocalDateTime())
 
-  td(times.asSafely<JsonProjectScanningHistoryTimes>()?.totalWallTimeWithPauses?.presentableDuration()
-     ?: times.asSafely<JsonProjectDumbIndexingHistoryTimes>()?.totalWallTimeWithPauses?.presentableDuration()
-     ?: "Unexpected times $times")
-  td(times.totalPausedWallTime.presentableDuration())
+  td(times.dumbModeStart?.presentableLocalDateTime() ?: DID_NOT_START)
+
   td {
     if (times.wasInterrupted) {
       strong("Cancelled")
@@ -369,8 +370,14 @@ private fun TR.printIndexingActivityRow(times: JsonProjectIndexingActivityHistor
     }
     text(times.updatingEnd.presentableLocalDateTime())
   }
-  td(times.asSafely<JsonProjectDumbIndexingHistoryTimes>()?.contentLoadingVisibleTime?.presentableDuration()
-     ?: NOT_APPLICABLE)
+
+  td(times.totalWallTimeWithPauses.presentableDuration())
+  td(times.wallTimeOnPause.presentableDuration())
+
+  td(times.dumbWallTimeWithPauses.presentableDuration())
+  td(times.dumbWallTimeWithoutPauses.presentableDuration())
+
+  td(times.asSafely<JsonProjectDumbIndexingHistoryTimes>()?.contentLoadingVisibleTime?.presentableDuration() ?: NOT_APPLICABLE)
 
   // Files section.
   when (fileCount) {
@@ -445,6 +452,7 @@ private fun canUnify(event: ChangedFilesPushedEvent, baseList: List<ChangedFiles
 }
 
 private const val NOT_APPLICABLE = "N/A"
+private const val DID_NOT_START = "Didn't start"
 
 private const val SECTION_PROJECT_NAME_ID = "id-project-name"
 private const val SECTION_PROJECT_NAME_TITLE = "Project name"
@@ -1060,13 +1068,21 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
                 tr { td("Reason"); td(times.scanningReason) }
               }
               tr { td("Type"); td(times.scanningType.name.lowercase(Locale.ENGLISH).replace('_', ' ')) }
+              tr { td("Dumb mode start"); td(times.dumbModeStart?.presentableLocalDateTime() ?: "Didn't happen") }
+
               tr { td("Finished at"); td(times.updatingEnd.presentableLocalDateTime()) }
               tr { td("Cancelled"); td(times.wasInterrupted.toString()) }
-              tr { td("Total with pauses"); td(times.totalWallTimeWithPauses.presentableDuration()) }
-              tr { td("Pauses time"); td(times.totalPausedWallTime.presentableDuration()) }
+              tr { td("Total time with pauses"); td(times.totalWallTimeWithPauses.presentableDuration()) }
+              tr { td("Time spent on pause"); td(times.wallTimeOnPause.presentableDuration()) }
+              tr { td("Total time w/o pauses"); td(times.totalWallTimeWithoutPauses.presentableDuration()) }
+              tr { td("Dumb mode time with pauses"); td(times.dumbWallTimeWithPauses.presentableDuration()) }
+              tr { td("Dumb mode time w/o pauses"); td(times.dumbWallTimeWithoutPauses.presentableDuration()) }
 
               tr { td("Scanning stages w/o pauses: iterators creation time"); td(times.creatingIteratorsTime.presentableDuration()) }
-              tr { td("Scanning stages w/o pauses: pushing properties of refreshed files time"); td(times.delayedPushPropertiesStageTime.presentableDuration()) }
+              tr {
+                td("Scanning stages w/o pauses: pushing properties of refreshed files time")
+                td(times.delayedPushPropertiesStageTime.presentableDuration())
+              }
               tr {
                 td("Scanning stages w/o pauses: time of collecting files to compute index values")
                 td(times.scanFilesTime.presentableDuration())
@@ -1283,7 +1299,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
               tr { td("Finished at"); td(times.updatingEnd.presentableLocalDateTime()) }
               tr { td("Cancelled?"); td(times.wasInterrupted.toString()) }
               tr { td("Total time with pauses"); td(times.totalWallTimeWithPauses.presentableDuration()) }
-              tr { td("Pauses time"); td(times.totalPausedWallTime.presentableDuration()) }
+              tr { td("Pauses time"); td(times.wallTimeOnPause.presentableDuration()) }
               if (IndexDiagnosticDumper.shouldProvideVisibleAndAllThreadsTimeInfo) {
                 tr {
                   td("Total processing visible time")
@@ -1766,7 +1782,7 @@ private inline fun TR.th(value: String, crossinline block : TH.() -> Unit = {}) 
 }
 private inline fun TR.td(value: String, crossinline block : TD.() -> Unit = {}) {
   td {
-    if(value == NOT_APPLICABLE){
+    if (value == NOT_APPLICABLE || value == DID_NOT_START) {
       classes += "not-applicable-data"
     }
     block()

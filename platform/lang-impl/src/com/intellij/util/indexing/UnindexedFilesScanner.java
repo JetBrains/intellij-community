@@ -212,7 +212,7 @@ public class UnindexedFilesScanner implements FilesScanningTask {
     }
     finally {
       projectIndexingHistory.stopStage(ProjectIndexingHistoryImpl.Stage.Scanning);
-      scanningHistory.stopStage(ProjectScanningHistoryImpl.ScanningStage.Scanning);
+      //scanningHistory would be stopped later on overall stop of activity
     }
     String scanningCompletedMessage = getLogScanningCompletedStageMessage(projectIndexingHistory);
     LOG.info(snapshot.getLogResponsivenessSinceCreationMessage(scanningCompletedMessage));
@@ -227,30 +227,30 @@ public class UnindexedFilesScanner implements FilesScanningTask {
     LOG.info("Started scanning for indexing of " + myProject.getName() + ". Reason: " + myIndexingReason);
 
     ProjectScanningHistoryImpl scanningHistory = new ProjectScanningHistoryImpl(myProject, myIndexingReason, myScanningType);
-
-    ProgressSuspender suspender = ProgressSuspender.getSuspender(indicator);
-    if (suspender != null) {
-      ApplicationManager.getApplication().getMessageBus().connect(this)
-        .subscribe(ProgressSuspender.TOPIC, projectIndexingHistory.getSuspendListener(suspender));
-      ApplicationManager.getApplication().getMessageBus().connect(this)
-        .subscribe(ProgressSuspender.TOPIC, scanningHistory.getSuspendListener(suspender));
-    }
-
-    if (myStartSuspended) {
-      if (suspender == null) {
-        throw new IllegalStateException("Indexing progress indicator must be suspendable!");
-      }
-      if (!suspender.isSuspended()) {
-        suspender.suspendProcess(IndexingBundle.message("progress.indexing.started.as.suspended"));
-      }
-    }
-
-    indicator.setIndeterminate(true);
-    indicator.setText(IndexingBundle.message("progress.indexing.scanning"));
-
-    PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
-    Disposable scanningLifetime = Disposer.newDisposable();
+    Disposable scanningLifetime = null;
     try {
+      ProgressSuspender suspender = ProgressSuspender.getSuspender(indicator);
+      if (suspender != null) {
+        ApplicationManager.getApplication().getMessageBus().connect(this)
+          .subscribe(ProgressSuspender.TOPIC, projectIndexingHistory.getSuspendListener(suspender));
+        ApplicationManager.getApplication().getMessageBus().connect(this)
+          .subscribe(ProgressSuspender.TOPIC, scanningHistory.getSuspendListener(suspender));
+      }
+
+      if (myStartSuspended) {
+        if (suspender == null) {
+          throw new IllegalStateException("Indexing progress indicator must be suspendable!");
+        }
+        if (!suspender.isSuspended()) {
+          suspender.suspendProcess(IndexingBundle.message("progress.indexing.started.as.suspended"));
+        }
+      }
+
+      indicator.setIndeterminate(true);
+      indicator.setText(IndexingBundle.message("progress.indexing.scanning"));
+
+      PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
+      scanningLifetime = Disposer.newDisposable();
       if (!shouldScanInSmartMode()) {
         DumbModeProgressTitle.getInstance(myProject)
           .attachProgressTitleText(IndexingBundle.message("progress.indexing.scanning.title"), scanningLifetime);
@@ -262,8 +262,13 @@ public class UnindexedFilesScanner implements FilesScanningTask {
       throw e;
     }
     finally {
-      IndexDiagnosticDumper.getInstance().onScanningFinished(scanningHistory);
-      Disposer.dispose(scanningLifetime);
+      if (scanningLifetime != null) {
+        IndexDiagnosticDumper.getInstance().onScanningFinished(scanningHistory);
+        Disposer.dispose(scanningLifetime);
+      }
+      else {
+        scanningHistory.finishTracking();
+      }
     }
 
     boolean skipInitialRefresh = skipInitialRefresh();

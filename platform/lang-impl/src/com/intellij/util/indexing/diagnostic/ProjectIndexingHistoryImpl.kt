@@ -381,6 +381,20 @@ data class ProjectScanningHistoryImpl(override val project: Project,
 
   private val events = mutableListOf<Event>()
 
+  @Volatile
+  private var currentDumbModeStart: ZonedDateTime? = null
+
+  private val scanningDumbModeCallBack: Runnable = Runnable {
+    val now = ZonedDateTime.now(ZoneOffset.UTC)
+    currentDumbModeStart = now
+    @Suppress("TestOnlyProblems")
+    startStage(ScanningStage.DumbMode, now.toInstant())
+  }
+
+  init {
+    project.getService(DumbModeFromScanningTrackerService::class.java).setScanningDumbModeStartCallback(scanningDumbModeCallBack)
+  }
+
   fun addScanningStatistics(statistics: ScanningStatistics) {
     scanningStatistics += statistics.toJsonStatistics()
   }
@@ -430,8 +444,18 @@ data class ProjectScanningHistoryImpl(override val project: Project,
   }
 
   fun scanningFinished() {
-    writeStagesToDurations()
+    val now = ZonedDateTime.now(ZoneOffset.UTC)
+    stopStage(ScanningStage.Scanning, now.toInstant())
+    timesImpl.updatingEnd = now
+    timesImpl.totalUpdatingTime = System.nanoTime() - timesImpl.totalUpdatingTime
 
+    currentDumbModeStart?.let {
+      timesImpl.dumbModeStart = it
+      stopStage(ScanningStage.DumbMode, now.toInstant())
+      timesImpl.dumbModeWithPausesDuration = Duration.between(it, timesImpl.updatingEnd)
+    }
+
+    writeStagesToDurations()
     timesImpl.indexExtensionsDuration = scanningStatistics.map { stat -> stat.timeIndexingWithoutContentViaInfrastructureExtension.nano }.sumOf { it }.let {
       Duration.ofNanos(it)
     }
@@ -441,9 +465,8 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     timesImpl.wasInterrupted = true
   }
 
-  fun finishTotalUpdatingTime() {
-    timesImpl.updatingEnd = ZonedDateTime.now(ZoneOffset.UTC)
-    timesImpl.totalUpdatingTime = System.nanoTime() - timesImpl.totalUpdatingTime
+  fun finishTracking() {
+    project.getService(DumbModeFromScanningTrackerService::class.java).cleanScanningDumbModeStartCallback(scanningDumbModeCallBack)
   }
 
   /**
@@ -534,8 +557,8 @@ data class ProjectScanningHistoryImpl(override val project: Project,
       for (stage in ScanningStage.values()) {
         stage.getProperty().set(timesImpl, durationMap[stage]!!)
       }
-      timesImpl.pausedDuration = pausedDuration
     }
+    timesImpl.pausedDuration = pausedDuration
   }
 
   /** Just a stage, don't have to cover whole indexing period, may intersect **/
@@ -548,8 +571,10 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     },
     DelayedPushProperties {
       override fun getProperty() = ScanningTimesImpl::delayedPushPropertiesStageDuration
+    },
+    DumbMode {
+      override fun getProperty() = ScanningTimesImpl::dumbModeWithoutPausesDuration
     };
-
 
     abstract fun getProperty(): KMutableProperty1<ScanningTimesImpl, Duration>
   }
@@ -561,7 +586,6 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     }
   }
 
-  @TestOnly
   fun stopStage(stage: ScanningStage, instant: Instant) {
     synchronized(events) {
       events.add(Event.StageEvent(stage, false, instant))
@@ -588,6 +612,9 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     override val updatingStart: ZonedDateTime,
     override var totalUpdatingTime: TimeNano,
     override var updatingEnd: ZonedDateTime = updatingStart,
+    override var dumbModeStart: ZonedDateTime? = null,
+    override var dumbModeWithPausesDuration: Duration = Duration.ZERO,
+    override var dumbModeWithoutPausesDuration: Duration = Duration.ZERO,
     override var delayedPushPropertiesStageDuration: Duration = Duration.ZERO,
     override var creatingIteratorsDuration: Duration = Duration.ZERO,
     override var scanFilesDuration: Duration = Duration.ZERO,

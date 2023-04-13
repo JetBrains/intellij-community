@@ -225,6 +225,7 @@ class IndexDiagnosticDumper : Disposable {
   }
 
   fun onScanningFinished(projectScanningHistory: ProjectScanningHistoryImpl) {
+    projectScanningHistory.finishTracking()
     // try {
     if (!shouldDumpAlternativeDiagnostics) {
       return
@@ -236,7 +237,6 @@ class IndexDiagnosticDumper : Disposable {
       return
     }
     projectScanningHistory.scanningFinished()
-    projectScanningHistory.finishTotalUpdatingTime()
     unsavedIndexingActivityHistories.add(projectScanningHistory)
     NonUrgentExecutor.getInstance().execute { dumpProjectIndexingActivityHistoryToLogSubdirectory(projectScanningHistory) }
     /* }

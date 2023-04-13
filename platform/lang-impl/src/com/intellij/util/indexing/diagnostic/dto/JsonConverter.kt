@@ -107,8 +107,11 @@ fun ScanningTimes.toJson() =
     indexExtensionsTime = JsonDuration(indexExtensionsDuration.toNanos()),
     updatingStart = JsonDateTime(updatingStart),
     updatingEnd = JsonDateTime(updatingEnd),
-    totalPausedWallTime = JsonDuration(pausedDuration.toNanos()),
-    wasInterrupted = wasInterrupted
+    wallTimeOnPause = JsonDuration(pausedDuration.toNanos()),
+    wasInterrupted = wasInterrupted,
+    dumbModeStart = dumbModeStart?.let { JsonDateTime(it) },
+    dumbWallTimeWithoutPauses = JsonDuration(dumbModeWithoutPausesDuration.toNanos()),
+    dumbWallTimeWithPauses = JsonDuration(dumbModeWithPausesDuration.toNanos())
   )
 
 fun DumbIndexingTimes.toJson() =
@@ -120,7 +123,7 @@ fun DumbIndexingTimes.toJson() =
     separateApplyingIndexesVisibleTime = JsonDuration(separateValueApplicationVisibleTime),
     updatingStart = JsonDateTime(updatingStart),
     updatingEnd = JsonDateTime(updatingEnd),
-    totalPausedWallTime = JsonDuration(pausedDuration.toNanos()),
+    wallTimeOnPause = JsonDuration(pausedDuration.toNanos()),
     wasInterrupted = wasInterrupted
   )
 
