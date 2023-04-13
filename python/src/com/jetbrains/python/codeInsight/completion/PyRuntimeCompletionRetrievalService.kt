@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
+import com.jetbrains.python.debugger.PyDebugValue
 import com.jetbrains.python.debugger.state.PyRuntime
 import com.jetbrains.python.debugger.values.DataFrameDebugValue
 import com.jetbrains.python.debugger.values.completePandasDataFrameColumns
@@ -69,7 +70,11 @@ fun createCompletionResultSet(retrievalService: PyRuntimeCompletionRetrievalServ
 
   return ApplicationUtil.runWithCheckCanceled(Callable {
     return@Callable pyObjectCandidates.flatMap { candidate ->
-      getSetOfChildrenByListOfCall(getParentNodeByName(treeNodeList, candidate.psiName), candidate.pyQualifiedExpressionList)
+      val parentNode = getParentNodeByName(treeNodeList, candidate.psiName)
+      val valueContainer = parentNode?.valueContainer
+      if (valueContainer is PyDebugValue && valueContainer.type == "module") return@flatMap emptyList()
+
+      getSetOfChildrenByListOfCall(parentNode, candidate.pyQualifiedExpressionList)
         .let { retrievalService.extractItemsForCompletion(it, candidate) }
         ?.let { postProcessingChildren(it, candidate, parameters) }
       ?: emptyList()

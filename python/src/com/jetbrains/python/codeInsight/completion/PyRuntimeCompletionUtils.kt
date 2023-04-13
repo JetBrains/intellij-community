@@ -296,6 +296,7 @@ fun getParentNodeByName(children: List<TreeNode>, psiName: String): XValueNodeIm
 
 fun getSetOfChildrenByListOfCall(valueNode: XValueNodeImpl?, listOfCall: List<String>): Pair<XValueNodeImpl, List<String>>? {
   var currentNode = valueNode ?: return null
+
   listOfCall.forEachIndexed { index, call ->
     when (currentNode.valueContainer) {
       is DataFrameDebugValue -> {
