@@ -343,6 +343,7 @@ public final class CachedIntentions {
     return IntentionGroup.OTHER;
   }
 
+  /** Determine the icon that is shown in the action menu. */
   public @Nullable Icon getIcon(@NotNull IntentionActionWithTextCaching value) {
     if (value.getIcon() != null) {
       return value.getIcon();
@@ -367,13 +368,15 @@ public final class CachedIntentions {
     }
 
     if (IntentionManagerSettings.getInstance().isShowLightBulb(action)) {
-      return myErrorFixes.contains(value) ? AllIcons.Actions.QuickfixBulb
-                                          : myInspectionFixes.contains(value) ? AllIcons.Actions.IntentionBulb :
-                                            ExperimentalUI.isNewUI() ? null : AllIcons.Actions.RealIntentionBulb;
+      return myErrorFixes.contains(value) ? AllIcons.Actions.QuickfixBulb :
+             myInspectionFixes.contains(value) ? AllIcons.Actions.IntentionBulb :
+             ExperimentalUI.isNewUI() ? null :
+             AllIcons.Actions.RealIntentionBulb;
     }
     else {
-      if (myErrorFixes.contains(value)) return AllIcons.Actions.QuickfixOffBulb;
-      return ExperimentalUI.isNewUI() ? null : IconLoader.getDisabledIcon(AllIcons.Actions.RealIntentionBulb);
+      return myErrorFixes.contains(value) ? AllIcons.Actions.QuickfixOffBulb :
+             ExperimentalUI.isNewUI() ? null :
+             IconLoader.getDisabledIcon(AllIcons.Actions.RealIntentionBulb);
     }
   }
 
