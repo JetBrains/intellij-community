@@ -25,15 +25,18 @@ import java.util.Collection;
 import java.util.function.Consumer;
 
 public class MavenProjectsProcessorResolvingTask implements MavenProjectsProcessorTask {
-  @NotNull private final MavenGeneralSettings myGeneralSettings;
-  @Nullable private final Consumer<MavenProjectResolver.MavenProjectResolutionResult> myOnCompletion;
   @NotNull private final Collection<MavenProject> myMavenProjects;
+  @NotNull private final MavenGeneralSettings myGeneralSettings;
+  @NotNull private final MavenProjectsTree myTree;
+  @Nullable private final Consumer<MavenProjectResolver.MavenProjectResolutionResult> myOnCompletion;
 
   public MavenProjectsProcessorResolvingTask(@NotNull Collection<MavenProject> mavenProjects,
                                              @NotNull MavenGeneralSettings generalSettings,
+                                             @NotNull MavenProjectsTree tree,
                                              @Nullable Consumer<MavenProjectResolver.MavenProjectResolutionResult> onCompletion) {
     myMavenProjects = mavenProjects;
     myGeneralSettings = generalSettings;
+    myTree = tree;
     myOnCompletion = onCompletion;
   }
 
@@ -41,7 +44,7 @@ public class MavenProjectsProcessorResolvingTask implements MavenProjectsProcess
   public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
     var resolver = MavenProjectResolver.getInstance(project);
-    var result = resolver.resolve(myMavenProjects, myGeneralSettings, embeddersManager, console, indicator);
+    var result = resolver.resolve(myMavenProjects, myTree, myGeneralSettings, embeddersManager, console, indicator);
     if (myOnCompletion != null) myOnCompletion.accept(result);
   }
 

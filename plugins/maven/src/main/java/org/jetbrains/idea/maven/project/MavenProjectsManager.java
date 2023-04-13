@@ -1090,7 +1090,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         }
       };
 
-      myResolvingProcessor.scheduleTask(new MavenProjectsProcessorResolvingTask(toResolve, getGeneralSettings(), onCompletion));
+      myResolvingProcessor.scheduleTask(new MavenProjectsProcessorResolvingTask(toResolve, getGeneralSettings(), myProjectsTree, onCompletion));
     });
     return result;
   }

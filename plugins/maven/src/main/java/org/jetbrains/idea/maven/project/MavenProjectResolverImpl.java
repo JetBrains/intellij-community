@@ -24,25 +24,21 @@ import java.util.stream.Collectors;
 
 class MavenProjectResolverImpl implements MavenProjectResolver {
   @NotNull private final Project myProject;
-  @NotNull private final MavenProjectsManager myProjectsManager;
 
   MavenProjectResolverImpl(@NotNull Project project) {
     myProject = project;
-    myProjectsManager = MavenProjectsManager.getInstance(myProject);
-  }
-
-  private MavenProjectsTree getProjectsTree() {
-    return myProjectsManager.getProjectsTree();
   }
 
   @Override
   public MavenProjectResolutionResult resolve(@NotNull Collection<MavenProject> mavenProjects,
+                                              @NotNull MavenProjectsTree tree,
                                               @NotNull MavenGeneralSettings generalSettings,
                                               @NotNull MavenEmbeddersManager embeddersManager,
                                               @NotNull MavenConsole console,
                                               @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
+    boolean updateSnapshots = MavenProjectsManager.getInstance(myProject).getForceUpdateSnapshots() || generalSettings.isAlwaysUpdateSnapshots();
     var projectsWithUnresolvedPlugins = new HashMap<String, Collection<MavenProjectWithHolder>>();
-    MultiMap<String, MavenProject> projectMultiMap = MavenUtil.groupByBasedir(mavenProjects, getProjectsTree());
+    MultiMap<String, MavenProject> projectMultiMap = MavenUtil.groupByBasedir(mavenProjects, tree);
 
     for (var entry : projectMultiMap.entrySet()) {
       String baseDir = entry.getKey();
@@ -56,9 +52,8 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
             mavenImporter.customizeUserProperties(myProject, mavenProject, userProperties);
           }
         }
-        boolean updateSnapshots = myProjectsManager.getForceUpdateSnapshots() || generalSettings.isAlwaysUpdateSnapshots();
-        embedder.customizeForResolve(console, process, updateSnapshots, getProjectsTree().getWorkspaceMap(), userProperties);
-        var projectsWithUnresolvedPluginsChunk = doResolve(mavenProjectsInBaseDir, generalSettings, embedder, process);
+        embedder.customizeForResolve(console, process, updateSnapshots, tree.getWorkspaceMap(), userProperties);
+        var projectsWithUnresolvedPluginsChunk = doResolve(mavenProjectsInBaseDir, tree, generalSettings, embedder, process);
         projectsWithUnresolvedPlugins.put(baseDir, projectsWithUnresolvedPluginsChunk);
       }
       catch (Throwable t) {
@@ -97,6 +92,7 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
   }
 
   private Collection<MavenProjectWithHolder> doResolve(@NotNull Collection<MavenProject> mavenProjects,
+                                                       @NotNull MavenProjectsTree tree,
                                                        @NotNull MavenGeneralSettings generalSettings,
                                                        @NotNull MavenEmbedderWrapper embedder,
                                                        @NotNull MavenProgressIndicator process)
@@ -109,10 +105,10 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
     process.setText(MavenProjectBundle.message("maven.resolving.pom", text));
     process.setText2("");
 
-    MavenExplicitProfiles explicitProfiles = getProjectsTree().getExplicitProfiles();
+    MavenExplicitProfiles explicitProfiles = tree.getExplicitProfiles();
     Collection<VirtualFile> files = ContainerUtil.map(mavenProjects, p -> p.getFile());
     Collection<MavenProjectReaderResult> results = new MavenProjectReader(myProject)
-      .resolveProject(generalSettings, embedder, files, explicitProfiles, getProjectsTree().getProjectLocator());
+      .resolveProject(generalSettings, embedder, files, explicitProfiles, tree.getProjectLocator());
 
     MavenResolveResultProblemProcessor.MavenResolveProblemHolder problems = MavenResolveResultProblemProcessor.getProblems(results);
     MavenResolveResultProblemProcessor.notifySyncForProblem(myProject, problems);
@@ -122,7 +118,7 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
       .collect(Collectors.groupingBy(mavenProject -> mavenProject.getMavenId().getArtifactId()));
     var projectsWithUnresolvedPlugins = new ConcurrentLinkedQueue<MavenProjectWithHolder>();
     ParallelRunner.<MavenProjectReaderResult, MavenProcessCanceledException>runInParallelRethrow(results, result -> {
-      doResolve(result, artifactIdToMavenProjects, generalSettings, embedder, projectsWithUnresolvedPlugins);
+      doResolve(result, artifactIdToMavenProjects, generalSettings, embedder, tree, projectsWithUnresolvedPlugins);
     });
 
     return projectsWithUnresolvedPlugins;
@@ -132,6 +128,7 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
                          @NotNull Map<String, List<MavenProject>> artifactIdToMavenProjects,
                          @NotNull MavenGeneralSettings generalSettings,
                          @NotNull MavenEmbedderWrapper embedder,
+                         @NotNull MavenProjectsTree tree,
                          @NotNull ConcurrentLinkedQueue<MavenProjectWithHolder> projectsWithUnresolvedPlugins)
     throws MavenProcessCanceledException {
     var mavenId = result.mavenModel.getMavenId();
@@ -168,7 +165,7 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
     MavenProjectChanges changes = mavenProjectCandidate.getChangesSinceSnapshot(snapshot);
 
     mavenProjectCandidate.getProblems(); // need for fill problem cache
-    getProjectsTree().fireProjectResolved(Pair.create(mavenProjectCandidate, changes), nativeMavenProject);
+    tree.fireProjectResolved(Pair.create(mavenProjectCandidate, changes), nativeMavenProject);
 
     if (null != nativeMavenProject) {
       if (!mavenProjectCandidate.hasReadingProblems() && mavenProjectCandidate.hasUnresolvedPlugins()) {

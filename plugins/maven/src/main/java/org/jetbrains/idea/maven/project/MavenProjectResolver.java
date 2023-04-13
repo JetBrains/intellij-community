@@ -11,6 +11,7 @@ import java.util.Map;
 
 public interface MavenProjectResolver {
   MavenProjectResolutionResult resolve(@NotNull Collection<MavenProject> mavenProjects,
+                                       @NotNull MavenProjectsTree tree,
                                        @NotNull MavenGeneralSettings generalSettings,
                                        @NotNull MavenEmbeddersManager embeddersManager,
                                        @NotNull MavenConsole console,
