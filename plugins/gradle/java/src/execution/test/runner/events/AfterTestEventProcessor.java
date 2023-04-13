@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
+import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.task.event.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -118,35 +119,8 @@ public class AfterTestEventProcessor extends AbstractTestEventProcessor {
       getExecutionConsole().getEventPublisher().onTestFinished(testProxy);
     }
     else if (testResult instanceof FailureResult failureResult) {
-      var failure = ContainerUtil.getFirstItem(failureResult.getFailures());
-      var message = ObjectUtils.chooseNotNull(ObjectUtils.doIfNotNull(failure, it -> it.getMessage()), "");
-      var description = ObjectUtils.doIfNotNull(failure, it -> it.getDescription());
-      if (failure instanceof TestAssertionFailure assertionFailure) {
-        var comparisonResult = AssertionParser.parse(message);
-        var localizedMessage = comparisonResult == null ? message : ObjectUtils.chooseNotNull(comparisonResult.getMessage(), "");
-        var stackTrace = assertionFailure.getStackTrace();
-        var actualText = assertionFailure.getActualText();
-        var expectedText = assertionFailure.getExpectedText();
-        var actualFile = assertionFailure.getActualFile();
-        var expectedFile = assertionFailure.getExpectedFile();
-        testProxy.setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, actualFile, expectedFile, true);
-      }
-      else if (failure instanceof TestFailure testFailure) {
-        var stackTrace = testFailure.getStackTrace();
-        var comparisonResult = AssertionParser.parse(message);
-        if (comparisonResult != null) {
-          var localizedMessage = ObjectUtils.chooseNotNull(comparisonResult.getMessage(), "");
-          var actualText = comparisonResult.getActual();
-          var expectedText = comparisonResult.getExpected();
-          testProxy.setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText);
-        }
-        else {
-          testProxy.setTestFailed(message, stackTrace, testFailure.isTestError());
-        }
-      }
-      else {
-        LOG.error("Undefined test failure type: " + failure.getClass().getName());
-        testProxy.setTestFailed(message, description, true);
+      for (var failure : failureResult.getFailures()) {
+        processFailureResult(testProxy, failure);
       }
       getResultsViewer().onTestFailed(testProxy);
       getExecutionConsole().getEventPublisher().onTestFailed(testProxy);
@@ -158,5 +132,43 @@ public class AfterTestEventProcessor extends AbstractTestEventProcessor {
       getResultsViewer().onTestFinished(testProxy);
       getExecutionConsole().getEventPublisher().onTestFinished(testProxy);
     }
+  }
+
+  private static void processFailureResult(@NotNull SMTestProxy testProxy, @NotNull Failure failure) {
+    if (failure instanceof TestFailure testFailure) {
+      processTestFailureResult(testProxy, testFailure);
+    }
+    else {
+      LOG.error("Undefined test failure type: " + failure.getClass().getName());
+      var message = ObjectUtils.chooseNotNull(ObjectUtils.doIfNotNull(failure, it -> it.getMessage()), "");
+      var description = ObjectUtils.doIfNotNull(failure, it -> it.getDescription());
+      testProxy.setTestFailed(message, description, true);
+    }
+    for (var cause : failure.getCauses()) {
+      processFailureResult(testProxy, cause);
+    }
+  }
+
+  private static void processTestFailureResult(@NotNull SMTestProxy testProxy, @NotNull TestFailure failure) {
+    var message = ObjectUtils.chooseNotNull(ObjectUtils.doIfNotNull(failure, it -> it.getMessage()), "");
+    var stackTrace = failure.getStackTrace();
+    var comparisonResult = AssertionParser.parse(message);
+    if (failure instanceof TestAssertionFailure assertionFailure) {
+      var localizedMessage = comparisonResult == null ? message : ObjectUtils.chooseNotNull(comparisonResult.getMessage(), "");
+      var actualText = assertionFailure.getActualText();
+      var expectedText = assertionFailure.getExpectedText();
+      var actualFile = assertionFailure.getActualFile();
+      var expectedFile = assertionFailure.getExpectedFile();
+      testProxy.setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, actualFile, expectedFile, true);
+      return;
+    }
+    if (comparisonResult != null && failure.getCauses().isEmpty()) {
+      var localizedMessage = ObjectUtils.chooseNotNull(comparisonResult.getMessage(), "");
+      var actualText = comparisonResult.getActual();
+      var expectedText = comparisonResult.getExpected();
+      testProxy.setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText);
+      return;
+    }
+    testProxy.setTestFailed(message, stackTrace, failure.isTestError());
   }
 }
