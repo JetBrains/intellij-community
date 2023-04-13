@@ -44,13 +44,13 @@ class IdeaLibDependencyNotifier : ProjectActivity {
       WorkspaceModel.getInstance(project)
         .currentSnapshot
         .entities(LibraryEntity::class.java)
-        .forEach { library -> notifyLibraryIfNeeded(project, library, ideaHome) }
+        .forEach { library -> notifyLibraryIfNeeded(library, ideaHome, project) }
     })
   }
 }
 
 
-private fun notifyLibraryIfNeeded(project: Project, library: LibraryEntity, ideaHome: Path) {
+private fun notifyLibraryIfNeeded(library: LibraryEntity, ideaHome: Path, project: Project) {
   val (ideaJars, nonIdeaJars) = sortOutJars(library, ideaHome)
 
   if (ideaJars.isEmpty()) {
@@ -60,15 +60,15 @@ private fun notifyLibraryIfNeeded(project: Project, library: LibraryEntity, idea
   if (nonIdeaJars.isEmpty()) {
     val artifact = detectMavenArtifactByJars(ideaJars)
     if (artifact == null) {
-      notifyLibrary(library, JavaUiBundle.message("library.depends.on.ide.message.replacement.not.found"))
+      notifyLibrary(library, JavaUiBundle.message("library.depends.on.ide.message.replacement.not.found"), project)
     }
     else {
-      notifyLibrary(library, JavaUiBundle.message("library.depends.on.ide.message.can.be.replaced", artifact.mavenId),
+      notifyLibrary(library, JavaUiBundle.message("library.depends.on.ide.message.can.be.replaced", artifact.mavenId), project,
                     ConvertToRepositoryLibraryAction(project, library, artifact))
     }
   }
   else {
-    notifyLibrary(library, JavaUiBundle.message("library.depends.on.ide.message.jar.mixture"))
+    notifyLibrary(library, JavaUiBundle.message("library.depends.on.ide.message.jar.mixture"), project)
   }
 }
 
@@ -108,7 +108,7 @@ private fun detectMavenArtifactByJars(ideaJars: List<Path>): JpsMavenRepositoryL
 }
 
 
-private fun notifyLibrary(library: LibraryEntity, details: String, fix: NotificationAction? = null) {
+private fun notifyLibrary(library: LibraryEntity, details: String, project: Project, fix: NotificationAction? = null) {
   val notification = Notification(
     "Legacy Library",
     JavaUiBundle.message("library.depends.on.ide.title"),
@@ -120,7 +120,7 @@ private fun notifyLibrary(library: LibraryEntity, details: String, fix: Notifica
     notification.addAction(fix)
   }
 
-  Notifications.Bus.notify(notification)
+  Notifications.Bus.notify(notification, project)
 }
 
 private fun ConvertToRepositoryLibraryAction(
