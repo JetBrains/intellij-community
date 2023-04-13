@@ -66,6 +66,11 @@ public class SettingsImpl implements EditorSettings {
   private Integer myCaretBlinkingPeriod;
   private Boolean myIsRightMarginShown;
 
+  private Integer myVerticalScrollOffset;
+  private Integer myVerticalScrollJump;
+  private Integer myHorizontalScrollOffset;
+  private Integer myHorizontalScrollJump;
+
   private Boolean myAreLineNumbersShown;
   private Boolean myGutterIconsShown;
   private Boolean myIsFoldingOutlineShown;
@@ -478,6 +483,52 @@ public class SettingsImpl implements EditorSettings {
     if (newValue.equals(myIsSmartHome)) return;
     myIsSmartHome = newValue;
     fireEditorRefresh();
+  }
+
+  @Override
+  public int getVerticalScrollOffset() {
+    return myVerticalScrollOffset == null ? EditorSettingsExternalizable.getInstance().getVerticalScrollOffset() : myVerticalScrollOffset;
+  }
+
+  @Override
+  public void setVerticalScrollOffset(int val) {
+    final Integer newValue = Integer.valueOf(val);
+    if (Objects.equals(myVerticalScrollOffset, newValue)) return;
+    myVerticalScrollOffset = newValue;
+    fireEditorRefresh();
+  }
+
+  @Override
+  public int getVerticalScrollJump() {
+    return myVerticalScrollJump == null ? EditorSettingsExternalizable.getInstance().getVerticalScrollJump() : myVerticalScrollJump;
+  }
+
+  @Override
+  public void setVerticalScrollJump(int val) {
+    myVerticalScrollJump = val;
+  }
+
+  @Override
+  public int getHorizontalScrollOffset() {
+    return myHorizontalScrollOffset == null ? EditorSettingsExternalizable.getInstance().getHorizontalScrollOffset() : myHorizontalScrollOffset;
+  }
+
+  @Override
+  public void setHorizontalScrollOffset(int val) {
+    final Integer newValue = Integer.valueOf(val);
+    if (Objects.equals(myHorizontalScrollOffset, newValue)) return;
+    myHorizontalScrollOffset = newValue;
+    fireEditorRefresh();
+  }
+
+  @Override
+  public int getHorizontalScrollJump() {
+    return myHorizontalScrollJump == null ? EditorSettingsExternalizable.getInstance().getHorizontalScrollJump() : myHorizontalScrollJump;
+  }
+
+  @Override
+  public void setHorizontalScrollJump(int val) {
+    myHorizontalScrollJump = val;
   }
 
   @Override

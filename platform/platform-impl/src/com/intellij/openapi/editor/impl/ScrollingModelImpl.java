@@ -196,6 +196,12 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
       }
     }
 
+    int hOffset = getHorizontalOffset(editor, targetLocation, scrollType, viewRect);
+    int vOffset = getVerticalOffset(editor, targetLocation, scrollType, viewRect);
+    return new Point(hOffset, vOffset);
+  }
+
+  private int getHorizontalOffset(@NotNull Editor editor, @NotNull Point targetLocation, @NotNull ScrollType scrollType, @NotNull Rectangle viewRect) {
     int hOffset;
     if (scrollType == ScrollType.CENTER_CENTER) {
       hOffset = Math.max(0, targetLocation.x - viewRect.width / 2);
@@ -220,52 +226,126 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
         hOffset = targetLocation.x - Math.max(0, viewRect.width - xInsets);
       }
     }
+    JScrollPane scrollPane = mySupplier.getScrollPane();
+    hOffset = Math.max(0, hOffset);
+    hOffset = Math.min(scrollPane.getHorizontalScrollBar().getMaximum() - getExtent(scrollPane.getHorizontalScrollBar()), hOffset);
+    return hOffset;
+  }
 
-    // the following code tries to keeps 1 line above and 1 line below if available in viewRect
+  private int getVerticalOffset(@NotNull Editor editor, @NotNull Point targetLocation, @NotNull ScrollType scrollType, @NotNull Rectangle viewRect) {
+    int editorHeight = viewRect.height;
     int lineHeight = editor.getLineHeight();
-    // to avoid 'hysteresis', minAcceptableY should be always less or equal to maxAcceptableY
-    int minAcceptableY = viewRect.y + Math.max(0, Math.min(lineHeight, viewRect.height - 3 * lineHeight));
-    int maxAcceptableY = viewRect.y + (viewRect.height <= lineHeight ? 0 :
-                                       viewRect.height - (viewRect.height <= 2 * lineHeight ? lineHeight : 2 * lineHeight));
-    int scrollUpBy = minAcceptableY - targetLocation.y;
-    int scrollDownBy = targetLocation.y - maxAcceptableY;
-    int centerPosition = targetLocation.y - viewRect.height / 3;
 
-    int vOffset = viewRect.y;
-    if (scrollType == ScrollType.CENTER || scrollType == ScrollType.CENTER_CENTER) {
-      vOffset = centerPosition;
+    int scrollOffset = editor.getSettings().getVerticalScrollOffset();
+    int scrollJump = editor.getSettings().getVerticalScrollJump();
+    // the two following lines should be both visible in view rectangle after scrolling (that's the meaning of the scroll offset setting)
+    // if it is not possible e.g. view rectangle is too small to contain both lines, then scrolling will go to the `centerPosition`
+    int offsetTopBound = addVerticalOffsetToPosition(editor, -scrollOffset, targetLocation);
+    int offsetBottomBound = addVerticalOffsetToPosition(editor, scrollOffset, targetLocation) + lineHeight;
+    int minEditorHeightToSatisfyOffsets = offsetBottomBound - offsetTopBound;
+
+    // position that we consider to be the "central" one
+    // for some historical reasons, before scroll offset support, center was actually at the 1/3 of the view rectangle
+    int centerPosition;
+    if (editorHeight > minEditorHeightToSatisfyOffsets) { // if editor has enough height, let the center be in its historical (expected for users) position
+      centerPosition = targetLocation.y - editorHeight / 3;
+    } else { // the real centered position for ones who use big offsets or don't have enough height
+      centerPosition = targetLocation.y - Math.max(0, viewRect.height - lineHeight) / 2;
     }
-    else if (scrollType == ScrollType.CENTER_UP) {
-      if (scrollUpBy > 0 || scrollDownBy > 0 || vOffset > centerPosition) {
-        vOffset = centerPosition;
+
+    int verticalOffset = viewRect.y;
+    if (scrollType == ScrollType.CENTER) {
+      verticalOffset = centerPosition;
+    } else if (scrollType == ScrollType.CENTER_UP) {
+      if (viewRect.y > offsetTopBound || viewRect.y + viewRect.height < offsetBottomBound || viewRect.y > centerPosition) {
+        verticalOffset = centerPosition;
       }
-    }
-    else if (scrollType == ScrollType.CENTER_DOWN) {
-      if (scrollUpBy > 0 || scrollDownBy > 0 || vOffset < centerPosition) {
-        vOffset = centerPosition;
+    } else if (scrollType == ScrollType.CENTER_DOWN) {
+      if (viewRect.y > offsetTopBound || viewRect.y + viewRect.height < offsetBottomBound || viewRect.y < centerPosition) {
+        verticalOffset = centerPosition;
       }
-    }
-    else if (scrollType == ScrollType.RELATIVE) {
-      if (scrollUpBy > 0) {
-        vOffset = viewRect.y - scrollUpBy;
+    } else if (scrollType == ScrollType.RELATIVE) {
+      if (offsetBottomBound - offsetTopBound > editorHeight) {
+        verticalOffset = centerPosition;
+      } else if (viewRect.y + viewRect.height < offsetBottomBound) {
+        int bottomAfterScrollJump = addVerticalOffsetToPosition(editor, scrollJump, new Point(viewRect.x, viewRect.y + viewRect.height));
+        verticalOffset = Math.max(offsetBottomBound - viewRect.height, bottomAfterScrollJump - viewRect.height);
+      } else if (viewRect.y > offsetTopBound) {
+        int topAfterScrollJump = addVerticalOffsetToPosition(editor, -scrollJump, new Point(viewRect.x, viewRect.y));
+        verticalOffset = Math.min(offsetTopBound, topAfterScrollJump);
       }
-      else if (scrollDownBy > 0) {
-        vOffset = viewRect.y + scrollDownBy;
-      }
-    }
-    else if (scrollType == ScrollType.MAKE_VISIBLE) {
-      if (scrollUpBy > 0 || scrollDownBy > 0) {
-        vOffset = centerPosition;
+    } else if (scrollType == ScrollType.MAKE_VISIBLE) {
+      if (viewRect.y > offsetTopBound || viewRect.y + viewRect.height < offsetBottomBound) {
+        verticalOffset = centerPosition;
       }
     }
 
     JScrollPane scrollPane = mySupplier.getScrollPane();
-    hOffset = Math.max(0, hOffset);
-    vOffset = Math.max(0, vOffset);
-    hOffset = Math.min(scrollPane.getHorizontalScrollBar().getMaximum() - getExtent(scrollPane.getHorizontalScrollBar()), hOffset);
-    vOffset = Math.min(scrollPane.getVerticalScrollBar().getMaximum() - getExtent(scrollPane.getVerticalScrollBar()), vOffset);
+    verticalOffset = Math.max(0, verticalOffset);
+    verticalOffset = Math.min(scrollPane.getVerticalScrollBar().getMaximum() - getExtent(scrollPane.getVerticalScrollBar()), verticalOffset);
 
-    return new Point(hOffset, vOffset);
+    return verticalOffset;
+  }
+
+
+  /**
+   * @param editor target editor
+   * @param scrollOffset scroll offset value. Should be positive for bottom scroll bound and negative for top scroll bound
+   * @param point target point that we are scrolling to
+   * @return y-coordinate of the line obtained by adding scroll offset to the given point
+   */
+  private static int addVerticalOffsetToPosition(@NotNull Editor editor, int scrollOffset, @NotNull Point point) {
+    boolean isUseSoftWraps = editor.getSettings().isUseSoftWraps();
+    if (scrollOffset > 0) {
+      // if we are calculating the bottom scroll bound, add scroll offset to the end of logical line containing the given point,
+      // because we want to see some following lines and not just wrapped visual lines of the same logical line
+      VisualPosition pointLogicalLineEnd = isUseSoftWraps ? getLogicalLineEnd(editor, point) : editor.xyToVisualPosition(point);
+      VisualPosition bottomLine = new VisualPosition(pointLogicalLineEnd.line + scrollOffset, 0);
+      return editor.visualPositionToXY(bottomLine).y;
+    }
+    else if (scrollOffset < 0) {
+      // we count offset from logical line start to see previous lines (not the same line content if soft wrap is enabled)
+      VisualPosition pointLineStart = getLogicalLineStart(editor, point);
+      VisualPosition topLine = new VisualPosition(Math.max(0, pointLineStart.line + scrollOffset), 0);
+      // if soft wraps are enabled, last visual lines of one logical line may be not so helpful. That's why we scroll to logical line start
+      if (editor.getSettings().isUseSoftWraps()) {
+        topLine = getLogicalLineStart(editor, topLine);
+      }
+      return editor.visualPositionToXY(topLine).y;
+    } else {
+      return point.y;
+    }
+  }
+
+  private static @NotNull VisualPosition getLogicalLineEnd(@NotNull Editor editor, @NotNull Point point) {
+    LogicalPosition logicalPosition = editor.xyToLogicalPosition(point);
+    if (logicalPosition.line < 0) {
+      return new VisualPosition(0, 0);
+    }
+
+    if (logicalPosition.line < editor.getDocument().getLineCount()) {
+      int endOffset = editor.getDocument().getLineEndOffset(logicalPosition.line);
+      return editor.offsetToVisualPosition(endOffset);
+    }
+
+    VisualPosition textEndPosition = editor.logicalToVisualPosition(new LogicalPosition(editor.getDocument().getLineCount() - 1, 0));
+    int additionalLines = logicalPosition.line + 1 - editor.getDocument().getLineCount();
+    return new VisualPosition(textEndPosition.line + additionalLines, 0);
+  }
+
+  private static @NotNull VisualPosition getLogicalLineStart(@NotNull Editor editor, @NotNull Point point) {
+    if (editor.getSettings().isUseSoftWraps()) {
+      LogicalPosition logicalPosition = editor.xyToLogicalPosition(point);
+      return editor.logicalToVisualPosition(new LogicalPosition(logicalPosition.line, 0));
+    } else {
+      VisualPosition visualPosition = editor.xyToVisualPosition(point);
+      return new VisualPosition(visualPosition.line, 0);
+    }
+  }
+
+  private static @NotNull VisualPosition getLogicalLineStart(@NotNull Editor editor, @NotNull VisualPosition visualPosition) {
+    LogicalPosition logicalPosition = editor.visualToLogicalPosition(visualPosition);
+    return editor.logicalToVisualPosition(new LogicalPosition(logicalPosition.line, 0));
   }
 
   @Nullable
