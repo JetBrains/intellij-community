@@ -23,8 +23,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
 
-import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.parseComparisonMessage;
-
 /**
  * @author Vladislav.Soroka
  */
@@ -123,9 +121,12 @@ public class AfterTestEventProcessor extends AbstractTestEventProcessor {
         testProxy.setTestComparisonFailed(message, stackTrace, actualText, expectedText, filePath, actualFilePath, true);
       }
       else {
-        var comparisonPair = parseComparisonMessage(message);
-        if (comparisonPair != null) {
-          testProxy.setTestComparisonFailed(message, stackTrace, comparisonPair.second, comparisonPair.first);
+        var comparisonResult = AssertionParser.parse(message);
+        if (comparisonResult != null) {
+          var localizedMessage = ObjectUtils.chooseNotNull(comparisonResult.getMessage(), "");
+          var actualText = comparisonResult.getActual();
+          var expectedText = comparisonResult.getExpected();
+          testProxy.setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText);
         }
         else {
           testProxy.setTestFailed(message, stackTrace, "error".equals(failureType));
