@@ -55,7 +55,8 @@ import java.util.concurrent.locks.ReentrantLock;
 public final class FileChannelInterruptsRetryer implements AutoCloseable {
   private static final Logger LOG = Logger.getInstance(FileChannelInterruptsRetryer.class);
 
-  private static final boolean LOG_STACKTRACE_OF_TOO_LONG_RETRY_CHAINS = SystemProperties.getBooleanProperty("idea.vfs.LOG_STACKTRACE_OF_TOO_LONG_RETRY_CHAINS", true);
+  private static final boolean LOG_STACKTRACE_OF_TOO_LONG_RETRY_CHAINS =
+    SystemProperties.getBooleanProperty("idea.vfs.LOG_STACKTRACE_OF_TOO_LONG_RETRY_CHAINS", true);
 
   private final @NotNull Lock openCloseLock = new ReentrantLock();
   private final @NotNull Path path;
@@ -72,14 +73,20 @@ public final class FileChannelInterruptsRetryer implements AutoCloseable {
   }
 
   public <T> T retryIfInterrupted(final @NotNull FileChannelIdempotentOperation<T> operation) throws IOException {
-    if (!isOpen()) {
-      throw new ClosedChannelException();
-    }
     boolean interruptedStatusWasCleared = false;
     try {
       for (int turn = 0; ; turn++) {
         final FileChannel channelLocalCopy = channel;
+        if (channelLocalCopy == null && turn == 0) {
+          //we haven't tried yet -> just reject
+          throw new ClosedChannelException();
+        }
         try {
+          if (channelLocalCopy == null && turn >= 0) {
+            //we have tried already, and failed, so now we can't just reject, since previous unsuccessful
+            // attempts may corrupt the data -> throw CCException (which will be caught and re-tried)
+            throw new ClosedChannelException();
+          }
           return operation.execute(channelLocalCopy);
         }
         catch (ClosedChannelException e) {
@@ -117,7 +124,6 @@ public final class FileChannelInterruptsRetryer implements AutoCloseable {
           //         from the method start.
           //         (See @Ignored test ResilientFileChannel_MultiThreaded_Test.onceClosed_FileChannelInterruptsRetryer_RemainsClosedForever
           //         which fails now)
-
 
 
           if (LOG_STACKTRACE_OF_TOO_LONG_RETRY_CHAINS && (turn % 100 == 99)) {
