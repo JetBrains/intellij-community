@@ -3,7 +3,6 @@ package com.intellij.codeInspection.tests.kotlin.logging
 import com.intellij.codeInspection.logging.LoggingPlaceholderCountMatchesArgumentCountInspection
 import com.intellij.codeInspection.tests.JvmLanguage
 import com.intellij.codeInspection.tests.logging.LoggingPlaceholderCountMatchesArgumentCountInspectionTestBase
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import org.junit.experimental.runners.Enclosed
 import org.junit.runner.RunWith
 
@@ -189,7 +188,6 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
           var LOG = LoggerFactory.getLogger()
           fun m(a: String, b: Int, c: Any) {
               LOG.info("test {} for test {} in test {}", *arrayOf(a, b, c))
-            LOG.info("<warning descr="More arguments provided (4) than placeholders specified (3)">test {} for test {} in test {}</warning>", *arrayOf(a, b, c, 1))
           }
       }
          """.trimIndent())
@@ -357,6 +355,12 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
                     LOG.info("test {}", Supplier<Any> { "test" }, s3)
                     LOG.info("test {}", Supplier<Any> { "test" }, Supplier<Any> { RuntimeException() })
                     LOG.info("test {}", Supplier<Any> { "test" })
+                    LOG.info("<warning descr="More arguments provided (2) than placeholders specified (1)">test {}</warning>", {""}, {" "})
+                    LOG.info("test {}", {""}, {RuntimeException()})
+                    val function: () -> String = { "RuntimeException()" }
+                    LOG.info("<warning descr="More arguments provided (2) than placeholders specified (1)">test {}</warning>", {""},   function)
+                    val function2: () -> RuntimeException = { RuntimeException() }
+                    LOG.info("test {}", {""},   function2)
                 }
             }
         
@@ -410,15 +414,7 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
 
   class Slf4JTest : LoggingPlaceholderCountMatchesArgumentCountInspectionTestBase() {
     fun `test slf4j disable slf4jToLog4J2Type`() {
-      val currentProfile = ProjectInspectionProfileManager.getInstance(project).currentProfile
-      val inspectionTool = currentProfile.getInspectionTool(inspection.shortName, project)
-      val tool = inspectionTool?.tool
-      if (tool is LoggingPlaceholderCountMatchesArgumentCountInspection) {
-        tool.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.NO
-      }
-      else {
-        fail()
-      }
+      inspection.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.NO
       myFixture.testHighlighting(JvmLanguage.KOTLIN, """
         import org.slf4j.LoggerFactory
 
@@ -442,15 +438,7 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
     }
 
     fun `test slf4j auto slf4jToLog4J2Type`() {
-      val currentProfile = ProjectInspectionProfileManager.getInstance(project).currentProfile
-      val inspectionTool = currentProfile.getInspectionTool(inspection.shortName, project)
-      val tool = inspectionTool?.tool
-      if (tool is LoggingPlaceholderCountMatchesArgumentCountInspection) {
-        tool.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.AUTO
-      }
-      else {
-        fail()
-      }
+      inspection.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.AUTO
       myFixture.addClass("""
         package org.apache.logging.slf4j;
         public interface Log4jLogger {
@@ -474,15 +462,7 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
     }
 
     fun `test slf4j`() {
-      val currentProfile = ProjectInspectionProfileManager.getInstance(project).currentProfile
-      val inspectionTool = currentProfile.getInspectionTool(inspection.shortName, project)
-      val tool = inspectionTool?.tool
-      if (tool is LoggingPlaceholderCountMatchesArgumentCountInspection) {
-        tool.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.NO
-      }
-      else {
-        fail()
-      }
+      inspection.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.NO
 
       myFixture.testHighlighting(JvmLanguage.KOTLIN, """
         import org.slf4j.*;
@@ -490,9 +470,7 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
         private val brackets: String = "{}"
         fun foo() {
           logger?.debug("<warning descr="Fewer arguments provided (2) than placeholders specified (3)">test {} {} {}</warning>", 1, 2) //warn
-          logger?.debug("<warning descr="More arguments provided (3) than placeholders specified (2)">test {} {}</warning>", *arrayOf(1, 2, 3)) //warn
           logger?.debug("test {} {}", *arrayOf(1, 2))
-          logger?.debug("<warning descr="Fewer arguments provided (2) than placeholders specified (3)">test {} {} {}</warning>", *arrayOf(1, 2, Exception())) //warn
           logger?.debug("test {} {}", *arrayOf(1, 2, Exception()))
           logger?.debug(<warning descr="More arguments provided (2) than placeholders specified (1)">"test " + brackets</warning>, 1, 2) //warn
           logger?.debug("test {}" + brackets, 1, 2)

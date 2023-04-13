@@ -3,7 +3,6 @@ package com.intellij.codeInspection.tests.java.logging
 import com.intellij.codeInspection.logging.LoggingPlaceholderCountMatchesArgumentCountInspection
 import com.intellij.codeInspection.tests.JvmLanguage
 import com.intellij.codeInspection.tests.logging.LoggingPlaceholderCountMatchesArgumentCountInspectionTestBase
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 
 class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPlaceholderCountMatchesArgumentCountInspectionTestBase() {
 
@@ -276,15 +275,8 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       """.trimIndent())
   }
   fun `test slf4j disable slf4jToLog4J2Type`() {
-    val currentProfile = ProjectInspectionProfileManager.getInstance(project).currentProfile
-    val inspectionTool = currentProfile.getInspectionTool(inspection.shortName, project)
-    val tool = inspectionTool?.tool
-    if (tool is LoggingPlaceholderCountMatchesArgumentCountInspection) {
-      tool.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.NO
-    }
-    else {
-      fail()
-    }
+    inspection.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.NO
+
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.*;
       class X {
@@ -325,15 +317,8 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       """.trimIndent())
   }
   fun `test slf4j auto slf4jToLog4J2Type`() {
-    val currentProfile = ProjectInspectionProfileManager.getInstance(project).currentProfile
-    val inspectionTool = currentProfile.getInspectionTool(inspection.shortName, project)
-    val tool = inspectionTool?.tool
-    if (tool is LoggingPlaceholderCountMatchesArgumentCountInspection) {
-      tool.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.AUTO
-    }
-    else {
-      fail()
-    }
+    inspection.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.AUTO
+
     myFixture.addClass("""
       package org.apache.logging.slf4j;
       public interface Log4jLogger {

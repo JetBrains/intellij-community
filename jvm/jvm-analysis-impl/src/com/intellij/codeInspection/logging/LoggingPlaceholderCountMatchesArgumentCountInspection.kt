@@ -10,12 +10,14 @@ import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.psi.*
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.uast.UastHintedVisitorAdapter
+import com.intellij.util.containers.addIfNotNull
 import com.siyeh.ig.callMatcher.CallMapper
 import com.siyeh.ig.callMatcher.CallMatcher
 import com.siyeh.ig.format.FormatDecode
 import com.siyeh.ig.psiutils.TypeUtils
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
+import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLocalInspectionTool() {
 
@@ -73,24 +75,15 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
 
       val arguments = node.valueArguments
       var argumentCount = arguments.size - index
-      var lastArgumentIsException = hasThrowableType(arguments[arguments.size - 1])
-      var lastArgumentIsSupplier = couldBeThrowableSupplier(loggerType, parameters[parameters.size - 1], arguments[arguments.size - 1])
+      val lastArgumentIsException = hasThrowableType(arguments[arguments.size - 1])
+      val lastArgumentIsSupplier = couldBeThrowableSupplier(loggerType, parameters[parameters.size - 1], arguments[arguments.size - 1])
 
       if (argumentCount == 1 && parameters.size > 1) {
         val lastParameter = parameters.last()
         val argument = arguments[index]
         val argumentType = argument.getExpressionType()
         if (argumentType is PsiArrayType && lastParameter.type is PsiArrayType) {
-          if (isArrayCreation(argument)) {
-            val initializers = getInitializers(argument) ?: return true
-            argumentCount = initializers.size
-            lastArgumentIsException = argumentCount > 0 && hasThrowableType(initializers[initializers.size - 1])
-            lastArgumentIsSupplier = argumentCount > 0 && couldBeThrowableSupplier(loggerType, parameters[parameters.size - 1],
-                                                                                   initializers[initializers.size - 1])
-          }
-          else {
-            return true
-          }
+          return true
         }
       }
       val logStringArgument = arguments[index - 1]
@@ -252,41 +245,6 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
       return PlaceholderCountResult(count, if (full) PlaceholdersStatus.EXACTLY else PlaceholdersStatus.PARTIAL)
     }
 
-    private fun getInitializers(argument: UExpression): List<UExpression>? {
-      //mostly for java
-      if (argument is UCallExpression && argument.kind == UastCallKind.NEW_ARRAY_WITH_INITIALIZER) {
-        return argument.valueArguments
-      }
-      //mostly for scala
-      if (argument is UBinaryExpressionWithType) {
-        return (argument.operand as? UCallExpression)?.valueArguments
-      }
-      //mostly for kotlin
-      if (argument is UCallExpression) {
-        return argument.valueArguments
-      }
-      //for others, don't check further
-      return null
-    }
-
-    private fun isArrayCreation(argument: UExpression): Boolean {
-      val argumentType = argument.getExpressionType() as? PsiArrayType ?: return false
-      //mostly for java
-      if (argumentType.equalsToText(
-          "java.lang.Object[]") && argument is UCallExpression && argument.kind == UastCallKind.NEW_ARRAY_WITH_INITIALIZER) return true
-      //mostly for kotlin
-      if (argument is UCallExpression) {
-        if (argument.receiver == null && argument.resolve() == null && argument.methodName == "arrayOf") return true
-      }
-      //mostly for scala
-      if (argument is UBinaryExpressionWithType && argument.operationKind == UastBinaryExpressionWithTypeKind.TypeCast.INSTANCE) {
-        val operand = argument.operand
-        if (operand is UCallExpression && operand.methodName == "Array" && operand.resolve()?.containingClass?.name == "Array$") return true
-      }
-      //for others, don't check further
-      return false
-    }
-
     private fun couldBeThrowableSupplier(loggerType: LoggerType, lastParameter: UParameter?, lastArgument: UExpression?): Boolean {
       if (loggerType != LoggerType.LOG4J_OLD_STYLE && loggerType != LoggerType.LOG4J_FORMATTED_STYLE) {
         return false
@@ -303,25 +261,21 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
           lastParameterType, "org.apache.logging.log4j.util.Supplier"))) {
         return false
       }
-      val sourcePsi = lastArgument.sourcePsi ?: return false
+      val sourcePsi = lastArgument.sourcePsi ?: return true
       val throwable = PsiType.getJavaLangThrowable(sourcePsi.manager, sourcePsi.resolveScope)
-      //java lambda
-      if (sourcePsi is PsiLambdaExpression) {
-        for (expression in LambdaUtil.getReturnExpressions(sourcePsi)) {
-          val expressionType = expression.type
-          if (expression == null || expressionType == null || !throwable.isConvertibleFrom(expressionType)) {
-            return false
-          }
+
+      if (lastArgument is ULambdaExpression) {
+        return !lastArgument.getReturnExpressions().any {
+          val expressionType = it.getExpressionType()
+          expressionType != null && !throwable.isConvertibleFrom(expressionType)
         }
-        return true
       }
-      //java reference expression
-      if (sourcePsi is PsiMethodReferenceExpression) {
-        val psiType = PsiMethodReferenceUtil.getMethodReferenceReturnType(sourcePsi) ?: return false
+
+      if (lastArgument is UCallableReferenceExpression) {
+        val psiType = lastArgument.getMethodReferenceReturnType() ?: return true
         return throwable.isConvertibleFrom(psiType)
       }
-      //for other languages with functional interface,
-      //if the type is not defined, then it can be exception supplier
+
       val type = lastArgument.getExpressionType() ?: return true
       val functionalReturnType = LambdaUtil.getFunctionalInterfaceReturnType(type) ?: return true
       return throwable.isConvertibleFrom(functionalReturnType)
@@ -330,12 +284,7 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
     private fun hasThrowableType(lastArgument: UExpression): Boolean {
       val type = lastArgument.getExpressionType()
       if (type is PsiDisjunctionType) {
-        for (disjunction in type.disjunctions) {
-          if (!InheritanceUtil.isInheritor(disjunction, CommonClassNames.JAVA_LANG_THROWABLE)) {
-            return false
-          }
-        }
-        return true
+        return type.disjunctions.all { InheritanceUtil.isInheritor(it, CommonClassNames.JAVA_LANG_THROWABLE) }
       }
       return InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_THROWABLE)
     }
@@ -476,4 +425,26 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
 
 
   private data class Result(val argumentCount: Int, val placeholderCount: Int, val result: ResultType)
+}
+
+private fun UCallableReferenceExpression.getMethodReferenceReturnType(): PsiType? {
+  val method = this.resolveToUElement() as? UMethod ?: return null
+  if (method.isConstructor) {
+    val psiMethod = method.javaPsi
+    val containingClass = psiMethod.containingClass ?: return null
+    return JavaPsiFacade.getElementFactory(containingClass.project).createType(containingClass)
+  }
+  return method.returnType
+}
+
+private fun ULambdaExpression.getReturnExpressions(): List<UExpression> {
+  val returnExpressions = mutableListOf<UExpression>()
+  val visitor: AbstractUastVisitor = object : AbstractUastVisitor() {
+    override fun visitReturnExpression(node: UReturnExpression): Boolean {
+      returnExpressions.addIfNotNull(node.returnExpression)
+      return true
+    }
+  }
+  body.accept(visitor)
+  return returnExpressions
 }
