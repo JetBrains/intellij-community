@@ -1355,6 +1355,16 @@ public abstract class K1IdeK2CodeKotlinSteppingTestGenerated extends AbstractK1I
             runTest("testData/stepping/custom/smartStepIntoInlineFun.kt");
         }
 
+        @TestMetadata("smartStepIntoInlineLambdasInFunctionsWithSameName.kt")
+        public void testSmartStepIntoInlineLambdasInFunctionsWithSameName() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoInlineLambdasInFunctionsWithSameName.kt");
+        }
+
+        @TestMetadata("smartStepIntoInlineLambdasOnSameLine.kt")
+        public void testSmartStepIntoInlineLambdasOnSameLine() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoInlineLambdasOnSameLine.kt");
+        }
+
         @TestMetadata("smartStepIntoInlinedFunLiteral.kt")
         public void testSmartStepIntoInlinedFunLiteral() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoInlinedFunLiteral.kt");

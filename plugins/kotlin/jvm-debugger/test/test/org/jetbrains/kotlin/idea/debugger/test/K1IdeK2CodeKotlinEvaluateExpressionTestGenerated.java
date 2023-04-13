@@ -163,6 +163,69 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/evaluation/singleBreakpoint/contextReceivers")
+        public static class ContextReceivers extends AbstractK1IdeK2CodeKotlinEvaluateExpressionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+            }
+
+            @TestMetadata("contextClassAndContextReceiversInMethod.kt")
+            public void testContextClassAndContextReceiversInMethod() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/contextReceivers/contextClassAndContextReceiversInMethod.kt");
+            }
+
+            @TestMetadata("contextClassAndContextReceiversInSuspendMethod.kt")
+            public void testContextClassAndContextReceiversInSuspendMethod() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/contextReceivers/contextClassAndContextReceiversInSuspendMethod.kt");
+            }
+
+            @TestMetadata("contextClassReceiversInMethod.kt")
+            public void testContextClassReceiversInMethod() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/contextReceivers/contextClassReceiversInMethod.kt");
+            }
+
+            @TestMetadata("contextReceiversInFunction.kt")
+            public void testContextReceiversInFunction() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/contextReceivers/contextReceiversInFunction.kt");
+            }
+
+            @TestMetadata("contextReceiversInInlineFunction.kt")
+            public void testContextReceiversInInlineFunction() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/contextReceivers/contextReceiversInInlineFunction.kt");
+            }
+
+            @TestMetadata("contextReceiversInLambdas.kt")
+            public void testContextReceiversInLambdas() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/contextReceivers/contextReceiversInLambdas.kt");
+            }
+
+            @TestMetadata("contextReceiversInSamLambdas.kt")
+            public void testContextReceiversInSamLambdas() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/contextReceivers/contextReceiversInSamLambdas.kt");
+            }
+
+            @TestMetadata("contextReceiversInSuspendFunction.kt")
+            public void testContextReceiversInSuspendFunction() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/contextReceivers/contextReceiversInSuspendFunction.kt");
+            }
+
+            @TestMetadata("functionCallWithImplicitContextClassReceiverCapturing.kt")
+            public void testFunctionCallWithImplicitContextClassReceiverCapturing() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/contextReceivers/functionCallWithImplicitContextClassReceiverCapturing.kt");
+            }
+
+            @TestMetadata("functionCallWithImplicitContextReceiverCapturing.kt")
+            public void testFunctionCallWithImplicitContextReceiverCapturing() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/contextReceivers/functionCallWithImplicitContextReceiverCapturing.kt");
+            }
+
+            @TestMetadata("nestedContextClassReceivers.kt")
+            public void testNestedContextClassReceivers() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/contextReceivers/nestedContextClassReceivers.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/coroutines")
         public static class Coroutines extends AbstractK1IdeK2CodeKotlinEvaluateExpressionTest {
             private void runTest(String testDataFilePath) throws Exception {
