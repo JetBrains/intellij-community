@@ -44,7 +44,7 @@ public final class QuickDocUtil {
    * @deprecated No op in v2 implementation.
    * Use {@link DocumentationResult#asyncDocumentation} or {@link DocumentationResult.Documentation#updates} for async updates.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void updateQuickDoc(@NotNull final Project project, @NotNull final PsiElement element, @Nullable @Nls final String documentation) {
     if (StringUtil.isEmpty(documentation)) return;
     // modal dialogs with fragment editors fix: can't guess proper modality state here
@@ -60,7 +60,7 @@ public final class QuickDocUtil {
    * @deprecated Returns `null` in v2 implementation.
    * Use {@link  DocumentationResult#asyncDocumentation} or {@link DocumentationResult.Documentation#updates} for async updates.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public static DocumentationComponent getActiveDocComponent(@NotNull Project project) {
     DocumentationManager documentationManager = DocumentationManager.getInstance(project);
@@ -100,7 +100,7 @@ public final class QuickDocUtil {
   /**
    * @deprecated No op in v2 implementation.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void updateQuickDocAsync(@NotNull PsiElement element,
                                          @NotNull CharSequence prefix,
                                          @NotNull Consumer<? super Consumer<Object>> provider) {

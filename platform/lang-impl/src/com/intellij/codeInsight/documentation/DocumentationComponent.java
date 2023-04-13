@@ -79,7 +79,7 @@ import java.util.List;
  * @see com.intellij.lang.documentation.ide.ui.DocumentationToolWindowUI
  * @deprecated Unused in v2 implementation. Unsupported: use at own risk.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class DocumentationComponent extends JPanel implements Disposable, DataProvider, WidthBasedLayout {
   private static final Logger LOG = Logger.getInstance(DocumentationComponent.class);
   static final DataProvider HELP_DATA_PROVIDER =

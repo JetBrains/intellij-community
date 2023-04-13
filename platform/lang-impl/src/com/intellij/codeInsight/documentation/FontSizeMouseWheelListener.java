@@ -14,7 +14,7 @@ import java.util.function.Consumer;
 /**
  * @deprecated Unused in v2 implementation.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 @Internal
 public final class FontSizeMouseWheelListener implements MouseWheelListener {
 

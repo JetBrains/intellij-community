@@ -108,7 +108,7 @@ import static com.intellij.lang.documentation.DocumentationMarkup.*;
 /**
  * @deprecated Unused in v2 implementation. Unsupported: use at own risk.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class DocumentationManager extends DockablePopupManager<DocumentationComponent> {
   public static final String JAVADOC_LOCATION_AND_SIZE = "javadoc.popup";
   public static final String NEW_JAVADOC_LOCATION_AND_SIZE = "javadoc.popup.new";
