@@ -1,0 +1,14 @@
+[
+ {
+  matchedName: "html/attributes/disabled",
+  origin: "basic@null (<none>)",
+  complete: true,
+  priority: NORMAL,
+  segments: [
+   {
+    name-part: "disabled",
+    symbol: <self>,
+   },
+  ],
+ },
+]

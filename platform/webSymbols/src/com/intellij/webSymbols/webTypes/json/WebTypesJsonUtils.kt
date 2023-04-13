@@ -27,7 +27,6 @@ import com.intellij.webSymbols.query.WebSymbolNameConverter
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.utils.NameCaseUtils
 import com.intellij.webSymbols.utils.lastWebSymbol
-import com.intellij.webSymbols.webTypes.WebTypesSymbolTypeSupport
 import com.intellij.webSymbols.webTypes.filters.WebSymbolsFilter
 import com.intellij.webSymbols.webTypes.json.NameConversionRulesSingle.NameConverter
 import java.util.*
@@ -414,12 +413,12 @@ internal fun <T> buildNameConverters(map: Map<String, T>?,
   }
 }
 
-internal fun List<Type>.mapToTypeReferences(): List<WebTypesSymbolTypeSupport.TypeReference> =
+internal fun List<Type>.mapToTypeReferences(): List<WebSymbolTypeSupport.TypeReference> =
   mapNotNull {
     when (val reference = it.value) {
-      is String -> WebTypesSymbolTypeSupport.TypeReference(null, reference)
+      is String -> WebSymbolTypeSupport.TypeReference(null, reference)
       is TypeReference -> if (reference.name != null)
-        WebTypesSymbolTypeSupport.TypeReference(reference.module, reference.name)
+        WebSymbolTypeSupport.TypeReference(reference.module, reference.name)
       else null
       else -> null
     }
@@ -433,6 +432,7 @@ internal fun ContextBase.evaluate(context: WebSymbolsContext): Boolean =
     is ContextNot -> !not.evaluate(context)
     else -> throw IllegalStateException(this.javaClass.simpleName)
   }
+
 fun parseWebTypesPath(path: String?, context: WebSymbol?): List<WebSymbolQualifiedName> =
   if (path != null)
     parseWebTypesPath(StringUtil.split(path, "/", true, true), context)

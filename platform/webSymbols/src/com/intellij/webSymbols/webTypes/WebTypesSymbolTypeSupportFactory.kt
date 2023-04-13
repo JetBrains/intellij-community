@@ -9,25 +9,16 @@ import com.intellij.webSymbols.webTypes.json.WebTypes
 import com.intellij.webSymbols.webTypes.json.jsTypesSyntaxWithLegacy
 import java.util.*
 
-interface WebTypesSymbolTypeSupport : WebSymbolTypeSupport {
+interface WebTypesSymbolTypeSupportFactory {
 
-  fun resolve(types: List<TypeReference>): Any?
-
-  data class TypeReference(
-    val module: String?,
-    val name: String
-  )
-
-  interface Factory {
-    fun createTypeSupport(webTypes: WebTypes, project: Project?, context: List<VirtualFile>): WebTypesSymbolTypeSupport
-  }
+  fun createTypeSupport(webTypes: WebTypes, project: Project?, context: List<VirtualFile>): WebSymbolTypeSupport
 
   companion object {
 
     private const val DEFAULT_TYPE_SYNTAX = "typescript"
 
     @JvmStatic
-    fun get(webTypes: WebTypes, project: Project? = null, context: List<VirtualFile> = emptyList()): WebTypesSymbolTypeSupport =
+    fun get(webTypes: WebTypes, project: Project? = null, context: List<VirtualFile> = emptyList()): WebSymbolTypeSupport =
       (webTypes.jsTypesSyntaxWithLegacy?.name ?: DEFAULT_TYPE_SYNTAX)
         .let { syntax -> WebTypesSymbolTypeSupportFactoryEP.EP_NAME.forKey(syntax.lowercase(Locale.US)) }
         .map { it.createTypeSupport(webTypes, project, context) }
@@ -38,9 +29,8 @@ interface WebTypesSymbolTypeSupport : WebSymbolTypeSupport {
           }
         }
 
-    private object EmptySupport : WebTypesSymbolTypeSupport {
-      override fun resolve(types: List<TypeReference>): Any? = null
-
+    private object EmptySupport : WebSymbolTypeSupport {
+      override fun resolve(types: List<WebSymbolTypeSupport.TypeReference>): Any? = null
     }
 
   }

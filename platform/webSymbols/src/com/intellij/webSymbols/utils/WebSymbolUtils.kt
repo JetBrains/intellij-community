@@ -19,10 +19,7 @@ import com.intellij.webSymbols.*
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.impl.sortSymbolsByPriority
 import com.intellij.webSymbols.impl.toCodeCompletionItems
-import com.intellij.webSymbols.query.WebSymbolMatch
-import com.intellij.webSymbols.query.WebSymbolNamesProvider
-import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
-import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
+import com.intellij.webSymbols.query.*
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
 import java.util.*
 import javax.swing.Icon
@@ -120,17 +117,20 @@ fun WebSymbol.match(nameToMatch: String,
     }
   }
 
-  val queryExecutor = params.queryExecutor
-  val queryNames = queryExecutor.namesProvider.getNames(this.namespace, this.kind,
-                                                        nameToMatch, WebSymbolNamesProvider.Target.NAMES_QUERY)
-  val symbolNames = queryExecutor.namesProvider.getNames(this.namespace, this.kind, this.name,
-                                                         WebSymbolNamesProvider.Target.NAMES_MAP_STORAGE).toSet()
-  return if (queryNames.any { symbolNames.contains(it) }) {
+  return if (nameMatches(nameToMatch, params.queryExecutor)) {
     listOf(this.withMatchedName(nameToMatch))
   }
   else {
     emptyList()
   }
+}
+
+fun WebSymbol.nameMatches(name: String, queryExecutor: WebSymbolsQueryExecutor): Boolean {
+  val queryNames = queryExecutor.namesProvider.getNames(this.namespace, this.kind,
+                                                        name, WebSymbolNamesProvider.Target.NAMES_QUERY)
+  val symbolNames = queryExecutor.namesProvider.getNames(this.namespace, this.kind, this.name,
+                                                         WebSymbolNamesProvider.Target.NAMES_MAP_STORAGE).toSet()
+  return queryNames.any { symbolNames.contains(it) }
 }
 
 fun WebSymbolNameSegment.getProblemKind(): ProblemKind? =

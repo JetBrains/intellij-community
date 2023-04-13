@@ -8,12 +8,8 @@ import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.webTypes.json.SourceBase
 import org.jetbrains.annotations.ApiStatus.Internal
 
-@Suppress("DEPRECATION")
 @Internal
 interface WebTypesJsonOrigin : WebSymbolOrigin {
-  override val typeSupport: WebTypesSymbolTypeSupport?
-    get() = null
-
   fun resolveSourceSymbol(source: SourceBase, cacheHolder: UserDataHolderEx): PsiElement?
   fun resolveSourceLocation(source: SourceBase): WebTypesSymbol.Location?
   fun renderDescription(description: String): String

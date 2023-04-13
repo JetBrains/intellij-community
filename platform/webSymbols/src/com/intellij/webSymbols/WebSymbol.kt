@@ -160,9 +160,11 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
     const val KIND_CSS_PSEUDO_CLASSES = "pseudo-classes"
     const val KIND_CSS_FUNCTIONS = "functions"
     const val KIND_CSS_CLASSES = "classes"
+    const val KIND_CSS_PARTS = "parts"
 
     const val KIND_JS_EVENTS = "events"
     const val KIND_JS_PROPERTIES = "properties"
+    const val KIND_JS_STATIC_PROPERTIES = "static-properties"
 
     /** Specify language to inject in an HTML element */
     const val PROP_INJECT_LANGUAGE = "inject-language"

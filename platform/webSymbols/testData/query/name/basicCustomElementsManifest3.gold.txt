@@ -1,0 +1,42 @@
+[
+ {
+  matchedName: "html/attributes/deprecated",
+  origin: "basic@null (<none>)",
+  complete: true,
+  deprecated: true,
+  priority: NORMAL,
+  segments: [
+   {
+    name-part: "deprecated",
+    deprecated: true,
+    symbol: <self>,
+   },
+  ],
+ },
+ {
+  matchedName: "html/attributes/deprecatedWithMessage",
+  origin: "basic@null (<none>)",
+  complete: true,
+  deprecated: true,
+  priority: NORMAL,
+  segments: [
+   {
+    name-part: "deprecatedWithMessage",
+    deprecated: true,
+    symbol: <self>,
+   },
+  ],
+ },
+ {
+  matchedName: "html/attributes/disabled",
+  origin: "basic@null (<none>)",
+  complete: true,
+  priority: NORMAL,
+  segments: [
+   {
+    name-part: "disabled",
+    symbol: <self>,
+   },
+  ],
+ },
+]

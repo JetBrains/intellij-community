@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.sun.codemodel.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -32,7 +33,7 @@ import static com.intellij.webSymbols.webTypes.gen.WebTypesObjectRule.addInterfa
 import static org.apache.commons.lang3.StringUtils.contains;
 import static org.apache.commons.lang3.StringUtils.split;
 
-public class WebTypesOneOfRule implements Rule<JPackage, JType> {
+public class WebTypesComplexTypeRule implements Rule<JPackage, JType> {
 
   private final WebTypesRuleFactory ruleFactory;
 
@@ -47,7 +48,7 @@ public class WebTypesOneOfRule implements Rule<JPackage, JType> {
     tokenTypeMap.put("boolean", Arrays.asList("VALUE_TRUE", "VALUE_FALSE"));
   }
 
-  protected WebTypesOneOfRule(WebTypesRuleFactory ruleFactory) {
+  protected WebTypesComplexTypeRule(WebTypesRuleFactory ruleFactory) {
     this.ruleFactory = ruleFactory;
   }
 
@@ -57,39 +58,79 @@ public class WebTypesOneOfRule implements Rule<JPackage, JType> {
                      JsonNode parent,
                      JPackage _package,
                      Schema schema) {
+    if (node.has("enum")) return null;
+    JsonNode allOf = node.get("allOf");
+    JsonNode anyOf = node.get("anyOf");
     JsonNode oneOf = node.get("oneOf");
-    if (oneOf != null && oneOf.isArray() && oneOf.size() > 1
-        && node.get("anyOf") == null && node.get("allOf") == null) {
-      if (schema.getJavaType() != null) {
-        return schema.getJavaType();
-      }
-      JsonNode lenientDeserializerNode = node.get("javaLenientDeserialize");
-      boolean lenientDeserialize = lenientDeserializerNode != null && lenientDeserializerNode.asBoolean(false);
-      Map<String, List<ResolvedType>> resolved = preprocess((ArrayNode)oneOf, schema);
+    Set<String> typeNames = null;
 
-      if (resolved.entrySet().stream().anyMatch(entry -> !"object".equals(entry.getKey()) && entry.getValue().size() > 1)) {
-        ruleFactory.getLogger().error("Only one kind of non-object type can be specified within oneOf. Error for : " + nodeName);
+    ArrayNode arrayNode = null;
+    String arrayNodeName = null;
+    if (anyOf != null && anyOf.isArray() && anyOf.size() > 1 && oneOf == null && allOf == null) {
+      arrayNodeName = "anyOf";
+      arrayNode = (ArrayNode)anyOf;
+    }
+    else if (oneOf != null && oneOf.isArray() && oneOf.size() > 1 && anyOf == null && allOf == null) {
+      arrayNodeName = "oneOf";
+      arrayNode = (ArrayNode)oneOf;
+    }
+    else {
+      typeNames = getTypeNames(node);
+      typeNames.remove("array");
+      typeNames.remove("object");
+    }
+    Map<String, List<ResolvedType>> resolved;
+    if (arrayNode != null) {
+      resolved = preprocess(arrayNode, arrayNodeName, schema);
+    }
+    else {
+      if (typeNames.size() <= 1) {
         return null;
       }
-      if (resolved.containsKey(null)) {
-        ruleFactory.getLogger().error("One of oneOf branches has unspecified type. Error for : " + nodeName);
-        return null;
+      var fromCache = ruleFactory.getPrimitiveTypeFromCache(nodeName, typeNames);
+      if (fromCache != null) {
+        return fromCache;
       }
-
-      JClass objectsSuperType = null;
-      JDefinedClass wrapperClass = null;
-      if (resolved.keySet().size() > 1) {
-        wrapperClass = createClass(nodeName, node, _package, false);
-        Map<String, Object> map = new HashMap<>();
-        map.put("tokens", new HashSet<>(resolved.keySet()));
-        wrapperClass.metadata = map;
-        schema.setJavaTypeIfEmpty(wrapperClass);
+      resolved = new HashMap<>();
+      for (String type : typeNames) {
+        resolved.computeIfAbsent(type, (k) -> new ArrayList<>()).add(new ResolvedPrimitiveType(type));
       }
+    }
+    if (schema.getJavaType() != null) {
+      return schema.getJavaType();
+    }
+    JsonNode lenientDeserializerNode = node.get("javaLenientDeserialize");
+    boolean lenientDeserialize = lenientDeserializerNode != null && lenientDeserializerNode.asBoolean(false);
 
-      List<ResolvedType> objects = resolved.get("object");
+    if (resolved.entrySet().stream().anyMatch(entry -> !"object".equals(entry.getKey()) && entry.getValue().size() > 1)) {
+      ruleFactory.getLogger()
+        .error("Only one kind of non-object type can be specified within " + arrayNodeName + ". Error for : " + nodeName);
+      return null;
+    }
+    if (resolved.containsKey(null)) {
+      ruleFactory.getLogger().error("One of " + arrayNodeName + " branches has unspecified type. Error for : " + nodeName);
+      return null;
+    }
+
+    JClass objectsSuperType = null;
+    JDefinedClass wrapperClass = null;
+    if (resolved.keySet().size() > 1) {
+      wrapperClass = createClass(nodeName, node, _package, false);
+      Map<String, Object> map = new HashMap<>();
+      map.put("tokens", new HashSet<>(resolved.keySet()));
+      wrapperClass.metadata = map;
+      schema.setJavaTypeIfEmpty(wrapperClass);
+      if (typeNames != null) {
+        ruleFactory.storePrimitiveTypeInCache(nodeName, typeNames, wrapperClass);
+      }
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    List<ResolvedClassType> objects = (List<ResolvedClassType>)(List)resolved.get("object");
+    if (objects != null) {
       if (objects.size() == 1) {
-        ResolvedType obj = objects.get(0);
-        objectsSuperType = (JClass)obj.generate(ruleFactory, nodeName + "-object", oneOf, _package);
+        ResolvedClassType obj = objects.get(0);
+        objectsSuperType = (JClass)obj.generate(ruleFactory, nodeName + "-object", arrayNode, _package);
         schema.setJavaTypeIfEmpty(objectsSuperType);
       }
       else if (objects.size() > 1) {
@@ -101,14 +142,14 @@ public class WebTypesOneOfRule implements Rule<JPackage, JType> {
           schema.setJavaTypeIfEmpty(superType);
           generateEnumClass(nodeName, schema, objects, determinantPropertyName, superType);
           Map<String, JType> subTypes =
-            generateEnumBasedSubTypes(nodeName, oneOf, objects, determinantPropertyName, superType, _package);
+            generateEnumBasedSubTypes(nodeName, arrayNode, objects, determinantPropertyName, superType, _package);
           annotateWithEnumBasedSubtypes(superType, subTypes, determinantPropertyName);
         }
         else if (suitableForDeductionBased(objects)) {
           // Deduction based deserialization
           superType = createClass(nodeName + "-base", node, _package, true);
           schema.setJavaTypeIfEmpty(superType);
-          List<JType> subTypes = generateDeductionBasedSubTypes(nodeName, oneOf, objects, superType, _package);
+          List<JType> subTypes = generateDeductionBasedSubTypes(nodeName, arrayNode, objects, superType, _package);
           annotateWithDeductionBasedSubtypes(superType, subTypes);
         }
         else {
@@ -117,41 +158,41 @@ public class WebTypesOneOfRule implements Rule<JPackage, JType> {
         }
         objectsSuperType = superType;
       }
-      Map<String, JClass> generatedTypes = new LinkedHashMap<>();
-      for (Map.Entry<String, List<ResolvedType>> listEntry : resolved.entrySet()) {
-        if (listEntry.getKey().equals("object")) {
-          generatedTypes.put("object", objectsSuperType);
-        }
-        else {
-          generatedTypes.put(listEntry.getKey(), (JClass)listEntry.getValue().get(0).generate(ruleFactory, nodeName, oneOf, wrapperClass));
-        }
+    }
+    Map<String, JClass> generatedTypes = new LinkedHashMap<>();
+    for (Map.Entry<String, List<ResolvedType>> listEntry : resolved.entrySet()) {
+      if (listEntry.getKey().equals("object")) {
+        generatedTypes.put("object", objectsSuperType);
       }
-      if (wrapperClass != null) {
-        if (generatedTypes.size() == 2 && generatedTypes.get("array") != null) {
-          JType arrayType = generatedTypes.get("array");
-          Pair<JType, JClass> arrayItemType = unpackArrayItemClass(arrayType);
-          if (arrayItemType != null) {
-            Map.Entry<String, List<ResolvedType>> entry = resolved.entrySet().stream()
-              .filter(e -> !e.getKey().equals("array")).findFirst().orElseThrow();
-            JType itemType;
-            if (entry.getKey().equals("object")) {
-              itemType = objectsSuperType;
-            }
-            else {
-              itemType = entry.getValue().get(0).generate(ruleFactory, nodeName, oneOf, wrapperClass);
-            }
-            if (itemType != null && itemType.equals(arrayItemType.getRight())) {
-              generateDeserializeIntoArray(wrapperClass, entry.getKey(), arrayItemType, lenientDeserialize);
-              return wrapperClass;
-            }
+      else {
+        generatedTypes.put(listEntry.getKey(),
+                           (JClass)listEntry.getValue().get(0).generate(ruleFactory, nodeName, arrayNode, wrapperClass));
+      }
+    }
+    if (wrapperClass != null) {
+      if (generatedTypes.size() == 2 && generatedTypes.get("array") != null) {
+        JType arrayType = generatedTypes.get("array");
+        Pair<JType, JClass> arrayItemType = unpackArrayItemClass(arrayType);
+        if (arrayItemType != null) {
+          Map.Entry<String, List<ResolvedType>> entry = resolved.entrySet().stream()
+            .filter(e -> !e.getKey().equals("array")).findFirst().orElseThrow();
+          JType itemType;
+          if (entry.getKey().equals("object")) {
+            itemType = objectsSuperType;
+          }
+          else {
+            itemType = entry.getValue().get(0).generate(ruleFactory, nodeName, arrayNode, wrapperClass);
+          }
+          if (itemType != null && itemType.equals(arrayItemType.getRight())) {
+            generateDeserializeIntoArray(wrapperClass, entry.getKey(), arrayItemType, lenientDeserialize);
+            return wrapperClass;
           }
         }
-        generateDeserializeIntoValueProperty(wrapperClass, generatedTypes, node);
-        return wrapperClass;
       }
-      return schema.getJavaType();
+      generateDeserializeIntoValueProperty(wrapperClass, generatedTypes, node);
+      return wrapperClass;
     }
-    return null;
+    return schema.getJavaType();
   }
 
   private void generateDeserializeIntoValueProperty(JDefinedClass wrapperClass, Map<String, JClass> types, JsonNode node) {
@@ -349,39 +390,40 @@ public class WebTypesOneOfRule implements Rule<JPackage, JType> {
     return Pair.of(baseClass, parameters.get(0));
   }
 
-  private Map<String, List<ResolvedType>> preprocess(ArrayNode oneOf, Schema schema) {
+  private Map<String, List<ResolvedType>> preprocess(ArrayNode arrayNode, String arrayNodePath, Schema schema) {
     Map<String, List<ResolvedType>> result = new LinkedHashMap<>();
     int index = 0;
-    for (JsonNode child : oneOf) {
-      Schema childSchema = ruleFactory.resolveSchemaRef(schema, "oneOf/" + (index++));
-      ResolvedType resolved = resolveRefs(null, child, childSchema);
-      String type = getTypeName(resolved.node);
-      result.computeIfAbsent(type, (k) -> new ArrayList<>()).add(resolved);
+    for (JsonNode child : arrayNode) {
+      Schema childSchema = ruleFactory.resolveSchemaRef(schema, arrayNodePath + "/" + (index++));
+      ResolvedClassType resolved = resolveRefs(null, child, childSchema);
+      Set<String> types = getTypeNames(resolved.node);
+      for (String type : types) {
+        result.computeIfAbsent(type, (k) -> new ArrayList<>()).add(resolved);
+      }
     }
     return result;
   }
 
-  private static String getTypeName(JsonNode node) {
-    if (node.path("properties").size() > 0 || node.path("oneOf").size() > 0) {
-      return "object";
-    }
-    if (node.has("type") && node.get("type").isArray() && node.get("type").size() > 0) {
+  private static Set<String> getTypeNames(JsonNode node) {
+    var result = new HashSet<String>();
+    if (node.path("properties").size() > 0 || node.path("oneOf").size() > 0 || node.path("anyOf").size() > 0) {
+      result.add("object");
+    } else if (node.has("type") && node.get("type").isArray() && node.get("type").size() > 0) {
       for (JsonNode jsonNode : node.get("type")) {
         String typeName = jsonNode.asText();
-        if (!typeName.equals("null")) {
-          return typeName;
+        if (typeName != null && !typeName.equals("null")) {
+          result.add(typeName);
         }
       }
+    } else if (node.has("type") && node.get("type").isTextual()) {
+      result.add(node.get("type").asText());
+    } else {
+      result.add(null);
     }
-
-    if (node.has("type") && node.get("type").isTextual()) {
-      return node.get("type").asText();
-    }
-
-    return null;
+    return result;
   }
 
-  private ResolvedType resolveRefs(String name, JsonNode node, Schema schema) {
+  private ResolvedClassType resolveRefs(String name, JsonNode node, Schema schema) {
     if (node.has("$ref")) {
       final String nameFromRef = nameFromRef(node.get("$ref").asText());
       Schema childSchema = ruleFactory.getSchemaStore()
@@ -390,13 +432,13 @@ public class WebTypesOneOfRule implements Rule<JPackage, JType> {
       return resolveRefs(nameFromRef != null ? nameFromRef : name, schemaNode, childSchema);
     }
     schema = schema.deriveChildSchema(node);
-    return new ResolvedType(name, node, schema);
+    return new ResolvedClassType(name, node, schema);
   }
 
-  private static boolean suitableForDeductionBased(List<ResolvedType> objects) {
+  private static boolean suitableForDeductionBased(List<ResolvedClassType> objects) {
     List<Set<String>> requiredFields = new ArrayList<>();
     Set<String> defaultObjFields = null;
-    for (ResolvedType obj : objects) {
+    for (ResolvedClassType obj : objects) {
       Set<String> localRequired = getRequiredFields(obj.node);
       if (localRequired.isEmpty()) {
         if (defaultObjFields != null) {
@@ -441,10 +483,10 @@ public class WebTypesOneOfRule implements Rule<JPackage, JType> {
     return result;
   }
 
-  private List<JType> generateDeductionBasedSubTypes(String baseName, JsonNode parent, List<ResolvedType> objects,
+  private List<JType> generateDeductionBasedSubTypes(String baseName, JsonNode parent, List<ResolvedClassType> objects,
                                                      JDefinedClass superType, JPackage pkg) {
     List<JType> result = new ArrayList<>();
-    for (ResolvedType obj : objects) {
+    for (ResolvedClassType obj : objects) {
       Set<String> requiredFields = getRequiredFields(obj.node);
       String subTypeName = baseName + "-" + (obj.name != null
                                              ? obj.name
@@ -456,13 +498,17 @@ public class WebTypesOneOfRule implements Rule<JPackage, JType> {
     return result;
   }
 
-  private Map<String, JType> generateEnumBasedSubTypes(String baseName, JsonNode parent, List<ResolvedType> objects, String propertyName,
-                                                       JDefinedClass superType, JPackage pkg) {
+  private Map<String, JType> generateEnumBasedSubTypes(String baseName,
+                                                       JsonNode parent,
+                                                       List<ResolvedClassType> objects,
+                                                       String propertyName,
+                                                       JDefinedClass superType,
+                                                       JPackage pkg) {
     Map<String, JType> result = new TreeMap<>();
-    for (ResolvedType obj : objects) {
+    for (ResolvedClassType obj : objects) {
       ObjectNode node = (ObjectNode)obj.node;
       JsonNode determinant = ((ObjectNode)node.path("properties")).remove(propertyName);
-      String key = determinant.path("const").asText();
+      String key = getConstString(determinant);
       node.set("title", JsonNodeFactory.instance.textNode(propertyName + " = " + key));
       String name = obj.name != null ? obj.name : baseName + "." + key;
       JDefinedClass subType = (JDefinedClass)ruleFactory.getObjectRule().apply(name, node, parent, pkg, obj.schema);
@@ -514,10 +560,10 @@ public class WebTypesOneOfRule implements Rule<JPackage, JType> {
 
   private void generateEnumClass(String nodeName,
                                  Schema schema,
-                                 List<ResolvedType> objects,
+                                 List<ResolvedClassType> objects,
                                  String determinantPropertyName,
                                  JDefinedClass superType) {
-    Set<String> enumValues = findEnumValuesForOneOf(objects, determinantPropertyName);
+    Set<String> enumValues = findEnumValuesForOneAnyOf(objects, determinantPropertyName);
 
     JsonNodeFactory factory = JsonNodeFactory.instance;
     ObjectNode root = factory.objectNode();
@@ -537,30 +583,30 @@ public class WebTypesOneOfRule implements Rule<JPackage, JType> {
     ruleFactory.getPropertiesRule().apply(nodeName, properties, root, superType, superTypeSchema);
   }
 
-  private Set<String> findEnumValuesForOneOf(List<ResolvedType> objects, String determinantField) {
+  private Set<String> findEnumValuesForOneAnyOf(List<ResolvedClassType> objects, String determinantField) {
     Set<String> result = new TreeSet<>();
-    for (ResolvedType obj : objects) {
-      String value = obj.node.get("properties").get(determinantField).get("const").asText(null);
+    for (ResolvedClassType obj : objects) {
+      String value = getConstString(obj.node.get("properties").get(determinantField));
       if (value == null) {
-        ruleFactory.getLogger().error("No value for oneOf: " + determinantField);
+        ruleFactory.getLogger().error("No value for oneAnyOf: " + determinantField);
         throw new NullPointerException();
       }
       if (!result.add(value)) {
-        ruleFactory.getLogger().error("Duplicated value for oneOf: " + value);
-        throw new IllegalStateException("Duplicated value for oneOf: " + value);
+        ruleFactory.getLogger().error("Duplicated value for oneAnyOf: " + value);
+        throw new IllegalStateException("Duplicated value for oneAnyOf: " + value);
       }
     }
     return result;
   }
 
-  private static String findDeterminantField(List<ResolvedType> objects) {
+  private static String findDeterminantField(List<ResolvedClassType> objects) {
     String fieldName = null;
-    for (ResolvedType type : objects) {
+    for (ResolvedClassType type : objects) {
       JsonNode properties = type.node.get("properties");
       if (properties == null || !properties.isObject()) return null;
       for (Iterator<Map.Entry<String, JsonNode>> it = properties.fields(); it.hasNext(); ) {
         Map.Entry<String, JsonNode> property = it.next();
-        if (isConstString(property.getValue())) {
+        if (getConstString(property.getValue()) != null) {
           if (fieldName == null) {
             fieldName = property.getKey();
           }
@@ -573,10 +619,17 @@ public class WebTypesOneOfRule implements Rule<JPackage, JType> {
     return fieldName;
   }
 
-  private static boolean isConstString(JsonNode value) {
-    return value.isObject()
-           && value.path("const").asText(null) != null
-           && value.path("type").asText("").equals("string");
+  private static String getConstString(JsonNode value) {
+    if (value.isObject()
+        && value.path("type").asText("").equals("string")) {
+      var constVal = value.path("const").asText(null);
+      if (constVal != null) return constVal;
+      if (value.path("enum").isArray()
+          && value.path("enum").size() == 1) {
+        return value.path("enum").get(0).asText(null);
+      }
+    }
+    return null;
   }
 
   private String nameFromRef(String ref) {
@@ -869,18 +922,38 @@ public class WebTypesOneOfRule implements Rule<JPackage, JType> {
     equals.annotate(Override.class);
   }
 
-  private static class ResolvedType {
+  private interface ResolvedType {
+    JType generate(RuleFactory ruleFactory, String defaultName, JsonNode parent, JClassContainer container);
+  }
+
+  private static class ResolvedPrimitiveType implements ResolvedType {
+    public final String name;
+
+    ResolvedPrimitiveType(String name) {
+      this.name = name;
+    }
+
+    @Override
+    public JType generate(RuleFactory ruleFactory, String defaultName, JsonNode parent, JClassContainer container) {
+      var properties = new HashMap<String, JsonNode>();
+      properties.put("type", new TextNode(name));
+      return ruleFactory.getTypeRule().apply(defaultName, new ObjectNode(JsonNodeFactory.instance, properties) ,parent,container,null);
+    }
+  }
+
+  private static class ResolvedClassType implements ResolvedType {
     public final String name;
     public final JsonNode node;
     public final Schema schema;
 
-    ResolvedType(String name, JsonNode node, Schema schema) {
+    ResolvedClassType(String name, JsonNode node, Schema schema) {
       this.name = name;
       this.node = node;
       this.schema = schema;
     }
 
-    JType generate(RuleFactory ruleFactory, String defaultName, JsonNode parent, JClassContainer container) {
+    @Override
+    public JType generate(RuleFactory ruleFactory, String defaultName, JsonNode parent, JClassContainer container) {
       if (schema.isGenerated()) {
         return schema.getJavaType();
       }

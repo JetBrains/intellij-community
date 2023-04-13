@@ -11,6 +11,7 @@
   <modules>
     <module>ext</module>
     <module>gen</module>
+    <module>gen-cem</module>
   </modules>
   <!-- To generate POJOs for web-types run :compile target -->
   <!-- Web-types.json is located in resources folder -->
