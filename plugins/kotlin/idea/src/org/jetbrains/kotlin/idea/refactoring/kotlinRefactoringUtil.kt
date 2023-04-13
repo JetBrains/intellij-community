@@ -772,6 +772,8 @@ fun KtNamedDeclaration.isAbstract(): Boolean = when {
     else -> false
 }
 
+fun KtClass.isOpen(): Boolean = hasModifier(KtTokens.OPEN_KEYWORD) || this.isAbstract() || this.isInterfaceClass() || this.isSealed()
+
 fun <ListType : KtElement> replaceListPsiAndKeepDelimiters(
     changeInfo: KotlinChangeInfo,
     originalList: ListType,
