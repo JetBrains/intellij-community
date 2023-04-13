@@ -184,12 +184,13 @@ public final class MavenProjectsTree {
     }
   }
 
-  private void writeProjectsRecursively(DataOutputStream out, List<MavenProject> list) throws IOException {
-    out.writeInt(list.size());
-    for (MavenProject each : list) {
-      each.write(out);
-      myTimestamps.get(each.getFile()).write(out);
-      writeProjectsRecursively(out, getModules(each));
+  private void writeProjectsRecursively(DataOutputStream out, List<MavenProject> mavenProjects) throws IOException {
+    out.writeInt(mavenProjects.size());
+    for (var mavenProject : mavenProjects) {
+      mavenProject.write(out);
+      var timestamp = myTimestamps.getOrDefault(mavenProject.getFile(), MavenProjectTimestamp.NULL);
+      timestamp.write(out);
+      writeProjectsRecursively(out, getModules(mavenProject));
     }
   }
 
@@ -699,9 +700,9 @@ public final class MavenProjectsTree {
     }
   }
 
-  private MavenProjectTimestamp calculateTimestamp(final MavenProject mavenProject,
-                                                   final MavenExplicitProfiles explicitProfiles,
-                                                   final MavenGeneralSettings generalSettings) {
+  private MavenProjectTimestamp calculateTimestamp(MavenProject mavenProject,
+                                                   MavenExplicitProfiles explicitProfiles,
+                                                   MavenGeneralSettings generalSettings) {
     return ReadAction.compute(() -> {
       long pomTimestamp = getFileTimestamp(mavenProject.getFile());
       MavenProject parent = findParent(mavenProject);
@@ -1356,6 +1357,8 @@ public final class MavenProjectsTree {
     private final long myExplicitProfilesHashCode;
     private final long myJvmConfigTimestamp;
     private final long myMavenConfigTimestamp;
+
+    private static MavenProjectTimestamp NULL = new MavenProjectTimestamp(0, 0, 0, 0, 0, 0, 0, 0);
 
     private MavenProjectTimestamp(long pomTimestamp,
                                   long parentLastReadStamp,
