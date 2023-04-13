@@ -28,8 +28,7 @@ class DeclarativeCallChainCustomSettingsProvider : InlayHintsCustomSettingsProvi
 
   private val component by lazy {
     panel {
-      row {
-        label(CodeInsightBundle.message("inlay.hints.chain.minimal.unique.type.count.to.show.hints"))
+      row(CodeInsightBundle.message("inlay.hints.chain.minimal.unique.type.count.to.show.hints")) {
         cell(uniqueTypeCountSpinner)
       }
     }.also {

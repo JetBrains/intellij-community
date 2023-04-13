@@ -13,7 +13,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.ui.JBIntSpinner
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.asSafely
 import com.intellij.util.ui.JBUI
 import javax.swing.JPanel
@@ -87,7 +87,6 @@ abstract class AbstractCallChainHintsProvider<DotQualifiedExpression : PsiElemen
     get() = CodeInsightBundle.message("inlay.hints.chain.call.chain")
 
   final override fun createConfigurable(settings: Settings): ImmediateConfigurable = object : ImmediateConfigurable {
-    val uniqueTypeCountName = CodeInsightBundle.message("inlay.hints.chain.minimal.unique.type.count.to.show.hints")
 
     private val uniqueTypeCount by lazy { JBIntSpinner(1, 1, 10) }
 
@@ -100,9 +99,8 @@ abstract class AbstractCallChainHintsProvider<DotQualifiedExpression : PsiElemen
         handleChange(listener)
       }
       val panel = panel {
-        row {
-          label(uniqueTypeCountName)
-          uniqueTypeCount(pushX)
+        row(CodeInsightBundle.message("inlay.hints.chain.minimal.unique.type.count.to.show.hints")) {
+          cell(uniqueTypeCount)
         }
       }
       panel.border = JBUI.Borders.empty(5)
