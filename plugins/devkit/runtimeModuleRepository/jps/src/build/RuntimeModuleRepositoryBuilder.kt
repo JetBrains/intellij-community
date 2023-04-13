@@ -81,22 +81,6 @@ internal class RuntimeModuleRepositoryBuilder
     LOG.info("${descriptors.size} descriptors are saved in ${timeToSaveDescriptors}ms")
   }
 
-  private fun validateDescriptors(descriptors: List<RawRuntimeModuleDescriptor>, context: CompileContext) {
-    val moduleIDs = HashSet<String>()
-    for (descriptor in descriptors) {
-      if (!moduleIDs.add(descriptor.id)) {
-        context.reportError(DevkitRuntimeModuleRepositoryJpsBundle.message("error.message.duplicating.id.0.is.found", descriptor.id))
-      }
-    }
-    for (descriptor in descriptors) {
-      for (dependency in descriptor.dependencies) {
-        if (dependency !in moduleIDs) {
-          context.reportError(DevkitRuntimeModuleRepositoryJpsBundle.message("error.message.unknown.dependency.0.in.module.1", dependency, descriptor.id))
-        }
-      }
-    }
-  }
-
   private fun CompileContext.reportError(message: @Nls String) {
     processMessage(CompilerMessage("intellij-runtime-repository", BuildMessage.Kind.ERROR, message))
   }
