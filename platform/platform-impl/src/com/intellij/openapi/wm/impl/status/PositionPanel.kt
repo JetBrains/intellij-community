@@ -55,8 +55,11 @@ open class PositionPanel(private val dataContext: WidgetPresentationDataContext,
     multicaster.addCaretListener(object : CaretListener {
       override fun caretPositionChanged(e: CaretEvent) {
         val editor = e.editor
-        // when multiple carets exist in editor, we don't show information about caret positions
-        if (editor.caretModel.caretCount == 1 && isFocusedEditor(editor)) {
+        if (
+          editor.caretModel.caretCount == 1 && // when multiple carets exist in editor, we don't show information about caret positions
+          isFocusedEditor(editor) &&
+          editor.isOurEditor()
+        ) {
           updatePosition(editor)
         }
       }
@@ -73,7 +76,7 @@ open class PositionPanel(private val dataContext: WidgetPresentationDataContext,
       override fun selectionChanged(e: SelectionEvent) {
         // react to "select all" action
         val editor = e.editor
-        if (e.editor === dataContext.currentFileEditor.value?.let { (it as? TextEditor)?.editor }) {
+        if (editor.isOurEditor()) {
           updatePosition(editor)
         }
       }
@@ -90,6 +93,9 @@ open class PositionPanel(private val dataContext: WidgetPresentationDataContext,
     // combine uses the latest emitted values, so, we must emit something
     check(charCountRequests.tryEmit(CodePointCountTask(text = "", startOffset = 0, endOffset = 0)))
   }
+
+  private fun Editor.isOurEditor(): Boolean =
+    this === dataContext.currentFileEditor.value?.let { (it as? TextEditor)?.editor }
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun text(): Flow<@NlsContexts.Label String?> {
