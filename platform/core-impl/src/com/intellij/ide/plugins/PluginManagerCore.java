@@ -863,7 +863,6 @@ public final class PluginManagerCore {
     if (GraphicsEnvironment.isHeadless()) {
       if (QODANA_PLUGINS_THIRD_PARTY_ACCEPT) {
         thirdPartyPluginsNoteAccepted = Boolean.TRUE;
-        System.out.println("AJAJSOKQOWDKOWAKDOAKOWDKAOWKDOAKKWD");
         return;
       }
       getLogger().info("3rd-party plugin privacy note not accepted yet; disabling plugins for this headless session");
