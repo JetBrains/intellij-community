@@ -16,11 +16,14 @@ import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.platform.impl.toolkit.IdeToolkit
+import com.intellij.util.ReflectionUtil.getDeclaredField
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.UrlClassLoader
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
 import java.awt.GraphicsEnvironment
+import java.awt.Toolkit
 import java.io.IOException
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -119,13 +122,21 @@ private fun initRemoteDevGraphicsEnvironment() {
 
 private fun initLux() {
   if (!isLuxEnabled()) return
-  if (System.getProperty("lux.fonts.disable.projector.font.manager", "false").toBoolean()) {
-    // disable PFontManager
-    System.setProperty("org.jetbrains.projector.server.enable.font.manager", "false")
-  }
 
+  System.setProperty("java.awt.headless", false.toString())
+  System.setProperty("swing.volatileImageBufferEnabled", false.toString())
+  System.setProperty("keymap.current.os.only", false.toString())
   System.setProperty("awt.nativeDoubleBuffering", false.toString())
   System.setProperty("swing.bufferPerWindow", true.toString())
+
+  val toolkit = IdeToolkit()
+  val lookup = MethodHandles.lookup()
+  val field = Toolkit::class.java.getDeclaredField("toolkit")
+  field.isAccessible = true
+  val handle = lookup.unreflectSetter(field)
+  handle.invoke(toolkit)
+
+  System.setProperty("awt.toolkit", IdeToolkit::class.java.canonicalName)
 }
 
 private fun bootstrap(startupTimings: MutableList<Any>) {
