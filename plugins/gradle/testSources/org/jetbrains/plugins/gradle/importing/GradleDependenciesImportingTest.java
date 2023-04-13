@@ -814,6 +814,41 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleModuleDepScope("project.impl", "project.api", DependencyScope.TEST);
   }
 
+
+  @Test
+  public void testProjectDependencyOnCustomArtifacts() throws Exception {
+    createSettingsFile("include 'api', 'impl' ");
+    String archiveBaseName = (isGradleOlderThan("7.0") ? "baseName" : "archiveBaseName") + " = 'my-archive'\n";
+
+    importProject(
+      createBuildScriptBuilder()
+        .allprojects(TestGradleBuildScriptBuilder::withJavaPlugin)
+        .project(":api", it -> {
+          it
+            .addPostfix("""
+                          configurations { myConfig }
+                          sourceSets { mySourceSet }
+                          tasks.create("myJar", Jar) {
+                            dependsOn compileMySourceSetJava
+                          """ +  archiveBaseName + """
+                            from sourceSets.mySourceSet.output
+                          }
+                          artifacts { myConfig myJar }
+                          """);
+        })
+        .project(":impl", it -> {
+          it.addImplementationDependency(it.project(":api", "myConfig"));
+        })
+        .generate()
+    );
+
+    assertModules("project", "project.main", "project.test",
+                  "project.api", "project.api.main", "project.api.test", "project.api.mySourceSet",
+                  "project.impl", "project.impl.main", "project.impl.test");
+
+    assertModuleModuleDepScope("project.impl.main", "project.api.mySourceSet", DependencyScope.COMPILE);
+  }
+
   @Test
   public void testCompileAndRuntimeConfigurationsTransitiveDependencyMerge() throws Exception {
     createSettingsFile("""
