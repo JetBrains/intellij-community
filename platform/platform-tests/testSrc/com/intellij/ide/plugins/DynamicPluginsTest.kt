@@ -1,5 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UsePropertyAccessSyntax")
+
 package com.intellij.ide.plugins
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -27,6 +28,7 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.extensions.ExtensionPointChangeListener
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
@@ -37,6 +39,7 @@ import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProv
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.EdtRule
@@ -812,7 +815,68 @@ class DynamicPluginsTest {
     pluginDescriptor.depends(dependsOn.id, optionalDependencyDescriptor)
     return loadPluginWithText(pluginDescriptor)
   }
+
+  @Test
+  fun `registry access of key from same plugin`() {
+    /**
+     * This is a tricky one & possibly flaky. The point here is to make sure that registry keys, that are declared in the same config,
+     * are initialized before other extensions: there might be tricky cases of extension point listeners triggering some plugin's internal
+     * logic that tries to access registry.
+     * See https://youtrack.jetbrains.com/issue/IDEA-254324
+     *
+     * So the problem in current implementation is that extensions are initialized in an order that
+     * HashMap<String (extension point name), Collection<ExtensionDescriptor>> gives. So if there is an extension point with such a name
+     * that precedes com.intellij.registryKey in this map, it will be initialized before the registry keys.
+     *
+     * This scenario might become obsolete if HashMap implementation changes so that the order of keys changes or if plugin initialization
+     * code changes. This test breaks as of revision 6b7726ecbb051ab6bd2e073b460cf813dba2364a.
+     */
+    val id = "test.plugin"
+    val idParent = "test.batya"
+    val antiHashMap = "roGjzgGTyI" // this one goes before com.intellij.registryKey
+    //val antiHashMap = "OMEBtHDTCw" // this one goes after com.intellij.registryKey, so the test is green in this case
+    val parentPlugin = PluginBuilder()
+      .id(idParent)
+      .extensionPoints("""<extensionPoint qualifiedName="$idParent.$antiHashMap" interface="java.lang.Runnable" dynamic="true"/>""")
+
+    loadPluginWithText(parentPlugin).use {
+      val ep = ApplicationManager.getApplication().extensionArea.getExtensionPoint<Runnable>("$idParent.$antiHashMap")
+      ep.addExtensionPointListener(
+        ExtensionPointChangeListener {
+          ep.extensionList.forEach(Runnable::run)
+        }, false, it)
+      val plugin = PluginBuilder()
+        .id(id)
+        .depends(parentPlugin.id)
+        .extensions("""<registryKey key="test.plugin.registry.key" defaultValue="true" description="sample text"/>""")
+        .extensions("""<$antiHashMap implementation="${MyServiceAccessor::class.java.name}"/>""", idParent)
+        .extensions("""<applicationService serviceImplementation="${MyRegistryAccessor::class.java.name}"/>""")
+
+      loadPluginWithText(plugin).use {
+        check(service<MyRegistryAccessor>().invocations > 0)
+      }
+    }
+  }
 }
+
+@InternalIgnoreDependencyViolation
+private class MyServiceAccessor : Runnable {
+  override fun run() {
+    ApplicationManager.getApplication()
+      .getService(MyRegistryAccessor::class.java)!!.accessRegistry()
+  }
+}
+
+private class MyRegistryAccessor {
+  var invocations: Int = 0
+
+  fun accessRegistry() {
+    @Suppress("UnresolvedPluginConfigReference")
+    check(Registry.get("test.plugin.registry.key").asBoolean())
+    invocations++
+  }
+}
+
 
 private class MyUISettingsListener : UISettingsListener {
   override fun uiSettingsChanged(uiSettings: UISettings) {
