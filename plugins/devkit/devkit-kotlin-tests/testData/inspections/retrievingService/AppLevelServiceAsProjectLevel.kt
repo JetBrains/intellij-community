@@ -3,7 +3,8 @@ import com.intellij.openapi.project.Project
 
 @Service(Service.Level.APP)
 class MyService {
-  fun foo(project: Project, serviceClass: Class<MyService>) {
-    <error descr="The application-level service is retrieved as a project-level service">project.getService(serviceClass)</error>
+  @Suppress("NO_REFLECTION_IN_CLASS_PATH")
+  fun foo(project: Project) {
+    <error descr="The application-level service is retrieved as a project-level service">project.getService(MyService::class.java)</error>
   }
 }

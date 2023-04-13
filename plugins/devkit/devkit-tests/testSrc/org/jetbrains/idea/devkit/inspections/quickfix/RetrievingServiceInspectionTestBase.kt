@@ -66,5 +66,14 @@ abstract class RetrievingServiceInspectionTestBase : LightDevKitInspectionFixTes
 
       public interface Application extends ComponentManager {}
       """)
+    myFixture.addClass(
+      //language=java
+      """
+      package kotlin.reflect;
+
+      public class KClass<T> {
+        public Class<T> java;
+      }
+      """)
   }
 }

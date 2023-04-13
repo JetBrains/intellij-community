@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.testFramework.TestDataPath
+import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.inspections.quickfix.RetrievingServiceInspectionTestBase
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 
@@ -18,5 +19,40 @@ internal class KtRetrievingServiceInspectionTest : RetrievingServiceInspectionTe
 
   fun testProjectLevelServiceAsAppLevel() {
     doTest()
+  }
+
+  fun testReplaceWithGetInstanceApplicationLevel() {
+    myFixture.addClass(
+      //language=java
+      """
+      import com.intellij.openapi.application.ApplicationManager;
+      import com.intellij.openapi.components.Service;
+
+      @Service(Service.Level.APP)
+      public final class MyService {
+        public static MyService getInstance() {
+          return ApplicationManager.getApplication().getService(MyService.class);
+        }
+      }
+    """)
+    doTest(DevKitBundle.message("inspection.retrieving.service.replace.with", "MyService", "getInstance"))
+  }
+
+  fun testReplaceWithGetInstanceProjectLevel() {
+    myFixture.addClass(
+      //language=java
+      """
+      import com.intellij.openapi.application.ApplicationManager;
+      import com.intellij.openapi.components.Service;
+      import com.intellij.openapi.project.Project;
+
+      @Service(Service.Level.PROJECT)
+      public final class MyService {
+        public static MyService getInstance(Project project) {
+          return project.getService(MyService.class);
+        }
+      }
+    """)
+    doTest(DevKitBundle.message("inspection.retrieving.service.replace.with", "MyService", "getInstance"))
   }
 }
