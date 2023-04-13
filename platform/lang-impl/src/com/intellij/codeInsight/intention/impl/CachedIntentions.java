@@ -29,6 +29,7 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,6 +54,7 @@ public final class CachedIntentions {
   private final @NotNull Project myProject;
 
   private final List<AnAction> myGuttersRaw = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final Set<AnAction> myTopLevelActions = new CopyOnWriteArraySet<>();
 
   public CachedIntentions(@NotNull Project project, @NotNull PsiFile file, @Nullable Editor editor) {
     myProject = project;
@@ -74,6 +76,11 @@ public final class CachedIntentions {
 
   public @NotNull Set<IntentionActionWithTextCaching> getGutters() {
     return myGutters;
+  }
+
+  @ApiStatus.Experimental
+  public @NotNull Set<AnAction> getTopLevelActions() {
+    return myTopLevelActions;
   }
 
   public @NotNull Set<IntentionActionWithTextCaching> getNotifications() {
@@ -125,6 +132,7 @@ public final class CachedIntentions {
     changed |= wrapActionsTo(newInfo.inspectionFixesToShow, myInspectionFixes, callUpdate);
     changed |= wrapActionsTo(newInfo.intentionsToShow, myIntentions, callUpdate);
     changed |= updateGuttersRaw(newInfo);
+    changed |= myTopLevelActions.addAll(newInfo.topLevelActions);
     changed |= wrapActionsTo(newInfo.notificationActionsToShow, myNotifications, callUpdate);
     return changed;
   }
@@ -140,6 +148,7 @@ public final class CachedIntentions {
     changed |= addActionsTo(info.inspectionFixesToShow, myInspectionFixes);
     changed |= addActionsTo(info.intentionsToShow, myIntentions);
     changed |= updateGuttersRaw(info);
+    changed |= myTopLevelActions.addAll(info.topLevelActions);
     changed |= addActionsTo(info.notificationActionsToShow, myNotifications);
     return changed;
   }
@@ -379,6 +388,7 @@ public final class CachedIntentions {
            ", myErrorFixes=" + myErrorFixes +
            ", myInspectionFixes=" + myInspectionFixes +
            ", myGutters=" + myGutters +
+           ", myTopLevelActions=" + myTopLevelActions +
            ", myNotifications=" + myNotifications +
            '}';
   }
