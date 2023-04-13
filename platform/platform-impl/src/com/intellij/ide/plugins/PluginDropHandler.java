@@ -5,7 +5,6 @@ import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.openapi.editor.CustomFileDropHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -22,11 +21,7 @@ public final class PluginDropHandler extends CustomFileDropHandler {
                            @Nullable Editor editor) {
     List<? extends File> files = FileCopyPasteUtil.getFileList(transferable);
     return !ContainerUtil.isEmpty(files) &&
-           ContainerUtil.all(files, file -> {
-             String path = file.toPath().toString();
-             return FileUtilRt.extensionEquals(path, "jar") ||
-                    FileUtilRt.extensionEquals(path, "zip");
-           });
+           ContainerUtil.all(files, file -> InstallFromDiskAction.isPluginArchive(file.toPath().toString()));
   }
 
   @Override

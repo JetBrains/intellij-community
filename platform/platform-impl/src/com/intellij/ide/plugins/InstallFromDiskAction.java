@@ -81,15 +81,10 @@ class InstallFromDiskAction extends DumbAwareAction {
       return;
     }
 
-    VirtualFile toSelect = null;
     VirtualFile contextFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    if (contextFile != null && contextFile.isInLocalFileSystem() &&
-        (contextFile.getName().endsWith(".zip") || contextFile.getName().endsWith(".jar"))) {
-      toSelect = contextFile;
-    }
-    if (toSelect == null) {
-      toSelect = getFileToSelect(PropertiesComponent.getInstance().getValue(PLUGINS_PRESELECTION_PATH));
-    }
+    VirtualFile toSelect = contextFile != null && contextFile.isInLocalFileSystem() && isPluginArchive(contextFile.getPath())
+                           ? contextFile
+                           : getFileToSelect(PropertiesComponent.getInstance().getValue(PLUGINS_PRESELECTION_PATH));
 
     FileChooser.chooseFile(new FileChooserDescriptorImpl(),
                            project,
@@ -102,6 +97,11 @@ class InstallFromDiskAction extends DumbAwareAction {
 
                              installFromDisk(file, project);
                            });
+  }
+
+  public static boolean isPluginArchive(String filePath) {
+    return FileUtilRt.extensionEquals(filePath, "jar") ||
+           FileUtilRt.extensionEquals(filePath, "zip");
   }
 
   @RequiresEdt
