@@ -1,13 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 use std::env;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
+
+use anyhow::{bail, Result};
 use log::{debug, warn};
-use anyhow::{bail, Context, Result};
 use utils::{canonical_non_unc, get_current_exe, get_path_from_env_var, get_readable_file_from_env_var, is_executable, is_readable, PathExt, read_file_to_end};
 
 use crate::{get_config_home, LaunchConfiguration, ProductInfo};
+
+const IDE_HOME_LOOKUP_DEPTH: usize = 5;
 
 pub struct DefaultLaunchConfiguration {
     pub product_info: ProductInfo,
@@ -55,7 +58,7 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
 
     fn get_class_path(&self) -> Result<Vec<String>> {
         let class_path = &self.product_info.launch[0].bootClassPathJarNames;
-        let lib_path = get_lib_path(&self.ide_home);
+        let lib_path = &self.ide_home.join("lib");
 
         let lib_path_canonical = std::fs::canonicalize(lib_path)?;
 
@@ -100,19 +103,18 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
 impl DefaultLaunchConfiguration {
     pub fn new(args: Vec<String>) -> Result<Self> {
         let current_exe = get_current_exe();
+        debug!("Executable path: '{current_exe:?}'");
 
-        debug!("Resolved current executable path as '{current_exe:?}'");
-
-        let ide_home = get_ide_home(&current_exe).context("Failed to resolve IDE home")?;
-        debug!("Resolved ide home dir as '{ide_home:?}'");
+        let (ide_home, product_info_file) = find_ide_home(&current_exe)?;
+        debug!("IDE home dir: '{ide_home:?}'");
 
         let ide_bin = ide_home.join("bin");
-        debug!("Resolved ide bin dir as '{ide_bin:?}'");
+        debug!("IDE bin dir: '{ide_bin:?}'");
 
         let config_home = get_config_home()?;
-        debug!("Resolved config home as '{config_home:?}'");
+        debug!("OS config dir: '{config_home:?}'");
 
-        let product_info = get_product_info(&ide_home)?;
+        let product_info = read_product_info(&product_info_file)?;
         assert!(!product_info.launch.is_empty());
 
         let vm_options_file_path = product_info.launch[0].vmOptionsFilePath.as_str();
@@ -474,7 +476,6 @@ impl DefaultLaunchConfiguration {
     }
 }
 
-
 #[cfg(target_os = "linux")]
 fn get_bin_java_path(java_home: &Path) -> PathBuf {
     java_home
@@ -515,55 +516,27 @@ fn is_gc_vm_option(s: &str) -> bool {
     s.starts_with("-XX:+") && s.ends_with("GC")
 }
 
-#[cfg(target_os = "macos")]
-fn get_lib_path(ide_home: &Path) -> PathBuf {
-    ide_home
-        .join("lib")
-}
-
-#[cfg(any(target_os = "linux", target_os = "windows"))]
-fn get_lib_path(ide_home: &Path) -> PathBuf {
-    ide_home.join("lib")
-}
-
-fn get_product_info_home(ide_home: &Path) -> Result<PathBuf> {
-    let parent = match env::consts::OS {
-        "linux" => ide_home.to_path_buf(),
-        "macos" => ide_home.join("Resources"),
-        //TODO: check if that's actual for Windows
-        "windows" => ide_home.to_path_buf(),
-        unsupported_os => bail!("Unsupported OS: {unsupported_os}"),
-    };
-
-    Ok(parent)
-}
-
-fn get_product_info(ide_home: &Path) -> Result<ProductInfo> {
-    let product_info_path = get_product_info_home(ide_home)?.join("product-info.json");
-
+fn read_product_info(product_info_path: &Path) -> Result<ProductInfo> {
     let file = File::open(product_info_path)?;
-
     let reader = BufReader::new(file);
     let product_info: ProductInfo = serde_json::from_reader(reader)?;
-    let serialized = serde_json::to_string(&product_info)?;
-    debug!("{serialized}");
-
+    debug!("{:?}", serde_json::to_string(&product_info));
     return Ok(product_info);
 }
 
-fn get_ide_home(current_exe: &Path) -> Result<PathBuf> {
-    let max_lookup_count = 5;
-    let mut ide_home = current_exe.parent_or_err()?;
-    for _ in 0..max_lookup_count {
-        debug!("Resolving ide_home, candidate: {ide_home:?}");
+fn find_ide_home(current_exe: &Path) -> Result<(PathBuf, PathBuf)> {
+    let start = current_exe.parent_or_err()?;
+    let product_info_rel_path = if env::consts::OS == "macos" { "Resources/product-info.json" } else { "product-info.json" };
 
-        let product_info_path = get_product_info_home(&ide_home)?.join("product-info.json");
-        if product_info_path.exists() {
-            return Ok(ide_home)
+    let mut candidate = start.clone();
+    for _ in 0..IDE_HOME_LOOKUP_DEPTH {
+        debug!("Probing for IDE home: {:?}", candidate);
+        let product_info_path = candidate.join(product_info_rel_path);
+        if product_info_path.is_file() {
+            return Ok((candidate, product_info_path))
         }
-
-        ide_home = ide_home.parent_or_err()?;
+        candidate = candidate.parent_or_err()?;
     }
 
-    bail!("Failed to resolve ide_home in {max_lookup_count} attempts")
+    bail!("Cannot locate IDE installation directory among parents of '{}'", start.display())
 }
