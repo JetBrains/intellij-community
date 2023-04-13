@@ -45,7 +45,7 @@ public abstract class CompoundRendererProvider {
     return null;
   }
 
-  public Boolean isApplicable(Project project) {
+  public boolean isApplicable(Project project) {
     return true;
   }
   
