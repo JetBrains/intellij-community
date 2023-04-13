@@ -85,3 +85,14 @@ record MapTile(Map<Integer, Void> visible) {
     this(new HashMap<>(that.visible));
   }
 }
+class Copy {
+  private int i;
+
+  Copy(int i) {
+  }
+
+  <warning descr="Copy constructor does not copy field 'i'">Copy</warning>(Copy copy) {
+    this(copy.i);
+  }
+
+}
