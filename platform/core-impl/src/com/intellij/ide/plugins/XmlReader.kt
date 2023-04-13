@@ -460,8 +460,7 @@ private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescri
            * See [com.intellij.ide.plugins.DynamicPluginsTest]#`registry access of key from same plugin`
            * This is an ad-hoc solution to the problem, it doesn't fix the root cause. This may also break if this map gets copied
            * or transformed into a HashMap somewhere, but it seems it's not the case right now.
-           * TODO(vadim.salavatov): IMO one way to make a better fix is to introduce loadingOrder on extension points (as it is made for
-           *                        extensions).
+           * TODO: one way to make a better fix is to introduce loadingOrder on extension points (as it is made for extensions).
            */
           map = sortedMapOf(kotlin.Comparator { o1, o2 ->
             val registryKey = "com.intellij.registryKey"
@@ -473,7 +472,6 @@ private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescri
             }
             o1.compareTo(o2)
           })
-          // map = HashMap()
           descriptor.epNameToExtensions = map
         }
 
