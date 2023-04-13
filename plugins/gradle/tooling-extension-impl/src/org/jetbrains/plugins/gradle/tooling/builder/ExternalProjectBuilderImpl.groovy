@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import org.codehaus.groovy.runtime.DefaultGroovyMethods
 import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -14,7 +15,9 @@ import org.gradle.api.file.FileCopyDetails
 import org.gradle.api.file.RegularFile
 import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.invocation.Gradle
+import org.gradle.api.tasks.AbstractCopyTask
 import org.gradle.api.tasks.SourceSet
+import org.gradle.api.tasks.SourceSetOutput
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
@@ -35,6 +38,7 @@ import org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil
 import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
+import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
@@ -321,6 +325,15 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
                                         ReflectionUtil.reflectiveGetProperty(jarTask, "getArchiveFile", RegularFile.class).getAsFile() :
                                         jarTask.archivePath ]
       }
+
+      project.tasks.withType(AbstractArchiveTask) { AbstractArchiveTask task ->
+        if (containsAllSourceSetOutput(task, sourceSet)) {
+          externalSourceSet.artifacts.add(is67OrBetter ?
+                                          ReflectionUtil.reflectiveGetProperty(task, "getArchiveFile", RegularFile.class).getAsFile() :
+                                          task.archivePath)
+        }
+      }
+
 
       def sources = [:] as Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet>
       ExternalSourceDirectorySet resourcesDirectorySet = new DefaultExternalSourceDirectorySet()
@@ -727,5 +740,37 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     return ErrorMessageBuilder.create(
       project, e, "Project resolve errors"
     ).withDescription("Unable to resolve additional project configuration.")
+  }
+
+  private static boolean containsAllSourceSetOutput(@NotNull AbstractArchiveTask archiveTask, @NotNull SourceSet sourceSet) {
+    def outputFiles = new HashSet<>(sourceSet.output.files)
+    try {
+      final Method mainSpecGetter = AbstractCopyTask.class.getDeclaredMethod("getMainSpec");
+      mainSpecGetter.setAccessible(true);
+      Object mainSpec = mainSpecGetter.invoke(archiveTask);
+
+      final List<MetaMethod> sourcePathGetters =
+        DefaultGroovyMethods.respondsTo(mainSpec, "getSourcePaths", new Object[]{});
+      if (!sourcePathGetters.isEmpty()) {
+        Set<Object> sourcePaths = (Set<Object>)sourcePathGetters.get(0).doMethodInvoke(mainSpec, new Object[]{});
+        if (sourcePaths != null) {
+          for (Object path : sourcePaths) {
+            if (path instanceof String) {
+              File file = new File((String)path);
+              if (file.isAbsolute()) {
+                outputFiles.remove(file);
+              }
+            }
+            else if (path instanceof SourceSetOutput) {
+              outputFiles.removeAll(((SourceSetOutput)path).getFiles());
+            }
+          }
+        }
+      }
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+    return outputFiles.isEmpty()
   }
 }
