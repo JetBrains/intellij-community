@@ -3,9 +3,11 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
@@ -33,6 +35,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.IntPredicate;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 /**
  * This class is just an 'instance holder' -- actual implementation is an {@link FSRecordsImpl} instance,
  * all methods delegate to it.
@@ -40,6 +44,7 @@ import java.util.function.IntPredicate;
 @ApiStatus.Internal
 public final class FSRecords {
   static final Logger LOG = Logger.getInstance(FSRecords.class);
+  static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, SECONDS.toMillis(5));
 
   static final boolean BACKGROUND_VFS_FLUSH = SystemProperties.getBooleanProperty("idea.background.vfs.flush", true);
 
@@ -272,14 +277,21 @@ public final class FSRecords {
             break;
           }
           if (parentId == NULL_FILE_ID) {
-            //TODO RC: personally I think here we should throw exception. But (it seems)
-            //    the method .findFileById() is used in an assumption it just returns null
-            //    if 'incorrect' fileId is passed in? -- so I keep legacy behavior until I'll
-            //    be able to understand it better, or fix calling code meaningfully
+            //TODO RC: It seems idToDirCache _must_ contain all roots -- see PersistentFSImpl.findRoot()
+            //         method, there each new root is added to the cache, and idToDirCache.myIdToRootCache
+            //         cleared only on connect/disconnect. Hence, I think here we should throw exception.
+            //         But (it seems) the method .findFileById() is used in an assumption it just returns
+            //         null if 'incorrect' fileId is passed in? -- so I keep legacy behavior until I'll
+            //         be able to understand it better, or fix calling code meaningfully.
+
             String currentFileName = getName(currentId);
-            LOG.info(
+
+            THROTTLED_LOG.info(
               "file[" + fileId + "]: top parent (currentId: " + currentId + ", name: '" + currentFileName + "', parent: 0), " +
-              "is still not in the idToDirCache. path: " + path);
+              "is still not in the idToDirCache. " +
+              "path: " + path + ", " +
+              "idToDirCache.rootsCached: " + StringUtil.join(idToDirCache.getCachedRootDirs(), ", ")
+            );
             break;
           }
 

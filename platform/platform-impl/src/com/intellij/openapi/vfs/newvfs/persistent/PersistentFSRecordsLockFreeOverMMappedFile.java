@@ -923,6 +923,11 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
       public ByteBuffer rawPageBuffer() {
         return pageBuffer;
       }
+
+      @Override
+      public String toString() {
+        return "Page[#" + pageIndex + "][offset: " + offsetInFile + ", length: " + pageBuffer.capacity() + " b)";
+      }
     }
   }
 }

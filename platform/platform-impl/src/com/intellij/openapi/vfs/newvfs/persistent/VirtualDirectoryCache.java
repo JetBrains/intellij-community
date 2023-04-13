@@ -59,6 +59,11 @@ final class VirtualDirectoryCache {
     return ContainerUtil.concat(myIdToDirCache.values(), myIdToRootCache.values());
   }
 
+  @NotNull
+  Iterable<VirtualFileSystemEntry> getCachedRootDirs() {
+    return myIdToRootCache.values();
+  }
+
   void clear() {
     myIdToDirCache.clear();
     myIdToRootCache.clear();
