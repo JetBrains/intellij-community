@@ -15,7 +15,6 @@ import com.intellij.util.ArrayUtilRt
 import com.intellij.util.childScope
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogStorage
-import com.intellij.vcs.log.data.VcsLogStorageImpl
 import com.intellij.vcs.log.data.index.VcsLogPathsIndex.*
 import com.intellij.vcs.log.history.EdgeData
 import com.intellij.vcs.log.impl.HashImpl
@@ -92,7 +91,7 @@ private class ProjectLevelConnectionManager(project: Project, logId: String) : D
     private set
 
   private val dbFile = PersistentUtil.getPersistenceLogCacheDir(project, logId).resolve(
-    "$SQLITE_VCS_LOG_DB_FILENAME_PREFIX${DB_VERSION}-${VcsLogStorageImpl.VERSION}-${VcsLogPersistentIndex.VERSION}.db")
+    "$SQLITE_VCS_LOG_DB_FILENAME_PREFIX${DB_VERSION}-${VcsLogPersistentIndex.VERSION}.db")
 
   @Suppress("DEPRECATION")
   private val coroutineScope: CoroutineScope = ApplicationManager.getApplication().coroutineScope.childScope()
