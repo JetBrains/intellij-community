@@ -202,34 +202,78 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
   }
 
   private int getHorizontalOffset(@NotNull Editor editor, @NotNull Point targetLocation, @NotNull ScrollType scrollType, @NotNull Rectangle viewRect) {
-    int hOffset;
-    if (scrollType == ScrollType.CENTER_CENTER) {
-      hOffset = Math.max(0, targetLocation.x - viewRect.width / 2);
-    } else {
-      hOffset = scrollType == ScrollType.CENTER ||
-                scrollType == ScrollType.CENTER_DOWN ||
-                scrollType == ScrollType.CENTER_UP ? 0 : viewRect.x;
-      int spaceWidth = EditorUtil.getSpaceWidth(Font.PLAIN, editor);
-      int xInsets = editor.getSettings().getAdditionalColumnsCount() * spaceWidth;
-      if (targetLocation.x < hOffset) {
-        int inset = 4 * spaceWidth;
-        if (scrollType == ScrollType.MAKE_VISIBLE && targetLocation.x < viewRect.width - inset) {
-          // if we need to scroll to the left to make target position visible,
-          // let's scroll to the leftmost position (if that will make caret visible)
-          hOffset = 0;
-        }
-        else {
-          hOffset = Math.max(0, targetLocation.x - inset);
-        }
-      }
-      else if (viewRect.width > 0 && targetLocation.x >= hOffset + viewRect.width) {
-        hOffset = targetLocation.x - Math.max(0, viewRect.width - xInsets);
-      }
-    }
+    int horizontalOffset = viewRect.x;
+    int spaceWidth = EditorUtil.getSpaceWidth(Font.PLAIN, editor);
+
+    int editorWidth = viewRect.width;
+    if (editorWidth == 0) return horizontalOffset;
+
     JScrollPane scrollPane = mySupplier.getScrollPane();
-    hOffset = Math.max(0, hOffset);
-    hOffset = Math.min(scrollPane.getHorizontalScrollBar().getMaximum() - getExtent(scrollPane.getHorizontalScrollBar()), hOffset);
-    return hOffset;
+    int scrollWidth = scrollPane.getHorizontalScrollBar().getMaximum() - getExtent(scrollPane.getHorizontalScrollBar());
+    int textWidth = scrollWidth + editorWidth;
+
+    int scrollOffset = editor.getSettings().getHorizontalScrollOffset();
+    int scrollJump = editor.getSettings().getHorizontalScrollJump();
+
+    // when we calculate bounds, we assume that characters have the same width (spaceWidth),
+    // it's not the most accurate way to handle side scroll offset, but definitely the fastest
+    //
+    // text between this two following bounds should be visible in view rectangle after scrolling (that's the meaning of the scroll offset setting)
+    // if it is not possible e.g. view rectangle is too small to contain the whole range, then scrolling will center the targetLocation
+    int leftBound = targetLocation.x - scrollOffset * spaceWidth;
+    int rightBound = targetLocation.x + scrollOffset * spaceWidth;
+
+    if (rightBound - leftBound > editorWidth) { // if editor width is not enough to satisfy offsets from both sides, we center target location
+      horizontalOffset = targetLocation.x - editorWidth / 2;
+    } else if (scrollType == ScrollType.RELATIVE && leftBound < viewRect.x) {
+      int leftmostPossibleLocation = getLeftmostLocation(targetLocation, editorWidth, scrollOffset, spaceWidth);
+      int leftAfterScrollJump = Math.max(leftmostPossibleLocation, viewRect.x - scrollJump * spaceWidth);
+      horizontalOffset = Math.min(leftBound, leftAfterScrollJump);
+    } else if (scrollType == ScrollType.MAKE_VISIBLE && leftBound < viewRect.x) {
+      // we try to scroll to 0, if it is possible (rightBound allows us)
+      if (rightBound < editorWidth) {
+        horizontalOffset = 0;
+      } else {
+        int leftmostPossibleLocation = getLeftmostLocation(targetLocation, editorWidth, scrollOffset, spaceWidth);
+        int leftAfterScrollJump = Math.max(leftmostPossibleLocation, viewRect.x - scrollJump * spaceWidth);
+        horizontalOffset = Math.min(leftBound, leftAfterScrollJump);
+      }
+    } else if (rightBound > viewRect.x + editorWidth) {
+      // todo why ScrollType.CENTER, ScrollType.CENTER_UP, ScrollType.CENTER_DOWN, are always scrolled to the right?
+      int rightmostPossibleLocation = getRightmostLocation(targetLocation, textWidth, editorWidth, scrollOffset, spaceWidth);
+      int rightAfterScrollJump = Math.min(rightmostPossibleLocation, viewRect.x + editorWidth + scrollJump * spaceWidth);
+      horizontalOffset = Math.max(rightBound, rightAfterScrollJump) - editorWidth;
+    }
+
+    horizontalOffset = Math.max(0, horizontalOffset);
+    horizontalOffset = Math.min(scrollWidth, horizontalOffset);
+    return horizontalOffset;
+  }
+
+  /**
+   * Gets the leftmost possible x-coordinate that can be container by viewRect to satisfy two following conditions:
+   * 1. targetLocation must be still visible in the viewRect
+   * 2. there must be enough space to the right of targetLocation to satisfy scroll offset
+   */
+  private static int getLeftmostLocation(@NotNull Point targetLocation, int editorWidth, int scrollOffset, int spaceWidth) {
+    int leftmostLocation = targetLocation.x - editorWidth;
+    if (leftmostLocation < 0) {
+      return 0;
+    }
+    return leftmostLocation + scrollOffset * spaceWidth;
+  }
+
+  /**
+   * Gets the rightmost possible x-coordinate that can be container by viewRect to satisfy two following conditions:
+   * 1. targetLocation must be still visible in the viewRect
+   * 2. there must be enough space to the left of targetLocation to satisfy scroll offset
+   */
+  private static int getRightmostLocation(@NotNull Point targetLocation, int textWidth, int editorWidth, int scrollOffset, int spaceWidth) {
+    int rightmostLocation = targetLocation.x + editorWidth;
+    if (rightmostLocation > textWidth) {
+      return textWidth;
+    }
+    return rightmostLocation - scrollOffset * spaceWidth;
   }
 
   private int getVerticalOffset(@NotNull Editor editor, @NotNull Point targetLocation, @NotNull ScrollType scrollType, @NotNull Rectangle viewRect) {
