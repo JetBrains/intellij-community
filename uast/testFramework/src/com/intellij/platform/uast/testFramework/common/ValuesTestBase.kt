@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.uast.testFramework.common
 
+import com.intellij.testFramework.assertEqualsToFile
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UFile
@@ -8,17 +9,12 @@ import org.jetbrains.uast.evaluation.MapBasedEvaluationContext
 import org.jetbrains.uast.evaluation.UEvaluationContext
 import org.jetbrains.uast.evaluation.UEvaluatorExtension
 import org.jetbrains.uast.evaluation.analyzeAll
-import org.jetbrains.uast.java.JavaUFile
-import com.intellij.testFramework.assertEqualsToFile
 import org.jetbrains.uast.visitor.UastVisitor
 import java.io.File
 
 interface ValuesTestBase {
   fun getTestDataPath(): String
   fun getEvaluatorExtension(): UEvaluatorExtension? = null
-
-  // TODO: when JavaUFile (and/or its constructor) becomes `internal`, this should move into JavaUFile.
-  private fun JavaUFile.copy() : JavaUFile = JavaUFile(sourcePsi, languagePlugin)
 
   private fun UFile.analyzeAll() = analyzeAll(extensions = getEvaluatorExtension()?.let { listOf(it) } ?: emptyList())
 
@@ -33,11 +29,13 @@ interface ValuesTestBase {
     val evaluationContext = file.analyzeAll()
     assertEqualsToFile("Log values", valuesFile, file.asLogValues(evaluationContext, cachedOnly = false))
 
-    if (file is JavaUFile) {
-      val copyFile = file.copy()
+    val copyFile = createCopyToCheck(file)
+    if (copyFile != null) {
       assertEqualsToFile("Log cached values", valuesFile, copyFile.asLogValues(evaluationContext, cachedOnly = true))
     }
   }
+
+  fun createCopyToCheck(file: UFile): UFile? = null
 
   class ValueLogger(private val evaluationContext: UEvaluationContext, private val cachedOnly: Boolean) : UastVisitor {
     private val builder = StringBuilder()
