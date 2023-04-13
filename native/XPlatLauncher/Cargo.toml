@@ -6,7 +6,7 @@ rust-version = "1.65.0"
 publish = false
 
 [profile.release]
-#strip = true  # Automatically strip symbols from the binary.
+strip = "debuginfo"
 opt-level = "z"  # Optimize for size.
 lto = true
 codegen-units = 1
