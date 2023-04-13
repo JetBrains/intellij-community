@@ -250,7 +250,9 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
         return@withContext
       }
 
-      for (repaintRequest in repaints!!) {
+      if (repaints == null)
+        return@withContext
+      for (repaintRequest in repaints) {
         val actualTarget = repaintRequest.getActualTarget() ?: continue
         // revalidate will not work: JTree caches size of nodes
         if (shouldRevalidate && actualTarget is JTree) {
