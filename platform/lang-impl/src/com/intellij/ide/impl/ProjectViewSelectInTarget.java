@@ -4,6 +4,7 @@ package com.intellij.ide.impl;
 import com.intellij.ide.CompositeSelectInTarget;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTarget;
+import com.intellij.ide.actions.SelectInTargetPreferringEditorContext;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.SelectableTreeStructureProvider;
 import com.intellij.ide.projectView.TreeStructureProvider;
@@ -35,7 +36,10 @@ import java.util.function.Supplier;
 import static com.intellij.ide.projectView.impl.ProjectViewPane.canBeSelectedInProjectView;
 import static com.intellij.psi.SmartPointerManager.createPointer;
 
-public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper implements CompositeSelectInTarget {
+public abstract class ProjectViewSelectInTarget
+  extends SelectInTargetPsiWrapper
+  implements CompositeSelectInTarget, SelectInTargetPreferringEditorContext
+{
   private String mySubId;
 
   protected ProjectViewSelectInTarget(Project project) {

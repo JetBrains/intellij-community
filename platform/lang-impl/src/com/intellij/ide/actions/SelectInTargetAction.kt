@@ -18,11 +18,13 @@ import com.intellij.util.ui.EmptyIcon
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-internal fun createSelectInTargetAction(target: SelectInTarget, context: SelectInContext): AnAction =
+internal interface SelectInTargetPreferringEditorContext
+
+internal fun createSelectInTargetAction(target: SelectInTarget, context: SelectInContext, editorContext: SelectInContext?): AnAction =
   if (target is CompositeSelectInTarget) {
-    SelectInTargetActionGroup(SelectInTargetActionImpl(target, context))
+    SelectInTargetActionGroup(SelectInTargetActionImpl(target, context, editorContext))
   } else {
-    SelectInTargetAction(SelectInTargetActionImpl(target, context))
+    SelectInTargetAction(SelectInTargetActionImpl(target, context, editorContext))
   }
 
 private class SelectInTargetActionGroup(
@@ -44,7 +46,7 @@ private class SelectInTargetActionGroup(
   override fun getChildren(e: AnActionEvent?): Array<AnAction> =
     impl.target.getSubTargets(impl.selectInContext)
       .sortedWith(SelectInManager.SelectInTargetComparator.INSTANCE)
-      .map { createSelectInTargetAction(it, impl.selectInContext) }
+      .map { createSelectInTargetAction(it, impl.selectInContext, impl.editorContext) }
       .toTypedArray()
 
 }
@@ -68,6 +70,7 @@ private class SelectInTargetAction(
 private class SelectInTargetActionImpl<T : SelectInTarget>(
   val target: T,
   val selectInContext: SelectInContext,
+  var editorContext: SelectInContext?,
 ) {
 
   fun doUpdate(e: AnActionEvent) {
@@ -80,7 +83,8 @@ private class SelectInTargetActionImpl<T : SelectInTarget>(
 
   fun doPerform() {
     PsiDocumentManager.getInstance(selectInContext.project).commitAllDocuments()
-    target.selectIn(selectInContext, true)
+    val context = if (editorContext != null && target is SelectInTargetPreferringEditorContext) editorContext else selectInContext
+    target.selectIn(context, true)
   }
 
   @Nls

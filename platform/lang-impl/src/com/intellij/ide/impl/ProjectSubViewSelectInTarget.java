@@ -4,9 +4,10 @@ package com.intellij.ide.impl;
 
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTarget;
+import com.intellij.ide.actions.SelectInTargetPreferringEditorContext;
 
 
-public class ProjectSubViewSelectInTarget implements SelectInTarget {
+public class ProjectSubViewSelectInTarget implements SelectInTarget, SelectInTargetPreferringEditorContext {
   private final ProjectViewSelectInTarget myBaseTarget;
   private final String mySubId;
   private final int myWeight;
