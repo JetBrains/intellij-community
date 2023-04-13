@@ -377,10 +377,22 @@ class CodeFragmentParameterAnalyzer(
     }
 
     private fun doesCrossInlineBounds(expression: PsiElement, declaration: PsiElement): Boolean {
-        val declarationParent = declaration.parent ?: return false
-        var currentParent: PsiElement? = expression.parent?.takeIf { it.isInside(declarationParent) } ?: return false
 
-        while (currentParent != null && currentParent != declarationParent) {
+        // Trying to find a common parent for declaration and expression
+        fun findCommonParent(declaration: PsiElement): PsiElement? {
+            val declarationParent = declaration.parent
+            return when {
+                declarationParent is KtDestructuringDeclaration -> declarationParent.getParentOfType<KtBlockExpression>(true)
+                declarationParent is KtParameterList && declarationParent.parent is KtPrimaryConstructor -> declaration.getParentOfType<KtClass>(true)
+                declarationParent is KtParameterList && declarationParent.parent is KtFunction -> declarationParent.parent
+                else -> declarationParent
+            }
+        }
+
+        val declarationCommonParent = findCommonParent(declaration) ?: return false
+        var currentParent: PsiElement? = expression.parent?.takeIf { it.isInside(declarationCommonParent) } ?: return false
+
+        while (currentParent != null && currentParent != declarationCommonParent) {
             if (currentParent is KtFunction) {
                 val functionDescriptor = bindingContext[BindingContext.FUNCTION, currentParent]
                 if (functionDescriptor != null && !functionDescriptor.isInline) {
