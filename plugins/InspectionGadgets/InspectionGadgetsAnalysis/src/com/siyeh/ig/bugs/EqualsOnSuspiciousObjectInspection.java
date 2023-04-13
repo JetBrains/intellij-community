@@ -76,6 +76,9 @@ public class EqualsOnSuspiciousObjectInspection extends BaseInspection {
       return null;
     }
     String qualifiedName = psiClass.getQualifiedName();
+    if (qualifiedName == null) {
+      return null;
+    }
     ReplaceInfo info = myClasses.get(qualifiedName);
     if (info == null || !info.available) {
       return null;

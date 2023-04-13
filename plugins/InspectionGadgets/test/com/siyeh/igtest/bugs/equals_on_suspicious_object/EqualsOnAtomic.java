@@ -118,4 +118,14 @@ public class EqualsOnAtomic {
       System.out.println("Strange");
     }
   }
+
+  public static void testNotError() {
+    boolean equals = new Int() {
+    }.equals(new Int() {
+
+    });
+  }
+
+
+  interface Int{}
 }
