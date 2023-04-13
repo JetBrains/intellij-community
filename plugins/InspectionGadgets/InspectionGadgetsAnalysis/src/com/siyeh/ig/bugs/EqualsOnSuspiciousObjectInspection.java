@@ -98,7 +98,7 @@ public class EqualsOnSuspiciousObjectInspection extends BaseInspection {
         PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
         if (psiClass != null) {
           String qualifiedName = psiClass.getQualifiedName();
-          if (myClasses.containsKey(qualifiedName)) {
+          if (qualifiedName != null && myClasses.containsKey(qualifiedName)) {
             PsiElement name = expression.getReferenceNameElement();
             registerError(name == null ? expression : name, qualifiedName, expression);
             return true;
