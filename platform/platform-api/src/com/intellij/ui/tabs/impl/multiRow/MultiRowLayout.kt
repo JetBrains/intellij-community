@@ -27,22 +27,20 @@ abstract class MultiRowLayout(protected val tabs: JBTabsImpl,
     val data = MultiRowPassInfo(tabs, visibleInfos, toFitRec, scrollOffset)
     prevLayoutPassInfo = data
 
-    if (tabs.isHideTabs || visibleInfos.isEmpty() || data.toFitRec.isEmpty) {
-      return data
-    }
+    if (!tabs.isHideTabs && !visibleInfos.isEmpty() && !data.toFitRec.isEmpty) {
+      val rows = splitToRows(data)
+      data.rows.addAll(rows)
+      layoutRows(data)
 
-    val rows = splitToRows(data)
-    data.rows.addAll(rows)
-    layoutRows(data)
+      val topRowInd = if (tabs.position == JBTabsPosition.top) 0 else rows.size - 1
+      data.tabsRectangle = Rectangle(toFitRec.x, getRowY(data, topRowInd), toFitRec.width, data.rowCount * data.rowHeight)
+    }
 
     tabs.myTitleWrapper.bounds = data.titleRect
     tabs.myMoreToolbar.component.bounds = data.moreRect
     tabs.myEntryPointToolbar?.component?.bounds = data.entryPointRect
 
     tabs.selectedInfo?.let { layoutTabComponent(data, it) }
-
-    val topRowInd = if (tabs.position == JBTabsPosition.top) 0 else rows.size - 1
-    data.tabsRectangle = Rectangle(toFitRec.x, getRowY(data, topRowInd), toFitRec.width, data.rowCount * data.rowHeight)
     return data
   }
 
