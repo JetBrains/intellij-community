@@ -15,6 +15,8 @@ import java.util.Map;
 import java.util.concurrent.*;
 import java.util.function.Function;
 
+import static com.intellij.openapi.progress.ContextKt.isInCancellableContext;
+
 /**
  * A utility to run a potentially long function on a pooled thread, wait for it in an interruptible way,
  * and reuse that computation if it's needed again if it's still running.
@@ -41,6 +43,9 @@ public final class DiskQueryRelay<Param, Result> {
   }
 
   public Result accessDiskWithCheckCanceled(@NotNull Param arg) {
+    if (!isInCancellableContext()) {
+      return myFunction.apply(arg);
+    }
     Future<Result> future = myTasks.computeIfAbsent(arg, eachArg -> ProcessIOExecutorService.INSTANCE.submit(() -> {
       try {
         return myFunction.apply(eachArg);
