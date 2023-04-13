@@ -1829,32 +1829,34 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
                                                     MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);
-    List<MavenGoalExecutionResult> results = new ArrayList<>();
-    for (MavenGoalExecutionRequest request : requests) {
-      try {
-        File file = request.file();
-        MavenExplicitProfiles profiles = request.profiles();
-        MavenExecutionResult result =
-          doExecute(file, new ArrayList<>(profiles.getEnabledProfiles()), new ArrayList<>(profiles.getDisabledProfiles()), goal);
-
-        results.add(createEmbedderExecutionResult(file, result));
+    try {
+      /*
+      boolean runInParallel = canResolveDependenciesInParallel();
+      List<MavenGoalExecutionResult> results =
+        MavenServerParallelRunner.execute(runInParallel, requests, request -> doExecute(request, goal));
+      */
+      List<MavenGoalExecutionResult> results = new ArrayList<>();
+      for (MavenGoalExecutionRequest request : requests) {
+        results.add(doExecute(request, goal));
       }
-      catch (Exception e) {
-        throw wrapToSerializableRuntimeException(e);
-      }
+      return results;
     }
-    return results;
+    catch (Exception e) {
+      throw wrapToSerializableRuntimeException(e);
+    }
   }
 
-  private MavenExecutionResult doExecute(@NotNull final File file,
-                                         @NotNull final List<String> activeProfiles,
-                                         @NotNull final List<String> inactiveProfiles,
-                                         @NotNull final String goal) throws RemoteException {
-    MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, goal);
+  private MavenGoalExecutionResult doExecute(@NotNull MavenGoalExecutionRequest request, @NotNull String goal) throws RemoteException {
+    File file = request.file();
+    MavenExplicitProfiles profiles = request.profiles();
+    List<String> activeProfiles = new ArrayList<>(profiles.getEnabledProfiles());
+    List<String> inactiveProfiles = new ArrayList<>(profiles.getDisabledProfiles());
+    MavenExecutionRequest mavenExecutionRequest = createRequest(file, activeProfiles, inactiveProfiles, goal);
 
-    org.apache.maven.execution.MavenExecutionResult executionResult = safeExecute(request, getComponent(Maven.class));
+    org.apache.maven.execution.MavenExecutionResult executionResult = safeExecute(mavenExecutionRequest, getComponent(Maven.class));
 
-    return new MavenExecutionResult(executionResult.getProject(), filterExceptions(executionResult.getExceptions()));
+    MavenExecutionResult result = new MavenExecutionResult(executionResult.getProject(), filterExceptions(executionResult.getExceptions()));
+    return createEmbedderExecutionResult(file, result);
   }
 
   private org.apache.maven.execution.MavenExecutionResult safeExecute(MavenExecutionRequest request, Maven maven) throws RemoteException {
