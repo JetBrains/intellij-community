@@ -25,6 +25,14 @@ public class MavenGoalExecutionResult implements Serializable {
     this.problems = problems;
   }
 
+  @Override
+  public String toString() {
+    return "MavenGoalExecutionResult{" +
+           "success=" + success +
+           ", file=" + file +
+           '}';
+  }
+
   public static class Folders implements Serializable {
     private List<String> mySources = Collections.emptyList();
     private List<String> myTestSources = Collections.emptyList();
