@@ -93,8 +93,11 @@ private fun initRemoteDevIfNeeded(args: List<String>) {
 
   runActivity("cwm host init") {
     initRemoteDevGraphicsEnvironment()
-    initProjector()
-    initLux()
+    if (isLuxEnabled()) {
+      initLux()
+    } else {
+      initProjector()
+    }
   }
 }
 
