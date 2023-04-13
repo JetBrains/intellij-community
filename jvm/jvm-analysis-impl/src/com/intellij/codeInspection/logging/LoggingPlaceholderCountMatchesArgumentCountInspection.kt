@@ -252,10 +252,7 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
       if (lastParameter == null || lastArgument == null) {
         return false
       }
-      var lastParameterType = lastParameter.type
-      if (lastParameterType is PsiEllipsisType) {
-        lastParameterType = lastParameterType.componentType
-      }
+      val lastParameterType = lastParameter.type.let { if (it is PsiEllipsisType) it.componentType else it }
 
       if (!(InheritanceUtil.isInheritor(lastParameterType, CommonClassNames.JAVA_UTIL_FUNCTION_SUPPLIER) || InheritanceUtil.isInheritor(
           lastParameterType, "org.apache.logging.log4j.util.Supplier"))) {
