@@ -98,9 +98,9 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
         }
       }
       JBTabsPosition.bottom -> {
-        val rowCount = tabs.lastLayoutPass.rowCount
+        val rowCount = tabs.lastLayoutPass!!.rowCount
         for (rowInd in 0 until rowCount) {
-          val curY = height - (rowInd + 1) * tabs.myHeaderFitSize.height
+          val curY = height - (rowInd + 1) * tabs.headerFitSize!!.height
           tabs.tabPainter.paintBorderLine(g, thickness, Point(x, curY), Point(x + width, curY))
         }
       }

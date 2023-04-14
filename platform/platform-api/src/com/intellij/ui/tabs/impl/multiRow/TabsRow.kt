@@ -15,7 +15,7 @@ abstract class TabsRow(val infos: List<TabInfo>, val withTitle: Boolean, val wit
   private fun layoutTitleAndEntryPoint(data: MultiRowPassInfo, y: Int): IntRange {
     val tabs = data.tabs
     if (withTitle) {
-      data.titleRect = Rectangle(data.toFitRec.x, y, tabs.myTitleWrapper.preferredSize.width, data.rowHeight)
+      data.titleRect = Rectangle(data.toFitRec.x, y, tabs.titleWrapper.preferredSize.width, data.rowHeight)
     }
     if (withEntryPointToolbar) {
       val entryPointWidth = tabs.entryPointPreferredSize.width

@@ -15,29 +15,21 @@
  */
 package com.intellij.ui.tabs;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ui.tabs.impl.TabLabel
+import java.awt.Font
+import java.awt.Insets
+import java.util.function.Function
 
-import java.awt.*;
+interface UiDecorator {
+  fun getDecoration(): UiDecoration
 
-public interface UiDecorator {
-  @NotNull UiDecoration getDecoration();
-
-  final class UiDecoration {
-    private final @Nullable Font myLabelFont;
-    private final @Nullable Insets myLabelInsets;
-
-    public UiDecoration(@Nullable Font labelFont, @Nullable Insets labelInsets) {
-      myLabelFont = labelFont;
-      myLabelInsets = labelInsets;
-    }
-
-    public @Nullable Font getLabelFont() {
-      return myLabelFont;
-    }
-
-    public @Nullable Insets getLabelInsets() {
-      return myLabelInsets;
-    }
-  }
+  /**
+   * Provided values must be scaled
+   */
+  data class UiDecoration @JvmOverloads constructor(
+    val labelFont: Font? = null,
+    val labelInsets: Insets? = null,
+    val contentInsetsSupplier: Function<TabLabel.ActionsPosition, Insets>? = null,
+    val iconTextGap: Int? = null
+  )
 }

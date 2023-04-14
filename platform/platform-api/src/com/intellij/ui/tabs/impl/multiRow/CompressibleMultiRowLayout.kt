@@ -6,7 +6,7 @@ import com.intellij.ui.tabs.impl.JBTabsImpl
 class CompressibleMultiRowLayout(tabs: JBTabsImpl, showPinnedTabsSeparately: Boolean) : MultiRowLayout(tabs, showPinnedTabsSeparately) {
   override fun splitToRows(data: MultiRowPassInfo): List<TabsRow> {
     val (pinned, unpinned) = splitToPinnedUnpinned(data.myVisibleInfos)
-    val withTitle = tabs.myTitleWrapper.preferredSize.width > 0
+    val withTitle = tabs.titleWrapper.preferredSize.width > 0
     val withEntryPoint = tabs.entryPointPreferredSize.width > 0
     return if (!showPinnedTabsSeparately) {
       listOf(CompressibleTabsRow(data.myVisibleInfos, withTitle, withEntryPoint))

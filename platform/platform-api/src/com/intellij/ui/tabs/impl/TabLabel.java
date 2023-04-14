@@ -62,7 +62,7 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     myTabs = tabs;
     myInfo = info;
 
-    myLabel = createLabel(tabs);
+    myLabel = createLabel();
 
     // Allow focus so that user can TAB into the selected TabLabel and then
     // navigate through the other tabs using the LEFT/RIGHT keys.
@@ -197,7 +197,7 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     return super.isFocusable();
   }
 
-  private SimpleColoredComponent createLabel(final JBTabsImpl tabs) {
+  private SimpleColoredComponent createLabel() {
     SimpleColoredComponent label = new SimpleColoredComponent() {
       @Override
       public Font getFont() {
@@ -301,7 +301,7 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
 
   protected boolean shouldPaintFadeout() {
     return !Registry.is("ui.no.bangs.and.whistles", false)
-           && myTabs.getEffectiveLayout().isScrollable()
+           && myTabs.getEffectiveLayout$intellij_platform_ide().isScrollable()
            && myTabs.isSingleRow() && !isHovered() && !isSelected();
   }
 
@@ -377,9 +377,9 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
   public boolean isLastInRow() {
     List<TabInfo> infos = myTabs.getVisibleInfos();
     for (int ind = 0; ind < infos.size() - 1; ind++) {
-      TabLabel cur = myTabs.myInfo2Label.get(infos.get(ind));
+      TabLabel cur = myTabs.getInfoToLabel().get(infos.get(ind));
       if (cur == this) {
-        TabLabel next = myTabs.myInfo2Label.get(infos.get(ind + 1));
+        TabLabel next = myTabs.getInfoToLabel().get(infos.get(ind + 1));
         return cur.getY() != next.getY();
       }
     }
@@ -516,7 +516,7 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     return myInfo;
   }
 
-  final void apply(@NotNull UiDecorator.UiDecoration decoration) {
+  public final void apply(@NotNull UiDecorator.UiDecoration decoration) {
     if (decoration.getLabelFont() != null) {
       setFont(decoration.getLabelFont());
       getLabelComponent().setFont(decoration.getLabelFont());
@@ -844,7 +844,7 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
       int prefWidth = parent.getPreferredSize().width;
       synchronized (parent.getTreeLock()) {
         if (!myInfo.isPinned() && myTabs != null &&
-            myTabs.getEffectiveLayout().isScrollable() &&
+            myTabs.getEffectiveLayout$intellij_platform_ide().isScrollable() &&
             (ExperimentalUI.isNewUI() && !isHovered() || myTabs.isHorizontalTabs()) &&
             isShowTabActions() && isTabActionsOnTheRight() &&
             parent.getWidth() < prefWidth) {

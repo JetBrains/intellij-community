@@ -44,6 +44,8 @@ import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.ui.tabs.*
 import com.intellij.ui.tabs.JBTabPainter.Companion.DEFAULT
 import com.intellij.ui.tabs.UiDecorator.UiDecoration
+import com.intellij.ui.tabs.impl.multiRow.MultiRowLayout
+import com.intellij.ui.tabs.impl.multiRow.WrapMultiRowLayout
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout
 import com.intellij.ui.tabs.impl.singleRow.SingleRowPassInfo
@@ -187,19 +189,18 @@ open class JBTabsImpl(private var project: Project?,
   internal val separatorWidth: Int = JBUI.scale(1)
   private var dataProvider: DataProvider? = null
   private val deferredToRemove = WeakHashMap<Component, Component>()
-  private var singleRowLayout: SingleRowLayout
   private var tableLayout = createTableLayout()
 
   // it's an invisible splitter intended for changing size of tab zone
   private val splitter = TabsSideSplitter(this)
-  private var effectiveLayout: TabLayout? = null
+  internal var effectiveLayout: TabLayout? = null
   var lastLayoutPass: LayoutPassInfo? = null
     private set
 
   internal var forcedRelayout: Boolean = false
     private set
 
-  private var uiDecorator: UiDecorator? = null
+  internal var uiDecorator: UiDecorator? = null
   private var paintFocus = false
   private var hideTabs = false
   private var hideTopPanel = false
@@ -288,8 +289,7 @@ open class JBTabsImpl(private var project: Project?,
     myNavigationActions.add(nextAction)
     myNavigationActions.add(prevAction)
     setUiDecorator(null)
-    singleRowLayout = createSingleRowLayout()
-    setLayout(singleRowLayout)
+    setLayout(createSingleRowLayout())
     splitter.divider.isOpaque = false
     popupListener = object : PopupMenuListener {
       override fun popupMenuWillBecomeVisible(e: PopupMenuEvent) {}
@@ -382,16 +382,7 @@ open class JBTabsImpl(private var project: Project?,
       val afterScroll = Alarm(parentDisposable)
 
       override fun eventDispatched(event: AWTEvent) {
-        val tabRectangle = if (singleRowLayout.lastSingRowLayout != null) {
-          singleRowLayout.lastSingRowLayout.tabRectangle ?: return
-        }
-        else if (tableLayout.lastTableLayout != null) {
-          tableLayout.lastTableLayout.tabRectangle
-        }
-        else {
-          return
-        }
-
+        val tabRectangle = lastLayoutPass?.headerRectangle ?: return
         event as MouseEvent
         val point = event.point
         SwingUtilities.convertPointToScreen(point, event.component)
@@ -419,13 +410,7 @@ open class JBTabsImpl(private var project: Project?,
   }
 
   private fun isInsideTabsArea(x: Int, y: Int): Boolean {
-    var area = headerFitSize
-    if (tableLayout.lastTableLayout != null) {
-      area = tableLayout.lastTableLayout.tabRectangle.size
-    }
-    if (area == null) {
-      return false
-    }
+    val area = lastLayoutPass?.headerRectangle?.size ?: return false
     return when (tabsPosition) {
       JBTabsPosition.top -> y <= area.height
       JBTabsPosition.left -> x <= area.width
@@ -492,30 +477,24 @@ open class JBTabsImpl(private var project: Project?,
       singleRow = true
     }
     val forceTableLayout = (tabsPosition == JBTabsPosition.top && supportsTableLayoutAsSingleRow() && TabLayout.showPinnedTabsSeparately())
-    val useTableLayout = !isSingleRow || forceTableLayout
-    if (useTableLayout) {
-      tableLayout = createTableLayout()
-    }
-    else {
-      singleRowLayout = createSingleRowLayout()
-    }
-    val layout = if (useTableLayout) tableLayout else singleRowLayout
-    layout.scroll(scrollBarModel.value) // set current scroll value to new layout
+    val layout = if (useMultiRowLayout()) createMultiRowLayout() else createSingleRowLayout()
+    // set the current scroll value to new layout
+    layout.scroll(scrollBarModel.value)
     setLayout(layout)
     relayout(forced = true, layoutNow = true)
   }
 
   protected open fun supportsTableLayoutAsSingleRow(): Boolean = false
 
-  protected fun createTableLayout(): TableLayout {
-    val isWithScrollBar = ((ExperimentalUI.isEditorTabsWithScrollBar()
-                            && isSingleRow && tabsPosition == JBTabsPosition.top) && supportsTableLayoutAsSingleRow()
-                           && TabLayout.showPinnedTabsSeparately()
-                           && (!supportsCompression() || getInstance().hideTabsIfNeeded))
-    return TableLayout(this, isWithScrollBar)
-  }
+  protected open fun useMultiRowLayout(): Boolean = !isSingleRow
+
+  protected open fun createMultiRowLayout(): MultiRowLayout = WrapMultiRowLayout(tabs = this, showPinnedTabsSeparately = false)
 
   protected open fun createSingleRowLayout(): SingleRowLayout = ScrollableSingleRowLayout(this)
+
+  @Suppress("removal")
+  @Deprecated("override {@link JBTabsImpl#createMultiRowLayout()} instead", ReplaceWith("createMultiRowLayout()"))
+  protected open fun createTableLayout(): TableLayout = createMultiRowLayout()
 
   override fun setNavigationActionBinding(prevActionId: String, nextActionId: String): JBTabs {
     nextAction?.reconnect(nextActionId)
@@ -568,6 +547,7 @@ open class JBTabsImpl(private var project: Project?,
   }
 
   fun ignoreTabLabelLimitedWidthWhenPaint(): Boolean {
+    @Suppress("removal")
     return effectiveLayout is ScrollableSingleRowLayout || effectiveLayout is TableLayout && TabLayout.showPinnedTabsSeparately()
   }
 
@@ -794,45 +774,6 @@ open class JBTabsImpl(private var project: Project?,
       return Dimension(baseSize.width + JBUI.scale(4), baseSize.height + JBUI.scale(2))
     }
 
-  private val entryPointRect: Rectangle?
-    get() {
-      if (effectiveLayout is SingleRowLayout) {
-        val lastLayout = singleRowLayout.lastSingRowLayout
-        return lastLayout?.entryPointRect
-      }
-      if (effectiveLayout is TableLayout) {
-        val lastLayout = tableLayout.lastTableLayout
-        return lastLayout?.entryPointRect
-      }
-      return null
-    }
-
-  private val moreRect: Rectangle?
-    get() {
-      if (effectiveLayout is SingleRowLayout) {
-        val lastLayout = singleRowLayout.lastSingRowLayout
-        return lastLayout?.moreRect
-      }
-      if (effectiveLayout is TableLayout) {
-        val lastLayout = tableLayout.lastTableLayout
-        return lastLayout?.moreRect
-      }
-      return null
-    }
-
-  private val titleRect: Rectangle?
-    get() {
-      if (effectiveLayout is SingleRowLayout) {
-        val lastLayout = singleRowLayout.lastSingRowLayout
-        return lastLayout?.titleRect
-      }
-      if (effectiveLayout is TableLayout) {
-        val lastLayout = tableLayout.lastTableLayout
-        return lastLayout?.titleRect
-      }
-      return null
-    }
-
   override fun setTitleProducer(titleProducer: (() -> Pair<Icon, @Nls String>)?) {
     titleWrapper.removeAll()
     if (titleProducer != null) {
@@ -847,13 +788,13 @@ open class JBTabsImpl(private var project: Project?,
   }
 
   override fun canShowMorePopup(): Boolean {
-    val rect = moreRect
+    val rect = lastLayoutPass?.moreRect
     return rect != null && !rect.isEmpty
   }
 
   override fun showMorePopup(): JBPopup? {
-    val rect = moreRect ?: return null
-    val hiddenInfos = getVisibleInfos().filter(singleRowLayout::isTabHidden)
+    val rect = lastLayoutPass?.moreRect ?: return null
+    val hiddenInfos = getVisibleInfos().filter { effectiveLayout!!.isTabHidden(it) }
     if (ExperimentalUI.isNewUI()) {
       return showListPopup(rect = rect, hiddenInfos = hiddenInfos)
     }
@@ -1152,7 +1093,7 @@ open class JBTabsImpl(private var project: Project?,
       label.setIcon(info.icon)
       label.setTabActions(info.tabLabelActions)
       label.setAlignmentToCenter(false)
-      label.apply(uiDecorator?.decoration ?: defaultDecorator.decoration)
+      label.apply(uiDecorator?.getDecoration() ?: defaultDecorator.getDecoration())
       label.addMouseListener(object : MouseAdapter() {
         override fun mouseClicked(e: MouseEvent) {
           if (e.isShiftDown && !e.isPopupTrigger) {
@@ -1871,21 +1812,20 @@ open class JBTabsImpl(private var project: Project?,
       val moreBoundsBeforeLayout = moreToolbar!!.component.bounds
       val entryPointBoundsBeforeLayout = if (entryPointToolbar != null) entryPointToolbar!!.component.bounds else Rectangle(0, 0, 0, 0)
       headerFitSize = computeHeaderFitSize()
-      val visible: MutableList<TabInfo?> = ArrayList(
-        getVisibleInfos())
+      val visible = getVisibleInfos().toMutableList()
       if (dropInfo != null && !visible.contains(dropInfo) && showDropLocation) {
         if (dropInfoIndex >= 0 && dropInfoIndex < visible.size) {
-          visible.add(dropInfoIndex, dropInfo)
+          visible.add(dropInfoIndex, dropInfo!!)
         }
         else {
-          visible.add(dropInfo)
+          visible.add(dropInfo!!)
         }
       }
+      val effectiveLayout = effectiveLayout
       if (effectiveLayout is SingleRowLayout) {
-        singleRowLayout.scrollSelectionInView()
-        lastLayoutPass = singleRowLayout.layoutSingleRow(visible)
-        val titleRect = titleRect
-        if (titleRect != null && !titleRect.isEmpty) {
+        lastLayoutPass = effectiveLayout.layoutSingleRow(visible)
+        val titleRect = lastLayoutPass!!.titleRect
+        if (!titleRect.isEmpty) {
           val preferredSize = titleWrapper.preferredSize
           val bounds = Rectangle(titleRect)
           JBInsets.removeFrom(bounds, layoutInsets)
@@ -1903,20 +1843,20 @@ open class JBTabsImpl(private var project: Project?,
         tableLayout.lastTableLayout = null
         val divider = splitter.divider
         if (divider.parent === this) {
+          val lastLayoutPass = lastLayoutPass!!
           val location = if (tabsPosition == JBTabsPosition.left) {
-            singleRowLayout.lastSingRowLayout.tabRectangle.width
+            lastLayoutPass.headerRectangle.width
           }
           else {
-            width - singleRowLayout.lastSingRowLayout.tabRectangle.width
+            width - lastLayoutPass.headerRectangle.width
           }
-          divider.setBounds(location, 0, 1, height)
+          divider.setBounds (location, 0, 1, height)
         }
       }
-      else {
-        tableLayout.scrollSelectionInView()
-        lastLayoutPass = tableLayout.layoutTable(visible)
-        singleRowLayout.lastSingRowLayout = null
+      else if (effectiveLayout is TableLayout) {
+        lastLayoutPass = effectiveLayout.layoutTable(visible)
       }
+
       centerizeEntryPointToolbarPosition()
       centerizeMoreToolbarPosition()
       moveDraggedTabLabel()
@@ -1943,9 +1883,9 @@ open class JBTabsImpl(private var project: Project?,
     }
 
   private fun centerizeMoreToolbarPosition() {
-    val moreRect = moreRect
+    val moreRect = lastLayoutPass!!.moreRect
     val mComponent = moreToolbar!!.component
-    if (moreRect != null && !moreRect.isEmpty) {
+    if (!moreRect.isEmpty) {
       val bounds = Rectangle(moreRect)
       if (!ExperimentalUI.isNewUI() || !tabsPosition.isSide) {
         val preferredSize = mComponent.preferredSize
@@ -1966,8 +1906,8 @@ open class JBTabsImpl(private var project: Project?,
 
   private fun centerizeEntryPointToolbarPosition() {
     val eComponent = (if (entryPointToolbar == null) null else entryPointToolbar!!.component) ?: return
-    val entryPointRect = entryPointRect
-    if (entryPointRect != null && !entryPointRect.isEmpty && tabCount > 0) {
+    val entryPointRect = lastLayoutPass!!.moreRect
+    if (!entryPointRect.isEmpty && tabCount > 0) {
       val preferredSize = eComponent.preferredSize
       val bounds = Rectangle(entryPointRect)
       if (!ExperimentalUI.isNewUI() || !tabsPosition.isSide) {
@@ -2436,12 +2376,6 @@ open class JBTabsImpl(private var project: Project?,
       }
     }
     updateEntryPointToolbar()
-    if (effectiveLayout === singleRowLayout) {
-      singleRowLayout.scrollSelectionInView()
-    }
-    else if (effectiveLayout === tableLayout) {
-      tableLayout.scrollSelectionInView()
-    }
     relayout(forced, layoutNow)
   }
 
@@ -2513,7 +2447,7 @@ open class JBTabsImpl(private var project: Project?,
     unqueueFromRemove(component)
     if (component is TabLabel) {
       val uiDecorator = uiDecorator
-      component.apply(uiDecorator?.decoration ?: defaultDecorator.decoration)
+      component.apply(uiDecorator?.getDecoration() ?: defaultDecorator.getDecoration())
     }
     super.addImpl(component, constraints, index)
   }
@@ -2852,7 +2786,9 @@ open class JBTabsImpl(private var project: Project?,
   }
 
   private fun setLayout(layout: TabLayout): Boolean {
-    if (effectiveLayout === layout) return false
+    if (effectiveLayout === layout) {
+      return false
+    }
     effectiveLayout = layout
     return true
   }
@@ -2888,7 +2824,7 @@ open class JBTabsImpl(private var project: Project?,
   }
 
   private fun applyDecoration() {
-    uiDecorator?.decoration?.let { uiDecoration ->
+    uiDecorator?.getDecoration()?.let { uiDecoration ->
       for (tabLabel in infoToLabel.values) {
         tabLabel.apply(uiDecoration)
       }
@@ -2964,7 +2900,10 @@ open class JBTabsImpl(private var project: Project?,
 
   private class DefaultDecorator : UiDecorator {
     override fun getDecoration(): UiDecoration {
-      return UiDecoration(null, JBInsets(5, 12, 5, 12))
+      return UiDecoration(labelFont = null,
+                          labelInsets = JBUI.insets(5, 8),
+                          contentInsetsSupplier = java.util.function.Function { position -> JBUI.insets(0, 4) },
+                          iconTextGap = JBUI.scale(4))
     }
   }
 

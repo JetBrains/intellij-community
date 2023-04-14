@@ -583,6 +583,7 @@ private class EditorTabs(
 
   override fun getEditorWindow(): EditorWindow = window
 
+
   override fun useMultiRowLayout(): Boolean {
     return !isSingleRow || (isHorizontalTabs && (TabLayout.showPinnedTabsSeparately() || !UISettings.getInstance().hideTabsIfNeeded))
   }
