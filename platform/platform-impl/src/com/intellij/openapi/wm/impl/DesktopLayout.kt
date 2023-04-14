@@ -35,13 +35,10 @@ class DesktopLayout(
     unifiedWeights.copy(),
   )
 
-  internal fun create(task: RegisterToolWindowTask, isNewUi: Boolean): WindowInfoImpl {
+  internal fun create(task: RegisterToolWindowTask): WindowInfoImpl {
     val info = WindowInfoImpl()
     info.id = task.id
     info.isFromPersistentSettings = false
-    if (isNewUi) {
-      info.isShowStripeButton = false
-    }
     info.isSplit = task.sideTool
 
     info.toolWindowPaneId = WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID

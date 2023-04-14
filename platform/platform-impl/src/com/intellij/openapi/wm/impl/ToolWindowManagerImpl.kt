@@ -1023,7 +1023,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
                          && stripeManager.allowToShowOnStripe(task.id, info == null, isNewUi)
     // do not create layout for New UI - button is not created for toolwindow by default
     if (info == null) {
-      info = layoutState.create(task, isNewUi = isNewUi)
+      info = layoutState.create(task)
       if (isButtonNeeded) {
         // we must allocate order - otherwise, on drag-n-drop, we cannot move some tool windows to the end
         // because sibling's order is equal to -1, so, always in the end
