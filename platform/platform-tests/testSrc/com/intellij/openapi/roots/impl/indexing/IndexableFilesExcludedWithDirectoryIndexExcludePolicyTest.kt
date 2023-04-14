@@ -26,9 +26,10 @@ class IndexableFilesExcludedWithDirectoryIndexExcludePolicyTest : IndexableFiles
         }
       }
     }
+    val excludedDirFile = excludedDir.file  // load VFS synchronously outside read action
     val directoryIndexExcludePolicy = object : DirectoryIndexExcludePolicy {
       override fun getExcludeUrlsForProject(): Array<String> =
-        arrayOf(excludedDir.file.url)
+        arrayOf(excludedDirFile.url)
     }
     maskDirectoryIndexExcludePolicy(directoryIndexExcludePolicy)
     assertIndexableFiles()
@@ -44,9 +45,10 @@ class IndexableFilesExcludedWithDirectoryIndexExcludePolicyTest : IndexableFiles
         }
       }
     }
+    val excludedDirFile = excludedDir.file  // load VFS synchronously outside read action
     val directoryIndexExcludePolicy = object : DirectoryIndexExcludePolicy {
       override fun getExcludeRootsForModule(rootModel: ModuleRootModel) =
-        arrayOf(VirtualFilePointerManager.getInstance().create(excludedDir.file, disposableRule.disposable, null))
+        arrayOf(VirtualFilePointerManager.getInstance().create(excludedDirFile, disposableRule.disposable, null))
     }
     maskDirectoryIndexExcludePolicy(directoryIndexExcludePolicy)
     assertIndexableFiles()
@@ -77,15 +79,19 @@ class IndexableFilesExcludedWithDirectoryIndexExcludePolicyTest : IndexableFiles
       }
     }
 
+    val classesDirFile = classesDir.file  // load VFS synchronously outside read action
+    val sourcesDirFile = sourcesDir.file  // load VFS synchronously outside read action
     val sdk = projectModelRule.addSdk("sdkName") { sdkModificator ->
-      sdkModificator.addRoot(classesDir.file, OrderRootType.CLASSES)
-      sdkModificator.addRoot(sourcesDir.file, OrderRootType.SOURCES)
+      sdkModificator.addRoot(classesDirFile, OrderRootType.CLASSES)
+      sdkModificator.addRoot(sourcesDirFile, OrderRootType.SOURCES)
     }
 
+    val excludedClassesDirFile = excludedClassesDir.file  // load VFS synchronously outside read action
+    val excludedSourcesDirFile = excludedSourcesDir.file  // load VFS synchronously outside read action
     val directoryIndexExcludePolicy = object : DirectoryIndexExcludePolicy {
       override fun getExcludeSdkRootsStrategy() = Function<Sdk, List<VirtualFile>> { sdkExclude ->
         check(sdkExclude == sdk)
-        listOf(excludedClassesDir.file, excludedSourcesDir.file)
+        listOf(excludedClassesDirFile, excludedSourcesDirFile)
       }
     }
 
