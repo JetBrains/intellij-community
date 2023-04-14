@@ -689,12 +689,16 @@ pub fn run_launcher_and_get_dump_with_java_env(test: &TestEnvironment, java_env_
 /// - std_out of launcher;
 fn run_remote_dev(test: &TestEnvironment, args: &[&str], env: &HashMap<&str, &str>) -> LauncherRunResult {
     let output_file = test.test_root_dir.path().join(TEST_OUTPUT_FILE_NAME);
+    let project_specific_dir = test.test_root_dir.path().to_str().unwrap();
 
     let mut full_env = HashMap::from([
         (xplat_launcher::DO_NOT_SHOW_ERROR_UI_ENV_VAR, "1"),
         ("CWM_NO_PASSWORD", "1"),
         ("CWM_HOST_PASSWORD", "1"),
-        ("REMOTE_DEV_NON_INTERACTIVE", "1")
+        ("REMOTE_DEV_NON_INTERACTIVE", "1"),
+        ("IJ_HOST_CONFIG_DIR", project_specific_dir),
+        ("IJ_HOST_SYSTEM_DIR", project_specific_dir),
+        ("IJ_HOST_LOGS_DIR", project_specific_dir)
     ]);
     full_env.extend(env.into_iter());
 
