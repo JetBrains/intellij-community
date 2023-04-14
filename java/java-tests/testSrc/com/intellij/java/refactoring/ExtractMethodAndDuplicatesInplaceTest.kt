@@ -515,6 +515,11 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     }
   }
 
+  fun testChangeSignatureIsIgnored(){
+    DuplicatesMethodExtractor.changeSignatureDefault = true
+    doTest()
+  }
+
   fun testRefactoringListener(){
     templateTest {
       configureByFile("$BASE_PATH/${getTestName(false)}.java")

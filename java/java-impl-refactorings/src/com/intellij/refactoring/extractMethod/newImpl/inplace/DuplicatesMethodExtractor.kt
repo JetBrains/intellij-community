@@ -162,13 +162,20 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
 
   private fun isGoodSignatureChange(callBefore: List<PsiElement>, initialParameters: List<InputParameter>,
                                     callAfter: List<PsiElement>, updatedParameters: List<InputParameter>): Boolean {
-    if (initialParameters.size == updatedParameters.size) {
-      return true
-    }
     val sizeAfter = callAfter.sumOf(::calculateCodeLeafs)
     val sizeBefore = callBefore.sumOf(::calculateCodeLeafs)
     val addedParameters = updatedParameters.size - initialParameters.size
-    return 1.75 * sizeAfter < sizeBefore && addedParameters <= 3 && updatedParameters.size <= 5
+    if (addedParameters <= 0) {
+      // do not require reduce in call size if we just replace parameter
+      return sizeAfter <= sizeBefore
+    }
+    else if (addedParameters <= 3) {
+      // require significant reduce in call if we introduce new parameters
+      return 1.75 * sizeAfter < sizeBefore && updatedParameters.size <= 5
+    }
+    else {
+      return false
+    }
   }
 
   private fun calculateCodeLeafs(element: PsiElement): Int {
