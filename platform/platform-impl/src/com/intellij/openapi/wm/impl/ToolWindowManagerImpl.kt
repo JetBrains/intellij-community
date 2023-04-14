@@ -1010,9 +1010,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     return entry.toolWindow
   }
 
-  internal fun registerToolWindow(task: RegisterToolWindowTask,
-                                  buttonManager: ToolWindowButtonManager,
-                                  ensureToolWindowActionRegisteredIsNeeded: Boolean = true): ToolWindowEntry {
+  internal fun registerToolWindow(task: RegisterToolWindowTask, buttonManager: ToolWindowButtonManager): ToolWindowEntry {
     LOG.debug { "registerToolWindow($task)" }
 
     if (idToEntry.containsKey(task.id)) {
@@ -1077,9 +1075,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       }
     }
 
-    if (ensureToolWindowActionRegisteredIsNeeded) {
-      ActivateToolWindowAction.ensureToolWindowActionRegistered(toolWindow, ActionManager.getInstance())
-    }
+    ActivateToolWindowAction.ensureToolWindowActionRegistered(toolWindow, ActionManager.getInstance())
 
     val stripeButton = if (isButtonNeeded) {
       buttonManager.createStripeButton(toolWindow, infoSnapshot, task)
