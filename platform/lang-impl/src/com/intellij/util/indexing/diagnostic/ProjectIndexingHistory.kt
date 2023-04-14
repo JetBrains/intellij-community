@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
 import com.intellij.util.messages.Topic
+import it.unimi.dsi.fastutil.longs.LongSet
 import org.jetbrains.annotations.ApiStatus
 import java.time.Duration
 import java.time.ZonedDateTime
@@ -49,7 +50,7 @@ interface ProjectIndexingActivityHistory {
 interface ProjectScanningHistory : ProjectIndexingActivityHistory {
   override val project: Project
   val scanningReason: String?
-  val indexingSessionId: Long
+  val scanningSessionId: Long
   val times: ScanningTimes
   val scanningStatistics: List<JsonScanningStatistics>
 
@@ -163,6 +164,7 @@ interface IndexingTimes {
 interface ScanningTimes {
   val scanningReason: String?
   val scanningType: ScanningType
+  val scanningId: Long
   val updatingStart: ZonedDateTime
   val totalUpdatingTime: TimeNano
   val updatingEnd: ZonedDateTime
@@ -178,6 +180,7 @@ interface ScanningTimes {
 }
 
 interface DumbIndexingTimes {
+  val scanningIds: LongSet
   val updatingStart: ZonedDateTime
   val totalUpdatingTime: TimeNano
   val updatingEnd: ZonedDateTime

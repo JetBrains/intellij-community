@@ -100,6 +100,7 @@ fun ScanningTimes.toJson() =
   JsonProjectScanningHistoryTimes(
     scanningReason = scanningReason,
     scanningType = scanningType,
+    scanningId = scanningId,
     totalWallTimeWithPauses = JsonDuration(totalUpdatingTime),
     creatingIteratorsTime = JsonDuration(creatingIteratorsDuration.toNanos()),
     scanFilesTime = JsonDuration(scanFilesDuration.toNanos()),
@@ -116,6 +117,7 @@ fun ScanningTimes.toJson() =
 
 fun DumbIndexingTimes.toJson() =
   JsonProjectDumbIndexingHistoryTimes(
+    scanningIds = scanningIds.toSortedSet(),
     totalWallTimeWithPauses = JsonDuration(totalUpdatingTime),
     contentLoadingVisibleTime = JsonDuration(contentLoadingVisibleDuration.toNanos()),
     refreshedFilesScanTime = JsonDuration(refreshedScanFilesDuration.toNanos()),

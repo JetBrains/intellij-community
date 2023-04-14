@@ -390,7 +390,8 @@ public class UnindexedFilesScanner implements FilesScanningTask {
 
       return () -> {
         subTaskIndicator.setText(provider.getRootsScanningProgressText());
-        try (PerProviderSink perProviderSink = project.getService(PerProjectIndexingQueue.class).getSink(provider)) {
+        try (PerProviderSink perProviderSink = project.getService(PerProjectIndexingQueue.class)
+          .getSink(provider, projectScanningHistory.getScanningSessionId())) {
           CollectingIterator collectingIterator = new CollectingIterator(project, subTaskIndicator, provider, fileScannerVisitors,
                                                                          unindexedFileFinder, scanningStatistics, perProviderSink);
           provider.iterateFiles(project, collectingIterator, thisProviderDeduplicateFilter);

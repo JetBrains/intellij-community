@@ -223,7 +223,7 @@ internal fun createAggregateActivityHtml(
             }
             thead {
               tr {
-                th("History of scannings and indexings") { colSpan = "14" }
+                th("History of scannings and indexings") { colSpan = "15" }
               }
               tr {
                 th("Time") {
@@ -231,6 +231,9 @@ internal fun createAggregateActivityHtml(
                 }
                 th("Files") {
                   colSpan = "5"
+                }
+                th("Scanning ID(s)") {
+                  rowSpan = "2"
                 }
                 th("Scanning Type") {
                   rowSpan = "2"
@@ -409,7 +412,15 @@ private fun TR.printIndexingActivityRow(times: JsonProjectIndexingActivityHistor
     }
   }
 
-  //Indexing type section
+  //Scanning ID(s) section
+  td(times.asSafely<JsonProjectScanningHistoryTimes>()?.scanningId?.toString()
+     ?: times.asSafely<JsonProjectDumbIndexingHistoryTimes>()?.scanningIds?.let {
+       if (it.isEmpty()) "None"
+       else it.toString().trimStart('[').trimEnd(']')
+     }
+     ?: "Unexpected times $times")
+
+  //Scanning type section
   td(times.asSafely<JsonProjectScanningHistoryTimes>()?.scanningType?.name?.lowercase(Locale.ENGLISH)?.replace('_', ' ')
      ?: NOT_APPLICABLE)
 }
@@ -1062,6 +1073,9 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
               tr {
                 td("Activity"); td("Scanning")
               }
+              tr {
+                td("Scanning session ID"); td(times.scanningId.toString())
+              }
 
               tr { td("Started at"); td(times.updatingStart.presentableLocalDateTimeWithMilliseconds()) }
               if (times.scanningReason != null) {
@@ -1292,6 +1306,14 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
             tbody {
               tr {
                 td("Activity"); td("Dumb indexing")
+              }
+
+              tr {
+                td("Indexed files from scanning sessions with IDs")
+                td(times.scanningIds.let { ids ->
+                  if (ids.isEmpty()) "Only refreshed files were indexed"
+                  else ids.toString().trimStart('[').trimEnd(']').plus(" (and refreshed files)")
+                })
               }
 
               val times = times

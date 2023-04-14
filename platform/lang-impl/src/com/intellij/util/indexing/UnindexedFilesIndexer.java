@@ -23,6 +23,9 @@ import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl;
 import com.intellij.util.indexing.diagnostic.ScanningType;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.snapshot.SnapshotInputMappingsStatistics;
+import it.unimi.dsi.fastutil.longs.LongArraySet;
+import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.longs.LongSets;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,10 +43,11 @@ class UnindexedFilesIndexer extends DumbModeTask {
   private final FileBasedIndexImpl myIndex;
   private final @NotNull Map<@NotNull IndexableFilesIterator, @NotNull Collection<@NotNull VirtualFile>> providerToFiles;
   private final @NonNls @NotNull String indexingReason;
+  private final @NotNull LongSet scanningIds;
 
   UnindexedFilesIndexer(@NotNull Project project,
                         @NonNls @NotNull String indexingReason) {
-    this(project, Collections.emptyMap(), indexingReason);
+    this(project, Collections.emptyMap(), indexingReason, LongSets.emptySet());
   }
 
   /**
@@ -53,11 +57,13 @@ class UnindexedFilesIndexer extends DumbModeTask {
    */
   UnindexedFilesIndexer(@NotNull Project project,
                         @NotNull Map<@NotNull IndexableFilesIterator, @NotNull Collection<@NotNull VirtualFile>> providerToFiles,
-                        @NonNls @NotNull String indexingReason) {
+                        @NonNls @NotNull String indexingReason,
+                        @NotNull LongSet scanningIds) {
     myProject = project;
     myIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     this.providerToFiles = providerToFiles;
     this.indexingReason = indexingReason;
+    this.scanningIds = scanningIds;
   }
 
   void indexFiles(@NotNull ProjectIndexingHistoryImpl projectIndexingHistory,
@@ -67,6 +73,8 @@ class UnindexedFilesIndexer extends DumbModeTask {
       LOG.info("Finished for " + myProject.getName() + ". System property 'idea.indexes.pretendNoFiles' is enabled.");
       return;
     }
+
+    projectDumbIndexingHistory.setScanningIds(scanningIds);
 
     PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
 
@@ -225,7 +233,10 @@ class UnindexedFilesIndexer extends DumbModeTask {
     }
 
     String mergedReason = mergeReasons(otherIndexingTask);
-    return new UnindexedFilesIndexer(myProject, mergedFilesToIndex, mergedReason);
+    LongArraySet ids = new LongArraySet(scanningIds.size() + otherIndexingTask.scanningIds.size());
+    ids.addAll(scanningIds);
+    ids.addAll(otherIndexingTask.scanningIds);
+    return new UnindexedFilesIndexer(myProject, mergedFilesToIndex, mergedReason, ids);
   }
 
   @NotNull

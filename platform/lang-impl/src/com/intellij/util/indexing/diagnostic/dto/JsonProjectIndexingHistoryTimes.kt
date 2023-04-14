@@ -45,6 +45,7 @@ interface JsonProjectIndexingActivityHistoryTimes {
 data class JsonProjectScanningHistoryTimes(
   val scanningReason: String? = null,
   val scanningType: ScanningType = ScanningType.FULL,
+  val scanningId: Long = 0,
   val creatingIteratorsTime: JsonDuration = JsonDuration(),
   val scanFilesTime: JsonDuration = JsonDuration(),
   val delayedPushPropertiesStageTime: JsonDuration = JsonDuration(),
@@ -64,6 +65,7 @@ data class JsonProjectScanningHistoryTimes(
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class JsonProjectDumbIndexingHistoryTimes(
+  val scanningIds: Set<Long> = setOf(),
   val contentLoadingVisibleTime: JsonDuration = JsonDuration(),
   val refreshedFilesScanTime: JsonDuration = JsonDuration(),
   val isAppliedAllValuesSeparately: Boolean = true,

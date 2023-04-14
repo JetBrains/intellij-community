@@ -14,6 +14,9 @@ import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
 import com.intellij.util.indexing.roots.IndexableFilesIterator
+import it.unimi.dsi.fastutil.longs.LongArraySet
+import it.unimi.dsi.fastutil.longs.LongSet
+import it.unimi.dsi.fastutil.longs.LongSets
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.TestOnly
@@ -30,14 +33,15 @@ import kotlin.concurrent.write
 private class PerProviderSinkFactory(private val uncommittedListener: UncommittedFilesListener) {
   interface UncommittedFilesListener {
     fun onUncommittedCountChanged(cntDirty: Int)
-    fun commit(iterator: IndexableFilesIterator, files: List<VirtualFile>)
+    fun commit(iterator: IndexableFilesIterator, files: List<VirtualFile>, scanningId: Long)
   }
 
   private val activeSinksCount: AtomicInteger = AtomicInteger()
   private val cancelActiveSinks: AtomicBoolean = AtomicBoolean()
   private val cntFilesDirty = AtomicInteger()
 
-  inner class PerProviderSinkImpl(private val iterator: IndexableFilesIterator) : PerProjectIndexingQueue.PerProviderSink {
+  inner class PerProviderSinkImpl(private val iterator: IndexableFilesIterator,
+                                  private val scanningId: Long) : PerProjectIndexingQueue.PerProviderSink {
     private val files: MutableList<VirtualFile> = ArrayList()
     private var closed = false
 
@@ -74,7 +78,7 @@ private class PerProviderSinkFactory(private val uncommittedListener: Uncommitte
       if (files.isNotEmpty()) {
         val cntDirty = cntFilesDirty.addAndGet(-files.size)
         LOG.assertTrue(cntDirty >= 0, "cntFilesDirty should be positive or 0: ${cntDirty}")
-        uncommittedListener.commit(iterator, files)
+        uncommittedListener.commit(iterator, files, scanningId)
         files.clear()
       }
     }
@@ -90,13 +94,13 @@ private class PerProviderSinkFactory(private val uncommittedListener: Uncommitte
     }
   }
 
-  fun newSink(provider: IndexableFilesIterator): PerProjectIndexingQueue.PerProviderSink {
+  fun newSink(provider: IndexableFilesIterator, scanningId: Long): PerProjectIndexingQueue.PerProviderSink {
     if (cancelActiveSinks.get()) {
       ProgressManager.getGlobalProgressIndicator()?.cancel()
       ProgressManager.checkCanceled()
     }
 
-    return PerProviderSinkImpl(provider)
+    return PerProviderSinkImpl(provider, scanningId)
   }
 
   fun cancelAllProducersAndWait() {
@@ -138,7 +142,8 @@ class PerProjectIndexingQueue(private val project: Project) {
 
   private val sinkFactory = PerProviderSinkFactory(object : PerProviderSinkFactory.UncommittedFilesListener {
     override fun onUncommittedCountChanged(cntDirty: Int) = publishEstimatedFilesCount(cntDirty)
-    override fun commit(iterator: IndexableFilesIterator, files: List<VirtualFile>) = addFiles(iterator, files)
+    override fun commit(iterator: IndexableFilesIterator, files: List<VirtualFile>, scanningId: Long) = addFiles(iterator, files,
+                                                                                                                 scanningId)
   })
 
   private val estimatedFilesCount: MutableStateFlow<Int> = MutableStateFlow(0)
@@ -151,6 +156,10 @@ class PerProjectIndexingQueue(private val project: Project) {
   // Files that will be re-indexed
   private var filesSoFar: ConcurrentMap<IndexableFilesIterator, Collection<VirtualFile>> = ConcurrentHashMap()
 
+  // guarded by [lock]. Must be in consistent state under write lock (see [lock] comment)
+  // Ids of scannings from which [filesSoFar] came
+  private var scanningIds: LongSet = createSetForScanningIds()
+
   // Code under read lock still runs in parallel, so all the counters (e.g. [cntFilesSoFar]) and collections (e.g. [filesSoFar]) still have
   // to be thread-safe. It is only required that the state must be consistent under write lock (e.g. [cntFilesSoFar] corresponds to total
   // count of files in [filesSoFar])
@@ -160,12 +169,13 @@ class PerProjectIndexingQueue(private val project: Project) {
   // Accepting `List<VirtualFile>` delays the moment when we know that many files have changed, and we need a dumb mode.
   // Accepting [VirtualFile] without intermediate buffering ([PerProviderSink] is essentially a non-thread safe buffer) and adding
   // them directly to [filesSoFar] will likely slow down the process (though this assumption is not properly verified)
-  private fun addFiles(iterator: IndexableFilesIterator, files: List<VirtualFile>) {
+  private fun addFiles(iterator: IndexableFilesIterator, files: List<VirtualFile>, scanningId: Long) { //todo[lene] write to a set
     lock.read {
       filesSoFar.compute(iterator) { _, old ->
         return@compute if (old == null) ArrayList(files) else old + files
       }
       cntFilesSoFar.addAndGet(files.size)
+      scanningIds.add(scanningId)
     }
   }
 
@@ -175,10 +185,10 @@ class PerProjectIndexingQueue(private val project: Project) {
   }
 
   fun flushNow(reason: String) {
-    val (filesInQueue, totalFiles) = getAndResetQueuedFiles()
+    val (filesInQueue, totalFiles, scanningIds) = getAndResetQueuedFiles()
     if (totalFiles > 0) {
       // note that DumbModeWhileScanningTrigger will not finish dumb mode until scanning is finished
-      UnindexedFilesIndexer(project, filesInQueue, reason).queue(project)
+      UnindexedFilesIndexer(project, filesInQueue, reason, scanningIds).queue(project)
     }
     else {
       LOG.info("Finished for " + project.name + ". No files to index with loading content.")
@@ -186,12 +196,13 @@ class PerProjectIndexingQueue(private val project: Project) {
   }
 
   fun flushNowSync(projectIndexingHistory: ProjectIndexingHistoryImpl, indicator: ProgressIndicator) {
-    val (filesInQueue, totalFiles) = getAndResetQueuedFiles()
+    val (filesInQueue, totalFiles, scanningIds) = getAndResetQueuedFiles()
     if (totalFiles > 0) {
       val indexingReason = projectIndexingHistory.indexingReason ?: "Flushing queue of project ${project.name}"
       val projectDumbIndexingHistory = ProjectDumbIndexingHistoryImpl(project)
       try {
-        UnindexedFilesIndexer(project, filesInQueue, indexingReason).indexFiles(projectIndexingHistory, projectDumbIndexingHistory, indicator)
+        UnindexedFilesIndexer(project, filesInQueue, indexingReason, scanningIds).indexFiles(projectIndexingHistory,
+                                                                                             projectDumbIndexingHistory, indicator)
       }
       catch (e: Throwable) {
         projectDumbIndexingHistory.setWasInterrupted()
@@ -215,15 +226,24 @@ class PerProjectIndexingQueue(private val project: Project) {
     return files
   }
 
-  private fun getAndResetQueuedFiles(): Pair<ConcurrentMap<IndexableFilesIterator, Collection<VirtualFile>>, Int> {
+  private data class QueuedFiles(
+    val fileMap: ConcurrentMap<IndexableFilesIterator, Collection<VirtualFile>>,
+    val numberOfFiles: Int,
+    val scanningIds: LongSet
+  )
+
+  private fun getAndResetQueuedFiles(): QueuedFiles {
     try {
       return lock.write {
         val filesInQueue = filesSoFar
         filesSoFar = ConcurrentHashMap()
         val totalFiles = cntFilesSoFar.getAndSet(0)
-        return@write Pair(filesInQueue, totalFiles)
+        val idsOfScannings = scanningIds
+        scanningIds = createSetForScanningIds()
+        return@write QueuedFiles(filesInQueue, totalFiles, LongSets.unmodifiable(idsOfScannings))
       }
-    } finally {
+    }
+    finally {
       publishEstimatedFilesCount(sinkFactory.getUncommittedDirtyFilesCount())
     }
   }
@@ -232,8 +252,8 @@ class PerProjectIndexingQueue(private val project: Project) {
    * Creates new instance of **thread-unsafe** [PerProviderSink]
    * Will throw [ProcessCanceledException] if the queue is suspended via [cancelAllTasksAndWait]
    */
-  fun getSink(provider: IndexableFilesIterator): PerProviderSink {
-    return sinkFactory.newSink(provider)
+  fun getSink(provider: IndexableFilesIterator, scanningId: Long): PerProviderSink {
+    return sinkFactory.newSink(provider, scanningId)
   }
 
   /**
@@ -258,12 +278,13 @@ class PerProjectIndexingQueue(private val project: Project) {
 
   companion object {
     private val LOG = logger<PerProjectIndexingQueue>()
+    private fun createSetForScanningIds(): LongSet = LongSets.synchronize(LongArraySet(4))
   }
 
   @TestOnly
   class TestCompanion(private val q: PerProjectIndexingQueue) {
     fun getAndResetQueuedFiles(): Pair<ConcurrentMap<IndexableFilesIterator, Collection<VirtualFile>>, Int> {
-      return q.getAndResetQueuedFiles()
+      return q.getAndResetQueuedFiles().let { Pair(it.fileMap, it.numberOfFiles) }
     }
   }
 }

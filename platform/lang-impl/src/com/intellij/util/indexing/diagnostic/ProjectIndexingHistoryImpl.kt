@@ -9,6 +9,7 @@ import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
 import com.intellij.util.indexing.diagnostic.dto.toJsonStatistics
 import com.intellij.util.indexing.snapshot.SnapshotInputMappingsStatistics
+import it.unimi.dsi.fastutil.longs.LongSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.time.Duration
@@ -366,15 +367,15 @@ data class ProjectScanningHistoryImpl(override val project: Project,
                                       override val scanningReason: String?,
                                       private val scanningType: ScanningType) : ProjectScanningHistory {
   private companion object {
-    val indexingSessionIdSequencer = AtomicLong()
+    val scanningSessionIdSequencer = AtomicLong()
     val log = thisLogger()
   }
 
-  override val indexingSessionId = indexingSessionIdSequencer.getAndIncrement()
+  override val scanningSessionId = scanningSessionIdSequencer.getAndIncrement()
 
   override val times: ScanningTimes by ::timesImpl
 
-  private val timesImpl = ScanningTimesImpl(scanningReason = scanningReason, scanningType = scanningType,
+  private val timesImpl = ScanningTimesImpl(scanningReason = scanningReason, scanningType = scanningType, scanningId = scanningSessionId,
                                             updatingStart = ZonedDateTime.now(ZoneOffset.UTC), totalUpdatingTime = System.nanoTime())
 
   override val scanningStatistics = arrayListOf<JsonScanningStatistics>()
@@ -609,6 +610,7 @@ data class ProjectScanningHistoryImpl(override val project: Project,
   data class ScanningTimesImpl(
     override val scanningReason: String?,
     override val scanningType: ScanningType,
+    override val scanningId: Long,
     override val updatingStart: ZonedDateTime,
     override var totalUpdatingTime: TimeNano,
     override var updatingEnd: ZonedDateTime = updatingStart,
@@ -638,7 +640,7 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
 
   private val timesImpl = DumbIndexingTimesImpl(updatingStart = ZonedDateTime.now(ZoneOffset.UTC), totalUpdatingTime = System.nanoTime())
 
-  override var refreshedScanningStatistics : JsonScanningStatistics = JsonScanningStatistics()
+  override var refreshedScanningStatistics: JsonScanningStatistics = JsonScanningStatistics()
 
   override val providerStatistics = arrayListOf<JsonFileProviderIndexStatistics>()
 
@@ -737,6 +739,10 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
     }
   }
 
+  fun setScanningIds(ids: LongSet){
+    timesImpl.scanningIds = ids
+  }
+
   fun indexingFinished() {
     writeStagesToDurations()
   }
@@ -797,6 +803,7 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
   ) : StatsPerIndexer
 
   data class DumbIndexingTimesImpl(
+    override var scanningIds: LongSet = LongSet.of(),
     override val updatingStart: ZonedDateTime,
     override var totalUpdatingTime: TimeNano,
     override var updatingEnd: ZonedDateTime = updatingStart,
