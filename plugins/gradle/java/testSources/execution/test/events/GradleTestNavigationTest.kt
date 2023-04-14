@@ -17,7 +17,7 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
   @AllGradleVersionsSource
   fun `test display name and navigation with Java and Junit 5 OLD`(gradleVersion: GradleVersion) {
     testJavaProject(gradleVersion) {
-      writeText("src/test/java/org/example/TestCase.java", JAVA_PARAMETRISED_JUNIT_5_TEST)
+      writeText("src/test/java/org/example/TestCase.java", JAVA_PARAMETRISED_JUNIT5_TEST)
 
       executeTasks(":test")
 
@@ -73,7 +73,7 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
   @AllGradleVersionsSource
   fun `test display name and navigation with Java and Junit 5`(gradleVersion: GradleVersion) {
     testJavaProject(gradleVersion) {
-      writeText("src/test/java/org/example/TestCase.java", JAVA_PARAMETRISED_JUNIT_5_TEST)
+      writeText("src/test/java/org/example/TestCase.java", JAVA_PARAMETRISED_JUNIT5_TEST)
 
       executeTasks(":test")
 
@@ -146,8 +146,8 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
   @AllGradleVersionsSource
   fun `test display name and navigation with Java and Junit 4`(gradleVersion: GradleVersion) {
     test(gradleVersion, JAVA_JUNIT4_FIXTURE) {
-      writeText("src/test/java/org/example/TestCase.java", JAVA_JUNIT_4_TEST)
-      writeText("src/test/java/org/example/ParametrizedTestCase.java", JAVA_PARAMETRIZED_JUNIT_4_TEST)
+      writeText("src/test/java/org/example/TestCase.java", JAVA_JUNIT4_TEST)
+      writeText("src/test/java/org/example/ParametrizedTestCase.java", JAVA_PARAMETRIZED_JUNIT4_TEST)
 
       executeTasks(":test")
 
@@ -390,7 +390,7 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
       withDirectory("src/test/groovy")
     }
 
-    private val JAVA_PARAMETRISED_JUNIT_5_TEST = """
+    private val JAVA_PARAMETRISED_JUNIT5_TEST = """
       |package org.example;
       |
       |import org.junit.jupiter.api.*;
@@ -421,7 +421,7 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
       |}
     """.trimMargin()
 
-    private val JAVA_JUNIT_4_TEST = """
+    private val JAVA_JUNIT4_TEST = """
       |package org.example;
       |
       |import org.junit.Test;
@@ -436,7 +436,7 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
       |}
     """.trimMargin()
 
-    private val JAVA_PARAMETRIZED_JUNIT_4_TEST = """
+    private val JAVA_PARAMETRIZED_JUNIT4_TEST = """
       |package org.example;
       |
       |import org.junit.Test;

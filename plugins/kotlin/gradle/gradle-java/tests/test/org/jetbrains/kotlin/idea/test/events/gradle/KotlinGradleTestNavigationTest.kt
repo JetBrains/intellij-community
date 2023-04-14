@@ -17,7 +17,7 @@ class KotlinGradleTestNavigationTest : KotlinGradleTestNavigationTestCase() {
     @AllGradleVersionsSource
     fun `test display name and navigation with Kotlin and Junit 5 OLD`(gradleVersion: GradleVersion) {
         testKotlinProject(gradleVersion) {
-            writeText("src/test/kotlin/org/example/TestCase.kt", KOTLIN_CLASS_WITH_PARAMETRISED_JUNIT_5_TESTS)
+            writeText("src/test/kotlin/org/example/TestCase.kt", KOTLIN_CLASS_WITH_PARAMETRISED_JUNIT5_TESTS)
 
             executeTasks(":test")
 
@@ -73,7 +73,7 @@ class KotlinGradleTestNavigationTest : KotlinGradleTestNavigationTestCase() {
     @AllGradleVersionsSource
     fun `test display name and navigation with Kotlin and Junit 5`(gradleVersion: GradleVersion) {
         testKotlinProject(gradleVersion) {
-            writeText("src/test/kotlin/org/example/TestCase.kt", KOTLIN_CLASS_WITH_PARAMETRISED_JUNIT_5_TESTS)
+            writeText("src/test/kotlin/org/example/TestCase.kt", KOTLIN_CLASS_WITH_PARAMETRISED_JUNIT5_TESTS)
 
             executeTasks(":test")
 
@@ -147,8 +147,8 @@ class KotlinGradleTestNavigationTest : KotlinGradleTestNavigationTestCase() {
     @AllGradleVersionsSource
     fun `test display name and navigation with Kotlin and Junit 4`(gradleVersion: GradleVersion) {
         test(gradleVersion, KOTLIN_JUNIT4_FIXTURE) {
-            writeText("src/test/kotlin/org/example/TestCase.kt", KOTLIN_JUNIT_4_TEST)
-            writeText("src/test/kotlin/org/example/ParametrizedTestCase.kt", KOTLIN_PARAMETRIZED_JUNIT_4_TEST)
+            writeText("src/test/kotlin/org/example/TestCase.kt", KOTLIN_JUNIT4_TEST)
+            writeText("src/test/kotlin/org/example/ParametrizedTestCase.kt", KOTLIN_PARAMETRIZED_JUNIT4_TEST)
 
             executeTasks(":test")
 
@@ -286,7 +286,7 @@ class KotlinGradleTestNavigationTest : KotlinGradleTestNavigationTestCase() {
             withDirectory("src/test/kotlin")
         }
 
-        private val KOTLIN_CLASS_WITH_PARAMETRISED_JUNIT_5_TESTS = """
+        private val KOTLIN_CLASS_WITH_PARAMETRISED_JUNIT5_TESTS = """
             |package org.example
             |
             |import org.junit.jupiter.api.*
@@ -316,7 +316,7 @@ class KotlinGradleTestNavigationTest : KotlinGradleTestNavigationTestCase() {
             |}
         """.trimMargin()
 
-        private val KOTLIN_JUNIT_4_TEST = """
+        private val KOTLIN_JUNIT4_TEST = """
             |package org.example
             |
             |import org.junit.Assert
@@ -333,7 +333,7 @@ class KotlinGradleTestNavigationTest : KotlinGradleTestNavigationTestCase() {
             |}
         """.trimMargin()
 
-        private val KOTLIN_PARAMETRIZED_JUNIT_4_TEST = """
+        private val KOTLIN_PARAMETRIZED_JUNIT4_TEST = """
             |package org.example
             |
             |import org.junit.Test
