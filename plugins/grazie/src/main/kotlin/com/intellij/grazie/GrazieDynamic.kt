@@ -20,7 +20,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 
-internal object GrazieDynamic : DynamicPluginListener {
+object GrazieDynamic : DynamicPluginListener {
   private val myDynClassLoaders by lazy {
     val oldFiles = Files.walk(dynamicFolder).filter { file ->
       file.isFile() && Lang.values().all { it.remote.file.toAbsolutePath() != file.toAbsolutePath() }
