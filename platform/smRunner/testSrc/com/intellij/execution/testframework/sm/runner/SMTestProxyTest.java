@@ -199,7 +199,7 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     assertTrue(mySimpleTest.wasLaunched());
     assertTrue(mySimpleTest.isDefect());
     assertTrue(mySimpleTest.getMagnitudeInfo() == Magnitude.FAILED_INDEX);
-    final MockPrinter printer = new MockPrinter(true);
+    final MockPrinter printer = new MockPrinter();
     mySimpleTest.printOn(printer);
     assertEquals("", printer.getStdOut());
     assertEquals("\nmsg 1\nstack trace 1\n", printer.getStdErr());
@@ -232,7 +232,7 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     mySimpleTest.setTestFailed("c", "stacktrace", false);
     mySimpleTest.setFinished();
 
-    final MockPrinter printer = new MockPrinter(true);
+    final MockPrinter printer = new MockPrinter();
     printer.setShowHyperLink(true);
     mySimpleTest.printOn(printer);
     assertEquals("", printer.getStdOut());

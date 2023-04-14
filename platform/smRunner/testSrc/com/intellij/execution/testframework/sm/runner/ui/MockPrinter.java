@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class MockPrinter implements Printer {
   private boolean myShowHyperLink = false;
-  private boolean myShouldReset = false;
+  private boolean myShouldReset = true;
   private boolean myHasPrinted = false;
   protected final StringBuilder myAllOut = new StringBuilder();
   protected final StringBuilder myStdOut = new StringBuilder();
@@ -40,14 +40,6 @@ public class MockPrinter implements Printer {
     MockPrinter printer = new MockPrinter();
     printable.printOn(printer);
     return printer;
-  }
-
-  public MockPrinter() {
-    this(true);
-  }
-
-  public MockPrinter(boolean shouldReset) {
-    myShouldReset = shouldReset;
   }
 
   @Override
@@ -91,6 +83,10 @@ public class MockPrinter implements Printer {
 
   public boolean isShouldReset() {
     return myShouldReset;
+  }
+
+  public void setShouldReset(boolean shouldReset) {
+    myShouldReset = shouldReset;
   }
 
   public void resetIfNecessary() {

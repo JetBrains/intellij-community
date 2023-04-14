@@ -81,7 +81,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     TestConsoleProperties.SELECT_FIRST_DEFECT.set(consoleProperties, false);
     TestConsoleProperties.TRACK_RUNNING_TEST.set(consoleProperties, false);
 
-    myMockResettablePrinter = new MockPrinter(true);
+    myMockResettablePrinter = new MockPrinter();
     myConsole = new MyConsoleView(consoleProperties);
     myConsole.initUI();
     myResultsViewer = myConsole.getResultsViewer();
