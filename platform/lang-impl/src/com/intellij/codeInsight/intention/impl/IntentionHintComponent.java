@@ -448,7 +448,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       myIconLabel.setOpaque(false);
       myIconLabel.addMouseListener(new LightBulbMouseListener(project, file));
 
-      if (Registry.is("debugger.inlayRunToCursor")) {
+      if (Registry.is("debugger.inlayRunToCursor") && !topLevelActions.isEmpty()) {
         DefaultActionGroup actions = new DefaultActionGroup(List.copyOf(topLevelActions));
         ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("Any", actions, true);
         add(toolbar.getComponent(), BorderLayout.CENTER);

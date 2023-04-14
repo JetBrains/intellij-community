@@ -225,7 +225,8 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
         "Errors: " + errorFixesToShow + "; " +
         "Inspection fixes: " + inspectionFixesToShow + "; " +
         "Intentions: " + intentionsToShow + "; " +
-        "Gutters: " + guttersToShow + "; "+
+        "Gutters: " + guttersToShow + "; " +
+        "TopLevelActions: " + topLevelActions + "; " +
         "Notifications: " + notificationActionsToShow;
     }
   }
