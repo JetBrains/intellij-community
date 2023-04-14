@@ -2,5 +2,6 @@
 package com.intellij.codeInspection.blockingCallsDetection
 
 data class BlockingCallInspectionSettings(
-  val considerUnknownContextBlocking: Boolean
+  val considerUnknownContextBlocking: Boolean,
+  val considerSuspendContextNonBlocking: Boolean,
 )

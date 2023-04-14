@@ -28,10 +28,12 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
 
   public BlockingMethodInNonBlockingContextInspection() {
     myConsiderUnknownContextBlocking = true;
+    myConsiderSuspendContextNonBlocking = true;
   }
 
-  public BlockingMethodInNonBlockingContextInspection(boolean considerUnknownContextBlocking) {
+  public BlockingMethodInNonBlockingContextInspection(boolean considerUnknownContextBlocking, boolean considerSuspendContextNonBlocking) {
     myConsiderUnknownContextBlocking = considerUnknownContextBlocking;
+    myConsiderSuspendContextNonBlocking = considerSuspendContextNonBlocking;
   }
 
   public static final List<String> DEFAULT_BLOCKING_ANNOTATIONS = List.of(
@@ -48,12 +50,15 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
   public List<String> myBlockingAnnotations = new ArrayList<>(DEFAULT_BLOCKING_ANNOTATIONS);
   public List<String> myNonBlockingAnnotations = new ArrayList<>(DEFAULT_NONBLOCKING_ANNOTATIONS);
   public boolean myConsiderUnknownContextBlocking;
+  public boolean myConsiderSuspendContextNonBlocking;
 
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
       checkbox("myConsiderUnknownContextBlocking",
                JvmAnalysisBundle.message("jvm.inspections.blocking.method.consider.unknown.context.blocking")),
+      checkbox("myConsiderSuspendContextNonBlocking",
+               JvmAnalysisBundle.message("jvm.inspections.blocking.method.consider.suspend.context.non.blocking")),
       stringList("myBlockingAnnotations", JvmAnalysisBundle.message("jvm.inspections.blocking.method.annotation.blocking"),
                  new JavaClassValidator().withTitle(
                     JvmAnalysisBundle.message("jvm.inspections.blocking.method.annotation.configure.add.blocking.title"))
@@ -83,7 +88,7 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
   }
 
   public BlockingCallInspectionSettings getSettings() {
-    return new BlockingCallInspectionSettings(myConsiderUnknownContextBlocking);
+    return new BlockingCallInspectionSettings(myConsiderUnknownContextBlocking, myConsiderSuspendContextNonBlocking);
   }
 
   private static @NotNull List<NonBlockingContextChecker> getNonBlockingContextCheckers(@NotNull PsiFile file,
