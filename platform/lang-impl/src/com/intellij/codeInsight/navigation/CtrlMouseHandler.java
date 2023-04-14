@@ -3,7 +3,6 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -22,7 +21,6 @@ import static com.intellij.openapi.actionSystem.IdeActions.ACTION_GOTO_DECLARATI
 @Deprecated
 @ApiStatus.Internal
 public final class CtrlMouseHandler {
-  static final Logger LOG = Logger.getInstance(CtrlMouseHandler.class);
 
   private static @Nullable CtrlMouseAction getCtrlMouseAction(@NotNull String actionId) {
     AnAction action = ActionManager.getInstance().getAction(actionId);

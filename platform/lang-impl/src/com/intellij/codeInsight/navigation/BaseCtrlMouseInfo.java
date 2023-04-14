@@ -6,10 +6,9 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.codeInsight.navigation.CtrlMouseHandler.LOG;
+import static com.intellij.codeInsight.navigation.CtrlMouseDataKt.getReferenceRanges;
 
 /**
  * @deprecated Unused in v2 implementation.
@@ -26,22 +25,6 @@ public abstract class BaseCtrlMouseInfo implements CtrlMouseInfo {
 
   protected BaseCtrlMouseInfo(@NotNull PsiElement elementAtPointer) {
     this(getReferenceRanges(elementAtPointer));
-  }
-
-  @ApiStatus.Internal
-  @NotNull
-  public static List<TextRange> getReferenceRanges(@NotNull PsiElement elementAtPointer) {
-    if (!elementAtPointer.isPhysical()) return Collections.emptyList();
-    int textOffset = elementAtPointer.getTextOffset();
-    final TextRange range = elementAtPointer.getTextRange();
-    if (range == null) {
-      throw new AssertionError("Null range for " + elementAtPointer + " of " + elementAtPointer.getClass());
-    }
-    if (textOffset < range.getStartOffset() || textOffset < 0) {
-      LOG.error("Invalid text offset " + textOffset + " of element " + elementAtPointer + " of " + elementAtPointer.getClass());
-      textOffset = range.getStartOffset();
-    }
-    return Collections.singletonList(new TextRange(textOffset, range.getEndOffset()));
   }
 
   @Override
