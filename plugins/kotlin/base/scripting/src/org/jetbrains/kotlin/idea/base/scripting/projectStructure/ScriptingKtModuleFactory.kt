@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.workspaceModel.ide.WorkspaceModel
 import org.jetbrains.kotlin.analysis.project.structure.*
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -13,10 +12,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.KtModuleByModuleInfoBase
 import org.jetbrains.kotlin.idea.base.projectStructure.KtModuleFactory
 import org.jetbrains.kotlin.idea.base.projectStructure.toKtModuleOfType
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptId
-import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryRootTypeId
-import org.jetbrains.kotlin.idea.core.script.ucache.listDependencies
-import org.jetbrains.kotlin.idea.core.script.ucache.scriptsAsEntities
 import org.jetbrains.kotlin.psi.KtFile
 import java.nio.file.Path
 
@@ -79,15 +74,6 @@ private class KtScriptDependencyModuleByModuleInfo(
                     .map { it.toNioPath() }
             }
             is ScriptDependenciesInfo.ForFile -> {
-                if (scriptsAsEntities) {
-                    val entityStorage = WorkspaceModel.getInstance(project).currentSnapshot
-                    val scriptEntity = entityStorage.resolve(KotlinScriptId(moduleInfo.scriptFile.path))
-                    if (scriptEntity != null) {
-                        return scriptEntity.listDependencies(project, KotlinScriptLibraryRootTypeId.COMPILED)
-                            .map { it.toNioPath() }
-                    }
-                }
-
                 return ScriptConfigurationManager.getInstance(project)
                     .getScriptDependenciesClassFiles(moduleInfo.scriptFile)
                     .map { it.toNioPath() }

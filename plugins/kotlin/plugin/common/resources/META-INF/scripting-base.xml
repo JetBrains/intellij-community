@@ -57,11 +57,8 @@
 
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.core.script.LoadScriptDefinitionsStartupActivity" order="last"/>
 
-    <java.elementFinder implementation="org.jetbrains.kotlin.idea.core.script.KotlinScriptDependenciesClassFinder" order="last"/>
-
     <java.shortNamesCache implementation="org.jetbrains.kotlin.idea.core.script.dependencies.JavaClassesInScriptDependenciesShortNameCache"/>
 
-    <additionalLibraryRootsProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptDependenciesLibraryRootProvider"/>
 
     <psi.clsCustomNavigationPolicy implementation="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependencySourceNavigationPolicyForJavaClasses"/>
 
@@ -81,12 +78,6 @@
 
     <!--suppress PluginXmlValidity -->
     <indexableEntityProvider implementation="org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptDependencyIndexableEntityProvider"/>
-
-    <registryKey
-            key="kotlin.scripts.as.entities"
-            description="Enables explicit script dependencies support"
-            defaultValue="true"
-            restartRequired="true"/>
 
     <registryKey
             key="kotlin.scripting.support.warning"
