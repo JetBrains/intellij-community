@@ -1381,8 +1381,8 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
               tr {
                 th("File type")
                 th("Number of files")
-                th("Total processing time")
-                th("Content loading time")
+                th("Total processing time (% of total processing time)")
+                th("Content loading time (% of total content loading time)")
                 th("Total files size")
                 th("Total processing speed")
                 th("The biggest contributors")
