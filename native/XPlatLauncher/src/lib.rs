@@ -1,4 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 #![warn(
 absolute_paths_not_starting_with_crate,
 elided_lifetimes_in_paths,
@@ -67,6 +68,7 @@ mod default;
 mod docker;
 
 const CANNOT_START_TITLE: &'static str = "Cannot start the IDE";
+const SUPPORT_CONTACT: &'static str = "For support, please refer to https://jb.gg/ide/critical-startup-errors";
 
 #[cfg(target_os = "windows")]
 const CLASS_PATH_SEPARATOR: &'static str = ";";
@@ -78,11 +80,11 @@ pub fn main_lib() {
     let show_error_ui = env::var(DO_NOT_SHOW_ERROR_UI_ENV_VAR).is_err() && !remote_dev;
     let verbose = env::var(VERBOSE_LOGGING_ENV_VAR).is_ok() || remote_dev;
     if let Err(e) = main_impl(remote_dev, verbose) {
-        let text = format!("{:?}", e);
+        let text = format!("{:?}\n\n{}", e, SUPPORT_CONTACT);
         if show_error_ui {
             show_fail_to_start_message(text.as_str())
         } else if verbose {
-            error!("{}", text);
+            error!("{:?}", e);
         } else {
             eprintln!("{}\n{}", CANNOT_START_TITLE, text);
         }
