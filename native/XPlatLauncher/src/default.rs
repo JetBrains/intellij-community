@@ -1,4 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 use std::env;
 use std::fs::File;
 use std::io::BufReader;
@@ -525,10 +526,10 @@ fn read_product_info(product_info_path: &Path) -> Result<ProductInfo> {
 }
 
 fn find_ide_home(current_exe: &Path) -> Result<(PathBuf, PathBuf)> {
-    let start = current_exe.parent_or_err()?;
     let product_info_rel_path = if env::consts::OS == "macos" { "Resources/product-info.json" } else { "product-info.json" };
+    debug!("Looking for: '{product_info_rel_path}'");
 
-    let mut candidate = start.clone();
+    let mut candidate = current_exe.parent_or_err()?;
     for _ in 0..IDE_HOME_LOOKUP_DEPTH {
         debug!("Probing for IDE home: {:?}", candidate);
         let product_info_path = candidate.join(product_info_rel_path);
@@ -538,5 +539,5 @@ fn find_ide_home(current_exe: &Path) -> Result<(PathBuf, PathBuf)> {
         candidate = candidate.parent_or_err()?;
     }
 
-    bail!("Cannot locate IDE installation directory among parents of '{}'", start.display())
+    bail!("Cannot find a directory with a product descriptor.\nPlease try to reinstall the IDE.")
 }
