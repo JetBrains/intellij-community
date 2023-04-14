@@ -64,7 +64,11 @@ internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry
       context.messages.warning("Descriptor for '$moduleId' isn't found in module repository $repositoryForCompiledModulesPath")
       continue
     }
-    distDescriptors.add(RawRuntimeModuleDescriptor(moduleId, resourcePaths.toList(), descriptor.dependencies))
+    
+    //this is a temporary workaround to skip dependencies which aren't used in production and aren't included in the distribution
+    val dependenciesToSkip = dependenciesUsedOnlyWhenRunningFromSources[descriptor.id] ?: emptySet()
+    
+    distDescriptors.add(RawRuntimeModuleDescriptor(moduleId, resourcePaths.toList(), descriptor.dependencies - dependenciesToSkip))
   }
 
   /* include descriptors of aggregating modules which don't have own resources (and therefore don't have DistributionFileEntry),
@@ -137,3 +141,8 @@ private val DistributionFileEntry.runtimeModuleId: RuntimeModuleId
     is ModuleLibraryFileEntry -> RuntimeModuleId.moduleLibrary(moduleName, libraryName)
     is ProjectLibraryEntry -> RuntimeModuleId.projectLibrary(data.libraryName)
   }
+
+private val dependenciesUsedOnlyWhenRunningFromSources = mapOf(
+  //may be removed when IJPL-125 is fixed
+  "intellij.platform.buildScripts.downloader" to setOf("lib.zstd-jni", "lib.zstd-jni-windows-aarch64"), 
+)
