@@ -1349,7 +1349,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
                 th("Provider name")
                 th("File")
                 th("Content loading time")
-                th("Indexing time")
+                th("Indexes values evaluation time")
                 th("Total processing time")
               }
             }
