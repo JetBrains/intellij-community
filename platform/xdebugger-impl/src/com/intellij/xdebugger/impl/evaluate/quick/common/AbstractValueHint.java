@@ -380,6 +380,11 @@ public abstract class AbstractValueHint {
     point.translate(0, myEditor.getLineHeight());
 
     myCurrentPopup = popupPresenter.apply(point);
+    myEditor.getScrollingModel().addVisibleAreaListener(e -> {
+      if (!Objects.equals(e.getOldRectangle(), e.getNewRectangle())) {
+        hideCurrentHint();
+      }
+    }, myCurrentPopup);
     myCurrentPopup.addListener(new JBPopupListener() {
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {

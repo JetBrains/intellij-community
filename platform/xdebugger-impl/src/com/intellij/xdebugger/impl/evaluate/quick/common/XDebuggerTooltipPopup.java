@@ -70,10 +70,7 @@ class XDebuggerTooltipPopup {
 
     myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(content, component)
       .setRequestFocus(true)
-      .setResizable(false)
       .setModalContext(false)
-      .setMovable(true)
-      .setMayBeParent(true)
       .setCancelOnOtherWindowOpen(true)
       .createPopup();
 
