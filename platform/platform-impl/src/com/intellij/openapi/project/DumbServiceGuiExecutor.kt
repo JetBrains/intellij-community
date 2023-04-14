@@ -29,7 +29,7 @@ class DumbServiceGuiExecutor(project: Project, queue: DumbServiceMergingTaskQueu
     val childActivity = createChildActivity(parentActivity)
     var taskCompletedNormally = false
     return try {
-      DumbServiceAppIconProgress.registerForProgress(project, visibleIndicator as ProgressIndicatorEx)
+      if (visibleIndicator is ProgressIndicatorEx) DumbServiceAppIconProgress.registerForProgress(project, visibleIndicator)
       project.service<DumbModeProgressTitle>().attachDumbModeProgress(visibleIndicator)
       super.processTasksWithProgress(suspender, visibleIndicator, childActivity).also {
         taskCompletedNormally = true
