@@ -417,7 +417,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
         }
         catch (Throwable e) {
           LOG.error(e);
-          myState = new ErrorState(new ErrorDiffRequest(DiffBundle.message("error.cant.show.diff.message")), getFittedTool(true));
+          myState = new ErrorState(new ErrorDiffRequest(DiffBundle.message("error.cant.show.diff.message"), e), getFittedTool(true));
           myState.init();
         }
       });
