@@ -1,6 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-use anyhow::{bail, Context, Result};
-use serde::{Deserialize, Serialize};
+
 use std::{env, fs, io, thread, time};
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
@@ -9,8 +8,12 @@ use std::io::{BufReader, Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus, Output, Stdio};
 use std::sync::Once;
-use log::{debug};
+
+use anyhow::{bail, Context, Result};
+use log::debug;
+use serde::{Deserialize, Serialize};
 use utils::{get_path_from_env_var, PathExt};
+
 use xplat_launcher::get_config_home;
 
 static INIT: Once = Once::new();
@@ -163,7 +166,7 @@ fn get_gradlew_executable_name() -> String {
     "gradlew.bat".to_string()
 }
 
-#[cfg(any(target_os = "macos", target_os = "linux"))]
+#[cfg(target_family = "unix")]
 fn get_gradlew_executable_name() -> String {
     "gradlew".to_string()
 }
@@ -426,7 +429,7 @@ fn layout_launcher_impl(
     Ok(())
 }
 
-#[cfg(any(target_os = "macos", target_os = "linux"))]
+#[cfg(target_family = "unix")]
 fn symlink(source: &Path, target: &Path) -> Result<()> {
     std::os::unix::fs::symlink(source, target)
         .context(format!("Failed to create symlink {target:?} pointing to {source:?}"))?;
@@ -533,10 +536,8 @@ pub struct LauncherRunResult {
 impl Debug for LauncherRunResult {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!(
-            "\n** exit code: {}\n** stderr: [[[{}]]]\n** stdout: [[[{}]]]",
-            self.exit_status.code().unwrap_or(-1),
-            self.stderr.trim(),
-            self.stdout.trim()))
+            "\n** exit code: {}\n** stderr: <<<{}>>>\n** stdout: <<<{}>>>",
+            self.exit_status.code().unwrap_or(-1), self.stderr, self.stdout))
     }
 }
 
