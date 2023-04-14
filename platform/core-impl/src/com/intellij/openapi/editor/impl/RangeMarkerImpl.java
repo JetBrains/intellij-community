@@ -120,10 +120,10 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     return TextRangeScalarUtil.create(TextRangeScalarUtil.shift(node.toScalarRange(), delta, delta));
   }
 
-  void invalidate(@NotNull final Object reason) {
+  void invalidate() {
     RangeMarkerTree.RMNode<RangeMarkerEx> node = myNode;
     if (node != null) {
-      node.invalidate(reason);
+      node.invalidate();
     }
   }
 
@@ -191,7 +191,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   public final void documentChanged(@NotNull DocumentEvent e) {
     TextRange newRange = applyChange(e, intervalStart(), intervalEnd(), isGreedyToLeft(), isGreedyToRight(), isStickingToRight());
     if (newRange == null) {
-      invalidate(e);
+      invalidate();
     }
     else {
       setRange(TextRangeScalarUtil.toScalarRange(newRange));
@@ -210,7 +210,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     if (oldStart > oldEnd || oldStart < 0 || oldEnd > docLength - e.getNewLength() + e.getOldLength()) {
       LOG.error("RangeMarker" + (isGreedyToLeft() ? "[" : "(") + oldStart + ", " + oldEnd + (isGreedyToRight() ? "]" : ")") +
                 " is invalid before update. Event = " + e + ". Doc length=" + docLength + "; "+getClass());
-      invalidate(e);
+      invalidate();
       return;
     }
     changedUpdateImpl(e);
@@ -221,7 +221,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
                 "Doc length=" + docLength +
                 "; "+getClass()+". Before update: " + (isGreedyToLeft() ? "[" : "(") + oldStart + ", " + oldEnd + (isGreedyToRight() ? "]" : ")") +
                 " After update: '"+this+"'");
-      invalidate(e);
+      invalidate();
     }
   }
 
@@ -234,7 +234,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
     TextRange newRange = applyChange(e, intervalStart(), intervalEnd(), isGreedyToLeft(), isGreedyToRight(), isStickingToRight());
     if (newRange == null) {
-      invalidate(e);
+      invalidate();
       return;
     }
 
@@ -275,7 +275,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   private int translatedViaDiff(@NotNull DocumentEventImpl e, int line) throws FilesTooBigForDiffException {
     line = e.translateLineViaDiff(line);
     if (line < 0 || line >= getDocument().getLineCount()) {
-      invalidate(e);
+      invalidate();
     }
     else {
       DocumentEx document = getDocument();

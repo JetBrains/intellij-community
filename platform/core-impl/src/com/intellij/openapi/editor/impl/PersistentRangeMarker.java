@@ -125,7 +125,7 @@ class PersistentRangeMarker extends RangeMarkerImpl {
     Pair<TextRange, LinesCols> pair =
       applyChange(e, this, intervalStart(), intervalEnd(), isGreedyToLeft(), isGreedyToRight(), isStickingToRight(), myLinesCols);
     if (pair == null) {
-      invalidate(e);
+      invalidate();
       return;
     }
 

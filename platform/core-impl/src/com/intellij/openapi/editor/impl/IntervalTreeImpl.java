@@ -962,7 +962,6 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     l.writeLock().lock();
     try {
       incModCount();
-
       if (!((RangeMarkerEx)interval).isValid()) return false;
       checkBelongsToTheTree(interval, true);
       checkMax(true);
@@ -971,7 +970,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
       IntervalNode<T> node = lookupNode(interval);
       if (node == null) return false;
 
-      beforeRemove(interval, "Explicit Dispose");
+      beforeRemove(interval);
 
       node.removeInterval(interval);
       return true;
@@ -1286,7 +1285,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
   public void clear() {
     l.writeLock().lock();
     processAll(t -> {
-      beforeRemove(t, "Clear all");
+      beforeRemove(t);
       return true;
     });
     try {
@@ -1307,19 +1306,19 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     collectGced(root.getRight(), gced);
   }
 
-  void fireBeforeRemoved(@NotNull T markerEx, @NotNull @NonNls Object reason) {
+  void fireBeforeRemoved(@NotNull T markerEx) {
   }
 
   private boolean firingBeforeRemove; // accessed under l.writeLock() only
 
   // must be called under l.writeLock()
-  void beforeRemove(@NotNull T markerEx, @NonNls @NotNull Object reason) {
+  void beforeRemove(@NotNull T markerEx) {
     if (firingBeforeRemove) {
       throw new IllegalStateException("must not remove range markers from within beforeRemove() listener");
     }
     firingBeforeRemove = true;
     try {
-      fireBeforeRemoved(markerEx, reason);
+      fireBeforeRemoved(markerEx);
     }
     finally {
       firingBeforeRemove = false;

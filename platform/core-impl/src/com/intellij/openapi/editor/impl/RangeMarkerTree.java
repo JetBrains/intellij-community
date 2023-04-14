@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
@@ -150,21 +151,21 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
       return (isGreedyToLeft() ? "[" : "(") + intervalStart() + "," + intervalEnd() + (isGreedyToRight() ? "]" : ")");
     }
 
-    void invalidate(@NotNull Object reason) {
+    void invalidate() {
       setValid(false);
       IntervalTreeImpl<T> tree = getTree();
       tree.assertUnderWriteLock();
       processAliveKeys(markerEx -> {
-        tree.beforeRemove(markerEx, reason);
+        tree.beforeRemove(markerEx);
         return true;
       });
     }
 
-    void invalidateUnderLock(@NotNull String reason) {
+    void invalidateUnderLock() {
       Lock l = getTree().l.writeLock();
       l.lock();
       try {
-        invalidate(reason);
+        invalidate();
       }
       finally {
         l.unlock();

@@ -178,7 +178,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
         registerRangeMarker(r, startOffset, endOffset, r.isGreedyToLeft(), r.isGreedyToRight(), 0);
       }
       else {
-        node.invalidateUnderLock("document was gc-ed and re-created with invalid offsets: (" + startOffset + "," + endOffset + "): " + getTextLength());
+        node.invalidateUnderLock();
       }
     }
   }
