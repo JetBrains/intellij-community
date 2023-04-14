@@ -549,34 +549,35 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
                                       @NotNull final String actualText,
                                       @NotNull final String expectedText,
                                       @NotNull final TestFailedEvent event) {
-    TestComparisionFailedState comparisonFailedState =
-      setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, event.getExpectedFilePath(), event.getActualFilePath(),
+    TestComparisonFailedState comparisonFailedState =
+      setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, event.getExpectedFilePath(),
+                              event.getActualFilePath(),
                               event.shouldPrintExpectedAndActualValues());
     comparisonFailedState.setToDeleteExpectedFile(event.isExpectedFileTemp());
     comparisonFailedState.setToDeleteActualFile(event.isActualFileTemp());
   }
 
-  public TestComparisionFailedState setTestComparisonFailed(@Nullable final String localizedMessage,
-                                                            @Nullable final String stackTrace,
-                                                            @NotNull final String actualText,
-                                                            @NotNull final String expectedText,
-                                                            @Nullable final String expectedFilePath,
-                                                            @Nullable final String actualFilePath,
-                                                            boolean printExpectedAndActualValues) {
+  public TestComparisonFailedState setTestComparisonFailed(
+    @Nullable final String localizedMessage,
+    @Nullable final String stackTrace,
+    @NotNull final String actualText,
+    @NotNull final String expectedText,
+    @Nullable final String expectedFilePath,
+    @Nullable final String actualFilePath,
+    boolean printExpectedAndActualValues
+  ) {
     setStacktraceIfNotSet(stackTrace);
     myErrorMessage = localizedMessage;
-    final TestComparisionFailedState comparisionFailedState = new TestComparisionFailedState(
+    final TestComparisonFailedState comparisonFailedState = new TestComparisonFailedState(
       localizedMessage, stackTrace, actualText, expectedText, printExpectedAndActualValues,
       expectedFilePath, actualFilePath
     );
-    DiffHyperlink hyperlink = comparisionFailedState.getHyperlink();
-    if (hyperlink != null) {
-      hyperlink.setTestProxy(this);
-    }
+    DiffHyperlink hyperlink = comparisonFailedState.getHyperlink();
+    hyperlink.setTestProxy(this);
 
-    updateFailedState(comparisionFailedState);
-    fireOnNewPrintable(comparisionFailedState);
-    return comparisionFailedState;
+    updateFailedState(comparisonFailedState);
+    fireOnNewPrintable(comparisonFailedState);
+    return comparisonFailedState;
   }
 
   @Override
@@ -759,8 +760,8 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   @Nullable
   public DiffHyperlink getDiffViewerProvider() {
     AbstractState state = myState;
-    if (state instanceof TestComparisionFailedState) {
-      return ((TestComparisionFailedState)state).getHyperlink();
+    if (state instanceof TestComparisonFailedState) {
+      return ((TestComparisonFailedState)state).getHyperlink();
     }
 
     if (state instanceof CompoundTestFailedState) {
