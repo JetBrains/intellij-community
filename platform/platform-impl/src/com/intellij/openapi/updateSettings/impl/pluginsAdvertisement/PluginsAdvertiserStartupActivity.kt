@@ -3,6 +3,8 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.DEPENDENCY_SUPPORT_FEATURE
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.advertiser.PluginDataSet
 import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
 import com.intellij.ide.plugins.advertiser.PluginFeatureMap
@@ -23,6 +25,36 @@ import java.util.concurrent.TimeUnit
 import kotlin.coroutines.coroutineContext
 
 internal class PluginsAdvertiserStartupActivity : ProjectActivity {
+  fun getSuggestedPlugins(project: Project, customMap: Map<String, List<PluginNode>>): List<IdeaPluginDescriptor> {
+    val application = ApplicationManager.getApplication()
+    if (application.isUnitTestMode || application.isHeadlessEnvironment) {
+      return emptyList()
+    }
+
+    val customPlugins = ArrayList<PluginNode>()
+    for (value in customMap.values) {
+      customPlugins.addAll(value)
+    }
+
+    val pluginAdvertiserService = PluginAdvertiserService.getInstance(project)
+    pluginAdvertiserService.collectDependencyUnknownFeatures(true)
+
+    val customPluginIds = customPlugins.map { it.pluginId.idString }.toSet()
+    val extensionsService = PluginFeatureCacheService.getInstance()
+    val oldDependencies = extensionsService.dependencies
+    extensionsService.dependencies = PluginFeatureMap(
+      getFeatureMapFromMarketPlace(customPluginIds, DEPENDENCY_SUPPORT_FEATURE),
+      if (oldDependencies != null) System.currentTimeMillis() else 0L,
+    )
+
+    val unknownFeatures = UnknownFeaturesCollector.getInstance(project).unknownFeatures
+
+    if (unknownFeatures.isNotEmpty()) {
+      return pluginAdvertiserService.fetch(customPlugins, unknownFeatures, true)
+    }
+
+    return emptyList()
+  }
 
   suspend fun checkSuggestedPlugins(project: Project, includeIgnored: Boolean) {
     val application = ApplicationManager.getApplication()

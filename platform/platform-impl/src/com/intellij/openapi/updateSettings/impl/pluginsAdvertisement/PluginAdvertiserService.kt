@@ -87,6 +87,12 @@ sealed interface PluginAdvertiserService {
     includeIgnored: Boolean = false,
   )
 
+  fun fetch(
+    customPlugins: List<PluginNode>,
+    unknownFeatures: Collection<UnknownFeature>,
+    includeIgnored: Boolean = false,
+  ): List<IdeaPluginDescriptor>
+
   @ApiStatus.Internal
   fun collectDependencyUnknownFeatures(includeIgnored: Boolean = false)
 
@@ -179,6 +185,101 @@ open class PluginAdvertiserServiceImpl(
         includeIgnored = includeIgnored,
       )
     }
+  }
+
+  override fun fetch(customPlugins: List<PluginNode>,
+                     unknownFeatures: Collection<UnknownFeature>,
+                     includeIgnored: Boolean): List<IdeaPluginDescriptor> {
+    val featuresMap = MultiMap.createSet<PluginId, UnknownFeature>()
+
+    val plugins = mutableSetOf<PluginData>()
+    val dependencies = PluginFeatureCacheService.getInstance().dependencies
+
+    val ignoredPluginSuggestionState = GlobalIgnoredPluginSuggestionState.getInstance()
+    for (feature in unknownFeatures) {
+      val featureType = feature.featureType
+      val implementationName = feature.implementationName
+      val featurePluginData = PluginFeatureService.instance.getPluginForFeature(featureType, implementationName)
+
+      val installedPluginData = featurePluginData?.pluginData
+
+      fun putFeature(data: PluginData) {
+        val pluginId = data.pluginId
+        if (ignoredPluginSuggestionState.isIgnored(pluginId) && !includeIgnored) { // globally ignored
+          LOG.info("Plugin is ignored by user, suggestion will not be shown: $pluginId")
+          return
+        }
+
+        plugins += data
+        featuresMap.putValue(pluginId, featurePluginData?.displayName?.let { feature.withImplementationDisplayName(it) } ?: feature)
+      }
+
+      if (installedPluginData != null) {
+        putFeature(installedPluginData)
+      }
+      else if (featureType == DEPENDENCY_SUPPORT_FEATURE && dependencies != null) {
+        dependencies.get(implementationName).forEach(::putFeature)
+      }
+      else {
+        MarketplaceRequests.getInstance()
+          .getFeatures(featureType, implementationName)
+          .asSequence()
+          .mapNotNull { it.toPluginData() }
+          .forEach { putFeature(it) }
+      }
+    }
+
+    if (plugins.isEmpty()) {
+      return emptyList()
+    }
+
+    val pluginIds = plugins.asSequence().map { it.pluginId }.toSet()
+    val pluginManagerFilters = PluginManagerFilters.getInstance()
+
+    val result = ArrayList<IdeaPluginDescriptor>(RepositoryHelper.mergePluginsFromRepositories(
+      MarketplaceRequests.loadLastCompatiblePluginDescriptors(pluginIds),
+      customPlugins,
+      true,
+    ).asSequence()
+      .filter { pluginIds.contains(it.pluginId) }
+      .filterNot { PluginManagerCore.isBrokenPlugin(it) }
+      .filter { pluginManagerFilters.allowInstallingPlugin(it) }
+      .toList())
+
+    val localPluginIdMap = PluginManagerCore.buildPluginIdMap()
+
+    if (result.size < plugins.size) {
+      pluginIds.filterNot { pluginId -> result.find { pluginId == it.pluginId } != null }.mapNotNullTo(result) {
+        convertToNode(localPluginIdMap[it])
+      }
+    }
+
+    result.removeAll { localPluginIdMap[it.pluginId]?.isEnabled == true }
+
+    result.forEach {
+      val features = featuresMap[it.pluginId]
+      if (features.isNotEmpty()) {
+        (it as PluginNode).suggestedFeatures = features.map { f -> f.featureDisplayName }.toSet()
+      }
+    }
+
+    return result
+  }
+
+  private fun convertToNode(descriptor: IdeaPluginDescriptor?): PluginNode? {
+    if (descriptor == null) {
+      return null
+    }
+
+    val node = PluginNode(descriptor.pluginId, descriptor.name, "0")
+    node.description = descriptor.description
+    node.changeNotes = descriptor.changeNotes
+    node.version = descriptor.version
+    node.vendor = descriptor.vendor
+    node.organization = descriptor.organization
+    node.dependencies = descriptor.dependencies
+
+    return node
   }
 
   private fun fetchPluginSuggestions(
@@ -438,6 +539,12 @@ open class HeadlessPluginAdvertiserServiceImpl : PluginAdvertiserService {
     unknownFeatures: Collection<UnknownFeature>,
     includeIgnored: Boolean,
   ) {
+  }
+
+  override fun fetch(customPlugins: List<PluginNode>,
+                     unknownFeatures: Collection<UnknownFeature>,
+                     includeIgnored: Boolean): List<IdeaPluginDescriptor> {
+    return emptyList()
   }
 
   final override fun collectDependencyUnknownFeatures(includeIgnored: Boolean) {}

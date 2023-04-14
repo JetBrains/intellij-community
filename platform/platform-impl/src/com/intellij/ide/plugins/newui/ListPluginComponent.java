@@ -27,9 +27,11 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.RelativeFont;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +43,7 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.BooleanSupplier;
@@ -120,6 +123,7 @@ public final class ListPluginComponent extends JPanel {
     if (myIsAvailable) {
       createButtons();
       createMetricsPanel();
+      createFeaturesPanel();
       createLicensePanel();
     }
     else {
@@ -400,6 +404,22 @@ public final class ListPluginComponent extends JPanel {
       String vendor = StringUtil.defaultIfEmpty(Strings.trim(myPlugin.getVendor()), Strings.trim(myPlugin.getOrganization()));
       if (!StringUtil.isEmptyOrSpaces(vendor)) {
         myVendor = createRatingLabel(myMetricsPanel, TextHorizontalLayout.FIX_LABEL, vendor, null, null, true);
+      }
+    }
+  }
+
+  private void createFeaturesPanel() {
+    if (myMarketplace) {
+      Collection<String> features = ((PluginNode)myPlugin).getSuggestedFeatures();
+      if (!ContainerUtil.isEmpty(features)) {
+        JBLabel label = new JBLabel();
+        label.setText("<html><body><b>" + StringUtil.join(features, "</b> <b>") + "</b></body></html>"); //NON-NLS
+        PluginManagerConfigurable.setTinyFont(label);
+        label.setBorder(JBUI.Borders.emptyTop(5));
+        if (!isEnabledState()) {
+          label.setForeground(DisabledColor);
+        }
+        myLayout.addLineComponent(label);
       }
     }
   }

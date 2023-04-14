@@ -7,6 +7,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.certificates.PluginCertificateManager;
 import com.intellij.ide.plugins.enums.PluginsGroupType;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
@@ -35,6 +36,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiserStartupActivity;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
@@ -380,6 +382,8 @@ public final class PluginManagerConfigurable
         //noinspection ConstantConditions
         ((SearchUpDownPopupController)myMarketplaceSearchPanel.controller).setEventHandler(eventHandler);
 
+        Project project = ProjectUtil.getActiveProject();
+
         Runnable runnable = () -> {
           List<PluginsGroup> groups = new ArrayList<>();
 
@@ -387,6 +391,9 @@ public final class PluginManagerConfigurable
             Map<String, List<PluginNode>> customRepositoriesMap = CustomPluginRepositoryService.getInstance()
               .getCustomRepositoryPluginMap();
             try {
+              if (project != null) {
+                addSuggestedGroup(groups, project, customRepositoriesMap);
+              }
               addGroupViaLightDescriptor(
                 groups,
                 IdeBundle.message("plugins.configurable.featured"),
@@ -502,6 +509,7 @@ public final class PluginManagerConfigurable
             if (!UpdateSettings.getInstance().getPluginHosts().isEmpty()) {
               attributes.add(SearchWords.REPOSITORY.getValue());
             }
+            attributes.add(SearchWords.SUGGESTED.getValue());
             return attributes;
           }
 
@@ -549,6 +557,7 @@ public final class PluginManagerConfigurable
                 yield myVendorsSorted;
               }
               case REPOSITORY -> UpdateSettings.getInstance().getPluginHosts();
+              case SUGGESTED -> null;
             };
           }
 
@@ -699,6 +708,8 @@ public final class PluginManagerConfigurable
         panel.setSelectionListener(selectionListener);
         registerCopyProvider(panel);
 
+        Project project = ProjectUtil.getActiveProject();
+
         myMarketplaceSearchPanel =
           new SearchResultPanel(marketplaceController, panel, true, 0, 0) {
             @Override
@@ -708,6 +719,13 @@ public final class PluginManagerConfigurable
                   CustomPluginRepositoryService.getInstance().getCustomRepositoryPluginMap();
 
                 SearchQueryParser.Marketplace parser = new SearchQueryParser.Marketplace(query);
+
+                if (parser.suggested) {
+                  if (project != null) {
+                    result.descriptors.addAll(new PluginsAdvertiserStartupActivity().getSuggestedPlugins(project, customRepositoriesMap));
+                  }
+                  return;
+                }
 
                 if (!parser.repositories.isEmpty()) {
                   for (String repository : parser.repositories) {
@@ -1178,6 +1196,13 @@ public final class PluginManagerConfigurable
         }
       }
     });
+  }
+
+  private void addSuggestedGroup(@NotNull List<? super PluginsGroup> groups,
+                                 @NotNull Project project,
+                                 Map<String, @NotNull List<PluginNode>> customMap) {
+    List<IdeaPluginDescriptor> plugins = new PluginsAdvertiserStartupActivity().getSuggestedPlugins(project, customMap);
+    addGroup(groups, IdeBundle.message("plugins.configurable.suggested"), PluginsGroupType.SUGGESTED, "", plugins, group -> false);
   }
 
   private final class ComparablePluginsGroup extends PluginsGroup
@@ -1703,14 +1728,12 @@ public final class PluginManagerConfigurable
                         @NotNull @Nls String name,
                         @NotNull PluginsGroupType type,
                         @NotNull String showAllQuery,
-                        @NotNull List<PluginNode> customPlugins,
+                        @NotNull List<? extends IdeaPluginDescriptor> customPlugins,
                         @NotNull Predicate<? super PluginsGroup> predicate) {
     PluginsGroup group = new PluginsGroup(name, type);
 
     int i = 0;
-    for (Iterator<? extends IdeaPluginDescriptor> iterator = customPlugins.iterator();
-         iterator.hasNext() && i < ITEMS_PER_GROUP;
-         i++) {
+    for (Iterator<? extends IdeaPluginDescriptor> iterator = customPlugins.iterator(); iterator.hasNext() && i < ITEMS_PER_GROUP; i++) {
       group.descriptors.add(iterator.next());
     }
 
