@@ -457,8 +457,8 @@
   <extensions defaultExtensionNs="DevKit.lang">
     <goodCodeRedVisitor language="JAVA" implementationClass="org.jetbrains.idea.devkit.inspections.internal.JavaGoodCodeRedVisitor"/>
     <cancellationCheckProvider language="JAVA" implementationClass="org.jetbrains.idea.devkit.inspections.JavaCancellationCheckProvider"/>
-    <visitorProviderForRBCInspection
-      implementation="org.jetbrains.idea.devkit.inspections.CallingMethodShouldBeRequiresBlockingContextInspection$VisitorProviderForJava"/>
+    <visitorProviderForRBCInspection language="JAVA"
+      implementationClass="org.jetbrains.idea.devkit.inspections.CallingMethodShouldBeRequiresBlockingContextInspection$VisitorProviderForJava"/>
   </extensions>
 
   <extensionPoints>
@@ -473,8 +473,10 @@
     <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.CancellationCheckProvider"/>
     </extensionPoint>
     <extensionPoint qualifiedName="DevKit.lang.visitorProviderForRBCInspection"
-                    interface="org.jetbrains.idea.devkit.inspections.CallingMethodShouldBeRequiresBlockingContextInspection$VisitorProvider"
-                    dynamic="true"/>
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements=" org.jetbrains.idea.devkit.inspections.CallingMethodShouldBeRequiresBlockingContextInspection$VisitorProvider"/>
+    </extensionPoint>
   </extensionPoints>
 
   <actions>

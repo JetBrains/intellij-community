@@ -6,7 +6,7 @@ import com.intellij.codeInsight.intention.AddAnnotationFix
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.lang.java.JavaLanguage
+import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
@@ -36,9 +36,8 @@ class CallingMethodShouldBeRequiresBlockingContextInspection : LocalInspectionTo
       val bodyPsi = node.uastBody?.sourcePsi ?: return true
 
       if (!AnnotationUtil.isAnnotated(node.javaPsi, REQUIRES_BLOCKING_CONTEXT_ANNOTATION, AnnotationUtil.CHECK_HIERARCHY)) {
-        val visitor = EP_NAME.extensionList.firstNotNullOfOrNull {
-          it.provideVisitorForBody(psiElementForMethod, holder)
-        } ?: return true
+        val visitor = VisitorProviders.forLanguage(psiElementForMethod.language)?.provideVisitorForBody(psiElementForMethod, holder)
+                      ?: return true
         bodyPsi.accept(visitor)
       }
 
@@ -64,12 +63,7 @@ class CallingMethodShouldBeRequiresBlockingContextInspection : LocalInspectionTo
   internal class VisitorProviderForJava : VisitorProvider {
     override fun provideVisitorForBody(method: PsiElement, holder: ProblemsHolder): PsiElementVisitor? {
       val javaMethod = method as? PsiMethod ?: return null
-      return if (method.language == JavaLanguage.INSTANCE) {
-        MethodBodyVisitor(holder, javaMethod)
-      }
-      else {
-        null
-      }
+      return MethodBodyVisitor(holder, javaMethod)
     }
   }
 
@@ -108,3 +102,4 @@ class CallingMethodShouldBeRequiresBlockingContextInspection : LocalInspectionTo
 private val EP_NAME = ExtensionPointName.create<CallingMethodShouldBeRequiresBlockingContextInspection.VisitorProvider>(
   "DevKit.lang.visitorProviderForRBCInspection"
 )
+private object VisitorProviders : LanguageExtension<CallingMethodShouldBeRequiresBlockingContextInspection.VisitorProvider>(EP_NAME.name)

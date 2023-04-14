@@ -45,8 +45,8 @@
 
   <extensions defaultExtensionNs="DevKit.lang">
     <cancellationCheckProvider language="kotlin" implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KotlinCancellationCheckProvider"/>
-    <visitorProviderForRBCInspection
-      implementation="org.jetbrains.idea.devkit.kotlin.inspections.KtCallingFunctionShouldBeRequiresBlockingContextVisitorProvider"/>
+    <visitorProviderForRBCInspection language="kotlin"
+      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtCallingFunctionShouldBeRequiresBlockingContextVisitorProvider"/>
   </extensions>
 
 </idea-plugin>
