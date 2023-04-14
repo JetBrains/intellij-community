@@ -2,8 +2,8 @@
 package org.jetbrains.kotlin.idea.k2.inspections.tests
 
 import com.intellij.testFramework.common.runAll
-import org.jetbrains.kotlin.idea.codeInsight.AbstractInspectionTest
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
+import org.jetbrains.kotlin.idea.inspections.AbstractInspectionTest
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 

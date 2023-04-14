@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.AbstractShare
 import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.idea.kdoc.AbstractSharedK2KDocHighlightingTest
 import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2InspectionTest
 import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2LocalInspectionTest
-import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2QuickFixTest
+import org.jetbrains.kotlin.idea.k2.quickfix.tests.AbstractK2QuickFixTest
 import org.jetbrains.kotlin.testGenerator.model.*
 
 

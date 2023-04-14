@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.k2.inspections.tests
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.k2.quickfix.tests
 
 import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
@@ -29,8 +29,8 @@ abstract class AbstractK2QuickFixTest : AbstractQuickFixTest() {
     override fun checkForUnexpectedErrors() {}
 
     override fun doTest(beforeFileName: String) {
-        IgnoreTests.runTestIfNotDisabledByFileDirective(File(beforeFileName).toPath(), IgnoreTests.DIRECTIVES.IGNORE_FIR, "after") {
-            super.doTest(beforeFileName)
-        }
+      IgnoreTests.runTestIfNotDisabledByFileDirective(File(beforeFileName).toPath(), IgnoreTests.DIRECTIVES.IGNORE_FIR, "after") {
+        super.doTest(beforeFileName)
+      }
     }
 }
