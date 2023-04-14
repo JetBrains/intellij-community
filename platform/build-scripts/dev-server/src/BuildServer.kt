@@ -62,7 +62,7 @@ private fun createConfiguration(productionClassOutput: Path, homePath: Path): Co
   System.setProperty(BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY, productionClassOutput.parent.toString())
   var projectPropertiesPath = homePath.resolve(PRODUCTS_PROPERTIES_PATH)
   // Handle Rider repository layout
-  if (!projectPropertiesPath.exists() && homePath.parent.resolve(".rider.root.marker").exists()) {
+  if (!projectPropertiesPath.exists() && homePath.parent?.parent?.resolve(".dotnet-products.root")?.exists() == true) {
     val riderSpecificProjectPropertiesPath = homePath.parent.resolve("ultimate").resolve(PRODUCTS_PROPERTIES_PATH)
     if (riderSpecificProjectPropertiesPath.exists()) {
       projectPropertiesPath = riderSpecificProjectPropertiesPath

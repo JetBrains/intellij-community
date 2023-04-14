@@ -50,8 +50,6 @@ public final class PathManager {
   private static final String SYSTEM_DIRECTORY = "system";
   private static final String PATHS_SELECTOR = System.getProperty(PROPERTY_PATHS_SELECTOR);
 
-  private static final String RIDER_REPO_MARKER_FILE = ".rider.root.marker";
-
   private static final class Lazy {
     private static final Pattern PROPERTY_REF = Pattern.compile("\\$\\{(.+?)}");
   }
@@ -688,7 +686,7 @@ public final class PathManager {
       // support projects in ULTIMATE_REPO/remote-dev/extras/SUBDIR
       return homePath + "/../../../community";
     }
-    if (Files.isRegularFile(Paths.get(homePath, "../" + RIDER_REPO_MARKER_FILE))) {
+    if (Files.isRegularFile(Paths.get(homePath, "../../.dotnet-products.repo"))) {
       return homePath + "/../ultimate/community";
     }
     return homePath;
