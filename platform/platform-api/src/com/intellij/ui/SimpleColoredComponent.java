@@ -560,7 +560,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   private static float getFragmentWidth(@NotNull ColoredFragment fragment, Font font, FontRenderContext frc) {
-    WidthKey key = new WidthKey(fragment.text, new ImmutableFont(font), frc, fragment.attributes.getStyle());
+    WidthKey key = new WidthKey(fragment.text, new ImmutableFont(font), frc, fragment.attributes.getStyle(), font.getSize());
     Float result;
     synchronized (ourWidthCache) {
       result = ourWidthCache.get(key);
@@ -1525,7 +1525,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   private record WidthKey(@NotNull String text,
                           Font font,
                           FontRenderContext frc,
-                          int style) {
+                          int style,
+                          int size) {
   }
 
   private static final class ImmutableFont extends Font {
