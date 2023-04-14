@@ -37,8 +37,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.function.BiConsumer;
 
-// Author: dyoma
-
 public class JUnitConfigurationModel {
   public static final int ALL_IN_PACKAGE = 0;
   public static final int CLASS = 1;
@@ -91,10 +89,6 @@ public class JUnitConfigurationModel {
 
   public void setListener(final BiConsumer<Integer, Integer> listener) {
     myListener = listener;
-  }
-
-  public Object getJUnitDocument(final int i) {
-    return myJUnitDocuments[i];
   }
 
   public void setJUnitDocument(final int i, Object doc) {
@@ -151,7 +145,7 @@ public class JUnitConfigurationModel {
           final LinkedHashSet<String> set = new LinkedHashSet<>();
           final String[] patterns = getJUnitTextValue(PATTERN).split("\\|\\|");
           for (String pattern : patterns) {
-            if (pattern.length() > 0) {
+            if (!pattern.isEmpty()) {
               set.add(pattern);
             }
           }
@@ -196,7 +190,7 @@ public class JUnitConfigurationModel {
   }
 
   private static String replaceRuntimeClassName(String mainClassName) {
-    return mainClassName.replaceAll("\\$", "\\.");
+    return mainClassName.replace('$', '.');
   }
 
   private void setJUnitTextValue(final int index, final String text) {
@@ -215,8 +209,8 @@ public class JUnitConfigurationModel {
       }
     }
     else {
-      WriteCommandAction
-        .runWriteCommandAction(myProject, () -> ((Document)document).replaceString(0, ((Document)document).getTextLength(), text));
+      WriteCommandAction.runWriteCommandAction(myProject, null, null,
+                                               () -> ((Document)document).replaceString(0, ((Document)document).getTextLength(), text));
     }
   }
 
