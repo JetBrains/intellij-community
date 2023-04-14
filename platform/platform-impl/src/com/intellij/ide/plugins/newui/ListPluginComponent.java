@@ -83,6 +83,7 @@ public final class ListPluginComponent extends JPanel {
   private JLabel myDownloads;
   private JLabel myVersion;
   private JLabel myVendor;
+  private JLabel myFeatures;
   private LicensePanel myLicensePanel;
   private LicensePanel myUpdateLicensePanel;
   private JPanel myErrorPanel;
@@ -412,14 +413,11 @@ public final class ListPluginComponent extends JPanel {
     if (myMarketplace) {
       Collection<String> features = ((PluginNode)myPlugin).getSuggestedFeatures();
       if (!ContainerUtil.isEmpty(features)) {
-        JBLabel label = new JBLabel();
-        label.setText("<html><body><b>" + StringUtil.join(features, "</b> <b>") + "</b></body></html>"); //NON-NLS
-        PluginManagerConfigurable.setTinyFont(label);
-        label.setBorder(JBUI.Borders.emptyTop(5));
-        if (!isEnabledState()) {
-          label.setForeground(DisabledColor);
-        }
-        myLayout.addLineComponent(label);
+        myFeatures = new JBLabel();
+        myFeatures.setText("<html><body><b>" + StringUtil.join(features, "</b> <b>") + "</b></body></html>"); //NON-NLS
+        PluginManagerConfigurable.setTinyFont(myFeatures);
+        myFeatures.setBorder(JBUI.Borders.emptyTop(5));
+        myLayout.addLineComponent(myFeatures);
       }
     }
   }
@@ -636,6 +634,9 @@ public final class ListPluginComponent extends JPanel {
     }
     if (myVendor != null) {
       myVendor.setForeground(otherForeground);
+    }
+    if (myFeatures != null) {
+      myFeatures.setForeground(myInstalledDescriptorForMarketplace == null || isEnabledState() ? null : DisabledColor);
     }
   }
 
