@@ -192,9 +192,8 @@ class MiniDetailsGetter internal constructor(project: Project,
     }
 
     private operator fun IntSet.minus(other: IntSet): IntSet {
-      if (other.isEmpty()) return IntSets.emptySet()
+      if (other.isEmpty()) return this
       return filterNotTo(IntOpenHashSet()) { it in other }
     }
   }
 }
-
