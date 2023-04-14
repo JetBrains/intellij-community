@@ -199,7 +199,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
             }
 
             @Override
-            public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+            public void afterRemoved(@NotNull RangeHighlighterEx highlighter) {
               processHighlighter(highlighter, false);
             }
 

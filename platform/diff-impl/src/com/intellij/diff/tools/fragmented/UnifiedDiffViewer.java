@@ -1409,7 +1409,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
       }
 
       @Override
-      public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+      public void afterRemoved(@NotNull RangeHighlighterEx highlighter) {
         scheduleUpdate();
       }
 

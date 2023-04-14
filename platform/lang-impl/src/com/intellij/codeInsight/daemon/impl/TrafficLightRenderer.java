@@ -131,7 +131,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       }
 
       @Override
-      public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+      public void afterRemoved(@NotNull RangeHighlighterEx highlighter) {
         incErrorCount(highlighter, -1);
       }
     });

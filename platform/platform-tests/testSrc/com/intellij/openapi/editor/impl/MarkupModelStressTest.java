@@ -20,7 +20,7 @@ public class MarkupModelStressTest extends AbstractEditorTest {
   private static final int RANDOM_ITERATIONS = 10_000;
   private static final int MAX_CHARS_PER_OPERATION = 10;
   private static final Long SEED_OVERRIDE = null; // set non-null value to run with a specific seed
-  private static final GutterIconRenderer DUMMY_GUTTER_ICON_RENDERER = new DummyGutterIconRenderer();
+  static final GutterIconRenderer DUMMY_GUTTER_ICON_RENDERER = new DummyGutterIconRenderer();
 
   private final List<? extends Runnable> ourActions = Arrays.asList(new AddHighlighter(),
                                                                     new RemoveHighlighter(),

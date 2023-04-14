@@ -220,6 +220,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
     boolean removed = treeFor(segmentHighlighter).removeInterval((RangeHighlighterEx)segmentHighlighter);
     LOG.assertTrue(removed);
+    fireAfterRemoved((RangeHighlighterEx)segmentHighlighter);
   }
 
   @Override
@@ -283,6 +284,12 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   void fireBeforeRemoved(@NotNull RangeHighlighterEx segmentHighlighter) {
     for (MarkupModelListener listener : myListeners) {
       listener.beforeRemoved(segmentHighlighter);
+    }
+  }
+
+  private void fireAfterRemoved(@NotNull RangeHighlighterEx segmentHighlighter) {
+    for (MarkupModelListener listener : myListeners) {
+      listener.afterRemoved(segmentHighlighter);
     }
   }
 

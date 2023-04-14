@@ -104,8 +104,8 @@ final class ErrorStripeMarkersModel {
       }
 
       @Override
-      public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
-        ErrorStripeMarkersModel.this.beforeRemoved(highlighter, documentMarkupModel);
+      public void afterRemoved(@NotNull RangeHighlighterEx highlighter) {
+        ErrorStripeMarkersModel.this.afterRemoved(highlighter, documentMarkupModel);
       }
 
       @Override
@@ -121,7 +121,7 @@ final class ErrorStripeMarkersModel {
     }
   }
 
-  private void beforeRemoved(@NotNull RangeHighlighterEx highlighter, boolean documentMarkupModel) {
+  private void afterRemoved(@NotNull RangeHighlighterEx highlighter, boolean documentMarkupModel) {
     ErrorStripeMarkerImpl errorStripeMarker = findErrorStripeMarker(highlighter, false);
     if (errorStripeMarker != null) {
       removeErrorStripeMarker(errorStripeMarker);
@@ -177,7 +177,7 @@ final class ErrorStripeMarkersModel {
     myListeners.forEach(l -> l.errorMarkerChanged(new ErrorStripeEvent(myEditor, null, h)));
   }
 
-  private void removeErrorStripeMarker(ErrorStripeMarkerImpl errorStripeMarker) {
+  private void removeErrorStripeMarker(@NotNull ErrorStripeMarkerImpl errorStripeMarker) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     RangeHighlighterEx highlighter = errorStripeMarker.getHighlighter();
     treeFor(highlighter).removeInterval(errorStripeMarker);
