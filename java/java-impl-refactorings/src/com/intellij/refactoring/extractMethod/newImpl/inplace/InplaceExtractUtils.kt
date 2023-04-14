@@ -97,14 +97,13 @@ object InplaceExtractUtils {
     if (!checkIdentifierName(editor, file, variableRange)) {
       return false
     }
-    val reference = PsiTreeUtil.findElementOfClassAtOffset(file, variableRange.startOffset, PsiReferenceExpression::class.java, false)
-    if (reference != null && reference.multiResolve(false).size != 1) {
+    val identifier = PsiTreeUtil.findElementOfClassAtOffset(file, variableRange.startOffset, PsiIdentifier::class.java, false)
+    val parent = identifier?.parent
+    if (parent is PsiReferenceExpression && parent.multiResolve(false).size != 1) {
       showErrorHint(editor, variableRange.endOffset, JavaRefactoringBundle.message("extract.method.error.method.conflict"))
       return false
     }
-    val member = PsiTreeUtil.findElementOfClassAtOffset(file, variableRange.startOffset, PsiMember::class.java, false)
-    val parentClass = member?.containingClass
-    if (member is PsiMethod && parentClass != null && parentClass.findMethodsBySignature(member, true).size > 1) {
+    if (parent is PsiMethod && parent.containingClass?.findMethodsBySignature(parent, true).orEmpty().size > 1) {
       showErrorHint(editor, variableRange.endOffset, JavaRefactoringBundle.message("extract.method.error.method.conflict"))
       return false
     }
