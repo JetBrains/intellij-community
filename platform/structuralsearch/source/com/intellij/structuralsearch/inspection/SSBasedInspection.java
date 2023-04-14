@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -26,6 +26,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
@@ -167,7 +168,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       (mySessionProfile != null && !isOnTheFly) ? mySessionProfile : InspectionProfileManager.getInstance(project).getCurrentProfile();
     final List<Configuration> configurations = new SmartList<>();
     for (Configuration configuration : myConfigurations) {
-      if (configuration.getFileType() != fileType) continue;
+      if (configuration.getFileType() != fileType && !configuration.getMatchOptions().isSearchInjectedCode()) continue;
       final ToolsImpl tools = profile.getToolsOrNull(configuration.getUuid(), project);
       if (tools != null && tools.isEnabled(file)) {
         configurations.add(configuration);
@@ -242,9 +243,8 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
 
   @NotNull
   public List<Configuration> getConfigurationsWithUuid(@NotNull String uuid) {
-    final List<Configuration> configurations = ContainerUtil.sorted(ContainerUtil.filter(myConfigurations, c -> uuid.equals(c.getUuid())),
-    Comparator.comparingInt(Configuration::getOrder));
-    return configurations;
+    return ContainerUtil.sorted(ContainerUtil.filter(myConfigurations, c -> uuid.equals(c.getUuid())),
+                                Comparator.comparingInt(Configuration::getOrder));
   }
 
   public boolean addConfiguration(@NotNull Configuration configuration) {
@@ -342,7 +342,9 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
 
     private void registerProblem(MatchResult matchResult, Configuration configuration, ProblemsHolder holder) {
       final PsiElement element = matchResult.getMatch();
-      if (!element.isPhysical() || holder.getFile() != element.getContainingFile()) {
+      PsiFile containingFile = element.getContainingFile();
+      PsiFile templateFile = PsiUtilCore.getTemplateLanguageFile(containingFile);
+      if (!element.isPhysical() || holder.getFile() != containingFile && holder.getFile() != templateFile) {
         return;
       }
       final LocalQuickFix fix = createQuickFix(element.getProject(), matchResult, configuration);
