@@ -15,7 +15,7 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
   @ParameterizedTest
   @TargetVersions("4.7 <=> 7.0")
   @AllGradleVersionsSource
-  fun `test display name and navigation with Java and Junit 5`(gradleVersion: GradleVersion) {
+  fun `test display name and navigation with Java and Junit 5 OLD`(gradleVersion: GradleVersion) {
     testJavaProject(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", JAVA_PARAMETRISED_JUNIT_5_TEST)
 
@@ -71,7 +71,7 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
   @ParameterizedTest
   @TargetVersions("7.0+")
   @AllGradleVersionsSource
-  fun `test display name and navigation with Java and Junit 5 and test events`(gradleVersion: GradleVersion) {
+  fun `test display name and navigation with Java and Junit 5`(gradleVersion: GradleVersion) {
     testJavaProject(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", JAVA_PARAMETRISED_JUNIT_5_TEST)
 
@@ -194,6 +194,116 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
   }
 
   @ParameterizedTest
+  @TargetVersions("<5.0")
+  @AllGradleVersionsSource
+  fun `test display name and navigation with Java and Test NG OLD`(gradleVersion: GradleVersion) {
+    test(gradleVersion, JAVA_TESTNG_FIXTURE) {
+      writeText("src/test/java/org/example/TestCase.java", JAVA_TESTNG_TEST)
+      writeText("src/test/java/org/example/ParametrizedTestCase.java", JAVA_PARAMETRIZED_TESTNG_TEST)
+
+      executeTasks(":test")
+
+      assertTestTreeView {
+        assertNode("Gradle suite") {
+          assertNode("Gradle test") {
+            assertNode("parametrized_test[0](1, first)")
+            assertNode("parametrized_test[1](2, second)")
+            assertNode("parametrized_test[2](3, third)")
+            assertNode("successful_test")
+            assertNode("test")
+          }
+        }
+      }
+      assertSMTestProxyTree {
+        assertNode("Gradle suite") {
+          assertNode("Gradle test") {
+            assertNode("parametrized_test[0](1, first)") {
+              Assertions.assertEquals("parametrized_test", value.psiMethod.name)
+              Assertions.assertEquals("ParametrizedTestCase", value.psiMethod.psiClass.name)
+            }
+            assertNode("parametrized_test[1](2, second)") {
+              Assertions.assertEquals("parametrized_test", value.psiMethod.name)
+              Assertions.assertEquals("ParametrizedTestCase", value.psiMethod.psiClass.name)
+            }
+            assertNode("parametrized_test[2](3, third)") {
+              Assertions.assertEquals("parametrized_test", value.psiMethod.name)
+              Assertions.assertEquals("ParametrizedTestCase", value.psiMethod.psiClass.name)
+            }
+            assertNode("successful_test") {
+              Assertions.assertEquals("successful_test", value.psiMethod.name)
+              Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+            }
+            assertNode("test") {
+              Assertions.assertEquals("test", value.psiMethod.name)
+              Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @TargetVersions("5.0+")
+  @AllGradleVersionsSource
+  fun `test display name and navigation with Java and Test NG`(gradleVersion: GradleVersion) {
+    test(gradleVersion, JAVA_TESTNG_FIXTURE) {
+      writeText("src/test/java/org/example/TestCase.java", JAVA_TESTNG_TEST)
+      writeText("src/test/java/org/example/ParametrizedTestCase.java", JAVA_PARAMETRIZED_TESTNG_TEST)
+
+      executeTasks(":test")
+
+      assertTestTreeView {
+        assertNode("Gradle suite") {
+          assertNode("Gradle test") {
+            assertNode("ParametrizedTestCase") {
+              assertNode("parametrized_test[0](1, first)")
+              assertNode("parametrized_test[1](2, second)")
+              assertNode("parametrized_test[2](3, third)")
+            }
+            assertNode("TestCase") {
+              assertNode("successful_test")
+              assertNode("test")
+            }
+          }
+        }
+      }
+      assertSMTestProxyTree {
+        assertNode("Gradle suite") {
+          assertNode("Gradle test") {
+            assertNode("ParametrizedTestCase") {
+              Assertions.assertEquals("ParametrizedTestCase", value.psiClass.name)
+              assertNode("parametrized_test[0](1, first)") {
+                Assertions.assertEquals("parametrized_test", value.psiMethod.name)
+                Assertions.assertEquals("ParametrizedTestCase", value.psiMethod.psiClass.name)
+              }
+              assertNode("parametrized_test[1](2, second)") {
+                Assertions.assertEquals("parametrized_test", value.psiMethod.name)
+                Assertions.assertEquals("ParametrizedTestCase", value.psiMethod.psiClass.name)
+              }
+              assertNode("parametrized_test[2](3, third)") {
+                Assertions.assertEquals("parametrized_test", value.psiMethod.name)
+                Assertions.assertEquals("ParametrizedTestCase", value.psiMethod.psiClass.name)
+              }
+            }
+            assertNode("TestCase") {
+              Assertions.assertEquals("TestCase", value.psiClass.name)
+              assertNode("successful_test") {
+                Assertions.assertEquals("successful_test", value.psiMethod.name)
+                Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+              }
+              assertNode("test") {
+                Assertions.assertEquals("test", value.psiMethod.name)
+                Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @ParameterizedTest
   @TargetVersions("5.6+")
   @AllGradleVersionsSource
   fun `test display name and navigation with Groovy and Spock`(gradleVersion: GradleVersion) {
@@ -204,14 +314,20 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
 
       assertTestTreeView {
         assertNode("SpockTestCase") {
+          assertNode("failure test")
           assertNode("length of #name is #length") {
             assertNode("length of Spock is 5")
           }
+          assertNode("success test")
         }
       }
       assertSMTestProxyTree {
         assertNode("SpockTestCase") {
           Assertions.assertEquals("SpockTestCase", value.psiClass.name)
+          assertNode("failure test") {
+            Assertions.assertEquals("failure test", value.psiMethod.name)
+            Assertions.assertEquals("SpockTestCase", value.psiMethod.psiClass.name)
+          }
           assertNode("length of #name is #length") {
             Assertions.assertEquals("length of #name is #length", value.psiMethod.name)
             Assertions.assertEquals("SpockTestCase", value.psiMethod.psiClass.name)
@@ -219,6 +335,10 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
               Assertions.assertEquals("length of #name is #length", value.psiMethod.name)
               Assertions.assertEquals("SpockTestCase", value.psiMethod.psiClass.name)
             }
+          }
+          assertNode("success test") {
+            Assertions.assertEquals("success test", value.psiMethod.name)
+            Assertions.assertEquals("SpockTestCase", value.psiMethod.psiClass.name)
           }
         }
       }
@@ -234,6 +354,23 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
       withBuildFile(gradleVersion) {
         withJavaPlugin()
         withJUnit4()
+      }
+      withDirectory("src/main/java")
+      withDirectory("src/test/java")
+    }
+
+    private val JAVA_TESTNG_FIXTURE = GradleTestFixtureBuilder.create("GradleTestNavigationTest-java-testng") { gradleVersion ->
+      withSettingsFile {
+        setProjectName("GradleTestNavigationTest-java-testng")
+      }
+      withBuildFile(gradleVersion) {
+        withJavaPlugin()
+        withMavenCentral()
+        addImplementationDependency("org.slf4j:slf4j-log4j12:2.0.5")
+        addTestImplementationDependency("org.testng:testng:7.5")
+        configureTestTask {
+          call("useTestNG")
+        }
       }
       withDirectory("src/main/java")
       withDirectory("src/test/java")
@@ -334,12 +471,60 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
       |}
     """.trimMargin()
 
+    private val JAVA_TESTNG_TEST = """
+      |package org.example;
+      |
+      |import org.testng.annotations.Ignore;
+      |import org.testng.annotations.Test;
+      |
+      |public class TestCase {
+      |
+      |    @Test
+      |    public void test() {}
+      |
+      |    @Test
+      |    public void successful_test() {}
+      |}
+    """.trimMargin()
+
+    private val JAVA_PARAMETRIZED_TESTNG_TEST = """
+      |package org.example;
+      |
+      |import org.testng.annotations.DataProvider;
+      |import org.testng.annotations.Test;
+      |
+      |public class ParametrizedTestCase {
+      |
+      |    @Test(dataProvider = "data")
+      |    public void parametrized_test(int value, String name) {}
+      |
+      |    @DataProvider(name = "data")
+      |    public static Object[][] data() {
+      |        return new Object[][]{
+      |                {1, "first"},
+      |                {2, "second"},
+      |                {3, "third"}
+      |        };
+      |    }
+      |}
+    """.trimMargin()
+
     private val GROOVY_CLASS_WITH_SPOCK_TESTS = """
       |package org.example
       |
       |import spock.lang.Specification
       |
       |class SpockTestCase extends Specification {
+      |
+      |  def "success test"() {
+      |    expect:
+      |    true
+      |  }
+      |
+      |  def "failure test"() {
+      |    expect:
+      |    false
+      |  }
       |
       |  def "length of #name is #length"() {
       |    expect:

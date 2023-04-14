@@ -15,7 +15,7 @@ class KotlinGradleTestNavigationTest : KotlinGradleTestNavigationTestCase() {
     @ParameterizedTest
     @TargetVersions("5.6.2 <=> 7.0")
     @AllGradleVersionsSource
-    fun `test display name and navigation with Kotlin and Junit 5`(gradleVersion: GradleVersion) {
+    fun `test display name and navigation with Kotlin and Junit 5 OLD`(gradleVersion: GradleVersion) {
         testKotlinProject(gradleVersion) {
             writeText("src/test/kotlin/org/example/TestCase.kt", KOTLIN_CLASS_WITH_PARAMETRISED_JUNIT_5_TESTS)
 
@@ -71,7 +71,7 @@ class KotlinGradleTestNavigationTest : KotlinGradleTestNavigationTestCase() {
     @ParameterizedTest
     @TargetVersions("7.0+")
     @AllGradleVersionsSource
-    fun `test display name and navigation with Kotlin and Junit 5 and test events`(gradleVersion: GradleVersion) {
+    fun `test display name and navigation with Kotlin and Junit 5`(gradleVersion: GradleVersion) {
         testKotlinProject(gradleVersion) {
             writeText("src/test/kotlin/org/example/TestCase.kt", KOTLIN_CLASS_WITH_PARAMETRISED_JUNIT_5_TESTS)
 
@@ -194,15 +194,93 @@ class KotlinGradleTestNavigationTest : KotlinGradleTestNavigationTestCase() {
         }
     }
 
+    @ParameterizedTest
+    @TargetVersions("5.6.2+")
+    @AllGradleVersionsSource
+    fun `test display name and navigation with Kotlin and Test NG`(gradleVersion: GradleVersion) {
+        test(gradleVersion, KOTLIN_TESTNG_FIXTURE) {
+            writeText("src/test/kotlin/org/example/TestCase.kt", KOTLIN_TESTNG_TEST)
+            writeText("src/test/kotlin/org/example/ParametrizedTestCase.kt", KOTLIN_PARAMETRIZED_TESTNG_TEST)
+
+            executeTasks(":test")
+
+            assertTestTreeView {
+                assertNode("Gradle suite") {
+                    assertNode("Gradle test") {
+                        assertNode("ParametrizedTestCase") {
+                            assertNode("parametrized test[0](1, first)")
+                            assertNode("parametrized test[1](2, second)")
+                            assertNode("parametrized test[2](3, third)")
+                        }
+                        assertNode("TestCase") {
+                            assertNode("successful test")
+                            assertNode("test")
+                        }
+                    }
+                }
+            }
+            assertSMTestProxyTree {
+                assertNode("Gradle suite") {
+                    assertNode("Gradle test") {
+                        assertNode("ParametrizedTestCase") {
+                            Assertions.assertEquals("ParametrizedTestCase", value.psiClass.name)
+                            assertNode("parametrized test[0](1, first)") {
+                                Assertions.assertEquals("parametrized test", value.psiMethod.name)
+                                Assertions.assertEquals("ParametrizedTestCase", value.psiMethod.psiClass.name)
+                            }
+                            assertNode("parametrized test[1](2, second)") {
+                                Assertions.assertEquals("parametrized test", value.psiMethod.name)
+                                Assertions.assertEquals("ParametrizedTestCase", value.psiMethod.psiClass.name)
+                            }
+                            assertNode("parametrized test[2](3, third)") {
+                                Assertions.assertEquals("parametrized test", value.psiMethod.name)
+                                Assertions.assertEquals("ParametrizedTestCase", value.psiMethod.psiClass.name)
+                            }
+                        }
+                        assertNode("TestCase") {
+                            Assertions.assertEquals("TestCase", value.psiClass.name)
+                            assertNode("successful test") {
+                                Assertions.assertEquals("successful test", value.psiMethod.name)
+                                Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+                            }
+                            assertNode("test") {
+                                Assertions.assertEquals("test", value.psiMethod.name)
+                                Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     companion object {
 
-        private val KOTLIN_JUNIT4_FIXTURE = GradleTestFixtureBuilder.create("KotlinGradleTestNavigationTest-kotlin-junit4") { gradleVersion ->
+        private val KOTLIN_JUNIT4_FIXTURE =
+            GradleTestFixtureBuilder.create("KotlinGradleTestNavigationTest-kotlin-junit4") { gradleVersion ->
+                withSettingsFile {
+                    setProjectName("KotlinGradleTestNavigationTest-kotlin-junit4")
+                }
+                withBuildFile(gradleVersion) {
+                    withKotlinJvmPlugin()
+                    withJUnit4()
+                }
+                withDirectory("src/main/kotlin")
+                withDirectory("src/test/kotlin")
+            }
+
+        private val KOTLIN_TESTNG_FIXTURE = GradleTestFixtureBuilder.create("KotlinGradleTestNavigationTest-kotlin-testng") { gradleVersion ->
             withSettingsFile {
-                setProjectName("KotlinGradleTestNavigationTest-kotlin-junit4")
+                setProjectName("KotlinGradleTestNavigationTest-kotlin-testng")
             }
             withBuildFile(gradleVersion) {
                 withKotlinJvmPlugin()
-                withJUnit4()
+                withMavenCentral()
+                addImplementationDependency("org.slf4j:slf4j-log4j12:2.0.5")
+                addTestImplementationDependency("org.testng:testng:7.5")
+                configureTestTask {
+                    call("useTestNG")
+                }
             }
             withDirectory("src/main/kotlin")
             withDirectory("src/test/kotlin")
@@ -276,6 +354,46 @@ class KotlinGradleTestNavigationTest : KotlinGradleTestNavigationTestCase() {
             |        @JvmStatic
             |        @Parameterized.Parameters
             |        fun data() = listOf(
+            |            arrayOf(1, "first"),
+            |            arrayOf(2, "second"),
+            |            arrayOf(3, "third")
+            |        )
+            |    }
+            |}
+        """.trimMargin()
+
+        private val KOTLIN_TESTNG_TEST = """
+            |package org.example
+            |
+            |import org.testng.annotations.Ignore
+            |import org.testng.annotations.Test
+            |
+            |class TestCase {
+            |
+            |    @Test
+            |    fun test() = Unit
+            |
+            |    @Test
+            |    fun `successful test`() = Unit
+            |}
+        """.trimMargin()
+
+        private val KOTLIN_PARAMETRIZED_TESTNG_TEST = """
+            |package org.example
+            |
+            |import org.testng.annotations.DataProvider
+            |import org.testng.annotations.Test
+            |
+            |class ParametrizedTestCase {
+            |
+            |    @Test(dataProvider = "data")
+            |    fun `parametrized test`(value: Int, name: String) = Unit
+            |
+            |    companion object {
+            |
+            |        @JvmStatic
+            |        @DataProvider(name = "data")
+            |        fun data() = arrayOf(
             |            arrayOf(1, "first"),
             |            arrayOf(2, "second"),
             |            arrayOf(3, "third")
