@@ -258,28 +258,17 @@ fn get_known_folder_path(rfid: &GUID, rfid_debug_name: &str) -> Result<PathBuf> 
 
 #[cfg(target_os = "macos")]
 pub fn get_config_home() -> Result<PathBuf> {
-    let result = get_user_home()
-        .join("Library")
-        .join("Application Support");
-
-    Ok(result)
+    Ok(get_user_home().join("Library/Application Support"))
 }
 
 #[cfg(target_os = "macos")]
 pub fn get_cache_home() -> Result<PathBuf> {
-    let result = get_user_home()
-        .join("Library")
-        .join("Caches");
-
-    Ok(result)
+    Ok(get_user_home().join("Library/Caches"))
 }
 
 #[cfg(target_os = "macos")]
 pub fn get_logs_home() -> Result<Option<PathBuf>> {
-    let result = get_user_home()
-        .join("Logs");
-
-    Ok(Some(result))
+    Ok(Some(get_user_home().join("Library/Logs")))
 }
 
 // CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
