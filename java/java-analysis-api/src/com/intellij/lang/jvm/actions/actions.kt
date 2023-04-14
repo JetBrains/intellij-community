@@ -4,6 +4,8 @@
 package com.intellij.lang.jvm.actions
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.lang.jvm.*
 import com.intellij.openapi.extensions.ExtensionPointName
 
@@ -43,9 +45,11 @@ fun createRemoveAnnotationActions(target: JvmModifiersOwner, request: Annotation
 
 fun createChangeAnnotationAttributeActions(annotation: JvmAnnotation,
                                            attributeIndex: Int,
-                                           request: AnnotationAttributeRequest): List<IntentionAction> {
+                                           request: AnnotationAttributeRequest,
+                                           @IntentionName text: String,
+                                           @IntentionFamilyName familyName: String): List<IntentionAction> {
   return createActions {
-    it.createChangeAnnotationAttributeActions(annotation, attributeIndex, request)
+    it.createChangeAnnotationAttributeActions(annotation, attributeIndex, request, text, familyName)
   }
 }
 

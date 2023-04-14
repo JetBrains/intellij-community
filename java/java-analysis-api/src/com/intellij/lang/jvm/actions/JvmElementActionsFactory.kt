@@ -2,6 +2,8 @@
 package com.intellij.lang.jvm.actions
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.lang.jvm.*
 
 /**
@@ -25,7 +27,9 @@ abstract class JvmElementActionsFactory {
 
   open fun createChangeAnnotationAttributeActions(annotation: JvmAnnotation,
                                                   attributeIndex: Int,
-                                                  request: AnnotationAttributeRequest): List<IntentionAction> = emptyList()
+                                                  request: AnnotationAttributeRequest,
+                                                  @IntentionName text: String,
+                                                  @IntentionFamilyName familyName: String): List<IntentionAction> = emptyList()
 
   open fun createAddFieldActions(targetClass: JvmClass, request: CreateFieldRequest): List<IntentionAction> = emptyList()
 

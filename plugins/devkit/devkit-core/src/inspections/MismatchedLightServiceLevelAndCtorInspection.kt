@@ -61,12 +61,12 @@ internal class MismatchedLightServiceLevelAndCtorInspection : DevKitJvmInspectio
                                                       file: PsiFile) {
         val projectLevelFqn = "${Service.Level::class.java.canonicalName}.${Service.Level.PROJECT}"
         val request = constantAttribute(DEFAULT_REFERENCED_METHOD_NAME, projectLevelFqn)
-        val actions = createChangeAnnotationAttributeActions(annotation, 0, request)
+        val text = DevKitBundle.message("inspection.mismatched.light.service.level.and.ctor.specify.project.level.fix")
+        val actions = createChangeAnnotationAttributeActions(annotation, 0, request, text, text)
         val fixes = IntentionWrapper.wrapToQuickFixes(actions.toTypedArray(), file)
         val holder = (sink as HighlightSinkImpl).holder
-        holder.registerProblem(elementToReport,
-                               DevKitBundle.message("inspection.mismatched.light.service.level.and.ctor.project.level.required"),
-                               *fixes)
+        val message = DevKitBundle.message("inspection.mismatched.light.service.level.and.ctor.project.level.required")
+        holder.registerProblem(elementToReport, message, *fixes)
       }
 
       private fun registerProblemApplicationLevelRequired(method: JvmMethod, file: PsiFile) {

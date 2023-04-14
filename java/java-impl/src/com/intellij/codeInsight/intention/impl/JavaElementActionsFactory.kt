@@ -114,10 +114,12 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
 
   override fun createChangeAnnotationAttributeActions(annotation: JvmAnnotation,
                                                       attributeIndex: Int,
-                                                      request: AnnotationAttributeRequest): List<IntentionAction> {
+                                                      request: AnnotationAttributeRequest,
+                                                      @IntentionName text: String,
+                                                      @IntentionFamilyName familyName: String): List<IntentionAction> {
     val psiAnnotation = annotation as? PsiAnnotation ?: return emptyList()
     if (psiAnnotation.language != JavaLanguage.INSTANCE) return emptyList()
-    return listOf(ChangeAnnotationAttributeAction(psiAnnotation, request))
+    return listOf(ChangeAnnotationAttributeAction(psiAnnotation, request, text, familyName))
   }
 
   override fun createAddFieldActions(targetClass: JvmClass, request: CreateFieldRequest): List<IntentionAction> {

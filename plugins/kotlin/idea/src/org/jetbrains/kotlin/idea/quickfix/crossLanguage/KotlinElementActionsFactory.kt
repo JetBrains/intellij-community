@@ -6,6 +6,8 @@ import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.lang.java.beans.PropertyKind
 import com.intellij.lang.jvm.*
 import com.intellij.lang.jvm.actions.*
@@ -426,25 +428,31 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
 
     override fun createChangeAnnotationAttributeActions(annotation: JvmAnnotation,
                                                         attributeIndex: Int,
-                                                        request: AnnotationAttributeRequest): List<IntentionAction> {
+                                                        request: AnnotationAttributeRequest,
+                                                        @IntentionName text: String,
+                                                        @IntentionFamilyName familyName: String): List<IntentionAction> {
         val annotationEntry = annotation.safeAs<KtLightElement<*, *>>()?.kotlinOrigin.safeAs<KtAnnotationEntry>().takeIf {
             it?.language == KotlinLanguage.INSTANCE
         } ?: return emptyList()
-        return listOf(ChangeAnnotationAction(annotationEntry, attributeIndex, request))
+        return listOf(ChangeAnnotationAction(annotationEntry, attributeIndex, request, text, familyName))
     }
 
-    private class ChangeAnnotationAction(annotationEntry: KtAnnotationEntry,
-                                         private val attributeIndex: Int,
-                                         private val request: AnnotationAttributeRequest) : IntentionAction {
+    private class ChangeAnnotationAction(
+        annotationEntry: KtAnnotationEntry,
+        private val attributeIndex: Int,
+        private val request: AnnotationAttributeRequest,
+        @IntentionName private val text: String,
+        @IntentionFamilyName private val familyName: String
+    ) : IntentionAction {
 
         private val pointer: SmartPsiElementPointer<KtAnnotationEntry>
         private val qualifiedName: String
 
         override fun startInWriteAction(): Boolean = true
 
-        override fun getFamilyName(): String = QuickFixBundle.message("change.annotation.attribute.value.family")
+        override fun getFamilyName(): String = familyName
 
-        override fun getText(): String = QuickFixBundle.message("change.annotation.attribute.value.text", request.name)
+        override fun getText(): String = text
 
         override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = pointer.element != null
 
