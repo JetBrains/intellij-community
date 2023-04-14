@@ -20,11 +20,11 @@ internal object ServiceUtil {
     APP, PROJECT, APP_AND_PROJECT, NOT_SPECIFIED;
 
     fun isApp(): Boolean {
-      return this in listOf(APP, APP_AND_PROJECT)
+      return this == APP || this == APP_AND_PROJECT
     }
 
     fun isProject(): Boolean {
-      return this in listOf(PROJECT, APP_AND_PROJECT)
+      return this == PROJECT || this == APP_AND_PROJECT
     }
   }
 
