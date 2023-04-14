@@ -21,8 +21,9 @@ libloading = "0.8.0"
 utils = { version = "0.1.0", path = "utils" }
 anyhow = { version = "1.0.62", features = ["std", "backtrace"] }
 
-[target.'cfg(target_os = "windows")'.dependencies]
-windows = { version = "0.43.0", features = ["Win32_Foundation", "Win32_UI_Shell", "Win32_System_Environment", "Win32_System_Services", "Win32_Security"] }
+[target.'cfg(target_os = "windows")'.dependencies.windows]
+version = "0.48.0"
+features = ["Win32_Foundation", "Win32_UI_Shell", "Win32_System_Environment", "Win32_System_Services", "Win32_Security"]
 
 [target.'cfg(not(target_os = "macos"))'.dependencies]
 native-dialog = "0.6.3"
@@ -39,4 +40,4 @@ rstest = "0.17.0"
 tempfile = "3.5.0"
 
 [target.'cfg(target_os = "windows")'.dev-dependencies]
-junction = "0.2.0"
+junction = "1.0.0"
