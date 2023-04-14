@@ -9,6 +9,7 @@ import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -69,7 +70,8 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
 
   @Override
   public boolean isMyLanguage(@NotNull Language language) {
-    return language instanceof XMLLanguage;
+    return language instanceof XMLLanguage &&
+           (!language.getID().equals("JSP") || ApplicationManager.getApplication().isUnitTestMode());
   }
 
   @Override
