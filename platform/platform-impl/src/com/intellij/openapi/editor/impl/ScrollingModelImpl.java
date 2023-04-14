@@ -251,6 +251,32 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
   }
 
   /**
+   * Gets the upmost possible y-coordinate that can be container by viewRect to satisfy two following conditions:
+   * 1. targetLocation must be still visible in the viewRect
+   * 2. there must be enough space to the bottom of targetLocation to contain offsetBottomBound
+   */
+  private static int getTopmostLocation(@NotNull Point targetLocation, int editorHeight, int offsetBottomBound) {
+    int topmostLocation = targetLocation.y - editorHeight;
+    if (topmostLocation < 0) {
+      return 0;
+    }
+    return topmostLocation + (offsetBottomBound - targetLocation.y);
+  }
+
+  /**
+   * Gets the bottommost possible y-coordinate that can be container by viewRect to satisfy two following conditions:
+   * 1. targetLocation must be still visible in the viewRect
+   * 2. there must be enough space to the top of targetLocation to contain offsetTopBound
+   */
+  private static int getBottommostLocation(@NotNull Point targetLocation, int textHeight, int editorHeight, int offsetTopBound) {
+    int bottommostLocation = targetLocation.y + editorHeight;
+    if (bottommostLocation > textHeight) {
+      return textHeight;
+    }
+    return bottommostLocation - (targetLocation.y - offsetTopBound);
+  }
+
+  /**
    * Gets the leftmost possible x-coordinate that can be container by viewRect to satisfy two following conditions:
    * 1. targetLocation must be still visible in the viewRect
    * 2. there must be enough space to the right of targetLocation to satisfy scroll offset
@@ -279,6 +305,10 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
   private int getVerticalOffset(@NotNull Editor editor, @NotNull Point targetLocation, @NotNull ScrollType scrollType, @NotNull Rectangle viewRect) {
     int editorHeight = viewRect.height;
     int lineHeight = editor.getLineHeight();
+
+    JScrollPane scrollPane = mySupplier.getScrollPane();
+    int scrollHeight = scrollPane.getVerticalScrollBar().getMaximum() - getExtent(scrollPane.getVerticalScrollBar());
+    int textHeight = scrollHeight + editorHeight;
 
     int scrollOffset = editor.getSettings().getVerticalScrollOffset();
     int scrollJump = editor.getSettings().getVerticalScrollJump();
@@ -312,10 +342,16 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
       if (offsetBottomBound - offsetTopBound > editorHeight) {
         verticalOffset = centerPosition;
       } else if (viewRect.y + viewRect.height < offsetBottomBound) {
-        int bottomAfterScrollJump = addVerticalOffsetToPosition(editor, scrollJump, new Point(viewRect.x, viewRect.y + viewRect.height));
+        int bottomAfterScrollJump = Math.min(
+          getBottommostLocation(targetLocation, textHeight, editorHeight, offsetTopBound),
+          addVerticalOffsetToPosition(editor, scrollJump, new Point(viewRect.x, viewRect.y + viewRect.height))
+        );
         verticalOffset = Math.max(offsetBottomBound - viewRect.height, bottomAfterScrollJump - viewRect.height);
       } else if (viewRect.y > offsetTopBound) {
-        int topAfterScrollJump = addVerticalOffsetToPosition(editor, -scrollJump, new Point(viewRect.x, viewRect.y));
+        int topAfterScrollJump = Math.max(
+          getTopmostLocation(targetLocation, editorHeight, offsetBottomBound),
+          addVerticalOffsetToPosition(editor, -scrollJump, new Point(viewRect.x, viewRect.y))
+        );
         verticalOffset = Math.min(offsetTopBound, topAfterScrollJump);
       }
     } else if (scrollType == ScrollType.MAKE_VISIBLE) {
@@ -324,9 +360,8 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
       }
     }
 
-    JScrollPane scrollPane = mySupplier.getScrollPane();
     verticalOffset = Math.max(0, verticalOffset);
-    verticalOffset = Math.min(scrollPane.getVerticalScrollBar().getMaximum() - getExtent(scrollPane.getVerticalScrollBar()), verticalOffset);
+    verticalOffset = Math.min(scrollHeight, verticalOffset);
 
     return verticalOffset;
   }
