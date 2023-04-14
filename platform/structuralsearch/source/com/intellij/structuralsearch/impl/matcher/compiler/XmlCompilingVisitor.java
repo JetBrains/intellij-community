@@ -8,7 +8,6 @@ import com.intellij.psi.XmlRecursiveElementWalkingVisitor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.structuralsearch.MatchOptions;
-import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.filters.TagValueFilter;
@@ -73,12 +72,9 @@ public class XmlCompilingVisitor extends XmlRecursiveElementVisitor {
 
   @Override
   public void visitElement(@NotNull PsiElement element) {
-    if (!(element.getLanguage() instanceof XMLLanguage)) {
-      final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
-      if (profile != null) {
-        profile.compile(new PsiElement[]{element}, myCompilingVisitor);
-        return;
-      }
+    if (!(element.getLanguage() instanceof XMLLanguage) &&
+        StructuralSearchUtil.compileForeignElement(element, myCompilingVisitor)) {
+      return;
     }
     myCompilingVisitor.handle(element);
     super.visitElement(element);
@@ -88,6 +84,7 @@ public class XmlCompilingVisitor extends XmlRecursiveElementVisitor {
   public void visitXmlToken(@NotNull XmlToken token) {
     final IElementType tokenType = token.getTokenType();
     if (tokenType != XmlTokenType.XML_NAME &&
+        tokenType != XmlTokenType.XML_TAG_NAME &&
         tokenType != XmlTokenType.XML_COMMENT_CHARACTERS &&
         tokenType != XmlTokenType.XML_DATA_CHARACTERS) {
       return;
