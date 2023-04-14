@@ -10,6 +10,7 @@ import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.util.Alarm;
 import org.cef.browser.CefBrowser;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,7 +32,7 @@ class JBCefOsrComponent extends JPanel {
   private volatile @NotNull CefBrowser myBrowser;
   private final @NotNull MyScale myScale = new MyScale();
 
-  private @NotNull Alarm myAlarm;
+  private @Nullable Alarm myAlarm;
   private @NotNull Disposable myDisposable;
 
   JBCefOsrComponent(boolean isMouseWheelEventEnabled) {
@@ -98,10 +99,12 @@ class JBCefOsrComponent extends JPanel {
   @Override
   public void reshape(int x, int y, int w, int h) {
     super.reshape(x, y, w, h);
-    myAlarm.cancelAllRequests();
+    if (myAlarm != null) {
+      myAlarm.cancelAllRequests();
 
-    double scale = myScale.getInverted();
-    myAlarm.addRequest(() -> myBrowser.wasResized(CEIL.round(w * scale), CEIL.round(h * scale)), 100);
+      double scale = myScale.getInverted();
+      myAlarm.addRequest(() -> myBrowser.wasResized(CEIL.round(w * scale), CEIL.round(h * scale)), 100);
+    }
   }
 
   @SuppressWarnings("DuplicatedCode")
