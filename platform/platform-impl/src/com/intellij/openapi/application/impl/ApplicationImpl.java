@@ -5,6 +5,9 @@ import com.intellij.CommonBundle;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.diagnostic.*;
+import com.intellij.diagnostic.telemetry.IJTracer;
+import com.intellij.diagnostic.telemetry.TraceManager;
+import com.intellij.diagnostic.telemetry.TraceUtil;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
 import com.intellij.ide.plugins.ContainerDescriptor;
@@ -44,6 +47,8 @@ import com.intellij.util.containers.Stack;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.EdtInvocationManager;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.context.Scope;
 import org.jetbrains.annotations.*;
 import sun.awt.AWTAccessor;
 
@@ -588,8 +593,10 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   }
 
   private void doExit(int flags, boolean restart, String @NotNull [] beforeRestart) {
+    IJTracer tracer = TraceManager.INSTANCE.getTracer("exitApp");
+    Span exitSpan = tracer.spanBuilder("application.exit").startSpan();
     boolean force = BitUtil.isSet(flags, FORCE_EXIT);
-    try {
+    try(Scope scope = exitSpan.makeCurrent()) {
       if (!force && !confirmExitIfNeeded(BitUtil.isSet(flags, EXIT_CONFIRMED))) {
         return;
       }
@@ -603,8 +610,9 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
       stopServicePreloading();
 
+
       if (BitUtil.isSet(flags, SAVE)) {
-        SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(this);
+        TraceUtil.runWithSpanThrows(tracer, "saveSettingsOnExit", (span) -> SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(this));
       }
 
       if (isInstantShutdownPossible()) {
@@ -622,22 +630,23 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
       LifecycleUsageTriggerCollector.onIdeClose(restart);
 
-      boolean success = true;
-      ProjectManagerEx manager = ProjectManagerEx.getInstanceExIfCreated();
-      if (manager != null) {
-        try {
-          if (!manager.closeAndDisposeAllProjects(!force)) {
-            success = false;
+      boolean success = TraceUtil.computeWithSpanThrows(tracer, "disposeProjects", (span) -> {
+        ProjectManagerEx manager = ProjectManagerEx.getInstanceExIfCreated();
+        if (manager != null) {
+          try {
+            if (!manager.closeAndDisposeAllProjects(!force)) {
+              return false;
+            }
+          }
+          catch (Throwable e) {
+            LOG.error(e);
           }
         }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
-      }
-      if (success) {
         //noinspection TestOnlyProblems
         disposeContainer();
-      }
+        return true;
+      });
+
 
       //noinspection SpellCheckingInspection
       if (!success || isUnitTestMode() || Boolean.getBoolean("idea.test.guimode")) {
@@ -660,9 +669,12 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
           exitCode = AppExitCodes.RESTART_FAILED;
         }
       }
+      scope.close();
+      exitSpan.end();
       System.exit(exitCode);
     }
     finally {
+      exitSpan.end();
       myExitInProgress = false;
     }
   }
