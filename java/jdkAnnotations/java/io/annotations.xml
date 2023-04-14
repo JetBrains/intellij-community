@@ -130,21 +130,36 @@
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name="java.io.File File(java.io.File, java.lang.String) 1">
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
     <annotation name="org.jetbrains.annotations.NonNls" />
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name="java.io.File File(java.lang.String) 0">
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
     <annotation name="org.jetbrains.annotations.NonNls" />
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name='java.io.File File(java.lang.String, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name="java.io.File File(java.lang.String, java.lang.String) 1">
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
     <annotation name="org.jetbrains.annotations.NonNls" />
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name="java.io.File File(java.net.URI) 0">
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name="java.io.File java.io.File createTempFile(java.lang.String, java.lang.String)">
@@ -168,6 +183,9 @@
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
   <item name="java.io.File java.io.File getAbsoluteFile()">
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name="java.io.File java.io.File getCanonicalFile()">
@@ -189,15 +207,24 @@
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name="java.io.File java.lang.String getAbsolutePath()">
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name="java.io.File java.lang.String getCanonicalPath()">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name="java.io.File java.lang.String getName()">
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name="java.io.File java.lang.String getPath()">
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name='java.io.File java.lang.String[] list()'>
@@ -213,6 +240,9 @@
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name="java.io.File java.nio.file.Path toPath()">
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name='java.io.FileInputStream FileInputStream(java.io.File) 0'>
