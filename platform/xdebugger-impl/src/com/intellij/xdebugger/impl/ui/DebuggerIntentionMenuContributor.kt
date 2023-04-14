@@ -19,6 +19,7 @@ class DebuggerIntentionMenuContributor : IntentionMenuContributor {
                               offset: Int) {
     if (Registry.`is`("debugger.inlayRunToCursor") && XDebuggerManager.getInstance(hostFile.project).currentSession != null) {
       intentions.topLevelActions.add(ActionManager.getInstance().getAction("RunToCursor"))
+      ActionManager.getInstance().getAction("StreamTracerAction")?.let { intentions.topLevelActions.add(it) }
     }
   }
 }
