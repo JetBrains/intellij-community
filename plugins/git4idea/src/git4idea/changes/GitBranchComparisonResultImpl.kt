@@ -24,8 +24,10 @@ class GitBranchComparisonResultImpl(private val project: Project,
 
   private val headSha = commits.last().sha
 
-  override val changes = mutableListOf<Change>()
-  override val changesByCommits = mutableMapOf<String, Collection<Change>>()
+  private val _changes = mutableListOf<Change>()
+  override val changes: List<Change> = Collections.unmodifiableList(_changes)
+  private val _changesByCommits = mutableMapOf<String, Collection<Change>>()
+  override val changesByCommits: Map<String, Collection<Change>> = Collections.unmodifiableMap(_changesByCommits)
 
   private val _diffDataByChange: MutableMap<Change, GitTextFilePatchWithHistory> =
     CollectionFactory.createCustomHashingStrategyMap(GitBranchComparisonResult.REVISION_COMPARISON_HASHING_STRATEGY)
@@ -79,7 +81,7 @@ class GitBranchComparisonResultImpl(private val project: Project,
           _diffDataByChange[change] = GitTextFilePatchWithHistory(patch, false, fileHistory)
         }
       }
-      changesByCommits[commitWithPatches.sha] = commitChanges
+      _changesByCommits[commitWithPatches.sha] = commitChanges
       previousCommitSha = commitSha
     }
 
@@ -89,7 +91,7 @@ class GitBranchComparisonResultImpl(private val project: Project,
 
     for (patch in headPatches) {
       val change = createChangeFromPatch(mergeBaseSha, headSha, patch)
-      changes.add(change)
+      _changes.add(change)
 
       if (patch is TextFilePatch) {
         val filePath = patch.filePath
@@ -112,12 +114,12 @@ class GitBranchComparisonResultImpl(private val project: Project,
       val previousCommitSha = commitWithPatches.parents.find { commitsHashes.contains(it) } ?: mergeBaseSha
       val commitSha = commitWithPatches.sha
       val commitChanges = commitWithPatches.patches.map { createChangeFromPatch(previousCommitSha, commitSha, it) }
-      changesByCommits[commitWithPatches.sha] = commitChanges
+      _changesByCommits[commitWithPatches.sha] = commitChanges
     }
 
     for (patch in headPatches) {
       val change = createChangeFromPatch(mergeBaseSha, headSha, patch)
-      changes.add(change)
+      _changes.add(change)
 
       if (patch is TextFilePatch) {
         patch.beforeVersionId = baseSha
