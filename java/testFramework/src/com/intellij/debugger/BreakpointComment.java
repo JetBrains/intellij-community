@@ -59,7 +59,7 @@ public final class BreakpointComment {
     return new Parser(text, comment).parse();
   }
 
-  private BreakpointComment(String fileName, int lineNumber) {
+  private BreakpointComment(@NotNull String fileName, int lineNumber) {
     this.fileName = fileName;
     this.lineNumber = lineNumber;
   }
