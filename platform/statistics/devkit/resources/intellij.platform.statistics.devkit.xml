@@ -1,4 +1,5 @@
-<idea-plugin>
+<idea-plugin package="com.intellij.internal.statistic.devkit">
+  <resource-bundle>messages.ActionsBundle</resource-bundle>
   <actions>
     <group id="FeatureUsage.Internal" popup="true" internal="true" compact="true">
       <action internal="true" id="OpenStatisticsEventLogAction"
@@ -7,8 +8,11 @@
               class="com.intellij.internal.statistic.devkit.actions.RecordStateStatisticsEventLogAction"/>
       <action internal="true" id="AddGroupToTestSchemeAction"
               class="com.intellij.internal.statistic.devkit.actions.scheme.AddGroupToTestSchemeAction"/>
+      <action internal="true" id="CollectFUStatisticsAction"
+              class="com.intellij.internal.statistic.devkit.actions.CollectFUStatisticsAction"/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
+
     <action internal="true" id="EditTestSchemeAction" class="com.intellij.internal.statistic.devkit.actions.scheme.EditEventsTestSchemeAction"/>
     <action internal="true" id="CleanupEventsTestSchemeAction" class="com.intellij.internal.statistic.devkit.actions.CleanupEventsTestSchemeAction"/>
     <action internal="true" id="SendEventLogStatistics" class="com.intellij.internal.statistic.devkit.actions.SendEventLogAction"/>
@@ -20,6 +24,8 @@
     <group internal="true" id="CleanupEventLog" class="com.intellij.internal.statistic.devkit.groups.CleanupEventLogByIdActionGroup"/>
     <group internal="true" id="UpdateEventsSchemeAction" class="com.intellij.internal.statistic.devkit.groups.UpdateEventsSchemeActionGroup"/>
     <action internal="true" id="GenerateEventsScheme" class="com.intellij.internal.statistic.devkit.actions.GenerateEventsScheme"/>
+    <action internal="true" id="TestParseEventsSchemeAction"
+            class="com.intellij.internal.statistic.devkit.actions.TestParseEventsSchemeAction"/>
   </actions>
   <extensions defaultExtensionNs="com.intellij">
     <toolWindow id="Statistics Event Log" factoryClass="com.intellij.internal.statistic.devkit.toolwindow.StatisticsEventLogToolWindowFactory"
@@ -29,7 +35,7 @@
                             implementationClass="com.intellij.internal.statistic.devkit.actions.scheme.ValidationRulesCompletionContributor"/>
   </extensions>
   <extensionPoints>
-    <extensionPoint name="statisticsLogGroupActionsProvider"
+    <extensionPoint qualifiedName="com.intellij.internal.statistic.devkit.toolwindow.logGroupActionsProvider"
                     interface="com.intellij.internal.statistic.devkit.toolwindow.StatisticsLogGroupActionsProvider" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
