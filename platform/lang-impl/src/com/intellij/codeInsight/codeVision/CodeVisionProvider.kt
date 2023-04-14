@@ -87,6 +87,7 @@ interface CodeVisionProvider<T> {
   @Deprecated("use getPlaceholderCollector")
   fun collectPlaceholders(editor: Editor): List<TextRange> = emptyList()
 
+  @JvmDefault // Prevent Kotlin to generate a method in the client code, as CodeVisionPlaceholderCollector is internal
   fun getPlaceholderCollector(editor: Editor, psiFile: PsiFile?) : CodeVisionPlaceholderCollector? = null
 
   /**
