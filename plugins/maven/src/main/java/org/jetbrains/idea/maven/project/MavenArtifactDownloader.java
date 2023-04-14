@@ -36,7 +36,6 @@ public final class MavenArtifactDownloader {
 
   private final Project myProject;
   private final MavenProjectsTree myProjectsTree;
-  private final Collection<MavenProject> myMavenProjects;
   private final Collection<MavenArtifact> myArtifacts;
   private final MavenProgressIndicator myProgress;
 
@@ -48,43 +47,44 @@ public final class MavenArtifactDownloader {
                                         boolean downloadDocs,
                                         MavenEmbedderWrapper embedder,
                                         MavenProgressIndicator p) throws MavenProcessCanceledException {
-    return new MavenArtifactDownloader(project, projectsTree, mavenProjects, artifacts, p).download(embedder, downloadSources, downloadDocs);
+    return new MavenArtifactDownloader(project, projectsTree, artifacts, p)
+      .download(mavenProjects, embedder, downloadSources, downloadDocs);
   }
 
   public MavenArtifactDownloader(@NotNull Project project,
                                  MavenProjectsTree projectsTree,
-                                 Collection<MavenProject> mavenProjects,
                                  Collection<MavenArtifact> artifacts,
                                  MavenProgressIndicator progressIndicator) {
     myProject = project;
     myProjectsTree = projectsTree;
-    myMavenProjects = mavenProjects;
     myArtifacts = artifacts == null ? null : new HashSet<>(artifacts);
     myProgress = progressIndicator;
   }
 
-  public @NotNull DownloadResult downloadSourcesAndJavadocs(boolean downloadSources,
+  public @NotNull DownloadResult downloadSourcesAndJavadocs(Collection<MavenProject> mavenProjects,
+                                                            boolean downloadSources,
                                                             boolean downloadDocs,
                                                             @NotNull MavenEmbeddersManager embeddersManager,
                                                             @NotNull MavenConsole console)
     throws MavenProcessCanceledException {
-    var projectMultiMap = MavenUtil.groupByBasedir(myMavenProjects, myProjectsTree);
+    var projectMultiMap = MavenUtil.groupByBasedir(mavenProjects, myProjectsTree);
     DownloadResult result = new DownloadResult();
     for (var entry : projectMultiMap.entrySet()) {
       var baseDir = entry.getKey();
+      var mavenProjectsForBaseDir = entry.getValue();
       var embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD, baseDir);
       try {
         embedder.customizeForResolve(console, myProgress, false, null, null);
-        var result1 = download(embedder, downloadSources, downloadDocs);
+        var chunk = download(mavenProjectsForBaseDir, embedder, downloadSources, downloadDocs);
 
-        for (MavenProject each : myMavenProjects) {
+        for (MavenProject each : mavenProjectsForBaseDir) {
           myProjectsTree.fireArtifactsDownloaded(each);
         }
 
-        result.resolvedDocs.addAll(result1.resolvedDocs);
-        result.resolvedSources.addAll(result1.resolvedSources);
-        result.unresolvedDocs.addAll(result1.unresolvedDocs);
-        result.unresolvedSources.addAll(result1.unresolvedSources);
+        result.resolvedDocs.addAll(chunk.resolvedDocs);
+        result.resolvedSources.addAll(chunk.resolvedSources);
+        result.unresolvedDocs.addAll(chunk.unresolvedDocs);
+        result.unresolvedSources.addAll(chunk.unresolvedSources);
       }
       finally {
         embeddersManager.release(embedder);
@@ -93,7 +93,10 @@ public final class MavenArtifactDownloader {
     return result;
   }
 
-  private DownloadResult download(MavenEmbedderWrapper embedder, boolean downloadSources, boolean downloadDocs)
+  private DownloadResult download(Collection<MavenProject> mavenProjects,
+                                  MavenEmbedderWrapper embedder,
+                                  boolean downloadSources,
+                                  boolean downloadDocs)
     throws MavenProcessCanceledException {
     List<File> downloadedFiles = new ArrayList<>();
     try {
@@ -108,13 +111,14 @@ public final class MavenArtifactDownloader {
                           : MavenProjectBundle.message("maven.downloading.docs"));
       myProgress.setText(caption);
 
-      Map<MavenId, DownloadData> artifacts = collectArtifactsToDownload(types);
+      Map<MavenId, DownloadData> artifacts = collectArtifactsToDownload(mavenProjects, types);
       return download(embedder, artifacts, downloadedFiles);
     }
     finally {
       boolean isAsync = !MavenUtil.isMavenUnitTestModeEnabled();
 
-      Set<File> filesToRefresh = new HashSet<>(); // We have to refresh parents of downloaded files, because some additional files  may have been download.
+      // We have to refresh parents of downloaded files, because some additional files may have been downloaded
+      Set<File> filesToRefresh = new HashSet<>();
       for (File file : downloadedFiles) {
         filesToRefresh.add(file);
         filesToRefresh.add(file.getParentFile());
@@ -124,20 +128,21 @@ public final class MavenArtifactDownloader {
     }
   }
 
-  private Map<MavenId, DownloadData> collectArtifactsToDownload(List<MavenExtraArtifactType> types) {
+  private Map<MavenId, DownloadData> collectArtifactsToDownload(Collection<MavenProject> mavenProjects,
+                                                                List<MavenExtraArtifactType> types) {
     Map<MavenId, DownloadData> result = new HashMap<>();
 
     Set<String> dependencyTypesFromSettings = new HashSet<>();
 
-    if (!ReadAction.compute(()->{
-
+    if (!ReadAction.compute(() -> {
       if (myProject.isDisposed()) return false;
-
       dependencyTypesFromSettings.addAll(MavenProjectsManager.getInstance(myProject).getImportingSettings().getDependencyTypesAsSet());
       return true;
-    })) return result;
+    })) {
+      return result;
+    }
 
-    for (MavenProject eachProject : myMavenProjects) {
+    for (MavenProject eachProject : mavenProjects) {
       List<MavenRemoteRepository> repositories = eachProject.getRemoteRepositories();
 
       for (MavenArtifact eachDependency : eachProject.getDependencies()) {

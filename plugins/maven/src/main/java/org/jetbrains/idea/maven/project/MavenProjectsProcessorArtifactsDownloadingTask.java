@@ -50,8 +50,8 @@ public final class MavenProjectsProcessorArtifactsDownloadingTask implements Mav
     try {
       downloadConsole.startDownload(progressListener, myDownloadSources, myDownloadDocs);
       downloadConsole.startDownloadTask();
-      var downloader = new MavenArtifactDownloader(project, myTree, myProjects, myArtifacts, indicator);
-      result = downloader.downloadSourcesAndJavadocs(myDownloadSources, myDownloadDocs, embeddersManager, console);
+      var downloader = new MavenArtifactDownloader(project, myTree, myArtifacts, indicator);
+      result = downloader.downloadSourcesAndJavadocs(myProjects, myDownloadSources, myDownloadDocs, embeddersManager, console);
       downloadConsole.finishDownloadTask();
     }
     catch (Exception e) {

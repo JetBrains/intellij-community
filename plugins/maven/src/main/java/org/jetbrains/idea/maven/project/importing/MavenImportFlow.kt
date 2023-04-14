@@ -236,12 +236,11 @@ class MavenImportFlow {
     val downloader = MavenArtifactDownloader(
       context.project,
       context.readContext.projectsTree,
-      context.projectsToImport,
       null,
       context.initialContext.indicator)
     val consoleToBeRemoved = BTWMavenConsole(context.project, context.initialContext.generalSettings.outputLevel,
                                              context.initialContext.generalSettings.isPrintErrorStackTraces)
-    return downloader.downloadSourcesAndJavadocs(sources, javadocs, embeddersManager, consoleToBeRemoved)
+    return downloader.downloadSourcesAndJavadocs(context.projectsToImport,sources, javadocs, embeddersManager, consoleToBeRemoved)
 
   }
 
@@ -256,16 +255,10 @@ class MavenImportFlow {
     if (!(sources || javadocs)) return MavenArtifactDownloader.DownloadResult()
     val projectManager = MavenProjectsManager.getInstance(project)
     val embeddersManager = projectManager.embeddersManager
-    val downloader = MavenArtifactDownloader(
-      project,
-      projectsTree,
-      mavenProjects,
-      mavenArtifacts,
-      indicator)
+    val downloader = MavenArtifactDownloader(project, projectsTree, mavenArtifacts, indicator)
     val settings = MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings()
     val consoleToBeRemoved = BTWMavenConsole(project, settings.outputLevel, settings.isPrintErrorStackTraces)
-    return downloader.downloadSourcesAndJavadocs(sources, javadocs, embeddersManager, consoleToBeRemoved)
-
+    return downloader.downloadSourcesAndJavadocs(mavenProjects, sources, javadocs, embeddersManager, consoleToBeRemoved)
   }
 
   fun resolveFolders(projects: Collection<MavenProject>, project: Project, indicator: MavenProgressIndicator): Collection<MavenProject> {
