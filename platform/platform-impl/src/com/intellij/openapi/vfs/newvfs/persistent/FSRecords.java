@@ -528,8 +528,14 @@ public final class FSRecords {
 
   //========== aux: ========================================================
 
+  public static void invalidateCaches(@Nullable String diagnosticMessage) {
+    implOrFail().invalidateCaches(diagnosticMessage, null);
+  }
+
+  /** Please use {@link #invalidateCaches(String)} instead -> provide explicit reason for invalidate caches */
+  @ApiStatus.Obsolete
   public static void invalidateCaches() {
-    implOrFail().invalidateCaches();
+    invalidateCaches("No description given");
   }
 
   /**
@@ -542,9 +548,9 @@ public final class FSRecords {
    *   throw handeError(e);
    * }
    * </pre>
-   * i.e. in a 'throw' statement -- to make clear, it will throw an exception. Method made return
-   * RuntimeException specifically for that purpose: to be used in a 'throw' statement, so compiler
-   * understands it is as a method exit point.
+   * i.e. in a 'throw' statement -- to make clear that it will throw an exception.
+   * Method made return RuntimeException specifically for that purpose: to be used
+   * in a 'throw' statement, so the compiler understands it as a method exit point.
    */
   @Contract("_->fail")
   public static RuntimeException handleError(Throwable e) throws RuntimeException, Error {

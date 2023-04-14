@@ -197,14 +197,14 @@ public final class PersistentFSConnection {
     }
   }
 
-  void createBrokenMarkerFile(@Nullable Throwable reason) {
+  void createBrokenMarkerFile(@Nullable String message,
+                              @Nullable Throwable reason) {
     final ByteArrayOutputStream out = new ByteArrayOutputStream();
     try (@SuppressWarnings("ImplicitDefaultCharsetUsage") PrintStream stream = new PrintStream(out)) {
-      new Exception().printStackTrace(stream);
-      if (reason != null) {
-        stream.print("\nReason:\n");
-        reason.printStackTrace(stream);
-      }
+      new VFSCorruptedException(
+        message == null ? "(No specific reason of corruption was given)" : message,
+        reason
+      ).printStackTrace(stream);
     }
     LOG.info("Creating VFS corruption marker; Trace=\n" + out);
 
@@ -334,7 +334,7 @@ public final class PersistentFSConnection {
     // No need to forcibly mark VFS corrupted if it is already shut down
     try {
       if (myCorrupted.compareAndSet(false, true)) {
-        createBrokenMarkerFile(e);
+        createBrokenMarkerFile(e.getMessage(), e);
         if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
           showCorruptionNotification();
         }
@@ -413,13 +413,12 @@ public final class PersistentFSConnection {
 
   /**
    * Gentle flusher impl: uses storage lock .getQueueLength() to determine potential contention and limit it.
-   *
+   * <p>
    * More details in a {@link GentleFlusherBase} javadocs
    */
   private class GentleVFSFlusher extends GentleFlusherBase {
     /** How often, on average, flush each index to the disk */
     private static final long FLUSHING_PERIOD_MS = SECONDS.toMillis(5);
-
 
 
     private static final int MIN_CONTENTION_QUOTA = 2;
@@ -539,6 +538,12 @@ public final class PersistentFSConnection {
         return storageLock.getQueueLength() + readers;
       }
     }
+  }
 
+  /** Created to make stacktraces easily recognizable in logs */
+  private static class VFSCorruptedException extends Exception {
+    VFSCorruptedException(final String message, final Throwable cause) {
+      super(message, cause);
+    }
   }
 }

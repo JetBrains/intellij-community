@@ -522,7 +522,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     if (i >= 0) {
       VirtualFileSystemEntry fileById = getVfsData().getFileById(id, this, true);
       if (fileById != null) {
-        LOG.assertTrue(fileById.getId() == id);
+        if (fileById.getId() != id) {
+          LOG.error("getFileById(" + id + ") returns " + fileById + " with different id(=" + fileById.getId() + ")");
+        }
       }
       return fileById;
     }
@@ -532,7 +534,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     if (fileByName != null && fileByName.getId() != id) {
       // a child with the same name and different ID was recreated after a refresh session -
       // it doesn't make sense to check it earlier because it is executed outside the VFS' read/write lock
-      LOG.assertTrue(FSRecords.isDeleted(id));
+      final boolean deleted = FSRecords.isDeleted(id);
+      if(!deleted) {
+        LOG.error("FSRecords(id: " + id + ", name: '" + name + "', !deleted), " +
+                  "but VFI.findChild(" + name + ")=" + fileByName + " with different id(=" + fileByName.getId() + ")");
+      }
       return null;
     }
     return fileByName;

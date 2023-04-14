@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorageFactory.RecordsStorageKind;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.testFramework.TemporaryDirectory;
@@ -11,7 +12,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 
@@ -197,6 +197,8 @@ public class VFSRebuildingTriggersTest {
     }
   }
 
+
+  //==== infrastructure:
   @After
   public void tearDown() throws Exception {
     PersistentFSRecordsStorageFactory.resetRecordsStorageImplementation();
@@ -217,10 +219,10 @@ public class VFSRebuildingTriggersTest {
   }
 
   public static void main(String[] args) throws IOException {
-    Path cachesDir = Paths.get("/Users/cheremin.ruslan/Documents/Development/tmp/caches");
+    Path cachesDir = FileUtil.createTempDirectory("vfs", "caches").toPath();
     int version = 1;
 
-    PersistentFSConnection connection = PersistentFSConnector.tryInit(
+    PersistentFSConnection connection = PersistentFSConnector.connect(
       cachesDir,
       version,
       true,
@@ -228,7 +230,7 @@ public class VFSRebuildingTriggersTest {
       Collections.emptyList()
     );
     try {
-      System.out.println("VFS creation timestamp: " + connection.getTimestamp());
+      connection.createBrokenMarkerFile("Because I can!", new Exception("Something happens here"));
     }
     finally {
       PersistentFSConnector.disconnect(connection);

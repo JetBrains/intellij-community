@@ -68,8 +68,9 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
   private @NotNull FSDir convertDirectory(@NotNull VirtualFile dir) throws IOException {
     FSItem fsItem = convertAndCheck(dir);
     if (!fsItem.isDirectory()) {
-      FSRecords.invalidateCaches();
-      throw new IOException("Not a directory: " + dir.getPath());
+      String message = "Not a directory: " + dir.getPath();
+      FSRecords.invalidateCaches(message);
+      throw new IOException(message);
     }
     return (FSDir)fsItem;
   }
@@ -78,8 +79,9 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
   private FSItem convertAndCheck(@NotNull VirtualFile file) {
     FSItem fsItem = convert(file);
     if (fsItem == null) {
-      FSRecords.invalidateCaches();
-      throw new IllegalStateException("Does not exist: " + file.getPath());
+      String message = "Does not exist: " + file.getPath();
+      FSRecords.invalidateCaches(message);
+      throw new IllegalStateException(message);
     }
     return fsItem;
   }

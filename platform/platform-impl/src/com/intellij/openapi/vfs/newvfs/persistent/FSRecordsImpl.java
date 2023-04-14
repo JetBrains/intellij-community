@@ -1028,9 +1028,10 @@ final class FSRecordsImpl {
 
   //========== aux: ========================================
 
-  void invalidateCaches() {
+  void invalidateCaches(final @Nullable String diagnosticMessage,
+                        final @Nullable Throwable cause) {
     checkNotDisposed();
-    connection.createBrokenMarkerFile(null);
+    connection.createBrokenMarkerFile(diagnosticMessage, cause);
   }
 
   /**
@@ -1086,18 +1087,19 @@ final class FSRecordsImpl {
 
   @NotNull String describeAlreadyCreatedFile(int fileId,
                                              int nameId) {
-    invalidateCaches();
-    //RC: actually, this method is better to be located in VfsData class from there it is called
-    //    The only list(parentId) method is not public -- all other methods could be called
-    //    from VfsData
+    //RC: Actually, this method is better to be in VfsData class from there it is called.
+    //    The only non-public method needed is .list(parentId) -- all other methods are
+    //    open to be called from VfsData.
     int parentId = getParent(fileId);
     String description = "fileId=" + fileId +
                                "; nameId=" + nameId + "(" + FileNameCache.getVFileName(nameId) + ")" +
                                "; parentId=" + parentId;
-    if (parentId <= 0) {
-      return description;
+    if (parentId > 0) {
+      description+= "; parent.name=" + getName(parentId)
+             + "; parent.children=" + list(parentId);
     }
-    return description + "; parent.name=" + getName(parentId)
-           + "; parent.children=" + list(parentId);
+
+    invalidateCaches(description, null);
+    return description;
   }
 }

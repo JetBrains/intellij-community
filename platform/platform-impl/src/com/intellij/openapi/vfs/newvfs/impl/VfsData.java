@@ -146,8 +146,10 @@ public final class VfsData {
     }
     final int nameId = segment.getNameId(id);
     if (nameId <= 0) {
-      FSRecords.invalidateCaches();
-      throw new AssertionError("nameId=" + nameId + "; data=" + o + "; parent=" + parent + "; parent.id=" + parent.getId() + "; db.parent=" + FSRecords.getParent(id));
+      String message = "nameId=" + nameId + "; data=" + o + "; parent=" + parent + "; parent.id=" + parent.getId() +
+                             "; db.parent=" + FSRecords.getParent(id);
+      FSRecords.invalidateCaches(message);
+      throw new AssertionError(message);
     }
 
     if (o instanceof DirectoryData) {
