@@ -22,6 +22,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import org.jetbrains.annotations.NotNull;
 
 public class MockPrinter implements Printer {
+  private boolean myShowHyperLink = false;
   private boolean myShouldReset = false;
   private boolean myHasPrinted = false;
   protected final StringBuilder myAllOut = new StringBuilder();
@@ -84,6 +85,10 @@ public class MockPrinter implements Printer {
     myHasPrinted = hasPrinted;
   }
 
+  public void setShowHyperLink(boolean showHyperLink) {
+    myShowHyperLink = showHyperLink;
+  }
+
   public boolean isShouldReset() {
     return myShouldReset;
   }
@@ -108,6 +113,9 @@ public class MockPrinter implements Printer {
 
   @Override
   public void printHyperlink(@NotNull String text, HyperlinkInfo info) {
+    if (myShowHyperLink) {
+      print(text, ConsoleViewContentType.SYSTEM_OUTPUT);
+    }
   }
 
   @Override

@@ -21,6 +21,7 @@ import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,11 +64,14 @@ public class TestComparisionFailedState extends TestFailedState {
 
   @Override
   public void printOn(Printer printer) {
-    printer.print(CompositePrintable.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
     printer.mark();
 
     // Error msg
-    printer.printWithAnsiColoring(getErrorMsgPresentation(), ProcessOutputTypes.STDERR);
+    var errorMsgPresentation = getErrorMsgPresentation();
+    if (!StringUtil.isEmptyOrSpaces(errorMsgPresentation)) {
+      printer.print(CompositePrintable.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
+      printer.printWithAnsiColoring(errorMsgPresentation, ProcessOutputTypes.STDERR);
+    }
 
     // Diff link
     myHyperlink.printOn(printer);
