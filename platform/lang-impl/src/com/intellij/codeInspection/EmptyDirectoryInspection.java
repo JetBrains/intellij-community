@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
@@ -55,7 +55,7 @@ public class EmptyDirectoryInspection extends GlobalInspectionTool {
       return;
     }
     index.iterateContent(file -> {
-      if (onlyReportDirectoriesUnderSourceRoots && !index.isInSourceContent(file)) {
+      if (onlyReportDirectoriesUnderSourceRoots && ReadAction.compute(() -> !index.isInSourceContent(file))) {
         return true;
       }
       if (!file.isDirectory() || file.getChildren().length != 0) {
