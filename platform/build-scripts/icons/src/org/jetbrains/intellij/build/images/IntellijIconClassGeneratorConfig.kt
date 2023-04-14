@@ -112,6 +112,8 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
                                                                                    packageName = "com.intellij.bigdatatools.databricks")
       "intellij.bigdatatools.common" -> IntellijIconClassGeneratorModuleConfig(className = "BigdatatoolsCommonIcons",
                                                                                packageName = "com.intellij.bigdatatools.common")
+      "intellij.swagger.core" -> IntellijIconClassGeneratorModuleConfig(className = "SwaggerCoreIcons",
+                                                                        packageName = "com.intellij.swagger.core")
       "intellij.ml.llm" -> IntellijIconClassGeneratorModuleConfig(className = "MLLlmIcons", packageName = "com.intellij.ml.llm")
 
       else -> super.getConfigForModule(moduleName)
