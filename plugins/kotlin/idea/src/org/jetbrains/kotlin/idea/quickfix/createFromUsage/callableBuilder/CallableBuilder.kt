@@ -8,6 +8,8 @@ import com.intellij.codeInsight.navigation.NavigationUtil
 import com.intellij.codeInsight.template.*
 import com.intellij.codeInsight.template.impl.TemplateImpl
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
+import com.intellij.injected.editor.VirtualFileWindow
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.WriteCommandAction
@@ -496,7 +498,9 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                                 && containingElement.isAncestor(config.originalElement)
                                 && callableInfo.kind != CallableKind.CONSTRUCTOR
                             ) "private "
-                            else if (isExtension) "private "
+                            else if (isExtension) {
+                                if (containingElement is KtFile && containingElement.isScript()) "" else "private "
+                            }
                             else ""
                         append(defaultVisibility)
                     }
@@ -972,7 +976,10 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
             documentManager.doPostponedOperationsAndUnblockDocument(document)
 
             val caretModel = containingFileEditor.caretModel
-            caretModel.moveToOffset(ktFileToEdit.node.startOffset)
+            val injectedOffsetOrZero = if (ktFileToEdit.virtualFile is VirtualFileWindow) {
+                InjectedLanguageManager.getInstance(ktFileToEdit.project).injectedToHost(ktFileToEdit, ktFileToEdit.textOffset)
+            } else 0
+            caretModel.moveToOffset(ktFileToEdit.node.startOffset + injectedOffsetOrZero)
 
             val declaration = declarationPointer.element ?: return
 
@@ -1243,6 +1250,7 @@ internal fun KtNamedDeclaration.getReturnTypeReferences(): List<KtTypeReference>
     return when (this) {
         is KtCallableDeclaration -> listOfNotNull(typeReference)
         is KtClassOrObject -> superTypeListEntries.mapNotNull { it.typeReference }
+        is KtScript -> emptyList()
         else -> throw AssertionError("Unexpected declaration kind: $text")
     }
 }
