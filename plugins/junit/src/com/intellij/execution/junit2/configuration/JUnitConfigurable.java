@@ -305,7 +305,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     configuration.getPersistentData().setUniqueIds(setArrayFromText(myUniqueIdField.getComponent().getText()));
     configuration.getPersistentData().setTags(myTagsField.getComponent().getText());
     configuration.getPersistentData().setChangeList((String)myChangeListLabeledComponent.getComponent().getSelectedItem());
-    myModel.apply(getModuleSelector().getModule(), configuration);
+    myModel.apply(getModuleSelector().getModule(), configuration, null);
     applyHelpersTo(configuration);
     final JUnitConfiguration.Data data = configuration.getPersistentData();
     if (myWholeProjectScope.isSelected()) {

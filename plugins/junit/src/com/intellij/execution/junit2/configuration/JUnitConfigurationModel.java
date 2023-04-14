@@ -4,6 +4,7 @@ package com.intellij.execution.junit2.configuration;
 
 import com.intellij.execution.JUnitBundle;
 import com.intellij.execution.JavaExecutionUtil;
+import com.intellij.execution.application.ClassEditorField;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
@@ -53,7 +54,7 @@ public class JUnitConfigurationModel {
 
   static {
     ourTestObjects = Arrays.asList(JUnitConfiguration.TEST_PACKAGE,
-                                   JUnitConfiguration.TEST_CLASS, 
+                                   JUnitConfiguration.TEST_CLASS,
                                    JUnitConfiguration.TEST_METHOD,
                                    JUnitConfiguration.TEST_PATTERN,
                                    JUnitConfiguration.TEST_DIRECTORY,
@@ -95,15 +96,15 @@ public class JUnitConfigurationModel {
      myJUnitDocuments[i] = doc;
   }
 
-  public void apply(final Module module, final JUnitConfiguration configuration) {
+  public void apply(final Module module, final JUnitConfiguration configuration, @Nullable ClassEditorField classField) {
     final boolean shouldUpdateName = configuration.isGeneratedName();
-    applyTo(configuration.getPersistentData(), module);
+    applyTo(configuration.getPersistentData(), module, classField);
     if (shouldUpdateName && !JavaExecutionUtil.isNewName(configuration.getName())) {
       configuration.setGeneratedName();
     }
   }
 
-  private void applyTo(final JUnitConfiguration.Data data, final Module module) {
+  private void applyTo(final JUnitConfiguration.Data data, final Module module, @Nullable ClassEditorField classField) {
     final String testObject = getTestObject();
     final String className = getJUnitTextValue(CLASS);
     data.TEST_OBJECT = testObject;
@@ -113,6 +114,17 @@ public class JUnitConfigurationModel {
         !JUnitConfiguration.TEST_CATEGORY.equals(testObject) &&
         !JUnitConfiguration.BY_SOURCE_CHANGES.equals(testObject)) {
       data.METHOD_NAME = getJUnitTextValue(METHOD);
+      if (classField != null) {
+        String jvmName = classField.getClassName();
+        if (jvmName != null) {
+          data.MAIN_CLASS_NAME = jvmName;
+          data.PACKAGE_NAME = StringUtil.getPackageName(jvmName);
+        }
+        else {
+          data.MAIN_CLASS_NAME = className;
+        }
+        return;
+      }
       if (!className.equals(replaceRuntimeClassName(data.getMainClassName()))) {
         try {
           final PsiClass testClass;
