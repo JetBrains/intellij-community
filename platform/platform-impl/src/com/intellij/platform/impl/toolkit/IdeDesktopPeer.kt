@@ -2,8 +2,8 @@
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.platform.impl.toolkit
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.jetbrains.rdserver.unattendedHost.browser.UnattendedHostUrlOpener
 import java.awt.Desktop
 import java.awt.peer.DesktopPeer
 import java.io.File
@@ -12,6 +12,8 @@ import java.net.URI
 class IdeDesktopPeer : DesktopPeer {
   companion object {
     val logger = logger<IdeDesktopPeer>()
+    val clientInstance: ClientDesktopPeer
+      get() = service()
   }
   override fun isSupported(action: Desktop.Action) =
     action in setOf(Desktop.Action.OPEN, Desktop.Action.EDIT, Desktop.Action.PRINT, Desktop.Action.MAIL, Desktop.Action.BROWSE)
@@ -31,8 +33,5 @@ class IdeDesktopPeer : DesktopPeer {
   override fun mail(mailtoURL: URI) {
     logger.error("mail ignored")
   }
-
-  override fun browse(uri: URI) {
-    UnattendedHostUrlOpener.openUrlOnControllerWithPortForward(uri.toASCIIString(), null)
-  }
+  override fun browse(uri: URI) = clientInstance.browse(uri)
 }
