@@ -1063,14 +1063,14 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
                 td("Activity"); td("Scanning")
               }
 
-              tr { td("Started at"); td(times.updatingStart.presentableLocalDateTime()) }
+              tr { td("Started at"); td(times.updatingStart.presentableLocalDateTimeWithMilliseconds()) }
               if (times.scanningReason != null) {
                 tr { td("Reason"); td(times.scanningReason) }
               }
               tr { td("Type"); td(times.scanningType.name.lowercase(Locale.ENGLISH).replace('_', ' ')) }
-              tr { td("Dumb mode start"); td(times.dumbModeStart?.presentableLocalDateTime() ?: "Didn't happen") }
+              tr { td("Dumb mode start"); td(times.dumbModeStart?.presentableLocalDateTimeWithMilliseconds() ?: "Didn't happen") }
 
-              tr { td("Finished at"); td(times.updatingEnd.presentableLocalDateTime()) }
+              tr { td("Finished at"); td(times.updatingEnd.presentableLocalDateTimeWithMilliseconds()) }
               tr { td("Cancelled"); td(times.wasInterrupted.toString()) }
               tr { td("Total time with pauses"); td(times.totalWallTimeWithPauses.presentableDuration()) }
               tr { td("Time spent on pause"); td(times.wallTimeOnPause.presentableDuration()) }
