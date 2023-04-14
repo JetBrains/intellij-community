@@ -34,7 +34,7 @@ variant_size_differences
 use std::env;
 use std::path::PathBuf;
 
-use anyhow::{bail, Result};
+use anyhow::{bail, Context, Result};
 use log::{debug, error, LevelFilter, warn};
 use serde::{Deserialize, Serialize};
 use utils::get_current_exe;
@@ -258,27 +258,26 @@ fn get_known_folder_path(rfid: &GUID, rfid_debug_name: &str) -> Result<PathBuf> 
 
 #[cfg(target_os = "macos")]
 pub fn get_config_home() -> Result<PathBuf> {
-    Ok(get_user_home().join("Library/Application Support"))
+    Ok(get_user_home()?.join("Library/Application Support"))
 }
 
 #[cfg(target_os = "macos")]
 pub fn get_cache_home() -> Result<PathBuf> {
-    Ok(get_user_home().join("Library/Caches"))
+    Ok(get_user_home()?.join("Library/Caches"))
 }
 
 #[cfg(target_os = "macos")]
 pub fn get_logs_home() -> Result<Option<PathBuf>> {
-    Ok(Some(get_user_home().join("Library/Logs")))
+    Ok(Some(get_user_home()?.join("Library/Logs")))
 }
 
-// CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
 #[cfg(target_os = "linux")]
 pub fn get_config_home() -> Result<PathBuf> {
     let xdg_config_home = get_xdg_dir("XDG_CONFIG_HOME");
 
     let result = match xdg_config_home {
         Some(p) => { p }
-        None => { get_user_home().join(".config") }
+        None => { get_user_home()?.join(".config") }
     };
 
     Ok(result)
@@ -290,7 +289,7 @@ pub fn get_cache_home() -> Result<PathBuf> {
 
     let result = match xdg_cache_home {
         Some(p) => { p }
-        None => { get_user_home().join(".cache") }
+        None => { get_user_home()?.join(".cache") }
     };
 
     Ok(result)
@@ -319,29 +318,10 @@ fn get_xdg_dir(env_var_name: &str) -> Option<PathBuf> {
     Some(path)
 }
 
-// used in ${HOME}/.config
-// TODO: is this the same as env:
-#[cfg(any(target_os = "linux", target_os = "macos"))]
-fn get_user_home() -> PathBuf {
-    // TODO: dirs::home_dir seems better then just simply using $HOME as it checks `getpwuid_r`
-
-    match env::var("HOME") {
-        Ok(s) => {
-            debug!("User home directory resolved as '{s}'");
-            let path = PathBuf::from(s);
-            if !path.is_absolute() {
-                warn!("User home directory is not absolute, this may be a misconfiguration");
-            }
-
-            path
-        }
-        Err(e) => {
-            // TODO: this seems wrong
-            warn!("Failed to get $HOME env var value: {e}, using / as home dir");
-
-            PathBuf::from("/")
-        }
-    }
+#[cfg(target_family = "unix")]
+#[allow(deprecated)]
+fn get_user_home() -> Result<PathBuf> {
+    env::home_dir().context("Cannot detect the user home directory")
 }
 
 #[cfg(any(target_os = "linux", target_os = "windows"))]
