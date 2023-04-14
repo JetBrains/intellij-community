@@ -13,12 +13,5 @@ object RuntimeModuleRepositoryValidator {
         errorReporter(DevkitRuntimeModuleRepositoryJpsBundle.message("error.message.duplicating.id.0.is.found", descriptor.id))
       }
     }
-    for (descriptor in descriptors) {
-      for (dependency in descriptor.dependencies) {
-        if (dependency !in moduleIDs) {
-          errorReporter(DevkitRuntimeModuleRepositoryJpsBundle.message("error.message.unknown.dependency.0.in.module.1", dependency, descriptor.id))
-        }
-      }
-    }
   }
 }

@@ -5,6 +5,7 @@ import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleReposi
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryValidator
 import com.intellij.openapi.util.io.isAncestor
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.runtime.repository.MalformedRepositoryException
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
@@ -77,7 +78,12 @@ internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry
     }
   }
 
-  RuntimeModuleRepositoryValidator.validate(distDescriptors) { context.messages.warning("Runtime module repository problem: $it") }
+  val errors = ArrayList<String>()
+  RuntimeModuleRepositoryValidator.validate(distDescriptors) { errors.add(it) }
+  if (errors.isNotEmpty()) {
+    context.messages.error("Runtime module repository has ${errors.size} ${StringUtil.pluralize("error", errors.size)}:\n" +
+                           errors.joinToString("\n"))
+  }
   try {
     RuntimeModuleRepositorySerialization.saveToJar(distDescriptors, context.paths.distAllDir.resolve(JAR_REPOSITORY_FILE_NAME),
                                                    GENERATOR_VERSION)
