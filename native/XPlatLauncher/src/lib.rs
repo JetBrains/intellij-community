@@ -47,21 +47,11 @@ use {
     windows::Win32::UI::Shell::SHGetKnownFolderPath
 };
 
-#[cfg(not(target_os = "macos"))]
-use native_dialog::{MessageDialog, MessageType};
-
-#[cfg(target_os = "macos")]
-use {
-    core_foundation::base::{CFOptionFlags, SInt32, TCFType},
-    core_foundation::date::CFTimeInterval,
-    core_foundation::string::{CFString, CFStringRef},
-    core_foundation::url::CFURLRef
-};
-
 use crate::default::DefaultLaunchConfiguration;
 use crate::remote_dev::RemoteDevLaunchConfiguration;
 
 mod mini_logger;
+mod ui;
 mod java;
 mod remote_dev;
 mod default;
@@ -82,7 +72,7 @@ pub fn main_lib() {
     if let Err(e) = main_impl(remote_dev, verbose) {
         let text = format!("{:?}\n\n{}", e, SUPPORT_CONTACT);
         if show_error_ui {
-            show_fail_to_start_message(text.as_str())
+            ui::show_fail_to_start_message(CANNOT_START_TITLE, text.as_str())
         } else if verbose {
             error!("{:?}", e);
         } else {
@@ -241,46 +231,6 @@ fn get_full_vm_options(configuration: &Box<dyn LaunchConfiguration>) -> Result<V
     full_vm_options.extend_from_slice(&intellij_vm_options);
 
     Ok(full_vm_options)
-}
-
-#[cfg(target_os = "macos")]
-#[allow(non_snake_case, unused_variables, unused_results)]
-fn show_fail_to_start_message(text: &str) {
-    extern "C" {
-        fn CFUserNotificationDisplayAlert(
-            timeout: CFTimeInterval,
-            flags: CFOptionFlags,
-            iconURL: CFURLRef, soundURL: CFURLRef, localizationURL: CFURLRef,
-            alertHeader: CFStringRef, alertMessage: CFStringRef,
-            defaultButtonTitle: CFStringRef, alternateButtonTitle: CFStringRef, otherButtonTitle: CFStringRef,
-            responseFlags: *mut CFOptionFlags,
-        ) -> SInt32;
-    }
-
-    let title = CFString::from_static_string(CANNOT_START_TITLE);
-    let message = CFString::new(text);
-    unsafe {
-        CFUserNotificationDisplayAlert(
-            0.0,
-            0,  // kCFUserNotificationStopAlertLevel
-            std::ptr::null(), std::ptr::null(), std::ptr::null(),
-            title.as_concrete_TypeRef(), message.as_concrete_TypeRef(),
-            std::ptr::null(), std::ptr::null(), std::ptr::null(),
-            std::ptr::null_mut())
-    };
-}
-
-#[cfg(not(target_os = "macos"))]
-fn show_fail_to_start_message(text: &str) {
-    let result = MessageDialog::new()
-        .set_title(CANNOT_START_TITLE)
-        .set_text(text)
-        .set_type(MessageType::Error)
-        .show_alert();
-    if let Err(e) = result {
-        error!("Failed to show error message: {:?}", e);
-        eprintln!("{}\n{}", CANNOT_START_TITLE, text);
-    }
 }
 
 #[cfg(target_os = "windows")]
