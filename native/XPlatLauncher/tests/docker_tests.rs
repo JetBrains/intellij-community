@@ -1,24 +1,27 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 pub mod utils;
 
 #[cfg(test)]
 mod tests {
-    use std::fs::{File, create_dir_all};
-    use std::io::Write;
-    use std::path::PathBuf;
-    use log::info;
     use rstest::*;
-    use crate::utils::*;
 
-    #[cfg(target_os = "linux")] use {
+    #[cfg(target_os = "linux")]
+    use {
+        std::fs::{File, create_dir_all},
+        std::io::Write,
+        std::path::PathBuf,
+        log::info,
+        crate::utils::*,
         xplat_launcher::{is_control_group_matches_docker, is_docker_env_file_exist, is_docker_init_file_exist}
     };
 
-    #[cfg(target_os = "windows")] use {
+    #[cfg(target_os = "windows")]
+    use {
         xplat_launcher::is_service_present
     };
 
+    #[cfg(target_os = "linux")]
     const TEST_CLASS_DIR_NAME: &str = "DockerTestData";
 
     #[rstest]
@@ -156,6 +159,7 @@ mod tests {
      *    - Prepare temp directory to store temp files
      *    - Prepare common test environment
      */
+    #[cfg(target_os = "linux")]
     fn prepare_env() -> DockerTestEnvironment {
         info!("Prepare Docker test environment");
         info!("Preparing test environment");
@@ -177,6 +181,7 @@ mod tests {
     /**
      * Create a file with a provided name in a specified directory and validate creation result.
      */
+    #[cfg(target_os = "linux")]
     fn create_file_in_dir(path: &PathBuf, file_name: &str) -> File {
         if !path.exists() {
             create_dir_all(&path).expect(format!(
@@ -195,6 +200,7 @@ mod tests {
     /**
      * Create a cgroup file with a content in a specified directory.
      */
+    #[cfg(target_os = "linux")]
     fn create_cgroup_file(path: &PathBuf, content: &str) -> File {
         if !path.exists() {
             create_dir_all(&path).expect(format!(
@@ -220,6 +226,7 @@ mod tests {
     /**
      * Test environment for Docker tests.
      */
+    #[cfg(target_os = "linux")]
     struct DockerTestEnvironment {
         test_temp_directory: PathBuf,
     }
