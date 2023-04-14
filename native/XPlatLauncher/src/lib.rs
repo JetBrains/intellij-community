@@ -41,10 +41,9 @@ use utils::get_current_exe;
 
 #[cfg(target_os = "windows")]
 use {
-    windows::core::GUID,
+    windows::core::{GUID, PWSTR},
     windows::Win32::Foundation::HANDLE,
-    windows::Win32::UI::Shell::KF_FLAG_CREATE,
-    windows::Win32::UI::Shell::SHGetKnownFolderPath
+    windows::Win32::UI::Shell
 };
 
 use crate::default::DefaultLaunchConfiguration;
@@ -235,16 +234,12 @@ fn get_full_vm_options(configuration: &Box<dyn LaunchConfiguration>) -> Result<V
 
 #[cfg(target_os = "windows")]
 pub fn get_config_home() -> Result<PathBuf> {
-    unsafe {
-        get_known_folder_path(&windows::Win32::UI::Shell::FOLDERID_LocalAppData, "FOLDERID_LocalAppData")
-    }
+    get_known_folder_path(&Shell::FOLDERID_LocalAppData, "FOLDERID_LocalAppData")
 }
 
 #[cfg(target_os = "windows")]
 pub fn get_cache_home() -> Result<PathBuf> {
-    unsafe {
-        get_known_folder_path(&windows::Win32::UI::Shell::FOLDERID_RoamingAppData, "FOLDERID_RoamingAppData")
-    }
+    get_known_folder_path(&Shell::FOLDERID_RoamingAppData, "FOLDERID_RoamingAppData")
 }
 
 #[cfg(target_os = "windows")]
@@ -253,25 +248,12 @@ pub fn get_logs_home() -> Result<Option<PathBuf>> {
 }
 
 #[cfg(target_os = "windows")]
-pub unsafe fn get_known_folder_path(rfid: &GUID, human_readable: &str) -> Result<PathBuf> {
-    debug!("Calling SHGetKnownFolderPath");
-    let pwstr = unsafe {
-        SHGetKnownFolderPath(
-            rfid,
-            KF_FLAG_CREATE,
-            HANDLE(0)
-        )?
-    };
-
-    debug!("Converting PWSTR to u16 vec");
-    let path_wide_vec = unsafe {
-        pwstr.as_wide()
-    };
-
-    let folder_path = String::from_utf16(path_wide_vec)?;
-    debug!("SHGetKnownFolderPath path for known folder {human_readable}: {folder_path}");
-
-    Ok(PathBuf::from(folder_path))
+fn get_known_folder_path(rfid: &GUID, rfid_debug_name: &str) -> Result<PathBuf> {
+    debug!("Calling SHGetKnownFolderPath({})", rfid_debug_name);
+    let result: PWSTR = unsafe { Shell::SHGetKnownFolderPath(rfid, Shell::KF_FLAG_CREATE, HANDLE(0)) }?;
+    let result_str = unsafe { result.to_string() }?;
+    debug!("  result: {}", result_str);
+    Ok(PathBuf::from(result_str))
 }
 
 #[cfg(target_os = "macos")]
