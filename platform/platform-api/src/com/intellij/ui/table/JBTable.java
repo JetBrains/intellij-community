@@ -113,6 +113,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       }
     };
 
+    putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, myEmptyText.getWrappedFragmentsIterable());
+
     myExpandableItemsHandler = createExpandableItemsHandler();
 
     setFillsViewportHeight(true);

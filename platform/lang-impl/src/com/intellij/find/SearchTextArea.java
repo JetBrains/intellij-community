@@ -203,9 +203,10 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
     iconsPanelWrapper.add(p, BorderLayout.WEST);
     iconsPanelWrapper.add(myExtraActionsPanel, BorderLayout.CENTER);
 
+    Border border = getBorder() == null ? JBUI.Borders.empty(JBUI.CurrentTheme.Editor.SearchField.borderInsets()) : getBorder();
     removeAll();
     setLayout(new BorderLayout(JBUIScale.scale(3), 0));
-    setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.Editor.SearchField.borderInsets()));
+    setBorder(border);
 
     add(historyButtonWrapper, BorderLayout.WEST);
     add(myScrollPane, BorderLayout.CENTER);
@@ -229,17 +230,25 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
       myIconsPanel.setLayout(new BorderLayout());
       myIconsPanel.add(myClearButton, BorderLayout.CENTER);
       myIconsPanel.add(myNewLineButton, BorderLayout.EAST);
-      myIconsPanel.setPreferredSize(myIconsPanel.getPreferredSize());
+      resetPreferredSize(myIconsPanel);
       if (!showClearIcon) myIconsPanel.remove(myClearButton);
       if (!showNewLine) myIconsPanel.remove(myNewLineButton);
       myIconsPanel.revalidate();
       myIconsPanel.repaint();
+    }
+    else {
+      resetPreferredSize(myIconsPanel);
     }
     myScrollPane.setHorizontalScrollBarPolicy(HORIZONTAL_SCROLLBAR_AS_NEEDED);
     myScrollPane.setVerticalScrollBarPolicy(multiline ? VERTICAL_SCROLLBAR_AS_NEEDED : VERTICAL_SCROLLBAR_NEVER);
     myScrollPane.getHorizontalScrollBar().setVisible(multiline);
     myScrollPane.revalidate();
     doLayout();
+  }
+
+  private void resetPreferredSize(JComponent component) {
+    component.setPreferredSize(null);
+    component.setPreferredSize(myIconsPanel.getPreferredSize());
   }
 
   public List<Component> setExtraActions(AnAction... actions) {

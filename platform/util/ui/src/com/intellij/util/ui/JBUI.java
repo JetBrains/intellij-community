@@ -79,6 +79,13 @@ public final class JBUI {
     return JBUIScale.scale(i);
   }
 
+  /**
+   * @return 'i' unscaled by the user scale factor
+   */
+  public static int unscale(int i) {
+    return Math.round(i / JBUIScale.scale(1f));
+  }
+
   public static int scaleFontSize(float fontSize) {
     return JBUIScale.scaleFontSize(fontSize);
   }
@@ -1233,7 +1240,7 @@ public final class JBUI {
         return insets("ComplexPopup.TextField.borderInsets", insets(0, 12));
       }
 
-      public static Insets textFieldInputInsets() {
+      public static JBInsets textFieldInputInsets() {
         return insets(textFieldInputInsetsKey(), insets(6, 2));
       }
 

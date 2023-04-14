@@ -2,11 +2,10 @@
 package com.intellij.ui.dsl.gridLayout
 
 import com.intellij.ui.dsl.checkNonNegative
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBEmptyBorder
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Insets
-import kotlin.math.roundToInt
 
 /**
  * Defines gaps around. Values must be provided unscaled
@@ -44,7 +43,7 @@ fun UnscaledGaps(top: Int = 0, left: Int = 0, bottom: Int = 0, right: Int = 0): 
 fun Insets.toUnscaledGaps(): UnscaledGaps = unscale().let { UnscaledGaps(it.top, it.left, it.bottom, it.right) }
 
 @ApiStatus.Internal
-fun Int.unscale(): Int = (this / JBUIScale.scale(1f)).roundToInt()
+fun Int.unscale(): Int = JBUI.unscale(this)
 
 @Suppress("UseDPIAwareInsets")
 @ApiStatus.Internal

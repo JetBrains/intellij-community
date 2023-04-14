@@ -20,6 +20,7 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -227,10 +228,10 @@ public final class PopupUtil {
   }
 
   public static Border createComplexPopupTextFieldBorder() {
-    return JBUI.Borders.compound(new EmptyBorder(JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets()),
+    return JBUI.Borders.compound(new JBEmptyBorder(JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets().getUnscaled()),
                                  JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 0, 0,
                                                          JBUI.CurrentTheme.ComplexPopup.TEXT_FIELD_SEPARATOR_HEIGHT, 0),
-                                 new EmptyBorder(JBUI.CurrentTheme.ComplexPopup.textFieldInputInsets()));
+                                 new JBEmptyBorder(JBUI.CurrentTheme.ComplexPopup.textFieldInputInsets().getUnscaled()));
   }
 
   public static void applyNewUIBackground(@Nullable Component component) {
@@ -240,15 +241,13 @@ public final class PopupUtil {
   }
 
   public static Border getComplexPopupHorizontalHeaderBorder() {
-    Insets headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets();
-    //noinspection UseDPIAwareBorders
-    return new EmptyBorder(0, headerInsets.left, 0, headerInsets.right);
+    Insets headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets().getUnscaled();
+    return new JBEmptyBorder(0, headerInsets.left, 0, headerInsets.right);
   }
 
   public static Border getComplexPopupVerticalHeaderBorder() {
-    Insets headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets();
-    //noinspection UseDPIAwareBorders
-    return new EmptyBorder(headerInsets.top, 0, headerInsets.bottom, 0);
+    Insets headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets().getUnscaled();
+    return new JBEmptyBorder(headerInsets.top, 0, headerInsets.bottom, 0);
   }
 
   public static void configListRendererFixedHeight(SelectablePanel selectablePanel) {
