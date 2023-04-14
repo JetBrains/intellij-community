@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
@@ -12,6 +13,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.stream.Collectors;
 
 public class MavenFolderResolver {
@@ -21,6 +23,36 @@ public class MavenFolderResolver {
                              @NotNull MavenEmbeddersManager embeddersManager,
                              @NotNull MavenConsole console,
                              @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
+    var mavenProjectsToResolve = collectMavenProjectsToResolve(mavenProjects, tree);
+    doResolveFolders(mavenProjectsToResolve, tree, importingSettings, embeddersManager, console, process);
+  }
+
+  @NotNull
+  private Collection<MavenProject> collectMavenProjectsToResolve(@NotNull Collection<MavenProject> mavenProjects,
+                                                                 @NotNull MavenProjectsTree tree) {
+    // if we generate sources for the aggregator of a project, sources will be generated for the project too
+    if (Registry.is("maven.server.generate.sources.for.aggregator.projects")) {
+      var mavenProjectsToSkip = new HashSet<MavenProject>();
+      for (var mavenProject : mavenProjects) {
+        var aggregator = mavenProject;
+        while ((aggregator = tree.findAggregator(aggregator)) != null) {
+          if (mavenProjects.contains(aggregator)) {
+            mavenProjectsToSkip.add(mavenProject);
+            break;
+          }
+        }
+      }
+      return mavenProjects.stream().filter(mavenProject -> !mavenProjectsToSkip.contains(mavenProject)).toList();
+    }
+    return mavenProjects;
+  }
+
+  private void doResolveFolders(@NotNull Collection<MavenProject> mavenProjects,
+                                @NotNull MavenProjectsTree tree,
+                                @NotNull MavenImportingSettings importingSettings,
+                                @NotNull MavenEmbeddersManager embeddersManager,
+                                @NotNull MavenConsole console,
+                                @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
     var projectMultiMap = MavenUtil.groupByBasedir(mavenProjects, tree);
     for (var entry : projectMultiMap.entrySet()) {
       var baseDir = entry.getKey();

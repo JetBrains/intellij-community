@@ -356,6 +356,9 @@
     <registryKey key="maven.server.use.custom.dependencies.resolver" defaultValue="true"
                  description="Use custom maven dependencies resolver to speed up dependency resolution"/>
 
+    <registryKey key="maven.server.generate.sources.for.aggregator.projects" defaultValue="true"
+                 description="Generate sources for aggregator projects (instead of all projects) for better performance"/>
+
     <registryKey key="maven.import.to.workspace.model.fast.facet.creation" defaultValue="false"
                  description="Create facets in a background thread instead of EDT"/>
 
