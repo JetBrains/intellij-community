@@ -273,26 +273,12 @@ pub fn get_logs_home() -> Result<Option<PathBuf>> {
 
 #[cfg(target_os = "linux")]
 pub fn get_config_home() -> Result<PathBuf> {
-    let xdg_config_home = get_xdg_dir("XDG_CONFIG_HOME");
-
-    let result = match xdg_config_home {
-        Some(p) => { p }
-        None => { get_user_home()?.join(".config") }
-    };
-
-    Ok(result)
+    get_xdg_dir("XDG_CONFIG_HOME", ".config")
 }
 
 #[cfg(target_os = "linux")]
 pub fn get_cache_home() -> Result<PathBuf> {
-    let xdg_cache_home = get_xdg_dir("XDG_CACHE_HOME");
-
-    let result = match xdg_cache_home {
-        Some(p) => { p }
-        None => { get_user_home()?.join(".cache") }
-    };
-
-    Ok(result)
+    get_xdg_dir("XDG_CACHE_HOME", ".cache")
 }
 
 #[cfg(target_os = "linux")]
@@ -301,27 +287,22 @@ pub fn get_logs_home() -> Result<Option<PathBuf>> {
 }
 
 #[cfg(target_os = "linux")]
-fn get_xdg_dir(env_var_name: &str) -> Option<PathBuf> {
-    let xdg_dir = env::var(env_var_name).unwrap_or(String::from(""));
-    debug!("{env_var_name}={xdg_dir}");
-
-    if xdg_dir.is_empty() {
-        return None
-    }
-
-    let path = PathBuf::from(xdg_dir);
-    if !path.is_absolute() {
-        // TODO: consider change
+fn get_xdg_dir(env_var_name: &str, fallback: &str) -> Result<PathBuf> {
+    if let Ok(value) = env::var(env_var_name) {
+        let path = PathBuf::from(value);
+        if path.is_absolute() {
+            return Ok(path)
+        }
         warn!("{env_var_name} is not set to an absolute path ({path:?}), this is likely a misconfiguration");
     }
 
-    Some(path)
+    Ok(get_user_home()?.join(fallback))
 }
 
 #[cfg(target_family = "unix")]
 #[allow(deprecated)]
 fn get_user_home() -> Result<PathBuf> {
-    env::home_dir().context("Cannot detect the user home directory")
+    env::home_dir().context("Cannot detect a user home directory")
 }
 
 #[cfg(any(target_os = "linux", target_os = "windows"))]
