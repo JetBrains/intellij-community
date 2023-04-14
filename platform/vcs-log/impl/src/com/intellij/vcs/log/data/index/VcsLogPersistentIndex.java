@@ -15,8 +15,6 @@ import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
-import com.intellij.util.EmptyConsumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -53,6 +51,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 import static com.intellij.vcs.log.data.index.VcsLogFullDetailsIndex.INDEX;
@@ -201,7 +200,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
         continue;
       }
 
-      requestConsumer.consume(new IndexingRequest(root, myIndexStorage.store.getPathsEncoder(), commits, isFull));
+      requestConsumer.accept(new IndexingRequest(root, myIndexStorage.store.getPathsEncoder(), commits, isFull));
     }
 
     if (isFull) {
@@ -394,7 +393,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     private static final int LOW_PRIORITY = Thread.MIN_PRIORITY;
 
     MySingleTaskController(@NotNull Disposable parent) {
-      super("index", EmptyConsumer.getInstance(), parent);
+      super("index", parent, unused -> {});
     }
 
     @Override
@@ -424,7 +423,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       };
       Future<?> future = AppExecutorUtil.getAppExecutorService().submit(() -> {
         ProgressManager.getInstance().runProcess(() -> {
-          task.consume(indicator);
+          task.accept(indicator);
         }, indicator);
       });
       return new SingleTaskImpl(future, indicator);

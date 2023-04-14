@@ -4,7 +4,6 @@ package com.intellij.vcs.log.data.index;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.Consumer;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
@@ -37,6 +36,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
@@ -148,7 +148,7 @@ final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitD
         result.put(myUserEnumerator.enumerate(inputData.getAuthor()), null);
       }
       catch (IOException e) {
-        myFatalErrorConsumer.consume(e);
+        myFatalErrorConsumer.accept(e);
       }
       return result;
     }

@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DataIndexer;
@@ -34,6 +33,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Consumer;
 
 public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsIndex.ChangeKind>, VcsLogIndexer.CompressedDetails> {
 
@@ -76,7 +76,7 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
       return toFilePath(getPath(pathId), isDirectory);
     }
     catch (IOException e) {
-      myPathsIndexer.myFatalErrorConsumer.consume(e);
+      myPathsIndexer.myFatalErrorConsumer.accept(e);
     }
     return null;
   }
@@ -160,7 +160,7 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
           }
         }
         catch (IOException e) {
-          myFatalErrorConsumer.consume(e);
+          myFatalErrorConsumer.accept(e);
         }
       }
 
