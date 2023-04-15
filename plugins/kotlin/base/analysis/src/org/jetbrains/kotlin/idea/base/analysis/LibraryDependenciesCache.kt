@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.base.analysis
 
 import com.intellij.ProjectTopics
-import com.intellij.codeInsight.JavaLibraryModificationTracker
+import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.assertReadAccessAllowed
 import com.intellij.openapi.application.runReadAction
@@ -184,9 +184,9 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
     private fun getLibraryUsageIndex(): LibraryUsageIndex =
         CachedValuesManager.getManager(project).getCachedValue(project) {
             CachedValueProvider.Result(
-                LibraryUsageIndex(),
-                ModuleModificationTracker.getInstance(project),
-                JavaLibraryModificationTracker.getInstance(project)
+              LibraryUsageIndex(),
+              ModuleModificationTracker.getInstance(project),
+              JavaLibraryModificationTracker.getInstance(project)
             )
         }!!
 

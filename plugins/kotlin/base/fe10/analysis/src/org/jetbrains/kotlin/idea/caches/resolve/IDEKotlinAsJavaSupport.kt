@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
-import com.intellij.codeInsight.JavaLibraryModificationTracker
+import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker

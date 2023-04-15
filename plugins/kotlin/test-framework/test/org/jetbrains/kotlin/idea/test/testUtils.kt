@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.test
 
-import com.intellij.codeInsight.JavaLibraryModificationTracker
+import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.facet.FacetManager
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.invokeAndWaitIfNeeded

@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
-import com.intellij.codeInsight.JavaLibraryModificationTracker
+import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
@@ -143,13 +143,13 @@ internal class ProjectResolutionFacade(
                 listOfNotNull(ScriptDependenciesInfo.ForProject.createIfRequired(project, resolvedModules))
 
         return IdeaResolverForProject(
-            resolverDebugName,
-            globalContext.withProject(project),
-            resolvedModulesWithDependencies,
-            syntheticFilesByModule,
-            delegateResolverForProject,
-            if (invalidateOnOOCB) KotlinModificationTrackerService.getInstance(project).outOfBlockModificationTracker else JavaLibraryModificationTracker.getInstance(project),
-            settings
+          resolverDebugName,
+          globalContext.withProject(project),
+          resolvedModulesWithDependencies,
+          syntheticFilesByModule,
+          delegateResolverForProject,
+          if (invalidateOnOOCB) KotlinModificationTrackerService.getInstance(project).outOfBlockModificationTracker else JavaLibraryModificationTracker.getInstance(project),
+          settings
         )
     }
 

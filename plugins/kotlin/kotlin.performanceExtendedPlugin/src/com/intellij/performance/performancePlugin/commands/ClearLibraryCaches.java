@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.performance.performancePlugin.commands;
 
-import com.intellij.codeInsight.JavaLibraryModificationTracker;
+import com.intellij.java.library.JavaLibraryModificationTracker;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.commands.AbstractCommand;

@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
-import com.intellij.codeInsight.JavaLibraryModificationTracker
+import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -51,9 +51,9 @@ class ResolutionAnchorCacheServiceImpl(
         get() =
             CachedValuesManager.getManager(project).getCachedValue(project) {
                 CachedValueProvider.Result.create(
-                    mapResolutionAnchorForLibraries(),
-                    ModuleModificationTracker.getInstance(project),
-                    JavaLibraryModificationTracker.getInstance(project)
+                  mapResolutionAnchorForLibraries(),
+                  ModuleModificationTracker.getInstance(project),
+                  JavaLibraryModificationTracker.getInstance(project)
                 )
             }
 
@@ -61,9 +61,9 @@ class ResolutionAnchorCacheServiceImpl(
         get() =
             CachedValuesManager.getManager(project).getCachedValue(project) {
                 CachedValueProvider.Result.create(
-                    ContainerUtil.createConcurrentWeakMap(),
-                    ModuleModificationTracker.getInstance(project),
-                    JavaLibraryModificationTracker.getInstance(project)
+                  ContainerUtil.createConcurrentWeakMap(),
+                  ModuleModificationTracker.getInstance(project),
+                  JavaLibraryModificationTracker.getInstance(project)
                 )
             }
 
