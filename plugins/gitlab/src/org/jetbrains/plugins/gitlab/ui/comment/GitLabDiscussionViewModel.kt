@@ -1,15 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.ui.comment
 
-import com.intellij.collaboration.async.mapCachingIndexed
+import com.intellij.collaboration.async.mapCaching
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
@@ -64,9 +61,9 @@ class GitLabDiscussionViewModelImpl(
     if (initialNotesSize == null) {
       initialNotesSize = it.size
     }
-  }.mapCachingIndexed(
+  }.mapCaching(
     GitLabNote::id,
-    { cs, note, index -> GitLabNoteViewModelImpl(cs, note, if (index == 0) resolveVm else null) },
+    { cs, note -> GitLabNoteViewModelImpl(cs, note, getDiscussionState(discussion, note)) },
     GitLabNoteViewModelImpl::destroy
   ).combine(expandRequested) { notes, expanded ->
     if (initialNotesSize!! <= 3 || notes.size <= 3 || expanded) {
@@ -80,6 +77,12 @@ class GitLabDiscussionViewModelImpl(
       )
     }
   }.modelFlow(cs, LOG)
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private fun getDiscussionState(discussion: GitLabDiscussion, note: GitLabNote): Flow<GitLabDiscussionStateContainer> =
+    discussion.notes.map { it.firstOrNull()?.id == note.id }.mapLatest {
+      if (it) GitLabDiscussionStateContainer(discussion.resolved) else GitLabDiscussionStateContainer(flowOf(false))
+    }
 
   override suspend fun destroy() {
     try {

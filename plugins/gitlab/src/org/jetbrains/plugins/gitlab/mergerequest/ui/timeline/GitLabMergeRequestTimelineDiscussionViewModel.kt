@@ -51,7 +51,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   override val mainNote: Flow<GitLabNoteViewModel> = discussion.notes
     .map { it.first() }
     .distinctUntilChangedBy { it.id }
-    .mapScoped { GitLabNoteViewModelImpl(this, it, resolveVm) }
+    .mapScoped { GitLabNoteViewModelImpl(this, it, flowOf(GitLabDiscussionStateContainer(discussion.resolved))) }
     .modelFlow(cs, LOG)
 
   override val id: String = discussion.id
@@ -65,7 +65,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
     .map { it.drop(1) }
     .mapCaching(
       GitLabNote::id,
-      { cs, note -> GitLabNoteViewModelImpl(cs, note) },
+      { cs, note -> GitLabNoteViewModelImpl(cs, note, flowOf(GitLabDiscussionStateContainer(flowOf(false)))) },
       GitLabNoteViewModelImpl::destroy
     )
     .modelFlow(cs, LOG)

@@ -33,7 +33,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineUIUtil.createNoteTitleComponent
 import org.jetbrains.plugins.gitlab.ui.comment.*
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -78,7 +77,7 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
 
     val titlePanel = Wrapper().apply {
       bindContentIn(cs, vm.mainNote) { titleCs, mainNote ->
-        createNoteTitleComponent(titleCs, mainNote)
+        GitLabNoteComponentFactory.createTitle(titleCs, mainNote)
       }
     }
 
