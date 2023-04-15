@@ -12,7 +12,7 @@ public fun fn1b(): kotlin.Unit { /* compiled code */ }
 
 public fun kotlin.String.fn2b(): kotlin.Unit { /* compiled code */ }
 
-@kotlin.Deprecated public const val annotatedConstVal: kotlin.Int /* compiled code */
+@kotlin.Deprecated public const val annotatedConstVal: kotlin.Int = COMPILED_CODE /* compiled code */
 
 public val val1a: kotlin.Int /* compiled code */
 
