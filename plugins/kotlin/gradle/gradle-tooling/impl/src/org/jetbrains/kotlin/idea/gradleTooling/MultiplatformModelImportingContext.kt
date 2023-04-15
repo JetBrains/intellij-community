@@ -79,7 +79,7 @@ internal enum class GradleImportProperties(val id: String, val defaultValue: Boo
     COERCE_ROOT_SOURCE_SETS_TO_COMMON("kotlin.mpp.coerceRootSourceSetsToCommon", true),
     IMPORT_ORPHAN_SOURCE_SETS("import_orphan_source_sets", true),
     INCLUDE_ANDROID_DEPENDENCIES("kotlin.include.android.dependencies", false),
-    ENABLE_KGP_DEPENDENCY_RESOLUTION("kotlin.mpp.import.enableKgpDependencyResolution", false)
+    ENABLE_KGP_DEPENDENCY_RESOLUTION("kotlin.mpp.import.enableKgpDependencyResolution", true)
     ;
 }
 

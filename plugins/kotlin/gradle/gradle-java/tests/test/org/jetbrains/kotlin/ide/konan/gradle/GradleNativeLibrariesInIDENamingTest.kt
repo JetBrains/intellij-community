@@ -12,12 +12,14 @@ import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.detectLibraryKind
 import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
+import org.jetbrains.kotlin.idea.codeInsight.gradle.isKgpDependencyResolutionEnabled
 import org.jetbrains.kotlin.idea.util.projectStructure.allModules
 import org.jetbrains.kotlin.konan.library.konanCommonLibraryPath
 import org.jetbrains.kotlin.konan.library.konanPlatformLibraryPath
 import org.jetbrains.kotlin.platform.konan.isNative
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Assert.*
+import org.junit.AssumptionViolatedException
 import org.junit.Test
 import java.io.File
 
@@ -25,6 +27,9 @@ class GradleNativeLibrariesInIDENamingTest15 : TestCaseWithFakeKotlinNative() {
     // Test naming of Kotlin/Native libraries
     @Test
     fun testLibrariesNaming() {
+        if (isKgpDependencyResolutionEnabled())
+            throw AssumptionViolatedException("KGP-based import doesn't follow the old naming scheme")
+
         configureProject()
         importProject()
 
