@@ -34,7 +34,7 @@ variant_size_differences
 use std::env;
 use std::path::PathBuf;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{bail, Result};
 use log::{debug, error, LevelFilter, warn};
 use serde::{Deserialize, Serialize};
 use utils::get_current_exe;
@@ -45,6 +45,9 @@ use {
     windows::Win32::Foundation::HANDLE,
     windows::Win32::UI::Shell
 };
+
+#[cfg(target_family = "unix")]
+use anyhow::Context;
 
 use crate::default::DefaultLaunchConfiguration;
 use crate::remote_dev::RemoteDevLaunchConfiguration;
@@ -163,9 +166,9 @@ impl ProductInfo {
 trait LaunchConfiguration {
     fn get_args(&self) -> &[String];
 
-    fn get_intellij_vm_options(&self) -> Result<Vec<String>>;
     fn get_properties_file(&self) -> Result<Option<PathBuf>>;
     fn get_class_path(&self) -> Result<Vec<String>>;
+    fn collect_vm_options(&self, vm_options: &mut Vec<String>) -> Result<()>;
 
     fn prepare_for_launch(&self) -> Result<PathBuf>;
 }
@@ -203,31 +206,20 @@ pub const DO_NOT_SHOW_ERROR_UI_ENV_VAR: &str = "DO_NOT_SHOW_ERROR_UI";
 pub const VERBOSE_LOGGING_ENV_VAR: &str = "IJ_LAUNCHER_DEBUG";
 
 fn get_full_vm_options(configuration: &Box<dyn LaunchConfiguration>) -> Result<Vec<String>> {
-    let mut full_vm_options: Vec<String> = Vec::new();
+    let mut full_vm_options = Vec::new();
 
-    debug!("Resolving IDE properties file");
-    // 1. properties file
-    match configuration.get_properties_file()? {
-        Some(p) => {
-            let path_string = p.to_string_lossy();
-            let vm_option = format!("-Didea.properties.file={path_string}");
-            full_vm_options.push(vm_option);
-        }
-        None => {
-            debug!("IDE properties file is not set, skipping setting vm option")
-        }
-    };
+    if let Some(path) = configuration.get_properties_file()? {
+        debug!("Custom properties file: {:?}", path);
+        let path_string = path.to_string_lossy();
+        full_vm_options.push("-Didea.properties.file".to_string() + path_string.as_ref());
+    }
 
-    debug!("Resolving classpath");
-    // 2. classpath
+    debug!("Assembling classpath");
     let class_path = configuration.get_class_path()?.join(CLASS_PATH_SEPARATOR);
-    let class_path_vm_option = "-Djava.class.path=".to_string() + class_path.as_str();
-    full_vm_options.push(class_path_vm_option);
+    full_vm_options.push("-Djava.class.path=".to_string() + class_path.as_str());
 
-    debug!("Resolving IDE VM options");
-    // 3. vmoptions
-    let intellij_vm_options = configuration.get_intellij_vm_options()?;
-    full_vm_options.extend_from_slice(&intellij_vm_options);
+    debug!("Collecting VM options");
+    configuration.collect_vm_options(&mut full_vm_options)?;
 
     Ok(full_vm_options)
 }
