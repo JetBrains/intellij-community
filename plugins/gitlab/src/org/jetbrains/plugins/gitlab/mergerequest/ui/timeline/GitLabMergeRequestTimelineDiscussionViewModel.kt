@@ -11,8 +11,8 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussionPosition
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDiscussionChangeMapping
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
 import org.jetbrains.plugins.gitlab.ui.comment.*
 import java.util.*
@@ -42,7 +42,7 @@ private val LOG = logger<GitLabMergeRequestTimelineDiscussionViewModel>()
 class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   parentCs: CoroutineScope,
   currentUser: GitLabUserDTO,
-  mr: GitLabMergeRequest,
+  private val mr: GitLabMergeRequest,
   discussion: GitLabDiscussion
 ) : GitLabMergeRequestTimelineDiscussionViewModel {
 
@@ -82,9 +82,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
     if (discussion.canAddNotes) GitLabDiscussionReplyViewModelImpl(cs, currentUser, discussion) else null
 
   override val diffVm: Flow<GitLabDiscussionDiffViewModel?> =
-    discussion.position.map { pos ->
-      (pos as? GitLabDiscussionPosition.Text)?.let { GitLabDiscussionDiffViewModelImpl(cs, mr, it) }
-    }
+    discussion.position.map { pos -> pos?.let { GitLabDiscussionDiffViewModelImpl(cs, mr, it) } }
 
   init {
     val resolvedFlow = resolveVm?.resolved

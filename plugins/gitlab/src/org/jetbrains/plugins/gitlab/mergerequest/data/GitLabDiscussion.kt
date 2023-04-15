@@ -3,6 +3,8 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.async.mapCaching
 import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
+import com.intellij.diff.util.Side
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
@@ -95,15 +97,7 @@ class LoadedGitLabDiscussion(
 
   override val canAddNotes: Boolean = mr.userPermissions.createNote
 
-  override val position: Flow<GitLabDiscussionPosition?> =
-    loadedNotes.map { note ->
-      note.first().position?.let {
-        when (it.positionType) {
-          "text" -> GitLabDiscussionPosition.Text(it.diffRefs, it.filePath, it.newPath, it.newLine, it.oldPath, it.oldLine)
-          else -> GitLabDiscussionPosition.Image(it.diffRefs, it.filePath)
-        }
-      }
-    }
+  override val position: Flow<GitLabDiscussionPosition?> = loadedNotes.map { it.first().let(::convertPosition) }
 
   // a little cheat that greatly simplifies the implementation
   override val canResolve: Boolean = discussionData.notes.first().let { it.resolvable && it.userPermissions.resolveNote }
@@ -147,4 +141,28 @@ class LoadedGitLabDiscussion(
   }
 
   override fun toString(): String = "LoadedGitLabDiscussion(id='$id', createdAt=$createdAt, canResolve=$canResolve)"
+}
+
+private fun convertPosition(note: GitLabNoteDTO): GitLabDiscussionPosition? {
+  val position = note.position ?: return null
+  if (position.diffRefs.baseSha == null) {
+    LOG.warn("Missing merge base in note position: $note")
+    return null
+  }
+
+  val parentSha = position.diffRefs.baseSha
+  val sha = position.diffRefs.headSha
+
+  return when (position.positionType) {
+    "text" -> {
+      val location = if (position.oldLine != null) {
+        DiffLineLocation(Side.LEFT, position.oldLine - 1)
+      }
+      else {
+        DiffLineLocation(Side.RIGHT, position.newLine!! - 1)
+      }
+      GitLabDiscussionPosition.Text(parentSha, sha, position.oldPath, position.newPath, location)
+    }
+    else -> GitLabDiscussionPosition.Image(parentSha, sha, position.oldPath, position.newPath)
+  }
 }

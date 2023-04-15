@@ -9,6 +9,7 @@ import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.ex.isValidRanges
 import com.intellij.util.containers.HashingStrategy
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 
 /**
@@ -19,8 +20,15 @@ import java.util.*
  *
  * Actual parsed changes are stored in [patchesByChange]
  */
+@Internal
 interface GitBranchComparisonResult {
+  val baseSha: String
+  val mergeBaseSha: String
+  val headSha: String
+
   val changes: List<Change>
+
+  val commits: List<GitCommitShaWithPatches>
   val changesByCommits: Map<String, Collection<Change>>
 
   val patchesByChange: Map<Change, GitTextFilePatchWithHistory>

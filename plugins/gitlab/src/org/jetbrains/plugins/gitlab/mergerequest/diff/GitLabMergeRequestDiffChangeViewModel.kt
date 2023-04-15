@@ -72,16 +72,13 @@ class GitLabMergeRequestDiffChangeViewModelImpl(
 
   private fun mapDiscussionToDiff(position: GitLabDiscussionPosition.Text, discussion: GitLabDiscussion)
     : DiffMappedValue<GitLabDiscussion>? {
-    val diffRefs = position.diffRefs
-    if (diffRefs.baseSha == null) return null
 
-    if (!diffData.contains(diffRefs.headSha, position.filePath) &&
-        !diffData.contains(diffRefs.baseSha, position.filePath)) return null
+    if ((position.filePathBefore != null && !diffData.contains(position.parentSha, position.filePathBefore)) &&
+        (position.filePathAfter != null && !diffData.contains(position.sha, position.filePathAfter))) return null
 
+    val (side, lineIndex) = position.location
     // context should be mapped to the left side
-    val side = if (position.oldLine != null) Side.LEFT else Side.RIGHT
-    val lineIndex = side.select(position.oldLine, position.newLine)!! - 1
-    val commitSha = side.select(diffRefs.baseSha, diffRefs.headSha)!!
+    val commitSha = side.select(position.parentSha, position.sha)!!
 
     val location = diffData.mapLine(commitSha, lineIndex, side) ?: return null
     return DiffMappedValue(location, discussion)

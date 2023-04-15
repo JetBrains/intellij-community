@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 import com.intellij.collaboration.async.inverted
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.*
-import com.intellij.collaboration.ui.CollaborationToolsUIUtil.animatedLoadingIcon
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.wrapWithLimitedSize
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType
@@ -33,6 +32,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.mergerequest.data.filePath
 import org.jetbrains.plugins.gitlab.ui.comment.*
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -157,21 +157,18 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
                               vm: GitLabMergeRequestTimelineDiscussionViewModel,
                               diffVm: GitLabDiscussionDiffViewModel): JComponent {
     return TimelineDiffComponentFactory.createDiffWithHeader(cs, vm, diffVm.position.filePath, {}) {
-      Wrapper().apply {
+      Wrapper(LoadingLabel()).apply {
         bindContentIn(it, diffVm.patchHunk) { _, hunkState ->
           when (hunkState) {
-            GitLabDiscussionDiffViewModel.PatchHunkLoadingState.Loading -> {
-              JLabel(animatedLoadingIcon)
-            }
-            is GitLabDiscussionDiffViewModel.PatchHunkLoadingState.Loaded -> {
+            is GitLabDiscussionDiffViewModel.PatchHunkResult.Loaded -> {
               TimelineDiffComponentFactory.createDiffComponent(project, EditorFactory.getInstance(), hunkState.hunk, hunkState.anchor, null)
             }
-            is GitLabDiscussionDiffViewModel.PatchHunkLoadingState.LoadingError,
-            GitLabDiscussionDiffViewModel.PatchHunkLoadingState.NotAvailable -> {
+            is GitLabDiscussionDiffViewModel.PatchHunkResult.Error,
+            GitLabDiscussionDiffViewModel.PatchHunkResult.NotLoaded -> {
               val text = HtmlBuilder()
                 .append(HtmlChunk.p().addText("Not able to load diff hunk"))
                 .apply {
-                  if (hunkState is GitLabDiscussionDiffViewModel.PatchHunkLoadingState.LoadingError) {
+                  if (hunkState is GitLabDiscussionDiffViewModel.PatchHunkResult.Error) {
                     append(HtmlChunk.p().addText(hunkState.error.localizedMessage))
                   }
                 }

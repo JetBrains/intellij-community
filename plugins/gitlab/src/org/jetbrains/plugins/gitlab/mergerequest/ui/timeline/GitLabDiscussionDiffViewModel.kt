@@ -6,90 +6,89 @@ import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.diff.util.Side
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.PatchHunk
+import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.util.childScope
-import git4idea.changes.filePath
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.map
-import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussionPosition
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestChanges
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDiscussionChangeMapping
+import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabDiscussionDiffViewModel.*
 
 interface GitLabDiscussionDiffViewModel {
-  val position: GitLabDiscussionPosition.Text
-  val patchHunk: Flow<PatchHunkLoadingState>
+  val position: GitLabDiscussionPosition
+  val patchHunk: Flow<PatchHunkResult>
 
-  sealed interface PatchHunkLoadingState {
-    object Loading : PatchHunkLoadingState
-    class Loaded(val hunk: PatchHunk, val anchor: DiffLineLocation) : PatchHunkLoadingState
-    object NotAvailable : PatchHunkLoadingState
-    class LoadingError(val error: Throwable) : PatchHunkLoadingState
+  sealed interface PatchHunkResult {
+    class Loaded(val hunk: PatchHunk, val anchor: DiffLineLocation) : PatchHunkResult
+    object NotLoaded : PatchHunkResult
+    class Error(val error: Throwable) : PatchHunkResult
   }
 }
 
 private val LOG = logger<GitLabDiscussionDiffViewModel>()
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class GitLabDiscussionDiffViewModelImpl(
   parentCs: CoroutineScope,
   mr: GitLabMergeRequest,
-  override val position: GitLabDiscussionPosition.Text
+  override val position: GitLabDiscussionPosition
 ) : GitLabDiscussionDiffViewModel {
 
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
 
-  override val patchHunk: Flow<GitLabDiscussionDiffViewModel.PatchHunkLoadingState> = channelFlow {
-    send(GitLabDiscussionDiffViewModel.PatchHunkLoadingState.Loading)
+  private val mapping: Flow<GitLabMergeRequestDiscussionChangeMapping> = mr.changes.mapLatest {
     try {
-      mr.changes.mapToHunkAndAnchor().collectLatest { hunkAndAnchor ->
-        if (hunkAndAnchor == null) {
-          send(GitLabDiscussionDiffViewModel.PatchHunkLoadingState.NotAvailable)
-        }
-        else {
-          send(GitLabDiscussionDiffViewModel.PatchHunkLoadingState.Loaded(hunkAndAnchor.first, hunkAndAnchor.second))
-        }
-      }
+      val allChanges = it.getParsedChanges()
+      GitLabMergeRequestDiscussionChangeMapping.map(allChanges, position)
     }
     catch (e: Exception) {
-      send(GitLabDiscussionDiffViewModel.PatchHunkLoadingState.LoadingError(e))
+      GitLabMergeRequestDiscussionChangeMapping.Error(e)
     }
   }.modelFlow(cs, LOG)
 
-  private fun Flow<GitLabMergeRequestChanges>.mapToHunkAndAnchor(): Flow<Pair<PatchHunk, DiffLineLocation>?> =
-    map { changes ->
-      val parsedChanges = changes.getParsedChanges()
-      val patchWithHistory = parsedChanges.patchesByChange.values.find {
-        it.patch.beforeVersionId == position.diffRefs.startSha
-        && it.patch.afterVersionId == position.diffRefs.headSha
-        && it.patch.filePath == position.filePath
-      }
-      if (patchWithHistory == null) {
-        LOG.debug("Unable to find patch for position $position")
-      }
-      patchWithHistory?.patch
-    }.map { patch ->
-      if (patch == null) return@map null
-      val location = when {
-        position.oldLine != null -> {
-          val index = position.oldLine - 1
-          patch.hunks.find {
-            index >= it.startLineBefore && index < it.endLineBefore
-          }?.let { it to DiffLineLocation(Side.LEFT, index) }
+
+  override val patchHunk: Flow<PatchHunkResult> = channelFlow {
+    mr.changes.mapLatest { it.getParsedChanges() }.catch { e ->
+      send(PatchHunkResult.Error(e))
+    }.combine(mapping) { allChanges, mapping ->
+      when {
+        mapping is GitLabMergeRequestDiscussionChangeMapping.Actual && mapping.location != null -> {
+          val patch = allChanges.patchesByChange[mapping.change]?.patch ?: run {
+            LOG.warn("Can't find patch for ${mapping.change}")
+            return@combine PatchHunkResult.NotLoaded
+          }
+
+          val (hunk, anchor) = findHunkAndAnchor(patch, mapping.location) ?: run {
+            LOG.debug("Unable to map location for position $position in patch\n$patch")
+            return@combine PatchHunkResult.NotLoaded
+          }
+          PatchHunkResult.Loaded(hunk, anchor)
         }
-        position.newLine != null -> {
-          val index = position.newLine - 1
-          patch.hunks.find {
-            index >= it.startLineAfter && index < it.endLineAfter
-          }?.let { it to DiffLineLocation(Side.RIGHT, index) }
-        }
-        else -> null
+        mapping is GitLabMergeRequestDiscussionChangeMapping.Error -> PatchHunkResult.Error(mapping.error)
+        else -> PatchHunkResult.NotLoaded
       }
-      if (location == null) {
-        LOG.debug("Unable to map location for position $position in patch\n$patch")
-      }
-      location
+    }.collectLatest {
+      send(it)
     }
+  }.modelFlow(cs, LOG)
+}
+
+private fun findHunkAndAnchor(patch: TextFilePatch, location: DiffLineLocation): Pair<PatchHunk, DiffLineLocation>? {
+  val (side, index) = location
+  return when (side) {
+    Side.LEFT -> {
+      patch.hunks.find {
+        index >= it.startLineBefore && index < it.endLineBefore
+      }?.let { it to location }
+    }
+    Side.RIGHT -> {
+      patch.hunks.find {
+        index >= it.startLineAfter && index < it.endLineAfter
+      }?.let { it to location }
+    }
+    else -> null
+  }
 }

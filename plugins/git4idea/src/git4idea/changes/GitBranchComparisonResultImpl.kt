@@ -16,13 +16,13 @@ import java.util.*
 
 class GitBranchComparisonResultImpl(private val project: Project,
                                     private val vcsRoot: VirtualFile,
-                                    private val baseSha: String,
-                                    private val mergeBaseSha: String,
-                                    commits: List<GitCommitShaWithPatches>,
+                                    override val baseSha: String,
+                                    override val mergeBaseSha: String,
+                                    override val commits: List<GitCommitShaWithPatches>,
                                     private val headPatches: List<FilePatch>)
   : GitBranchComparisonResult {
 
-  private val headSha = commits.last().sha
+  override val headSha: String = commits.last().sha
 
   private val _changes = mutableListOf<Change>()
   override val changes: List<Change> = Collections.unmodifiableList(_changes)
