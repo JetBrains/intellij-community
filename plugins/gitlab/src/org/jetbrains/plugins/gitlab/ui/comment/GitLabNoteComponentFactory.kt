@@ -66,6 +66,15 @@ object GitLabNoteComponentFactory {
           null
         }
       }
+      val outdatedFlow = vm.discussionState.flatMapLatest { it.outdated }
+      bindChildIn(cs, outdatedFlow) { _, resolved ->
+        if (resolved) {
+          CollaborationToolsUIUtil.createTagLabel(CollaborationToolsBundle.message("review.thread.outdated.tag"))
+        }
+        else {
+          null
+        }
+      }
     }
   }
 

@@ -19,6 +19,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabDiscussionDif
 
 interface GitLabDiscussionDiffViewModel {
   val position: GitLabDiscussionPosition
+  val mapping: Flow<GitLabMergeRequestDiscussionChangeMapping>
   val patchHunk: Flow<PatchHunkResult>
 
   sealed interface PatchHunkResult {
@@ -39,7 +40,7 @@ class GitLabDiscussionDiffViewModelImpl(
 
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
 
-  private val mapping: Flow<GitLabMergeRequestDiscussionChangeMapping> = mr.changes.mapLatest {
+  override val mapping: Flow<GitLabMergeRequestDiscussionChangeMapping> = mr.changes.mapLatest {
     try {
       val allChanges = it.getParsedChanges()
       GitLabMergeRequestDiscussionChangeMapping.map(allChanges, position)

@@ -81,7 +81,8 @@ class GitLabDiscussionViewModelImpl(
   @OptIn(ExperimentalCoroutinesApi::class)
   private fun getDiscussionState(discussion: GitLabDiscussion, note: GitLabNote): Flow<GitLabDiscussionStateContainer> =
     discussion.notes.map { it.firstOrNull()?.id == note.id }.mapLatest {
-      if (it) GitLabDiscussionStateContainer(discussion.resolved) else GitLabDiscussionStateContainer(flowOf(false))
+      if (it) GitLabDiscussionStateContainer(discussion.resolved, flowOf(false))
+      else GitLabDiscussionStateContainer.DEFAULT
     }
 
   override suspend fun destroy() {

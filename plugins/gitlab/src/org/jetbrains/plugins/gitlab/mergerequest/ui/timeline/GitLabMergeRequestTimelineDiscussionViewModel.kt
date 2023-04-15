@@ -51,8 +51,16 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   override val mainNote: Flow<GitLabNoteViewModel> = discussion.notes
     .map { it.first() }
     .distinctUntilChangedBy { it.id }
-    .mapScoped { GitLabNoteViewModelImpl(this, it, flowOf(GitLabDiscussionStateContainer(discussion.resolved))) }
+    .mapScoped { GitLabNoteViewModelImpl(this, it, getDiscussionState(discussion)) }
     .modelFlow(cs, LOG)
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private fun getDiscussionState(discussion: GitLabDiscussion): Flow<GitLabDiscussionStateContainer> {
+    val resolved = discussion.resolved
+    val outdated = diffVm.flatMapLatest { it?.mapping ?: flowOf(null) }
+      .mapLatest { it != null && it !is GitLabMergeRequestDiscussionChangeMapping.Actual }
+    return flowOf(GitLabDiscussionStateContainer(resolved, outdated))
+  }
 
   override val id: String = discussion.id
   override val date: Date = discussion.createdAt
@@ -65,7 +73,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
     .map { it.drop(1) }
     .mapCaching(
       GitLabNote::id,
-      { cs, note -> GitLabNoteViewModelImpl(cs, note, flowOf(GitLabDiscussionStateContainer(flowOf(false)))) },
+      { cs, note -> GitLabNoteViewModelImpl(cs, note, flowOf(GitLabDiscussionStateContainer.DEFAULT)) },
       GitLabNoteViewModelImpl::destroy
     )
     .modelFlow(cs, LOG)
