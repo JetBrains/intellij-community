@@ -242,6 +242,10 @@ public final class JBCefApp {
       }
     }
 
+    if (settings.remote_debugging_port > 0) {
+      args = ArrayUtil.mergeArrays(args, "--remote-allow-origins=*");
+    }
+
     CefApp.addAppHandler(new MyCefAppHandler(args, trackGPUCrashes));
     myCefSettings = settings;
     myCefApp = CefApp.getInstance(settings);
