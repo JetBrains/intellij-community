@@ -54,7 +54,7 @@ internal abstract class AbstractAddAccessorIntention(
     override fun isApplicableByAnalyze(element: KtProperty): Boolean {
         if (element.annotationEntries.isEmpty()) return true
         val symbol = element.getVariableSymbol() as? KtPropertySymbol ?: return false
-        return !symbol.hasAnnotation(JVM_FIELD_CLASS_ID)
+        return symbol.backingFieldSymbol?.hasAnnotation(JVM_FIELD_CLASS_ID) != true
     }
 
     override fun apply(element: KtProperty, project: Project, editor: Editor?) = addAccessors(element, addGetter, addSetter, editor)
