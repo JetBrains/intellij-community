@@ -40,6 +40,11 @@ public abstract class KotlinPsiBasedTestFrameworkTestGenerated extends AbstractK
             runTest("testData/codeInsight/lineMarker/runMarkers/jUnit4TestFile.kt");
         }
 
+        @TestMetadata("jUnit5TestFile.kt")
+        public void testJUnit5TestFile() throws Exception {
+            runTest("testData/codeInsight/lineMarker/runMarkers/jUnit5TestFile.kt");
+        }
+
         @TestMetadata("jUnitTestClassWithSubclasses.kt")
         public void testJUnitTestClassWithSubclasses() throws Exception {
             runTest("testData/codeInsight/lineMarker/runMarkers/jUnitTestClassWithSubclasses.kt");
@@ -71,6 +76,11 @@ public abstract class KotlinPsiBasedTestFrameworkTestGenerated extends AbstractK
         @TestMetadata("jUnit4TestFile.kt")
         public void testJUnit4TestFile() throws Exception {
             runTest("testData/codeInsight/lineMarker/runMarkers/jUnit4TestFile.kt");
+        }
+
+        @TestMetadata("jUnit5TestFile.kt")
+        public void testJUnit5TestFile() throws Exception {
+            runTest("testData/codeInsight/lineMarker/runMarkers/jUnit5TestFile.kt");
         }
 
         @TestMetadata("jUnitTestClassWithSubclasses.kt")

@@ -8,6 +8,7 @@ import com.intellij.lang.OuterModelsModificationTrackerManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.testIntegration.framework.AbstractKotlinPsiBasedTestFramework
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework
@@ -26,7 +27,10 @@ class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
 
         override fun isTestClass(declaration: KtClassOrObject): Boolean {
             return super.isTestClass(declaration) && CachedValuesManager.getCachedValue(declaration) {
-                CachedValueProvider.Result.create(isJUnit5TestClass(declaration), OuterModelsModificationTrackerManager.getInstance(declaration.project).tracker)
+                CachedValueProvider.Result.create(isJUnit5TestClass(declaration),
+                                                  OuterModelsModificationTrackerManager.getInstance(declaration.project).tracker
+                                                  //PsiModificationTracker.getInstance(declaration.project)
+                )
             }
         }
 
@@ -36,8 +40,8 @@ class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
             return isJUnit5TestMethod(declaration)
         }
 
-        private fun isJUnit5TestClass(declaration: KtClassOrObject): Boolean =
-            if (!isFrameworkAvailable(declaration)) {
+        private fun isJUnit5TestClass(declaration: KtClassOrObject): Boolean {
+            val b = if (!isFrameworkAvailable(declaration)) {
                 false
             } else if (declaration is KtClass && declaration.isInner() && !isAnnotated(declaration, "org.junit.jupiter.api.Nested")) {
                 false
@@ -46,6 +50,8 @@ class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
             } else {
                 findAnnotatedFunction(declaration, METHOD_ANNOTATION_FQN) != null
             }
+            return b
+        }
 
         private fun isJUnit5TestMethod(method: KtNamedFunction): Boolean {
             return isAnnotated(method, METHOD_ANNOTATION_FQN)

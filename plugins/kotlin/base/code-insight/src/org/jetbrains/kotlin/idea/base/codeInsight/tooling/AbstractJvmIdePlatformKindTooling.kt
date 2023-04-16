@@ -1,8 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.codeInsight.tooling
 
+import com.intellij.lang.OuterModelsModificationTrackerManager
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.removeUserData
+import com.intellij.psi.util.CachedValue
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.testIntegration.TestFramework
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
@@ -37,13 +42,14 @@ abstract class AbstractJvmIdePlatformKindTooling : IdePlatformKindTooling() {
     override fun acceptsAsEntryPoint(function: KtFunction) = true
 
     override fun getTestIcon(declaration: KtNamedDeclaration, allowSlowOperations: Boolean): Icon? {
-        val calculatedTestFrameworkName = declaration.getUserData(TEST_FRAMEWORK_NAME_KEY)
-        if (calculatedTestFrameworkName != null && allowSlowOperations) {
+        val calculatedTestFrameworkValue = declaration.getUserData(TEST_FRAMEWORK_NAME_KEY)
+        if (calculatedTestFrameworkValue != null && allowSlowOperations) {
             // testframework has been provided on `allowSlowOperations=false` state
             return null
         }
         val testFramework =
-            calculatedTestFrameworkName?.let { name ->
+            calculatedTestFrameworkValue?.let { cachedValue ->
+                val name = cachedValue.upToDateOrNull?.get() ?: return@let null
                 TestFramework.EXTENSION_NAME.extensionList.first { name == it.name }
             } ?: TestFramework.EXTENSION_NAME.extensionList.firstOrNull { framework ->
                 if (framework is KotlinPsiBasedTestFramework) {
@@ -57,8 +63,19 @@ abstract class AbstractJvmIdePlatformKindTooling : IdePlatformKindTooling() {
                 } else {
                     false
                 }
-            } ?: return null
-        declaration.putUserData(TEST_FRAMEWORK_NAME_KEY, testFramework.name)
+            } ?: run {
+                declaration.removeUserData(TEST_FRAMEWORK_NAME_KEY)
+                return null
+            }
+        declaration.putUserData(
+            TEST_FRAMEWORK_NAME_KEY,
+            CachedValuesManager.getManager(declaration.project).createCachedValue {
+                CachedValueProvider.Result.create(
+                    testFramework.name,
+                    OuterModelsModificationTrackerManager.getInstance(declaration.project).tracker
+                )
+            }
+        )
         val urls = calculateUrls(declaration)
 
         return if (urls != null) {
@@ -88,6 +105,6 @@ abstract class AbstractJvmIdePlatformKindTooling : IdePlatformKindTooling() {
     }
 
     private companion object {
-        val TEST_FRAMEWORK_NAME_KEY = Key.create<String>("TestFramework:name")
+        val TEST_FRAMEWORK_NAME_KEY = Key.create<CachedValue<String>>("TestFramework:name")
     }
 }
