@@ -8,6 +8,10 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Pass performs analysis in background and highlights found issues in the editor.
+ * <p>
+ * Implement {@link com.intellij.openapi.project.DumbAware} to allow highlighting during index updates.
+ * If pass is created by {@link TextEditorHighlightingPassFactory},
+ * the factory should implement {@link com.intellij.openapi.project.DumbAware} as well
  */
 public interface HighlightingPass {
   HighlightingPass[] EMPTY_ARRAY = new HighlightingPass[0];
