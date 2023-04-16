@@ -661,7 +661,7 @@
     <option name="RUNTIME_ERROR">
       <value>
         <option name="EFFECT_COLOR" value="f2c55c" />
-        <option name="ERROR_STRIPE_COLOR" value="9e2927"/>
+        <option name="ERROR_STRIPE_COLOR" value="d64d5b"/>
         <option name="EFFECT_TYPE" value="5" />
       </value>
     </option>
