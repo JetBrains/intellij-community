@@ -43,10 +43,11 @@ public final class CsvMetricsExporter implements MetricExporter {
   private static final String HTML_PLOTTER_NAME = "open-telemetry-metrics-plotter.html";
 
 
-  private final @NotNull Path writeToFile;
+  private final @NotNull RollingFileSupplier writeToFileSupplier;
 
-  public CsvMetricsExporter(final @NotNull Path writeToFile) throws IOException {
-    this.writeToFile = writeToFile;
+  public CsvMetricsExporter(final @NotNull RollingFileSupplier writeToFileSupplier) throws IOException {
+    this.writeToFileSupplier = writeToFileSupplier;
+    final Path writeToFile = writeToFileSupplier.get();
 
     if (!Files.exists(writeToFile)) {
       final Path parentDir = writeToFile.getParent();
@@ -90,6 +91,7 @@ public final class CsvMetricsExporter implements MetricExporter {
     }
 
     final CompletableResultCode result = new CompletableResultCode();
+    final Path writeToFile = writeToFileSupplier.get();
     final List<String> lines = metrics.stream()
       .flatMap(MetricsExporterUtils::toCsvStream)
       .collect(Collectors.toList());
