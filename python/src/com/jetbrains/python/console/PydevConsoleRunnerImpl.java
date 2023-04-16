@@ -135,7 +135,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   @Nullable private final Function<TargetEnvironment, String> myWorkingDirFunction;
   @Nullable private Sdk mySdk;
   private PydevConsoleCommunication myPydevConsoleCommunication;
-  private PyConsoleProcessHandler myProcessHandler;
+  private ProcessHandler myProcessHandler;
   protected PythonConsoleExecuteActionHandler myConsoleExecuteActionHandler;
   private final List<ConsoleListener> myConsoleListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final PyConsoleType myConsoleType;
@@ -742,7 +742,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       return myTargetEnvironment;
     }
 
-    public abstract @NotNull PyConsoleProcessHandler createPythonConsoleProcessHandler(@NotNull PythonConsoleView consoleView);
+    public abstract @NotNull ProcessHandler createPythonConsoleProcessHandler(@NotNull PythonConsoleView consoleView);
   }
 
   /**
@@ -756,7 +756,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
 
     @Override
-    public @NotNull PyConsoleProcessHandler createPythonConsoleProcessHandler(@NotNull PythonConsoleView consoleView) {
+    public @NotNull ProcessHandler createPythonConsoleProcessHandler(@NotNull PythonConsoleView consoleView) {
       return new PyConsoleProcessHandler(myProcess, consoleView, myConsoleCommunication, myCommandLineString, CONSOLE_CHARSET);
     }
   }
@@ -786,7 +786,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
 
     @Override
-    public @NotNull PyConsoleProcessHandler createPythonConsoleProcessHandler(@NotNull PythonConsoleView consoleView) {
+    public @NotNull ProcessHandler createPythonConsoleProcessHandler(@NotNull PythonConsoleView consoleView) {
       return myRemoteInterpreterManager.createConsoleProcessHandler(
         myProcess, consoleView, myConsoleCommunication,
         myCommandLineString,
@@ -814,7 +814,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
 
     @Override
-    public @NotNull PyConsoleProcessHandler createPythonConsoleProcessHandler(@NotNull PythonConsoleView consoleView) {
+    public @NotNull ProcessHandler createPythonConsoleProcessHandler(@NotNull PythonConsoleView consoleView) {
       return PyConsoleProcessHandlers.createPythonConsoleProcessHandler(myProcessHandler, myProcess, consoleView, myConsoleCommunication,
                                                                         myCommandLineString, CONSOLE_CHARSET);
     }
@@ -1182,8 +1182,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
           UIUtil.invokeAndWaitIfNeeded(() -> closeCommunication());
 
           boolean processStopped = myProcessHandler.waitFor(WAIT_BEFORE_FORCED_CLOSE_MILLIS);
-          if (!processStopped && myProcessHandler.canKillProcess()) {
-            myProcessHandler.killProcess();
+          if (!processStopped) {
+            tryKillProcess(myProcessHandler);
           }
           myProcessHandler.waitFor();
         }
@@ -1201,6 +1201,14 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         }
       }
     }.queue();
+  }
+
+  private static void tryKillProcess(@NotNull ProcessHandler processHandler) {
+    if (processHandler instanceof KillableProcessHandler) {
+      if (((KillableProcessHandler)processHandler).canKillProcess()) {
+        ((KillableProcessHandler)processHandler).killProcess();
+      }
+    }
   }
 
   @Override
@@ -1342,7 +1350,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   @Override
-  public PyConsoleProcessHandler getProcessHandler() {
+  public ProcessHandler getProcessHandler() {
     return myProcessHandler;
   }
 
