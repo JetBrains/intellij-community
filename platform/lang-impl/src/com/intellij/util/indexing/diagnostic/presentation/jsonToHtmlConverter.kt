@@ -489,6 +489,7 @@ private const val SECTION_STATS_PER_INDEXER_TITLE = "Statistics per indexer"
 
 private const val SECTION_SCANNING_ID = "id-scanning"
 private const val SECTION_SCANNING_TITLE = "Scanning"
+private const val SECTION_SCANNING_PER_PROVIDER_TITLE = "Scanning per provider"
 
 private const val SECTION_INDEXING_ID = "id-indexing"
 private const val SECTION_INDEXING_TITLE = "Indexing"
@@ -1027,7 +1028,7 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
           }
           li {
             a("#$SECTION_SCANNING_ID") {
-              text(SECTION_SCANNING_TITLE)
+              text(SECTION_SCANNING_PER_PROVIDER_TITLE)
             }
           }
         }
@@ -1122,23 +1123,19 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
         val shouldPrintScannedFiles = scanningStatistics.any { it.scannedFiles.orEmpty().isNotEmpty() }
         val shouldPrintProviderRoots = scanningStatistics.any { it.roots.isNotEmpty() }
         div(id = SECTION_SCANNING_ID) {
+          h1 { text(SECTION_SCANNING_PER_PROVIDER_TITLE) }
+          text("Total time consists of pushing and getting files' statuses. " +
+               "Processing up-to-date files, updating content-less indexes, indexing by $INDEX_INFRA_EXTENSIONS without content " +
+               "happens during getting files' statuses.")
           table(classes = "table-with-margin activity-table") {
             thead {
-              tr {
-                th(SECTION_SCANNING_TITLE) {
-                  var spanValue = 10
-                  if (shouldPrintProviderRoots) spanValue++
-                  if (shouldPrintScannedFiles) spanValue++
-                  colSpan = spanValue.toString()
-                }
-              }
               tr {
                 th("Provider name")
                 th("Number of scanned files")
                 th("Number of files scheduled for indexing")
                 th("Number of files fully indexed by $INDEX_INFRA_EXTENSIONS")
                 th("Number of double-scanned skipped files")
-                th("Total time (pushing and getting files' statuses)")
+                th { text("Total"); unsafe { raw("&nbsp;") }; text("time") }
                 th("Time of getting files' statuses")
                 th("Time processing up-to-date files")
                 th("Time updating content-less indexes")
