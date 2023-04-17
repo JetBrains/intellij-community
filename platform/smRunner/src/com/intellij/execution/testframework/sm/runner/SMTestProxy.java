@@ -549,10 +549,15 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
                                       @NotNull final String actualText,
                                       @NotNull final String expectedText,
                                       @NotNull final TestFailedEvent event) {
-    TestComparisonFailedState comparisonFailedState =
-      setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, event.getExpectedFilePath(),
-                              event.getActualFilePath(),
-                              event.shouldPrintExpectedAndActualValues());
+    TestComparisonFailedState comparisonFailedState = setTestComparisonFailed(
+      localizedMessage,
+      stackTrace,
+      actualText,
+      expectedText,
+      event.getActualFilePath(),
+      event.getExpectedFilePath(),
+      event.shouldPrintExpectedAndActualValues()
+    );
     comparisonFailedState.setToDeleteExpectedFile(event.isExpectedFileTemp());
     comparisonFailedState.setToDeleteActualFile(event.isActualFileTemp());
   }
@@ -562,8 +567,8 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     @Nullable final String stackTrace,
     @NotNull final String actualText,
     @NotNull final String expectedText,
-    @Nullable final String expectedFilePath,
     @Nullable final String actualFilePath,
+    @Nullable final String expectedFilePath,
     boolean printExpectedAndActualValues
   ) {
     setStacktraceIfNotSet(stackTrace);
