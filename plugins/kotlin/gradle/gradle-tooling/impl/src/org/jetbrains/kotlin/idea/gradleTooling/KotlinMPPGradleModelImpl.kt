@@ -3,6 +3,8 @@
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.gradle.api.tasks.Exec
+import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheAwareImpl
+import org.jetbrains.kotlin.idea.gradleTooling.arguments.createCachedArgsInfo
 import org.jetbrains.kotlin.idea.projectModel.*
 import java.io.File
 
@@ -121,6 +123,7 @@ data class KotlinCompilationImpl(
     override val dependencies: Array<KotlinDependencyId>,
     override val output: KotlinCompilationOutput,
     override val dependencyClasspath: Array<String>,
+    override val cachedArgsInfo: CachedArgsInfo<*>?,
     override val compilerArguments: List<String>?,
     override val kotlinTaskProperties: KotlinTaskProperties,
     override val nativeExtensions: KotlinNativeCompilationExtensions?,
@@ -136,6 +139,7 @@ data class KotlinCompilationImpl(
         dependencies = kotlinCompilation.dependencies,
         output = KotlinCompilationOutputImpl(kotlinCompilation.output),
         dependencyClasspath = kotlinCompilation.dependencyClasspath,
+        cachedArgsInfo = kotlinCompilation.cachedArgsInfo?.let { cachedArgsInfo -> createCachedArgsInfo(cachedArgsInfo, cloningCache) },
         compilerArguments = kotlinCompilation.compilerArguments?.toList(),
         kotlinTaskProperties = KotlinTaskPropertiesImpl(kotlinCompilation.kotlinTaskProperties),
         nativeExtensions = kotlinCompilation.nativeExtensions?.let(::KotlinNativeCompilationExtensionsImpl),
@@ -257,6 +261,7 @@ data class KotlinMPPGradleModelImpl @OptIn(KotlinGradlePluginVersionDependentApi
     override val kotlinNativeHome: String,
     override val dependencyMap: Map<KotlinDependencyId, KotlinDependency>,
     override val dependencies: IdeaKotlinDependenciesContainer?,
+    override val cacheAware: CompilerArgumentsCacheAware,
     override val kotlinImportingDiagnostics: KotlinImportingDiagnosticsContainer = mutableSetOf(),
     override val kotlinGradlePluginVersion: KotlinGradlePluginVersion?
 ) : KotlinMPPGradleModel {
@@ -279,9 +284,19 @@ data class KotlinMPPGradleModelImpl @OptIn(KotlinGradlePluginVersionDependentApi
         kotlinNativeHome = mppModel.kotlinNativeHome,
         dependencyMap = mppModel.dependencyMap.map { it.key to it.value.deepCopy(cloningCache) }.toMap(),
         dependencies = mppModel.dependencies,
+        cacheAware = CompilerArgumentsCacheAwareImpl(mppModel.cacheAware),
         kotlinImportingDiagnostics = mppModel.kotlinImportingDiagnostics.mapTo(mutableSetOf()) { it.deepCopy(cloningCache) },
         kotlinGradlePluginVersion = mppModel.kotlinGradlePluginVersion?.reparse()
     )
+
+    @Deprecated(
+        "Use KotlinGradleModel#cacheAware instead", level = DeprecationLevel.ERROR,
+        replaceWith = ReplaceWith("KotlinMPPGradleModel#cacheAware")
+    )
+    @Suppress("OverridingDeprecatedMember")
+    override val partialCacheAware: CompilerArgumentsCacheAware
+        get() = cacheAware
+
 }
 
 class KotlinPlatformContainerImpl() : KotlinPlatformContainer {

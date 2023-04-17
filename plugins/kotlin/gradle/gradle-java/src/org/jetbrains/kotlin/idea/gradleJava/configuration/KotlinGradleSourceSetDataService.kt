@@ -26,7 +26,6 @@ import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
-import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.TargetPlatformKind
@@ -45,16 +44,16 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.configuration.KOTLIN_GROUP_ID
 import org.jetbrains.kotlin.idea.facet.*
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
-import org.jetbrains.kotlin.idea.gradle.configuration.GradlePropertiesFileFacade
+import org.jetbrains.kotlin.idea.gradle.configuration.*
 import org.jetbrains.kotlin.idea.gradle.configuration.GradlePropertiesFileFacade.Companion.KOTLIN_CODE_STYLE_GRADLE_SETTING
-import org.jetbrains.kotlin.idea.gradle.configuration.ImplementedModulesAware
-import org.jetbrains.kotlin.idea.gradle.configuration.KotlinGradleSourceSetData
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.KOTLIN_NATIVE_LIBRARY_PREFIX
-import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSetData
 import org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger
+import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl
 import org.jetbrains.kotlin.idea.gradleJava.inspections.getResolvedVersionByModuleData
 import org.jetbrains.kotlin.idea.gradleJava.migrateNonJvmSourceFolders
 import org.jetbrains.kotlin.idea.gradleTooling.CompilerArgumentsBySourceSet
+import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo
+import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheHolder
 import org.jetbrains.kotlin.library.KLIB_FILE_EXTENSION
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.impl.isCommon
@@ -64,6 +63,12 @@ import org.jetbrains.kotlin.psi.UserDataProperty
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import java.io.File
+
+@Suppress("TYPEALIAS_EXPANSION_DEPRECATION", "DEPRECATION", "UNUSED")
+@Deprecated("Compiler arguments are stored in KotlinGradleSourceSetData nodes cached", level = DeprecationLevel.ERROR)
+var Module.compilerArgumentsBySourceSet
+        by UserDataProperty(Key.create<CompilerArgumentsBySourceSet>("CURRENT_COMPILER_ARGUMENTS"))
 
 var Module.sourceSetName
         by UserDataProperty(Key.create<String>("SOURCE_SET_NAME"))
@@ -301,10 +306,13 @@ fun configureFacetByGradleModule(
     }
     ideModule.hasExternalSdkConfiguration = sourceSetNode?.data?.sdkName != null
 
+    val cacheHolder = CompilerArgumentsCacheMergeManager.compilerArgumentsCacheHolder
     val kotlinGradleSourceSetData = kotlinGradleSourceSetDataNode?.data
 
-    kotlinGradleSourceSetData?.compilerArguments?.let { compilerArguments ->
-        configureFacetWithCompilerArguments(kotlinFacet, modelsProvider, platformKind, compilerArguments)
+    val cachedArgsInfo = kotlinGradleSourceSetData?.cachedArgsInfo
+    if (cachedArgsInfo != null) {
+        configureFacetByCachedCompilerArguments(kotlinFacet, cachedArgsInfo, cacheHolder, modelsProvider)
+        kotlinGradleSourceSetData.isProcessed = true
     }
 
     val implementedModulesAware = (kotlinGradleSourceSetData ?: kotlinGradleProjectData) as ImplementedModulesAware
@@ -328,16 +336,8 @@ fun configureFacetByGradleModule(
 
 private fun KotlinFacetSettings.configureOutputPaths(moduleNode: DataNode<ModuleData>, platformKind: IdePlatformKind?) {
 
-    fun DataNode<KotlinGradleSourceSetData>.compilerArgumentsOrNull(): CommonCompilerArguments? {
-        return try {
-            val arguments = platformKind?.createArguments() ?: K2JVMCompilerArguments()
-            parseCommandLineArguments(data.compilerArguments ?: return null, arguments)
-            arguments
-        } catch (t: Throwable) {
-            logger.error(t)
-            null
-        }
-    }
+    fun DataNode<KotlinGradleSourceSetData>.compilerArgumentsOrNull(cacheHolder: CompilerArgumentsCacheHolder): CommonCompilerArguments? =
+        CachedArgumentsRestoring.restoreExtractedArgs(data.cachedArgsInfo, cacheHolder).currentCompilerArguments
 
     if (!platformKind.isJavaScript) {
         productionOutputPath = null
@@ -345,28 +345,26 @@ private fun KotlinFacetSettings.configureOutputPaths(moduleNode: DataNode<Module
         return
     }
 
+    val cacheHolder = CompilerArgumentsCacheMergeManager.compilerArgumentsCacheHolder
     val kotlinGradleProjectDataNode = moduleNode.kotlinGradleProjectDataNodeOrNull ?: return
     val kotlinGradleSourceSetDataNodes = ExternalSystemApiUtil.findAll(kotlinGradleProjectDataNode, KotlinGradleSourceSetData.KEY)
     kotlinGradleSourceSetDataNodes.find { it.data.sourceSetName == "main" }?.let {
-        productionOutputPath = (it.compilerArgumentsOrNull() as? K2JSCompilerArguments)?.outputFile
+        productionOutputPath = (it.compilerArgumentsOrNull(cacheHolder) as? K2JSCompilerArguments)?.outputFile
     }
     kotlinGradleSourceSetDataNodes.find { it.data.sourceSetName == "test" }?.let {
-        testOutputPath = (it.compilerArgumentsOrNull() as? K2JSCompilerArguments)?.outputFile
+        testOutputPath = (it.compilerArgumentsOrNull(cacheHolder) as? K2JSCompilerArguments)?.outputFile
     }
 }
 
-fun configureFacetWithCompilerArguments(
+fun configureFacetByCachedCompilerArguments(
     kotlinFacet: KotlinFacet,
-    modelsProvider: IdeModifiableModelsProvider?,
-    platformKind: IdePlatformKind?,
-    compilerArguments: List<String>,
+    cachedArgsInfo: CachedExtractedArgsInfo,
+    cacheHolder: CompilerArgumentsCacheHolder,
+    modelsProvider: IdeModifiableModelsProvider?
 ) {
-    val parsedArguments = platformKind?.createArguments() ?: K2JVMCompilerArguments()
-    parseCommandLineArguments(compilerArguments, parsedArguments)
-    applyCompilerArgumentsToFacet(parsedArguments, kotlinFacet, modelsProvider)
-
-    if (parsedArguments is K2JVMCompilerArguments) run {
-        adjustClasspath(kotlinFacet, parsedArguments.classpath?.split(File.pathSeparator) ?: return@run)
+    with(CachedArgumentsRestoring.restoreExtractedArgs(cachedArgsInfo, cacheHolder)) {
+        applyCompilerArgumentsToFacet(currentCompilerArguments, defaultCompilerArguments, kotlinFacet, modelsProvider)
+        adjustClasspath(kotlinFacet, dependencyClasspath.toList())
     }
 }
 

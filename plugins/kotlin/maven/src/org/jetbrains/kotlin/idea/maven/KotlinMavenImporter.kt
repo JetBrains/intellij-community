@@ -333,9 +333,9 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         val executionArguments = mavenPlugin.executions
             ?.firstOrNull { it.goals.any { s -> s in compilationGoals } }
             ?.configurationElement?.let { getCompilerArgumentsByConfigurationElement(mavenProject, it, configuredPlatform, module.project) }
-        parseCompilerArgumentsToFacet(sharedArguments.args, kotlinFacet, modifiableModelsProvider)
+        parseCompilerArgumentsToFacet(sharedArguments.args, emptyList(), kotlinFacet, modifiableModelsProvider)
         if (executionArguments != null) {
-            parseCompilerArgumentsToFacet(executionArguments.args, kotlinFacet, modifiableModelsProvider)
+            parseCompilerArgumentsToFacet(executionArguments.args, emptyList(), kotlinFacet, modifiableModelsProvider)
         }
         if (facetSettings.compilerArguments is K2JSCompilerArguments) {
             configureJSOutputPaths(mavenProject, modifiableModelsProvider.getModifiableRootModel(module), facetSettings, mavenPlugin)
