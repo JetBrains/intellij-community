@@ -10,6 +10,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -382,6 +384,22 @@ public abstract class AbstractValueHint {
     myCurrentPopup = popupPresenter.apply(point);
     myEditor.getScrollingModel().addVisibleAreaListener(e -> {
       if (!Objects.equals(e.getOldRectangle(), e.getNewRectangle())) {
+        hideCurrentHint();
+      }
+    }, myCurrentPopup);
+    myEditor.getCaretModel().addCaretListener(new CaretListener() {
+      @Override
+      public void caretPositionChanged(@NotNull CaretEvent event) {
+        hideCurrentHint();
+      }
+
+      @Override
+      public void caretAdded(@NotNull CaretEvent event) {
+        hideCurrentHint();
+      }
+
+      @Override
+      public void caretRemoved(@NotNull CaretEvent event) {
         hideCurrentHint();
       }
     }, myCurrentPopup);
