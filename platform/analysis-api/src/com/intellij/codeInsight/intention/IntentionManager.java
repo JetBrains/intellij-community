@@ -18,9 +18,10 @@ import java.util.List;
 /**
  * Manager for intentions. All intentions must be registered here.
  *
+ * @see <a href="https://www.jetbrains.com/help/idea/intention-actions.html">IntelliJ documentation</a>
  * @see IntentionAction
  */
-public abstract class IntentionManager  {
+public abstract class IntentionManager {
   /**
    * Key to be used within {@link UserDataHolder} in order to check presence of explicit indication on if intentions sub-menu
    * should be shown.
@@ -82,12 +83,14 @@ public abstract class IntentionManager  {
    * E.g. actions for suppress the problem via comment, javadoc or annotation,
    * and edit corresponding inspection settings.
    */
-  public abstract @NotNull List<IntentionAction> getStandardIntentionOptions(@NotNull HighlightDisplayKey displayKey, @NotNull PsiElement context);
+  public abstract @NotNull List<IntentionAction> getStandardIntentionOptions(@NotNull HighlightDisplayKey displayKey,
+                                                                             @NotNull PsiElement context);
 
   /**
    * @return "Fix all '' inspections problems for a file" intention if toolWrapper is local inspection or simple global one
    */
-  public abstract @Nullable IntentionAction createFixAllIntention(@NotNull InspectionToolWrapper<?, ?> toolWrapper, @NotNull IntentionAction action);
+  public abstract @Nullable IntentionAction createFixAllIntention(@NotNull InspectionToolWrapper<?, ?> toolWrapper,
+                                                                  @NotNull IntentionAction action);
 
   /**
    * @return intention to start code cleanup on file
@@ -102,6 +105,7 @@ public abstract class IntentionManager  {
 
   /**
    * Wraps given action in a LocalQuickFix object.
+   *
    * @param action action to convert.
    * @return quick fix instance.
    */
