@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file;
 
 import com.intellij.core.CoreBundle;
@@ -8,7 +8,7 @@ import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.navigation.NavigationRequest;
-import com.intellij.navigation.NavigationService;
+import com.intellij.navigation.NavigationRequests;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -521,7 +521,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
   @Override
   public @Nullable NavigationRequest navigationRequest() {
-    return NavigationService.getInstance().directoryNavigationRequest(this);
+    return NavigationRequests.getInstance().directoryNavigationRequest(this);
   }
 
   @Override

@@ -1,14 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.navigation.impl
 
 import com.intellij.navigation.NavigationRequest
-import com.intellij.navigation.NavigationService
+import com.intellij.navigation.NavigationRequests
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDirectory
 
-internal class NavigationServiceImpl : NavigationService {
+internal class NavigationRequestsImpl : NavigationRequests {
 
   override fun sourceNavigationRequest(file: VirtualFile, offset: Int): NavigationRequest? {
     ApplicationManager.getApplication().assertReadAccessAllowed()

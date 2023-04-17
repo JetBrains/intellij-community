@@ -2,7 +2,7 @@ package org.intellij.plugins.markdown.model.psi
 
 import com.intellij.model.Pointer
 import com.intellij.navigation.NavigationRequest
-import com.intellij.navigation.NavigationService
+import com.intellij.navigation.NavigationRequests
 import com.intellij.navigation.NavigationTarget
 import com.intellij.openapi.vfs.VirtualFile
 
@@ -18,6 +18,6 @@ internal abstract class MarkdownSourceNavigationTarget(
     if (!file.isValid) {
       return null
     }
-    return NavigationService.getInstance().sourceNavigationRequest(file, offset)
+    return NavigationRequests.getInstance().sourceNavigationRequest(file, offset)
   }
 }

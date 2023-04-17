@@ -13,7 +13,7 @@ import com.intellij.model.Symbol;
 import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.navigation.NavigatableSymbol;
 import com.intellij.navigation.NavigationRequest;
-import com.intellij.navigation.NavigationService;
+import com.intellij.navigation.NavigationRequests;
 import com.intellij.navigation.NavigationTarget;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -442,7 +442,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
 
           @Override
           public @Nullable NavigationRequest navigationRequest() {
-            return NavigationService.getInstance().sourceNavigationRequest(myVirtualFile, myRangeInFile.getStartOffset());
+            return NavigationRequests.getInstance().sourceNavigationRequest(myVirtualFile, myRangeInFile.getStartOffset());
           }
         }
       );

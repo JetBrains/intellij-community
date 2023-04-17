@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.impl
 
 import com.intellij.icons.AllIcons
@@ -10,7 +10,7 @@ import com.intellij.ide.projectView.impl.ProjectRootsUtil
 import com.intellij.model.Pointer
 import com.intellij.model.Pointer.hardPointer
 import com.intellij.navigation.NavigationRequest
-import com.intellij.navigation.NavigationService
+import com.intellij.navigation.NavigationRequests
 import com.intellij.openapi.editor.colors.CodeInsightColors.ERRORS_ATTRIBUTES
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.module.Module
@@ -104,7 +104,7 @@ internal class ModuleNavBarItem(data: Module) : DefaultNavBarItem<Module>(data),
   override fun dereference(): NavBarItem? = if (data.isDisposed) null else this
 
   override fun navigationRequest(): NavigationRequest? {
-    return NavigationService.getInstance().rawNavigationRequest(object : Navigatable {
+    return NavigationRequests.getInstance().rawNavigationRequest(object : Navigatable {
       override fun navigate(requestFocus: Boolean) {
         val projectView = ProjectView.getInstance(data.project)
         val projectViewPane = projectView.getProjectViewPaneById(projectView.currentViewId)
@@ -142,7 +142,7 @@ internal class PsiNavBarItem(data: PsiElement, val ownerExtension: NavBarModelEx
   }
 
   override fun navigationRequest(): NavigationRequest? {
-    return (data as? Navigatable)?.let(NavigationService.getInstance()::rawNavigationRequest)
+    return (data as? Navigatable)?.let(NavigationRequests.getInstance()::rawNavigationRequest)
   }
 
   override fun getIcon(): Icon? =
