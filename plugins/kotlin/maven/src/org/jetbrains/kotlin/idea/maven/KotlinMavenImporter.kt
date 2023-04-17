@@ -228,9 +228,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
 
         when (arguments) {
             is K2JVMCompilerArguments -> {
-                arguments.classpath = configuration?.getChild("classpath")?.content?.flatMap { classpathContent ->
-                    if(classpathContent is Text) { classpathContent.text.split(File.pathSeparator) } else emptyList()
-                }?.toTypedArray()
+                arguments.classpath = configuration?.getChild("classpath")?.text
                 arguments.jdkHome = configuration?.getChild("jdkHome")?.text
                 arguments.javaParameters = configuration?.getChild("javaParameters")?.text?.toBoolean() ?: false
 
