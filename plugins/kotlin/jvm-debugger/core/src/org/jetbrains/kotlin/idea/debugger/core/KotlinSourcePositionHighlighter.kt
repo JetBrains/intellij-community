@@ -5,6 +5,8 @@ package org.jetbrains.kotlin.idea.debugger.core
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.SourcePositionHighlighter
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.idea.base.psi.isOneLiner
 import org.jetbrains.kotlin.idea.debugger.KotlinReentrantSourcePosition
 import org.jetbrains.kotlin.idea.debugger.KotlinSourcePositionWithEntireLineHighlighted
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
@@ -15,8 +17,9 @@ class KotlinSourcePositionHighlighter : SourcePositionHighlighter() {
             sourcePosition is KotlinReentrantSourcePosition) {
             return null
         }
-        val lambda = sourcePosition?.elementAt?.parent
-        if (lambda is KtFunctionLiteral) {
+
+        val lambda = sourcePosition?.elementAt?.parentOfType<KtFunctionLiteral>()
+        if (lambda != null && lambda.isOneLiner()) {
             return lambda.textRange
         }
         return null
