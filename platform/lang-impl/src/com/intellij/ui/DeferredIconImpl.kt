@@ -232,6 +232,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
       scaledDelegateIcon = result
       modificationCount.incrementAndGet()
       checkDelegationDepth()
+      setDone(result)
       processRepaints(oldWidth = oldWidth, result = result)
     }
   }
@@ -245,13 +246,10 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     val shouldRevalidate = Registry.`is`("ide.tree.deferred.icon.invalidates.cache", true) && scaledDelegateIcon.iconWidth != oldWidth
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       val repaints = scheduledRepaints
-      setDone(result)
-      if (equalIcons(result, delegateIcon)) {
+      if (equalIcons(result, delegateIcon) || repaints == null) {
         return@withContext
       }
 
-      if (repaints == null)
-        return@withContext
       for (repaintRequest in repaints) {
         val actualTarget = repaintRequest.getActualTarget() ?: continue
         // revalidate will not work: JTree caches size of nodes
@@ -265,13 +263,15 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     }
   }
 
-  private fun setDone(result: Icon) {
-    evalListener?.invoke(this, result)
-    isDone = true
-    evaluator = null
-    asyncEvaluator = null
-    scheduledRepaints = null
-    ApplicationManager.getApplication().messageBus.syncPublisher(DeferredIconListener.TOPIC).evaluated(this, result)
+  private suspend fun setDone(result: Icon) {
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      evalListener?.invoke(this@DeferredIconImpl, result)
+      isDone = true
+      evaluator = null
+      asyncEvaluator = null
+      scheduledRepaints = null
+      ApplicationManager.getApplication().messageBus.syncPublisher(DeferredIconListener.TOPIC).evaluated(this@DeferredIconImpl, result)
+    }
   }
 
   override fun retrieveIcon(): Icon {
