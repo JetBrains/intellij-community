@@ -132,11 +132,11 @@ public abstract class AutoScrollToSourceHandler {
   }
 
   private void onSelectionChanged(final Component component) {
-    if (component != null && UIUtil.isShowing(component) && isAutoScrollMode()) {
+    if (component != null && UIUtil.isShowing(component, false) && isAutoScrollMode()) {
       myAutoScrollAlarm.cancelAllRequests();
       myAutoScrollAlarm.addRequest(
         () -> {
-          if (UIUtil.isShowing(component)) { //for tests
+          if (UIUtil.isShowing(component, false)) { //for tests
             if (!needToCheckFocus() || UIUtil.hasFocus(component)) {
               scrollToSource(component);
             }
