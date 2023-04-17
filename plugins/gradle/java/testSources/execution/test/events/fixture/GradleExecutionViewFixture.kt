@@ -13,7 +13,7 @@ import com.intellij.testFramework.fixtures.IdeaTestFixture
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole
 import org.jetbrains.plugins.gradle.testFramework.util.tree.Tree
-import org.jetbrains.plugins.gradle.testFramework.util.tree.TreeAssertion
+import org.jetbrains.plugins.gradle.testFramework.util.tree.assertion.TreeAssertion
 import org.jetbrains.plugins.gradle.testFramework.util.tree.buildTree
 import org.jetbrains.plugins.gradle.testFramework.util.tree.sortedTree
 import org.junit.jupiter.api.AssertionFailureBuilder

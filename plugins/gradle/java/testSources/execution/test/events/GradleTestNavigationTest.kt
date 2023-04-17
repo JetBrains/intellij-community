@@ -191,57 +191,6 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
   }
 
   @ParameterizedTest
-  @TargetVersions("<5.0")
-  @AllGradleVersionsSource
-  fun `test display name and navigation with Java and Test NG OLD`(gradleVersion: GradleVersion) {
-    testTestNGProject(gradleVersion) {
-      writeText("src/test/java/org/example/TestCase.java", JAVA_TESTNG_TEST)
-      writeText("src/test/java/org/example/ParametrizedTestCase.java", JAVA_PARAMETRIZED_TESTNG_TEST)
-
-      executeTasks(":test")
-
-      assertTestTreeView {
-        assertNode("Gradle suite") {
-          assertNode("Gradle test") {
-            assertNode("parametrized_test[0](1, first)")
-            assertNode("parametrized_test[1](2, second)")
-            assertNode("parametrized_test[2](3, third)")
-            assertNode("successful_test")
-            assertNode("test")
-          }
-        }
-      }
-      assertSMTestProxyTree {
-        assertNode("Gradle suite") {
-          assertNode("Gradle test") {
-            assertNode("parametrized_test[0](1, first)") {
-              Assertions.assertEquals("parametrized_test", value.psiMethod.name)
-              Assertions.assertEquals("ParametrizedTestCase", value.psiMethod.psiClass.name)
-            }
-            assertNode("parametrized_test[1](2, second)") {
-              Assertions.assertEquals("parametrized_test", value.psiMethod.name)
-              Assertions.assertEquals("ParametrizedTestCase", value.psiMethod.psiClass.name)
-            }
-            assertNode("parametrized_test[2](3, third)") {
-              Assertions.assertEquals("parametrized_test", value.psiMethod.name)
-              Assertions.assertEquals("ParametrizedTestCase", value.psiMethod.psiClass.name)
-            }
-            assertNode("successful_test") {
-              Assertions.assertEquals("successful_test", value.psiMethod.name)
-              Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
-            }
-            assertNode("test") {
-              Assertions.assertEquals("test", value.psiMethod.name)
-              Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
-            }
-          }
-        }
-      }
-    }
-  }
-
-  @ParameterizedTest
-  @TargetVersions("5.0+")
   @AllGradleVersionsSource
   fun `test display name and navigation with Java and Test NG`(gradleVersion: GradleVersion) {
     testTestNGProject(gradleVersion) {
@@ -253,12 +202,12 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
       assertTestTreeView {
         assertNode("Gradle suite") {
           assertNode("Gradle test") {
-            assertNode("ParametrizedTestCase") {
+            assertNode("ParametrizedTestCase", flattenIf = isGradleOlderThan("5.0")) {
               assertNode("parametrized_test[0](1, first)")
               assertNode("parametrized_test[1](2, second)")
               assertNode("parametrized_test[2](3, third)")
             }
-            assertNode("TestCase") {
+            assertNode("TestCase", flattenIf = isGradleOlderThan("5.0")) {
               assertNode("successful_test")
               assertNode("test")
             }
@@ -268,8 +217,10 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
       assertSMTestProxyTree {
         assertNode("Gradle suite") {
           assertNode("Gradle test") {
-            assertNode("ParametrizedTestCase") {
-              Assertions.assertEquals("ParametrizedTestCase", value.psiClass.name)
+            assertNode("ParametrizedTestCase", flattenIf = isGradleOlderThan("5.0")) {
+              assertValueIfPresent {
+                Assertions.assertEquals("ParametrizedTestCase", value.psiClass.name)
+              }
               assertNode("parametrized_test[0](1, first)") {
                 Assertions.assertEquals("parametrized_test", value.psiMethod.name)
                 Assertions.assertEquals("ParametrizedTestCase", value.psiMethod.psiClass.name)
@@ -283,8 +234,10 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
                 Assertions.assertEquals("ParametrizedTestCase", value.psiMethod.psiClass.name)
               }
             }
-            assertNode("TestCase") {
-              Assertions.assertEquals("TestCase", value.psiClass.name)
+            assertNode("TestCase", flattenIf = isGradleOlderThan("5.0")) {
+              assertValueIfPresent {
+                Assertions.assertEquals("TestCase", value.psiClass.name)
+              }
               assertNode("successful_test") {
                 Assertions.assertEquals("successful_test", value.psiMethod.name)
                 Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
