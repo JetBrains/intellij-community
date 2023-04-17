@@ -11,14 +11,6 @@ import java.util.function.IntConsumer
 import java.util.function.ToIntFunction
 
 internal interface VcsLogStorageBackend : VcsLogUsersStorage, VcsLogPathsStorage {
-  val isEmpty: Boolean
-
-  /**
-   * null if not applicable
-   */
-  val trigramsEmpty: Boolean?
-    get() = null
-
   var isFresh: Boolean
 
   fun getMessage(commitId: Int): String?

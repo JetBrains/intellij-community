@@ -118,10 +118,24 @@ internal class PhmVcsLogStorageBackend(
     users = VcsLogUserIndex(storageId, storageLockContext, userRegistry, errorHandler, disposable)
 
     trigrams = VcsLogMessagesTrigramIndex(storageId, storageLockContext, errorHandler, disposable)
+
+    reportEmpty()
   }
 
-  override val trigramsEmpty: Boolean
-    get() = trigrams.isEmpty
+  @Throws(IOException::class)
+  private fun reportEmpty() {
+    if (messages.keysCountApproximately() == 0) return
+
+    val trigramsEmpty = trigrams.isEmpty
+    val usersEmpty = users.isEmpty
+    val pathsEmpty = paths.isEmpty
+    if (trigramsEmpty || usersEmpty || pathsEmpty) {
+      VcsLogPersistentIndex.LOG.warn("Some of the index maps empty:\n" +
+                                     "trigrams empty $trigramsEmpty\n" +
+                                     "users empty $usersEmpty\n" +
+                                     "paths empty $pathsEmpty")
+    }
+  }
 
   override fun createWriter(): VcsLogWriter {
     return object : VcsLogWriter {
@@ -158,11 +172,6 @@ internal class PhmVcsLogStorageBackend(
       }
     }
   }
-
-  override val isEmpty: Boolean
-    get() {
-      return messages.keysCountApproximately() == 0
-    }
 
   override fun markCorrupted() {
     messages.markCorrupted()
@@ -289,10 +298,6 @@ internal class PhmVcsLogStorageBackend(
   override fun getCommitsForUsers(users: Set<VcsUser>): IntSet {
     return this.users.getCommitsForUsers(users)
   }
-
-  override fun isPathsEmpty() = paths.isEmpty
-
-  override fun isUsersEmpty() = users.isEmpty
 }
 
 private inline fun catchAndWarn(runnable: () -> Unit) {

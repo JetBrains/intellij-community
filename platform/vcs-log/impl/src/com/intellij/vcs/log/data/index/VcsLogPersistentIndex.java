@@ -326,28 +326,10 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
         else {
           store = new PhmVcsLogStorageBackend(indexStorageId, storage, roots, userRegistry, errorHandler, this);
         }
-
-        reportEmpty();
       }
       catch (Throwable t) {
         Disposer.dispose(this);
         throw t;
-      }
-    }
-
-    private void reportEmpty() throws IOException {
-      if (store.isEmpty()) {
-        return;
-      }
-
-      var trigramsEmpty = store.getTrigramsEmpty();
-      boolean usersEmpty = store.isUsersEmpty();
-      boolean pathsEmpty = store.isPathsEmpty();
-      if ((trigramsEmpty != null && trigramsEmpty) || usersEmpty || pathsEmpty) {
-        LOG.warn("Some of the index maps empty:\n" +
-                 "trigrams empty " + trigramsEmpty + "\n" +
-                 "users empty " + usersEmpty + "\n" +
-                 "paths empty " + pathsEmpty);
       }
     }
 

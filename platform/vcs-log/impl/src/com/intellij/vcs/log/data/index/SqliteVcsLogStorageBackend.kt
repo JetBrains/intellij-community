@@ -165,9 +165,6 @@ internal class SqliteVcsLogStorageBackend(project: Project,
 
   override fun createWriter(): VcsLogWriter = SqliteVcsLogWriter(connection)
 
-  override val isEmpty: Boolean
-    get() = connection.selectBoolean("select not exists (select 1 from log)")
-
   override fun containsCommit(commitId: Int): Boolean {
     return connection.selectBoolean("select exists(select 1 from log where commitId = ?)", commitId)
   }
@@ -351,10 +348,6 @@ internal class SqliteVcsLogStorageBackend(project: Project,
     connectionManager.recreate()
   }
 
-  override fun isUsersEmpty(): Boolean {
-    return connection.selectBoolean("select not exists (select 1 from user)")
-  }
-
   override fun getAuthorForCommit(commitId: Int): VcsUser? {
     val paramBinder = IntBinder(paramCount = 1)
     connection.prepareStatement("select name, email from user where commitId = ? and isCommitter = 0", paramBinder)
@@ -425,10 +418,6 @@ internal class SqliteVcsLogStorageBackend(project: Project,
   }
 
   override fun flush() {}
-
-  override fun isPathsEmpty(): Boolean {
-    return connection.selectBoolean("select not exists (select 1 from path)")
-  }
 
   override fun iterateChangesInCommits(root: VirtualFile, path: FilePath, consumer: ObjIntConsumer<List<ChangeKind>>) {
     connectionManager.runUnderConnection { connection ->
