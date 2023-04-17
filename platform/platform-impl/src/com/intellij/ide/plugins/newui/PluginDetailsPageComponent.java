@@ -808,7 +808,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
             component.setPluginDescriptor(pluginNode);
           });
         }
-        else if (myUpdateOnly && (node.getScreenShots() == null || node.getReviewComments() == null)) {
+        else if (node.getScreenShots() == null || node.getReviewComments() == null) {
           syncLoading = false;
           doLoad(component, () -> {
             MarketplaceRequests marketplace = MarketplaceRequests.getInstance();
