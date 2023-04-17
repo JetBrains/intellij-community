@@ -97,7 +97,8 @@ public final class XLineBreakpointManager {
     busConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
       @Override
       public void fileContentLoaded(@NotNull VirtualFile file, @NotNull Document document) {
-        myBreakpoints.get(file.getUrl()).stream().filter(b -> b.getHighlighter() == null).forEach(XLineBreakpointManager.this::queueBreakpointUpdate);
+        myBreakpoints.get(file.getUrl()).stream().filter(b -> b.getHighlighter() == null)
+          .forEach(XLineBreakpointManager.this::queueBreakpointUpdate);
       }
     });
   }
@@ -172,7 +173,7 @@ public final class XLineBreakpointManager {
     queueBreakpointUpdate(slave, null);
   }
 
-   public void queueBreakpointUpdate(final XBreakpoint<?> slave, @Nullable Runnable callOnUpdate) {
+  public void queueBreakpointUpdate(final XBreakpoint<?> slave, @Nullable Runnable callOnUpdate) {
     if (slave instanceof XLineBreakpointImpl<?>) {
       queueBreakpointUpdate((XLineBreakpointImpl<?>)slave, callOnUpdate);
     }
@@ -249,12 +250,11 @@ public final class XLineBreakpointManager {
           || mouseEvent.isMetaDown() || mouseEvent.isControlDown()
           || mouseEvent.getButton() != MouseEvent.BUTTON1
           || DiffUtil.isDiffEditor(editor)
-          || !isInsideGutter(e, editor)
+          || !isInsideClickableGutterArea(e, editor)
           || ConsoleViewUtil.isConsoleViewEditor(editor)
           || !isFromMyProject(editor)
           || (editor.getSelectionModel().hasSelection() && myDragDetected)
-          || (ExperimentalUI.isNewUI() && !UISettings.getInstance().getShowBreakpointsOverLineNumbers() && e.getArea() == EditorMouseEventArea.LINE_NUMBERS_AREA)
-        ) {
+      ) {
         return;
       }
 
@@ -272,9 +272,9 @@ public final class XLineBreakpointManager {
       }
     }
 
-    private boolean isInsideGutter(EditorMouseEvent e, Editor editor) {
+    private static boolean isInsideClickableGutterArea(EditorMouseEvent e, Editor editor) {
       if (ExperimentalUI.isNewUI() && e.getArea() == EditorMouseEventArea.LINE_NUMBERS_AREA) {
-        return true;
+        return UISettings.getInstance().getShowBreakpointsOverLineNumbers();
       }
       if (e.getArea() != EditorMouseEventArea.LINE_MARKERS_AREA && e.getArea() != EditorMouseEventArea.FOLDING_OUTLINE_AREA) {
         return false;
