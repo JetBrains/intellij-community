@@ -1,0 +1,6 @@
+// FIX: Move unary operator to previous line
+// WITH_STDLIB
+fun main() {
+    val a = "2".toBigDecimal()
+    <caret>- "4".toBigDecimal()
+}
