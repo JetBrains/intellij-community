@@ -82,7 +82,7 @@ class IndexedDetails(private val dataGetter: IndexDataGetter,
 
       for (commitIndex in commitIndexes) {
         val commitId = commitIds[commitIndex]
-        val parent = if (storage is SqliteVcsLogStorageBackend) parents[commitIndex] else dataGetter.getParents(commitIndex)
+        val parent = parents[commitIndex]
         val author = authors[commitIndex]
         val committer = committers[commitIndex] ?: author
         val authorTime = authorTimes[commitIndex]

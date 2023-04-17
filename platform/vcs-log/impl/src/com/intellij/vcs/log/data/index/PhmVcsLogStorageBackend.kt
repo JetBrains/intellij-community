@@ -35,7 +35,7 @@ import java.util.function.ToIntFunction
 
 internal class PhmVcsLogStorageBackend(
   storageId: StorageId,
-  storage: VcsLogStorage,
+  private val storage: VcsLogStorage,
   roots: Set<VirtualFile>,
   userRegistry: VcsUserRegistry,
   private val errorHandler: VcsLogErrorHandler,
@@ -225,6 +225,14 @@ internal class PhmVcsLogStorageBackend(
 
   override fun getParent(commitId: Int): IntArray? = parents.get(commitId)
 
+  override fun getParents(commitIds: Collection<Int>): Map<Int, List<Hash>> {
+    return commitIds.mapNotNull { commitId ->
+      val parents = getParent(commitId) ?: return@mapNotNull null
+      val parentHashes = storage.getHashes(parents) ?: return@mapNotNull null
+      commitId to parentHashes
+    }.toMap()
+  }
+
   @Throws(IOException::class)
   override fun processMessages(processor: (Int, String) -> Boolean) {
     messages.processKeysWithExistingMapping(Processor { commit -> processor(commit, messages.get(commit) ?: return@Processor true) })
@@ -310,6 +318,15 @@ private inline fun catchAndWarn(runnable: () -> Unit) {
   catch (e: IOException) {
     VcsLogPersistentIndex.LOG.warn(e)
   }
+}
+
+internal fun VcsLogStorage.getHashes(commits: IntArray): List<Hash>? {
+  val result = ArrayList<Hash>(commits.size)
+  for (parentIndex in commits) {
+    val id = getCommitId(parentIndex) ?: return null
+    result.add(id.hash)
+  }
+  return result
 }
 
 private object IntPairKeyDescriptor : KeyDescriptor<IntArray> {

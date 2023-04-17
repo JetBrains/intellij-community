@@ -35,6 +35,7 @@ import java.util.function.IntConsumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static com.intellij.vcs.log.data.index.PhmVcsLogStorageBackendKt.getHashes;
 import static com.intellij.vcs.log.history.FileHistoryKt.FILE_PATH_HASHING_STRATEGY;
 
 public final class IndexDataGetter {
@@ -121,19 +122,8 @@ public final class IndexDataGetter {
   public @Nullable List<Hash> getParents(int index) {
     return executeAndCatch(() -> {
       int[] parentsIndexes = myIndexStorage.store.getParent(index);
-      if (parentsIndexes == null) {
-        return null;
-      }
-
-      List<Hash> result = new ArrayList<>(parentsIndexes.length);
-      for (int parentIndex : parentsIndexes) {
-        CommitId id = myLogStorage.getCommitId(parentIndex);
-        if (id == null) {
-          return null;
-        }
-        result.add(id.getHash());
-      }
-      return result;
+      if (parentsIndexes == null) return null;
+      return getHashes(myLogStorage, parentsIndexes);
     });
   }
 

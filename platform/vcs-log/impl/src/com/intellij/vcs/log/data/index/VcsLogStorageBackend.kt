@@ -31,7 +31,7 @@ internal interface VcsLogStorageBackend : VcsLogUsersStorage, VcsLogPathsStorage
 
   fun getParent(commitId: Int): IntArray?
 
-  fun getParents(commitIds: Collection<Int>): Map<Int, List<Hash>> = emptyMap()
+  fun getParents(commitIds: Collection<Int>): Map<Int, List<Hash>>
 
   @Throws(IOException::class)
   fun containsCommit(commitId: Int): Boolean
