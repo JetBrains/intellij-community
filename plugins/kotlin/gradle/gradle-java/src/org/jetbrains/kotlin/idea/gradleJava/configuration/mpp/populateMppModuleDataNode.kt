@@ -101,7 +101,7 @@ internal fun doCreateSourceSetInfo(
             }
         } ?: KotlinPlatform.COMMON
 
-        info.compilerArguments = CompilerArgumentsProvider {
+        info.lazyCompilerArguments = lazy {
             createCompilerArguments(emptyList(), compilerArgumentsPlatform).also {
                 it.multiPlatform = true
                 it.languageVersion = languageSettings.languageVersion
@@ -157,10 +157,17 @@ internal fun doCreateSourceSetInfo(
         }.toSet()
 
         compilation.compilerArguments?.let { compilerArguments ->
-            sourceSetInfo.compilerArguments = CompilerArgumentsProvider {
-                createCompilerArguments(compilerArguments, compilation.platform)
+            val lazyParsedCompilerArguments = lazy { createCompilerArguments(compilerArguments, compilation.platform) }
+            sourceSetInfo.lazyCompilerArguments = lazyParsedCompilerArguments
+            sourceSetInfo.lazyDefaultCompilerArguments = lazyParsedCompilerArguments
+            sourceSetInfo.lazyDependencyClasspath = lazy {
+                val parsedArguments = lazyParsedCompilerArguments.value
+                if (parsedArguments is K2JVMCompilerArguments) {
+                    parsedArguments.classpath.orEmpty().split(File.pathSeparator)
+                } else emptyList()
             }
         }
+
         sourceSetInfo.addSourceSets(compilation.allSourceSets, compilation.fullName(), gradleModule, resolverCtx)
     }
 }
