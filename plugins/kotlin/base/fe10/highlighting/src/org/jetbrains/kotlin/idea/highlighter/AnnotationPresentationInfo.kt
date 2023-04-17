@@ -39,8 +39,9 @@ class AnnotationPresentationInfo(
     fun processDiagnostics(
         holder: HighlightInfoHolder,
         diagnostics: Collection<Diagnostic>,
-        diagnosticHighlighted: MutableSet<Diagnostic>,
-        fixesMap: MultiMap<Diagnostic, IntentionAction>
+        highlightInfoByDiagnostic: MutableMap<Diagnostic, HighlightInfo>?,
+        fixesMap: MultiMap<Diagnostic, IntentionAction>,
+        calculatingInProgress: Boolean
     ) {
         for (range in ranges) {
             for (diagnostic in diagnostics) {
@@ -49,10 +50,20 @@ class AnnotationPresentationInfo(
                 } else {
                     null
                 }
-                val builder = create(diagnostic, range, group)
-                diagnosticHighlighted.add(diagnostic)
-                applyFixes(fixesMap, diagnostic, builder, group)
-                holder.add(builder.createUnconditionally())
+                val existingInfo = highlightInfoByDiagnostic?.get(diagnostic)
+                if (existingInfo != null) {
+                    if (!calculatingInProgress) {
+                        applyFixes(fixesMap, diagnostic, range, builder = null, highlightInfo = existingInfo, problemGroup = group)
+                    }
+                } else {
+                    val builder = create(diagnostic, range, group)
+                    if (!calculatingInProgress || !fixesMap.isEmpty) {
+                        applyFixes(fixesMap, diagnostic, range, builder = builder, highlightInfo = null, problemGroup = group)
+                    }
+                    val highlightInfo = builder.createUnconditionally()
+                    holder.add(highlightInfo)
+                    highlightInfoByDiagnostic?.put(diagnostic, highlightInfo)
+                }
             }
         }
     }
@@ -88,7 +99,9 @@ class AnnotationPresentationInfo(
     private fun applyFixes(
         quickFixes: MultiMap<Diagnostic, IntentionAction>,
         diagnostic: Diagnostic,
-        builder: HighlightInfo.Builder,
+        range: TextRange,
+        builder: HighlightInfo.Builder?,
+        highlightInfo: HighlightInfo?,
         problemGroup: ProblemGroup?
     ) {
         val isWarning = diagnostic.severity == Severity.WARNING
@@ -111,10 +124,12 @@ class AnnotationPresentationInfo(
             }
 
             if (fix == RegisterQuickFixesLaterIntentionAction) {
-                element.reference?.let {
-                    UnresolvedReferenceQuickFixUpdater.getInstance(element.project).registerQuickFixesLater(it, builder)
+                if (builder != null) {
+                    element.reference?.let {
+                        UnresolvedReferenceQuickFixUpdater.getInstance(element.project).registerQuickFixesLater(it, builder)
+                    }
+                    continue
                 }
-                continue
             }
 
             val options = mutableListOf<IntentionAction>()
@@ -129,7 +144,8 @@ class AnnotationPresentationInfo(
 
             val isError = diagnostic.severity == Severity.ERROR
             val message = KotlinBaseFe10HighlightingBundle.message(if (isError) "kotlin.compiler.error" else "kotlin.compiler.warning")
-            builder.registerFix(fix, options, message, null, keyForSuppressOptions)
+            builder?.registerFix(fix, options, message, range, keyForSuppressOptions)
+            highlightInfo?.registerFix(fix, options, message, range, keyForSuppressOptions)
         }
     }
 
