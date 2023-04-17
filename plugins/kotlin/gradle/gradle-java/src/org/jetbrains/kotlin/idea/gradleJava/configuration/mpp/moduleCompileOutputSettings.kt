@@ -13,7 +13,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.containers.MultiMap
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinOutputPathsData
-import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMppGradleProjectResolver
+import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver
 import org.jetbrains.kotlin.idea.gradleJava.configuration.resourceType
 import org.jetbrains.kotlin.idea.gradleJava.configuration.sourceType
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
@@ -23,11 +23,11 @@ import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
 
-internal fun KotlinMppGradleProjectResolver.Context.populateModuleCompileOutputSettings() {
+internal fun KotlinMPPGradleProjectResolver.Context.populateModuleCompileOutputSettings() {
     val ideaOutDir = File(moduleDataNode.data.linkedExternalProjectPath, "out")
     val moduleOutputsMap = projectDataNode.getUserData(GradleProjectResolver.MODULES_OUTPUTS)!!
     val outputDirs = HashSet<String>()
-    KotlinMppGradleProjectResolver.getCompilations(gradleModule, mppModel, moduleDataNode, resolverCtx)
+    KotlinMPPGradleProjectResolver.getCompilations(gradleModule, mppModel, moduleDataNode, resolverCtx)
         .filterNot { (_, compilation) -> shouldDelegateToOtherPlugin(compilation) }
         .forEach { (dataNode, compilation) ->
             var gradleOutputMap = dataNode.getUserData(GradleProjectResolver.GRADLE_OUTPUTS)

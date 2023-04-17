@@ -4,12 +4,12 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration.mpp
 
 import com.intellij.build.events.MessageEvent
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinUnresolvedBinaryDependency
-import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMppGradleProjectResolver
+import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver
 import org.jetbrains.plugins.gradle.issue.UnresolvedDependencySyncIssue
 
 internal fun reportIdeaKotlinUnresolvedDependency(
     dependency: IdeaKotlinUnresolvedBinaryDependency,
-    context: KotlinMppGradleProjectResolver.Context,
+    context: KotlinMPPGradleProjectResolver.Context,
     sourceSetModuleId: KotlinSourceSetModuleId,
 ) {
     val unresolvedDependencyIssue = UnresolvedDependencySyncIssue(

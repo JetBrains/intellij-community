@@ -5,7 +5,7 @@ import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.util.Pair
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinDependency
-import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMppGradleProjectResolver
+import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibrariesFixer
 import org.jetbrains.plugins.gradle.model.ExternalSourceSet
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
@@ -13,7 +13,7 @@ import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 
 @Throws(IllegalStateException::class)
-internal fun KotlinMppGradleProjectResolver.Companion.buildDependencies(
+internal fun KotlinMPPGradleProjectResolver.Companion.buildDependencies(
     resolverCtx: ProjectResolverContext,
     sourceSetMap: Map<String, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>>,
     artifactsMap: Map<ArtifactPath, ModuleId>,

@@ -9,13 +9,13 @@ import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinProjectArtifactDependency
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinSourceDependency
 import org.jetbrains.kotlin.gradle.idea.tcs.extras.artifactsClasspath
 import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSetData
-import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMppGradleProjectResolver
+import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
 
 interface KotlinProjectArtifactDependencyResolver {
     fun resolve(
-        context: KotlinMppGradleProjectResolver.Context,
+        context: KotlinMPPGradleProjectResolver.Context,
         sourceSetNode: DataNode<GradleSourceSetData>,
         dependency: IdeaKotlinProjectArtifactDependency
     ): Set<IdeaKotlinSourceDependency>
@@ -38,7 +38,7 @@ fun KotlinProjectArtifactDependencyResolver(): KotlinProjectArtifactDependencyRe
 private class KotlinProjectArtifactDependencyResolverImpl : KotlinProjectArtifactDependencyResolver {
 
     override fun resolve(
-        context: KotlinMppGradleProjectResolver.Context,
+        context: KotlinMPPGradleProjectResolver.Context,
         sourceSetNode: DataNode<GradleSourceSetData>,
         dependency: IdeaKotlinProjectArtifactDependency
     ): Set<IdeaKotlinSourceDependency> {

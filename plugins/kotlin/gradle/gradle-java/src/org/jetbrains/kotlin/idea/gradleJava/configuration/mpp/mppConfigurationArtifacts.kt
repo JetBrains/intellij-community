@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration.mpp
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMppGradleProjectResolver
+import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver
 import org.jetbrains.plugins.gradle.model.DefaultExternalProjectDependency
 import org.jetbrains.plugins.gradle.model.ExternalDependency
 import org.jetbrains.plugins.gradle.model.ExternalProjectDependency
@@ -38,7 +38,7 @@ private fun ExternalDependency.getDependencyArtifacts(): Collection<File> =
     }
 
 private fun getOrCreateAffiliatedArtifactsMap(ideProject: DataNode<ProjectData>): Map<String, List<String>>? {
-    val mppArtifacts = ideProject.getUserData(KotlinMppGradleProjectResolver.MPP_CONFIGURATION_ARTIFACTS) ?: return null
+    val mppArtifacts = ideProject.getUserData(KotlinMPPGradleProjectResolver.MPP_CONFIGURATION_ARTIFACTS) ?: return null
     val configArtifacts = ideProject.getUserData(GradleProjectResolver.CONFIGURATION_ARTIFACTS) ?: return null
     // All MPP modules are already known, we can fill configurations map
     return HashMap<String, MutableList<String>>().also { newMap ->

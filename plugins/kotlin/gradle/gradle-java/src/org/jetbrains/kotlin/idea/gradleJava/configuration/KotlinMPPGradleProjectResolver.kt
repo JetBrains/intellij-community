@@ -26,27 +26,8 @@ import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import java.lang.reflect.Proxy
 import java.util.*
 
-@Suppress("unused") // Can be removed once AS rebased on 23.1
-@Deprecated("Use KotlinMppGradleProjectResolver instead", replaceWith = ReplaceWith("KotlinMppGradleProjectResolver"))
-class KotlinMPPGradleProjectResolver {
-    @Deprecated("Use KotlinMppGradleProjectResolver instead", replaceWith = ReplaceWith("KotlinMppGradleProjectResolver"))
-    companion object {
-        val MPP_CONFIGURATION_ARTIFACTS = KotlinMppGradleProjectResolver.MPP_CONFIGURATION_ARTIFACTS
-
-        // This method is used in Android side of import and it's signature could not be changed
-        fun createSourceSetInfo(
-            compilation: KotlinCompilation,
-            gradleModule: IdeaModule,
-            resolverCtx: ProjectResolverContext
-        ): KotlinSourceSetInfo? {
-            val model = resolverCtx.getMppModel(gradleModule) ?: return null
-            return doCreateSourceSetInfo(model, compilation, gradleModule, resolverCtx)
-        }
-    }
-}
-
 @Order(ExternalSystemConstants.UNORDERED + 1)
-open class KotlinMppGradleProjectResolver : AbstractProjectResolverExtension() {
+open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
 
     interface Context {
         val mppModel: KotlinMPPGradleModel
@@ -80,7 +61,7 @@ open class KotlinMppGradleProjectResolver : AbstractProjectResolverExtension() {
     override fun createModule(gradleModule: IdeaModule, projectDataNode: DataNode<ProjectData>): DataNode<ModuleData>? {
         val moduleDataNode = super.createModule(gradleModule, projectDataNode) ?: return null
         val model = resolverCtx.getMppModel(gradleModule) ?: return moduleDataNode
-        val context = KotlinMppGradleProjectResolver.Context(model, resolverCtx, gradleModule, projectDataNode, moduleDataNode)
+        val context = KotlinMPPGradleProjectResolver.Context(model, resolverCtx, gradleModule, projectDataNode, moduleDataNode)
         moduleDataNode.kotlinMppGradleProjectResolverContext = context
         populateMppModuleDataNode(context)
         return moduleDataNode
@@ -156,15 +137,34 @@ open class KotlinMppGradleProjectResolver : AbstractProjectResolverExtension() {
             resolverCtx: ProjectResolverContext
         ): KotlinSourceSetInfo? = doCreateSourceSetInfo(mppModel, sourceSet, gradleModule, resolverCtx)
 
+        // This method is used in Android side of import and it's signature could not be changed
+        fun createSourceSetInfo(
+            model: KotlinMPPGradleModel,
+            compilation: KotlinCompilation,
+            gradleModule: IdeaModule,
+            resolverCtx: ProjectResolverContext
+        ): KotlinSourceSetInfo? {
+            return doCreateSourceSetInfo(model, compilation, gradleModule, resolverCtx)
+        }
+
+        // restored method for binary compatibility with Android plugin, will be removed in future commits
+        fun createSourceSetInfo(
+            compilation: KotlinCompilation,
+            gradleModule: IdeaModule,
+            resolverCtx: ProjectResolverContext
+        ): KotlinSourceSetInfo? {
+            val model = resolverCtx.getMppModel(gradleModule) ?: return null
+            return createSourceSetInfo(model, compilation, gradleModule, resolverCtx)
+        }
     }
 }
 
 fun ProjectResolverContext.getMppModel(gradleModule: IdeaModule): KotlinMPPGradleModel? =
     this.getExtraProject(gradleModule, KotlinMPPGradleModel::class.java)?.let { mppModel ->
         if (mppModel is Proxy) {
-            KotlinMppGradleProjectResolver.proxyObjectCloningCache[mppModel] as? KotlinMPPGradleModelImpl
-                ?: KotlinMPPGradleModelImpl(mppModel, KotlinMppGradleProjectResolver.proxyObjectCloningCache).also {
-                    KotlinMppGradleProjectResolver.proxyObjectCloningCache[mppModel] = it
+            KotlinMPPGradleProjectResolver.proxyObjectCloningCache[mppModel] as? KotlinMPPGradleModelImpl
+                ?: KotlinMPPGradleModelImpl(mppModel, KotlinMPPGradleProjectResolver.proxyObjectCloningCache).also {
+                    KotlinMPPGradleProjectResolver.proxyObjectCloningCache[mppModel] = it
                 }
         } else mppModel
     }

@@ -4,12 +4,12 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration.mpp
 
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinProjectArtifactDependency
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinUnresolvedBinaryDependency
-import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMppGradleProjectResolver
+import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver
 import org.jetbrains.kotlin.idea.gradleTooling.IdeaKotlinDependenciesContainer
 import org.jetbrains.kotlin.idea.projectModel.KotlinGradlePluginVersionDependentApi
 
 @OptIn(KotlinGradlePluginVersionDependentApi::class)
-internal fun KotlinMppGradleProjectResolver.Context.populateModuleDependencies() {
+internal fun KotlinMPPGradleProjectResolver.Context.populateModuleDependencies() {
     val dependenciesContainer = mppModel.dependencies
     if (dependenciesContainer != null) {
         populateModuleDependenciesWithDependenciesContainer(dependenciesContainer)
@@ -21,7 +21,7 @@ internal fun KotlinMppGradleProjectResolver.Context.populateModuleDependencies()
 /**
  *  New Kotlin Gradle Plugin versions will provide this dependencies container
  */
-internal fun KotlinMppGradleProjectResolver.Context.populateModuleDependenciesWithDependenciesContainer(
+internal fun KotlinMPPGradleProjectResolver.Context.populateModuleDependenciesWithDependenciesContainer(
     dependencies: IdeaKotlinDependenciesContainer
 ) {
     mppModel.dependencyMap.values.modifyDependenciesOnMppModules(projectDataNode)
@@ -77,12 +77,12 @@ internal fun KotlinMppGradleProjectResolver.Context.populateModuleDependenciesWi
  * Implementation for older Kotlin Gradle plugins that will use
  * IntelliJ injected code to resolve dependencies
  */
-internal fun KotlinMppGradleProjectResolver.Context.populateModuleDependenciesWithoutDependenciesContainer() {
+internal fun KotlinMPPGradleProjectResolver.Context.populateModuleDependenciesWithoutDependenciesContainer() {
     val context = createKotlinMppPopulateModuleDependenciesContext(
         gradleModule = gradleModule, ideProject = projectDataNode, ideModule = moduleDataNode, resolverCtx = resolverCtx
     ) ?: return
 
-    KotlinMppGradleProjectResolver.populateModuleDependenciesByCompilations(context)
-    KotlinMppGradleProjectResolver.populateModuleDependenciesByPlatformPropagation(context)
-    KotlinMppGradleProjectResolver.populateModuleDependenciesBySourceSetVisibilityGraph(context)
+    KotlinMPPGradleProjectResolver.populateModuleDependenciesByCompilations(context)
+    KotlinMPPGradleProjectResolver.populateModuleDependenciesByPlatformPropagation(context)
+    KotlinMPPGradleProjectResolver.populateModuleDependenciesBySourceSetVisibilityGraph(context)
 }
