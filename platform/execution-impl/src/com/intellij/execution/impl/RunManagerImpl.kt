@@ -95,7 +95,11 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     fun getInstanceImpl(project: Project): RunManagerImpl = getInstance(project) as RunManagerImpl
 
     fun canRunConfiguration(environment: ExecutionEnvironment): Boolean {
-      return environment.runnerAndConfigurationSettings?.let { canRunConfiguration(it, environment.executor) } ?: false
+      return environment.computeWithDataContext {
+        environment.runnerAndConfigurationSettings?.let {
+          canRunConfiguration(it, environment.executor)
+        } ?: false
+      }
     }
 
     @JvmStatic

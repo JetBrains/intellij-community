@@ -5,12 +5,10 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeCoreBundle;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Computable;
@@ -48,15 +46,13 @@ public final class MacrosDialog extends DialogWrapper {
   private final DefaultListModel<Item> myMacrosModel = new DefaultListModel<>();
   private final JBList<Item> myMacrosList = new JBList<>(myMacrosModel);
   private final JTextArea myPreviewTextarea = new JTextArea();
+  private final DataContext myDataContext;
 
   public MacrosDialog(@NotNull Component parent,
                       @NotNull Predicate<? super Macro> filter,
                       @Nullable Map<String, String> userMacros) {
     super(parent, true);
-    DataContext context = DataManager.getInstance().getDataContext(parent);
-    Project project = CommonDataKeys.PROJECT.getData(context);
-    assert project != null;
-    MacroManager.getInstance().cacheMacrosPreview(context, project);
+    myDataContext = DataManager.getInstance().getDataContext(parent);
     init(filter, userMacros);
   }
 
@@ -281,7 +277,7 @@ public final class MacrosDialog extends DialogWrapper {
     @NotNull String toString();
   }
 
-  private static final class MacroWrapper implements Item {
+  private final class MacroWrapper implements Item {
     private final Macro myMacro;
 
     MacroWrapper(Macro macro) {
@@ -295,7 +291,12 @@ public final class MacrosDialog extends DialogWrapper {
 
     @Override
     public @NotNull String getPreview() {
-      return StringUtil.notNullize(myMacro.preview());
+      try {
+        return StringUtil.notNullize(myMacro.expand(myDataContext));
+      }
+      catch (Macro.ExecutionCancelledException ignore) {
+        return "";
+      }
     }
 
     public @NotNull String toString() {

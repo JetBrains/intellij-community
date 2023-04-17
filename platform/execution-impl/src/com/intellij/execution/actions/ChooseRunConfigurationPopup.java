@@ -13,7 +13,6 @@ import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.macro.MacroManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -388,7 +387,6 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
           final RunManager manager = RunManager.getInstance(project);
 
           if (!manager.isRiderRunWidgetActive()) RunManager.getInstance(project).setSelectedConfiguration(config);
-          MacroManager.getInstance().cacheMacrosPreview(context, project);
           ExecutorRegistryImpl.RunnerHelper.run(project, settings.getConfiguration(), settings, context, executor);
         }
 
