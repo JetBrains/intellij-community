@@ -15,7 +15,6 @@ import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionCo
 import org.jetbrains.plugins.gradle.testFramework.util.tree.Tree
 import org.jetbrains.plugins.gradle.testFramework.util.tree.assertion.TreeAssertion
 import org.jetbrains.plugins.gradle.testFramework.util.tree.buildTree
-import org.jetbrains.plugins.gradle.testFramework.util.tree.sortedTree
 import org.junit.jupiter.api.AssertionFailureBuilder
 import org.junit.jupiter.api.Assertions
 
@@ -78,8 +77,7 @@ class GradleExecutionViewFixture(
     invokeAndWaitIfNeeded {
       PlatformTestUtil.waitWhileBusy(treeView)
     }
-    val tree = buildTree(treeString)
-    return tree.sortedTree()
+    return buildTree(treeString)
   }
 
   private fun getTestConsoleText(): String {
@@ -124,7 +122,7 @@ class GradleExecutionViewFixture(
   }
 
   fun assertTestTreeView(assert: TreeAssertion.Node<Nothing?>.() -> Unit) {
-    TreeAssertion.assertTree(getSimplifiedTestTreeView()) {
+    TreeAssertion.assertTree(getSimplifiedTestTreeView(), isUnordered = true) {
       assertNode("[root]", assert)
     }
   }
@@ -143,7 +141,7 @@ class GradleExecutionViewFixture(
     val roots = resultsViewer.root.children
     val tree = buildTree(roots, { name }, { children })
     runReadAction { // all navigation tests requires read action
-      TreeAssertion.assertTree(tree.sortedTree(), assert)
+      TreeAssertion.assertTree(tree, isUnordered = true, assert)
     }
   }
 }

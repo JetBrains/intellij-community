@@ -1,10 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework.util.tree.assertion
 
-import org.jetbrains.plugins.gradle.testFramework.util.tree.MutableTree
-import org.jetbrains.plugins.gradle.testFramework.util.tree.SimpleTree
-import org.jetbrains.plugins.gradle.testFramework.util.tree.Tree
-import org.jetbrains.plugins.gradle.testFramework.util.tree.getTreeString
+import org.jetbrains.plugins.gradle.testFramework.util.tree.*
 import org.junit.jupiter.api.AssertionFailureBuilder
 
 internal abstract class AbstractTreeAssertion<T>(
@@ -115,11 +112,14 @@ internal abstract class AbstractTreeAssertion<T>(
 
   companion object {
 
-    fun <T> assertTree(actualTree: Tree<T>, assert: TreeAssertion<T>.() -> Unit) {
+    fun <T> assertTree(actualTree: Tree<T>, isUnordered: Boolean, assert: TreeAssertion<T>.() -> Unit) {
       val expectedTree = SimpleTree<NodeMatcher<T>>()
       val assertion = TreeAssertionImpl(actualTree, expectedTree)
       assertion.assert()
-      assertTree(expectedTree, actualTree)
+      when (isUnordered) {
+        true -> assertTree(expectedTree.sortTree(), actualTree.sortedTree())
+        else -> assertTree(expectedTree, actualTree)
+      }
     }
 
     private fun <T> assertTree(expectedTree: Tree<NodeMatcher<T>>, actualTree: Tree<T>) {

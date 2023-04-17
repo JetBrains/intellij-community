@@ -22,7 +22,7 @@ interface TreeAssertion<T> {
 
   companion object {
 
-    fun <T> assertTree(actualTree: Tree<T>, assert: TreeAssertion<T>.() -> Unit) =
-      AbstractTreeAssertion.assertTree(actualTree, assert)
+    fun <T> assertTree(actualTree: Tree<T>, isUnordered: Boolean = false, assert: TreeAssertion<T>.() -> Unit) =
+      AbstractTreeAssertion.assertTree(actualTree, isUnordered, assert)
   }
 }

@@ -189,9 +189,9 @@ class GradleTestEventTest : GradleTestEventTestCase() {
       executeTasks(":test")
       assertTestTreeView {
         assertNode("TestCase") {
+          assertNode("successTest")
           assertNode("failedTest")
           assertNode("ignoredTest")
-          assertNode("successTest")
         }
       }
       assertTestEventCount("TestCase", 1, 1, 0, 0, 0, 0)

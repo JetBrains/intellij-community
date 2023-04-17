@@ -20,11 +20,11 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
 
       assertTestTreeView {
         assertNode("TestCase") {
+          assertNode("test")
+          assertNode("successful test")
+          assertNode("pretty test")
           assertNode("parametrized_test [1] 1, first")
           assertNode("parametrized_test [2] 2, second")
-          assertNode("pretty test")
-          assertNode("successful test")
-          assertNode("test")
           assertNode("ugly_parametrized_test [1] 3, third")
           assertNode("ugly_parametrized_test [2] 4, fourth")
         }
@@ -32,24 +32,24 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
       assertSMTestProxyTree {
         assertNode("TestCase") {
           Assertions.assertEquals("TestCase", value.psiClass.name)
-          assertNode("parametrized_test [1] 1, first") {
-            Assertions.assertEquals("parametrized_test", value.psiMethod.name)
-            Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
-          }
-          assertNode("parametrized_test [2] 2, second") {
-            Assertions.assertEquals("parametrized_test", value.psiMethod.name)
-            Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
-          }
-          assertNode("pretty test") {
-            Assertions.assertEquals("ugly_test", value.psiMethod.name)
+          assertNode("test") {
+            Assertions.assertEquals("test", value.psiMethod.name)
             Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
           }
           assertNode("successful test") {
             Assertions.assertEquals("successful_test", value.psiMethod.name)
             Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
           }
-          assertNode("test") {
-            Assertions.assertEquals("test", value.psiMethod.name)
+          assertNode("pretty test") {
+            Assertions.assertEquals("ugly_test", value.psiMethod.name)
+            Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+          }
+          assertNode("parametrized_test [1] 1, first") {
+            Assertions.assertEquals("parametrized_test", value.psiMethod.name)
+            Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+          }
+          assertNode("parametrized_test [2] 2, second") {
+            Assertions.assertEquals("parametrized_test", value.psiMethod.name)
             Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
           }
           assertNode("ugly_parametrized_test [1] 3, third") {
@@ -76,6 +76,9 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
 
       assertTestTreeView {
         assertNode("TestCase") {
+          assertNode("test")
+          assertNode("successful test")
+          assertNode("pretty test")
           assertNode("parametrized test") {
             assertNode("[1] 1, first")
             assertNode("[2] 2, second")
@@ -84,14 +87,23 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
             assertNode("[1] 3, third")
             assertNode("[2] 4, fourth")
           }
-          assertNode("pretty test")
-          assertNode("successful test")
-          assertNode("test")
         }
       }
       assertSMTestProxyTree {
         assertNode("TestCase") {
           Assertions.assertEquals("TestCase", value.psiClass.name)
+          assertNode("test") {
+            Assertions.assertEquals("test", value.psiMethod.name)
+            Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+          }
+          assertNode("successful test") {
+            Assertions.assertEquals("successful_test", value.psiMethod.name)
+            Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+          }
+          assertNode("pretty test") {
+            Assertions.assertEquals("ugly_test", value.psiMethod.name)
+            Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+          }
           assertNode("parametrized test") {
             if (isSupportedTestLauncher()) {
               // Known bug. See DefaultGradleTestEventConverter.getConvertedMethodName
@@ -122,18 +134,6 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
               Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
             }
           }
-          assertNode("pretty test") {
-            Assertions.assertEquals("ugly_test", value.psiMethod.name)
-            Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
-          }
-          assertNode("successful test") {
-            Assertions.assertEquals("successful_test", value.psiMethod.name)
-            Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
-          }
-          assertNode("test") {
-            Assertions.assertEquals("test", value.psiMethod.name)
-            Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
-          }
         }
       }
     }
@@ -149,17 +149,28 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
       executeTasks(":test")
 
       assertTestTreeView {
+        assertNode("TestCase") {
+          assertNode("test")
+          assertNode("successful_test")
+        }
         assertNode("ParametrizedTestCase") {
           assertNode("parametrized_test[0]")
           assertNode("parametrized_test[1]")
           assertNode("parametrized_test[2]")
         }
-        assertNode("TestCase") {
-          assertNode("successful_test")
-          assertNode("test")
-        }
       }
       assertSMTestProxyTree {
+        assertNode("TestCase") {
+          Assertions.assertEquals("TestCase", value.psiClass.name)
+          assertNode("test") {
+            Assertions.assertEquals("test", value.psiMethod.name)
+            Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+          }
+          assertNode("successful_test") {
+            Assertions.assertEquals("successful_test", value.psiMethod.name)
+            Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+          }
+        }
         assertNode("ParametrizedTestCase") {
           Assertions.assertEquals("ParametrizedTestCase", value.psiClass.name)
           assertNode("parametrized_test[0]") {
@@ -173,17 +184,6 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
           assertNode("parametrized_test[2]") {
             Assertions.assertEquals("parametrized_test", value.psiMethod.name)
             Assertions.assertEquals("ParametrizedTestCase", value.psiMethod.psiClass.name)
-          }
-        }
-        assertNode("TestCase") {
-          Assertions.assertEquals("TestCase", value.psiClass.name)
-          assertNode("successful_test") {
-            Assertions.assertEquals("successful_test", value.psiMethod.name)
-            Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
-          }
-          assertNode("test") {
-            Assertions.assertEquals("test", value.psiMethod.name)
-            Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
           }
         }
       }
@@ -202,14 +202,14 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
       assertTestTreeView {
         assertNode("Gradle suite") {
           assertNode("Gradle test") {
+            assertNode("TestCase", flattenIf = isGradleOlderThan("5.0")) {
+              assertNode("test")
+              assertNode("successful_test")
+            }
             assertNode("ParametrizedTestCase", flattenIf = isGradleOlderThan("5.0")) {
               assertNode("parametrized_test[0](1, first)")
               assertNode("parametrized_test[1](2, second)")
               assertNode("parametrized_test[2](3, third)")
-            }
-            assertNode("TestCase", flattenIf = isGradleOlderThan("5.0")) {
-              assertNode("successful_test")
-              assertNode("test")
             }
           }
         }
@@ -264,16 +264,20 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
 
       assertTestTreeView {
         assertNode("SpockTestCase") {
+          assertNode("success test")
           assertNode("failure test")
           assertNode("length of #name is #length") {
             assertNode("length of Spock is 5")
           }
-          assertNode("success test")
         }
       }
       assertSMTestProxyTree {
         assertNode("SpockTestCase") {
           Assertions.assertEquals("SpockTestCase", value.psiClass.name)
+          assertNode("success test") {
+            Assertions.assertEquals("success test", value.psiMethod.name)
+            Assertions.assertEquals("SpockTestCase", value.psiMethod.psiClass.name)
+          }
           assertNode("failure test") {
             Assertions.assertEquals("failure test", value.psiMethod.name)
             Assertions.assertEquals("SpockTestCase", value.psiMethod.psiClass.name)
@@ -285,10 +289,6 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
               Assertions.assertEquals("length of #name is #length", value.psiMethod.name)
               Assertions.assertEquals("SpockTestCase", value.psiMethod.psiClass.name)
             }
-          }
-          assertNode("success test") {
-            Assertions.assertEquals("success test", value.psiMethod.name)
-            Assertions.assertEquals("SpockTestCase", value.psiMethod.psiClass.name)
           }
         }
       }
