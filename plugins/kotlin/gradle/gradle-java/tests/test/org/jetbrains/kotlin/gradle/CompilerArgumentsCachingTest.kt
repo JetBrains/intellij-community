@@ -281,7 +281,7 @@ class CompilerArgumentsCachingTest {
         moduleName = generateRandomString(20)
         jvmTarget = generateRandomString(20)
         abiStability = generateRandomString(20)
-        javaModulePath = generateRandomString(20)
+        javaModulePath = generateRandomStringArray(20)
         assertionsMode = generateRandomString(20)
         buildFile = generateRandomString(20)
         declarationsOutputPath = generateRandomString(20)
@@ -297,7 +297,7 @@ class CompilerArgumentsCachingTest {
         samConversions = generateRandomString(20)
         lambdas = generateRandomString(20)
 
-        classpath = generateRandomStringArray(20).joinToString(File.pathSeparator)
+        classpath = generateRandomStringArray(20)
 
         scriptTemplates = generateRandomStringArray(10)
         additionalJavaModules = generateRandomStringArray(10)

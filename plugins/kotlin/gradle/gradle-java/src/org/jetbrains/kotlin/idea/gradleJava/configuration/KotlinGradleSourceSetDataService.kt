@@ -384,8 +384,8 @@ private fun getAdditionalVisibleModuleNames(moduleNode: DataNode<ModuleData>, so
 internal fun adjustClasspath(kotlinFacet: KotlinFacet, dependencyClasspath: List<String>) {
     if (dependencyClasspath.isEmpty()) return
     val arguments = kotlinFacet.configuration.settings.compilerArguments as? K2JVMCompilerArguments ?: return
-    val fullClasspath = arguments.classpath?.split(File.pathSeparator) ?: emptyList()
+    val fullClasspath = arguments.classpath.orEmpty()
     if (fullClasspath.isEmpty()) return
-    val newClasspath = fullClasspath - dependencyClasspath
-    arguments.classpath = if (newClasspath.isNotEmpty()) newClasspath.joinToString(File.pathSeparator) else null
+    val newClasspath = fullClasspath.toSet() - dependencyClasspath.toSet()
+    arguments.classpath = if (newClasspath.isNotEmpty()) newClasspath.toTypedArray() else null
 }

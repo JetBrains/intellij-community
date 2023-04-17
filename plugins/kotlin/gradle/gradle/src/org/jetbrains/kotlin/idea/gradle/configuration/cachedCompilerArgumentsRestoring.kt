@@ -1,3 +1,5 @@
+//@file:Suppress("DEPRECATION_ERROR")
+
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradle.configuration
 
@@ -150,7 +152,7 @@ object CachedArgumentsRestoring {
             ?.data
             ?.joinToString(File.pathSeparator)
         when (newCompilerArgumentsBean) {
-            is K2JVMCompilerArguments -> newCompilerArgumentsBean.classpath = classpathValue
+            is K2JVMCompilerArguments -> newCompilerArgumentsBean.classpath = arrayOf(classpathValue!!)
             is K2MetadataCompilerArguments -> newCompilerArgumentsBean.classpath = classpathValue
         }
 
