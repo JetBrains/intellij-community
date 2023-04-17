@@ -79,6 +79,7 @@ internal class GitLabMergeRequestChangesViewModelImpl(
   companion object {
     private fun isSelectionEqual(old: ListSelection<Change>, new: ListSelection<Change>): Boolean {
       if (old.selectedIndex != new.selectedIndex) return false
+      if (old.isExplicitSelection != new.isExplicitSelection) return false
       val oldList = old.list
       val newList = new.list
       if (oldList.size != newList.size) return false
