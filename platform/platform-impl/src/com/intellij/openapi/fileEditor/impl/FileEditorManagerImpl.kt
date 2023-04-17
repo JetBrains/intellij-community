@@ -16,7 +16,6 @@ import com.intellij.featureStatistics.fusCollectors.FileEditorCollector
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.SplitAction
-import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.ui.UISettings
@@ -118,7 +117,6 @@ import java.util.concurrent.atomic.LongAdder
 import javax.swing.JComponent
 import javax.swing.JTabbedPane
 import javax.swing.KeyStroke
-import javax.swing.SwingUtilities
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -1117,18 +1115,10 @@ open class FileEditorManagerImpl(
   }
 
   private fun getEffectiveOptions(options: FileEditorOpenOptions, entry: HistoryEntry?): FileEditorOpenOptions {
-    var effectiveOptions = options
-    if (effectiveOptions.requestFocus) {
-      val activeProject = ProjectUtil.getActiveProject()
-      if (activeProject != null && activeProject != project) {
-        // allow focus switching only within a project
-        effectiveOptions = effectiveOptions.copy(requestFocus = false)
-      }
-    }
     if (entry != null && entry.isPreview) {
-      effectiveOptions = effectiveOptions.copy(usePreviewTab = false)
+      return options.copy(usePreviewTab = false)
     }
-    return effectiveOptions
+    return options
   }
 
   private fun openFileUsingClient(file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite {
@@ -1185,7 +1175,8 @@ open class FileEditorManagerImpl(
 
     // notify editors about selection changes
     val splitters = window.owner
-    splitters.setCurrentWindow(window, options.requestFocus)
+    splitters.setCurrentWindow(window = window, requestFocus = false)
+
     splitters.afterFileOpen(file)
     addSelectionRecord(file, window)
     val selectedEditor = composite.selectedEditor
@@ -1210,24 +1201,20 @@ open class FileEditorManagerImpl(
 
     // transfer focus into editor
     if (options.requestFocus && !ApplicationManager.getApplication().isUnitTestMode) {
-      val focusRunnable = Runnable {
-        if (splitters.currentWindow != window || window.selectedComposite !== composite) {
-          // While the editor was loading asynchronously, the user switched to another editor.
-          // Don't steal focus.
-          return@Runnable
-        }
-        val windowAncestor = SwingUtilities.getWindowAncestor(window.panel)
-        if (windowAncestor != null && windowAncestor == KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow) {
-          composite.preferredFocusedComponent?.requestFocus()
-        }
-      }
       if (selectedEditor is TextEditor) {
-        runWhenLoaded(selectedEditor.editor, focusRunnable)
+        runWhenLoaded(selectedEditor.editor) {
+          // while the editor was loading asynchronously, the user switched to another editor - don't steal focus
+          if (splitters.currentWindow === window && window.selectedComposite === composite) {
+            composite.preferredFocusedComponent?.requestFocusInWindow()
+            IdeFocusManager.getGlobalInstance().toFront(splitters)
+          }
+        }
+
       }
       else {
-        focusRunnable.run()
+        composite.preferredFocusedComponent?.requestFocusInWindow()
+        IdeFocusManager.getGlobalInstance().toFront(splitters)
       }
-      IdeFocusManager.getInstance(project).toFront(splitters)
     }
 
     if (newEditor) {

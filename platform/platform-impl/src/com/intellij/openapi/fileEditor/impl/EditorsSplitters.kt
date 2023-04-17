@@ -664,7 +664,7 @@ open class EditorsSplitters internal constructor(
     require(window == null || windows.contains(window)) { "$window is not a member of this container" }
     setCurrentWindowAndComposite(window)
     if (window != null && requestFocus) {
-      window.requestFocus(true)
+      window.requestFocus(forced = true)
     }
   }
 
