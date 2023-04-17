@@ -17,7 +17,6 @@ import com.intellij.util.text.VersionComparatorUtil
 import org.gradle.tooling.model.UnsupportedMethodException
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
-import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.ManualLanguageFeatureSetting
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -187,19 +186,6 @@ internal fun doCreateSourceSetInfo(
                 }
             }
         }
-
-        compilation.compilerArguments?.let { compilerArguments ->
-            val lazyParsedCompilerArguments = lazy { createCompilerArguments(compilerArguments, compilation.platform) }
-            sourceSetInfo.lazyCompilerArguments = lazyParsedCompilerArguments
-            sourceSetInfo.lazyDefaultCompilerArguments = lazyParsedCompilerArguments
-            sourceSetInfo.lazyDependencyClasspath = lazy {
-                val parsedArguments = lazyParsedCompilerArguments.value
-                if (parsedArguments is K2JVMCompilerArguments) {
-                    parsedArguments.classpath.orEmpty().split(File.pathSeparator)
-                } else emptyList()
-            }
-        }
-
         sourceSetInfo.addSourceSets(compilation.allSourceSets, compilation.fullName(), gradleModule, resolverCtx)
     }
 }

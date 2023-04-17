@@ -21,18 +21,9 @@ object CompilerArgumentsExtractor {
         val compileTaskClass = compileTask.javaClass
         val compilerArguments = compileTask[CREATE_COMPILER_ARGS]!!
         compileTaskClass.getMethodOrNull(SETUP_COMPILER_ARGS, compilerArguments::class.java, Boolean::class.java, Boolean::class.java)
-            ?.doSetupCompilerArgs(
-                compileTask = compileTask,
-                compilerArgs = compilerArguments,
-                defaultsOnly = defaultsOnly,
-                ignoreClasspathIssues = false
-            )
+            ?.doSetupCompilerArgs(compileTask, compilerArguments, defaultsOnly, false)
             ?: compileTaskClass.getMethodOrNull(SETUP_COMPILER_ARGS, compilerArguments::class.java, Boolean::class.java)
-                ?.doSetupCompilerArgs(
-                    compileTask = compileTask,
-                    compilerArgs = compilerArguments,
-                    defaultsOnly = defaultsOnly
-                )
+                ?.doSetupCompilerArgs(compileTask, compilerArguments, defaultsOnly)
 
         return prepareCompilerArgumentsBucket(compilerArguments)
     }

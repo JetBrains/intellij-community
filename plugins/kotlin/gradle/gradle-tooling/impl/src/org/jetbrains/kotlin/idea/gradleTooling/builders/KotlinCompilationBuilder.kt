@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinCompilationOutputRe
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinCompilationReflection
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinNativeCompileReflection
 import org.jetbrains.kotlin.idea.gradleTooling.IdeaKotlinExtras
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinCompilerArgumentsResolverReflection
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilationOutput
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
@@ -43,30 +42,14 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
             .flatMap { sourceSet -> importingContext.resolveAllDependsOnSourceSets(sourceSet) }
             .union(kotlinSourceSets)
 
-        val compilerArgumentsResolverReflection = KotlinCompilerArgumentsResolverReflection(importingContext.kotlinExtensionReflection)
-        val compilerArguments = compilerArgumentsResolverReflection?.resolveCompilerArguments(origin.gradleCompilation)
-            ?.map { argument -> importingContext.interner.getOrPut(argument) }
-
-        val cachedArgsInfo = if (compilerArgumentsResolverReflection == null || compilerArguments == null) {
-            /* This code block is not expected to be executed in 1.9.20 or higher */
-            importingContext.kotlinGradlePluginVersion?.let { kotlinGradlePluginVersion ->
-                if (kotlinGradlePluginVersion >= "1.9.20-Beta") {
-                    logger.warn(
-                        "w: Failed resolving Compiler Arguments on '${origin.gradleCompilation}' using 'KotlinCompilerArgumentsResolver'"
-                    )
-                }
-            }
-            if (compileKotlinTask.isCompilerArgumentAware
-                //TODO hotfix for KTIJ-21807.
-                // Remove after proper implementation of org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile#setupCompilerArgs
-                && !compileKotlinTask.isKotlinNativeCompileTask //TODO hotfix for KTIJ-21807. Replace after
-            )
-                buildCachedArgsInfo(compileKotlinTask, importingContext.compilerArgumentsCacheMapper)
-            else
-                buildSerializedArgsInfo(compileKotlinTask, importingContext.compilerArgumentsCacheMapper, logger)
-        } else {
-            null
-        }
+        val cachedArgsInfo = if (compileKotlinTask.isCompilerArgumentAware
+            //TODO hotfix for KTIJ-21807.
+            // Remove after proper implementation of org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile#setupCompilerArgs
+            && !compileKotlinTask.isKotlinNativeCompileTask //TODO hotfix for KTIJ-21807. Replace after
+        )
+            buildCachedArgsInfo(compileKotlinTask, importingContext.compilerArgumentsCacheMapper)
+        else
+            buildSerializedArgsInfo(compileKotlinTask, importingContext.compilerArgumentsCacheMapper, logger)
 
         val associateCompilations = origin.associateCompilations.mapNotNull { associateCompilation ->
             KotlinCompilationCoordinatesImpl(
@@ -84,9 +67,9 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
             declaredSourceSets = kotlinSourceSets,
             dependencies = dependencies.map { importingContext.dependencyMapper.getId(it) }.distinct().toTypedArray(),
             output = output,
+            arguments = KotlinCompilationArgumentsImpl(emptyArray(), emptyArray()),
             dependencyClasspath = emptyArray(),
             cachedArgsInfo = cachedArgsInfo,
-            compilerArguments = compilerArguments,
             kotlinTaskProperties = kotlinTaskProperties,
             nativeExtensions = nativeExtensions,
             associateCompilations = associateCompilations.toSet(),

@@ -24,6 +24,14 @@ interface KotlinCompilation : KotlinComponent, HasMutableExtras {
 
     val output: KotlinCompilationOutput
 
+    @Suppress("DEPRECATION_ERROR")
+    @Deprecated(
+        "Raw compiler arguments are not available anymore",
+        ReplaceWith("cachedArgsInfo#currentCompilerArguments or cachedArgsInfo#defaultCompilerArguments"),
+        level = DeprecationLevel.ERROR
+    )
+    val arguments: KotlinCompilationArguments
+
     @Deprecated(
         "Raw dependency classpath is not available anymore",
         ReplaceWith("cachedArgsInfo#dependencyClasspath"),
@@ -31,10 +39,7 @@ interface KotlinCompilation : KotlinComponent, HasMutableExtras {
     )
     val dependencyClasspath: Array<String>
 
-    val cachedArgsInfo: CachedArgsInfo<*>?
-
-    val compilerArguments: List<String>?
-
+    val cachedArgsInfo: CachedArgsInfo<*>
     val disambiguationClassifier: String?
     val platform: KotlinPlatform
     val kotlinTaskProperties: KotlinTaskProperties
