@@ -37,7 +37,6 @@ internal class PhmVcsLogStorageBackend(
   storage: VcsLogStorage,
   roots: Set<VirtualFile>,
   userRegistry: VcsUserRegistry,
-  storageLockContext: StorageLockContext,
   private val errorHandler: VcsLogErrorHandler,
   disposable: Disposable,
 ) : VcsLogStorageBackend {
@@ -58,6 +57,8 @@ internal class PhmVcsLogStorageBackend(
   override var isFresh = false
 
   init {
+    val storageLockContext = StorageLockContext()
+
     val messagesStorage = storageId.getStorageFile("messages")
     isFresh = !Files.exists(messagesStorage)
 

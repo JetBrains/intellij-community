@@ -19,7 +19,6 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.StorageLockContext;
 import com.intellij.vcs.log.VcsLogProperties;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsUserRegistry;
@@ -325,8 +324,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
           store = (VcsLogStorageBackend)storage;
         }
         else {
-          StorageLockContext storageLockContext = new StorageLockContext();
-          store = new PhmVcsLogStorageBackend(indexStorageId, storage, roots, userRegistry, storageLockContext, errorHandler, this);
+          store = new PhmVcsLogStorageBackend(indexStorageId, storage, roots, userRegistry, errorHandler, this);
         }
 
         reportEmpty();
