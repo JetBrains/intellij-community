@@ -8,16 +8,18 @@ import com.intellij.openapi.ListSelection
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.util.childScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestChanges
+import org.jetbrains.plugins.gitlab.mergerequest.diff.isEqual
 
 internal interface GitLabMergeRequestChangesViewModel : CodeReviewChangesViewModel<GitLabCommitDTO> {
   val changesResult: Flow<Result<Collection<Change>>>
 
-  val userChangesSelection: StateFlow<ListSelection<Change>>
+  val userChangesSelection: Flow<ListSelection<Change>>
   val changeSelectionRequests: Flow<Change>
 
   fun selectChange(change: Change)
@@ -45,8 +47,10 @@ internal class GitLabMergeRequestChangesViewModelImpl(
       }
     }.modelFlow(cs, thisLogger())
 
-  private val _userChangesSelection = MutableStateFlow<ListSelection<Change>>(ListSelection.empty())
-  override val userChangesSelection: StateFlow<ListSelection<Change>> = _userChangesSelection.asStateFlow()
+  private val _userChangesSelection = MutableSharedFlow<ListSelection<Change>>()
+  override val userChangesSelection: Flow<ListSelection<Change>> = _userChangesSelection.asSharedFlow().distinctUntilChanged { old, new ->
+    isSelectionEqual(old, new)
+  }
 
   private val _changeSelectionRequests = MutableSharedFlow<Change>()
   override val changeSelectionRequests: Flow<Change> = _changeSelectionRequests.asSharedFlow()
@@ -65,8 +69,8 @@ internal class GitLabMergeRequestChangesViewModelImpl(
   }
 
   override fun updateChangesSelectedByUser(changes: ListSelection<Change>) {
-    _userChangesSelection.update {
-      if (isSelectionEqual(it, changes)) it else changes
+    cs.launch {
+      _userChangesSelection.emit(changes)
     }
   }
 
@@ -85,26 +89,6 @@ internal class GitLabMergeRequestChangesViewModelImpl(
       if (oldList.size != newList.size) return false
 
       return oldList.isEqual(newList)
-    }
-
-    private fun Collection<Change>.isEqual(other: Collection<Change>): Boolean =
-      equalsVia(other) { o1, o2 ->
-        o1 == o2 &&
-        o1.beforeRevision == o2.beforeRevision &&
-        o1.afterRevision == o2.afterRevision
-      }
-
-    private fun <E> Collection<E>.equalsVia(other: Collection<E>, isEqual: (E, E) -> Boolean): Boolean {
-      if (other === this) return true
-      val i1 = iterator()
-      val i2 = other.iterator()
-
-      while (i1.hasNext() && i2.hasNext()) {
-        val e1 = i1.next()
-        val e2 = i2.next()
-        if (!isEqual(e1, e2)) return false
-      }
-      return !(i1.hasNext() || i2.hasNext())
     }
   }
 }

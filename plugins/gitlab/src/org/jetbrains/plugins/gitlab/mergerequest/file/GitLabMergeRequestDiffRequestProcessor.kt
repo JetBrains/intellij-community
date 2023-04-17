@@ -5,6 +5,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.file
 import com.intellij.collaboration.ui.codereview.diff.MutableDiffRequestChainProcessor
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.diff.chains.DiffRequestChain
+import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.requests.ErrorDiffRequest
@@ -27,6 +28,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabLazyProject
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestChanges
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
+import org.jetbrains.plugins.gitlab.mergerequest.diff.ChangesSelection
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffBridge
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffReviewViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffReviewViewModelImpl
@@ -53,7 +55,7 @@ fun createMergeRequestDiffRequestProcessor(project: Project,
   uiCs.launch(start = CoroutineStart.UNDISPATCHED) {
     projectData.mergeRequests.getShared(mergeRequestId).flatMapLatest { res ->
       res.fold(
-        onSuccess = { diffBridge.changes.mapToDiffChain(project, it.changes) },
+        onSuccess = { diffBridge.displayedChanges.mapToDiffChain(project, it.changes) },
         onFailure = { flowOf(SimpleDiffRequestChain(ErrorDiffRequest(it))) }
       )
     }.collectLatest {
@@ -78,10 +80,10 @@ fun createMergeRequestDiffRequestProcessor(project: Project,
   return processor
 }
 
-private fun Flow<ListSelection<Change>?>.mapToDiffChain(project: Project, changesFlow: Flow<GitLabMergeRequestChanges>)
+private fun Flow<ChangesSelection>.mapToDiffChain(project: Project, changesFlow: Flow<GitLabMergeRequestChanges>)
   : Flow<DiffRequestChain?> =
   combineTransformLatest(this, changesFlow) { selection, changes ->
-    if (selection == null || selection.isEmpty) {
+    if (selection.changes.isEmpty()) {
       emit(null)
       return@combineTransformLatest
     }
@@ -97,9 +99,9 @@ private fun Flow<ListSelection<Change>?>.mapToDiffChain(project: Project, change
       return@combineTransformLatest
     }
 
-    val producers = selection.map {
-      val changeDataKeys = createData(changesBundle, it)
-      ChangeDiffRequestProducer.create(project, it, changeDataKeys)
+    val producers = selection.toProducersSelection { change ->
+      val changeDataKeys = createData(changesBundle, change)
+      ChangeDiffRequestProducer.create(project, change, changeDataKeys)
     }
 
     emit(producers.let(SimpleDiffRequestChain::fromProducers))
@@ -139,3 +141,18 @@ private inline fun <reified T1, reified T2, R> combineTransformLatest(
     .transformLatest { (v1, v2) ->
       transform(v1, v2)
     }
+
+private fun ChangesSelection.toProducersSelection(mapper: (Change) -> DiffRequestProducer?)
+  : ListSelection<out DiffRequestProducer> = when (this) {
+  is ChangesSelection.Multiple -> ListSelection.createAt(changes.mapNotNull(mapper), 0).asExplicitSelection()
+  is ChangesSelection.Single -> {
+    var newSelectionIndex = -1
+    val result = mutableListOf<DiffRequestProducer>()
+    for (i in changes.indices) {
+      if (i == selectedIdx) newSelectionIndex = result.size
+      val out = mapper(changes[i])
+      if (out != null) result.add(out)
+    }
+    ListSelection.createAt(result, newSelectionIndex)
+  }
+}

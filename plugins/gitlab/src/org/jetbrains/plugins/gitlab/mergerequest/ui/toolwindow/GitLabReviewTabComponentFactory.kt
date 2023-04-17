@@ -24,6 +24,9 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
+import org.jetbrains.plugins.gitlab.mergerequest.diff.ChangesSelection
+import org.jetbrains.plugins.gitlab.mergerequest.diff.ChangesSelection.Companion.toSelection
+import org.jetbrains.plugins.gitlab.mergerequest.diff.isEqual
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContext
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContextHolder
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestDetailsComponentFactory
@@ -87,15 +90,17 @@ internal class GitLabReviewTabComponentFactory(
       detailsVmFlow.flatMapLatest {
         it.changesVm.userChangesSelection
       }.collectLatest {
-        diffBridge.setChanges(it)
+        diffBridge.setChanges(it.toSelection())
       }
     }
 
     cs.launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
       detailsVmFlow.collectLatest { detailsVm ->
-        diffBridge.changes.collectLatest { changes ->
-          if (!changes.isExplicitSelection) {
-            diffBridge.selectedChange.filterNotNull().collect {
+        diffBridge.displayedChanges.collectLatest { changes ->
+          if (changes !is ChangesSelection.Multiple) {
+            diffBridge.selectedChange.distinctUntilChanged { old, new ->
+              if (old == null || new == null) false else old.isEqual(new)
+            }.filterNotNull().collect {
               detailsVm.changesVm.selectChange(it)
             }
           }
