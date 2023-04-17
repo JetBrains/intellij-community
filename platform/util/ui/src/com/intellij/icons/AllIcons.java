@@ -399,6 +399,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Htaccess = load("fileTypes/htaccess.svg", -2088610418, 0);
     /** 16x16 */ public static final @NotNull Icon Html = load("fileTypes/html.svg", -1577865559, 0);
     /** 16x16 */ public static final @NotNull Icon Idl = load("fileTypes/idl.svg", -219435872, 0);
+    /** 16x16 */ public static final @NotNull Icon Image = load("fileTypes/image.svg", -1773595662, 0);
     /** 16x16 */ public static final @NotNull Icon Java = load("fileTypes/java.svg", 1910963991, 0);
     /** 16x16 */ public static final @NotNull Icon JavaClass = load("fileTypes/javaClass.svg", 1466981955, 0);
     /** 16x16 */ public static final @NotNull Icon JavaOutsideSource = load("fileTypes/javaOutsideSource.svg", -223692720, 0);

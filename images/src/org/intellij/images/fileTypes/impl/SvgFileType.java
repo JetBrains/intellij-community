@@ -1,10 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.images.fileTypes.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.XmlLikeFileType;
 import com.intellij.openapi.fileTypes.UIBasedFileType;
-import org.intellij.images.ImagesIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,6 +46,6 @@ public final class SvgFileType extends XmlLikeFileType implements UIBasedFileTyp
 
   @Override
   public Icon getIcon() {
-    return ImagesIcons.ImagesFileType;
+    return AllIcons.FileTypes.Image;
   }
 }

@@ -181,6 +181,7 @@
         "fileTypes/custom.svg",
         "fileTypes/text.svg"
       ],
+      "image.svg": "fileTypes/image.svg",
       "unknown.svg": "fileTypes/unknown.svg",
       "velocity.svg": "icons/velocity.svg",
       "vueJs.svg": "icons/vue.svg",

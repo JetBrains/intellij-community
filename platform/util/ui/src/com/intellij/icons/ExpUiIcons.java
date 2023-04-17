@@ -173,6 +173,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon IdeaModule = load("expui/fileTypes/ideaModule.svg", 1417127557, 2);
     /** 16x16 */ public static final @NotNull Icon Idl = load("expui/fileTypes/idl.svg", -1553952385, 2);
     /** 16x16 */ public static final @NotNull Icon Ignored = load("expui/fileTypes/ignored.svg", -676991736, 2);
+    /** 16x16 */ public static final @NotNull Icon Image = load("expui/fileTypes/image.svg", -1705666596, 2);
     /** 16x16 */ public static final @NotNull Icon Java = load("expui/fileTypes/java.svg", 1155678562, 2);
     /** 16x16 */ public static final @NotNull Icon JavaScript = load("expui/fileTypes/javaScript.svg", 390154029, 2);
     /** 16x16 */ public static final @NotNull Icon Jest = load("expui/fileTypes/jest.svg", -2044269766, 0);
