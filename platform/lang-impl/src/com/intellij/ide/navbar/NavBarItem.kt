@@ -2,8 +2,8 @@
 package com.intellij.ide.navbar
 
 import com.intellij.model.Pointer
-import com.intellij.navigation.NavigationRequest
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 

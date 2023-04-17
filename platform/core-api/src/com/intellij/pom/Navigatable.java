@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pom;
 
-import com.intellij.navigation.NavigationRequest;
-import com.intellij.navigation.NavigationRequests;
+import com.intellij.platform.backend.navigation.NavigationRequest;
+import com.intellij.platform.backend.navigation.NavigationRequests;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus.Experimental;

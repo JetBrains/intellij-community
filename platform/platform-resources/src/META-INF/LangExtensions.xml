@@ -242,8 +242,8 @@
     <applicationService serviceInterface="com.intellij.psi.stubs.StubTreeLoader"
                         serviceImplementation="com.intellij.psi.stubs.StubTreeLoaderImpl"/>
 
-    <applicationService serviceInterface="com.intellij.navigation.NavigationRequests"
-                        serviceImplementation="com.intellij.navigation.impl.NavigationRequestsImpl"/>
+    <applicationService serviceInterface="com.intellij.platform.backend.navigation.NavigationRequests"
+                        serviceImplementation="com.intellij.platform.backend.navigation.impl.NavigationRequestsImpl"/>
     <applicationService serviceInterface="com.intellij.ide.util.PsiNavigationSupport"
                         serviceImplementation="com.intellij.ide.util.PsiNavigationSupportImpl"/>
 

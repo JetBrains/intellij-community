@@ -1,8 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.navigation.impl
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.backend.navigation.impl
 
-import com.intellij.navigation.NavigationRequest
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDirectory
 import org.jetbrains.annotations.ApiStatus.Internal

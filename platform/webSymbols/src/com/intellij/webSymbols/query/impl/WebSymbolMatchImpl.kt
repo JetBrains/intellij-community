@@ -2,9 +2,9 @@
 package com.intellij.webSymbols.query.impl
 
 import com.intellij.model.Pointer
-import com.intellij.navigation.NavigationTarget
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.WebSymbol.Priority

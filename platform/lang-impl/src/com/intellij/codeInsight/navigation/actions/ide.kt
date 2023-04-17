@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.actions
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -13,16 +13,16 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.idea.ActionsBundle
 import com.intellij.lang.LanguageNamesValidation
-import com.intellij.navigation.NavigationRequest
-import com.intellij.navigation.impl.DirectoryNavigationRequest
-import com.intellij.navigation.impl.RawNavigationRequest
-import com.intellij.navigation.impl.SourceNavigationRequest
 import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.backend.navigation.NavigationRequest
+import com.intellij.platform.backend.navigation.impl.DirectoryNavigationRequest
+import com.intellij.platform.backend.navigation.impl.RawNavigationRequest
+import com.intellij.platform.backend.navigation.impl.SourceNavigationRequest
 import com.intellij.psi.PsiFile
 import com.intellij.util.ui.EDT
 import java.awt.event.MouseEvent

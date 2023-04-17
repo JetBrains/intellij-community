@@ -3,6 +3,7 @@ package com.intellij.navigation;
 
 import com.intellij.model.Symbol;
 import com.intellij.openapi.project.Project;
+import com.intellij.platform.backend.navigation.NavigationTarget;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.ApiStatus.OverrideOnly;
 import org.jetbrains.annotations.NotNull;

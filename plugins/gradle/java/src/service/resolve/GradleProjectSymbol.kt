@@ -5,10 +5,10 @@ import com.intellij.find.usages.api.SearchTarget
 import com.intellij.find.usages.api.UsageHandler
 import com.intellij.model.Pointer
 import com.intellij.navigation.NavigatableSymbol
-import com.intellij.navigation.NavigationTarget
 import com.intellij.navigation.SymbolNavigationService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import org.jetbrains.annotations.ApiStatus.Internal

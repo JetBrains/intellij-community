@@ -9,8 +9,6 @@ import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.projectView.impl.ProjectRootsUtil
 import com.intellij.model.Pointer
 import com.intellij.model.Pointer.hardPointer
-import com.intellij.navigation.NavigationRequest
-import com.intellij.navigation.NavigationRequests
 import com.intellij.openapi.editor.colors.CodeInsightColors.ERRORS_ATTRIBUTES
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.module.Module
@@ -27,6 +25,8 @@ import com.intellij.openapi.roots.OrderEntry
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.navigation.NavigationRequest
+import com.intellij.platform.backend.navigation.NavigationRequests
 import com.intellij.pom.Navigatable
 import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.psi.*

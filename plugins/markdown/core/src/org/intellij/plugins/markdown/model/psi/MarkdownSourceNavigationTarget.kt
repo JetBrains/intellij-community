@@ -1,10 +1,10 @@
 package org.intellij.plugins.markdown.model.psi
 
 import com.intellij.model.Pointer
-import com.intellij.navigation.NavigationRequest
-import com.intellij.navigation.NavigationRequests
-import com.intellij.navigation.NavigationTarget
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.navigation.NavigationRequest
+import com.intellij.platform.backend.navigation.NavigationRequests
+import com.intellij.platform.backend.navigation.NavigationTarget
 
 internal abstract class MarkdownSourceNavigationTarget(
   private val file: VirtualFile,
