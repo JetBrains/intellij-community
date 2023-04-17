@@ -6,11 +6,16 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.execution.PsiLocation
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.PopupChooserBuilder
 import com.intellij.psi.PsiFile
+import com.intellij.testFramework.replaceService
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.popup.PopupFactoryImpl
+import com.intellij.util.application
 import org.jetbrains.kotlin.gradle.GradleDaemonAnalyzerTestCase
 import org.jetbrains.kotlin.gradle.checkFiles
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
@@ -18,11 +23,20 @@ import org.jetbrains.kotlin.idea.test.TagsTestDataUtil
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.junit.Test
+import java.awt.Point
 import java.io.File
+import javax.swing.JList
 
 class GradleTestRunConfigurationAndHighlightingTest23 : KotlinGradleImportingTestCase() {
     @Test
     fun testExpectClassWithTests() {
+        enableExperimentalMPP(true)
+        doTest()
+    }
+
+    @Test
+    fun testMultiplatformInheritedTests() {
+        mockInheritorPopup()
         enableExperimentalMPP(true)
         doTest()
     }
@@ -147,6 +161,16 @@ class GradleTestRunConfigurationAndHighlightingTest23 : KotlinGradleImportingTes
         val context = ConfigurationContext.createEmptyContextForLocation(location)
 
         return context.configurationsFromContext.orEmpty()
+    }
+
+    private fun mockInheritorPopup() {
+        application.replaceService(
+            JBPopupFactory::class.java, object : PopupFactoryImpl() {
+                override fun <T : Any?> createPopupChooserBuilder(list: MutableList<out T>) = PopupChooserBuilder<T>(JList())
+                override fun guessBestPopupLocation(dataContext: DataContext) = RelativePoint(Point())
+            },
+            testRootDisposable
+        )
     }
 
     override fun testDataDirName(): String = "multiplatform/testRunConfigurations"
