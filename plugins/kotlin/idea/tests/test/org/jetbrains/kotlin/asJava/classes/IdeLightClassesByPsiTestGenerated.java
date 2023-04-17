@@ -146,6 +146,11 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
             super.setUp();
         }
 
+        @TestMetadata("allowedTargets.kt")
+        public void testAllowedTargets() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/allowedTargets.kt"));
+        }
+
         @TestMetadata("annotationWithSetParamPropertyModifier.kt")
         public void testAnnotationWithSetParamPropertyModifier() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/annotationWithSetParamPropertyModifier.kt"));
