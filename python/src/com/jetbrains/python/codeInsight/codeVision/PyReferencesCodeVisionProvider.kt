@@ -76,7 +76,7 @@ class PyReferencesCodeVisionProvider : ReferencesCodeVisionProvider() {
     if (result == 0 && dynamicResult == 0) return null
     if (dynamicResult == 0 || result > limit) {
       return CodeVisionInfo(PyBundle.message("inlay.hints.usages.text", min(result, limit), if (result > limit) 1 else 0),
-                            result, false)
+                            result, result <= limit)
     }
     return CodeVisionInfo(PyBundle.message("inlay.hints.usages.with.dynamic.text", result, dynamicResult), dynamicResult)
   }
