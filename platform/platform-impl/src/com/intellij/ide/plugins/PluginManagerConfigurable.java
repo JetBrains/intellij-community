@@ -780,6 +780,15 @@ public final class PluginManagerConfigurable
 
                   myMarketplaceSortByAction.setText(title);
                   result.addRightAction(myMarketplaceSortByAction);
+
+
+                  Collection<IdeaPluginDescriptor> updates = PluginUpdatesService.getUpdates();
+                  if (!ContainerUtil.isEmpty(updates)) {
+                    myPostFillGroupCallback = () -> {
+                      applyUpdates(myPanel, updates);
+                      selectionListener.accept(myMarketplacePanel);
+                    };
+                  }
                 }
               }
               catch (IOException e) {
