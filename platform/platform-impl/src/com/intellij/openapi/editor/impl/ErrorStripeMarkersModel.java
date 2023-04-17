@@ -104,8 +104,8 @@ final class ErrorStripeMarkersModel {
       }
 
       @Override
-      public void afterRemoved(@NotNull RangeHighlighterEx highlighter) {
-        ErrorStripeMarkersModel.this.afterRemoved(highlighter, documentMarkupModel);
+      public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+        ErrorStripeMarkersModel.this.beforeRemoved(highlighter, documentMarkupModel);
       }
 
       @Override
@@ -121,7 +121,7 @@ final class ErrorStripeMarkersModel {
     }
   }
 
-  private void afterRemoved(@NotNull RangeHighlighterEx highlighter, boolean documentMarkupModel) {
+  private void beforeRemoved(@NotNull RangeHighlighterEx highlighter, boolean documentMarkupModel) {
     ErrorStripeMarkerImpl errorStripeMarker = findErrorStripeMarker(highlighter, false);
     if (errorStripeMarker != null) {
       removeErrorStripeMarker(errorStripeMarker);
@@ -197,6 +197,7 @@ final class ErrorStripeMarkersModel {
     }
   }
 
+  @NotNull
   MarkupIterator<RangeHighlighterEx> highlighterIterator(int startOffset, int endOffset) {
     return new HighlighterIterator(startOffset, endOffset);
   }
