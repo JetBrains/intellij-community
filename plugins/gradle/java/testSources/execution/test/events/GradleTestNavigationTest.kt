@@ -2,10 +2,7 @@
 package org.jetbrains.plugins.gradle.execution.test.events
 
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
-import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
@@ -16,7 +13,7 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
   @TargetVersions("4.7 <=> 7.0")
   @AllGradleVersionsSource
   fun `test display name and navigation with Java and Junit 5 OLD`(gradleVersion: GradleVersion) {
-    testJavaProject(gradleVersion) {
+    testJunit5Project(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", JAVA_PARAMETRISED_JUNIT5_TEST)
 
       executeTasks(":test")
@@ -72,7 +69,7 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
   @TargetVersions("7.0+")
   @AllGradleVersionsSource
   fun `test display name and navigation with Java and Junit 5`(gradleVersion: GradleVersion) {
-    testJavaProject(gradleVersion) {
+    testJunit5Project(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", JAVA_PARAMETRISED_JUNIT5_TEST)
 
       executeTasks(":test")
@@ -145,7 +142,7 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test display name and navigation with Java and Junit 4`(gradleVersion: GradleVersion) {
-    test(gradleVersion, JAVA_JUNIT4_FIXTURE) {
+    testJunit4Project(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", JAVA_JUNIT4_TEST)
       writeText("src/test/java/org/example/ParametrizedTestCase.java", JAVA_PARAMETRIZED_JUNIT4_TEST)
 
@@ -197,7 +194,7 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
   @TargetVersions("<5.0")
   @AllGradleVersionsSource
   fun `test display name and navigation with Java and Test NG OLD`(gradleVersion: GradleVersion) {
-    test(gradleVersion, JAVA_TESTNG_FIXTURE) {
+    testTestNGProject(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", JAVA_TESTNG_TEST)
       writeText("src/test/java/org/example/ParametrizedTestCase.java", JAVA_PARAMETRIZED_TESTNG_TEST)
 
@@ -247,7 +244,7 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
   @TargetVersions("5.0+")
   @AllGradleVersionsSource
   fun `test display name and navigation with Java and Test NG`(gradleVersion: GradleVersion) {
-    test(gradleVersion, JAVA_TESTNG_FIXTURE) {
+    testTestNGProject(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", JAVA_TESTNG_TEST)
       writeText("src/test/java/org/example/ParametrizedTestCase.java", JAVA_PARAMETRIZED_TESTNG_TEST)
 
@@ -307,7 +304,7 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
   @TargetVersions("5.6+")
   @AllGradleVersionsSource
   fun `test display name and navigation with Groovy and Spock`(gradleVersion: GradleVersion) {
-    test(gradleVersion, GROOVY_SPOCK_FIXTURE) {
+    testSpockProject(gradleVersion) {
       writeText("src/test/groovy/org/example/SpockTestCase.groovy", GROOVY_CLASS_WITH_SPOCK_TESTS)
 
       executeTasks(":test")
@@ -346,49 +343,6 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
   }
 
   companion object {
-
-    private val JAVA_JUNIT4_FIXTURE = GradleTestFixtureBuilder.create("GradleTestNavigationTest-java-junit4") { gradleVersion ->
-      withSettingsFile {
-        setProjectName("GradleTestNavigationTest-java-junit4")
-      }
-      withBuildFile(gradleVersion) {
-        withJavaPlugin()
-        withJUnit4()
-      }
-      withDirectory("src/main/java")
-      withDirectory("src/test/java")
-    }
-
-    private val JAVA_TESTNG_FIXTURE = GradleTestFixtureBuilder.create("GradleTestNavigationTest-java-testng") { gradleVersion ->
-      withSettingsFile {
-        setProjectName("GradleTestNavigationTest-java-testng")
-      }
-      withBuildFile(gradleVersion) {
-        withJavaPlugin()
-        withMavenCentral()
-        addImplementationDependency("org.slf4j:slf4j-log4j12:2.0.5")
-        addTestImplementationDependency("org.testng:testng:7.5")
-        configureTestTask {
-          call("useTestNG")
-        }
-      }
-      withDirectory("src/main/java")
-      withDirectory("src/test/java")
-    }
-
-    private val GROOVY_SPOCK_FIXTURE = GradleTestFixtureBuilder.create("GradleTestNavigationTest-groovy-spock") { gradleVersion ->
-      withSettingsFile {
-        setProjectName("GradleTestNavigationTest-groovy-spock")
-      }
-      withBuildFile(gradleVersion) {
-        withGroovyPlugin("3.0.0")
-        addTestImplementationDependency(call("platform", "org.spockframework:spock-bom:2.1-groovy-3.0"))
-        addTestImplementationDependency("org.spockframework:spock-core:2.1-groovy-3.0")
-        withJUnit()
-      }
-      withDirectory("src/main/groovy")
-      withDirectory("src/test/groovy")
-    }
 
     private val JAVA_PARAMETRISED_JUNIT5_TEST = """
       |package org.example;

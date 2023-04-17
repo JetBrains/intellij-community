@@ -2,10 +2,7 @@
 package org.jetbrains.kotlin.idea.test.events.gradle
 
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
-import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
@@ -16,7 +13,7 @@ class KotlinGradleTestNavigationTest : KotlinGradleTestNavigationTestCase() {
     @TargetVersions("5.6.2 <=> 7.0")
     @AllGradleVersionsSource
     fun `test display name and navigation with Kotlin and Junit 5 OLD`(gradleVersion: GradleVersion) {
-        testKotlinProject(gradleVersion) {
+        testKotlinJunit5Project(gradleVersion) {
             writeText("src/test/kotlin/org/example/TestCase.kt", KOTLIN_CLASS_WITH_PARAMETRISED_JUNIT5_TESTS)
 
             executeTasks(":test")
@@ -72,7 +69,7 @@ class KotlinGradleTestNavigationTest : KotlinGradleTestNavigationTestCase() {
     @TargetVersions("7.0+")
     @AllGradleVersionsSource
     fun `test display name and navigation with Kotlin and Junit 5`(gradleVersion: GradleVersion) {
-        testKotlinProject(gradleVersion) {
+        testKotlinJunit5Project(gradleVersion) {
             writeText("src/test/kotlin/org/example/TestCase.kt", KOTLIN_CLASS_WITH_PARAMETRISED_JUNIT5_TESTS)
 
             executeTasks(":test")
@@ -146,7 +143,7 @@ class KotlinGradleTestNavigationTest : KotlinGradleTestNavigationTestCase() {
     @TargetVersions("5.6.2+")
     @AllGradleVersionsSource
     fun `test display name and navigation with Kotlin and Junit 4`(gradleVersion: GradleVersion) {
-        test(gradleVersion, KOTLIN_JUNIT4_FIXTURE) {
+        testKotlinJunit4Project(gradleVersion) {
             writeText("src/test/kotlin/org/example/TestCase.kt", KOTLIN_JUNIT4_TEST)
             writeText("src/test/kotlin/org/example/ParametrizedTestCase.kt", KOTLIN_PARAMETRIZED_JUNIT4_TEST)
 
@@ -198,7 +195,7 @@ class KotlinGradleTestNavigationTest : KotlinGradleTestNavigationTestCase() {
     @TargetVersions("5.6.2+")
     @AllGradleVersionsSource
     fun `test display name and navigation with Kotlin and Test NG`(gradleVersion: GradleVersion) {
-        test(gradleVersion, KOTLIN_TESTNG_FIXTURE) {
+        testKotlinTestNGProject(gradleVersion) {
             writeText("src/test/kotlin/org/example/TestCase.kt", KOTLIN_TESTNG_TEST)
             writeText("src/test/kotlin/org/example/ParametrizedTestCase.kt", KOTLIN_PARAMETRIZED_TESTNG_TEST)
 
@@ -255,36 +252,6 @@ class KotlinGradleTestNavigationTest : KotlinGradleTestNavigationTestCase() {
     }
 
     companion object {
-
-        private val KOTLIN_JUNIT4_FIXTURE =
-            GradleTestFixtureBuilder.create("KotlinGradleTestNavigationTest-kotlin-junit4") { gradleVersion ->
-                withSettingsFile {
-                    setProjectName("KotlinGradleTestNavigationTest-kotlin-junit4")
-                }
-                withBuildFile(gradleVersion) {
-                    withKotlinJvmPlugin()
-                    withJUnit4()
-                }
-                withDirectory("src/main/kotlin")
-                withDirectory("src/test/kotlin")
-            }
-
-        private val KOTLIN_TESTNG_FIXTURE = GradleTestFixtureBuilder.create("KotlinGradleTestNavigationTest-kotlin-testng") { gradleVersion ->
-            withSettingsFile {
-                setProjectName("KotlinGradleTestNavigationTest-kotlin-testng")
-            }
-            withBuildFile(gradleVersion) {
-                withKotlinJvmPlugin()
-                withMavenCentral()
-                addImplementationDependency("org.slf4j:slf4j-log4j12:2.0.5")
-                addTestImplementationDependency("org.testng:testng:7.5")
-                configureTestTask {
-                    call("useTestNG")
-                }
-            }
-            withDirectory("src/main/kotlin")
-            withDirectory("src/test/kotlin")
-        }
 
         private val KOTLIN_CLASS_WITH_PARAMETRISED_JUNIT5_TESTS = """
             |package org.example

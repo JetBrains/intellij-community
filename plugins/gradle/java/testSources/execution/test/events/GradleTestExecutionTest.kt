@@ -13,7 +13,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
   @TargetVersions("4.7+")
   @AllGradleVersionsSource
   fun `test grouping events of the same suite comes from different tasks`(gradleVersion: GradleVersion) {
-    testJavaProject(gradleVersion) {
+    testJunit5Project(gradleVersion) {
       writeText("src/test/java/org/example/AppTest.java", """
         |package org.example;
         |import $jUnitTestAnnotationClass;
@@ -169,44 +169,6 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           }
         }
       }
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  fun `test test execution status`(gradleVersion: GradleVersion) {
-    testJavaProject(gradleVersion) {
-      writeText("src/test/java/org/example/TestCase.java", """
-        |package org.example;
-        |
-        |public class TestCase {
-        |
-        |  @$jUnitTestAnnotationClass
-        |  public void successTest() {}
-        |
-        |  @$jUnitTestAnnotationClass
-        |  public void failedTest() { 
-        |    throw new RuntimeException(); 
-        |  }
-        |
-        |  @$jUnitIgnoreAnnotationClass
-        |  @$jUnitTestAnnotationClass
-        |  public void ignoredTest() {}
-        |}
-      """.trimMargin())
-
-      executeTasks(":test")
-      assertTestTreeView {
-        assertNode("TestCase") {
-          assertNode("failedTest")
-          assertNode("ignoredTest")
-          assertNode("successTest")
-        }
-      }
-      assertTestEventCount("TestCase", 1, 1, 0, 0, 0, 0)
-      assertTestEventCount("successTest", 0, 0, 1, 1, 0, 0)
-      assertTestEventCount("failedTest", 0, 0, 1, 1, 1, 0)
-      assertTestEventCount("ignoredTest", 0, 0, 1, 1, 0, 1)
     }
   }
 

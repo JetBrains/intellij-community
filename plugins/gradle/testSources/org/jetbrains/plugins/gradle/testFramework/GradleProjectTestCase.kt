@@ -33,9 +33,6 @@ abstract class GradleProjectTestCase : GradleProjectBaseTestCase() {
   fun testJavaProject(gradleVersion: GradleVersion, test: () -> Unit) =
     test(gradleVersion, JAVA_PROJECT, test)
 
-  fun testKotlinProject(gradleVersion: GradleVersion, test: () -> Unit) =
-    test(gradleVersion, KOTLIN_PROJECT, test)
-
   fun testGroovyProject(gradleVersion: GradleVersion, test: () -> Unit) =
     test(gradleVersion, GROOVY_PROJECT, test)
 
@@ -97,19 +94,6 @@ abstract class GradleProjectTestCase : GradleProjectBaseTestCase() {
       }
       withDirectory("src/main/java")
       withDirectory("src/test/java")
-    }
-
-
-    private val KOTLIN_PROJECT = GradleTestFixtureBuilder.create("kotlin-plugin-project") { gradleVersion ->
-      withSettingsFile {
-        setProjectName("kotlin-plugin-project")
-      }
-      withBuildFile(gradleVersion) {
-        withKotlinJvmPlugin()
-        withJUnit()
-      }
-      withDirectory("src/main/kotlin")
-      withDirectory("src/test/kotlin")
     }
 
     private val GROOVY_PROJECT = GradleTestFixtureBuilder.create("groovy-plugin-project") { gradleVersion ->
