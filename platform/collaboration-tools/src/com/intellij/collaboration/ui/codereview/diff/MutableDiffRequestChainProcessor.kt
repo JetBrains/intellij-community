@@ -35,6 +35,7 @@ class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequestChain
       // listener should be added after `onAssigned` call to avoid notification about synchronously loaded requests
       newValue.addListener(asyncChangeListener, this)
     }
+    dropCaches()
     currentIndex = newValue?.index ?: 0
     updateRequest()
   }
