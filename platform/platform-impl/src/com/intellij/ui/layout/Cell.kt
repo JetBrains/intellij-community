@@ -534,7 +534,7 @@ abstract class Cell : BaseBuilder {
   }
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   @ApiStatus.Internal
   fun textFieldWithHistoryWithBrowseButton(
     getter: () -> String,
