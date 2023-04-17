@@ -32,16 +32,22 @@ def _get_series_variable_repr(series, max_items=MAX_REPR_ITEM_SIZE):
 
 
 def _get_df_variable_repr(data_frame):
-    # Avoid using df.iteritems() or df.values[i], because it works very slow for large data frames
-    # df.__str__() is already optimised and works fast enough
-    res = []
+    # Avoid using df.iteritems() or df.values[i], because it works very slow for
+    # large data frames. df.__str__() is already optimised and works fast enough.
+    data_preview = []
+    column_row = 0
+
     rows = str(data_frame).split('\n')
     for (i, r) in enumerate(rows):
-        if i == 0:
-            res.append(r.strip())
-        else:
-            res.append("[%s]" % r)
-    return ' '.join(res)
+        if i != column_row:
+            data_preview.append("[%s]" % r)
+
+        if r == '':
+            column_row = i + 1
+
+    # The string provided is used for column name completion
+    # by JupyterVarsFrameExecutor.parseFrameVars
+    return '{} {}'.format(data_frame.columns.tolist(), ' '.join(data_preview))
 
 
 def _trim_string_repr_if_needed(value, do_trim=True, max_length=MAX_REPR_LENGTH):

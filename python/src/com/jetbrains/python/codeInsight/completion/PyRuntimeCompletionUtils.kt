@@ -223,9 +223,9 @@ fun processDataFrameColumns(dfName: String,
   return columns.mapNotNull { column ->
     when {
       !needValidatorCheck && elementOnPosition !is PyStringElement -> {
-        "'${StringUtil.escapeStringCharacters(column.length, column, "'", StringBuilder())}'"
+        "'${StringUtil.escapeStringCharacters(column.length, column, "'", false, StringBuilder())}'"
       }
-      !needValidatorCheck -> StringUtil.escapeStringCharacters(column.length, column, "'\"", StringBuilder())
+      !needValidatorCheck -> StringUtil.escapeStringCharacters(column.length, column, "'\"", false, StringBuilder())
       validator.isIdentifier(column, project) -> column
       else -> null
     }?.let {
