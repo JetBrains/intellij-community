@@ -39,7 +39,9 @@ public final class OpenSourceUtil {
 
   /**
    * @return {@code true} if the specified {@code object} is {@link Navigatable} and supports navigation to source
+   * @deprecated check instanceof/null on the caller side
    */
+  @Deprecated
   public static boolean canNavigateToSource(@Nullable Object object) {
     return object instanceof Navigatable && ((Navigatable)object).canNavigateToSource();
   }
@@ -137,7 +139,7 @@ public final class OpenSourceUtil {
    * @return {@code true} if navigation is done, {@code false} otherwise
    */
   public static boolean navigateToSource(boolean requestFocus, boolean tryNotToScroll, @Nullable Navigatable navigatable) {
-    if (!canNavigateToSource(navigatable)) {
+    if (navigatable == null || !navigatable.canNavigateToSource()) {
       return false;
     }
     if (tryNotToScroll && navigatable instanceof StatePreservingNavigatable) {
