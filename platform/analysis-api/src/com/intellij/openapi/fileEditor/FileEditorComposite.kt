@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor
 
-import com.intellij.openapi.util.Pair
 import org.jetbrains.annotations.ApiStatus.Internal
 
 interface FileEditorComposite {
@@ -19,9 +18,9 @@ interface FileEditorComposite {
     fun fromPair(pair: Pair<Array<FileEditor>, Array<FileEditorProvider>>): FileEditorComposite {
       return object : FileEditorComposite {
         override val allEditors: List<FileEditor>
-          get() = pair.getFirst().asList()
+          get() = pair.first.asList()
         override val allProviders: List<FileEditorProvider>
-          get() = pair.getSecond().asList()
+          get() = pair.second.asList()
         override val isPreview: Boolean
           get() = false
       }
@@ -33,5 +32,7 @@ interface FileEditorComposite {
   val isPreview: Boolean
 
   @Internal
-  fun retrofit(): Pair<Array<FileEditor>, Array<FileEditorProvider>> = Pair(allEditors.toTypedArray(), allProviders.toTypedArray())
+  fun retrofit(): com.intellij.openapi.util.Pair<Array<FileEditor>, Array<FileEditorProvider>> {
+    return com.intellij.openapi.util.Pair(allEditors.toTypedArray(), allProviders.toTypedArray())
+  }
 }

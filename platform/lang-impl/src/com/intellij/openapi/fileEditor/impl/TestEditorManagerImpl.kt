@@ -121,21 +121,21 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     return FileEditorComposite.fromPair(editWithProvider)
   }
 
-  private fun openFileImpl3(openFileDescriptor: FileEditorNavigatable): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
+  private fun openFileImpl3(openFileDescriptor: FileEditorNavigatable): kotlin.Pair<Array<FileEditor>, Array<FileEditorProvider>> {
     val file = openFileDescriptor.file
     if (!isCurrentlyUnderLocalId) {
-      val clientManager = clientFileEditorManager
-                          ?: return Pair.createNonNull(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY)
+      val clientManager = clientFileEditorManager ?: return kotlin.Pair(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY)
       val result = clientManager.openFile(file, false)
       val fileEditors = result.map { it.fileEditor }.toTypedArray()
       val providers = result.map { it.provider }.toTypedArray()
-      return Pair.createNonNull(fileEditors, providers)
+      return kotlin.Pair(fileEditors, providers)
     }
+
     val isNewEditor = !virtualFileToEditor.containsKey(file)
 
     // for non-text editors. uml, etc
     var provider = file.getUserData(FileEditorProvider.KEY)
-    val result: Pair<Array<FileEditor>, Array<FileEditorProvider>>
+    val result: kotlin.Pair<Array<FileEditor>, Array<FileEditorProvider>>
     val fileEditor: FileEditor
     val editor: Editor?
     if (provider != null && provider.accept(project, file)) {
@@ -149,12 +149,12 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
       }
     }
     else {
-      //text editor
+      // text editor
       editor = doOpenTextEditor(openFileDescriptor)
       fileEditor = TextEditorProvider.getInstance().getTextEditor(editor)
       provider = stubProvider
     }
-    result = Pair.create(arrayOf(fileEditor), arrayOf(provider))
+    result = kotlin.Pair(arrayOf(fileEditor), arrayOf(provider))
     virtualFileToEditor.put(file, editor)
     activeFile = file
     if (editor != null) {
@@ -426,8 +426,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     get() = project.getServices(ClientFileEditorManager::class.java, ClientKind.REMOTE)
 
   override fun openTextEditor(descriptor: OpenFileDescriptor, focusEditor: Boolean): Editor? {
-    val pair = openFileInCommand(descriptor)
-    for (editor in pair.allEditors) {
+    for (editor in openFileInCommand(descriptor).allEditors) {
       if (editor is TextEditor) {
         return editor.editor
       }
@@ -438,19 +437,17 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
   private fun openFileInCommand(descriptor: FileEditorNavigatable): FileEditorComposite {
     var result: FileEditorComposite? = null
     CommandProcessor.getInstance().executeCommand(project, {
-      val editWithProvider = openFileImpl3(descriptor)
-      val editors = editWithProvider.first
-      for (i in editors.indices) {
-        val editor = editors[i]
+      val composite = FileEditorComposite.fromPair(openFileImpl3(descriptor))
+      for ((i, editor) in composite.allEditors.withIndex()) {
         if (editor is NavigatableFileEditor && descriptor.file == editor.file) {
           if (editor.canNavigateTo(descriptor)) {
-            setSelectedEditor(descriptor.file, editWithProvider.second[i].editorTypeId)
+            setSelectedEditor(file = descriptor.file, fileEditorProviderId = composite.allProviders.get(i).editorTypeId)
             editor.navigateTo(descriptor)
           }
           break
         }
       }
-      result = FileEditorComposite.fromPair(editWithProvider)
+      result = composite
     }, "", null)
     return result!!
   }
@@ -466,15 +463,15 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
       val highlighter = HighlighterFactory.createHighlighter(project, file)
       val language = TextEditorImpl.getDocumentLanguage(editor)
       editor.settings.setLanguageSupplier { language }
-      val editorEx = editor as EditorEx?
-      editorEx!!.highlighter = highlighter
+      val editorEx = editor as EditorEx
+      editorEx.highlighter = highlighter
       editorEx.setFile(file)
     }
     catch (e: Throwable) {
       editorFactory.releaseEditor(editor)
       throw e
     }
-    return editor!!
+    return editor
   }
 
   override fun openFileEditor(descriptor: FileEditorNavigatable, focusEditor: Boolean): List<FileEditor> {

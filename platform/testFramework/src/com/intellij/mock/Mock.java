@@ -328,7 +328,7 @@ public final class Mock {
 
     @Override
     public @NotNull FileEditorComposite openFile(@NotNull VirtualFile file, @Nullable EditorWindow window, @NotNull FileEditorOpenOptions options) {
-      return FileEditorComposite.Companion.fromPair(new Pair<>(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY));
+      return FileEditorComposite.Companion.fromPair(new kotlin.Pair<>(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY));
     }
 
     @Nullable
@@ -336,7 +336,7 @@ public final class Mock {
     public Object openFile(@NotNull VirtualFile file,
                            @NotNull FileEditorOpenOptions options,
                            @NotNull Continuation<? super FileEditorComposite> $completion) {
-      return FileEditorComposite.Companion.fromPair(new Pair<>(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY));
+      return FileEditorComposite.Companion.fromPair(new kotlin.Pair<>(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY));
     }
   }
 
