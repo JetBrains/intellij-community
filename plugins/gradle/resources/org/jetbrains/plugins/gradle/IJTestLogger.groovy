@@ -42,25 +42,27 @@ class IJTestEventLogger {
     })
   }
 
-  static def logTestEvent(testEventType, TestDescriptor testDescriptor, testEvent, TestResult testResult) {
+  static void logTestEvent(String testEventType, TestDescriptor testDescriptor, TestOutputEvent testEvent, TestResult testResult) {
     def writer = new StringWriter()
     def xml = new MarkupBuilder(writer)
     xml.event(type: testEventType) {
       test(id: testDescriptor.id, parentId: testDescriptor.parent?.id ?: '') {
-        if (testDescriptor) {
+        if (testDescriptor != null) {
           descriptor(name: testDescriptor.name ?: '', displayName: getName(testDescriptor) ?: '', className: testDescriptor.className ?: '')
         }
-        if (testEvent) {
+        if (testEvent != null) {
           def message = escapeCdata(testEvent.message)
           event(destination: testEvent.destination) {
             xml.mkp.yieldUnescaped("$message")
           }
         }
-        if (testResult) {
+        if (testResult != null) {
           result(resultType: testResult.resultType ?: '', startTime: testResult.startTime, endTime: testResult.endTime) {
             def exception = testResult.exception
 
-            logFailureDescriptor(xml, exception)
+            if (exception != null) {
+              logFailureDescriptor(xml, exception)
+            }
 
             if ('org.junit.ComparisonFailure' == exception?.class?.name) {
               logJunit4ComparisonFailure(xml, exception)
@@ -92,19 +94,15 @@ class IJTestEventLogger {
   }
 
   private static def logFailureDescriptor(MarkupBuilder xml, Throwable exception) {
-    def errorMsg = escapeCdata(exception?.message ?: '')
+    def errorMsg = escapeCdata(exception.message)
     def stackTrace = escapeCdata(getStackTrace(exception))
 
-    if (exception?.message?.trim()) {
-      xml.mkp.yieldUnescaped("<errorMsg>$errorMsg</errorMsg>")
-    }
-    if (exception != null) {
-      xml.mkp.yieldUnescaped("<stackTrace>$stackTrace</stackTrace>")
-    }
+    xml.mkp.yieldUnescaped("<errorMsg>$errorMsg</errorMsg>")
+    xml.mkp.yieldUnescaped("<stackTrace>$stackTrace</stackTrace>")
   }
 
   // org.junit.ComparisonFailure | junit.framework.ComparisonFailure
-  private static def logJunit4ComparisonFailure(MarkupBuilder xml, exception) {
+  private static def logJunit4ComparisonFailure(MarkupBuilder xml, Throwable exception) {
     def expected = escapeCdata(exception.fExpected)
     def actual = escapeCdata(exception.fActual)
 
@@ -114,7 +112,7 @@ class IJTestEventLogger {
   }
 
   // org.opentest4j.AssertionFailedError
-  private static def logJunit5ComparisonFailure(MarkupBuilder xml, exception) {
+  private static def logJunit5ComparisonFailure(MarkupBuilder xml, Throwable exception) {
     def expected = escapeCdata(exception.expected.stringRepresentation)
     def actual = escapeCdata(exception.actual.stringRepresentation)
 
@@ -124,7 +122,7 @@ class IJTestEventLogger {
   }
 
   // com.intellij.rt.execution.junit.FileComparisonFailure
-  private static def logIjFileComparisonFailure(MarkupBuilder xml, exception) {
+  private static def logIjFileComparisonFailure(MarkupBuilder xml, Throwable exception) {
     def expected = escapeCdata(exception.expected)
     def actual = escapeCdata(exception.actual)
     def filePath = escapeCdata(exception.filePath)
@@ -137,13 +135,15 @@ class IJTestEventLogger {
     xml.mkp.yieldUnescaped("<expected>$expected</expected>")
     xml.mkp.yieldUnescaped("<actual>$actual</actual>")
     xml.mkp.yieldUnescaped("<filePath>$filePath</filePath>")
-    if (actualFilePath != null) {
-      xml.mkp.yieldUnescaped("<actualFilePath>$actualFilePath</actualFilePath>")
-    }
+    xml.mkp.yieldUnescaped("<actualFilePath>$actualFilePath</actualFilePath>")
   }
 
-  static String escapeCdata(String s) {
-    return "<![CDATA[" + s?.getBytes("UTF-8")?.encodeBase64()?.toString() + "]]>"
+  private static String escapeCdata(String s) {
+    if (s == null) {
+      return null
+    }
+    def encodedString = s.getBytes("UTF-8").encodeBase64()
+    return "<![CDATA[$encodedString]]>"
   }
 
   static def wrap(String s) {
