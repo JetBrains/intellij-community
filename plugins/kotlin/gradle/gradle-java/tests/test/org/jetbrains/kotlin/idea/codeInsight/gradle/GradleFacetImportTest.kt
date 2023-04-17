@@ -70,10 +70,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertFalse(compilerArguments!!.autoAdvanceApiVersion)
             assertEquals(JvmPlatforms.jvm8, targetPlatform)
             assertEquals("1.7", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
-            assertEquals(
-                "-Xallow-no-source-files -Xdump-declarations-to=tmp",
-                compilerSettings!!.additionalArguments
-            )
+            assertEquals("-Xdump-declarations-to=tmp", compilerSettings!!.additionalArguments)
         }
 
         with(testFacetSettings) {
@@ -84,7 +81,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertEquals(JvmPlatforms.jvm6, targetPlatform)
             assertEquals("1.6", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
             assertEquals(
-                "-Xallow-no-source-files -Xdump-declarations-to=tmpTest",
+                "-Xdump-declarations-to=tmpTest",
                 compilerSettings!!.additionalArguments
             )
         }
@@ -130,10 +127,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertEquals("1.3", apiLevel!!.versionString)
             assertEquals(JvmPlatforms.jvm8, targetPlatform)
             assertEquals("1.7", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
-            assertEquals(
-                "-Xallow-no-source-files -Xdump-declarations-to=tmp",
-                compilerSettings!!.additionalArguments
-            )
+            assertEquals("-Xdump-declarations-to=tmp", compilerSettings!!.additionalArguments)
         }
 
         with(facetSettings("project.myTest")) {
@@ -141,10 +135,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertEquals("1.0", apiLevel!!.versionString)
             assertEquals(JvmPlatforms.jvm6, targetPlatform)
             assertEquals("1.6", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
-            assertEquals(
-                "-Xallow-no-source-files -Xdump-declarations-to=tmpTest",
-                compilerSettings!!.additionalArguments
-            )
+            assertEquals("-Xdump-declarations-to=tmpTest", compilerSettings!!.additionalArguments)
         }
 
         assertAllModulesConfigured()
@@ -522,7 +513,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
 
         with(facetSettings) {
             assertEquals(
-                listOf("-Xallow-no-source-files", "-Xbuild-file=module with spaces"),
+                listOf("-Xbuild-file=module with spaces"),
                 compilerSettings!!.additionalArgumentsAsList
             )
         }
@@ -639,9 +630,9 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
     fun testJDKImport() {
         val mockJdkPath = FileUtil.toSystemDependentName("${PathManager.getHomePath()}/community/java/mockJDK-1.8")
         runWriteActionAndWait {
-          val jdk = JavaSdk.getInstance().createJdk("myJDK", mockJdkPath)
-          runReadAction<ProjectJdkTable> { ProjectJdkTable.getInstance() }.addJdk(jdk)
-          ProjectRootManager.getInstance(myProject).projectSdk = jdk
+            val jdk = JavaSdk.getInstance().createJdk("myJDK", mockJdkPath)
+            runReadAction<ProjectJdkTable> { ProjectJdkTable.getInstance() }.addJdk(jdk)
+            ProjectRootManager.getInstance(myProject).projectSdk = jdk
         }
 
         try {
@@ -654,9 +645,9 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertEquals(mockJdkPath, moduleSDK.homePath?.let(FileUtil::toSystemDependentName))
         } finally {
             runWriteActionAndWait {
-              val jdkTable = runReadAction<ProjectJdkTable> { ProjectJdkTable.getInstance() }
-              jdkTable.removeJdk(jdkTable.findJdk("myJDK")!!)
-              ProjectRootManager.getInstance(myProject).projectSdk = null
+                val jdkTable = runReadAction<ProjectJdkTable> { ProjectJdkTable.getInstance() }
+                jdkTable.removeJdk(jdkTable.findJdk("myJDK")!!)
+                ProjectRootManager.getInstance(myProject).projectSdk = null
             }
         }
     }
@@ -775,7 +766,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         assertEquals(LanguageVersion.KOTLIN_1_3, facetSettings.languageLevel)
 
         // We haven't lost internal argument during importing to facet
-        assertEquals("-Xallow-no-source-files -XXLanguage:+InlineClasses", facetSettings.compilerSettings?.additionalArguments)
+        assertEquals("-XXLanguage:+InlineClasses", facetSettings.compilerSettings?.additionalArguments)
 
         // Inline classes are enabled even though LV = 1.3
         assertEquals(
@@ -814,11 +805,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         configureByFiles()
         importProject()
 
-        assertEquals(
-            "-Xallow-no-source-files",
-            testFacetSettings.compilerSettings!!.additionalArguments
-        )
-
+        assertEquals("", testFacetSettings.compilerSettings!!.additionalArguments)
         assertAllModulesConfigured()
     }
 

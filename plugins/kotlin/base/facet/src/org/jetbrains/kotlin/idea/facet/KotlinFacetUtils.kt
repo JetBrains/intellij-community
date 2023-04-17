@@ -193,8 +193,8 @@ fun applyCompilerArgumentsToFacet(
             K2NativeCompilerArguments::shortModuleName.name,
             K2NativeCompilerArguments::noendorsedlibs.name,
 
-            K2JSCompilerArguments::main.name,
             K2JSCompilerArguments::metaInfo.name,
+            K2JSCompilerArguments::outputFile.name,
         )
 
         fun exposeAsAdditionalArgument(property: KProperty1<CommonCompilerArguments, Any?>) =
