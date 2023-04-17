@@ -14,12 +14,8 @@ CoroutineInfo: -1 coroutine UNKNOWN
 		(step, this)
 	CoroutineStackFrame hasNext:!LINE_NUMBER!, TakeSequence$iterator$1 (kotlin.sequences)
 		(this)
-	CoroutineStackFrame toCollection:!LINE_NUMBER!, SequencesKt___SequencesKt (kotlin.sequences)
-		($this$toCollection, destination)
-	CoroutineStackFrame toMutableList:!LINE_NUMBER!, SequencesKt___SequencesKt (kotlin.sequences)
-		($this$toMutableList)
 	CoroutineStackFrame toList:!LINE_NUMBER!, SequencesKt___SequencesKt (kotlin.sequences)
-		($this$toList)
+		($this$toList, dst, element, it)
 	CoroutineStackFrame main:!LINE_NUMBER!, SuspendLambdaKt (continuation)
 		(a)
 Disconnected from the target VM
