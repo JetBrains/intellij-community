@@ -52,10 +52,10 @@ internal val jvmFields = KotlinFacetFields(
     exposedFields = listOf(
         K2JVMCompilerArguments::jvmTarget.name,
         K2JVMCompilerArguments::destination.name,
-        K2JVMCompilerArguments::classpath.name
+        K2JVMCompilerArguments::classpath.name,
     ),
     hiddenFields = listOf(
-        K2JVMCompilerArguments::friendPaths.name
+        K2JVMCompilerArguments::friendPaths.name,
     )
 )
 

@@ -348,7 +348,7 @@ fun configureFacetWithCompilerArguments(
 ) {
     applyCompilerArgumentsToFacet(compilerArguments, kotlinFacet, modelsProvider)
     if (compilerArguments is K2JVMCompilerArguments) run {
-        adjustClasspath(kotlinFacet, compilerArguments.classpath?.toSet() ?: return@run)
+        adjustClasspath(kotlinFacet, compilerArguments.classpathArray?.toSet() ?: return@run)
     }
 }
 
@@ -368,8 +368,8 @@ private fun getAdditionalVisibleModuleNames(moduleNode: DataNode<ModuleData>, so
 internal fun adjustClasspath(kotlinFacet: KotlinFacet, dependencyClasspath: Set<String>) {
     if (dependencyClasspath.isEmpty()) return
     val arguments = kotlinFacet.configuration.settings.compilerArguments as? K2JVMCompilerArguments ?: return
-    val fullClasspath = arguments.classpath.orEmpty()
+    val fullClasspath = arguments.classpathArray.orEmpty()
     if (fullClasspath.isEmpty()) return
     val newClasspath = fullClasspath.toSet() - dependencyClasspath.toSet()
-    arguments.classpath = if (newClasspath.isNotEmpty()) newClasspath.toTypedArray() else null
+    arguments.classpathArray = if (newClasspath.isNotEmpty()) newClasspath.toTypedArray() else null
 }

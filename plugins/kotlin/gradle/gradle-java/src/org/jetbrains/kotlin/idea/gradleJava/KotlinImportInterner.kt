@@ -29,8 +29,8 @@ internal fun CommonCompilerArguments.internLargeArguments(interner: Interner) {
     fun Array<String>.internElements() = forEachIndexed { index, s -> this[index] = interner.getOrPut(s) }
 
     if (this is K2JVMCompilerArguments) {
-        classpath?.internElements()
-        javaModulePath?.internElements()
+        classpath?.intern()
+        javaModulePath?.intern()
         friendPaths?.internElements()
         additionalJavaModules?.internElements()
     }
