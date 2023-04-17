@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.util.treeView.FileNameComparator;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -18,6 +19,7 @@ import com.intellij.ui.DirtyUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.JBIterable;
@@ -86,7 +88,9 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   final Color getBackgroundColorCached(@NotNull Project project) {
     Color backgroundColor = myBackgroundColor;
     if (backgroundColor == UNKNOWN_COLOR) {
-      backgroundColor = getBackgroundColor(project);
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-318216, EA-829418")) {
+        backgroundColor = getBackgroundColor(project);
+      }
       myBackgroundColor = backgroundColor;
     }
 

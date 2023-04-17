@@ -14,6 +14,7 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Document;
@@ -95,20 +96,20 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
       if (DumbService.isDumb(myProject) || !myFile.isValid()) return;
       if (myEditor.isDisposed() || myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid()) return;
 
-      SlowOperations.allowSlowOperations(() -> {
-        int caretOffset = myEditor.getCaretModel().getOffset();
-        importUnambiguousImports();
-        if (isImportHintEnabled()) {
-          List<HighlightInfo> visibleHighlights = getVisibleHighlights(myVisibleRange, myProject, myEditor, hasDirtyTextRange);
-          // sort by distance to the caret
-          visibleHighlights.sort(Comparator.comparingInt(info -> Math.abs(info.getActualStartOffset() - caretOffset)));
+      int caretOffset = myEditor.getCaretModel().getOffset();
+      importUnambiguousImports();
+      if (isImportHintEnabled()) {
+        List<HighlightInfo> visibleHighlights = getVisibleHighlights(myVisibleRange, myProject, myEditor, hasDirtyTextRange);
+        // sort by distance to the caret
+        visibleHighlights.sort(Comparator.comparingInt(info -> Math.abs(info.getActualStartOffset() - caretOffset)));
+        try (AccessToken ignore = SlowOperations.knownIssue("IDEA-301732, IDEA-305605, EA-829346, EA-789713, ...")) {
           for (HighlightInfo visibleHighlight : visibleHighlights) {
             if (showAddImportHint(visibleHighlight)) {
               break;
             }
           }
         }
-      });
+      }
     });
   }
 

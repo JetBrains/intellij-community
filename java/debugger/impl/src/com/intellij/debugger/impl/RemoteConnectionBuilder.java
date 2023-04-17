@@ -13,6 +13,7 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,6 +26,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -226,7 +228,9 @@ public class RemoteConnectionBuilder {
                                                                            "captureAgent", null,
                                                                            f -> f.getName().startsWith("debugger-agent"));
               if (agentPath != null) {
-                parametersList.add(prefix + agentPath + generateAgentSettings(project));
+                try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307303, EA-835503")) {
+                  parametersList.add(prefix + agentPath + generateAgentSettings(project));
+                }
               }
             }
             else {

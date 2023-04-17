@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.evaluation;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -51,7 +52,10 @@ public abstract class XDebuggerEditorsProviderBase extends XDebuggerEditorsProvi
                                  @NotNull XExpression expression,
                                  @Nullable PsiElement context,
                                  @NotNull EvaluationMode mode) {
-    PsiFile codeFragment = SlowOperations.allowSlowOperations(() -> createExpressionCodeFragment(project, expression, context, true));
+    PsiFile codeFragment;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-304707, EA-597817, EA-832153, ...")) {
+      codeFragment = createExpressionCodeFragment(project, expression, context, true);
+    }
     Document document = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
     assert document != null;
     return document;
