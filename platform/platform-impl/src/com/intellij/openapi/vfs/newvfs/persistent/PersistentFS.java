@@ -23,23 +23,22 @@ import java.util.function.Function;
 import static com.intellij.util.BitUtil.isSet;
 
 public abstract class PersistentFS extends ManagingFS {
-  static final class Flags {
-    static final int CHILDREN_CACHED                  =           0b0001;
-    static final int IS_DIRECTORY                     =           0b0010;
-    static final int IS_READ_ONLY                     =           0b0100;
-    static final int MUST_RELOAD_CONTENT              =           0b1000;
+  interface Flags {
+    int CHILDREN_CACHED                  =           0b0001;
+    int IS_DIRECTORY                     =           0b0010;
+    int IS_READ_ONLY                     =           0b0100;
+    int MUST_RELOAD_CONTENT              =           0b1000;
 
-    static final int IS_SYMLINK                       =      0b0001_0000;
-    static final int IS_SPECIAL                       =      0b0010_0000;
-    static final int IS_HIDDEN                        =      0b0100_0000;
-    static final int MUST_RELOAD_LENGTH               =      0b1000_0000;
-    static final int CHILDREN_CASE_SENSITIVE          = 0b0001_0000_0000;  // 'true' if this directory can contain files differing only in the case
-    static final int CHILDREN_CASE_SENSITIVITY_CACHED = 0b0010_0000_0000;  // 'true' if this directory's case sensitivity is known
-    static final int FREE_RECORD_FLAG                 = 0b0100_0000_0000;
-    static final int OFFLINE_BY_DEFAULT               = 0b1000_0000_0000;
+    int IS_SYMLINK                       =      0b0001_0000;
+    int IS_SPECIAL                       =      0b0010_0000;
+    int IS_HIDDEN                        =      0b0100_0000;
+    int MUST_RELOAD_LENGTH               =      0b1000_0000;
+    int CHILDREN_CASE_SENSITIVE          = 0b0001_0000_0000;  // 'true' if this directory can contain files differing only in the case
+    int CHILDREN_CASE_SENSITIVITY_CACHED = 0b0010_0000_0000;  // 'true' if this directory's case sensitivity is known
+    int FREE_RECORD_FLAG                 = 0b0100_0000_0000;
+    int OFFLINE_BY_DEFAULT               = 0b1000_0000_0000;
 
-
-    static final int MASK = 0xFFF;
+    static int getAllValidFlags() { return 0xFFF; }
   }
 
   @MagicConstant(flagsFromClass = Flags.class)
