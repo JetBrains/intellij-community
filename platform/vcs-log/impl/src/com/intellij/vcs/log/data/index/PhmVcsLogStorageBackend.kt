@@ -223,11 +223,11 @@ internal class PhmVcsLogStorageBackend(
 
   override fun getTimestamp(commitId: Int): LongArray? = timestamps.get(commitId)
 
-  override fun getParent(commitId: Int): IntArray? = parents.get(commitId)
+  override fun getParents(commitId: Int): IntArray? = parents.get(commitId)
 
   override fun getParents(commitIds: Collection<Int>): Map<Int, List<Hash>> {
     return commitIds.mapNotNull { commitId ->
-      val parents = getParent(commitId) ?: return@mapNotNull null
+      val parents = getParents(commitId) ?: return@mapNotNull null
       val parentHashes = storage.getHashes(parents) ?: return@mapNotNull null
       commitId to parentHashes
     }.toMap()

@@ -29,7 +29,7 @@ internal interface VcsLogStorageBackend : VcsLogUsersStorage, VcsLogPathsStorage
     return commitIds.mapNotNull { getTimestamp(it)?.let { times -> it to times[1] } }.toMap()
   }
 
-  fun getParent(commitId: Int): IntArray?
+  fun getParents(commitId: Int): IntArray?
 
   fun getParents(commitIds: Collection<Int>): Map<Int, List<Hash>>
 

@@ -121,7 +121,7 @@ public final class IndexDataGetter {
 
   public @Nullable List<Hash> getParents(int index) {
     return executeAndCatch(() -> {
-      int[] parentsIndexes = myIndexStorage.store.getParent(index);
+      int[] parentsIndexes = myIndexStorage.store.getParents(index);
       if (parentsIndexes == null) return null;
       return getHashes(myLogStorage, parentsIndexes);
     });
@@ -264,7 +264,7 @@ public final class IndexDataGetter {
     if (myProviders.containsKey(root) && root != null) {
       executeAndCatch(() -> {
         myIndexStorage.store.iterateChangesInCommits(root, path, (changes, commit) -> executeAndCatch(() -> {
-          int[] parents = myIndexStorage.store.getParent(commit);
+          int[] parents = myIndexStorage.store.getParents(commit);
           if (parents == null) {
             throw new CorruptedDataException("No parents for commit " + commit);
           }

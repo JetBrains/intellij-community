@@ -255,7 +255,7 @@ internal class SqliteVcsLogStorageBackend(project: Project,
     return result
   }
 
-  override fun getParent(commitId: Int): IntArray {
+  override fun getParents(commitId: Int): IntArray {
     val batch = IntBinder(paramCount = 1)
     connection.prepareStatement("select parent from parent where commitId = ?", batch).use { statement ->
       batch.bind(commitId)
