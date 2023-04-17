@@ -18,6 +18,7 @@ import com.intellij.lang.jvm.inspection.JvmLocalInspection
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.asSafely
@@ -94,6 +95,10 @@ private class JUnitMixedAnnotationVisitor(private val sink: JvmLocalInspection.H
   )
 
   private companion object {
+    enum class JUnitVersion(val intRepresentation: Int) {
+      V3(3), V4(4), V5(5);
+    }
+
     val junit4RemoveAnnotations = arrayOf(
       ORG_JUNIT_BEFORE, ORG_JUNIT_AFTER,
       ORG_JUNIT_BEFORE_CLASS, ORG_JUNIT_AFTER_CLASS
@@ -103,6 +108,33 @@ private class JUnitMixedAnnotationVisitor(private val sink: JvmLocalInspection.H
       ORG_JUNIT_JUPITER_API_BEFORE_EACH, ORG_JUNIT_JUPITER_API_AFTER_EACH,
       ORG_JUNIT_JUPITER_API_BEFORE_ALL, ORG_JUNIT_JUPITER_API_AFTER_ALL
     )
+
+    val junit4Annotations = arrayOf(
+      ORG_JUNIT_TEST, ORG_JUNIT_IGNORE, ORG_JUNIT_BEFORE, ORG_JUNIT_AFTER, ORG_JUNIT_BEFORE_CLASS, ORG_JUNIT_AFTER_CLASS
+    )
+
+    val junit5Annotations = arrayOf(
+      ORG_JUNIT_JUPITER_API_TEST, ORG_JUNIT_JUPITER_API_DISABLED, ORG_JUNIT_JUPITER_API_BEFORE_EACH, ORG_JUNIT_JUPITER_API_AFTER_EACH,
+      ORG_JUNIT_JUPITER_API_BEFORE_ALL, ORG_JUNIT_JUPITER_API_AFTER_ALL
+    )
+
+    /**
+     * Finds the prefered test framework in case of multiple JUnit test frameworks APIs are used in a single test class.
+     */
+    fun getPreferedTestFramework(clazz: PsiClass, checkSuper: Boolean = true): JUnitVersion? {
+      if (checkSuper) { // check super class 1 layer deep, we assume super class only uses 1 framework
+        clazz.superClass?.let { superClass ->
+          val parentFramework = getPreferedTestFramework(superClass, false)
+          if (parentFramework != null) return parentFramework
+        }
+      }
+      if (InheritanceUtil.isInheritor(clazz, JUNIT_FRAMEWORK_TEST_CASE)) return JUnitVersion.V3
+      val junit4Methods = clazz.methods.filter { method -> junit4Annotations.any { fqn -> method.hasAnnotation(fqn) } }
+      val junit5Methods = clazz.methods.filter { method -> junit5Annotations.any { fqn -> method.hasAnnotation(fqn) } }
+      if (junit4Methods.size > junit5Methods.size) return JUnitVersion.V4
+      if (junit5Methods.isNotEmpty()) return JUnitVersion.V5
+      return null
+    }
   }
 }
 
