@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.impl;
 
 import com.intellij.lang.*;
@@ -1715,7 +1715,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
   @NotNull
   protected TreeElement createLeaf(@NotNull IElementType type, int start, int end) {
-    CharSequence text = myCharTable.intern(myText, start, end);
+    CharSequence text = getInternedText(start, end);
     if (myWhitespaces.contains(type)) {
       return new PsiWhiteSpaceImpl(text);
     }
@@ -1735,6 +1735,11 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     }
 
     return ASTFactory.leaf(type, text);
+  }
+
+  @NotNull
+  protected CharSequence getInternedText(int start, int end) {
+    return myCharTable.intern(myText, start, end);
   }
 
   @Override
