@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.TargetPlatformKind
@@ -230,7 +231,7 @@ fun detectPlatformByPlugin(moduleNode: DataNode<ModuleData>): TargetPlatformKind
     }
 }
 
-internal fun detectPlatformByLibrary(moduleNode: DataNode<ModuleData>): IdePlatformKind? {
+private fun detectPlatformByLibrary(moduleNode: DataNode<ModuleData>): IdePlatformKind? {
     val detectedPlatforms =
         mavenLibraryIdToPlatform.entries
             .filter { moduleNode.getResolvedVersionByModuleData(KOTLIN_GROUP_ID, listOf(it.key)) != null }
@@ -302,7 +303,7 @@ fun configureFacetByGradleModule(
     val kotlinGradleSourceSetData = kotlinGradleSourceSetDataNode?.data
 
     kotlinGradleSourceSetData?.compilerArguments?.let { compilerArguments ->
-        configureFacetWithCompilerArguments(kotlinFacet, modelsProvider, compilerArguments)
+        configureFacetWithCompilerArguments(kotlinFacet, modelsProvider, platformKind, compilerArguments)
     }
 
     val implementedModulesAware = (kotlinGradleSourceSetData ?: kotlinGradleProjectData) as ImplementedModulesAware
@@ -325,6 +326,18 @@ fun configureFacetByGradleModule(
 }
 
 private fun KotlinFacetSettings.configureOutputPaths(moduleNode: DataNode<ModuleData>, platformKind: IdePlatformKind?) {
+
+    fun DataNode<KotlinGradleSourceSetData>.compilerArgumentsOrNull(): CommonCompilerArguments? {
+        return try {
+            val arguments = platformKind?.createArguments() ?: K2JVMCompilerArguments()
+            parseCommandLineArguments(data.compilerArguments ?: return null, arguments)
+            arguments
+        } catch (t: Throwable) {
+            logger.error(t)
+            null
+        }
+    }
+
     if (!platformKind.isJavaScript) {
         productionOutputPath = null
         testOutputPath = null
@@ -334,21 +347,25 @@ private fun KotlinFacetSettings.configureOutputPaths(moduleNode: DataNode<Module
     val kotlinGradleProjectDataNode = moduleNode.kotlinGradleProjectDataNodeOrNull ?: return
     val kotlinGradleSourceSetDataNodes = ExternalSystemApiUtil.findAll(kotlinGradleProjectDataNode, KotlinGradleSourceSetData.KEY)
     kotlinGradleSourceSetDataNodes.find { it.data.sourceSetName == "main" }?.let {
-        productionOutputPath = (it.data.compilerArguments as? K2JSCompilerArguments)?.outputFile
+        productionOutputPath = (it.compilerArgumentsOrNull() as? K2JSCompilerArguments)?.outputFile
     }
     kotlinGradleSourceSetDataNodes.find { it.data.sourceSetName == "test" }?.let {
-        testOutputPath = (it.data.compilerArguments as? K2JSCompilerArguments)?.outputFile
+        testOutputPath = (it.compilerArgumentsOrNull() as? K2JSCompilerArguments)?.outputFile
     }
 }
 
 fun configureFacetWithCompilerArguments(
     kotlinFacet: KotlinFacet,
     modelsProvider: IdeModifiableModelsProvider?,
-    compilerArguments: CommonCompilerArguments,
+    platformKind: IdePlatformKind?,
+    compilerArguments: List<String>,
 ) {
-    applyCompilerArgumentsToFacet(compilerArguments, kotlinFacet, modelsProvider)
-    if (compilerArguments is K2JVMCompilerArguments) run {
-        adjustClasspath(kotlinFacet, compilerArguments.classpath?.toSet() ?: return@run)
+    val parsedArguments = platformKind?.createArguments() ?: K2JVMCompilerArguments()
+    parseCommandLineArguments(compilerArguments, parsedArguments)
+    applyCompilerArgumentsToFacet(parsedArguments, kotlinFacet, modelsProvider)
+
+    if (parsedArguments is K2JVMCompilerArguments) run {
+        adjustClasspath(kotlinFacet, parsedArguments.classpath?.toSet() ?: return@run)
     }
 }
 

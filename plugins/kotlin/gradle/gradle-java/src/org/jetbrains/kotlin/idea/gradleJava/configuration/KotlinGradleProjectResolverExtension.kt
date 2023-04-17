@@ -13,16 +13,11 @@ import com.intellij.openapi.util.io.FileUtil
 import org.gradle.api.artifacts.Dependency
 import org.gradle.internal.impldep.org.apache.commons.lang.math.RandomUtils
 import org.gradle.tooling.model.idea.IdeaModule
-import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
-import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
-import org.jetbrains.kotlin.config.convertPathsToSystemIndependent
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinGradleProjectData
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinGradleSourceSetData
 import org.jetbrains.kotlin.idea.gradle.configuration.kotlinGradleSourceSetDataNodes
 import org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger
 import org.jetbrains.kotlin.idea.gradleJava.inspections.getDependencyModules
-import org.jetbrains.kotlin.idea.gradleJava.internLargeArguments
-import org.jetbrains.kotlin.idea.gradleJava.interner
 import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
 import org.jetbrains.kotlin.idea.statistics.KotlinIDEGradleActionsFUSCollector
@@ -133,6 +128,7 @@ var DataNode<out ModuleData>.implementedModuleNames: List<String>
     set(value) = throw UnsupportedOperationException("Changing of implementedModuleNames is available only through KotlinGradleSourceSetData.")
 
 
+
 @Deprecated("Use KotlinGradleSourceSetData#implementedModuleNames instead", level = DeprecationLevel.ERROR)
 var DataNode<out ModuleData>.pureKotlinSourceFolders: MutableCollection<String>
     get() = kotlinGradleProjectDataOrFail.pureKotlinSourceFolders
@@ -211,12 +207,7 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
     private fun initializeGradleSourceSetsData(kotlinModel: KotlinGradleModel, mainModuleNode: DataNode<ModuleData>) {
         kotlinModel.compilerArgumentsBySourceSet.forEach { (sourceSetName, arguments) ->
             KotlinGradleSourceSetData(sourceSetName).apply {
-                val platformKind = detectPlatformKindByPlugin(mainModuleNode) ?: detectPlatformByLibrary(mainModuleNode)
-                compilerArguments = (platformKind?.createArguments() ?: K2JVMCompilerArguments())
-                    .apply { parseCommandLineArguments(arguments, this) }
-                    .apply { convertPathsToSystemIndependent() }
-                    .apply { internLargeArguments(mainModuleNode.interner) }
-
+                compilerArguments = arguments
                 additionalVisibleSourceSets = kotlinModel.additionalVisibleSourceSets.getValue(sourceSetName)
                 kotlinPluginVersion = kotlinModel.kotlinTaskProperties.getValue(sourceSetName).pluginVersion
                 mainModuleNode.kotlinGradleProjectDataNodeOrFail.createChild(KotlinGradleSourceSetData.KEY, this)
@@ -266,11 +257,9 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
                         getDependencyByFiles(dependency.projectDependencyArtifacts, outputToSourceSet, sourceSetByName)
                     }
                 }
-
                 is FileCollectionDependency -> {
                     getDependencyByFiles(dependency.files, outputToSourceSet, sourceSetByName)
                 }
-
                 else -> null
             }
         }
