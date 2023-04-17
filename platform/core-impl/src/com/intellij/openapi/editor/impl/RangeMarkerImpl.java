@@ -150,14 +150,14 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   }
 
   @Override
-  public void setGreedyToLeft(final boolean greedy) {
+  public void setGreedyToLeft(boolean greedy) {
     if (!isValid() || greedy == isGreedyToLeft()) return;
 
     myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), greedy, isGreedyToRight(), isStickingToRight(), getLayer());
   }
 
   @Override
-  public void setGreedyToRight(final boolean greedy) {
+  public void setGreedyToRight(boolean greedy) {
     if (!isValid() || greedy == isGreedyToRight()) return;
     myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), isGreedyToLeft(), greedy, isStickingToRight(), getLayer());
   }
@@ -294,9 +294,9 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
       return processIfOnePoint(e, intervalStart, isGreedyToRight, isStickingToRight);
     }
 
-    final int offset = e.getOffset();
-    final int oldLength = e.getOldLength();
-    final int newLength = e.getNewLength();
+    int offset = e.getOffset();
+    int oldLength = e.getOldLength();
+    int newLength = e.getNewLength();
 
     // changes after the end.
     if (intervalEnd < offset) {
@@ -396,7 +396,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   }
 
   private static boolean isBinaryWithoutDecompiler(@NotNull VirtualFile file) {
-    final FileType fileType = file.getFileType();
+    FileType fileType = file.getFileType();
     return fileType.isBinary() && BinaryFileTypeDecompilers.getInstance().forFileType(fileType) == null;
   }
 

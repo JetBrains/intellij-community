@@ -85,7 +85,7 @@ class PersistentRangeMarker extends RangeMarkerImpl {
     }
   }
   @Nullable
-  static Pair.NonNull<TextRange, LinesCols> translateViaDiff(@NotNull final DocumentEventImpl event, @NotNull LinesCols linesCols) {
+  static Pair.NonNull<TextRange, LinesCols> translateViaDiff(@NotNull DocumentEventImpl event, @NotNull LinesCols linesCols) {
     try {
       int myStartLine = event.translateLineViaDiffStrict(linesCols.myStartLine);
       Document document = event.getDocument();

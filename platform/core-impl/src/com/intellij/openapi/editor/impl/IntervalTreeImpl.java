@@ -60,9 +60,6 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     IntervalNode(@NotNull IntervalTreeImpl<E> intervalTree, @NotNull E key, int start, int end) {
       // maxEnd == 0 so to not disrupt existing maxes
       myIntervalTree = intervalTree;
-      if (start < 0 || end < 0) {
-        throw new IllegalArgumentException("Invalid offsets: start=" + start+"; end="+end);
-      }
       myRange = TextRangeScalarUtil.toScalarRange(start, end);
       intervals = new SmartList<>(createGetter(key));
       setValid(true);
@@ -780,9 +777,6 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
   @NotNull
   public IntervalTreeImpl.IntervalNode<T> addInterval(@NotNull T interval, int start, int end,
                                                       boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
-    if (start < 0 || start > end) {
-      throw new IllegalArgumentException("invalid offsets: start="+start+"; end="+end);
-    }
     l.writeLock().lock();
     try {
       if (firingBeforeRemove) {

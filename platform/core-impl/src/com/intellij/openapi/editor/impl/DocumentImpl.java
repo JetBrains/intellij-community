@@ -287,7 +287,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   /**
    * @return true if stripping was completed successfully, false if the document prevented stripping by e.g., caret(s) being in the way
    */
-  boolean stripTrailingSpaces(@Nullable final Project project, boolean inChangedLinesOnly, int @Nullable [] caretOffsets) {
+  boolean stripTrailingSpaces(@Nullable Project project, boolean inChangedLinesOnly, int @Nullable [] caretOffsets) {
     if (!isStripTrailingSpacesEnabled) {
       return true;
     }
@@ -334,7 +334,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
       if (inChangedLinesOnly && !lineSet.isModified(line) || maxSpacesToLeave < 0) continue;
 
       int whiteSpaceStart = -1;
-      final int lineEnd = lineSet.getLineEnd(line) - lineSet.getSeparatorLength(line);
+      int lineEnd = lineSet.getLineEnd(line) - lineSet.getSeparatorLength(line);
       int lineStart = lineSet.getLineStart(line);
       for (int offset = lineEnd - 1; offset >= lineStart; offset--) {
         char c = text.charAt(offset);
@@ -353,7 +353,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
         }
       }
 
-      final int finalStart = whiteSpaceStart + maxSpacesToLeave;
+      int finalStart = whiteSpaceStart + maxSpacesToLeave;
       if (finalStart < lineEnd) {
         targetOffsets[targetOffsetPos++] = finalStart;
         targetOffsets[targetOffsetPos++] = lineEnd;
@@ -402,7 +402,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     return myReadonlyFragmentModificationHandler;
   }
 
-  void setReadonlyFragmentModificationHandler(final ReadonlyFragmentModificationHandler readonlyFragmentModificationHandler) {
+  void setReadonlyFragmentModificationHandler(ReadonlyFragmentModificationHandler readonlyFragmentModificationHandler) {
     myReadonlyFragmentModificationHandler = readonlyFragmentModificationHandler;
   }
 
@@ -616,7 +616,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @ApiStatus.Internal
   public void replaceString(int startOffset, int endOffset, int moveOffset, @NotNull CharSequence s,
-                            final long newModificationStamp, boolean wholeTextReplaced) {
+                            long newModificationStamp, boolean wholeTextReplaced) {
     assertBounds(startOffset, endOffset);
 
     assertWriteAccess();
@@ -631,8 +631,8 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     int initialStartOffset = startOffset;
     int initialOldLength = endOffset - startOffset;
 
-    final int newStringLength = s.length();
-    final CharSequence chars = myText;
+    int newStringLength = s.length();
+    CharSequence chars = myText;
     int newStartInString = 0;
     while (newStartInString < newStringLength &&
            startOffset < endOffset &&
@@ -679,7 +679,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     trimToSize();
   }
 
-  private void assertBounds(final int startOffset, final int endOffset) {
+  private void assertBounds(int startOffset, int endOffset) {
     if (startOffset < 0 || startOffset > getTextLength()) {
       throw new IndexOutOfBoundsException("Wrong startOffset: " + startOffset + "; documentLength: " + getTextLength());
     }
@@ -699,7 +699,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   private void assertWriteAccess() {
     if (myAssertThreading) {
-      final Application application = ApplicationManager.getApplication();
+      Application application = ApplicationManager.getApplication();
       if (application != null) {
         application.assertWriteAccessAllowed();
         VirtualFile file = FileDocumentManager.getInstance().getFile(this);
@@ -964,7 +964,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @NotNull
   @Override
-  public String getText(@NotNull final TextRange range) {
+  public String getText(@NotNull TextRange range) {
     return ReadAction
       .compute(() -> myText.subSequence(range.getStartOffset(), range.getEndOffset()).toString());
   }
@@ -995,7 +995,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   @Override
-  public void addDocumentListener(@NotNull final DocumentListener listener, @NotNull Disposable parentDisposable) {
+  public void addDocumentListener(@NotNull DocumentListener listener, @NotNull Disposable parentDisposable) {
     addDocumentListener(listener);
     Disposer.register(parentDisposable, new DocumentListenerDisposable(myDocumentListeners, listener));
   }
@@ -1025,7 +1025,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   @Override
-  public int getLineNumber(final int offset) {
+  public int getLineNumber(int offset) {
     return getLineSet().findLineIndex(offset);
   }
 
@@ -1036,7 +1036,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   @Override
-  public int getLineStartOffset(final int line) {
+  public int getLineStartOffset(int line) {
     if (line == 0) return 0; // otherwise, it would crash for the zero-length document
     return getLineSet().getLineStart(line);
   }
@@ -1101,7 +1101,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   @Override
-  public void setText(@NotNull final CharSequence text) {
+  public void setText(@NotNull CharSequence text) {
     Runnable runnable = () -> replaceString(0, getTextLength(), 0, text, LocalTimeCounter.currentTime(), true);
     if (CommandProcessor.getInstance().isUndoTransparentActionInProgress() || !myAssertThreading) {
       runnable.run();

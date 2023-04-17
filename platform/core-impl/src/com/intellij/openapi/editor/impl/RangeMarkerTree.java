@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
-import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
@@ -83,7 +82,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
   }
   private @NonNls String errMsg(@NotNull RMNode<T> node) {
     System.gc();
-    final AtomicInteger alive = new AtomicInteger();
+    AtomicInteger alive = new AtomicInteger();
     node.processAliveKeys(t -> {
       alive.incrementAndGet();
       return true;
@@ -197,9 +196,9 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
     incModCount();
 
     List<IntervalNode<T>> affected = new SmartList<>();
-    final int start = e.getOffset();
-    final int oldLength = e.getOldLength();
-    final int newLength = e.getNewLength();
+    int start = e.getOffset();
+    int oldLength = e.getOldLength();
+    int newLength = e.getNewLength();
     collectAffectedMarkersAndShiftSubtrees(getRoot(), start, start + oldLength, newLength - oldLength, affected);
     checkMax(false);
 

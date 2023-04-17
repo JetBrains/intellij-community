@@ -54,7 +54,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
-import java.util.function.BiConsumer;
 
 public final class PostprocessReformattingAspect implements PomModelAspect {
   private static final Logger LOG = Logger.getInstance(PostprocessReformattingAspect.class);
@@ -731,7 +730,7 @@ public final class PostprocessReformattingAspect implements PomModelAspect {
     }
 
     @NotNull
-    public RangeMarker getRange() {
+    RangeMarker getRange() {
       return myRange;
     }
 
