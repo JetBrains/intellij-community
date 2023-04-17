@@ -103,8 +103,8 @@ private class ProjectLevelConnectionManager(project: Project, logId: String) : D
     connection = connect()
   }
 
-  fun runUnderConnection(runnable: (SqliteConnection) -> Unit) {
-    connect().use { connection -> runnable(connection) }
+  fun <R> runUnderConnection(runnable: (SqliteConnection) -> R): R {
+    return connect().use { connection -> runnable(connection) }
   }
 
   private fun connect(): SqliteConnection {
@@ -566,18 +566,20 @@ internal class SqliteVcsLogStorageBackend(project: Project,
 
   override fun getCommitId(commitIndex: Int): CommitId? {
     val paramBinder = IntBinder(paramCount = 1)
-    connection.prepareStatement("select position, hash from commit_hashes where rowid = ?", paramBinder).use { statement ->
-      paramBinder.bind(commitIndex)
+    return connectionManager.runUnderConnection { connection ->
+      connection.prepareStatement("select position, hash from commit_hashes where rowid = ?", paramBinder).use { statement ->
+        paramBinder.bind(commitIndex)
 
-      val rs = statement.executeQuery()
-      if (rs.next()) {
-        val root = sortedRoots.get(rs.getInt(0))
-        val hash = rs.getString(1)!!.let(HashImpl::build)
-        return CommitId(hash, root)
+        val rs = statement.executeQuery()
+        if (rs.next()) {
+          val root = sortedRoots.get(rs.getInt(0))
+          val hash = rs.getString(1)!!.let(HashImpl::build)
+          return@runUnderConnection CommitId(hash, root)
+        }
       }
-    }
 
-    return null
+      return@runUnderConnection null
+    }
   }
 
   override fun containsCommit(id: CommitId): Boolean {
@@ -611,21 +613,23 @@ internal class SqliteVcsLogStorageBackend(project: Project,
 
   override fun getVcsRef(refIndex: Int): VcsRef? {
     val paramBinder = IntBinder(paramCount = 1)
-    connection.prepareStatement("select position, hash, name, type from commit_hashes where rowid = ?", paramBinder).use { statement ->
-      paramBinder.bind(refIndex)
+    return connectionManager.runUnderConnection { connection ->
+      connection.prepareStatement("select position, hash, name, type from commit_hashes where rowid = ?", paramBinder).use { statement ->
+        paramBinder.bind(refIndex)
 
-      val rs = statement.executeQuery()
-      if (rs.next()) {
-        val root = sortedRoots.get(rs.getInt(0))
-        val hash = rs.getString(1)!!.let(HashImpl::build)
-        val name = rs.getString(2)!!
-        val refTypeSerializer = VcsRefTypeSerializer().apply { writeInt(rs.getInt(3)) }
-        val type = logProviders[root]!!.referenceManager.deserialize(refTypeSerializer)
-        return VcsRefImpl(hash, name, type, root)
+        val rs = statement.executeQuery()
+        if (rs.next()) {
+          val root = sortedRoots.get(rs.getInt(0))
+          val hash = rs.getString(1)!!.let(HashImpl::build)
+          val name = rs.getString(2)!!
+          val refTypeSerializer = VcsRefTypeSerializer().apply { writeInt(rs.getInt(3)) }
+          val type = logProviders[root]!!.referenceManager.deserialize(refTypeSerializer)
+          return@runUnderConnection VcsRefImpl(hash, name, type, root)
+        }
       }
-    }
 
-    return null
+      return@runUnderConnection null
+    }
   }
 
   override fun iterateCommits(consumer: Predicate<in CommitId>) {
