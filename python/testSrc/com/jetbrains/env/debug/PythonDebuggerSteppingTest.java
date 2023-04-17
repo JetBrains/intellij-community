@@ -497,7 +497,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
       @Override
       public @NotNull Set<String> getTags() {
         return ImmutableSet.<String>builder().addAll(super.getTags())
-          .add("-python2")
+          .add("-python2.7")
           .add("-django")
           .add("-python3.11") // PY-57113
           .build();
