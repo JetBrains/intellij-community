@@ -297,6 +297,23 @@ impl RemoteDevLaunchConfiguration {
             // ("jdk.lang.Process.launchMechanism", "vfork"),
         ];
 
+        match env::var("REMOTE_DEV_NEW_UI_ENABLED") {
+            Ok(remote_dev_new_ui_enabled) => {
+                match remote_dev_new_ui_enabled.as_str() {
+                    "1" | "true" => {
+                        info!("Force enable new UI");
+                        remote_dev_properties.push(("ide.experimental.ui", "true"));
+                    },
+                    _ => {
+                        bail!("Unsupported value for REMOTE_DEV_NEW_UI_ENABLED variable: '{}'", remote_dev_new_ui_enabled);
+                    },
+                }
+            }
+            Err(_) => {
+                info!("Using ui config with default values");
+            }
+        }
+
         match env::var("REMOTE_DEV_JDK_DETECTION") {
             Ok(remote_dev_jdk_detection_value) => {
                 match remote_dev_jdk_detection_value.as_str() {
