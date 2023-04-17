@@ -20,6 +20,7 @@ class ShellCommandManager(terminal: Terminal) {
   init {
     terminal.addCustomCommandListener(TerminalCustomCommandListener {
       when (it.getOrNull(0)) {
+        "initialized" -> fireInitialized()
         "command_started" -> processCommandStartedEvent(it)
         "command_finished" -> processCommandFinishedEvent(it)
         "command_history" -> processCommandHistoryEvent(it)
@@ -69,21 +70,30 @@ class ShellCommandManager(terminal: Terminal) {
     }
   }
 
+  private fun fireInitialized() {
+    if (LOG.isDebugEnabled) {
+      LOG.debug("Shell event: initialized")
+    }
+    for (listener in listeners) {
+      listener.initialized()
+    }
+  }
+
   private fun fireCommandStarted(commandRun: CommandRun) {
+    if (LOG.isDebugEnabled) {
+      LOG.debug("Shell event: command_started - $commandRun")
+    }
     for (listener in listeners) {
       listener.commandStarted(commandRun.command)
-    }
-    if (LOG.isDebugEnabled) {
-      LOG.debug("Started $commandRun")
     }
   }
 
   private fun fireCommandFinished(commandRun: CommandRun, exitCode: Int) {
+    if (LOG.isDebugEnabled) {
+      LOG.debug("Shell event: command_finished - $commandRun, exit code: $exitCode")
+    }
     for (listener in listeners) {
       listener.commandFinished(commandRun.command, exitCode, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - commandRun.commandStartedNano))
-    }
-    if (LOG.isDebugEnabled) {
-      LOG.debug("Finished $commandRun, exit code: $exitCode")
     }
   }
 
@@ -97,6 +107,9 @@ class ShellCommandManager(terminal: Terminal) {
   }
 
   private fun fireCommandHistoryReceived(history: String) {
+    if (LOG.isDebugEnabled) {
+      LOG.debug("Shell event: command_history of ${history.length} size")
+    }
     for (listener in listeners) {
       listener.commandHistoryReceived(history)
     }
@@ -122,8 +135,12 @@ class ShellCommandManager(terminal: Terminal) {
 }
 
 interface ShellCommandListener {
+  /** Fired before the first prompt is printed */
+  fun initialized() {}
+
   fun commandStarted(command: String) {}
 
+  /** Fired after command is executed and before prompt is printed */
   fun commandFinished(command: String, exitCode: Int, duration: Long) {}
 
   fun directoryChanged(newDirectory: String) {}

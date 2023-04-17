@@ -50,13 +50,23 @@ class TerminalBlocksComponent(private val project: Project,
     add(promptPanel, BorderLayout.SOUTH)
   }
 
-  fun makeCurrentBlockReadOnly() {
-    runningPanel?.makeReadOnly() ?: error("Running panel is null")
+  fun makeCurrentBlockReadOnly(removeIfEmpty: Boolean) {
+    val currentBlock: TerminalPanel = runningPanel ?: error("Running panel is null")
+    currentBlock.makeReadOnly {
+      if (removeIfEmpty && it.document.textLength == 0) {
+        blocksPanel.remove(currentBlock)
+        blocksPanel.revalidate()
+        Disposer.dispose(currentBlock)
+      }
+    }
   }
 
   @RequiresEdt
   fun installRunningPanel() {
-    val eventsHandler = TerminalEventsHandler(session.terminalStarter, session.model, settings)
+    if (runningPanel != null) {
+      error("Running panel is not-null")
+    }
+    val eventsHandler = TerminalEventsHandler(session, settings)
     val panel = TerminalPanel(project, settings, session.model, eventsHandler)
     runningPanel = panel
 
@@ -99,10 +109,10 @@ class TerminalBlocksComponent(private val project: Project,
   }
 
   // return preferred size of the terminal calculated from the component size
-  fun getTerminalSize(): TermSize {
-    val promptWidth = promptPanel.getContentSize().width
-    val componentSize = Dimension(promptWidth, this.height)
-    val baseSize = calculateTerminalSize(componentSize, promptPanel.charSize)
+  fun getTerminalSize(): TermSize? {
+    val bounds = bounds
+    if (bounds.isEmpty) return null
+    val baseSize = calculateTerminalSize(Dimension(bounds.width, bounds.height), promptPanel.charSize)
     return ensureTermMinimumSize(baseSize)
   }
 

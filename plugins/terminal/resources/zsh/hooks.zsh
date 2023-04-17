@@ -24,21 +24,25 @@ __intellij_encode_large() {
   fi
 }
 
-__intellij_cmd_preexec() {
+__intellij_command_preexec() {
   builtin local entered_command="$1"
   builtin local current_directory="$PWD"
   builtin printf '\e]1341;command_started;command=%s;current_directory=%s\a' "$(__intellij_encode "${entered_command}")" "$(__intellij_encode "${current_directory}")"
 }
 
-__intellij_command_terminated() {
+__intellij_command_precmd() {
   builtin local LAST_EXIT_CODE="$?"
   builtin local current_directory="$PWD"
   builtin printf '\e]1341;command_finished;exit_code=%s;current_directory=%s\a' "$LAST_EXIT_CODE" "$(__intellij_encode "${current_directory}")"
 }
 
-add-zsh-hook preexec __intellij_cmd_preexec
-add-zsh-hook precmd __intellij_command_terminated
+add-zsh-hook preexec __intellij_command_preexec
+add-zsh-hook precmd __intellij_command_precmd
 
+# This script is sourced from inside a `precmd` hook, i.e. right before the first prompt.
+builtin printf '\e]1341;initialized\a'
+
+# `HISTFILE` is already initialized at this point.
 # Get all commands from history from the first command
 builtin local hist="$(builtin history 1)"
 builtin printf '\e]1341;command_history;history_string=%s\a' "$(__intellij_encode_large "${hist}")"

@@ -84,7 +84,7 @@ class TerminalPanel(private val project: Project,
     updateEditorContent()
   }
 
-  fun makeReadOnly() {
+  fun makeReadOnly(done: (Editor) -> Unit) {
     // remove listening for content changes and forwarding events to terminal process
     Disposer.dispose(runningDisposable)
 
@@ -97,6 +97,7 @@ class TerminalPanel(private val project: Project,
 
       editor.setCaretEnabled(false)
       editor.isViewer = true
+      done(editor)
     }
   }
 
