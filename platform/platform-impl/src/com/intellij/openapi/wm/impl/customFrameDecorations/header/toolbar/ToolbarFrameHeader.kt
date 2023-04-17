@@ -214,7 +214,8 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
       ShowMode.TOOLBAR -> {
         super.getHitTestSpots() +
         Pair(getElementRect(mainMenuButton.button), MENU_BAR) +
-        (toolbar?.components?.asSequence()?.filter { it.isVisible }?.map { Pair(getElementRect(it), MENU_BAR) } ?: emptySequence())
+        if (isCompact) emptySequence()
+        else (toolbar?.components?.asSequence()?.filter { it.isVisible }?.map { Pair(getElementRect(it), MENU_BAR) } ?: emptySequence())
       }
     }
   }
