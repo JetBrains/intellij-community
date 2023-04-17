@@ -5,7 +5,6 @@ import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.navigation.CtrlMouseData
-import com.intellij.codeInsight.navigation.CtrlMouseInfo
 import com.intellij.codeInsight.navigation.impl.*
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.MultipleTargets
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.SingleTarget
@@ -62,13 +61,6 @@ internal object GotoTypeDeclarationHandler2 : CodeInsightActionHandler {
   private fun handleLookup(project: Project, editor: Editor, offset: Int): NavigationActionResult? {
     val fromLookup = TargetElementUtil.getTargetElementFromLookup(project) ?: return null
     return result(elementTypeTargets(editor, offset, listOf(fromLookup)))
-  }
-
-  @Suppress("DEPRECATION", "DeprecatedCallableAddReplaceWith")
-  @Deprecated("Unused in v2 implementation")
-  @JvmStatic
-  fun getCtrlMouseInfo(file: PsiFile, offset: Int): CtrlMouseInfo? {
-    return gotoTypeDeclaration(file, offset)?.ctrlMouseInfo()
   }
 
   @JvmStatic

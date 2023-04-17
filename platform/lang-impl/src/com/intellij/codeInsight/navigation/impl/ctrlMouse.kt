@@ -2,29 +2,14 @@
 
 package com.intellij.codeInsight.navigation.impl
 
-import com.intellij.codeInsight.navigation.*
+import com.intellij.codeInsight.navigation.CtrlMouseData
+import com.intellij.codeInsight.navigation.multipleTargetsCtrlMouseData
+import com.intellij.codeInsight.navigation.symbolCtrlMouseData
 import com.intellij.model.psi.impl.DeclarationOrReference
 import com.intellij.model.psi.impl.TargetData
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-
-@Suppress("DEPRECATION")
-@Deprecated("Unused in v2 implementation")
-internal fun TargetData.ctrlMouseInfo(): CtrlMouseInfo? {
-  val targets = this.targets
-  if (targets.isEmpty()) {
-    return null
-  }
-  val ranges = highlightRanges()
-  val singleTarget = targets.singleOrNull()
-  return if (singleTarget != null) {
-    SingleSymbolCtrlMouseInfo(singleTarget.symbol, elementAtOffset(), ranges, this is TargetData.Declared)
-  }
-  else {
-    MultipleTargetElementsInfo(ranges)
-  }
-}
 
 internal fun TargetData.ctrlMouseData(project: Project): CtrlMouseData? {
   val targets = this.targets

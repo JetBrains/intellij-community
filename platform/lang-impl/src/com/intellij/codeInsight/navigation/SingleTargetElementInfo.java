@@ -6,7 +6,6 @@ import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ElementDescriptionUtil;
@@ -19,55 +18,18 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
-/**
- * @deprecated Unused in v2 implementation.
- */
-@Deprecated
 @ApiStatus.Internal
-public class SingleTargetElementInfo extends BaseCtrlMouseInfo {
+public final class SingleTargetElementInfo  {
 
-  private final @NotNull PsiElement myElementAtPointer;
-  private final @NotNull PsiElement myTargetElement;
+  private SingleTargetElementInfo() {}
 
-  public SingleTargetElementInfo(@NotNull List<TextRange> absoluteRanges,
-                                 @NotNull PsiElement elementAtPointer,
-                                 @NotNull PsiElement targetElement) {
-    super(absoluteRanges);
-    myElementAtPointer = elementAtPointer;
-    myTargetElement = targetElement;
-  }
-
-  public SingleTargetElementInfo(@NotNull PsiElement elementAtPointer, @NotNull PsiElement targetElement) {
-    super(elementAtPointer);
-    myElementAtPointer = elementAtPointer;
-    myTargetElement = targetElement;
-  }
-
-  @Override
-  public @NotNull CtrlMouseDocInfo getDocInfo() {
-    return isValid() ? generateInfo(myTargetElement, myElementAtPointer, isNavigatable()) : CtrlMouseDocInfo.EMPTY;
-  }
-
-  @Override
-  public boolean isValid() {
-    return myTargetElement.isValid() && myElementAtPointer.isValid();
-  }
-
-  @Override
-  public boolean isNavigatable() {
-    return myTargetElement != myElementAtPointer && myTargetElement != myElementAtPointer.getParent();
-  }
-
-  @ApiStatus.Internal
-  public static @NotNull CtrlMouseDocInfo generateInfo(PsiElement element, PsiElement atPointer, boolean fallbackToBasicInfo) {
+  public static @NlsSafe @Nullable String generateInfo(PsiElement element, PsiElement atPointer, boolean fallbackToBasicInfo) {
     final DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(element, atPointer);
     @NlsSafe String result = documentationProvider.getQuickNavigateInfo(element, atPointer);
     if (result == null && fallbackToBasicInfo) {
       result = doGenerateInfo(element);
     }
-    return result == null ? CtrlMouseDocInfo.EMPTY : new CtrlMouseDocInfo(result, atPointer, documentationProvider);
+    return result;
   }
 
   @Nullable

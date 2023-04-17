@@ -14,16 +14,12 @@ import org.jetbrains.annotations.TestOnly;
 import static com.intellij.codeInsight.navigation.CtrlMouseHandlerKt.getCtrlMouseData;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_GOTO_DECLARATION;
 
-/**
- * @deprecated Unused in v2 implementation.
- */
-@Deprecated
 @ApiStatus.Internal
 public final class CtrlMouseHandler {
 
   @TestOnly
   public static @Nullable String getInfo(PsiElement element, PsiElement atPointer) {
-    return SingleTargetElementInfo.generateInfo(element, atPointer, true).text;
+    return SingleTargetElementInfo.generateInfo(element, atPointer, true);
   }
 
   @TestOnly

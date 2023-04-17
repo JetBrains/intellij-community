@@ -25,13 +25,6 @@ private class DirectNavigationData(
   private val navigationProvider: DirectNavigationProvider
 ) : GTDActionData {
 
-  @Suppress("DEPRECATION")
-  @Deprecated("Unused in v2 implementation")
-  override fun ctrlMouseInfo(): CtrlMouseInfo = object : BaseCtrlMouseInfo(listOf(sourceElement.textRange)) {
-    override fun getDocInfo(): CtrlMouseDocInfo = CtrlMouseDocInfo.EMPTY
-    override fun isValid(): Boolean = true
-  }
-
   override fun ctrlMouseData(): CtrlMouseData = rangeOnlyCtrlMouseData(listOf(sourceElement.textRange))
 
   override fun result(): NavigationActionResult? {

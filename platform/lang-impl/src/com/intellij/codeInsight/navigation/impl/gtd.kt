@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.codeInsight.navigation.CtrlMouseData
-import com.intellij.codeInsight.navigation.CtrlMouseInfo
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.MultipleTargets
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.SingleTarget
 import com.intellij.model.Symbol
@@ -28,10 +27,6 @@ fun gotoDeclaration(file: PsiFile, offset: Int): GTDActionData? {
 @ApiStatus.Internal
 interface GTDActionData {
 
-  @Suppress("DEPRECATION")
-  @Deprecated("Unused in v2 implementation")
-  fun ctrlMouseInfo(): CtrlMouseInfo?
-
   fun ctrlMouseData(): CtrlMouseData?
 
   fun result(): NavigationActionResult?
@@ -56,10 +51,6 @@ internal fun TargetData.toGTDActionData(project: Project): GTDActionData {
 
 @Internal
 class TargetGTDActionData(private val project: Project, private val targetData: TargetData) : GTDActionData {
-
-  @Suppress("DEPRECATION")
-  @Deprecated("Unused in v2 implementation")
-  override fun ctrlMouseInfo(): CtrlMouseInfo? = targetData.ctrlMouseInfo()
 
   override fun ctrlMouseData(): CtrlMouseData? = targetData.ctrlMouseData(project)
 

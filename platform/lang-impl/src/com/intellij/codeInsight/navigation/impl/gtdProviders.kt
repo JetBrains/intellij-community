@@ -55,18 +55,6 @@ private class GTDProviderData(
     require(targetElements.isNotEmpty())
   }
 
-  @Suppress("DEPRECATION")
-  @Deprecated("Unused in v2 implementation")
-  override fun ctrlMouseInfo(): CtrlMouseInfo {
-    val singleTarget = targetElements.singleOrNull()
-    return if (singleTarget == null) {
-      MultipleTargetElementsInfo(leafElement)
-    }
-    else {
-      SingleTargetElementInfo(leafElement, singleTarget)
-    }
-  }
-
   override fun ctrlMouseData(): CtrlMouseData {
     val singleTarget = targetElements.singleOrNull()
     if (singleTarget == null) {

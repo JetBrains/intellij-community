@@ -45,17 +45,6 @@ internal class GTTDActionData(
 
   private fun typeSymbols() = targetData.typeSymbols(project, editor, offset)
 
-  @Suppress("DEPRECATION")
-  @Deprecated("Unused in v2 implementation")
-  fun ctrlMouseInfo(): CtrlMouseInfo? {
-    val typeSymbols = typeSymbols().take(2).toList()
-    return when (typeSymbols.size) {
-      0 -> null
-      1 -> SingleSymbolCtrlMouseInfo(typeSymbols.single(), targetData.elementAtOffset(), targetData.highlightRanges(), false)
-      else -> MultipleTargetElementsInfo(targetData.highlightRanges())
-    }
-  }
-
   fun ctrlMouseData(): CtrlMouseData? {
     val typeSymbols = typeSymbols().take(2).toList()
     return when (typeSymbols.size) {
