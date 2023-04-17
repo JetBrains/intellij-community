@@ -11,8 +11,9 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlo
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.io.PageCacheUtils;
 import com.intellij.util.io.PagedFileStorage;
-import com.intellij.util.io.PagedFileStorageLockFree;
+import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
 import com.intellij.util.io.StorageLockContext;
+import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -70,7 +71,7 @@ public class AttributesStorageOnTheTopOfBlobStorage_PropertyBasedTest {
     final SpaceAllocationStrategy spaceAllocationStrategy = new DataLengthPlusFixedPercentStrategy(256, 64, 30);
     final StreamlinedBlobStorage storage = useLockFreeStorage ?
                                            new StreamlinedBlobStorageOverLockFreePagesStorage(
-                                             new PagedFileStorageLockFree(storagePath, LOCK_CONTEXT, PAGE_SIZE, true),
+                                             new PagedFileStorageWithRWLockedPageContent(storagePath, LOCK_CONTEXT, PAGE_SIZE, true, PageContentLockingStrategy.LOCK_PER_PAGE),
                                              spaceAllocationStrategy
                                            ) :
                                            new SmallStreamlinedBlobStorage(

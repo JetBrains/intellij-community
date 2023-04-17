@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IntRef;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.io.ClosedStorageException;
-import com.intellij.util.io.PagedFileStorageLockFree;
+import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
 import com.intellij.util.io.pagecache.Page;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.metrics.BatchCallback;
@@ -26,7 +26,7 @@ import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.LargeBl
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Storage;
 
 /**
- * Implements {@link StreamlinedBlobStorage} blobs over {@link PagedFileStorageLockFree} storage.
+ * Implements {@link StreamlinedBlobStorage} blobs over {@link PagedFileStorageWithRWLockedPageContent} storage.
  * Implementation is thread-safe, and mostly relies on page-level locks to protect data access.
  * <br/>
  * Storage is optimized to store small records (~tens bytes) -- it tries to compress record headers
@@ -142,7 +142,7 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
 
 
   @NotNull
-  private final PagedFileStorageLockFree pagedStorage;
+  private final PagedFileStorageWithRWLockedPageContent pagedStorage;
 
   /** To avoid write file header to already closed storage */
   private final AtomicBoolean closed = new AtomicBoolean(false);
@@ -176,7 +176,7 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
   private final BatchCallback openTelemetryCallback;
 
 
-  public StreamlinedBlobStorageOverLockFreePagesStorage(final @NotNull PagedFileStorageLockFree pagedStorage,
+  public StreamlinedBlobStorageOverLockFreePagesStorage(final @NotNull PagedFileStorageWithRWLockedPageContent pagedStorage,
                                                         final @NotNull SpaceAllocationStrategy allocationStrategy)
     throws IOException {
     this.pagedStorage = pagedStorage;

@@ -2,8 +2,9 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.IntRef;
-import com.intellij.util.io.PagedFileStorageLockFree;
+import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
 import com.intellij.util.io.StorageLockContext;
+import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
@@ -185,11 +186,12 @@ public class PersistentFSStoragesBenchmarks {
     public void setup(FileState fileState) throws IOException {
       final int pageSize = 1 << 20;
       storage = new PersistentFSRecordsOverLockFreePagedStorage(
-        new PagedFileStorageLockFree(
-          fileState.file,
+        new PagedFileStorageWithRWLockedPageContent(
+          file,
           CONTEXT,
           pageSize,
-          true
+          true,
+          PageContentLockingStrategy.LOCK_PER_PAGE
         )
       );
       for (int i = 0; i < RECORDS_COUNT; i++) {

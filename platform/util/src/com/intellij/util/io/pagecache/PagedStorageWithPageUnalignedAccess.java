@@ -2,6 +2,7 @@
 package com.intellij.util.io.pagecache;
 
 import com.intellij.util.io.Bits;
+import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
 import com.intellij.util.io.StorageLockContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,7 +11,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 
 /**
- * Wrapper for {@link com.intellij.util.io.PagedFileStorageLockFree} which allows page-unaligned
+ * Wrapper for {@link PagedFileStorageWithRWLockedPageContent} which allows page-unaligned
  * accesses: i.e. read int which is 2 bytes on one page, and 2 bytes on the next page.
  */
 public class PagedStorageWithPageUnalignedAccess implements PagedStorage {

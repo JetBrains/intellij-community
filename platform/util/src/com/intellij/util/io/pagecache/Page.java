@@ -3,6 +3,7 @@ package com.intellij.util.io.pagecache;
 
 import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.util.io.FilePageCacheLockFree;
+import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
 
 import java.io.Flushable;
 import java.io.IOException;
@@ -10,7 +11,7 @@ import java.nio.ByteBuffer;
 
 /**
  * Page: region of file, 'mapped' into memory. Part of our own file page cache
- * implementation, {@link com.intellij.util.io.PagedFileStorageLockFree}
+ * implementation, {@link PagedFileStorageWithRWLockedPageContent}
  * <p>
  *
  * @see FilePageCacheLockFree
@@ -45,7 +46,7 @@ public interface Page extends AutoCloseable, Flushable {
   @Override
   void flush() throws IOException;
 
-  //=============================================================================================
+  //===== page content access: ================================================================================
   //RC: There are several different ways to access/modify page content:
   //    Lambda-based .read() and .write() methods: I plan them to be the default option for
   //    accessing page content -- this is the safest way, since all locking, page state checking,

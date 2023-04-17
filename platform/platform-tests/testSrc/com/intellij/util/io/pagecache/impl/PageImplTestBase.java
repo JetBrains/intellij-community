@@ -7,7 +7,10 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
@@ -15,7 +18,7 @@ import java.util.stream.IntStream;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.junit.Assert.*;
 
-public class PageTest {
+public abstract class PageImplTestBase<P extends PageImpl> {
 
   /** All available CPUs -- except 1 which runs 'main' anyway */
   public static final int THREADS = Runtime.getRuntime().availableProcessors() - 1;
@@ -42,8 +45,11 @@ public class PageTest {
       }
     };
 
-    final PageImpl page = new PageImpl(0, pageSize, handle);
-    page.prepareForUse(_page -> ByteBuffer.allocate(_page.pageSize()));
+    final PageImpl page = createPage(0, pageSize, handle);
+    assertTrue(
+      "Preparation must succeed since there are no contenders",
+      page.tryPrepareForUse(_page -> ByteBuffer.allocate(_page.pageSize()))
+    );
     page.tryAcquireForUse(this);
 
     final Collection<Callable<Void>> tasks = IntStream.range(0, threadsCount)
@@ -93,12 +99,19 @@ public class PageTest {
     }
   }
 
+  protected abstract P createPage(int pageIndex,
+                                  int pageSize,
+                                  PageToStorageHandle pageToStorageHandle);
+
   @Test
   public void pageAndStorageDirtyStatusesAreConsistent_EvenWithConcurrentFlushes() throws Exception {
 
     final DirtyStatusCounter dirtinessCounter = new DirtyStatusCounter();
-    final PageImpl page = new PageImpl(0, 1024, dirtinessCounter);
-    page.prepareForUse(_page -> ByteBuffer.allocate(_page.pageSize()));
+    final PageImpl page = createPage(0, 1024, dirtinessCounter);
+    assertTrue(
+      "Preparation must succeed since there are no contenders",
+      page.tryPrepareForUse(_page -> ByteBuffer.allocate(_page.pageSize()))
+    );
     page.tryAcquireForUse(this);
 
     final ExecutorService pool = Executors.newFixedThreadPool(THREADS);
@@ -149,10 +162,9 @@ public class PageTest {
   }
 
 
-
   // =================== infrastructure: ============================================================================ //
 
-  private static byte[] randomByteArrayOfSize(final int length) {
+  private static byte[] randomByteArrayOfSize(int length) {
     final byte[] array = new byte[length];
     final ThreadLocalRandom rnd = ThreadLocalRandom.current();
     for (int i = 0; i < array.length; i++) {

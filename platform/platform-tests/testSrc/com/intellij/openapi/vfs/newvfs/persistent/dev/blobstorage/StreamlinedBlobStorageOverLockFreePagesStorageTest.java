@@ -2,7 +2,8 @@
 package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
 import com.intellij.util.io.PageCacheUtils;
-import com.intellij.util.io.PagedFileStorageLockFree;
+import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
+import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.junit.BeforeClass;
 
@@ -35,11 +36,12 @@ public class StreamlinedBlobStorageOverLockFreePagesStorageTest
 
   @Override
   protected StreamlinedBlobStorageOverLockFreePagesStorage openStorage(final Path pathToStorage) throws IOException {
-    final PagedFileStorageLockFree pagedStorage = new PagedFileStorageLockFree(
+    final PagedFileStorageWithRWLockedPageContent pagedStorage = new PagedFileStorageWithRWLockedPageContent(
       pathToStorage,
       LOCK_CONTEXT,
       pageSize,
-      true
+      true,
+      PageContentLockingStrategy.LOCK_PER_PAGE
     );
     return new StreamlinedBlobStorageOverLockFreePagesStorage(
       pagedStorage,

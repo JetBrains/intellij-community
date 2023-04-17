@@ -2,7 +2,6 @@
 package com.intellij.util.io.pagecache.impl;
 
 import com.intellij.openapi.util.IntRef;
-import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.pagecache.Page;
 import it.unimi.dsi.fastutil.HashCommon;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
@@ -68,11 +67,14 @@ public class PagesTable {
   public @NotNull PageImpl lookupOrCreate(final int pageIndex,
                                           final @NotNull IntFunction<PageImpl> uninitializedPageFactory,
                                           final @NotNull PageContentLoader pageContentLoader) throws IOException {
+  @NotNull
+  public PageImpl lookupOrCreate(final int pageIndex,
+                                 final @NotNull IntFunction<PageImpl> uninitializedPageFactory) throws IOException {
     final PageImpl page = findPageOrInsertionIndex(this.pages, pageIndex, /*insertionIndexRef: */null);
     if (page != null) {
       return page;
     }
-    return insertNewPage(pageIndex, uninitializedPageFactory, pageContentLoader);
+    return insertNewPage(pageIndex, uninitializedPageFactory);
   }
 
   public void flushAll() throws IOException {
@@ -127,9 +129,9 @@ public class PagesTable {
   }
 
 
+
   private @NotNull PageImpl insertNewPage(final int pageIndex,
-                                          final IntFunction<PageImpl> uninitializedPageFactory,
-                                          final PageContentLoader pageContentLoader) throws IOException {
+                                          final IntFunction<PageImpl> uninitializedPageFactory) throws IOException {
 
     //Don't try to be lock-free on updates, just avoid holding the _global_ lock during IO:
     // 1) put blankPage under the pagesLock,
@@ -187,31 +189,35 @@ public class PagesTable {
       pagesLock.unlock();
     }
 
-    blankPage.pageLock().writeLock().lock();
-    try {
-      if (blankPage.isTombstone()) {
-        throw new ClosedStorageException("Storage is already closed");
-      }
-      if (!blankPage.isNotReadyYet()) {
-        throw new AssertionError("Page must be {NOT_READY_YET, TOMBSTONE}, but " + blankPage);
-      }
-      blankPage.prepareForUse(pageContentLoader);
-      if (blankPage.isNotReadyYet()) {
-        //RC: Page state could be any of {USABLE, ABOUT_TO_UNMAP, TOMBSTONE} here. USABLE is the
-        //    obvious case, but {ABOUT_TO_UNMAP, TOMBSTONE} could happen if new page allocation
-        //    races with storage closing: in such scenario page could be entombed async immediately
-        //    after .prepareForUse() made it USABLE -- nothing prevents it, since page has
-        //    usageCount=0 still.
-        throw new AssertionError("Page must be {USABLE, ABOUT_TO_UNMAP, TOMBSTONE}, but " + blankPage);
-      }
-      if (blankPage.isDirty()) {
-        throw new AssertionError("Page must NOT be dirty just after .pageLoader: " + blankPage);
-      }
-      return blankPage;
-    }
-    finally {
-      blankPage.pageLock().writeLock().unlock();
-    }
+    return blankPage;
+
+
+    //blankPage.pageLock().writeLock().lock();
+    //try {
+    //  if (blankPage.isTombstone()) {
+    //    throw new ClosedStorageException("Storage is already closed");
+    //  }
+    //  if (!blankPage.isNotReadyYet()) {
+    //    //possible if short-circuit (NOT_READY_YET->TOMBSTONE) transition of storage close happens
+    //    throw new AssertionError("Page must be {NOT_READY_YET, TOMBSTONE}, but " + blankPage);
+    //  }
+    //  blankPage.prepareForUse(pageContentLoader);
+    //  if (blankPage.isNotReadyYet()) {
+    //    //RC: Page state could be any of {USABLE, ABOUT_TO_UNMAP, TOMBSTONE} here -- but not NOT_READY_YET.
+    //    //    USABLE is the obvious case, but {ABOUT_TO_UNMAP, TOMBSTONE} could happen if new page
+    //    //    allocation races with storage closing: in such a scenario the page could be entombed async-ly
+    //    //    immediately after .prepareForUse() made it USABLE -- nothing prevents it, since page
+    //    //    has usageCount=0 still.
+    //    throw new AssertionError("Page must be {USABLE, ABOUT_TO_UNMAP, TOMBSTONE}, but " + blankPage);
+    //  }
+    //  if (blankPage.isDirty()) {
+    //    throw new AssertionError("Page must NOT be dirty just after .pageLoader: " + blankPage);
+    //  }
+    //  return blankPage;
+    //}
+    //finally {
+    //  blankPage.pageLock().writeLock().unlock();
+    //}
   }
 
   //@GuardedBy(pagesLock)

@@ -6,7 +6,8 @@ import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOverBlobStora
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage;
 import com.intellij.util.io.PageCacheUtils;
-import com.intellij.util.io.PagedFileStorageLockFree;
+import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
+import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -36,11 +37,12 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStorageLockFreeTest
 
   @Override
   protected AttributesStorageOverBlobStorage openAttributesStorage(final Path storagePath) throws IOException {
-    final PagedFileStorageLockFree pagedStorage = new PagedFileStorageLockFree(
+    final PagedFileStorageWithRWLockedPageContent pagedStorage = new PagedFileStorageWithRWLockedPageContent(
       this.storagePath,
       LOCK_CONTEXT,
       PAGE_SIZE,
-      true
+      true,
+      PageContentLockingStrategy.LOCK_PER_PAGE
     );
     storage = new StreamlinedBlobStorageOverLockFreePagesStorage(
       pagedStorage,

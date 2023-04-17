@@ -1,7 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
-import org.junit.*;
+import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
@@ -39,7 +41,9 @@ public class FilePageCacheLockFreeTest {
     final FilePageCacheLockFree fpCache = new FilePageCacheLockFree(CACHE_CAPACITY_BYTES);
     try (fpCache) {
       final StorageLockContext storageContext = new StorageLockContext(fpCache, true, true, true);
-      try (final PagedFileStorageLockFree storage = new PagedFileStorageLockFree(file.toPath(), storageContext, PAGE_SIZE, true)) {
+      try (final PagedFileStorageWithRWLockedPageContent storage = new PagedFileStorageWithRWLockedPageContent(file.toPath(), storageContext,
+                                                                                                               PAGE_SIZE, true,
+                                                                                                               PageContentLockingStrategy.LOCK_PER_PAGE)) {
         Thread.sleep(1000L);
       }
     }
@@ -69,7 +73,8 @@ public class FilePageCacheLockFreeTest {
       IllegalStateException.class,
       () -> {
         //noinspection EmptyTryBlock
-        try (PagedFileStorageLockFree storage = new PagedFileStorageLockFree(file.toPath(), storageContext, PAGE_SIZE, true)) {
+        try (PagedFileStorageWithRWLockedPageContent storage = new PagedFileStorageWithRWLockedPageContent(file.toPath(), storageContext, PAGE_SIZE, true,
+                                                                                                           PageContentLockingStrategy.LOCK_PER_PAGE)) {
         }
       });
   }

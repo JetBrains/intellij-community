@@ -3,6 +3,7 @@ package com.intellij.util.io.pagecache;
 
 import com.intellij.util.io.FilePageCacheLockFree;
 import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -28,12 +29,12 @@ public class FilePageCacheStatistics {
   private final AtomicLong totalPagesWritten = new AtomicLong();
 
   /**
-   * Total pages requested from {@link com.intellij.util.io.PagedFileStorageLockFree#pageByOffset(long, boolean)}
+   * Total pages requested from {@link PagedFileStorageWithRWLockedPageContent#pageByOffset(long, boolean)}
    * methods
    */
   private final AtomicLong totalPagesRequested = new AtomicLong();
   /**
-   * Total pages bytes requested from {@link com.intellij.util.io.PagedFileStorageLockFree#pageByOffset(long, boolean)}
+   * Total pages bytes requested from {@link PagedFileStorageWithRWLockedPageContent#pageByOffset(long, boolean)}
    * methods
    */
   private final AtomicLong totalBytesRequested = new AtomicLong();

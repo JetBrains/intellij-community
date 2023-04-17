@@ -2,6 +2,7 @@
 package com.intellij.util.io;
 
 import com.intellij.util.io.pagecache.Page;
+import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
 import org.HdrHistogram.Histogram;
 import org.jetbrains.annotations.NotNull;
 import org.junit.BeforeClass;
@@ -235,7 +236,8 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
     final long[] offsetsToRequest = IntStream.range(0, DIFFERENT_OFFSETS_TO_REQUEST)
       .mapToLong(i -> ThreadLocalRandom.current().nextLong(FILE_SIZE))
       .toArray();
-    try (final PagedFileStorageLockFree pagedStorage = new PagedFileStorageLockFree(file.toPath(), storageContext, BUFFER_SIZE, true)) {
+    try (final PagedFileStorageWithRWLockedPageContent pagedStorage = new PagedFileStorageWithRWLockedPageContent(file.toPath(), storageContext, BUFFER_SIZE, true,
+                                                                                                                  PageContentLockingStrategy.LOCK_PER_PAGE)) {
       final Callable<Void> task = () -> {
         final ThreadLocalRandom rnd = ThreadLocalRandom.current();
         final int requestNo = rnd.nextInt(offsetsToRequest.length);
@@ -303,7 +305,8 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
     final long[] offsetsToRequest = IntStream.range(0, DIFFERENT_OFFSETS_TO_REQUEST)
       .mapToLong(i -> ThreadLocalRandom.current().nextLong(FILE_SIZE))
       .toArray();
-    try (final PagedFileStorageLockFree pagedStorage = new PagedFileStorageLockFree(file.toPath(), storageContext, BUFFER_SIZE, true)) {
+    try (final PagedFileStorageWithRWLockedPageContent pagedStorage = new PagedFileStorageWithRWLockedPageContent(file.toPath(), storageContext, BUFFER_SIZE, true,
+                                                                                                                  PageContentLockingStrategy.LOCK_PER_PAGE)) {
       final Callable<Void> task = () -> {
         final ThreadLocalRandom rnd = ThreadLocalRandom.current();
         final int requestNo = rnd.nextInt(offsetsToRequest.length);
@@ -363,7 +366,8 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
 
   private void readFileRandomlyApproximatelyTwice(final @NotNull File file,
                                                   final @NotNull ByteBuffer buffer) throws IOException, InterruptedException {
-    try (PagedFileStorageLockFree pagedStorage = new PagedFileStorageLockFree(file.toPath(), storageContext, BUFFER_SIZE, true)) {
+    try (PagedFileStorageWithRWLockedPageContent pagedStorage = new PagedFileStorageWithRWLockedPageContent(file.toPath(), storageContext, BUFFER_SIZE, true,
+                                                                                                            PageContentLockingStrategy.LOCK_PER_PAGE)) {
       final ThreadLocalRandom rnd = ThreadLocalRandom.current();
       final long blocksCount = FILE_SIZE / BUFFER_SIZE;
       for (int i = 0; i < blocksCount * TWICE; i++) {
@@ -381,7 +385,8 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
 
   private void readFileSequentiallyTwice(final @NotNull File file,
                                          final @NotNull ByteBuffer buffer) throws IOException, InterruptedException {
-    try (PagedFileStorageLockFree pagedStorage = new PagedFileStorageLockFree(file.toPath(), storageContext, BUFFER_SIZE, true)) {
+    try (PagedFileStorageWithRWLockedPageContent pagedStorage = new PagedFileStorageWithRWLockedPageContent(file.toPath(), storageContext, BUFFER_SIZE, true,
+                                                                                                            PageContentLockingStrategy.LOCK_PER_PAGE)) {
       final long blocksCount = FILE_SIZE / BUFFER_SIZE;
       for (int turn = 0; turn < TWICE; turn++) {
         for (int blockNo = 0; blockNo < blocksCount; blockNo++) {
@@ -400,7 +405,8 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
   private void writeFileRandomlyApproximatelyTwice(final @NotNull File file,
                                                    final @NotNull ByteBuffer buffer) throws IOException, InterruptedException {
 
-    try (PagedFileStorageLockFree pagedStorage = new PagedFileStorageLockFree(file.toPath(), storageContext, BUFFER_SIZE, true)) {
+    try (PagedFileStorageWithRWLockedPageContent pagedStorage = new PagedFileStorageWithRWLockedPageContent(file.toPath(), storageContext, BUFFER_SIZE, true,
+                                                                                                            PageContentLockingStrategy.LOCK_PER_PAGE)) {
       final ThreadLocalRandom rnd = ThreadLocalRandom.current();
       final long blocksCount = FILE_SIZE / BUFFER_SIZE;
       for (int i = 0; i < blocksCount * TWICE; i++) {
@@ -419,7 +425,8 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
 
   private void writeFileSequentiallyTwice(final @NotNull File file,
                                           final @NotNull ByteBuffer buffer) throws IOException, InterruptedException {
-    try (PagedFileStorageLockFree pagedStorage = new PagedFileStorageLockFree(file.toPath(), storageContext, BUFFER_SIZE, true)) {
+    try (PagedFileStorageWithRWLockedPageContent pagedStorage = new PagedFileStorageWithRWLockedPageContent(file.toPath(), storageContext, BUFFER_SIZE, true,
+                                                                                                            PageContentLockingStrategy.LOCK_PER_PAGE)) {
       final long blocksCount = FILE_SIZE / BUFFER_SIZE;
       for (int turn = 0; turn < TWICE; turn++) {
         for (int blockNo = 0; blockNo < blocksCount; blockNo++) {

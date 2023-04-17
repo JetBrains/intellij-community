@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.util.io.PagedFileStorageLockFree;
+import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
 import com.intellij.util.io.pagecache.Page;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSHeaders.*;
 
 /**
- * Implementation uses new {@link PagedFileStorageLockFree}
+ * Implementation uses new {@link PagedFileStorageWithRWLockedPageContent}
  */
 @ApiStatus.Internal
 public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFSRecordsStorage, IPersistentFSRecordsStorage {
@@ -48,7 +48,7 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
 
   /* ================ RECORD FIELDS LAYOUT end             ======================================== */
 
-  private final @NotNull PagedFileStorageLockFree storage;
+  private final @NotNull PagedFileStorageWithRWLockedPageContent storage;
 
   /** How many records were allocated already. allocatedRecordsCount-1 == last record id */
   private final AtomicInteger allocatedRecordsCount = new AtomicInteger(0);
@@ -68,7 +68,7 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
   private final transient HeaderAccessor headerAccessor = new HeaderAccessor(this);
 
 
-  public PersistentFSRecordsOverLockFreePagedStorage(final @NotNull PagedFileStorageLockFree storage) throws IOException {
+  public PersistentFSRecordsOverLockFreePagedStorage(final @NotNull PagedFileStorageWithRWLockedPageContent storage) throws IOException {
     this.storage = storage;
 
     pageSize = storage.getPageSize();

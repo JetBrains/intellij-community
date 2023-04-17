@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,15 +8,12 @@ import com.intellij.util.io.OpenChannelsCache.FileChannelOperation;
 import com.intellij.util.io.pagecache.FilePageCacheStatistics;
 import com.intellij.util.io.pagecache.Page;
 import com.intellij.util.io.pagecache.PagedStorage;
-import com.intellij.util.io.pagecache.impl.PageImpl;
-import com.intellij.util.io.pagecache.impl.PageToStorageHandle;
-import com.intellij.util.io.pagecache.impl.PagesTable;
+import com.intellij.util.io.pagecache.impl.*;
 import com.intellij.util.io.storage.AbstractStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
@@ -26,9 +23,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class PagedFileStorageLockFree implements PagedStorage {
-  private static final Logger LOG = Logger.getInstance(PagedFileStorageLockFree.class);
+import static java.nio.ByteOrder.BIG_ENDIAN;
+
+public class PagedFileStorageWithRWLockedPageContent implements PagedStorage {
+  private static final Logger LOG = Logger.getInstance(PagedFileStorageWithRWLockedPageContent.class);
 
   public static final int DEFAULT_PAGE_SIZE = PageCacheUtils.DEFAULT_PAGE_SIZE;
 
@@ -47,6 +47,8 @@ public class PagedFileStorageLockFree implements PagedStorage {
   private final int pageSize;
 
   private final boolean nativeBytesOrder;
+
+  private final PageContentLockingStrategy pageContentLockingStrategy;
 
   private final @NotNull FilePageCacheLockFree pageCache;
 
@@ -97,17 +99,21 @@ public class PagedFileStorageLockFree implements PagedStorage {
     }
   };
 
-  public PagedFileStorageLockFree(final @NotNull Path file,
-                                  final @Nullable StorageLockContext storageLockContext,
-                                  final int pageSize,
-                                  final boolean nativeBytesOrder) throws IOException {
+  public PagedFileStorageWithRWLockedPageContent(final @NotNull Path file,
+                                                 final @Nullable StorageLockContext storageLockContext,
+                                                 final int pageSize,
+                                                 final boolean nativeBytesOrder,
+                                                 final @NotNull PageContentLockingStrategy strategy) throws IOException {
     this.file = file;
+
     // TODO read-only flag should be extracted from PersistentHashMapValueStorage.CreationTimeOptions
     this.readOnly = PersistentHashMapValueStorage.CreationTimeOptions.READONLY.get() == Boolean.TRUE;
 
     this.storageLockContext = findOutAppropriateContext(storageLockContext);
     this.pageSize = Math.max(pageSize > 0 ? pageSize : PageCacheUtils.DEFAULT_PAGE_SIZE, AbstractStorage.PAGE_SIZE);
     this.nativeBytesOrder = nativeBytesOrder;
+
+    this.pageContentLockingStrategy = strategy;
 
     pageCache = this.storageLockContext.pageCache();
     pages = pageCache.registerStorage(this);
@@ -199,7 +205,6 @@ public class PagedFileStorageLockFree implements PagedStorage {
   public void putBuffer(final long offsetInFile,
                         final @NotNull ByteBuffer data) throws IOException {
     checkValueIsPageAligned(offsetInFile, data.remaining());
-    //MAYBE RC: implement crossing page boundary -- as already done for arrays?
 
     final int pageIndex = toPageIndex(offsetInFile);
     final int offsetInPage = toOffsetInPage(offsetInFile);
@@ -252,6 +257,9 @@ public class PagedFileStorageLockFree implements PagedStorage {
   @Override
   public void put(final long offsetInFile,
                   final byte[] src, final int offsetInArray, final int length) throws IOException {
+    //MAYBE RC: here array could cross page boundary, while for all other methods it is prohibited
+    //          which is inconsistent. Prohibit crossing page boundary here also, and move this code
+    //          to PagedStorageWithUnalignedAccess?
     long i = offsetInFile;
     int o = offsetInArray;
     int l = length;
@@ -315,21 +323,19 @@ public class PagedFileStorageLockFree implements PagedStorage {
       }
       final PageImpl page = pages.lookupOrCreate(
         pageIndex,
-        this::createUninitializedPage,
-        this::loadPageData
+        this::createUninitializedPage
       );
 
-      //TODO RC: Avoid busy-spinning, since page loading could take quite a time.
-      //         We could try to acquire page write lock:
-      //         1) if we acquired the lock, and page is NOT_READY_YET -> we could help page loading,
-      //         i.e. initiate .prepareToUse() from current thread.
-      //         2) if we acquired the lock, but page is USABLE -> release the lock immediately, and
-      //         just proceed
-      //         3) if we get blocked -> ok, other thread does the loading, and we're waiting for
-      //         it without spinning
-
-      try {//busy-spin on: check page is USABLE, and increment useCount
+      try {
+        //busy-spin on: (check page is USABLE, and increment useCount)
         while (!page.tryAcquireForUse(this)) {
+          if (page.isNotReadyYet()) { //page just created: try to load it
+            page.tryPrepareForUse(this::loadPageData);
+            //MAYBE RC: What could we do to avoid busy-spinning on pages loaded by another thread?
+            //          Page loading could take quite a while. One idea is to have something like
+            //          (optional, lazy) CompletableFuture in Page, which is returned from .tryPrepareForUse()
+            //          instead of 'false', and could be waited on (or used to suspend coroutine).
+          }
           Thread.yield();
           //MAYBE RC: Thread.onSpinWait(); (java9+)
         }
@@ -342,7 +348,7 @@ public class PagedFileStorageLockFree implements PagedStorage {
         //    this process, we could only wait until page will be finally unmapped, and request it
         //    again afterwards -- so it will be mapped back, anew.
         //MAYBE RC: we could try to assist page reclamation here: i.e. check it is ABOUT_TO_RECLAIM,
-        //          .flush() if dirty...
+        //          .flush() if dirty?..
       }
     }
   }
@@ -365,7 +371,7 @@ public class PagedFileStorageLockFree implements PagedStorage {
    * new storage from the same file.
    */
   @Override
-  public void close() throws IOException {
+  public void close() throws IOException, InterruptedException {
     if (isClosed()) {
       return;
     }
@@ -387,15 +393,6 @@ public class PagedFileStorageLockFree implements PagedStorage {
       else {
         throw new IOException("Can't close storage for " + file, cause);
       }
-    }
-    catch (InterruptedException e) {
-      //RC: storage.close() method throwing InterruptedException is a lot of pain, because in many places only IO
-      //    exceptions are expected, and there is no better way to deal with IE other then rethrow it as some kind
-      //    of IO exception. So finally I decided to do it right here, instead of repeating it in 10s places around
-      //    the codebase:
-      final InterruptedIOException ioEx = new InterruptedIOException("Closing storage for " + file + " was interrupted");
-      ioEx.addSuppressed(e);
-      throw ioEx;
     }
   }
 
@@ -480,30 +477,36 @@ public class PagedFileStorageLockFree implements PagedStorage {
   }
 
   private PageImpl createUninitializedPage(final int pageIndex) {
-    return PageImpl.notReady(pageIndex, pageSize, pageToStorageHandle);
+    final ReentrantReadWriteLock lockToUseWithPage = pageContentLockingStrategy.lockForPage(this, pageIndex);
+    return RWLockProtectedPageImpl.createBlankWithExplicitLock(pageIndex, pageSize, pageToStorageHandle, lockToUseWithPage);
   }
 
   private ByteBuffer loadPageData(final @NotNull PageImpl pageToLoad) throws IOException {
-    //MAYBE RC: check pageToLoad.writeLock.isHoldByCurrentThread()
     if (isClosed()) {
       throw new ClosedStorageException("Storage is already closed");
     }
-    if (!pageToLoad.isNotReadyYet()) {
-      throw new AssertionError("Page must be NOT_READY_YET, but " + pageToLoad);
+    if (!pageToLoad.isLoading()) {
+      throw new AssertionError("Bug: page must be in LOADING, but " + pageToLoad);
     }
     final FilePageCacheStatistics statistics = pageCache.getStatistics();
     final long startedAtNs = statistics.startTimestampNs();
     final ByteBuffer pageBuffer = pageCache.allocatePageBuffer(pageSize);
-    pageBuffer.order(nativeBytesOrder ? ByteOrder.nativeOrder() : ByteOrder.BIG_ENDIAN);
-    executeIdempotentOp(ch -> {
-      final int readBytes = ch.read(pageBuffer, pageToLoad.offsetInFile());
-      if (readBytes < pageSize) {
-        final int startFrom = Math.max(0, readBytes);
-        fillWithZeroes(pageBuffer, startFrom, pageSize);
-      }
-      statistics.pageRead(readBytes, startedAtNs);
-      return pageBuffer;
-    }, isReadOnly());
+    pageBuffer.order(nativeBytesOrder ? ByteOrder.nativeOrder() : BIG_ENDIAN);
+    try {
+      executeIdempotentOp(ch -> {
+        final int readBytes = ch.read(pageBuffer, pageToLoad.offsetInFile());
+        if (readBytes < pageSize) {
+          final int startFrom = Math.max(0, readBytes);
+          fillWithZeroes(pageBuffer, startFrom, pageSize);
+        }
+        statistics.pageRead(readBytes, startedAtNs);
+        return pageBuffer;
+      }, isReadOnly());
+    }
+    catch (Throwable t) {
+      pageCache.reclaimPageBuffer(pageBuffer);
+      throw t;
+    }
     return pageBuffer;
   }
 
@@ -536,7 +539,8 @@ public class PagedFileStorageLockFree implements PagedStorage {
     }
   }
 
-  private static @NotNull StorageLockContext findOutAppropriateContext(final @Nullable StorageLockContext storageLockContext) {
+  @NotNull
+  private static StorageLockContext findOutAppropriateContext(final @Nullable StorageLockContext storageLockContext) {
     final StorageLockContext threadContext = THREAD_LOCAL_STORAGE_LOCK_CONTEXT.get();
     if (threadContext != null) {
       if (storageLockContext != null && storageLockContext != threadContext) {
