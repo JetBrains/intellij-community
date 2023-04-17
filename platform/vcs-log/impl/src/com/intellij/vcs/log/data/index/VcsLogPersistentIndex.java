@@ -588,8 +588,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
         return;
       }
       try {
-        IntOpenHashSet missingCommits = new IntOpenHashSet();
-        indexStorage.store.collectMissingCommits(myCommits, missingCommits);
+        IntSet missingCommits = indexStorage.store.collectMissingCommits(myCommits);
         markForIndexing(missingCommits, myRoot);
       }
       catch (IOException e) {

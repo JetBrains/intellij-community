@@ -21,6 +21,7 @@ import com.intellij.vcs.log.impl.VcsLogErrorHandler
 import com.intellij.vcs.log.impl.VcsLogIndexer
 import com.intellij.vcs.log.impl.VcsLogIndexer.PathsEncoder
 import com.intellij.vcs.log.util.StorageId
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import java.io.DataInput
@@ -180,12 +181,14 @@ internal class PhmVcsLogStorageBackend(
 
   override fun containsCommit(commitId: Int) = messages.containsMapping(commitId)
 
-  override fun collectMissingCommits(commitIds: IntSet, missing: IntSet) {
+  override fun collectMissingCommits(commitIds: IntSet): IntSet {
+    val missing = IntOpenHashSet()
     commitIds.forEach(IntConsumer {
       if (!messages.containsMapping(it)) {
         missing.add(it)
       }
     })
+    return missing
   }
 
   fun force() {

@@ -37,7 +37,7 @@ internal interface VcsLogStorageBackend : VcsLogUsersStorage, VcsLogPathsStorage
   fun containsCommit(commitId: Int): Boolean
 
   @Throws(IOException::class)
-  fun collectMissingCommits(commitIds: IntSet, missing: IntSet)
+  fun collectMissingCommits(commitIds: IntSet): IntSet
 
   @Throws(IOException::class)
   fun processMessages(processor: (Int, String) -> Boolean)

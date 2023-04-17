@@ -169,7 +169,8 @@ internal class SqliteVcsLogStorageBackend(project: Project,
     return connection.selectBoolean("select exists(select 1 from log where commitId = ?)", commitId)
   }
 
-  override fun collectMissingCommits(commitIds: IntSet, missing: IntSet) {
+  override fun collectMissingCommits(commitIds: IntSet): IntSet {
+    val missing = IntOpenHashSet()
     val batch = IntBinder(paramCount = 1)
     connection.prepareStatement("select exists (select commitId from log where commitId = ?)", batch).use { statement ->
       commitIds.forEach(IntConsumer {
@@ -179,6 +180,7 @@ internal class SqliteVcsLogStorageBackend(project: Project,
         }
       })
     }
+    return missing
   }
 
   override fun getMessage(commitId: Int): String? {
