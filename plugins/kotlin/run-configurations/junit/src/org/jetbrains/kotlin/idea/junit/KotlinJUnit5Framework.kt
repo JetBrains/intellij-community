@@ -8,7 +8,6 @@ import com.intellij.lang.OuterModelsModificationTrackerManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.testIntegration.framework.AbstractKotlinPsiBasedTestFramework
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework
@@ -25,14 +24,13 @@ class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
         override val markerClassFqn: String = JUnitUtil.TEST5_ANNOTATION
         override val disabledTestAnnotation: String = "org.junit.jupiter.api.Disabled"
 
-        override fun isTestClass(declaration: KtClassOrObject): Boolean {
-            return super.isTestClass(declaration) && CachedValuesManager.getCachedValue(declaration) {
-                CachedValueProvider.Result.create(isJUnit5TestClass(declaration),
-                                                  OuterModelsModificationTrackerManager.getInstance(declaration.project).tracker
-                                                  //PsiModificationTracker.getInstance(declaration.project)
+        override fun isTestClass(declaration: KtClassOrObject): Boolean =
+            super.isTestClass(declaration) && CachedValuesManager.getCachedValue(declaration) {
+                CachedValueProvider.Result.create(
+                    isJUnit5TestClass(declaration),
+                    OuterModelsModificationTrackerManager.getInstance(declaration.project).tracker
                 )
             }
-        }
 
         override fun isTestMethod(declaration: KtNamedFunction): Boolean {
             if (!super.isTestMethod(declaration)) return false
