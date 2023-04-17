@@ -2,8 +2,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.impl.toolkit
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.Disposer
 import sun.awt.LightweightFrame
 import sun.awt.SunToolkit
 import java.awt.*
@@ -16,7 +18,7 @@ import java.awt.image.ImageObserver
 import java.awt.peer.*
 import java.util.*
 
-class IdeToolkit: SunToolkit() {
+class IdeToolkit : SunToolkit() {
   companion object {
     @JvmStatic
     private val logger = logger<IdeToolkit>()
@@ -28,16 +30,17 @@ class IdeToolkit: SunToolkit() {
 
     private val clipboard = Clipboard("System")
   }
-
-  fun peerWasDisposed(target: Component, peer: ComponentPeer) = targetDisposedPeer(target, peer)
-  fun peerWasCreated(target: Component, peer: ComponentPeer) = targetCreatedPeer(target, peer)
+  fun peerCreated(target: Component, peer: ComponentPeer, disposable: Disposable) {
+    targetCreatedPeer(target, peer)
+    Disposer.register(disposable) { targetDisposedPeer(target, peer) }
+  }
   fun createPanelWindow(panel: Component, target: Window) = clientInstance.createPanelWindow(panel, target)
   override fun createWindow(target: Window) = clientInstance.createWindow(target)
   override fun createDialog(target: Dialog) = clientInstance.createDialog(target)
   override fun createFrame(target: Frame) = clientInstance.createFrame(target)
   override fun getSystemClipboard() = clipboard
 
-  override fun getScreenResolution() = 96 //TODO
+  override fun getScreenResolution() = 96
   override fun prepareImage(img: Image, w: Int, h: Int, o: ImageObserver?): Boolean {
     //TODO: probably can be used for caching
     return super.prepareImage(img, w, h, o)
@@ -48,9 +51,9 @@ class IdeToolkit: SunToolkit() {
   override fun getKeyboardFocusManagerPeer() = IdeKeyboardFocusManagerPeer
 
   // Toolkit interface which shouldn't be used
-  override fun sync() = Unit
+  override fun sync() {}
   override fun getPrintJob(frame: Frame?, jobtitle: String?, props: Properties?): PrintJob? = null
-  override fun beep() = Unit
+  override fun beep() {}
   override fun createFileDialog(target: FileDialog): FileDialogPeer {
     error("Not implemented")
   }

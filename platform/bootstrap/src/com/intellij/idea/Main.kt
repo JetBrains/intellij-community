@@ -90,11 +90,6 @@ private fun initRemoteDevIfNeeded(args: List<String>) {
     error("JBR version 17.0.6b796 or later is required to run a remote-dev server with lux")
   }
 
-  if (System.getProperty("lux.enabled") == null) {
-    // Enable lux by default
-    System.setProperty("lux.enabled", "true")
-  }
-
   runActivity("cwm host init") {
     initRemoteDevGraphicsEnvironment()
     if (isLuxEnabled()) {

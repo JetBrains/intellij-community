@@ -12,7 +12,7 @@ import java.util.*
 
 class IdeFontManager: SunFontManager() {
   companion object {
-    internal fun getDefaultLuxFont(): Array<String>? {
+    internal fun getDefaultIdeFont(): Array<String>? {
       val interFontPath = System.getProperty("java.home") + File.separator + "lib" + File.separator +
                           "fonts" + File.separator + "Inter-Regular.otf"
       if (File(interFontPath).exists()) {
@@ -28,7 +28,7 @@ class IdeFontManager: SunFontManager() {
   }
 
   override fun getDefaultPlatformFont(): Array<String> {
-    return getDefaultLuxFont()
+    return getDefaultIdeFont()
            ?: run {
              logger<IdeFontManager>().error("Default font is not available")
              return arrayOf("Dialog", "")
@@ -88,10 +88,10 @@ private class IdeFontConfiguration : FontConfiguration {
     val fontNames = mutableListOf<String>()
     val fontPaths = mutableListOf<String>()
 
-    val luxFont = IdeFontManager.getDefaultLuxFont()
-    if (luxFont != null) {
-      fontNames += luxFont[0]
-      fontPaths += luxFont[1]
+    val ideFont = IdeFontManager.getDefaultIdeFont()
+    if (ideFont != null) {
+      fontNames += ideFont[0]
+      fontPaths += ideFont[1]
     }
 
     if (fontNames.isEmpty()) {
