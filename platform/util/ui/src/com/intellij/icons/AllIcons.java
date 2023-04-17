@@ -696,12 +696,12 @@ public class AllIcons {
   /** 100x100 */ public static final @NotNull Icon Idea_logo_welcome = load("idea_logo_welcome.png", 0, 0);
 
   public static final class Javaee {
-    /** 16x16 */ public static final @NotNull Icon Home = load("javaee/home.svg", -1395024929, 1);
-    /** 16x16 */ public static final @NotNull Icon PersistenceEntity = load("javaee/persistenceEntity.svg", 1189216795, 0);
-    /** 16x16 */ public static final @NotNull Icon UpdateRunningApplication = load("javaee/updateRunningApplication.svg", -1419199974, 2);
-    /** 16x16 */ public static final @NotNull Icon WebModuleGroup = load("javaee/webModuleGroup.svg", -1443428390, 0);
-    /** 16x16 */ public static final @NotNull Icon WebService = load("javaee/WebService.svg", -1652510659, 0);
-    /** 16x16 */ public static final @NotNull Icon WebServiceClient = load("javaee/WebServiceClient.svg", -1166834779, 0);
+    /** 16x16 */ public static final @NotNull Icon Home = load("javaee/home.svg", -1762129996, 0);
+    /** 16x16 */ public static final @NotNull Icon PersistenceEntity = load("javaee/persistenceEntity.svg", -1501668648, 0);
+    /** 16x16 */ public static final @NotNull Icon UpdateRunningApplication = load("javaee/updateRunningApplication.svg", -36399267, 2);
+    /** 16x16 */ public static final @NotNull Icon WebModuleGroup = load("javaee/webModuleGroup.svg", 125213459, 0);
+    /** 16x16 */ public static final @NotNull Icon WebService = load("javaee/WebService.svg", 2042459137, 0);
+    /** 16x16 */ public static final @NotNull Icon WebServiceClient = load("javaee/WebServiceClient.svg", 684483623, 0);
   }
 
   public static final class Json {
