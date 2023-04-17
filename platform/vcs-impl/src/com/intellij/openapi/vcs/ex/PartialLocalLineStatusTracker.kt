@@ -917,7 +917,14 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     }
 
   private var Block.marker: ChangeListMarker
-    get() = this.ourData.marker!! // can be null in MyLineTrackerListener, until `onBlockAdded` is called
+    get() = this.ourData.marker ?: run {
+      // This field should be initialized by PartialDocumentTrackerHandler, and should not be accessed from outside in this time frame.
+      // This error might indicate some internal inconsistency in DocumentTracker.
+      // Initialize field with some value to prevent bigger problems later.
+      LOG.error("Line range changelist was not set yet", Throwable())
+      this.ourData.marker = defaultMarker
+      defaultMarker
+    }
     set(value) {
       this.ourData.marker = value
     }
