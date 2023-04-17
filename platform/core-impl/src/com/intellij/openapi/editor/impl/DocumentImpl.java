@@ -522,9 +522,6 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   @Override
   @NotNull
   public RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) {
-    if (!(0 <= startOffset && startOffset <= endOffset && endOffset <= getTextLength())) {
-      LOG.error("Incorrect offsets: startOffset=" + startOffset + ", endOffset=" + endOffset + ", text length=" + getTextLength());
-    }
     return surviveOnExternalChange
            ? new PersistentRangeMarker(this, startOffset, endOffset, true)
            : new RangeMarkerImpl(this, startOffset, endOffset, true, false);
