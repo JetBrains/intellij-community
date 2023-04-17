@@ -193,9 +193,9 @@ internal class PhmVcsLogStorageBackend(
     committers.force()
     timestamps.force()
     trigrams.flush()
-    messages.force()
     users.flush()
     paths.flush()
+    messages.force()
   }
 
   override fun getMessage(commitId: Int): String? = messages.get(commitId)
