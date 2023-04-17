@@ -35,7 +35,8 @@ public final class PsiUtil {
     "idea.iml", "community-main.iml", "intellij.idea.community.main.iml", "intellij.idea.ultimate.main.iml"
   };
   private static final List<String> IDEA_PROJECT_MARKER_MODULE_NAMES = List.of("intellij.idea.community.main",
-                                                                               "intellij.platform.commercial");
+                                                                               "intellij.platform.commercial",
+                                                                               "intellij.android.studio.integration");
 
   private PsiUtil() { }
 
