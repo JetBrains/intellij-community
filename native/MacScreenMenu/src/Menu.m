@@ -45,8 +45,8 @@ static jclass sjc_Menu = NULL;
     JNIEnv *env = getAppKitEnv();
     JNI_COCOA_ENTER();
     GET_MENU_CLASS();
-    DECLARE_METHOD(jm_Menu_invokeOpenLater, sjc_Menu, "invokeOpenLater", "()V");
-    (*env)->CallVoidMethod(env, javaPeer, jm_Menu_invokeOpenLater);
+    DECLARE_METHOD(jm_Menu_menuNeedsUpdate, sjc_Menu, "menuNeedsUpdate", "()V");
+    (*env)->CallVoidMethod(env, javaPeer, jm_Menu_menuNeedsUpdate);
     CHECK_EXCEPTION(env);
     JNI_COCOA_EXIT();
 }

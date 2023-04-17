@@ -217,7 +217,7 @@ public class Menu extends MenuItem {
     }
   }
 
-  public void invokeOpenLater() {
+  public void menuNeedsUpdate() {
     // Called on AppKit when menu opening
     myIsOpened = true;
     if (myOnOpen != null) {
