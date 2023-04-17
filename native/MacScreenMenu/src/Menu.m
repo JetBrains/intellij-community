@@ -38,7 +38,7 @@ static jclass sjc_Menu = NULL;
 
 // NSMenuDelegate
 
-- (void)menuWillOpen:(NSMenu *)menu {
+- (void)menuNeedsUpdate:(NSMenu *)menu {
     if (javaPeer == nil)
         return;
 
@@ -49,7 +49,6 @@ static jclass sjc_Menu = NULL;
     (*env)->CallVoidMethod(env, javaPeer, jm_Menu_invokeOpenLater);
     CHECK_EXCEPTION(env);
     JNI_COCOA_EXIT();
-
 }
 
 - (void)menuDidClose:(NSMenu *)menu {
