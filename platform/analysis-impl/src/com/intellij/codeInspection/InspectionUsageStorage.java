@@ -11,7 +11,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Holds the set of inspections reported something. After collecting the report, the storage is reset.
+ * Holds the set of inspections that produced some diagnostics in the current highlighting session, to report them to FUS.
+ * After the statistics is reported, the storage is reset
  */
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
@@ -40,5 +41,5 @@ public final class InspectionUsageStorage {
     return new Report(old, inspectionSessionCount);
   }
 
-  public record Report(Set<String> inspectionsReportingProblems, int inspectionSessionCount) {}
+  public record Report(@NotNull Set<@NotNull String> inspectionsReportingProblems, int inspectionSessionCount) {}
 }
