@@ -106,36 +106,35 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
 
   override suspend fun openFile(file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite {
     val descriptor = OpenFileDescriptor(project, file)
-    val editWithProvider = openFileImpl3(descriptor)
-    val editors = editWithProvider.first
+    val composite = openFileImpl3(descriptor)
+    val editors = composite.allEditors
     for (i in editors.indices) {
       val editor = editors[i]
       if (editor is NavigatableFileEditor && descriptor.file == editor.file) {
         if (editor.canNavigateTo(descriptor)) {
-          setSelectedEditor(descriptor.file, editWithProvider.second[i].editorTypeId)
+          setSelectedEditor(descriptor.file, composite.allProviders.get(i).editorTypeId)
           editor.navigateTo(descriptor)
         }
         break
       }
     }
-    return FileEditorComposite.fromPair(editWithProvider)
+    return composite
   }
 
-  private fun openFileImpl3(openFileDescriptor: FileEditorNavigatable): kotlin.Pair<Array<FileEditor>, Array<FileEditorProvider>> {
+  private fun openFileImpl3(openFileDescriptor: FileEditorNavigatable): FileEditorComposite {
     val file = openFileDescriptor.file
     if (!isCurrentlyUnderLocalId) {
-      val clientManager = clientFileEditorManager ?: return kotlin.Pair(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY)
+      val clientManager = clientFileEditorManager ?: return FileEditorComposite.EMPTY
       val result = clientManager.openFile(file, false)
       val fileEditors = result.map { it.fileEditor }.toTypedArray()
       val providers = result.map { it.provider }.toTypedArray()
-      return kotlin.Pair(fileEditors, providers)
+      return FileEditorComposite.fromPair(kotlin.Pair(fileEditors, providers))
     }
 
     val isNewEditor = !virtualFileToEditor.containsKey(file)
 
     // for non-text editors. uml, etc
     var provider = file.getUserData(FileEditorProvider.KEY)
-    val result: kotlin.Pair<Array<FileEditor>, Array<FileEditorProvider>>
     val fileEditor: FileEditor
     val editor: Editor?
     if (provider != null && provider.accept(project, file)) {
@@ -154,7 +153,6 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
       fileEditor = TextEditorProvider.getInstance().getTextEditor(editor)
       provider = stubProvider
     }
-    result = kotlin.Pair(arrayOf(fileEditor), arrayOf(provider))
     virtualFileToEditor.put(file, editor)
     activeFile = file
     if (editor != null) {
@@ -164,12 +162,12 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
       }
     }
     modifyTabWell {
-      testEditorSplitter.openAndFocusTab(file, result.first[0], result.second[0])
+      testEditorSplitter.openAndFocusTab(file, fileEditor, provider)
       if (isNewEditor) {
         eventPublisher().fileOpened(this, file)
       }
     }
-    return result
+    return FileEditorComposite.createFileEditorComposite(allEditors = listOf(fileEditor), allProviders = listOf(provider))
   }
 
   private fun modifyTabWell(tabWellModification: Runnable) {
@@ -437,7 +435,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
   private fun openFileInCommand(descriptor: FileEditorNavigatable): FileEditorComposite {
     var result: FileEditorComposite? = null
     CommandProcessor.getInstance().executeCommand(project, {
-      val composite = FileEditorComposite.fromPair(openFileImpl3(descriptor))
+      val composite = openFileImpl3(descriptor)
       for ((i, editor) in composite.allEditors.withIndex()) {
         if (editor is NavigatableFileEditor && descriptor.file == editor.file) {
           if (editor.canNavigateTo(descriptor)) {
@@ -455,10 +453,9 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
   private fun doOpenTextEditor(descriptor: FileEditorNavigatable): Editor {
     val file = descriptor.file
     virtualFileToEditor.get(file)?.let { return it }
-    val document = FileDocumentManager.getInstance().getDocument(file)
-    LOG.assertTrue(document != null, file)
+    val document = FileDocumentManager.getInstance().getDocument(file)!!
     val editorFactory = EditorFactory.getInstance()
-    val editor = editorFactory.createEditor(document!!, project)
+    val editor = editorFactory.createEditor(document, project)
     try {
       val highlighter = HighlighterFactory.createHighlighter(project, file)
       val language = TextEditorImpl.getDocumentLanguage(editor)
