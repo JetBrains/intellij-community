@@ -3,6 +3,7 @@ package com.intellij.pom;
 
 import com.intellij.platform.backend.navigation.NavigationRequest;
 import com.intellij.platform.backend.navigation.NavigationRequests;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus.Experimental;
@@ -38,7 +39,12 @@ public interface Navigatable {
    *
    * @param requestFocus {@code true} if focus requesting is necessary
    */
-  void navigate(boolean requestFocus);
+  default void navigate(boolean requestFocus) {
+    throw new IncorrectOperationException(
+      "Must not call `navigate(boolean)` if `canNavigate()` returns `false`, " +
+      "or `navigate(boolean)` should be overridden if `canNavigate()` can return `true`."
+    );
+  }
 
   /**
    * Indicates whether this instance supports navigation of any kind.
@@ -50,7 +56,9 @@ public interface Navigatable {
    *
    * @return {@code false} if navigation is not possible for any reason.
    */
-  boolean canNavigate();
+  default boolean canNavigate() {
+    return false;
+  }
 
   /**
    * Indicates whether this instance supports navigation to source (that means some kind of editor).
@@ -62,5 +70,7 @@ public interface Navigatable {
    *
    * @return {@code false} if navigation to source is not possible for any reason.
    */
-  boolean canNavigateToSource();
+  default boolean canNavigateToSource() {
+    return false;
+  }
 }

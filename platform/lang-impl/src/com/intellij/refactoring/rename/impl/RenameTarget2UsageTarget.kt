@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.impl
 
 import com.intellij.model.Pointer
@@ -52,9 +52,6 @@ internal class RenameTarget2UsageTarget(
   // ----- Navigatable & NavigationItem -----
 
   override fun getName(): String? = null
-  override fun canNavigate(): Boolean = false
-  override fun canNavigateToSource(): Boolean = false
-  override fun navigate(requestFocus: Boolean): Unit = Unit
 
   // ----- actions -----
 
