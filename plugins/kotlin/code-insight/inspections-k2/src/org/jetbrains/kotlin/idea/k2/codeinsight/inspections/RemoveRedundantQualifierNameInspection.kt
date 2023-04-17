@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ShortenOption
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.psi.*
@@ -65,15 +66,18 @@ class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection() {
             },
         )
 
-    private fun InspectionManager.createRedundantQualifierProblemDescriptor(element: KtElement, isOnTheFly: Boolean): ProblemDescriptor =
-        createProblemDescriptor(
+    private fun InspectionManager.createRedundantQualifierProblemDescriptor(element: KtElement, isOnTheFly: Boolean): ProblemDescriptor {
+        val qualifierToRemove = element.getQualifier()
+
+        return createProblemDescriptor(
             element,
-            null,
+            qualifierToRemove?.textRangeIn(element),
             KotlinBundle.message("remove.redundant.qualifier.name.quick.fix.text"),
             ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
             isOnTheFly,
             RemoveQualifierQuickFix,
         )
+    }
 
     private object RemoveQualifierQuickFix : LocalQuickFix {
         override fun getFamilyName(): String = KotlinBundle.message("remove.redundant.qualifier.name.quick.fix.text")
@@ -109,4 +113,10 @@ private fun KtDeclarationSymbol?.isEnumCompanionObject(): Boolean =
 private fun KtDotQualifiedExpression.deleteQualifier(): KtExpression? {
     val selectorExpression = selectorExpression ?: return null
     return this.replace(selectorExpression) as KtExpression
+}
+
+private fun KtElement.getQualifier(): KtElement? = when (this) {
+    is KtUserType -> qualifier
+    is KtDotQualifiedExpression -> receiverExpression
+    else -> null
 }
