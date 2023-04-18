@@ -24,9 +24,9 @@ class ScrollableTabsRow(infos: List<TabInfo>,
 
     val tabsLength = if (data.reqLength > maxLength) {
       val moreWidth = tabs.moreToolbarPreferredSize.width
-      val moreX = x + maxLength - moreWidth + if (withEntryPointToolbar) tabs.actionsInsets.left else -tabs.actionsInsets.right
+      val moreX = x + maxLength - moreWidth + if (withEntryPointToolbar) tabs.getActionsInsets().left else -tabs.getActionsInsets().right
       data.moreRect = Rectangle(moreX, y, moreWidth, data.rowHeight)
-      data.moreRect.x - tabs.actionsInsets.left - x
+      data.moreRect.x - tabs.getActionsInsets().left - x
     }
     else maxLength
 

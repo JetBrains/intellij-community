@@ -10,7 +10,7 @@ class WrapMultiRowLayout(tabs: JBTabsImpl, showPinnedTabsSeparately: Boolean) : 
   override fun splitToRows(data: MultiRowPassInfo): List<TabsRow> {
     val leftmostX = data.toFitRec.x + tabs.titleWrapper.preferredSize.width
     val entryToolbarWidth = tabs.entryPointToolbar?.component?.let { toolbar ->
-      tabs.actionsInsets.left + toolbar.preferredSize.width + tabs.actionsInsets.right
+      tabs.getActionsInsets().left + toolbar.preferredSize.width + tabs.getActionsInsets().right
     } ?: 0
     val rightmostX = data.toFitRec.x + data.toFitRec.width - entryToolbarWidth
     val firstRowWidth = rightmostX - leftmostX
