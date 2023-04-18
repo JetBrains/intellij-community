@@ -30,6 +30,7 @@ interface GitLabDiscussion {
 
   val position: Flow<GitLabDiscussionPosition?>
 
+  val resolvable: Boolean
   val canResolve: Boolean
   val resolved: Flow<Boolean>
 
@@ -100,7 +101,8 @@ class LoadedGitLabDiscussion(
   override val position: Flow<GitLabDiscussionPosition?> = loadedNotes.map { it.first().let(::convertPosition) }
 
   // a little cheat that greatly simplifies the implementation
-  override val canResolve: Boolean = discussionData.notes.first().let { it.resolvable && it.userPermissions.resolveNote }
+  override val resolvable: Boolean = discussionData.notes.first().resolvable
+  override val canResolve: Boolean = discussionData.notes.first().userPermissions.resolveNote
   override val resolved: Flow<Boolean> =
     loadedNotes
       .map { it.first().resolved }
@@ -140,7 +142,8 @@ class LoadedGitLabDiscussion(
     }
   }
 
-  override fun toString(): String = "LoadedGitLabDiscussion(id='$id', createdAt=$createdAt, canResolve=$canResolve)"
+  override fun toString(): String =
+    "LoadedGitLabDiscussion(id='$id', createdAt=$createdAt, canAddNotes=$canAddNotes, resolvable=$resolvable, canResolve=$canResolve)"
 }
 
 private fun convertPosition(note: GitLabNoteDTO): GitLabDiscussionPosition? {

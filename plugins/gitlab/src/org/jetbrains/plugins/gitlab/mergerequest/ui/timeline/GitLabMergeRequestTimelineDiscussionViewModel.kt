@@ -79,7 +79,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
     .modelFlow(cs, LOG)
 
   override val resolveVm: GitLabDiscussionResolveViewModel? =
-    if (discussion.canResolve) GitLabDiscussionResolveViewModelImpl(cs, discussion) else null
+    if (discussion.resolvable) GitLabDiscussionResolveViewModelImpl(cs, discussion) else null
 
   override val collapsible: Flow<Boolean> = resolveVm?.resolved ?: flowOf(false)
 

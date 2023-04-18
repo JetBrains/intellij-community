@@ -80,7 +80,7 @@ object GitLabDiscussionComponentFactory {
       bindEnabledIn(cs, vm.state.map { it != GitLabNoteEditingViewModel.SubmissionState.Loading })
     }
 
-    val resolveAction = resolveVm?.let {
+    val resolveAction = resolveVm?.takeIf { it.canResolve }?.let {
       swingAction(CollaborationToolsBundle.message("review.comments.resolve.action")) {
         resolveVm.changeResolvedState()
       }
@@ -118,7 +118,7 @@ object GitLabDiscussionComponentFactory {
     return HorizontalListPanel(CodeReviewTimelineUIUtil.Thread.Replies.ActionsFolded.HORIZONTAL_GROUP_GAP).apply {
       add(replyLink)
 
-      if (resolveVm != null) {
+      if (resolveVm != null && resolveVm.canResolve) {
         createUnResolveLink(cs, resolveVm).also(::add)
       }
     }

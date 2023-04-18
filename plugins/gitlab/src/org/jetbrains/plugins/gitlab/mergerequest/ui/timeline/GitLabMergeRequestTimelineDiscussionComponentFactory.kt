@@ -288,7 +288,7 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
     return HorizontalListPanel(Replies.ActionsFolded.HORIZONTAL_GROUP_GAP).apply {
       add(repliesActions)
 
-      vm.resolveVm?.let {
+      vm.resolveVm?.takeIf { it.canResolve }?.let {
         GitLabDiscussionComponentFactory.createUnResolveLink(cs, it).also(::add)
       }
     }
@@ -296,26 +296,25 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
 
   private fun collapseDiscussionTextIfNeeded(cs: CoroutineScope, vm: GitLabMergeRequestTimelineDiscussionViewModel,
                                              textPane: JComponent): JComponent {
-    val resolveVm = vm.resolveVm
-    if (resolveVm == null) return textPane
-
-    return JPanel(null).apply {
+    val layout = SizeRestrictedSingleComponentLayout()
+    return JPanel(layout).apply {
       name = "Text pane wrapper"
       isOpaque = false
-      layout = SizeRestrictedSingleComponentLayout().apply {
-        cs.launch {
-          vm.collapsed.collect {
-            if (it) {
-              textPane.foreground = UIUtil.getContextHelpForeground()
-              maxSize = DimensionRestrictions.LinesHeight(textPane, 2)
-            }
-            else {
-              textPane.foreground = UIUtil.getLabelForeground()
-              maxSize = DimensionRestrictions.None
-            }
-            revalidate()
-            repaint()
+
+      cs.launch {
+        combine(vm.collapsible, vm.collapsed) { collapsible, collapsed ->
+          collapsible && collapsed
+        }.collect {
+          if (it) {
+            textPane.foreground = UIUtil.getContextHelpForeground()
+            layout.maxSize = DimensionRestrictions.LinesHeight(textPane, 2)
           }
+          else {
+            textPane.foreground = UIUtil.getLabelForeground()
+            layout.maxSize = DimensionRestrictions.None
+          }
+          revalidate()
+          repaint()
         }
       }
       add(textPane)

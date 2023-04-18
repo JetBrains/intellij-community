@@ -49,7 +49,7 @@ class GitLabDiscussionViewModelImpl(
   private val expandRequested = MutableStateFlow(false)
 
   override val resolveVm: GitLabDiscussionResolveViewModel? =
-    if (discussion.canResolve) GitLabDiscussionResolveViewModelImpl(cs, discussion) else null
+    if (discussion.resolvable) GitLabDiscussionResolveViewModelImpl(cs, discussion) else null
 
   override val replyVm: GitLabDiscussionReplyViewModel? =
     if (discussion.canAddNotes) GitLabDiscussionReplyViewModelImpl(cs, currentUser, discussion) else null
