@@ -10,6 +10,7 @@ import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.terminal.ui.TtyConnectorAccessor
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
+import org.jetbrains.plugins.terminal.ShellStartupOptions
 import javax.swing.JComponent
 
 class TerminalWidgetImpl(private val project: Project,
@@ -36,6 +37,9 @@ class TerminalWidgetImpl(private val project: Project,
     ttyConnectorAccessor.ttyConnector = ttyConnector
     session.start(ttyConnector)
     blocksController.sizeTerminalToComponent()
+  }
+
+  fun setStartupOptions(options: ShellStartupOptions) {
   }
 
   override fun writePlainMessage(message: String) {

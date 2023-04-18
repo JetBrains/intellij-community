@@ -183,31 +183,56 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   @Override
-  public @NotNull PtyProcess createProcess(@NotNull ShellStartupOptions options) throws ExecutionException {
-    String workingDir = getWorkingDirectory(options.getWorkingDirectory());
+  public @NotNull ShellStartupOptions configureStartupOptions(@NotNull ShellStartupOptions baseOptions) {
+    String workingDir = getWorkingDirectory(baseOptions.getWorkingDirectory());
     Map<String, String> envs = getTerminalEnvironment(workingDir);
 
-    List<String> initialCommand = doGetInitialCommand(options, envs);
-    ShellTerminalWidget widget = getShellTerminalWidget(options);
+    List<String> initialCommand = doGetInitialCommand(baseOptions, envs);
+    ShellTerminalWidget widget = getShellTerminalWidget(baseOptions);
     if (widget != null) {
       widget.setShellCommand(initialCommand);
     }
-    if (enableShellIntegration()) {
-      initialCommand = injectShellIntegration(initialCommand, envs, options);
-    }
-    String[] command = ArrayUtil.toStringArray(initialCommand);
 
+    ShellStartupOptions updatedOptions = baseOptions.builder()
+      .shellCommand(initialCommand)
+      .workingDirectory(workingDir)
+      .envVariables(envs)
+      .build();
+    if (enableShellIntegration()) {
+      updatedOptions = injectShellIntegration(updatedOptions);
+    }
+    return applyTerminalCustomizers(updatedOptions);
+  }
+
+  private @NotNull ShellStartupOptions applyTerminalCustomizers(@NotNull ShellStartupOptions options) {
+    String[] command = ArrayUtil.toStringArray(options.getShellCommand());
+    Map<String, String> envs = ShellStartupOptionsKt.createEnvVariablesMap(options.getEnvVariables());
     for (LocalTerminalCustomizer customizer : LocalTerminalCustomizer.EP_NAME.getExtensions()) {
       try {
-        command = customizer.customizeCommandAndEnvironment(myProject, workingDir, command, envs);
+        command = customizer.customizeCommandAndEnvironment(myProject, options.getWorkingDirectory(), command, envs);
       }
       catch (Exception e) {
         LOG.error("Exception during customization of the terminal session", e);
       }
     }
 
-    TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command);
+    return options.builder()
+      .shellCommand(Arrays.asList(command))
+      .envVariables(envs)
+      .build();
+  }
+
+  @Override
+  public @NotNull PtyProcess createProcess(@NotNull ShellStartupOptions options) throws ExecutionException {
+    String[] command = ArrayUtil.toStringArray(options.getShellCommand());
+    Map<String, String> envs = options.getEnvVariables();
     TermSize initialTermSize = options.getInitialTermSize();
+    String workingDir = options.getWorkingDirectory();
+    if (workingDir == null) {
+      throw new IllegalStateException("Working directory must not be null, startup options: " + options);
+    }
+
+    TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command);
     try {
       long startNano = System.nanoTime();
       PtyProcessBuilder builder = new PtyProcessBuilder(command)
@@ -377,34 +402,40 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
                                                  @NotNull Map<String, String> envs,
                                                  boolean shellIntegration) {
     List<String> command = convertShellPathToCommand(shellPath);
-    return shellIntegration ? injectShellIntegration(command, envs, null) : command;
+    if (shellIntegration) {
+      ShellStartupOptions options = injectShellIntegration(command, envs);
+      return Objects.requireNonNull(options.getShellCommand());
+    }
+    return command;
   }
 
-  static @NotNull List<String> injectShellIntegration(@NotNull List<String> shellCommand,
-                                                      @NotNull Map<String, String> envs,
-                                                      @Nullable ShellStartupOptions startupOptions) {
+  static @NotNull ShellStartupOptions injectShellIntegration(@NotNull List<String> shellCommand,
+                                                             @NotNull Map<String, String> envs) {
+    ShellStartupOptions options = new ShellStartupOptions.Builder().shellCommand(shellCommand).envVariables(envs).build();
+    return injectShellIntegration(options);
+  }
+
+  private static @NotNull ShellStartupOptions injectShellIntegration(@NotNull ShellStartupOptions options) {
+    List<String> shellCommand = options.getShellCommand();
     String shellExe = ContainerUtil.getFirstItem(shellCommand);
-    if (shellExe == null) return shellCommand;
-    return injectShellIntegration(shellExe, shellCommand.subList(1, shellCommand.size()), envs, startupOptions);
-  }
+    if (shellCommand == null || shellExe == null) return options;
 
-  private static @NotNull List<String> injectShellIntegration(@NotNull String shellExe,
-                                                              @NotNull List<String> command,
-                                                              @NotNull Map<String, String> envs,
-                                                              @Nullable ShellStartupOptions startupOptions) {
-    List<String> result = new ArrayList<>();
-    result.add(shellExe);
-    command = new ArrayList<>(command);
+    List<String> arguments = new ArrayList<>(shellCommand.subList(1, shellCommand.size()));
+    Map<String, String> envs = ShellStartupOptionsKt.createEnvVariablesMap(options.getEnvVariables());
+    boolean blockShellIntegrationEnabled = false;
+
+    List<String> resultCommand = new ArrayList<>();
+    resultCommand.add(shellExe);
 
     String shellName = PathUtil.getFileName(shellExe);
     String rcFilePath = findRCFile(shellName);
     if (rcFilePath != null) {
       if (shellName.equals(BASH_NAME) || (SystemInfo.isMac && shellName.equals(SH_NAME))) {
-        addRcFileArgument(envs, command, result, rcFilePath, "--rcfile");
+        addRcFileArgument(envs, arguments, resultCommand, rcFilePath, "--rcfile");
         // remove --login to enable --rcfile sourcing
-        boolean loginShell = command.removeAll(LOGIN_CLI_OPTIONS);
+        boolean loginShell = arguments.removeAll(LOGIN_CLI_OPTIONS);
         setLoginShellEnv(envs, loginShell);
-        setCommandHistoryFile(startupOptions, envs);
+        setCommandHistoryFile(options, envs);
       }
       else if (shellName.equals(ZSH_NAME)) {
         String zdotdir = envs.get(ZDOTDIR);
@@ -412,20 +443,25 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
           envs.put("_INTELLIJ_ORIGINAL_ZDOTDIR", zdotdir);
         }
         envs.put(ZDOTDIR, PathUtil.getParentPath(rcFilePath));
+        blockShellIntegrationEnabled = true;
       }
       else if (shellName.equals(FISH_NAME)) {
         // `--init-command=COMMANDS` is available since Fish 2.7.0 (released November 23, 2017)
         // Multiple `--init-command=COMMANDS` are supported.
-        result.add("--init-command=source " + CommandLineUtil.posixQuote(rcFilePath));
+        resultCommand.add("--init-command=source " + CommandLineUtil.posixQuote(rcFilePath));
       }
     }
 
-    result.addAll(command);
-    return result;
+    resultCommand.addAll(arguments);
+    return options.builder()
+      .shellCommand(resultCommand)
+      .envVariables(envs)
+      .blockShellIntegrationEnabled(blockShellIntegrationEnabled)
+      .build();
   }
 
-  private static void setCommandHistoryFile(@Nullable ShellStartupOptions startupOptions, @NotNull Map<String, String> envs) {
-    Function0<Path> commandHistoryFileProvider = startupOptions != null ? startupOptions.getCommandHistoryFileProvider() : null;
+  private static void setCommandHistoryFile(@NotNull ShellStartupOptions startupOptions, @NotNull Map<String, String> envs) {
+    Function0<Path> commandHistoryFileProvider = startupOptions.getCommandHistoryFileProvider();
     Path commandHistoryFile = commandHistoryFileProvider != null ? commandHistoryFileProvider.invoke() : null;
     if (commandHistoryFile != null) {
       envs.put(IJ_COMMAND_HISTORY_FILE_ENV, commandHistoryFile.toString());
@@ -456,17 +492,17 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   private static void addRcFileArgument(Map<String, String> envs,
-                                        List<String> command,
+                                        List<String> arguments,
                                         List<String> result,
                                         String rcFilePath, String rcfileOption) {
     result.add(rcfileOption);
     result.add(rcFilePath);
-    int idx = command.indexOf(rcfileOption);
+    int idx = arguments.indexOf(rcfileOption);
     if (idx >= 0) {
-      command.remove(idx);
-      if (idx < command.size()) {
-        envs.put(JEDITERM_USER_RCFILE, FileUtil.expandUserHome(command.get(idx)));
-        command.remove(idx);
+      arguments.remove(idx);
+      if (idx < arguments.size()) {
+        envs.put(JEDITERM_USER_RCFILE, FileUtil.expandUserHome(arguments.get(idx)));
+        arguments.remove(idx);
       }
     }
   }

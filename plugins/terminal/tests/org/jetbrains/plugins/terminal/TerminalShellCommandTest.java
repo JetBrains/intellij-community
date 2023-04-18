@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class TerminalShellCommandTest extends TestCase {
   public void testDontAddAnything() {
@@ -42,7 +43,13 @@ public class TerminalShellCommandTest extends TestCase {
 
   private static List<String> getCommand(@NotNull String shellPath, @NotNull Map<String, String> envs, boolean shellIntegration) {
     List<String> shellCommand = LocalTerminalDirectRunner.convertShellPathToCommand(shellPath);
-    return shellIntegration ? LocalTerminalDirectRunner.injectShellIntegration(shellCommand, envs, null) : shellCommand;
+    if (shellIntegration) {
+      ShellStartupOptions options = LocalTerminalDirectRunner.injectShellIntegration(shellCommand, envs);
+      envs.clear();
+      envs.putAll(options.getEnvVariables());
+      return Objects.requireNonNull(options.getShellCommand());
+    }
+    return shellCommand;
   }
 
   private static void hasRcConfig(String path, String configName, Map<String, String> envs) {
