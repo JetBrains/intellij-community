@@ -131,6 +131,8 @@ fun doPatchPluginXml(document: Document,
     val description = rootElement.getChild("description")
     val replaced = replaceInElementText(description, "IntelliJ-based IDEs", "WebStorm")
     check(replaced) { "Could not find \'IntelliJ-based IDEs\' in plugin description of $pluginModuleName" }
+    // IJI-673 workaround
+    productDescriptor.setAttribute("release-date", "20230327")
   }
   return document.toXML()
 }
