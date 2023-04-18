@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -13,6 +14,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,9 +62,11 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
 
       renderer.appendFileName(file, filePath.getName(), change.getFileStatus().getColor());
 
-      String originText = change.getOriginText(myProject);
-      if (originText != null) {
-        renderer.append(spaceAndThinSpace() + originText, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-318216, EA-831659")) {
+        String originText = change.getOriginText(myProject);
+        if (originText != null) {
+          renderer.append(spaceAndThinSpace() + originText, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        }
       }
 
       if (renderer.isShowFlatten()) {
