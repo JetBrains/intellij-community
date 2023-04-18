@@ -40,8 +40,10 @@ internal class GitLabMergeRequestChangesViewModelImpl(
     changes.map { it.commits }
       .stateIn(cs, SharingStarted.Lazily, listOf())
 
+  private val parsedChanges = changes.map { runCatching { it.getParsedChanges() } }
+    .modelFlow(cs, thisLogger())
   override val changesResult: Flow<Result<Collection<Change>>> =
-    combine(changes.map { runCatching { it.getParsedChanges() } }, selectedCommit) { changesResult, commit ->
+    combine(parsedChanges, selectedCommit) { changesResult, commit ->
       changesResult.map {
         it.changesByCommits[commit?.sha] ?: it.changes
       }
@@ -57,6 +59,16 @@ internal class GitLabMergeRequestChangesViewModelImpl(
 
   override fun selectChange(change: Change) {
     cs.launch {
+      val commit = combine(reviewCommits, parsedChanges) { commits, changesRes ->
+        val changes = changesRes.getOrNull() ?: throw CancellationException("Missing changes")
+        if (changes.changes.find { it.isEqual(change) } != null) {
+          null
+        }
+        else {
+          changes.commitByChange[change]?.let { commitSha -> commits.find { it.sha == commitSha } }
+        }
+      }.first()
+      selectCommit(commit)
       _changeSelectionRequests.emit(change)
     }
   }

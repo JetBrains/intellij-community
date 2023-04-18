@@ -28,6 +28,9 @@ class GitBranchComparisonResultImpl(private val project: Project,
   override val changes: List<Change> = Collections.unmodifiableList(_changes)
   private val _changesByCommits = mutableMapOf<String, Collection<Change>>()
   override val changesByCommits: Map<String, Collection<Change>> = Collections.unmodifiableMap(_changesByCommits)
+  private val _commitByChange: MutableMap<Change, String> =
+    CollectionFactory.createCustomHashingStrategyMap(GitBranchComparisonResult.REVISION_COMPARISON_HASHING_STRATEGY)
+  override val commitByChange: Map<Change, String> = Collections.unmodifiableMap(_commitByChange)
 
   private val _diffDataByChange: MutableMap<Change, GitTextFilePatchWithHistory> =
     CollectionFactory.createCustomHashingStrategyMap(GitBranchComparisonResult.REVISION_COMPARISON_HASHING_STRATEGY)
@@ -80,6 +83,7 @@ class GitBranchComparisonResultImpl(private val project: Project,
           patch.afterVersionId = commitSha
           _diffDataByChange[change] = GitTextFilePatchWithHistory(patch, false, fileHistory)
         }
+        _commitByChange[change] = commitWithPatches.sha
       }
       _changesByCommits[commitWithPatches.sha] = commitChanges
       previousCommitSha = commitSha
@@ -114,6 +118,7 @@ class GitBranchComparisonResultImpl(private val project: Project,
       val previousCommitSha = commitWithPatches.parents.find { commitsHashes.contains(it) } ?: mergeBaseSha
       val commitSha = commitWithPatches.sha
       val commitChanges = commitWithPatches.patches.map { createChangeFromPatch(previousCommitSha, commitSha, it) }
+      commitChanges.forEach { _commitByChange[it] = commitWithPatches.sha }
       _changesByCommits[commitWithPatches.sha] = commitChanges
     }
 

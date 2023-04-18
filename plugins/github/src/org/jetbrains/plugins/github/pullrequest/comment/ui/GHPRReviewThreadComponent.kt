@@ -32,10 +32,7 @@ import com.intellij.util.containers.nullize
 import com.intellij.util.text.JBDateFormat
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -45,6 +42,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRSelectInToolWind
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtensionComponentBase.Companion.items
 import java.awt.event.ActionEvent
+import java.awt.event.ActionListener
 import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JComponent
@@ -109,10 +107,11 @@ object GHPRReviewThreadComponent {
     return Wrapper().also {
       scopeProvider.activateWith(it)
 
+      val fileNameClickListener = flowOf(ActionListener { selectInToolWindowHelper.selectChange(thread.commit?.oid, thread.filePath) })
       scopeProvider.doInScope {
-        val comp = TimelineDiffComponentFactory.createDiffWithHeader(this, vm, thread.filePath, {
-          selectInToolWindowHelper.selectChange(thread.commit?.oid, thread.filePath)
-        }) { createDiff(thread, project) }
+        val comp = TimelineDiffComponentFactory.createDiffWithHeader(this, vm, thread.filePath, fileNameClickListener) {
+          createDiff(thread, project)
+        }
         it.setContent(comp)
       }
     }

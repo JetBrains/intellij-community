@@ -7,26 +7,35 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.PatchHunk
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
+import com.intellij.openapi.vcs.changes.Change
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussionPosition
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDiscussionChangeMapping
-import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabDiscussionDiffViewModel.*
+import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabDiscussionDiffViewModel.FullDiffRequest
+import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabDiscussionDiffViewModel.PatchHunkResult
 
 interface GitLabDiscussionDiffViewModel {
   val position: GitLabDiscussionPosition
   val mapping: Flow<GitLabMergeRequestDiscussionChangeMapping>
   val patchHunk: Flow<PatchHunkResult>
 
+  val showDiffRequests: Flow<FullDiffRequest>
+  val showDiffHandler: Flow<(() -> Unit)?>
+
   sealed interface PatchHunkResult {
     class Loaded(val hunk: PatchHunk, val anchor: DiffLineLocation) : PatchHunkResult
     object NotLoaded : PatchHunkResult
     class Error(val error: Throwable) : PatchHunkResult
   }
+
+  data class FullDiffRequest(val change: Change, val location: DiffLineLocation?)
 }
 
 private val LOG = logger<GitLabDiscussionDiffViewModel>()
@@ -34,7 +43,7 @@ private val LOG = logger<GitLabDiscussionDiffViewModel>()
 @OptIn(ExperimentalCoroutinesApi::class)
 class GitLabDiscussionDiffViewModelImpl(
   parentCs: CoroutineScope,
-  mr: GitLabMergeRequest,
+  private val mr: GitLabMergeRequest,
   override val position: GitLabDiscussionPosition
 ) : GitLabDiscussionDiffViewModel {
 
@@ -75,6 +84,30 @@ class GitLabDiscussionDiffViewModelImpl(
       send(it)
     }
   }.modelFlow(cs, LOG)
+
+  private val _showDiffRequests = MutableSharedFlow<FullDiffRequest>(
+    extraBufferCapacity = 1,
+    onBufferOverflow = BufferOverflow.DROP_OLDEST
+  )
+  override val showDiffRequests: Flow<FullDiffRequest> = _showDiffRequests.asSharedFlow()
+
+  override val showDiffHandler: Flow<(() -> Unit)?> = mapping.map {
+    when (it) {
+      is GitLabMergeRequestDiscussionChangeMapping.Actual -> {
+        { requestFullDiff(it.change, it.location) }
+      }
+      is GitLabMergeRequestDiscussionChangeMapping.Outdated -> {
+        { requestFullDiff(it.change, it.originalLocation) }
+      }
+      else -> null
+    }
+  }
+
+  private fun requestFullDiff(change: Change, location: DiffLineLocation?) {
+    cs.launch {
+      _showDiffRequests.emit(FullDiffRequest(change, location))
+    }
+  }
 }
 
 private fun findHunkAndAnchor(patch: TextFilePatch, location: DiffLineLocation): Pair<PatchHunk, DiffLineLocation>? {

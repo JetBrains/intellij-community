@@ -2,6 +2,7 @@
 
 package org.jetbrains.plugins.gitlab.mergerequest.file
 
+import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.MutableDiffRequestChainProcessor
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.diff.chains.DiffRequestChain
@@ -10,10 +11,12 @@ import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.requests.ErrorDiffRequest
 import com.intellij.diff.requests.LoadingDiffRequest
+import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.history.VcsDiffUtil
@@ -99,8 +102,8 @@ private fun Flow<ChangesSelection>.mapToDiffChain(project: Project, changesFlow:
       return@combineTransformLatest
     }
 
-    val producers = selection.toProducersSelection { change ->
-      val changeDataKeys = createData(changesBundle, change)
+    val producers = selection.toProducersSelection { change, location ->
+      val changeDataKeys = createData(changesBundle, change, location)
       ChangeDiffRequestProducer.create(project, change, changeDataKeys)
     }
 
@@ -117,7 +120,8 @@ private suspend fun loadRevisionsAndParseChanges(changes: GitLabMergeRequestChan
 
 private fun createData(
   parsedChanges: GitBranchComparisonResult,
-  change: Change
+  change: Change,
+  location: DiffLineLocation?
 ): Map<Key<out Any>, Any?> {
   val requestDataKeys = mutableMapOf<Key<out Any>, Any?>()
 
@@ -126,6 +130,10 @@ private fun createData(
   val diffComputer = parsedChanges.patchesByChange[change]?.getDiffComputer()
   if (diffComputer != null) {
     requestDataKeys[DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER] = diffComputer
+  }
+
+  if (location != null) {
+    requestDataKeys[DiffUserDataKeys.SCROLL_TO_LINE] = Pair(location.first, location.second)
   }
 
   return requestDataKeys
@@ -142,15 +150,15 @@ private inline fun <reified T1, reified T2, R> combineTransformLatest(
       transform(v1, v2)
     }
 
-private fun ChangesSelection.toProducersSelection(mapper: (Change) -> DiffRequestProducer?)
+private fun ChangesSelection.toProducersSelection(mapper: (Change, DiffLineLocation?) -> DiffRequestProducer?)
   : ListSelection<out DiffRequestProducer> = when (this) {
-  is ChangesSelection.Multiple -> ListSelection.createAt(changes.mapNotNull(mapper), 0).asExplicitSelection()
+  is ChangesSelection.Multiple -> ListSelection.createAt(changes.mapNotNull { mapper(it, null) }, 0).asExplicitSelection()
   is ChangesSelection.Single -> {
     var newSelectionIndex = -1
     val result = mutableListOf<DiffRequestProducer>()
     for (i in changes.indices) {
       if (i == selectedIdx) newSelectionIndex = result.size
-      val out = mapper(changes[i])
+      val out = mapper(changes[i], location?.takeIf { i == selectedIdx })
       if (out != null) result.add(out)
     }
     ListSelection.createAt(result, newSelectionIndex)

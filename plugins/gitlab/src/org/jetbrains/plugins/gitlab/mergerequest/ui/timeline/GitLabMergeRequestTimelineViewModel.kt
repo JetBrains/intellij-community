@@ -102,6 +102,9 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
       }
     }.modelFlow(cs, LOG)
 
+  private val _diffRequests = MutableSharedFlow<GitLabDiscussionDiffViewModel.FullDiffRequest>()
+  val diffRequests: Flow<GitLabDiscussionDiffViewModel.FullDiffRequest> = _diffRequests.asSharedFlow()
+
   /**
    * Load all simple events and discussions and subscribe to user discussions changes
    */
@@ -142,16 +145,28 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
   private fun Flow<List<GitLabMergeRequestTimelineItem>>.mapToVms(mr: GitLabMergeRequest) =
     mapCaching(
       GitLabMergeRequestTimelineItem::id,
-      { cs, item -> createVm(cs, mr, item) },
+      { cs, item -> cs.createItemVm(mr, item) },
       { if (this is GitLabMergeRequestTimelineItemViewModel.Discussion) destroy() }
     )
 
-  private fun createVm(cs: CoroutineScope, mr: GitLabMergeRequest, item: GitLabMergeRequestTimelineItem)
+  private fun CoroutineScope.createItemVm(mr: GitLabMergeRequest, item: GitLabMergeRequestTimelineItem)
     : GitLabMergeRequestTimelineItemViewModel =
     when (item) {
       is GitLabMergeRequestTimelineItem.Immutable ->
         GitLabMergeRequestTimelineItemViewModel.Immutable(item)
       is GitLabMergeRequestTimelineItem.UserDiscussion ->
-        GitLabMergeRequestTimelineItemViewModel.Discussion(cs, currentUser, mr, item.discussion)
+        GitLabMergeRequestTimelineItemViewModel.Discussion(cs, currentUser, mr, item.discussion).also {
+          handleDiffRequests(it)
+        }
     }
+
+  private fun CoroutineScope.handleDiffRequests(discussion: GitLabMergeRequestTimelineItemViewModel.Discussion) {
+    launch(start = CoroutineStart.UNDISPATCHED) {
+      discussion.diffVm.collectLatest {
+        it?.showDiffRequests?.collectLatest { req ->
+          _diffRequests.emit(req)
+        }
+      }
+    }
+  }
 }

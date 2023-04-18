@@ -91,6 +91,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
 
   override val diffVm: Flow<GitLabDiscussionDiffViewModel?> =
     discussion.position.map { pos -> pos?.let { GitLabDiscussionDiffViewModelImpl(cs, mr, it) } }
+      .modelFlow(cs, LOG)
 
   init {
     val resolvedFlow = resolveVm?.resolved

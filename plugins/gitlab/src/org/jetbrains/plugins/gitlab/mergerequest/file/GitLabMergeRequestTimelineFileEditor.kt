@@ -10,7 +10,10 @@ import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.childScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import org.jetbrains.plugins.gitlab.mergerequest.diff.ChangesSelection
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContext
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.LoadAllGitLabMergeRequestTimelineViewModel
@@ -30,7 +33,17 @@ internal class GitLabMergeRequestTimelineFileEditor(private val project: Project
 
   private val component = run {
     val vm = LoadAllGitLabMergeRequestTimelineViewModel(cs, ctx.currentUser, ctx.projectData, file.mergeRequestId)
-    GitLabMergeRequestTimelineComponentFactory.create(project, cs.childScope(Dispatchers.Main), vm, ctx.avatarIconProvider)
+    val uiCs = cs.childScope(Dispatchers.Main)
+
+    val diffBridge = ctx.getDiffBridge(file.mergeRequestId)
+    uiCs.launch(start = CoroutineStart.UNDISPATCHED) {
+      vm.diffRequests.collect { (change, location) ->
+        diffBridge.setChanges(ChangesSelection.Single(listOf(change), 0, location))
+        diffBridge.changeSelected(change)
+        ctx.filesController.openDiff(file.mergeRequestId, true)
+      }
+    }
+    GitLabMergeRequestTimelineComponentFactory.create(project, uiCs, vm, ctx.avatarIconProvider)
   }
 
   override fun getComponent(): JComponent = component

@@ -4,7 +4,6 @@ package com.intellij.collaboration.ui.codereview.timeline
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
-import com.intellij.collaboration.ui.util.ActivatableCoroutineScopeProvider
 import com.intellij.collaboration.ui.util.bindChildIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.diff.util.DiffDrawUtil
@@ -30,7 +29,7 @@ import com.intellij.openapi.vcs.changes.patch.tool.PatchChangeBuilder
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
-import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.panels.ListLayout
 import com.intellij.util.PathUtil
 import com.intellij.util.ui.EmptyIcon
@@ -39,15 +38,11 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.annotations.NonNls
 import java.awt.Color
 import java.awt.event.ActionListener
 import javax.swing.JComponent
@@ -200,7 +195,7 @@ object TimelineDiffComponentFactory {
   fun createDiffWithHeader(cs: CoroutineScope,
                            collapseVm: CollapsibleTimelineItemViewModel,
                            filePath: @NlsSafe String,
-                           onFileNameClick: () -> Unit,
+                           fileNameClickListener: Flow<ActionListener?>,
                            diffComponentFactory: CoroutineScope.() -> JComponent): JComponent {
     val expandCollapseButton = InlineIconButton(EmptyIcon.ICON_16).apply {
       cs.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -229,7 +224,7 @@ object TimelineDiffComponentFactory {
 
 
     return RoundedPanel(ListLayout.vertical(0), 8).apply {
-      add(createFileNameComponent(filePath, expandCollapseButton, onFileNameClick))
+      add(cs.createFileNameComponent(filePath, expandCollapseButton, fileNameClickListener))
       CollaborationToolsUIUtil.overrideUIDependentProperty(this) {
         background = EditorColorsManager.getInstance().globalScheme.defaultBackground
       }
@@ -243,14 +238,29 @@ object TimelineDiffComponentFactory {
     }
   }
 
-  private fun createFileNameComponent(filePath: String, expandCollapseButton: JComponent, onFileClick: () -> Unit): JComponent {
+  private fun CoroutineScope.createFileNameComponent(filePath: String, expandCollapseButton: JComponent,
+                                                     nameClickListener: Flow<ActionListener?>): JComponent {
     val name = PathUtil.getFileName(filePath)
     val path = PathUtil.getParentPath(filePath)
     val fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(name)
 
-    val nameLabel = LinkLabel<Unit>(name, fileType.icon) { _, _ ->
-      onFileClick()
+    val nameLabel = ActionLink(name).apply {
+      icon = fileType.icon
+      autoHideOnDisable = false
     }
+
+    launch {
+      nameClickListener.collect { listener ->
+        nameLabel.actionListeners.forEach {
+          nameLabel.removeActionListener(it)
+        }
+        if (listener != null) {
+          nameLabel.addActionListener(listener)
+        }
+        nameLabel.isEnabled = listener != null
+      }
+    }
+
     return JPanel(MigLayout(LC().insets("0").gridGap("5", "0").fill().noGrid())).apply {
       isOpaque = false
       border = JBUI.Borders.empty(10)

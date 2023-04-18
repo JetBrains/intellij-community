@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.ui.HyperlinkAdapter
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.Wrapper
@@ -35,10 +36,14 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.filePath
 import org.jetbrains.plugins.gitlab.ui.comment.*
+import org.jetbrains.plugins.gitlab.util.GitLabBundle
+import java.awt.event.ActionEvent
+import java.awt.event.ActionListener
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.event.HyperlinkEvent
 
 @OptIn(ExperimentalCoroutinesApi::class)
 object GitLabMergeRequestTimelineDiscussionComponentFactory {
@@ -153,35 +158,54 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
     return contentPanel
   }
 
+  private const val OPEN_DIFF_LINK_HREF = "OPEN_DIFF"
+
   private fun CoroutineScope.createDiffPanel(project: Project,
                                              vm: GitLabMergeRequestTimelineDiscussionViewModel,
                                              diffVm: GitLabDiscussionDiffViewModel): JComponent {
-    return TimelineDiffComponentFactory.createDiffWithHeader(this, vm, diffVm.position.filePath, {}) {
+    val fileNameClickHandler = diffVm.showDiffHandler.map { handler ->
+      handler?.let { ActionListener { _ -> it() } }
+    }
+    return TimelineDiffComponentFactory.createDiffWithHeader(this, vm, diffVm.position.filePath, fileNameClickHandler) {
       val diffCs = this
       Wrapper(LoadingLabel()).apply {
         bindContentIn(diffCs, diffVm.patchHunk) { hunkState ->
+          val loadedDiffCs = this
           when (hunkState) {
             is GitLabDiscussionDiffViewModel.PatchHunkResult.Loaded -> {
               TimelineDiffComponentFactory.createDiffComponent(project, EditorFactory.getInstance(), hunkState.hunk, hunkState.anchor, null)
             }
             is GitLabDiscussionDiffViewModel.PatchHunkResult.Error,
             GitLabDiscussionDiffViewModel.PatchHunkResult.NotLoaded -> {
-              val text = HtmlBuilder()
-                .append(HtmlChunk.p().addText("Not able to load diff hunk"))
-                .apply {
-                  if (hunkState is GitLabDiscussionDiffViewModel.PatchHunkResult.Error) {
-                    append(HtmlChunk.p().addText(hunkState.error.localizedMessage))
-                  }
-                }
-                .append(HtmlChunk.p().child(HtmlChunk.link("OPEN", "Open full diff")))
-                .wrapWith(HtmlChunk.div("text-align: center"))
-                .toString()
-
               JPanel(SingleComponentCenteringLayout()).apply {
                 isOpaque = false
                 border = JBUI.Borders.empty(16)
 
-                add(SimpleHtmlPane(text))
+                bindChildIn(loadedDiffCs, fileNameClickHandler) { clickListener ->
+                  if (clickListener != null) {
+                    val text = buildCantLoadHunkText(hunkState)
+                      .append(HtmlChunk.p().child(
+                        HtmlChunk.link(OPEN_DIFF_LINK_HREF, GitLabBundle.message("merge.request.timeline.discussion.open.full.diff"))))
+                      .wrapWith(HtmlChunk.div("text-align: center"))
+                      .toString()
+
+                    SimpleHtmlPane(addBrowserListener = false).apply {
+                      setHtmlBody(text)
+                    }.also {
+                      it.addHyperlinkListener(object : HyperlinkAdapter() {
+                        override fun hyperlinkActivated(e: HyperlinkEvent) {
+                          if (e.description == OPEN_DIFF_LINK_HREF) {
+                            clickListener.actionPerformed(ActionEvent(it, ActionEvent.ACTION_PERFORMED, "execute"))
+                          }
+                        }
+                      })
+                    }
+                  }
+                  else {
+                    val text = buildCantLoadHunkText(hunkState).toString()
+                    SimpleHtmlPane(text)
+                  }
+                }
               }
             }
           }
@@ -189,6 +213,15 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
       }
     }
   }
+
+  private fun buildCantLoadHunkText(hunkState: GitLabDiscussionDiffViewModel.PatchHunkResult) =
+    HtmlBuilder()
+      .append(HtmlChunk.p().addText(GitLabBundle.message("merge.request.timeline.discussion.cant.load.diff")))
+      .apply {
+        if (hunkState is GitLabDiscussionDiffViewModel.PatchHunkResult.Error) {
+          append(HtmlChunk.p().addText(hunkState.error.localizedMessage))
+        }
+      }
 
   private fun Flow<GitLabUserDTO>.createIconValue(cs: CoroutineScope, iconsProvider: IconsProvider<GitLabUserDTO>, size: Int) =
     SingleValueModel<Icon>(EmptyIcon.create(size)).apply {

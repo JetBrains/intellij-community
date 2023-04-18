@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.diff
 
+import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.vcs.changes.Change
 import git4idea.changes.GitBranchComparisonResult
@@ -8,11 +9,12 @@ import git4idea.changes.GitBranchComparisonResult
 sealed interface ChangesSelection {
   val changes: List<Change>
 
-  class Single(override val changes: List<Change>, val selectedIdx: Int) : ChangesSelection {
+  class Single(override val changes: List<Change>, val selectedIdx: Int, val location: DiffLineLocation? = null) : ChangesSelection {
     override fun equals(other: Any?): Boolean {
       if (this === other) return true
       if (other !is Single) return false
       if (selectedIdx != other.selectedIdx) return false
+      if (location != other.location) return false
 
       return changes.isEqual(other.changes)
     }
@@ -21,6 +23,7 @@ sealed interface ChangesSelection {
     override fun hashCode(): Int {
       var result = changes.calcHashCode()
       result = 31 * result + selectedIdx
+      result = 31 * result + (location?.hashCode() ?: 0)
       return result
     }
   }
@@ -37,12 +40,12 @@ sealed interface ChangesSelection {
   }
 
   companion object {
-    fun ListSelection<Change>.toSelection(): ChangesSelection {
+    fun ListSelection<Change>.toSelection(location: DiffLineLocation? = null): ChangesSelection {
       return if (isExplicitSelection) {
         Multiple(list)
       }
       else {
-        Single(list, selectedIndex)
+        Single(list, selectedIndex, location)
       }
     }
   }

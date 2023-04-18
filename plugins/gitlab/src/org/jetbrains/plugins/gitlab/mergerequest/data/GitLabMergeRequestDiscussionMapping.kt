@@ -9,7 +9,7 @@ import git4idea.changes.findCumulativeChange
 
 interface GitLabMergeRequestDiscussionChangeMapping {
   class Actual(val change: Change, val location: DiffLineLocation? = null) : GitLabMergeRequestDiscussionChangeMapping
-  class Outdated(val change: Change) : GitLabMergeRequestDiscussionChangeMapping
+  class Outdated(val change: Change, val originalLocation: DiffLineLocation? = null) : GitLabMergeRequestDiscussionChangeMapping
   object Obsolete : GitLabMergeRequestDiscussionChangeMapping
   class Error(val error: Throwable) : GitLabMergeRequestDiscussionChangeMapping
 
@@ -33,7 +33,7 @@ interface GitLabMergeRequestDiscussionChangeMapping {
             LOG.debug("Current head differs from $position")
             val change = mrChanges.findCumulativeChange(position.sha, position.filePath)
             if (change != null) {
-              return Outdated(change)
+              return Outdated(change, textLocation)
             }
             else {
               return Obsolete
