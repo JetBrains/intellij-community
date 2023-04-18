@@ -8,15 +8,16 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.psi.*
 
-internal class KtDeclarationTreeNode private constructor(
+class KtDeclarationTreeNode private constructor(
     project: Project?,
-    ktDeclaration: KtDeclaration?,
+    val declaration: KtDeclaration?,
     viewSettings: ViewSettings?
-) : AbstractPsiBasedNode<KtDeclaration?>(project, ktDeclaration!!, viewSettings) {
+) : AbstractPsiBasedNode<KtDeclaration?>(project, declaration!!, viewSettings) {
 
     override fun extractPsiFromValue(): PsiElement? = value
 
@@ -29,13 +30,14 @@ internal class KtDeclarationTreeNode private constructor(
 
     override fun isDeprecated(): Boolean = value?.let { KtPsiUtil.isDeprecated(it) } ?: false
 
-    internal companion object {
+    companion object {
         private val CLASS_INITIALIZER = "<" + KotlinBundle.message("project.view.class.initializer") + ">"
         private val EXPRESSION =  "<" + KotlinBundle.message("project.view.expression") + ">"
         private val ERROR_NAME = "<" + KotlinBundle.message("project.view.class.error.name") + ">"
 
         private fun String?.orErrorName() = if (!isNullOrBlank()) this else ERROR_NAME
 
+        @ApiStatus.Internal
         @NlsSafe
         fun tryGetRepresentableText(declaration: KtDeclaration, renderArguments: Boolean = true): String {
             val settings = declaration.containingKtFile.kotlinCustomSettings

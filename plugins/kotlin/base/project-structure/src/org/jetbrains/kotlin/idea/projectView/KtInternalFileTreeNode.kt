@@ -16,7 +16,7 @@ import com.intellij.util.SmartList
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.fileClasses.isJvmMultifileClassFile
-import org.jetbrains.kotlin.idea.decompiler.navigation.SourceNavigationHelper
+import org.jetbrains.kotlin.idea.navigation.SourceNavigationService
 import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeFqNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinJvmNameAnnotationIndex
 import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils
@@ -35,7 +35,7 @@ class KtInternalFileTreeNode(project: Project?, lightClass: KtLightClass, viewSe
         val prj = getProject()
         val baseName = virtualFile.nameWithoutExtension
         val smartPointerManager = SmartPointerManager.getInstance(prj)
-        val scopes = SourceNavigationHelper.targetClassFilesToSourcesScopes(virtualFile, prj)
+        val scopes = SourceNavigationService.getInstance(prj).targetClassFilesToSourcesScopes(virtualFile, prj)
         if (scopes.isEmpty()) return@lazy null
         val scope = GlobalSearchScope.union(scopes)
 

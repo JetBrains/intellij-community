@@ -106,3 +106,11 @@ class KotlinSelectInProjectViewProvider(private val project: Project) : Selectab
         return file != null && (index.isInSourceContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file))
     }
 }
+
+
+fun KtClassOrObject.getStructureDeclarations() =
+    buildList {
+        primaryConstructor?.let { add(it) }
+        primaryConstructorParameters.filterTo(this) { it.hasValOrVar() }
+        addAll(declarations)
+    }
