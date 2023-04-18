@@ -1758,9 +1758,13 @@ open class JBTabsImpl(private var project: Project?,
 
     override fun getPreferredSize(): Dimension {
       val base = super.getPreferredSize()
+      if (!tabs.horizontalSide) {
+        return base
+      }
+
       val label = tabs.infoToLabel.get(info)
-      if (tabs.horizontalSide && tabs.isSideComponentOnTabs && label != null && base.height > 0) {
-        return Dimension(base.width, label.preferredSize.height - tabs.borderThickness)
+      if (tabs.isSideComponentOnTabs && label != null && base.height > 0) {
+        return Dimension(base.width, label.preferredSize.height)
       }
       else {
         return base
