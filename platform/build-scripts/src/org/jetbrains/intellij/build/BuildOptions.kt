@@ -173,14 +173,14 @@ class BuildOptions(
     /**
      * Max attempts of dependencies resolution on fault. "1" means no retries.
      *
-     * @see {@link org.jetbrains.intellij.build.impl.JpsCompilationRunner.resolveProjectDependencies}
+     * @see [org.jetbrains.intellij.build.impl.JpsCompilationRunner.resolveProjectDependencies]
      */
     const val RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY = "intellij.build.dependencies.resolution.retry.max.attempts"
 
     /**
      * Initial delay in milliseconds between dependencies resolution retries on fault. Default is 1000
      *
-     * @see {@link org.jetbrains.intellij.build.impl.JpsCompilationRunner.resolveProjectDependencies}
+     * @see [org.jetbrains.intellij.build.impl.JpsCompilationRunner.resolveProjectDependencies]
      */
     const val RESOLVE_DEPENDENCIES_DELAY_MS_PROPERTY = "intellij.build.dependencies.resolution.retry.delay.ms"
     const val TARGET_OS_PROPERTY = "intellij.build.target.os"
@@ -193,13 +193,13 @@ class BuildOptions(
 
     /**
      * Allows override version isEap flag in ApplicationInfo.xml
-     * @see {@link org.jetbrains.intellij.build.ApplicationInfoPropertiesImpl}
+     * @see [org.jetbrains.intellij.build.ApplicationInfoPropertiesImpl]
      */
     const val INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_IS_EAP = "intellij.build.override.application.version.is.eap"
 
     /**
      * Allows override version suffix in ApplicationInfo.xml
-     * @see {@link org.jetbrains.intellij.build.ApplicationInfoPropertiesImpl}
+     * @see [org.jetbrains.intellij.build.ApplicationInfoPropertiesImpl]
      */
     const val INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_SUFFIX = "intellij.build.override.application.version.suffix"
     /**

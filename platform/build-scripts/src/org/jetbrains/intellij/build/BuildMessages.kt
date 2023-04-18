@@ -9,7 +9,7 @@ interface BuildMessages: System.Logger {
   fun warning(message: String)
 
   /**
-   * Print {@code message} to <output-root>/log/debug.log file. This log file will also include 'info' and 'warning' messages.
+   * Print `message` to <output-root>/log/debug.log file. This log file will also include 'info' and 'warning' messages.
    */
   fun debug(message: String)
 

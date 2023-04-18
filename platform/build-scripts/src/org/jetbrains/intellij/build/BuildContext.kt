@@ -83,7 +83,7 @@ interface BuildContext : CompilationContext {
   fun patchInspectScript(path: Path)
 
   /**
-   * Unlike VM options produced by {@link org.jetbrains.intellij.build.impl.VmOptionsGenerator},
+   * Unlike VM options produced by [org.jetbrains.intellij.build.impl.VmOptionsGenerator],
    * these are hard-coded into launchers and aren't supposed to be changed by a user.
    */
   fun getAdditionalJvmArguments(os: OsFamily,
