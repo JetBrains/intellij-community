@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-compiler-fir" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-fir-for-ide:1.8.20-release-327" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-fir-for-ide:1.9.0-dev-6050" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/1.8.20-release-327/kotlin-compiler-fir-for-ide-1.8.20-release-327.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/1.9.0-dev-6050/kotlin-compiler-fir-for-ide-1.9.0-dev-6050.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/1.8.20-release-327/kotlin-compiler-fir-for-ide-1.8.20-release-327-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/1.9.0-dev-6050/kotlin-compiler-fir-for-ide-1.9.0-dev-6050-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
