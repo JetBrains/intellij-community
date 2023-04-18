@@ -36,19 +36,41 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
   public void testSimpleOptions() {
     configure("-<caret>");
     myFixture.completeBasic();
-    assertEquals(List.of("-add-exports", "-add-opens",
-                         "agentlib:", "agentpath:", "D", "da", "disableassertions", "Djava.awt.headless=",
-                         "dsa", "Duser.dir=", "Duser.home=", "Duser.name=", "ea", "enableassertions", "esa",
-                         "javaagent:", "Xmx", "XX:"), myFixture.getLookupElementStrings());
+    assertEquals(List.of("--add-exports", "--add-opens",
+                         "-agentlib:", "-agentpath:", "-D", "-da", "-disableassertions", "-Djava.awt.headless=",
+                         "-dsa", "-Duser.dir=", "-Duser.home=", "-Duser.name=", "-ea", "-enableassertions", "-esa",
+                         "-javaagent:", "-Xmx", "-XX:"), myFixture.getLookupElementStrings());
     checkPresentation(myFixture.getLookupElements()[0], "--add-exports|null/null");
     checkPresentation(myFixture.getLookupElements()[2], "-agentlib:|null/null");
+  }
+
+  @Test
+  public void testSimpleOptionsAfterDot() {
+    configure("-Duser.<caret>");
+    myFixture.completeBasic();
+    assertEquals(List.of("-Duser.dir=", "-Duser.home=", "-Duser.name="), myFixture.getLookupElementStrings());
+  }
+
+  @Test
+  public void testSimpleOptionsAfterDash() {
+    configure("-add-<caret>");
+    myFixture.completeBasic();
+    assertEquals(List.of("--add-exports", "--add-opens"), myFixture.getLookupElementStrings());
+  }
+
+  @Test
+  public void testSimpleOptionsBeforeAnother() {
+    configure("-<caret> -ea");
+    myFixture.completeBasic();
+    List<String> strings = myFixture.getLookupElementStrings();
+    assertContainsElements(strings, "-Duser.dir=", "-Duser.home=", "-Duser.name=");
   }
 
   @Test
   public void testDoubleDash() {
     configure("--<caret>");
     myFixture.completeBasic();
-    assertEquals(List.of("add-exports", "add-opens"), myFixture.getLookupElementStrings());
+    assertEquals(List.of("--add-exports", "--add-opens"), myFixture.getLookupElementStrings());
     checkPresentation(myFixture.getLookupElements()[0], "--add-exports|null/null");
   }
 
