@@ -51,7 +51,7 @@ internal fun joinBlocking(containerScope: CoroutineScope, debugString: String, p
   @OptIn(DelicateCoroutinesApi::class)
   val dumpJob = GlobalScope.launch {
     delay(delayUntilCoroutineDump)
-    LOG.warn("$debugString: scope was not completed in $delayUntilCoroutineDump.\n${dumpCoroutines()}")
+    LOG.warn("$debugString: scope was not completed in $delayUntilCoroutineDump.\n${dumpCoroutines(scope = containerScope)}")
   }
   try {
     pumpEvents(containerJob)
