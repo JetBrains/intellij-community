@@ -8,7 +8,7 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.util.function.Supplier
 
-class RollingFileSupplier(private var basePath: Path) : Supplier<Path> {
+class RollingFileSupplier(private val basePath: Path) : Supplier<Path> {
   private val maxSizeBeforeRoll: Long = 3 * 1024
   private var currentPath: Path? = null
 
