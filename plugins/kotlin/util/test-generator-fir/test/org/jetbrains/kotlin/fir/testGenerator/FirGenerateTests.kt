@@ -23,10 +23,6 @@ import org.jetbrains.kotlin.idea.fir.low.level.api.AbstractFirLibraryModuleDecla
 import org.jetbrains.kotlin.idea.fir.parameterInfo.AbstractFirParameterInfoTest
 import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixMultiFileTest
 import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixTest
-import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveInJavaTest
-import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveTest
-import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveWithLibTest
-import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceToCompiledKotlinResolveInJavaTest
 import org.jetbrains.kotlin.idea.fir.search.AbstractHLImplementationSearcherTest
 import org.jetbrains.kotlin.idea.fir.shortenRefs.AbstractFirShortenRefsTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirRenameTest
@@ -39,6 +35,7 @@ import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOT_AND_FIR_PREFIX
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_FIR_PREFIX
 import org.jetbrains.fir.uast.test.*
+import org.jetbrains.kotlin.idea.fir.resolve.*
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     generateK2Tests()
@@ -248,6 +245,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractFirQuickDocTest> {
             model("quickDoc", pattern = Patterns.forRegex("""^([^_]+)\.(kt|java)$"""))
+        }
+
+        testClass<AbstractK2ReferenceResolveWithResolveExtensionTest> {
+            model("extensions/references", pattern = KT_WITHOUT_DOTS)
         }
     }
 
