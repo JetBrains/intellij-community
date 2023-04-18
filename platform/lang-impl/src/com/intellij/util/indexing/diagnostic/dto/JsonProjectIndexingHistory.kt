@@ -81,7 +81,7 @@ data class JsonProjectDumbIndexingHistory(
   override val fileCount: JsonProjectDumbIndexingFileCount = JsonProjectDumbIndexingFileCount(),
   val totalStatsPerFileType: List<JsonStatsPerFileType> = emptyList(),
   val totalStatsPerIndexer: List<JsonStatsPerIndexer> = emptyList(),
-  val scanningStatistics: JsonScanningStatistics = JsonScanningStatistics(),
+  val scanningStatisticsOfRefreshedFiles: JsonScanningStatistics = JsonScanningStatistics(),
   val fileProviderStatistics: List<JsonFileProviderIndexStatistics> = emptyList(),
   val visibleTimeToAllThreadTimeRatio: Double = 0.0
 ) : JsonProjectIndexingActivityHistory {

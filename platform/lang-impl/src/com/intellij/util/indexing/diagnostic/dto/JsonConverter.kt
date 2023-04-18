@@ -185,7 +185,7 @@ private fun ProjectDumbIndexingHistoryImpl.changeToJson(): JsonProjectDumbIndexi
     fileCount = getFileCount(),
     totalStatsPerFileType = aggregateStatsPerFileType().sortedByDescending { it.partOfTotalProcessingTime.doublePercentages },
     totalStatsPerIndexer = aggregateStatsPerIndexer().sortedByDescending { it.partOfTotalIndexingTime.doublePercentages },
-    scanningStatistics = refreshedScanningStatistics,
+    scanningStatisticsOfRefreshedFiles = refreshedScanningStatistics,
     fileProviderStatistics = providerStatistics.sortedByDescending { it.totalIndexingVisibleTime.nano },
     visibleTimeToAllThreadTimeRatio = visibleTimeToAllThreadsTimeRatio
   )

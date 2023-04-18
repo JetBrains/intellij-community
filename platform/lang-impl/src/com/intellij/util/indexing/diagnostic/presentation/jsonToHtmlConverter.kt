@@ -1246,7 +1246,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
               text(SECTION_INDEXING_TITLE)
             }
           }
-          if (scanningStatistics.numberOfScannedFiles != 0) {
+          if (scanningStatisticsOfRefreshedFiles.numberOfScannedFiles != 0) {
             li {
               a("#$SECTION_SCANNING_ID") {
                 text(SECTION_SCANNING_OF_REFRESHED_FILES_TITLE)
@@ -1518,7 +1518,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
           }
         }
 
-        if (scanningStatistics.numberOfScannedFiles != 0) {
+        if (scanningStatisticsOfRefreshedFiles.numberOfScannedFiles != 0) {
           div(id = SECTION_SCANNING_ID) {
             table(classes = "table-with-margin narrow-activity-table") {
               thead {
@@ -1527,48 +1527,50 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
                 }
               }
               tbody {
-                val classes = getMinorDataClass(
-                  scanningStatistics.scanningTime.milliseconds < 100 && scanningStatistics.numberOfScannedFiles < 1000)
+                val classes = getMinorDataClass(scanningStatisticsOfRefreshedFiles.scanningTime.milliseconds < 100 &&
+                                                scanningStatisticsOfRefreshedFiles.numberOfScannedFiles < 1000)
                 tr(classes = classes) {
-                  td("Number of scanned files"); td(scanningStatistics.numberOfScannedFiles.toString())
+                  td("Number of scanned files"); td(scanningStatisticsOfRefreshedFiles.numberOfScannedFiles.toString())
                 }
                 tr(classes = classes) {
-                  td("Number of files scheduled for indexing"); td(scanningStatistics.numberOfFilesForIndexing.toString())
+                  td("Number of files scheduled for indexing"); td(scanningStatisticsOfRefreshedFiles.numberOfFilesForIndexing.toString())
                 }
                 tr(classes = classes) {
                   td("Number of files fully indexed by $INDEX_INFRA_EXTENSIONS"); td(
-                  scanningStatistics.numberOfFilesFullyIndexedByInfrastructureExtensions.toString())
+                  scanningStatisticsOfRefreshedFiles.numberOfFilesFullyIndexedByInfrastructureExtensions.toString())
                 }
                 tr(classes = classes) {
-                  td("Number of double-scanned skipped files"); td(scanningStatistics.numberOfSkippedFiles.toString())
+                  td("Number of double-scanned skipped files"); td(scanningStatisticsOfRefreshedFiles.numberOfSkippedFiles.toString())
                 }
                 tr(classes = classes) {
-                  td("Total time of getting files' statuses (part of scanning)"); td(scanningStatistics.statusTime.presentableDuration())
+                  td("Total time of getting files' statuses (part of scanning)")
+                  td(scanningStatisticsOfRefreshedFiles.statusTime.presentableDuration())
                 }
                 tr(classes = classes) {
-                  td("Scanning time"); td(scanningStatistics.scanningTime.presentableDuration())
+                  td("Scanning time"); td(scanningStatisticsOfRefreshedFiles.scanningTime.presentableDuration())
                 }
                 tr(classes = classes) {
-                  td("Time processing up-to-date files"); td(scanningStatistics.timeProcessingUpToDateFiles.presentableDuration())
+                  td("Time processing up-to-date files")
+                  td(scanningStatisticsOfRefreshedFiles.timeProcessingUpToDateFiles.presentableDuration())
                 }
                 tr(classes = classes) {
-                  td("Time updating content-less indexes"); td(scanningStatistics.timeUpdatingContentLessIndexes.presentableDuration())
+                  td("Time updating content-less indexes")
+                  td(scanningStatisticsOfRefreshedFiles.timeUpdatingContentLessIndexes.presentableDuration())
                 }
                 tr(classes = classes) {
-                  td("Time indexing without content"); td(scanningStatistics.timeIndexingWithoutContentViaInfrastructureExtension.presentableDuration())
+                  td("Time indexing without content")
+                  td(scanningStatisticsOfRefreshedFiles.timeIndexingWithoutContentViaInfrastructureExtension.presentableDuration())
                 }
-                if (scanningStatistics.roots.isNotEmpty()) {
+                if (scanningStatisticsOfRefreshedFiles.roots.isNotEmpty()) {
                   tr(classes = classes) {
-                    td("Roots");td {
-                    textArea(scanningStatistics.roots.sorted().joinToString("\n"))
-                  }
+                    td("Roots");td { textArea(scanningStatisticsOfRefreshedFiles.roots.sorted().joinToString("\n")) }
                   }
                 }
-                if (scanningStatistics.scannedFiles.orEmpty().isNotEmpty()) {
+                if (scanningStatisticsOfRefreshedFiles.scannedFiles.orEmpty().isNotEmpty()) {
                   tr(classes = classes) {
                     td("Scanned files"); td {
                     textArea(
-                      scanningStatistics.scannedFiles.orEmpty().joinToString("\n") { file ->
+                      scanningStatisticsOfRefreshedFiles.scannedFiles.orEmpty().joinToString("\n") { file ->
                         file.path.presentablePath + when {
                           file.wasFullyIndexedByInfrastructureExtension -> " [by infrastructure]"
                           file.isUpToDate -> " [up-to-date]"
