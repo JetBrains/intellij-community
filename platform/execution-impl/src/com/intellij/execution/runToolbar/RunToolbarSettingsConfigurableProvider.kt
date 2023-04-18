@@ -8,7 +8,8 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
 
 class RunToolbarSettingsConfigurableProvider(val project: Project) : ConfigurableProvider() {
   override fun createConfigurable(): Configurable {
@@ -20,22 +21,21 @@ class RunToolbarSettingsConfigurableProvider(val project: Project) : Configurabl
   }
 }
 
-class RunToolbarSettingsConfigurable internal constructor(private val project: Project)
+class RunToolbarSettingsConfigurable internal constructor(project: Project)
   : BoundConfigurable(LangBundle.message("run.toolbar.configurable.title")) {
 
   private val settings = RunToolbarSettings.getInstance(project)
 
   override fun createPanel(): DialogPanel {
-    val panel = panel {
+    return panel {
       row {
-        checkBox(LangBundle.message("run.toolbar.move.new.on.top"), settings::getMoveNewOnTop, settings::setMoveNewOnTop)
+        checkBox(LangBundle.message("run.toolbar.move.new.on.top"))
+          .bindSelected(settings::getMoveNewOnTop, settings::setMoveNewOnTop)
       }
-
       row {
-        checkBox(LangBundle.message("run.toolbar.update.main.by.selected"), settings::getUpdateMainBySelected, settings::setUpdateMainBySelected)
+        checkBox(LangBundle.message("run.toolbar.update.main.by.selected"))
+          .bindSelected(settings::getUpdateMainBySelected, settings::setUpdateMainBySelected)
       }
-
     }
-    return panel
   }
 }
