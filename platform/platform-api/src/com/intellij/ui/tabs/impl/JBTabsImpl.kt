@@ -49,7 +49,6 @@ import com.intellij.ui.tabs.impl.multiRow.WrapMultiRowLayout
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout
 import com.intellij.ui.tabs.impl.singleRow.SingleRowPassInfo
-import com.intellij.ui.tabs.impl.table.TableLayout
 import com.intellij.ui.tabs.impl.themes.TabTheme
 import com.intellij.util.Alarm
 import com.intellij.util.Function
@@ -224,6 +223,7 @@ open class JBTabsImpl(private var project: Project?,
   var addNavigationGroup: Boolean = true
   private var activeTabFillIn: Color? = null
   private var tabLabelActionsAutoHide = false
+  @Suppress("DEPRECATION")
   private val tabActionsAutoHideListener = TabActionsAutoHideListener()
   private var tabActionsAutoHideListenerDisposable = Disposer.newDisposable()
   private var glassPane: IdeGlassPane? = null
@@ -472,18 +472,23 @@ open class JBTabsImpl(private var project: Project?,
   }
 
   private fun updateRowLayout() {
-    if (tabsPosition != JBTabsPosition.top) {
+    if (!isHorizontalTabs) {
       singleRow = true
     }
-    val forceTableLayout = (tabsPosition == JBTabsPosition.top && supportsTableLayoutAsSingleRow() && TabLayout.showPinnedTabsSeparately())
+
     val layout = if (useMultiRowLayout()) createMultiRowLayout() else createSingleRowLayout()
     // set the current scroll value to new layout
     layout.scroll(scrollBarModel.value)
     setLayout(layout)
+
+    applyDecoration()
+    for (label in infoToLabel.values) {
+      label.enableCompressionMode(false)
+      label.isForcePaintBorders = false
+    }
+
     relayout(forced = true, layoutNow = true)
   }
-
-  protected open fun supportsTableLayoutAsSingleRow(): Boolean = false
 
   protected open fun useMultiRowLayout(): Boolean = !isSingleRow
 
@@ -491,9 +496,8 @@ open class JBTabsImpl(private var project: Project?,
 
   protected open fun createSingleRowLayout(): SingleRowLayout = ScrollableSingleRowLayout(this)
 
-  @Suppress("removal")
   @Deprecated("override {@link JBTabsImpl#createMultiRowLayout()} instead", ReplaceWith("createMultiRowLayout()"))
-  protected open fun createTableLayout(): TableLayout = createMultiRowLayout()
+  protected open fun createTableLayout() = createMultiRowLayout()
 
   override fun setNavigationActionBinding(prevActionId: String, nextActionId: String): JBTabs {
     nextAction?.reconnect(nextActionId)
@@ -545,10 +549,7 @@ open class JBTabsImpl(private var project: Project?,
     return effectiveLayout!!.isDragOut(label!!, deltaX, deltaY)
   }
 
-  fun ignoreTabLabelLimitedWidthWhenPaint(): Boolean {
-    @Suppress("removal")
-    return effectiveLayout is ScrollableSingleRowLayout || effectiveLayout is TableLayout && TabLayout.showPinnedTabsSeparately()
-  }
+  fun ignoreTabLabelLimitedWidthWhenPaint(): Boolean = effectiveLayout!!.isScrollable
 
   @RequiresEdt
   fun resetTabsCache() {
@@ -1740,8 +1741,7 @@ open class JBTabsImpl(private var project: Project?,
         val toolbar = ActionManager.getInstance()
           .createActionToolbar(if (place != null && place != ActionPlaces.UNKNOWN) place else "JBTabs", group, tabs.horizontalSide)
         toolbar.targetComponent = info.actionsContextComponent
-        val actionToolbar = toolbar.component
-        add(actionToolbar, BorderLayout.CENTER)
+        add(toolbar.component, BorderLayout.CENTER)
       }
       if (side != null) {
         if (group == null) {
@@ -1777,22 +1777,17 @@ open class JBTabsImpl(private var project: Project?,
 
   private fun updateScrollBarModel() {
     val scrollBarModel = scrollBarModel
-    if (scrollBarModel.valueIsAdjusting) return
+    if (scrollBarModel.valueIsAdjusting) {
+      return
+    }
+
     val maximum = lastLayoutPass!!.requiredLength
     val value = effectiveLayout!!.scrollOffset
-    var extent: Int
-    if (isHorizontalTabs) {
-      extent = getTabsAreaWidth()
-    }
-    else {
-      extent = height
-      val entryPointToolbar = entryPointToolbar
-      if (entryPointToolbar != null && !ExperimentalUI.isNewUI() && entryPointToolbar.component.isVisible) {
-        extent = entryPointToolbar.component.y
-      }
-    }
+    val extent = lastLayoutPass!!.scrollExtent
+
     scrollBarModel.maximum = maximum
     scrollBarModel.value = value
+
     // if the extent is 0, that means the layout is in improper state, so we don't show the scrollbar
     scrollBarModel.extent = if (extent == 0) value + maximum else extent
   }
@@ -1840,44 +1835,40 @@ open class JBTabsImpl(private var project: Project?,
         else {
           titleWrapper.bounds = Rectangle()
         }
-        tableLayout.lastTableLayout = null
+
         val divider = splitter.divider
         if (divider.parent === this) {
-          val lastLayoutPass = lastLayoutPass!!
           val location = if (tabsPosition == JBTabsPosition.left) {
-            lastLayoutPass.headerRectangle.width
+            lastLayoutPass!!.headerRectangle.width
           }
           else {
-            width - lastLayoutPass.headerRectangle.width
+            width - lastLayoutPass!!.headerRectangle.width
           }
           divider.setBounds (location, 0, 1, height)
         }
       }
-      else if (effectiveLayout is TableLayout) {
+      else if (effectiveLayout is MultiRowLayout) {
         lastLayoutPass = effectiveLayout.layoutTable(visible)
       }
 
       centerizeEntryPointToolbarPosition()
       centerizeMoreToolbarPosition()
+
       moveDraggedTabLabel()
+
       tabActionsAutoHideListener.processMouseOver()
+
       applyResetComponents()
+
       scrollBar.orientation = if (isHorizontalTabs) Adjustable.HORIZONTAL else Adjustable.VERTICAL
       scrollBar.bounds = scrollBarBounds
       updateScrollBarModel()
+
       updateToolbarIfVisibilityChanged(moreToolbar, moreBoundsBeforeLayout)
       updateToolbarIfVisibilityChanged(entryPointToolbar, entryPointBoundsBeforeLayout)
     }
     finally {
       forcedRelayout = false
-    }
-  }
-
-  private fun getTabsAreaWidth(): Int {
-    return when {
-      moreToolbar!!.component.isVisible -> moreToolbar.component.x
-      entryPointToolbar != null && entryPointToolbar!!.component.isVisible && tableLayout.lastTableLayout == null -> entryPointToolbar!!.component.x
-      else -> bounds.width
     }
   }
 
@@ -2457,7 +2448,7 @@ open class JBTabsImpl(private var project: Project?,
       forcedRelayout = forced
     }
     if (moreToolbar != null) {
-      moreToolbar.component.isVisible = !isHideTabs && (effectiveLayout is ScrollableSingleRowLayout || effectiveLayout is TableLayout)
+      moreToolbar.component.isVisible = !isHideTabs && effectiveLayout!!.isScrollable
     }
     revalidateAndRepaint(layoutNow)
   }
