@@ -164,10 +164,15 @@ public class CustomRegExpFakeInspection extends LocalInspectionTool {
       return;
     }
     final CustomRegExpInspection inspection = getRegExpInspection(profile);
-    final MetaDataDialog dialog = new MetaDataDialog(project, inspection, myConfiguration, false);
+    final InspectionMetaDataDialog dialog = inspection.createMetaDataDialog(project, myConfiguration);
     if (!dialog.showAndGet()) {
       return;
     }
+    myConfiguration.setName(dialog.getName());
+    myConfiguration.setDescription(dialog.getDescription());
+    myConfiguration.setSuppressId(dialog.getSuppressId());
+    myConfiguration.setProblemDescriptor(dialog.getProblemDescriptor());
+
     inspection.updateConfiguration(myConfiguration);
     profile.setModified(true);
     profile.getProfileManager().fireProfileChanged(profile);

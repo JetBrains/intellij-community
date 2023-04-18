@@ -141,12 +141,16 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       final RegExpInspectionConfiguration.InspectionPattern pattern = dialog.getPattern();
       final InspectionProfileModifiableModel profile = myPanel.getProfile();
       final CustomRegExpInspection inspection = InspectionProfileUtil.getCustomRegExpInspection(profile);
-      final RegExpInspectionConfiguration configuration = new RegExpInspectionConfiguration("new inspection");
-      configuration.addPattern(pattern);
       final Project project = e.getData(CommonDataKeys.PROJECT);
       if (project == null) return;
-      final MetaDataDialog metaDataDialog = new MetaDataDialog(project, inspection, configuration, true);
+      final InspectionMetaDataDialog metaDataDialog = inspection.createMetaDataDialog(project, null);
       if (!metaDataDialog.showAndGet()) return;
+
+      final RegExpInspectionConfiguration configuration = new RegExpInspectionConfiguration(metaDataDialog.getName());
+      configuration.addPattern(pattern);
+      configuration.setDescription(metaDataDialog.getDescription());
+      configuration.setSuppressId(metaDataDialog.getSuppressId());
+      configuration.setProblemDescriptor(metaDataDialog.getProblemDescriptor());
 
       configuration.setUuid(null);
       inspection.addConfiguration(configuration);
