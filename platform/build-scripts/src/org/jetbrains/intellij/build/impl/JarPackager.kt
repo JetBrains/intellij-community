@@ -639,7 +639,7 @@ private fun createJarDescriptor(outputDir: Path, targetFile: Path, context: Buil
 
 internal fun mergeProductJar(appFile: Path, libDir: Path) {
   // packing to product.jar maybe disabled
-  val productJar = libDir.resolve("product.jar")
+  val productJar = libDir.resolve(PRODUCT_JAR)
   if (Files.notExists(productJar)) {
     return
   }

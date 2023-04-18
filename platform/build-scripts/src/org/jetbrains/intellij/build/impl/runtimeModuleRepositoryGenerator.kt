@@ -48,8 +48,9 @@ internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry
     //todo handle entries from OS-specific directories as well
     if (context.paths.distAllDir.isAncestor(entry.path, false)) {
       val moduleId = entry.runtimeModuleId.stringId
-      val targetPath = "../${context.paths.distAllDir.relativize(entry.path).pathString}"
-      resourcePathMapping.putValue(moduleId, targetPath)
+      val pathInDist = context.paths.distAllDir.relativize(entry.path).pathString
+      val realPathInDist = if (pathInDist != "lib/$PRODUCT_JAR") pathInDist else "lib/$APP_JAR"
+      resourcePathMapping.putValue(moduleId, "../$realPathInDist")
     }
   }
 
