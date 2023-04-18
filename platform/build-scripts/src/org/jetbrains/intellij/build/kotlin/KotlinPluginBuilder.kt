@@ -70,6 +70,7 @@ object KotlinPluginBuilder {
     "kotlin.compiler-reference-index",
     "kotlin.compiler-plugins.parcelize.common",
     "kotlin.compiler-plugins.parcelize.k1",
+    "kotlin.compiler-plugins.parcelize.k2",
     "kotlin.compiler-plugins.parcelize.gradle",
     "kotlin.compiler-plugins.allopen.common",
     "kotlin.compiler-plugins.allopen.gradle",

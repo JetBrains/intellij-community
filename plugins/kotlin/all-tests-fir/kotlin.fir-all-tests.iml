@@ -31,6 +31,7 @@
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared.tests.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates-k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.line-markers-k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.navigation.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.test.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.refactorings.rename.k2" scope="RUNTIME" />
