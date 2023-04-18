@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+/** A single inspection, together with the scopes in which it is active. */
 public final class ToolsImpl implements Tools {
   @NonNls static final String ENABLED_BY_DEFAULT_ATTRIBUTE = "enabled_by_default";
   @NonNls static final String ENABLED_ATTRIBUTE = "enabled";
@@ -48,9 +49,9 @@ public final class ToolsImpl implements Tools {
   }
 
   public @NotNull ScopeToolState prependTool(@NotNull NamedScope scope,
-                                      @NotNull InspectionToolWrapper<?,?> toolWrapper,
-                                      boolean enabled,
-                                      @NotNull HighlightDisplayLevel level) {
+                                             @NotNull InspectionToolWrapper<?,?> toolWrapper,
+                                             boolean enabled,
+                                             @NotNull HighlightDisplayLevel level) {
     return insertTool(scope, toolWrapper, enabled, level, 0);
   }
 
@@ -96,7 +97,6 @@ public final class ToolsImpl implements Tools {
           }
         }
       }
-
     }
     return myDefaultState.getTool();
   }
@@ -340,12 +340,12 @@ public final class ToolsImpl implements Tools {
   public HighlightDisplayLevel getLevel(PsiElement element) {
     return getState(element).getLevel();
   }
-  
+
   public ScopeToolState getState(PsiElement element) {
     if (myTools == null || element == null) return myDefaultState;
     return ReadAction.compute(() -> {
       if (!element.isValid()) return myDefaultState;
-      
+
       Project project = element.getProject();
       DependencyValidationManager manager = DependencyValidationManager.getInstance(project);
       for (ScopeToolState state : myTools) {
@@ -358,7 +358,7 @@ public final class ToolsImpl implements Tools {
       return myDefaultState;
     });
   }
-  
+
   @Nullable
   public TextAttributesKey getAttributesKey(PsiElement element) {
     return getState(element).getEditorAttributesKey();
@@ -533,11 +533,11 @@ public final class ToolsImpl implements Tools {
       }
     }
   }
-  
+
   public void setLevel(HighlightDisplayLevel level, PsiElement element) {
     getState(element).setLevel(level);
   }
-  
+
   public void setLevel(@NotNull HighlightDisplayLevel level, @Nullable String scopeName, Project project) {
     if (scopeName == null) {
       myDefaultState.setLevel(level);
