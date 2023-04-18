@@ -206,11 +206,23 @@ public final class NavigationUtil {
       return false;
     }
 
-    if (!EditorHistoryManager.getInstance(element.getProject()).hasBeenOpen(vFile)) {
+    Project project = element.getProject();
+
+    return activateFileIfOpen(project, vFile, element.getTextRange(), searchForOpen, requestFocus);
+  }
+
+  private static boolean activateFileIfOpen(
+    @NotNull Project project,
+    @NotNull VirtualFile vFile,
+    @Nullable TextRange range,
+    boolean searchForOpen,
+    boolean requestFocus
+  ) {
+    if (!EditorHistoryManager.getInstance(project).hasBeenOpen(vFile)) {
       return false;
     }
 
-    FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(element.getProject());
+    FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
     boolean wasAlreadyOpen = fileEditorManager.isFileOpen(vFile);
     if (!wasAlreadyOpen) {
       fileEditorManager.openFile(
@@ -219,7 +231,6 @@ public final class NavigationUtil {
       );
     }
 
-    TextRange range = element.getTextRange();
     if (range == null) {
       return false;
     }
