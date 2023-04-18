@@ -164,7 +164,7 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
       MarkdownElementTypes.BLOCK_QUOTE to MarkdownBundle.message("markdown.folding.block.quote.name"),
       MarkdownElementTypes.TABLE to MarkdownBundle.message("markdown.folding.table.name"),
       MarkdownElementTypes.CODE_FENCE to MarkdownBundle.message("markdown.folding.code.fence.name"),
-      MarkdownElementTypes.FRONT_MATTER_HEADER to "front matter"
+      MarkdownElementTypes.FRONT_MATTER_HEADER to MarkdownBundle.message("markdown.folding.front.matter.name")
     )
 
     private fun addDescriptors(element: PsiElement, range: TextRange, descriptors: MutableList<in FoldingDescriptor>, document: Document) {
