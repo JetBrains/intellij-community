@@ -1,19 +1,21 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.inspections;
+package org.jetbrains.idea.devkit.kotlin.inspections;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
+import org.jetbrains.idea.devkit.inspections.StatefulEpInspectionTestBase;
+import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/statefulEp")
-public class StatefulEpInspectionTest extends StatefulEpInspectionTestBase {
+public class KtStatefulEpInspectionTest extends StatefulEpInspectionTestBase {
+
   @Override
   protected String getBasePath() {
-    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/statefulEp";
+    return DevkitKtTestsUtil.TESTDATA_PATH + "inspections/statefulEp";
   }
 
   @Override
   protected String getFileExtension() {
-    return "java";
+    return "kt";
   }
 
   public void testFix() {
@@ -29,12 +31,12 @@ public class StatefulEpInspectionTest extends StatefulEpInspectionTestBase {
     setPluginXml("plugin.xml");
     doTest();
   }
-  
+
   public void testProjectComp() {
     setPluginXml("plugin.xml");
     doTest();
   }
-  
+
   public void testProjectService() {
     setPluginXml("plugin.xml");
     doTest();

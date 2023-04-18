@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
@@ -10,16 +10,19 @@ import com.intellij.lang.jvm.types.JvmReferenceType
 import com.intellij.lang.jvm.types.JvmType
 import com.intellij.lang.jvm.util.JvmInheritanceUtil.isInheritor
 import com.intellij.lang.jvm.util.JvmUtil
-import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnonymousClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiWildcardType
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.util.processExtensionsByClassName
+import org.jetbrains.uast.*
+import org.jetbrains.uast.visitor.AbstractUastVisitor
 import java.util.*
 
 class StatefulEpInspection : DevKitJvmInspection() {
@@ -60,10 +63,11 @@ class StatefulEpInspection : DevKitJvmInspection() {
     }
 
     override fun visitClass(clazz: JvmClass): Boolean? {
-      if (canCapture(clazz) && isInheritor (clazz, localQuickFixFqn)) {
+      if (canCapture(clazz) && isInheritor(clazz, localQuickFixFqn)) {
         for (capturedElement in getCapturedPoints(clazz)) {
-          if (capturedElement.resolved is PsiVariable && isHoldingElement(capturedElement.resolved.type, PsiElement::class.java.canonicalName)) {
-            (sink as HighlightSinkImpl).holder.registerProblem(capturedElement.reference, getMessage(true))
+          if (capturedElement.resolved is UVariable && isHoldingElement(capturedElement.resolved.type, PsiElement::class.java.canonicalName)) {
+            val capturedElementPsi = capturedElement.reference.sourcePsi ?: continue
+            (sink as HighlightSinkImpl).holder.registerProblem(capturedElementPsi, getMessage(true))
           }
         }
       }
@@ -81,7 +85,12 @@ class StatefulEpInspection : DevKitJvmInspection() {
       return true
     }
     if (type is JvmReferenceType && type.typeArguments().iterator().hasNext() && holderClasses.any { isInheritor(typeClass, it) }) {
-      return type.typeArguments().any { isHoldingElement(it, elementClass) }
+      return type.typeArguments().any {
+        // Kotlin's List<PsiElement> is List <? extends Element>, so we need to use bound if exists:
+        val typeBound = (it as? PsiWildcardType)?.bound
+        val actualType = typeBound ?: it
+        isHoldingElement(actualType, elementClass)
+      }
     }
     return false
   }
@@ -89,39 +98,63 @@ class StatefulEpInspection : DevKitJvmInspection() {
   private fun getMessage(isQuickFix: Boolean): @Nls String {
     var message = DevKitBundle.message("inspections.stateful.extension.point.leak.psi.element")
     if (isQuickFix) {
-      message += " " + DevKitBundle.message("inspections.stateful.extension.point.leak.psi.element.quick.fix")
+      message += ". " + DevKitBundle.message("inspections.stateful.extension.point.leak.psi.element.quick.fix")
     }
     return message
   }
 }
 
-data class CapturedDescriptor(val reference: PsiElement, val resolved: PsiElement)
+private data class CapturedDescriptor(val reference: UElement, val resolved: UElement)
 
-fun getCapturedPoints(clazz: JvmClass): Collection<CapturedDescriptor> {
-  val res = mutableListOf<CapturedDescriptor>()
-  if (clazz is PsiClass && canCapture(clazz)) {
-    val argumentList = if (clazz is PsiAnonymousClass) clazz.argumentList else null
-    clazz.accept(object : JavaRecursiveElementWalkingVisitor() {
-      override fun visitReferenceExpression(expression: PsiReferenceExpression) {
-        if (expression.qualifierExpression == null && (argumentList == null || !PsiTreeUtil.isAncestor(argumentList, expression, true))) {
-          val refElement = expression.resolve()
-          if (refElement is PsiVariable) {
-            val containingClass = PsiTreeUtil.getParentOfType(refElement, PsiClass::class.java)
-            if (PsiTreeUtil.isAncestor(containingClass, clazz, true)) {
-              res.add(CapturedDescriptor(expression, refElement))
-            }
+private fun getCapturedPoints(clazz: JvmClass): Collection<CapturedDescriptor> {
+  val capturedPoints = mutableListOf<CapturedDescriptor>()
+  if (canCapture(clazz)) {
+    val uClass = (clazz as? PsiElement)?.toUElement() as? UClass ?: return emptyList()
+    val argumentList = if (uClass is UAnonymousClass) (uClass.javaPsi as? PsiAnonymousClass)?.argumentList else null
+    uClass.accept(object : AbstractUastVisitor() {
+      override fun visitSimpleNameReferenceExpression(node: USimpleNameReferenceExpression): Boolean {
+        val expressionPsi = node.sourcePsi ?: return super.visitSimpleNameReferenceExpression(node)
+        if (argumentList == null || !PsiTreeUtil.isAncestor(argumentList, expressionPsi, true)) {
+          val refElement = node.resolveToUElement() as? UVariable ?: return super.visitSimpleNameReferenceExpression(node)
+          val containingClass = refElement.getUastParentOfType<UClass>() ?: return super.visitSimpleNameReferenceExpression(node)
+          if (isAncestor(containingClass, uClass)) {
+            capturedPoints.add(CapturedDescriptor(node, refElement))
           }
         }
+        return super.visitSimpleNameReferenceExpression(node)
       }
     })
   }
-  return res
+  return capturedPoints
 }
 
-private fun canCapture(clazz: JvmClass) = clazz is PsiClass && PsiUtil.isLocalOrAnonymousClass(clazz)
+private fun isAncestor(ancestor: UElement, child: UElement): Boolean {
+  val ancestorPsi = ancestor.sourcePsi ?: return false
+  val childPsi = child.sourcePsi ?: return false
+  return PsiTreeUtil.isAncestor(ancestorPsi, childPsi, true)
+}
+
+private fun canCapture(clazz: JvmClass): Boolean {
+  val uClass = (clazz as? PsiElement)?.toUElement() as? UClass ?: return false
+  return uClass.isLocalOrAnonymousClass()
+}
+
+private fun UClass.isLocalOrAnonymousClass(): Boolean {
+  return this is UAnonymousClass || this.isLocalClass()
+}
+
+private fun UClass.isLocalClass(): Boolean {
+  val parent = this.uastParent
+  if (parent is UDeclarationsExpression && parent.uastParent is UBlockExpression) {
+    return true
+  }
+  return (parent as? UClass)?.isLocalOrAnonymousClass() == true
+}
 
 private val localQuickFixFqn = LocalQuickFix::class.java.canonicalName
-private val projectComponentFqn = ProjectComponent::class.java.canonicalName
+
+@Suppress("DEPRECATION")
+private val projectComponentFqn = com.intellij.openapi.components.ProjectComponent::class.java.canonicalName
 
 private fun findEpCandidates(project: Project, className: String): Collection<XmlTag> {
   val result = Collections.synchronizedList(SmartList<XmlTag>())
