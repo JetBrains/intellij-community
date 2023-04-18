@@ -163,7 +163,7 @@ public class Menu extends MenuItem {
 
   synchronized
   public void endFill(boolean onAppKit) {
-    disposeChildren(0); // NOTE: to test/increase stability use 2000 ms
+    disposeChildren(0);
 
     if (myBuffer.isEmpty()) return;
 
@@ -251,17 +251,9 @@ public class Menu extends MenuItem {
     // Defer clearing to avoid this problem.
     disposeChildren(CLOSE_DELAY);
 
-    // NOTE: we can't perform native cleaning immediately, because items from 'Help' menu stop work.
-    SimpleTimer.getInstance().setUp(() -> {
-      if (myIsOpened) {
-        return;
-      }
+    // NOTE: don't clear native hierarchy here (see IDEA-315910)
+    // It will be done when menu opens next time.
 
-      synchronized (this) {
-        // clean native NSMenu item
-        if (nativePeer != 0) nativeRefill(nativePeer, null, true);
-      }
-    }, CLOSE_DELAY);
     if (myOnClose != null) invokeWithLWCToolkit(myOnClose, null, myComponent);
   }
 
