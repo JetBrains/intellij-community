@@ -3,8 +3,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.navigation.BackgroundUpdaterTask;
-import com.intellij.codeInsight.navigation.PsiTargetNavigator;
-import com.intellij.codeInsight.navigation.impl.PsiTargetPresentationRenderer;
 import com.intellij.find.FindUtil;
 import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.util.PsiElementListCellRenderer;
@@ -34,9 +32,7 @@ import javax.swing.*;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
-import java.util.function.Supplier;
 
 public final class PsiElementListNavigator {
 
@@ -70,7 +66,7 @@ public final class PsiElementListNavigator {
   }
 
   /**
-   * @deprecated Use {@link #openTargets(Editor, Supplier, String, String, PsiTargetPresentationRenderer) }
+   * @deprecated Use {@link com.intellij.codeInsight.navigation.PsiTargetNavigator }
    */
   @Deprecated
   public static <T extends NavigatablePsiElement> void openTargets(@NotNull Editor e,
@@ -79,17 +75,6 @@ public final class PsiElementListNavigator {
                                                                    @NlsContexts.TabTitle String findUsagesTitle,
                                                                    ListCellRenderer<? super T> listRenderer) {
     openTargets(e, targets, title, findUsagesTitle, listRenderer, null);
-  }
-
-  public static <T extends PsiElement> void openTargets(@NotNull Editor editor,
-                                                                   Supplier<Collection<T>> targets,
-                                                                   @NlsContexts.PopupTitle String title,
-                                                                   @NlsContexts.TabTitle String findUsagesTitle,
-                                                                   PsiTargetPresentationRenderer<T> listRenderer) {
-    new PsiTargetNavigator<>(targets)
-      .tabTitle(findUsagesTitle)
-      .presentationProvider(listRenderer)
-      .navigate(editor, title);
   }
 
   public static <T extends NavigatablePsiElement> void openTargets(@NotNull Editor e,
