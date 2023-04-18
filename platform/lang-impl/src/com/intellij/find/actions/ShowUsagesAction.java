@@ -445,7 +445,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     AbstractPopup popup = createUsagePopup(usageView, showUsagesPopupData, itemChosenCallback, tableResizer);
 
     popup.addResizeListener(() -> manuallyResized.set(true), popup);
-    Ref<Long> popupShownTime = new Ref<>();
+    Ref<Long> popupShownTimeRef = new Ref<>();
     popup.addListener(new JBPopupListener() {
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {
@@ -455,7 +455,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         UsageInfo usageInfo = usageAdapter != null ? usageAdapter.getUsageInfo() : null;
         int preselectedRowNumber = getRowNumber(preselectedRow.get(), table);
         int selectedRowNumber = getRowNumber(node, table);
-        long durationTime = System.currentTimeMillis() - popupShownTime.get();
+        Long popupShownTime = popupShownTimeRef.get();
+        Long durationTime = popupShownTime != null ? System.currentTimeMillis() - popupShownTime : null;
         ReadAction.nonBlocking(() ->
                                  actionHandler.buildFinishEventData(usageInfo)
         ).submit(AppExecutorUtil.getAppExecutorService()).onSuccess((finishEventData) -> {
@@ -476,7 +477,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       // show popup only if find usages takes more than 300ms, otherwise it would flicker needlessly
       EdtScheduledExecutorService.getInstance().schedule(() -> {
         if (!usageView.isDisposed()) {
-          showPopupIfNeedTo(popup, parameters.popupPosition, popupShownTime);
+          showPopupIfNeedTo(popup, parameters.popupPosition, popupShownTimeRef);
         }
       }, ourPopupDelayTimeout, TimeUnit.MILLISECONDS);
     }
@@ -491,7 +492,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       List<Usage> copy;
       synchronized (usages) {
         // open up popup as soon as the first usage has been found
-        if (!popup.isVisible() && (usages.isEmpty() || !showPopupIfNeedTo(popup, parameters.popupPosition, popupShownTime))) {
+        if (!popup.isVisible() && (usages.isEmpty() || !showPopupIfNeedTo(popup, parameters.popupPosition, popupShownTimeRef))) {
           return;
         }
         addUsageNodes(usageView.getRoot(), usageView, nodes);
