@@ -40,13 +40,16 @@ internal class A {
         }
     }
 
-    fun numberConversions(b: Byte, s: Short, i: Int, l: Long, f: Float, d: Double, str: String) {
+    fun primitiveConversions(bool: Boolean, b: Byte, s: Short, i: Int, l: Long, f: Float, d: Double, str: String) {
+        bool
         b
         s
         i
         l
         f
         d
+        str.toBoolean()
+        str.toBoolean()
         str.toByte()
         str.toByte()
         str.toByte(i)
