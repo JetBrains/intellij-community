@@ -56,6 +56,8 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLine;
+import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLineOption;
+import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLineTask;
 
 import java.awt.geom.IllegalPathStateException;
 import java.io.File;
@@ -445,6 +447,7 @@ public class GradleExecutionHelper {
       tasksAndArguments,
       settings.getArguments()
     );
+    commandLine = fixUpGradleCommandLine(commandLine);
 
     LOG.info("Passing command-line to Gradle Tooling API: " +
              StringUtil.join(obfuscatePasswordParameters(commandLine.getTokens()), " "));
@@ -458,6 +461,25 @@ public class GradleExecutionHelper {
     else {
       operation.withArguments(commandLine.getTokens());
     }
+  }
+
+  private static @NotNull GradleCommandLine fixUpGradleCommandLine(@NotNull GradleCommandLine commandLine) {
+    var tasks = new ArrayList<GradleCommandLineTask>();
+    for (var task : commandLine.getTasks()) {
+      var name = task.getName();
+      var options = ContainerUtil.filter(task.getOptions(), it -> !isWildcardTestPattern(it));
+      tasks.add(new GradleCommandLineTask(name, options));
+    }
+    return new GradleCommandLine(tasks, commandLine.getOptions());
+  }
+
+  private static boolean isWildcardTestPattern(@NotNull GradleCommandLineOption option) {
+    return option.getName().equals(GradleConstants.TESTS_ARG_NAME) &&
+           option.getValues().size() == 1 && (
+             option.getValues().get(0).equals("*") ||
+             option.getValues().get(0).equals("'*'") ||
+             option.getValues().get(0).equals("\"*\"")
+           );
   }
 
   private static void setupTestLauncherArguments(
