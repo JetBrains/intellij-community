@@ -63,7 +63,7 @@ internal class PortableCompilationCacheDownloader(
     }
   }
 
-  private val availableCommitDepth by lazy {
+  val availableCommitDepth by lazy {
     if (availableForHeadCommitForced) 0 else lastCommits.indexOfFirst {
       availableCachesKeys.contains(it)
     }

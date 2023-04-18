@@ -2,6 +2,9 @@
 package org.jetbrains.intellij.build.impl
 
 import java.nio.file.Path
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.listDirectoryEntries
 
 class JpsCompilationData(val dataStorageRoot: Path, val buildLogFile: Path, categoriesWithDebugLevelNullable: String?) {
   val compiledModules: MutableSet<String> = LinkedHashSet()
@@ -12,6 +15,12 @@ class JpsCompilationData(val dataStorageRoot: Path, val buildLogFile: Path, cate
   var runtimeModuleRepositoryGenerated: Boolean = false
 
   val categoriesWithDebugLevel: String = categoriesWithDebugLevelNullable ?: ""
+  val dataStorageRootListing: List<Path>
+    get() = if (dataStorageRoot.exists() && dataStorageRoot.isDirectory()) {
+      dataStorageRoot.listDirectoryEntries()
+    }
+    else emptyList()
+
   fun reset() {
     compiledModules.clear()
     compiledModuleTests.clear()
