@@ -36,17 +36,37 @@ static jclass sjc_Menu = NULL;
     [super dealloc];
 }
 
-// NSMenuDelegate
+//
+// NSMenuDelegate methods
+// All of them are called from AppKit
+//
 
 - (void)menuNeedsUpdate:(NSMenu *)menu {
     if (javaPeer == nil)
         return;
 
+    static NSDate * sLastUpdate = nil;
+    static NSMenu * sCurrentMenu = nil;
+
+    if (sCurrentMenu != nil) {
+        // Nested updates can lead to crash, see IDEA-315910
+        //fprintf(stderr, "skip nested update for menu '%s'\n", [sCurrentMenu.title cString]);
+        return;
+    }
+
     JNIEnv *env = getAppKitEnv();
     JNI_COCOA_ENTER();
     GET_MENU_CLASS();
     DECLARE_METHOD(jm_Menu_menuNeedsUpdate, sjc_Menu, "menuNeedsUpdate", "()V");
-    (*env)->CallVoidMethod(env, javaPeer, jm_Menu_menuNeedsUpdate);
+
+    @try {
+        sLastUpdate = [NSDate date];
+        sCurrentMenu = menu;
+        (*env)->CallVoidMethod(env, javaPeer, jm_Menu_menuNeedsUpdate);
+    }
+    @finally {
+        sCurrentMenu = nil;
+    }
     CHECK_EXCEPTION(env);
     JNI_COCOA_EXIT();
 }
@@ -65,13 +85,16 @@ static jclass sjc_Menu = NULL;
 }
 
 - (void)menu:(NSMenu *)menu willHighlightItem:(NSMenuItem *)item {
-
     for (NSMenuItem * child in menu.itemArray) {
         if (child != nil && [child.view isKindOfClass:CustomMenuItemView.class]) {
             [(CustomMenuItemView *)child.view setSelected:(child == item)];
         }
     }
 }
+
+//
+// Other methods
+//
 
 - (void)setTitle:(NSString *)title {
     if (title == nil)
