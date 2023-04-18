@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.LoadingDetails;
@@ -70,7 +71,7 @@ public final class GraphTableModel extends AbstractTableModel {
     }
 
     try {
-      return column.getValue(this, rowIndex);
+      return ObjectUtils.chooseNotNull(column.getValue(this, rowIndex), column.getStubValue(this));
     }
     catch (ProcessCanceledException ignore) {
       return column.getStubValue(this);
@@ -124,7 +125,7 @@ public final class GraphTableModel extends AbstractTableModel {
     return myDataPack.getVisibleGraph().getRowInfo(row).getCommit();
   }
 
-  public @NotNull VirtualFile getRootAtRow(int row) {
+  public @Nullable VirtualFile getRootAtRow(int row) {
     return myDataPack.getRoot(row);
   }
 
