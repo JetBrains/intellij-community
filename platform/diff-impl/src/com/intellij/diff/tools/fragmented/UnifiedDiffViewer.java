@@ -65,6 +65,7 @@ import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -1361,7 +1362,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
       myUpdateQueue.queue(new Update("update") {
         @Override
         public void run() {
-          if (!getComponent().isShowing()) return;
+          if (!UIUtil.isShowing(getComponent())) return;
           if (myStateIsOutOfDate || !myModel.isValid()) return;
 
           myUpdateIndicator.cancel();
