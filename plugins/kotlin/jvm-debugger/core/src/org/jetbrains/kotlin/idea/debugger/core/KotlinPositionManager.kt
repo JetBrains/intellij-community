@@ -146,16 +146,27 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             throw NoDataException.INSTANCE
         }
 
-        val lambdaOrFunIfInside = getLambdaOrFunStartingOrEndingOnLineIfInside(location, psiFile, sourceLineNumber)
+        val sourcePosition = createSourcePosition(location, psiFile, sourceLineNumber)
+            ?: SourcePosition.createFromLine(psiFile, sourceLineNumber)
+        // There may be several locations for same source line. If same source position would be created for all of them,
+        // breakpoints at this line will stop on every location.
+        if (sourcePosition !is KotlinReentrantSourcePosition && location.shouldBeTreatedAsReentrantSourcePosition(psiFile, fileName)) {
+            return KotlinReentrantSourcePosition(sourcePosition)
+        }
+        return decorateSourcePosition(location, sourcePosition)
+    }
+
+    private fun createSourcePosition(location: Location, file: KtFile, sourceLineNumber: Int): SourcePosition? {
+        val lambdaOrFunIfInside = getLambdaOrFunStartingOrEndingOnLineIfInside(location, file, sourceLineNumber)
         if (lambdaOrFunIfInside != null) {
-            val elementAt = getFirstElementInsideLambdaOnLine(psiFile, lambdaOrFunIfInside, sourceLineNumber)
+            val elementAt = getFirstElementInsideLambdaOnLine(file, lambdaOrFunIfInside, sourceLineNumber)
             if (elementAt != null) {
                 return SourcePosition.createFromElement(elementAt)
             }
-            return SourcePosition.createFromLine(psiFile, sourceLineNumber)
+            return SourcePosition.createFromLine(file, sourceLineNumber)
         }
 
-        val callableReferenceIfInside = getCallableReferenceIfInside(location, psiFile, sourceLineNumber)
+        val callableReferenceIfInside = getCallableReferenceIfInside(location, file, sourceLineNumber)
         if (callableReferenceIfInside != null) {
             val sourcePosition = SourcePosition.createFromElement(callableReferenceIfInside)
             if (sourcePosition != null) {
@@ -164,18 +175,11 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             }
         }
 
-        val elementInDeclaration = getElementForDeclarationLine(location, psiFile, sourceLineNumber)
+        val elementInDeclaration = getElementForDeclarationLine(location, file, sourceLineNumber)
         if (elementInDeclaration != null) {
             return SourcePosition.createFromElement(elementInDeclaration)
         }
-
-        // There may be several locations for same source line. If same source position would be created for all of them,
-        // breakpoints at this line will stop on every location.
-        if (location.shouldBeTreatedAsReentrantSourcePosition(psiFile, fileName)) {
-            return KotlinReentrantSourcePosition(SourcePosition.createFromLine(psiFile, sourceLineNumber))
-        }
-        val sourcePosition = SourcePosition.createFromLine(psiFile, sourceLineNumber)
-        return decorateSourcePosition(location, sourcePosition)
+        return null
     }
 
     private fun getFirstElementInsideLambdaOnLine(file: PsiFile, lambda: KtFunction, line: Int): PsiElement? {
@@ -569,6 +573,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 //
 // Now we should highlight the line before the curly brace, since we are still inside the `also` inline lambda.
 private fun decorateSourcePosition(location: Location, sourcePosition: SourcePosition): SourcePosition {
+    if (sourcePosition is KotlinReentrantSourcePosition) return sourcePosition
     val lambda = sourcePosition.elementAt?.parent as? KtFunctionLiteral ?: return sourcePosition
     val lines = lambda.getLineRange() ?: return sourcePosition
     if (!location.hasVisibleInlineLambdasOnLines(lines)) {
