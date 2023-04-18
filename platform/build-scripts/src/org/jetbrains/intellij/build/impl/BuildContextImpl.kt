@@ -258,6 +258,9 @@ class BuildContextImpl(
       jvmArgs.add("-Dsplash=true")
     }
 
+    // https://youtrack.jetbrains.com/issue/IDEA-269280
+    jvmArgs.add("-Daether.connector.resumeDownloads=false")
+
     jvmArgs.addAll(getCommandLineArgumentsForOpenPackages(this, os))
 
     return jvmArgs
