@@ -32,7 +32,7 @@ internal object GitLabMergeRequestTimelineDescriptionComponent {
     avatarIconsProvider: IconsProvider<GitLabUserDTO>,
   ): JComponent {
     val titlePanel = GitLabMergeRequestTimelineUIUtil.createTitleTextPane(mr.author, date = null)
-    val descriptionTextComponent = createTextPanel(cs, mr.description.map { if (it.isNotBlank()) it else noDescriptionHtmlText })
+    val descriptionTextComponent = createTextPanel(cs, mr.descriptionHtml.map { it.ifBlank { noDescriptionHtmlText } })
 
 
     return CodeReviewChatItemUIUtil.buildDynamic(CodeReviewChatItemUIUtil.ComponentType.FULL,
