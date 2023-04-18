@@ -1,5 +1,6 @@
 package com.intellij.settingsSync
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.extensions.PluginId
@@ -8,12 +9,20 @@ import com.intellij.settingsSync.plugins.PluginManagerProxy
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsState.PluginData
-import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.BeforeEach
 
-abstract class BasePluginManagerTest : LightPlatformTestCase() {
+@TestApplication
+abstract class BasePluginManagerTest {
   internal lateinit var pluginManager: SettingsSyncPluginManager
   internal lateinit var testPluginManager: TestPluginManager
+
+  @TestDisposable
+  internal lateinit var testRootDisposable: Disposable
 
   internal val quickJump = TestPluginDescriptor(
     "QuickJump",
@@ -44,8 +53,8 @@ abstract class BasePluginManagerTest : LightPlatformTestCase() {
     bundled = true
   )
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     SettingsSyncSettings.getInstance().syncEnabled = true
     testPluginManager = TestPluginManager()
     ApplicationManager.getApplication().replaceService(PluginManagerProxy::class.java, testPluginManager, testRootDisposable)
@@ -57,21 +66,26 @@ abstract class BasePluginManagerTest : LightPlatformTestCase() {
     assertPluginManagerState(state(build))
   }
 
+  internal fun getPluginManagerState(): Map<PluginId, PluginData> {
+    return pluginManager.state.plugins
+  }
+
   internal fun assertPluginManagerState(expectedState: SettingsSyncPluginsState) {
-    val state = pluginManager.state
-    assertPluginsState(expectedState.plugins, state.plugins)
+    assertPluginsState(expectedState.plugins, getPluginManagerState())
   }
 
   internal fun assertIdeState(build: StateBuilder.() -> Unit) {
     assertIdeState(state(build))
   }
 
-  internal fun assertIdeState(expectedState: SettingsSyncPluginsState) {
-
-    val actualState = PluginManagerProxy.getInstance().getPlugins().associate { plugin ->
+  internal fun getIdeState(): Map<PluginId, PluginData> {
+    return PluginManagerProxy.getInstance().getPlugins().associate { plugin ->
       plugin.pluginId to PluginData(plugin.isEnabled)
     }
-    assertPluginsState(expectedState.plugins, actualState)
+  }
+
+  internal fun assertIdeState(expectedState: SettingsSyncPluginsState) {
+    assertPluginsState(expectedState.plugins, getIdeState())
   }
 }
 
@@ -101,13 +115,13 @@ internal fun assertPluginsState(expectedStates: Map<PluginId, PluginData>, actua
       .joinToString { (id, data) -> "$id: ${enabledOrDisabled(data.enabled)}" }
 
   if (expectedStates.size != actualStates.size) {
-    LightPlatformTestCase.assertEquals("Expected and actual states have different number of elements",
-                                       stringifyStates(expectedStates), stringifyStates(actualStates))
+    assertEquals("Expected and actual states have different number of elements",
+                 stringifyStates(expectedStates), stringifyStates(actualStates))
   }
   for ((expectedId, expectedData) in expectedStates) {
     val actualData = actualStates[expectedId]
-    LightPlatformTestCase.assertNotNull("Record for plugin $expectedId not found", actualData)
-    LightPlatformTestCase.assertEquals("Plugin $expectedId has incorrect state", expectedData.enabled, actualData!!.enabled)
+    assertNotNull(actualData, "Record for plugin $expectedId not found")
+    assertEquals(expectedData.enabled, actualData!!.enabled, "Plugin $expectedId has incorrect state")
   }
 }
 
