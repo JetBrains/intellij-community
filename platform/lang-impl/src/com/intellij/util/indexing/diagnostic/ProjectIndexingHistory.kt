@@ -174,7 +174,7 @@ interface ScanningTimes {
   val delayedPushPropertiesStageDuration: Duration
   val indexExtensionsDuration: Duration
   var creatingIteratorsDuration: Duration
-  val scanFilesDuration: Duration
+  val collectingIndexableFilesDuration: Duration
   val pausedDuration: Duration
   val wasInterrupted: Boolean
 }

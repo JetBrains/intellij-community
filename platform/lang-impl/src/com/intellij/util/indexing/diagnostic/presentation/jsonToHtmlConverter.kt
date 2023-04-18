@@ -1092,7 +1092,7 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
               tr { td("Dumb mode time w/o pauses"); td(times.dumbWallTimeWithoutPauses.presentableDuration()) }
               tr {
                 td("Time of collecting files to compute index values (w/o pauses)")
-                td(times.scanFilesTime.presentableDuration())
+                td(times.collectingIndexableFilesTime.presentableDuration())
               }
               tr {
                 td("Time of running $INDEX_INFRA_EXTENSIONS (without loading content)"); td(times.indexExtensionsTime.presentableDuration())

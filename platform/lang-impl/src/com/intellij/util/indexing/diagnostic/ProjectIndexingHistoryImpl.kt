@@ -432,7 +432,7 @@ data class ProjectScanningHistoryImpl(override val project: Project,
 
   fun scanningFinished() {
     val now = ZonedDateTime.now(ZoneOffset.UTC)
-    stopStage(ScanningStage.Scanning, now.toInstant())
+    stopStage(ScanningStage.CollectingIndexableFiles, now.toInstant())
     timesImpl.updatingEnd = now
     timesImpl.totalUpdatingTime = System.nanoTime() - timesImpl.totalUpdatingTime
 
@@ -553,8 +553,8 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     CreatingIterators {
       override fun getProperty(): KMutableProperty1<ScanningTimesImpl, Duration> = ScanningTimesImpl::creatingIteratorsDuration
     },
-    Scanning {
-      override fun getProperty() = ScanningTimesImpl::scanFilesDuration
+    CollectingIndexableFiles {
+      override fun getProperty() = ScanningTimesImpl::collectingIndexableFilesDuration
     },
     DelayedPushProperties {
       override fun getProperty() = ScanningTimesImpl::delayedPushPropertiesStageDuration
@@ -592,7 +592,7 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     override var dumbModeWithoutPausesDuration: Duration = Duration.ZERO,
     override var delayedPushPropertiesStageDuration: Duration = Duration.ZERO,
     override var creatingIteratorsDuration: Duration = Duration.ZERO,
-    override var scanFilesDuration: Duration = Duration.ZERO,
+    override var collectingIndexableFilesDuration: Duration = Duration.ZERO,
     override var indexExtensionsDuration: Duration = Duration.ZERO,
     override var pausedDuration: Duration = Duration.ZERO,
     override var wasInterrupted: Boolean = false

@@ -47,7 +47,7 @@ data class JsonProjectScanningHistoryTimes(
   val scanningType: ScanningType = ScanningType.FULL,
   val scanningId: Long = 0,
   val creatingIteratorsTime: JsonDuration = JsonDuration(),
-  val scanFilesTime: JsonDuration = JsonDuration(),
+  val collectingIndexableFilesTime: JsonDuration = JsonDuration(),
   val delayedPushPropertiesStageTime: JsonDuration = JsonDuration(),
   val indexExtensionsTime: JsonDuration = JsonDuration(),
 

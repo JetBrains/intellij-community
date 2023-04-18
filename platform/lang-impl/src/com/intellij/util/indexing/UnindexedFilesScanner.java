@@ -209,7 +209,7 @@ public class UnindexedFilesScanner implements FilesScanningTask {
 
     Instant scanningStageStart = Instant.now();
     projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.Scanning, scanningStageStart);
-    scanningHistory.startStage(ProjectScanningHistoryImpl.ScanningStage.Scanning, scanningStageStart);
+    scanningHistory.startStage(ProjectScanningHistoryImpl.ScanningStage.CollectingIndexableFiles, scanningStageStart);
     try {
       collectIndexableFilesConcurrently(myProject, indicator, orderedProviders, projectIndexingHistory, scanningHistory);
       if (isFullIndexUpdate()) {
