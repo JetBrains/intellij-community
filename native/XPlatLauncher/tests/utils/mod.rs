@@ -123,7 +123,7 @@ fn get_jbr_sdk_from_project_root(project_root: &Path) -> Result<PathBuf> {
     let gradle_jvm = project_root.join("resources").join("TestProject").join("gradle-jvm");
 
     // TODO: remove after wrapper with https://github.com/mfilippov/gradle-jvm-wrapper/pull/31
-    let java_dir_prefix = if env::consts::OS == "windows" { "jdk" } else { "jbrsdk" };
+    let java_dir_prefix = if cfg!(targget_os = "windows") { "jdk" } else { "jbrsdk" };
 
     // jbrsdk-17.0.3-osx-x64-b469.37-f87880
     let sdk_gradle_parent = get_child_dir(&gradle_jvm, java_dir_prefix)?;
@@ -183,19 +183,12 @@ fn get_child_dir(parent: &Path, prefix: &str) -> io::Result<PathBuf> {
 
     for dir_entry in read_dir {
         let dir_entry_ok = dir_entry?;
-        if dir_entry_ok
-            .file_name()
-            .to_string_lossy()
-            .starts_with(prefix)
-        {
+        if dir_entry_ok.file_name().to_string_lossy().starts_with(prefix) {
             return Ok(dir_entry_ok.path());
         }
     }
 
-    return Err(io::Error::new(
-        io::ErrorKind::NotFound,
-        "Child dir not found",
-    ));
+    return Err(io::Error::new(io::ErrorKind::NotFound, "Child dir not found"));
 }
 
 #[cfg(target_os = "linux")]
@@ -351,25 +344,17 @@ fn symlink(target: &Path, junction: &Path) -> Result<()> {
 
 #[cfg(target_os = "linux")]
 pub fn get_bin_java_path(java_home: &Path) -> PathBuf {
-    java_home
-        .join("bin")
-        .join("java")
+    java_home.join("bin/java")
 }
 
 #[cfg(target_os = "windows")]
 pub fn get_bin_java_path(java_home: &Path) -> PathBuf {
-    java_home
-        .join("bin")
-        .join("java.exe")
+    java_home.join("bin\\java.exe")
 }
 
 #[cfg(target_os = "macos")]
 pub fn get_bin_java_path(java_home: &Path) -> PathBuf {
-    java_home
-        .join("Contents")
-        .join("Home")
-        .join("bin")
-        .join("java")
+    java_home.join("Contents/Home/bin/java")
 }
 
 #[cfg(target_os = "linux")]
@@ -379,7 +364,7 @@ pub fn get_jbr_home(jbr_dir: &PathBuf) -> Result<PathBuf> {
 
 #[cfg(target_os = "macos")]
 pub fn get_jbr_home(jbr_dir: &PathBuf) -> Result<PathBuf> {
-    Ok(jbr_dir.join("Contents").join("Home").canonicalize()?)
+    Ok(jbr_dir.join("Contents/Home").canonicalize()?)
 }
 
 #[cfg(target_os = "windows")]

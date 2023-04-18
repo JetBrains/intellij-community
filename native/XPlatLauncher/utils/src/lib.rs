@@ -4,13 +4,12 @@ use std::ffi::OsStr;
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
+
 use anyhow::{bail, Result};
 use log::debug;
 
-#[cfg(any(target_os = "macos", target_os = "linux"))]
-use {
-    std::os::unix::fs::PermissionsExt
-};
+#[cfg(target_family = "unix")]
+use std::os::unix::fs::PermissionsExt;
 
 #[cfg(target_os = "windows")]
 pub fn canonical_non_unc(path: &Path) -> Result<String> {
@@ -20,14 +19,14 @@ pub fn canonical_non_unc(path: &Path) -> Result<String> {
     Ok(stripped_unc)
 }
 
-#[cfg(any(target_os = "macos", target_os = "linux"))]
+#[cfg(target_family = "unix")]
 pub fn canonical_non_unc(path: &Path) -> Result<String> {
     let canonical = path.canonicalize()?;
     let os_str = canonical.as_os_str().to_string_lossy().to_string();
     Ok(os_str)
 }
 
-#[cfg(any(target_os = "macos", target_os = "linux"))]
+#[cfg(target_family = "unix")]
 pub fn is_executable(path: &Path) -> Result<bool> {
     let permissions = path.metadata()?.permissions();
     let is_executable = permissions.mode() & 0o111 != 0;
