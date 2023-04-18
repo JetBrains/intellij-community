@@ -7,18 +7,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="kotlinc.kotlin-stdlib" level="project" />
-    <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
-    <orderEntry type="library" name="kotlinc.parcelize-compiler-plugin" level="project" />
-    <orderEntry type="library" name="kotlinc.kotlin-compiler-tests" level="project" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
-    <orderEntry type="module" module-name="kotlin.base.plugin" />
-    <orderEntry type="module" module-name="kotlin.plugin.k1" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.core" />
-    <orderEntry type="module" module-name="kotlin.idea" />
+    <orderEntry type="module" module-name="kotlin.base.frontend-agnostic" />
+    <orderEntry type="module" module-name="kotlin.base.plugin" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.psi.impl" />
   </component>
 </module>
