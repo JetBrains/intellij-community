@@ -52,8 +52,9 @@ object Utils {
   var isEnabledInTests = false
 
   fun ResourceProperties.configValueForKey(key: String): String {
-    val value = properties[key]
-    return if (value == null || value.sourceValue in UNSET_VALUES) "" else value.sourceValue
+    val prop = properties[key] ?: return ""
+    val value = prop.sourceValue.trim()
+    return if (value in UNSET_VALUES) "" else value
   }
 
   @JvmStatic
