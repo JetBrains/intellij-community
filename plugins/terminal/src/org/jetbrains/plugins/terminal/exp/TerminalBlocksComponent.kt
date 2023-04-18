@@ -26,7 +26,7 @@ class TerminalBlocksComponent(private val project: Project,
                               private val session: TerminalSession,
                               private val settings: JBTerminalSystemSettingsProviderBase,
                               commandExecutor: TerminalCommandExecutor,
-                              parentDisposable: Disposable) : JPanel() {
+                              private val parentDisposable: Disposable) : JPanel() {
   private val blocksPanel: JPanel
   private val scrollPane: JBScrollPane
   private val promptPanel: TerminalPromptPanel = TerminalPromptPanel(project, settings, session, commandExecutor)
@@ -69,6 +69,7 @@ class TerminalBlocksComponent(private val project: Project,
     val eventsHandler = TerminalEventsHandler(session, settings)
     val panel = TerminalPanel(project, settings, session.model, eventsHandler)
     runningPanel = panel
+    Disposer.register(parentDisposable, panel)
 
     promptPanel.isVisible = false
     blocksPanel.add(panel, VerticalLayout.BOTTOM)

@@ -12,10 +12,7 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.LogicalPosition
-import com.intellij.openapi.editor.ScrollType
+import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
@@ -70,7 +67,11 @@ class TerminalPanel(private val project: Project,
   init {
     document = DocumentImpl("", true)
     editor = TerminalUiUtils.createEditor(document, project, settings)
-    Disposer.register(this, editor.disposable)
+    Disposer.register(this) {
+      EditorFactory.getInstance().releaseEditor(editor)
+    }
+    Disposer.register(this, runningDisposable)
+    Disposer.register(this, keyEventsForwardingDisposable)
 
     setupContentListener()
     setupEventDispatcher()
@@ -321,7 +322,6 @@ class TerminalPanel(private val project: Project,
   override fun getPreferredFocusableComponent(): JComponent = editor.contentComponent
 
   override fun dispose() {
-    eventDispatcher.unregister()
   }
 
   private data class TerminalContent(val text: String, val highlightings: List<HighlightingInfo>)
