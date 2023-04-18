@@ -18,10 +18,12 @@ import com.intellij.openapi.fileTypes.PlainTextLikeFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.ui.InspectionMetaDataDialog;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
@@ -54,6 +56,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
@@ -274,6 +277,24 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     final boolean removed = myConfigurations.removeIf(c -> c.getUuid().equals(uuid));
     if (removed) myWriteSorted = true;
     return removed;
+  }
+
+  public InspectionMetaDataDialog createMetaDataDialog(Project project, @Nullable Configuration configuration) {
+    final List<Configuration> configurations = getConfigurations();
+    final Function<String, @Nullable @NlsContexts.DialogMessage String> nameValidator = name -> {
+      for (Configuration current : configurations) {
+        if (current.getOrder() == 0 && current.getName().equals(name) &&
+            (configuration == null || !current.getUuid().equals(configuration.getUuid()))) {
+          return SSRBundle.message("inspection.with.name.exists.warning", name);
+        }
+      }
+      return null;
+    };
+    if (configuration == null) {
+      return new InspectionMetaDataDialog(project, nameValidator);
+    }
+    return new InspectionMetaDataDialog(project, nameValidator, configuration.getName(), configuration.getDescription(),
+                                        configuration.getProblemDescriptor(), configuration.getSuppressId());
   }
 
   private static class StructuralQuickFix implements LocalQuickFix {

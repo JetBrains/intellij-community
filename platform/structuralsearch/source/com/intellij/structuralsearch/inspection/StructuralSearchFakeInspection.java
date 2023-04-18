@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -14,6 +14,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.profile.codeInspection.ui.InspectionMetaDataDialog;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.ui.*;
 import com.intellij.ui.AnActionButton;
@@ -171,8 +172,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
       return;
     }
     final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
-    final StructuralSearchProfileActionProvider.InspectionDataDialog dialog =
-      new StructuralSearchProfileActionProvider.InspectionDataDialog(project, inspection, myMainConfiguration, false);
+    final InspectionMetaDataDialog dialog = inspection.createMetaDataDialog(project, myMainConfiguration);
     if (!dialog.showAndGet()) {
       return;
     }
@@ -180,6 +180,9 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     for (Configuration c : myConfigurations) {
       c.setName(name);
     }
+    myMainConfiguration.setDescription(dialog.getDescription());
+    myMainConfiguration.setProblemDescriptor(dialog.getProblemDescriptor());
+    myMainConfiguration.setSuppressId(dialog.getSuppressId());
     inspection.removeConfigurationsWithUuid(myMainConfiguration.getUuid());
     inspection.addConfigurations(myConfigurations);
     profile.setModified(true);
