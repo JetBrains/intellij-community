@@ -1163,7 +1163,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
     JEditorPane text = new JEditorPane();
     text.setEditorKit(HTMLEditorKitBuilder.simple());
-    text.setText(NotificationsUtil.buildHtml(null, null, content, null, null, null, NotificationsUtil.getFontStyle()));
+    text.setText(NotificationsUtil.buildHtml(null, null, false, content, null, null, null, NotificationsUtil.getFontStyle()));
     text.setEditable(false);
     text.setOpaque(false);
     text.setBorder(null);
