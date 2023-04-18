@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
+import org.jetbrains.kotlin.analysis.api.getModule
 import org.jetbrains.kotlin.analysis.api.lifetime.KtAlwaysAccessibleLifetimeTokenFactory
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
@@ -17,7 +18,6 @@ import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
-import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.analysis.providers.DecompiledPsiDeclarationProvider.findPsi
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
@@ -89,7 +89,7 @@ internal fun KtAnalysisSession.toPsiMethod(
         is KtFunction -> {
             // For JVM-invisible methods, such as @JvmSynthetic, LC conversion returns nothing, so fake it
             fun handleLocalOrSynthetic(source: KtFunction): PsiMethod? {
-                val ktModule = source.getKtModule(context.project)
+                val ktModule = getModule(source)
                 if (ktModule !is KtSourceModule) return null
                 return getContainingLightClass(source)?.let { UastFakeLightMethod(source, it) }
             }
