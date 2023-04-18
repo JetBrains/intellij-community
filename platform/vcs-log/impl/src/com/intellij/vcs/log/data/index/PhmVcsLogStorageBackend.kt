@@ -31,7 +31,6 @@ import java.nio.file.Files
 import java.util.*
 import java.util.function.IntConsumer
 import java.util.function.ObjIntConsumer
-import java.util.function.ToIntFunction
 
 internal class PhmVcsLogStorageBackend(
   storageId: StorageId,
@@ -141,36 +140,22 @@ internal class PhmVcsLogStorageBackend(
   override fun createWriter(): VcsLogWriter {
     return object : VcsLogWriter {
       override fun putCommit(commitId: Int, details: VcsLogIndexer.CompressedDetails) {
+        users.update(commitId, details)
+        paths.update(commitId, details)
+        trigrams.update(commitId, details)
+
+        parents.put(commitId, IntArray(details.parents.size) {
+          storage.getCommitIndex(details.parents[it], details.root)
+        })
         timestamps.put(commitId, longArrayOf(details.authorTime, details.commitTime))
         if (details.author != details.committer) {
           committers.put(commitId, users.getUserId(details.committer))
         }
-        trigrams.update(commitId, details)
         messages.put(commitId, details.fullMessage)
       }
 
-      override fun putParents(commitId: Int, parents: List<Hash>, hashToId: ToIntFunction<Hash>) {
-        this@PhmVcsLogStorageBackend.parents.put(commitId, IntArray(parents.size) {
-          hashToId.applyAsInt(parents[it])
-        })
-      }
-
-      override fun flush() {
-        force()
-      }
-
-      override fun close(performCommit: Boolean) {
-        force()
-      }
-
-      override fun putRename(parent: Int, child: Int, renames: IntArray) {
-        this@PhmVcsLogStorageBackend.renames.put(intArrayOf(parent, child), renames)
-      }
-
-      override fun putUsersAndPaths(commitId: Int, details: VcsLogIndexer.CompressedDetails) {
-        users.update(commitId, details)
-        paths.update(commitId, details)
-      }
+      override fun flush() = force()
+      override fun close(performCommit: Boolean) = force()
     }
   }
 

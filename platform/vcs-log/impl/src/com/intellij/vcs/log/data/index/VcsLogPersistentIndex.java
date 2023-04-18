@@ -214,11 +214,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     }
 
     try {
-      int commitId = myStorage.getCommitIndex(detail.getId(), detail.getRoot());
-      mutator.putUsersAndPaths(commitId, detail);
-      mutator.putPathChanges(commitId, detail, myStorage);
-      mutator.putParents(commitId, detail.getParents(), hash -> myStorage.getCommitIndex(hash, detail.getRoot()));
-      mutator.putCommit(commitId, detail);
+      mutator.putCommit(myStorage.getCommitIndex(detail.getId(), detail.getRoot()), detail);
     }
     catch (IOException | UncheckedIOException e) {
       myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);

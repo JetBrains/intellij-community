@@ -3,12 +3,10 @@ package com.intellij.vcs.log.data.index
 
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogTextFilter
-import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.impl.VcsLogIndexer
 import it.unimi.dsi.fastutil.ints.IntSet
 import java.io.IOException
 import java.util.function.IntConsumer
-import java.util.function.ToIntFunction
 
 internal interface VcsLogStorageBackend : VcsLogUsersStorage, VcsLogPathsStorage {
   var isFresh: Boolean
@@ -58,15 +56,6 @@ internal interface VcsLogStorageBackend : VcsLogUsersStorage, VcsLogPathsStorage
 interface VcsLogWriter {
   @Throws(IOException::class)
   fun putCommit(commitId: Int, details: VcsLogIndexer.CompressedDetails)
-
-  fun putParents(commitId: Int, parents: List<Hash>, hashToId: ToIntFunction<Hash>)
-
   fun flush()
-
   fun close(performCommit: Boolean)
-
-  fun putRename(parent: Int, child: Int, renames: IntArray)
-
-  fun putPathChanges(commitId: Int, details: VcsLogIndexer.CompressedDetails, logStore: VcsLogStorage) {}
-  fun putUsersAndPaths(commitId: Int, details: VcsLogIndexer.CompressedDetails) {}
 }

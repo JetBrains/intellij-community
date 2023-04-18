@@ -35,7 +35,6 @@ import java.nio.file.Files
 import java.util.function.IntConsumer
 import java.util.function.ObjIntConsumer
 import java.util.function.Predicate
-import java.util.function.ToIntFunction
 
 private const val DB_VERSION = 2
 
@@ -163,7 +162,7 @@ internal class SqliteVcsLogStorageBackend(project: Project,
   private val connection: SqliteConnection
     get() = connectionManager.connection
 
-  override fun createWriter(): VcsLogWriter = SqliteVcsLogWriter(connection)
+  override fun createWriter(): VcsLogWriter = SqliteVcsLogWriter(connection, this)
 
   override fun containsCommit(commitId: Int): Boolean {
     return connection.selectBoolean("select exists(select 1 from log where commitId = ?)", commitId)
@@ -652,7 +651,7 @@ internal class SqliteVcsLogStorageBackend(project: Project,
 }
 
 @Suppress("SqlResolve")
-private class SqliteVcsLogWriter(private val connection: SqliteConnection) : VcsLogWriter {
+private class SqliteVcsLogWriter(private val connection: SqliteConnection, private val storage: VcsLogStorage) : VcsLogWriter {
   init {
     connection.beginTransaction()
   }
@@ -679,6 +678,9 @@ private class SqliteVcsLogWriter(private val connection: SqliteConnection) : Vcs
   private val changeStatement = statementCollection.prepareIntStatement("insert into path_change(commitId, pathId, kind) values(?, ?, ?)")
 
   override fun putCommit(commitId: Int, details: VcsLogIndexer.CompressedDetails) {
+    putPathChanges(commitId, details)
+    putParents(commitId, details.root, details.parents)
+
     val isCommitter = if (details.author == details.committer) 0 else 1
     if (isCommitter == 1) {
       userBatch.bindMultiple(commitId, isCommitter, details.committer.name, details.committer.email)
@@ -686,23 +688,24 @@ private class SqliteVcsLogWriter(private val connection: SqliteConnection) : Vcs
     }
     userBatch.bindMultiple(commitId, 0, details.author.name, details.author.email)
     userBatch.addBatch()
+
     logBatch.bind(commitId, details.fullMessage, details.authorTime, details.commitTime, isCommitter)
     logBatch.addBatch()
   }
 
-  override fun putParents(commitId: Int, parents: List<Hash>, hashToId: ToIntFunction<Hash>) {
+  private fun putParents(commitId: Int, root: VirtualFile, parents: List<Hash>) {
     // clear old if any
     parentDeleteStatement.setInt(1, commitId)
     parentDeleteStatement.addBatch()
 
     for (parent in parents) {
       parentStatement.setInt(1, commitId)
-      parentStatement.setInt(2, hashToId.applyAsInt(parent))
+      parentStatement.setInt(2, storage.getCommitIndex(parent, root))
       parentStatement.addBatch()
     }
   }
 
-  override fun putRename(parent: Int, child: Int, renames: IntArray) {
+  private fun putRename(parent: Int, child: Int, renames: IntArray) {
     renameDeleteStatement.setInt(1, parent)
     renameDeleteStatement.setInt(2, child)
     renameDeleteStatement.addBatch()
@@ -715,9 +718,8 @@ private class SqliteVcsLogWriter(private val connection: SqliteConnection) : Vcs
     }
   }
 
-  override fun putPathChanges(commitId: Int, details: VcsLogIndexer.CompressedDetails, logStore: VcsLogStorage) {
-
-    val changesToStore = collectChangesAndPutRenames(details, logStore)
+  private fun putPathChanges(commitId: Int, details: VcsLogIndexer.CompressedDetails) {
+    val changesToStore = collectChangesAndPutRenames(details)
 
     for (entry in changesToStore) {
       val pathId = entry.key
@@ -732,8 +734,7 @@ private class SqliteVcsLogWriter(private val connection: SqliteConnection) : Vcs
     }
   }
 
-  private fun collectChangesAndPutRenames(details: VcsLogIndexer.CompressedDetails,
-                                          logStore: VcsLogStorage): Int2ObjectOpenHashMap<List<ChangeKind>> {
+  private fun collectChangesAndPutRenames(details: VcsLogIndexer.CompressedDetails): Int2ObjectOpenHashMap<List<ChangeKind>> {
     val result = Int2ObjectOpenHashMap<List<ChangeKind>>()
 
     // it's not exactly parents count since it is very convenient to assume that initial commit has one parent
@@ -750,8 +751,8 @@ private class SqliteVcsLogWriter(private val connection: SqliteConnection) : Vcs
           PathIndexer.getOrCreateChangeKindList(result, entry.intKey, parentsCount)[parentIndex] = ChangeKind.REMOVED
           PathIndexer.getOrCreateChangeKindList(result, entry.intValue, parentsCount)[parentIndex] = ChangeKind.ADDED
         }
-        val commit = logStore.getCommitIndex(details.id, details.root)
-        val parent = logStore.getCommitIndex(details.parents[parentIndex], details.root)
+        val commit = storage.getCommitIndex(details.id, details.root)
+        val parent = storage.getCommitIndex(details.parents[parentIndex], details.root)
 
         putRename(parent, commit, renames)
       }
