@@ -58,7 +58,7 @@ object CommentInputActionsComponentFactory {
     return HorizontalListPanel(12).apply {
       add(createHintLabel(CollaborationToolsBundle.message("review.comment.new.line.hint", newLineShortcutText)))
 
-      bindChildIn(cs, submitHintState, index = 0, componentFactory = { _, hint ->
+      bindChildIn(cs, submitHintState, index = 0, componentFactory = { hint ->
         createHintLabel(hint)
       })
     }

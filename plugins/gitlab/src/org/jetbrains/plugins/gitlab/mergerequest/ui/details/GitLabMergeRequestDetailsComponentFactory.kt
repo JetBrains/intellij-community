@@ -42,13 +42,13 @@ internal object GitLabMergeRequestDetailsComponentFactory {
       isOpaque = false
       background = UIUtil.getListBackground()
 
-      bindContentIn(scope, detailsLoadingVm.mergeRequestLoadingFlow) { contentCs, loadingState ->
+      bindContentIn(scope, detailsLoadingVm.mergeRequestLoadingFlow) { loadingState ->
         when (loadingState) {
           GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Loading -> LoadingLabel()
           is GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Error -> SimpleHtmlPane(loadingState.exception.localizedMessage)
           is GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Result -> {
             val detailsVm = loadingState.detailsVm
-            val detailsPanel = createDetailsComponent(project, contentCs, detailsVm, avatarIconsProvider).apply {
+            val detailsPanel = createDetailsComponent(project, detailsVm, avatarIconsProvider).apply {
               val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Request.Details.Popup") as ActionGroup
               PopupHandler.installPopupMenu(this, actionGroup, "GitLabMergeRequestDetailsPanelPopup")
               DataManager.registerDataProvider(this) { dataId ->
@@ -59,19 +59,19 @@ internal object GitLabMergeRequestDetailsComponentFactory {
               }
             }
 
-            return@bindContentIn CollaborationToolsUIUtil.wrapWithProgressStripe(scope, detailsVm.isLoading, detailsPanel)
+            CollaborationToolsUIUtil.wrapWithProgressStripe(scope, detailsVm.isLoading, detailsPanel)
           }
         }
       }
     }
   }
 
-  private fun createDetailsComponent(
+  private fun CoroutineScope.createDetailsComponent(
     project: Project,
-    cs: CoroutineScope,
     detailsVm: GitLabMergeRequestDetailsViewModel,
     avatarIconsProvider: IconsProvider<GitLabUserDTO>
   ): JComponent {
+    val cs = this
     val detailsInfoVm = detailsVm.detailsInfoVm
     val detailsReviewFlowVm = detailsVm.detailsReviewFlowVm
     val statusVm = detailsVm.statusVm

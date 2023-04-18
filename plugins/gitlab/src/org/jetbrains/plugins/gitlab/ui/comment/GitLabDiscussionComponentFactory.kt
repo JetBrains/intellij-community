@@ -51,14 +51,14 @@ object GitLabDiscussionComponentFactory {
       add(notesPanel)
       val replyVm = vm.replyVm
       if (replyVm != null) {
-        bindChildIn(cs, replyVm.newNoteVm) { cs, newNoteVm ->
+        bindChildIn(cs, replyVm.newNoteVm) { newNoteVm ->
           if (newNoteVm == null) {
-            createReplyActionsPanel(cs, replyVm, vm.resolveVm).apply {
+            createReplyActionsPanel(replyVm, vm.resolveVm).apply {
               border = JBUI.Borders.empty(8, ComponentType.COMPACT.fullLeftShift)
             }
           }
           else {
-            createReplyField(ComponentType.COMPACT, project, cs, newNoteVm, vm.resolveVm, avatarIconsProvider, swingAction("") {
+            createReplyField(ComponentType.COMPACT, project, this, newNoteVm, vm.resolveVm, avatarIconsProvider, swingAction("") {
               replyVm.stopWriting()
             })
           }
@@ -106,15 +106,15 @@ object GitLabDiscussionComponentFactory {
     }
   }
 
-  private fun createReplyActionsPanel(cs: CoroutineScope,
-                                      replyVm: GitLabDiscussionReplyViewModel,
-                                      resolveVm: GitLabDiscussionResolveViewModel?): JComponent {
+  private fun CoroutineScope.createReplyActionsPanel(replyVm: GitLabDiscussionReplyViewModel,
+                                                     resolveVm: GitLabDiscussionResolveViewModel?): JComponent {
     val replyLink = ActionLink(CollaborationToolsBundle.message("review.comments.reply.action")) {
       replyVm.startWriting()
     }.apply {
       isFocusPainted = false
     }
 
+    val cs = this
     return HorizontalListPanel(CodeReviewTimelineUIUtil.Thread.Replies.ActionsFolded.HORIZONTAL_GROUP_GAP).apply {
       add(replyLink)
 

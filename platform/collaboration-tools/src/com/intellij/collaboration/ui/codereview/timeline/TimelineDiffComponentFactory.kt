@@ -201,7 +201,7 @@ object TimelineDiffComponentFactory {
                            collapseVm: CollapsibleTimelineItemViewModel,
                            filePath: @NlsSafe String,
                            onFileNameClick: () -> Unit,
-                           diffComponentFactory: (CoroutineScope) -> JComponent): JComponent {
+                           diffComponentFactory: CoroutineScope.() -> JComponent): JComponent {
     val expandCollapseButton = InlineIconButton(EmptyIcon.ICON_16).apply {
       cs.launch(start = CoroutineStart.UNDISPATCHED) {
         collapseVm.collapsed.collect { collapsed ->
@@ -234,7 +234,7 @@ object TimelineDiffComponentFactory {
         background = EditorColorsManager.getInstance().globalScheme.defaultBackground
       }
 
-      bindChildIn(cs, collapseVm.collapsed) { cs, collapsed ->
+      bindChildIn(cs, collapseVm.collapsed) { collapsed ->
         if (collapsed) return@bindChildIn null
         diffComponentFactory(cs).apply {
           border = IdeBorderFactory.createBorder(SideBorder.TOP)

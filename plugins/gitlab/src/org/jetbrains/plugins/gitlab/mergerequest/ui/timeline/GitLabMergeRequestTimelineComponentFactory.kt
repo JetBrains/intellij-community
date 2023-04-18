@@ -78,8 +78,8 @@ object GitLabMergeRequestTimelineComponentFactory {
       add(timelinePanel)
     }
 
-    panel.bindChildIn(cs, vm.newNoteVm, null) { noteCs, editVm ->
-      editVm?.let { createNewNoteField(project, avatarIconsProvider, noteCs, it) }
+    panel.bindChildIn(cs, vm.newNoteVm, null) { editVm ->
+      editVm?.let { createNewNoteField(project, avatarIconsProvider, it) }
     }
 
     return ScrollPaneFactory.createScrollPane(panel, true).apply {
@@ -121,10 +121,10 @@ object GitLabMergeRequestTimelineComponentFactory {
     }
   }
 
-  private fun createNewNoteField(project: Project,
-                                 iconsProvider: IconsProvider<GitLabUserDTO>,
-                                 noteCs: CoroutineScope,
-                                 editVm: NewGitLabNoteViewModel): JComponent {
+  private fun CoroutineScope.createNewNoteField(project: Project,
+                                                iconsProvider: IconsProvider<GitLabUserDTO>,
+                                                editVm: NewGitLabNoteViewModel): JComponent {
+    val noteCs = this
     val submitAction = swingAction(CollaborationToolsBundle.message("review.comments.reply.action")) {
       editVm.submit()
     }.apply {

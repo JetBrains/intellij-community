@@ -169,11 +169,11 @@ fun Wrapper.bindContentIn(scope: CoroutineScope, contentFlow: Flow<JComponent?>)
 }
 
 fun <D> Wrapper.bindContentIn(scope: CoroutineScope, dataFlow: Flow<D>,
-                              componentFactory: (CoroutineScope, D) -> JComponent?) {
+                              componentFactory: CoroutineScope.(D) -> JComponent?) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     dataFlow.collectLatest {
       coroutineScope {
-        val component = componentFactory(this, it) ?: return@coroutineScope
+        val component = componentFactory(it) ?: return@coroutineScope
         setContent(component)
         repaint()
 
@@ -199,11 +199,11 @@ fun ProgressStripe.bindProgressIn(scope: CoroutineScope, loadingFlow: Flow<Boole
 
 fun <D> JPanel.bindChildIn(scope: CoroutineScope, dataFlow: Flow<D>,
                            constraints: Any? = null, index: Int? = null,
-                           componentFactory: (CoroutineScope, D) -> JComponent?) {
+                           componentFactory: CoroutineScope.(D) -> JComponent?) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     dataFlow.collectLatest {
       coroutineScope {
-        val component = componentFactory(this, it) ?: return@coroutineScope
+        val component = componentFactory(it) ?: return@coroutineScope
         if (index != null) {
           add(component, constraints, index)
         }

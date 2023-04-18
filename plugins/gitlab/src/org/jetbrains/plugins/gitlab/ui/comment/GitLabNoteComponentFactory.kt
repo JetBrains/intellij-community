@@ -58,7 +58,7 @@ object GitLabNoteComponentFactory {
       add(GitLabMergeRequestTimelineUIUtil.createTitleTextPane(vm.author, vm.createdAt))
 
       val resolvedFlow = vm.discussionState.flatMapLatest { it.resolved }
-      bindChildIn(cs, resolvedFlow) { _, resolved ->
+      bindChildIn(cs, resolvedFlow) { resolved ->
         if (resolved) {
           CollaborationToolsUIUtil.createTagLabel(CollaborationToolsBundle.message("review.thread.resolved.tag"))
         }
@@ -67,7 +67,7 @@ object GitLabNoteComponentFactory {
         }
       }
       val outdatedFlow = vm.discussionState.flatMapLatest { it.outdated }
-      bindChildIn(cs, outdatedFlow) { _, resolved ->
+      bindChildIn(cs, outdatedFlow) { resolved ->
         if (resolved) {
           CollaborationToolsUIUtil.createTagLabel(CollaborationToolsBundle.message("review.thread.outdated.tag"))
         }

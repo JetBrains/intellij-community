@@ -58,9 +58,9 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
 
         val replyVm = vm.replyVm
         if (replyVm != null) {
-          bindChildIn(cs, replyVm.newNoteVm) { cs, newNoteVm ->
+          bindChildIn(cs, replyVm.newNoteVm) { newNoteVm ->
             newNoteVm?.let {
-              GitLabDiscussionComponentFactory.createReplyField(ComponentType.FULL_SECONDARY, project, cs, it, vm.resolveVm,
+              GitLabDiscussionComponentFactory.createReplyField(ComponentType.FULL_SECONDARY, project, this, it, vm.resolveVm,
                                                                 avatarIconsProvider)
             }
           }
@@ -77,8 +77,8 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
     }
 
     val titlePanel = Wrapper().apply {
-      bindContentIn(cs, vm.mainNote) { titleCs, mainNote ->
-        GitLabNoteComponentFactory.createTitle(titleCs, mainNote)
+      bindContentIn(cs, vm.mainNote) { mainNote ->
+        GitLabNoteComponentFactory.createTitle(this, mainNote)
       }
     }
 
@@ -132,7 +132,7 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
       add(repliesActionsPanel)
     }
 
-    contentPanel.bindChildIn(cs, combine(vm.collapsed, diffPanelFlow, ::Pair), index = 0) { _, (collapsed, diffPanel) ->
+    contentPanel.bindChildIn(cs, combine(vm.collapsed, diffPanelFlow, ::Pair), index = 0) { (collapsed, diffPanel) ->
       if (diffPanel != null) {
         VerticalListPanel(4).apply {
           if (collapsed) {
@@ -157,8 +157,9 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
                                              vm: GitLabMergeRequestTimelineDiscussionViewModel,
                                              diffVm: GitLabDiscussionDiffViewModel): JComponent {
     return TimelineDiffComponentFactory.createDiffWithHeader(this, vm, diffVm.position.filePath, {}) {
+      val diffCs = this
       Wrapper(LoadingLabel()).apply {
-        bindContentIn(it, diffVm.patchHunk) { _, hunkState ->
+        bindContentIn(diffCs, diffVm.patchHunk) { hunkState ->
           when (hunkState) {
             is GitLabDiscussionDiffViewModel.PatchHunkResult.Loaded -> {
               TimelineDiffComponentFactory.createDiffComponent(project, EditorFactory.getInstance(), hunkState.hunk, hunkState.anchor, null)
