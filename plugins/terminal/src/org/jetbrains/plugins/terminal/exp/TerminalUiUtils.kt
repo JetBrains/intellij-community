@@ -23,7 +23,6 @@ object TerminalUiUtils {
     editor.setCustomCursor(this, Cursor.getDefaultCursor())
     editor.scrollPane.border = JBUI.Borders.empty()
     editor.scrollPane.horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
-    editor.scrollPane.verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_NEVER
     editor.gutterComponentEx.isPaintBackground = false
 
     editor.colorsScheme.apply {

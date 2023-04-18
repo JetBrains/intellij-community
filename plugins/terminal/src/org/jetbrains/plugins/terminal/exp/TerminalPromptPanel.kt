@@ -80,7 +80,8 @@ class TerminalPromptPanel(private val project: Project,
     textField.border = JBUI.Borders.emptyLeft(JBUI.scale(LEFT_INSET))
     textField.alignmentX = JComponent.LEFT_ALIGNMENT
 
-    val editor = textField.getEditor(true)!!
+    val editor = textField.getEditor(true) as EditorImpl
+    editor.scrollPane.border = JBUI.Borders.empty()
     editor.backgroundColor = UIUtil.getTextFieldBackground()
     editor.colorsScheme.apply {
       editorFontName = settings.terminalFont.fontName

@@ -64,6 +64,9 @@ class TerminalPanel(private val project: Project,
 
   private val eventDispatcher: TerminalEventDispatcher = TerminalEventDispatcher()
 
+  val charSize: Dimension
+    get() = Dimension(editor.charHeight, editor.lineHeight)
+
   init {
     document = DocumentImpl("", true)
     editor = TerminalUiUtils.createEditor(document, project, settings)
@@ -128,7 +131,9 @@ class TerminalPanel(private val project: Project,
     // Can not use invokeAndWait here because deadlock may happen. TerminalTextBuffer is locked at this place,
     // and EDT can be frozen now trying to acquire this lock
     invokeLater(ModalityState.any()) {
-      updateEditor(content)
+      if (!editor.isDisposed) {
+        updateEditor(content)
+      }
     }
   }
 
@@ -317,6 +322,10 @@ class TerminalPanel(private val project: Project,
     return Dimension(baseSize.width, lineCount * editor.lineHeight + insets.top + insets.bottom)
   }
 
+  fun getContentSize(): Dimension {
+    return Dimension(width - JBUI.scale(LEFT_INSET), height)
+  }
+
   override fun getComponent(): JComponent = this
 
   override fun getPreferredFocusableComponent(): JComponent = editor.contentComponent
@@ -386,6 +395,8 @@ class TerminalPanel(private val project: Project,
   }
 
   companion object {
+    private const val LEFT_INSET: Int = 7
+
     @NonNls
     private val ACTIONS_TO_SKIP = listOf(
       "ActivateTerminalToolWindow",

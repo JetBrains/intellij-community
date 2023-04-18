@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
-import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
@@ -28,7 +28,7 @@ class TerminalBlocksComponent(private val project: Project,
                               commandExecutor: TerminalCommandExecutor,
                               private val parentDisposable: Disposable) : JPanel() {
   private val blocksPanel: JPanel
-  private val scrollPane: JBScrollPane
+  private val scrollPane: JScrollPane
   private val promptPanel: TerminalPromptPanel = TerminalPromptPanel(project, settings, session, commandExecutor)
 
   private var runningPanel: TerminalPanel? = null
@@ -42,7 +42,9 @@ class TerminalBlocksComponent(private val project: Project,
       }
     }
 
-    scrollPane = JBScrollPane(blocksPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER)
+    scrollPane = ScrollPaneFactory.createScrollPane(blocksPanel, true)
+    scrollPane.verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
+    scrollPane.horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
     stickScrollBarToBottom(scrollPane.verticalScrollBar)
 
     layout = BorderLayout()
