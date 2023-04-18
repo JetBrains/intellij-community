@@ -206,7 +206,7 @@ fn layout_launcher(launcher_location: LauncherLocation, target_dir: &Path, share
     // .
     // ├── bin/
     // │   └── xplat-launcher | remote-dev-server
-    // │   └── idea64.vmoptions
+    // │   └── xplat64.vmoptions
     // │   └── idea.properties
     // ├── lib/
     // │   └── app.jar
@@ -223,7 +223,7 @@ fn layout_launcher(launcher_location: LauncherLocation, target_dir: &Path, share
         target_dir,
         vec![
             "bin/idea.properties",
-            "bin/idea64.vmoptions",
+            "bin/xplat64.vmoptions",
             "lib/test.jar"
         ],
         vec![
@@ -243,7 +243,7 @@ fn layout_launcher(launcher_location: LauncherLocation, target_dir: &Path, share
     // └── Contents
     //     ├── bin/
     //     │   └── xplat-launcher | remote-dev-server
-    //     │   └── idea.vmoptions
+    //     │   └── xplat.vmoptions
     //     │   └── idea.properties
     //     ├── Resources/
     //     │   └── product-info.json
@@ -262,7 +262,7 @@ fn layout_launcher(launcher_location: LauncherLocation, target_dir: &Path, share
         &dist_root,
         vec![
             "bin/idea.properties",
-            "bin/idea.vmoptions",
+            "bin/xplat.vmoptions",
             "lib/test.jar"
         ],
         vec![
@@ -282,7 +282,7 @@ fn layout_launcher(launcher_location: LauncherLocation, target_dir: &Path, share
     // .
     // ├── bin/
     // │   └── xplat-launcher.exe | remote-dev-server.exe
-    // │   └── idea64.exe.vmoptions
+    // │   └── xplat64.exe.vmoptions
     // │   └── idea.properties
     // ├── lib/
     // │   └── app.jar
@@ -299,7 +299,7 @@ fn layout_launcher(launcher_location: LauncherLocation, target_dir: &Path, share
         target_dir,
         vec![
             "bin\\idea.properties",
-            "bin\\idea64.exe.vmoptions",
+            "bin\\xplat64.exe.vmoptions",
             "lib\\test.jar"
         ],
         vec![
@@ -391,7 +391,7 @@ pub fn get_jbr_home(jbr_dir: &PathBuf) -> Result<PathBuf> {
 }
 
 pub fn get_custom_config_dir() -> PathBuf {
-    get_config_home().unwrap().join("JetBrains").join("IntelliJIdea2022.3")
+    get_config_home().unwrap().join("JetBrains").join("XPlatLauncherTest")
 }
 
 pub struct LauncherRunSpec {
