@@ -1,20 +1,20 @@
 <component name="libraryTable">
   <library name="mockito" type="repository">
-    <properties maven-id="org.mockito:mockito-core:4.10.0">
+    <properties maven-id="org.mockito:mockito-core:5.3.0">
       <exclude>
         <dependency maven-id="org.objenesis:objenesis" />
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/mockito/mockito-core/4.10.0/mockito-core-4.10.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.12.19/byte-buddy-1.12.19.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.12.19/byte-buddy-agent-1.12.19.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/mockito/mockito-core/5.3.0/mockito-core-5.3.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.14.4/byte-buddy-1.14.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.14.4/byte-buddy-agent-1.14.4.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/mockito/mockito-core/4.10.0/mockito-core-4.10.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.12.19/byte-buddy-1.12.19-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.12.19/byte-buddy-agent-1.12.19-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/mockito/mockito-core/5.3.0/mockito-core-5.3.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.14.4/byte-buddy-1.14.4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.14.4/byte-buddy-agent-1.14.4-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
