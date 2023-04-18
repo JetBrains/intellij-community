@@ -3,10 +3,7 @@ package com.intellij.vcs.log.history;
 
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.NamedRunnable;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,6 +34,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.function.Predicate;
 
 import static com.intellij.ui.JBColor.namedColor;
 
@@ -212,7 +210,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     private final @NotNull Hash myRevision;
     private final @NotNull VirtualFile myRoot;
 
-    private @Nullable Condition<Integer> myCondition;
+    private Predicate<Integer> myCondition;
     private @NotNull VcsLogDataPack myVisiblePack = VisiblePack.EMPTY;
 
     RevisionHistoryHighlighter(@NotNull VcsLogStorage storage, @NotNull Hash revision, @NotNull VirtualFile root) {
@@ -229,16 +227,16 @@ public class FileHistoryUi extends AbstractVcsLogUi {
         myCondition = getCondition();
       }
 
-      if (myCondition.value(commitId)) {
+      if (myCondition.test(commitId)) {
         return VcsCommitStyleFactory.background(myBgColor);
       }
       return VcsCommitStyle.DEFAULT;
     }
 
-    private @NotNull Condition<Integer> getCondition() {
-      if (!(myVisiblePack instanceof VisiblePack)) return Conditions.alwaysFalse();
+    private @NotNull Predicate<Integer> getCondition() {
+      if (!(myVisiblePack instanceof VisiblePack)) return Predicates.alwaysFalse();
       DataPackBase dataPack = ((VisiblePack)myVisiblePack).getDataPack();
-      if (!(dataPack instanceof DataPack)) return Conditions.alwaysFalse();
+      if (!(dataPack instanceof DataPack)) return Predicates.alwaysFalse();
       Set<Integer> heads = Collections.singleton(myStorage.getCommitIndex(myRevision, myRoot));
       return ((DataPack)dataPack).getPermanentGraph().getContainedInBranchCondition(heads);
     }
@@ -247,7 +245,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     public void update(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
       myVisiblePack = dataPack;
       if (myVisiblePack.getFilters().get(VcsLogFilterCollection.REVISION_FILTER) != null) {
-        myCondition = Conditions.alwaysFalse();
+        myCondition = Predicates.alwaysFalse();
       }
       else {
         myCondition = null;
