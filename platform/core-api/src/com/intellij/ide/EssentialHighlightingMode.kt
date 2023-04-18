@@ -8,7 +8,7 @@ import com.intellij.openapi.util.registry.RegistryManager
 class EssentialHighlightingMode {
   companion object {
     fun isEnabled(): Boolean {
-      return RegistryManager.getInstance().`is`("ide.highlighting.mode.essential");
+      return RegistryManager.getInstance().`is`("ide.highlighting.mode.essential")
     }
 
     fun setEnabled(value: Boolean) {
