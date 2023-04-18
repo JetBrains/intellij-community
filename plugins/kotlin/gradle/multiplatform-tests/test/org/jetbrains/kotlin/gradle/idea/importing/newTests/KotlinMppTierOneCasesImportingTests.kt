@@ -6,7 +6,11 @@ import org.jetbrains.kotlin.gradle.newTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.newTests.TestConfigurationDslScope
 import org.jetbrains.kotlin.gradle.newTests.testFeatures.checkers.contentRoots.ContentRootsChecker
 import org.jetbrains.kotlin.gradle.newTests.testFeatures.checkers.orderEntries.OrderEntriesChecker
+import org.jetbrains.kotlin.gradle.newTests.testProperties.AndroidGradlePluginVersionTestsProperty
+import org.jetbrains.kotlin.gradle.newTests.testProperties.GradleVersionTestsProperty
+import org.jetbrains.kotlin.gradle.newTests.testProperties.KotlinGradlePluginVersionTestsProperty
 import org.jetbrains.kotlin.test.TestMetadata
+import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.junit.Test
 
 @TestMetadata("newMppTests/tier1")
