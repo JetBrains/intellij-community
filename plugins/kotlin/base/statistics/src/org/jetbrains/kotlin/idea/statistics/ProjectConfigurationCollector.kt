@@ -58,11 +58,11 @@ class ProjectConfigurationCollector : ProjectUsagesCollector() {
     }
 
     companion object {
-        private val GROUP = EventLogGroup("kotlin.project.configuration", 9)
+        private val GROUP = EventLogGroup("kotlin.project.configuration", 10)
 
         private val systemField = EventFields.String("system", listOf("JPS", "Maven", "Gradle", "unknown"))
         private val platformField = EventFields.String("platform", composePlatformFields())
-        private val languageLevelField = EventFields.StringValidatedByRegexp("languageVersion", "version_lang_api")
+        private val languageLevelField = EventFields.StringValidatedByRegexp("languageLevel", "version")
         private val isMPPBuild = EventFields.Boolean("isMPP")
         private val pluginInfoField = EventFields.PluginInfo
 
