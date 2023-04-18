@@ -60,6 +60,7 @@ import org.jetbrains.kotlin.load.java.JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_A
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiRequestPositionManager, PositionManagerWithMultipleStackFrames {
     private val stackFrameInterceptor: StackFrameInterceptor? = debugProcess.project.serviceOrNull()
@@ -148,12 +149,33 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 
         val sourcePosition = createSourcePosition(location, psiFile, sourceLineNumber)
             ?: SourcePosition.createFromLine(psiFile, sourceLineNumber)
+
         // There may be several locations for same source line. If same source position would be created for all of them,
         // breakpoints at this line will stop on every location.
         if (sourcePosition !is KotlinReentrantSourcePosition && location.shouldBeTreatedAsReentrantSourcePosition(psiFile, fileName)) {
             return KotlinReentrantSourcePosition(sourcePosition)
         }
-        return decorateSourcePosition(location, sourcePosition)
+
+		// Here we are trying to detect whether we should highlight the entire line of a source position or not.
+		// Consider the example:
+		//    1.also { // Stop on a breakpoint here and perform a step over
+		//        println(it)
+		//    }.also { // You will get to this line
+		//        println(it)
+		//    }
+		// In this example the entire line with `also` should be highlighted.
+		// Another example:
+		//    1.also {
+		//        println(it) // Stop on a breakpoint here and perform a step over
+		//    }.also { // You will get to this line
+		//        println(it)
+		//    }
+		// Now we should highlight the line before the curly brace, since we are still inside the `also` inline lambda.
+		val lines = sourcePosition.elementAt?.parent.safeAs<KtFunctionLiteral>()?.getLineRange() ?: return sourcePosition
+		if (!location.hasVisibleInlineLambdasOnLines(lines)) {
+			return KotlinSourcePositionWithEntireLineHighlighted(sourcePosition)
+		}
+		return sourcePosition
     }
 
     private fun createSourcePosition(location: Location, file: KtFile, sourceLineNumber: Int): SourcePosition? {
@@ -197,11 +219,9 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
                 it.lineNumber() == lineNumber()
             }
 
-        /*
-            `finally {}` block code is placed in the class file twice.
-            Unless the debugger metadata is available, we can't figure out if we are inside `finally {}`, so we have to check it using PSI.
-            This is conceptually wrong and won't work in some cases, but it's still better than nothing.
-        */
+        //  The `finally {}` block code is placed in the class file twice.
+        //  Unless the debugger metadata is available, we can't figure out if we are inside `finally {}`, so we have to check it using PSI.
+        //  This is conceptually wrong and won't work in some cases, but it's still better than nothing.
         if (sameLineLocations.size < 2 || hasFinallyBlockInParent(psiFile)) {
             return false
         }
@@ -548,38 +568,9 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
                 listOfNotNull(
                     debugProcess.requestsManager.createClassPrepareRequest(requestor, name),
                     debugProcess.requestsManager.createClassPrepareRequest(requestor, "$name$*")
-                )
+               )
             }
     }
-}
-
-// This method detects whether we should highlight the entire line of a source position or not.
-// Consider the example:
-//
-//    1.also { // Stop on a breakpoint here and perform a step over
-//        println(it)
-//    }.also { // You will get to this line
-//        println(it)
-//    }
-//
-// In this example the entire line with `also` should be highlighted.
-// Another example:
-//
-//    1.also {
-//        println(it) // Stop on a breakpoint here and perform a step over
-//    }.also { // You will get to this line
-//        println(it)
-//    }
-//
-// Now we should highlight the line before the curly brace, since we are still inside the `also` inline lambda.
-private fun decorateSourcePosition(location: Location, sourcePosition: SourcePosition): SourcePosition {
-    if (sourcePosition is KotlinReentrantSourcePosition) return sourcePosition
-    val lambda = sourcePosition.elementAt?.parent as? KtFunctionLiteral ?: return sourcePosition
-    val lines = lambda.getLineRange() ?: return sourcePosition
-    if (!location.hasVisibleInlineLambdasOnLines(lines)) {
-        return KotlinSourcePositionWithEntireLineHighlighted(sourcePosition)
-    }
-    return sourcePosition
 }
 
 private fun Location.getZeroBasedLineNumber(): Int =
