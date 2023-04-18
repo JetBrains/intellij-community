@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.intellij.lang.regexp.inspection.custom;
+package com.intellij.profile.codeInspection.ui;
 
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.fileTypes.FileType;
@@ -15,7 +16,6 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.FormBuilder;
-import org.intellij.lang.regexp.RegExpBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +46,7 @@ public class InspectionMetaDataDialog extends DialogWrapper {
                                   @NlsSafe String problemDescriptor,
                                   @NlsSafe String suppressId) {
     super(project);
-    myNameTextField = new JTextField(name == null ? RegExpBundle.message("unnamed.inspection") : name);
+    myNameTextField = new JTextField(name == null ? InspectionsBundle.message("unnamed.inspection") : name);
     myProblemDescriptorTextField = new JTextField(problemDescriptor);
     final FileType htmlFileType = FileTypeManager.getInstance().getStdFileType("HTML");
     myDescriptionTextArea = new EditorTextField(ObjectUtils.notNull(description, ""), project, htmlFileType);
@@ -56,7 +56,7 @@ public class InspectionMetaDataDialog extends DialogWrapper {
     myDescriptionTextArea.setMinimumSize(new Dimension(200, 50));
     mySuppressIdTextField = new JTextField(suppressId);
     myNameValidator = nameValidator;
-    setTitle(RegExpBundle.message("dialog.title.custom.regexp.inspection"));
+    setTitle(InspectionsBundle.message("dialog.title.user.defined.inspection"));
     init();
   }
 
@@ -70,7 +70,7 @@ public class InspectionMetaDataDialog extends DialogWrapper {
     final List<ValidationInfo> warnings = new SmartList<>();
     final String name = getName();
     if (StringUtil.isEmpty(name)) {
-      warnings.add(new ValidationInfo(RegExpBundle.message("dialog.message.name.must.not.be.empty"), myNameTextField));
+      warnings.add(new ValidationInfo(InspectionsBundle.message("dialog.message.name.must.not.be.empty"), myNameTextField));
     }
     else {
       String errorMessage = myNameValidator.apply(name);
@@ -81,7 +81,7 @@ public class InspectionMetaDataDialog extends DialogWrapper {
     final String suppressId = getSuppressId();
     if (!StringUtil.isEmpty(suppressId)) {
       if (!mySuppressIdPattern.matcher(suppressId).matches()) {
-        warnings.add(new ValidationInfo(RegExpBundle.message("dialog.message.suppress.id.must.match.regex.za.z"), mySuppressIdTextField));
+        warnings.add(new ValidationInfo(InspectionsBundle.message("dialog.message.suppress.id.must.match.regex"), mySuppressIdTextField));
       }
     }
     return warnings;
@@ -91,10 +91,10 @@ public class InspectionMetaDataDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     return new FormBuilder()
-      .addLabeledComponent(RegExpBundle.message("label.inspection.name"), myNameTextField, true)
-      .addLabeledComponentFillVertically(RegExpBundle.message("label.description"), myDescriptionTextArea)
-      .addLabeledComponent(RegExpBundle.message("label.problem.tool.tip"), myProblemDescriptorTextField, true)
-      .addLabeledComponent(RegExpBundle.message("label.suppress.id"), mySuppressIdTextField)
+      .addLabeledComponent(InspectionsBundle.message("label.inspection.name"), myNameTextField, true)
+      .addLabeledComponentFillVertically(InspectionsBundle.message("label.description"), myDescriptionTextArea)
+      .addLabeledComponent(InspectionsBundle.message("label.problem.tool.tip"), myProblemDescriptorTextField, true)
+      .addLabeledComponent(InspectionsBundle.message("label.suppress.id"), mySuppressIdTextField)
       .getPanel();
   }
 
