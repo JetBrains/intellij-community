@@ -47,6 +47,7 @@ import com.intellij.util.progress.SubTaskProgressIndicator;
 import kotlin.Pair;
 import org.jetbrains.annotations.*;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -165,16 +166,18 @@ public class UnindexedFilesScanner implements FilesScanningTask {
                     @NotNull ProjectScanningHistoryImpl scanningHistory,
                     @NotNull ProgressIndicator indicator,
                     @NotNull Ref<? super StatusMark> markRef) {
-    projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.PushProperties);
-    scanningHistory.startStage(ProjectScanningHistoryImpl.ScanningStage.DelayedPushProperties);
+    Instant delayedPushingStart = Instant.now();
+    projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.PushProperties, delayedPushingStart);
+    scanningHistory.startStage(ProjectScanningHistoryImpl.ScanningStage.DelayedPushProperties, delayedPushingStart);
     try {
       if (myPusher instanceof PushedFilePropertiesUpdaterImpl) {
         ((PushedFilePropertiesUpdaterImpl)myPusher).performDelayedPushTasks();
       }
     }
     finally {
-      projectIndexingHistory.stopStage(ProjectIndexingHistoryImpl.Stage.PushProperties);
-      scanningHistory.stopStage(ProjectScanningHistoryImpl.ScanningStage.DelayedPushProperties);
+      Instant delayedPushingEnd = Instant.now();
+      projectIndexingHistory.stopStage(ProjectIndexingHistoryImpl.Stage.PushProperties, delayedPushingEnd);
+      scanningHistory.stopStage(ProjectScanningHistoryImpl.ScanningStage.DelayedPushProperties, delayedPushingEnd);
     }
     LOG.info(snapshot.getLogResponsivenessSinceCreationMessage("Performing delayed pushing properties tasks for " + myProject.getName()));
 
@@ -185,8 +188,9 @@ public class UnindexedFilesScanner implements FilesScanningTask {
     }
 
     List<IndexableFilesIterator> orderedProviders;
-    projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.CreatingIterators);
-    scanningHistory.startStage(ProjectScanningHistoryImpl.ScanningStage.CreatingIterators);
+    Instant iteratorsStart = Instant.now();
+    projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.CreatingIterators, iteratorsStart);
+    scanningHistory.startStage(ProjectScanningHistoryImpl.ScanningStage.CreatingIterators, iteratorsStart);
     try {
       if (myPredefinedIndexableFilesIterators == null) {
         Pair<@NotNull List<IndexableFilesIterator>, @NotNull StatusMark> pair = collectProviders(myProject, myIndex);
@@ -198,12 +202,14 @@ public class UnindexedFilesScanner implements FilesScanningTask {
       }
     }
     finally {
-      projectIndexingHistory.stopStage(ProjectIndexingHistoryImpl.Stage.CreatingIterators);
-      scanningHistory.stopStage(ProjectScanningHistoryImpl.ScanningStage.CreatingIterators);
+      Instant iteratorsTimeEnd = Instant.now();
+      projectIndexingHistory.stopStage(ProjectIndexingHistoryImpl.Stage.CreatingIterators, iteratorsTimeEnd);
+      scanningHistory.stopStage(ProjectScanningHistoryImpl.ScanningStage.CreatingIterators, iteratorsTimeEnd);
     }
 
-    projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.Scanning);
-    scanningHistory.startStage(ProjectScanningHistoryImpl.ScanningStage.Scanning);
+    Instant scanningStageStart = Instant.now();
+    projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.Scanning, scanningStageStart);
+    scanningHistory.startStage(ProjectScanningHistoryImpl.ScanningStage.Scanning, scanningStageStart);
     try {
       collectIndexableFilesConcurrently(myProject, indicator, orderedProviders, projectIndexingHistory, scanningHistory);
       if (isFullIndexUpdate()) {
@@ -211,7 +217,7 @@ public class UnindexedFilesScanner implements FilesScanningTask {
       }
     }
     finally {
-      projectIndexingHistory.stopStage(ProjectIndexingHistoryImpl.Stage.Scanning);
+      projectIndexingHistory.stopStage(ProjectIndexingHistoryImpl.Stage.Scanning, Instant.now());
       //scanningHistory would be stopped later on overall stop of activity
     }
     String scanningCompletedMessage = getLogScanningCompletedStageMessage(projectIndexingHistory);

@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.time.Instant;
 import java.util.*;
 
 /**
@@ -86,12 +87,12 @@ class UnindexedFilesIndexer extends DumbModeTask {
 
     myIndex.resetSnapshotInputMappingStatistics();
 
-    projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.Indexing);
+    projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.Indexing, Instant.now());
     try {
       doIndexFiles(projectIndexingHistory, projectDumbIndexingHistory, poweredIndicator);
     }
     finally {
-      projectIndexingHistory.stopStage(ProjectIndexingHistoryImpl.Stage.Indexing);
+      projectIndexingHistory.stopStage(ProjectIndexingHistoryImpl.Stage.Indexing, Instant.now());
     }
 
     LOG.info(

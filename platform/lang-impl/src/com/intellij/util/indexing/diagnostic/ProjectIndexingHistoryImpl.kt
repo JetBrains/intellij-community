@@ -114,19 +114,19 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
   private sealed interface Event {
     val instant: Instant
 
-    data class StageEvent(val stage: Stage, val started: Boolean, override val instant: Instant = Instant.now()) : Event
+    data class StageEvent(val stage: Stage, val started: Boolean, override val instant: Instant) : Event
     data class SuspensionEvent(val started: Boolean, override val instant: Instant = Instant.now()) : Event
   }
 
-  fun startStage(stage: Stage) {
+  fun startStage(stage: Stage, instant: Instant) {
     synchronized(events) {
-      events.add(Event.StageEvent(stage, true))
+      events.add(Event.StageEvent(stage, true, instant))
     }
   }
 
-  fun stopStage(stage: Stage) {
+  fun stopStage(stage: Stage, instant: Instant) {
     synchronized(events) {
-      events.add(Event.StageEvent(stage, false))
+      events.add(Event.StageEvent(stage, false, instant))
     }
   }
 
@@ -286,20 +286,6 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
   }
 
   @TestOnly
-  fun startStage(stage: Stage, instant: Instant) {
-    synchronized(events) {
-      events.add(Event.StageEvent(stage, true, instant))
-    }
-  }
-
-  @TestOnly
-  fun stopStage(stage: Stage, instant: Instant) {
-    synchronized(events) {
-      events.add(Event.StageEvent(stage, false, instant))
-    }
-  }
-
-  @TestOnly
   fun suspendStages(instant: Instant) {
     synchronized(events) {
       events.add(Event.SuspensionEvent(true, instant))
@@ -403,19 +389,19 @@ data class ProjectScanningHistoryImpl(override val project: Project,
   private sealed interface Event {
     val instant: Instant
 
-    data class StageEvent(val stage: ScanningStage, val started: Boolean, override val instant: Instant = Instant.now()) : Event
+    data class StageEvent(val stage: ScanningStage, val started: Boolean, override val instant: Instant) : Event
     data class SuspensionEvent(val started: Boolean, override val instant: Instant = Instant.now()) : Event
   }
 
-  fun startStage(stage: ScanningStage) {
+  fun startStage(stage: ScanningStage, instant: Instant) {
     synchronized(events) {
-      events.add(Event.StageEvent(stage, true))
+      events.add(Event.StageEvent(stage, true, instant))
     }
   }
 
-  fun stopStage(stage: ScanningStage) {
+  fun stopStage(stage: ScanningStage, instant: Instant) {
     synchronized(events) {
-      events.add(Event.StageEvent(stage, false))
+      events.add(Event.StageEvent(stage, false, instant))
     }
   }
 
@@ -578,19 +564,6 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     };
 
     abstract fun getProperty(): KMutableProperty1<ScanningTimesImpl, Duration>
-  }
-
-  @TestOnly
-  fun startStage(stage: ScanningStage, instant: Instant) {
-    synchronized(events) {
-      events.add(Event.StageEvent(stage, true, instant))
-    }
-  }
-
-  fun stopStage(stage: ScanningStage, instant: Instant) {
-    synchronized(events) {
-      events.add(Event.StageEvent(stage, false, instant))
-    }
   }
 
   @TestOnly
