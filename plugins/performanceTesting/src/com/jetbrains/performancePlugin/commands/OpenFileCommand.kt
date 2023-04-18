@@ -1,5 +1,6 @@
 package com.jetbrains.performancePlugin.commands
 
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.project.Project
@@ -53,7 +54,9 @@ class OpenFileCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter
     }
     spanRef.set(span.startSpan())
     scopeRef.set(spanRef.get().makeCurrent())
-    setFilePath(projectPath, spanRef, file)
+    setFilePath(projectPath = projectPath, span = spanRef.get(), file = file)
+    // focus window
+    ProjectUtil.focusProjectWindow(project)
     FileEditorManagerEx.getInstanceEx(project).openFile(file = file,
                                                         options = FileEditorOpenOptions(requestFocus = true)).allEditors
 
@@ -64,14 +67,12 @@ class OpenFileCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter
     job.waitForComplete()
   }
 
-  private fun setFilePath(projectPath: @SystemIndependent @NonNls String?,
-                        spanRef: Ref<Span>,
-                        file: VirtualFile) {
+  private fun setFilePath(projectPath: @SystemIndependent @NonNls String?, span: Span, file: VirtualFile) {
     if (projectPath != null) {
-      spanRef.get().setAttribute("filePath", file.path.replaceFirst(projectPath, ""))
+      span.setAttribute("filePath", file.path.replaceFirst(projectPath, ""))
     }
     else {
-      spanRef.get().setAttribute("filePath", file.path)
+      span.setAttribute("filePath", file.path)
     }
   }
 }

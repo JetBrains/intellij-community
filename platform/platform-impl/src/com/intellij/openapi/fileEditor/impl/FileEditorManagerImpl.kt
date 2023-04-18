@@ -1201,6 +1201,8 @@ open class FileEditorManagerImpl(
 
     // transfer focus into editor
     if (options.requestFocus && !ApplicationManager.getApplication().isUnitTestMode) {
+      check(!isReopeningOnStartup)
+
       if (selectedEditor is TextEditor) {
         runWhenLoaded(selectedEditor.editor) {
           // while the editor was loading asynchronously, the user switched to another editor - don't steal focus
