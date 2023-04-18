@@ -189,16 +189,16 @@ class FramePrinter(private val suspendContext: SuspendContextImpl) {
     }
 }
 
-fun SourcePosition.render(): String {
+fun SourcePosition.render(): String = runReadAction {
     val virtualFile = file.originalFile.virtualFile ?: file.viewProvider.virtualFile
 
-    val libraryEntry = runReadAction {  LibraryUtil.findLibraryEntry(virtualFile, file.project) }
+    val libraryEntry = LibraryUtil.findLibraryEntry(virtualFile, file.project)
     if (libraryEntry != null && (libraryEntry is JdkOrderEntry || libraryEntry.presentableName == KOTLIN_LIBRARY_NAME)) {
         val suffix = if (isInCompiledFile()) "COMPILED" else "EXT"
-        return FileUtil.getNameWithoutExtension(virtualFile.name) + ".!$suffix!"
+        return@runReadAction FileUtil.getNameWithoutExtension(virtualFile.name) + ".!$suffix!"
     }
 
-    return virtualFile.name + ":" + (line + 1)
+    return@runReadAction virtualFile.name + ":" + (line + 1)
 }
 
 private fun SourcePosition.isInCompiledFile(): Boolean {

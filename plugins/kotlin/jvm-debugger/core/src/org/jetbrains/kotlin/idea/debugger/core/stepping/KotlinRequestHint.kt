@@ -2,14 +2,18 @@
 
 package org.jetbrains.kotlin.idea.debugger.core.stepping
 
+import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebugProcess.JAVA_STRATUM
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.MethodFilter
 import com.intellij.debugger.engine.RequestHint
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
+import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.psi.util.parentOfType
 import com.sun.jdi.Location
 import com.sun.jdi.VMDisconnectedException
 import com.sun.jdi.request.StepRequest
@@ -18,8 +22,14 @@ import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.core.isKotlinFakeLineNumber
 import org.jetbrains.kotlin.idea.debugger.core.isOnSuspensionPoint
+import org.jetbrains.kotlin.idea.debugger.core.stackFrame.InlineStackTraceCalculator
 import org.jetbrains.kotlin.load.java.JvmAbi
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.resolve.calls.util.isSingleUnderscore
 import org.jetbrains.org.objectweb.asm.Type
+import com.intellij.psi.PsiElement
+import com.intellij.psi.util.parents
 
 open class KotlinRequestHint(
     stepThread: ThreadReferenceProxyImpl,
@@ -166,6 +176,7 @@ class KotlinStepIntoRequestHint(
     parentHint: RequestHint?
 ) : KotlinRequestHint(stepThread, suspendContext, StepRequest.STEP_LINE, StepRequest.STEP_INTO, filter, parentHint) {
     private var lastWasKotlinFakeLineNumber = false
+    private var currentSteppingSize = StepRequest.STEP_LINE
 
     private companion object {
         private val LOG = Logger.getInstance(KotlinStepIntoRequestHint::class.java)
@@ -174,6 +185,7 @@ class KotlinStepIntoRequestHint(
     override fun getNextStepDepth(context: SuspendContextImpl): Int {
         try {
             val frameProxy = context.frameProxy ?: return STOP
+            currentSteppingSize = StepRequest.STEP_LINE
             val location = frameProxy.safeLocation()
             // Continue stepping into if we are at a compiler generated fake line number.
             if (location != null && isKotlinFakeLineNumber(location)) {
@@ -187,6 +199,15 @@ class KotlinStepIntoRequestHint(
                 lastWasKotlinFakeLineNumber = false
                 return STOP
             }
+
+            // Step over `component*` function calls to let destructured parameters be initialized
+            if (location != null && shouldStepOverParameterDestructuring(context, frameProxy, location)) {
+                // Switching to minimal stepping size allows us to not skip locations of interest
+                // in case of one-line lambdas.
+                currentSteppingSize = StepRequest.STEP_MIN
+                return StepRequest.STEP_OVER
+            }
+
             return super.getNextStepDepth(context)
         } catch (ignored: VMDisconnectedException) {
         } catch (e: EvaluateException) {
@@ -194,4 +215,51 @@ class KotlinStepIntoRequestHint(
         }
         return STOP
     }
+
+    override fun getSize(): Int = currentSteppingSize
+}
+
+private fun shouldStepOverParameterDestructuring(context: SuspendContextImpl, frameProxy: StackFrameProxyImpl, location: Location): Boolean {
+    val method = location.safeMethod() ?: return false
+    if (method.isBridge) {
+        return false
+    }
+
+    val sourcePosition = context.debugProcess.positionManager.getSourcePosition(location) ?: return false
+    val destructuredParametersNames = runReadAction { collectDestructuredParametersNames(sourcePosition) }
+    if (destructuredParametersNames.isEmpty()) {
+        return false
+    }
+
+    val visibleVariablesNames = InlineStackTraceCalculator.calculateVisibleVariables(frameProxy)
+        .mapNotNull { it.name() }
+        .toSet()
+    return destructuredParametersNames.any { it !in visibleVariablesNames }
+}
+
+private fun collectDestructuredParametersNames(sourcePosition: SourcePosition): List<String> {
+    val lambda = sourcePosition.elementAt?.getFunctionLiteralParent() ?: return emptyList()
+    val destructuredParametersNames = mutableListOf<String>()
+    for (parameter in lambda.valueParameters) {
+        val destructuringDeclaration = parameter.destructuringDeclaration ?: continue
+        for (entry in destructuringDeclaration.entries) {
+            if (entry.isSingleUnderscore) continue
+            val name = entry.name ?: continue
+            destructuredParametersNames.add(name)
+        }
+    }
+
+    return destructuredParametersNames
+}
+
+private fun PsiElement.getFunctionLiteralParent(): KtFunctionLiteral? {
+    for (parent in parents(withSelf = false)) {
+        if (parent is KtFunctionLiteral) {
+            return parent
+        } else if (parent is KtFunction) {
+            return null
+        }
+    }
+
+    return null
 }

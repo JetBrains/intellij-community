@@ -865,6 +865,31 @@ public abstract class KotlinEvaluateExpressionTestGenerated extends AbstractKotl
                 runTest("testData/evaluation/singleBreakpoint/lambdas/oneLineLambda.kt");
             }
 
+            @TestMetadata("stepIntoInlineLambdaWithDestructuring.kt")
+            public void testStepIntoInlineLambdaWithDestructuring() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/lambdas/stepIntoInlineLambdaWithDestructuring.kt");
+            }
+
+            @TestMetadata("stepIntoLambdaWithDestructuring.kt")
+            public void testStepIntoLambdaWithDestructuring() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/lambdas/stepIntoLambdaWithDestructuring.kt");
+            }
+
+            @TestMetadata("stepIntoNestedInlineLambdasWithDestructuring.kt")
+            public void testStepIntoNestedInlineLambdasWithDestructuring() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/lambdas/stepIntoNestedInlineLambdasWithDestructuring.kt");
+            }
+
+            @TestMetadata("stepIntoOneLineLambdaWithDestructuring.kt")
+            public void testStepIntoOneLineLambdaWithDestructuring() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/lambdas/stepIntoOneLineLambdaWithDestructuring.kt");
+            }
+
+            @TestMetadata("stepIntoSamLambdaWithDestructuring.kt")
+            public void testStepIntoSamLambdaWithDestructuring() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/lambdas/stepIntoSamLambdaWithDestructuring.kt");
+            }
+
             @TestMetadata("twoLambdasOnOneLineFirst.kt")
             public void testTwoLambdasOnOneLineFirst() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/lambdas/twoLambdasOnOneLineFirst.kt");

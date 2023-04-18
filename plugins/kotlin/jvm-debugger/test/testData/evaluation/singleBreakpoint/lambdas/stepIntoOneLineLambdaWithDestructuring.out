@@ -1,0 +1,15 @@
+// IGNORE_BACKEND: JVM_WITH_OLD_EVALUATOR
+LineBreakpoint created at stepIntoOneLineLambdaWithDestructuring.kt:12
+Run Java
+Connected to the target VM
+stepIntoOneLineLambdaWithDestructuring.kt:12
+stepIntoOneLineLambdaWithDestructuring.kt:16
+Compile bytecode for x + y
+KotlinStackFrame (stepIntoOneLineLambdaWithDestructuring.kt:16)
+    JavaValue[this] this: StepIntoOneLineLambdaWithDestructuringKt$main$1@uniqueID = Function1<destructurableClasses.B, kotlin.Unit>
+        JavaValue[field] arity: int = 1 (Lambda.!EXT!)
+    JavaValue[local] x: int = 1 (stepIntoOneLineLambdaWithDestructuring.kt:16)
+    JavaValue[local] y: int = 1 (stepIntoOneLineLambdaWithDestructuring.kt:16)
+Disconnected from the target VM
+
+Process finished with exit code 0

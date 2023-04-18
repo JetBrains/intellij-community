@@ -1,0 +1,17 @@
+LineBreakpoint created at stepIntoAnonymousObjectInsideLambdaWithDestructuring.kt:22
+LineBreakpoint created at stepIntoAnonymousObjectInsideLambdaWithDestructuring.kt:30
+LineBreakpoint created at stepIntoAnonymousObjectInsideLambdaWithDestructuring.kt:38
+LineBreakpoint created at stepIntoAnonymousObjectInsideLambdaWithDestructuring.kt:45
+Run Java
+Connected to the target VM
+stepIntoAnonymousObjectInsideLambdaWithDestructuring.kt:22
+stepIntoAnonymousObjectInsideLambdaWithDestructuring.kt:16
+stepIntoAnonymousObjectInsideLambdaWithDestructuring.kt:30
+stepIntoAnonymousObjectInsideLambdaWithDestructuring.kt:25
+stepIntoAnonymousObjectInsideLambdaWithDestructuring.kt:38
+stepIntoAnonymousObjectInsideLambdaWithDestructuring.kt:33
+stepIntoAnonymousObjectInsideLambdaWithDestructuring.kt:45
+stepIntoAnonymousObjectInsideLambdaWithDestructuring.kt:41
+Disconnected from the target VM
+
+Process finished with exit code 0
