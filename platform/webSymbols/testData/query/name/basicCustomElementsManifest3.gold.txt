@@ -3,12 +3,11 @@
   matchedName: "html/attributes/deprecated",
   origin: "basic@null (<none>)",
   complete: true,
-  deprecated: true,
+  apiStatus: deprecated,
   priority: NORMAL,
   segments: [
    {
     name-part: "deprecated",
-    deprecated: true,
     symbol: <self>,
    },
   ],
@@ -17,12 +16,11 @@
   matchedName: "html/attributes/deprecatedWithMessage",
   origin: "basic@null (<none>)",
   complete: true,
-  deprecated: true,
+  apiStatus: deprecated (<p>This is <b>old</b>!</p>),
   priority: NORMAL,
   segments: [
    {
     name-part: "deprecatedWithMessage",
-    deprecated: true,
     symbol: <self>,
    },
   ],

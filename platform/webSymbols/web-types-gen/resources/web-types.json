@@ -736,11 +736,17 @@
       "type": "boolean"
     },
     "deprecated": {
-      "type": "boolean",
+      "type": [
+        "boolean",
+        "string"
+      ],
       "default": false
     },
     "experimental": {
-      "type": "boolean",
+      "type": [
+        "boolean",
+        "string"
+      ],
       "default": false
     },
     "pattern": {

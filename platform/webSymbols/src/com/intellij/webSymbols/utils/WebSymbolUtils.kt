@@ -169,6 +169,29 @@ fun List<WebSymbolNameSegment>.withOffset(offset: Int): List<WebSymbolNameSegmen
   if (offset != 0) map { it.withOffset(offset) }
   else this
 
+fun WebSymbol.ApiStatus?.coalesceWith(other: WebSymbol.ApiStatus?): WebSymbol.ApiStatus? =
+  when (this) {
+    null -> other
+    is WebSymbol.Deprecated -> when {
+      message != null -> this
+      other is WebSymbol.Deprecated && other.message != null -> other
+      else -> this
+    }
+    is WebSymbol.Experimental -> when {
+      other is WebSymbol.Deprecated -> other
+      message != null -> this
+      other is WebSymbol.Experimental && other.message != null -> other
+      else -> this
+    }
+  }
+
+fun <T : Any> coalesceApiStatus(collection: Iterable<T>?, mapper: (T) -> WebSymbol.ApiStatus?): WebSymbol.ApiStatus? =
+  coalesceApiStatus(collection?.asSequence(), mapper)
+
+
+fun <T : Any> coalesceApiStatus(sequence: Sequence<T>?, mapper: (T) -> WebSymbol.ApiStatus?): WebSymbol.ApiStatus? =
+  sequence?.map(mapper)?.reduceOrNull { a, b -> a.coalesceWith(b) }
+
 fun Sequence<WebSymbolHtmlAttributeValue?>.merge(): WebSymbolHtmlAttributeValue? {
   var kind: WebSymbolHtmlAttributeValue.Kind? = null
   var type: WebSymbolHtmlAttributeValue.Type? = null

@@ -13,11 +13,12 @@ abstract class MdnDocumentedSymbol : WebSymbol {
 
   protected abstract fun getMdnDocumentation(): MdnSymbolDocumentation?
 
-  override val deprecated: Boolean
-    get() = mdnDoc?.isDeprecated ?: false
-
-  override val experimental: Boolean
-    get() = mdnDoc?.isExperimental ?: false
+  override val apiStatus: WebSymbol.ApiStatus?
+    get() = when {
+      mdnDoc?.isDeprecated == true -> WebSymbol.Deprecated()
+      mdnDoc?.isExperimental == true -> WebSymbol.Experimental()
+      else -> null
+    }
 
   override val description: String?
     get() = mdnDoc?.description
@@ -32,8 +33,7 @@ abstract class MdnDocumentedSymbol : WebSymbol {
     this.mdnDoc?.let { mdnDoc ->
       val documentation = super.createDocumentation(location)
       return documentation?.with(
-        deprecated = false, // already contained in MDN documentation sections
-        experimental = false, // already contained in MDN documentation sections
+        apiStatus = null, // already contained in MDN documentation sections
         footnote = mdnDoc.footnote
                      ?.let { it + (documentation.footnote?.let { prev -> "<br>$prev" } ?: "") }
                    ?: documentation.footnote,

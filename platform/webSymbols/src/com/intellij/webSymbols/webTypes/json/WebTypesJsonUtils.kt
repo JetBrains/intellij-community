@@ -28,6 +28,7 @@ import com.intellij.webSymbols.query.WebSymbolNameConverter
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.utils.NameCaseUtils
 import com.intellij.webSymbols.utils.lastWebSymbol
+import com.intellij.webSymbols.webTypes.WebTypesJsonOrigin
 import com.intellij.webSymbols.webTypes.filters.WebSymbolsFilter
 import com.intellij.webSymbols.webTypes.json.NameConversionRulesSingle.NameConverter
 import java.util.*
@@ -464,3 +465,15 @@ private fun parseWebTypesPath(path: List<String>, context: WebSymbol?): List<Web
   }
   return result
 }
+
+internal fun BaseContribution.toApiStatus(origin: WebTypesJsonOrigin): WebSymbol.ApiStatus? =
+  deprecated?.value?.takeIf { it != false }
+    ?.let { msg -> WebSymbol.Deprecated((msg as? String)?.let { origin.renderDescription(it) }) }
+  ?: experimental?.value?.takeIf { it != false }
+    ?.let { msg -> WebSymbol.Experimental((msg as? String)?.let { origin.renderDescription(it) }) }
+
+
+internal fun NamePatternDefault.toApiStatus(origin: WebTypesJsonOrigin): WebSymbol.ApiStatus? =
+  deprecated?.value
+    ?.takeIf { it != false }
+    ?.let { msg -> WebSymbol.Deprecated((msg as? String)?.let { origin.renderDescription(it) }) }

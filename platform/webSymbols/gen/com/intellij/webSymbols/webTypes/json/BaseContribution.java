@@ -80,9 +80,9 @@ public abstract class BaseContribution implements GenericContributionsHost
     @JsonPropertyDescription("Allows to specify the source of the entity. For Vue.js component this may be for instance a class.")
     private SourceBase source;
     @JsonProperty("deprecated")
-    private Boolean deprecated = false;
+    private Deprecated deprecated = null;
     @JsonProperty("experimental")
-    private Boolean experimental = false;
+    private Experimental experimental = null;
     @JsonProperty("priority")
     private BaseContribution.Priority priority;
     @JsonProperty("proximity")
@@ -248,22 +248,22 @@ public abstract class BaseContribution implements GenericContributionsHost
     }
 
     @JsonProperty("deprecated")
-    public Boolean getDeprecated() {
+    public Deprecated getDeprecated() {
         return deprecated;
     }
 
     @JsonProperty("deprecated")
-    public void setDeprecated(Boolean deprecated) {
+    public void setDeprecated(Deprecated deprecated) {
         this.deprecated = deprecated;
     }
 
     @JsonProperty("experimental")
-    public Boolean getExperimental() {
+    public Experimental getExperimental() {
         return experimental;
     }
 
     @JsonProperty("experimental")
-    public void setExperimental(Boolean experimental) {
+    public void setExperimental(Experimental experimental) {
         this.experimental = experimental;
     }
 

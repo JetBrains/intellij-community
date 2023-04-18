@@ -44,7 +44,7 @@
             },
             {
               "name": "deprecatedWithMessage",
-              "deprecated": "This is old!"
+              "deprecated": "This is **old**!"
             }
           ],
           "slots": [

@@ -11,8 +11,8 @@ import com.intellij.webSymbols.customElements.CustomElementsJsonOrigin
 import com.intellij.webSymbols.customElements.CustomElementsManifestScopeBase
 import com.intellij.webSymbols.customElements.CustomElementsSymbol
 import com.intellij.webSymbols.customElements.json.CustomElementClassOrMixinDeclaration
-import com.intellij.webSymbols.customElements.json.isTrue
 import com.intellij.webSymbols.customElements.json.resolve
+import com.intellij.webSymbols.customElements.json.toApiStatus
 import com.intellij.webSymbols.impl.StaticWebSymbolsScopeBase
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
@@ -86,8 +86,8 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
                 ?.let { origin.renderDescription(it) }
               ?: superContributions.asSequence().mapNotNull { it.description }.firstOrNull()
 
-    override val deprecated: Boolean
-      get() = base.declaration.deprecated.isTrue
+    override val apiStatus: WebSymbol.ApiStatus?
+      get() = base.declaration.deprecated.toApiStatus(origin)
 
     override val queryScope: List<WebSymbolsScope>
       get() = superContributions.asSequence()

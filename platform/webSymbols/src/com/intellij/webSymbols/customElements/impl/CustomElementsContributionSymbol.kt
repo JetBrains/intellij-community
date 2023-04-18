@@ -7,8 +7,8 @@ import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.customElements.CustomElementsJsonOrigin
 import com.intellij.webSymbols.customElements.CustomElementsSymbol
 import com.intellij.webSymbols.customElements.json.CustomElementsContribution
-import com.intellij.webSymbols.customElements.json.isTrue
 import com.intellij.webSymbols.customElements.json.mapToReferenceList
+import com.intellij.webSymbols.customElements.json.toApiStatus
 import com.intellij.webSymbols.impl.StaticWebSymbolsScopeBase
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
@@ -25,8 +25,8 @@ abstract class CustomElementsContributionSymbol<T : CustomElementsContribution> 
   final override val framework: FrameworkId?
     get() = null
 
-  final override val deprecated: Boolean
-    get() = contribution.deprecated.isTrue
+  final override val apiStatus: WebSymbol.ApiStatus?
+    get() = contribution.deprecated.toApiStatus(origin)
 
   final override val description: String?
     get() = (contribution.description?.takeIf { it.isNotBlank() } ?: contribution.summary)

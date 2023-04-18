@@ -105,8 +105,14 @@ internal class WebSymbolDocumentationTargetImpl(override val symbol: WebSymbol,
     private fun buildSections(doc: WebSymbolDocumentation): Map<String, String> =
       LinkedHashMap(doc.descriptionSections).also { sections ->
         if (doc.required) sections[WebSymbolsBundle.message("mdn.documentation.section.isRequired")] = ""
-        if (doc.deprecated) sections[WebSymbolsBundle.message("mdn.documentation.section.status.Deprecated")] = ""
-        if (doc.experimental) sections[WebSymbolsBundle.message("mdn.documentation.section.status.Experimental")] = ""
+        doc.apiStatus?.let {
+          when (it) {
+            is WebSymbol.Deprecated -> sections[WebSymbolsBundle.message("mdn.documentation.section.status.Deprecated")] =
+              it.message ?: ""
+            is WebSymbol.Experimental -> sections[WebSymbolsBundle.message("mdn.documentation.section.status.Experimental")] =
+              it.message ?: ""
+          }
+        }
         doc.defaultValue?.let { sections[WebSymbolsBundle.message("mdn.documentation.section.defaultValue")] = "<p><code>$it</code>" }
         doc.library?.let { sections[WebSymbolsBundle.message("mdn.documentation.section.library")] = "<p>$it" }
       }

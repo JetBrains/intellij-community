@@ -38,16 +38,9 @@ interface WebSymbolDocumentation {
   val docUrl: @NlsSafe String?
 
   /**
-   * Whether the symbol is deprecated
+   * API status of the symbol - deprecated or experimental
    */
-  @get:JvmName("isDeprecated")
-  val deprecated: Boolean
-
-  /**
-   * Whether the symbol is an experimental technology
-   */
-  @get:JvmName("isExperimental")
-  val experimental: Boolean
+  val apiStatus: WebSymbol.ApiStatus?
 
   /**
    * Whether the symbol is required
@@ -90,9 +83,7 @@ interface WebSymbolDocumentation {
 
   fun withDocUrl(docUrl: @NlsSafe String?): WebSymbolDocumentation
 
-  fun withDeprecated(deprecated: Boolean): WebSymbolDocumentation
-
-  fun withExperimental(experimental: Boolean): WebSymbolDocumentation
+  fun withApiStatus(apiStatus: WebSymbol.ApiStatus?): WebSymbolDocumentation
 
   fun withRequired(required: Boolean): WebSymbolDocumentation
 
@@ -110,8 +101,7 @@ interface WebSymbolDocumentation {
            definition: @NlsSafe String = this.definition,
            description: @Nls String? = this.description,
            docUrl: @NlsSafe String? = this.docUrl,
-           deprecated: Boolean = this.deprecated,
-           experimental: Boolean = this.experimental,
+           apiStatus: WebSymbol.ApiStatus? = this.apiStatus,
            required: Boolean = this.required,
            defaultValue: @NlsSafe String? = this.defaultValue,
            library: @NlsSafe String? = this.library,
@@ -122,8 +112,8 @@ interface WebSymbolDocumentation {
   companion object {
 
     fun create(symbol: WebSymbol, location: PsiElement?): WebSymbolDocumentation =
-      WebSymbolDocumentationImpl(symbol.name, Strings.escapeXmlEntities(symbol.name), symbol.description, symbol.docUrl, symbol.deprecated,
-                                 symbol.experimental,
+      WebSymbolDocumentationImpl(symbol.name, Strings.escapeXmlEntities(symbol.name), symbol.description, symbol.docUrl,
+                                 symbol.apiStatus,
                                  symbol.required ?: false,
                                  symbol.defaultValue ?: symbol.attributeValue?.default,
                                  symbol.origin.takeIf { it.library != null }

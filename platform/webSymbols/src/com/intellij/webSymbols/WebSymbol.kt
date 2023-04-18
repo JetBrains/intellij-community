@@ -58,13 +58,8 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
   val required: Boolean?
     get() = null
 
-  @get:JvmName("isDeprecated")
-  val deprecated: Boolean
-    get() = false
-
-  @get:JvmName("isExperimental")
-  val experimental: Boolean
-    get() = false
+  val apiStatus: ApiStatus?
+    get() = null
 
   val attributeValue: WebSymbolHtmlAttributeValue?
     get() = null
@@ -136,6 +131,18 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
 
   fun adjustNameForRefactoring(queryExecutor: WebSymbolsQueryExecutor, newName: String, occurence: String): String =
     queryExecutor.namesProvider.adjustRename(namespace, kind, name, newName, occurence)
+
+  sealed interface ApiStatus
+
+  /**
+   * @param message message with HTML markup
+   */
+  data class Deprecated(@Nls val message: String? = null) : ApiStatus
+
+  /**
+   * @param message message with HTML markup
+   */
+  data class Experimental(@Nls val message: String? = null) : ApiStatus
 
   enum class Priority(val value: Double) {
     LOWEST(0.0),

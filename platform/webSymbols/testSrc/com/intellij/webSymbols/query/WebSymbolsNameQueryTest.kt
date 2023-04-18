@@ -30,6 +30,10 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
     doTest("html/attributes/v-foo", null, true, "basic-pattern")
   }
 
+  fun testDeprecationAndExperimentalStatus() {
+    doTest("html/elements/", null, "api-status")
+  }
+
   fun testVirtualAttributes() {
     doTest("html/attributes", null, true, "basic-pattern")
   }
@@ -397,35 +401,35 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
   }
 
   fun testBasicCustomElementsManifest1() {
-    doTest("html/elements/my-EleMeNt", customElementsManifests = listOf("basic") )
+    doTest("html/elements/my-EleMeNt", customElementsManifests = listOf("basic"))
   }
 
   fun testBasicCustomElementsManifest2() {
-    doTest("html/elements/my-EleMeNt/attributes/disabled", customElementsManifests = listOf("basic") )
+    doTest("html/elements/my-EleMeNt/attributes/disabled", customElementsManifests = listOf("basic"))
   }
 
   fun testBasicCustomElementsManifest3() {
-    doTest("html/elements/my-EleMeNt/attributes/", customElementsManifests = listOf("basic") )
+    doTest("html/elements/my-EleMeNt/attributes/", customElementsManifests = listOf("basic"))
   }
 
   fun testBasicCustomElementsManifest4() {
-    doTest("html/elements/my-EleMeNt/js/events/", customElementsManifests = listOf("basic") )
+    doTest("html/elements/my-EleMeNt/js/events/", customElementsManifests = listOf("basic"))
   }
 
   fun testBasicCustomElementsManifest5() {
-    doTest("html/elements/my-EleMeNt/css/properties/", customElementsManifests = listOf("basic") )
+    doTest("html/elements/my-EleMeNt/css/properties/", customElementsManifests = listOf("basic"))
   }
 
   fun testBasicCustomElementsManifest6() {
-    doTest("html/elements/my-EleMeNt/css/parts/", customElementsManifests = listOf("basic") )
+    doTest("html/elements/my-EleMeNt/css/parts/", customElementsManifests = listOf("basic"))
   }
 
   fun testBasicCustomElementsManifest7() {
-    doTest("html/elements/my-EleMeNt/js/properties/", customElementsManifests = listOf("basic") )
+    doTest("html/elements/my-EleMeNt/js/properties/", customElementsManifests = listOf("basic"))
   }
 
   fun testBasicCustomElementsManifest8() {
-    doTest("html/elements/my-element/js/static-properties/", customElementsManifests = listOf("basic") )
+    doTest("html/elements/my-element/js/static-properties/", customElementsManifests = listOf("basic"))
   }
 
   fun testNestedPattern1() {

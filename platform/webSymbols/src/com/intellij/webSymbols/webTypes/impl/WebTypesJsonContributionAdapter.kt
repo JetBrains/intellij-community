@@ -31,7 +31,7 @@ import com.intellij.webSymbols.webTypes.json.*
 import javax.swing.Icon
 
 abstract class WebTypesJsonContributionAdapter private constructor(protected val contribution: BaseContribution,
-                                                                   private val jsonOrigin: WebTypesJsonOrigin,
+                                                                   protected val jsonOrigin: WebTypesJsonOrigin,
                                                                    protected val cacheHolder: UserDataHolderEx,
                                                                    protected val rootScope: WebTypesScopeBase,
                                                                    override val namespace: SymbolNamespace,
@@ -69,7 +69,7 @@ abstract class WebTypesJsonContributionAdapter private constructor(protected val
   abstract val jsonPattern: NamePatternRoot?
 
   override val pattern: WebSymbolsPattern?
-    get() = jsonPattern?.wrap(contribution.name)
+    get() = jsonPattern?.wrap(contribution.name, jsonOrigin)
 
   open val contributionForQuery: GenericContributionsHost get() = contribution
 
@@ -190,11 +190,8 @@ abstract class WebTypesJsonContributionAdapter private constructor(protected val
                 ?.let { base.jsonOrigin.typeSupport?.resolve(it.mapToTypeReferences()) }
               ?: superContributions.asSequence().mapNotNull { it.type }.firstOrNull()
 
-    override val deprecated: Boolean
-      get() = base.contribution.deprecated == true
-
-    override val experimental: Boolean
-      get() = base.contribution.experimental == true
+    override val apiStatus: WebSymbol.ApiStatus?
+      get() = base.contribution.toApiStatus(origin)
 
     override val virtual: Boolean
       get() = base.contribution.virtual == true
@@ -224,7 +221,7 @@ abstract class WebTypesJsonContributionAdapter private constructor(protected val
               ?: superContributions.firstOrNull()?.defaultValue
 
     override val pattern: WebSymbolsPattern?
-      get() = base.jsonPattern?.wrap(base.contribution.name)
+      get() = base.jsonPattern?.wrap(base.contribution.name, origin)
 
     override fun createPointer(): Pointer<WebTypesSymbolImpl> {
       val queryExecutorPtr = this.queryExecutor.createPointer()
@@ -319,7 +316,7 @@ abstract class WebTypesJsonContributionAdapter private constructor(protected val
     override val name: String = "<pattern>"
 
     override fun toString(): String =
-      "$kind/${jsonPattern?.wrap("")?.getStaticPrefixes()?.toSet() ?: "[]"}... <pattern>"
+      "$kind/${jsonPattern?.wrap("", jsonOrigin)?.getStaticPrefixes()?.toSet() ?: "[]"}... <pattern>"
 
     override fun createPointer(): Pointer<Pattern> =
       object : WebTypesJsonContributionWrapperPointer<Pattern>(this) {

@@ -32,8 +32,8 @@ private fun Reference.createQueryPathList(origin: CustomElementsJsonOrigin): Lis
   )
 }
 
-val Deprecated?.isTrue
-  get() = this?.value.let { it != null && it != false }
+fun Deprecated?.toApiStatus(origin: CustomElementsJsonOrigin) =
+  this?.value?.let { msg -> WebSymbol.Deprecated((msg as? String)?.let { origin.renderDescription(it) }) }
 
 fun CustomElementsManifest.adaptAllContributions(origin: CustomElementsJsonOrigin, rootScope: CustomElementsManifestScopeBase)
   : Sequence<StaticWebSymbolsScopeBase.StaticSymbolContributionAdapter> =
