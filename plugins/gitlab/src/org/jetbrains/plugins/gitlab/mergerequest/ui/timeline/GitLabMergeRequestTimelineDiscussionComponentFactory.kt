@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 
 import com.intellij.collaboration.async.inverted
+import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.*
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.wrapWithLimitedSize
@@ -123,8 +124,8 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
       wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
     }
 
-    val diffPanelFlow = vm.diffVm.mapLatest { diffVm ->
-      diffVm?.let { createDiffPanel(project, cs, vm, it) }
+    val diffPanelFlow = vm.diffVm.mapScoped { diffVm ->
+      diffVm?.let { createDiffPanel(project, vm, it) }
     }
 
     val contentPanel = VerticalListPanel().apply {
@@ -152,11 +153,10 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
     return contentPanel
   }
 
-  private fun createDiffPanel(project: Project,
-                              cs: CoroutineScope,
-                              vm: GitLabMergeRequestTimelineDiscussionViewModel,
-                              diffVm: GitLabDiscussionDiffViewModel): JComponent {
-    return TimelineDiffComponentFactory.createDiffWithHeader(cs, vm, diffVm.position.filePath, {}) {
+  private fun CoroutineScope.createDiffPanel(project: Project,
+                                             vm: GitLabMergeRequestTimelineDiscussionViewModel,
+                                             diffVm: GitLabDiscussionDiffViewModel): JComponent {
+    return TimelineDiffComponentFactory.createDiffWithHeader(this, vm, diffVm.position.filePath, {}) {
       Wrapper(LoadingLabel()).apply {
         bindContentIn(it, diffVm.patchHunk) { _, hunkState ->
           when (hunkState) {
