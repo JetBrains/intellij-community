@@ -1,6 +1,7 @@
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.project.Project
@@ -17,6 +18,8 @@ import com.jetbrains.performancePlugin.PerformanceTestingBundle
 import com.jetbrains.performancePlugin.utils.DaemonCodeAnalyzerListener
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Scope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.SystemIndependent
 
@@ -55,10 +58,13 @@ class OpenFileCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter
     spanRef.set(span.startSpan())
     scopeRef.set(spanRef.get().makeCurrent())
     setFilePath(projectPath = projectPath, span = spanRef.get(), file = file)
+
     // focus window
-    ProjectUtil.focusProjectWindow(project)
-    FileEditorManagerEx.getInstanceEx(project).openFile(file = file,
-                                                        options = FileEditorOpenOptions(requestFocus = true)).allEditors
+    withContext(Dispatchers.EDT) {
+      ProjectUtil.focusProjectWindow(project)
+    }
+
+    FileEditorManagerEx.getInstanceEx(project).openFile(file = file, options = FileEditorOpenOptions(requestFocus = true)).allEditors
 
     job.onError {
       spanRef.get()?.setAttribute("timeout", "true")
