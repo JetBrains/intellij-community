@@ -365,21 +365,19 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
       val clientManager = clientFileEditorManager ?: return VirtualFile.EMPTY_ARRAY
       return clientManager.getSelectedFiles().toTypedArray()
     }
-    return if (activeFile == null) VirtualFile.EMPTY_ARRAY else arrayOf(activeFile!!)
+    return arrayOf(activeFile ?: return VirtualFile.EMPTY_ARRAY)
   }
 
   override fun getSelectedEditors(): Array<FileEditor> {
     if (!isCurrentlyUnderLocalId) {
       return (clientFileEditorManager ?: return FileEditor.EMPTY_ARRAY).getSelectedEditors().toTypedArray()
     }
-    return if (activeFile == null) FileEditor.EMPTY_ARRAY else getEditors(activeFile!!)
+    return getEditors(activeFile ?: return FileEditor.EMPTY_ARRAY)
   }
 
   override fun getSelectedTextEditor(): Editor? {
     if (!isCurrentlyUnderLocalId) {
-      val clientManager = clientFileEditorManager ?: return null
-      val selectedEditor = clientManager.getSelectedEditor()
-      return if (selectedEditor is TextEditor) selectedEditor.editor else null
+      return (clientFileEditorManager?.getSelectedEditor() as? TextEditor)?.editor
     }
     return IntentionPreviewUtils.getPreviewEditor() ?: getEditor(activeFile ?: return null)
   }
