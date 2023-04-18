@@ -134,7 +134,7 @@ public final class GraphicsUtil {
     return AATextInfo.create(hint, UIUtil.getLcdContrastValue());
   }
 
-  public static boolean isProjectorEnvironment() {
+  public static boolean isRemoteEnvironment() {
     String geClassName = GraphicsEnvironment.getLocalGraphicsEnvironment().getClass().getSimpleName();
     return geClassName.equals("PGraphicsEnvironment") || geClassName.equals("IdeGraphicsEnvironment");
   }

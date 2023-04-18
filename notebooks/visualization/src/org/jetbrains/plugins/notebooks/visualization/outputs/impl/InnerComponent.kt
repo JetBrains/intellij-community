@@ -28,7 +28,7 @@ internal class InnerComponent(private val editor: EditorImpl) : JPanel() {
     require(constraints is Constraint)
     comp.layoutConstraints = constraints
     super.add(comp, constraints, index)
-    if (GraphicsUtil.isProjectorEnvironment()) {
+    if (GraphicsUtil.isRemoteEnvironment()) {
       (parent as SurroundingComponent).fireResize()
     }
   }

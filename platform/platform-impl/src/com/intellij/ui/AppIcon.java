@@ -50,7 +50,7 @@ public abstract class AppIcon {
   @NotNull
   public static AppIcon getInstance() {
     if (ourIcon == null) {
-      if (GraphicsEnvironment.isHeadless() || GraphicsUtil.isProjectorEnvironment()) {
+      if (GraphicsEnvironment.isHeadless() || GraphicsUtil.isRemoteEnvironment()) {
         ourIcon = new EmptyIcon();
       }
       else if (SystemInfoRt.isMac) {
