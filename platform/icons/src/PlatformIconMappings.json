@@ -450,6 +450,14 @@
         "general/inlineVariablesHover.svg"
       ]
     },
+    "javaee": {
+      "home.svg": "javaee/home.svg",
+      "persistenceEntity.svg": "javaee/persistenceEntity.svg",
+      "updateRunningApplication.svg": "javaee/updateRunningApplication.svg",
+      "webModuleGroup.svg": "javaee/webModuleGroup.svg",
+      "webService.svg": "javaee/WebService.svg",
+      "webServiceClient.svg": "javaee/WebServiceClient.svg"
+    },
     "nodes": {
       "abstractException.svg": "nodes/abstractException.svg",
       "alias.svg": "nodes/alias.svg",

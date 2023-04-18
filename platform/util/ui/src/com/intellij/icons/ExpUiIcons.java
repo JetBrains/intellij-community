@@ -383,6 +383,15 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon Variables = load("expui/inline/variables.svg", 300038818, 2);
   }
 
+  public static final class Javaee {
+    /** 16x16 */ public static final @NotNull Icon Home = load("expui/javaee/home.svg", 660865721, 2);
+    /** 16x16 */ public static final @NotNull Icon PersistenceEntity = load("expui/javaee/persistenceEntity.svg", 1817675335, 2);
+    /** 16x16 */ public static final @NotNull Icon UpdateRunningApplication = load("expui/javaee/updateRunningApplication.svg", 2011370774, 2);
+    /** 16x16 */ public static final @NotNull Icon WebModuleGroup = load("expui/javaee/webModuleGroup.svg", -1561928104, 2);
+    /** 16x16 */ public static final @NotNull Icon WebService = load("expui/javaee/webService.svg", -2074926921, 2);
+    /** 16x16 */ public static final @NotNull Icon WebServiceClient = load("expui/javaee/webServiceClient.svg", 82747397, 2);
+  }
+
   public static final class MeetNewUi {
     /** 16x16 */ public static final @NotNull Icon DarkTheme = load("expui/meetNewUi/darkTheme.svg", -1804694481, 2);
     /** 16x16 */ public static final @NotNull Icon DarkThemeSelected = load("expui/meetNewUi/darkThemeSelected.svg", -415698467, 2);
