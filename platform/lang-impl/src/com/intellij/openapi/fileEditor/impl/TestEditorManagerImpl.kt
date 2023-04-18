@@ -39,7 +39,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.jdom.Element
 import java.awt.Component
-import java.util.*
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 
@@ -282,8 +281,8 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     get() = emptyArray()
 
   override fun getSelectedEditorWithRemotes(): Array<FileEditor> {
-    val result: MutableList<FileEditor> = ArrayList()
-    Collections.addAll(result, *selectedEditors)
+    val result = ArrayList<FileEditor>()
+    result.addAll(selectedEditors)
     for (m in allClientFileEditorManagers) {
       result.addAll(m.getSelectedEditors())
     }
