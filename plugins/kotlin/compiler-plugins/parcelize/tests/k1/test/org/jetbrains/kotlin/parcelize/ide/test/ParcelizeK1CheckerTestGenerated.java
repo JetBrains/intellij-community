@@ -1,6 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.pacelize.ide.test;
+package org.jetbrains.kotlin.parcelize.ide.test;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
@@ -14,92 +14,92 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("compiler-plugins/parcelize/tests")
+@TestRoot("compiler-plugins/parcelize/tests/k1")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("testData/checker")
-public class ParcelizeCheckerTestGenerated extends AbstractParcelizeCheckerTest {
+@TestMetadata("../testData/checker")
+public class ParcelizeK1CheckerTestGenerated extends AbstractParcelizeK1CheckerTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
     @TestMetadata("constructors.kt")
     public void testConstructors() throws Exception {
-        runTest("testData/checker/constructors.kt");
+        runTest("../testData/checker/constructors.kt");
     }
 
     @TestMetadata("customCreator.kt")
     public void testCustomCreator() throws Exception {
-        runTest("testData/checker/customCreator.kt");
+        runTest("../testData/checker/customCreator.kt");
     }
 
     @TestMetadata("customParcelers.kt")
     public void testCustomParcelers() throws Exception {
-        runTest("testData/checker/customParcelers.kt");
+        runTest("../testData/checker/customParcelers.kt");
     }
 
     @TestMetadata("customWriteToParcel.kt")
     public void testCustomWriteToParcel() throws Exception {
-        runTest("testData/checker/customWriteToParcel.kt");
+        runTest("../testData/checker/customWriteToParcel.kt");
     }
 
     @TestMetadata("delegate.kt")
     public void testDelegate() throws Exception {
-        runTest("testData/checker/delegate.kt");
+        runTest("../testData/checker/delegate.kt");
     }
 
     @TestMetadata("deprecatedAnnotations.kt")
     public void testDeprecatedAnnotations() throws Exception {
-        runTest("testData/checker/deprecatedAnnotations.kt");
+        runTest("../testData/checker/deprecatedAnnotations.kt");
     }
 
     @TestMetadata("emptyPrimaryConstructor.kt")
     public void testEmptyPrimaryConstructor() throws Exception {
-        runTest("testData/checker/emptyPrimaryConstructor.kt");
+        runTest("../testData/checker/emptyPrimaryConstructor.kt");
     }
 
     @TestMetadata("kt20062.kt")
     public void testKt20062() throws Exception {
-        runTest("testData/checker/kt20062.kt");
+        runTest("../testData/checker/kt20062.kt");
     }
 
     @TestMetadata("modality.kt")
     public void testModality() throws Exception {
-        runTest("testData/checker/modality.kt");
+        runTest("../testData/checker/modality.kt");
     }
 
     @TestMetadata("notMagicParcel.kt")
     public void testNotMagicParcel() throws Exception {
-        runTest("testData/checker/notMagicParcel.kt");
+        runTest("../testData/checker/notMagicParcel.kt");
     }
 
     @TestMetadata("objectProperties.kt")
     public void testObjectProperties() throws Exception {
-        runTest("testData/checker/objectProperties.kt");
+        runTest("../testData/checker/objectProperties.kt");
     }
 
     @TestMetadata("properties.kt")
     public void testProperties() throws Exception {
-        runTest("testData/checker/properties.kt");
+        runTest("../testData/checker/properties.kt");
     }
 
     @TestMetadata("simple.kt")
     public void testSimple() throws Exception {
-        runTest("testData/checker/simple.kt");
+        runTest("../testData/checker/simple.kt");
     }
 
     @TestMetadata("unsupportedType.kt")
     public void testUnsupportedType() throws Exception {
-        runTest("testData/checker/unsupportedType.kt");
+        runTest("../testData/checker/unsupportedType.kt");
     }
 
     @TestMetadata("withoutParcelableSupertype.kt")
     public void testWithoutParcelableSupertype() throws Exception {
-        runTest("testData/checker/withoutParcelableSupertype.kt");
+        runTest("../testData/checker/withoutParcelableSupertype.kt");
     }
 
     @TestMetadata("wrongAnnotationTarget.kt")
     public void testWrongAnnotationTarget() throws Exception {
-        runTest("testData/checker/wrongAnnotationTarget.kt");
+        runTest("../testData/checker/wrongAnnotationTarget.kt");
     }
 }

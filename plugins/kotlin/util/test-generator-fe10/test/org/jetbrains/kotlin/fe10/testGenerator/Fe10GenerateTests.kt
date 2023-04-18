@@ -139,8 +139,8 @@ import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.inference.common.AbstractCommonConstraintCollectorTest
 import org.jetbrains.kotlin.nj2k.inference.mutability.AbstractMutabilityInferenceTest
 import org.jetbrains.kotlin.nj2k.inference.nullability.AbstractNullabilityInferenceTest
-import org.jetbrains.kotlin.pacelize.ide.test.AbstractParcelizeCheckerTest
-import org.jetbrains.kotlin.pacelize.ide.test.AbstractParcelizeQuickFixTest
+import org.jetbrains.kotlin.parcelize.ide.test.AbstractParcelizeK1CheckerTest
+import org.jetbrains.kotlin.parcelize.ide.test.AbstractParcelizeK1QuickFixTest
 import org.jetbrains.kotlin.psi.patternMatching.AbstractPsiUnifierTest
 import org.jetbrains.kotlin.search.AbstractAnnotatedMembersSearchTest
 import org.jetbrains.kotlin.search.AbstractInheritorsSearchTest
@@ -1124,12 +1124,12 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("compiler-plugins/parcelize/tests") {
-        testClass<AbstractParcelizeQuickFixTest> {
+    testGroup("compiler-plugins/parcelize/tests/k1", testDataPath = "../testData") {
+        testClass<AbstractParcelizeK1QuickFixTest> {
             model("quickfix", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$"))
         }
 
-        testClass<AbstractParcelizeCheckerTest> {
+        testClass<AbstractParcelizeK1CheckerTest> {
             model("checker", pattern = KT)
         }
     }
