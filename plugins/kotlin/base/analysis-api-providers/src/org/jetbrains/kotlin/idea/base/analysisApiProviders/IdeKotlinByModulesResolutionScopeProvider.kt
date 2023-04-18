@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.allDirectDependencies
 import org.jetbrains.kotlin.analysis.providers.KotlinResolutionScopeProvider
-import org.jetbrains.kotlin.idea.base.projectStructure.KtSourceModuleByModuleInfoForNonUnderContentFile
+import org.jetbrains.kotlin.idea.base.projectStructure.KtSourceModuleByModuleInfoForOutsider
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleDependencyCollector
 import org.jetbrains.kotlin.idea.base.projectStructure.collectDependencies
 import org.jetbrains.kotlin.idea.base.projectStructure.ideaModule
@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceIn
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSourceInfo
 import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
 import org.jetbrains.kotlin.idea.base.util.minus
+import org.jetbrains.kotlin.idea.base.util.not
 
 internal class IdeKotlinByModulesResolutionScopeProvider(private val project: Project) : KotlinResolutionScopeProvider() {
     override fun getResolutionScope(module: KtModule): GlobalSearchScope {
@@ -25,8 +26,10 @@ internal class IdeKotlinByModulesResolutionScopeProvider(private val project: Pr
                 val moduleInfo = module.moduleInfo as ModuleSourceInfo
                 val includeTests = moduleInfo is ModuleTestSourceInfo
                 val scope = excludeIgnoredModulesByKotlinProjectModel(moduleInfo, module, includeTests)
-                return if (module is KtSourceModuleByModuleInfoForNonUnderContentFile) {
-                    module.replaceOriginalFileWithFakeInScope(scope)
+                return if (module is KtSourceModuleByModuleInfoForOutsider) {
+                    GlobalSearchScope.fileScope(module.project, module.fakeVirtualFile)
+                        .uniteWith(scope)
+                        .intersectWith(GlobalSearchScope.fileScope(module.project, module.originalVirtualFile).not())
                 } else {
                     scope
                 }
