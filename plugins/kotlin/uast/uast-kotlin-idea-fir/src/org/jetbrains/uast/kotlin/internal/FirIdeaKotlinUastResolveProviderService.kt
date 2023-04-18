@@ -5,7 +5,7 @@ package org.jetbrains.uast.kotlin.internal
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.project.structure.KtNotUnderContentRootModule
-import org.jetbrains.kotlin.analysis.project.structure.getKtModule
+import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.uast.kotlin.FirKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.internal.util.ReadActionSingleValueCache
@@ -41,6 +41,7 @@ class FirIdeaKotlinUastResolveProviderService : FirKotlinUastResolveProviderServ
         }
 
         // The checks above might not work in all possible situations (e.g. scripts) and `getKtModule` is able to give a definitive answer.
-        return file.getKtModule(project) !is KtNotUnderContentRootModule
+        val module = ProjectStructureProvider.getModule(project, file, contextualModule = null)
+        return module !is KtNotUnderContentRootModule
     }
 }

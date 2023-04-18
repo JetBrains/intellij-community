@@ -4,7 +4,7 @@ package org.jetbrains.uast.kotlin.internal
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.project.structure.KtNotUnderContentRootModule
-import org.jetbrains.kotlin.analysis.project.structure.getKtModule
+import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.uast.kotlin.FirKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.unwrapFakeFileForLightClass
@@ -15,6 +15,7 @@ class FirCliKotlinUastResolveProviderService : FirKotlinUastResolveProviderServi
         // The `getKtModule` optimization of `FirIdeaKotlinUastResolveProviderService` cannot be applied here, because `uast-kotlin-fir` is
         // available externally and doesn't have access to `intellij.platform.projectModel`. See also KTIJ-24932.
         val containingFile = psiElement.containingFile?.let(::unwrapFakeFileForLightClass) as? KtFile ?: return false
-        return containingFile.getKtModule(containingFile.project) !is KtNotUnderContentRootModule
+        val module = ProjectStructureProvider.getModule(containingFile.project, containingFile, contextualModule = null)
+        return module !is KtNotUnderContentRootModule
     }
 }

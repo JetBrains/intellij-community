@@ -44,7 +44,7 @@ inline fun <reified T : KtModule> IdeaModuleInfo.toKtModuleOfType(): @kotlin.int
 internal class ProjectStructureProviderIdeImpl(private val project: Project) : ProjectStructureProvider() {
     override fun getKtModuleForKtElement(element: PsiElement): KtModule {
         val config = ModuleInfoProvider.Configuration(createSourceLibraryInfoForLibraryBinaries = false)
-        val moduleInfo = ModuleInfoProvider.getInstance(element.project).firstOrNull(element, config)
+        val moduleInfo = ModuleInfoProvider.getInstance(project).firstOrNull(element, config)
             ?: NotUnderContentRootModuleInfo(project, element.containingFile as? KtFile)
 
         val virtualFile = element.containingFile?.virtualFile
@@ -83,7 +83,7 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : P
 
     companion object {
         fun getInstance(project: Project): ProjectStructureProviderIdeImpl {
-            return project.getService(ProjectStructureProvider::class.java) as ProjectStructureProviderIdeImpl
+            return ProjectStructureProvider.getInstance(project) as ProjectStructureProviderIdeImpl
         }
     }
 }
