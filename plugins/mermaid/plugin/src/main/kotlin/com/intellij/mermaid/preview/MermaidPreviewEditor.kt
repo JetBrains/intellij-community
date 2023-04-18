@@ -1,5 +1,8 @@
 package com.intellij.mermaid.preview
 
+import com.intellij.application.subscribe
+import com.intellij.ide.ui.LafManager
+import com.intellij.ide.ui.LafManagerListener
 import com.intellij.mermaid.MermaidPlugin
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
@@ -21,6 +24,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
+import javax.swing.UIManager
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(FlowPreview::class)
@@ -46,6 +50,20 @@ internal class MermaidPreviewEditor(
         component.update(it)
       }
     }
+
+    LafManagerListener.TOPIC.subscribe(this, object : LafManagerListener {
+      private var previousLaf: UIManager.LookAndFeelInfo? = LafManager.getInstance().currentLookAndFeel
+
+      override fun lookAndFeelChanged(source: LafManager) {
+        if (source.currentLookAndFeel != previousLaf) {
+          previousLaf = source.currentLookAndFeel
+          coroutineScope.launch(context = Dispatchers.Default) {
+            component.load()
+            component.update(document.text)
+          }
+        }
+      }
+    })
   }
 
   private inner class UpdatePreviewDocumentListener: DocumentListener {
