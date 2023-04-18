@@ -41,6 +41,20 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
         super.visitList(list)
       }
 
+      override fun visitLinkDestination(linkDestination: MarkdownLinkDestination) {
+        val node = linkDestination.node
+        val descriptor = FoldingDescriptor(
+          node,
+          node.textRange,
+          null,
+          "...",
+          node.textLength > 10,
+          emptySet()
+        )
+        descriptors.add(descriptor)
+        super.visitLinkDestination(linkDestination)
+      }
+
       override fun visitParagraph(paragraph: MarkdownParagraph) {
         val parent = paragraph.parent
         if (parent is MarkdownBlockQuote && parent.childrenOfType<MarkdownParagraph>().size <= 1) {
@@ -82,7 +96,7 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
   }
 
   override fun isRegionCollapsedByDefault(node: ASTNode): Boolean {
-    return false
+    return node.hasType(MarkdownElementTypes.LINK_DESTINATION)
   }
 
   private class HeaderRegionsBuildingVisitor(private val regionConsumer: (PsiElement, TextRange) -> Unit): MarkdownRecursiveElementVisitor() {
