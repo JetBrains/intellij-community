@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.jediterm.core.util.TermSize
 import java.awt.event.ComponentAdapter
@@ -16,7 +15,7 @@ class TerminalBlocksController(
   project: Project,
   private val session: TerminalSession,
   settings: JBTerminalSystemSettingsProviderBase
-) : ComponentContainer, TerminalCommandExecutor, ShellCommandListener {
+) : TerminalContentController, TerminalCommandExecutor, ShellCommandListener {
   private val blocksComponent: TerminalBlocksComponent
 
   init {
@@ -26,7 +25,8 @@ class TerminalBlocksController(
     blocksComponent.installRunningPanel()
     blocksComponent.addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent?) {
-        sizeTerminalToComponent()
+        val newSize = getTerminalSize() ?: return
+        session.postResize(newSize)
       }
     })
 
@@ -88,19 +88,9 @@ class TerminalBlocksController(
     }
   }
 
-  fun sizeTerminalToComponent() {
-    val newSize = blocksComponent.getTerminalSize() ?: return
-    val model = session.model
-    if (newSize.columns != model.width || newSize.rows != model.height) {
-      // TODO: is it needed?
-      //myTypeAheadManager.onResize()
-      session.postResize(newSize)
-    }
-  }
+  override fun getTerminalSize(): TermSize? = blocksComponent.getTerminalSize()
 
-  fun getTerminalSize(): TermSize? = blocksComponent.getTerminalSize()
-
-  fun isFocused(): Boolean {
+  override fun isFocused(): Boolean {
     return blocksComponent.isFocused()
   }
 

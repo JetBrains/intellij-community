@@ -19,24 +19,24 @@ class TerminalWidgetImpl(private val project: Project,
   override val terminalTitle: TerminalTitle = TerminalTitle()
 
   override val termSize: TermSize?
-    get() = blocksController.getTerminalSize()
+    get() = controller.getTerminalSize()
 
   override val ttyConnectorAccessor: TtyConnectorAccessor = TtyConnectorAccessor()
 
 
   private val session: TerminalSession = TerminalSession(project, terminalSettings)
-  private val blocksController: TerminalBlocksController = TerminalBlocksController(project, session, terminalSettings)
+  private var controller: TerminalContentController = TerminalBlocksController(project, session, terminalSettings)
 
   init {
     Disposer.register(parent, this)
     Disposer.register(this, session)
-    Disposer.register(this, blocksController)
+    Disposer.register(this, controller)
   }
 
   override fun connectToTty(ttyConnector: TtyConnector) {
     ttyConnectorAccessor.ttyConnector = ttyConnector
     session.start(ttyConnector)
-    blocksController.sizeTerminalToComponent()
+    controller.sizeTerminalToComponent()
   }
 
   fun setStartupOptions(options: ShellStartupOptions) {
@@ -51,11 +51,11 @@ class TerminalWidgetImpl(private val project: Project,
   }
 
   override fun hasFocus(): Boolean {
-    return blocksController.isFocused()
+    return controller.isFocused()
   }
 
   override fun requestFocus() {
-    blocksController.component.requestFocus()
+    controller.component.requestFocus()
   }
 
   override fun addNotification(notificationComponent: JComponent, disposable: Disposable) {
@@ -70,7 +70,7 @@ class TerminalWidgetImpl(private val project: Project,
 
   }
 
-  override fun getComponent(): JComponent = blocksController.component
+  override fun getComponent(): JComponent = controller.component
 
-  override fun getPreferredFocusableComponent(): JComponent = blocksController.preferredFocusableComponent
+  override fun getPreferredFocusableComponent(): JComponent = controller.preferredFocusableComponent
 }

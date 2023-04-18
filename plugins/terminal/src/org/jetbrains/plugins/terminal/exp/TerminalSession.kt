@@ -64,7 +64,9 @@ class TerminalSession(private val project: Project,
   fun postResize(newSize: TermSize) {
     // it can be executed right after component is shown,
     // terminal starter can not be initialized at this point
-    if (this::terminalStarter.isInitialized) {
+    if (this::terminalStarter.isInitialized && (newSize.columns != model.width || newSize.rows != model.height)) {
+      // TODO: is it needed?
+      //myTypeAheadManager.onResize()
       terminalStarter.postResize(newSize, RequestOrigin.User)
     }
   }
