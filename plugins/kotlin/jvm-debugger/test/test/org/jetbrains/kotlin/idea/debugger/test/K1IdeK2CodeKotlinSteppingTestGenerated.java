@@ -1105,6 +1105,11 @@ public abstract class K1IdeK2CodeKotlinSteppingTestGenerated extends AbstractK1I
             runTest("testData/stepping/custom/breakpointOnWhen.kt");
         }
 
+        @TestMetadata("breakpointsInOneLineLambdas.kt")
+        public void testBreakpointsInOneLineLambdas() throws Exception {
+            runTest("testData/stepping/custom/breakpointsInOneLineLambdas.kt");
+        }
+
         @TestMetadata("constantConditions.kt")
         public void testConstantConditions() throws Exception {
             runTest("testData/stepping/custom/constantConditions.kt");
