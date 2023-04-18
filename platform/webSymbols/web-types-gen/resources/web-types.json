@@ -976,6 +976,13 @@
           "items": {
             "$ref": "#/definitions/css-generic-item"
           }
+        },
+        "parts": {
+          "description": "CSS parts",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/css-generic-item"
+          }
         }
       },
       "patternProperties": {

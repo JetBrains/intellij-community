@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_CSS_CLASSES
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_CSS_FUNCTIONS
+import com.intellij.webSymbols.WebSymbol.Companion.KIND_CSS_PARTS
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_CSS_PROPERTIES
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_CSS_PSEUDO_CLASSES
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_CSS_PSEUDO_ELEMENTS
@@ -102,7 +103,8 @@ private fun GenericContributionsHost.collectDirectContributions(framework: Frame
       Pair(KIND_CSS_FUNCTIONS, this.functions),
       Pair(KIND_CSS_PROPERTIES, this.properties),
       Pair(KIND_CSS_PSEUDO_CLASSES, this.pseudoClasses),
-      Pair(KIND_CSS_PSEUDO_ELEMENTS, this.pseudoElements)
+      Pair(KIND_CSS_PSEUDO_ELEMENTS, this.pseudoElements),
+      Pair(KIND_CSS_PARTS, this.parts),
     )
     is JsContributionsHost -> sequenceOf(
       Pair(KIND_JS_EVENTS, this.events),
