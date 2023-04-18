@@ -22,6 +22,7 @@ interface GitLabNoteViewModel {
 
   val actionsVm: GitLabNoteAdminActionsViewModel?
 
+  val body: Flow<@Nls String>
   val htmlBody: Flow<@Nls String>
 }
 
@@ -42,7 +43,7 @@ class GitLabNoteViewModelImpl(
   override val actionsVm: GitLabNoteAdminActionsViewModel? =
     if (note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, note) else null
 
-  private val body: Flow<String> = note.body
+  override val body: Flow<String> = note.body
   override val htmlBody: Flow<String> = body.map { GitLabUIUtil.convertToHtml(it) }.modelFlow(cs, LOG)
 
   suspend fun destroy() {

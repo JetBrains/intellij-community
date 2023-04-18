@@ -111,9 +111,7 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
       border = JBUI.Borders.empty(Replies.ActionsFolded.VERTICAL_PADDING, 0)
       bindVisibilityIn(cs, vm.repliesFolded)
     }
-    val textPanel = GitLabNoteComponentFactory.createTextPanel(cs, mainNoteVm.flatMapLatest { it.htmlBody }).let {
-      collapseDiscussionTextIfNeeded(cs, vm, it)
-    }
+    val textPanel = createDiscussionTextPane(cs, vm)
 
     // oh well... probably better to make a suitable API in EditableComponentFactory, but that would look ugly
     val actionAndEditVmsFlow: Flow<Pair<GitLabNoteAdminActionsViewModel, GitLabNoteEditingViewModel>?> =
@@ -294,17 +292,23 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
     }
   }
 
-  private fun collapseDiscussionTextIfNeeded(cs: CoroutineScope, vm: GitLabMergeRequestTimelineDiscussionViewModel,
-                                             textPane: JComponent): JComponent {
+  private fun createDiscussionTextPane(cs: CoroutineScope, vm: GitLabMergeRequestTimelineDiscussionViewModel): JComponent {
+    val collapsedFlow = combine(vm.collapsible, vm.collapsed) { collapsible, collapsed ->
+      collapsible && collapsed
+    }
+
+    val textFlow = combine(collapsedFlow, vm.mainNote) { collapsed, mainNote ->
+      if (collapsed) mainNote.body else mainNote.htmlBody
+    }.flatMapLatest { it }
+
+    val textPane = GitLabNoteComponentFactory.createTextPanel(cs, textFlow)
     val layout = SizeRestrictedSingleComponentLayout()
     return JPanel(layout).apply {
       name = "Text pane wrapper"
       isOpaque = false
 
       cs.launch {
-        combine(vm.collapsible, vm.collapsed) { collapsible, collapsed ->
-          collapsible && collapsed
-        }.collect {
+        collapsedFlow.collect {
           if (it) {
             textPane.foreground = UIUtil.getContextHelpForeground()
             layout.maxSize = DimensionRestrictions.LinesHeight(textPane, 2)
