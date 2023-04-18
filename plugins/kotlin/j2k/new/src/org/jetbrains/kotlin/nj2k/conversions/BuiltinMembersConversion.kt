@@ -700,7 +700,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
         ).groupBy { it.from.fqName }
 
     private fun castReceiverToJavaLangObject() = CustomExpression { expr ->
-        val parent = expr.parent!!
+        val parent = expr.parent ?: return@CustomExpression expr
         val (receiver, selector) = if (parent is JKQualifiedExpression) {
             parent.receiver.detach(parent)
             parent.selector.detach(parent)
