@@ -273,7 +273,7 @@ open class JBTabsImpl(private var project: Project?,
 
   private var tabLabelAtMouse: TabLabel? = null
   private val scrollBar: JBScrollBar
-  private val myScrollBarChangeListener: ChangeListener
+  private val scrollBarChangeListener: ChangeListener
   private var scrollBarOn = false
 
   constructor(project: Project) : this(project, project)
@@ -373,7 +373,7 @@ open class JBTabsImpl(private var project: Project?,
       }
     }
     hoverListener.addTo(this)
-    myScrollBarChangeListener = ChangeListener { updateTabsOffsetFromScrollBar() }
+    scrollBarChangeListener = ChangeListener { updateTabsOffsetFromScrollBar() }
   }
 
   private fun addMouseMotionAwtListener(parentDisposable: Disposable) {
@@ -430,15 +430,17 @@ open class JBTabsImpl(private var project: Project?,
   protected open val entryPointActionGroup: DefaultActionGroup?
     get() = null
 
-  private val scrollBarBounds: Rectangle
-    get() = if (!isWithScrollBar || isHideTabs) Rectangle(0, 0, 0, 0)
-    else when (tabsPosition) {
+  private fun getScrollBarBounds(): Rectangle {
+    if (!isWithScrollBar || isHideTabs) {
+      return Rectangle(0, 0, 0, 0)
+    }
+
+    return when (tabsPosition) {
       JBTabsPosition.left -> {
         if (ExperimentalUI.isNewUI()) {
           val tabsRect = lastLayoutPass!!.headerRectangle
           if (tabsRect != null) {
-            Rectangle(tabsRect.x + tabsRect.width - SCROLL_BAR_THICKNESS, 0,
-                      SCROLL_BAR_THICKNESS, height)
+            Rectangle(tabsRect.x + tabsRect.width - SCROLL_BAR_THICKNESS, 0, SCROLL_BAR_THICKNESS, height)
           }
           else {
             Rectangle(0, 0, 0, 0)
@@ -448,20 +450,19 @@ open class JBTabsImpl(private var project: Project?,
           Rectangle(0, 0, SCROLL_BAR_THICKNESS, height)
         }
       }
-      JBTabsPosition.right -> Rectangle(width - SCROLL_BAR_THICKNESS, 0,
-                                        SCROLL_BAR_THICKNESS, height)
+      JBTabsPosition.right -> Rectangle(width - SCROLL_BAR_THICKNESS, 0, SCROLL_BAR_THICKNESS, height)
       JBTabsPosition.top -> Rectangle(0, 1, width, SCROLL_BAR_THICKNESS)
-      JBTabsPosition.bottom -> Rectangle(0, height - SCROLL_BAR_THICKNESS, width,
-                                         SCROLL_BAR_THICKNESS)
+      JBTabsPosition.bottom -> Rectangle(0, height - SCROLL_BAR_THICKNESS, width, SCROLL_BAR_THICKNESS)
     }
+  }
+
   private val scrollBarModel: BoundedRangeModel
     get() = scrollBar.model
-  val isWithScrollBar: Boolean
+
+  private val isWithScrollBar: Boolean
     get() = effectiveLayout!!.isWithScrollBar
 
-  protected open fun createDragHelper(tabs: JBTabsImpl, parentDisposable: Disposable): DragHelper {
-    return DragHelper(tabs, parentDisposable)
-  }
+  protected open fun createDragHelper(tabs: JBTabsImpl, parentDisposable: Disposable): DragHelper = DragHelper(tabs, parentDisposable)
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
     for ((info, label) in infoToLabel) {
@@ -585,7 +586,7 @@ open class JBTabsImpl(private var project: Project?,
   override fun addNotify() {
     super.addNotify()
     addTimerUpdate()
-    scrollBarModel.addChangeListener(myScrollBarChangeListener)
+    scrollBarModel.addChangeListener(scrollBarChangeListener)
     if (deferredFocusRequest != null) {
       val request = deferredFocusRequest!!
       deferredFocusRequest = null
@@ -617,7 +618,7 @@ open class JBTabsImpl(private var project: Project?,
     }
     setFocused(false)
     removeTimerUpdate()
-    scrollBarModel.removeChangeListener(myScrollBarChangeListener)
+    scrollBarModel.removeChangeListener(scrollBarChangeListener)
     if (ScreenUtil.isStandardAddRemoveNotify(this) && glassPane != null) {
       Disposer.dispose(tabActionsAutoHideListenerDisposable)
       tabActionsAutoHideListenerDisposable = Disposer.newDisposable()
@@ -1861,7 +1862,7 @@ open class JBTabsImpl(private var project: Project?,
       applyResetComponents()
 
       scrollBar.orientation = if (isHorizontalTabs) Adjustable.HORIZONTAL else Adjustable.VERTICAL
-      scrollBar.bounds = scrollBarBounds
+      scrollBar.bounds = getScrollBarBounds()
       updateScrollBarModel()
 
       updateToolbarIfVisibilityChanged(moreToolbar, moreBoundsBeforeLayout)
