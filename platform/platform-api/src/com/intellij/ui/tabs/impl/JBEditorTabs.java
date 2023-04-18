@@ -71,7 +71,7 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
   }
 
   @Override
-  public JBTabsPresentation setAlphabeticalMode(boolean alphabeticalMode) {
+  public @NotNull JBTabsPresentation setAlphabeticalMode(boolean alphabeticalMode) {
     myAlphabeticalModeChanged = true;
     return super.setAlphabeticalMode(alphabeticalMode);
   }

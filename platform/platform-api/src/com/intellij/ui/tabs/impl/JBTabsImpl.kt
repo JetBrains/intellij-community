@@ -1806,7 +1806,7 @@ open class JBTabsImpl(private var project: Project?,
         each.setTabActionsAutoHide(tabLabelActionsAutoHide)
       }
       val moreBoundsBeforeLayout = moreToolbar!!.component.bounds
-      val entryPointBoundsBeforeLayout = if (entryPointToolbar != null) entryPointToolbar!!.component.bounds else Rectangle(0, 0, 0, 0)
+      val entryPointBoundsBeforeLayout = if (entryPointToolbar == null) Rectangle(0, 0, 0, 0) else entryPointToolbar!!.component.bounds
       headerFitSize = computeHeaderFitSize()
       val visible = getVisibleInfos().toMutableList()
       if (dropInfo != null && !visible.contains(dropInfo) && showDropLocation) {
@@ -1897,7 +1897,7 @@ open class JBTabsImpl(private var project: Project?,
 
   private fun centerizeEntryPointToolbarPosition() {
     val eComponent = (if (entryPointToolbar == null) null else entryPointToolbar!!.component) ?: return
-    val entryPointRect = lastLayoutPass!!.moreRect
+    val entryPointRect = lastLayoutPass!!.entryPointRect
     if (!entryPointRect.isEmpty && tabCount > 0) {
       val preferredSize = eComponent.preferredSize
       val bounds = Rectangle(entryPointRect)
@@ -1939,10 +1939,10 @@ open class JBTabsImpl(private var project: Project?,
   private fun computeHeaderFitSize(): Dimension {
     val max = computeMaxSize()
     if (position == JBTabsPosition.top || position == JBTabsPosition.bottom) {
-      return Dimension(size.width, if (horizontalSide) Math.max(max.myLabel.height, max.myToolbar.height) else max.myLabel.height)
+      return Dimension(size.width, if (horizontalSide) Math.max(max.label.height, max.toolbar.height) else max.label.height)
     }
     else {
-      return Dimension(max.myLabel.width + if (horizontalSide) 0 else max.myToolbar.width, size.height)
+      return Dimension(max.label.width + if (horizontalSide) 0 else max.toolbar.width, size.height)
     }
   }
 
@@ -2091,29 +2091,28 @@ open class JBTabsImpl(private var project: Project?,
     val max = Max()
     val isSideComponentOnTabs = effectiveLayout!!.isSideComponentOnTabs
     for (eachInfo in visibleInfos) {
-      val label = infoToLabel[eachInfo]
-      max.myLabel.height = Math.max(max.myLabel.height, label!!.preferredSize.height)
-      max.myLabel.width = Math.max(max.myLabel.width, label.preferredSize.width)
+      val label = infoToLabel.get(eachInfo)
+      max.label.height = max.label.height.coerceAtLeast(label!!.preferredSize.height)
+      max.label.width = max.label.width.coerceAtLeast(label.preferredSize.width)
       if (isSideComponentOnTabs) {
-        val toolbar = infoToToolbar[eachInfo]
+        val toolbar = infoToToolbar.get(eachInfo)
         if (toolbar != null && !toolbar.isEmpty) {
-          max.myToolbar.height = Math.max(max.myToolbar.height, toolbar.preferredSize.height)
-          max.myToolbar.width = Math.max(max.myToolbar.width, toolbar.preferredSize.width)
+          max.toolbar.height = max.toolbar.height.coerceAtLeast(toolbar.preferredSize.height)
+          max.toolbar.width = max.toolbar.width.coerceAtLeast(toolbar.preferredSize.width)
         }
       }
     }
     if (tabsPosition.isSide) {
       if (splitter.sideTabsLimit > 0) {
-        max.myLabel.width = Math.min(max.myLabel.width, splitter.sideTabsLimit)
+        max.label.width = max.label.width.coerceAtMost(splitter.sideTabsLimit)
       }
     }
-    max.myToolbar.height++
+    max.toolbar.height++
     return max
   }
 
   override fun getMinimumSize(): Dimension {
-    return computeSize(
-      { component: JComponent -> component.minimumSize }, 1)
+    return computeSize({ it.minimumSize }, 1)
   }
 
   override fun getPreferredSize(): Dimension {
@@ -2244,8 +2243,8 @@ open class JBTabsImpl(private var project: Project?,
 
   // Tells whether focus is currently within one of the tab's components, or it was there last time the containing window had focus
   private fun isFocused(info: TabInfo): Boolean {
-    val label = infoToLabel[info]
-    val toolbar = infoToToolbar[info]
+    val label = infoToLabel.get(info)
+    val toolbar = infoToToolbar.get(info)
     val component = info.component
     val ancestorChecker = Predicate<Component?> { focusOwner ->
       @Suppress("NAME_SHADOWING")
@@ -2266,9 +2265,9 @@ open class JBTabsImpl(private var project: Project?,
   }
 
   private fun processRemove(info: TabInfo?, forcedNow: Boolean) {
-    val tabLabel = infoToLabel[info]
+    val tabLabel = infoToLabel.get(info)
     tabLabel?.let { remove(it) }
-    val toolbar = infoToToolbar[info]
+    val toolbar = infoToToolbar.get(info)
     toolbar?.let { remove(it) }
     val tabComponent = info!!.component
     if (forcedNow || !isToDeferRemoveForLater(tabComponent)) {
@@ -2337,8 +2336,10 @@ open class JBTabsImpl(private var project: Project?,
   }
 
   private class Max {
-    val myLabel = Dimension()
-    val myToolbar = Dimension()
+    @JvmField
+    val label = Dimension()
+    @JvmField
+    val toolbar = Dimension()
   }
 
   private fun updateContainer(forced: Boolean, layoutNow: Boolean) {

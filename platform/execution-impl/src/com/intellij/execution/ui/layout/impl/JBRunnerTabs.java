@@ -12,8 +12,6 @@ import com.intellij.ui.tabs.JBTabPainter;
 import com.intellij.ui.tabs.JBTabsBorder;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.*;
-import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
-import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +29,7 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
   }
 
   @Override
-  protected TabPainterAdapter createTabPainterAdapter() {
+  protected @NotNull TabPainterAdapter createTabPainterAdapter() {
     return new DefaultTabPainterAdapter(JBTabPainter.getDEBUGGER());
   }
 
@@ -49,12 +47,7 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
   }
 
   @Override
-  protected SingleRowLayout createSingleRowLayout() {
-    return new ScrollableSingleRowLayout(this);
-  }
-
-  @Override
-  protected JBTabsBorder createTabBorder() {
+  protected @NotNull JBTabsBorder createTabBorder() {
     return new JBRunnerTabsBorder(this);
   }
 
@@ -79,7 +72,7 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
   }
 
   @Override
-  public void processDropOver(TabInfo over, RelativePoint relativePoint) {
+  public void processDropOver(@NotNull TabInfo over, RelativePoint relativePoint) {
     final Point point = relativePoint.getPoint(getComponent());
     setShowDropLocation(shouldAddToGlobal(point));
     super.processDropOver(over, relativePoint);
@@ -96,13 +89,11 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
    * @return scaled preferred runner tab label height aligned with toolbars
    */
   public static int getTabLabelPreferredHeight() {
-    return ExperimentalUI.isNewUI() ? JBUI.scale(JBUI.CurrentTheme.DebuggerTabs.tabHeight())
-                                    : JBUI.scale(29);
+    return ExperimentalUI.isNewUI() ? JBUI.scale(JBUI.CurrentTheme.DebuggerTabs.tabHeight()) : JBUI.scale(29);
   }
 
-  @NotNull
   @Override
-  protected TabLabel createTabLabel(@NotNull TabInfo info) {
+  protected @NotNull TabLabel createTabLabel(@NotNull TabInfo info) {
     return new SingleHeightLabel(this, info) {
       {
         updateFont();
@@ -116,7 +107,8 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
 
       private void updateFont() {
         JComponent label = getLabelComponent();
-        if (label != null && ExperimentalUI.isNewUI()) {  // can be null at the first updateUI call during init
+        // can be null at the first updateUI call during init
+        if (label != null && ExperimentalUI.isNewUI()) {
           label.setFont(JBUI.CurrentTheme.DebuggerTabs.font());
         }
       }
@@ -126,19 +118,17 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
         return getTabLabelPreferredHeight();
       }
     };
-
   }
 
-  public class JBRunnerTabsBorder extends JBTabsBorder {
+  public final class JBRunnerTabsBorder extends JBTabsBorder {
     private int mySideMask = SideBorder.LEFT;
 
     JBRunnerTabsBorder(@NotNull JBTabsImpl tabs) {
       super(tabs);
     }
 
-    @NotNull
     @Override
-    public Insets getEffectiveBorder() {
+    public @NotNull Insets getEffectiveBorder() {
       //noinspection UseDPIAwareInsets
       return new Insets(getBorderThickness(), (mySideMask & SideBorder.LEFT) != 0 ? getBorderThickness() : 0, 0, 0);
     }
