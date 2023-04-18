@@ -10,11 +10,15 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.indexing.FileBasedIndex
+import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProvider
 import org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProviderFactory
+import org.jetbrains.kotlin.analysis.providers.impl.CompositeKotlinDeclarationProvider
+import org.jetbrains.kotlin.analysis.providers.impl.FileBasedKotlinDeclarationProvider
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelCallableByPackageShortNameIndex
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex
 import org.jetbrains.kotlin.idea.base.indices.names.getNamesInPackage
+import org.jetbrains.kotlin.idea.base.projectStructure.KtSourceModuleByModuleInfoForOutsider
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinModuleMappingIndex
 import org.jetbrains.kotlin.name.CallableId
@@ -25,8 +29,18 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class IdeKotlinDeclarationProviderFactory(private val project: Project) : KotlinDeclarationProviderFactory() {
-    override fun createDeclarationProvider(searchScope: GlobalSearchScope): KotlinDeclarationProvider {
-        return IdeKotlinDeclarationProvider(project, searchScope)
+    override fun createDeclarationProvider(scope: GlobalSearchScope, contextualModule: KtModule?): KotlinDeclarationProvider {
+        val mainProvider = IdeKotlinDeclarationProvider(project, scope)
+
+        if (contextualModule is KtSourceModuleByModuleInfoForOutsider) {
+            val fakeKtFile = PsiManager.getInstance(contextualModule.project).findFile(contextualModule.fakeVirtualFile)
+            if (fakeKtFile is KtFile) {
+                val providerForFake = FileBasedKotlinDeclarationProvider(fakeKtFile)
+                return CompositeKotlinDeclarationProvider.create(listOf(providerForFake, mainProvider))
+            }
+        }
+
+        return mainProvider
     }
 }
 
