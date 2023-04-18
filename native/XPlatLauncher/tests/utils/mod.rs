@@ -90,17 +90,14 @@ fn prepare_test_env_impl<'a>(launcher_location: LauncherLocation) -> Result<Test
     let project_dir = temp_dir.path().join("_project");
     fs::create_dir_all(&project_dir)?;
 
-    env::set_current_dir(&launcher_path.parent().unwrap())?;
-
-    // clean environment variables
-    env::remove_var("IU_JDK");
-    env::remove_var("JDK_HOME");
-    env::remove_var("JAVA_HOME");
-
     Ok(TestEnvironment { dist_root, project_dir, launcher_path, shared_env, test_root_dir: temp_dir, to_delete: Vec::new() })
 }
 
 fn init_test_environment_once() -> Result<TestEnvironmentShared> {
+    // clean environment variables
+    env::remove_var("JDK_HOME");
+    env::remove_var("JAVA_HOME");
+
     let project_root = env::current_dir().expect("Failed to get project root");
 
     let build_target = if cfg!(debug_assertions) { "debug" } else { "release" };
