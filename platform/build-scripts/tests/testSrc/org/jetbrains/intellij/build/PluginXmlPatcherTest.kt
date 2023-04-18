@@ -187,7 +187,7 @@ class PluginXmlPatcherTest {
         <id>com.intellij.database</id>
         <version>x-plugin-version</version>
         <idea-version since-build="new-since" until-build="new-until"/>
-        <product-descriptor code="PDB" release-date="X-RELEASE-DATE-X" release-version="X-RELEASE-VERSION-X"/>
+        <product-descriptor code="PDB" release-date="20230327" release-version="X-RELEASE-VERSION-X"/>
         <description>
             <![CDATA[
               xxx for WebStorm provides
