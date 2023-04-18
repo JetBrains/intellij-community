@@ -136,6 +136,21 @@ class IndexDiagnosticDumper : Disposable {
     fun readJsonIndexDiagnostic(file: Path): JsonIndexDiagnostic =
       jacksonMapper.readValue(file.toFile(), JsonIndexDiagnostic::class.java)
 
+    fun readJsonIndexingActivityDiagnostic(file: Path): JsonIndexingActivityDiagnostic? {
+      val appInfo = fastReadAppInfo(file) ?: return null
+      val runtimeInfo = fastReadRuntimeInfo(file) ?: return null
+
+      val diagnosticType = fastReadJsonField(file, "type", IndexingActivityType::class.java) ?: return null
+      val historyClass: Class<out JsonProjectIndexingActivityHistory> = when (diagnosticType) {
+        IndexingActivityType.Scanning -> JsonProjectScanningHistory::class.java
+        IndexingActivityType.DumbIndexing -> JsonProjectDumbIndexingHistory::class.java
+      }
+      val history: JsonProjectIndexingActivityHistory = fastReadJsonField(file, "projectIndexingActivityHistory", historyClass)
+                                                        ?: return null
+      return JsonIndexingActivityDiagnostic(appInfo = appInfo, runtimeInfo = runtimeInfo, type = diagnosticType,
+                                            projectIndexingActivityHistory = history)
+    }
+
     fun clearDiagnostic() {
       if (indexingDiagnosticDir.exists()) {
         indexingDiagnosticDir.directoryStreamIfExists { dirStream ->
@@ -196,6 +211,32 @@ class IndexDiagnosticDumper : Disposable {
     fun getDiagnosticNumberLimitWithinSizeLimit(existingDiagnostics: List<ExistingDiagnostic>): Int =
       getDiagnosticNumberLimitWithinSizeLimit(existingDiagnostics,
                                               indexingDiagnosticsSizeLimitOfFilesInMiBPerProject * 1024 * 1024.toLong()).first
+
+    private fun <T> fastReadJsonField(jsonFile: Path, propertyName: String, type: Class<T>): T? {
+      try {
+        jsonFile.bufferedReader().use { reader ->
+          jacksonMapper.factory.createParser(reader).use { parser ->
+            while (parser.nextToken() != null) {
+              val property = parser.currentName
+              if (property == propertyName) {
+                parser.nextToken()
+                return jacksonMapper.readValue(parser, type)
+              }
+            }
+          }
+        }
+      }
+      catch (e: Exception) {
+        LOG.debug("Failed to parse project indexing time", e)
+      }
+      return null
+    }
+
+    private fun fastReadAppInfo(jsonFile: Path): JsonIndexDiagnosticAppInfo? =
+      fastReadJsonField(jsonFile, "appInfo", JsonIndexDiagnosticAppInfo::class.java)
+
+    private fun fastReadRuntimeInfo(jsonFile: Path): JsonRuntimeInfo? =
+      fastReadJsonField(jsonFile, "runtimeInfo", JsonRuntimeInfo::class.java)
   }
 
   private var isDisposed = false
@@ -366,37 +407,11 @@ class IndexDiagnosticDumper : Disposable {
     return diagnosticJson to diagnosticHtml
   }
 
-  private fun <T> fastReadJsonField(jsonFile: Path, propertyName: String, type: Class<T>): T? {
-    try {
-      jsonFile.bufferedReader().use { reader ->
-        jacksonMapper.factory.createParser(reader).use { parser ->
-          while (parser.nextToken() != null) {
-            val property = parser.currentName
-            if (property == propertyName) {
-              parser.nextToken()
-              return jacksonMapper.readValue(parser, type)
-            }
-          }
-        }
-      }
-    }
-    catch (e: Exception) {
-      LOG.debug("Failed to parse project indexing time", e)
-    }
-    return null
-  }
-
   private fun fastReadIndexingHistoryTimes(jsonFile: Path): JsonProjectIndexingHistoryTimes? =
     fastReadJsonField(jsonFile, "times", JsonProjectIndexingHistoryTimes::class.java)
 
   private fun fastReadFileCount(jsonFile: Path): JsonProjectIndexingFileCount? =
     fastReadJsonField(jsonFile, "fileCount", JsonProjectIndexingFileCount::class.java)
-
-  private fun fastReadAppInfo(jsonFile: Path): JsonIndexDiagnosticAppInfo? =
-    fastReadJsonField(jsonFile, "appInfo", JsonIndexDiagnosticAppInfo::class.java)
-
-  private fun fastReadRuntimeInfo(jsonFile: Path): JsonRuntimeInfo? =
-    fastReadJsonField(jsonFile, "runtimeInfo", JsonRuntimeInfo::class.java)
 
   private fun deleteOutdatedDiagnostics(existingDiagnostics: List<ExistingDiagnostic>): List<ExistingDiagnostic> {
     val sortedDiagnostics = existingDiagnostics.sortedByDescending { it.indexingTimes.updatingStart.instant }

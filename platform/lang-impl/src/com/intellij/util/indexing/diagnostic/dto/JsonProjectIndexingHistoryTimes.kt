@@ -26,7 +26,7 @@ data class JsonProjectIndexingHistoryTimes(
   val wasInterrupted: Boolean = false
 )
 
-interface JsonProjectIndexingActivityHistoryTimes {
+sealed interface JsonProjectIndexingActivityHistoryTimes {
   val updatingStart: JsonDateTime
   val updatingEnd: JsonDateTime
   val totalWallTimeWithPauses: JsonDuration

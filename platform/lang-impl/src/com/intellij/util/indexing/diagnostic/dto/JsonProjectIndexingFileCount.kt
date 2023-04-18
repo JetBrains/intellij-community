@@ -15,7 +15,7 @@ data class JsonProjectIndexingFileCount(
   val numberOfFilesIndexedWithLoadingContent: Int = 0
 )
 
-interface JsonProjectIndexingActivityFileCount
+sealed interface JsonProjectIndexingActivityFileCount
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)

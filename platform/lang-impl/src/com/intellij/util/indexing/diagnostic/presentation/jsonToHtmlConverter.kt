@@ -402,11 +402,6 @@ private fun TR.printIndexingActivityRow(times: JsonProjectIndexingActivityHistor
       td(fileCount.numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage.toString())
       td(fileCount.numberOfFilesIndexedWithLoadingContent.toString())
     }
-    else -> {
-      for (i in 1..5) {
-        td("Unexpected fileCount $fileCount")
-      }
-    }
   }
 
   //Scanning ID(s) section
@@ -978,9 +973,9 @@ fun JsonIndexDiagnostic.generateHtml(target: Appendable): String {
 fun JsonIndexingActivityDiagnostic.generateHtml(target: Appendable): String =
   when (type) {
     IndexDiagnosticDumper.IndexingActivityType.Scanning ->
-      (this.projectIndexingHistory as JsonProjectScanningHistory).generateScanningHtml(target, appInfo, runtimeInfo)
+      (this.projectIndexingActivityHistory as JsonProjectScanningHistory).generateScanningHtml(target, appInfo, runtimeInfo)
     IndexDiagnosticDumper.IndexingActivityType.DumbIndexing ->
-      (this.projectIndexingHistory as JsonProjectDumbIndexingHistory).generateDumbIndexingHtml(target, appInfo, runtimeInfo)
+      (this.projectIndexingActivityHistory as JsonProjectDumbIndexingHistory).generateDumbIndexingHtml(target, appInfo, runtimeInfo)
   }
 
 

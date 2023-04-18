@@ -27,7 +27,7 @@ data class JsonIndexingActivityDiagnostic(
   val appInfo: JsonIndexDiagnosticAppInfo = JsonIndexDiagnosticAppInfo(),
   val runtimeInfo: JsonRuntimeInfo = JsonRuntimeInfo(),
   val type: IndexDiagnosticDumper.IndexingActivityType,
-  val projectIndexingHistory: JsonProjectIndexingActivityHistory) {
+  val projectIndexingActivityHistory: JsonProjectIndexingActivityHistory) {
 
   constructor(projectIndexingActivityHistory: ProjectIndexingActivityHistory) : this(JsonIndexDiagnosticAppInfo.create(),
                                                                                      JsonRuntimeInfo.create(),
