@@ -25,8 +25,8 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
     configure("<caret>");
     myFixture.completeBasic();
     assertEquals(List.of("--add-exports", "--add-opens",
-                         "-agentlib:", "-agentpath:", "-D", "-da", "-disableassertions", "-Djava.awt.headless=",
-                         "-dsa", "-Duser.dir=", "-Duser.home=", "-Duser.name=", "-ea", "-enableassertions", "-esa",
+                         "-agentlib:", "-agentpath:", "-D", "-da", "-disableassertions", "-Djava.awt.headless",
+                         "-dsa", "-Duser.dir", "-Duser.home", "-Duser.name", "-ea", "-enableassertions", "-esa",
                          "-javaagent:", "-Xmx", "-XX:"), myFixture.getLookupElementStrings());
     checkPresentation(myFixture.getLookupElements()[0], "--add-exports|null/null");
     checkPresentation(myFixture.getLookupElements()[2], "-agentlib:|null/null");
@@ -37,8 +37,8 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
     configure("-<caret>");
     myFixture.completeBasic();
     assertEquals(List.of("--add-exports", "--add-opens",
-                         "-agentlib:", "-agentpath:", "-D", "-da", "-disableassertions", "-Djava.awt.headless=",
-                         "-dsa", "-Duser.dir=", "-Duser.home=", "-Duser.name=", "-ea", "-enableassertions", "-esa",
+                         "-agentlib:", "-agentpath:", "-D", "-da", "-disableassertions", "-Djava.awt.headless",
+                         "-dsa", "-Duser.dir", "-Duser.home", "-Duser.name", "-ea", "-enableassertions", "-esa",
                          "-javaagent:", "-Xmx", "-XX:"), myFixture.getLookupElementStrings());
     checkPresentation(myFixture.getLookupElements()[0], "--add-exports|null/null");
     checkPresentation(myFixture.getLookupElements()[2], "-agentlib:|null/null");
@@ -48,7 +48,7 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
   public void testSimpleOptionsAfterDot() {
     configure("-Duser.<caret>");
     myFixture.completeBasic();
-    assertEquals(List.of("-Duser.dir=", "-Duser.home=", "-Duser.name="), myFixture.getLookupElementStrings());
+    assertEquals(List.of("-Duser.dir", "-Duser.home", "-Duser.name"), myFixture.getLookupElementStrings());
   }
 
   @Test
@@ -63,7 +63,7 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
     configure("-<caret> -ea");
     myFixture.completeBasic();
     List<String> strings = myFixture.getLookupElementStrings();
-    assertContainsElements(strings, "-Duser.dir=", "-Duser.home=", "-Duser.name=");
+    assertContainsElements(strings, "-Duser.dir", "-Duser.home", "-Duser.name");
   }
 
   @Test
@@ -157,6 +157,20 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
                    <tr><td align="right" valign="top"><b>Type: </b></td><td>bool</td></tr>\
                    <tr><td align="right" valign="top"><b>Default value: </b></td><td>true</td></tr>\
                    <tr><td align="right" valign="top"><b>Description: </b></td><td>SuperOption</td></tr></table>""", doc);
+  }
+
+  @Test
+  public void testSimpleOptionCompletion() {
+    configure("-Duser.di<caret>");
+    myFixture.completeBasic();
+    myFixture.checkResult("-Duser.dir=<caret>");
+  }
+
+  @Test
+  public void testSimpleOptionTailReplace() {
+    configure("-Duser.di<caret>=");
+    myFixture.completeBasic();
+    myFixture.checkResult("-Duser.dir=<caret>");
   }
 
   private void configure(String text) {

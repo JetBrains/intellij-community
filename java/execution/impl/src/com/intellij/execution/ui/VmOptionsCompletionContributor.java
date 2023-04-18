@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
+import com.intellij.codeInsight.CharTailType;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
@@ -104,9 +105,11 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
       .flatMap(Function.identity())
       .forEach(option -> {
       String fullLookup = option.getVariant().prefix() + option.getOptionName();
-      result.addElement(LookupElementBuilder.create(option.createPointer(), fullLookup + option.getVariant().suffix())
-                          .withTypeText(option.getType())
-                          .withPresentableText(fullLookup));
+      LookupElementBuilder builder = LookupElementBuilder.create(option.createPointer(), fullLookup)
+        .withTypeText(option.getType())
+        .withPresentableText(fullLookup);
+      Character suffix = option.getVariant().suffix();
+      result.addElement(TailTypeDecorator.withTail(builder, suffix == null ? null : new CharTailType(suffix)));
     });
   }
 

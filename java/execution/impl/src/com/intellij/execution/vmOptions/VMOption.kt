@@ -80,9 +80,9 @@ enum class VMOptionVariant {
     XX -> "-XX:"
   }
 
-  fun suffix(): @NlsSafe String = when(this) {
-    D, XX -> "="
-    else -> ""
+  fun suffix(): Char? = when(this) {
+    D, XX -> '='
+    else -> null
   }
 }
 
