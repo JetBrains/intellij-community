@@ -280,12 +280,11 @@ suspend fun buildNonBundledPlugins(pluginsToPublish: Set<PluginLayout>,
                                    buildPlatformLibJob: Job?,
                                    state: DistributionBuilderState,
                                    context: BuildContext): List<DistributionFileEntry> {
-  if (pluginsToPublish.isEmpty()) {
-    return emptyList()
-  }
-
   return spanBuilder("build non-bundled plugins").setAttribute("count", pluginsToPublish.size.toLong()).useWithScope2 { span ->
-    if (context.options.buildStepsToSkip.contains(BuildOptions.NON_BUNDLED_PLUGINS_STEP)) {
+    if (pluginsToPublish.isEmpty()) {
+      return@useWithScope2 emptyList<DistributionFileEntry>()
+    }
+    if (context.isStepSkipped(BuildOptions.NON_BUNDLED_PLUGINS_STEP)) {
       span.addEvent("skip")
       return@useWithScope2 emptyList<DistributionFileEntry>()
     }
@@ -688,12 +687,14 @@ private fun containsFileInOutput(moduleName: String,
   return !set.isEmpty()
 }
 
-fun getPluginAutoUploadFile(communityRoot: BuildDependenciesCommunityRoot): Path {
-  val autoUploadFile = communityRoot.communityRoot.resolve("../build/plugins-autoupload.txt")
-  require(Files.isRegularFile(autoUploadFile)) {
-    "File '$autoUploadFile' must exist"
+fun getPluginAutoUploadFile(context: BuildContext): Path? {
+  val autoUploadFile = context.paths.communityHomeDir.resolve("../build/plugins-autoupload.txt")
+  return when {
+    Files.isRegularFile(autoUploadFile) -> autoUploadFile
+    // public sources build
+    context.paths.projectHome.toUri() == context.paths.communityHomeDir.toUri() -> null
+    else -> error("File '$autoUploadFile' must exist")
   }
-  return autoUploadFile
 }
 
 fun readPluginAutoUploadFile(autoUploadFile: Path): Collection<String> {
@@ -818,7 +819,7 @@ fun satisfiesBundlingRequirements(plugin: PluginLayout,
  * @return predicate to test if the given plugin should be auto-published
  */
 private fun loadPluginAutoPublishList(context: BuildContext): Predicate<PluginLayout> {
-  val file = getPluginAutoUploadFile(context.paths.communityHomeDirRoot)
+  val file = getPluginAutoUploadFile(context) ?: return Predicate<PluginLayout> { false }
   val config = readPluginAutoUploadFile(file)
 
   val productCode = context.applicationInfo.productCode
