@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeTokenFactory
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
-import org.jetbrains.kotlin.analysis.project.structure.getKtModule
+import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -117,7 +117,7 @@ class Fe10WrapperContextImpl(
 ) : Fe10WrapperContext {
     private val token: KtLifetimeToken = KtLifetimeTokenForKtSymbolBasedWrappers(project, ktElement)
 
-    private val module: KtModule = ktElement.getKtModule(project)
+    private val module: KtModule = ProjectStructureProvider.getModule(project, ktElement, null)
 
     override fun <R> withAnalysisSession(f: KtAnalysisSession.() -> R): R {
         return analyze(ktElement, token.factory, f)
