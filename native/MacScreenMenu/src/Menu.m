@@ -8,8 +8,8 @@ static jclass sjc_Menu = NULL;
 // Menu (NSMenu wrapper)
 //
 
-static NSDate * sLastUpdate = nil;
-static NSMenu * sCurrentMenu = nil;
+static NSDate * sLastUpdate = nil; // used only in AppKit
+static bool sUpdateInProgress = false; // used only in AppKit
 
 @implementation Menu
 
@@ -48,7 +48,7 @@ static NSMenu * sCurrentMenu = nil;
     if (javaPeer == nil)
         return;
 
-    if (sCurrentMenu != nil) {
+    if (sUpdateInProgress) {
         // Nested updates can lead to crash, see IDEA-315910
         //fprintf(stderr, "skip nested update for menu '%s'\n", [sCurrentMenu.title cString]);
         return;
@@ -60,12 +60,14 @@ static NSMenu * sCurrentMenu = nil;
     DECLARE_METHOD(jm_Menu_menuNeedsUpdate, sjc_Menu, "menuNeedsUpdate", "()V");
 
     @try {
-        sLastUpdate = [NSDate date];
-        sCurrentMenu = menu;
+        if (sLastUpdate != nil)
+            [sLastUpdate release];
+        sLastUpdate = [[NSDate date] retain];
+        sUpdateInProgress = true;
         (*env)->CallVoidMethod(env, javaPeer, jm_Menu_menuNeedsUpdate);
     }
     @finally {
-        sCurrentMenu = nil;
+        sUpdateInProgress = false;
     }
     CHECK_EXCEPTION(env);
     JNI_COCOA_EXIT();
@@ -295,23 +297,24 @@ Java_com_intellij_ui_mac_screenmenu_Menu_nativeInsertItem
 }
 
 - (void)refill {
+    // Called from AppKit only
     if (menu == nil) {
         // Going to update main menu. Will defer update in some cases (see IDEA-315910)
         bool defer = false;
-        if (sCurrentMenu != nil) {
+        if (sUpdateInProgress) {
             // Don't change hierachy when update in progress
             defer = true;
         } else if (sLastUpdate != nil) {
-            NSTimeInterval delta = [[NSDate now] timeIntervalSinceDate:sLastUpdate];
+            NSTimeInterval delta = [[NSDate date] timeIntervalSinceDate:sLastUpdate];
             long deltaMs = delta*1000;
-            if (deltaMs < 200) {
-                // Don't change hierachy in 200 ms after last update
+            if (deltaMs < 500) {
+                // Don't change hierachy in 500 ms after last update
                 defer = true;
             }
         }
         if (defer) {
             //fprintf(stderr, "defer update of main menu\n");
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 200 * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{[self refill];});
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 500 * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{[self refill];});
             return;
         }
     }
