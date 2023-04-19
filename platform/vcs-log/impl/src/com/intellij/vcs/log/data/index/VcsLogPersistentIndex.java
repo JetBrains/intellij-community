@@ -54,7 +54,7 @@ import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 import static com.intellij.vcs.log.data.index.VcsLogFullDetailsIndex.INDEX;
-import static com.intellij.vcs.log.util.PersistentUtil.calcIndexId;
+import static com.intellij.vcs.log.util.PersistentUtil.calcLogId;
 
 public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable {
   static final Logger LOG = Logger.getInstance(VcsLogPersistentIndex.class);
@@ -105,7 +105,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     myIndexers = getAvailableIndexers(providers);
     myRoots = new LinkedHashSet<>(myIndexers.keySet());
 
-    String logId = calcIndexId(myProject, myIndexers);
+    String logId = calcLogId(myProject, providers);
     myIndexStorageId = new StorageId(myProject.getName(), INDEX, logId, VcsLogStorageImpl.VERSION + VERSION);
     myIndexStorage = createIndexStorage(myStorage, myRoots, myIndexStorageId, errorHandler);
     if (myIndexStorage != null) {

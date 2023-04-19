@@ -9,7 +9,6 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.indexing.impl.MapIndexStorage
 import com.intellij.util.io.IOUtil
 import com.intellij.vcs.log.VcsLogProvider
-import com.intellij.vcs.log.impl.VcsLogIndexer
 import com.intellij.vcs.log.util.PersistentUtil.getPersistenceLogCacheDir
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Files
@@ -28,19 +27,12 @@ object PersistentUtil {
 
   @JvmStatic
   fun calcLogId(project: Project, logProviders: Map<VirtualFile, VcsLogProvider>): String {
-    val hashcode = calcHash(logProviders) { it.supportedVcs.name }
-    return project.locationHash + "." + Integer.toHexString(hashcode)
+    return project.locationHash + "." + Integer.toHexString(logProviders.calcHash())
   }
 
-  @JvmStatic
-  fun calcIndexId(project: Project, logProviders: Map<VirtualFile, VcsLogIndexer>): String {
-    val hashcode = calcHash(logProviders) { it.supportedVcs.name }
-    return project.locationHash + "." + Integer.toHexString(hashcode)
-  }
-
-  private fun <T> calcHash(logProviders: Map<VirtualFile, T>, mapping: (T) -> String): Int {
-    val sortedRoots = logProviders.keys.sortedBy { it.path }
-    return sortedRoots.joinToString(separator = ".") { root -> "${root.path}.${mapping(logProviders.getValue(root))}" }.hashCode()
+  private fun Map<VirtualFile, VcsLogProvider>.calcHash(): Int {
+    val sortedRoots = keys.sortedBy { it.path }
+    return sortedRoots.joinToString(separator = ".") { root -> "${root.path}.${getValue(root).supportedVcs.name}" }.hashCode()
   }
 
   @JvmStatic
