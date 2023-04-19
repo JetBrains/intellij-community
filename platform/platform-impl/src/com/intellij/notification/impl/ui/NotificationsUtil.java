@@ -138,9 +138,9 @@ public final class NotificationsUtil {
         htmlBuilder.append(titleChunk);
       }
       else {
-        htmlBuilder.nbsp().append(StringUtil.isNotEmpty(titleColor) ?
-                                  HtmlChunk.span().attr("color", titleColor).addText(title) :
-                                  HtmlChunk.raw(title));
+        htmlBuilder.append(StringUtil.isNotEmpty(titleColor) ?
+                           HtmlChunk.span().attr("color", titleColor).addText(title) :
+                           HtmlChunk.raw(title));
       }
     }
 
