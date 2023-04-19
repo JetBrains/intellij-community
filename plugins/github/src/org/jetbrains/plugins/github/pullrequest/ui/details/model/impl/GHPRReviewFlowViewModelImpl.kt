@@ -55,9 +55,14 @@ internal class GHPRReviewFlowViewModelImpl(
     combineState(scope, pullRequestReviewState, _requestedReviewersState) { reviews, requestedReviewers ->
       mutableMapOf<GHPullRequestRequestedReviewer, ReviewState>().apply {
         reviews
-          .filter { (reviewer, _) -> reviewer != metadataModel.getAuthor() }
+          .filter { (reviewer, pullRequestReviewState) ->
+            reviewer != metadataModel.getAuthor() && (pullRequestReviewState == GHPullRequestReviewState.APPROVED ||
+                                                      pullRequestReviewState == GHPullRequestReviewState.CHANGES_REQUESTED)
+          }
           .forEach { (reviewer, pullRequestReviewState) ->
-            put(reviewer, convertPullRequestReviewState(pullRequestReviewState))
+            val reviewState = if (pullRequestReviewState == GHPullRequestReviewState.APPROVED) ReviewState.ACCEPTED
+            else ReviewState.WAIT_FOR_UPDATES
+            put(reviewer, reviewState)
           }
 
         requestedReviewers.forEach { requestedReviewer ->
@@ -186,15 +191,5 @@ internal class GHPRReviewFlowViewModelImpl(
           detailsDataProvider.reloadDetails()
         }
       })
-  }
-
-  companion object {
-    private fun convertPullRequestReviewState(pullRequestReviewState: GHPullRequestReviewState): ReviewState = when (pullRequestReviewState) {
-      GHPullRequestReviewState.APPROVED -> ReviewState.ACCEPTED
-      GHPullRequestReviewState.CHANGES_REQUESTED,
-      GHPullRequestReviewState.COMMENTED,
-      GHPullRequestReviewState.DISMISSED,
-      GHPullRequestReviewState.PENDING -> ReviewState.WAIT_FOR_UPDATES
-    }
   }
 }
