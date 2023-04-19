@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -199,5 +200,13 @@ public final class LanguageUtil {
   @NotNull
   public static JBIterable<Language> getBaseLanguages(@NotNull Language language) {
     return JBIterable.generate(language, Language::getBaseLanguage);
+  }
+
+  public static @Nullable Language findRegisteredLanguage(@NotNull String langValueText) {
+    final Language language = Language.findLanguageByID(langValueText);
+    if (language != null) return language;
+
+    return ContainerUtil.find(Language.getRegisteredLanguages(),
+                              e -> e.getID().equalsIgnoreCase(langValueText));
   }
 }

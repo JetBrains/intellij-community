@@ -4,6 +4,7 @@ package com.intellij.profile.codeInspection.ui
 import com.intellij.codeEditor.printing.HTMLTextPainter
 import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.lang.Language
+import com.intellij.lang.LanguageUtil
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.psi.PsiFileFactory
@@ -69,7 +70,7 @@ fun JEditorPane.readHTMLWithCodeHighlighting(text: String, language: String?) {
   }
 
   document.select("pre code").forEach { codeSnippet ->
-    if (codeSnippet.hasAttr("lang")) lang = Language.findLanguageByID(codeSnippet.attr("lang")) ?: lang
+    if (codeSnippet.hasAttr("lang")) lang = LanguageUtil.findRegisteredLanguage(codeSnippet.attr("lang")) ?: lang
     val defaultProject = DefaultProjectFactory.getInstance().defaultProject
     val psiFileFactory = PsiFileFactory.getInstance(defaultProject)
 
