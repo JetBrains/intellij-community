@@ -5,11 +5,9 @@ import com.intellij.testFramework.RunAll.Companion.runAll
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.plugins.gradle.execution.test.events.GradleExecutionTestCase
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isSupportedJUnit5
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
-import org.junit.jupiter.api.Assertions
 
 abstract class KotlinGradleExecutionTestCase : GradleExecutionTestCase() {
 
@@ -24,12 +22,7 @@ abstract class KotlinGradleExecutionTestCase : GradleExecutionTestCase() {
       test(gradleVersion, KOTLIN_PROJECT, test)
 
     fun testKotlinJunit5Project(gradleVersion: GradleVersion, action: () -> Unit) {
-        Assertions.assertTrue(isSupportedJUnit5(gradleVersion)) {
-            """
-                |Gradle $gradleVersion doesn't support Junit 5.
-                |Please, use @TargetVersions("4.7+") annotation to ignore this version.
-            """.trimMargin()
-        }
+        assertJunit5IsSupported(gradleVersion)
         testKotlinProject(gradleVersion, action)
     }
 

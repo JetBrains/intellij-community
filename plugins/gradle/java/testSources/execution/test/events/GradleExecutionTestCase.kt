@@ -192,13 +192,17 @@ abstract class GradleExecutionTestCase : GradleProjectTestCase() {
     executionConsoleFixture.assertPsiLocation(this, className, methodName)
   }
 
-  fun testJunit5Project(gradleVersion: GradleVersion, action: () -> Unit) {
+  fun assertJunit5IsSupported(gradleVersion: GradleVersion) {
     Assertions.assertTrue(isSupportedJUnit5(gradleVersion)) {
       """
         |Gradle $gradleVersion doesn't support Junit 5.
         |Please, use @TargetVersions("4.7+") annotation to ignore this version.
       """.trimMargin()
     }
+  }
+
+  fun testJunit5Project(gradleVersion: GradleVersion, action: () -> Unit) {
+    assertJunit5IsSupported(gradleVersion)
     testJavaProject(gradleVersion, action)
   }
 
@@ -210,11 +214,29 @@ abstract class GradleExecutionTestCase : GradleProjectTestCase() {
     test(gradleVersion, JAVA_TESTNG_FIXTURE, action)
   }
 
+  fun testJunit5AssertJProject(gradleVersion: GradleVersion, action: () -> Unit) {
+    assertJunit5IsSupported(gradleVersion)
+    test(gradleVersion, JAVA_JUNIT5_ASSERTJ_FIXTURE, action)
+  }
+
   fun testSpockProject(gradleVersion: GradleVersion, action: () -> Unit) {
     test(gradleVersion, GROOVY_SPOCK_FIXTURE, action)
   }
 
   companion object {
+
+    private val JAVA_JUNIT5_ASSERTJ_FIXTURE = GradleTestFixtureBuilder.create("java-plugin-junit5-assertj-project") { gradleVersion ->
+      withSettingsFile {
+        setProjectName("java-plugin-junit5-assertj-project")
+      }
+      withBuildFile(gradleVersion) {
+        withJavaPlugin()
+        withJUnit5()
+        addTestImplementationDependency("org.assertj:assertj-core:3.24.2")
+      }
+      withDirectory("src/main/java")
+      withDirectory("src/test/java")
+    }
 
     private val JAVA_JUNIT4_FIXTURE = GradleTestFixtureBuilder.create("java-plugin-junit4-project") { gradleVersion ->
       withSettingsFile {
