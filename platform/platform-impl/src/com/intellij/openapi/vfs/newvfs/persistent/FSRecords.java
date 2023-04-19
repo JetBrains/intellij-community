@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
@@ -44,7 +43,10 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 @ApiStatus.Internal
 public final class FSRecords {
   static final Logger LOG = Logger.getInstance(FSRecords.class);
-  static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, SECONDS.toMillis(5));
+  static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, SECONDS.toMillis(30));
+
+  /** Limit on how many cached fs roots to log on error (could be too many of them in total) */
+  private static final int MAX_CACHED_ROOTS_TO_LOG = SystemProperties.getIntProperty("idea.vfs.max-roots-to-log", 128);
 
   static final boolean BACKGROUND_VFS_FLUSH = SystemProperties.getBooleanProperty("idea.background.vfs.flush", true);
 
@@ -285,12 +287,15 @@ public final class FSRecords {
             //         be able to understand it better, or fix calling code meaningfully.
 
             String currentFileName = getName(currentId);
+            int preRootIdFlags = impl.getFlags(currentId);
+            int sourceFileFlags = impl.getFlags(fileId);
 
+            int finalCurrentId = currentId;
             THROTTLED_LOG.info(
-              "file[" + fileId + "]: top parent (currentId: " + currentId + ", name: '" + currentFileName + "', parent: 0), " +
-              "is still not in the idToDirCache. " +
-              "path: " + path + ", " +
-              "idToDirCache.rootsCached: " + StringUtil.join(idToDirCache.getCachedRootDirs(), ", ")
+              () -> "file[" + fileId + ", flags: " + sourceFileFlags + "]: " +
+                    "top parent (id: " + finalCurrentId + ", name: '" + currentFileName + "', flags: " + preRootIdFlags + " parent: 0), " +
+                    "is still not in the idToDirCache. " +
+                    "path: " + path
             );
             break;
           }
