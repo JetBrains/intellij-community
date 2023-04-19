@@ -203,14 +203,13 @@ object IconLoader {
 
   @JvmOverloads
   @JvmStatic
-  fun toImage(icon: Icon, ctx: ScaleContext? = null): Image? {
+  fun toImage(icon: Icon, scaleContext: ScaleContext? = null): Image? {
     var effectiveIcon = icon
-    var effectiveScaleContext = ctx
     if (effectiveIcon is RetrievableIcon) {
       effectiveIcon = getOriginIcon(effectiveIcon)
     }
     if (effectiveIcon is com.intellij.ui.icons.CachedImageIcon) {
-      effectiveIcon = effectiveIcon.resolveActualIcon(effectiveScaleContext?.getScale(ScaleType.SYS_SCALE) ?: -1.0)
+      return effectiveIcon.resolveImage(scaleContext = scaleContext)
     }
     if (effectiveIcon is ImageIcon) {
       return effectiveIcon.image
@@ -219,16 +218,15 @@ object IconLoader {
       return null
     }
 
+
     val image: BufferedImage
     if (GraphicsEnvironment.isHeadless()) {
       // for testing purpose
-      image = ImageUtil.createImage(effectiveScaleContext, effectiveIcon.iconWidth.toDouble(), effectiveIcon.iconHeight.toDouble(),
+      image = ImageUtil.createImage(scaleContext, effectiveIcon.iconWidth.toDouble(), effectiveIcon.iconHeight.toDouble(),
                                     BufferedImage.TYPE_INT_ARGB, PaintUtil.RoundingMode.ROUND)
     }
     else {
-      if (effectiveScaleContext == null) {
-        effectiveScaleContext = ScaleContext.create()
-      }
+      val effectiveScaleContext = scaleContext ?: ScaleContext.create()
       image = if (StartupUiUtil.isJreHiDPI(effectiveScaleContext)) {
         HiDPIImage(scaleContext = effectiveScaleContext,
                    width = effectiveIcon.iconWidth.toDouble(),
@@ -397,19 +395,10 @@ object IconLoader {
     }
   }
 
-  /**
-   * Gets a snapshot of the icon, immune to changes made by these calls:
-   * [.setFilter], [.setUseDarkIcons]
-   *
-   * @param icon the source icon
-   * @return the icon snapshot
-   */
+  @Deprecated("Not needed")
   @JvmStatic
   fun getIconSnapshot(icon: Icon): Icon {
-    return if (icon is com.intellij.ui.icons.CachedImageIcon) {
-      icon.getRealIcon()
-    }
-    else icon
+    return if (icon is com.intellij.ui.icons.CachedImageIcon) icon.getRealIcon() else icon
   }
 
   /**

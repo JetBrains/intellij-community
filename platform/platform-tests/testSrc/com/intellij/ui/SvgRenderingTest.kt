@@ -10,6 +10,7 @@ import com.intellij.util.io.inputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
@@ -112,6 +113,214 @@ class SvgRenderingTest {
   }
 
   @Test
+  fun dos() {
+    assumeTrue(System.getenv("TEAMCITY_VERSION") == null)
+    @Language("HTML")
+    val svg = """
+      <?xml version="1.0" standalone="no"?>
+      <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+          <defs>
+              <g id="a0">
+                  <circle stroke="#000000" fill="#ffffff" fill-opacity="0.1" r="10"/>
+              </g>
+          </defs>
+          <defs>
+              <g id="a1">
+                  <use x="0" y="10" xlink:href="#a0"/>
+                  <use x="10" y="10" xlink:href="#a0"/>
+                  <use x="20" y="10" xlink:href="#a0"/>
+                  <use x="30" y="10" xlink:href="#a0"/>
+                  <use x="40" y="10" xlink:href="#a0"/>
+                  <use x="50" y="10" xlink:href="#a0"/>
+                  <use x="60" y="10" xlink:href="#a0"/>
+                  <use x="70" y="10" xlink:href="#a0"/>
+                  <use x="80" y="10" xlink:href="#a0"/>
+                  <use x="90" y="10" xlink:href="#a0"/>
+              </g>
+          </defs>
+          <defs>
+              <g id="a2">
+                  <use x="0" y="10" xlink:href="#a1"/>
+                  <use x="10" y="10" xlink:href="#a1"/>
+                  <use x="20" y="10" xlink:href="#a1"/>
+                  <use x="30" y="10" xlink:href="#a1"/>
+                  <use x="40" y="10" xlink:href="#a1"/>
+                  <use x="50" y="10" xlink:href="#a1"/>
+                  <use x="60" y="10" xlink:href="#a1"/>
+                  <use x="70" y="10" xlink:href="#a1"/>
+                  <use x="80" y="10" xlink:href="#a1"/>
+                  <use x="90" y="10" xlink:href="#a1"/>
+              </g>
+          </defs>
+          <defs>
+              <g id="a3">
+                  <use x="0" y="10" xlink:href="#a2"/>
+                  <use x="10" y="10" xlink:href="#a2"/>
+                  <use x="20" y="10" xlink:href="#a2"/>
+                  <use x="30" y="10" xlink:href="#a2"/>
+                  <use x="40" y="10" xlink:href="#a2"/>
+                  <use x="50" y="10" xlink:href="#a2"/>
+                  <use x="60" y="10" xlink:href="#a2"/>
+                  <use x="70" y="10" xlink:href="#a2"/>
+                  <use x="80" y="10" xlink:href="#a2"/>
+                  <use x="90" y="10" xlink:href="#a2"/>
+              </g>
+          </defs>
+          <defs>
+              <g id="a4">
+                  <use x="0" y="10" xlink:href="#a3"/>
+                  <use x="10" y="10" xlink:href="#a3"/>
+                  <use x="20" y="10" xlink:href="#a3"/>
+                  <use x="30" y="10" xlink:href="#a3"/>
+                  <use x="40" y="10" xlink:href="#a3"/>
+                  <use x="50" y="10" xlink:href="#a3"/>
+                  <use x="60" y="10" xlink:href="#a3"/>
+                  <use x="70" y="10" xlink:href="#a3"/>
+                  <use x="80" y="10" xlink:href="#a3"/>
+                  <use x="90" y="10" xlink:href="#a3"/>
+              </g>
+          </defs>
+          <defs>
+              <g id="a5">
+                  <use x="0" y="10" xlink:href="#a4"/>
+                  <use x="10" y="10" xlink:href="#a4"/>
+                  <use x="20" y="10" xlink:href="#a4"/>
+                  <use x="30" y="10" xlink:href="#a4"/>
+                  <use x="40" y="10" xlink:href="#a4"/>
+                  <use x="50" y="10" xlink:href="#a4"/>
+                  <use x="60" y="10" xlink:href="#a4"/>
+                  <use x="70" y="10" xlink:href="#a4"/>
+                  <use x="80" y="10" xlink:href="#a4"/>
+                  <use x="90" y="10" xlink:href="#a4"/>
+              </g>
+          </defs>
+          <defs>
+              <g id="a6">
+                  <use x="0" y="10" xlink:href="#a5"/>
+                  <use x="10" y="10" xlink:href="#a5"/>
+                  <use x="20" y="10" xlink:href="#a5"/>
+                  <use x="30" y="10" xlink:href="#a5"/>
+                  <use x="40" y="10" xlink:href="#a5"/>
+                  <use x="50" y="10" xlink:href="#a5"/>
+                  <use x="60" y="10" xlink:href="#a5"/>
+                  <use x="70" y="10" xlink:href="#a5"/>
+                  <use x="80" y="10" xlink:href="#a5"/>
+                  <use x="90" y="10" xlink:href="#a5"/>
+              </g>
+          </defs>
+          <defs>
+              <g id="a7">
+                  <use x="0" y="10" xlink:href="#a6"/>
+                  <use x="10" y="10" xlink:href="#a6"/>
+                  <use x="20" y="10" xlink:href="#a6"/>
+                  <use x="30" y="10" xlink:href="#a6"/>
+                  <use x="40" y="10" xlink:href="#a6"/>
+                  <use x="50" y="10" xlink:href="#a6"/>
+                  <use x="60" y="10" xlink:href="#a6"/>
+                  <use x="70" y="10" xlink:href="#a6"/>
+                  <use x="80" y="10" xlink:href="#a6"/>
+                  <use x="90" y="10" xlink:href="#a6"/>
+              </g>
+          </defs>
+          <defs>
+              <g id="a8">
+                  <use x="0" y="10" xlink:href="#a7"/>
+                  <use x="10" y="10" xlink:href="#a7"/>
+                  <use x="20" y="10" xlink:href="#a7"/>
+                  <use x="30" y="10" xlink:href="#a7"/>
+                  <use x="40" y="10" xlink:href="#a7"/>
+                  <use x="50" y="10" xlink:href="#a7"/>
+                  <use x="60" y="10" xlink:href="#a7"/>
+                  <use x="70" y="10" xlink:href="#a7"/>
+                  <use x="80" y="10" xlink:href="#a7"/>
+                  <use x="90" y="10" xlink:href="#a7"/>
+              </g>
+          </defs>
+          <defs>
+              <g id="a9">
+                  <use x="0" y="10" xlink:href="#a8"/>
+                  <use x="10" y="10" xlink:href="#a8"/>
+                  <use x="20" y="10" xlink:href="#a8"/>
+                  <use x="30" y="10" xlink:href="#a8"/>
+                  <use x="40" y="10" xlink:href="#a8"/>
+                  <use x="50" y="10" xlink:href="#a8"/>
+                  <use x="60" y="10" xlink:href="#a8"/>
+                  <use x="70" y="10" xlink:href="#a8"/>
+                  <use x="80" y="10" xlink:href="#a8"/>
+                  <use x="90" y="10" xlink:href="#a8"/>
+              </g>
+          </defs>
+          <defs>
+              <g id="a10">
+                  <use x="0" y="10" xlink:href="#a9"/>
+                  <use x="10" y="10" xlink:href="#a9"/>
+                  <use x="20" y="10" xlink:href="#a9"/>
+                  <use x="30" y="10" xlink:href="#a9"/>
+                  <use x="40" y="10" xlink:href="#a9"/>
+                  <use x="50" y="10" xlink:href="#a9"/>
+                  <use x="60" y="10" xlink:href="#a9"/>
+                  <use x="70" y="10" xlink:href="#a9"/>
+                  <use x="80" y="10" xlink:href="#a9"/>
+                  <use x="90" y="10" xlink:href="#a9"/>
+              </g>
+          </defs>
+          <use x="0" y="0" xlink:href="#a9"/>
+      </svg>
+    """.trimIndent()
+
+    assertThatThrownBy {
+      val image = renderSvg(svg.byteInputStream())
+    }.hasMessage("use is over-nested: 7")
+  }
+
+  @Test
+  fun dosShort() {
+    assumeTrue(System.getenv("TEAMCITY_VERSION") == null)
+    @Language("HTML")
+    val svg = """
+      <?xml version="1.0" standalone="no"?>
+      <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+          <defs>
+              <g id="a0">
+                  <circle stroke="#000000" fill="#ffffff" fill-opacity="0.1" r="10"/>
+              </g>
+          </defs>
+          <defs>
+              <g id="a1">
+                  <use x="0" y="10" xlink:href="#a0"/>
+                  <use x="10" y="10" xlink:href="#a0"/>
+                  <use x="20" y="10" xlink:href="#a0"/>
+                  <use x="30" y="10" xlink:href="#a0"/>
+                  <use x="40" y="10" xlink:href="#a0"/>
+                  <use x="50" y="10" xlink:href="#a0"/>
+                  <use x="60" y="10" xlink:href="#a0"/>
+                  <use x="70" y="10" xlink:href="#a0"/>
+                  <use x="80" y="10" xlink:href="#a0"/>
+                  <use x="90" y="10" xlink:href="#a0"/>
+              </g>
+          </defs>
+          <defs>
+              <g id="a2">
+                  <use x="0" y="10" xlink:href="#a1"/>
+                  <use x="10" y="10" xlink:href="#a1"/>
+                  <use x="20" y="10" xlink:href="#a1"/>
+                  <use x="30" y="10" xlink:href="#a1"/>
+                  <use x="40" y="10" xlink:href="#a1"/>
+                  <use x="50" y="10" xlink:href="#a1"/>
+                  <use x="60" y="10" xlink:href="#a1"/>
+                  <use x="70" y="10" xlink:href="#a1"/>
+                  <use x="80" y="10" xlink:href="#a1"/>
+                  <use x="90" y="10" xlink:href="#a1"/>
+              </g>
+          </defs>
+          <use x="0" y="0" xlink:href="#a2"/>
+      </svg>
+    """.trimIndent()
+
+    val image = renderSvg(svg.byteInputStream())
+  }
+
+  @Test
   fun css() {
     assumeTrue(System.getenv("TEAMCITY_VERSION") == null)
 
@@ -198,6 +407,70 @@ class SvgRenderingTest {
     val image = renderSvg(svg.byteInputStream())
 
     val goldImage = loadOrSaveGoldSnapshot(image, "base64")
+    ImageComparator.compareAndAssert(null, image, goldImage, null)
+  }
+
+  @Test
+  fun shadow() {
+    assumeTrue(System.getenv("TEAMCITY_VERSION") == null)
+
+    @Language("HTML")
+    val svg = """
+<svg width="4" height="6" viewBox="0 0 4 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_5382_56966)">
+<g filter="url(#filter0_d_5382_56966)">
+<path d="M11 4.99023H-7C-7.55228 4.99023 -8 5.43794 -8 5.99023V24.9902C-8 25.5425 -7.55228 25.9902 -7 25.9902H11C11.5523 25.9902 12 25.5425 12 24.9902V5.99023C12 5.43795 11.5523 4.99023 11 4.99023Z" fill="white" fill-opacity="0.01"/>
+</g>
+</g>
+<defs>
+<filter id="filter0_d_5382_56966" x="-20" y="-3.00977" width="44" height="45" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dy="4"/>
+<feGaussianBlur stdDeviation="6"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.16 0"/>
+<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_5382_56966"/>
+<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_5382_56966" result="shape"/>
+</filter>
+<clipPath id="clip0_5382_56966">
+<rect width="4" height="6" fill="white"/>
+</clipPath>
+</defs>
+</svg>
+
+""".trimIndent()
+    val image = renderSvg(svg.byteInputStream())
+
+    val goldImage = loadOrSaveGoldSnapshot(image, "shadow")
+    ImageComparator.compareAndAssert(null, image, goldImage, null)
+  }
+
+  @Test
+  fun f1() {
+    assumeTrue(System.getenv("TEAMCITY_VERSION") == null)
+
+    @Language("HTML")
+    val svg = """
+<!-- Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="18" height="22" viewBox="0 0 18 22">
+  <defs>
+    <rect id="bottomleft-b" width="20" height="21"/>
+    <filter id="bottomleft-a" width="270%" height="261.9%" x="-85%" y="-61.9%" filterUnits="objectBoundingBox">
+      <feOffset dy="4" in="SourceAlpha" result="shadowOffsetOuter1"/>
+      <feGaussianBlur in="shadowOffsetOuter1" result="shadowBlurOuter1" stdDeviation="5"/>
+      <feComposite in="shadowBlurOuter1" in2="SourceAlpha" operator="out" result="shadowBlurOuter1"/>
+      <feColorMatrix in="shadowBlurOuter1" values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.3 0"/>
+    </filter>
+  </defs>
+  <g fill="none" fill-rule="evenodd" transform="translate(10 -13)">
+    <use fill="#000" filter="url(#bottomleft-a)" xlink:href="#bottomleft-b"/>
+    <use fill="#FFF" fill-opacity="0" xlink:href="#bottomleft-b"/>
+  </g>
+</svg>
+""".trimIndent()
+    val image = renderSvg(svg.byteInputStream())
+
+    val goldImage = loadOrSaveGoldSnapshot(image, "f1")
     ImageComparator.compareAndAssert(null, image, goldImage, null)
   }
 

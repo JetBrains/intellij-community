@@ -135,7 +135,12 @@ open class CachedImageIcon protected constructor(
   @ApiStatus.Internal
   fun getRealImage(): Image? = (resolveActualIcon(sysScale = -1.0) as? ScaledResultIcon)?.image
 
-  internal fun resolveActualIcon(sysScale: Double): Icon {
+  internal fun resolveImage(scaleContext: ScaleContext?): Image? {
+    val icon = resolveActualIcon(scaleContext?.getScale(ScaleType.SYS_SCALE) ?: -1.0)
+    return if (icon is ScaledResultIcon) icon.image else null
+  }
+
+  private fun resolveActualIcon(sysScale: Double): Icon {
     val resolver = resolver
     if (resolver == null || !isIconActivated) {
       return EMPTY_ICON

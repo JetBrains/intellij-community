@@ -184,10 +184,10 @@ private fun processElementFragment(reader: XMLStreamReader2,
       XMLStreamConstants.END_ELEMENT -> {
         queue.removeLast()
       }
-      XMLStreamConstants.CDATA -> queue.last().node().addContent(reader.textCharacters.copyOf())
+      XMLStreamConstants.CDATA -> queue.last().node().addContent(getChars(reader))
       XMLStreamConstants.SPACE, XMLStreamConstants.CHARACTERS -> {
         if (!reader.isWhiteSpace) {
-          queue.last().node().addContent(reader.textCharacters.copyOf())
+          queue.last().node().addContent(getChars(reader))
         }
       }
       XMLStreamConstants.ENTITY_REFERENCE, XMLStreamConstants.COMMENT, XMLStreamConstants.PROCESSING_INSTRUCTION -> {
@@ -195,6 +195,11 @@ private fun processElementFragment(reader: XMLStreamReader2,
       else -> throw IOException("Unexpected XMLStream event: ${reader.eventType}")
     }
   }
+}
+
+private fun getChars(reader: XMLStreamReader2): CharArray {
+  val fromIndex = reader.textStart
+  return reader.textCharacters.copyOfRange(fromIndex, fromIndex + reader.textLength)
 }
 
 private fun readAttributes(reader: XMLStreamReader, attributeMutator: AttributeMutator?): Map<String, String> {
@@ -208,7 +213,7 @@ private fun readAttributes(reader: XMLStreamReader, attributeMutator: AttributeM
     val localName = reader.getAttributeLocalName(i)
     val prefix = reader.getAttributePrefix(i)
     val qualifiedName = getQualifiedName(prefix = prefix, localName = localName)
-    attributes.put(qualifiedName, reader.getAttributeValue(i))
+    attributes.put(qualifiedName, reader.getAttributeValue(i).trim())
   }
 
   attributeMutator?.invoke(attributes)

@@ -240,7 +240,7 @@ object IconUtil {
   @JvmStatic
   @Suppress("UndesirableClassUsage")
   fun toImage(icon: Icon, context: ScaleContext? = null): Image {
-    return IconLoader.toImage(icon = icon, ctx = context) ?: BufferedImage(1, 0, BufferedImage.TYPE_INT_ARGB)
+    return IconLoader.toImage(icon = icon, scaleContext = context) ?: BufferedImage(1, 0, BufferedImage.TYPE_INT_ARGB)
   }
 
   @JvmOverloads

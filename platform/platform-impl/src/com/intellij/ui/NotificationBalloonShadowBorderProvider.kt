@@ -191,29 +191,30 @@ private fun drawLine(component: JComponent,
                      horizontal: Boolean,
                      scaleContext: ScaleContext) {
   val length = fullLength - start - end
-  val iconSnapshot = IconLoader.getIconSnapshot(icon)
-  val image = IconLoader.toImage(iconSnapshot, scaleContext)
-  val iconWidth = iconSnapshot.iconWidth
-  val iconHeight = iconSnapshot.iconHeight
+  val image = IconLoader.toImage(icon, scaleContext) ?: return
+  val iconWidth = icon.iconWidth
+  val iconHeight = icon.iconHeight
+  //val sourceBounds = Rectangle(0, 0, iconWidth, iconHeight)
+  val sourceBounds: Rectangle? = null
   if (horizontal) {
     drawImage(g = g,
-              image = image!!,
+              image = image,
               x = start,
               y = start2,
               dw = length,
               dh = iconHeight,
-              sourceBounds = Rectangle(0, 0, iconWidth, iconHeight),
+              sourceBounds = sourceBounds,
               op = null,
               observer = component)
   }
   else {
     drawImage(g = g,
-              image = image!!,
+              image = image,
               x = start2,
               y = start,
               dw = iconWidth,
               dh = length,
-              sourceBounds = Rectangle(0, 0, iconWidth, iconHeight),
+              sourceBounds = sourceBounds,
               op = null,
               observer = component)
   }
