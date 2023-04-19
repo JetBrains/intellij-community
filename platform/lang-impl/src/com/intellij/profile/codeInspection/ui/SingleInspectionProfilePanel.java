@@ -33,6 +33,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
@@ -752,8 +753,10 @@ public class SingleInspectionProfilePanel extends JPanel {
           final InspectionProfileEntry tool = defaultDescriptor.getToolWrapper().getTool();
           try {
             if (description == null) throw new NullPointerException();
-            String markedDescription = SearchUtil.markup(SettingsUtil.wrapWithPoweredByMessage(description, tool.getClass().getClassLoader()), myProfileFilter.getFilter());
-            DescriptionEditorPaneKt.readHTML(myDescription, markedDescription);
+            @NlsSafe String markedDescription = SearchUtil.markup(SettingsUtil.wrapWithPoweredByMessage(description, tool.getClass().getClassLoader()), myProfileFilter.getFilter());
+            DescriptionEditorPaneKt.readHTMLWithCodeHighlighting(myDescription,
+                                                                 markedDescription,
+                                                                 descriptor.getState().getTool().getLanguage());
           }
           catch (Throwable t) {
             LOG.error("Failed to load description for: " +

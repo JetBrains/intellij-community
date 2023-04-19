@@ -1,18 +1,24 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui
 
+import com.intellij.codeEditor.printing.HTMLTextPainter
 import com.intellij.codeInsight.hint.HintUtil
+import com.intellij.lang.Language
+import com.intellij.openapi.fileTypes.PlainTextLanguage
+import com.intellij.openapi.project.DefaultProjectFactory
+import com.intellij.psi.PsiFileFactory
 import com.intellij.ui.HintHint
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
-import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.annotations.Nls
+import org.jsoup.Jsoup
 import java.awt.Color
 import java.awt.Point
 import java.io.IOException
 import java.io.StringReader
+import java.lang.IllegalStateException
 import javax.swing.JEditorPane
 import javax.swing.text.html.HTMLEditorKit
 
@@ -36,13 +42,54 @@ open class DescriptionEditorPane : JEditorPane(UIUtil.HTML_MIME, EMPTY_HTML) {
 }
 
 fun JEditorPane.readHTML(text: String) {
-  val htmlText = when {
-    XmlStringUtil.isWrappedInHtml(text) -> text
-    else -> XmlStringUtil.wrapInHtml(text.replace("\\n", "<br>"))
+  val document = Jsoup.parse(text)
+
+  for (pre in document.select("pre")) {
+    if ("editor-background" !in pre.classNames()) pre.addClass("editor-background")
   }
 
   try {
-    read(StringReader(htmlText.replace("<pre>", "<pre class=\"editor-background\">")), null)
+    read(StringReader(document.html()), null)
+  }
+  catch (e: IOException) {
+    throw RuntimeException(e)
+  }
+}
+
+/**
+ * Similar to [readHTML], buteports duplicate entries (patterns) code in `<pre><code>` will be highlighted.
+ */
+fun JEditorPane.readHTMLWithCodeHighlighting(text: String, language: String?) {
+  var lang = Language.findLanguageByID(language) ?: PlainTextLanguage.INSTANCE
+  val document = Jsoup.parse(text)
+
+  document.select("pre code").forEach { codeSnippet ->
+    if (codeSnippet.hasAttr("lang")) lang = Language.findLanguageByID(codeSnippet.attr("lang")) ?: lang
+    val defaultProject = DefaultProjectFactory.getInstance().defaultProject
+    val psiFileFactory = PsiFileFactory.getInstance(defaultProject)
+
+    val defaultFile = psiFileFactory.createFileFromText(PlainTextLanguage.INSTANCE, "")
+    val content = codeSnippet.text().let { it.substringBefore("\n") + "\n" + it.substringAfter("\n").trimIndent() }
+      .trimEnd()
+      .replaceIndent("  ")
+    var snippet: String
+
+    try {
+      val file = psiFileFactory.createFileFromText(lang, "") ?: defaultFile
+      snippet = HTMLTextPainter.convertCodeFragmentToHTMLFragmentWithInlineStyles(file, content)
+    } catch (e: IllegalStateException) {
+      snippet = HTMLTextPainter.convertCodeFragmentToHTMLFragmentWithInlineStyles(defaultFile, content)
+    }
+
+    codeSnippet.parent()?.html(
+      snippet.removePrefix("<pre>").removeSuffix("</pre>").trimMargin()
+    )
+  }
+
+  document.select("pre").forEach { it.addClass("editor-background") }
+
+  try {
+    read(StringReader(document.html()), null)
   }
   catch (e: IOException) {
     throw RuntimeException(e)

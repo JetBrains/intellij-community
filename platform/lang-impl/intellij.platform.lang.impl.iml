@@ -68,5 +68,6 @@
     <orderEntry type="library" name="Slf4j" level="project" />
     <orderEntry type="library" name="commons-lang" level="project" />
     <orderEntry type="library" name="commons-lang3" level="project" />
+    <orderEntry type="library" name="jsoup" level="project" />
   </component>
 </module>
