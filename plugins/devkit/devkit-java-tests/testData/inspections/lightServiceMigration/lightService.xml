@@ -5,7 +5,6 @@
     <extensionPoint qualifiedName="com.intellij.applicationService" beanClass="com.intellij.openapi.components.ServiceDescriptor"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.example.demo.MyService"
-                        serviceImplementation="com.example.demo.MyServiceImpl"/>
+    <<warning descr="Service class annotated with '@Service' does not need to be registered in plugin.xml">applicationService</warning> serviceImplementation="com.example.demo.MyService"/>
   </extensions>
 </idea-plugin>

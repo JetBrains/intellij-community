@@ -1,3 +1,3 @@
-package com.example.demo;
+package com.example.demo
 
-open class MyService {}
+open class MyService

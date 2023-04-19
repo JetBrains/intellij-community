@@ -12,40 +12,33 @@ internal class KtLightServiceMigrationInspectionTest : LightServiceMigrationInsp
   private val CANNOT_BE_LIGHT_SERVICE_KT = "CannotBeLightService.kt"
 
   override fun getBasePath(): String = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/lightServiceMigration"
+  override fun getFileExtension(): String = "kt"
 
   fun testCanBeLightServiceAppLevel() {
-    myFixture.testHighlightingAllFiles(true, false, false,
-                                       getTestName(false) + ".kt",
-                                       getTestName(true) + ".xml")
+    doTest(getCodeFilePath(), getXmlFilePath())
   }
 
   fun testCanBeLightServiceProjectLevel() {
-    myFixture.testHighlightingAllFiles(true, false, false,
-                                       getTestName(false) + ".kt",
-                                       getTestName(true) + ".xml")
+    doTest(getCodeFilePath(), getXmlFilePath())
   }
 
   fun testOpenClass() {
-    myFixture.testHighlightingAllFiles(true, false, false,
-                                       getTestName(false) + ".kt",
-                                       CANNOT_BE_LIGHT_SERVICE_XML)
+    doTest(getCodeFilePath(), CANNOT_BE_LIGHT_SERVICE_XML)
   }
 
   fun testServiceInterface() {
-    myFixture.testHighlightingAllFiles(true, false, false,
-                                       CANNOT_BE_LIGHT_SERVICE_KT,
-                                       getTestName(true) + ".xml")
+    doTest(CANNOT_BE_LIGHT_SERVICE_KT, getXmlFilePath())
   }
 
   fun testPersistentStateComponent() {
-    myFixture.testHighlightingAllFiles(true, false, false,
-                                       getTestName(false) + ".kt",
-                                       CANNOT_BE_LIGHT_SERVICE_XML)
+    doTest(getCodeFilePath(), CANNOT_BE_LIGHT_SERVICE_XML)
   }
 
   fun testPreload() {
-    myFixture.testHighlightingAllFiles(true, false, false,
-                                       CANNOT_BE_LIGHT_SERVICE_KT,
-                                       getTestName(true) + ".xml")
+    doTest(CANNOT_BE_LIGHT_SERVICE_KT, getXmlFilePath())
+  }
+
+  fun testLightService() {
+    doTest(getCodeFilePath(), getXmlFilePath())
   }
 }

@@ -11,40 +11,33 @@ internal class LightServiceMigrationInspectionTest : LightServiceMigrationInspec
   private val CANNOT_BE_LIGHT_SERVICE_JAVA = "CannotBeLightService.java"
 
   override fun getBasePath(): String = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/lightServiceMigration"
+  override fun getFileExtension(): String = "java"
 
   fun testCanBeLightServiceAppLevel() {
-    myFixture.testHighlightingAllFiles(true, false, false,
-                                       getTestName(false) + ".java",
-                                       getTestName(true) + ".xml")
+    doTest(getCodeFilePath(), getXmlFilePath())
   }
 
   fun testCanBeLightServiceProjectLevel() {
-    myFixture.testHighlightingAllFiles(true, false, false,
-                                       getTestName(false) + ".java",
-                                       getTestName(true) + ".xml")
+    doTest(getCodeFilePath(), getXmlFilePath())
   }
 
   fun testNonFinalClass() {
-    myFixture.testHighlightingAllFiles(true, false, false,
-                                       getTestName(false) + ".java",
-                                       CANNOT_BE_LIGHT_SERVICE_XML)
+    doTest(getCodeFilePath(), CANNOT_BE_LIGHT_SERVICE_XML)
   }
 
   fun testServiceInterface() {
-    myFixture.testHighlightingAllFiles(true, false, false,
-                                       CANNOT_BE_LIGHT_SERVICE_JAVA,
-                                       getTestName(true) + ".xml")
+    doTest(CANNOT_BE_LIGHT_SERVICE_JAVA, getXmlFilePath())
   }
 
   fun testPersistentStateComponent() {
-    myFixture.testHighlightingAllFiles(true, false, false,
-                                       getTestName(false) + ".java",
-                                       CANNOT_BE_LIGHT_SERVICE_XML)
+    doTest(getCodeFilePath(), CANNOT_BE_LIGHT_SERVICE_XML)
   }
 
   fun testPreload() {
-    myFixture.testHighlightingAllFiles(true, false, false,
-                                       CANNOT_BE_LIGHT_SERVICE_JAVA,
-                                       getTestName(true) + ".xml")
+    doTest(CANNOT_BE_LIGHT_SERVICE_JAVA, getXmlFilePath())
+  }
+
+  fun testLightService() {
+    doTest(getCodeFilePath(), getXmlFilePath())
   }
 }
