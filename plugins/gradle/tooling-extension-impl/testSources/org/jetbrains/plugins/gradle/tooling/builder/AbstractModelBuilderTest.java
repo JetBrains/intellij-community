@@ -110,10 +110,10 @@ public abstract class AbstractModelBuilderTest {
     FileUtil.ensureExists(testDir);
 
     GradleVersion _gradleVersion = GradleVersion.version(gradleVersion);
-    String compileConfiguration = GradleBuildScriptBuilderUtil.isSupportedJavaLibraryPlugin(_gradleVersion) ? "implementation" : "compile";
-    String testCompileConfiguration = GradleBuildScriptBuilderUtil.isSupportedJavaLibraryPlugin(_gradleVersion)
+    String compileConfiguration = GradleBuildScriptBuilderUtil.isJavaLibraryPluginSupported(_gradleVersion) ? "implementation" : "compile";
+    String testCompileConfiguration = GradleBuildScriptBuilderUtil.isJavaLibraryPluginSupported(_gradleVersion)
                                       ? "testImplementation" : "testCompile";
-    String integrationTestCompileConfiguration = GradleBuildScriptBuilderUtil.isSupportedJavaLibraryPlugin(_gradleVersion)
+    String integrationTestCompileConfiguration = GradleBuildScriptBuilderUtil.isJavaLibraryPluginSupported(_gradleVersion)
                                                  ? "integrationTestImplementation"
                                                  : "integrationTestCompile";
     try (InputStream buildScriptStream = getClass().getResourceAsStream('/' + methodName + '/' + GradleConstants.DEFAULT_SCRIPT_NAME)) {

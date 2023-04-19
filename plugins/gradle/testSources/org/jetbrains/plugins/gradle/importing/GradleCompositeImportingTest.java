@@ -40,7 +40,6 @@ import org.junit.Test;
 
 import static com.intellij.openapi.roots.DependencyScope.COMPILE;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilderUtil.isSupportedJavaLibraryPlugin;
 
 /**
  * @author Vladislav.Soroka
@@ -453,8 +452,8 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
     createProjectSubFile("project-a/settings.gradle", "rootProject.name = \"project-a\"");
 
-    String mainCompileConfiguration = isSupportedJavaLibraryPlugin(getCurrentGradleVersion()) ? "implementation" : "compile";
-    String utilCompileConfiguration = isSupportedJavaLibraryPlugin(getCurrentGradleVersion()) ? "utilImplementation" : "utilCompile";
+    String mainCompileConfiguration = isJavaLibraryPluginSupported() ? "implementation" : "compile";
+    String utilCompileConfiguration = isJavaLibraryPluginSupported() ? "utilImplementation" : "utilCompile";
     createProjectSubFile("project-a/build.gradle", script(it -> {
       it.withIdeaPlugin()
         .withJavaPlugin()

@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.execution.test.events
 
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isSupportedJUnit5
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isJunit5Supported
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
@@ -11,27 +11,27 @@ import org.junit.jupiter.api.Assertions
 abstract class GradleExecutionTestCase : GradleExecutionBaseTestCase() {
 
   val jUnitTestAnnotationClass: String
-    get() = when (isSupportedJunit5()) {
+    get() = when (isJunit5Supported()) {
       true -> "org.junit.jupiter.api.Test"
       else -> "org.junit.Test"
     }
 
   val jUnitIgnoreAnnotationClass: String
-    get() = when (isSupportedJunit5()) {
+    get() = when (isJunit5Supported()) {
       true -> "org.junit.jupiter.api.Disabled"
       else -> "org.junit.Ignore"
     }
 
-  fun isSupportedTestLauncher(): Boolean {
+  fun isTestLauncherSupported(): Boolean {
     return isGradleAtLeast("7.6")
   }
 
-  private fun isSupportedJunit5(): Boolean {
-    return isSupportedJUnit5(gradleVersion)
+  private fun isJunit5Supported(): Boolean {
+    return isJunit5Supported(gradleVersion)
   }
 
   fun assertJunit5IsSupported(gradleVersion: GradleVersion) {
-    Assertions.assertTrue(isSupportedJUnit5(gradleVersion)) {
+    Assertions.assertTrue(isJunit5Supported(gradleVersion)) {
       """
         |Gradle $gradleVersion doesn't support Junit 5.
         |Please, use @TargetVersions("4.7+") annotation to ignore this version.

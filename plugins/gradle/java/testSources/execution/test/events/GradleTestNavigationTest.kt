@@ -66,7 +66,7 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
             assertPsiLocation("TestCase", "ugly_test")
           }
           assertNode("parametrized test") {
-            if (isSupportedTestLauncher()) {
+            if (isTestLauncherSupported()) {
               // Known bug. See DefaultGradleTestEventConverter.getConvertedMethodName
               assertPsiLocation("TestCase", "parametrized_test")
             }
@@ -78,7 +78,7 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
             }
           }
           assertNode("pretty parametrized test") {
-            if (isSupportedTestLauncher()) {
+            if (isTestLauncherSupported()) {
               // Known bug. See DefaultGradleTestEventConverter.getConvertedMethodName
               assertPsiLocation("TestCase", "ugly_parametrized_test")
             }

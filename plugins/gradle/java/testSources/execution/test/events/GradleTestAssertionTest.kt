@@ -75,7 +75,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
             """.trimMargin())
           }
           assertNode("test multiple assert equals for texts") {
-            if (isSupportedTestLauncher()) {
+            if (isTestLauncherSupported()) {
               assertTestConsoleContains("""
                 |
                 |assertion message 1
@@ -192,7 +192,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
             """.trimMargin())
           }
           assertNode("test assert equals for texts") {
-            if (isSupportedTestLauncher()) {
+            if (isTestLauncherSupported()) {
               assertTestConsoleContains("""
                 |
                 |Expected :"expected"

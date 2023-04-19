@@ -54,7 +54,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":processTestResources")
           assertNode(":testClasses")
           assertNode(":test") {
-            if (isSupportedTestLauncher()) {
+            if (isTestLauncherSupported()) {
               assertNode("Gradle Test Run :test") {
                 assertNode("Gradle Test Executor 1") {
                   assertNode("AppTest") {
@@ -65,7 +65,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
             }
           }
           assertNode(":additionalTest") {
-            if (isSupportedTestLauncher()) {
+            if (isTestLauncherSupported()) {
               assertNode("Gradle Test Run :additionalTest") {
                 assertNode("Gradle Test Executor 2") {
                   assertNode("AppTest") {
@@ -80,7 +80,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
               assertNode("There were failing tests. See the report at: .*".toRegex())
             }
           }
-          if (isSupportedTestLauncher()) {
+          if (isTestLauncherSupported()) {
             assertNode("Test failed.")
           }
         }
@@ -155,7 +155,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":processTestResources")
           assertNode(":testClasses")
           assertNode(":test") {
-            if (isSupportedTestLauncher()) {
+            if (isTestLauncherSupported()) {
               assertNode("Gradle Test Run :test") {
                 assertNode("Gradle Test Executor 1") {
                   assertNode("AppTest") {
@@ -247,7 +247,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":processTestResources")
           assertNode(":testClasses")
           assertNode(":test") {
-            if (isSupportedTestLauncher()) {
+            if (isTestLauncherSupported()) {
               assertNode("Gradle Test Run :test") {
                 assertNode("Gradle Test Executor 1") {
                   assertNode("TestCase") {
@@ -275,7 +275,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":processTestResources")
           assertNode(":testClasses")
           assertNode(":test") {
-            if (isSupportedTestLauncher()) {
+            if (isTestLauncherSupported()) {
               assertNode("Gradle Test Run :test") {
                 assertNode("Gradle Test Executor 2") {
                   assertNode("TestCase") {
@@ -348,7 +348,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":processTestResources")
           assertNode(":testClasses")
           assertNode(":test") {
-            if (isSupportedTestLauncher()) {
+            if (isTestLauncherSupported()) {
               assertNode("Gradle Test Run :test") {
                 assertNode("Gradle Test Executor 1") {
                   assertNode("TestCase") {
@@ -366,7 +366,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       assertTestTreeViewIsEmpty()
       assertBuildExecutionTree {
         val status = when {
-          isSupportedTestLauncher() -> "failed"
+          isTestLauncherSupported() -> "failed"
           else -> "successful"
         }
         assertNode(status) {
@@ -378,7 +378,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test")
           assertNode(":allTests")
-          if (isSupportedTestLauncher()) {
+          if (isTestLauncherSupported()) {
             assertNode("No matching tests found in any candidate test task.")
           }
         }
@@ -444,7 +444,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       assertBuildExecutionTree {
         assertNode("failed") {
           when {
-            isSupportedTestLauncher() ->
+            isTestLauncherSupported() ->
               assertNode(
                 "Task ':allTests' of type 'org.gradle.api.DefaultTask_Decorated' " +
                 "not supported for executing tests via TestLauncher API."
@@ -491,7 +491,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":processTestResources")
           assertNode(":testClasses")
           assertNode(":test") {
-            if (isSupportedTestLauncher()) {
+            if (isTestLauncherSupported()) {
               assertNode("Gradle Test Run :test") {
                 assertNode("Gradle Test Executor 1") {
                   assertNode("TestCase") {
@@ -513,7 +513,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":processTestResources")
           assertNode(":testClasses")
           assertNode(":test") {
-            if (isSupportedTestLauncher()) {
+            if (isTestLauncherSupported()) {
               assertNode("Gradle Test Run :test") {
                 assertNode("Gradle Test Executor 2") {
                   assertNode("TestCase") {
@@ -537,7 +537,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":processTestResources")
           assertNode(":testClasses")
           assertNode(":test") {
-            if (isSupportedTestLauncher()) {
+            if (isTestLauncherSupported()) {
               assertNode("Gradle Test Run :test") {
                 assertNode("Gradle Test Executor 3") {
                   assertNode("TestCase") {
