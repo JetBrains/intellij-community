@@ -186,9 +186,22 @@ class UnindexedFilesIndexer extends DumbModeTask {
     ProgressSuspender suspender = ProgressSuspender.getSuspender(indicator);
     if (suspender != null) {
       ApplicationManager.getApplication().getMessageBus().connect(this)
-        .subscribe(ProgressSuspender.TOPIC, projectIndexingHistory.getSuspendListener(suspender));
-      ApplicationManager.getApplication().getMessageBus().connect(this)
-        .subscribe(ProgressSuspender.TOPIC, projectDumbIndexingHistory.getSuspendListener(suspender));
+        .subscribe(ProgressSuspender.TOPIC, new ProgressSuspender.SuspenderListener() {
+          @Override
+          public void suspendedStatusChanged(@NotNull ProgressSuspender changedSuspender) {
+            if (suspender == changedSuspender) {
+              Instant now = Instant.now();
+              if (suspender.isSuspended()) {
+                projectIndexingHistory.suspendStages(now);
+                projectDumbIndexingHistory.suspendStages(now);
+              }
+              else {
+                projectIndexingHistory.stopSuspendingStages(now);
+                projectDumbIndexingHistory.stopSuspendingStages(now);
+              }
+            }
+          }
+        });
     }
 
     try {

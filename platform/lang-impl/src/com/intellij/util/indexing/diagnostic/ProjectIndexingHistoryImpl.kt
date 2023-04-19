@@ -2,8 +2,6 @@
 package com.intellij.util.indexing.diagnostic
 
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.progress.impl.ProgressSuspender
-import com.intellij.openapi.progress.impl.ProgressSuspender.SuspenderListener
 import com.intellij.openapi.project.Project
 import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
@@ -11,7 +9,6 @@ import com.intellij.util.indexing.diagnostic.dto.toJsonStatistics
 import com.intellij.util.indexing.snapshot.SnapshotInputMappingsStatistics
 import it.unimi.dsi.fastutil.longs.LongSet
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneOffset
@@ -115,7 +112,7 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
     val instant: Instant
 
     data class StageEvent(val stage: Stage, val started: Boolean, override val instant: Instant) : Event
-    data class SuspensionEvent(val started: Boolean, override val instant: Instant = Instant.now()) : Event
+    data class SuspensionEvent(val started: Boolean, override val instant: Instant) : Event
   }
 
   fun startStage(stage: Stage, instant: Instant) {
@@ -130,28 +127,13 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
     }
   }
 
-  fun suspendStages() {
-    synchronized(events) {
-      events.add(Event.SuspensionEvent(true))
-    }
-  }
+  fun suspendStages(instant: Instant) = doSuspend(instant, true)
 
-  fun stopSuspendingStages() {
-    synchronized(events) {
-      events.add(Event.SuspensionEvent(false))
-    }
-  }
+  fun stopSuspendingStages(instant: Instant) = doSuspend(instant, false)
 
-  fun getSuspendListener(suspender: ProgressSuspender): SuspenderListener = object : SuspenderListener {
-    override fun suspendedStatusChanged(changedSuspender: ProgressSuspender) {
-      if (suspender == changedSuspender) {
-        if (suspender.isSuspended) {
-          suspendStages()
-        }
-        else {
-          stopSuspendingStages()
-        }
-      }
+  private fun doSuspend(instant: Instant, start: Boolean) {
+    synchronized(events) {
+      events.add(Event.SuspensionEvent(start, instant))
     }
   }
 
@@ -285,20 +267,6 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
     abstract fun getProperty(): KMutableProperty1<IndexingTimesImpl, Duration>
   }
 
-  @TestOnly
-  fun suspendStages(instant: Instant) {
-    synchronized(events) {
-      events.add(Event.SuspensionEvent(true, instant))
-    }
-  }
-
-  @TestOnly
-  fun stopSuspendingStages(instant: Instant) {
-    synchronized(events) {
-      events.add(Event.SuspensionEvent(false, instant))
-    }
-  }
-
   data class StatsPerFileTypeImpl(
     override var totalNumberOfFiles: Int,
     override var totalBytes: BytesNumber,
@@ -404,28 +372,13 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     }
   }
 
-  fun suspendStages() {
-    synchronized(events) {
-      events.add(Event.SuspensionEvent(true))
-    }
-  }
+  fun suspendStages(instant: Instant) = doSuspend(instant, true)
 
-  fun stopSuspendingStages() {
-    synchronized(events) {
-      events.add(Event.SuspensionEvent(false))
-    }
-  }
+  fun stopSuspendingStages(instant: Instant) = doSuspend(instant, false)
 
-  fun getSuspendListener(suspender: ProgressSuspender): SuspenderListener = object : SuspenderListener {
-    override fun suspendedStatusChanged(changedSuspender: ProgressSuspender) {
-      if (suspender == changedSuspender) {
-        if (suspender.isSuspended) {
-          suspendStages()
-        }
-        else {
-          stopSuspendingStages()
-        }
-      }
+  private fun doSuspend(instant: Instant, start: Boolean) {
+    synchronized(events) {
+      events.add(Event.SuspensionEvent(start, instant))
     }
   }
 
@@ -564,20 +517,6 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     abstract fun getProperty(): KMutableProperty1<ScanningTimesImpl, Duration>
   }
 
-  @TestOnly
-  fun suspendStages(instant: Instant) {
-    synchronized(events) {
-      events.add(Event.SuspensionEvent(true, instant))
-    }
-  }
-
-  @TestOnly
-  fun stopSuspendingStages(instant: Instant) {
-    synchronized(events) {
-      events.add(Event.SuspensionEvent(false, instant))
-    }
-  }
-
   data class ScanningTimesImpl(
     override val scanningReason: String?,
     override val scanningType: ScanningType,
@@ -685,28 +624,15 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
     }
   }
 
-  data class SuspensionEvent(val started: Boolean, val instant: Instant = Instant.now())
+  data class SuspensionEvent(val started: Boolean, val instant: Instant)
 
-  fun suspendStages() = registerSuspension(true)
+  fun suspendStages(instant: Instant) = registerSuspension(true, instant)
 
-  fun stopSuspendingStages() = registerSuspension(false)
+  fun stopSuspendingStages(instant: Instant) = registerSuspension(false, instant)
 
-  private fun registerSuspension(started: Boolean) {
+  private fun registerSuspension(started: Boolean, instant: Instant) {
     synchronized(events) {
-      events.add(SuspensionEvent(started))
-    }
-  }
-
-  fun getSuspendListener(suspender: ProgressSuspender): SuspenderListener = object : SuspenderListener {
-    override fun suspendedStatusChanged(changedSuspender: ProgressSuspender) {
-      if (suspender == changedSuspender) {
-        if (suspender.isSuspended) {
-          suspendStages()
-        }
-        else {
-          stopSuspendingStages()
-        }
-      }
+      events.add(SuspensionEvent(started, instant))
     }
   }
 
