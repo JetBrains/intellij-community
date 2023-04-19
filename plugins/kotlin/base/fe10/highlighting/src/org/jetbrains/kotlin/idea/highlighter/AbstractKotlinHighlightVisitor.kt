@@ -2,12 +2,14 @@
 package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.codeInsight.daemon.impl.Divider
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.CommonProcessors
@@ -75,7 +77,7 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
 
         // annotate diagnostics on fly: show diagnostics as soon as front-end reports them
         // don't create quick fixes as it could require some resolve
-        val diagnosticHighlighted = mutableSetOf<Diagnostic>()
+        val highlightInfoByDiagnostic = mutableMapOf<Diagnostic, HighlightInfo>()
 
         // render of on-fly diagnostics with descriptors could lead to recursion
         fun checkIfDescriptor(candidate: Any?): Boolean =
@@ -89,17 +91,19 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
                     {
                         val element = it.psiElement
                         if (element in elements &&
-                            it !in diagnosticHighlighted &&
+                            it !in highlightInfoByDiagnostic &&
                             !RenderingContext.parameters(it).any(::checkIfDescriptor)
                         ) {
-                            annotateDiagnostic(element, holder, it, diagnosticHighlighted)
+                            annotateDiagnostic(
+                                element, holder, listOf(it), highlightInfoByDiagnostic, calculatingInProgress = true
+                            )
                         }
                     }
                 )
-            }
-            else {
+            } else {
                 file.analyzeWithAllCompilerChecks()
             }
+
         // resolve is done!
 
         val bindingContext =
@@ -111,9 +115,9 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
                 { BindingContext.EMPTY }
             )
 
-
         afterAnalysisVisitor = getAfterAnalysisVisitor(holder, bindingContext)
 
+        //cleanUpCalculatingAnnotations(highlightInfoByTextRange)
         if (!shouldHighlightErrors) return
 
         for (diagnostic in bindingContext.diagnostics) {
@@ -121,28 +125,41 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
             if (psiElement !in elements) continue
             // has been processed earlier e.g. on-fly or for some reasons it could be duplicated diagnostics for the same factory
             //  see [PsiCheckerTestGenerated$Checker.testRedeclaration]
-            if (diagnostic in diagnosticHighlighted) continue
+            if (diagnostic in highlightInfoByDiagnostic) continue
 
             // annotate diagnostics those were not possible to report (and therefore render) on-the-fly
-            annotateDiagnostic(psiElement, holder, diagnostic, diagnosticHighlighted)
+            annotateDiagnostic(
+                psiElement,
+                holder,
+                listOf(diagnostic),
+                highlightInfoByDiagnostic,
+                calculatingInProgress = false
+            )
         }
+
+        // apply quick fixes for all diagnostics grouping by element
+        highlightInfoByDiagnostic.keys
+            .groupBy { it.psiElement }
+            .forEach {
+                annotateDiagnostic(it.key, holder, it.value, highlightInfoByDiagnostic, calculatingInProgress = false)
+            }
     }
 
     private fun annotateDiagnostic(
         element: PsiElement,
         holder: HighlightInfoHolder,
-        diagnostic: Diagnostic,
-        diagnosticHighlighted: MutableSet<Diagnostic>
+        diagnostics: List<Diagnostic>,
+        highlightInfoByDiagnostic: MutableMap<Diagnostic, HighlightInfo>? = null,
+        calculatingInProgress: Boolean = true
     ) {
         if (element.getUserData(DO_NOT_HIGHLIGHT_KEY) != null) return
-        val diagnostics = listOf(diagnostic)
         assertBelongsToTheSameElement(element, diagnostics)
         if (element is KtNameReferenceExpression) {
             val unresolved = diagnostics.any { it.factory == Errors.UNRESOLVED_REFERENCE }
             element.putUserData(UNRESOLVED_KEY, if (unresolved) Unit else null)
         }
         ElementAnnotator(element) { shouldSuppressUnusedParameter(it) }
-            .registerDiagnosticsAnnotations(holder, diagnostics, diagnosticHighlighted)
+            .registerDiagnosticsAnnotations(holder, diagnostics, highlightInfoByDiagnostic, calculatingInProgress)
     }
 
     protected open fun shouldSuppressUnusedParameter(parameter: KtParameter): Boolean = false

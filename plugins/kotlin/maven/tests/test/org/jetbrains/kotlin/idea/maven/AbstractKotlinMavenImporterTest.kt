@@ -59,6 +59,7 @@ import org.junit.Assert
 import org.junit.Assert.assertNotEquals
 import org.junit.Test
 import java.io.File
+import java.io.File.pathSeparatorChar
 
 abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() {
     protected val kotlinVersion = "1.1.3"
@@ -818,10 +819,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                     Assert.assertEquals(true, sourceMap)
                     Assert.assertEquals("commonjs", moduleKind)
                 }
-                Assert.assertEquals(
-                    "-meta-info -output test.js",
-                    compilerSettings!!.additionalArguments
-                )
+                Assert.assertEquals("", compilerSettings!!.additionalArguments)
             }
 
             val rootManager = ModuleRootManager.getInstance(getModule("project"))
@@ -996,7 +994,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
 
             importProject(
-                """
+                /* xml = */ """
             <groupId>test</groupId>
             <artifactId>project</artifactId>
             <version>1.0.0</version>
@@ -2157,11 +2155,11 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
     }
 
     class JpsCompilerMultiModule : AbstractKotlinMavenImporterTest() {
-      override fun runInDispatchThread(): Boolean {
-        return false
-      }
+        override fun runInDispatchThread(): Boolean {
+            return false
+        }
 
-      @Test
+        @Test
         fun testJpsCompilerMultiModule() {
             createProjectSubDirs(
                 "src/main/kotlin",

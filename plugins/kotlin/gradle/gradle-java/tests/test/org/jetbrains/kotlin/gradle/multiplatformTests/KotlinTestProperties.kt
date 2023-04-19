@@ -16,7 +16,6 @@ class KotlinTestProperties private constructor(
     private val gradleVersionFromEnv: GradleVersion,
     private val agpVersionFromEnv: String,
     private val devModeTweaks: DevModeTweaks?,
-    private val simplePropertiesValuesById: Map<String, String>,
 ) {
     val kotlinGradlePluginVersion: KotlinToolingVersion
         get() = devModeTweaks?.overrideKgpVersion?.let { KotlinToolingVersion(it) } ?: kotlinGradlePluginVersionFromEnv
@@ -27,9 +26,13 @@ class KotlinTestProperties private constructor(
     val agpVersion: String
         get() = devModeTweaks?.overrideAgpVersion ?: agpVersionFromEnv
 
+
+
     fun substituteKotlinTestPropertiesInText(text: String, sourceFile: File): String {
+        val simpleProperties =  SimpleProperties(gradleVersion, kotlinGradlePluginVersion)
+
         // Important! Collect final properties exactly here to get versions with devModeTweaks applied
-        val allPropertiesValuesById = simplePropertiesValuesById.toMutableMap().apply {
+        val allPropertiesValuesById = simpleProperties.toMutableMap().apply {
             put(KotlinGradlePluginVersionTestsProperty.id, kotlinGradlePluginVersion.toString())
             put(GradleVersionTestsProperty.id, gradleVersion.version)
             put(AndroidGradlePluginVersionTestsProperty.id, agpVersion)
@@ -81,14 +84,11 @@ class KotlinTestProperties private constructor(
             val kgpVersionRaw = KotlinGradlePluginVersionTestsProperty.resolveFromEnvironment()
             val kgpVersion = KotlinToolingVersion(kgpVersionRaw)
 
-            val simpleProperties = SimpleProperties(gradleVersion, kgpVersion)
-
             return KotlinTestProperties(
                 kgpVersion,
                 gradleVersion,
                 agpVersion,
                 testConfiguration?.getConfiguration(DevModeTestFeature),
-                simpleProperties
             )
         }
     }

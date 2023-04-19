@@ -44,16 +44,15 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.configuration.KOTLIN_GROUP_ID
 import org.jetbrains.kotlin.idea.facet.*
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
-import org.jetbrains.kotlin.idea.gradle.configuration.*
+import org.jetbrains.kotlin.idea.gradle.configuration.GradlePropertiesFileFacade
 import org.jetbrains.kotlin.idea.gradle.configuration.GradlePropertiesFileFacade.Companion.KOTLIN_CODE_STYLE_GRADLE_SETTING
+import org.jetbrains.kotlin.idea.gradle.configuration.ImplementedModulesAware
+import org.jetbrains.kotlin.idea.gradle.configuration.KotlinGradleSourceSetData
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.KOTLIN_NATIVE_LIBRARY_PREFIX
+import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSetData
 import org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger
-import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl
 import org.jetbrains.kotlin.idea.gradleJava.inspections.getResolvedVersionByModuleData
 import org.jetbrains.kotlin.idea.gradleJava.migrateNonJvmSourceFolders
-import org.jetbrains.kotlin.idea.gradleTooling.CompilerArgumentsBySourceSet
-import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo
-import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheHolder
 import org.jetbrains.kotlin.library.KLIB_FILE_EXTENSION
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.impl.isCommon
@@ -63,12 +62,6 @@ import org.jetbrains.kotlin.psi.UserDataProperty
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import java.io.File
-
-@Suppress("TYPEALIAS_EXPANSION_DEPRECATION", "DEPRECATION", "UNUSED")
-@Deprecated("Compiler arguments are stored in KotlinGradleSourceSetData nodes cached", level = DeprecationLevel.ERROR)
-var Module.compilerArgumentsBySourceSet
-        by UserDataProperty(Key.create<CompilerArgumentsBySourceSet>("CURRENT_COMPILER_ARGUMENTS"))
 
 var Module.sourceSetName
         by UserDataProperty(Key.create<String>("SOURCE_SET_NAME"))
@@ -237,7 +230,7 @@ fun detectPlatformByPlugin(moduleNode: DataNode<ModuleData>): TargetPlatformKind
     }
 }
 
-private fun detectPlatformByLibrary(moduleNode: DataNode<ModuleData>): IdePlatformKind? {
+internal fun detectPlatformByLibrary(moduleNode: DataNode<ModuleData>): IdePlatformKind? {
     val detectedPlatforms =
         mavenLibraryIdToPlatform.entries
             .filter { moduleNode.getResolvedVersionByModuleData(KOTLIN_GROUP_ID, listOf(it.key)) != null }
@@ -306,13 +299,10 @@ fun configureFacetByGradleModule(
     }
     ideModule.hasExternalSdkConfiguration = sourceSetNode?.data?.sdkName != null
 
-    val cacheHolder = CompilerArgumentsCacheMergeManager.compilerArgumentsCacheHolder
     val kotlinGradleSourceSetData = kotlinGradleSourceSetDataNode?.data
 
-    val cachedArgsInfo = kotlinGradleSourceSetData?.cachedArgsInfo
-    if (cachedArgsInfo != null) {
-        configureFacetByCachedCompilerArguments(kotlinFacet, cachedArgsInfo, cacheHolder, modelsProvider)
-        kotlinGradleSourceSetData.isProcessed = true
+    kotlinGradleSourceSetData?.compilerArguments?.let { compilerArguments ->
+        configureFacetWithCompilerArguments(kotlinFacet, modelsProvider, compilerArguments)
     }
 
     val implementedModulesAware = (kotlinGradleSourceSetData ?: kotlinGradleProjectData) as ImplementedModulesAware
@@ -335,37 +325,28 @@ fun configureFacetByGradleModule(
 }
 
 private fun KotlinFacetSettings.configureOutputPaths(moduleNode: DataNode<ModuleData>, platformKind: IdePlatformKind?) {
-
-    fun DataNode<KotlinGradleSourceSetData>.compilerArgumentsOrNull(cacheHolder: CompilerArgumentsCacheHolder): CommonCompilerArguments? =
-        CachedArgumentsRestoring.restoreExtractedArgs(data.cachedArgsInfo, cacheHolder).currentCompilerArguments
-
     if (!platformKind.isJavaScript) {
         productionOutputPath = null
         testOutputPath = null
         return
     }
 
-    val cacheHolder = CompilerArgumentsCacheMergeManager.compilerArgumentsCacheHolder
     val kotlinGradleProjectDataNode = moduleNode.kotlinGradleProjectDataNodeOrNull ?: return
     val kotlinGradleSourceSetDataNodes = ExternalSystemApiUtil.findAll(kotlinGradleProjectDataNode, KotlinGradleSourceSetData.KEY)
     kotlinGradleSourceSetDataNodes.find { it.data.sourceSetName == "main" }?.let {
-        productionOutputPath = (it.compilerArgumentsOrNull(cacheHolder) as? K2JSCompilerArguments)?.outputFile
+        productionOutputPath = (it.data.compilerArguments as? K2JSCompilerArguments)?.outputFile
     }
     kotlinGradleSourceSetDataNodes.find { it.data.sourceSetName == "test" }?.let {
-        testOutputPath = (it.compilerArgumentsOrNull(cacheHolder) as? K2JSCompilerArguments)?.outputFile
+        testOutputPath = (it.data.compilerArguments as? K2JSCompilerArguments)?.outputFile
     }
 }
 
-fun configureFacetByCachedCompilerArguments(
+fun configureFacetWithCompilerArguments(
     kotlinFacet: KotlinFacet,
-    cachedArgsInfo: CachedExtractedArgsInfo,
-    cacheHolder: CompilerArgumentsCacheHolder,
-    modelsProvider: IdeModifiableModelsProvider?
+    modelsProvider: IdeModifiableModelsProvider?,
+    compilerArguments: CommonCompilerArguments,
 ) {
-    with(CachedArgumentsRestoring.restoreExtractedArgs(cachedArgsInfo, cacheHolder)) {
-        applyCompilerArgumentsToFacet(currentCompilerArguments, defaultCompilerArguments, kotlinFacet, modelsProvider)
-        adjustClasspath(kotlinFacet, dependencyClasspath.toList())
-    }
+    applyCompilerArgumentsToFacet(compilerArguments, kotlinFacet, modelsProvider)
 }
 
 private fun getAdditionalVisibleModuleNames(moduleNode: DataNode<ModuleData>, sourceSetName: String): Set<String> {
@@ -379,13 +360,4 @@ private fun getAdditionalVisibleModuleNames(moduleNode: DataNode<ModuleData>, so
                 }
         }.map { it.id }
         .toSet()
-}
-
-internal fun adjustClasspath(kotlinFacet: KotlinFacet, dependencyClasspath: List<String>) {
-    if (dependencyClasspath.isEmpty()) return
-    val arguments = kotlinFacet.configuration.settings.compilerArguments as? K2JVMCompilerArguments ?: return
-    val fullClasspath = arguments.classpath?.split(File.pathSeparator) ?: emptyList()
-    if (fullClasspath.isEmpty()) return
-    val newClasspath = fullClasspath - dependencyClasspath
-    arguments.classpath = if (newClasspath.isNotEmpty()) newClasspath.joinToString(File.pathSeparator) else null
 }

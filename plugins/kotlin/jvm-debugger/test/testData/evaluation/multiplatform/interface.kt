@@ -6,9 +6,9 @@ expect interface Platform {
     open fun name2(param: String = "name2"): String
 }
 
-// MODULE: jvm
+// MODULE: jvm(common)
 // FILE: jvm.kt
-// DEPENDS_ON: common
+
 
 actual interface Platform {
     actual fun name1() = "name1"

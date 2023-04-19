@@ -12,12 +12,8 @@ import org.gradle.tooling.model.Model
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.tooling.model.gradle.GradleBuild
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo
-import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheMapperImpl
-import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCachingChain
-import org.jetbrains.kotlin.idea.gradleTooling.arguments.KotlinCachedRegularCompilerArgument
-import org.jetbrains.kotlin.idea.projectModel.CompilerArgumentsCacheAware
 import org.jetbrains.kotlin.idea.projectModel.KotlinTaskProperties
+import org.jetbrains.kotlin.tooling.core.Interner
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
@@ -27,49 +23,25 @@ import java.io.Serializable
 import java.lang.reflect.InvocationTargetException
 import java.util.*
 
-@Deprecated("Use org.jetbrains.kotlin.idea.projectModel.CachedArgsInfo instead")
-interface ArgsInfo : Serializable {
-    val currentArguments: List<String>
-    val defaultArguments: List<String>
-    val dependencyClasspath: List<String>
-}
-
-@Suppress("DEPRECATION")
-@Deprecated("Use org.jetbrains.kotlin.idea.gradleTooling.CachedCompilerArgumentsBySourceSet instead")
-typealias CompilerArgumentsBySourceSet = Map<String, ArgsInfo>
-typealias CachedCompilerArgumentsBySourceSet = Map<String, CachedExtractedArgsInfo>
-
 typealias AdditionalVisibleSourceSetsBySourceSet = Map</* Source Set Name */ String, /* Visible Source Set Names */ Set<String>>
+
+typealias CompilerArgumentsBySourceSet = Map< /* Source Set Name */ String, /* Arguments */ List<String>>
 
 interface KotlinGradleModel : Serializable {
     val hasKotlinPlugin: Boolean
-
-    @Suppress("DEPRECATION", "TYPEALIAS_EXPANSION_DEPRECATION")
-    @Deprecated(
-        "Use 'cachedCompilerArgumentsBySourceSet' instead",
-        ReplaceWith("cachedCompilerArgumentsBySourceSet"),
-        DeprecationLevel.ERROR
-    )
     val compilerArgumentsBySourceSet: CompilerArgumentsBySourceSet
     val additionalVisibleSourceSets: AdditionalVisibleSourceSetsBySourceSet
-    val cachedCompilerArgumentsBySourceSet: CachedCompilerArgumentsBySourceSet
     val coroutines: String?
     val platformPluginId: String?
     val implements: List<String>
     val kotlinTarget: String?
     val kotlinTaskProperties: KotlinTaskPropertiesBySourceSet
     val gradleUserHome: String
-    val cacheAware: CompilerArgumentsCacheAware
-
-    @Deprecated(level = DeprecationLevel.WARNING, message = "Use KotlinGradleModel#cacheAware instead")
-    val partialCacheAware: CompilerArgumentsCacheAware
 }
 
 data class KotlinGradleModelImpl(
     override val hasKotlinPlugin: Boolean,
-    @Suppress("OverridingDeprecatedMember", "DEPRECATION", "TYPEALIAS_EXPANSION_DEPRECATION")
     override val compilerArgumentsBySourceSet: CompilerArgumentsBySourceSet,
-    override val cachedCompilerArgumentsBySourceSet: CachedCompilerArgumentsBySourceSet,
     override val additionalVisibleSourceSets: AdditionalVisibleSourceSetsBySourceSet,
     override val coroutines: String?,
     override val platformPluginId: String?,
@@ -77,17 +49,7 @@ data class KotlinGradleModelImpl(
     override val kotlinTarget: String? = null,
     override val kotlinTaskProperties: KotlinTaskPropertiesBySourceSet,
     override val gradleUserHome: String,
-    override val cacheAware: CompilerArgumentsCacheAware
-) : KotlinGradleModel {
-
-    @Deprecated(
-        "Use KotlinGradleModel#cacheAware instead", level = DeprecationLevel.ERROR,
-        replaceWith = ReplaceWith("KotlinGradleModel#cacheAware")
-    )
-    @Suppress("OverridingDeprecatedMember")
-    override val partialCacheAware: CompilerArgumentsCacheAware
-        get() = cacheAware
-}
+) : KotlinGradleModel
 
 abstract class AbstractKotlinGradleModelBuilder : ModelBuilderService {
     companion object {
@@ -245,6 +207,7 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
     }
 
     private fun buildAll(project: Project, builderContext: ModelBuilderContext?): KotlinGradleModelImpl? {
+        val interner = Interner()
         // When running in Android Studio, Android Studio would request specific source sets only to avoid syncing
         // currently not active build variants. We convert names to the lower case to avoid ambiguity with build variants
         // accidentally named starting with upper case.
@@ -258,10 +221,9 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
             return null
         }
 
-        val cachedCompilerArgumentsBySourceSet = LinkedHashMap<String, CachedExtractedArgsInfo>()
+        val compilerArgumentsBySourceSet = LinkedHashMap<String, List<String>>()
         val additionalVisibleSourceSets = LinkedHashMap<String, Set<String>>()
         val extraProperties = HashMap<String, KotlinTaskProperties>()
-        val argsMapper = CompilerArgumentsCacheMapperImpl()
 
         val kotlinCompileTasks = target?.let { it.compilations ?: emptyList() }
             ?.mapNotNull { compilation -> compilation.getCompileKotlinTaskName(project) }
@@ -271,12 +233,8 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
             if (compileTask.javaClass.name !in kotlinCompileTaskClasses) return@forEach
             val sourceSetName = compileTask.getSourceSetName()
             if (androidVariantRequest.shouldSkipSourceSet(sourceSetName)) return@forEach
-            val currentArguments = CompilerArgumentsCachingChain.extractAndCacheTask(compileTask, argsMapper, defaultsOnly = false)
-            val defaultArguments = CompilerArgumentsCachingChain.extractAndCacheTask(compileTask, argsMapper, defaultsOnly = true)
-            val dependencyClasspath = compileTask.getDependencyClasspath()
-                .map { KotlinCachedRegularCompilerArgument(argsMapper.cacheArgument(it)) }
-            cachedCompilerArgumentsBySourceSet[sourceSetName] =
-                CachedExtractedArgsInfo(argsMapper.cacheOriginIdentifier, currentArguments, defaultArguments, dependencyClasspath)
+            compilerArgumentsBySourceSet[sourceSetName] = resolveCompilerArguments(compileTask).orEmpty()
+                .map(interner::getOrPut)
 
             additionalVisibleSourceSets[sourceSetName] = getAdditionalVisibleSourceSets(project, sourceSetName)
             extraProperties.acknowledgeTask(compileTask, null)
@@ -287,8 +245,7 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
 
         return KotlinGradleModelImpl(
             hasKotlinPlugin = kotlinPluginId != null || platformPluginId != null,
-            compilerArgumentsBySourceSet = emptyMap(),
-            cachedCompilerArgumentsBySourceSet = cachedCompilerArgumentsBySourceSet,
+            compilerArgumentsBySourceSet = compilerArgumentsBySourceSet,
             additionalVisibleSourceSets = additionalVisibleSourceSets,
             coroutines = getCoroutines(project),
             platformPluginId = platform,
@@ -296,7 +253,6 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
             kotlinTarget = platform ?: kotlinPluginId,
             kotlinTaskProperties = extraProperties,
             gradleUserHome = project.gradle.gradleUserHomeDir.absolutePath,
-            cacheAware = argsMapper
         )
     }
 }
