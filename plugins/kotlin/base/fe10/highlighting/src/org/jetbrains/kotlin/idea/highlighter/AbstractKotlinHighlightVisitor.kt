@@ -9,7 +9,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.CommonProcessors
@@ -120,22 +119,18 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
         //cleanUpCalculatingAnnotations(highlightInfoByTextRange)
         if (!shouldHighlightErrors) return
 
-        for (diagnostic in bindingContext.diagnostics) {
-            val psiElement = diagnostic.psiElement
-            if (psiElement !in elements) continue
-            // has been processed earlier e.g. on-fly or for some reasons it could be duplicated diagnostics for the same factory
-            //  see [PsiCheckerTestGenerated$Checker.testRedeclaration]
-            if (diagnostic in highlightInfoByDiagnostic) continue
-
-            // annotate diagnostics those were not possible to report (and therefore render) on-the-fly
-            annotateDiagnostic(
-                psiElement,
-                holder,
-                listOf(diagnostic),
-                highlightInfoByDiagnostic,
-                calculatingInProgress = false
-            )
-        }
+        bindingContext.diagnostics
+            .filter { diagnostic ->
+                diagnostic.psiElement in elements
+                        // has been processed earlier e.g. on-fly or for some reasons it could be duplicated diagnostics for the same factory
+                        //  see [PsiCheckerTestGenerated$Checker.testRedeclaration]
+                        && diagnostic !in highlightInfoByDiagnostic
+            }
+            .groupBy { it.psiElement }
+            .forEach { (psiElement, diagnostics) ->
+                // annotate diagnostics those were not possible to report (and therefore render) on-the-fly
+                annotateDiagnostic(psiElement, holder, diagnostics, highlightInfoByDiagnostic, calculatingInProgress = false)
+            }
 
         // apply quick fixes for all diagnostics grouping by element
         highlightInfoByDiagnostic.keys
