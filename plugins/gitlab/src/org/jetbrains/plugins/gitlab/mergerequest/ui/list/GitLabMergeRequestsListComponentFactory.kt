@@ -2,10 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.list
 
 import com.intellij.collaboration.ui.codereview.Avatar
-import com.intellij.collaboration.ui.codereview.list.NamedCollection
-import com.intellij.collaboration.ui.codereview.list.ReviewListComponentFactory
-import com.intellij.collaboration.ui.codereview.list.ReviewListItemPresentation
-import com.intellij.collaboration.ui.codereview.list.UserPresentation
+import com.intellij.collaboration.ui.codereview.list.*
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CollectionListModel
@@ -28,7 +25,10 @@ internal object GitLabMergeRequestsListComponentFactory {
         id = "!${mergeRequest.iid}",
         createdDate = mergeRequest.createdAt,
         author = userPresentation(mergeRequest.author, avatarIconsProvider),
-        tagGroup = null,
+        tagGroup = NamedCollection.create(
+          GitLabBundle.message("merge.request.list.renderer.labels.popup", mergeRequest.labels.size),
+          mergeRequest.labels.map(::getLabelPresentation)
+        ),
         mergeableStatus = getMergeableStatus(mergeRequest.mergeStatus),
         buildStatus = null,
         state = getMergeStateText(mergeRequest.state, mergeRequest.draft),
@@ -43,6 +43,10 @@ internal object GitLabMergeRequestsListComponentFactory {
         commentsCounter = null
       )
     }
+  }
+
+  private fun getLabelPresentation(label: String): TagPresentation {
+    return TagPresentation.Simple(label, null)
   }
 
   private fun userPresentation(user: GitLabUserDTO, avatarIconsProvider: IconsProvider<GitLabUserDTO>): UserPresentation {

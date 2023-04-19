@@ -9,6 +9,12 @@ fragment mergeRequest on MergeRequest {
   targetBranch
   sourceBranch
 
+  labels(first: 100) {
+    nodes {
+      title
+    }
+  }
+
   diffRefs {
     baseSha
     startSha
