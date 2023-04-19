@@ -13,7 +13,7 @@ class RollingFileSupplier(private val basePath: Path) : Supplier<Path> {
   private var currentPath: Path? = null
 
   override fun get(): Path {
-    val generateNewPath = currentPath?.let { Files.size(it) > maxSizeBeforeRoll } ?: true
+    val generateNewPath = currentPath?.let { Files.exists(it) && Files.size(it) > maxSizeBeforeRoll } ?: true
     if (generateNewPath) {
       currentPath = generateFileForMetrics(basePath)
       Files.write(currentPath, csvHeadersLines(), StandardOpenOption.CREATE, StandardOpenOption.WRITE)
