@@ -2,6 +2,7 @@
 package com.intellij.execution.vmOptions
 
 
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.icons.AllIcons
 import com.intellij.java.JavaBundle
 import com.intellij.model.Pointer
@@ -22,7 +23,8 @@ data class VMOption(
   val defaultValue: @NlsSafe String?,
   val kind: VMOptionKind,
   val doc: @NlsSafe String?,
-  val variant: VMOptionVariant
+  val variant: VMOptionVariant,
+  val decorator: VMOptionLookupElementDecorator? = null
 ) : Symbol, DocumentationTarget {
   override fun createPointer(): Pointer<out VMOption> = Pointer.hardPointer(this)
 
@@ -59,8 +61,8 @@ data class VMOption(
      * Create a new option specifying -D property
      */
     @JvmStatic
-    fun property(name: String, type: String?, doc: String?): VMOption {
-      return VMOption(name, type, null, VMOptionKind.Product, doc, VMOptionVariant.D)
+    fun property(name: String, type: String?, doc: String?, decorator: VMOptionLookupElementDecorator?): VMOption {
+      return VMOption(name, type, null, VMOptionKind.Product, doc, VMOptionVariant.D, decorator)
     }
   }
 }
@@ -126,4 +128,8 @@ enum class VMOptionKind {
     Diagnostic -> AllIcons.General.ShowInfos
     Experimental -> AllIcons.General.ShowWarning
   }
+}
+
+fun interface VMOptionLookupElementDecorator {
+  fun tune(lookupElement: LookupElement): LookupElement
 }

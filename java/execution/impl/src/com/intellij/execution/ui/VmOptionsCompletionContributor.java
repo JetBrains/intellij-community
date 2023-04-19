@@ -54,7 +54,7 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
   };
 
   private static VMOption opt(@NotNull String name, @NotNull String doc) {
-    return new VMOption(name, null, null, VMOptionKind.Standard, doc, VMOptionVariant.DASH);
+    return new VMOption(name, null, null, VMOptionKind.Standard, doc, VMOptionVariant.DASH, null);
   }
 
   @Override
@@ -108,8 +108,15 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
       LookupElementBuilder builder = LookupElementBuilder.create(option.createPointer(), fullLookup)
         .withTypeText(option.getType())
         .withPresentableText(fullLookup);
-      Character suffix = option.getVariant().suffix();
-      result.addElement(TailTypeDecorator.withTail(builder, suffix == null ? null : new CharTailType(suffix)));
+      VMOptionLookupElementDecorator decorator = option.getDecorator();
+      if (decorator != null) {
+        result.addElement(decorator.tune(builder));
+      }
+      else {
+        Character suffix = option.getVariant().suffix();
+        TailType tailType = suffix == null ? null : new CharTailType(suffix);
+        result.addElement(TailTypeDecorator.withTail(builder, tailType));
+      }
     });
   }
 
