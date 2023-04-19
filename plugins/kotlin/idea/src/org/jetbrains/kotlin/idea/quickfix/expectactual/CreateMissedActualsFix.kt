@@ -264,15 +264,8 @@ private class CreateMissedActualsDialog(
         return allModules.filter { module -> module !in allActualizedModules }
     }
 
-    private fun getNewFilePathForModule(module: Module): Path {
-        val simpleName = simpleModuleNames[module].orEmpty()
-        val suffixToRemove = listOf("Main", "Test").firstOrNull { simpleName.endsWith(it) }.orEmpty()
-        val modulePlatformName = simpleName.removeSuffix(suffixToRemove).takeIf { it.isNotBlank() }
-        return Path(
-            filePathProperty.get().removePrefix(File.separator).removeSuffix(".kt") +
-                    modulePlatformName?.let { ".$it" }.orEmpty() + ".kt"
-        )
-    }
+    private fun getNewFilePathForModule(module: Module) =
+        getNewFilePathForModule(filePathProperty.get(), module, simpleModuleNames)
 
     //Observer for UI changes
     private inner class ModuleCheckBoxPredicate(val module: Module) : ComponentPredicate() {
