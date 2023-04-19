@@ -63,6 +63,11 @@ fun JEditorPane.readHTMLWithCodeHighlighting(text: String, language: String?) {
   var lang = Language.findLanguageByID(language) ?: PlainTextLanguage.INSTANCE
   val document = Jsoup.parse(text)
 
+  // IDEA-318323
+  if (text.contains("<body>\n<p>")) {
+    document.select("body > :first-child").first()?.tagName("div")
+  }
+
   document.select("pre code").forEach { codeSnippet ->
     if (codeSnippet.hasAttr("lang")) lang = Language.findLanguageByID(codeSnippet.attr("lang")) ?: lang
     val defaultProject = DefaultProjectFactory.getInstance().defaultProject
