@@ -207,8 +207,8 @@ public final class MavenArtifactDownloader {
               myProgress.checkCanceled();
               myProgress.setFraction(((double)downloaded.getAndIncrement()) / finalTotal);
 
-              MavenArtifact a = embedder.resolve(new MavenArtifactInfo(id, eachElement.extension, eachElement.classifier),
-                                                 new ArrayList<>(data.repositories));
+              MavenArtifactInfo info = new MavenArtifactInfo(id, eachElement.extension, eachElement.classifier);
+              MavenArtifact a = embedder.resolve(List.of(info), new ArrayList<>(data.repositories)).get(0);
               File file = a.getFile();
               if (file.exists()) {
                 synchronized (downloadedFiles) {

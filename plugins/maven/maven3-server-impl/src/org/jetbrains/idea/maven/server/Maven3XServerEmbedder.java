@@ -1455,21 +1455,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     return null;
   }
 
-  @NotNull
-  @Override
-  public MavenArtifact resolve(@NotNull MavenArtifactInfo info,
-                               @NotNull List<MavenRemoteRepository> remoteRepositories,
-                               MavenToken token)
-    throws RemoteException {
-    MavenServerUtil.checkToken(token);
-    try {
-      return doResolve(info, remoteRepositories);
-    }
-    catch (Exception e) {
-      throw wrapToSerializableRuntimeException(e);
-    }
-  }
-
   @Deprecated
   @NotNull
   @Override
@@ -1734,6 +1719,26 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       Maven3ServerGlobals.getLogger().warn(e);
     }
     return null;
+  }
+
+  @NotNull
+  @Override
+  public List<MavenArtifact> resolve(@NotNull Collection<MavenArtifactInfo> infos,
+                                     @NotNull List<MavenRemoteRepository> remoteRepositories,
+                                     MavenToken token)
+    throws RemoteException {
+    MavenServerUtil.checkToken(token);
+    try {
+      List<MavenArtifact> artifacts = new ArrayList<>();
+      for (MavenArtifactInfo info : infos) {
+        MavenArtifact artifact = doResolve(info, remoteRepositories);
+        artifacts.add(artifact);
+      }
+      return artifacts;
+    }
+    catch (Exception e) {
+      throw wrapToSerializableRuntimeException(e);
+    }
   }
 
   private MavenArtifact doResolve(MavenArtifactInfo info, List<MavenRemoteRepository> remoteRepositories) throws RemoteException {
