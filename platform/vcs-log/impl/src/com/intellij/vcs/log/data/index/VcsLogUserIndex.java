@@ -46,11 +46,11 @@ final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitD
   private static final @NonNls String USERS_IDS = "users-ids";
   private final @NotNull UserIndexer myUserIndexer;
 
-  VcsLogUserIndex(@NotNull StorageId storageId,
-                         @Nullable StorageLockContext storageLockContext,
-                         @NotNull VcsUserRegistry userRegistry,
-                         @NotNull VcsLogErrorHandler errorHandler,
-                         @NotNull Disposable disposableParent) throws IOException {
+  VcsLogUserIndex(@NotNull StorageId.Directory storageId,
+                  @Nullable StorageLockContext storageLockContext,
+                  @NotNull VcsUserRegistry userRegistry,
+                  @NotNull VcsLogErrorHandler errorHandler,
+                  @NotNull Disposable disposableParent) throws IOException {
     super(storageId,
           USERS,
           new UserIndexer(createUserEnumerator(storageId, storageLockContext, userRegistry)),
@@ -68,7 +68,7 @@ final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitD
                       new KeyCollectionForwardIndexAccessor<>(new IntCollectionDataExternalizer()));
   }
 
-  private static @NotNull PersistentEnumerator<VcsUser> createUserEnumerator(@NotNull StorageId storageId,
+  private static @NotNull PersistentEnumerator<VcsUser> createUserEnumerator(@NotNull StorageId.Directory storageId,
                                                                              @Nullable StorageLockContext storageLockContext,
                                                                              @NotNull VcsUserRegistry userRegistry) throws IOException {
     Path storageFile = storageId.getStorageFile(USERS_IDS);

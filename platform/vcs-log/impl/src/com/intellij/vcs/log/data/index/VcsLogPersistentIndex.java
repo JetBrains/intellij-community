@@ -71,8 +71,6 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
   private final @NotNull VcsLogIndexCollector myIndexCollector;
   private final @NotNull CheckedDisposable myDisposableFlag = Disposer.newCheckedDisposable();
 
-  private final @NotNull StorageId myIndexStorageId;
-
   private final @Nullable VcsLogStorageBackend myBackend;
   private final @Nullable IndexDataGetter myDataGetter;
 
@@ -105,9 +103,8 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     myIndexers = getAvailableIndexers(providers);
     myRoots = new LinkedHashSet<>(myIndexers.keySet());
 
-    String logId = calcLogId(myProject, providers);
-    myIndexStorageId = new StorageId(myProject.getName(), INDEX, logId, VcsLogStorageImpl.VERSION + VERSION);
-    myBackend = createIndexStorageBackend(myStorage, myRoots, myIndexStorageId, errorHandler);
+    String logId = calcLogId(project, providers);
+    myBackend = createIndexStorageBackend(myProject, myStorage, myRoots, logId, errorHandler);
     if (myBackend != null) {
       myDataGetter = new IndexDataGetter(myProject, ContainerUtil.filter(providers, root -> myRoots.contains(root)),
                                          myBackend, myStorage, myErrorHandler);
@@ -135,18 +132,21 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     return Math.max(1, Registry.intValue("vcs.log.index.limit.minutes"));
   }
 
-  private @Nullable VcsLogStorageBackend createIndexStorageBackend(@NotNull VcsLogStorage storage,
+  private @Nullable VcsLogStorageBackend createIndexStorageBackend(@NotNull Project project,
+                                                                   @NotNull VcsLogStorage storage,
                                                                    @NotNull Set<VirtualFile> roots,
-                                                                   @NotNull StorageId indexStorageId,
+                                                                   @NotNull String logId,
                                                                    @NotNull VcsLogErrorHandler errorHandler) {
     if (storage instanceof VcsLogStorageBackend) return (VcsLogStorageBackend)storage;
-    VcsUserRegistry userRegistry = myProject.getService(VcsUserRegistry.class);
+
+    StorageId.Directory storageId = new StorageId.Directory(project.getName(), INDEX, logId, VcsLogStorageImpl.VERSION + VERSION);
+    VcsUserRegistry userRegistry = project.getService(VcsUserRegistry.class);
     try {
       return IOUtil.openCleanOrResetBroken(
-        () -> new PhmVcsLogStorageBackend(indexStorageId, storage, roots, userRegistry, errorHandler, this),
+        () -> new PhmVcsLogStorageBackend(storageId, storage, roots, userRegistry, errorHandler, this),
         () -> {
-          if (!indexStorageId.cleanupAllStorageFiles()) {
-            LOG.error("Could not clean up storage files in " + indexStorageId.getProjectStorageDir());
+          if (!storageId.cleanupAllStorageFiles()) {
+            LOG.error("Could not clean up storage files in " + storageId.getStoragePath());
           }
         });
     }
@@ -275,8 +275,9 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     myListeners.remove(l);
   }
 
-  public @NotNull StorageId getIndexStorageId() {
-    return myIndexStorageId;
+  public @Nullable StorageId getIndexStorageId() {
+    if (myBackend == null) return null;
+    return myBackend.getStorageId();
   }
 
   @Override

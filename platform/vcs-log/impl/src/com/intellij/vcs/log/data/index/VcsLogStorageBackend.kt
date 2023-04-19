@@ -4,11 +4,13 @@ package com.intellij.vcs.log.data.index
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogTextFilter
 import com.intellij.vcs.log.impl.VcsLogIndexer
+import com.intellij.vcs.log.util.StorageId
 import it.unimi.dsi.fastutil.ints.IntSet
 import java.io.IOException
 import java.util.function.IntConsumer
 
 internal interface VcsLogStorageBackend : VcsLogUsersStorage, VcsLogPathsStorage {
+  val storageId: StorageId
   var isFresh: Boolean
 
   fun getMessage(commitId: Int): String?

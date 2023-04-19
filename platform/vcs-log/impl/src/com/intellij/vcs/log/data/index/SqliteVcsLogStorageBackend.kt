@@ -20,7 +20,7 @@ import com.intellij.vcs.log.history.EdgeData
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.VcsLogIndexer
 import com.intellij.vcs.log.impl.VcsRefImpl
-import com.intellij.vcs.log.util.PersistentUtil
+import com.intellij.vcs.log.util.StorageId
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
@@ -89,8 +89,9 @@ private class ProjectLevelConnectionManager(project: Project, logId: String) : D
   var connection: SqliteConnection
     private set
 
-  private val dbFile = PersistentUtil.getPersistenceLogCacheDir(project, logId).resolve(
-    "$SQLITE_VCS_LOG_DB_FILENAME_PREFIX${DB_VERSION}-${VcsLogPersistentIndex.VERSION}.db")
+  val storageId = StorageId.File(project.name, logId,
+                                 "$SQLITE_VCS_LOG_DB_FILENAME_PREFIX$DB_VERSION-${VcsLogPersistentIndex.VERSION}", "db")
+  private val dbFile = storageId.storagePath
 
   @Suppress("DEPRECATION")
   private val coroutineScope: CoroutineScope = ApplicationManager.getApplication().coroutineScope.childScope()
@@ -143,6 +144,7 @@ internal class SqliteVcsLogStorageBackend(project: Project,
   VcsLogStorageBackend, VcsLogStorage {
 
   private val connectionManager = ProjectLevelConnectionManager(project, logId).also { Disposer.register(disposable, it) }
+  override val storageId get() = connectionManager.storageId
 
   private val userRegistry = project.service<VcsUserRegistry>()
 

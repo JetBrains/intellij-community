@@ -34,7 +34,7 @@ import java.util.function.IntConsumer
 import java.util.function.ObjIntConsumer
 
 internal class PhmVcsLogStorageBackend(
-  storageId: StorageId,
+  override val storageId: StorageId.Directory,
   private val storage: VcsLogStorage,
   roots: Set<VirtualFile>,
   userRegistry: VcsUserRegistry,

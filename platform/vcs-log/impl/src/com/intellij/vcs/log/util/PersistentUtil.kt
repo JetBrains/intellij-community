@@ -36,11 +36,6 @@ object PersistentUtil {
   }
 
   @JvmStatic
-  fun getPersistenceLogCacheDir(project: Project, logId: String): Path {
-    return getPersistenceLogCacheDir(project.name, logId)
-  }
-
-  @JvmStatic
   internal fun getPersistenceLogCacheDir(projectName: String, logId: String): Path {
     return LOG_CACHE.resolve(getProjectLogDataDirectoryName(projectName, logId))
   }
@@ -51,35 +46,40 @@ object PersistentUtil {
   }
 }
 
-internal class StorageId(@NonNls private val projectName: String,
-                         @NonNls private val subdirName: String,
-                         private val logId: String,
-                         val version: Int) {
-  val projectStorageDir: Path by lazy { getPersistenceLogCacheDir(projectName, logId).resolve(subdirName) }
+internal sealed class StorageId(@NonNls protected val projectName: String, @NonNls protected val logId: String) {
+  val baseDir: Path by lazy { getPersistenceLogCacheDir(projectName, logId) }
+  abstract val storagePath: Path
 
-  @JvmOverloads
-  fun getStorageFile(kind: String, forMapIndexStorage: Boolean = false): Path {
-    val storageFile = doGetRealStorageFile(kind, forMapIndexStorage)
-    if (!Files.exists(storageFile)) {
-      for (oldVersion in 0 until version) {
-        val oldStorageFile = StorageId(projectName, subdirName, logId, oldVersion).doGetRealStorageFile(kind, forMapIndexStorage)
-        IOUtil.deleteAllFilesStartingWith(oldStorageFile)
+  fun cleanupAllStorageFiles() = FileUtil.deleteWithRenaming(storagePath)
+
+  class Directory(projectName: String, @NonNls private val subdirName: String, logId: String,
+                  val version: Int) : StorageId(projectName, logId) {
+    override val storagePath: Path by lazy { baseDir.resolve(subdirName) }
+
+    @JvmOverloads
+    fun getStorageFile(kind: String, forMapIndexStorage: Boolean = false): Path {
+      val storageFile = doGetRealStorageFile(kind, forMapIndexStorage)
+      if (!Files.exists(storageFile)) {
+        for (oldVersion in 0 until version) {
+          val oldStorageFile = Directory(projectName, subdirName, logId, oldVersion).doGetRealStorageFile(kind, forMapIndexStorage)
+          IOUtil.deleteAllFilesStartingWith(oldStorageFile)
+        }
       }
+      return doGetStorageFile(kind) // MapIndexStorage itself adds ".storage" suffix to the given file, so we won't do it here
     }
-    return doGetStorageFile(kind) // MapIndexStorage itself adds ".storage" suffix to the given file, so we won't do it here
+
+    private fun doGetRealStorageFile(kind: String, forMapIndexStorage: Boolean): Path {
+      val storageFile = doGetStorageFile(kind)
+      if (!forMapIndexStorage) return storageFile
+      return MapIndexStorage.getIndexStorageFile(storageFile)
+    }
+
+    private fun doGetStorageFile(kind: String): Path {
+      return storagePath.resolve("$kind.$version")
+    }
   }
 
-  private fun doGetRealStorageFile(kind: String, forMapIndexStorage: Boolean): Path {
-    val storageFile = doGetStorageFile(kind)
-    if (!forMapIndexStorage) return storageFile
-    return MapIndexStorage.getIndexStorageFile(storageFile)
-  }
-
-  private fun doGetStorageFile(kind: String): Path {
-    return projectStorageDir.resolve("$kind.$version")
-  }
-
-  fun cleanupAllStorageFiles(): Boolean {
-    return FileUtil.deleteWithRenaming(projectStorageDir)
+  class File(projectName: String, logId: String, fileName: String, extension: String) : StorageId(projectName, logId) {
+    override val storagePath: Path by lazy { baseDir.resolve("$fileName.$extension") }
   }
 }
