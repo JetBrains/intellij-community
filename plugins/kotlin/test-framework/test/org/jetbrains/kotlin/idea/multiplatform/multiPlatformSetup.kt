@@ -319,7 +319,7 @@ private data class ModuleId(
 ) {
     fun ideaModuleName(): String = buildString {
         append(groupName)
-        append("_" + platform.presentableName)
+        append("_${platform.presentableName}")
         if (index != 0) {
             append("_$index")
         }
