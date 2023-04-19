@@ -45,7 +45,7 @@ interface WebTypesSymbol : PsiSourcedWebSymbol {
 
   companion object {
     val WEB_TYPES_JS_FORBIDDEN_GLOBAL_KINDS = setOf(
-      WebSymbol.KIND_JS_PROPERTIES, WebSymbol.KIND_JS_STATIC_PROPERTIES
+      WebSymbol.KIND_JS_PROPERTIES, WebSymbol.KIND_JS_STATIC_PROPERTIES, WebSymbol.KIND_JS_STRING_LITERALS
     )
   }
 
