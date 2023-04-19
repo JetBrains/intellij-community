@@ -12,13 +12,26 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+/**
+ * Allows to control automatic reformatting
+ */
 public abstract class PostprocessReformattingAspect implements PomModelAspect {
   public abstract void disablePostprocessFormattingInside(@NotNull Runnable runnable);
 
   public abstract <T> T disablePostprocessFormattingInside(@NotNull Computable<T> computable);
 
+  /**
+   * Runs the runnable with automatic formatting turned off, then apply it at once 
+   * @param runnable runnable to run
+   */
   public abstract void postponeFormattingInside(@NotNull Runnable runnable);
 
+  /**
+   * Runs the computable with automatic formatting turned off, then apply it at once and returns the computable result
+   * @param <T> type of computable result
+   * @param computable computable to run
+   * @return result of computable
+   */
   public abstract <T> T postponeFormattingInside(@NotNull Computable<T> computable);
 
   public abstract void forcePostprocessFormatInside(@NotNull PsiFile psiFile, @NotNull Runnable runnable);
@@ -26,6 +39,9 @@ public abstract class PostprocessReformattingAspect implements PomModelAspect {
   @Override
   public abstract void update(@NotNull PomModelEvent event);
 
+  /**
+   * Perform all the postponed formatting. Mostly useful for tests.
+   */
   public abstract void doPostponedFormatting();
 
   public abstract void doPostponedFormatting(@NotNull FileViewProvider viewProvider);
@@ -48,12 +64,11 @@ public abstract class PostprocessReformattingAspect implements PomModelAspect {
   @TestOnly
   public abstract void clear();
 
+  /**
+   * @param project project
+   * @return the {@link PostprocessReformattingAspect} instance
+   */
   public static PostprocessReformattingAspect getInstance(@NotNull Project project) {
     return PomManager.getModel(project).getModelAspect(PostprocessReformattingAspect.class);
-  }
-
-  public static void assertDocumentChangeIsAllowed(@NotNull PsiFile file) {
-    PostprocessReformattingAspect reformattingAspect = getInstance(file.getProject());
-    reformattingAspect.assertDocumentChangeIsAllowed(file.getViewProvider());
   }
 }
