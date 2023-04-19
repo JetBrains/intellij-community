@@ -106,6 +106,9 @@ private val libraryStackframeJudge: StackframeJudge = { stackframe: StackTraceEl
     "kotlinx.coroutines.flow.CallbackFlowBuilder.collectTo" -> OMIT
     "kotlinx.coroutines.flow.StateFlowImpl.collect" -> SHRINK
     "kotlinx.coroutines.flow.FlowKt__ShareKt\$launchSharing\$1.invokeSuspend" -> SHRINK
+    "kotlinx.coroutines.flow.FlowKt__ErrorsKt.catchImpl" -> SHRINK
+    "kotlinx.coroutines.flow.FlowKt__ErrorsKt\$retryWhen\$\$inlined\$unsafeFlow\$1.collect" -> SHRINK
+    "kotlinx.coroutines.flow.FlowKt__ErrorsKt\$catch\$\$inlined\$unsafeFlow\$1.collect" -> SHRINK
 
     // kotlinx.coroutines.flow.internal
     "kotlinx.coroutines.flow.internal.FlowCoroutineKt\$scopedFlow\$1\$1.invokeSuspend" -> OMIT
