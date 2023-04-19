@@ -17,7 +17,6 @@ import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.invocation.Gradle
 import org.gradle.api.tasks.AbstractCopyTask
 import org.gradle.api.tasks.SourceSet
-import org.gradle.api.tasks.SourceSetOutput
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
@@ -755,15 +754,8 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
         Set<Object> sourcePaths = (Set<Object>)sourcePathGetters.get(0).doMethodInvoke(mainSpec, new Object[]{});
         if (sourcePaths != null) {
           for (Object path : sourcePaths) {
-            if (path instanceof String) {
-              File file = new File((String)path);
-              if (file.isAbsolute()) {
-                outputFiles.remove(file);
-              }
-            }
-            else if (path instanceof SourceSetOutput) {
-              outputFiles.removeAll(((SourceSetOutput)path).getFiles());
-            }
+            def files = archiveTask.project.files(path).files
+            outputFiles.removeAll(files)
           }
         }
       }
@@ -771,6 +763,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     catch (Exception e) {
       throw new RuntimeException(e);
     }
+
     return outputFiles.isEmpty()
   }
 }
