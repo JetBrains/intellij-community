@@ -290,10 +290,7 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
       SpeedSearchUtil.applySpeedSearchHighlightingFiltered(tree, value, mainTextComponent, true, selected)
     }
 
-    if (ExperimentalUI.isNewUI()) {
-      mainPanel.preferredSize = mainPanel.preferredSize.apply { height = GitBranchesTreePopup.treeRowHeight }
-    }
-    else if (updateScaleHelper.saveScaleAndUpdateUIIfChanged(mainPanel)) {
+    if (updateScaleHelper.saveScaleAndUpdateUIIfChanged(mainPanel)) {
       tree.rowHeight = GitBranchesTreePopup.treeRowHeight
     }
 
