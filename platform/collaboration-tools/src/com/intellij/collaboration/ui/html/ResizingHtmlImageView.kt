@@ -203,29 +203,34 @@ private class ImageLoader(
     }
 
     val toolkit = Toolkit.getDefaultToolkit()
-    if (src.startsWith("data:image") && src.contains("base64")) {
-      val result = Job()
-      val base64Image = tryCreateBase64Image(src)
-      if (base64Image != null) {
-        toolkit.prepareImage(base64Image, -1, -1, this)
-        result.complete()
+    try {
+      if (src.startsWith("data:image") && src.contains("base64")) {
+        val result = Job()
+        val base64Image = tryCreateBase64Image(src)
+        if (base64Image != null) {
+          toolkit.prepareImage(base64Image, -1, -1, this)
+          result.complete()
+        }
+        else {
+          result.cancel()
+        }
+        return result
+      }
+
+      if (asyncLoader != null) {
+        return requestImageAsync(asyncLoader, baseUrl, src)
       }
       else {
-        result.cancel()
+        val url = baseUrl?.let { URL(it, src) } ?: URL(src)
+        return toolkit.createImage(url).also {
+          toolkit.prepareImage(it, -1, -1, this)
+        }.let {
+          Job().apply { complete() }
+        }
       }
-      return result
     }
-
-    if (asyncLoader != null) {
-      return requestImageAsync(asyncLoader, baseUrl, src)
-    }
-    else {
-      val url = baseUrl?.let { URL(it, src) } ?: URL(src)
-      return toolkit.createImage(url).also {
-        toolkit.prepareImage(it, -1, -1, this)
-      }.let {
-        Job().apply { complete() }
-      }
+    catch (e: Exception) {
+      return Job().apply { completeExceptionally(e) }
     }
   }
 
@@ -291,12 +296,7 @@ private class ImageLoader(
 
 // example: "data:image/png;base64,ENCODED_IMAGE_HERE"
 private fun tryCreateBase64Image(src: String): Image? {
-  try {
-    val encodedImage = src.split(',').takeIf { it.size == 2 }?.get(1) ?: return null
-    val decodedImage = Base64.getDecoder().decode(encodedImage)
-    return Toolkit.getDefaultToolkit().createImage(decodedImage)
-  }
-  catch (e: Exception) {
-    return null
-  }
+  val encodedImage = src.split(',').takeIf { it.size == 2 }?.get(1) ?: return null
+  val decodedImage = Base64.getDecoder().decode(encodedImage)
+  return Toolkit.getDefaultToolkit().createImage(decodedImage)
 }
