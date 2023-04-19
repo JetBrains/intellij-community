@@ -52,8 +52,7 @@ public interface MavenServerEmbedder extends Remote {
                                                                                                MavenServerProcessCanceledException;
 
   @NotNull
-  List<MavenArtifact> resolve(@NotNull Collection<MavenArtifactInfo> infos,
-                              @NotNull List<MavenRemoteRepository> remoteRepositories,
+  List<MavenArtifact> resolve(@NotNull Collection<MavenArtifactResolutionRequest> requests,
                               MavenToken token) throws RemoteException, MavenServerProcessCanceledException;
 
   /**

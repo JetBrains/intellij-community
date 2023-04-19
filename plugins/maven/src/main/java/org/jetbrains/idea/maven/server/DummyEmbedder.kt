@@ -44,7 +44,7 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
     return null
   }
 
-  override fun resolve(infos: Collection<MavenArtifactInfo>, remoteRepositories: List<MavenRemoteRepository>, token: MavenToken?): List<MavenArtifact> {
+  override fun resolve(requests: Collection<MavenArtifactResolutionRequest>, token: MavenToken?): List<MavenArtifact> {
     return listOf()
   }
 

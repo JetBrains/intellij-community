@@ -5,35 +5,22 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
 import org.jetbrains.idea.maven.model.*;
+import org.jetbrains.idea.maven.server.MavenArtifactResolutionRequest;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public final class MavenArtifactDownloader {
-  private static final ThreadPoolExecutor EXECUTOR =
-    new ThreadPoolExecutor(0, Integer.MAX_VALUE, 1, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), new ThreadFactory() {
-      private final AtomicInteger num = new AtomicInteger();
-
-      @NotNull
-      @Override
-      public Thread newThread(@NotNull Runnable r) {
-        return new Thread(r, "Maven Artifact Downloader " + num.getAndIncrement());
-      }
-    });
-
   private final Project myProject;
   private final MavenProjectsTree myProjectsTree;
   private final Collection<MavenArtifact> myArtifacts;
@@ -179,64 +166,38 @@ public final class MavenArtifactDownloader {
   private DownloadResult download(MavenEmbedderWrapper embedder,
                                   Map<MavenId, DownloadData> toDownload,
                                   Collection<File> downloadedFiles) throws MavenProcessCanceledException {
-    List<Future> futures = new ArrayList<>();
-
-    final AtomicInteger downloaded = new AtomicInteger();
-    int total = 0;
-    for (DownloadData each : toDownload.values()) {
-      total += each.classifiersWithExtensions.size();
-    }
-
-    final DownloadResult result = new DownloadResult();
+    DownloadResult result = new DownloadResult();
     result.unresolvedSources.addAll(toDownload.keySet());
     result.unresolvedDocs.addAll(toDownload.keySet());
 
-    try {
-      for (final Map.Entry<MavenId, DownloadData> eachEntry : toDownload.entrySet()) {
-        myProgress.checkCanceled();
+    var requests = new ArrayList<MavenArtifactResolutionRequest>();
+    for (Map.Entry<MavenId, DownloadData> eachEntry : toDownload.entrySet()) {
+      myProgress.checkCanceled();
 
-        final DownloadData data = eachEntry.getValue();
-        final MavenId id = eachEntry.getKey();
+      DownloadData data = eachEntry.getValue();
+      MavenId id = eachEntry.getKey();
 
-        for (final DownloadElement eachElement : data.classifiersWithExtensions) {
-          final int finalTotal = total;
-          futures.add(EXECUTOR.submit(() -> {
-            try {
-              if (myProject.isDisposed()) return;
-
-              myProgress.checkCanceled();
-              myProgress.setFraction(((double)downloaded.getAndIncrement()) / finalTotal);
-
-              MavenArtifactInfo info = new MavenArtifactInfo(id, eachElement.extension, eachElement.classifier);
-              MavenArtifact a = embedder.resolve(List.of(info), new ArrayList<>(data.repositories)).get(0);
-              File file = a.getFile();
-              if (file.exists()) {
-                downloadedFiles.add(file);
-
-                var mavenId = new MavenId(a.getGroupId(), a.getArtifactId(), a.getVersion());
-                if (MavenExtraArtifactType.SOURCES.getDefaultClassifier().equals(a.getClassifier())) {
-                  result.resolvedSources.add(mavenId);
-                  result.unresolvedSources.remove(mavenId);
-                }
-                else {
-                  result.resolvedDocs.add(mavenId);
-                  result.unresolvedDocs.remove(mavenId);
-                }
-              }
-            }
-            catch (MavenProcessCanceledException ignore) {
-            }
-          }));
-        }
+      for (DownloadElement eachElement : data.classifiersWithExtensions) {
+        MavenArtifactInfo info = new MavenArtifactInfo(id, eachElement.extension, eachElement.classifier);
+        var request = new MavenArtifactResolutionRequest(info, new ArrayList<>(data.repositories));
+        requests.add(request);
       }
     }
-    finally {
-      for (Future each : futures) {
-        try {
-          each.get();
+
+    var artifacts = embedder.resolve(requests);
+    for (var artifact : artifacts) {
+      File file = artifact.getFile();
+      if (file.exists()) {
+        downloadedFiles.add(file);
+
+        var mavenId = new MavenId(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion());
+        if (MavenExtraArtifactType.SOURCES.getDefaultClassifier().equals(artifact.getClassifier())) {
+          result.resolvedSources.add(mavenId);
+          result.unresolvedSources.remove(mavenId);
         }
-        catch (Exception e) {
-          MavenLog.LOG.error(e);
+        else {
+          result.resolvedDocs.add(mavenId);
+          result.unresolvedDocs.remove(mavenId);
         }
       }
     }
@@ -290,10 +251,5 @@ public final class MavenArtifactDownloader {
 
     public final Set<MavenId> unresolvedSources = ConcurrentHashMap.newKeySet();
     public final Set<MavenId> unresolvedDocs = ConcurrentHashMap.newKeySet();
-  }
-
-  @TestOnly
-  public static void awaitQuiescence(long timeout, @NotNull TimeUnit unit) {
-    ConcurrencyUtil.awaitQuiescence(EXECUTOR, timeout, unit);
   }
 }
