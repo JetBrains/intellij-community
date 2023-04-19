@@ -43,6 +43,7 @@ public class MavenEmbeddersManager {
   }
 
   @NotNull
+  // used in third-party plugins
   public synchronized MavenEmbedderWrapper getEmbedder(@NotNull MavenProject mavenProject, Key kind) {
     String baseDir = MavenUtil.getBaseDir(mavenProject.getDirectoryFile()).toString();
     return getEmbedder(kind, baseDir);
