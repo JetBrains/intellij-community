@@ -27,8 +27,8 @@ import static com.intellij.codeInspection.options.OptPane.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
-  public boolean myWarnOnlyOnExpressionConversion = false;
-  public int myMaxNumberStatementsForBranch = 2;
+  @SuppressWarnings("WeakerAccess") public boolean myWarnOnlyOnExpressionConversion;
+  @SuppressWarnings("WeakerAccess") public int myMaxNumberStatementsForBranch = 2;
 
   @Override
   public @NotNull OptPane getOptionsPane() {
@@ -165,7 +165,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
   }
 
   /**
-   * Before using this method make sure you are using correct version of Java.
+   * Before using this method, make sure you are using a correct version of Java.
    */
   @Nullable
   public static SwitchReplacer findSwitchReplacer(@NotNull PsiSwitchStatement switchStatement) {
@@ -238,8 +238,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
   private static boolean isConvertibleBranch(OldSwitchStatementBranch branch, boolean hasNext) {
     int length = branch.getStatements().length;
     if (length == 0) return (branch.isFallthrough() && hasNext) || (!branch.isFallthrough() && branch.isDefault());
-    if (branch.isFallthrough()) return false;
-    return true;
+    return !branch.isFallthrough();
   }
 
   private enum ReplacementType {
@@ -314,14 +313,14 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     @NotNull final PsiStatement myStatement;
     final List<SwitchBranch> myNewBranches;
     final @Nullable PsiReturnStatement myReturnToDelete;
-    private final List<PsiStatement> myStatementsToDelete;
+    private final @NotNull List<? extends PsiStatement> myStatementsToDelete;
     private final boolean myIsInfo;
     private final int myMaxNumberStatementsInBranch;
 
     private ReturningSwitchReplacer(@NotNull PsiStatement statement,
                                     @NotNull List<SwitchBranch> newBranches,
                                     @Nullable PsiReturnStatement returnToDelete,
-                                    @NotNull List<PsiStatement> statementsToDelete,
+                                    @NotNull List<? extends PsiStatement> statementsToDelete,
                                     boolean isInfo,
                                     int maxNumberStatementsInBranch) {
       myStatement = statement;
@@ -681,7 +680,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
   }
 
   /**
-   * Replaces with enhanced switch statement
+   * Replaces with an enhanced switch statement
    */
   private static final class SwitchStatementReplacer implements SwitchReplacer {
     @NotNull final PsiStatement myStatement;
@@ -718,7 +717,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
   }
 
   /**
-   * Suggest replacement with enhanced switch statement
+   * Suggest replacement with an enhanced switch statement
    */
   @Nullable
   private static SwitchReplacer inspectReplacementWithStatement(@NotNull PsiStatement statement,
@@ -885,7 +884,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     final PsiStatement @NotNull [] myStatements;
     final @NotNull PsiSwitchLabelStatement myLabelStatement;
     final @Nullable PsiBreakStatement myBreakStatement;
-    @Nullable OldSwitchStatementBranch myPreviousSwitchBranch = null;
+    @Nullable OldSwitchStatementBranch myPreviousSwitchBranch;
 
     private OldSwitchStatementBranch(boolean isFallthrough,
                                      PsiStatement @NotNull [] statements,
