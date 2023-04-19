@@ -739,11 +739,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     internal fun createTreeSeparator(text: @NlsContexts.Separator String? = null) =
       SeparatorWithText().apply {
         caption = text
-        if (ExperimentalUI.isNewUI()) { // the new UI uses variable height, so we don't use rowHeight / 2, it's too large,
-          // but we DO add some padding, otherwise it's too close to the text
-          border = JBUI.Borders.empty(JBUIScale.scale(3), 0, JBUIScale.scale(6), 0)
-        }
-        else {
+        if (!ExperimentalUI.isNewUI()) { // the new UI uses variable height, no need to add extra space here, it's too large
           border = JBUI.Borders.emptyTop(
             if (text == null) treeRowHeight / 2 else JBUIScale.scale(SeparatorWithText.DEFAULT_H_GAP))
         }
