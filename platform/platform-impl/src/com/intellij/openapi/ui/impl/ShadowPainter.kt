@@ -1,176 +1,195 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.ui.impl;
+package com.intellij.openapi.ui.impl
 
-import com.intellij.ide.ui.LafManagerListener;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.ui.JreHiDpiUtil;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.scale.ScaleContext;
-import com.intellij.ui.scale.ScaleContextAware;
-import com.intellij.ui.scale.ScaleContextSupport;
-import com.intellij.util.IconUtil;
-import com.intellij.util.ui.ImageUtil;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.geom.Area;
-import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
+import com.intellij.ide.ui.LafManagerListener
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.IconLoader
+import com.intellij.ui.JreHiDpiUtil.isJreHiDPIEnabled
+import com.intellij.ui.scale.JBUIScale.sysScale
+import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.scale.ScaleContextAware
+import com.intellij.ui.scale.ScaleContextSupport
+import com.intellij.util.IconUtil.cropIcon
+import com.intellij.util.ui.ImageUtil
+import java.awt.*
+import java.awt.geom.Area
+import java.awt.geom.Rectangle2D
+import java.awt.image.BufferedImage
+import javax.swing.Icon
+import javax.swing.JComponent
+import kotlin.math.ceil
+import kotlin.math.floor
 
 /**
  * @author Konstantin Bulenkov
  */
-public final class ShadowPainter extends ScaleContextSupport {
-  private final Icon myTop;
-  private final Icon myTopRight;
-  private final Icon myRight;
-  private final Icon myBottomRight;
-  private final Icon myBottom;
-  private final Icon myBottomLeft;
-  private final Icon myLeft;
-  private final Icon myTopLeft;
+class ShadowPainter(private val top: Icon,
+                    private val topRight: Icon,
+                    private val right: Icon,
+                    private val bottomRight: Icon,
+                    private val bottom: Icon,
+                    private val bottomLeft: Icon,
+                    private val left: Icon,
+                    private val topLeft: Icon) : ScaleContextSupport() {
+  private var croppedTop: Icon? = null
+  private var croppedRight: Icon? = null
+  private var croppedBottom: Icon? = null
+  private var croppedLeft: Icon? = null
+  private var borderColor: Color? = null
 
-  private Icon myCroppedTop = null;
-  private Icon myCroppedRight = null;
-  private Icon myCroppedBottom = null;
-  private Icon myCroppedLeft = null;
-
-  @Nullable
-  private Color myBorderColor;
-
-  public ShadowPainter(Icon top, Icon topRight, Icon right, Icon bottomRight, Icon bottom, Icon bottomLeft, Icon left, Icon topLeft) {
-    myTop = top;
-    myTopRight = topRight;
-    myRight = right;
-    myBottomRight = bottomRight;
-    myBottom = bottom;
-    myBottomLeft = bottomLeft;
-    myLeft = left;
-    myTopLeft = topLeft;
-
-    updateIcons(null);
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(LafManagerListener.TOPIC, source -> updateIcons(null));
+  init {
+    updateIcons(null)
+    ApplicationManager.getApplication().messageBus.connect().subscribe(LafManagerListener.TOPIC, LafManagerListener { updateIcons(null) })
   }
 
-  public ShadowPainter(Icon top, Icon topRight, Icon right, Icon bottomRight, Icon bottom, Icon bottomLeft, Icon left, Icon topLeft, @Nullable Color borderColor) {
-    this(top, topRight, right, bottomRight, bottom, bottomLeft, left, topLeft);
-    myBorderColor = borderColor;
+  constructor(top: Icon,
+              topRight: Icon,
+              right: Icon,
+              bottomRight: Icon,
+              bottom: Icon,
+              bottomLeft: Icon,
+              left: Icon,
+              topLeft: Icon,
+              borderColor: Color?) : this(top, topRight, right, bottomRight, bottom, bottomLeft, left, topLeft) {
+    this.borderColor = borderColor
   }
 
-  public void setBorderColor(@Nullable Color borderColor) {
-    myBorderColor = borderColor;
+  fun setBorderColor(borderColor: Color?) {
+    this.borderColor = borderColor
   }
 
-  public BufferedImage createShadow(final JComponent c, final int width, final int height) {
-    final BufferedImage image = c.getGraphicsConfiguration().createCompatibleImage(width, height, Transparency.TRANSLUCENT);
-    final Graphics2D g = image.createGraphics();
-
-    paintShadow(c, g, 0, 0, width, height);
-
-    g.dispose();
-    return image;
+  fun createShadow(c: JComponent, width: Int, height: Int): BufferedImage {
+    val image = c.graphicsConfiguration.createCompatibleImage(width, height, Transparency.TRANSLUCENT)
+    val g = image.createGraphics()
+    paintShadow(c, g, 0, 0, width, height)
+    g.dispose()
+    return image
   }
 
-  private void updateIcons(ScaleContext ctx) {
-    updateIcon(myTop, ctx, () -> myCroppedTop = IconUtil.cropIcon(myTop, 1, Integer.MAX_VALUE));
-    updateIcon(myTopRight, ctx, null);
-    updateIcon(myRight, ctx, () -> myCroppedRight = IconUtil.cropIcon(myRight, Integer.MAX_VALUE, 1));
-    updateIcon(myBottomRight, ctx, null);
-    updateIcon(myBottom, ctx, () -> myCroppedBottom = IconUtil.cropIcon(myBottom, 1, Integer.MAX_VALUE));
-    updateIcon(myBottomLeft, ctx, null);
-    updateIcon(myLeft, ctx, () -> myCroppedLeft = IconUtil.cropIcon(myLeft, Integer.MAX_VALUE, 1));
-    updateIcon(myTopLeft, ctx, null);
+  private fun updateIcons(ctx: ScaleContext?) {
+    updateIcon(top, ctx) { croppedTop = cropIcon(top, 1, Int.MAX_VALUE) }
+    updateIcon(topRight, ctx) {}
+    updateIcon(right, ctx) { croppedRight = cropIcon(right, Int.MAX_VALUE, 1) }
+    updateIcon(bottomRight, ctx) {}
+    updateIcon(bottom, ctx) { croppedBottom = cropIcon(bottom, 1, Int.MAX_VALUE) }
+    updateIcon(bottomLeft, ctx) {}
+    updateIcon(left, ctx) { croppedLeft = cropIcon(left, Int.MAX_VALUE, 1) }
+    updateIcon(topLeft, ctx) {}
   }
 
-  private static void updateIcon(Icon icon, ScaleContext ctx, Runnable r) {
-    if (icon instanceof ScaleContextAware) ((ScaleContextAware)icon).updateScaleContext(ctx);
-    if (r != null) r.run();
-  }
-
-  public void paintShadow(Component c, Graphics2D g, int x, int y, int width, int height) {
-    ScaleContext ctx = ScaleContext.create(g);
-    if (updateScaleContext(ctx)) {
-      updateIcons(ctx);
+  @Suppress("GraphicsSetClipInspection")
+  fun paintShadow(c: Component?, g: Graphics2D, x: Int, y: Int, width: Int, height: Int) {
+    val scaleContext = ScaleContext.create(g)
+    if (updateScaleContext(scaleContext)) {
+      updateIcons(scaleContext)
     }
-    final int leftSize = myCroppedLeft.getIconWidth();
-    final int rightSize = myCroppedRight.getIconWidth();
-    final int bottomSize = myCroppedBottom.getIconHeight();
-    final int topSize = myCroppedTop.getIconHeight();
 
-    int delta = myTopLeft.getIconHeight() + myBottomLeft.getIconHeight() - height;
-    if (delta > 0) { // Corner icons are overlapping. Need to handle this
-      Shape clip = g.getClip();
-
-      int topHeight = myTopLeft.getIconHeight() - delta / 2;
-      Area top = new Area(new Rectangle2D.Float(x, y, width, topHeight));
+    val leftSize = croppedLeft!!.iconWidth
+    val rightSize = croppedRight!!.iconWidth
+    val bottomSize = croppedBottom!!.iconHeight
+    val topSize = croppedTop!!.iconHeight
+    val delta = topLeft.iconHeight + bottomLeft.iconHeight - height
+    // Corner icons are overlapping. Need to handle this.
+    if (delta > 0) {
+      val clip = g.clip
+      val topHeight = topLeft.iconHeight - delta / 2
+      val top = Area(Rectangle2D.Float(x.toFloat(), y.toFloat(), width.toFloat(), topHeight.toFloat()))
       if (clip != null) {
-        top.intersect(new Area(clip));
+        top.intersect(Area(clip))
       }
-      g.setClip(top);
-
-      myTopLeft.paintIcon(c, g, x, y);
-      myTopRight.paintIcon(c, g, x + width - myTopRight.getIconWidth(), y);
-
-      int bottomHeight = myBottomLeft.getIconHeight() - delta + delta / 2;
-      Area bottom = new Area(new Rectangle2D.Float(x, y + topHeight, width, bottomHeight));
+      g.clip = top
+      topLeft.paintIcon(c, g, x, y)
+      topRight.paintIcon(c, g, x + width - topRight.iconWidth, y)
+      val bottomHeight = bottomLeft.iconHeight - delta + delta / 2
+      val bottom = Area(Rectangle2D.Float(x.toFloat(), (y + topHeight).toFloat(), width.toFloat(), bottomHeight.toFloat()))
       if (clip != null) {
-        bottom.intersect(new Area(clip));
+        bottom.intersect(Area(clip))
       }
-      g.setClip(bottom);
-
-      myBottomLeft.paintIcon(c, g, x, y + height - myBottomLeft.getIconHeight());
-      myBottomRight.paintIcon(c, g, x + width - myBottomRight.getIconWidth(), y + height - myBottomRight.getIconHeight());
-
-      g.setClip(clip);
-    } else {
-      myTopLeft.paintIcon(c, g, x, y);
-      myTopRight.paintIcon(c, g, x + width - myTopRight.getIconWidth(), y);
-      myBottomLeft.paintIcon(c, g, x, y + height - myBottomLeft.getIconHeight());
-      myBottomRight.paintIcon(c, g, x + width - myBottomRight.getIconWidth(), y + height - myBottomRight.getIconHeight());
-    }
-
-    fill(g, myCroppedTop, x, y, myTopLeft.getIconWidth(), width - myTopRight.getIconWidth(), true);
-    fill(g, myCroppedBottom, x, y + height - bottomSize, myBottomLeft.getIconWidth(), width - myBottomRight.getIconWidth(), true);
-    fill(g, myCroppedLeft, x, y, myTopLeft.getIconHeight(), height - myBottomLeft.getIconHeight(), false);
-    fill(g, myCroppedRight, x + width - rightSize, y, myTopRight.getIconHeight(), height - myBottomRight.getIconHeight(), false);
-
-    if (myBorderColor != null) {
-      g.setColor(myBorderColor);
-      g.drawRect(x + leftSize - 1, y + topSize - 1, width - leftSize - rightSize + 1, height - topSize - bottomSize + 1);
-    }
-  }
-
-  private static void fill(Graphics g, Icon pattern, int x, int y, int from, int to, boolean horizontally) {
-    double scale = JBUIScale.sysScale((Graphics2D)g);
-    if (JreHiDpiUtil.isJreHiDPIEnabled() && Math.ceil(scale) > scale) {
-      // Direct painting for fractional scale
-      BufferedImage img = ImageUtil.toBufferedImage(IconUtil.toImage(pattern));
-      int patternSize = horizontally ? img.getWidth() : img.getHeight();
-      Graphics2D g2d = (Graphics2D)g.create();
-      try {
-        g2d.scale(1 / scale, 1 / scale);
-        g2d.translate(x * scale, y * scale);
-        for (int at = (int)Math.floor(from * scale); at < to * scale; at += patternSize) {
-          if (horizontally) {
-            g2d.drawImage(img, at, 0, null);
-          }
-          else {
-            g2d.drawImage(img, 0, at, null);
-          }
-        }
-      } finally {
-        g2d.dispose();
-      }
+      g.clip = bottom
+      bottomLeft.paintIcon(c, g, x, y + height - bottomLeft.iconHeight)
+      bottomRight.paintIcon(c, g, x + width - bottomRight.iconWidth, y + height - bottomRight.iconHeight)
+      g.clip = clip
     }
     else {
-      for (int at = from; at < to; at++) {
+      topLeft.paintIcon(c, g, x, y)
+      topRight.paintIcon(c, g, x + width - topRight.iconWidth, y)
+      bottomLeft.paintIcon(c, g, x, y + height - bottomLeft.iconHeight)
+      bottomRight.paintIcon(c, g, x + width - bottomRight.iconWidth, y + height - bottomRight.iconHeight)
+    }
+    fill(g = g,
+         pattern = croppedTop!!,
+         x = x,
+         y = y,
+         from = topLeft.iconWidth,
+         to = width - topRight.iconWidth,
+         horizontally = true)
+    fill(g = g,
+         pattern = croppedBottom!!,
+         x = x,
+         y = y + height - bottomSize,
+         from = bottomLeft.iconWidth,
+         to = width - bottomRight.iconWidth,
+         horizontally = true)
+    fill(g = g,
+         pattern = croppedLeft!!,
+         x = x,
+         y = y,
+         from = topLeft.iconHeight,
+         to = height - bottomLeft.iconHeight,
+         horizontally = false)
+    fill(g = g,
+         pattern = croppedRight!!,
+         x = x + width - rightSize,
+         y = y,
+         from = topRight.iconHeight,
+         to = height - bottomRight.iconHeight,
+         horizontally = false)
+    if (borderColor != null) {
+      g.color = borderColor
+      g.drawRect(x + leftSize - 1, y + topSize - 1, width - leftSize - rightSize + 1, height - topSize - bottomSize + 1)
+    }
+  }
+}
+
+private inline fun updateIcon(icon: Icon, ctx: ScaleContext?, r: () -> Unit) {
+  if (icon is ScaleContextAware) {
+    icon.updateScaleContext(ctx)
+  }
+  r()
+}
+
+private fun fill(g: Graphics, pattern: Icon, x: Int, y: Int, from: Int, to: Int, horizontally: Boolean) {
+  val scale = sysScale(g as Graphics2D).toDouble()
+  if (isJreHiDPIEnabled() && ceil(scale) > scale) {
+    // direct painting for a fractional scale
+    val image = ImageUtil.toBufferedImage(IconLoader.toImage(icon = pattern) ?: BufferedImage(1, 0, BufferedImage.TYPE_INT_ARGB))
+    val patternSize = if (horizontally) image.width else image.height
+    val g2d = g.create() as Graphics2D
+    try {
+      g2d.scale(1 / scale, 1 / scale)
+      g2d.translate(x * scale, y * scale)
+      var at = floor(from * scale).toInt()
+      while (at < to * scale) {
         if (horizontally) {
-          pattern.paintIcon(null, g, x + at, y);
+          g2d.drawImage(image, at, 0, null)
         }
         else {
-          pattern.paintIcon(null, g, x, y + at);
+          g2d.drawImage(image, 0, at, null)
         }
+        at += patternSize
+      }
+    }
+    finally {
+      g2d.dispose()
+    }
+  }
+  else {
+    for (at in from until to) {
+      if (horizontally) {
+        pattern.paintIcon(null, g, x + at, y)
+      }
+      else {
+        pattern.paintIcon(null, g, x, y + at)
       }
     }
   }
