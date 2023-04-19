@@ -36,11 +36,32 @@ class FirLightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), Light
         checkThrowsList(myFixture)
     }
 
+    fun testComparatorInheritor() {
+        checkComparatorInheritor(myFixture)
+    }
+
+
+    fun testBoxedReturnTypeWhenOverridingNonPrimitive() {
+        checkBoxedReturnTypeWhenOverridingNonPrimitive(myFixture)
+    }
+
     fun testAnnotationOnPsiType() {
         checkAnnotationOnPsiType(myFixture)
     }
 
     fun testAnnotationOnPsiTypeArgument() {
         checkAnnotationOnPsiTypeArgument(myFixture)
+    }
+
+    fun testUpperBoundWildcardForCtor() {
+        checkUpperBoundWildcardForCtor(myFixture)
+    }
+
+    fun testUpperBoundWildcardForEnum() {
+        checkUpperBoundWildcardForEnum(myFixture)
+    }
+
+    fun testUpperBoundWildcardForVar() {
+        checkUpperBoundWildcardForVar(myFixture)
     }
 }

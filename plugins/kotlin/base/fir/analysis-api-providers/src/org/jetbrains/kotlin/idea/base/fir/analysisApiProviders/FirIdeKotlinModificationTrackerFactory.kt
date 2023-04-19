@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.base.fir.analysisApiProviders
 
 import com.intellij.java.library.JavaLibraryModificationTracker
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import org.jetbrains.annotations.TestOnly
@@ -14,13 +13,13 @@ import org.jetbrains.kotlin.idea.base.analysisApiProviders.KotlinModuleStateTrac
 import org.jetbrains.kotlin.idea.base.projectStructure.ideaModule
 
 internal class FirIdeKotlinModificationTrackerFactory(private val project: Project) : KotlinModificationTrackerFactory() {
-    override fun createProjectWideOutOfBlockModificationTracker(): ModificationTracker {
-        return KotlinFirOutOfBlockModificationTracker(project)
-    }
+    private val modificationTrackerService = project.getService(FirIdeModificationTrackerService::class.java)
 
-    override fun createModuleWithoutDependenciesOutOfBlockModificationTracker(module: KtSourceModule): ModificationTracker {
-        return KotlinFirOutOfBlockModuleModificationTracker(module.ideaModule)
-    }
+    override fun createProjectWideOutOfBlockModificationTracker(): ModificationTracker =
+        modificationTrackerService.projectOutOfBlockModificationTracker
+
+    override fun createModuleWithoutDependenciesOutOfBlockModificationTracker(module: KtSourceModule): ModificationTracker =
+        modificationTrackerService.getModuleOutOfBlockModificationTracker(module.ideaModule)
 
     override fun createLibrariesWideModificationTracker(): ModificationTracker {
         return JavaLibraryModificationTracker.getInstance(project)
@@ -37,28 +36,8 @@ internal class FirIdeKotlinModificationTrackerFactory(private val project: Proje
         }
 
         // `FirIdeModificationTrackerService` is for source modules only.
-        project.getService(FirIdeModificationTrackerService::class.java).increaseModificationCountForAllModules()
+        modificationTrackerService.increaseModificationCountForAllModules()
 
         KotlinModuleStateTrackerProvider.getInstance(project).incrementModificationCountForAllModules(includeBinaryTrackers)
-    }
-}
-
-private class KotlinFirOutOfBlockModificationTracker(project: Project) : ModificationTracker {
-    private val trackerService = project.getService(FirIdeModificationTrackerService::class.java)
-
-    override fun getModificationCount(): Long {
-        return trackerService.projectGlobalOutOfBlockInKotlinFilesModificationCount
-    }
-}
-
-private class KotlinFirOutOfBlockModuleModificationTracker(private val module: Module) : ModificationTracker {
-    private val trackerService = module.project.getService(FirIdeModificationTrackerService::class.java)
-
-    override fun getModificationCount(): Long {
-        return trackerService.getOutOfBlockModificationCountForModules(module)
-    }
-
-    override fun toString(): String {
-        return "Out-of-block tracker for IDEA module '" + module.name + "'"
     }
 }

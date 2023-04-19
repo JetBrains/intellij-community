@@ -6,9 +6,9 @@ expect suspend fun defaultValue2(param: Int = 1): Int
 expect inline fun defaultValue3(param: () -> Int = { 1 }): Int
 
 // ATTACH_LIBRARY: maven(org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2)
-// MODULE: jvm
+// MODULE: jvm(common)
 // FILE: jvm.kt
-// DEPENDS_ON: common
+
 import kotlinx.coroutines.runBlocking
 
 actual fun defaultValue1(param: Int): Int = param

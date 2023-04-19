@@ -1,19 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.test.common.kotlin
 
-import com.intellij.psi.PsiArrayType
-import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import junit.framework.TestCase
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.uast.UClass
-import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.*
 import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
-import org.jetbrains.uast.toUElement
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 // NB: Similar to [UastResolveApiFixtureTestBase], but focusing on light classes, not `resolve`
@@ -185,6 +180,54 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
         TestCase.assertNotNull(visitedMethod.singleOrNull { it.name == "getBoo" })
     }
 
+    fun checkComparatorInheritor(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class Foo(val x : Int)
+                class FooComparator : Comparator<Foo> {
+                  override fun compare(firstFoo: Foo, secondFoo: Foo): Int =
+                    firstFoo.x - secondFoo.x
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val fooComparator = uFile.findElementByTextFromPsi<UClass>("FooComparator", strict = false)
+            .orFail("can't find class FooComparator")
+
+        val lc = fooComparator.javaPsi
+        TestCase.assertTrue(lc.extendsList?.referenceElements?.isEmpty() == true)
+        TestCase.assertTrue(lc.implementsList?.referenceElements?.size == 1)
+        TestCase.assertEquals("java.util.Comparator<Foo>", lc.implementsList?.referenceElements?.single()?.reference?.canonicalText)
+    }
+
+    fun checkBoxedReturnTypeWhenOverridingNonPrimitive(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                abstract class ActivityResultContract<I, O> {
+                  abstract fun parseResult(resultCode: Int, intent: Intent?): O
+                }
+
+                interface Intent
+
+                class StartActivityForResult : ActivityResultContract<Intent, Boolean>() {
+                  override fun parseResult(resultCode: Int, intent: Intent?): Boolean {
+                    return resultCode == 42
+                  }
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val sub = uFile.findElementByTextFromPsi<UClass>("StartActivityForResult", strict = false)
+            .orFail("can't find class StartActivityForResult")
+
+        val mtd = sub.methods.find { it.name == "parseResult" }
+            .orFail("can't find method parseResult")
+
+        TestCase.assertEquals("java.lang.Boolean", mtd.returnType?.canonicalText)
+    }
+
     private fun checkPsiType(psiType: PsiType, fqName: String = "TypeAnnotation") {
         TestCase.assertEquals(1, psiType.annotations.size)
         val annotation = psiType.annotations[0]
@@ -258,6 +301,121 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
         lightMethod.parameterList.parameters.forEach { psiParameter ->
             checkPsiType(firstTypeArgument(psiParameter.type)!!)
         }
+    }
+
+    fun checkUpperBoundWildcardForCtor(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class FrameData(
+                  frameStartNanos: Long,
+                  frameDurationUiNanos: Long,
+                  isJank: Boolean,
+                  val states: List<StateInfo>
+                )
+                
+                class StateInfo(val key: String, val value: String)
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+
+        val cls = uFile.findElementByTextFromPsi<UClass>("FrameData", strict = false)
+            .orFail("can't find class FrameData")
+        val ctor = cls.javaPsi.constructors.single()
+        val states = ctor.parameterList.parameters.last()
+        TestCase.assertEquals("java.util.List<StateInfo>", states.type.canonicalText)
+    }
+
+    fun checkUpperBoundWildcardForEnum(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                enum class PowerCategoryDisplayLevel {
+                  BREAKDOWN, TOTAL
+                }
+
+                enum class PowerCategory {
+                  CPU, MEMORY
+                }
+
+                class PowerMetric {
+                  companion object {
+                    @JvmStatic
+                    fun Battery(): Type.Battery {
+                      return Type.Battery()
+                    }
+
+                    @JvmStatic
+                    fun Energy(
+                      categories: Map<PowerCategory, PowerCategoryDisplayLevel> = emptyMap()
+                    ): Type.Energy {
+                      return Type.Energy(categories)
+                    }
+
+                    @JvmStatic
+                    fun Power(
+                      categories: Map<PowerCategory, PowerCategoryDisplayLevel> = emptyMap()
+                    ): Type.Power {
+                      return Type.Power(categories)
+                    }
+                  }
+
+                  sealed class Type(var categories: Map<PowerCategory, PowerCategoryDisplayLevel> = emptyMap()) {
+                    class Power(
+                      powerCategories: Map<PowerCategory, PowerCategoryDisplayLevel> = emptyMap()
+                    ) : Type(powerCategories)
+
+                    class Energy(
+                      energyCategories: Map<PowerCategory, PowerCategoryDisplayLevel> = emptyMap()
+                    ) : Type(energyCategories)
+
+                    class Battery : Type()
+                  }
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+
+        uFile.accept(object : AbstractUastVisitor() {
+            override fun visitParameter(node: UParameter): Boolean {
+                val lc = node.javaPsi as? PsiParameter ?: return super.visitParameter(node)
+
+                val t = lc.type.canonicalText
+                if (t.contains("Map")) {
+                    TestCase.assertEquals("java.util.Map<PowerCategory,? extends PowerCategoryDisplayLevel>", t)
+                }
+
+                return super.visitParameter(node)
+            }
+        })
+    }
+
+    fun checkUpperBoundWildcardForVar(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                abstract class RoomDatabase {
+                  @JvmField
+                  protected var mCallbacks: List<Callback>? = null
+                  
+                  abstract class Callback {
+                    open fun onCreate(db: RoomDatabase) {}
+                  }
+                }
+
+                val sum: (Int) -> Int = { x: Int -> sum(x - 1) + x }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val fld = uFile.findElementByTextFromPsi<UField>("mCallbacks", strict = false)
+            .orFail("can't find var mCallbacks")
+        val mCallbacks = fld.javaPsi as? PsiField
+        TestCase.assertEquals("java.util.List<? extends RoomDatabase.Callback>", mCallbacks?.type?.canonicalText)
+
+        val top = uFile.findElementByTextFromPsi<UField>("sum", strict = false)
+            .orFail("can't find val sum")
+        val sum = top.javaPsi as? PsiField
+        TestCase.assertEquals("kotlin.jvm.functions.Function1<java.lang.Integer,java.lang.Integer>", sum?.type?.canonicalText)
     }
 
 }

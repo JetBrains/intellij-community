@@ -29,12 +29,12 @@ project.commonTest
 project.iosArm64Main
     languageLevel = 1.7
     apiLevel = 1.7
-    compilerSettings = -opt-in OptInAnnotation
+    compilerSettings = -opt-in OptInAnnotation -progressive
 
 project.iosArm64Test
     languageLevel = 1.7
     apiLevel = 1.7
-    compilerSettings = -opt-in OptInAnnotation
+    compilerSettings = -opt-in OptInAnnotation -progressive
 
 project.iosMain
     languageLevel = 1.7
@@ -49,22 +49,22 @@ project.iosTest
 project.iosX64Main
     languageLevel = 1.7
     apiLevel = 1.7
-    compilerSettings = -opt-in OptInAnnotation
+    compilerSettings = -opt-in OptInAnnotation -progressive
 
 project.iosX64Test
     languageLevel = 1.7
     apiLevel = 1.7
-    compilerSettings = -opt-in OptInAnnotation
+    compilerSettings = -opt-in OptInAnnotation -progressive
 
 project.jsMain
     languageLevel = 1.7
     apiLevel = 1.7
-    compilerSettings = -opt-in OptInAnnotation -progressive
+    compilerSettings = -main call -opt-in OptInAnnotation -progressive
 
 project.jsTest
     languageLevel = 1.7
     apiLevel = 1.7
-    compilerSettings = -opt-in OptInAnnotation -progressive
+    compilerSettings = -main call -opt-in OptInAnnotation -progressive
 
 project.jvmAndroidMain
     languageLevel = 1.7

@@ -1695,11 +1695,6 @@ public abstract class KotlinEvaluateExpressionTestGenerated extends AbstractKotl
                 runTest("testData/evaluation/multipleBreakpoints/isInsideInlineLambda.kt");
             }
 
-            @TestMetadata("kt51755.kt")
-            public void testKt51755() throws Exception {
-                runTest("testData/evaluation/multipleBreakpoints/kt51755.kt");
-            }
-
             @TestMetadata("lambdaParameters.kt")
             public void testLambdaParameters() throws Exception {
                 runTest("testData/evaluation/multipleBreakpoints/lambdaParameters.kt");

@@ -3,8 +3,6 @@
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.gradle.api.tasks.Exec
-import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheAwareImpl
-import org.jetbrains.kotlin.idea.gradleTooling.arguments.createCachedArgsInfo
 import org.jetbrains.kotlin.idea.projectModel.*
 import java.io.File
 
@@ -40,7 +38,6 @@ class KotlinSourceSetImpl @OptIn(KotlinGradlePluginVersionDependentApi::class) c
 
 
     @OptIn(KotlinGradlePluginVersionDependentApi::class)
-    @Suppress("DEPRECATION")
     constructor(kotlinSourceSet: KotlinSourceSet) : this(
         name = kotlinSourceSet.name,
         languageSettings = KotlinLanguageSettingsImpl(kotlinSourceSet.languageSettings),
@@ -60,7 +57,6 @@ class KotlinSourceSetImpl @OptIn(KotlinGradlePluginVersionDependentApi::class) c
     override fun toString() = name
 
     init {
-        @Suppress("DEPRECATION")
         require(allDependsOnSourceSets.containsAll(declaredDependsOnSourceSets)) {
             "Inconsistent source set dependencies: 'allDependsOnSourceSets' is expected to contain all 'declaredDependsOnSourceSets'"
         }
@@ -101,18 +97,6 @@ data class KotlinCompilationOutputImpl(
     )
 }
 
-@Deprecated("Use org.jetbrains.kotlin.idea.projectModel.CachedArgsInfo instead", level = DeprecationLevel.ERROR)
-@Suppress("DEPRECATION_ERROR")
-data class KotlinCompilationArgumentsImpl(
-    override val defaultArguments: Array<String>,
-    override val currentArguments: Array<String>
-) : KotlinCompilationArguments {
-    constructor(arguments: KotlinCompilationArguments) : this(
-        arguments.defaultArguments,
-        arguments.currentArguments
-    )
-}
-
 data class KotlinNativeCompilationExtensionsImpl(
     override val konanTarget: String
 ) : KotlinNativeCompilationExtensions {
@@ -136,9 +120,7 @@ data class KotlinCompilationImpl(
     override val declaredSourceSets: Set<KotlinSourceSet>,
     override val dependencies: Array<KotlinDependencyId>,
     override val output: KotlinCompilationOutput,
-    override val arguments: KotlinCompilationArguments,
-    override val dependencyClasspath: Array<String>,
-    override val cachedArgsInfo: CachedArgsInfo<*>,
+    override val compilerArguments: List<String>?,
     override val kotlinTaskProperties: KotlinTaskProperties,
     override val nativeExtensions: KotlinNativeCompilationExtensions?,
     override val associateCompilations: Set<KotlinCompilationCoordinates>,
@@ -152,9 +134,7 @@ data class KotlinCompilationImpl(
         allSourceSets = cloneSourceSetsWithCaching(kotlinCompilation.allSourceSets, cloningCache),
         dependencies = kotlinCompilation.dependencies,
         output = KotlinCompilationOutputImpl(kotlinCompilation.output),
-        arguments = KotlinCompilationArgumentsImpl(kotlinCompilation.arguments),
-        dependencyClasspath = kotlinCompilation.dependencyClasspath,
-        cachedArgsInfo = createCachedArgsInfo(kotlinCompilation.cachedArgsInfo, cloningCache),
+        compilerArguments = kotlinCompilation.compilerArguments?.toList(),
         kotlinTaskProperties = KotlinTaskPropertiesImpl(kotlinCompilation.kotlinTaskProperties),
         nativeExtensions = kotlinCompilation.nativeExtensions?.let(::KotlinNativeCompilationExtensionsImpl),
         associateCompilations = cloneCompilationCoordinatesWithCaching(kotlinCompilation.associateCompilations, cloningCache),
@@ -275,7 +255,6 @@ data class KotlinMPPGradleModelImpl @OptIn(KotlinGradlePluginVersionDependentApi
     override val kotlinNativeHome: String,
     override val dependencyMap: Map<KotlinDependencyId, KotlinDependency>,
     override val dependencies: IdeaKotlinDependenciesContainer?,
-    override val cacheAware: CompilerArgumentsCacheAware,
     override val kotlinImportingDiagnostics: KotlinImportingDiagnosticsContainer = mutableSetOf(),
     override val kotlinGradlePluginVersion: KotlinGradlePluginVersion?
 ) : KotlinMPPGradleModel {
@@ -298,19 +277,9 @@ data class KotlinMPPGradleModelImpl @OptIn(KotlinGradlePluginVersionDependentApi
         kotlinNativeHome = mppModel.kotlinNativeHome,
         dependencyMap = mppModel.dependencyMap.map { it.key to it.value.deepCopy(cloningCache) }.toMap(),
         dependencies = mppModel.dependencies,
-        cacheAware = CompilerArgumentsCacheAwareImpl(mppModel.cacheAware),
         kotlinImportingDiagnostics = mppModel.kotlinImportingDiagnostics.mapTo(mutableSetOf()) { it.deepCopy(cloningCache) },
         kotlinGradlePluginVersion = mppModel.kotlinGradlePluginVersion?.reparse()
     )
-
-    @Deprecated(
-        "Use KotlinGradleModel#cacheAware instead", level = DeprecationLevel.ERROR,
-        replaceWith = ReplaceWith("KotlinMPPGradleModel#cacheAware")
-    )
-    @Suppress("OverridingDeprecatedMember")
-    override val partialCacheAware: CompilerArgumentsCacheAware
-        get() = cacheAware
-
 }
 
 class KotlinPlatformContainerImpl() : KotlinPlatformContainer {
