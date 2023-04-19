@@ -55,8 +55,7 @@ abstract class AbstractKotlinUVariable(
     override val uAnnotations by lz {
         val sourcePsi = sourcePsi ?: return@lz psi.annotations.map { WrappedUAnnotation(it, this) }
         val annotations = SmartList<UAnnotation>()
-        val hasInheritedGenericType =
-            (sourcePsi as? KtCallableDeclaration)?.let { baseResolveProviderService.hasInheritedGenericType(it) } ?: false
+        val hasInheritedGenericType = baseResolveProviderService.hasInheritedGenericType(sourcePsi)
         if (!hasInheritedGenericType) {
             annotations.add(KotlinNullabilityUAnnotation(baseResolveProviderService, sourcePsi, this))
         }

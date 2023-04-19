@@ -2,17 +2,23 @@ public final class NullabilityOfTypeParameterKt {
     public static final fun topLevelNonNullUpperBoundInherited(@org.jetbrains.annotations.NotNull t: T) : T {
         return t
     }
+    public static final fun extensionNonNullUpperBoundInherited(@org.jetbrains.annotations.NotNull $this$extensionNonNullUpperBoundInherited: T, @org.jetbrains.annotations.NotNull t: T) : void {
+    }
     public static final fun topLevelNonNullUpperBoundExplicitNullable(@org.jetbrains.annotations.Nullable t: T) : T {
         return t
     }
     public static final fun topLevelNullableUpperBoundInherited(t: T) : T {
         return t
     }
+    public static final fun extensionNullableUpperBoundInherited($this$extensionNullableUpperBoundInherited: T, t: T) : void {
+    }
     public static final fun topLevelNullableUpperBoundExplicitNullable(@org.jetbrains.annotations.Nullable t: T) : T {
         return t
     }
     public static final fun topLevelUnspecifiedUpperBoundInherited(t: T) : T {
         return t
+    }
+    public static final fun extensionUnspecifiedUpperBoundInherited($this$extensionUnspecifiedUpperBoundInherited: T, t: T) : void {
     }
     public static final fun topLevelUnspecifiedUpperBoundExplicitNullable(@org.jetbrains.annotations.Nullable t: T) : T {
         return t

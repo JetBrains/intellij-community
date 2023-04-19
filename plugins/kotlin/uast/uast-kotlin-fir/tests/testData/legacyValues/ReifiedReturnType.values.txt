@@ -61,9 +61,8 @@ UFile (package = ) [public final class ReifiedReturnTypeKt {...]
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return 42] = Nothing
                     ULiteralExpression (value = 42) [42] = 42
-        UMethod (name = function6) [public static fun function6(@org.jetbrains.annotations.Nullable $this$function6: T, t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {...}]
-            UParameter (name = $this$function6) [@org.jetbrains.annotations.Nullable var $this$function6: T]
-                UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
+        UMethod (name = function6) [public static fun function6($this$function6: T, t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {...}]
+            UParameter (name = $this$function6) [var $this$function6: T]
             UParameter (name = t) [var t: T]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
@@ -108,9 +107,8 @@ UFile (package = ) [public final class ReifiedReturnTypeKt {...]
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return t] = Nothing
                     USimpleNameReferenceExpression (identifier = t) [t] = Undetermined
-        UMethod (name = function11) [public static fun function11(@org.jetbrains.annotations.Nullable $this$function11: T, t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {...}]
-            UParameter (name = $this$function11) [@org.jetbrains.annotations.Nullable var $this$function11: T]
-                UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
+        UMethod (name = function11) [public static fun function11($this$function11: T, t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {...}]
+            UParameter (name = $this$function11) [var $this$function11: T]
             UParameter (name = t) [var t: T]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]

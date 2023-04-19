@@ -444,8 +444,8 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         return uLambdaExpression.getFunctionalInterfaceType()
     }
 
-    override fun hasInheritedGenericType(ktCallableDeclaration: KtCallableDeclaration): Boolean {
-        val returnType = getType(ktCallableDeclaration) ?: return false
+    override fun hasInheritedGenericType(psiElement: PsiElement): Boolean {
+        val returnType = getTargetType(psiElement) ?: return false
         return TypeUtils.isTypeParameter(returnType) &&
                 // explicitly nullable, e.g., T?
                 !returnType.isMarkedNullable &&
