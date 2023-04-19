@@ -31,10 +31,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.EdtExecutorService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Listens for editor events and starts brace/identifier highlighting in the background
@@ -152,7 +154,7 @@ final class BackgroundHighlighter implements StartupActivity, DumbAware {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       updateHighlighted(project, editor);
     } else {
-      myAlarm.addRequest(() -> updateHighlighted(project, editor), 300);
+      EdtExecutorService.getScheduledExecutorInstance().schedule(() -> updateHighlighted(project, editor), 300, TimeUnit.MILLISECONDS);
     }
   }
 
