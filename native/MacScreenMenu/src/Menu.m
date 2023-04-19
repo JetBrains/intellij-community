@@ -94,6 +94,13 @@ static bool sUpdateInProgress = false; // used only in AppKit
     }
 }
 
+- (BOOL)menuHasKeyEquivalent:(NSMenu *)menu
+                    forEvent:(NSEvent *)event
+                      target:(id  _Nullable *)target
+                      action:(SEL  _Nullable *)action {
+    return NO;
+}
+
 //
 // Other methods
 //
@@ -239,10 +246,8 @@ Java_com_intellij_ui_mac_screenmenu_Menu_nativeInsertItem
 }
 
 
-
 @interface MenuRefiller : NSObject {
 @public
-
     Menu * menu;
     jsize length;
     long * newItemsPtrs;
