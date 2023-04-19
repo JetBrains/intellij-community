@@ -11,8 +11,10 @@ interface TreeAssertion<T> {
 
   interface Node<T> : TreeAssertion<T> {
 
-    val value: T
-
+    /**
+     * Postpones value assertion after assertion of tree structure.
+     * Assertion will be skipped if the structure is incorrect or the current is flattened.
+     */
     fun assertValueIfPresent(assert: (T) -> Unit)
 
     fun assertNode(name: String, flattenIf: Boolean, assert: Node<T>.() -> Unit = {})

@@ -4,14 +4,14 @@ package org.jetbrains.kotlin.idea.test.events.gradle
 import com.intellij.testFramework.RunAll.Companion.runAll
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.plugins.gradle.execution.test.events.GradleTestNavigationTestCase
+import org.jetbrains.plugins.gradle.execution.test.events.GradleExecutionTestCase
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isSupportedJUnit5
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.junit.jupiter.api.Assertions
 
-abstract class KotlinGradleTestNavigationTestCase : GradleTestNavigationTestCase() {
+abstract class KotlinGradleExecutionTestCase : GradleExecutionTestCase() {
 
     override fun tearDown() {
         runAll(

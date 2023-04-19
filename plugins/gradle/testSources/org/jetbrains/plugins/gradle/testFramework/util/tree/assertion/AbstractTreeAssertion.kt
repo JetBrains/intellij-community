@@ -71,17 +71,6 @@ internal abstract class AbstractTreeAssertion<T>(
     override val actualChildren = node?.children?.toMutableList() ?: ArrayList()
     override val expectedChildren = expectedNode.children
 
-    override val value: T
-      get() {
-        if (node == null) {
-          throw AssertionError(
-            "Expected node by path $actualPath in tree:\n" +
-            actualTree.getTreeString()
-          )
-        }
-        return node.value
-      }
-
     override fun assertValueIfPresent(assert: (T) -> Unit) {
       if (node != null) {
         assert(node.value)
@@ -98,14 +87,6 @@ internal abstract class AbstractTreeAssertion<T>(
 
     override val actualChildren = parentNode.actualChildren
     override val expectedChildren = parentNode.expectedChildren
-
-    override val value: Nothing
-      get() {
-        throw AssertionError(
-          "Expected node by path $actualPath in tree:\n" +
-          actualTree.getTreeString()
-        )
-      }
 
     override fun assertValueIfPresent(assert: (T) -> Unit) {}
   }

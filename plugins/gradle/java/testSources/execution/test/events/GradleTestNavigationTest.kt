@@ -4,10 +4,9 @@ package org.jetbrains.plugins.gradle.execution.test.events
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 
-class GradleTestNavigationTest : GradleTestNavigationTestCase() {
+class GradleTestNavigationTest : GradleExecutionTestCase() {
 
   @ParameterizedTest
   @TargetVersions("4.7 <=> 7.0")
@@ -17,48 +16,29 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
       writeText("src/test/java/org/example/TestCase.java", JAVA_PARAMETRISED_JUNIT5_TEST)
 
       executeTasks(":test")
-
       assertTestTreeView {
         assertNode("TestCase") {
-          assertNode("test")
-          assertNode("successful test")
-          assertNode("pretty test")
-          assertNode("parametrized_test [1] 1, first")
-          assertNode("parametrized_test [2] 2, second")
-          assertNode("ugly_parametrized_test [1] 3, third")
-          assertNode("ugly_parametrized_test [2] 4, fourth")
-        }
-      }
-      assertSMTestProxyTree {
-        assertNode("TestCase") {
-          Assertions.assertEquals("TestCase", value.psiClass.name)
+          assertPsiLocation("TestCase")
           assertNode("test") {
-            Assertions.assertEquals("test", value.psiMethod.name)
-            Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+            assertPsiLocation("TestCase", "test")
           }
           assertNode("successful test") {
-            Assertions.assertEquals("successful_test", value.psiMethod.name)
-            Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+            assertPsiLocation("TestCase", "successful_test")
           }
           assertNode("pretty test") {
-            Assertions.assertEquals("ugly_test", value.psiMethod.name)
-            Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+            assertPsiLocation("TestCase", "ugly_test")
           }
           assertNode("parametrized_test [1] 1, first") {
-            Assertions.assertEquals("parametrized_test", value.psiMethod.name)
-            Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+            assertPsiLocation("TestCase", "parametrized_test")
           }
           assertNode("parametrized_test [2] 2, second") {
-            Assertions.assertEquals("parametrized_test", value.psiMethod.name)
-            Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+            assertPsiLocation("TestCase", "parametrized_test")
           }
           assertNode("ugly_parametrized_test [1] 3, third") {
-            Assertions.assertEquals("ugly_parametrized_test", value.psiMethod.name)
-            Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+            assertPsiLocation("TestCase", "ugly_parametrized_test")
           }
           assertNode("ugly_parametrized_test [2] 4, fourth") {
-            Assertions.assertEquals("ugly_parametrized_test", value.psiMethod.name)
-            Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+            assertPsiLocation("TestCase", "ugly_parametrized_test")
           }
         }
       }
@@ -73,65 +53,40 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
       writeText("src/test/java/org/example/TestCase.java", JAVA_PARAMETRISED_JUNIT5_TEST)
 
       executeTasks(":test")
-
       assertTestTreeView {
         assertNode("TestCase") {
-          assertNode("test")
-          assertNode("successful test")
-          assertNode("pretty test")
-          assertNode("parametrized test") {
-            assertNode("[1] 1, first")
-            assertNode("[2] 2, second")
-          }
-          assertNode("pretty parametrized test") {
-            assertNode("[1] 3, third")
-            assertNode("[2] 4, fourth")
-          }
-        }
-      }
-      assertSMTestProxyTree {
-        assertNode("TestCase") {
-          Assertions.assertEquals("TestCase", value.psiClass.name)
+          assertPsiLocation("TestCase")
           assertNode("test") {
-            Assertions.assertEquals("test", value.psiMethod.name)
-            Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+            assertPsiLocation("TestCase", "test")
           }
           assertNode("successful test") {
-            Assertions.assertEquals("successful_test", value.psiMethod.name)
-            Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+            assertPsiLocation("TestCase", "successful_test")
           }
           assertNode("pretty test") {
-            Assertions.assertEquals("ugly_test", value.psiMethod.name)
-            Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+            assertPsiLocation("TestCase", "ugly_test")
           }
           assertNode("parametrized test") {
             if (isSupportedTestLauncher()) {
               // Known bug. See DefaultGradleTestEventConverter.getConvertedMethodName
-              Assertions.assertEquals("parametrized_test", value.psiMethod.name)
-              Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+              assertPsiLocation("TestCase", "parametrized_test")
             }
             assertNode("[1] 1, first") {
-              Assertions.assertEquals("parametrized_test", value.psiMethod.name)
-              Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+              assertPsiLocation("TestCase", "parametrized_test")
             }
             assertNode("[2] 2, second") {
-              Assertions.assertEquals("parametrized_test", value.psiMethod.name)
-              Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+              assertPsiLocation("TestCase", "parametrized_test")
             }
           }
           assertNode("pretty parametrized test") {
             if (isSupportedTestLauncher()) {
               // Known bug. See DefaultGradleTestEventConverter.getConvertedMethodName
-              Assertions.assertEquals("ugly_parametrized_test", value.psiMethod.name)
-              Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+              assertPsiLocation("TestCase", "ugly_parametrized_test")
             }
             assertNode("[1] 3, third") {
-              Assertions.assertEquals("ugly_parametrized_test", value.psiMethod.name)
-              Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+              assertPsiLocation("TestCase", "ugly_parametrized_test")
             }
             assertNode("[2] 4, fourth") {
-              Assertions.assertEquals("ugly_parametrized_test", value.psiMethod.name)
-              Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+              assertPsiLocation("TestCase", "ugly_parametrized_test")
             }
           }
         }
@@ -147,43 +102,26 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
       writeText("src/test/java/org/example/ParametrizedTestCase.java", JAVA_PARAMETRIZED_JUNIT4_TEST)
 
       executeTasks(":test")
-
       assertTestTreeView {
         assertNode("TestCase") {
-          assertNode("test")
-          assertNode("successful_test")
-        }
-        assertNode("ParametrizedTestCase") {
-          assertNode("parametrized_test[0]")
-          assertNode("parametrized_test[1]")
-          assertNode("parametrized_test[2]")
-        }
-      }
-      assertSMTestProxyTree {
-        assertNode("TestCase") {
-          Assertions.assertEquals("TestCase", value.psiClass.name)
+          assertPsiLocation("TestCase")
           assertNode("test") {
-            Assertions.assertEquals("test", value.psiMethod.name)
-            Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+            assertPsiLocation("TestCase", "test")
           }
           assertNode("successful_test") {
-            Assertions.assertEquals("successful_test", value.psiMethod.name)
-            Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+            assertPsiLocation("TestCase", "successful_test")
           }
         }
         assertNode("ParametrizedTestCase") {
-          Assertions.assertEquals("ParametrizedTestCase", value.psiClass.name)
+          assertPsiLocation("ParametrizedTestCase")
           assertNode("parametrized_test[0]") {
-            Assertions.assertEquals("parametrized_test", value.psiMethod.name)
-            Assertions.assertEquals("ParametrizedTestCase", value.psiMethod.psiClass.name)
+            assertPsiLocation("ParametrizedTestCase", "parametrized_test")
           }
           assertNode("parametrized_test[1]") {
-            Assertions.assertEquals("parametrized_test", value.psiMethod.name)
-            Assertions.assertEquals("ParametrizedTestCase", value.psiMethod.psiClass.name)
+            assertPsiLocation("ParametrizedTestCase", "parametrized_test")
           }
           assertNode("parametrized_test[2]") {
-            Assertions.assertEquals("parametrized_test", value.psiMethod.name)
-            Assertions.assertEquals("ParametrizedTestCase", value.psiMethod.psiClass.name)
+            assertPsiLocation("ParametrizedTestCase", "parametrized_test")
           }
         }
       }
@@ -198,53 +136,28 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
       writeText("src/test/java/org/example/ParametrizedTestCase.java", JAVA_PARAMETRIZED_TESTNG_TEST)
 
       executeTasks(":test")
-
       assertTestTreeView {
         assertNode("Gradle suite") {
           assertNode("Gradle test") {
             assertNode("TestCase", flattenIf = isGradleOlderThan("5.0")) {
-              assertNode("test")
-              assertNode("successful_test")
-            }
-            assertNode("ParametrizedTestCase", flattenIf = isGradleOlderThan("5.0")) {
-              assertNode("parametrized_test[0](1, first)")
-              assertNode("parametrized_test[1](2, second)")
-              assertNode("parametrized_test[2](3, third)")
-            }
-          }
-        }
-      }
-      assertSMTestProxyTree {
-        assertNode("Gradle suite") {
-          assertNode("Gradle test") {
-            assertNode("ParametrizedTestCase", flattenIf = isGradleOlderThan("5.0")) {
-              assertValueIfPresent {
-                Assertions.assertEquals("ParametrizedTestCase", value.psiClass.name)
-              }
-              assertNode("parametrized_test[0](1, first)") {
-                Assertions.assertEquals("parametrized_test", value.psiMethod.name)
-                Assertions.assertEquals("ParametrizedTestCase", value.psiMethod.psiClass.name)
-              }
-              assertNode("parametrized_test[1](2, second)") {
-                Assertions.assertEquals("parametrized_test", value.psiMethod.name)
-                Assertions.assertEquals("ParametrizedTestCase", value.psiMethod.psiClass.name)
-              }
-              assertNode("parametrized_test[2](3, third)") {
-                Assertions.assertEquals("parametrized_test", value.psiMethod.name)
-                Assertions.assertEquals("ParametrizedTestCase", value.psiMethod.psiClass.name)
-              }
-            }
-            assertNode("TestCase", flattenIf = isGradleOlderThan("5.0")) {
-              assertValueIfPresent {
-                Assertions.assertEquals("TestCase", value.psiClass.name)
+              assertPsiLocation("TestCase")
+              assertNode("test") {
+                assertPsiLocation("TestCase", "test")
               }
               assertNode("successful_test") {
-                Assertions.assertEquals("successful_test", value.psiMethod.name)
-                Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+                assertPsiLocation("TestCase", "successful_test")
               }
-              assertNode("test") {
-                Assertions.assertEquals("test", value.psiMethod.name)
-                Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+            }
+            assertNode("ParametrizedTestCase", flattenIf = isGradleOlderThan("5.0")) {
+              assertPsiLocation("ParametrizedTestCase")
+              assertNode("parametrized_test[0](1, first)") {
+                assertPsiLocation("ParametrizedTestCase", "parametrized_test")
+              }
+              assertNode("parametrized_test[1](2, second)") {
+                assertPsiLocation("ParametrizedTestCase", "parametrized_test")
+              }
+              assertNode("parametrized_test[2](3, third)") {
+                assertPsiLocation("ParametrizedTestCase", "parametrized_test")
               }
             }
           }
@@ -261,33 +174,19 @@ class GradleTestNavigationTest : GradleTestNavigationTestCase() {
       writeText("src/test/groovy/org/example/SpockTestCase.groovy", GROOVY_CLASS_WITH_SPOCK_TESTS)
 
       executeTasks(":test")
-
       assertTestTreeView {
         assertNode("SpockTestCase") {
-          assertNode("success test")
-          assertNode("failure test")
-          assertNode("length of #name is #length") {
-            assertNode("length of Spock is 5")
-          }
-        }
-      }
-      assertSMTestProxyTree {
-        assertNode("SpockTestCase") {
-          Assertions.assertEquals("SpockTestCase", value.psiClass.name)
+          assertPsiLocation("SpockTestCase")
           assertNode("success test") {
-            Assertions.assertEquals("success test", value.psiMethod.name)
-            Assertions.assertEquals("SpockTestCase", value.psiMethod.psiClass.name)
+            assertPsiLocation("SpockTestCase", "success test")
           }
           assertNode("failure test") {
-            Assertions.assertEquals("failure test", value.psiMethod.name)
-            Assertions.assertEquals("SpockTestCase", value.psiMethod.psiClass.name)
+            assertPsiLocation("SpockTestCase", "failure test")
           }
           assertNode("length of #name is #length") {
-            Assertions.assertEquals("length of #name is #length", value.psiMethod.name)
-            Assertions.assertEquals("SpockTestCase", value.psiMethod.psiClass.name)
+            assertPsiLocation("SpockTestCase", "length of #name is #length")
             assertNode("length of Spock is 5") {
-              Assertions.assertEquals("length of #name is #length", value.psiMethod.name)
-              Assertions.assertEquals("SpockTestCase", value.psiMethod.psiClass.name)
+              assertPsiLocation("SpockTestCase", "length of #name is #length")
             }
           }
         }

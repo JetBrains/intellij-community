@@ -53,7 +53,7 @@ abstract class GradleExecutionTestCase : GradleProjectTestCase() {
     executionEnvironmentFixture = GradleExecutionEnvironmentFixture(project)
     executionEnvironmentFixture.setUp()
 
-    executionConsoleFixture = GradleExecutionViewFixture(executionEnvironmentFixture)
+    executionConsoleFixture = GradleExecutionViewFixture(project, executionEnvironmentFixture)
     executionConsoleFixture.setUp()
 
     buildViewFixture = BuildViewTestFixture(project)
@@ -164,11 +164,19 @@ abstract class GradleExecutionTestCase : GradleProjectTestCase() {
     executionConsoleFixture.assertTestConsoleDoesNotContain(expected)
   }
 
+  fun TreeAssertion.Node<AbstractTestProxy>.assertTestConsoleContains(expectedTextSample: String) {
+    executionConsoleFixture.assertTestConsoleContains(this, expectedTextSample)
+  }
+
+  fun TreeAssertion.Node<AbstractTestProxy>.assertTestConsoleDoesNotContain(unexpectedTextSample: String) {
+    executionConsoleFixture.assertTestConsoleDoesNotContain(this, unexpectedTextSample)
+  }
+
   fun assertRunTreeView(assert: TreeAssertion.Node<Nothing?>.() -> Unit) {
     executionConsoleFixture.assertRunTreeView(assert)
   }
 
-  fun assertTestTreeView(assert: TreeAssertion.Node<Nothing?>.() -> Unit) {
+  fun assertTestTreeView(assert: TreeAssertion<AbstractTestProxy>.() -> Unit) {
     executionConsoleFixture.assertTestTreeView(assert)
   }
 
@@ -180,8 +188,8 @@ abstract class GradleExecutionTestCase : GradleProjectTestCase() {
     executionConsoleFixture.assertTestTreeViewIsEmpty()
   }
 
-  fun assertSMTestProxyTree(assert: TreeAssertion<AbstractTestProxy>.() -> Unit) {
-    executionConsoleFixture.assertSMTestProxyTree(assert)
+  fun TreeAssertion.Node<AbstractTestProxy>.assertPsiLocation(className: String, methodName: String? = null) {
+    executionConsoleFixture.assertPsiLocation(this, className, methodName)
   }
 
   fun testJunit5Project(gradleVersion: GradleVersion, action: () -> Unit) {

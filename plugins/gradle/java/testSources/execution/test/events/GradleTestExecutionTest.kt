@@ -39,7 +39,6 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test :additionalTest")
-
       assertTestTreeView {
         assertNode("AppTest") {
           assertNode("test")
@@ -113,7 +112,6 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test")
-
       assertTestTreeView {
         assertNode("AppTest") {
           assertNode("test")
@@ -143,7 +141,6 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test")
-
       assertTestTreeView {
         assertNode("AppTest") {
           assertNode("test")

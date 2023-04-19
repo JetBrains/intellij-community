@@ -4,10 +4,9 @@ package org.jetbrains.kotlin.idea.test.events.gradle
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 
-class KotlinGradleTestNavigationTest : KotlinGradleTestNavigationTestCase() {
+class KotlinGradleTestNavigationTest : KotlinGradleExecutionTestCase() {
 
     @ParameterizedTest
     @TargetVersions("5.6.2 <=> 7.0")
@@ -17,48 +16,29 @@ class KotlinGradleTestNavigationTest : KotlinGradleTestNavigationTestCase() {
             writeText("src/test/kotlin/org/example/TestCase.kt", KOTLIN_CLASS_WITH_PARAMETRISED_JUNIT5_TESTS)
 
             executeTasks(":test")
-
             assertTestTreeView {
                 assertNode("TestCase") {
-                    assertNode("test")
-                    assertNode("successful test")
-                    assertNode("pretty test")
-                    assertNode("parametrized test [1] 1, first")
-                    assertNode("parametrized test [2] 2, second")
-                    assertNode("ugly parametrized test [1] 3, third")
-                    assertNode("ugly parametrized test [2] 4, fourth")
-                }
-            }
-            assertSMTestProxyTree {
-                assertNode("TestCase") {
-                    Assertions.assertEquals("TestCase", value.psiClass.name)
+                    assertPsiLocation("TestCase")
                     assertNode("test") {
-                        Assertions.assertEquals("test", value.psiMethod.name)
-                        Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+                        assertPsiLocation("TestCase", "test")
                     }
                     assertNode("successful test") {
-                        Assertions.assertEquals("successful test", value.psiMethod.name)
-                        Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+                        assertPsiLocation("TestCase", "successful test")
                     }
                     assertNode("pretty test") {
-                        Assertions.assertEquals("ugly test", value.psiMethod.name)
-                        Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+                        assertPsiLocation("TestCase", "ugly test")
                     }
                     assertNode("parametrized test [1] 1, first") {
-                        Assertions.assertEquals("parametrized test", value.psiMethod.name)
-                        Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+                        assertPsiLocation("TestCase", "parametrized test")
                     }
                     assertNode("parametrized test [2] 2, second") {
-                        Assertions.assertEquals("parametrized test", value.psiMethod.name)
-                        Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+                        assertPsiLocation("TestCase", "parametrized test")
                     }
                     assertNode("ugly parametrized test [1] 3, third") {
-                        Assertions.assertEquals("ugly parametrized test", value.psiMethod.name)
-                        Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+                        assertPsiLocation("TestCase", "ugly parametrized test")
                     }
                     assertNode("ugly parametrized test [2] 4, fourth") {
-                        Assertions.assertEquals("ugly parametrized test", value.psiMethod.name)
-                        Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+                        assertPsiLocation("TestCase", "ugly parametrized test")
                     }
                 }
             }
@@ -73,65 +53,40 @@ class KotlinGradleTestNavigationTest : KotlinGradleTestNavigationTestCase() {
             writeText("src/test/kotlin/org/example/TestCase.kt", KOTLIN_CLASS_WITH_PARAMETRISED_JUNIT5_TESTS)
 
             executeTasks(":test")
-
             assertTestTreeView {
                 assertNode("TestCase") {
-                    assertNode("test")
-                    assertNode("successful test")
-                    assertNode("pretty test")
-                    assertNode("parametrized test") {
-                        assertNode("[1] 1, first")
-                        assertNode("[2] 2, second")
-                    }
-                    assertNode("pretty parametrized test") {
-                        assertNode("[1] 3, third")
-                        assertNode("[2] 4, fourth")
-                    }
-                }
-            }
-            assertSMTestProxyTree {
-                assertNode("TestCase") {
-                    Assertions.assertEquals("TestCase", value.psiClass.name)
+                    assertPsiLocation("TestCase")
                     assertNode("test") {
-                        Assertions.assertEquals("test", value.psiMethod.name)
-                        Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+                        assertPsiLocation("TestCase", "test")
                     }
                     assertNode("successful test") {
-                        Assertions.assertEquals("successful test", value.psiMethod.name)
-                        Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+                        assertPsiLocation("TestCase", "successful test")
                     }
                     assertNode("pretty test") {
-                        Assertions.assertEquals("ugly test", value.psiMethod.name)
-                        Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+                        assertPsiLocation("TestCase", "ugly test")
                     }
                     assertNode("parametrized test") {
                         if (isSupportedTestLauncher()) {
                             // Known bug. See DefaultGradleTestEventConverter.getConvertedMethodName
-                            Assertions.assertEquals("parametrized test", value.psiMethod.name)
-                            Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+                            assertPsiLocation("TestCase", "parametrized test")
                         }
                         assertNode("[1] 1, first") {
-                            Assertions.assertEquals("parametrized test", value.psiMethod.name)
-                            Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+                            assertPsiLocation("TestCase", "parametrized test")
                         }
                         assertNode("[2] 2, second") {
-                            Assertions.assertEquals("parametrized test", value.psiMethod.name)
-                            Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+                            assertPsiLocation("TestCase", "parametrized test")
                         }
                     }
                     assertNode("pretty parametrized test") {
                         if (isSupportedTestLauncher()) {
                             // Known bug. See DefaultGradleTestEventConverter.getConvertedMethodName
-                            Assertions.assertEquals("ugly parametrized test", value.psiMethod.name)
-                            Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+                            assertPsiLocation("TestCase", "ugly parametrized test")
                         }
                         assertNode("[1] 3, third") {
-                            Assertions.assertEquals("ugly parametrized test", value.psiMethod.name)
-                            Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+                            assertPsiLocation("TestCase", "ugly parametrized test")
                         }
                         assertNode("[2] 4, fourth") {
-                            Assertions.assertEquals("ugly parametrized test", value.psiMethod.name)
-                            Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+                            assertPsiLocation("TestCase", "ugly parametrized test")
                         }
                     }
                 }
@@ -148,43 +103,26 @@ class KotlinGradleTestNavigationTest : KotlinGradleTestNavigationTestCase() {
             writeText("src/test/kotlin/org/example/ParametrizedTestCase.kt", KOTLIN_PARAMETRIZED_JUNIT4_TEST)
 
             executeTasks(":test")
-
             assertTestTreeView {
                 assertNode("TestCase") {
-                    assertNode("test")
-                    assertNode("successful test")
-                }
-                assertNode("ParametrizedTestCase") {
-                    assertNode("parametrized test[0]")
-                    assertNode("parametrized test[1]")
-                    assertNode("parametrized test[2]")
-                }
-            }
-            assertSMTestProxyTree {
-                assertNode("TestCase") {
-                    Assertions.assertEquals("TestCase", value.psiClass.name)
+                    assertPsiLocation("TestCase")
                     assertNode("test") {
-                        Assertions.assertEquals("test", value.psiMethod.name)
-                        Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+                        assertPsiLocation("TestCase", "test")
                     }
                     assertNode("successful test") {
-                        Assertions.assertEquals("successful test", value.psiMethod.name)
-                        Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+                        assertPsiLocation("TestCase", "successful test")
                     }
                 }
                 assertNode("ParametrizedTestCase") {
-                    Assertions.assertEquals("ParametrizedTestCase", value.psiClass.name)
+                    assertPsiLocation("ParametrizedTestCase")
                     assertNode("parametrized test[0]") {
-                        Assertions.assertEquals("parametrized test", value.psiMethod.name)
-                        Assertions.assertEquals("ParametrizedTestCase", value.psiMethod.psiClass.name)
+                        assertPsiLocation("ParametrizedTestCase", "parametrized test")
                     }
                     assertNode("parametrized test[1]") {
-                        Assertions.assertEquals("parametrized test", value.psiMethod.name)
-                        Assertions.assertEquals("ParametrizedTestCase", value.psiMethod.psiClass.name)
+                        assertPsiLocation("ParametrizedTestCase", "parametrized test")
                     }
                     assertNode("parametrized test[2]") {
-                        Assertions.assertEquals("parametrized test", value.psiMethod.name)
-                        Assertions.assertEquals("ParametrizedTestCase", value.psiMethod.psiClass.name)
+                        assertPsiLocation("ParametrizedTestCase", "parametrized test")
                     }
                 }
             }
@@ -200,49 +138,28 @@ class KotlinGradleTestNavigationTest : KotlinGradleTestNavigationTestCase() {
             writeText("src/test/kotlin/org/example/ParametrizedTestCase.kt", KOTLIN_PARAMETRIZED_TESTNG_TEST)
 
             executeTasks(":test")
-
             assertTestTreeView {
                 assertNode("Gradle suite") {
                     assertNode("Gradle test") {
                         assertNode("TestCase") {
-                            assertNode("test")
-                            assertNode("successful test")
-                        }
-                        assertNode("ParametrizedTestCase") {
-                            assertNode("parametrized test[0](1, first)")
-                            assertNode("parametrized test[1](2, second)")
-                            assertNode("parametrized test[2](3, third)")
-                        }
-                    }
-                }
-            }
-            assertSMTestProxyTree {
-                assertNode("Gradle suite") {
-                    assertNode("Gradle test") {
-                        assertNode("TestCase") {
-                            Assertions.assertEquals("TestCase", value.psiClass.name)
+                            assertPsiLocation("TestCase")
                             assertNode("test") {
-                                Assertions.assertEquals("test", value.psiMethod.name)
-                                Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+                                assertPsiLocation("TestCase", "test")
                             }
                             assertNode("successful test") {
-                                Assertions.assertEquals("successful test", value.psiMethod.name)
-                                Assertions.assertEquals("TestCase", value.psiMethod.psiClass.name)
+                                assertPsiLocation("TestCase", "successful test")
                             }
                         }
                         assertNode("ParametrizedTestCase") {
-                            Assertions.assertEquals("ParametrizedTestCase", value.psiClass.name)
+                            assertPsiLocation("ParametrizedTestCase")
                             assertNode("parametrized test[0](1, first)") {
-                                Assertions.assertEquals("parametrized test", value.psiMethod.name)
-                                Assertions.assertEquals("ParametrizedTestCase", value.psiMethod.psiClass.name)
+                                assertPsiLocation("ParametrizedTestCase", "parametrized test")
                             }
                             assertNode("parametrized test[1](2, second)") {
-                                Assertions.assertEquals("parametrized test", value.psiMethod.name)
-                                Assertions.assertEquals("ParametrizedTestCase", value.psiMethod.psiClass.name)
+                                assertPsiLocation("ParametrizedTestCase", "parametrized test")
                             }
                             assertNode("parametrized test[2](3, third)") {
-                                Assertions.assertEquals("parametrized test", value.psiMethod.name)
-                                Assertions.assertEquals("ParametrizedTestCase", value.psiMethod.psiClass.name)
+                                assertPsiLocation("ParametrizedTestCase", "parametrized test")
                             }
                         }
                     }
