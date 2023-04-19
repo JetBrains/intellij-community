@@ -217,8 +217,9 @@ public class UnindexedFilesScanner implements FilesScanningTask {
       }
     }
     finally {
-      projectIndexingHistory.stopStage(ProjectIndexingHistoryImpl.Stage.Scanning, Instant.now());
-      //scanningHistory would be stopped later on overall stop of activity
+      Instant scanningStageStop = Instant.now();
+      projectIndexingHistory.stopStage(ProjectIndexingHistoryImpl.Stage.Scanning, scanningStageStop);
+      scanningHistory.stopStage(ProjectScanningHistoryImpl.ScanningStage.CollectingIndexableFiles, scanningStageStop);
     }
     String scanningCompletedMessage = getLogScanningCompletedStageMessage(projectIndexingHistory);
     LOG.info(snapshot.getLogResponsivenessSinceCreationMessage(scanningCompletedMessage));

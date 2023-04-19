@@ -374,7 +374,6 @@ data class ProjectScanningHistoryImpl(override val project: Project,
   private val scanningDumbModeCallBack: Runnable = Runnable {
     val now = ZonedDateTime.now(ZoneOffset.UTC)
     currentDumbModeStart = now
-    @Suppress("TestOnlyProblems")
     startStage(ScanningStage.DumbMode, now.toInstant())
   }
 
@@ -432,7 +431,6 @@ data class ProjectScanningHistoryImpl(override val project: Project,
 
   fun scanningFinished() {
     val now = ZonedDateTime.now(ZoneOffset.UTC)
-    stopStage(ScanningStage.CollectingIndexableFiles, now.toInstant())
     timesImpl.updatingEnd = now
     timesImpl.totalUpdatingTime = System.nanoTime() - timesImpl.totalUpdatingTime
 
@@ -443,7 +441,7 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     }
 
     writeStagesToDurations()
-    timesImpl.indexExtensionsDuration = scanningStatistics.map { stat -> stat.timeIndexingWithoutContentViaInfrastructureExtension.nano }.sumOf { it }.let {
+    timesImpl.indexExtensionsDuration = scanningStatistics.sumOf { stat -> stat.timeIndexingWithoutContentViaInfrastructureExtension.nano }.let {
       Duration.ofNanos(it)
     }
   }
