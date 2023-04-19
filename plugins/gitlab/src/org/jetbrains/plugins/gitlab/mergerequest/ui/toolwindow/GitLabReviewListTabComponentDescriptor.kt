@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.toolwindow.ReviewListTabComponentDescriptor
 import com.intellij.ide.DataManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
@@ -36,7 +37,7 @@ internal class GitLabReviewListTabComponentDescriptor(
     val filterVm: GitLabMergeRequestsFiltersViewModel = GitLabMergeRequestsFiltersViewModelImpl(
       cs,
       currentUser = connection.currentUser,
-      historyModel = GitLabMergeRequestsFiltersHistoryModel(GitLabMergeRequestsPersistentFiltersHistory()),
+      historyModel = GitLabMergeRequestsFiltersHistoryModel(project.service<GitLabMergeRequestsPersistentFiltersHistory>()),
       avatarIconsProvider = avatarIconsProvider,
       projectData = connection.projectData
     )

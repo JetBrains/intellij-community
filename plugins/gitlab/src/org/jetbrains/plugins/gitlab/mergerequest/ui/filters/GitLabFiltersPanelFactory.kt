@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.*
+import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestsMemberFilterValue.*
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
 
