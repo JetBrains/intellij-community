@@ -6,11 +6,7 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImp
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.contentRoots.ContentRootsChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orderEntries.OrderEntriesChecker
-import org.jetbrains.kotlin.gradle.newTests.testProperties.AndroidGradlePluginVersionTestsProperty
-import org.jetbrains.kotlin.gradle.newTests.testProperties.GradleVersionTestsProperty
-import org.jetbrains.kotlin.gradle.newTests.testProperties.KotlinGradlePluginVersionTestsProperty
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.junit.Test
 
 @TestMetadata("multiplatform/core/tier1")
