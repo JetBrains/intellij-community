@@ -1,9 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java.impl.compiler;
 
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
 import org.jetbrains.jps.util.JpsPathUtil;
 
@@ -12,7 +10,6 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class JpsCompilerExcludesImpl implements JpsCompilerExcludes {
-  private static final String SNIPPET_DIR_PATTERN = "/snippet-files/";
   private final Set<File> myFiles = new LinkedHashSet<>();
   private final Set<File> myDirectories = new LinkedHashSet<>();
   private final Set<File> myRecursivelyExcludedDirectories = new LinkedHashSet<>();
@@ -54,12 +51,6 @@ public class JpsCompilerExcludesImpl implements JpsCompilerExcludes {
         parent = FileUtilRt.getParentFile(parent);
       }
     }
-
-    String path = FileUtilRt.toSystemIndependentName(file.getPath());
-    if (SystemInfoRt.isFileSystemCaseSensitive? StringUtil.contains(path, SNIPPET_DIR_PATTERN) : StringUtil.containsIgnoreCase(path, SNIPPET_DIR_PATTERN)) {
-      return true;
-    }
-
     return false;
   }
 

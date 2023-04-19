@@ -44,7 +44,6 @@ public class JpsCompilerConfigurationTest extends JpsSerializationTestCase {
     assertTrue(isExcluded(excludes, "src/rec/Y.java"));
     assertTrue(isExcluded(excludes, "src/A.java"));
     assertFalse(isExcluded(excludes, "src/B.java"));
-    assertTrue(isExcluded(excludes, "src/snippet-files/B.java"));
 
     JpsJavaCompilerOptions options = configuration.getCurrentCompilerOptions();
     assertNotNull(options);
