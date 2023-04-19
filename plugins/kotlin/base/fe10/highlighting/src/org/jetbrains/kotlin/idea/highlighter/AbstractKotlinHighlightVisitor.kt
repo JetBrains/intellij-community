@@ -92,7 +92,7 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
                             it !in diagnosticHighlighted &&
                             !RenderingContext.parameters(it).any(::checkIfDescriptor)
                         ) {
-                            annotateDiagnostic(element, holder, it, diagnosticHighlighted)
+                            annotateDiagnostic(element, holder, listOf(it), diagnosticHighlighted)
                         }
                     }
                 )
@@ -117,26 +117,27 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
         //cleanUpCalculatingAnnotations(highlightInfoByTextRange)
         if (!shouldHighlightErrors) return
 
-        for (diagnostic in bindingContext.diagnostics) {
-            val psiElement = diagnostic.psiElement
-            if (psiElement !in elements) continue
-            // has been processed earlier e.g. on-fly or for some reasons it could be duplicated diagnostics for the same factory
-            //  see [PsiCheckerTestGenerated$Checker.testRedeclaration]
-            if (diagnostic in diagnosticHighlighted) continue
-
-            // annotate diagnostics those were not possible to report (and therefore render) on-the-fly
-            annotateDiagnostic(psiElement, holder, diagnostic, diagnosticHighlighted)
-        }
+        bindingContext.diagnostics
+            .filter { diagnostic ->
+                diagnostic.psiElement in elements
+                        // has been processed earlier e.g. on-fly or for some reasons it could be duplicated diagnostics for the same factory
+                        //  see [PsiCheckerTestGenerated$Checker.testRedeclaration]
+                        && diagnostic !in diagnosticHighlighted
+            }
+            .groupBy { it.psiElement }
+            .forEach { (psiElement, diagnostics) ->
+                // annotate diagnostics those were not possible to report (and therefore render) on-the-fly
+                annotateDiagnostic(psiElement, holder, diagnostics, diagnosticHighlighted)
+            }
     }
 
     private fun annotateDiagnostic(
         element: PsiElement,
         holder: HighlightInfoHolder,
-        diagnostic: Diagnostic,
+        diagnostics: List<Diagnostic>,
         diagnosticHighlighted: MutableSet<Diagnostic>
     ) {
         if (element.getUserData(DO_NOT_HIGHLIGHT_KEY) != null) return
-        val diagnostics = listOf(diagnostic)
         assertBelongsToTheSameElement(element, diagnostics)
         if (element is KtNameReferenceExpression) {
             val unresolved = diagnostics.any { it.factory == Errors.UNRESOLVED_REFERENCE }
