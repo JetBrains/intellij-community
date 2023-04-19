@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -22,6 +23,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
@@ -37,6 +39,8 @@ import java.awt.event.ActionListener;
 import java.util.function.Function;
 
 public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
+  private static final Logger LOG = Logger.getInstance(XDebuggerExpressionComboBox.class);
+
   private final JComponent myComponent;
   private final ComboBox<XExpression> myComboBox;
   private final CollectionComboBoxModel<XExpression> myModel = new CollectionComboBoxModel<>();
@@ -239,7 +243,18 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     @Override
     public void setItem(Object anObject) {
       if (anObject != null) { // do not reset the editor on null
-        setExpression((XExpression)anObject);
+        // TODO @kate.botsman Hack for remote dev and code with me, will be removed soon
+        if (anObject instanceof String) {
+          XExpression expression = XDebuggerUtil.getInstance()
+            .createExpression((String)anObject, myExpression.getLanguage(), null, myExpression.getMode());
+          setExpression(expression);
+        }
+        else if (anObject instanceof XExpression) {
+          setExpression((XExpression)anObject);
+        }
+        else {
+          LOG.error("Unexpected item: " + anObject);
+        }
       }
     }
 
