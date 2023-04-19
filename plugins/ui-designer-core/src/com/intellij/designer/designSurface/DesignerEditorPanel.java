@@ -39,8 +39,8 @@ import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLayeredPane;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.FixedHashMap;
@@ -1021,12 +1021,8 @@ public abstract class DesignerEditorPanel extends JPanel
   }
 
   private final class MyLayeredPane extends JBLayeredPane implements Scrollable {
-    @Override
-    public void doLayout() {
-      for (int i = getComponentCount() - 1; i >= 0; i--) {
-        Component component = getComponent(i);
-        component.setBounds(0, 0, getWidth(), getHeight());
-      }
+    private MyLayeredPane() {
+      setFullOverlayLayout(true);
     }
 
     @Override

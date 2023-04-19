@@ -46,6 +46,7 @@ public class CaptionPanel extends JBLayeredPane implements DataProvider {
       setBorder(IdeBorderFactory.createBorder(horizontal ? SideBorder.BOTTOM : SideBorder.RIGHT));
     }
 
+    setFullOverlayLayout(true);
     setFocusable(true);
 
     myHorizontal = horizontal;
@@ -160,14 +161,6 @@ public class CaptionPanel extends JBLayeredPane implements DataProvider {
         repaint();
       }
     });
-  }
-
-  @Override
-  public void doLayout() {
-    for (int i = getComponentCount() - 1; i >= 0; i--) {
-      Component component = getComponent(i);
-      component.setBounds(0, 0, getWidth(), getHeight());
-    }
   }
 
   @Override
