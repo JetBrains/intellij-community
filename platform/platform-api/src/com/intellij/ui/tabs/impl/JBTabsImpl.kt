@@ -2107,7 +2107,6 @@ open class JBTabsImpl(private var project: Project?,
         max.label.width = max.label.width.coerceAtMost(splitter.sideTabsLimit)
       }
     }
-    max.toolbar.height++
     return max
   }
 

@@ -150,7 +150,7 @@ public abstract class SingleRowLayout extends TabLayout {
 
     final JBTabsImpl.Toolbar selectedToolbar = myTabs.getInfoToToolbar().get(selected);
     data.hToolbar =
-      new WeakReference<>(selectedToolbar != null && myTabs.isHorizontalTabs() && !selectedToolbar.isEmpty() ? selectedToolbar : null);
+      new WeakReference<>(selectedToolbar != null && myTabs.getHorizontalSide() && !selectedToolbar.isEmpty() ? selectedToolbar : null);
     data.vToolbar =
       new WeakReference<>(selectedToolbar != null && !myTabs.getHorizontalSide() && !selectedToolbar.isEmpty() ? selectedToolbar : null);
     data.toFitLength = getStrategy().getToFitLength(data);
