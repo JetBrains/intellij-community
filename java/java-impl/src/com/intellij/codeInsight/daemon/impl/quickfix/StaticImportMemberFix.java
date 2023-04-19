@@ -54,8 +54,8 @@ abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement> 
     }
     else {
       // search for suitable candidates here, in the background thread
-      List<T> applicableCandidates = getMembersToImport(true, 100);
-      List<T> candidatesToImport = applicableCandidates.isEmpty() ? getMembersToImport(false, 2) : applicableCandidates;
+      StaticMembersProcessor.MembersToImport<T> membersToImport = getMembersToImport(100);
+      List<T> candidatesToImport = membersToImport.applicable().isEmpty() ? membersToImport.all() : membersToImport.applicable();
       candidates = ContainerUtil.filter(candidatesToImport, candidate -> isValidCandidate(file, candidate));
     }
     myPsiModificationCount = PsiModificationTracker.getInstance(project).getModificationCount();
@@ -110,7 +110,7 @@ abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement> 
   }
 
   @NotNull
-  abstract List<T> getMembersToImport(boolean applicableOnly, int maxResults);
+  abstract StaticMembersProcessor.MembersToImport<T> getMembersToImport(int maxResults);
 
   abstract boolean toAddStaticImports();
 
