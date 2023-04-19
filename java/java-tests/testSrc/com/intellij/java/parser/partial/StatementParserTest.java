@@ -71,6 +71,7 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testForNormal3() { doParserTest("for(var x : list) ;"); }
   public void testForNormal4() { doParserTest("for(foo();;) ;"); }
   public void testForNormal5() { doParserTest("for(((foo()));;) ;"); }
+  public void testForNormal6() { doParserTest("for (getI(getS()); a; b = true)"); }
   public void testForIncorrect() { doParserTest("for ((Point(var x, var y)) : pointArray) ;"); } // pattern with parens can't be parsed
   public void testForIncomplete0() { doParserTest("for"); }
   public void testForIncomplete1() { doParserTest("for("); }
