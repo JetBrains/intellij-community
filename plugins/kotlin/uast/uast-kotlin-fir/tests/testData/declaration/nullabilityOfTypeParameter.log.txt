@@ -6,6 +6,12 @@ UFile (package = )
             UBlockExpression
                 UReturnExpression
                     USimpleNameReferenceExpression (identifier = t)
+        UMethod (name = extensionNonNullUpperBoundInherited)
+            UParameter (name = $this$extensionNonNullUpperBoundInherited)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+            UParameter (name = t)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+            UBlockExpression
         UMethod (name = topLevelNonNullUpperBoundExplicitNullable)
             UParameter (name = t)
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable)
@@ -17,6 +23,10 @@ UFile (package = )
             UBlockExpression
                 UReturnExpression
                     USimpleNameReferenceExpression (identifier = t)
+        UMethod (name = extensionNullableUpperBoundInherited)
+            UParameter (name = $this$extensionNullableUpperBoundInherited)
+            UParameter (name = t)
+            UBlockExpression
         UMethod (name = topLevelNullableUpperBoundExplicitNullable)
             UParameter (name = t)
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable)
@@ -28,6 +38,10 @@ UFile (package = )
             UBlockExpression
                 UReturnExpression
                     USimpleNameReferenceExpression (identifier = t)
+        UMethod (name = extensionUnspecifiedUpperBoundInherited)
+            UParameter (name = $this$extensionUnspecifiedUpperBoundInherited)
+            UParameter (name = t)
+            UBlockExpression
         UMethod (name = topLevelUnspecifiedUpperBoundExplicitNullable)
             UParameter (name = t)
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable)

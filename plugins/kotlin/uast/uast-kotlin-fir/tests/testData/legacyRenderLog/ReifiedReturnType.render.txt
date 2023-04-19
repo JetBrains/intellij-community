@@ -18,7 +18,7 @@ public final class ReifiedReturnTypeKt {
     public static fun function5(t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : int {
         return 42
     }
-    public static fun function6(@org.jetbrains.annotations.Nullable $this$function6: T, t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {
+    public static fun function6($this$function6: T, t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {
         return t
     }
     public static fun function7(t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {
@@ -33,7 +33,7 @@ public final class ReifiedReturnTypeKt {
     public static fun function10(t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {
         return t
     }
-    public static fun function11(@org.jetbrains.annotations.Nullable $this$function11: T, t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {
+    public static fun function11($this$function11: T, t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {
         return t
     }
     public static fun function11CharSequence(@org.jetbrains.annotations.NotNull $this$function11CharSequence: T, @org.jetbrains.annotations.NotNull t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {

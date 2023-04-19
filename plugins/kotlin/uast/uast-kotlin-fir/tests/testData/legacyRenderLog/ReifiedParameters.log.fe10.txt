@@ -14,7 +14,6 @@ UFile (package = )
             UParameter (name = i)
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable)
             UParameter (name = t)
-                UAnnotation (fqName = org.jetbrains.annotations.Nullable)
             UBlockExpression
                 UReturnExpression
                     UArrayAccessExpression
@@ -22,7 +21,6 @@ UFile (package = )
                         ULiteralExpression (value = 0)
         UMethod (name = functionWithReceiver)
             UParameter (name = $this$functionWithReceiver)
-                UAnnotation (fqName = org.jetbrains.annotations.Nullable)
             UParameter (name = i)
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable)
             UBlockExpression
@@ -30,7 +28,6 @@ UFile (package = )
                     UThisExpression (label = null)
         UMethod (name = name with spaces)
             UParameter (name = $this$name with spaces)
-                UAnnotation (fqName = org.jetbrains.annotations.Nullable)
             UParameter (name = i)
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable)
             UBlockExpression

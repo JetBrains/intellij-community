@@ -14,10 +14,13 @@ class UnspecifiedUpperBound<T>(ctorParam: T) {
 }
 
 fun <T : Any> topLevelNonNullUpperBoundInherited(t: T) = t
+fun <T : Any> T.extensionNonNullUpperBoundInherited(t: T) { }
 fun <T : Any> topLevelNonNullUpperBoundExplicitNullable(t: T?) = t
 
 fun <T : Any?> topLevelNullableUpperBoundInherited(t: T) = t
+fun <T : Any?> T.extensionNullableUpperBoundInherited(t: T) { }
 fun <T : Any?> topLevelNullableUpperBoundExplicitNullable(t: T?) = t
 
 fun <T> topLevelUnspecifiedUpperBoundInherited(t: T) = t
+fun <T> T.extensionUnspecifiedUpperBoundInherited(t: T) { }
 fun <T> topLevelUnspecifiedUpperBoundExplicitNullable(t: T?) = t

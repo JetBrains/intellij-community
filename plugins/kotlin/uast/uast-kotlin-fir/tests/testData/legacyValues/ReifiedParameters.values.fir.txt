@@ -10,27 +10,24 @@ UFile (package = ) [public final class ReifiedParametersKt {...]
                         UIdentifier (Identifier (process)) [UIdentifier (Identifier (process))]
                         USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] = external invoke(t)(Undetermined)
                         USimpleNameReferenceExpression (identifier = t) [t] = Undetermined
-        UMethod (name = functionWithVararg) [public static fun functionWithVararg(@org.jetbrains.annotations.Nullable i: java.lang.Integer, @org.jetbrains.annotations.Nullable t: T...) : T {...}]
+        UMethod (name = functionWithVararg) [public static fun functionWithVararg(@org.jetbrains.annotations.Nullable i: java.lang.Integer, t: T...) : T {...}]
             UParameter (name = i) [@org.jetbrains.annotations.Nullable var i: java.lang.Integer]
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
-            UParameter (name = t) [@org.jetbrains.annotations.Nullable var t: T...]
-                UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
+            UParameter (name = t) [var t: T...]
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return t[0]] = Nothing
                     UArrayAccessExpression [t[0]] = Undetermined
                         USimpleNameReferenceExpression (identifier = t) [t] = Undetermined
                         ULiteralExpression (value = 0) [0] = 0
-        UMethod (name = functionWithReceiver) [public static fun functionWithReceiver(@org.jetbrains.annotations.Nullable $this$functionWithReceiver: T, @org.jetbrains.annotations.Nullable i: java.lang.Integer) : T {...}]
-            UParameter (name = $this$functionWithReceiver) [@org.jetbrains.annotations.Nullable var $this$functionWithReceiver: T]
-                UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
+        UMethod (name = functionWithReceiver) [public static fun functionWithReceiver($this$functionWithReceiver: T, @org.jetbrains.annotations.Nullable i: java.lang.Integer) : T {...}]
+            UParameter (name = $this$functionWithReceiver) [var $this$functionWithReceiver: T]
             UParameter (name = i) [@org.jetbrains.annotations.Nullable var i: java.lang.Integer]
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return this] = Nothing
                     UThisExpression (label = null) [this] = Undetermined
-        UMethod (name = name with spaces) [public static fun name with spaces(@org.jetbrains.annotations.Nullable $this$name with spaces: T, @org.jetbrains.annotations.Nullable i: java.lang.Integer) : T {...}]
-            UParameter (name = $this$name with spaces) [@org.jetbrains.annotations.Nullable var $this$name with spaces: T]
-                UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
+        UMethod (name = name with spaces) [public static fun name with spaces($this$name with spaces: T, @org.jetbrains.annotations.Nullable i: java.lang.Integer) : T {...}]
+            UParameter (name = $this$name with spaces) [var $this$name with spaces: T]
             UParameter (name = i) [@org.jetbrains.annotations.Nullable var i: java.lang.Integer]
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
             UBlockExpression [{...}] = Nothing
