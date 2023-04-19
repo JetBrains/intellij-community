@@ -64,7 +64,6 @@ public class XValueHint extends AbstractValueHint {
   private final PsiElement myElement;
   private final XSourcePosition myExpressionPosition;
   private Disposable myDisposable;
-  protected JBPopup myCurrentPopup;
 
   private static final Key<XValueHint> HINT_KEY = Key.create("allows only one value hint per editor");
 
