@@ -5,14 +5,16 @@ import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.refactoring.IntroduceVariableUtil
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.canDeclareVarType
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.createDeclaration
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.shouldDeclareVarType
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.*
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.extractMethod.newImpl.structures.FlowOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.FlowOutput.*
 import com.intellij.refactoring.util.RefactoringChangeUtil
-
 class CallBuilder(private val context: PsiElement) {
 
   private val factory: PsiElementFactory = PsiElementFactory.getInstance(context.project)
@@ -37,9 +39,14 @@ class CallBuilder(private val context: PsiElement) {
     }
     val declarationStatement = declaration as? PsiDeclarationStatement
     val declaredVariable = declarationStatement?.declaredElements?.firstOrNull() as? PsiVariable
-    if (dataOutput is VariableOutput && declaredVariable != null) {
-      val needsFinal = dataOutput.variable.hasModifierProperty(PsiModifier.FINAL)
-      PsiUtil.setModifierProperty(declaredVariable, PsiModifier.FINAL, needsFinal)
+    if (declaredVariable != null) {
+      if (dataOutput is VariableOutput) {
+        val needsFinal = dataOutput.variable.hasModifierProperty(PsiModifier.FINAL)
+        PsiUtil.setModifierProperty(declaredVariable, PsiModifier.FINAL, needsFinal)
+      }
+      if (canDeclareVarType(dataOutput, context) && shouldDeclareVarType(dataOutput)){
+        IntroduceVariableUtil.expandDiamondsAndReplaceExplicitTypeWithVar(declaredVariable.typeElement, declaredVariable)
+      }
     }
     return listOfNotNull(declaration)
   }
@@ -108,7 +115,7 @@ class CallBuilder(private val context: PsiElement) {
         factory.createReferenceExpression(methodClass)
       }
       else {
-        RefactoringChangeUtil.createThisExpression(PsiManager.getInstance(method.project), methodClass)
+        RefactoringChangeUtil.createThisExpression(method.manager, methodClass)
       }
       callElement.methodExpression.qualifierExpression = ref
     }

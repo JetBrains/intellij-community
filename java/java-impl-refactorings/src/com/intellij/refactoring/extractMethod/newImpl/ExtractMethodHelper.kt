@@ -18,6 +18,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.IntroduceVariableUtil
+import com.intellij.refactoring.JavaRefactoringSettings
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.*
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
@@ -26,6 +27,23 @@ import com.intellij.refactoring.introduceField.ElementToWorkOn
 import com.intellij.util.CommonJavaRefactoringUtil
 
 object ExtractMethodHelper {
+
+  fun canDeclareVarType(dataOutput: DataOutput, context: PsiElement): Boolean {
+    if (!PsiUtil.isLanguageLevel10OrHigher(context)) {
+      return false
+    }
+    return when (dataOutput) {
+      ArtificialBooleanOutput -> true
+      is VariableOutput -> true
+      is EmptyOutput -> false
+      is ExpressionOutput -> false
+    }
+  }
+
+  fun shouldDeclareVarType(dataOutput: DataOutput): Boolean {
+    val isInferredType = (dataOutput as? VariableOutput)?.variable?.typeElement?.isInferredType == true
+    return isInferredType || JavaRefactoringSettings.getInstance().DECLARE_VAR_TYPE
+  }
 
   fun hasReferencesToScope(scope: List<PsiElement>, elements: List<PsiElement>): Boolean {
     val localVariables = scope.asSequence().flatMap { element -> PsiTreeUtil.findChildrenOfType(element, PsiVariable::class.java) }.toSet()
