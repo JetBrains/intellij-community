@@ -204,7 +204,7 @@ fn layout_launcher(launcher_location: LauncherLocation, target_dir: &Path, share
     // ├── jbr/
     // └── product-info.json
 
-    let launcher_rel_path = match layout_spec.launcher_location {
+    let launcher_rel_path = match launcher_location {
         LauncherLocation::Standard => "bin/xplat-launcher",
         LauncherLocation::RemoteDev => "bin/remote-dev-server"
     };
