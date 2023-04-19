@@ -137,7 +137,7 @@ internal object CompiledClasses {
     try {
       runner.compile(context, moduleNames, includingTestsInModules)
       if (localCompilationDataExists) {
-        context.messages.buildStatus("Compiled incrementally")
+        context.messages.buildStatus("Compiled using local cache")
       } else {
         context.messages.buildStatus("Clean build")
       }

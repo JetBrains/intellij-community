@@ -198,7 +198,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
         context.messages.warning("Incremental compilation using locally available caches failed. Re-trying using Remote Cache.")
         downloadCache()
         if (downloader.availableCommitDepth >= 0) {
-          successMessage = "${downloader.availableCommitDepth} commits compiled incrementally with Jps Caches"
+          successMessage = "${downloader.availableCommitDepth} commits compiled using Jps remote cache"
         }
       }
       context.compilationData.reset()
@@ -214,7 +214,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
       try {
         downloader.download()
         if (downloader.availableCommitDepth > 0) {
-          context.messages.buildStatus("${downloader.availableCommitDepth} commits compiled incrementally with Jps Caches")
+          context.messages.buildStatus("${downloader.availableCommitDepth} commits compiled using Jps remote cache")
         }
       }
       catch (e: Exception) {
