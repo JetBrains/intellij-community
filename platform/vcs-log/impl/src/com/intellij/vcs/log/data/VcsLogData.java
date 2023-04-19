@@ -88,13 +88,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
 
     if (VcsLogCachesInvalidator.getInstance().isValid()) {
       myStorage = createStorage(logProviders);
-      if (VcsLogSharedSettings.isIndexSwitchedOn(myProject)) {
-        myIndex = new VcsLogPersistentIndex(myProject, myStorage, progress, logProviders, myErrorHandler, this);
-      }
-      else {
-        LOG.info("Vcs log index is turned off for project " + myProject.getName());
-        myIndex = new EmptyIndex();
-      }
+      myIndex = createIndex(logProviders, progress);
     }
     else {
       // this is not recoverable
@@ -147,6 +141,20 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
       LOG.error("Falling back to in-memory hashes", e);
       return new InMemoryStorage();
     }
+  }
+
+  @NotNull
+  private VcsLogModifiableIndex createIndex(@NotNull Map<VirtualFile, VcsLogProvider> logProviders, @NotNull VcsLogProgress progress) {
+    if (!VcsLogSharedSettings.isIndexSwitchedOn(myProject)) {
+      LOG.info("Vcs log index is turned off for project " + myProject.getName());
+      return new EmptyIndex();
+    }
+    VcsLogPersistentIndex index = VcsLogPersistentIndex.create(myProject, myStorage, logProviders, progress, myErrorHandler, this);
+    if (index == null) {
+      LOG.error("Cannot create vcs log index for project " + myProject.getName());
+      return new EmptyIndex();
+    }
+    return index;
   }
 
   public void initialize() {

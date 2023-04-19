@@ -71,8 +71,8 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
   private final @NotNull VcsLogIndexCollector myIndexCollector;
   private final @NotNull CheckedDisposable myDisposableFlag = Disposer.newCheckedDisposable();
 
-  private final @Nullable VcsLogStorageBackend myBackend;
-  private final @Nullable IndexDataGetter myDataGetter;
+  private final @NotNull VcsLogStorageBackend myBackend;
+  private final @NotNull IndexDataGetter myDataGetter;
 
   private final @NotNull SingleTaskController<IndexingRequest, Void> mySingleTaskController;
   private final @NotNull MyHeavyAwareListener myHeavyAwareListener;
@@ -87,12 +87,15 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
 
   private @NotNull Map<VirtualFile, IntSet> myCommitsToIndex = new HashMap<>();
 
-  public VcsLogPersistentIndex(@NotNull Project project,
-                               @NotNull VcsLogStorage storage,
-                               @NotNull VcsLogProgress progress,
-                               @NotNull Map<VirtualFile, VcsLogProvider> providers,
-                               @NotNull VcsLogErrorHandler errorHandler,
-                               @NotNull Disposable disposableParent) {
+  private VcsLogPersistentIndex(@NotNull Project project,
+                                @NotNull Map<VirtualFile, VcsLogProvider> providers,
+                                @NotNull Map<VirtualFile, VcsLogIndexer> indexers,
+                                @NotNull LinkedHashSet<VirtualFile> roots,
+                                @NotNull VcsLogStorage storage,
+                                @NotNull VcsLogStorageBackend backend,
+                                @NotNull VcsLogProgress progress,
+                                @NotNull VcsLogErrorHandler errorHandler,
+                                @NotNull Disposable disposableParent) {
     myStorage = storage;
     myProject = project;
     myProgress = progress;
@@ -100,18 +103,12 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     myBigRepositoriesList = VcsLogBigRepositoriesList.getInstance();
     myIndexCollector = VcsLogIndexCollector.getInstance(myProject);
 
-    myIndexers = getAvailableIndexers(providers);
-    myRoots = new LinkedHashSet<>(myIndexers.keySet());
+    myIndexers = indexers;
+    myRoots = roots;
 
-    String logId = calcLogId(project, providers);
-    myBackend = createIndexStorageBackend(myProject, myStorage, myRoots, logId, errorHandler);
-    if (myBackend != null) {
-      myDataGetter = new IndexDataGetter(myProject, ContainerUtil.filter(providers, root -> myRoots.contains(root)),
-                                         myBackend, myStorage, myErrorHandler);
-    }
-    else {
-      myDataGetter = null;
-    }
+    myBackend = backend;
+    myDataGetter = new IndexDataGetter(myProject, ContainerUtil.filter(providers, root -> myRoots.contains(root)),
+                                       myBackend, myStorage, myErrorHandler);
 
     for (VirtualFile root : myRoots) {
       myNumberOfTasks.put(root, new AtomicInteger());
@@ -130,30 +127,6 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
 
   private static int getIndexingLimit() {
     return Math.max(1, Registry.intValue("vcs.log.index.limit.minutes"));
-  }
-
-  private @Nullable VcsLogStorageBackend createIndexStorageBackend(@NotNull Project project,
-                                                                   @NotNull VcsLogStorage storage,
-                                                                   @NotNull Set<VirtualFile> roots,
-                                                                   @NotNull String logId,
-                                                                   @NotNull VcsLogErrorHandler errorHandler) {
-    if (storage instanceof VcsLogStorageBackend) return (VcsLogStorageBackend)storage;
-
-    StorageId.Directory storageId = new StorageId.Directory(project.getName(), INDEX, logId, VcsLogStorageImpl.VERSION + VERSION);
-    VcsUserRegistry userRegistry = project.getService(VcsUserRegistry.class);
-    try {
-      return IOUtil.openCleanOrResetBroken(
-        () -> new PhmVcsLogStorageBackend(storageId, storage, roots, userRegistry, errorHandler, this),
-        () -> {
-          if (!storageId.cleanupAllStorageFiles()) {
-            LOG.error("Could not clean up storage files in " + storageId.getStoragePath());
-          }
-        });
-    }
-    catch (IOException e) {
-      errorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
-    }
-    return null;
   }
 
   @Override
@@ -180,7 +153,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
 
   private synchronized void doScheduleIndex(boolean full, @NotNull Consumer<? super IndexingRequest> requestConsumer) {
     if (myDisposableFlag.isDisposed()) return;
-    if (myCommitsToIndex.isEmpty() || myBackend == null) return;
+    if (myCommitsToIndex.isEmpty()) return;
     // for fresh index, wait for complete log to load and index everything in one command
     if (myBackend.isFresh() && !full) return;
 
@@ -209,8 +182,6 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
   }
 
   private void storeDetail(@NotNull VcsLogIndexer.CompressedDetails detail, @NotNull VcsLogWriter mutator) {
-    if (myBackend == null) return;
-
     try {
       mutator.putCommit(myStorage.getCommitIndex(detail.getId(), detail.getRoot()), detail);
     }
@@ -221,15 +192,13 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
 
   @Override
   public void markCorrupted() {
-    if (myBackend != null) {
-      myBackend.markCorrupted();
-    }
+    myBackend.markCorrupted();
   }
 
   @Override
   public boolean isIndexed(int commit) {
     try {
-      return myBackend == null || myBackend.containsCommit(commit);
+      return myBackend.containsCommit(commit);
     }
     catch (IOException e) {
       myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
@@ -245,7 +214,6 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
 
   @Override
   public boolean isIndexingEnabled(@NotNull VirtualFile root) {
-    if (myBackend == null) return false;
     return myRoots.contains(root) && !(myBigRepositoriesList.isBig(root));
   }
 
@@ -261,7 +229,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
   }
 
   @Override
-  public @Nullable IndexDataGetter getDataGetter() {
+  public @NotNull IndexDataGetter getDataGetter() {
     return myDataGetter;
   }
 
@@ -275,8 +243,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     myListeners.remove(l);
   }
 
-  public @Nullable StorageId getIndexStorageId() {
-    if (myBackend == null) return null;
+  public @NotNull StorageId getIndexStorageId() {
     return myBackend.getStorageId();
   }
 
@@ -299,6 +266,45 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
 
   public static @NotNull Set<VirtualFile> getRootsForIndexing(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
     return getAvailableIndexers(providers).keySet();
+  }
+
+  public static @Nullable VcsLogPersistentIndex create(@NotNull Project project,
+                                                       @NotNull VcsLogStorage storage,
+                                                       @NotNull Map<VirtualFile, VcsLogProvider> providers,
+                                                       @NotNull VcsLogProgress progress,
+                                                       @NotNull VcsLogErrorHandler errorHandler,
+                                                       @NotNull Disposable disposableParent) {
+    Map<VirtualFile, VcsLogIndexer> indexers = getAvailableIndexers(providers);
+    LinkedHashSet<VirtualFile> roots = new LinkedHashSet<>(indexers.keySet());
+    VcsLogStorageBackend backend = createIndexStorageBackend(project, storage, roots, calcLogId(project, providers), errorHandler,
+                                                             disposableParent);
+    if (backend == null) return null;
+    return new VcsLogPersistentIndex(project, providers, indexers, roots, storage, backend, progress, errorHandler, disposableParent);
+  }
+
+  private static @Nullable VcsLogStorageBackend createIndexStorageBackend(@NotNull Project project,
+                                                                          @NotNull VcsLogStorage storage,
+                                                                          @NotNull Set<VirtualFile> roots,
+                                                                          @NotNull String logId,
+                                                                          @NotNull VcsLogErrorHandler errorHandler,
+                                                                          @NotNull Disposable parent) {
+    if (storage instanceof VcsLogStorageBackend) return (VcsLogStorageBackend)storage;
+
+    StorageId.Directory storageId = new StorageId.Directory(project.getName(), INDEX, logId, VcsLogStorageImpl.VERSION + VERSION);
+    VcsUserRegistry userRegistry = project.getService(VcsUserRegistry.class);
+    try {
+      return IOUtil.openCleanOrResetBroken(
+        () -> new PhmVcsLogStorageBackend(storageId, storage, roots, userRegistry, errorHandler, parent),
+        () -> {
+          if (!storageId.cleanupAllStorageFiles()) {
+            LOG.error("Could not clean up storage files in " + storageId.getStoragePath());
+          }
+        });
+    }
+    catch (IOException e) {
+      errorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
+    }
+    return null;
   }
 
   private final class MyHeavyAwareListener extends HeavyAwareListener {
@@ -529,9 +535,8 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     }
 
     private void markCommits() {
-      if (myBackend == null || !myRoots.contains(myRoot)) {
-        return;
-      }
+      if (!myRoots.contains(myRoot)) return;
+
       try {
         IntSet missingCommits = myBackend.collectMissingCommits(myCommits);
         markForIndexing(missingCommits, myRoot);
