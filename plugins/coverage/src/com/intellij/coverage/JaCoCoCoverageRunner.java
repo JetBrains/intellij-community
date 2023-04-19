@@ -11,6 +11,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -67,6 +68,7 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
       return data;
     }
     catch (Exception e) {
+      if (e instanceof ControlFlowException) throw e;
       LOG.error(e);
       return data;
     }
