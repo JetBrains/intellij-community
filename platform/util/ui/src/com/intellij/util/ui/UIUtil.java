@@ -315,7 +315,6 @@ public final class UIUtil {
 
   public static final char MNEMONIC = BundleBase.MNEMONIC;
   public static final @NlsSafe String HTML_MIME = "text/html";
-  public static final @NonNls String JSLIDER_ISFILLED = "JSlider.isFilled";
   public static final @NonNls String TABLE_FOCUS_CELL_BACKGROUND_PROPERTY = "Table.focusCellBackground";
   /**
    * Prevent component DataContext from returning parent editor
@@ -678,7 +677,6 @@ public final class UIUtil {
   public static void setActionNameAndMnemonic(@NotNull @Nls String text, @NotNull Action action) {
     assignMnemonic(text, action);
 
-    //noinspection HardCodedStringLiteral
     text = text.replaceAll("&", "");
     action.putValue(Action.NAME, text);
   }
@@ -947,10 +945,6 @@ public final class UIUtil {
 
   public static Font getMenuFont() {
     return UIManager.getFont("Menu.font");
-  }
-
-  public static Color getSeparatorShadow() {
-    return UIManager.getColor("Separator.shadow");
   }
 
   /**
@@ -1248,10 +1242,6 @@ public final class UIUtil {
     sb.append(Integer.toHexString(color.getGreen()));
     if (color.getBlue() < 16) sb.append('0');
     sb.append(Integer.toHexString(color.getBlue()));
-  }
-
-  public static void drawDottedRectangle(@NotNull Graphics g, @NotNull Rectangle r) {
-    drawDottedRectangle(g, r.x, r.y, r.x + r.width, r.y + r.height);
   }
 
   /**

@@ -218,7 +218,6 @@ object IconLoader {
       return null
     }
 
-
     val image: BufferedImage
     if (GraphicsEnvironment.isHeadless()) {
       // for testing purpose
