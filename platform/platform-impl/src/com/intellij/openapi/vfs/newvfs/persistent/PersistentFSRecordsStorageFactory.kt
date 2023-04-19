@@ -17,7 +17,7 @@ object PersistentFSRecordsStorageFactory {
     OVER_MMAPPED_FILE
   }
 
-  private var RECORDS_STORAGE_KIND = RecordsStorageKind.valueOf(System.getProperty("vfs.records-storage-impl", RecordsStorageKind.REGULAR.name))
+  private var RECORDS_STORAGE_KIND = RecordsStorageKind.valueOf(System.getProperty("vfs.records-storage-impl", RecordsStorageKind.OVER_MMAPPED_FILE.name))
 
 
   @JvmStatic
