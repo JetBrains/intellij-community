@@ -810,6 +810,51 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
                 runTest("testData/evaluation/singleBreakpoint/lambdas/lambdaOnSecondLine.kt");
             }
 
+            @TestMetadata("notCapturedClassParameter.kt")
+            public void testNotCapturedClassParameter() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/lambdas/notCapturedClassParameter.kt");
+            }
+
+            @TestMetadata("notCapturedFunLiteralParameter.kt")
+            public void testNotCapturedFunLiteralParameter() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/lambdas/notCapturedFunLiteralParameter.kt");
+            }
+
+            @TestMetadata("notCapturedFunParameter.kt")
+            public void testNotCapturedFunParameter() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/lambdas/notCapturedFunParameter.kt");
+            }
+
+            @TestMetadata("notCapturedFunParameterSecond.kt")
+            public void testNotCapturedFunParameterSecond() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/lambdas/notCapturedFunParameterSecond.kt");
+            }
+
+            @TestMetadata("notCapturedLambdaParameter.kt")
+            public void testNotCapturedLambdaParameter() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/lambdas/notCapturedLambdaParameter.kt");
+            }
+
+            @TestMetadata("notCapturedLambdaParameterFourth.kt")
+            public void testNotCapturedLambdaParameterFourth() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/lambdas/notCapturedLambdaParameterFourth.kt");
+            }
+
+            @TestMetadata("notCapturedLambdaParameterSecond.kt")
+            public void testNotCapturedLambdaParameterSecond() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/lambdas/notCapturedLambdaParameterSecond.kt");
+            }
+
+            @TestMetadata("notCapturedLambdaParameterThird.kt")
+            public void testNotCapturedLambdaParameterThird() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/lambdas/notCapturedLambdaParameterThird.kt");
+            }
+
+            @TestMetadata("notCapturedSecondaryConstructorParameter.kt")
+            public void testNotCapturedSecondaryConstructorParameter() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/lambdas/notCapturedSecondaryConstructorParameter.kt");
+            }
+
             @TestMetadata("oneLineFunctionalExpression.kt")
             public void testOneLineFunctionalExpression() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/lambdas/oneLineFunctionalExpression.kt");
