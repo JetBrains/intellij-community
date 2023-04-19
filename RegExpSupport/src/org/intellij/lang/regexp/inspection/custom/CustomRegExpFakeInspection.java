@@ -26,6 +26,7 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -74,6 +75,14 @@ public class CustomRegExpFakeInspection extends LocalInspectionTool {
   @Override
   public boolean isEnabledByDefault() {
     return true;
+  }
+
+  public boolean isCleanup() {
+    return isCleanupAllowed() && myConfiguration.isCleanup();
+  }
+
+  private boolean isCleanupAllowed() {
+    return ContainerUtil.exists(myConfiguration.getPatterns(), p -> p.replacement() != null);
   }
 
   @NotNull
@@ -161,11 +170,14 @@ public class CustomRegExpFakeInspection extends LocalInspectionTool {
   private void performEditMetaData(@NotNull Component context) {
     final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(context));
     final InspectionProfileModifiableModel profile = getInspectionProfile(context);
-    if (profile == null) {
+    if (profile == null || project == null) {
       return;
     }
     final CustomRegExpInspection inspection = getRegExpInspection(profile);
     final InspectionMetaDataDialog dialog = inspection.createMetaDataDialog(project, myConfiguration);
+    if (isCleanupAllowed()) {
+      dialog.showCleanupOption(myConfiguration.isCleanup());
+    }
     if (!dialog.showAndGet()) {
       return;
     }
@@ -173,6 +185,7 @@ public class CustomRegExpFakeInspection extends LocalInspectionTool {
     myConfiguration.setDescription(dialog.getDescription());
     myConfiguration.setSuppressId(dialog.getSuppressId());
     myConfiguration.setProblemDescriptor(dialog.getProblemDescriptor());
+    myConfiguration.setCleanup(dialog.isCleanup());
 
     inspection.updateConfiguration(myConfiguration);
     profile.setModified(true);

@@ -13,6 +13,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.FormBuilder;
@@ -33,6 +34,8 @@ public class InspectionMetaDataDialog extends DialogWrapper {
   private final JTextField myProblemDescriptorTextField;
   private final EditorTextField myDescriptionTextArea;
   private final JTextField mySuppressIdTextField;
+  private final JBCheckBox myCleanupCheckbox;
+  private boolean showCleanupOption = false;
 
   public InspectionMetaDataDialog(@NotNull Project project,
                                   @NotNull Function<String, @Nullable @NlsContexts.DialogMessage String> nameValidator) {
@@ -55,9 +58,15 @@ public class InspectionMetaDataDialog extends DialogWrapper {
     myDescriptionTextArea.setPreferredSize(new Dimension(375, 125));
     myDescriptionTextArea.setMinimumSize(new Dimension(200, 50));
     mySuppressIdTextField = new JTextField(suppressId);
+    myCleanupCheckbox = new JBCheckBox(InspectionsBundle.message("checkbox.cleanup.inspection"));
     myNameValidator = nameValidator;
     setTitle(InspectionsBundle.message("dialog.title.user.defined.inspection"));
+  }
+
+  @Override
+  public void show() {
     init();
+    super.show();
   }
 
   @Override
@@ -90,12 +99,16 @@ public class InspectionMetaDataDialog extends DialogWrapper {
   @Nullable
   @Override
   protected JComponent createCenterPanel() {
-    return new FormBuilder()
-      .addLabeledComponent(InspectionsBundle.message("label.inspection.name"), myNameTextField, true)
+    FormBuilder builder = new FormBuilder()
+      .addLabeledComponent(InspectionsBundle.message("label.inspection.name"), myNameTextField, true);
+    if (showCleanupOption) {
+      builder.addComponent(myCleanupCheckbox);
+    }
+    builder
       .addLabeledComponentFillVertically(InspectionsBundle.message("label.description"), myDescriptionTextArea)
       .addLabeledComponent(InspectionsBundle.message("label.problem.tool.tip"), myProblemDescriptorTextField, true)
-      .addLabeledComponent(InspectionsBundle.message("label.suppress.id"), mySuppressIdTextField)
-      .getPanel();
+      .addLabeledComponent(InspectionsBundle.message("label.suppress.id"), mySuppressIdTextField);
+    return builder.getPanel();
   }
 
   public @NlsSafe String getName() {
@@ -112,6 +125,15 @@ public class InspectionMetaDataDialog extends DialogWrapper {
 
   public @NlsSafe @Nullable String getProblemDescriptor() {
     return convertEmptyToNull(myProblemDescriptorTextField.getText());
+  }
+
+  public boolean isCleanup() {
+    return myCleanupCheckbox.isSelected();
+  }
+
+  public void showCleanupOption(boolean cleanupValue) {
+    myCleanupCheckbox.setSelected(cleanupValue);
+    showCleanupOption = true;
   }
 
   private static String convertEmptyToNull(String s) {

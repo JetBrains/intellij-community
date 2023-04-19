@@ -18,6 +18,7 @@ import com.intellij.profile.codeInspection.ui.InspectionMetaDataDialog;
 import com.intellij.profile.codeInspection.ui.InspectionProfileActionProvider;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import com.intellij.structuralsearch.plugin.ui.StructuralSearchDialog;
@@ -133,6 +134,9 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       final Project project = e.getData(CommonDataKeys.PROJECT);
       if (project == null) return;
       final InspectionMetaDataDialog metaDataDialog = inspection.createMetaDataDialog(project, null);
+      if (pattern.replacement() != null) {
+        metaDataDialog.showCleanupOption(false);
+      }
       if (!metaDataDialog.showAndGet()) return;
 
       final RegExpInspectionConfiguration configuration = new RegExpInspectionConfiguration(metaDataDialog.getName());
@@ -140,6 +144,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       configuration.setDescription(metaDataDialog.getDescription());
       configuration.setSuppressId(metaDataDialog.getSuppressId());
       configuration.setProblemDescriptor(metaDataDialog.getProblemDescriptor());
+      configuration.setCleanup(metaDataDialog.isCleanup());
 
       configuration.setUuid(null);
       inspection.addConfiguration(configuration);
@@ -185,6 +190,9 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       InspectionMetaDataDialog dialog = inspection.createMetaDataDialog(project, null);
+      if (configuration instanceof ReplaceConfiguration) {
+        dialog.showCleanupOption(false);
+      }
       if (!dialog.showAndGet()) return false;
       configuration.setOrder(0); // reset
       configuration.setName(dialog.getName());

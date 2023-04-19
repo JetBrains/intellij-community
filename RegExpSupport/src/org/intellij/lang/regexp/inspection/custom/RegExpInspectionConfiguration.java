@@ -26,6 +26,7 @@ public class RegExpInspectionConfiguration implements Comparable<RegExpInspectio
   private String uuid;
   private String suppressId;
   private String problemDescriptor;
+  private boolean cleanup;
 
   public RegExpInspectionConfiguration(@NotNull String name) {
     this.name = name;
@@ -44,6 +45,7 @@ public class RegExpInspectionConfiguration implements Comparable<RegExpInspectio
     uuid = other.uuid;
     suppressId = other.suppressId;
     problemDescriptor = other.problemDescriptor;
+    cleanup = other.cleanup;
   }
 
   @Override
@@ -122,6 +124,14 @@ public class RegExpInspectionConfiguration implements Comparable<RegExpInspectio
 
   public void setProblemDescriptor(String problemDescriptor) {
     this.problemDescriptor = problemDescriptor;
+  }
+
+  public boolean isCleanup() {
+    return cleanup;
+  }
+
+  public void setCleanup(boolean cleanup) {
+    this.cleanup = cleanup;
   }
 
   @Override
