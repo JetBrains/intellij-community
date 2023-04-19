@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.psi.*
 
+@ApiStatus.Internal
 class KtDeclarationTreeNode private constructor(
     project: Project?,
     val declaration: KtDeclaration?,

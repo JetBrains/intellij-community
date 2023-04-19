@@ -5,7 +5,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface SourceNavigationService {
     fun targetClassFilesToSourcesScopes(virtualFile: VirtualFile, project: Project): List<GlobalSearchScope>
 

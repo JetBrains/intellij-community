@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.idea.KotlinIconProvider
@@ -108,6 +109,7 @@ class KotlinSelectInProjectViewProvider(private val project: Project) : Selectab
 }
 
 
+@ApiStatus.Internal
 fun KtClassOrObject.getStructureDeclarations() =
     buildList {
         primaryConstructor?.let { add(it) }
