@@ -31,9 +31,9 @@ internal object LightServiceMigrationUtil {
   }
 
   fun getServiceImplementation(extension: Extension): ServiceInfo? {
-    val level = when (extension.xmlElementName) {
-      "projectService" -> Level.PROJECT
-      "applicationService" -> Level.APPLICATION
+    val level = when (extension.extensionPoint?.effectiveQualifiedName) {
+      "com.intellij.projectService" -> Level.PROJECT
+      "com.intellij.applicationService" -> Level.APPLICATION
       else -> return null
     }
     val extensionPoint = extension.extensionPoint
