@@ -38,8 +38,11 @@ public class RegExpInspectionConfiguration implements Comparable<RegExpInspectio
     patterns = new SmartList<>();
   }
 
-  public RegExpInspectionConfiguration(RegExpInspectionConfiguration other) {
-    patterns = new SmartList<>(other.patterns);
+  private RegExpInspectionConfiguration(RegExpInspectionConfiguration other) {
+    patterns = new SmartList<>();
+    for (InspectionPattern pattern : other.patterns) {
+      patterns.add(pattern.copy());
+    }
     name = other.name;
     description = other.description;
     uuid = other.uuid;
@@ -180,7 +183,21 @@ public class RegExpInspectionConfiguration implements Comparable<RegExpInspectio
     public InspectionPattern() {
     }
 
-    public @NlsSafe String regExp() { return regExp; }
+    InspectionPattern(InspectionPattern copy) {
+      regExp = copy.regExp;
+      fileType = copy.fileType;
+      _fileType = copy._fileType;
+      searchContext = copy.searchContext;
+      replacement = copy.replacement;
+    }
+
+    public InspectionPattern copy() {
+      return new InspectionPattern(this);
+    }
+
+    public @NlsSafe String regExp() {
+      return regExp;
+    }
 
     public @Nullable FileType fileType() {
       if (fileType == null && _fileType != null) {
@@ -192,9 +209,13 @@ public class RegExpInspectionConfiguration implements Comparable<RegExpInspectio
       return fileType;
     }
 
-    public FindModel.SearchContext searchContext() { return searchContext; }
+    public FindModel.SearchContext searchContext() {
+      return searchContext;
+    }
 
-    public @NlsSafe @Nullable String replacement() { return replacement; }
+    public @NlsSafe @Nullable String replacement() {
+      return replacement;
+    }
 
     @Override
     public boolean equals(Object obj) {

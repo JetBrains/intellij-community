@@ -27,7 +27,7 @@ public class CustomRegExpInspectionToolWrapper extends LocalInspectionToolWrappe
   @Override
   public LocalInspectionToolWrapper createCopy() {
     final CustomRegExpFakeInspection inspection = (CustomRegExpFakeInspection)getTool();
-    RegExpInspectionConfiguration configuration = inspection.getConfiguration();
+    RegExpInspectionConfiguration configuration = inspection.getConfiguration().copy();
     return new CustomRegExpInspectionToolWrapper(configuration);
   }
 

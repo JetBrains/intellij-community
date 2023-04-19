@@ -246,12 +246,9 @@ public class CustomRegExpFakeInspection extends LocalInspectionTool {
     saveChangesToProfile(list);
   }
 
-  private void saveChangesToProfile(JList<InspectionPattern> list) {
+  private static void saveChangesToProfile(JList<InspectionPattern> list) {
     final InspectionProfileModifiableModel profile = getInspectionProfile(list);
-    if (profile == null) return;
-    final CustomRegExpInspection inspection = getRegExpInspection(profile);
-    inspection.updateConfiguration(myConfiguration);
-    profile.setModified(true);
+    if (profile != null) profile.setModified(true);
   }
 
   @NotNull
