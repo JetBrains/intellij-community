@@ -55,9 +55,16 @@ private class IdeKotlinDeclarationProvider(
     }
 
     override fun getClassLikeDeclarationByClassId(classId: ClassId): KtClassLikeDeclaration? {
-        return firstMatchingOrNull(KotlinFullClassNameIndex.indexKey, key = classId.asStringForIndexes()) { candidate ->
+        val classOrObject = firstMatchingOrNull(KotlinFullClassNameIndex.indexKey, key = classId.asStringForIndexes()) { candidate ->
             candidate.getClassId() == classId
-        } ?: getTypeAliasByClassId(classId)
+        }
+        val typeAlias = getTypeAliasByClassId(classId)
+        if (classOrObject != null && typeAlias != null) {
+            if (scope.compare(classOrObject.containingFile.virtualFile, typeAlias.containingFile.virtualFile) < 0) {
+                return typeAlias
+            }
+        }
+        return classOrObject ?: typeAlias
     }
 
     override fun getAllClassesByClassId(classId: ClassId): Collection<KtClassOrObject> =
