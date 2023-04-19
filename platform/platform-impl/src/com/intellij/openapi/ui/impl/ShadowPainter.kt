@@ -8,7 +8,6 @@ import com.intellij.ui.JreHiDpiUtil.isJreHiDPIEnabled
 import com.intellij.ui.scale.JBUIScale.sysScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleContextAware
-import com.intellij.ui.scale.ScaleContextSupport
 import com.intellij.util.IconUtil.cropIcon
 import com.intellij.util.ui.ImageUtil
 import java.awt.*
@@ -30,7 +29,7 @@ class ShadowPainter(private val top: Icon,
                     private val bottom: Icon,
                     private val bottomLeft: Icon,
                     private val left: Icon,
-                    private val topLeft: Icon) : ScaleContextSupport() {
+                    private val topLeft: Icon) {
   private var croppedTop: Icon? = null
   private var croppedRight: Icon? = null
   private var croppedBottom: Icon? = null
@@ -54,6 +53,8 @@ class ShadowPainter(private val top: Icon,
     this.borderColor = borderColor
   }
 
+  private var cachedScaleContext: ScaleContext? = null
+
   fun setBorderColor(borderColor: Color?) {
     this.borderColor = borderColor
   }
@@ -66,22 +67,26 @@ class ShadowPainter(private val top: Icon,
     return image
   }
 
-  private fun updateIcons(ctx: ScaleContext?) {
-    updateIcon(top, ctx) { croppedTop = cropIcon(top, 1, Int.MAX_VALUE) }
-    updateIcon(topRight, ctx) {}
-    updateIcon(right, ctx) { croppedRight = cropIcon(right, Int.MAX_VALUE, 1) }
-    updateIcon(bottomRight, ctx) {}
-    updateIcon(bottom, ctx) { croppedBottom = cropIcon(bottom, 1, Int.MAX_VALUE) }
-    updateIcon(bottomLeft, ctx) {}
-    updateIcon(left, ctx) { croppedLeft = cropIcon(left, Int.MAX_VALUE, 1) }
-    updateIcon(topLeft, ctx) {}
+  private fun updateIcons(scaleContext: ScaleContext?) {
+    updateIcon(top, scaleContext) { croppedTop = cropIcon(top, 1, Int.MAX_VALUE) }
+    updateIcon(topRight, scaleContext) {}
+    updateIcon(right, scaleContext) { croppedRight = cropIcon(right, Int.MAX_VALUE, 1) }
+    updateIcon(bottomRight, scaleContext) {}
+    updateIcon(bottom, scaleContext) { croppedBottom = cropIcon(bottom, 1, Int.MAX_VALUE) }
+    updateIcon(bottomLeft, scaleContext) {}
+    updateIcon(left, scaleContext) { croppedLeft = cropIcon(left, Int.MAX_VALUE, 1) }
+    updateIcon(topLeft, scaleContext) {}
   }
 
   @Suppress("GraphicsSetClipInspection")
   fun paintShadow(c: Component?, g: Graphics2D, x: Int, y: Int, width: Int, height: Int) {
-    val scaleContext = ScaleContext.create(g)
-    if (updateScaleContext(scaleContext)) {
-      updateIcons(scaleContext)
+    val newScaleContext = ScaleContext.create(g)
+    if (cachedScaleContext == null) {
+      cachedScaleContext = newScaleContext
+      updateIcons(null)
+    }
+    else if (cachedScaleContext!!.update(newScaleContext)) {
+      updateIcons(cachedScaleContext)
     }
 
     val leftSize = croppedLeft!!.iconWidth
@@ -151,9 +156,9 @@ class ShadowPainter(private val top: Icon,
   }
 }
 
-private inline fun updateIcon(icon: Icon, ctx: ScaleContext?, r: () -> Unit) {
+private inline fun updateIcon(icon: Icon, scaleContext: ScaleContext?, r: () -> Unit) {
   if (icon is ScaleContextAware) {
-    icon.updateScaleContext(ctx)
+    icon.updateScaleContext(scaleContext)
   }
   r()
 }
