@@ -40,5 +40,17 @@ class GradleQuickFixTest : AbstractGradleMultiFileQuickFixTest() {
 
     @Test
     @PluginTargetVersions(pluginVersion = "1.5.31+")
+    fun testCreateActualForNativeIOSWithExistentFile() = doMultiFileQuickFixTest()
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "1.5.31+")
+    fun testCreateActualForNativeIOSWithExistentDifferentPackage() = doMultiFileQuickFixTest()
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "1.5.31+")
+    fun testCreateActualForNativeIOSWithExistentEmptyFile() = doMultiFileQuickFixTest()
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "1.5.31+")
     fun testCreateActualForGranularSourceSetTarget() = doMultiFileQuickFixTest()
 }
