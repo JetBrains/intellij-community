@@ -133,7 +133,7 @@ internal object CompiledClasses {
     context.compilationData.statisticsReported = false
     val runner = JpsCompilationRunner(context)
     val localCompilationDataExists = context.options.incrementalCompilation &&
-                                     context.compilationData.dataStorageRootListing.any()
+                                     context.compilationData.listDataStorageRoot(context.messages).any()
     try {
       runner.compile(context, moduleNames, includingTestsInModules)
       if (localCompilationDataExists) {

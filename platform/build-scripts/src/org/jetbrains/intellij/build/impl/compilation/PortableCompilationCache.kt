@@ -38,9 +38,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
     val dir: Path get() = context.compilationData.dataStorageRoot
 
     val maybeAvailableLocally: Boolean by lazy {
-      val files = context.compilationData.dataStorageRootListing
-      context.messages.info("$dir: ${files.joinToString()}")
-      files.isNotEmpty()
+      context.compilationData.listDataStorageRoot(context.messages).any()
     }
   }
 
