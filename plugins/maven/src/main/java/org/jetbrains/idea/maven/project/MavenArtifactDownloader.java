@@ -98,7 +98,7 @@ public final class MavenArtifactDownloader {
                                   boolean downloadSources,
                                   boolean downloadDocs)
     throws MavenProcessCanceledException {
-    List<File> downloadedFiles = new ArrayList<>();
+    Collection<File> downloadedFiles = new ConcurrentLinkedQueue<>();
     try {
       List<MavenExtraArtifactType> types = new ArrayList<>(2);
       if (downloadSources) types.add(MavenExtraArtifactType.SOURCES);
@@ -178,7 +178,7 @@ public final class MavenArtifactDownloader {
 
   private DownloadResult download(MavenEmbedderWrapper embedder,
                                   Map<MavenId, DownloadData> toDownload,
-                                  List<File> downloadedFiles) throws MavenProcessCanceledException {
+                                  Collection<File> downloadedFiles) throws MavenProcessCanceledException {
     List<Future> futures = new ArrayList<>();
 
     final AtomicInteger downloaded = new AtomicInteger();
@@ -211,19 +211,16 @@ public final class MavenArtifactDownloader {
               MavenArtifact a = embedder.resolve(List.of(info), new ArrayList<>(data.repositories)).get(0);
               File file = a.getFile();
               if (file.exists()) {
-                synchronized (downloadedFiles) {
-                  downloadedFiles.add(file);
+                downloadedFiles.add(file);
 
-                  switch (eachElement.type) {
-                    case SOURCES -> {
-                      result.resolvedSources.add(id);
-                      result.unresolvedSources.remove(id);
-                    }
-                    case DOCS -> {
-                      result.resolvedDocs.add(id);
-                      result.unresolvedDocs.remove(id);
-                    }
-                  }
+                var mavenId = new MavenId(a.getGroupId(), a.getArtifactId(), a.getVersion());
+                if (MavenExtraArtifactType.SOURCES.getDefaultClassifier().equals(a.getClassifier())) {
+                  result.resolvedSources.add(mavenId);
+                  result.unresolvedSources.remove(mavenId);
+                }
+                else {
+                  result.resolvedDocs.add(mavenId);
+                  result.unresolvedDocs.remove(mavenId);
                 }
               }
             }
@@ -286,12 +283,13 @@ public final class MavenArtifactDownloader {
     }
   }
 
+  // used by third-party plugins
   public static class DownloadResult {
-    public final Set<MavenId> resolvedSources = new HashSet<>();
-    public final Set<MavenId> resolvedDocs = new HashSet<>();
+    public final Set<MavenId> resolvedSources = ConcurrentHashMap.newKeySet();
+    public final Set<MavenId> resolvedDocs = ConcurrentHashMap.newKeySet();
 
-    public final Set<MavenId> unresolvedSources = new HashSet<>();
-    public final Set<MavenId> unresolvedDocs = new HashSet<>();
+    public final Set<MavenId> unresolvedSources = ConcurrentHashMap.newKeySet();
+    public final Set<MavenId> unresolvedDocs = ConcurrentHashMap.newKeySet();
   }
 
   @TestOnly
