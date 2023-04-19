@@ -290,6 +290,10 @@ impl RemoteDevLaunchConfiguration {
             // For pre-configured environment (e.g. cloud) the version is fixed anyway
             ("ide.no.platform.update", "true"),
 
+            // Don't ask user about indexes download
+            ("shared.indexes.download", "true"),
+            ("shared.indexes.download.auto.consent", "true"),
+
             // TODO: disable once IDEA doesn't require JBA login for remote dev
             ("eap.login.enabled", "false"),
 
