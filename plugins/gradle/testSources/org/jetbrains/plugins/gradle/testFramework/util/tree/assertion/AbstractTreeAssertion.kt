@@ -108,11 +108,11 @@ internal abstract class AbstractTreeAssertion<T>(
       queue.add(expectedTree.roots to actualTree.roots)
       while (queue.isNotEmpty()) {
         val (expectedNodes, actualNodes) = queue.removeFirst()
+        if (expectedNodes.size != actualNodes.size) {
+          throwTreeAssertionError(expectedTree, actualTree)
+        }
         for ((expectedNode, actualNode) in expectedNodes.zip(actualNodes)) {
           if (!expectedNode.value.matches(actualNode)) {
-            throwTreeAssertionError(expectedTree, actualTree)
-          }
-          if (expectedNode.children.size != actualNode.children.size) {
             throwTreeAssertionError(expectedTree, actualTree)
           }
           queue.add(expectedNode.children to actualNode.children)
@@ -120,7 +120,7 @@ internal abstract class AbstractTreeAssertion<T>(
       }
     }
 
-    private fun <T> throwTreeAssertionError(expectedTree: Tree<NodeMatcher<T>>, actualTree: Tree<T>) {
+    private fun <T> throwTreeAssertionError(expectedTree: Tree<NodeMatcher<T>>, actualTree: Tree<T>): Nothing {
       throw AssertionFailureBuilder.assertionFailure()
         .expected(expectedTree.getTreeString())
         .actual(actualTree.getTreeString())
