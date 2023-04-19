@@ -15,7 +15,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
 /**
- * Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are 5 predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements and pseudo-classes.
+ * Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are6 predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements, pseudo-classes and parts.
  * 
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)

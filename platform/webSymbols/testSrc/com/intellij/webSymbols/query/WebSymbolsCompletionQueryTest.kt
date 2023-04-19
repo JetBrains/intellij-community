@@ -209,7 +209,7 @@ class WebSymbolsCompletionQueryTest : WebSymbolsMockQueryExecutorTestBase() {
   }
 
   fun testNamingRules2() {
-    doTest("js/properties", 0, "vue", "naming-rules")
+    doTest("js/custom-properties", 0, "vue", "naming-rules")
   }
 
   fun testNestedNamingRules1() {

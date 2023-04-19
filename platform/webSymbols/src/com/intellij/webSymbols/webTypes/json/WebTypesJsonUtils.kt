@@ -29,6 +29,7 @@ import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.utils.NameCaseUtils
 import com.intellij.webSymbols.utils.lastWebSymbol
 import com.intellij.webSymbols.webTypes.WebTypesJsonOrigin
+import com.intellij.webSymbols.webTypes.WebTypesSymbol
 import com.intellij.webSymbols.webTypes.filters.WebSymbolsFilter
 import com.intellij.webSymbols.webTypes.json.NameConversionRulesSingle.NameConverter
 import java.util.*
@@ -43,9 +44,10 @@ private fun namespaceOf(host: GenericContributionsHost): SymbolNamespace =
   }
 
 internal fun Contributions.getAllContributions(framework: FrameworkId?): Sequence<Triple<SymbolNamespace, SymbolKind, List<BaseContribution>>> =
-  sequenceOf(css, js, html)
+  sequenceOf(css, html)
     .filter { it != null }
     .flatMap { host -> host.collectDirectContributions(framework).mapWith(namespaceOf(host)) }
+    .plus(js?.collectDirectContributions() ?: emptySequence())
 
 internal fun GenericContributionsHost.getAllContributions(framework: FrameworkId?): Sequence<Triple<SymbolNamespace, SymbolKind, List<BaseContribution>>> =
   if (this is BaseContribution)
@@ -116,6 +118,13 @@ private fun GenericContributionsHost.collectDirectContributions(framework: Frame
     .plus(this.additionalProperties.asSequence()
             .map { (name, list) -> Pair(name, list?.mapNotNull { it?.value as? GenericContribution } ?: emptyList()) }
             .filter { it.second.isNotEmpty() })
+
+private fun JsGlobal.collectDirectContributions(): Sequence<Triple<SymbolNamespace, SymbolKind, List<BaseContribution>>> =
+ (events?.let { sequenceOf(Triple(NAMESPACE_JS, KIND_JS_EVENTS, it)) } ?: emptySequence())
+   .plus(additionalProperties.asSequence()
+           .filter { (name, _) -> !WebTypesSymbol.WEB_TYPES_JS_FORBIDDEN_GLOBAL_KINDS.contains(name) }
+           .map { (name, list) -> Triple(NAMESPACE_JS, name, list?.mapNotNull { it?.value as? GenericContribution } ?: emptyList()) }
+           .filter { it.second.isNotEmpty() })
 
 internal val GenericContributionsHost.genericContributions: Map<String, List<GenericContribution>>
   get() =

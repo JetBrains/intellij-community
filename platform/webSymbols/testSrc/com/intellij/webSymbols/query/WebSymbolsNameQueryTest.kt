@@ -287,15 +287,15 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
   }
 
   fun testNamingRules4() {
-    doTest("js/properties/prop-one", "vue", true, "naming-rules")
+    doTest("js/custom-properties/prop-one", "vue", true, "naming-rules")
   }
 
   fun testNamingRules5() {
-    doTest("js/properties/propOne", "vue", true, "naming-rules")
+    doTest("js/custom-properties/propOne", "vue", true, "naming-rules")
   }
 
   fun testNamingRules6() {
-    doTest("js/properties/prop-two-three", "vue", true, "naming-rules")
+    doTest("js/custom-properties/prop-two-three", "vue", true, "naming-rules")
   }
 
   fun testNestedNamingRules1() {
