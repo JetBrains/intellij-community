@@ -1,13 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.util.InspectionMessage;
-import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModCommand;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -229,7 +228,7 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
     }
   }
 
-  private static class NavigateToDuplicateFix implements LocalQuickFix {
+  private static class NavigateToDuplicateFix extends ModCommandQuickFix {
     private final SmartPsiElementPointer<PsiExpression> myPointer;
 
     NavigateToDuplicateFix(PsiExpression arg) {
@@ -244,30 +243,15 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
     }
 
     @Override
-    public boolean startInWriteAction() {
-      return false;
+    public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiExpression element = myPointer.getElement();
+      if (element == null) return ModCommands.nop();
+      return ModCommands.select(element);
     }
 
     @Override
     public boolean availableInBatchMode() {
       return false;
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiExpression element = myPointer.getElement();
-      if (element == null) return;
-      PsiFile file = element.getContainingFile();
-      if (file == null) return;
-      int offset = element.getTextRange().getStartOffset();
-      PsiNavigationSupport.getInstance().createNavigatable(project, file.getVirtualFile(), offset).navigate(true);
-    }
-
-    @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      NavigatablePsiElement element = tryCast(myPointer.getElement(), NavigatablePsiElement.class);
-      if (element == null) return IntentionPreviewInfo.EMPTY;
-      return IntentionPreviewInfo.navigate(element);
     }
   }
 }
