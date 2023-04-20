@@ -117,7 +117,6 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
                               @NotNull ChangedRangesInfo info) throws IncorrectOperationException {
     ensureDocumentCommitted(file);
     FormatTextRanges formatRanges = new FormatTextRanges(info, ChangedRangesUtil.processChangedRanges(file, info));
-    formatRanges.setExtendToContext(true);
     reformatText(file, formatRanges);
   }
 

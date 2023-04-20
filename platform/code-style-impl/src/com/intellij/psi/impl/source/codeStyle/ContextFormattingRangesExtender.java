@@ -17,15 +17,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 @SuppressWarnings("SameParameterValue")
-class FormattingRangesExtender {
-  private final static Logger LOG = Logger.getInstance(FormattingRangesExtender.class);
+class ContextFormattingRangesExtender {
+  private final static Logger LOG = Logger.getInstance(ContextFormattingRangesExtender.class);
 
   private final static int MAX_EXTENSION_LINES = 10;
 
   private final Document myDocument;
   private final PsiFile  myFile;
 
-  FormattingRangesExtender(@NotNull Document document, PsiFile file) {
+  ContextFormattingRangesExtender(@NotNull Document document, PsiFile file) {
     myDocument = document;
     myFile = file;
   }

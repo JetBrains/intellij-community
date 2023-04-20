@@ -157,7 +157,7 @@ public class CodeFormatterFacade {
       if (file.getTextLength() > 0) {
         LOG.assertTrue(document != null);
         if (ranges.isExtendToContext()) {
-          ranges.setExtendedRanges(new FormattingRangesExtender(document, file).getExtendedRanges(ranges.getTextRanges()));
+          ranges.setExtendedRanges(new ContextFormattingRangesExtender(document, file).getExtendedRanges(ranges.getTextRanges()));
         }
         try {
           ASTNode containingNode = findContainingNode(file, ranges.getBoundRange());
