@@ -266,7 +266,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     def projectSourceCompatibility = getSourceCompatibility(project)
     def projectTargetCompatibility = getTargetCompatibility(project)
 
-    def result = [:] as Map<String, DefaultExternalSourceSet>
+    def result = new LinkedHashMap<String, DefaultExternalSourceSet>();
     def sourceSets = JavaPluginUtil.getSourceSetContainer(project)
     if (sourceSets == null) {
       return result
