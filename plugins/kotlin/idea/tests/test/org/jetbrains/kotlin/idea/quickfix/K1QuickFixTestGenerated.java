@@ -13111,23 +13111,22 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         @TestMetadata("return.kt")
         public void testReturn() throws Exception {
             runTest("testData/quickfix/replaceWithSafeCall/return.kt");
+        }  
+        
+        @TestMetadata("infixFunction.kt")
+        public void testInfixFunction() throws Exception {
+            runTest("testData/quickfix/replaceWithSafeCall/infixFunction.kt");
         }
         
-           @TestMetadata("Test1.kt")
-        public void testTest1() throws Exception {
-            runTest("testData/quickfix/replaceWithSafeCall/Test1.kt");
+        @TestMetadata("infixFunction2.kt")
+        public void testInfixFunction2() throws Exception {
+            runTest("testData/quickfix/replaceWithSafeCall/infixFunction2.kt");
         }
         
-        @TestMetadata("Test2.kt")
-        public void testTest2() throws Exception {
-            runTest("testData/quickfix/replaceWithSafeCall/Test2.kt");
-        }
-        
-        @TestMetadata("Test3.kt")
-        public void testTest3() throws Exception {
-            runTest("testData/quickfix/replaceWithSafeCall/Test3.kt");
-        }
-        
+        @TestMetadata("infixFunction3.kt")
+        public void testInfixFunction3() throws Exception {
+            runTest("testData/quickfix/replaceWithSafeCall/infixFunction3.kt");
+        }        
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
