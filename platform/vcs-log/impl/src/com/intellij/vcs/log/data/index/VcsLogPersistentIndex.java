@@ -88,6 +88,8 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
 
   private @NotNull Map<VirtualFile, IntSet> myCommitsToIndex = new HashMap<>();
 
+  private final @NotNull IdleVcsLogIndexer myIdleIndexer;
+
   private VcsLogPersistentIndex(@NotNull Project project,
                                 @NotNull Map<VirtualFile, VcsLogProvider> providers,
                                 @NotNull Map<VirtualFile, VcsLogIndexer> indexers,
@@ -121,6 +123,9 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     mySingleTaskController = new MySingleTaskController(this);
     myHeavyAwareListener = new MyHeavyAwareListener(100);
     myHeavyAwareListener.start();
+
+    myIdleIndexer = new IdleVcsLogIndexer(project, this, this);
+    myIdleIndexer.start();
 
     Disposer.register(disposableParent, this);
     Disposer.register(this, myDisposableFlag);
@@ -251,6 +256,11 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
   @Override
   public void dispose() {
     myPostponedIndex.set(null);
+  }
+
+  @Override
+  public @NotNull Set<VirtualFile> getIndexingRoots() {
+    return myRoots;
   }
 
   private static @NotNull Map<VirtualFile, VcsLogIndexer> getAvailableIndexers(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
@@ -582,6 +592,8 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     }
 
     private void checkShouldCancel(@NotNull ProgressIndicator indicator) {
+      if (myIdleIndexer.isEnabled()) return;
+
       long time = myIndexingTime.get(myRoot).get() + (getCurrentTimeMillis() - myStartTime);
       int limit = myIndexingLimit.get(myRoot).get();
       boolean isOvertime = time >= (Math.max(limit, 1L) * 60 * 1000) && !myBigRepositoriesList.isBig(myRoot);
