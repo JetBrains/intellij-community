@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions
 
 import com.intellij.icons.AllIcons
@@ -63,21 +63,28 @@ class ResumeIndexingAction : DumbAwareAction() {
     val rootsForIndexing = VcsLogPersistentIndex.getRootsForIndexing(data.logProviders)
     if (rootsForIndexing.isEmpty()) return
 
-    if (rootsForIndexing.any { it.isScheduledForIndexing(data.index) }) {
-      rootsForIndexing.filter { !it.isBig() }.forEach { VcsLogBigRepositoriesList.getInstance().addRepository(it) }
-    }
-    else {
-      var resumed = false
-      for (root in rootsForIndexing.filter { it.isBig() }) {
-        resumed = resumed or VcsLogBigRepositoriesList.getInstance().removeRepository(root)
-      }
-      if (resumed) (data.index as? VcsLogModifiableIndex)?.scheduleIndex(false)
-    }
+    toggleIndexing(rootsForIndexing, data.index)
   }
 
-  private fun VirtualFile.isBig(): Boolean = VcsLogBigRepositoriesList.getInstance().isBig(this)
-  private fun VirtualFile.isScheduledForIndexing(index: VcsLogIndex): Boolean = index.isIndexingEnabled(this) &&
-                                                                                !index.isIndexed(this)
-
+  companion object {
+    /**
+     * Resume Log indexing if paused or pause indexing if indexing is in progress.
+     */
+    internal fun toggleIndexing(rootsForIndexing: Set<VirtualFile>, index: VcsLogIndex) {
+      if (rootsForIndexing.any { it.isScheduledForIndexing(index) }) {
+        rootsForIndexing.filter { !it.isBig() }.forEach { VcsLogBigRepositoriesList.getInstance().addRepository(it) }
+      }
+      else {
+        var resumed = false
+        for (root in rootsForIndexing.filter { it.isBig() }) {
+          resumed = resumed or VcsLogBigRepositoriesList.getInstance().removeRepository(root)
+        }
+        if (resumed) (index as? VcsLogModifiableIndex)?.scheduleIndex(false)
+      }
+    }
+    internal fun VirtualFile.isBig(): Boolean = VcsLogBigRepositoriesList.getInstance().isBig(this)
+    internal fun VirtualFile.isScheduledForIndexing(index: VcsLogIndex): Boolean = index.isIndexingEnabled(this) &&
+                                                                                  !index.isIndexed(this)
+  }
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 }
