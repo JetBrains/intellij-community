@@ -395,7 +395,7 @@ class TerminalPanel(private val project: Project,
   }
 
   companion object {
-    private const val LEFT_INSET: Int = 7
+    const val LEFT_INSET: Int = 7
 
     @NonNls
     private val ACTIONS_TO_SKIP = listOf(

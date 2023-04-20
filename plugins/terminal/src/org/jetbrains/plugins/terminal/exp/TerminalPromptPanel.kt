@@ -141,10 +141,6 @@ class TerminalPromptPanel(private val project: Project,
     return editor.contentComponent.hasFocus()
   }
 
-  fun getContentSize(): Dimension {
-    return Dimension(editor.component.width, editor.contentComponent.height)
-  }
-
   override fun getBackground(): Color {
     return UIUtil.getTextFieldBackground()
   }

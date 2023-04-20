@@ -9,6 +9,7 @@ import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.jediterm.core.util.TermSize
 import java.awt.BorderLayout
@@ -20,7 +21,6 @@ import javax.swing.JScrollBar
 import javax.swing.JScrollPane
 import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
-import kotlin.math.max
 
 class TerminalBlocksComponent(private val project: Project,
                               private val session: TerminalSession,
@@ -115,18 +115,8 @@ class TerminalBlocksComponent(private val project: Project,
   fun getTerminalSize(): TermSize? {
     val bounds = bounds
     if (bounds.isEmpty) return null
-    val baseSize = calculateTerminalSize(Dimension(bounds.width, bounds.height), promptPanel.charSize)
-    return ensureTermMinimumSize(baseSize)
-  }
-
-  private fun calculateTerminalSize(componentSize: Dimension, charSize: Dimension): TermSize {
-    val width = componentSize.width / charSize.width
-    val height = componentSize.height / charSize.height
-    return TermSize(width, height)
-  }
-
-  private fun ensureTermMinimumSize(size: TermSize): TermSize {
-    return TermSize(max(TerminalModel.MIN_WIDTH, size.columns), max(TerminalModel.MIN_HEIGHT, size.rows))
+    val contentSize = Dimension(bounds.width - JBUI.scale(TerminalPanel.LEFT_INSET), bounds.height)
+    return TerminalUiUtils.calculateTerminalSize(contentSize, promptPanel.charSize)
   }
 
   fun isFocused(): Boolean {
