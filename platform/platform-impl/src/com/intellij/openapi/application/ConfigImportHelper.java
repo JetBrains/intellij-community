@@ -854,10 +854,10 @@ public final class ConfigImportHelper {
 
     try {
       Map<PluginId, Set<String>> brokenPluginVersions = options.brokenPluginVersions;
-      PluginLoadingResult result = PluginDescriptorLoader.loadDescriptors(oldPluginsDir,
-                                                                          options.bundledPluginPath,
-                                                                          brokenPluginVersions,
-                                                                          options.compatibleBuildNumber);
+      PluginLoadingResult result = PluginDescriptorLoader.loadDescriptorsFromOtherIde(oldPluginsDir,
+                                                                                      options.bundledPluginPath,
+                                                                                      brokenPluginVersions,
+                                                                                      options.compatibleBuildNumber);
 
       partitionNonBundled(result.getIdMap().values(), pluginsToDownload, pluginsToMigrate, descriptor -> {
         Set<String> brokenVersions = brokenPluginVersions != null ? brokenPluginVersions.get(descriptor.getPluginId()) : null;

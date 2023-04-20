@@ -768,7 +768,7 @@ fun loadDescriptor(
 }
 
 @Throws(ExecutionException::class, InterruptedException::class, IOException::class)
-fun loadDescriptors(
+fun loadDescriptorsFromOtherIde(
   customPluginDir: Path,
   bundledPluginDir: Path?,
   brokenPluginVersions: Map<PluginId, Set<String?>>?,
