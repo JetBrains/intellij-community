@@ -5,24 +5,19 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 
 class Main {
-  private static final String s = " CONASTANT";
   private static final String s1 = " <TYPO descr="Typo: In word 'CONASTANT'">CONASTANT</TYPO>";
 
   public static void main(String[] args) {
     System.out.println("1");
 
+    SimpleDateFormat simpleDateFormat = new SimpleDateFormat(" CONASTANT");
+    SimpleDateFormat simpleDateFormat2 = new SimpleDateFormat("   CONASTANT");
 
-    SimpleDateFormat simpleDateFormat = new SimpleDateFormat(s);
-    String pattern = "   CONASTANT";
-    SimpleDateFormat simpleDateFormat2 = new SimpleDateFormat(pattern);
+    simpleDateFormat.applyPattern( "CONASTANT");
+    simpleDateFormat.applyLocalizedPattern("CONASTANT");
 
-    simpleDateFormat.applyPattern( "Errror");
-    simpleDateFormat.applyLocalizedPattern("Errror");
+    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("CONASTANT");
 
-    String error1 = "Errror";
-    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(error1);
-
-    String error2 = "Errror";
-    new DateTimeFormatterBuilder().appendPattern(error2);
+    new DateTimeFormatterBuilder().appendPattern("CONASTANT");
   }
 }

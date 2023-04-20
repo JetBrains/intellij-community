@@ -4,18 +4,14 @@ package com.intellij.spellchecker;
 import com.intellij.codeInspection.SuppressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallHandler;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.Map;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
@@ -95,14 +91,10 @@ public class JavaSpellcheckingStrategy extends SpellcheckingStrategy {
     if (element == null) {
       return false;
     }
-    if (element.getParent() instanceof PsiVariable psiVariable) {
-      List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(psiVariable, PsiTreeUtil.getParentOfType(psiVariable, PsiCodeBlock.class, PsiMethod.class, PsiClass.class));
-      return ContainerUtil.or(references, reference -> checkCall(reference));
-    }
     return checkCall(element);
   }
 
-  private static boolean checkCall(PsiElement source) {
+  private static boolean checkCall(@NotNull PsiElement source) {
     PsiElement element = PsiUtil.skipParenthesizedExprUp(source);
     PsiElement parent = element.getParent();
     if (!(parent instanceof PsiExpressionList expressionList)) {
