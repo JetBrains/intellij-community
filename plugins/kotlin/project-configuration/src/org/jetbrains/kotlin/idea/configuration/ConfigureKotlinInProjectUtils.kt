@@ -25,6 +25,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
@@ -37,9 +38,9 @@ import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.syncNonBlockingReadAction
+import org.jetbrains.kotlin.idea.projectConfiguration.KotlinNotConfiguredSuppressedModulesState
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
-import org.jetbrains.kotlin.idea.projectConfiguration.KotlinNotConfiguredSuppressedModulesState
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.vfilefinder.IdeVirtualFileFinder
@@ -310,6 +311,12 @@ fun findApplicableConfigurator(module: Module): KotlinProjectConfigurator {
     val moduleGroup = module.toModuleGroup()
     return allConfigurators().find { it.getStatus(moduleGroup) != ConfigureKotlinStatus.NON_APPLICABLE }
         ?: KotlinJavaModuleConfigurator.instance
+}
+
+fun Module.hasKotlinPluginEnabled(): Boolean {
+    val settings = KotlinFacetSettingsProvider.getInstance(project)
+    val moduleSettings = settings?.getSettings(this) ?: return false
+    return moduleSettings.compilerSettings != null
 }
 
 fun hasAnyKotlinRuntimeInScope(module: Module): Boolean {

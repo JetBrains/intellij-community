@@ -255,11 +255,11 @@ fun configureFacetByGradleModule(
     sourceSetName: String? = sourceSetNode?.data?.id?.let { it.substring(it.lastIndexOf(':') + 1) }
 ): KotlinFacet? {
     if (moduleNode.kotlinSourceSetData?.sourceSetInfo != null) return null // Suppress in the presence of new MPP model
-    val kotlinGradleProjectDataNode = moduleNode.kotlinGradleProjectDataNodeOrNull ?: return null
-    val kotlinGradleProjectData = kotlinGradleProjectDataNode.data
-    if (!kotlinGradleProjectData.isResolved) return null
+    val kotlinGradleProjectDataNode = moduleNode.kotlinGradleProjectDataNodeOrNull
+    val kotlinGradleProjectData = kotlinGradleProjectDataNode?.data
 
-    if (!kotlinGradleProjectData.hasKotlinPlugin) {
+    if (kotlinGradleProjectData?.isResolved == false) return null
+    if (kotlinGradleProjectDataNode == null || kotlinGradleProjectData?.hasKotlinPlugin == false) {
         val facetModel = modelsProvider.getModifiableFacetModel(ideModule)
         val facet = facetModel.getFacetByType(KotlinFacetType.TYPE_ID)
         if (facet != null) {
