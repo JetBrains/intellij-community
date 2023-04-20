@@ -256,9 +256,7 @@ class MacDistributionBuilder(override val context: BuildContext,
       //noinspection SpellCheckingInspection
       additionalJvmArgs.add("-Xbootclasspath/a:${bootClassPath}")
     }
-    val predicate: (String) -> Boolean = { it.startsWith("-D") }
-    val launcherProperties = additionalJvmArgs.filter(predicate)
-    val launcherVmOptions = additionalJvmArgs.filterNot(predicate)
+    val (launcherProperties, launcherVmOptions) = additionalJvmArgs.partition { it.startsWith("-D") }
 
     val urlSchemes = macCustomizer.urlSchemes
     val urlSchemesString = if (urlSchemes.isEmpty()) {

@@ -81,6 +81,7 @@ class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
     if (productCodeSeparator != -1) {
       productCode = buildNumber.substring(0, productCodeSeparator)
     }
+    @Suppress("DEPRECATION")
     if (productProperties.customProductCode != null) {
       productCode = productProperties.customProductCode
     }

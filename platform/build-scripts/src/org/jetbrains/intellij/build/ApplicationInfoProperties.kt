@@ -31,6 +31,5 @@ interface ApplicationInfoProperties {
 
   val launcherName: String
 
-
   val appInfoXml: String
 }

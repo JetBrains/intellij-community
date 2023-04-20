@@ -14,7 +14,7 @@ import java.util.*
 import java.util.function.BiPredicate
 
 /**
- * Describes distribution of an IntelliJ-based IDE. Override this class and build distribution of your product.
+ * Describes distribution of an IntelliJ-based IDE. Override this class and build a distribution of your product.
  */
 abstract class ProductProperties {
   /**
@@ -113,9 +113,8 @@ abstract class ProductProperties {
    * An identifier which will be used to form names for directories where configuration and caches will be stored, usually a product name
    * without spaces with an added version ('IntelliJIdea2016.1' for IntelliJ IDEA 2016.1).
    */
-  open fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String {
-    return "${appInfo.productName}${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
-  }
+  open fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String =
+    "${appInfo.productName}${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
 
   /**
    * If `true`, Alt+Button1 shortcut will be removed from 'Quick Evaluate Expression' action and assigned to 'Add/Remove Caret' action
@@ -254,8 +253,7 @@ abstract class ProductProperties {
   /**
    * Override this method to copy additional files to distributions of all operating systems.
    */
-  open suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
-  }
+  open suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) { }
 
   /**
    * Override this method if the product has several editions to ensure that their artifacts won't be mixed up.
