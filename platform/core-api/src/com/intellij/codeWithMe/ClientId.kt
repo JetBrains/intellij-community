@@ -141,32 +141,11 @@ data class ClientId(val value: String) {
     }
 
     /**
-     * Returns true if and only if the given ID is considered to be local to this process
-     */
-    @JvmStatic
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use ClientId.isLocal", ReplaceWith("clientId.isLocal", "com.intellij.codeWithMe.ClientId.Companion.isLocal"))
-    fun isLocalId(clientId: ClientId?): Boolean {
-      return clientId.isLocal
-    }
-
-    /**
      * Is true if and only if the given ID is considered to be local to this process
      */
     @JvmStatic
     val ClientId?.isLocal: Boolean
       get() = this == null || this == localId
-
-    /**
-     * Returns true if the given ID is local or a client is still in the session.
-     * Consider subscribing to a proper lifetime instead of this check.
-     */
-    @JvmStatic
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use ClientId.isValid", ReplaceWith("clientId.isValid", "com.intellij.codeWithMe.ClientId.Companion.isValid"))
-    fun isValidId(clientId: ClientId?): Boolean {
-      return clientId.isValid
-    }
 
     /**
      * Is true if the given ID is local or a client is still in the session.
@@ -175,35 +154,6 @@ data class ClientId(val value: String) {
     @JvmStatic
     val ClientId?.isValid: Boolean
       get() = getCachedService()?.isValid(this) ?: true
-
-    /**
-     * Returns a disposable object associated with the given ID.
-     * Consider using a lifetime that is usually passed along with the ID
-     */
-    @JvmStatic
-    @Deprecated("Use create a per-client service that implements disposable to get proper disposable associated with the client id")
-        fun ClientId?.toDisposable(): Disposable {
-          @Suppress("DEPRECATION")
-      return getCachedService()?.toDisposable(this) ?: Disposer.newDisposable()
-    }
-
-    /**
-     * Invokes a runnable under the given [ClientId]
-     */
-    @JvmStatic
-    @Suppress("DeprecatedCallableAddReplaceWith")
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Consider using an overload that returns a AccessToken to follow java try-with-resources pattern")
-    fun withClientId(clientId: ClientId?, action: Runnable): Unit = withClientId(clientId) { action.run() }
-
-    /**
-     * Computes a value under given [ClientId]
-     */
-    @JvmStatic
-    @Suppress("DeprecatedCallableAddReplaceWith")
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Consider using an overload that returns an AccessToken to follow java try-with-resources pattern")
-    fun <T> withClientId(clientId: ClientId?, action: Callable<T>): T = withClientId(clientId) { action.call() }
 
     /**
      * Computes a value under given [ClientId]

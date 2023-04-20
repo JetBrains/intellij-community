@@ -8,7 +8,6 @@ import com.intellij.ProjectTopics
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
-import com.intellij.codeWithMe.ClientId.Companion.withClientId
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.runActivity
 import com.intellij.diagnostic.subtask
@@ -763,7 +762,7 @@ open class FileEditorManagerImpl(
       }
     }
     else {
-      withClientId(ClientId.localId).use {
+      ClientId.withClientId(ClientId.localId).use {
         CommandProcessor.getInstance().executeCommand(project, {
           openFileSetModificationCount.increment()
           for (each in getAllSplitters()) {
