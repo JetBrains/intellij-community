@@ -309,8 +309,17 @@ public interface IntentionPreviewInfo {
    */
   static @NotNull IntentionPreviewInfo navigate(@NotNull NavigatablePsiElement target) {
     PsiFile file = target.getContainingFile();
-    Icon icon = file.getIcon(0);
     int offset = target.getTextOffset();
+    return navigate(file, offset);
+  }
+
+  /**
+   * @param file file to navigate to
+   * @param offset offset within file to navigate to
+   * @return a presentation describing that the action will navigate to the specified target element
+   */
+  static @NotNull Html navigate(@NotNull PsiFile file, int offset) {
+    Icon icon = file.getIcon(0);
     Document document = file.getViewProvider().getDocument();
     HtmlBuilder builder = new HtmlBuilder();
     builder.append(HtmlChunk.htmlEntity("&rarr;")).append(" ");
