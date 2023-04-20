@@ -7,15 +7,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.MutableProperty
-import com.intellij.ui.layout.*
-import com.intellij.util.ui.JBInsets
+import com.intellij.ui.layout.CellBuilder
+import com.intellij.ui.layout.PropertyBinding
+import com.intellij.ui.layout.Row
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
-import javax.swing.JComponent
-import javax.swing.JPanel
 
 /**
  * See [BrowsableTargetEnvironmentType.createBrowser]
@@ -61,15 +59,4 @@ fun com.intellij.ui.dsl.builder.Row.textFieldWithBrowseTargetButton(targetType: 
   textFieldWithBrowseButton.addActionListener(browser)
   return cell(textFieldWithBrowseButton)
     .bind(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, property)
-}
-
-/**
- * Workarounds cropping the focus highlighting frame around UI components (e.g. around text fields and combo boxes) when Kotlin UI DSL
- * [panel] is placed inside arbitrary [JPanel].
- *
- * @receiver the panel where Kotlin UI DSL elements are placed
- */
-@Deprecated("Not needed for Kotlin UI DSL 2, should be removed")
-fun <T : JComponent> T.fixHighlightingOfUiDslComponents(): T = apply {
-  border = IdeBorderFactory.createEmptyBorder(JBInsets(4, 0, 3, 3))
 }
