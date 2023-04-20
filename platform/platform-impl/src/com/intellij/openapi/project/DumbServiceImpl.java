@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.NlsContexts.PopupContent;
 import com.intellij.openapi.util.registry.Registry;
@@ -42,6 +43,7 @@ import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
@@ -74,6 +76,15 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private final DumbServiceBalloon myBalloon;
 
   private volatile @Nullable Thread myWaitIntolerantThread;
+
+  // cancelAllTasksAndWait will increase the epoch to avoid race conditions
+  // We queue new tasks on EDT, cancelAllTasksAndWait also requires EDT. This is how DumbService makes sure that no new tasks are submitted
+  // during "wait". But clients do not know that dumb service uses EDT thread in "queueTask" and the task will be queued after "queueTask"
+  // finish. This means that cancelAllTasksAndWait looks broken for clients that do not use EDT thread: queueTask has exit normally in one
+  // thread, in the EDT thread we invoke cancelAllTasksAndWait. Previously queued task will be executed (because task had not yet been
+  // queued by the moment when cancelAllTasksAndWait was invoked, it was waiting for EDT thread and write lock).
+  // See test for more details
+  private AtomicInteger myDumbEpoch = new AtomicInteger();
 
   private class DumbTaskListener implements MergingQueueGuiExecutor.ExecutorStateListener {
     /*
@@ -155,16 +166,19 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     LOG.assertTrue(changed, "actual state: " + myState.get() + ", project " + getProject());
 
     List<StartupActivity.RequiredForSmartMode> activities = REQUIRED_FOR_SMART_MODE_STARTUP_ACTIVITY.getExtensionList();
-    if (activities.isEmpty()) {
-      myState.set(State.SMART);
+    for (StartupActivity.RequiredForSmartMode activity : activities) {
+      activity.runActivity(getProject());
     }
-    else {
-      for (StartupActivity.RequiredForSmartMode activity : activities) {
-        activity.runActivity(getProject());
-      }
 
-      if (isSynchronousTaskExecution()) {
-        myState.set(State.SMART);
+    if (isSynchronousTaskExecution()) {
+      // invokeLaterAfterProjectInitialized(this::updateFinished) does not work well in synchronous environments (e.g. in unit tests): code
+      // continues to execute without waiting for smart mode to start because of invoke*Later*. See, for example, DbSrcFileDialectTest
+      myState.compareAndSet(State.RUNNING_PROJECT_SMART_MODE_STARTUP_TASKS, State.SMART);
+    } else {
+      // switch to smart mode and notify subscribers if no dumb mode tasks were scheduled
+      if (myState.compareAndSet(State.RUNNING_PROJECT_SMART_MODE_STARTUP_TASKS, State.WAITING_FOR_FINISH)) {
+        myTrackedEdtActivityService.setDumbStartModality(ModalityState.defaultModalityState());
+        myTrackedEdtActivityService.invokeLaterAfterProjectInitialized(this::updateFinished);
       }
     }
   }
@@ -314,7 +328,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     Throwable trace = new Throwable();
     ModalityState modality = ModalityState.defaultModalityState();
     // we need EDT because enterDumbMode runs write action to make sure that we do not enter dumb mode during read actions
-    Runnable runnable = () -> queueTaskOnEdt(task, modality, trace);
+    final int dumbEpochBeforeQueuing = myDumbEpoch.get();
+    Runnable runnable = () -> queueTaskOnEdt(task, modality, trace, dumbEpochBeforeQueuing);
     if (ApplicationManager.getApplication().isDispatchThread()) {
       runnable.run(); // will log errors if not already in a write-safe context
     }
@@ -323,7 +338,13 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }
   }
 
-  private void queueTaskOnEdt(@NotNull DumbModeTask task, @NotNull ModalityState modality, @NotNull Throwable trace) {
+  private void queueTaskOnEdt(@NotNull DumbModeTask task, @NotNull ModalityState modality, @NotNull Throwable trace,
+                              int dumbEpochBeforeQueuing) {
+    if (dumbEpochBeforeQueuing != myDumbEpoch.get()) {
+      Disposer.dispose(task);
+      return;
+    }
+
     myTaskQueue.addTask(task);
     State state = myState.get();
     if (state == State.SMART ||
@@ -438,6 +459,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     if (!application.isWriteIntentLockAcquired() || application.isWriteAccessAllowed()) {
       throw new AssertionError("Must be called on write thread without write action");
     }
+    myDumbEpoch.incrementAndGet();
 
     Thread currentThread = Thread.currentThread();
     String initialThreadName = currentThread.getName();

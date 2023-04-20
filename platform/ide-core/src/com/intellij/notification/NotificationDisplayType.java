@@ -5,9 +5,6 @@ import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.PropertyKey;
 
-/**
- * @author spleaner
- */
 public enum NotificationDisplayType {
   NONE("notification.type.no.popup"),
   /** Expires automatically after 10 seconds. */

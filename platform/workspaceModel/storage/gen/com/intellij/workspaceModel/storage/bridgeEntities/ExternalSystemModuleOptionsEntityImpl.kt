@@ -288,7 +288,7 @@ class ExternalSystemModuleOptionsEntityData : WorkspaceEntityData<ExternalSystem
       this.rootProjectPath = this@ExternalSystemModuleOptionsEntityData.rootProjectPath
       this.externalSystemModuleGroup = this@ExternalSystemModuleOptionsEntityData.externalSystemModuleGroup
       this.externalSystemModuleType = this@ExternalSystemModuleOptionsEntityData.externalSystemModuleType
-      this.module = parents.filterIsInstance<ModuleEntity>().single()
+      parents.filterIsInstance<ModuleEntity>().singleOrNull()?.let { this.module = it }
     }
   }
 

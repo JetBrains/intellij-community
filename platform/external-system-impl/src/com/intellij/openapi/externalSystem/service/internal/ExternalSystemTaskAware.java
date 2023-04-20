@@ -10,8 +10,6 @@ import java.util.Set;
 
 /**
  * Represents a service that exposes information about the tasks being processed. 
- * 
- * @author Denis Zhdanov
  */
 public interface  ExternalSystemTaskAware {
 

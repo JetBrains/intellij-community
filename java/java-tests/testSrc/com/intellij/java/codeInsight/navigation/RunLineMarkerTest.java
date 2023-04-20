@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.navigation;
 
 import com.intellij.application.options.editor.GutterIconsConfigurable;
@@ -92,8 +92,36 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
     assertEquals(ThreeState.YES, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
   }
 
+  public void testNoRunLineMarkerAnonymous() {
+    myFixture.configureByText("X.java", """
+      public class X {
+        void foo() {
+          new Object() {
+            public static void <caret>main(String[] args) {}
+          };
+        }
+      }""");
+    doTestNoRunLineMarkers();
+  }
+
+  public void testNoRunLineMarkerLocal() {
+    myFixture.configureByText("X.java", """
+      public class X {
+        void foo() {
+          class Local {
+            public static void <caret>main(String[] args) {}
+          };
+        }
+      }""");
+    doTestNoRunLineMarkers();
+  }
+
   public void testNoRunLineMarker() {
     myFixture.configureByText("MainTest.java", "public class MainTest {}");
+    doTestNoRunLineMarkers();
+  }
+
+  private void doTestNoRunLineMarkers() {
     assertEquals(ThreeState.UNSURE, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
     assertEmpty(myFixture.findAllGutters());
     assertEquals(ThreeState.NO, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));

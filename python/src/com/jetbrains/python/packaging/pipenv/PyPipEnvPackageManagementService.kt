@@ -11,9 +11,6 @@ import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.sdk.pipenv.pipFileLockSources
 
-/**
- * @author vlan
- */
 class PyPipEnvPackageManagementService(project: Project, sdk: Sdk) : PyPackageManagementService(project, sdk) {
   override fun getAllRepositories(): List<String>? = null
 

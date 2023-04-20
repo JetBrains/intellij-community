@@ -78,7 +78,6 @@ import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
-import java.util.*
 import java.util.function.BooleanSupplier
 import java.util.function.Supplier
 import javax.swing.*
@@ -128,7 +127,6 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   private var preferredDarkLaf: LookAndFeelInfo? = null
   private val myStoredDefaults = HashMap<LafReference?, MutableMap<String, Any?>>()
   private val myLafComboBoxModel = SynchronizedClearableLazy<CollectionComboBoxModel<LafReference>> { LafComboBoxModel() }
-  private var myDensity = UIDensity.DEFAULT
   private val settingsToolbar: Lazy<ActionToolbar> = SynchronizedClearableLazy {
     val group = DefaultActionGroup(PreferredLafAction())
     val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, group, true)
@@ -598,7 +596,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
           // avoid loading MetalLookAndFeel class here - check for UIThemeBasedLookAndFeelInfo first
           if (lookAndFeelInfo is UIThemeBasedLookAndFeelInfo) {
             if (laf is UserDataHolder) {
-              (laf as UserDataHolder).putUserData(UIUtil.LAF_WITH_THEME_KEY, java.lang.Boolean.TRUE)
+              (laf as UserDataHolder).putUserData(UIUtil.LAF_WITH_THEME_KEY, true)
             }
             //if (lafNameOrder.containsKey(lookAndFeelInfo.getName()) && lookAndFeelInfo.getName().endsWith("Light")) {
             //  updateIconsUnderSelection(false);
@@ -649,28 +647,40 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     return false
   }
 
+  override fun applyDensity() {
+    setCurrentLookAndFeel(currentLookAndFeel!!)
+    updateUI()
+  }
+
   private fun applyDensity(defaults: UIDefaults) {
-    // main toolbar and stripes action buttons
-    defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), JBUI.CurrentTheme.Toolbar.defaultExperimentalToolbarButtonSize())
-    // Run Widget
-    defaults.put(JBUI.CurrentTheme.RunWidget.toolbarHeightKey(), JBUI.CurrentTheme.RunWidget.defaultToolbarHeight())
-    defaults.put(JBUI.CurrentTheme.RunWidget.toolbarBorderHeightKey(), JBUI.CurrentTheme.RunWidget.defaultToolbarBorderHeight())
-    defaults.put(JBUI.CurrentTheme.RunWidget.actionButtonWidthKey(), JBUI.CurrentTheme.RunWidget.defaultActionButtonWidth())
-    defaults.put(JBUI.CurrentTheme.RunWidget.configurationSelectorWidthKey(), JBUI.CurrentTheme.RunWidget.defaultConfigurationSelectorWidth())
-    if (density == UIDensity.COMPACT) {
-      // main toolbar and stripes action buttons
-      defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), JBUI.size(32, 32))
+    if (UISettings.getInstance().uiDensity == UIDensity.COMPACT) {
+      // main toolbar
+      defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), JBUI.size(34, 34))
+      defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSizeKey(), 16)
+      defaults.put(JBUI.CurrentTheme.TitlePane.buttonPreferredSizeKey(), JBUI.size(44, 34))
+      // tool window stripes
+      defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSizeKey(), JBUI.size(32, 32))
+      defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconSizeKey(), 16)
+      defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPaddingKey(), JBUI.insets(4))
       // Run Widget
-      defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), JBUI.size(30, 30))
-      defaults.put(JBUI.CurrentTheme.RunWidget.toolbarBorderHeightKey(), 1)
-      // minimize/maximize/close buttons
-      defaults.put(JBUI.CurrentTheme.TitlePane.buttonPreferredSizeKey(), JBUI.size(32, 32))
+      defaults.put(JBUI.CurrentTheme.RunWidget.toolbarHeightKey(), 26)
+      defaults.put(JBUI.CurrentTheme.RunWidget.toolbarBorderHeightKey(), 4)
       // trees
-      defaults.put("Tree.rowHeight", 20)
+      defaults.put(JBUI.CurrentTheme.Tree.rowHeightKey(), 22)
+      // lists
+      defaults.put("List.rowHeight", 24)
+      // status bar
+      defaults.put(JBUI.CurrentTheme.StatusBar.Widget.insetsKey(), JBUI.insets(4, 8, 3, 8))
+      defaults.put(JBUI.CurrentTheme.StatusBar.Breadcrumbs.navBarInsetsKey(), JBUI.insets(1, 0, 1, 4))
       // editor tabs
-      defaults.put("EditorTabs.tabInsets", JBInsets.create(0, 2).asUIResource())
+      defaults.put("EditorTabs.tabInsets", JBInsets(1, 12, 1, 8).asUIResource())
+      defaults.put(JBUI.CurrentTheme.EditorTabs.fontKey(), JBFont.medium())
       // toolwindows
-      defaults.put("ToolWindow.Header.height", 35)
+      defaults.put(JBUI.CurrentTheme.ToolWindow.headerHeightKey(), 32)
+      defaults.put(JBUI.CurrentTheme.ToolWindow.headerFontKey(), JBFont.medium())
+      // VCS log
+      defaults.put(JBUI.CurrentTheme.VersionControl.Log.rowHeightKey(), 24)
+      defaults.put(JBUI.CurrentTheme.VersionControl.Log.verticalPaddingKey(), 4)
     }
   }
 
@@ -718,12 +728,14 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     fixPopupWeight()
     fixMenuIssues(uiDefaults)
     StartupUiUtil.initInputMapDefaults(uiDefaults)
-    uiDefaults.put("Button.defaultButtonFollowsFocus", java.lang.Boolean.FALSE)
+    uiDefaults.put("Button.defaultButtonFollowsFocus", false)
     uiDefaults.put("Balloon.error.textInsets", JBInsets(3, 8, 3, 8).asUIResource())
     patchFileChooserStrings(uiDefaults)
     patchLafFonts(uiDefaults)
     patchTreeUI(uiDefaults)
-    applyDensity(uiDefaults)
+    if (ExperimentalUI.isNewUI()) {
+      applyDensity(uiDefaults)
+    }
 
     //should be called last because this method modifies uiDefault values
     patchHiDPI(uiDefaults)
@@ -863,16 +875,6 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
 
   override fun setPreferredLightLaf(value: LookAndFeelInfo) {
     preferredLightLaf = value
-  }
-
-  override fun getDensity() = myDensity
-
-  override fun setDensity(density: UIDensity) {
-    if (density != myDensity) {
-      myDensity = density
-      setCurrentLookAndFeel(currentLookAndFeel!!)
-      updateUI()
-    }
   }
 
   private inner class UiThemeEpListener : ExtensionPointListener<UIThemeProvider> {
@@ -1265,7 +1267,7 @@ private fun patchHiDPI(defaults: UIDefaults) {
   val prevRowHeightScale = if (prevScaleVal != null || SystemInfoRt.isMac || SystemInfoRt.isWindows) prevScale else getFontScale(12f)
   patchRowHeight(defaults, "List.rowHeight", prevRowHeightScale)
   patchRowHeight(defaults, "Table.rowHeight", prevRowHeightScale)
-  patchRowHeight(defaults, "Tree.rowHeight", prevRowHeightScale)
+  patchRowHeight(defaults, JBUI.CurrentTheme.Tree.rowHeightKey(), prevRowHeightScale)
   if (prevScale == scale(1f) && prevScaleVal != null) {
     return
   }

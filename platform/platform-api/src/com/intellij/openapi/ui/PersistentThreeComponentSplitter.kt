@@ -71,7 +71,7 @@ class PersistentThreeComponentSplitter(
     lastProportion = lastSize / (totalSize - 2.0f * dividerWidth)
   }
 
-  fun restoreProportions() {
+  private fun restoreProportions() {
     setFirstSize()
     setLastSize()
   }

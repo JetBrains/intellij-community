@@ -5,9 +5,6 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemRunConfigurationProducer;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Denis Zhdanov
- */
 final class GradleRuntimeConfigurationProducer extends AbstractExternalSystemRunConfigurationProducer {
   @NotNull
   @Override

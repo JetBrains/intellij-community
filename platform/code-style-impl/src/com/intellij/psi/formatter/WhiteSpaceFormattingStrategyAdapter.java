@@ -21,9 +21,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Denis Zhdanov
- */
 public class WhiteSpaceFormattingStrategyAdapter implements WhiteSpaceFormattingStrategy {
   
   private final WhiteSpaceFormattingStrategy DELEGATE = WhiteSpaceFormattingStrategyFactory.DEFAULT_STRATEGY;

@@ -89,11 +89,11 @@ public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
   public @NotNull OptPane getOptionsPane() {
     return pane(
       horizontalStack(
-        stringSet("queryNames", InspectionGadgetsBundle.message("query.label")),
-        stringSet("updateNames", InspectionGadgetsBundle.message("update.label"))
+        stringList("queryNames", InspectionGadgetsBundle.message("query.label")),
+        stringList("updateNames", InspectionGadgetsBundle.message("update.label"))
       ),
-      stringSet("ignoredClasses", InspectionGadgetsBundle.message("ignored.class.label"),
-                new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("ignored.class.names"))
+      stringList("ignoredClasses", InspectionGadgetsBundle.message("ignored.class.label"),
+                 new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("ignored.class.names"))
                   .withSuperClass(CommonClassNames.JAVA_UTIL_COLLECTION, CommonClassNames.JAVA_UTIL_MAP))
     );
   }

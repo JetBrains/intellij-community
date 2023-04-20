@@ -30,7 +30,6 @@ import java.beans.PropertyChangeListener;
 import static com.intellij.ui.JBColor.namedColor;
 
 /**
- * @author spLeaner
  * @author Konstantin Bulenkov
  */
 public abstract class SpeedSearchSupply {

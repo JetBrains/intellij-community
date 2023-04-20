@@ -23,9 +23,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.migration.EqualsReplaceableByObjectsCallInspection;
 
-/**
- * @author Pavel.Dolgov
- */
 public class EqualsReplaceableByObjectsCallFixTest extends IGQuickFixesTestCase {
 
   public void testSimpleEquals() { doTest(); }

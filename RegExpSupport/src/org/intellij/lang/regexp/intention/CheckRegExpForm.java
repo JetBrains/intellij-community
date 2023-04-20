@@ -67,10 +67,19 @@ import java.util.regex.Pattern;
 public final class CheckRegExpForm {
   private static final Logger LOG = Logger.getInstance(CheckRegExpForm.class);
 
-  public static final Key<Boolean> CHECK_REG_EXP_EDITOR = Key.create("CHECK_REG_EXP_EDITOR");
-
   private static final Key<List<RegExpMatch>> LATEST_MATCHES = Key.create("REG_EXP_LATEST_MATCHES");
   private static final Key<RegExpMatchResult> RESULT = Key.create("REG_EXP_RESULT");
+
+  /**
+   * @deprecated Use {{@link Keys#CHECK_REG_EXP_EDITOR} instead.
+   */
+  @Deprecated
+  public static final Key<Boolean> CHECK_REG_EXP_EDITOR = Keys.CHECK_REG_EXP_EDITOR;
+
+  public static final class Keys {
+    // do not load CheckRegExpForm early, declare this key in separate class
+    public static final Key<Boolean> CHECK_REG_EXP_EDITOR = Key.create("CHECK_REG_EXP_EDITOR");
+  }
 
   private static final String LAST_EDITED_REGEXP = "last.edited.regexp";
 
@@ -124,7 +133,7 @@ public final class CheckRegExpForm {
       @Override
       protected @NotNull EditorEx createEditor() {
         final EditorEx editor = super.createEditor();
-        editor.putUserData(CHECK_REG_EXP_EDITOR, Boolean.TRUE);
+        editor.putUserData(Keys.CHECK_REG_EXP_EDITOR, Boolean.TRUE);
         editor.putUserData(IncrementalFindAction.SEARCH_DISABLED, Boolean.TRUE);
         editor.setEmbeddedIntoDialogWrapper(true);
         return editor;

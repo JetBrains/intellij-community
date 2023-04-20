@@ -7,9 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
 
-/**
- * @author ilyas
- */
 public class GrSwitchStatementImpl extends GrSwitchElementBase implements GrSwitchStatement {
 
   public GrSwitchStatementImpl(@NotNull ASTNode node) {

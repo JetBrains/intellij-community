@@ -27,9 +27,6 @@ import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServ
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author vlan
- */
 public abstract class PyPackageRequirementsSettings extends PyDefaultProjectAwareService<
   PyPackageRequirementsSettings.ServiceState,
   PyPackageRequirementsSettings,

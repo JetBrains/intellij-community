@@ -9,6 +9,7 @@ import com.intellij.ide.DefaultTreeExpander
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ActionPlaces.VCS_LOG_BRANCHES_PLACE
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.SELECTED_ITEMS
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.util.ProgressWindow
@@ -284,8 +285,11 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
   inner class BranchesTreePanel : BorderLayoutPanel(), DataProvider {
     override fun getData(dataId: String): Any? {
       return when {
+        SELECTED_ITEMS.`is`(dataId) -> filteringTree.component.selectionPaths
         GIT_BRANCHES.`is`(dataId) -> filteringTree.getSelectedBranches()
         GIT_BRANCH_FILTERS.`is`(dataId) -> filteringTree.getSelectedBranchFilters()
+        GIT_BRANCH_REMOTES.`is`(dataId) -> filteringTree.getSelectedRemotes()
+        GIT_BRANCH_DESCRIPTORS.`is`(dataId) -> filteringTree.getSelectedBranchNodes()
         BRANCHES_UI_CONTROLLER.`is`(dataId) -> uiController
         VcsLogInternalDataKeys.LOG_UI_PROPERTIES.`is`(dataId) -> logUi.properties
         else -> null

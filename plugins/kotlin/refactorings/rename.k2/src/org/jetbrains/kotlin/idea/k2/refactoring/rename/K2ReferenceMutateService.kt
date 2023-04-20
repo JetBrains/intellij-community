@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.rename
 
 import com.intellij.psi.PsiElement
 import com.intellij.util.IncorrectOperationException
-import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.OperatorToFunctionIntention
+import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.refactoring.rename.KtReferenceMutateServiceBase
 import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.name.FqName
@@ -48,7 +48,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     }
 
     override fun replaceWithImplicitInvokeInvocation(newExpression: KtDotQualifiedExpression): KtExpression? =
-        OperatorToFunctionIntention.replaceExplicitInvokeCallWithImplicit(newExpression)
+        OperatorToFunctionConverter.replaceExplicitInvokeCallWithImplicit(newExpression)
 
     private fun operationNotSupportedInK2Error(): Nothing {
         throw IncorrectOperationException("K2 plugin does not yet support this operation")

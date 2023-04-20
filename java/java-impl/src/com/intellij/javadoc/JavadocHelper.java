@@ -43,8 +43,6 @@ import java.util.List;
 
 /**
  * This class is not singleton but provides {@link #getInstance() single-point-of-usage field}.
- * 
- * @author Denis Zhdanov
  */
 public class JavadocHelper {
 

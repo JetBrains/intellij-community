@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.project;
 
 import com.intellij.ide.lightEdit.*;
@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import kotlinx.coroutines.CoroutineScope;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,8 +24,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public final class LightEditFileEditorManagerImpl extends FileEditorManagerImpl {
-  LightEditFileEditorManagerImpl(@NotNull Project project) {
-    super(project);
+  LightEditFileEditorManagerImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
+    super(project, coroutineScope);
   }
 
   @Override

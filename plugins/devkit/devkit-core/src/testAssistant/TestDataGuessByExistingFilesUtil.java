@@ -40,8 +40,6 @@ import java.util.*;
 /**
  * There is a possible case that particular test class is not properly configured with test annotations but uses test data files.
  * This class contains utility methods for guessing test data files location and name patterns from existing one.
- *
- * @author Denis Zhdanov
  */
 public final class TestDataGuessByExistingFilesUtil {
   private static final Logger LOG = Logger.getInstance(TestDataGuessByExistingFilesUtil.class);

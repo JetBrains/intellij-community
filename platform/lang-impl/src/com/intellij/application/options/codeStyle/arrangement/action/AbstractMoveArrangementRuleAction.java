@@ -12,9 +12,6 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Denis Zhdanov
- */
 public abstract class AbstractMoveArrangementRuleAction extends AbstractArrangementRuleAction implements DumbAware {
 
   @Override

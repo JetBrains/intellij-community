@@ -15,9 +15,6 @@
  */
 package com.intellij.formatting.templateLanguages;
 
-/**
- * @author Alexey Chmutov
- */
 public interface BlockWithParent {
   BlockWithParent getParent();
   void setParent(BlockWithParent newParent);

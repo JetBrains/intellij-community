@@ -5,6 +5,7 @@ import com.intellij.ide.bookmark.ui.tree.BookmarkNode
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.SimpleTextAttributes
 import java.io.File
 
@@ -23,7 +24,7 @@ internal class UrlNode(project: Project, bookmark: InvalidBookmark) : BookmarkNo
       else -> url.lastIndexOfAny(charArrayOf(slash, File.separatorChar))
     }
     val name = if (index < 0) url else url.substring(index + 1)
-    val location = if (index <= 0) null else url.substring(0, index)
+    val location: @NlsSafe String? = if (index <= 0) null else url.substring(0, index)
     val description = bookmarkDescription
     if (description == null) {
       presentation.presentableText = name // configure speed search

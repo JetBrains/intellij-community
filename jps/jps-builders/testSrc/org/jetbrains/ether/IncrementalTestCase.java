@@ -27,9 +27,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * @author db
- */
 public abstract class IncrementalTestCase extends JpsBuildTestCase {
 
   private static final String MODULE_DIR_PREFIX = "module";

@@ -40,6 +40,9 @@ fun showFeedbackSystemInfoDialog(project: Project?,
     row(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.runtime.version")) {
       label(systemInfoData.runtimeVersion) //NON-NLS
     }
+    row(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.internal.mode.enabled")) {
+      label(systemInfoData.getIsInternalModeForDialog()) //NON-NLS
+    }
     row(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.registry")) {
       cell(MultiLineLabel(systemInfoData.getRegistryKeysForDialog())) //NON-NLS
     }

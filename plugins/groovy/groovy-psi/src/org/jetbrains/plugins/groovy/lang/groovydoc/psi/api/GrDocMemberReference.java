@@ -21,9 +21,6 @@ import com.intellij.psi.PsiQualifiedReferenceElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ilyas
- */
 public interface GrDocMemberReference extends GroovyDocPsiElement, PsiPolyVariantReference, PsiQualifiedReferenceElement, GrDocTagValueToken {
 
   @Nullable

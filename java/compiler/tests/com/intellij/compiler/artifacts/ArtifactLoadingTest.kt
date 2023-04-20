@@ -100,7 +100,7 @@ class ArtifactLoadingTest {
           |</component>""".trimMargin())
       val project1 = PlatformTestUtil.loadAndOpenProject(projectModel.baseProjectDir.rootPath, disposableRule.disposable)
 
-      val defaultProperty = WorkspaceModel.getInstance(project1).entityStorage.current
+      val defaultProperty = WorkspaceModel.getInstance(project1).currentSnapshot
         .entities(ArtifactEntity::class.java)
         .single()
         .customProperties

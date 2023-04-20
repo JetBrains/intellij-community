@@ -57,3 +57,9 @@ fun nullableArraySize(x : Array<Int>?) {
     }
 }
 data class X(val x: Int)
+fun storeNull() {
+    // KTIJ-24314
+    val array: Array<Int?> = arrayOf(0)
+    array[0] = 1
+    array[0] = null
+}

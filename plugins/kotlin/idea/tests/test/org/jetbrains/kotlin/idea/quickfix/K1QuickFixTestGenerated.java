@@ -13873,6 +13873,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/suppress/availability/memberSuppressForMember.kt");
             }
 
+            @TestMetadata("parameterSuppressForDestructuredLambdaParameter.kt")
+            public void testParameterSuppressForDestructuredLambdaParameter() throws Exception {
+                runTest("testData/quickfix/suppress/availability/parameterSuppressForDestructuredLambdaParameter.kt");
+            }
+
+            @TestMetadata("parameterSuppressForLambdaParameter.kt")
+            public void testParameterSuppressForLambdaParameter() throws Exception {
+                runTest("testData/quickfix/suppress/availability/parameterSuppressForLambdaParameter.kt");
+            }
+
             @TestMetadata("topLevelFunctionAlreadySuppressed.kt")
             public void testTopLevelFunctionAlreadySuppressed() throws Exception {
                 runTest("testData/quickfix/suppress/availability/topLevelFunctionAlreadySuppressed.kt");

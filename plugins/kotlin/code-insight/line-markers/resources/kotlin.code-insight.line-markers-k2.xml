@@ -2,6 +2,7 @@
   <dependencies>
     <module name="kotlin.searching.k2"/>
     <module name="kotlin.code-insight.k2"/>
+    <module name="kotlin.highlighting"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

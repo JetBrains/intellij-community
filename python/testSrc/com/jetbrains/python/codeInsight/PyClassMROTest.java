@@ -21,9 +21,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author vlan
- */
 public class PyClassMROTest extends PyTestCase {
   public void testSimpleDiamond() {
     assertMRO(getClass("C"), "B1", "B2", "object");

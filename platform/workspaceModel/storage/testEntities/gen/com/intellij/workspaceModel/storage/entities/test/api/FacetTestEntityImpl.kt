@@ -228,7 +228,7 @@ class FacetTestEntityData : WorkspaceEntityData.WithCalculableSymbolicId<FacetTe
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return FacetTestEntity(data, moreData, entitySource) {
-      this.module = parents.filterIsInstance<ModuleTestEntity>().single()
+      parents.filterIsInstance<ModuleTestEntity>().singleOrNull()?.let { this.module = it }
     }
   }
 

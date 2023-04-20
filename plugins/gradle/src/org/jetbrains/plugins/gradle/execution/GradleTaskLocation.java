@@ -22,9 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author Denis Zhdanov
- */
 public class GradleTaskLocation extends PsiLocation<PsiFile> {
   
   @NotNull private final List<String> myTasks;

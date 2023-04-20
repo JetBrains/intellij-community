@@ -275,10 +275,10 @@ internal suspend fun showBackgroundLoadingBar(
 private fun Iterable<Channel<*>>.closeAll() = forEach { it.close() }
 
 internal class BackgroundLoadingBarController(
-    private val syncMutex: Mutex,
-    val progressChannel: SendChannel<Double>,
-    val messageChannel: SendChannel<String>,
-    val isSuspendedFLow: Flow<Boolean>
+  private val syncMutex: Mutex,
+  val progressChannel: SendChannel<Double>,
+  val messageChannel: SendChannel<String>,
+  private val isSuspendedFLow: Flow<Boolean>
 ) {
 
     private val callbacks = mutableSetOf<() -> Unit>()

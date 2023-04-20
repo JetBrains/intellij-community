@@ -24,9 +24,6 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.PsiUtilCore;
 
-/**
- * @author dsl
- */
 public abstract class PsiImportStatementBaseImpl extends JavaStubPsiElement<PsiImportStatementStub> implements PsiImportStatementBase{
   public static final PsiImportStatementBaseImpl[] EMPTY_ARRAY = new PsiImportStatementBaseImpl[0];
 

@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.UnorderedPair
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -135,7 +136,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
 
         val indexDataGetter = index.dataGetter
         scope.setAttribute("filePath", filePath.toString())
-        if (indexDataGetter != null && index.isIndexed(root) && dataPack.isFull) {
+        if (indexDataGetter != null && index.isIndexed(root) && dataPack.isFull && Registry.`is`("vcs.history.use.index")) {
           cancelLastTask(false)
           val visiblePack = filterWithIndex(indexDataGetter, dataPack, oldVisiblePack, sortType, filters, isInitial)
           LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for computing history for $filePath with index")
@@ -156,7 +157,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
               return@filter Pair(visiblePack, commitCount)
             }
             catch (e: VcsException) {
-              LOG.error(e)
+              return Pair(VisiblePack.ErrorVisiblePack(dataPack, filters, e), commitCount)
             }
           }
         }

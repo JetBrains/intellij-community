@@ -1373,26 +1373,25 @@ public final class BuildManager implements Disposable {
     }
 
     if (profileWithYourKit) {
+      YourKitProfilerService service = null;
       try {
-        YourKitProfilerService yourKitProfilerService = ApplicationManager.getApplication().getService(YourKitProfilerService.class);
-        if (yourKitProfilerService == null) {
+        service = ApplicationManager.getApplication().getService(YourKitProfilerService.class);
+        if (service == null) {
           throw new IOException("Performance Plugin is missing or disabled");
         }
-        yourKitProfilerService.copyYKLibraries(hostWorkingDirectory);
-        @SuppressWarnings("SpellCheckingInspection") final StringBuilder parameters = new StringBuilder()
-          .append("-agentpath:")
-          .append(cmdLine.getYjpAgentPath(yourKitProfilerService))
-          .append("=disablealloc,delay=10000,sessionname=ExternalBuild");
-        final String buildSnapshotPath = System.getProperty("build.snapshots.path");
-        if (buildSnapshotPath != null) {
-          parameters.append(",dir=").append(buildSnapshotPath);
-        }
-        cmdLine.addParameter(parameters.toString());
-        showSnapshotNotificationAfterFinish(project);
+        service.copyYKLibraries(hostWorkingDirectory);
       }
       catch (IOException e) {
-        LOG.warn(e);
+        LOG.warn("Failed to copy YK libraries", e);
       }
+      @SuppressWarnings("SpellCheckingInspection") 
+      final StringBuilder parameters = new StringBuilder().append("-agentpath:").append(cmdLine.getYjpAgentPath(service)).append("=disablealloc,delay=10000,sessionname=ExternalBuild");
+      final String buildSnapshotPath = System.getProperty("build.snapshots.path");
+      if (buildSnapshotPath != null) {
+        parameters.append(",dir=").append(buildSnapshotPath);
+      }
+      cmdLine.addParameter(parameters.toString());
+      showSnapshotNotificationAfterFinish(project);
     }
 
     // debugging

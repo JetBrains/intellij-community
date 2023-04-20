@@ -6,7 +6,7 @@ import com.intellij.openapi.util.TextRange
 internal class CodeProblemFilter : ProblemFilter() {
 
   override fun shouldIgnore(problem: TextProblem): Boolean {
-    return problem.highlightRanges.any { textAround(problem.text, it).looksLikeCode() }
+    return problem.shouldSuppressInCodeLikeFragments() && problem.highlightRanges.any { textAround(problem.text, it).looksLikeCode() }
   }
 
   private fun textAround(text: CharSequence, range: TextRange): CharSequence {

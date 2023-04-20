@@ -52,7 +52,7 @@ public class AnnotationSession extends UserDataHolderBase {
   }
 
   @ApiStatus.Internal
-  public void setVR(TextRange range) {
+  public void setVR(@NotNull TextRange range) {
     putUserData(VR, range);
   }
 }

@@ -9,9 +9,6 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.util.*;
 
-/**
- * @author Sergey Evdokimov
- */
 public final class MavenProjectNamer {
 
   public static Map<MavenProject, String> generateNameMap(Collection<MavenProject> mavenProjects) {

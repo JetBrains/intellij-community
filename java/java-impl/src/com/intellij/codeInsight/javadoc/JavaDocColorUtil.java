@@ -10,9 +10,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-/**
- * @author spleaner
- */
 public final class JavaDocColorUtil {
   private JavaDocColorUtil() {
   }

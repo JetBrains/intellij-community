@@ -11,6 +11,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.awt.Graphics2D
 import java.awt.RenderingHints
+import kotlin.math.max
 
 @Internal
 sealed class InlayPresentationEntry(
@@ -22,7 +23,9 @@ sealed class InlayPresentationEntry(
     fontMetricsStorage: InlayTextMetricsStorage,
     attributes: TextAttributes,
     isDisabled: Boolean,
-    yOffset: Int
+    yOffset: Int,
+    rectHeight: Int,
+    editor: Editor
   )
 
   abstract fun computeWidth(fontMetricsStorage: InlayTextMetricsStorage): Int
@@ -59,7 +62,9 @@ class TextInlayPresentationEntry(
                       fontMetricsStorage: InlayTextMetricsStorage,
                       attributes: TextAttributes,
                       isDisabled: Boolean,
-                      yOffset: Int) {
+                      yOffset: Int,
+                      rectHeight: Int,
+                      editor: Editor) {
     val metrics = fontMetricsStorage.getFontMetrics(small = false)
     val savedHint = graphics.getRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING)
     val savedColor = graphics.color
@@ -72,7 +77,7 @@ class TextInlayPresentationEntry(
         graphics.font = font
         graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false))
         graphics.color = foreground
-        graphics.drawString(text, 0, metrics.fontBaseline + yOffset)
+        graphics.drawString(text, 0, max(editor.ascent, (rectHeight + metrics.ascent - metrics.descent) / 2) - 1)
         val effectColor = attributes.effectColor ?: foreground
         if (isDisabled) {
           graphics.color = effectColor

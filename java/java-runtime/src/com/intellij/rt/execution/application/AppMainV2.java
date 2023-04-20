@@ -13,7 +13,6 @@ import java.util.Arrays;
 import java.util.Locale;
 
 /**
- * @author ven
  * @noinspection UseOfSystemOutOrSystemErr, CharsetObjectCanBeUsed
  */
 public final class AppMainV2 {

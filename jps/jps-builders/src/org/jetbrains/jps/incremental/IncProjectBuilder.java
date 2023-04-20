@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.google.common.collect.Lists;
@@ -1034,8 +1034,10 @@ public final class IncProjectBuilder {
         BitSet transitiveDependants = new BitSet();
         for (BuildChunkTask directDependant : directDependants) {
           BitSet dependantChunkTransitiveDependants = chunkToTransitive.get(directDependant);
-          transitiveDependants.or(dependantChunkTransitiveDependants);
-          transitiveDependants.set(directDependant.myIndex);
+          if (dependantChunkTransitiveDependants != null) {
+            transitiveDependants.or(dependantChunkTransitiveDependants);
+            transitiveDependants.set(directDependant.myIndex);
+          }
         }
         chunkToTransitive.put(task, transitiveDependants);
         task.myDepsScore = transitiveDependants.cardinality();

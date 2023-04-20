@@ -5,4 +5,3 @@ package testing
 class <caret>Server() {
 }
 
-// FIR_COMPARISON

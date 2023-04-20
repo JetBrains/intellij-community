@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
-import static com.intellij.codeInspection.options.OptPane.stringSet;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 public class PublicMethodWithoutLoggingInspection extends BaseInspection {
 
@@ -48,8 +48,8 @@ public class PublicMethodWithoutLoggingInspection extends BaseInspection {
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      stringSet("loggerClassNames", InspectionGadgetsBundle.message("logger.class.name"),
-                        new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("choose.logger.class"))));
+      stringList("loggerClassNames", InspectionGadgetsBundle.message("logger.class.name"),
+                 new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("choose.logger.class"))));
   }
 
   @Override

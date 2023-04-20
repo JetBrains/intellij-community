@@ -32,9 +32,6 @@ import java.util.Map;
 import static com.intellij.openapi.externalSystem.statistics.ExternalSystemUsagesCollector.ExternalSystemTaskId.ExecuteTask;
 import static com.intellij.openapi.externalSystem.statistics.ExternalSystemUsagesCollector.externalSystemTaskStarted;
 
-/**
- * @author Denis Zhdanov
- */
 public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
 
   @NotNull private final List<String> myTasksToExecute;

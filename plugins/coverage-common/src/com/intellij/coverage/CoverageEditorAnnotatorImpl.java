@@ -55,9 +55,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 
-/**
- * @author ven
- */
 public final class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Disposable {
   private static final Logger LOG = Logger.getInstance(CoverageEditorAnnotatorImpl.class);
   public static final Key<List<RangeHighlighter>> COVERAGE_HIGHLIGHTERS = Key.create("COVERAGE_HIGHLIGHTERS");

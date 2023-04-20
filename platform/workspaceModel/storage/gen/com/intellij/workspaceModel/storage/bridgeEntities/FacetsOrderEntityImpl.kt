@@ -231,7 +231,7 @@ class FacetsOrderEntityData : WorkspaceEntityData<FacetsOrderEntity>() {
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return FacetsOrderEntity(orderOfFacets, entitySource) {
-      this.moduleEntity = parents.filterIsInstance<ModuleEntity>().single()
+      parents.filterIsInstance<ModuleEntity>().singleOrNull()?.let { this.moduleEntity = it }
     }
   }
 

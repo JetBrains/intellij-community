@@ -24,9 +24,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author ven
- */
 public final class JavaCoverageSuite extends BaseCoverageSuite {
   private String[] myFilters;
   private String mySuiteToMerge;

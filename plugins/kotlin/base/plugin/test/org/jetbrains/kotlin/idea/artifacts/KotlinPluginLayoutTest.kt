@@ -30,6 +30,8 @@ class KotlinPluginLayoutTest : UsefulTestCase() {
     override fun tearDown() {
         try {
             myFixture.tearDown()
+        } catch (e: Throwable) {
+            addSuppressedException(e)
         } finally {
             super.tearDown()
         }

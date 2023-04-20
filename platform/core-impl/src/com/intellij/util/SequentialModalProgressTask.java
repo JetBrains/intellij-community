@@ -12,8 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Allows executing {@link SequentialTask} under modal progress.
- *
- * @author Denis Zhdanov
  */
 public class SequentialModalProgressTask extends Task.Modal {
   private static final Logger LOG = Logger.getInstance(SequentialModalProgressTask.class);

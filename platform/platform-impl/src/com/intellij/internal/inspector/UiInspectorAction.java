@@ -189,6 +189,9 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
           if (renderer instanceof UiInspectorListRendererContextProvider contextProvider) {
             clickInfo.addAll(contextProvider.getUiInspectorContext(list, value, row));
           }
+          if (value instanceof UiInspectorContextProvider contextProvider) {
+            clickInfo.addAll(contextProvider.getUiInspectorContext());
+          }
           clickInfo.addAll(findActionsFor(value));
 
           Component rendererComponent = renderer
@@ -211,14 +214,25 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
           if (renderer instanceof UiInspectorTableRendererContextProvider contextProvider) {
             clickInfo.addAll(contextProvider.getUiInspectorContext(table, value, row, column));
           }
+          if (value instanceof UiInspectorContextProvider contextProvider) {
+            clickInfo.addAll(contextProvider.getUiInspectorContext());
+          }
 
           if (component instanceof TreeTable treeTable) {
             TreeTableTree tree = treeTable.getTree();
             TreeCellRenderer treeRenderer = tree.getOriginalCellRenderer();
+
+            int treeRow = treeTable.convertRowIndexToModel(row);
+            Object treeValue = tree.getPathForRow(treeRow).getLastPathComponent();
             if (treeRenderer instanceof UiInspectorTreeRendererContextProvider contextProvider) {
-              int treeRow = treeTable.convertRowIndexToModel(row);
-              Object treeValue = tree.getPathForRow(treeRow).getLastPathComponent();
               clickInfo.addAll(contextProvider.getUiInspectorContext(tree, treeValue, treeRow));
+            }
+            if (treeValue instanceof UiInspectorContextProvider contextProvider) {
+              clickInfo.addAll(contextProvider.getUiInspectorContext());
+            }
+            if (treeValue instanceof DefaultMutableTreeNode mutableTreeNode &&
+                mutableTreeNode.getUserObject() instanceof UiInspectorContextProvider contextProvider) {
+              clickInfo.addAll(contextProvider.getUiInspectorContext());
             }
           }
 
@@ -241,6 +255,13 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
 
           if (renderer instanceof UiInspectorTreeRendererContextProvider contextProvider) {
             clickInfo.addAll(contextProvider.getUiInspectorContext(tree, value, row));
+          }
+          if (value instanceof UiInspectorContextProvider contextProvider) {
+            clickInfo.addAll(contextProvider.getUiInspectorContext());
+          }
+          if (value instanceof DefaultMutableTreeNode mutableTreeNode &&
+              mutableTreeNode.getUserObject() instanceof UiInspectorContextProvider contextProvider) {
+            clickInfo.addAll(contextProvider.getUiInspectorContext());
           }
 
           Component rendererComponent = renderer.getTreeCellRendererComponent(

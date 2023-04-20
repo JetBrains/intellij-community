@@ -64,15 +64,15 @@ public class ClassWithoutLoggerInspection extends BaseInspection {
     return pane(
       tabs(
         tab(InspectionGadgetsBundle.message("class.without.logger.loggers.tab"),
-            stringSet("loggerNames", InspectionGadgetsBundle.message("logger.class.name"), 
-                      new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("choose.logger.class")))),
+            stringList("loggerNames", InspectionGadgetsBundle.message("logger.class.name"),
+                       new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("choose.logger.class")))),
         tab(InspectionGadgetsBundle.message("options.title.ignored.classes"),
-            stringSet("ignoredClasses", InspectionGadgetsBundle.message("ignored.class.hierarchies.border.title"), 
-                      new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("choose.class.hierarchy.to.ignore.title"))),
+            stringList("ignoredClasses", InspectionGadgetsBundle.message("ignored.class.hierarchies.border.title"),
+                       new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("choose.class.hierarchy.to.ignore.title"))),
             checkbox("ignoreSuperLoggers", InspectionGadgetsBundle.message("super.class.logger.option"))),
         tab(InspectionGadgetsBundle.message("class.without.logger.annotations.tab"),
-            stringSet("annotations", InspectionGadgetsBundle.message("ignore.classes.annotated.by"), 
-                      new JavaClassValidator().annotationsOnly()))
+            stringList("annotations", InspectionGadgetsBundle.message("ignore.classes.annotated.by"),
+                       new JavaClassValidator().annotationsOnly()))
       )
     );
   }

@@ -26,9 +26,6 @@ import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
-/**
- * @author Pavel.Dolgov
- */
 public final class ParametrizedDuplicates {
   private static final Logger LOG = Logger.getInstance(ParametrizedDuplicates.class);
 

@@ -35,9 +35,6 @@ import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxPropertyReference;
 
 import java.util.*;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaFxPropertyRenameHandler implements RenameHandler {
   @Override
   public boolean isAvailableOnDataContext(@NotNull DataContext dataContext) {

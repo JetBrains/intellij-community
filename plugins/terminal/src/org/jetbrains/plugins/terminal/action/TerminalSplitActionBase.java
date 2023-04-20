@@ -11,7 +11,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.terminal.TerminalView;
+import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
 
 import javax.swing.*;
 import java.util.function.Supplier;
@@ -29,7 +29,7 @@ public class TerminalSplitActionBase extends TerminalSessionContextMenuActionBas
   public void actionPerformedInTerminalToolWindow(@NotNull AnActionEvent e, @NotNull Project project, @NotNull Content content) {
     JBTerminalWidget terminalWidget = getContextTerminal(e, content);
     if (terminalWidget != null) {
-      TerminalView.getInstance(project).split(terminalWidget, myVertically);
+      TerminalToolWindowManager.getInstance(project).split(terminalWidget, myVertically);
     }
   }
 
@@ -38,7 +38,7 @@ public class TerminalSplitActionBase extends TerminalSessionContextMenuActionBas
     if (terminal != null && UIUtil.isAncestor(content.getComponent(), terminal)) {
       return terminal;
     }
-    return TerminalView.getWidgetByContent(content);
+    return TerminalToolWindowManager.getWidgetByContent(content);
   }
 
   public static final class Vertical extends TerminalSplitActionBase {

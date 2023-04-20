@@ -28,9 +28,6 @@ import java.util.*;
 
 import static com.intellij.util.ui.SwingTextTrimmer.THREE_DOTS_AT_LEFT;
 
-/**
- * @author spleaner
- */
 public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent implements Disposable, Weighted {
 
   private static final Logger LOG = Logger.getInstance(BreadcrumbsComponent.class);

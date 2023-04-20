@@ -24,9 +24,6 @@ import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author vlan
- */
 public class PyExecutionException extends ExecutionExceptionWithAttachments {
   @NotNull private final String myCommand;
   @NotNull private final List<String> myArgs;

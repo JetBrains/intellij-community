@@ -9,9 +9,6 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaReadTest;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
-/**
- * @author Irina.Chernushina on 4/12/2017.
- */
 @SuppressWarnings({"JUnitTestClassNamingConvention"})
 public final class JsonSchemaTestSuite {
   public static Test suite() {

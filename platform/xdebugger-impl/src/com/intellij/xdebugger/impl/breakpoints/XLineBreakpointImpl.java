@@ -33,6 +33,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -322,6 +323,11 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
       removeHighlighter();
       fireBreakpointChanged();
     }
+  }
+
+  @ApiStatus.Internal
+  public void setLine(final int line) {
+    setLine(line, true);
   }
 
   private void setLine(final int line, boolean removeHighlighter) {

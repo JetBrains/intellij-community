@@ -15,9 +15,6 @@
  */
 package com.intellij.util;
 
-/**
- * @author Irina.Chernushina on 8/29/2015.
- */
 @FunctionalInterface
 public interface ThrowablePairConsumer<P,S,T extends Throwable> {
   void consume(P p, S s) throws T;

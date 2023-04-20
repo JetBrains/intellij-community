@@ -8,7 +8,6 @@ import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.messages.Topic;
-import com.intellij.workspaceModel.storage.MutableEntityStorage;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,8 +34,6 @@ public abstract class ArtifactManager implements ArtifactModel {
   public abstract Artifact[] getSortedArtifacts();
 
   public abstract ModifiableArtifactModel createModifiableModel();
-
-  public abstract ModifiableArtifactModel createModifiableModel(MutableEntityStorage mutableEntityStorage);
 
   public abstract PackagingElementResolvingContext getResolvingContext();
 

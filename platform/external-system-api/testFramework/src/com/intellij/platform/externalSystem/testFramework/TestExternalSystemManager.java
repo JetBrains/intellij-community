@@ -14,9 +14,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Denis Zhdanov
- */
 public class TestExternalSystemManager
   implements
   ExternalSystemManager<TestExternalProjectSettings,

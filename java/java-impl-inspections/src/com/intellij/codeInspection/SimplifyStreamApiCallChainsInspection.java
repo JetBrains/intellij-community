@@ -51,7 +51,6 @@ import static com.siyeh.ig.callMatcher.CallMatcher.*;
 import static com.siyeh.ig.psiutils.MethodCallUtils.getQualifierMethodCall;
 
 /**
- * @author Pavel.Dolgov
  * @author Tagir Valeev
  */
 public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocalInspectionTool {

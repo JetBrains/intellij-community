@@ -16,9 +16,6 @@ import static com.intellij.codeInspection.bytecodeAnalysis.Direction.InOut;
 import static com.intellij.codeInspection.bytecodeAnalysis.Direction.InThrow;
 import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
 
-/**
- * @author lambdamix
- */
 public final class BytecodeAnalysisConverter {
 
   /**

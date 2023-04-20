@@ -123,7 +123,7 @@ class IdeaResolverForProject(
         val resolverForModuleFactory = getResolverForModuleFactory(moduleInfo)
         val optimizingOptions = ResolveOptimizingOptionsProvider.getOptimizingOptions(projectContext.project, descriptor, moduleInfo)
 
-        return resolverForModuleFactory.createResolverForModule(
+        val resolverForModule = resolverForModuleFactory.createResolverForModule(
             descriptor as ModuleDescriptorImpl,
             projectContext.withModule(descriptor),
             moduleContent,
@@ -132,6 +132,8 @@ class IdeaResolverForProject(
             sealedInheritorsProvider = IdeSealedClassInheritorsProvider,
             resolveOptimizingOptions = optimizingOptions,
         )
+        ResolverForModuleComputationTrackerEx.getInstance(projectContext.project)?.onCreateResolverForModule(descriptor, moduleInfo)
+        return resolverForModule
     }
 
     private fun getResolverForModuleFactory(moduleInfo: IdeaModuleInfo): ResolverForModuleFactory {

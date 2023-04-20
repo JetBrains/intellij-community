@@ -165,10 +165,17 @@
       <reference id="Diff.ShowDiff"/>
       <reference id="Diff.ShowStandaloneDiff"/>
       <reference id="Github.PullRequest.Changes.Reload"/>
+      <reference id="EditSource"/>
       <action id="Github.PullRequest.Changes.MarkViewed"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPRMarkFilesViewedAction"/>
       <action id="Github.PullRequest.Changes.MarkNotViewed"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPRMarkFilesNotViewedAction"/>
+      <separator/>
+      <group id="Github.PullRequest.Details.Commit.Tree.ViewOptions" icon="AllIcons.Actions.Show" popup="true">
+        <reference id="ChangesView.GroupBy"/>
+      </group>
+      <reference ref="ExpandAll"/>
+      <reference ref="CollapseAll"/>
     </group>
 
     <group id="Github.PullRequest.Timeline.Popup">

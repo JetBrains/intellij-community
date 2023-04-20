@@ -12,9 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 
-/**
- * @author Pavel.Dolgov
- */
 class PreviewTreeRenderer extends ColoredTreeCellRenderer {
   @Override
   public void customizeCellRenderer(@NotNull JTree tree, Object value,

@@ -14,9 +14,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author ven
- */
 public class RenameFileAction extends AnAction implements ActionPromoter {
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {

@@ -165,7 +165,7 @@ public final class UniqueNameBuilder<T> {
 
     @Override
     public void remove() {
-      throw new UnsupportedOperationException("remove");
+      Iterator.super.remove();
     }
   }
 }

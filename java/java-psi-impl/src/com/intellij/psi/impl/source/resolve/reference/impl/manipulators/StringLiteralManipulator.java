@@ -7,9 +7,6 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public class StringLiteralManipulator extends AbstractElementManipulator<PsiLiteralExpression> {
   @Override
   public PsiLiteralExpression handleContentChange(@NotNull PsiLiteralExpression expr, @NotNull TextRange range, String newContent) throws IncorrectOperationException {

@@ -191,7 +191,7 @@ class SoftLinkReferencedChildData : WorkspaceEntityData<SoftLinkReferencedChild>
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return SoftLinkReferencedChild(entitySource) {
-      this.parentEntity = parents.filterIsInstance<EntityWithSoftLinks>().single()
+      parents.filterIsInstance<EntityWithSoftLinks>().singleOrNull()?.let { this.parentEntity = it }
     }
   }
 

@@ -2,6 +2,7 @@
 package com.intellij.find.actions;
 
 import com.intellij.find.FindBundle;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -12,6 +13,8 @@ import com.intellij.usages.UsageSearchPresentation;
 import com.intellij.usages.UsageSearcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 interface ShowUsagesActionHandler {
 
@@ -34,6 +37,8 @@ interface ShowUsagesActionHandler {
   @Nullable Language getTargetLanguage();
 
   @NotNull Class<?> getTargetClass();
+
+  @NotNull List<EventPair<?>> getEventData();
 
   static @PopupAdvertisement @Nullable String getSecondInvocationHint(@NotNull ShowUsagesActionHandler actionHandler) {
     KeyboardShortcut shortcut = ShowUsagesAction.getShowUsagesShortcut();

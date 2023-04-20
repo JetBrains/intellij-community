@@ -74,6 +74,19 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
       }
     """.trimIndent())
   }
+  fun `test malformed nested class quickfix`() {
+    myFixture.testQuickFix(ULanguage.KOTLIN, """
+        class A {
+            @org.junit.jupiter.api.Nested
+            class B<caret> { }
+        }
+    """.trimIndent(), """
+        class A {
+            @org.junit.jupiter.api.Nested
+            inner class B { }
+        }
+    """.trimIndent(), "Fix 'B' class signature", true)
+  }
 
   /* Malformed parameterized */
   fun `test malformed parameterized no highlighting`() {

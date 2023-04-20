@@ -18,8 +18,6 @@ import com.jetbrains.python.psi.impl.PyPsiUtils
 
 /**
  * Conditional expressions utility
- *
- * @author Vasya Aksyonov, Alexey.Ivanov
  */
 
 private val comparisonStrings = hashMapOf(

@@ -27,9 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author dsl
- */
 public class ExtractSuperClassViewDescriptor extends UsageViewDescriptorAdapter {
   final PsiElement[] myElements;
   final List<PsiElement> myMembersToMakeWritable = new ArrayList<>();

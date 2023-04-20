@@ -364,6 +364,10 @@ public final class FormatDecode {
       return false;
     }
 
+    if (validators.length == 0) {
+      return false;
+    }
+
     int idx = IntStream.range(0, arguments.length)
       .filter(i -> PsiTreeUtil.isAncestor(arguments[i], cast, false)).findFirst()
       .orElse(-1);

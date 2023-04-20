@@ -32,7 +32,6 @@ import java.util.*;
 
 /**
  * Tests parameter info available via ^P at call sites.
- * <br/>User: dcheryasov
  */
 public class PyParameterInfoTest extends LightMarkedTestCase {
 

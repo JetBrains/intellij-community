@@ -39,8 +39,6 @@ import java.util.Objects;
 
 /**
  * refactored from {@link MoveInitializerToConstructorAction}
- *
- * @author Danila Ponomarenko
  */
 public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIntentionAction {
   @Override

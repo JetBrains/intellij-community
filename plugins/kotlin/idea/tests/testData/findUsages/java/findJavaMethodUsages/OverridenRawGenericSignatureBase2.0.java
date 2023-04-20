@@ -6,4 +6,3 @@ public interface Foo2 {
 
     void <caret>baz(X clazz);
 }
-// FIR_COMPARISON

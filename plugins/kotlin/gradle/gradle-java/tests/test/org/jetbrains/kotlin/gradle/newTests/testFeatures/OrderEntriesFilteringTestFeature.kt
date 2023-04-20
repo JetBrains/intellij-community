@@ -20,8 +20,8 @@ object OrderEntriesFilteringTestFeature : TestFeature<OrderEntriesFilteringConfi
             if (hiddenStandardDependencies.isNotEmpty())
                 add("hiding following standard dependencies: ${hiddenStandardDependencies.joinToString()}")
 
-            if (configuration.excludeDependenciesRegex != null) {
-                add("hiding dependencies matching ${configuration.excludeDependenciesRegex.toString()}")
+            if (configuration.excludeDependencies != null) {
+                add("hiding dependencies matching ${configuration.excludeDependencies.toString()}")
             }
         }
     }
@@ -30,7 +30,8 @@ object OrderEntriesFilteringTestFeature : TestFeature<OrderEntriesFilteringConfi
 }
 
 class OrderEntriesFilteringConfiguration {
-    var excludeDependenciesRegex: Regex? = null
+    var excludeDependencies: Regex? = null
+    var onlyDependencies: Regex? = null
 
     var hideStdlib: Boolean = false
     var hideKotlinTest: Boolean = false
@@ -57,7 +58,13 @@ interface OrderEntriesFilteringSupport {
         get() = config.hideKonanDist
         set(value) { config.hideKonanDist = value }
 
-    fun TestConfigurationDslScope.excludeDependenciesRegex(@Language("Regex") regex: String) {
-        config.excludeDependenciesRegex = regex.toRegex()
+    fun TestConfigurationDslScope.excludeDependencies(@Language("Regex") regex: String) {
+        require(config.onlyDependencies == null) { "excludeDependencies can not be used together with onlyDependencies" }
+        config.excludeDependencies = regex.toRegex()
+    }
+
+    fun TestConfigurationDslScope.onlyDependencies(@Language("Regex") regex: String) {
+        require(config.excludeDependencies == null) { "onlyDependencies can not be used together with excludeDependencies" }
+        config.onlyDependencies = regex.toRegex()
     }
 }

@@ -10,9 +10,6 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.ArrayUtilRt
 import org.jetbrains.annotations.NotNull
-/**
- * @author Denis Zhdanov
- */
 class IndentGuideTest extends BaseIndentGuideTest {
 
   @Override

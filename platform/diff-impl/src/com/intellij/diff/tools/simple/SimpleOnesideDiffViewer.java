@@ -67,17 +67,6 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
     myTextDiffProvider = DiffUtil.createTextDiffProvider(getProject(), getRequest(), getTextSettings(), this::rediff, this);
   }
 
-  @Override
-  @RequiresEdt
-  protected void onDispose() {
-    for (RangeHighlighter highlighter : myHighlighters) {
-      highlighter.dispose();
-    }
-    myHighlighters.clear();
-    myFoldingModel.destroy();
-    super.onDispose();
-  }
-
   @NotNull
   @Override
   protected List<AnAction> createToolbarActions() {

@@ -25,7 +25,7 @@ public class TokenizerBase<T extends PsiElement> extends Tokenizer<T> {
   }
 
   @Override
-  public void tokenize(@NotNull T element, TokenConsumer consumer) {
+  public void tokenize(@NotNull T element, @NotNull TokenConsumer consumer) {
     if (element instanceof PsiLanguageInjectionHost && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)element)) {
       return;
     }

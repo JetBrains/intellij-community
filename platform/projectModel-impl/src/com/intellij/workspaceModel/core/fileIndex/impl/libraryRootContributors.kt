@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.ide.highlighter.ArchiveFileType
@@ -17,7 +17,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot.InclusionOptions.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
-class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEntity> {
+class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEntity>, PlatformInternalWorkspaceFileIndexContributor {
   override val entityClass: Class<LibraryEntity> get() = LibraryEntity::class.java
 
   override fun registerFileSets(entity: LibraryEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
@@ -85,10 +85,10 @@ class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEnt
 }
 
 internal class LibrarySourceRootFileSetData(projectLibraryId: LibraryId?, packagePrefix: String) 
-  : LibraryRootFileSetData(projectLibraryId, packagePrefix), ModuleOrLibrarySourceRootData, JvmPackageRootData
+  : LibraryRootFileSetData(projectLibraryId, packagePrefix), ModuleOrLibrarySourceRootData, JvmPackageRootDataInternal
 
 internal open class LibraryRootFileSetData(private val projectLibraryId: LibraryId?,
-                                           override val packagePrefix: String) : UnloadableFileSetData, JvmPackageRootData {
+                                           override val packagePrefix: String) : UnloadableFileSetData, JvmPackageRootDataInternal {
   override fun isUnloaded(project: Project): Boolean {
     return projectLibraryId != null && !ModuleDependencyIndex.getInstance(project).hasDependencyOn(projectLibraryId) 
   }

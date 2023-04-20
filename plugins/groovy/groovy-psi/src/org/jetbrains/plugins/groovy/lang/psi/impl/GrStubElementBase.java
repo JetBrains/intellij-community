@@ -13,9 +13,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.util.GrFileIndexUtil;
 
-/**
- * @author ilyas
- */
 public abstract class GrStubElementBase<T extends StubElement> extends StubBasedPsiElementBase<T> implements GroovyPsiElement {
 
   protected GrStubElementBase(final T stub, IStubElementType nodeType) {

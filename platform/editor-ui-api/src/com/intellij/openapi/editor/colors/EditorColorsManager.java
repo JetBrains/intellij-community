@@ -32,15 +32,6 @@ public abstract class EditorColorsManager {
 
   public abstract boolean isDefaultScheme(EditorColorsScheme scheme);
 
-  /**
-   * @deprecated use {@link #TOPIC} instead
-   */
-  @SuppressWarnings("MethodMayBeStatic")
-  @Deprecated(forRemoval = true)
-  public final void addEditorColorsListener(@NotNull EditorColorsListener listener) {
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(TOPIC, listener);
-  }
-
   public abstract boolean isUseOnlyMonospacedFonts();
 
   public abstract void setUseOnlyMonospacedFonts(boolean b);

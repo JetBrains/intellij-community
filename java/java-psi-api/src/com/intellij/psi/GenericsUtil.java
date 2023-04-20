@@ -15,9 +15,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author ven
- */
 public final class GenericsUtil {
 
   private static final Logger LOG = Logger.getInstance(GenericsUtil.class);

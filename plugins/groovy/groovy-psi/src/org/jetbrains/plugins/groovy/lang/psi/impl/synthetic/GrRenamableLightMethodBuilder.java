@@ -19,9 +19,6 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Sergey Evdokimov
- */
 public class GrRenamableLightMethodBuilder extends GrLightMethodBuilder implements GrRenameableLightElement {
 
   public GrRenamableLightMethodBuilder(PsiManager manager, String name) {

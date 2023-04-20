@@ -23,8 +23,6 @@ import org.jetbrains.annotations.Nullable;
  * Stands for an atomic settings element. The general idea is to allow third-party plugin developers to use platform
  * codebase for managing arrangement settings, that's why we need a general purpose class that represent a setting.
  * I.e. third-party developers can create their own instances of this class and implement {@link ArrangementStandardSettingsAware}.
- * 
- * @author Denis Zhdanov
  */
 public class ArrangementSettingsToken implements Comparable<ArrangementSettingsToken> {
 

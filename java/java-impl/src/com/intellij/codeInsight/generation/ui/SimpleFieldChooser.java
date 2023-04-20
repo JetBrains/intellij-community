@@ -30,9 +30,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-/**
- * @author ven
- */
 public class SimpleFieldChooser extends DialogWrapper {
   private final PsiField[] myFields;
   private JList myList;

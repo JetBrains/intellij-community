@@ -8,6 +8,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -484,8 +485,22 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
         // We can't leave the merged 'catch' section at collapseIntoIndex because it conflicts with other caught exceptions
         final PsiCatchSection[] catchSections = tryStatement.getCatchSections();
         if (insertBeforeIndex < catchSections.length && catchSections[insertBeforeIndex] != null) {
-          tryStatement.addBefore(collapseIntoSection.myCatchSection, catchSections[insertBeforeIndex]);
-          collapseIntoSection.myCatchSection.delete();
+          CatchSectionWrapper finalCollapseIntoSection = collapseIntoSection;
+          CodeStyleManager.getInstance(tryStatement.getProject()).performActionWithFormatterDisabled((Runnable)() -> {
+            PsiCatchSection sectionToMove = finalCollapseIntoSection.myCatchSection;
+            PsiElement toCopy = null;
+            if (sectionToMove.getNextSibling() instanceof PsiWhiteSpace whiteSpace) {
+              toCopy = whiteSpace.copy();
+            }
+            PsiElement element = tryStatement.addBefore(finalCollapseIntoSection.myCatchSection, catchSections[insertBeforeIndex]);
+            if (toCopy != null) {
+              tryStatement.addAfter(toCopy, element);
+            }
+            if (sectionToMove.getNextSibling() instanceof PsiWhiteSpace psiWhiteSpace) {
+              psiWhiteSpace.delete();
+            }
+            sectionToMove.delete();
+          });
         }
       }
 
@@ -498,7 +513,16 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
         }
         return true;
       });
-      tracker.deleteAndRestoreComments(duplicateSection.myCatchSection);
+
+      tracker.grabComments(duplicateSection.myCatchSection);
+      tracker.insertCommentsBefore(duplicateSection.myCatchSection);
+      CatchSectionWrapper finalDuplicateSection = duplicateSection;
+      CodeStyleManager.getInstance(tryStatement.getProject()).performActionWithFormatterDisabled((Runnable)() -> {
+        if (finalDuplicateSection.myCatchSection.getNextSibling() instanceof PsiWhiteSpace whiteSpace) {
+          whiteSpace.delete();
+        }
+        finalDuplicateSection.myCatchSection.delete();
+      });
     }
 
     private static int getSectionIndex(CatchSectionWrapper @NotNull [] sections, @NotNull PsiElement catchSection) {

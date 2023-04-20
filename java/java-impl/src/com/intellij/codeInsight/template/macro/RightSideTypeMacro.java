@@ -23,9 +23,6 @@ import com.intellij.util.CommonJavaRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
 
-/**
- * @author ven
- */
 public class RightSideTypeMacro extends Macro {
   @Override
   public String getName() {

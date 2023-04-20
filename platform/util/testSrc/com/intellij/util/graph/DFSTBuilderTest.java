@@ -24,9 +24,6 @@ import java.util.*;
 
 import static org.junit.Assert.*;
 
-/**
- * @author dsl
- */
 public class DFSTBuilderTest {
   @Test
   public void testGraph() {

@@ -8,8 +8,10 @@ import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.process.impl.ProcessListUtil;
 import com.intellij.execution.wsl.WSLCommandLineOptions;
 import com.intellij.execution.wsl.WSLDistribution;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
@@ -33,7 +35,8 @@ public class WslAttachHost implements XAttachHost {
   public @NotNull List<ProcessInfo> getProcessList() throws ExecutionException {
     String commListOutput = execAndCheckExitCode(COMM_LIST_COMMAND);
     String commandListOutput = execAndCheckExitCode(COMMAND_LIST_COMMAND);
-    List<ProcessInfo> processInfos = ProcessListUtil.parseLinuxOutputMacStyle(commListOutput, commandListOutput);
+    String user = getUser();
+    List<ProcessInfo> processInfos = ProcessListUtil.parseLinuxOutputMacStyle(commListOutput, commandListOutput, user);
     if (processInfos == null) {
       throw new ExecutionException(XDebuggerBundle.message("dialog.message.error.parsing.ps.output"));
     }
@@ -49,6 +52,17 @@ public class WslAttachHost implements XAttachHost {
       throw new ExecutionException(XDebuggerBundle.message("dialog.message.error.executing.ps", exitCodeString));
     }
     return output.getStdout();
+  }
+
+
+  private @Nullable String getUser() {
+    try {
+      return execAndCheckExitCode(List.of("whoami")).trim();
+    }
+    catch (ExecutionException e) {
+      // ignore errors: we can list processes without information about the current user
+      return null;
+    }
   }
 
   @Override

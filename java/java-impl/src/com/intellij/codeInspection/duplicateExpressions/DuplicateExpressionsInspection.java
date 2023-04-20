@@ -31,9 +31,6 @@ import java.util.*;
 import static com.intellij.codeInspection.options.OptPane.number;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-/**
- * @author Pavel.Dolgov
- */
 public final class DuplicateExpressionsInspection extends LocalInspectionTool {
   public int complexityThreshold = 70;
 

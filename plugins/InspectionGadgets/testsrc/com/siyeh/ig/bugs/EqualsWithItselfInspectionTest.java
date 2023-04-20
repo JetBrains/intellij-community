@@ -26,6 +26,7 @@ public class EqualsWithItselfInspectionTest extends LightJavaInspectionTestCase 
   @Override
   protected InspectionProfileEntry getInspection() {
     EqualsWithItselfInspection inspection = new EqualsWithItselfInspection();
+    inspection.ignoreNonFinalClassesInTest = false;
     String option = StringUtil.substringAfter(getName(), "_");
     if(option != null) {
       new OptionAccessor.Default(inspection).setOption(option, true);

@@ -4,9 +4,6 @@ package com.intellij.refactoring.rename;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 
-/**
- * @author dsl
- */
 public class ClassHidesImportedClassUsageInfo extends ResolvableCollisionUsageInfo {
   private final PsiClass myHiddenClass;
   private final PsiJavaCodeReferenceElement myCollisionReference;

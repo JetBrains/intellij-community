@@ -69,14 +69,16 @@ final class AssociationsEditor implements Disposable {
     myTree.setCellRenderer(new MyNodeRenderer(myManager));
     new TreeSpeedSearch(myTree);
 
-    SwingUtilities.invokeLater(() -> ApplicationManager.getApplication().invokeLater(() -> {
-      if (oldState == null) {
-        expandTree();
-      }
-      else {
-        oldState.applyTo(myTree);
-      }
-    }));
+    if (!project.isDefault()) {
+      SwingUtilities.invokeLater(() -> ApplicationManager.getApplication().invokeLater(() -> {
+        if (oldState == null) {
+          expandTree();
+        }
+        else {
+          oldState.applyTo(myTree);
+        }
+      }));
+    }
 
     myListModel = new AssociationsModel(myTree, myManager);
     myListModel.addListDataListener(new ListDataListener() {

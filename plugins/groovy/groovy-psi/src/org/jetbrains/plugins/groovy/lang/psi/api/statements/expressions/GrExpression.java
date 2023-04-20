@@ -10,9 +10,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator;
 
-/**
- * @author ilyas
- */
 public interface GrExpression extends GrStatement, GrAnnotationMemberValue {
   GrExpression[] EMPTY_ARRAY = new GrExpression[0];
 

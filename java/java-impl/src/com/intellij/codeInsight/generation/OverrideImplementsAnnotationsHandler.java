@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,15 +35,8 @@ public interface OverrideImplementsAnnotationsHandler extends OverrideImplements
   @Contract(pure = true)
   @Override
   default String[] getAnnotations(@NotNull PsiFile file) {
-    return getAnnotations(file.getProject());
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
-
-  /**
-   * @deprecated Use {@link #getAnnotations(PsiFile)}
-   */
-  @Deprecated(forRemoval = true)
-  @Contract(pure = true)
-  String[] getAnnotations(Project project);
 
   /** Perform post processing on the annotations, such as deleting or renaming or otherwise updating annotations in the override */
   default void cleanup(PsiModifierListOwner source, @Nullable PsiElement targetClass, PsiModifierListOwner target) {

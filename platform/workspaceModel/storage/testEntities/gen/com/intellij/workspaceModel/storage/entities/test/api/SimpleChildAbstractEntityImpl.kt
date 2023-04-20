@@ -190,7 +190,7 @@ class SimpleChildAbstractEntityData : WorkspaceEntityData<SimpleChildAbstractEnt
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return SimpleChildAbstractEntity(entitySource) {
-      this.parentInList = parents.filterIsInstance<CompositeAbstractEntity>().single()
+      parents.filterIsInstance<CompositeAbstractEntity>().singleOrNull()?.let { this.parentInList = it }
     }
   }
 

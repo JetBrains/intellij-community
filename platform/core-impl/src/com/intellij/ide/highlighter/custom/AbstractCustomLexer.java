@@ -12,9 +12,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author dsl
- */
 public class AbstractCustomLexer extends LexerBase {
   protected CharSequence myBuffer = Strings.EMPTY_CHAR_SEQUENCE;
   protected int myStartOffset = 0;

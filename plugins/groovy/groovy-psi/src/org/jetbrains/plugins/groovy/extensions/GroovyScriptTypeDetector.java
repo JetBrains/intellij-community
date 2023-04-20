@@ -10,9 +10,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 import javax.swing.*;
 
-/**
- * @author sergey.evdokimov
- */
 public abstract class GroovyScriptTypeDetector {
 
   public static final ExtensionPointName<GroovyScriptTypeDetector> EP_NAME = ExtensionPointName.create("org.intellij.groovy.scriptTypeDetector");

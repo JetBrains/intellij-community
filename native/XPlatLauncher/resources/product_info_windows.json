@@ -162,7 +162,6 @@
     "com.jetbrains.performancePlugin.gradle",
     "com.jetbrains.performancePlugin.java",
     "com.jetbrains.performancePlugin.kotlin",
-    "com.jetbrains.performancePlugin.maven",
     "com.jetbrains.performancePlugin.workspaceModel",
     "com.jetbrains.plugins.webDeployment",
     "com.jetbrains.projector.libs",

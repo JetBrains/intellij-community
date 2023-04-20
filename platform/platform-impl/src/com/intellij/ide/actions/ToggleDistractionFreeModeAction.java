@@ -70,7 +70,7 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction implements 
                  enter ? AFTER : BEFORE,
                  !enter);
     if (enter) {
-      TogglePresentationModeAction.storeToolWindows(project);
+      TogglePresentationModeAction.storeToolWindows(project, false);
     }
 
     UISettings uiSettings = UISettings.getInstance();
@@ -80,7 +80,7 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction implements 
     DaemonCodeAnalyzer.getInstance(project).settingsChanged();
     EditorFactory.getInstance().refreshAllEditors();
     if (!enter) {
-      TogglePresentationModeAction.restoreToolWindows(project, uiSettings.getPresentationMode());
+      TogglePresentationModeAction.restoreToolWindows(project, false);
     }
   }
 

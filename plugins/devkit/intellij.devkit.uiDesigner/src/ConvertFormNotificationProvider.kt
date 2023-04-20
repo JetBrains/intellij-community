@@ -5,9 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiManager
-import com.intellij.psi.search.ProjectScope
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.LightColors
 import com.intellij.ui.dsl.builder.AlignY
@@ -25,18 +23,17 @@ private class ConvertFormNotificationProvider : EditorNotificationProvider {
     if (!PsiUtil.isIdeaProject(project)) {
       return null
     }
+    val formPsiFile = PsiManager.getInstance(project).findFile(file) ?: return null
 
     return Function { fileEditor ->
       if (fileEditor !is UIFormEditor) {
         return@Function null
       }
-
-      val formPsiFile = PsiManager.getInstance(project).findFile(file) ?: return@Function null
       val classToBind = fileEditor.editor.rootContainer.classToBind ?: return@Function null
-      val psiClass = JavaPsiFacade.getInstance(project).findClass(classToBind, ProjectScope.getProjectScope(project))
-                     ?: return@Function null
 
       /* todo IDEA-282478
+      val psiClass = JavaPsiFacade.getInstance(project).findClass(classToBind, ProjectScope.getProjectScope(project))
+                     ?: return@Function null
     createActionLabel(DevKitBundle.message("convert.form.editor.notification.link.convert")) {
       convertFormToUiDsl(psiClass, formPsiFile)
     }

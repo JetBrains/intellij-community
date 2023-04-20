@@ -23,9 +23,6 @@ import com.intellij.psi.impl.FakePsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class WebReference extends PsiReferenceBase<PsiElement> {
   @Nullable private final String myUrl;
   

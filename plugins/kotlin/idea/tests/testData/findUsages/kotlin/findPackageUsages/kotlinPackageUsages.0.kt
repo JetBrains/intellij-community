@@ -9,4 +9,3 @@ class X
 
 val x: foo.bar.X? = foo.bar.X()
 
-// FIR_COMPARISON

@@ -22,9 +22,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 
 import java.util.Objects;
 
-/**
- * @author ven
- */
 public class GrLightParameter extends LightVariableBuilder<GrLightParameter> implements GrParameter {
   public static final GrLightParameter[] EMPTY_ARRAY = new GrLightParameter[0];
   private volatile boolean myOptional;

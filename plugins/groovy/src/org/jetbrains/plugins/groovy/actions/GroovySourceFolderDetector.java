@@ -18,9 +18,6 @@ package org.jetbrains.plugins.groovy.actions;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiDirectory;
 
-/**
- * @author sergey.evdokimov
- */
 public abstract class GroovySourceFolderDetector {
 
   public static final ExtensionPointName<GroovySourceFolderDetector> EP_NAME = ExtensionPointName.create("org.intellij.groovy.groovySourceFolderDetector");

@@ -9,11 +9,16 @@ import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinProjectArtifactDependency
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinSourceDependency
 import org.jetbrains.kotlin.gradle.idea.tcs.extras.artifactsClasspath
 import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSetData
+import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
 
 
 interface KotlinProjectArtifactDependencyResolver {
-    fun resolve(dependency: IdeaKotlinProjectArtifactDependency): Set<IdeaKotlinSourceDependency>
+    fun resolve(
+        projectNode: DataNode<ProjectData>,
+        sourceSetNode: DataNode<GradleSourceSetData>,
+        dependency: IdeaKotlinProjectArtifactDependency
+    ): Set<IdeaKotlinSourceDependency>
 
     companion object {
         internal val key = Key.create<MutableList<KotlinProjectArtifactDependencyResolver>>(
@@ -26,27 +31,29 @@ interface KotlinProjectArtifactDependencyResolver {
     }
 }
 
-fun KotlinProjectArtifactDependencyResolver(project: DataNode<ProjectData>): KotlinProjectArtifactDependencyResolver {
-    return KotlinProjectArtifactDependencyResolverImpl(project)
+fun KotlinProjectArtifactDependencyResolver(): KotlinProjectArtifactDependencyResolver {
+    return KotlinProjectArtifactDependencyResolverImpl()
 }
 
-private class KotlinProjectArtifactDependencyResolverImpl(
-    private val project: DataNode<ProjectData>
-) : KotlinProjectArtifactDependencyResolver {
+private class KotlinProjectArtifactDependencyResolverImpl : KotlinProjectArtifactDependencyResolver {
 
-    override fun resolve(dependency: IdeaKotlinProjectArtifactDependency): Set<IdeaKotlinSourceDependency> {
-        val resolvedByExtensions = project.getUserData(KotlinProjectArtifactDependencyResolver.key).orEmpty()
-            .flatMap { resolver -> resolver.resolve(dependency) }
+    override fun resolve(
+        projectNode: DataNode<ProjectData>,
+        sourceSetNode: DataNode<GradleSourceSetData>,
+        dependency: IdeaKotlinProjectArtifactDependency
+    ): Set<IdeaKotlinSourceDependency> {
+        val resolvedByExtensions = projectNode.getUserData(KotlinProjectArtifactDependencyResolver.key).orEmpty()
+            .flatMap { resolver -> resolver.resolve(projectNode, sourceSetNode, dependency) }
             .toSet()
 
-        val sourceSetMap = project.getUserData(GradleProjectResolver.RESOLVED_SOURCE_SETS).orEmpty()
-        val artifactsMap = project.getUserData(GradleProjectResolver.CONFIGURATION_ARTIFACTS).orEmpty()
-        val modulesOutputsMap = project.getUserData(GradleProjectResolver.MODULES_OUTPUTS).orEmpty()
+        val sourceSetMap = projectNode.getUserData(GradleProjectResolver.RESOLVED_SOURCE_SETS).orEmpty()
+        val artifactsMap = projectNode.getUserData(GradleProjectResolver.CONFIGURATION_ARTIFACTS).orEmpty()
+        val modulesOutputsMap = projectNode.getUserData(GradleProjectResolver.MODULES_OUTPUTS).orEmpty()
 
         return dependency.artifactsClasspath.flatMap { artifactFile ->
-            val id = artifactsMap[artifactFile.path] ?: modulesOutputsMap[artifactFile.path]?.first ?: return emptySet()
-            val sourceSetDataNode = sourceSetMap[id]?.first ?: return emptySet()
-            val sourceSet = sourceSetMap[id]?.second ?: return emptySet()
+            val id = artifactsMap[artifactFile.path] ?: modulesOutputsMap[artifactFile.path]?.first ?: return@flatMap emptySet()
+            val sourceSetDataNode = sourceSetMap[id]?.first ?: return@flatMap emptySet()
+            val sourceSet = sourceSetMap[id]?.second ?: return@flatMap emptySet()
             val sourceSetNames = sourceSetDataNode.kotlinSourceSetData?.sourceSetInfo?.dependsOn.orEmpty()
                 .mapNotNull { dependsOnId -> sourceSetMap[dependsOnId]?.second?.name } + sourceSet.name
 

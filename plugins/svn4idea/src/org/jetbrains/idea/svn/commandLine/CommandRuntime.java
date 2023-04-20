@@ -22,9 +22,6 @@ import java.util.List;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class CommandRuntime {
 
   private static final Logger LOG = Logger.getInstance(CommandRuntime.class);

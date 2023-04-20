@@ -24,9 +24,6 @@ import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ilyas
- */
 public interface GrDynamicImplicitElement extends ItemPresentation, NavigationItem {
   @Nullable
   PsiClass getContainingClassElement();

@@ -84,6 +84,11 @@ public abstract class YamlNewWizardProjectImportTestGenerated extends AbstractYa
         public void testSinglePlatformJsNode() throws Exception {
             runTest("testData/buildFileGeneration/singlePlatformJsNode/");
         }
+
+        @TestMetadata("wasmTarget")
+        public void testWasmTarget() throws Exception {
+            runTest("testData/buildFileGeneration/wasmTarget/");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -152,6 +157,11 @@ public abstract class YamlNewWizardProjectImportTestGenerated extends AbstractYa
         public void testSinglePlatformJsNode() throws Exception {
             runTest("testData/buildFileGeneration/singlePlatformJsNode/");
         }
+
+        @TestMetadata("wasmTarget")
+        public void testWasmTarget() throws Exception {
+            runTest("testData/buildFileGeneration/wasmTarget/");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -219,6 +229,11 @@ public abstract class YamlNewWizardProjectImportTestGenerated extends AbstractYa
         @TestMetadata("singlePlatformJsNode")
         public void testSinglePlatformJsNode() throws Exception {
             runTest("testData/buildFileGeneration/singlePlatformJsNode/");
+        }
+
+        @TestMetadata("wasmTarget")
+        public void testWasmTarget() throws Exception {
+            runTest("testData/buildFileGeneration/wasmTarget/");
         }
     }
 }

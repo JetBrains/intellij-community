@@ -10,19 +10,19 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
-import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortDTO
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortRestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequests
 
 internal class GitLabMergeRequestsListLoader(
   private val api: GitLabApi,
   private val project: GitLabProjectCoordinates,
   private val searchQuery: String
-) : SequentialListLoader<GitLabMergeRequestShortDTO> {
+) : SequentialListLoader<GitLabMergeRequestShortRestDTO> {
 
   private val loadingMutex = Mutex()
 
   @Volatile
-  private var nextRequest: (suspend () -> Pair<List<GitLabMergeRequestShortDTO>, String?>)?
+  private var nextRequest: (suspend () -> Pair<List<GitLabMergeRequestShortRestDTO>, String?>)?
 
   init {
     nextRequest = {
@@ -30,18 +30,18 @@ internal class GitLabMergeRequestsListLoader(
     }
   }
 
-  private suspend fun loadMergeRequests(nextUri: String?): Pair<List<GitLabMergeRequestShortDTO>, String?> {
-    val response = if (nextUri == null) api.loadMergeRequests(project, searchQuery) else api.loadMergeRequests(nextUri)
+  private suspend fun loadMergeRequests(nextUri: String?): Pair<List<GitLabMergeRequestShortRestDTO>, String?> {
+    val response = if (nextUri == null) api.loadMergeRequests(project, searchQuery) else api.loadList(nextUri)
     val linkHeader = response.headers().firstValue(LinkHttpHeaderValue.HEADER_NAME).orElse(null)?.let(LinkHttpHeaderValue::parse)
     return response.body() to linkHeader?.nextLink
   }
 
-  override suspend fun loadNext(): ListBatch<GitLabMergeRequestShortDTO> =
+  override suspend fun loadNext(): ListBatch<GitLabMergeRequestShortRestDTO> =
     withContext(Dispatchers.IO) {
       doLoad()
     }
 
-  private suspend fun doLoad(): ListBatch<GitLabMergeRequestShortDTO> {
+  private suspend fun doLoad(): ListBatch<GitLabMergeRequestShortRestDTO> {
     loadingMutex.withLock {
       val request = nextRequest
       if (request == null) {

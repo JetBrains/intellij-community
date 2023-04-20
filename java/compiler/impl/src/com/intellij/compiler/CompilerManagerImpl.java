@@ -208,11 +208,6 @@ public class CompilerManagerImpl extends CompilerManager {
   }
 
   @Override
-  public void removeCompilableFileType(@NotNull FileType type) {
-    myCompilableTypes.remove(type);
-  }
-
-  @Override
   public boolean isCompilableFileType(@NotNull FileType type) {
     if (myCompilableTypes.contains(type)) {
       return true;

@@ -24,7 +24,6 @@ import com.intellij.codeInsight.template.TextResult;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author ven
  * @author Konstantin Bulenkov
  */
 public class FirstWordMacro extends MacroBase {

@@ -16,9 +16,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.*;
 
-/**
- * @author lex
- */
 public abstract class InvokeThread<E extends PrioritizedTask> {
   private static final Logger LOG = Logger.getInstance(InvokeThread.class);
 

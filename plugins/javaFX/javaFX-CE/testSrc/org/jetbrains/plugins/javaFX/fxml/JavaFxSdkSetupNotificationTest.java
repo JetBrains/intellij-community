@@ -5,9 +5,6 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.ui.EditorNotificationPanel;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaFxSdkSetupNotificationTest extends SdkSetupNotificationTestBase {
   private static final String SAMPLE_FXML = "<?import javafx.scene.layout.VBox?>\n<VBox/>";
 

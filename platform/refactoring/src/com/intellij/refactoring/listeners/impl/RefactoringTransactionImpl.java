@@ -18,9 +18,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author dsl
- */
 public class RefactoringTransactionImpl implements RefactoringTransaction {
   private static final Logger LOG = Logger.getInstance(RefactoringTransactionImpl.class);
 

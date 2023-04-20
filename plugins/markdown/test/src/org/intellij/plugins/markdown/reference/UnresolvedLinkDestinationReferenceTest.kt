@@ -36,6 +36,9 @@ class UnresolvedLinkDestinationReferenceTest : BasePlatformTestCase() {
     try {
       myFixture.disableInspections(MarkdownUnresolvedFileReferenceInspection())
     }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
     finally {
       super.tearDown()
     }

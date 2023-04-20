@@ -15,4 +15,3 @@ fun test() {
 }
 
 // DISABLE-ERRORS
-// FIR_COMPARISON

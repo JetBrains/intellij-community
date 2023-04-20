@@ -33,9 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Consumer;
 
-/**
- * @author ven
- */
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public final class GenericInlineHandler {
   private static final Logger LOG = Logger.getInstance(GenericInlineHandler.class);

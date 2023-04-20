@@ -50,7 +50,7 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
                           @NotNull Set<VirtualFile> roots,
                           @Nullable StorageLockContext storageLockContext,
                           @NotNull VcsLogErrorHandler errorHandler,
-                          @NotNull VcsLogStore store,
+                          @NotNull VcsLogStorageBackend store,
                           @NotNull Disposable disposableParent) throws IOException {
     super(storageId,
           PATHS,
@@ -62,6 +62,10 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
 
     myPathsIndexer = (PathIndexer)myIndexer;
     myPathsIndexer.setFatalErrorConsumer(e -> errorHandler.handleError(VcsLogErrorHandler.Source.Index, e));
+  }
+
+  void setMutator(@Nullable VcsLogWriter mutator) {
+    myPathsIndexer.mutator = mutator;
   }
 
   private static @NotNull PersistentEnumerator<LightFilePath> createPathsEnumerator(@NotNull Collection<VirtualFile> roots,
@@ -152,12 +156,13 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
   private static final class PathIndexer implements DataIndexer<Integer, List<ChangeKind>, VcsLogIndexer.CompressedDetails> {
     private final @NotNull VcsLogStorage myStorage;
     private final @NotNull PersistentEnumerator<LightFilePath> myPathsEnumerator;
-    private final VcsLogStore store;
+    private final VcsLogStorageBackend store;
+    @Nullable VcsLogWriter mutator;
     private @NotNull Consumer<? super Exception> myFatalErrorConsumer = LOG::error;
 
     private PathIndexer(@NotNull VcsLogStorage storage,
                         @NotNull PersistentEnumerator<LightFilePath> enumerator,
-                        @NotNull VcsLogStore store) {
+                        @NotNull VcsLogStorageBackend store) {
       myStorage = storage;
       myPathsEnumerator = enumerator;
       this.store = store;
@@ -188,7 +193,12 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
 
             int commit = myStorage.getCommitIndex(inputData.getId(), inputData.getRoot());
             int parent = myStorage.getCommitIndex(inputData.getParents().get(parentIndex), inputData.getRoot());
-            store.putRename(parent, commit, renames);
+            if (mutator == null) {
+              store.putRename(parent, commit, renames);
+            }
+            else {
+              mutator.putRename(parent, commit, renames);
+            }
           }
 
           for (Int2ObjectMap.Entry<Change.Type> entry : inputData.getModifiedPaths(parentIndex).int2ObjectEntrySet()) {

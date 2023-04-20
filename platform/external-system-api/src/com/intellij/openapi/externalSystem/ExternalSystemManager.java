@@ -29,8 +29,6 @@ import org.jetbrains.annotations.Nullable;
  * dependencies which are configured at external system but not at the ide' etc.
  * <p/>
  * That makes it relatively easy to add a new external system integration.
- *
- * @author Denis Zhdanov
  */
 public interface ExternalSystemManager<
   ProjectSettings extends ExternalProjectSettings,

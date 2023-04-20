@@ -51,6 +51,7 @@ public class ForEachCollectionTraversal extends IterableTraversal {
     PsiType collectionElement = PsiUtil.substituteTypeParameter(collection.getType(), JAVA_UTIL_COLLECTION, 0, false);
     if (collectionElement == null) return null;
     PsiParameter parameter = loop.getIterationParameter();
+    if (parameter == null) return null;
     if (!parameter.getType().equals(collectionElement)) return null;
     return new ForEachCollectionTraversal(collection, parameter);
   }

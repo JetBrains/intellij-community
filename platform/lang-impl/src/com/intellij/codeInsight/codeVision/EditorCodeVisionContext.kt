@@ -33,7 +33,7 @@ open class EditorCodeVisionContext(
   private val codeVisionHost: CodeVisionHost,
   val editor: Editor
 ) {
-  val outputLifetimes: SequentialLifetimes = SequentialLifetimes((editor as EditorImpl).disposable.createLifetime())
+  private val outputLifetimes: SequentialLifetimes = SequentialLifetimes((editor as EditorImpl).disposable.createLifetime())
   private var frontendResults: List<RangeMarker> = listOf()
 
   companion object {

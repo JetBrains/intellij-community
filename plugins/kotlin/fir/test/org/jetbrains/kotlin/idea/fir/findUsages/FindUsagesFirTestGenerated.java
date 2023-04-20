@@ -186,6 +186,29 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../idea/tests/testData/findUsages/kotlin/conventions/invoke")
+            public static class Invoke extends AbstractFindUsagesFirTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("invokeAsTypeParameterExtension.0.kt")
+                public void testInvokeAsTypeParameterExtension() throws Exception {
+                    runTest("../idea/tests/testData/findUsages/kotlin/conventions/invoke/invokeAsTypeParameterExtension.0.kt");
+                }
+
+                @TestMetadata("invokeAsTypeParameterExtensionWithSmartCast.0.kt")
+                public void testInvokeAsTypeParameterExtensionWithSmartCast() throws Exception {
+                    runTest("../idea/tests/testData/findUsages/kotlin/conventions/invoke/invokeAsTypeParameterExtensionWithSmartCast.0.kt");
+                }
+
+                @TestMetadata("invokeInObjectAsFunction.0.kt")
+                public void testInvokeInObjectAsFunction() throws Exception {
+                    runTest("../idea/tests/testData/findUsages/kotlin/conventions/invoke/invokeInObjectAsFunction.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../idea/tests/testData/findUsages/kotlin/conventions")
             public static class Uncategorized extends AbstractFindUsagesFirTest {
                 private void runTest(String testDataFilePath) throws Exception {

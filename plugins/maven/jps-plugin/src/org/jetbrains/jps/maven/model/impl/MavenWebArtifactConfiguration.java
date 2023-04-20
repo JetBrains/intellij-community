@@ -15,9 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author Sergey Evdokimov
- */
 public final class MavenWebArtifactConfiguration {
   @Tag("module-name")
   public String moduleName;

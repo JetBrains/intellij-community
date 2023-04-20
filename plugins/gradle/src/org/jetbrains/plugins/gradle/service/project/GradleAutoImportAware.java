@@ -32,9 +32,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.stream.Stream;
 
-/**
- * @author Denis Zhdanov
- */
 public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
   private static final Logger LOG = Logger.getInstance(GradleAutoImportAware.class);
 

@@ -24,8 +24,6 @@ import static com.intellij.psi.CommonClassNames.*;
  * {@code Comparable.compareTo()}, and {@code Comparator.compare()} are considered safe because of their contract.
  * Immutable classes like {@code String}, {@code BigDecimal}, etc, and utility classes like
  * {@code Objects}, {@code Math} (except {@code random()}) are OK too.
- *
- *  @author Pavel.Dolgov
  */
 final class SideEffectCalculator {
   private final Object2IntMap<PsiExpression> myCache = new Object2IntOpenHashMap<>();

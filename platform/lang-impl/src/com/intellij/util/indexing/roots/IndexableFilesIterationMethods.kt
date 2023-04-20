@@ -10,7 +10,6 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.*
-import com.intellij.util.indexing.IndexableFilesFilter
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Predicate
 
@@ -31,9 +30,8 @@ object IndexableFilesIterationMethods {
     excludeNonProjectRoots: Boolean = true
   ): Boolean {
     val projectFileIndex = ProjectFileIndex.getInstance(project)
-    val filters = IndexableFilesFilter.EP_NAME.extensionList
     val rootsSet = roots.toSet()
-    val finalFileFilter = fileFilter.and { shouldIndexFile(it, projectFileIndex, filters, rootsSet, excludeNonProjectRoots) }
+    val finalFileFilter = fileFilter.and { shouldIndexFile(it, projectFileIndex, rootsSet, excludeNonProjectRoots) }
     return roots.all { root ->
       VfsUtilCore.iterateChildrenRecursively(root, finalFileFilter, contentIterator)
     }
@@ -42,7 +40,6 @@ object IndexableFilesIterationMethods {
   private fun shouldIndexFile(
     file: VirtualFile,
     projectFileIndex: ProjectFileIndex,
-    filters: List<IndexableFilesFilter>,
     rootsSet: Set<VirtualFile>,
     excludeNonProjectRoots: Boolean
   ): Boolean {
@@ -58,15 +55,12 @@ object IndexableFilesIterationMethods {
       if (file in rootsSet) {
         return true
       }
-      return shouldIndexFile(targetFile, projectFileIndex, filters, rootsSet, excludeNonProjectRoots)
+      return shouldIndexFile(targetFile, projectFileIndex, rootsSet, excludeNonProjectRoots)
     }
     if (file !is VirtualFileWithId || file.id <= 0) {
       return false
     }
     if (excludeNonProjectRoots && runReadAction { projectFileIndex.isExcluded(file) }) {
-      return false
-    }
-    if (filters.isNotEmpty() && filters.none { it.shouldIndex(file) }) {
       return false
     }
     return true
@@ -81,19 +75,17 @@ object IndexableFilesIterationMethods {
   ): Boolean {
     val fileTypeRegistry = FileTypeRegistry.getInstance()
     if (!iterateAsContent) {
-      val filters = IndexableFilesFilter.EP_NAME.extensionList
       val rootsSet = roots.toSet()
       val finalFileFilter = fileFilter.and {
         !fileTypeRegistry.isFileIgnored(it) || roots.contains(it)
       }.and {
-        shouldIndexFileIndependentlyFromProjectFileIndex(it, filters, rootsSet, exclusionCondition)
+        shouldIndexFileIndependentlyFromProjectFileIndex(it, rootsSet, exclusionCondition)
       }
       return roots.all { root ->
         VfsUtilCore.iterateChildrenRecursively(root, finalFileFilter, contentIterator)
       }
     }
     val contentIteratorEx = toContentIteratorEx(contentIterator)
-    val filters = IndexableFilesFilter.EP_NAME.extensionList
     val rootsSet = roots.toSet()
     return roots.all { root ->
       val result = VfsUtilCore.visitChildrenRecursively(root, object : VirtualFileVisitor<Unit>() {
@@ -105,7 +97,7 @@ object IndexableFilesIterationMethods {
             return SKIP_CHILDREN
           }
           val accepted = fileFilter.accept(file) &&
-                         shouldIndexFileIndependentlyFromProjectFileIndex(file, filters, rootsSet, null)
+                         shouldIndexFileIndependentlyFromProjectFileIndex(file, rootsSet, null)
           val status = if (accepted) contentIteratorEx.processFileEx(file) else ContentIteratorEx.Status.CONTINUE
           if (status == ContentIteratorEx.Status.CONTINUE) {
             return CONTINUE
@@ -131,7 +123,6 @@ object IndexableFilesIterationMethods {
 
   private fun shouldIndexFileIndependentlyFromProjectFileIndex(
     file: VirtualFile,
-    filters: List<IndexableFilesFilter>,
     rootsSet: Set<VirtualFile>,
     exclusionCondition: Predicate<VirtualFile>?
   ): Boolean {
@@ -148,15 +139,12 @@ object IndexableFilesIterationMethods {
         //valid symlink from included source should be handled
         return true
       }
-      return shouldIndexFileIndependentlyFromProjectFileIndex(targetFile, filters, rootsSet, exclusionCondition)
+      return shouldIndexFileIndependentlyFromProjectFileIndex(targetFile, rootsSet, exclusionCondition)
     }
     if (file !is VirtualFileWithId || file.id <= 0) {
       return false
     }
     if (exclusionCondition?.test(file) == true) {
-      return false
-    }
-    if (filters.isNotEmpty() && filters.none { it.shouldIndex(file) }) {
       return false
     }
     return true

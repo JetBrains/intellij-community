@@ -32,7 +32,6 @@ import java.util.Set;
  * only on instances of {@link ContentEntry} obtained from {@link ModifiableRootModel}. Calling these methods on instances obtained from
  * {@code ModuleRootManager.getInstance(module).getContentEntries()} may lead to failed assertion at runtime.
  *
- * @author dsl
  * @see ModuleRootModel#getContentEntries()
  * @see ModifiableRootModel#addContentEntry(VirtualFile)
  */

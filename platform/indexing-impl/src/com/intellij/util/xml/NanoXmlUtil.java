@@ -2,6 +2,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,6 +44,9 @@ public final class NanoXmlUtil {
     try (reader) {
       parse(new MyXMLReader(reader), builder, validator);
     }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
     catch (Exception e) {
       LOG.error(e);
     }
@@ -65,6 +69,9 @@ public final class NanoXmlUtil {
       catch (ParserStoppedXmlException ignore) {
       }
       catch (XMLException e) {
+        if (e.getException() instanceof ProcessCanceledException) {
+          throw new ProcessCanceledException(e);
+        }
         LOG.debug(e);
       }
     }

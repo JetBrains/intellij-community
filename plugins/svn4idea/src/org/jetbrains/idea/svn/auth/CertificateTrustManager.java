@@ -22,8 +22,6 @@ import java.security.cert.X509Certificate;
  * - java trust store
  * - "Server Certificates" settings
  * - ask user
- *
- * @author Konstantin Kolosovsky.
  */
 public class CertificateTrustManager extends ClientOnlyTrustManager {
 

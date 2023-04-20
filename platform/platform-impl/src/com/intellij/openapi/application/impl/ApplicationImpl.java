@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.BundleBase;
@@ -53,6 +53,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
+import static com.intellij.ide.ShutdownKt.joinBlocking;
 import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCancellation;
 
 @ApiStatus.Internal
@@ -187,6 +188,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @TestOnly
   public void disposeContainer() {
+    joinBlocking(this);
     runWriteAction(() -> {
       startDispose();
       Disposer.dispose(this);
@@ -1433,7 +1435,11 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       runnable.run();
       return;
     }
+    runWithDisabledImplicitRead(runnable);
+  }
 
+  private void runWithDisabledImplicitRead(@NotNull Runnable runnable) {
+    // This method is used to allow easily find stack traces which violate disabled ImplicitRead
     boolean oldVal = myLock.isImplicitReadAllowed();
     try {
       myLock.setImplicitReadAllowance(false);

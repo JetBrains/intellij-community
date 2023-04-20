@@ -22,8 +22,7 @@ import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl;
 import com.intellij.util.indexing.diagnostic.ScanningType;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.snapshot.SnapshotInputMappingsStatistics;
-import com.intellij.util.progress.ConcurrentTasksProgressManager;
-import com.intellij.util.progress.SubTaskProgressIndicator;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -34,18 +33,21 @@ class UnindexedFilesIndexer extends DumbModeTask {
   private static final Logger LOG = Logger.getInstance(UnindexedFilesIndexer.class);
   private final Project myProject;
   private final FileBasedIndexImpl myIndex;
-  private final Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles;
+  private final Map<IndexableFilesIterator, Collection<VirtualFile>> providerToFiles;
+  private final @NonNls @NotNull String indexingReason;
 
   UnindexedFilesIndexer(Project project,
-                        Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles) {
+                        Map<IndexableFilesIterator, Collection<VirtualFile>> providerToFiles,
+                        @NonNls @NotNull String indexingReason) {
     myProject = project;
     myIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     this.providerToFiles = providerToFiles;
+    this.indexingReason = indexingReason;
   }
 
   void indexFiles(@NotNull ProjectIndexingHistoryImpl projectIndexingHistory,
                   @NotNull ProgressIndicator indicator) {
-    int totalFiles = providerToFiles.values().stream().mapToInt(List::size).sum();
+    int totalFiles = providerToFiles.values().stream().mapToInt(Collection::size).sum();
     if (totalFiles == 0) {
       LOG.info("Finished for " + myProject.getName() + ". No files to index with loading content.");
       return;
@@ -90,7 +92,7 @@ class UnindexedFilesIndexer extends DumbModeTask {
     ArrayList<IndexableFilesIterator> providers = new ArrayList<>(providerToFiles.keySet());
     List<IndexUpdateRunner.FileSet> fileSets = new ArrayList<>();
     for (IndexableFilesIterator provider : providers) {
-      List<VirtualFile> providerFiles = providerToFiles.getOrDefault(provider, Collections.emptyList());
+      Collection<VirtualFile> providerFiles = providerToFiles.getOrDefault(provider, Collections.emptyList());
       if (!providerFiles.isEmpty()) {
         String progressText = provider.getIndexingProgressText();
         fileSets.add(new IndexUpdateRunner.FileSet(myProject, provider.getDebugName(), providerFiles, progressText));
@@ -126,7 +128,8 @@ class UnindexedFilesIndexer extends DumbModeTask {
     if (!IndexInfrastructure.hasIndices()) {
       return;
     }
-    ProjectIndexingHistoryImpl projectIndexingHistory = new ProjectIndexingHistoryImpl(myProject, "Async indexing", ScanningType.REFRESH);
+    ProjectIndexingHistoryImpl projectIndexingHistory = new ProjectIndexingHistoryImpl(myProject, indexingReason, ScanningType.REFRESH);
+    IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
     ProgressSuspender suspender = ProgressSuspender.getSuspender(indicator);
     if (suspender != null) {
       ApplicationManager.getApplication().getMessageBus().connect(this)
@@ -155,14 +158,14 @@ class UnindexedFilesIndexer extends DumbModeTask {
     if (!(taskFromQueue instanceof UnindexedFilesIndexer)) return null;
     UnindexedFilesIndexer otherIndexingTask = (UnindexedFilesIndexer)taskFromQueue;
 
-    Map<IndexableFilesIterator, List<VirtualFile>> largeMap =
+    Map<IndexableFilesIterator, Collection<VirtualFile>> largeMap =
       otherIndexingTask.providerToFiles.size() > providerToFiles.size() ? otherIndexingTask.providerToFiles : providerToFiles;
-    Map<IndexableFilesIterator, List<VirtualFile>> smallMap =
+    Map<IndexableFilesIterator, Collection<VirtualFile>> smallMap =
       largeMap == providerToFiles ? otherIndexingTask.providerToFiles : providerToFiles;
 
-    Map<IndexableFilesIterator, List<VirtualFile>> mergedFilesToIndex = new HashMap<>(largeMap);
-    for (Map.Entry<IndexableFilesIterator, List<VirtualFile>> e : smallMap.entrySet()) {
-      List<VirtualFile> mergedList;
+    Map<IndexableFilesIterator, Collection<VirtualFile>> mergedFilesToIndex = new HashMap<>(largeMap);
+    for (Map.Entry<IndexableFilesIterator, Collection<VirtualFile>> e : smallMap.entrySet()) {
+      Collection<VirtualFile> mergedList;
       if (mergedFilesToIndex.containsKey(e.getKey())) {
         // merge virtual files removing duplicates
         Set<VirtualFile> mergedSet = new HashSet<>(mergedFilesToIndex.get(e.getKey()));
@@ -174,7 +177,10 @@ class UnindexedFilesIndexer extends DumbModeTask {
       mergedFilesToIndex.put(e.getKey(), mergedList);
     }
 
-    return new UnindexedFilesIndexer(myProject, mergedFilesToIndex);
+    String mergedReason = "Merged " + StringUtil.trimStart(indexingReason, "Merged ") +
+             " with " + StringUtil.trimStart(otherIndexingTask.indexingReason, "Merged ");
+
+    return new UnindexedFilesIndexer(myProject, mergedFilesToIndex, mergedReason);
   }
 
   private static double getPowerForSmoothProgressIndicator() {
@@ -191,7 +197,7 @@ class UnindexedFilesIndexer extends DumbModeTask {
   }
 
   @TestOnly
-  Map<IndexableFilesIterator, List<VirtualFile>> getProviderToFiles() {
+  Map<IndexableFilesIterator, Collection<VirtualFile>> getProviderToFiles() {
     return providerToFiles;
   }
 }

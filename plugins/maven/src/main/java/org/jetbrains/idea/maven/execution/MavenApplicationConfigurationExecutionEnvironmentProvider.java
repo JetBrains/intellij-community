@@ -36,9 +36,6 @@ import static com.intellij.openapi.util.text.StringUtil.isEmpty;
 import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
 import static com.intellij.util.containers.ContainerUtil.indexOf;
 
-/**
- * @author ibessonov
- */
 public class MavenApplicationConfigurationExecutionEnvironmentProvider implements MavenExecutionEnvironmentProvider {
 
   @Override

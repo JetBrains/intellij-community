@@ -22,14 +22,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.ElementDescriptionUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewShortNameLocation;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,8 +73,8 @@ public class GotoImplementationHandler extends GotoTargetHandler {
       @Override
       public void onSuccess() {
         super.onSuccess();
-        PsiElement oneElement = getTheOnlyOneElement();
-        if (oneElement != null && navigateToElement(oneElement)) {
+        @Nullable Object oneElement = getTheOnlyOneElement();
+        if (oneElement instanceof SmartPsiElementPointer<?> && navigateToElement(((SmartPsiElementPointer<?>)oneElement).getElement())) {
           myPopup.cancel();
         }
       }
@@ -191,7 +191,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     return createDataForSource(editor, element.getTextOffset(), element);
   }
 
-  private class ImplementationsUpdaterTask extends BackgroundUpdaterTask {
+  private class ImplementationsUpdaterTask extends BackgroundUpdaterTaskBase<Object> {
     private final Editor myEditor;
     private final int myOffset;
     private final GotoData myGotoData;
@@ -201,7 +201,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
       super(
         gotoData.source.getProject(),
         ImplementationSearcher.getSearchingForImplementations(),
-        createImplementationComparator(gotoData)
+         createImplementationComparator(gotoData)
       );
       myEditor = editor;
       myOffset = offset;
@@ -212,8 +212,8 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     @Override
     public void run(@NotNull final ProgressIndicator indicator) {
       super.run(indicator);
-      for (PsiElement element : myGotoData.targets) {
-        if (!updateComponent(element)) {
+      for (SmartPsiElementPointer<?> pointer : myGotoData.getPointers()) {
+        if (!updateComponent(pointer)) {
           return;
         }
       }
@@ -222,8 +222,9 @@ public class GotoImplementationHandler extends GotoTargetHandler {
         protected void processElement(PsiElement element) {
           indicator.checkCanceled();
           if (!TargetElementUtil.getInstance().acceptImplementationForReference(myReference, element)) return;
-          if (myGotoData.addTarget(element)) {
-            if (!updateComponent(element)) {
+          SmartPsiElementPointer<PsiElement> pointer = myGotoData.addTarget(element);
+          if (pointer != null) {
+            if (!updateComponent(pointer)) {
               indicator.cancel();
             }
           }
@@ -236,14 +237,29 @@ public class GotoImplementationHandler extends GotoTargetHandler {
       String name = ElementDescriptionUtil.getElementDescription(myGotoData.source, UsageViewShortNameLocation.INSTANCE);
       return getChooserTitle(myGotoData.source, name, size, isFinished());
     }
+
+    @Override
+    protected @Nullable Usage createUsage(@NotNull Object element) {
+      if (element instanceof SmartPsiElementPointer<?>) {
+        PsiElement psiElement = ((SmartPsiElementPointer<?>)element).getElement();
+        return psiElement == null ? null : new UsageInfo2UsageAdapter(new UsageInfo(psiElement));
+      }
+      return null;
+    }
   }
 
-  private static @NotNull Comparator<PsiElement> createImplementationComparator(@NotNull GotoData gotoData) {
+  private static @Nullable Comparator<? super Object> createImplementationComparator(@NotNull GotoData gotoData) {
     Comparator<PsiElement> projectContentComparator = projectElementsFirst(gotoData.source.getProject());
     Comparator<PsiElement> presentationComparator = Comparator.comparing(element -> gotoData.getComparingObject(element));
     Comparator<PsiElement> positionComparator = PsiUtilCore::compareElementsByPosition;
     Comparator<PsiElement> result = projectContentComparator.thenComparing(presentationComparator).thenComparing(positionComparator);
-    return wrapIntoReadAction(result);
+    Comparator<PsiElement> psiElementComparator = wrapIntoReadAction(result);
+    return (o1, o2) -> {
+      if (o1 instanceof SmartPsiElementPointer<?> && o2 instanceof SmartPsiElementPointer<?>) {
+        return ReadAction.compute(() -> psiElementComparator.compare(((SmartPsiElementPointer<?>)o1).getElement(), ((SmartPsiElementPointer<?>)o2).getElement()));
+      }
+      return 0;
+    };
   }
 
   public static @NotNull Comparator<PsiElement> projectElementsFirst(@NotNull Project project) {

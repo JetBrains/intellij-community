@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * @author Nikolay Matveev
- */
 public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
   public void testSimpleTree() throws Exception {
     matchStructures(

@@ -54,7 +54,7 @@ private data class KotlinScriptDependenciesLibrary(val name: String, val classes
 }
 
 private fun KotlinScriptEntity.listDependencies(project: Project): ScriptDependencies {
-    val storage = WorkspaceModel.getInstance(project).entityStorage.current
+    val storage = WorkspaceModel.getInstance(project).currentSnapshot
 
     fun List<KotlinScriptLibraryRoot>.files() = asSequence()
         .mapNotNull { it.url.virtualFile }

@@ -24,8 +24,6 @@ import org.jetbrains.annotations.NotNull;
  * Unique key which encapsulates information about target ide and external projects.
  * <p/>
  * Thread-safe.
- * 
- * @author Denis Zhdanov
  */
 public class IntegrationKey {
 

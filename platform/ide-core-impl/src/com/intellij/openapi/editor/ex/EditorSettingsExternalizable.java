@@ -79,6 +79,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public boolean IS_LEADING_WHITESPACES_SHOWN = true;
     public boolean IS_INNER_WHITESPACES_SHOWN = true;
     public boolean IS_TRAILING_WHITESPACES_SHOWN = true;
+    public boolean IS_SELECTION_WHITESPACES_SHOWN = true;
     @SuppressWarnings("SpellCheckingInspection")
     public boolean IS_ALL_SOFTWRAPS_SHOWN = false;
     public boolean IS_INDENT_GUIDES_SHOWN = true;
@@ -588,6 +589,14 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public void setTrailingWhitespacesShown(boolean val) {
     myOptions.IS_TRAILING_WHITESPACES_SHOWN = val;
+  }
+
+  public boolean isSelectionWhitespacesShown() {
+    return myOptions.IS_SELECTION_WHITESPACES_SHOWN;
+  }
+
+  public void setSelectionWhitespacesShown(boolean val) {
+    myOptions.IS_SELECTION_WHITESPACES_SHOWN = val;
   }
 
   public boolean isAllSoftWrapsShown() {

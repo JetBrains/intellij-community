@@ -17,7 +17,7 @@ except:
 
 import inspect
 from _pydevd_bundle.pydevd_constants import BUILTINS_MODULE_NAME, IS_PY38_OR_GREATER, dict_iter_items, get_global_debugger, IS_PY3K, LOAD_VALUES_POLICY, \
-    ValuesPolicy, GET_FRAME_RETURN_GROUP, GET_FRAME_NORMAL_GROUP, IS_ASYNCIO_DEBUGGER_ENV
+    ValuesPolicy, GET_FRAME_RETURN_GROUP, GET_FRAME_NORMAL_GROUP, IS_ASYNCIO_DEBUGGER_ENV, IS_PY311
 import sys
 from _pydev_bundle import pydev_log
 from _pydev_imps._pydev_saved_modules import threading
@@ -99,6 +99,23 @@ else:
 
     def is_string(x):
         return isinstance(x, basestring)
+
+
+def patch_traceback_311():
+    # Workaround until https://github.com/python/cpython/issues/99103 is fixed
+    import traceback
+    def _byte_offset_pydev(str, offset):
+        try:
+            return traceback._byte_offset_orig(str, offset)
+        except:
+            return 0
+
+    traceback._byte_offset_orig = traceback._byte_offset_to_character_offset
+    traceback._byte_offset_to_character_offset = _byte_offset_pydev
+
+
+if IS_PY311:
+    patch_traceback_311()
 
 
 def to_string(x):

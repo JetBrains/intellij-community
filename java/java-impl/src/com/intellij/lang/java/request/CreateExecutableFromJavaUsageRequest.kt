@@ -8,6 +8,7 @@ import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.components.service
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
+import com.intellij.psi.codeStyle.VariableKind
 import com.intellij.psi.util.createSmartPointer
 import com.intellij.psi.util.parentOfTypes
 import com.intellij.util.CommonJavaRefactoringUtil
@@ -37,7 +38,7 @@ internal abstract class CreateExecutableFromJavaUsageRequest<out T : PsiCall>(
     return argumentList.expressions.map { expression ->
       val argType: PsiType? = CommonJavaRefactoringUtil.getTypeByExpression(expression)
       val type = CreateFromUsageUtils.getParameterTypeByArgumentType(argType, psiManager, scope)
-      val names = codeStyleManager.suggestSemanticNames(expression)
+      val names = codeStyleManager.suggestSemanticNames(expression, VariableKind.PARAMETER)
       val expectedTypes = expectedTypes(type, ExpectedType.Kind.SUPERTYPE)
       expectedParameter(expectedTypes, names)
     }

@@ -731,6 +731,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
+    return super.getActionUpdateThread();
   }
 }

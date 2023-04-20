@@ -27,9 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author Danila Ponomarenko
- */
 public class JavaPolyadicExpressionUnwrapper extends JavaUnwrapper {
   public JavaPolyadicExpressionUnwrapper() {
     super("");

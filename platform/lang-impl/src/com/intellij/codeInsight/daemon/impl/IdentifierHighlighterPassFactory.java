@@ -46,14 +46,15 @@ public final class IdentifierHighlighterPassFactory {
       r.run();
     }
     finally {
-      TestModeFlags.reset(ourTestingIdentifierHighlighting);
       waitForIdentifierHighlighting();
+      TestModeFlags.reset(ourTestingIdentifierHighlighting);
     }
   }
 
   @TestOnly
   public static void waitForIdentifierHighlighting() {
     // wait for async "highlight identifier" computation to apply in com.intellij.codeInsight.highlighting.BackgroundHighlighter.updateHighlighted
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
   }
 }

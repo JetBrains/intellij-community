@@ -4,9 +4,6 @@ package com.intellij.openapi.externalSystem.model.task;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Denis Zhdanov
- */
 public abstract class ExternalSystemTaskNotificationListenerAdapter implements ExternalSystemTaskNotificationListener {
 
   @NotNull public static final ExternalSystemTaskNotificationListener NULL_OBJECT = new ExternalSystemTaskNotificationListenerAdapter() {
@@ -40,6 +37,13 @@ public abstract class ExternalSystemTaskNotificationListenerAdapter implements E
   public void onStart(@NotNull ExternalSystemTaskId id) {
     if (myDelegate != null) {
       myDelegate.onStart(id);
+    }
+  }
+
+  @Override
+  public void onEnvironmentPrepared(@NotNull ExternalSystemTaskId id) {
+    if (myDelegate != null) {
+      myDelegate.onEnvironmentPrepared(id);
     }
   }
 

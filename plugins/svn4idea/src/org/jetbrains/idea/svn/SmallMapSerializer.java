@@ -17,9 +17,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author irengrig
- */
 public class SmallMapSerializer<K,V> implements Forceable {
   private final Map<KeyWrapper<K>,V> myMap;
   private final File myFile;

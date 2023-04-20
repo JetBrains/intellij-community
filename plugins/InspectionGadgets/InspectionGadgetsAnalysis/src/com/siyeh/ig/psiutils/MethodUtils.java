@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -233,7 +233,8 @@ public final class MethodUtils {
   }
 
   public static boolean hasSuper(@NotNull PsiMethod method) {
-    return getSuper(method) != null;
+    PsiAnnotation overrideAnnotation = method.getModifierList().findAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE);
+    return overrideAnnotation != null || getSuper(method) != null;
   }
 
   @Nullable

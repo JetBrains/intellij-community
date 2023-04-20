@@ -2,8 +2,11 @@
 package git4idea.ui.toolbar
 
 import com.intellij.dvcs.repo.Repository
+import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
+import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
@@ -25,7 +28,6 @@ import git4idea.ui.branch.GitBranchPopup
 import git4idea.ui.branch.GitBranchPopupActions
 import git4idea.ui.branch.popup.GitBranchesTreePopup
 import icons.DvcsImplIcons
-import java.util.function.Function
 import javax.swing.Icon
 import javax.swing.JComponent
 
@@ -41,22 +43,27 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
     val project = event.project ?: return null
     val repository = GitBranchUtil.guessWidgetRepository(project, event.dataContext)
 
-    val popup: JBPopup
-    if (repository != null) {
-      popup =
-        if (GitBranchesTreePopup.isEnabled()) GitBranchesTreePopup.create(project)
-        else GitBranchPopup.getInstance(project, repository, event.dataContext).asListPopup()
+    val popup: JBPopup = if (repository != null) {
+      if (GitBranchesTreePopup.isEnabled()) GitBranchesTreePopup.create(project)
+      else GitBranchPopup.getInstance(project, repository, event.dataContext).asListPopup()
     }
     else {
+      updatePlaceholder(project, null)
       val group = ActionManager.getInstance().getAction("Vcs.ToolbarWidget.CreateRepository") as ActionGroup
       val place = ActionPlaces.getPopupPlace(ActionPlaces.VCS_TOOLBAR_WIDGET)
-      popup = JBPopupFactory.getInstance()
+      JBPopupFactory.getInstance()
         .createActionGroupPopup(null, group, event.dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true, place)
     }
     val widget = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? ToolbarComboWidget
     PopupImplUtil.setPopupToggleButton(popup, widget)
 
     return popup
+  }
+
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+    val comp = super.createCustomComponent(presentation, place)
+    (comp.ui as? ToolbarComboWidgetUI)?.setMaxWidth(Int.MAX_VALUE)
+    return comp
   }
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
@@ -66,42 +73,68 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
     widget.leftIcons = listOfNotNull(presentation.icon)
     widget.rightIcons = presentation.getClientProperty(changesKey)?.let { changes ->
       val res = mutableListOf<Icon>()
-      if (changes.incoming) res.add(INCOMING_CHANGES_ICON)
-      if (changes.outgoing) res.add(OUTGOING_CHANGES_ICON)
+      if (changes.incoming) res.add(DvcsImplIcons.Incoming)
+      if (changes.outgoing) res.add(DvcsImplIcons.Outgoing)
       res
     } ?: emptyList()
   }
 
   override fun update(e: AnActionEvent) {
     val project = e.project
-    val repository = project?.let { GitBranchUtil.guessWidgetRepository(project, e.dataContext) }
+
+    if (project == null) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+
+    val gitRepository = GitBranchUtil.guessWidgetRepository(project, e.dataContext)
+    val state = getState(project, gitRepository)
 
     e.presentation.putClientProperty(projectKey, project)
-    e.presentation.putClientProperty(repositoryKey, repository)
-    e.presentation.text = calcText(project, repository)
-    e.presentation.icon = repository?.calcIcon()
-    e.presentation.description = repository?.calcTooltip() ?: GitBundle.message("git.toolbar.widget.no.repo.tooltip")
+    e.presentation.putClientProperty(repositoryKey, gitRepository)
 
-    val changes = repository?.currentBranchName?.let { branch ->
+    when(state) {
+      GitWidgetState.OtherVcs -> {
+        e.presentation.isEnabledAndVisible = false
+        return
+      }
+
+      GitWidgetState.NoVcs -> {
+        val placeholder = getPlaceholder(project)
+        with(e.presentation) {
+          isEnabledAndVisible = true
+          text = placeholder ?: GitBundle.message("git.toolbar.widget.no.repo")
+          icon = if (placeholder != null ) AllIcons.Vcs.Branch else null
+          description = GitBundle.message("git.toolbar.widget.no.repo.tooltip")
+        }
+      }
+
+      is GitWidgetState.Repo -> {
+        val repo = state.repository
+        with(e.presentation) {
+          isEnabledAndVisible = true
+          text = calcText(project, repo)
+          icon = repo.calcIcon()
+          description = repo.calcTooltip()
+        }
+      }
+    }
+
+    val changes = gitRepository?.currentBranchName?.let { branch ->
       val incomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(project)
-      MyRepoChanges(incomingOutgoingManager.hasIncomingFor(repository, branch), incomingOutgoingManager.hasOutgoingFor(repository, branch))
-    } ?: MyRepoChanges(false, false)
+      MyRepoChanges(incomingOutgoingManager.hasIncomingFor(gitRepository, branch), incomingOutgoingManager.hasOutgoingFor(gitRepository, branch))
+    } ?: MyRepoChanges(incoming = false, outgoing = false)
     e.presentation.putClientProperty(changesKey, changes)
   }
 
   @NlsSafe
-  private fun calcText(project: Project?, repository: GitRepository?): String {
-    project ?: return  GitBundle.message("git.toolbar.widget.no.repo")
-    repository ?: return  GitBundle.message("git.toolbar.widget.no.repo")
-
-    return StringUtil.escapeMnemonics(GitBranchUtil.getDisplayableBranchText(repository, Function { branchName ->
+  private fun calcText(project: Project, repository: GitRepository): String {
+    return StringUtil.escapeMnemonics(GitBranchUtil.getDisplayableBranchText(repository) { branchName ->
       GitBranchPopupActions.truncateBranchName(branchName, project)
-    }))
+    }).also { updatePlaceholder(project, it) }
   }
 
-  private fun GitRepository?.calcIcon(): Icon {
-    this ?: return AllIcons.Vcs.Branch
-
+  private fun GitRepository.calcIcon(): Icon {
     if (state != Repository.State.NORMAL) {
       return AllIcons.General.Warning
     }
@@ -122,9 +155,35 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
     }
     return message
   }
-}
 
-private val INCOMING_CHANGES_ICON = DvcsImplIcons.Incoming
-private val OUTGOING_CHANGES_ICON = DvcsImplIcons.Outgoing
+  companion object {
+    private const val GIT_WIDGET_PLACEHOLDER_KEY = "git-widget-placeholder"
+
+    fun updatePlaceholder(project: Project, newPlaceholder: @NlsSafe String?) {
+      PropertiesComponent.getInstance(project).setValue(GIT_WIDGET_PLACEHOLDER_KEY, newPlaceholder)
+    }
+
+    fun getPlaceholder(project: Project): @NlsSafe String? = PropertiesComponent.getInstance(project).getValue(GIT_WIDGET_PLACEHOLDER_KEY)
+  }
+
+  private sealed class GitWidgetState {
+    object NoVcs : GitWidgetState()
+
+    class Repo(val repository: GitRepository) : GitWidgetState()
+
+    object OtherVcs : GitWidgetState()
+  }
+
+  private fun getState(project: Project, gitRepository: GitRepository?) : GitWidgetState {
+    if (gitRepository != null) {
+      return GitWidgetState.Repo(gitRepository)
+    }
+
+    val isNonGitRepoExists = !VcsRepositoryManager.getInstance(project).repositories.isEmpty()
+    if (isNonGitRepoExists) return GitWidgetState.OtherVcs
+
+    return GitWidgetState.NoVcs
+  }
+}
 
 private data class MyRepoChanges(val incoming: Boolean, val outgoing: Boolean)

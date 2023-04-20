@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.databind.type.TypeFactory
@@ -10,10 +10,7 @@ import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.diagnostic.hprof.action.SystemTempFilenameSupplier
 import com.intellij.diagnostic.hprof.analysis.AnalyzeClassloaderReferencesGraph
 import com.intellij.diagnostic.hprof.analysis.HProfAnalysis
-import com.intellij.ide.DataManager
-import com.intellij.ide.IdeBundle
-import com.intellij.ide.IdeEventQueue
-import com.intellij.ide.SaveAndSyncHandler
+import com.intellij.ide.*
 import com.intellij.ide.actions.RevealFileAction
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.runBlockingUnderModalProgress
@@ -552,6 +549,7 @@ object DynamicPlugins {
     }
     finally {
       IdeEventQueue.getInstance().flushQueue()
+      joinPluginScopes(classLoaders)
 
       // do it after IdeEventQueue.flushQueue() to ensure that Disposer.isDisposed(...) works as expected in flushed tasks.
       Disposer.clearDisposalTraces()   // ensure we don't have references to plugin classes in disposal backtraces
@@ -670,6 +668,7 @@ object DynamicPlugins {
 
       if (classLoader is PluginClassLoader && classLoader.pluginDescriptor === subDescriptor) {
         classLoaders.add(classLoader)
+        classLoader.state = PluginAwareClassLoader.UNLOAD_IN_PROGRESS
       }
 
       unloadDependencyDescriptors(subDescriptor, pluginSet, classLoaders)
@@ -683,6 +682,7 @@ object DynamicPlugins {
       val classLoader = subDescriptor.pluginClassLoader ?: continue
       if (classLoader is PluginClassLoader && classLoader.pluginDescriptor === subDescriptor) {
         classLoaders.add(classLoader)
+        classLoader.state = PluginAwareClassLoader.UNLOAD_IN_PROGRESS
       }
 
       unloadModuleDescriptorNotRecursively(subDescriptor)
@@ -950,6 +950,20 @@ private fun clearNewFocusOwner() {
     }
     catch (e: Throwable) {
       LOG.info(e)
+    }
+  }
+}
+
+private fun joinPluginScopes(classLoaders: WeakList<PluginClassLoader>) {
+  if (!Registry.`is`("ide.await.scope.completion")) {
+    return
+  }
+  for (classLoader in classLoaders) {
+    joinBlocking(classLoader.pluginCoroutineScope, "Plugin ${classLoader.pluginId}") { job ->
+      while (job.isActive) {
+        ProgressManager.checkCanceled()
+        IdeEventQueue.getInstance().flushQueue()
+      }
     }
   }
 }

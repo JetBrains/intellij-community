@@ -6,6 +6,8 @@ package org.jetbrains.intellij.build.impl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
@@ -40,15 +42,22 @@ internal fun CoroutineScope.createPrebuildSvgIconsJob(context: BuildContext): Jo
   }
 }
 
+/**
+ * Concurrent [org.jetbrains.skiko.Library.unpackIfNeeded] may throw [java.nio.file.AccessDeniedException]
+ */
+private val imageSvgPreCompilerLock = Mutex()
+
 private suspend fun runSvgTool(context: BuildContext, svgToolClasspath: List<String>, requestFile: Path) {
   val dbDir = context.paths.tempDir.resolve("icon-db")
-  runIdea(
-    context = context,
-    mainClass = "org.jetbrains.intellij.build.images.ImageSvgPreCompiler",
-    args = listOf(dbDir.toString(), requestFile.toString()) + context.applicationInfo.svgProductIcons,
-    jvmArgs = listOf(if (Runtime.getRuntime().availableProcessors() < 10) "-Xmx1024m" else "-Xmx2048m", "-Djava.awt.headless=true"),
-    classPath = svgToolClasspath
-  )
+  imageSvgPreCompilerLock.withLock {
+    runIdea(
+      context = context,
+      mainClass = "org.jetbrains.intellij.build.images.ImageSvgPreCompiler",
+      args = listOf(dbDir.toString(), requestFile.toString()) + context.applicationInfo.svgProductIcons,
+      jvmArgs = listOf(if (Runtime.getRuntime().availableProcessors() < 10) "-Xmx1024m" else "-Xmx2048m", "-Djava.awt.headless=true"),
+      classPath = svgToolClasspath
+    )
+  }
 
   Files.newDirectoryStream(dbDir).use { dirStream ->
     var found = false

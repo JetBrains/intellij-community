@@ -6,9 +6,6 @@ import com.intellij.codeInspection.reflectiveAccess.JavaLangInvokeHandleSignatur
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-/**
- * @author Pavel.Dolgov
- */
 class JavaLangInvokeFieldHandleSignatureFixTest : LightQuickFixParameterizedTestCase() {
 
   override fun getProjectDescriptor(): LightProjectDescriptor = LightJavaCodeInsightFixtureTestCase.JAVA_9

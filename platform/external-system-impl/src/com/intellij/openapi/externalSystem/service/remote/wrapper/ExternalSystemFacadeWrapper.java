@@ -20,8 +20,6 @@ import java.util.Set;
  * Check service wrapper contracts for more details.
  * <p/>
  * Thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class ExternalSystemFacadeWrapper<S extends ExternalSystemExecutionSettings> implements RemoteExternalSystemFacade<S> {
 

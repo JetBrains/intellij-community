@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.presentation
 
 import com.intellij.navigation.ItemPresentation
 import com.intellij.navigation.ItemPresentationProvider
+import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -15,14 +16,19 @@ class KtJvmNameAnnotationPresenter : ItemPresentationProvider<KtAnnotationEntry>
     override fun getPresentation(annotationEntry: KtAnnotationEntry): ItemPresentation? {
         if (annotationEntry.shortName?.asString() != JvmFileClassUtil.JVM_NAME_SHORT) return null
 
-        return when (val grandParent = annotationEntry.parent.parent) {
+        return annotationEntry.parent.parent.toItemPresentation(annotationEntry)
+    }
+
+    private fun PsiElement.toItemPresentation(annotationEntry: KtAnnotationEntry): ItemPresentation? {
+        return when (this) {
             is KtFile -> KtJvmNameAnnotatedFilePresentation(annotationEntry)
-            is KtFunction -> KotlinFunctionPresentation(grandParent, JvmFileClassUtil.getLiteralStringFromAnnotation(annotationEntry))
-            is KtNamedDeclaration -> getDeclarationPresentation(grandParent, annotationEntry)
+            is KtFunction -> KotlinFunctionPresentation(this, JvmFileClassUtil.getLiteralStringFromAnnotation(annotationEntry))
+            is KtNamedDeclaration -> getDeclarationPresentation(this, annotationEntry)
             is KtPropertyAccessor -> {
-                val property = grandParent.parentOfType<KtProperty>() ?: return null
+                val property = this.parentOfType<KtProperty>() ?: return null
                 getDeclarationPresentation(property, annotationEntry)
             }
+            is KtFileAnnotationList -> parent.toItemPresentation(annotationEntry)
             else -> null
         }
     }

@@ -27,11 +27,11 @@ import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
-import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.OperatorToFunctionIntention
 import org.jetbrains.kotlin.idea.inspections.PublicApiImplicitTypeInspection
 import org.jetbrains.kotlin.idea.inspections.UseExpressionBodyInspection
 import org.jetbrains.kotlin.idea.intentions.InfixCallToOrdinaryIntention
 import org.jetbrains.kotlin.idea.intentions.RemoveExplicitTypeArgumentsIntention
+import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.refactoring.introduce.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.OutputValue.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.OutputValueBoxer.AsTuple
@@ -285,7 +285,7 @@ private fun makeCall(
 
         if (anchor is KtOperationReferenceExpression) {
             val newNameExpression = when (val operationExpression = anchor.parent as? KtOperationExpression ?: return null) {
-                is KtUnaryExpression -> OperatorToFunctionIntention.convert(operationExpression).second
+                is KtUnaryExpression -> OperatorToFunctionConverter.convert(operationExpression).second
                 is KtBinaryExpression -> {
                     InfixCallToOrdinaryIntention.convert(operationExpression).getCalleeExpressionIfAny()
                 }

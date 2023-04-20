@@ -19,10 +19,10 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.gridLayout.GridLayout
+import com.intellij.ui.util.minimumWidth
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.JComponent
 import javax.swing.JLabel
 
 
@@ -83,7 +83,7 @@ fun DialogPanel.setMinimumWidthForAllRowLabels(width: Int) {
   UIUtil.uiTraverser(this).asSequence()
     .filterIsInstance<JLabel>()
     .filter { isRowLabel(it) }
-    .forEach { it.setMinimumWidth(width) }
+    .forEach { it.minimumWidth = width }
 }
 
 private fun isRowLabel(label: JLabel): Boolean {
@@ -93,10 +93,6 @@ private fun isRowLabel(label: JLabel): Boolean {
   }
   val constraints = layout.getConstraints(label)
   return label.getClientProperty(DslComponentProperty.ROW_LABEL) == true && constraints != null && constraints.gaps.left == 0
-}
-
-fun JComponent.setMinimumWidth(width: Int) {
-  minimumSize = minimumSize.apply { this.width = width }
 }
 
 fun DialogPanel.withVisualPadding(topField: Boolean = false): DialogPanel {

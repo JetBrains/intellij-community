@@ -9,9 +9,6 @@ import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 
-/**
- * @author Sergey Evdokimov
- */
 class GroovyNamedArgumentTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testNamedArgumentsFromJavaClass() {

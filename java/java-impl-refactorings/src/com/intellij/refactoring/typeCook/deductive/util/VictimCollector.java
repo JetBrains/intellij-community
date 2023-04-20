@@ -23,9 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/**
- * @author db
- */
 public class VictimCollector extends Visitor {
   final Set<PsiElement> myVictims = new LinkedHashSet<>();
   final PsiElement[] myElements;
@@ -55,6 +52,7 @@ public class VictimCollector extends Visitor {
   @Override public void visitForeachStatement(final @NotNull PsiForeachStatement statement) {
     super.visitForeachStatement(statement);
     final PsiParameter parameter = statement.getIterationParameter();
+    if (parameter == null) return;
     testNAdd(parameter, parameter.getType());
   }
 

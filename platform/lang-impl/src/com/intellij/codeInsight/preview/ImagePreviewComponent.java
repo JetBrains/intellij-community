@@ -36,7 +36,6 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * @author spleaner
  * @deprecated see {@link PreviewHintProvider} deprecation notice
  */
 @Deprecated

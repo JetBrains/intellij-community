@@ -720,7 +720,7 @@ public final class Switcher extends BaseSwitcherAction {
                   manager.openFile(file, splitWindow, new FileEditorOpenOptions().withRequestFocus());
                 }
               }
-              if (mode == NEW_WINDOW) {
+              else if (mode == NEW_WINDOW) {
                 manager.openFileInNewWindow(file);
               }
               else if (item.getWindow() != null) {

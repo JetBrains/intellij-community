@@ -238,10 +238,10 @@ object SVGLoader {
     val fg = ColorUtil.toHtmlColor(resultColor)
     val map: Map<String, String> = strokeColors.associateWith { fg }
     val alpha = HashMap<String, Int>(map.size)
-    map.values.forEach { alpha[it] = 255 }
+    map.values.forEach { alpha[it] = resultColor.alpha }
 
     val hasher = sha512()
-    for (x in strokeColors + "" + backgroundColors + fg) {
+    for (x in strokeColors + "" + alpha.map { it.value.toString() } + backgroundColors + fg) {
       hasher.update(x.encodeToByteArray())
     }
     val digest = hasher.digest()

@@ -344,7 +344,8 @@ internal class LeakSearchContext(val project: Project, private val epName: Strin
 
   private fun tooManyObjects() = processedObjects.size > 500
 
-  private fun findVariableUsageLeaks(variable: UVariable, @Nls text: String): List<Leak> {
+  private fun findVariableUsageLeaks(variable: UVariable?, @Nls text: String): List<Leak> {
+    if (variable == null) return emptyList()
     val sourcePsi = variable.sourcePsi
     if (sourcePsi == null) {
       return listOf(Leak(DevKitBundle.message("extension.point.analyzer.reason.uast.no.source.psi", text), null))

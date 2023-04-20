@@ -16,7 +16,7 @@ import com.jediterm.terminal.ProcessTtyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.ShellTerminalWidget;
-import org.jetbrains.plugins.terminal.TerminalView;
+import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
 
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -85,7 +85,7 @@ public class TerminalWorkingDirectoryManager {
     data.myWorkingDirectory = content.getUserData(INITIAL_CWD_KEY);
     content.putUserData(INITIAL_CWD_KEY, null);
     dataRef.set(data);
-    JBTerminalWidget widget = TerminalView.getWidgetByContent(content);
+    JBTerminalWidget widget = TerminalToolWindowManager.getWidgetByContent(content);
     if (widget != null) {
       widget.getTerminalPanel().addCustomKeyListener(listener);
       Disposer.register(content, () -> widget.getTerminalPanel().removeCustomKeyListener(listener));
@@ -94,7 +94,7 @@ public class TerminalWorkingDirectoryManager {
   }
 
   private static void updateWorkingDirectory(@NotNull Content content, @NotNull Data data) {
-    JBTerminalWidget widget = TerminalView.getWidgetByContent(content);
+    JBTerminalWidget widget = TerminalToolWindowManager.getWidgetByContent(content);
     if (widget != null) {
       data.myWorkingDirectory = getWorkingDirectory(widget, data.myContentName);
     }
@@ -145,7 +145,7 @@ public class TerminalWorkingDirectoryManager {
     Data data = getData(content);
     if (data != null) {
       myDataByContentMap.remove(content);
-      JBTerminalWidget widget = TerminalView.getWidgetByContent(content);
+      JBTerminalWidget widget = TerminalToolWindowManager.getWidgetByContent(content);
       if (widget != null) {
         widget.getTerminalPanel().removeCustomKeyListener(data.myKeyListener);
       }

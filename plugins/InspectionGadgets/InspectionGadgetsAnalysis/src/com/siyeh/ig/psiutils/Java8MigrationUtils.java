@@ -380,6 +380,7 @@ public final class Java8MigrationUtils {
     public static MapLoopCondition create(@NotNull PsiForeachStatement statement) {
       PsiExpression iteratedValue = statement.getIteratedValue();
       PsiParameter iterParam = statement.getIterationParameter();
+      if (iterParam == null) return null;
       PsiMethodCallExpression iterCall = extractMapMethodCall(iteratedValue, "keySet");
       if (iterCall != null) return create(iterParam, false, iterCall.getMethodExpression().getQualifierExpression());
 

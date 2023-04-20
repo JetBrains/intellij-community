@@ -223,6 +223,16 @@ public class MoveTestGenerated extends AbstractMoveTest {
         runTest("testData/refactoring/move/kotlin/changePackage/longName/longName.test");
     }
 
+    @TestMetadata("kotlin/changePackage/updateAllUsagesByDefault/updateAllUsagesByDefault.test")
+    public void testKotlin_changePackage_updateAllUsagesByDefault_UpdateAllUsagesByDefault() throws Exception {
+        runTest("testData/refactoring/move/kotlin/changePackage/updateAllUsagesByDefault/updateAllUsagesByDefault.test");
+    }
+
+    @TestMetadata("kotlin/changePackage/updateOnlyRealReferences/updateOnlyRealReferences.test")
+    public void testKotlin_changePackage_updateOnlyRealReferences_UpdateOnlyRealReferences() throws Exception {
+        runTest("testData/refactoring/move/kotlin/changePackage/updateOnlyRealReferences/updateOnlyRealReferences.test");
+    }
+
     @TestMetadata("kotlin/moveDirectoryWithQuotation/moveDirectoryWithQuotation.test")
     public void testKotlin_moveDirectoryWithQuotation_MoveDirectoryWithQuotation() throws Exception {
         runTest("testData/refactoring/move/kotlin/moveDirectoryWithQuotation/moveDirectoryWithQuotation.test");

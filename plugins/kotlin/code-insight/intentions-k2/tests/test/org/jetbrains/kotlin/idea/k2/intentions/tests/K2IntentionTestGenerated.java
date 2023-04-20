@@ -2680,6 +2680,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/inapplicableAlreadyTyped.kt");
         }
 
+        @TestMetadata("inapplicableDefinitelyNonNullableTypeToReifiedType.kt")
+        public void testInapplicableDefinitelyNonNullableTypeToReifiedType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/inapplicableDefinitelyNonNullableTypeToReifiedType.kt");
+        }
+
+        @TestMetadata("inapplicableDefinitelyNonNullableTypeToReifiedTypeWithOtherArguments.kt")
+        public void testInapplicableDefinitelyNonNullableTypeToReifiedTypeWithOtherArguments() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/inapplicableDefinitelyNonNullableTypeToReifiedTypeWithOtherArguments.kt");
+        }
+
         @TestMetadata("inapplicableNotGeneric.kt")
         public void testInapplicableNotGeneric() throws Exception {
             runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/inapplicableNotGeneric.kt");
@@ -2725,6 +2735,21 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/insertDefinitelyNonNullTypeWithVarargs.kt");
         }
 
+        @TestMetadata("insertDefinitelyNonNullableType.kt")
+        public void testInsertDefinitelyNonNullableType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/insertDefinitelyNonNullableType.kt");
+        }
+
+        @TestMetadata("insertDefinitelyNonNullableTypeToInlineFun.kt")
+        public void testInsertDefinitelyNonNullableTypeToInlineFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/insertDefinitelyNonNullableTypeToInlineFun.kt");
+        }
+
+        @TestMetadata("insertDefinitelyNonNullableTypeWithOtherReifiedType.kt")
+        public void testInsertDefinitelyNonNullableTypeWithOtherReifiedType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/insertDefinitelyNonNullableTypeWithOtherReifiedType.kt");
+        }
+
         @TestMetadata("insertImportForArg.kt")
         public void testInsertImportForArg() throws Exception {
             runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/insertImportForArg.kt");
@@ -2743,6 +2768,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("insertMultipleSomeWithClashingName.kt")
         public void testInsertMultipleSomeWithClashingName() throws Exception {
             runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/insertMultipleSomeWithClashingName.kt");
+        }
+
+        @TestMetadata("insertReifiedType.kt")
+        public void testInsertReifiedType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/insertReifiedType.kt");
         }
 
         @TestMetadata("insertTwoTypesFun.kt")
@@ -3074,6 +3104,112 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertPropertyGetterToInitializer/simple.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertToRawStringTemplate")
+    public static class ConvertToRawStringTemplate extends AbstractK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("basic.kt")
+        public void testBasic() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToRawStringTemplate/basic.kt");
+        }
+
+        @TestMetadata("octalEscape.kt")
+        public void testOctalEscape() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToRawStringTemplate/octalEscape.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/toRawStringLiteral")
+    public static class ToRawStringLiteral extends AbstractK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("3quotes.kt")
+        public void test3quotes() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toRawStringLiteral/3quotes.kt");
+        }
+
+        @TestMetadata("alreadyRaw.kt")
+        public void testAlreadyRaw() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toRawStringLiteral/alreadyRaw.kt");
+        }
+
+        @TestMetadata("caret1.kt")
+        public void testCaret1() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toRawStringLiteral/caret1.kt");
+        }
+
+        @TestMetadata("caret2.kt")
+        public void testCaret2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toRawStringLiteral/caret2.kt");
+        }
+
+        @TestMetadata("caret3.kt")
+        public void testCaret3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toRawStringLiteral/caret3.kt");
+        }
+
+        @TestMetadata("caret4.kt")
+        public void testCaret4() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toRawStringLiteral/caret4.kt");
+        }
+
+        @TestMetadata("caret5.kt")
+        public void testCaret5() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toRawStringLiteral/caret5.kt");
+        }
+
+        @TestMetadata("dollar.kt")
+        public void testDollar() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toRawStringLiteral/dollar.kt");
+        }
+
+        @TestMetadata("dollar2.kt")
+        public void testDollar2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toRawStringLiteral/dollar2.kt");
+        }
+
+        @TestMetadata("quotesAndSlashes.kt")
+        public void testQuotesAndSlashes() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toRawStringLiteral/quotesAndSlashes.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toRawStringLiteral/simple.kt");
+        }
+
+        @TestMetadata("specialChar.kt")
+        public void testSpecialChar() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toRawStringLiteral/specialChar.kt");
+        }
+
+        @TestMetadata("tabCharacter.kt")
+        public void testTabCharacter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toRawStringLiteral/tabCharacter.kt");
+        }
+
+        @TestMetadata("trailingSpace.kt")
+        public void testTrailingSpace() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toRawStringLiteral/trailingSpace.kt");
+        }
+
+        @TestMetadata("trailingSpace2.kt")
+        public void testTrailingSpace2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toRawStringLiteral/trailingSpace2.kt");
+        }
+
+        @TestMetadata("trailingSpace3.kt")
+        public void testTrailingSpace3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toRawStringLiteral/trailingSpace3.kt");
         }
     }
 

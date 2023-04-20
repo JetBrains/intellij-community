@@ -22,7 +22,7 @@ public class OpenModuleSettingsAction extends EditSourceAction {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
+    return super.getActionUpdateThread();
   }
 
   protected static boolean isModuleInProjectViewPopup(@NotNull AnActionEvent e) {

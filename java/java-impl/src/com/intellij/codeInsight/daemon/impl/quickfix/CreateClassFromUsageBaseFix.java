@@ -19,9 +19,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ven
- */
 public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
   protected static final Logger LOG = Logger.getInstance(CreateClassFromUsageBaseFix.class);
   protected CreateClassKind myKind;

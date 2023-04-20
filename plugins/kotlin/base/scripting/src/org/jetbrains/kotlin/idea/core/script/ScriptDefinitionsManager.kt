@@ -422,8 +422,8 @@ interface ScriptDefinitionSourceAsContributor : ScriptDefinitionContributor, Scr
 
 @Deprecated("migrating to new configuration refinement: convert all contributors to ScriptDefinitionsSource/ScriptDefinitionsProvider")
 class ScriptDefinitionSourceFromContributor(
-    val contributor: ScriptDefinitionContributor,
-    val hostConfiguration: ScriptingHostConfiguration = defaultJvmScriptingHostConfiguration
+  val contributor: ScriptDefinitionContributor,
+  private val hostConfiguration: ScriptingHostConfiguration = defaultJvmScriptingHostConfiguration
 ) : ScriptDefinitionsSource {
     override val definitions: Sequence<ScriptDefinition>
         get() =

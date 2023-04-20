@@ -21,8 +21,6 @@ import java.rmi.RemoteException;
  * {@link ExternalSystemTaskNotificationListener#onStart(ExternalSystemTaskId, String) updates 'queued' task status}.
  * <p/>
  * Thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class ExternalSystemProjectResolverWrapper<S extends ExternalSystemExecutionSettings>
   extends AbstractRemoteExternalSystemServiceWrapper<S, RemoteExternalSystemProjectResolver<S>>

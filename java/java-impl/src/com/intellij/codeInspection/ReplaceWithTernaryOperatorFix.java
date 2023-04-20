@@ -34,9 +34,6 @@ import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Danila Ponomarenko
- */
 public class ReplaceWithTernaryOperatorFix implements LocalQuickFix {
   private final String myText;
 

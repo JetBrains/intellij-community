@@ -4,9 +4,6 @@ package com.intellij.java.codeInsight.daemon;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.pom.java.LanguageLevel;
 
-/**
- * @author ven
- */
 public class AnnotationsHighlightingTest extends LightDaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/annotations";
 

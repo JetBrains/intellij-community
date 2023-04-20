@@ -61,7 +61,8 @@ public class IntegerDivisionInFloatingPointContextInspection extends BaseInspect
 
   @Override
   protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
-    return new IntegerDivisionInFloatingPointContextFix();
+    String castTo = (String)infos[0];
+    return new IntegerDivisionInFloatingPointContextFix(castTo);
   }
 
   @Override
@@ -85,10 +86,14 @@ public class IntegerDivisionInFloatingPointContextInspection extends BaseInspect
       }
       final PsiExpression context = getContainingExpression(expression);
       final PsiType contextType = ExpectedTypeUtils.findExpectedType(context, true);
-      if (!PsiType.FLOAT.equals(contextType) && !PsiType.DOUBLE.equals(contextType)) {
+      String castTo;
+      if (PsiType.FLOAT.equals(contextType) || PsiType.DOUBLE.equals(contextType)) {
+        castTo = contextType.getCanonicalText();
+      }
+      else {
         return;
       }
-      registerError(expression);
+      registerError(expression, castTo);
     }
 
     private static boolean hasIntegerDivision(@NotNull PsiPolyadicExpression expression) {
@@ -102,34 +107,32 @@ public class IntegerDivisionInFloatingPointContextInspection extends BaseInspect
   }
 
   private static class IntegerDivisionInFloatingPointContextFix extends InspectionGadgetsFix {
+    private final String myCastTo;
+
+    private IntegerDivisionInFloatingPointContextFix(String castTo) {
+      myCastTo = castTo;
+    }
+
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       if (!(descriptor.getPsiElement() instanceof PsiBinaryExpression expression)) {
         return;
       }
 
-      final PsiExpression context = getContainingExpression(expression);
-      final PsiType contextType = ExpectedTypeUtils.findExpectedType(context, true);
-      String castTo;
-      if (PsiType.FLOAT.equals(contextType)) {
-        castTo = "float";
-      }
-      else if (PsiType.DOUBLE.equals(contextType)) {
-        castTo = "double";
-      }
-      else {
-        return;
-      }
-
       PsiExpression operand = expression.getLOperand();
       CommentTracker tracker = new CommentTracker();
       String text = tracker.text(operand, ParenthesesUtils.TYPE_CAST_PRECEDENCE);
-      tracker.replace(operand, "((" + castTo + ")" + text + ")");
+      tracker.replace(operand, "(" + myCastTo + ")" + text);
     }
 
     @Override
     public @NotNull String getFamilyName() {
-      return InspectionGadgetsBundle.message("integer.division.in.floating.point.context.quickfix");
+      return InspectionGadgetsBundle.message("integer.division.in.floating.point.context.fix.family.name");
+    }
+
+    @Override
+    public @NotNull String getName() {
+      return InspectionGadgetsBundle.message("integer.division.in.floating.point.context.fix.name", myCastTo);
     }
   }
 

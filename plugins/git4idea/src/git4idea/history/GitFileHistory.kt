@@ -20,6 +20,8 @@ import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.config.GitVersionSpecialty
 import git4idea.history.GitLogParser.GitLogOption
+import git4idea.log.GitLogProvider
+import git4idea.repo.GitRepositoryManager
 import org.jetbrains.annotations.NonNls
 import java.util.*
 
@@ -171,7 +173,8 @@ class GitFileHistory private constructor(private val project: Project,
                             startingFrom: VcsRevisionNumber?,
                             consumer: Consumer<in GitFileRevision>,
                             vararg parameters: String) {
-      val repositoryRoot = GitUtil.getRootForFile(project, path)
+      val detectedRoot = GitUtil.getRootForFile(project, path)
+      val repositoryRoot = GitLogProvider.getCorrectedVcsRoot(GitRepositoryManager.getInstance(project), detectedRoot, path)
       val revision = startingFrom ?: GitRevisionNumber.HEAD
       GitFileHistory(project, repositoryRoot, path, revision).load(consumer, *parameters)
     }

@@ -12,9 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author dsl
- */
 public final class NameSuggester {
   private static final Logger LOG = Logger.getInstance(NameSuggester.class);
   private final String[] myOldClassName;

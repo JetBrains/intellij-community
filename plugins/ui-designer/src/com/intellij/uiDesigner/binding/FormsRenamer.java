@@ -10,9 +10,6 @@ import com.intellij.uiDesigner.GuiFormFileType;
 
 import java.util.List;
 
-/**
- * @author ven
- */
 public class FormsRenamer extends AutomaticRenamer {
   @Override
   public String nameToCanonicalName(String name, PsiNamedElement psiFile) {

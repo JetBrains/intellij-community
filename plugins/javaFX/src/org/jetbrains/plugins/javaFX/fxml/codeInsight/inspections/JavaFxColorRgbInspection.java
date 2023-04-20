@@ -16,9 +16,6 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyAttributeDescriptor;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyTagDescriptor;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaFxColorRgbInspection extends XmlSuppressableInspectionTool {
   @NotNull
   @Override

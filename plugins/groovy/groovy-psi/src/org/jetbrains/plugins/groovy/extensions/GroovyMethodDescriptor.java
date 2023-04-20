@@ -13,9 +13,6 @@ import org.jetbrains.plugins.groovy.extensions.impl.StringTypeCondition;
 
 import java.util.*;
 
-/**
- * @author Sergey Evdokimov
- */
 public class GroovyMethodDescriptor {
   private static final String ATTR_NAMES_DELIMITER = " \t\n\r,;";
 

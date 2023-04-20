@@ -36,6 +36,7 @@ private val myWhitespacesCheckbox                     get() = CheckboxDescriptor
 private val myLeadingWhitespacesCheckBox              get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.show.leading.whitespaces"), PropertyBinding(model::isLeadingWhitespacesShown, model::setLeadingWhitespacesShown))
 private val myInnerWhitespacesCheckBox                get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.show.inner.whitespaces"), PropertyBinding(model::isInnerWhitespacesShown, model::setInnerWhitespacesShown))
 private val myTrailingWhitespacesCheckBox             get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.show.trailing.whitespaces"), PropertyBinding(model::isTrailingWhitespacesShown, model::setTrailingWhitespacesShown))
+private val mySelectionWhitespacesCheckBox            get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.show.selection.whitespaces"), PropertyBinding(model::isSelectionWhitespacesShown, model::setSelectionWhitespacesShown))
 private val myShowVerticalIndentGuidesCheckBox        get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.show.indent.guides"), PropertyBinding(model::isIndentGuidesShown, model::setIndentGuidesShown))
 private val myFocusModeCheckBox                       get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.highlight.only.current.declaration"), PropertyBinding(model::isFocusMode, model::setFocusMode))
 private val myCbShowIntentionBulbCheckBox             get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.show.intention.bulb"), PropertyBinding(model::isShowIntentionBulb, model::setShowIntentionBulb))
@@ -88,6 +89,9 @@ internal class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurab
         }
         row {
           checkBox(myTrailingWhitespacesCheckBox)
+        }
+        row {
+          checkBox(mySelectionWhitespacesCheckBox)
         }
       }.enabledIf(cbWhitespace.selected)
 

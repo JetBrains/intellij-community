@@ -26,9 +26,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author ven
- */
 public class ExceptionsTableModel extends AbstractTableModel implements EditableModel {
   private List<PsiTypeCodeFragment> myTypeCodeFragments;
   private final PsiElement myContext;

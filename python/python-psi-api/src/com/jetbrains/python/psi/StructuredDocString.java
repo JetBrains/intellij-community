@@ -15,15 +15,13 @@
  */
 package com.jetbrains.python.psi;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author vlan
- */
 public interface StructuredDocString {
 
   String getSummary();
@@ -58,6 +56,7 @@ public interface StructuredDocString {
   /**
    * @param paramName {@code null} can be used for unnamed parameters descriptors, e.g. in docstring following class attribute
    */
+  @NlsSafe
   @Nullable
   String getParamDescription(@Nullable String paramName);
   /**
@@ -98,6 +97,7 @@ public interface StructuredDocString {
   @Nullable
   String getAttributeDescription(); // for formatter
 
+  @NlsSafe
   @Nullable
   String getAttributeDescription(@Nullable String name);
 

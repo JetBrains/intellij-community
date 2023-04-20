@@ -18,5 +18,5 @@ fun test() {
     a += A(1)
 }
 
-// FIR_COMPARISON
+
 // IGNORE_FIR_LOG

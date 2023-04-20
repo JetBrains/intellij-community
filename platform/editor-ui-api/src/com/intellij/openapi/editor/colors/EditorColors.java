@@ -66,11 +66,6 @@ public interface EditorColors {
    * This key is used in New UI only (instead of GUTTER_BACKGROUND) and it is null by default.
    */
   ColorKey EDITOR_GUTTER_BACKGROUND = ColorKey.createColorKey("EDITOR_GUTTER_BACKGROUND");
-  /**
-   * @deprecated use {@link #GUTTER_BACKGROUND}
-   */
-  @Deprecated(forRemoval = true)
-  ColorKey LEFT_GUTTER_BACKGROUND = GUTTER_BACKGROUND;
   ColorKey NOTIFICATION_BACKGROUND = ColorKey.createColorKey("NOTIFICATION_BACKGROUND");
 
   ColorKey TEARLINE_COLOR = ColorKey.createColorKey("TEARLINE_COLOR");

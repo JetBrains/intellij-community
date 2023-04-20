@@ -23,9 +23,6 @@ import com.intellij.psi.CustomHighlighterTokenType;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author dsl
- */
 public final class CustomFileTypeLexer extends AbstractCustomLexer {
   public CustomFileTypeLexer(SyntaxTable table, boolean forHighlighting) {
     super(buildTokenParsers(table, forHighlighting));

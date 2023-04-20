@@ -26,9 +26,6 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Ge
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.BY_NAME;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.KEEP;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class XmlRearranger
   implements Rearranger<XmlElementArrangementEntry>,
              ArrangementStandardSettingsAware {

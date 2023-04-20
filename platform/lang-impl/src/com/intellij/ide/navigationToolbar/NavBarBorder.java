@@ -52,7 +52,7 @@ public class NavBarBorder implements Border {
         return NO_RUN_INSETS;
       }
       else {
-        return JBUI.insets(3, 0, 4, 4);
+        return JBUI.CurrentTheme.StatusBar.Breadcrumbs.navBarInsets();
       }
     }
     else if (!settings.getShowMainToolbar()) {

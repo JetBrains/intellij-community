@@ -3,9 +3,6 @@ package com.intellij.dupLocator;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public final class DefaultDuplocatorState implements ExternalizableDuplocatorState {
   private static final Logger LOG = Logger.getInstance(DefaultDuplocatorState.class);
 

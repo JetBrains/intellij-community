@@ -22,9 +22,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author spleaner
- */
 public class HtmlConditionalCommentInjector implements MultiHostInjector {
 
   /**

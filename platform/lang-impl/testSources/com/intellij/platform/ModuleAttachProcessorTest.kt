@@ -1,7 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform
 
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.project.stateStore
@@ -45,8 +48,8 @@ internal class ModuleAttachProcessorTest {
 
     createOrLoadProject(tempDirManager) { currentProject ->
       currentProject.stateStore.save()
-      withContext(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
-        assertThat(ModuleAttachProcessor().attachToProject(currentProject, Paths.get(existingProjectDir), null)).isTrue()
+      withContext(Dispatchers.EDT) {
+        assertThat(ModuleAttachProcessor().attachToProjectAsync(currentProject, Paths.get(existingProjectDir), null)).isTrue()
       }
     }
   }
@@ -56,8 +59,8 @@ internal class ModuleAttachProcessorTest {
     createOrLoadProject(tempDirManager) { currentProject ->
       currentProject.stateStore.save()
       val existingProjectDir = tempDirManager.newPath().createDirectories()
-      runInEdt {
-        assertThat(ModuleAttachProcessor().attachToProject(currentProject, existingProjectDir, null)).isTrue()
+      withContext(Dispatchers.EDT) {
+        assertThat(ModuleAttachProcessor().attachToProjectAsync(currentProject, existingProjectDir, null)).isTrue()
       }
     }
   }

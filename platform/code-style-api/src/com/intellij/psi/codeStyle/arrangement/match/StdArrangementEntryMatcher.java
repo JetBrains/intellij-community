@@ -22,8 +22,6 @@ import java.util.List;
  * {@link ArrangementEntryMatcher} which is based on standard match conditions in form of {@link ArrangementSettingsToken}.
  * <p/>
  * Implementations of this interface are expected to be thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class StdArrangementEntryMatcher implements ArrangementEntryMatcher {
 

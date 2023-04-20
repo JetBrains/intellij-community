@@ -23,9 +23,6 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.lang.reflect.Field;
 
-/**
- * @author Denis Zhdanov
- */
 public final class ExternalSystemUiUtil {
 
   public static final int INSETS = 5;

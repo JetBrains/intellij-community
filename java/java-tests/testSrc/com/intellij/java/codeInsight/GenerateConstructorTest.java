@@ -25,9 +25,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiFunction;
 
-/**
- * @author ven
- */
 public class GenerateConstructorTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override

@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.popup;
 
-import com.intellij.openapi.ui.ListComponentUpdater;
+import com.intellij.openapi.ui.GenericListComponentUpdater;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsContexts;
@@ -99,7 +99,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     default void autoSelect() {}
     default void setSelectionMode(int selection) {}
 
-    default ListComponentUpdater getBackgroundUpdater() {
+    default GenericListComponentUpdater<T> getBackgroundUpdater() {
       return null;
     }
 
@@ -589,7 +589,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   @Override
   public IPopupChooserBuilder<T> withHintUpdateSupply() {
-    HintUpdateSupply.installSimpleHintUpdateSupply(myChooserComponent.getComponent());
+    HintUpdateSupply.installDataContextHintUpdateSupply(myChooserComponent.getComponent());
     addCancelCallback(() -> {
       HintUpdateSupply.hideHint(myChooserComponent.getComponent());
       return true;
@@ -620,7 +620,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   }
 
   @Override
-  public ListComponentUpdater getBackgroundUpdater() {
+  public GenericListComponentUpdater<T> getBackgroundUpdater() {
     return myChooserComponent.getBackgroundUpdater();
   }
 

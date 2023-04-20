@@ -19,9 +19,6 @@ import com.intellij.refactoring.rename.RenameUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ven
- */
 public class RenameElementFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private static final Logger LOG = Logger.getInstance(RenameElementFix.class);
 

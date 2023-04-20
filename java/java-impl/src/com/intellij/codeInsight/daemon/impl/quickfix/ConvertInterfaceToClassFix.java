@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PriorityAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
@@ -17,6 +18,7 @@ import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.ui.ConflictsDialog;
@@ -74,6 +76,23 @@ public class ConvertInterfaceToClassFix extends LocalQuickFixAndIntentionActionO
   @Override
   public @IntentionFamilyName @NotNull String getFamilyName() {
     return IntentionPowerPackBundle.message("convert.interface.to.class.intention.family.name");
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile copyFile) {
+    PsiElement element = myStartElement.getElement();
+    if (!(element instanceof PsiClass psiClass && psiClass.isInterface())) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    PsiFile file = psiClass.getContainingFile();
+    if (copyFile.getOriginalFile() == file) {
+      PsiClass elementInCopy = PsiTreeUtil.findSameElementInCopy(psiClass, copyFile);
+      changeInterfaceToClass(elementInCopy);
+      moveExtendsToImplements(elementInCopy);
+      return IntentionPreviewInfo.DIFF;
+    }
+    //something strange happens
+    return IntentionPreviewInfo.EMPTY;
   }
 
   public static void convert(@NotNull PsiClass anInterface) {

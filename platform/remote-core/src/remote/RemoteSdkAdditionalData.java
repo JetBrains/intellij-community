@@ -9,13 +9,6 @@ import org.jetbrains.annotations.NotNull;
 public interface RemoteSdkAdditionalData<T extends RemoteSdkCredentials>
   extends SdkAdditionalData, RemoteSdkCredentialsProducer<T>, RemoteSdkProperties {
 
-  @Override
-  @Deprecated
-  boolean isInitialized();
-  @Override
-  @Deprecated
-  void setInitialized(boolean initialized);
-
   @NotNull RemoteConnectionCredentialsWrapper connectionCredentials();
 
   <C> void setCredentials(Key<C> key, C credentials);

@@ -1,0 +1,4 @@
+// WITH_STDLIB
+// WITH_SOURCES
+// SHOW_MEMBERS: TRUE
+// PATH: ArraysKt___ArraysKt.class

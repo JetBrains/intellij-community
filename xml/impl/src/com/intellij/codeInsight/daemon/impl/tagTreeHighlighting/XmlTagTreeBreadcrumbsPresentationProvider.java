@@ -13,9 +13,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class XmlTagTreeBreadcrumbsPresentationProvider extends BreadcrumbsPresentationProvider {
   private static boolean isMyContext(@NotNull PsiElement deepestElement) {
     final PsiFile file = deepestElement.getContainingFile();

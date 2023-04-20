@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.io
 
 import com.intellij.util.lang.DirectByteBufferPool
 import com.intellij.util.lang.ImmutableZipFile
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.EOFException
 import java.io.IOException
 import java.nio.ByteBuffer
@@ -27,7 +28,8 @@ fun readZipFile(file: Path, entryProcessor: EntryProcessor) {
   }
 }
 
-internal fun mapFileAndUse(file: Path, consumer: (ByteBuffer, fileSize: Int) -> Unit) {
+@Internal
+fun mapFileAndUse(file: Path, consumer: (ByteBuffer, fileSize: Int) -> Unit) {
   // FileChannel is strongly required because only FileChannel provides `read(ByteBuffer dst, long position)` method -
   // ability to read data without setting channel position, as setting channel position will require synchronization
   var fileSize: Int
@@ -57,6 +59,7 @@ internal fun mapFileAndUse(file: Path, consumer: (ByteBuffer, fileSize: Int) -> 
   }
   finally {
     if (mappedBuffer.isDirect) {
+      // on Windows memory-mapped file cannot be deleted without clearing in-memory buffer first
       unmapBuffer(mappedBuffer)
     }
   }

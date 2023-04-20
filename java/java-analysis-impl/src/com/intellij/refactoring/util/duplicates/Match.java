@@ -38,9 +38,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author dsl
- */
 public final class Match {
   private static final Logger LOG = Logger.getInstance(Match.class);
   private final PsiElement myMatchStart;

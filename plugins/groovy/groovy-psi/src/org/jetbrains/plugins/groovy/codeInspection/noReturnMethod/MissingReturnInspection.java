@@ -36,9 +36,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author ven
- */
 public class MissingReturnInspection extends GroovyLocalInspectionTool {
 
   public enum ReturnStatus {

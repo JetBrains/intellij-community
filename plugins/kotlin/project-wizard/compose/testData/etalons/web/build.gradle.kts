@@ -6,8 +6,8 @@ plugins {
     id("org.jetbrains.compose")
 }
 
-group "com.example"
-version "1.0-SNAPSHOT"
+group = "com.example"
+version = "1.0-SNAPSHOT"
 
 repositories {
     google()

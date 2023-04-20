@@ -24,9 +24,6 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.En
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PUBLIC
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.STATIC
 
-/**
- * @author Denis Zhdanov
- */
 @CompileStatic
 abstract class AbstractJavaRearrangerTest extends AbstractRearrangerTest {
   protected def classic = [rule(INTERFACE),

@@ -8,6 +8,7 @@ import com.intellij.ide.ReopenProjectAction
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.*
@@ -55,6 +56,7 @@ class ProjectToolbarWidgetAction : ExpandableComboAction() {
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
     val widget = component as? ToolbarComboWidget ?: return
+    (widget.ui as? ToolbarComboWidgetUI)?.setMaxWidth(500)
     widget.text = presentation.text
     widget.toolTipText = presentation.description
   }

@@ -18,9 +18,6 @@ package com.intellij.refactoring.rename;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.psi.PsiVariable;
 
-/**
- * @author dsl
- */
 public class RenameVariableUsageInfo extends UsageInfo {
   private final String myNewName;
 

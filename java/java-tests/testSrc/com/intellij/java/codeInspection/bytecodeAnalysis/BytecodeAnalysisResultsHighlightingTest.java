@@ -12,9 +12,6 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author lambdamix
- */
 public class BytecodeAnalysisResultsHighlightingTest extends DataFlowInspectionTestCase {
   @NotNull
   @Override

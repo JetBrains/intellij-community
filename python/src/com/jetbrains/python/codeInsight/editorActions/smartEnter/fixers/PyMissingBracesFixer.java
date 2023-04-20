@@ -23,9 +23,6 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Author: Alexey.Ivanov
- */
 public class PyMissingBracesFixer extends PyFixer<PyElement> {
   public PyMissingBracesFixer() {
     super(PyElement.class);

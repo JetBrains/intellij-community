@@ -28,9 +28,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ven
- */
 public class SuppressParameterFix extends AbstractBatchSuppressByNoInspectionCommentFix {
   private String myAlternativeID;
 

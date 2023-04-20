@@ -24,9 +24,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
-/**
- * @author ilyas
- */
 public class PsiClassCategory implements PsiEnhancerCategory {
 
   /**

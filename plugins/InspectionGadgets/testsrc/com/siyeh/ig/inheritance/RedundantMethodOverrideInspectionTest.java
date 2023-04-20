@@ -11,11 +11,14 @@ import com.siyeh.ig.LightJavaInspectionTestCase;
  * @author Bas Leijdekkers
  */
 public class RedundantMethodOverrideInspectionTest extends LightJavaInspectionTestCase {
+
+  private final RedundantMethodOverrideInspection myInspection = new RedundantMethodOverrideInspection();
+
   @Override
   protected InspectionProfileEntry getInspection() {
-    final RedundantMethodOverrideInspection inspection = new RedundantMethodOverrideInspection();
-    inspection.checkLibraryMethods = true;
-    return inspection;
+    myInspection.checkLibraryMethods = true;
+    myInspection.ignoreDelegates = false;
+    return myInspection;
   }
 
   public void testRedundantMethodOverride() { doTest(); }
@@ -40,5 +43,16 @@ public class RedundantMethodOverrideInspectionTest extends LightJavaInspectionTe
 
   public void testGuardedAndParenthesizedPatterns() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_17_PREVIEW, this::doTest);
+  }
+
+  public void testIgnoreDelegates(){
+    boolean ignoreDelegatesOldValue = myInspection.ignoreDelegates;
+    try {
+      myInspection.ignoreDelegates = true;
+      doTest();
+    }
+    finally {
+      myInspection.ignoreDelegates = ignoreDelegatesOldValue;
+    }
   }
 }

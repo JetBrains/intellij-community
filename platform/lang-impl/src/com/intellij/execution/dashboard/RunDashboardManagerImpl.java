@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.dashboard;
 
 import com.google.common.collect.Sets;
@@ -51,11 +51,11 @@ import java.util.stream.Collectors;
 @State(name = "RunDashboard", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class RunDashboardManagerImpl implements RunDashboardManager, PersistentStateComponent<RunDashboardManagerImpl.State> {
   private static final ExtensionPointName<RunDashboardCustomizer> CUSTOMIZER_EP_NAME =
-    ExtensionPointName.create("com.intellij.runDashboardCustomizer");
+    new ExtensionPointName<>("com.intellij.runDashboardCustomizer");
   private static final ExtensionPointName<RunDashboardDefaultTypesProvider> DEFAULT_TYPES_PROVIDER_EP_NAME =
-    ExtensionPointName.create("com.intellij.runDashboardDefaultTypesProvider");
+    new ExtensionPointName<>("com.intellij.runDashboardDefaultTypesProvider");
   static final ExtensionPointName<RunDashboardGroupingRule> GROUPING_RULE_EP_NAME =
-    ExtensionPointName.create("com.intellij.runDashboardGroupingRule");
+    new ExtensionPointName<>("com.intellij.runDashboardGroupingRule");
 
   private final Project myProject;
   private final ContentManager myContentManager;
@@ -442,9 +442,9 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   }
 
   private void syncConfigurations() {
-    List<RunnerAndConfigurationSettings> settingsList = ContainerUtil
-      .filter(RunManager.getInstance(myProject).getAllSettings(),
-              settings -> isShowInDashboard(settings.getConfiguration()));
+    List<RunnerAndConfigurationSettings> settingsList = ContainerUtil.filter(RunManager.getInstance(myProject).getAllSettings(), settings -> {
+      return isShowInDashboard(settings.getConfiguration());
+    });
     List<List<RunDashboardServiceImpl>> result = new ArrayList<>();
     myServiceLock.writeLock().lock();
     try {

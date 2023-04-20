@@ -32,7 +32,7 @@ class ScriptWorkspaceModelRepresentationTest : HeavyPlatformTestCase() {
 
     init {
         val testRoot = getTestRoot(this::class.java) ?: error("@TestRoot annotation is missing")
-        scriptDefinitionSourcePath = File(testRoot, "testData/script/wsmodel/").absolutePath
+        scriptDefinitionSourcePath = File(testRoot, "test/org/jetbrains/kotlin/idea/script/definition").absolutePath
     }
 
     // ON FIRST IMPORT
@@ -48,7 +48,7 @@ class ScriptWorkspaceModelRepresentationTest : HeavyPlatformTestCase() {
         val scriptAPath = addScript(scriptAName)
         val scriptBPath = addScript(scriptBName)
 
-        val storage = WorkspaceModel.getInstance(project).entityStorage.current
+        val storage = WorkspaceModel.getInstance(project).currentSnapshot
 
         // Checking script entities
 
@@ -108,7 +108,7 @@ class ScriptWorkspaceModelRepresentationTest : HeavyPlatformTestCase() {
         val scriptA = addAndLoadScript("script.a.kts")
         val scriptB = addAndLoadScript("script.b.kts")
 
-        val storage = WorkspaceModel.getInstance(project).entityStorage.current
+        val storage = WorkspaceModel.getInstance(project).currentSnapshot
 
         scriptA.dependencies.resolve(storage)
             .flatMap { it.usedInScripts }
@@ -159,7 +159,7 @@ class ScriptWorkspaceModelRepresentationTest : HeavyPlatformTestCase() {
         refreshDependencies(scriptABefore.path)
         refreshDependencies(scriptBBefore.path)
 
-        val storage = WorkspaceModel.getInstance(project).entityStorage.current
+        val storage = WorkspaceModel.getInstance(project).currentSnapshot
 
         val scriptEntities = storage.entities(KotlinScriptEntity::class.java).toList()
 
@@ -255,7 +255,7 @@ class ScriptWorkspaceModelRepresentationTest : HeavyPlatformTestCase() {
         refreshDependencies(scriptABefore.path)
         refreshDependencies(scriptBBefore.path)
 
-        val storage = WorkspaceModel.getInstance(project).entityStorage.current
+        val storage = WorkspaceModel.getInstance(project).currentSnapshot
 
         val scriptEntities = storage.entities(KotlinScriptEntity::class.java).toList()
         scriptEntities.assertContainsOnly(
@@ -305,7 +305,7 @@ class ScriptWorkspaceModelRepresentationTest : HeavyPlatformTestCase() {
 
         refreshDependencies(scriptBBefore.path)
 
-        val storage = WorkspaceModel.getInstance(project).entityStorage.current
+        val storage = WorkspaceModel.getInstance(project).currentSnapshot
 
         val scriptEntities = storage.entities(KotlinScriptEntity::class.java).toList()
         scriptEntities.assertContainsOnly(
@@ -338,13 +338,13 @@ class ScriptWorkspaceModelRepresentationTest : HeavyPlatformTestCase() {
     }
 
     private fun loadScript(name: String): KotlinScriptEntity {
-        val storage = WorkspaceModel.getInstance(project).entityStorage.current
+        val storage = WorkspaceModel.getInstance(project).currentSnapshot
         val scriptEntities = storage.entities(KotlinScriptEntity::class.java).toList()
         return scriptEntities.find { it.path.endsWith(name) } ?: error("Script with name '$name' doesn't exist")
     }
 
     private fun <E : WorkspaceEntityWithSymbolicId> Collection<SymbolicEntityId<E>>.resolve(
-        storage: EntityStorage = WorkspaceModel.getInstance(project).entityStorage.current
+        storage: EntityStorage = WorkspaceModel.getInstance(project).currentSnapshot
     ): List<E> = map { it.resolve(storage) ?: error("Unresolvable ref: ${it}") }
 
     private fun addScript(fileName: String): String {

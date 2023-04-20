@@ -9,9 +9,6 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
 
-/**
- * @author Pavel.Dolgov
- */
 class CreateServiceInterfaceOrClassTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   fun testSameModuleExistingPackage() {

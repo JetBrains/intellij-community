@@ -268,15 +268,6 @@ private abstract class ObservablePropertyTransformation<T, R> : ObservableProper
   override fun afterChange(parentDisposable: Disposable?, listener: (R) -> Unit) {
     property.afterChange(parentDisposable) { listener(map(it)) }
   }
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    return property == other
-  }
-
-  override fun hashCode(): Int {
-    return property.hashCode()
-  }
 }
 
 private abstract class ObservableMutablePropertyFiltration<T> : ObservableMutableProperty<T> {

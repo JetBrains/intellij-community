@@ -10,9 +10,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author Sergey Evdokimov
- */
 public final class MavenModelClassesProperties {
 
   private static final Map<String, Map<String, String>> PROPERTIES_MAP;

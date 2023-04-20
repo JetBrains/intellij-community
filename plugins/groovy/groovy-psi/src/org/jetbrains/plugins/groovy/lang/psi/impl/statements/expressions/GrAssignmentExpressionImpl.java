@@ -24,9 +24,6 @@ import java.util.function.Function;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.ASSIGNMENTS;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.getLeastUpperBoundNullable;
 
-/**
- * @author ilyas
- */
 public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl implements GrAssignmentExpression {
 
   private final SafePublicationClearableLazyValue<GroovyCallReference> myReference = new SafePublicationClearableLazyValue<>(

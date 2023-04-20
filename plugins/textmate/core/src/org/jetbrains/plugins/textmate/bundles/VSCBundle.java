@@ -21,6 +21,10 @@ import static java.util.Collections.emptyList;
 import static org.jetbrains.plugins.textmate.Constants.*;
 import static org.jetbrains.plugins.textmate.plist.PListValue.*;
 
+/**
+ * @deprecated use `{@link VSCBundleReaderKt#readVSCBundle}`
+ */
+@Deprecated
 public class VSCBundle extends Bundle {
   private final Map<String, Collection<String>> grammarToExtensions = new LinkedHashMap<>();
   private final Map<String, Collection<String>> configToScopes = new HashMap<>();

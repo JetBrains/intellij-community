@@ -125,7 +125,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
 
   /**
    * Override to provide your own inspection visitor.
-   * Created visitor must not be recursive (e.g. it must not inherit {@link PsiRecursiveElementVisitor})
+   * Created visitor must not be recursive (e.g., it must not inherit {@link PsiRecursiveElementVisitor})
    * since it will be fed with every element in the file anyway.
    * Visitor created must be thread-safe since it might be called on several elements concurrently.
    * If the inspection should not run in the given context return {@link PsiElementVisitor#EMPTY_VISITOR}

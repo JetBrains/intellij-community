@@ -1,13 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.sqlite;
 
-import org.jetbrains.sqlite.core.SqliteConnection;
-
-import java.sql.SQLException;
+import java.io.IOException;
 
 /** <a href="https://www.sqlite.org/c3ref/busy_handler.html">...</a> */
 public abstract class BusyHandler {
-
   /**
    * <a href="https://www.sqlite.org/c3ref/busy_handler.html">...</a>
    *
@@ -25,14 +22,12 @@ public abstract class BusyHandler {
    * @param conn        the SQLite connection
    * @param busyHandler the busyHandler
    */
-  private static void commitHandler(SqliteConnection conn, BusyHandler busyHandler)
-    throws SQLException {
-
+  private static void commitHandler(SqliteConnection conn, BusyHandler busyHandler) throws IOException {
     if (conn.isClosed()) {
-      throw new SQLException("connection closed");
+      throw new IOException("connection closed");
     }
 
-    conn.getDatabase().busy_handler(busyHandler);
+    conn.db.busy_handler(busyHandler);
   }
 
   /**
@@ -42,7 +37,7 @@ public abstract class BusyHandler {
    * @param busyHandler the busyHandler
    */
   public static void setHandler(SqliteConnection conn, BusyHandler busyHandler)
-    throws SQLException {
+    throws IOException {
     commitHandler(conn, busyHandler);
   }
 
@@ -51,7 +46,7 @@ public abstract class BusyHandler {
    *
    * @param conn the SQLite connection
    */
-  public static void clearHandler(SqliteConnection conn) throws SQLException {
+  public static void clearHandler(SqliteConnection conn) throws IOException {
     commitHandler(conn, null);
   }
 }

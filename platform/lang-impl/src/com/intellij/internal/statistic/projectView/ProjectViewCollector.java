@@ -20,8 +20,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.internal.statistic.beans.MetricEventFactoryKt.newMetric;
-
 public final class ProjectViewCollector extends ProjectUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("project.view.pane", 2);
   public static final ClassEventField CLASS_NAME = EventFields.Class("class_name");

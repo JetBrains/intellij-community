@@ -10,4 +10,3 @@ class B() : A {
     }
 }
 
-// FIR_COMPARISON

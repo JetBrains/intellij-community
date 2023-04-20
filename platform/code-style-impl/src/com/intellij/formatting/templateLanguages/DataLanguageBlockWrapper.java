@@ -17,9 +17,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Alexey Chmutov
- */
 public final class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockWithParent {
   private final Block myOriginal;
   @Nullable private final Language myLanguage;

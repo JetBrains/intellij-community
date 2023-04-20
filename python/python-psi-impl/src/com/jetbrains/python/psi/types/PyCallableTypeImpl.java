@@ -18,9 +18,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author vlan
- */
 public class PyCallableTypeImpl implements PyCallableType {
   @Nullable private final List<PyCallableParameter> myParameters;
   @Nullable private final PyType myReturnType;

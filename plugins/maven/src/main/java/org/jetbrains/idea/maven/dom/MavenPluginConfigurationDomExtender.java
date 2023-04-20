@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.util.Key;
@@ -31,7 +31,7 @@ import org.jetbrains.idea.maven.dom.plugin.MavenDomPluginModel;
 import java.lang.annotation.Annotation;
 import java.util.*;
 
-public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomConfiguration> {
+public final class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomConfiguration> {
   public static final Key<ParameterData> PLUGIN_PARAMETER_KEY = Key.create("MavenPluginConfigurationDomExtender.PLUGIN_PARAMETER_KEY");
 
   private static final Set<String> COLLECTIONS_TYPE_NAMES = ContainerUtil.immutableSet("java.util.Collection", CommonClassNames.JAVA_UTIL_SET,

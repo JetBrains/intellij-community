@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-/**
- * @author ven
- */
 public class CreateFieldFromUsageTest extends LightQuickFixTestCase {
 
   public void testAnonymousClass() { doSingleTest(); }

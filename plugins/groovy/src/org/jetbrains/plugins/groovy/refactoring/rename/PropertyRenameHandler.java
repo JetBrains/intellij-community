@@ -23,9 +23,6 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 
 import java.util.List;
 
-/**
- * @author ven
- */
 public class PropertyRenameHandler implements RenameHandler, TitledHandler {
   @Override
   public boolean isAvailableOnDataContext(@NotNull DataContext dataContext) {

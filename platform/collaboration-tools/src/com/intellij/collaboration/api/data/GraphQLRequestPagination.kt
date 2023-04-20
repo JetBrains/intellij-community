@@ -22,3 +22,9 @@ class GraphQLRequestPagination private constructor(
     val DEFAULT = GraphQLRequestPagination(afterCursor = null)
   }
 }
+
+fun GraphQLRequestPagination.asParameters(): Map<String, Any?> =
+  mapOf("pageSize" to pageSize, "cursor" to afterCursor)
+
+fun GraphQLRequestPagination?.orDefault(): GraphQLRequestPagination =
+  this ?: GraphQLRequestPagination.DEFAULT

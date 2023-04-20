@@ -16,9 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class DocumentBasedReplaceHandler extends StructuralReplaceHandler {
   private final Project myProject;
   private final Map<ReplacementInfo, RangeMarker> myRangeMarkers = new HashMap<>();

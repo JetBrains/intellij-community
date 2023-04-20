@@ -19,9 +19,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
-/**
- * @author Sergey Evdokimov
- */
 public abstract class GrMethodMayBeStaticInspectionFilter {
 
   public static final ExtensionPointName<GrMethodMayBeStaticInspectionFilter> EP_NAME =

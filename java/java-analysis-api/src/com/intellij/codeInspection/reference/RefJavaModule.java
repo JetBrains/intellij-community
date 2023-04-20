@@ -23,9 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author Pavel.Dolgov
- */
 public interface RefJavaModule extends RefElement {
   Key<RefJavaModule> JAVA_MODULE = Key.create("JAVA_MODULE");
 

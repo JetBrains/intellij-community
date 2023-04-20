@@ -6,7 +6,7 @@
                 factoryClass="org.jetbrains.plugins.terminal.TerminalToolWindowFactory"
                 secondary="false"
                 canCloseContents="true"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.terminal.TerminalView"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.terminal.TerminalToolWindowManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.terminal.DefaultTerminalRunnerFactory"/>
 
     <projectConfigurable groupId="tools" groupWeight="130"

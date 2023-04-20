@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.MergingQueueGuiExecutor;
 import com.intellij.openapi.project.MergingTaskQueue;
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.LockSupport;
 
 @Service(Service.Level.PROJECT)
 public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor<UnindexedFilesScanner> implements Disposable {
@@ -97,6 +99,16 @@ public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor
   private void cancelRunningTask() {
     ProgressIndicator indicator = runningTask.get();
     if (indicator != null) indicator.cancel();
+  }
+
+  public void cancelAllTasksAndWait() {
+    getTaskQueue().cancelAllTasks();
+    cancelRunningTask();
+
+    while (isRunning()) {
+      PingProgress.interactWithEdtProgress();
+      LockSupport.parkNanos(50_000_000);
+    }
   }
 
   @Override

@@ -202,7 +202,7 @@ class OoChildForParentWithPidEntityData : WorkspaceEntityData<OoChildForParentWi
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return OoChildForParentWithPidEntity(childProperty, entitySource) {
-      this.parentEntity = parents.filterIsInstance<OoParentWithPidEntity>().single()
+      parents.filterIsInstance<OoParentWithPidEntity>().singleOrNull()?.let { this.parentEntity = it }
     }
   }
 

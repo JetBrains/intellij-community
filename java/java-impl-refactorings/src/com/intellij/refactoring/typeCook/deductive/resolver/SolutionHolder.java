@@ -17,9 +17,6 @@ package com.intellij.refactoring.typeCook.deductive.resolver;
 
 import java.util.LinkedList;
 
-/**
- * @author db
- */
 public class SolutionHolder {
   private final LinkedList<Binding> mySolutions = new LinkedList<>();
 

@@ -5,5 +5,5 @@ PsiJavaFile:SwitchLabelsIncomplete1.java
     PsiCaseLabelElementList
       PsiLiteralExpression:2
         PsiJavaToken:INTEGER_LITERAL('2')
-    PsiErrorElement:':' expected
+    PsiErrorElement:':' or '->' expected
       <empty list>

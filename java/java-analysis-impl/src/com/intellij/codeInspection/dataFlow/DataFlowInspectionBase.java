@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.dataFlow;
 
@@ -43,7 +43,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-import javax.swing.*;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -390,9 +389,9 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     if (selector == null) return false;
     PsiType selectorType = selector.getType();
     if (selectorType == null) return false;
-    if (!JavaPsiPatternUtil.isTotalForType(label, selectorType)) return true;
+    if (!JavaPsiPatternUtil.isUnconditionalForType(label, selectorType)) return true;
     int branchCount = SwitchUtils.calculateBranchCount(switchBlock);
-    // it's a compilation error if switch contains both default and total pattern, so no additional suggestion is needed
+    // it's a compilation error if switch contains both default and an unconditional pattern, so no additional suggestion is needed
     return branchCount > 1;
   }
 
@@ -750,7 +749,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     if (anchor instanceof PsiInstanceOfExpression) {
       PsiType type = ((PsiInstanceOfExpression)anchor).getOperand().getType();
       if (type == null || !TypeConstraints.instanceOf(type).isResolved()) return true;
-      // 5.20.2 Removed restriction on pattern instanceof for total patterns (JEP 427)
+      // 5.20.2 Removed restriction on pattern instanceof for unconditional patterns (JEP 427)
       if (HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(anchor)) return false;
       PsiPattern pattern = ((PsiInstanceOfExpression)anchor).getPattern();
       if (pattern instanceof PsiTypeTestPattern && ((PsiTypeTestPattern)pattern).getPatternVariable() != null) {

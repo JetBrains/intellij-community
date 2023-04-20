@@ -102,7 +102,8 @@ class GitBranchesTreePopupStep(internal val project: Project,
       return
     }
 
-    val matcher = PreferStartMatchMatcherWrapper(NameUtil.buildMatcher("*$pattern").build())
+    val trimmedPattern = pattern.trim() //otherwise Character.isSpaceChar would affect filtering
+    val matcher = PreferStartMatchMatcherWrapper(NameUtil.buildMatcher("*$trimmedPattern").build())
     treeModel.filterBranches(matcher)
   }
 

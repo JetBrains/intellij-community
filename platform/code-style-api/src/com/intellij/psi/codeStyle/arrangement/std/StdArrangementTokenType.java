@@ -21,8 +21,6 @@ import org.jetbrains.annotations.NotNull;
  * Type of {@link StdArrangementSettingsToken}. Defines UI role used to display the token. Used to differentiate between semantically
  * different tokens when constructing matchers.
  * (see {@link com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher.StdMatcherBuilderImpl}).
- *
- * @author Roman.Shein
  */
 public class StdArrangementTokenType {
   @NotNull private final StdArrangementTokenUiRole myUiRole;

@@ -10,9 +10,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author Denis Zhdanov
- */
 public class DefaultInjectedLanguageBlockBuilder extends InjectedLanguageBlockBuilder {
 
   @NotNull private final CodeStyleSettings mySettings;

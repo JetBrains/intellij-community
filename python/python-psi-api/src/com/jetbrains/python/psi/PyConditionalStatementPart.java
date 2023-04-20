@@ -19,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * A statement part that has a condition before it.
- * User: dcheryasov
  */
 public interface PyConditionalStatementPart extends PyStatementPart {
   /**

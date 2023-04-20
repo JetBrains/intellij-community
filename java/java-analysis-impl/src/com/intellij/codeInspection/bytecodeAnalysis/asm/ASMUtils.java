@@ -9,9 +9,6 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.Value;
 
 import java.util.List;
 
-/**
- * @author lambdamix
- */
 public final class ASMUtils {
   public static final Type THIS_TYPE = Type.getObjectType("this");
   public static final Type THROWABLE_TYPE = Type.getObjectType("java/lang/Throwable");

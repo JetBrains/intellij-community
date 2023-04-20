@@ -15,8 +15,6 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * {@link ExternalSystemAutoImportAware} implementation which caches positive answers, i.e. mappings between file paths and
  * corresponding root external project path.
- *
- * @author Denis Zhdanov
  */
 public class CachingExternalSystemAutoImportAware implements ExternalSystemAutoImportAware {
 

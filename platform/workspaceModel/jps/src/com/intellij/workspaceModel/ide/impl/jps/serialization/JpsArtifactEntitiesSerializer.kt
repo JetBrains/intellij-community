@@ -145,38 +145,68 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
   override val mainEntityClass: Class<ArtifactEntity>
     get() = ArtifactEntity::class.java
 
-  override fun loadEntities(builder: MutableEntityStorage,
-                            reader: JpsFileContentReader,
+  override fun loadEntities(reader: JpsFileContentReader,
                             errorReporter: ErrorReporter,
-                            virtualFileManager: VirtualFileUrlManager) {
-    val artifactListElement = reader.loadComponent(fileUrl.url, ARTIFACT_MANAGER_COMPONENT_NAME)
-    if (artifactListElement == null) return
+                            virtualFileManager: VirtualFileUrlManager): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>> {
+    val artifactListElement = runCatchingXmlIssues { reader.loadComponent(fileUrl.url, ARTIFACT_MANAGER_COMPONENT_NAME) }
+      .onFailure { return LoadingResult(emptyMap(), it) }
+      .getOrThrow()
+    if (artifactListElement == null) return LoadingResult(emptyMap(), null)
 
     val orderOfItems = ArrayList<String>()
-    artifactListElement.getChildren("artifact").forEach { actifactElement ->
-      val entitySource = createEntitySource(actifactElement) ?: return@forEach
-      val state = XmlSerializer.deserialize(actifactElement, ArtifactState::class.java)
-      val outputUrl = state.outputPath?.let { path -> if (path.isNotEmpty()) virtualFileManager.fromPath(path) else null }
-      val rootElement = loadPackagingElement(state.rootElement, entitySource, builder)
-      val artifactEntity = builder.addArtifactEntity(state.name, state.artifactType, state.isBuildOnMake, outputUrl,
-                                                     rootElement as CompositePackagingElementEntity, entitySource)
-      for (propertiesState in state.propertiesList) {
-        builder.addArtifactPropertiesEntity(artifactEntity, propertiesState.id, JDOMUtil.write(propertiesState.options), entitySource)
-      }
-      orderOfItems += state.name
-    }
-    if (preserveOrder) {
-      val entity = builder.entities(ArtifactsOrderEntity::class.java).firstOrNull()
-      if (entity != null) {
-        builder.modifyEntity(entity) {
-          orderOfArtifacts = orderOfItems
+    val artifactEntities = runCatchingXmlIssues { artifactListElement.getChildren("artifact") }
+      .onFailure { return LoadingResult(emptyMap(), it) }
+      .getOrThrow()
+      .mapNotNull { artifactElement ->
+        runCatchingXmlIssues {
+          val entitySource = createEntitySource(artifactElement) ?: return@mapNotNull null
+          val state = XmlSerializer.deserialize(artifactElement, ArtifactState::class.java)
+          val outputUrl = state.outputPath?.let { path -> if (path.isNotEmpty()) virtualFileManager.fromPath(path) else null }
+          val rootElement = loadPackagingElement(state.rootElement, entitySource)
+          val artifactEntity = ArtifactEntity(state.name, state.artifactType, state.isBuildOnMake, entitySource) {
+            this.outputUrl = outputUrl
+            this.rootElement = rootElement as CompositePackagingElementEntity
+          }
+          for (propertiesState in state.propertiesList) {
+            ArtifactPropertiesEntity(propertiesState.id, entitySource) {
+              this.artifact = artifactEntity
+              this.propertiesXmlTag = JDOMUtil.write(propertiesState.options)
+            }
+          }
+          orderOfItems += state.name
+          artifactEntity
         }
       }
-      else {
-        builder.addEntity(ArtifactsOrderEntity(orderOfItems, internalEntitySource))
+    return LoadingResult(
+      mapOf(
+        ArtifactsOrderEntity::class.java to listOf(ArtifactsOrderEntity(orderOfItems, internalEntitySource)),
+        ArtifactEntity::class.java to artifactEntities.mapNotNull { it.getOrNull() },
+      ),
+      artifactEntities.firstOrNull { it.isFailure }?.exceptionOrNull())
+  }
+
+  override fun checkAndAddToBuilder(builder: MutableEntityStorage,
+                                    orphanage: MutableEntityStorage,
+                                    newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>) {
+    if (preserveOrder) {
+      val order = newEntities[ArtifactsOrderEntity::class.java]?.singleOrNull() as? ArtifactsOrderEntity
+      if (order != null) {
+        val entity = builder.entities(ArtifactsOrderEntity::class.java).firstOrNull()
+        if (entity != null) {
+          builder.modifyEntity(entity) {
+            orderOfArtifacts.addAll(order.orderOfArtifacts)
+          }
+        }
+        else {
+          builder addEntity order
+        }
       }
     }
+    newEntities.forEach { (key, value) ->
+      if (key == ArtifactsOrderEntity::class.java) return@forEach
 
+      value.forEach { builder addEntity it }
+    }
   }
 
   protected open fun createEntitySource(artifactTag: Element): EntitySource? {
@@ -185,23 +215,39 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
   }
 
   private fun loadPackagingElement(element: Element,
-                                   source: EntitySource,
-                                   builder: MutableEntityStorage): PackagingElementEntity {
-    fun loadElementChildren() = element.children.mapTo(ArrayList()) { loadPackagingElement(it, source, builder) }
+                                   source: EntitySource): PackagingElementEntity {
+    fun loadElementChildren() = element.children.mapTo(ArrayList()) { loadPackagingElement(it, source) }
     fun getAttribute(name: String) = element.getAttributeValue(name)!!
     fun getOptionalAttribute(name: String) = element.getAttributeValue(name)
     fun getPathAttribute(name: String) = element.getAttributeValue(name)!!.let { virtualFileManager.fromPath(it) }
     return when (val typeId = getAttribute("id")) {
-      "root" -> builder.addArtifactRootElementEntity(loadElementChildren(), source)
-      "directory" -> builder.addDirectoryPackagingElementEntity(getAttribute("name"), loadElementChildren(), source)
-      "archive" -> builder.addArchivePackagingElementEntity(getAttribute("name"), loadElementChildren(), source)
-      "dir-copy" -> builder.addDirectoryCopyPackagingElementEntity(getPathAttribute("path"), source)
-      "file-copy" -> builder.addFileCopyPackagingElementEntity(getPathAttribute("path"), getOptionalAttribute("output-file-name"), source)
-      "extracted-dir" -> builder.addExtractedDirectoryPackagingElementEntity(getPathAttribute("path"), getAttribute("path-in-jar"), source)
-      "artifact" -> builder.addArtifactOutputPackagingElementEntity(getOptionalAttribute("artifact-name")?.let { ArtifactId(it) }, source)
-      "module-output" -> builder.addModuleOutputPackagingElementEntity(getOptionalAttribute("name")?.let { ModuleId(it) }, source)
-      "module-test-output" -> builder.addModuleTestOutputPackagingElementEntity(getOptionalAttribute("name")?.let { ModuleId(it) }, source)
-      "module-source" -> builder.addModuleSourcePackagingElementEntity(getOptionalAttribute("name")?.let { ModuleId(it) }, source)
+      "root" -> ArtifactRootElementEntity(source) {
+        this.children = loadElementChildren()
+      }
+      "directory" -> DirectoryPackagingElementEntity(getAttribute("name"), source) {
+        this.children = loadElementChildren()
+      }
+      "archive" -> ArchivePackagingElementEntity(getAttribute("name"), source) {
+        this.children = loadElementChildren()
+      }
+      "dir-copy" -> DirectoryCopyPackagingElementEntity(getPathAttribute("path"), source)
+      "file-copy" -> FileCopyPackagingElementEntity(getPathAttribute("path"), source) {
+        this.renamedOutputFileName = getOptionalAttribute("output-file-name")
+      }
+      "extracted-dir" -> ExtractedDirectoryPackagingElementEntity(getPathAttribute("path"), getAttribute("path-in-jar"),
+                                                                  source)
+      "artifact" -> ArtifactOutputPackagingElementEntity(source) {
+        this.artifact = getOptionalAttribute("artifact-name")?.let { ArtifactId(it) }
+      }
+      "module-output" -> ModuleOutputPackagingElementEntity(source) {
+        this.module = getOptionalAttribute("name")?.let { ModuleId(it) }
+      }
+      "module-test-output" -> ModuleTestOutputPackagingElementEntity(source) {
+        this.module = getOptionalAttribute("name")?.let { ModuleId(it) }
+      }
+      "module-source" -> ModuleSourcePackagingElementEntity(source) {
+        this.module = getOptionalAttribute("name")?.let { ModuleId(it) }
+      }
       "library" -> {
         val level = getOptionalAttribute("level")
         val name = getOptionalAttribute("name")
@@ -211,16 +257,20 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
             moduleName != null -> LibraryTableId.ModuleLibraryTableId(ModuleId(moduleName))
             else -> LibraryNameGenerator.getLibraryTableId(level)
           }
-          builder.addLibraryFilesPackagingElementEntity(LibraryId(name, parentId), source)
+          LibraryFilesPackagingElementEntity(source) {
+            this.library = LibraryId(name, parentId)
+          }
         }
         else {
-          builder.addLibraryFilesPackagingElementEntity(null, source)
+          LibraryFilesPackagingElementEntity(source)
         }
       }
       else -> {
         val cloned = element.clone()
         cloned.removeContent()
-        builder.addCustomPackagingElementEntity(typeId, JDOMUtil.write(cloned), loadElementChildren(), source)
+        CustomPackagingElementEntity(typeId, JDOMUtil.write(cloned), source) {
+          this.children = loadElementChildren()
+        }
       }
     }
   }

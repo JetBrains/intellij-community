@@ -6,9 +6,6 @@ import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.sun.jdi.BooleanValue;
 
-/**
- * @author lex
- */
 public class IfStatementEvaluator implements Evaluator {
   private final Evaluator myConditionEvaluator;
   private final Evaluator myThenEvaluator;

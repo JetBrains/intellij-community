@@ -207,7 +207,7 @@ class OoChildAlsoWithPidEntityData : WorkspaceEntityData.WithCalculableSymbolicI
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return OoChildAlsoWithPidEntity(childProperty, entitySource) {
-      this.parentEntity = parents.filterIsInstance<OoParentWithPidEntity>().single()
+      parents.filterIsInstance<OoParentWithPidEntity>().singleOrNull()?.let { this.parentEntity = it }
     }
   }
 

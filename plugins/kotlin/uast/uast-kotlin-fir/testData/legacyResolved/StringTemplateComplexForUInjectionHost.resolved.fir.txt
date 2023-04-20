@@ -17,7 +17,7 @@ UReturnExpression -> USimpleNameReferenceExpression (identifier = i) -> Kotlin_L
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = trimIndent) -> FUN: trimIndent
     ULocalVariable (name = trimB) -> UQualifiedReferenceExpression -> Decompiled_Method: trimMargin
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = trimMargin) -> FUN: trimMargin
-    UBinaryExpression (operator = ==) -> USimpleNameReferenceExpression (identifier = ==) -> null: null
+    UBinaryExpression (operator = ==) -> USimpleNameReferenceExpression (identifier = ==) -> FUN: equals
     UBinaryExpression (operator = ==) -> UQualifiedReferenceExpression -> Decompiled_Method: trimIndent
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = trimIndent) -> FUN: trimIndent
     UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> FUN: plus

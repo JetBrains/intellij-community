@@ -22,9 +22,6 @@ import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 
 //Retrieves method reference from this pair, do NOT reuse!!!
 public class NameValuePairElement extends CompositeElement  {

@@ -19,9 +19,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Vladislav.Kaznacheev
-*/
 final class AntKeymapExtension implements KeymapExtension {
   private static final Logger LOG = Logger.getInstance(AntKeymapExtension.class);
 

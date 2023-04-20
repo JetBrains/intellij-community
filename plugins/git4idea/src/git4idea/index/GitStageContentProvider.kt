@@ -102,12 +102,15 @@ fun showStagingArea(project: Project, commitMessage: String) {
 }
 
 internal fun showStagingArea(project: Project, consumer: (GitStagePanel) -> Unit) {
-  val toolWindow = ChangesViewContentManager.getToolWindowFor(project, STAGING_AREA_TAB_NAME) ?: return
-  toolWindow.activate({
-                        val contentManager = ChangesViewContentManager.getInstance(project) as ChangesViewContentManager
-                        val content = contentManager.findContents { it.tabName == STAGING_AREA_TAB_NAME }.singleOrNull() ?: return@activate
+  ToolWindowManager.getInstance(project).invokeLater {
+    val toolWindow = ChangesViewContentManager.getToolWindowFor(project, STAGING_AREA_TAB_NAME) ?: return@invokeLater
+    toolWindow.activate({
+                          val contentManager = ChangesViewContentManager.getInstance(project) as ChangesViewContentManager
+                          val content = contentManager.findContents { it.tabName == STAGING_AREA_TAB_NAME }.singleOrNull()
+                                        ?: return@activate
 
-                        contentManager.setSelectedContent(content, true)
-                        (content.component as? GitStagePanel)?.let(consumer)
-                      }, true)
+                          contentManager.setSelectedContent(content, true)
+                          (content.component as? GitStagePanel)?.let(consumer)
+                        }, true)
+  }
 }

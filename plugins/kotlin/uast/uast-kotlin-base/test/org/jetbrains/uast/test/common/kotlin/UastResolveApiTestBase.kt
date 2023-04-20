@@ -213,6 +213,6 @@ interface UastResolveApiTestBase : UastPluginSelection {
         val k_delegate = safeClass.fields.find { it.name == "k\$delegate" }
             ?: throw IllegalStateException("Target field not found at ${safeClass.name}")
         // Without retrieving delegate expression type, it would be just "Lazy" (w/o type argument).
-        TestCase.assertEquals("PsiType:Lazy<? extends SimpleSafeClass>", k_delegate.type.toString())
+        TestCase.assertEquals("kotlin.Lazy<? extends SimpleSafeClass>", k_delegate.type.canonicalText)
     }
 }

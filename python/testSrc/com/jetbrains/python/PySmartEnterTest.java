@@ -29,9 +29,6 @@ import com.jetbrains.python.psi.LanguageLevel;
 
 import java.util.List;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PySmartEnterTest extends PyTestCase {
   private static List<SmartEnterProcessor> getSmartProcessors(Language language) {
     return SmartEnterProcessors.INSTANCE.forKey(language);

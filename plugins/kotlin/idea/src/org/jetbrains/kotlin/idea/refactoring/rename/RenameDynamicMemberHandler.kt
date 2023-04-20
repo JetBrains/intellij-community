@@ -9,9 +9,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.core.surroundWith.KotlinSurrounderUtils
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.resolve.calls.tasks.isDynamic
 
@@ -27,7 +27,7 @@ class RenameDynamicMemberHandler : KotlinVariableInplaceRenameHandler() {
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?, dataContext: DataContext) {
         super.invoke(project, editor, file, dataContext)
         editor?.let {
-            KotlinSurrounderUtils.showErrorHint(
+            CommonRefactoringUtil.showErrorHint(
                 project,
                 it,
                 KotlinBundle.message("text.rename.not.applicable.to.dynamically.invoked.methods"),

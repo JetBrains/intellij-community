@@ -31,8 +31,6 @@ import java.util.Collections;
 
 /**
  * Class to extend debugger functionality to handle various Groovy scripts
- *
- * @author ilyas
  */
 public abstract class ScriptPositionManagerHelper {
   public static final ExtensionPointName<ScriptPositionManagerHelper> EP_NAME = ExtensionPointName.create("org.intellij.groovy.positionManagerDelegate");

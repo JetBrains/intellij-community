@@ -24,9 +24,6 @@ import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author vlan
- */
 public class PyCommentInjector extends PyInjectorBase {
   @Nullable
   @Override

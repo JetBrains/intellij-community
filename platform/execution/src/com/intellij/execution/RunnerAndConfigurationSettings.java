@@ -61,20 +61,6 @@ public interface RunnerAndConfigurationSettings {
   }
 
   /**
-   * @deprecated There are different ways of storing run configuration in a file,
-   * use {@link #storeInLocalWorkspace()}, {@link #storeInDotIdeaFolder()} or {@link #storeInArbitraryFileInProject(String)}
-   */
-  @Deprecated(forRemoval = true)
-  default void setShared(boolean value) {
-    if (value) {
-      storeInDotIdeaFolder();
-    }
-    else {
-      storeInLocalWorkspace();
-    }
-  }
-
-  /**
    * Make this run configuration impossible to share through VCS, store it in <code>.idea/workspace.xml</code> file.
    *
    * @see #storeInDotIdeaFolder()

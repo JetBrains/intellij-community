@@ -31,9 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
-* @author vlan
-*/
 public class PyElementPresentation implements ColoredItemPresentation {
   @NotNull private final PyElement myElement;
 

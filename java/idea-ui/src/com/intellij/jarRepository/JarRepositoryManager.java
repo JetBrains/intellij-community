@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.JavadocOrderRootType;
@@ -477,7 +478,9 @@ public final class JarRepositoryManager {
   private static <T> T submitSyncJob(@NotNull Function<? super ProgressIndicator, ? extends T> job) {
     try {
       ourTasksInProgress.incrementAndGet();
-      ProgressIndicator indicator = new EmptyProgressIndicator(ModalityState.defaultModalityState());
+      ProgressIndicator parentIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+      ProgressIndicator indicator = parentIndicator == null ? new EmptyProgressIndicator(ModalityState.defaultModalityState())
+                                                            : ProgressWrapper.wrap(parentIndicator);
       return ProgressManager.getInstance().runProcess(() -> job.apply(indicator), indicator);
     }
     finally {

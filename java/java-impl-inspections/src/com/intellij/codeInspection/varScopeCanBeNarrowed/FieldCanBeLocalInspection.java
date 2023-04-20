@@ -111,8 +111,8 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      stringSet("EXCLUDE_ANNOS", JavaBundle.message("special.annotations.annotations.list"),
-                new JavaClassValidator().annotationsOnly()),
+      stringList("EXCLUDE_ANNOS", JavaBundle.message("special.annotations.annotations.list"),
+                 new JavaClassValidator().annotationsOnly()),
       checkbox("IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS", JavaBundle.message("checkbox.ignore.fields.used.in.multiple.methods"))
     );
   }

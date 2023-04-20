@@ -35,9 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author dsl
- */
 public final class DuplicatesImpl {
   private static final Logger LOG = Logger.getInstance(DuplicatesImpl.class);
 

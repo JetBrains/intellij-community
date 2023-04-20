@@ -6,9 +6,6 @@ import java.util.Iterator;
 
 import static org.junit.Assert.*;
 
-/**
- * @author dsl
- */
 public final class GraphTestUtil {
   static <E> void assertIteratorsEqual(Iterator<E> expected, Iterator<E> found) {
     while (expected.hasNext()) {

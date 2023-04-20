@@ -53,9 +53,6 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author irengrig
- */
 public class VcsStructureChooser extends DialogWrapper {
   private static final int MAX_FOLDERS = 100;
   public static final Border BORDER = IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.LEFT);

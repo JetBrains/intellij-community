@@ -35,9 +35,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author ven
- */
 public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
   private static final Logger LOG = Logger.getInstance(MoveInstanceMethodProcessor.class);
 

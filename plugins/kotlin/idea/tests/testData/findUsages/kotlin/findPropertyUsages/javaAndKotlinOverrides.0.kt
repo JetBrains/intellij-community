@@ -25,4 +25,3 @@ open class D : A<String>("") {
     override var foo: String = ""
 }
 
-// FIR_COMPARISON

@@ -27,8 +27,6 @@ import org.jetbrains.annotations.Nullable;
  * Stands for emacs 'reverse-kill-line' action, i.e.
  * <a href="http://www.gnu.org/software/emacs/manual/html_node/emacs/Killing-by-Lines.html">'kill-line' action</a>
  * with negative argument.
- * 
- * @author Denis Zhdanov
  */
 public class CutLineBackwardAction extends TextComponentEditorAction {
 

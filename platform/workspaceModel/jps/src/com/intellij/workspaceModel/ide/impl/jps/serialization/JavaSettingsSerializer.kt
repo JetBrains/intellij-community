@@ -4,10 +4,7 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.JavaModuleSettingsEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addJavaModuleSettingsEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.*
@@ -45,10 +42,8 @@ internal object JavaSettingsSerializer {
   }
 
   fun loadJavaModuleSettings(rootManagerElement: Element,
-                             builder: MutableEntityStorage,
                              virtualFileManager: VirtualFileUrlManager,
-                             moduleEntity: ModuleEntity,
-                             contentRotEntitySource: EntitySource) {
+                             contentRotEntitySource: EntitySource): JavaModuleSettingsEntity? {
     val inheritedCompilerOutput = rootManagerElement.getAttributeAndDetach(INHERIT_COMPILER_OUTPUT_ATTRIBUTE)
     val languageLevel = rootManagerElement.getAttributeAndDetach(MODULE_LANGUAGE_LEVEL_ATTRIBUTE)
     val excludeOutput = rootManagerElement.getChildAndDetach(EXCLUDE_OUTPUT_TAG)
@@ -57,22 +52,20 @@ internal object JavaSettingsSerializer {
 
     // According to our logic, java settings entity should produce one of the following attributes.
     //   So, if we don't meet one, we don't create a java settings entity
-    if (inheritedCompilerOutput != null || compilerOutput != null || languageLevel != null || excludeOutput != null || compilerOutputForTests != null) {
-      builder.addJavaModuleSettingsEntity(
-        inheritedCompilerOutput = inheritedCompilerOutput?.toBoolean() ?: false,
-        excludeOutput = excludeOutput != null,
-        compilerOutput = compilerOutput?.let { virtualFileManager.fromUrl(it) },
-        compilerOutputForTests = compilerOutputForTests?.let { virtualFileManager.fromUrl(it) },
-        languageLevelId = languageLevel,
-        module = moduleEntity,
-        source = contentRotEntitySource
-      )
-    }
-    else if (javaPluginPresent()) {
-      builder addEntity JavaModuleSettingsEntity(true, true, contentRotEntitySource) {
-        this.module = moduleEntity
+    return if (inheritedCompilerOutput != null || compilerOutput != null || languageLevel != null || excludeOutput != null || compilerOutputForTests != null) {
+      JavaModuleSettingsEntity(inheritedCompilerOutput = inheritedCompilerOutput?.toBoolean() ?: false,
+                                                 excludeOutput = excludeOutput != null,
+                                                 entitySource = contentRotEntitySource
+      ) {
+        this.compilerOutput = compilerOutput?.let { virtualFileManager.fromUrl(it) }
+        this.compilerOutputForTests = compilerOutputForTests?.let { virtualFileManager.fromUrl(it) }
+        this.languageLevelId = languageLevel
       }
     }
+    else if (javaPluginPresent()) {
+      JavaModuleSettingsEntity(true, true, contentRotEntitySource)
+    }
+    else null
   }
 
   private fun javaPluginPresent() = PluginManagerCore.getPlugin(PluginId.findId("com.intellij.java")) != null

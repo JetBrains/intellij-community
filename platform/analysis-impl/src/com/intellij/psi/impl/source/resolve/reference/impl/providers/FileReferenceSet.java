@@ -534,6 +534,9 @@ public class FileReferenceSet {
     return myPathString.startsWith(getSeparatorString());
   }
 
+  /**
+   * @return true, if contexts from {@link FileContextProvider} can be used as the default
+   */
   protected boolean useIncludingFileAsContext() {
     return true;
   }

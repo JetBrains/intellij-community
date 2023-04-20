@@ -4,8 +4,8 @@ package com.intellij.ui.layout
 import com.intellij.BundleBase
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.GraphProperty
@@ -14,7 +14,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.ui.emptyText
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsContexts
@@ -30,10 +29,11 @@ import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.NonNls
 import java.awt.Component
 import java.awt.Dimension
-import java.awt.event.*
+import java.awt.event.ActionEvent
+import java.awt.event.ActionListener
+import java.awt.event.MouseEvent
 import java.util.*
 import javax.swing.*
 import javax.swing.text.JTextComponent
@@ -86,6 +86,7 @@ fun <T> PropertyBinding<T>.toNullable(): PropertyBinding<T?> {
   return PropertyBinding<T?>({ get() }, { set(it!!) })
 }
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 inline fun <reified T : Any> KMutableProperty0<T>.toBinding(): PropertyBinding<T> {
   return createPropertyBinding(this, T::class.javaPrimitiveType ?: T::class.java)
 }
@@ -103,27 +104,37 @@ class ValidationInfoBuilder(val component: JComponent) {
 @JvmDefaultWithCompatibility
 @Deprecated("Use Kotlin UI DSL Version 2")
 interface CellBuilder<out T : JComponent> {
+  @Deprecated("Use Kotlin UI DSL Version 2")
   val component: T
 
   @Deprecated("Use Kotlin UI DSL 2")
   fun comment(@DetailedDescription text: String, maxLineLength: Int = ComponentPanelBuilder.MAX_COMMENT_WIDTH,
               forComponent: Boolean = false): CellBuilder<T>
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun focused(): CellBuilder<T>
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun withValidationOnApply(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T>
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun withValidationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T>
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun onApply(callback: () -> Unit): CellBuilder<T>
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun onReset(callback: () -> Unit): CellBuilder<T>
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun onIsModified(callback: () -> Boolean): CellBuilder<T>
 
   /**
    * All components of the same group share will get the same BoundSize (min/preferred/max),
    * which is that of the biggest component in the group
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2, see Cell.widthGroup()")
   fun sizeGroup(name: String): CellBuilder<T>
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
   fun growPolicy(growPolicy: GrowPolicy): CellBuilder<T>
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun constraints(vararg constraints: CCFlags): CellBuilder<T>
 
   /**
@@ -132,6 +143,7 @@ interface CellBuilder<out T : JComponent> {
   @Deprecated("Use Kotlin UI DSL Version 2")
   fun applyIfEnabled(): CellBuilder<T>
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun <V> withBinding(
     componentGet: (T) -> V,
     componentSet: (T, V) -> Unit,
@@ -146,10 +158,14 @@ interface CellBuilder<out T : JComponent> {
   @Deprecated("Use Kotlin UI DSL Version 2")
   fun withGraphProperty(property: GraphProperty<*>): CellBuilder<T>
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun enabled(isEnabled: Boolean)
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun enableIf(predicate: ComponentPredicate): CellBuilder<T>
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun visible(isVisible: Boolean)
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun visibleIf(predicate: ComponentPredicate): CellBuilder<T>
 
   @Deprecated("Use Kotlin UI DSL Version 2")
@@ -201,20 +217,26 @@ abstract class Cell : BaseBuilder {
    * If this constraint is not set the grow weight is set to 0 and the component will not grow (unless some automatic rule is not applied (see [com.intellij.ui.layout.panel])).
    * Grow weight will only be compared against the weights for the same cell.
    */
+  @Deprecated("Use Kotlin UI DSL Version 2")
   val growX = CCFlags.growX
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   val growY = CCFlags.growY
+  @Deprecated("Use Kotlin UI DSL Version 2")
   val grow = CCFlags.grow
 
   /**
    * Makes the column that the component is residing in grow with `weight`.
    */
+  @Deprecated("Use Kotlin UI DSL Version 2")
   val pushX = CCFlags.pushX
 
   /**
    * Makes the row that the component is residing in grow with `weight`.
    */
+  @Deprecated("Use Kotlin UI DSL Version 2")
   val pushY = CCFlags.pushY
+  @Deprecated("Use Kotlin UI DSL Version 2")
   val push = CCFlags.push
 
   @Deprecated("Use Kotlin UI DSL Version 2")
@@ -250,6 +272,7 @@ abstract class Cell : BaseBuilder {
     return component(result)
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun button(@Button text: String, actionListener: (event: ActionEvent) -> Unit): CellBuilder<JButton> {
     val button = JButton(BundleBase.replaceMnemonicAmpersand(text))
     button.addActionListener(actionListener)
@@ -301,12 +324,14 @@ abstract class Cell : BaseBuilder {
     return component(comment = comment)
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
   internal open fun radioButton(@RadioButton text: String, prop: KMutableProperty0<Boolean>, @Nls comment: String? = null): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text, prop.get())
     return component(comment = comment).withSelectedBinding(prop.toBinding())
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun <T> comboBox(model: ComboBoxModel<T>,
                    getter: () -> T?,
                    setter: (T?) -> Unit,
@@ -314,6 +339,7 @@ abstract class Cell : BaseBuilder {
     return comboBox(model, PropertyBinding(getter, setter), renderer)
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun <T> comboBox(model: ComboBoxModel<T>,
                    modelBinding: PropertyBinding<T?>,
                    renderer: ListCellRenderer<T?>? = null): CellBuilder<ComboBox<T>> {
@@ -329,6 +355,7 @@ abstract class Cell : BaseBuilder {
       )
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   inline fun <reified T : Any> comboBox(
     model: ComboBoxModel<T>,
     prop: KMutableProperty0<T>,
@@ -348,8 +375,10 @@ abstract class Cell : BaseBuilder {
       .applyToComponent { bind(property) }
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun textField(prop: KMutableProperty0<String>, columns: Int? = null): CellBuilder<JBTextField> = textField(prop.toBinding(), columns)
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun textField(getter: () -> String, setter: (String) -> Unit, columns: Int? = null) = textField(PropertyBinding(getter, setter), columns)
 
   @Deprecated("Use Kotlin UI DSL Version 2")
@@ -508,6 +537,7 @@ abstract class Cell : BaseBuilder {
     })
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   abstract fun <T : JComponent> component(component: T): CellBuilder<T>
 
   @Deprecated("Use Kotlin UI DSL Version 2")
@@ -527,6 +557,7 @@ abstract class Cell : BaseBuilder {
 
 @Deprecated("Use Kotlin UI DSL Version 2")
 class InnerCell(val cell: Cell) : Cell() {
+  @Deprecated("Use Kotlin UI DSL Version 2")
   override fun <T : JComponent> component(component: T): CellBuilder<T> {
     return cell.component(component)
   }
@@ -543,6 +574,7 @@ class InnerCell(val cell: Cell) : Cell() {
   }
 }
 
+@Deprecated("Use simplified method com.intellij.ui.dsl.builder.UtilsKt.listCellRenderer instead")
 fun <T> listCellRenderer(renderer: SimpleListCellRenderer<T?>.(value: T, index: Int, isSelected: Boolean) -> Unit): SimpleListCellRenderer<T?> {
   return object : SimpleListCellRenderer<T?>() {
     override fun customize(list: JList<out T?>, value: T?, index: Int, selected: Boolean, hasFocus: Boolean) {
@@ -554,7 +586,7 @@ fun <T> listCellRenderer(renderer: SimpleListCellRenderer<T?>.(value: T, index: 
 }
 
 @ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2")
+@Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
 fun Cell.slider(min: Int, max: Int, minorTick: Int, majorTick: Int): CellBuilder<JSlider> {
   val slider = JSlider()
   UIUtil.setSliderIsFilled(slider, true)
@@ -569,14 +601,14 @@ fun Cell.slider(min: Int, max: Int, minorTick: Int, majorTick: Int): CellBuilder
 }
 
 @ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2")
+@Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
 fun <T : JSlider> CellBuilder<T>.labelTable(table: Hashtable<Int, JComponent>.() -> Unit): CellBuilder<T> {
   component.labelTable = Hashtable<Int, JComponent>().apply(table)
   return this
 }
 
 @ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2")
+@Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
 fun <T : JSlider> CellBuilder<T>.withValueBinding(modelBinding: PropertyBinding<Int>): CellBuilder<T> {
   return withBinding(JSlider::getValue, JSlider::setValue, modelBinding)
 }

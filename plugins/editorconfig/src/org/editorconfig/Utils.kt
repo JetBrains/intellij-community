@@ -37,7 +37,7 @@ import java.nio.file.Paths
 object Utils {
   const val EDITOR_CONFIG_NAME = "EditorConfig"
   const val EDITOR_CONFIG_FILE_NAME = ".editorconfig"
-  const val FULL_SETTINGS_SUPPORT_REG_KEY = "editor.config.full.settings.support"
+  private const val FULL_SETTINGS_SUPPORT_REG_KEY = "editor.config.full.settings.support"
   const val PLUGIN_ID = "org.editorconfig.editorconfigjetbrains"
   // EC spec does not define "none"
   // WEB-18555 says it is a convention, the description seems the same as "unset"?
@@ -163,7 +163,7 @@ object Utils {
       .find { separator == it.separatorString }
       ?.let { StringUtil.toLowerCase(it.name) }
 
-  fun getEncodingLine(project: Project): String =
+  private fun getEncodingLine(project: Project): String =
     getEncoding(project)?.let { "${ConfigEncodingManager.charsetKey}=$it\n" } ?: ""
 
   fun getEncoding(project: Project): String? {

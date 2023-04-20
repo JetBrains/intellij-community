@@ -13,6 +13,6 @@ fun foo() {
     val (x, y) = A.b()
 }
 
-// FIR_COMPARISON
-// FIR_COMPARISON_WITH_DISABLED_COMPONENTS
+
+
 // IGNORE_FIR_LOG

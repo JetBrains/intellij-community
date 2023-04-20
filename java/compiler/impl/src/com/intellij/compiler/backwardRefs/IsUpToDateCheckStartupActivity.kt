@@ -50,7 +50,7 @@ internal class IsUpToDateCheckStartupActivity : ProjectPostStartupActivity {
   }
 
   @Suppress("DuplicatedCode")
-  suspend fun nonBlockingIsUpToDate(project: Project): Boolean {
+  private suspend fun nonBlockingIsUpToDate(project: Project): Boolean {
     return coroutineToIndicator {
       val manager = CompilerManager.getInstance(project)
       manager.isUpToDate(manager.createProjectCompileScope(project), ProgressManager.getInstance().progressIndicator)

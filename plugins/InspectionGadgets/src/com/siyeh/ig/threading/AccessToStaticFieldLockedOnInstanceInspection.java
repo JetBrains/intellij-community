@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
-import static com.intellij.codeInspection.options.OptPane.stringSet;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 public class AccessToStaticFieldLockedOnInstanceInspection extends BaseInspection {
 
@@ -44,7 +44,7 @@ public class AccessToStaticFieldLockedOnInstanceInspection extends BaseInspectio
 
   @Override
   public @NotNull OptPane getOptionsPane() {
-    return pane(stringSet(
+    return pane(stringList(
       "ignoredClasses", InspectionGadgetsBundle.message("options.label.ignored.classes"), 
       new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("choose.class.type.to.ignore"))
     ));

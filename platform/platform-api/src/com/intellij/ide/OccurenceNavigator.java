@@ -57,7 +57,7 @@ public interface OccurenceNavigator extends ActionUpdateThreadAware {
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
+      return OccurenceNavigator.super.getActionUpdateThread();
     }
   };
 

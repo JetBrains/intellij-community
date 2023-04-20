@@ -20,9 +20,6 @@ import java.util.Map;
 
 import static com.intellij.openapi.util.io.FileUtil.join;
 
-/**
- * @author irengrig
- */
 public class MultipleRootEditorWithSplitter extends JPanel {
   private final JList<FilePath> myList;
   private final JPanel myConfigureRootPanel;

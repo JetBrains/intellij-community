@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.Pair;
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Iterator;
 import java.util.List;
 
-class TypoTolerantMatcher extends MinusculeMatcher {
+final class TypoTolerantMatcher extends MinusculeMatcher {
   private final char[] myPattern;
   private final String myHardSeparators;
   private final NameUtil.MatchingCaseSensitivity myOptions;
@@ -99,8 +99,7 @@ class TypoTolerantMatcher extends MinusculeMatcher {
     return false;
   }
 
-  @NotNull
-  private static FList<TextRange> prependRange(@NotNull FList<TextRange> ranges, @NotNull Range range) {
+  private static @NotNull FList<TextRange> prependRange(@NotNull FList<TextRange> ranges, @NotNull Range range) {
     Range head = ((Range)ranges.getHead());
     if (head != null && head.getStartOffset() == range.getEndOffset()) {
       return ranges.getTail().prepend(new Range(range.getStartOffset(), head.getEndOffset(), range.getErrorCount() + head.getErrorCount()));
@@ -220,21 +219,19 @@ class TypoTolerantMatcher extends MinusculeMatcher {
   }
 
   @Override
-  @NotNull
-  public String getPattern() {
+  public @NotNull String getPattern() {
     return new String(myPattern);
   }
 
   @Override
-  @Nullable
-  public FList<TextRange> matchingFragments(@NotNull String name) {
+  public @Nullable FList<TextRange> matchingFragments(@NotNull String name) {
     FList<TextRange> ranges = new Session(name, false).matchingFragments();
     if (ranges != null) return ranges;
     return new Session(name, true).matchingFragments();
   }
 
   private class Session {
-    @NotNull private final String myName;
+    private final @NotNull String myName;
     private final boolean isAsciiName;
 
     private final boolean myTypoAware;
@@ -286,8 +283,7 @@ class TypoTolerantMatcher extends MinusculeMatcher {
       return errorState.length(myPattern);
     }
 
-    @Nullable
-    public FList<TextRange> matchingFragments() {
+    public @Nullable FList<TextRange> matchingFragments() {
       if (myName.length() < myMinNameLength) {
         return null;
       }
@@ -317,8 +313,7 @@ class TypoTolerantMatcher extends MinusculeMatcher {
      * After a wildcard (* or space), search for the first non-wildcard pattern character in the name starting from nameIndex
      * and try to {@link #matchFragment} for it.
      */
-    @Nullable
-    private FList<TextRange> matchWildcards(int patternIndex,
+    private @Nullable FList<TextRange> matchWildcards(int patternIndex,
                                         int nameIndex,
                                         @NotNull ErrorState errorState) {
       if (nameIndex < 0) {
@@ -368,8 +363,7 @@ class TypoTolerantMatcher extends MinusculeMatcher {
      * Enumerates places in name that could be matched by the pattern at patternIndex position
      * and invokes {@link #matchFragment} at those candidate positions
      */
-    @Nullable
-    private FList<TextRange> matchSkippingWords(int patternIndex,
+    private @Nullable FList<TextRange> matchSkippingWords(int patternIndex,
                                             int nameIndex,
                                             boolean allowSpecialChars,
                                             @NotNull ErrorState errorState) {
@@ -489,16 +483,14 @@ class TypoTolerantMatcher extends MinusculeMatcher {
       return false;
     }
 
-    @Nullable
-    private FList<TextRange> matchFragment(int patternIndex,
-                                       int nameIndex,
-                                       @NotNull ErrorState errorState) {
+    private @Nullable FList<TextRange> matchFragment(int patternIndex,
+                                                     int nameIndex,
+                                                     @NotNull ErrorState errorState) {
       Fragment fragment = maxMatchingFragment(patternIndex, nameIndex, errorState);
       return fragment == null ? null : matchInsideFragment(patternIndex, nameIndex, fragment);
     }
 
-    @Nullable
-    private Fragment maxMatchingFragment(int patternIndex, int nameIndex, @NotNull ErrorState baseErrorState) {
+    private @Nullable Fragment maxMatchingFragment(int patternIndex, int nameIndex, @NotNull ErrorState baseErrorState) {
       ErrorState errorState = baseErrorState.deriveFrom(patternIndex);
 
       if (!isFirstCharMatching(nameIndex, patternIndex, errorState)) {
@@ -520,8 +512,7 @@ class TypoTolerantMatcher extends MinusculeMatcher {
     }
 
     // we've found the longest fragment matching pattern and name
-    @Nullable
-    private FList<TextRange> matchInsideFragment(int patternIndex,
+    private @Nullable FList<TextRange> matchInsideFragment(int patternIndex,
                                              int nameIndex,
                                              @NotNull Fragment fragment) {
       // exact middle matches have to be at least of length 3, to prevent too many irrelevant matches
@@ -541,11 +532,10 @@ class TypoTolerantMatcher extends MinusculeMatcher {
              Character.isLetterOrDigit(myName.charAt(nameIndex)) && !NameUtilCore.isWordStart(myName, nameIndex);
     }
 
-    @Nullable
-    private FList<TextRange> findLongestMatchingPrefix(int patternIndex,
-                                                   int nameIndex,
-                                                   int fragmentLength, int minFragment,
-                                                   @NotNull ErrorState errorState) {
+    private @Nullable FList<TextRange> findLongestMatchingPrefix(int patternIndex,
+                                                                 int nameIndex,
+                                                                 int fragmentLength, int minFragment,
+                                                                 @NotNull ErrorState errorState) {
       if (patternIndex + fragmentLength >= patternLength(errorState)) {
         int errors = errorState.countErrors(patternIndex, patternIndex + fragmentLength);
         if (errors == fragmentLength) return null;
@@ -572,8 +562,7 @@ class TypoTolerantMatcher extends MinusculeMatcher {
      * When pattern is "CU" and the name is "CurrentUser", we already have a prefix "Cu" that matches,
      * but we try to find uppercase "U" later in name for better matching degree
      */
-    @Nullable
-    private FList<TextRange> improveCamelHumps(int patternIndex,
+    private @Nullable FList<TextRange> improveCamelHumps(int patternIndex,
                                            int nameIndex,
                                            int maxFragment,
                                            int minFragment,
@@ -595,10 +584,9 @@ class TypoTolerantMatcher extends MinusculeMatcher {
       return isUpperCase(patternIndex, errorState) && !charEquals(patternIndex, nameIndex, false, false, errorState);
     }
 
-    @Nullable
-    private FList<TextRange> findUppercaseMatchFurther(int patternIndex,
-                                                   int nameIndex,
-                                                   @NotNull ErrorState errorState) {
+    private @Nullable FList<TextRange> findUppercaseMatchFurther(int patternIndex,
+                                                                 int nameIndex,
+                                                                 @NotNull ErrorState errorState) {
       int nextWordStart = indexOfWordStart(patternIndex, nameIndex, errorState);
       return matchWildcards(patternIndex, nextWordStart, errorState.deriveFrom(patternIndex));
     }
@@ -707,15 +695,14 @@ class TypoTolerantMatcher extends MinusculeMatcher {
     return 'a' <= c && c <= 'z';
   }
 
-  @NonNls
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return "TypoTolerantMatcher{myPattern=" + new String(myPattern) + ", myOptions=" + myOptions + '}';
   }
 
 
   private static class ErrorState {
-    @Nullable private final ErrorState myBase;
+    private final @Nullable ErrorState myBase;
     private final int myDeriveIndex;
 
     private List<Pair<Integer, Error>> myErrors;
@@ -913,8 +900,7 @@ class TypoTolerantMatcher extends MinusculeMatcher {
     }
 
     @Override
-    @NotNull
-    public Range shiftRight(int delta) {
+    public @NotNull Range shiftRight(int delta) {
       if (delta == 0) return this;
       return new Range(getStartOffset() + delta, getEndOffset() + delta, getErrorCount());
     }

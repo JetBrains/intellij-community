@@ -28,8 +28,6 @@ import org.jetbrains.annotations.Nullable;
  * Allows to toggle {@link EditorEx#isStickySelection() sticky selection} for editors.
  * <p/>
  * Thread-safe.
- * 
- * @author Denis Zhdanov
  */
 public class ToggleStickySelectionModeAction extends EditorAction {
 

@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author Pavel.Dolgov
- */
 public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
   public static final String ID = "moduleInfo";
 

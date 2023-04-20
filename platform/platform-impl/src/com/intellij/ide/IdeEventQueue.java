@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.codeWithMe.ClientId;
@@ -43,6 +43,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,6 +66,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+
+import static com.intellij.ide.ShutdownKt.removeListenerOnCompletion;
 
 public final class IdeEventQueue extends EventQueue {
   private static final ExtensionPointName<EventDispatcher> DISPATCHERS_EP =
@@ -289,6 +292,11 @@ public final class IdeEventQueue extends EventQueue {
   public void addActivityListener(@NotNull Runnable runnable, @NotNull Disposable parentDisposable) {
     myActivityListeners.add(runnable);
     Disposer.register(parentDisposable, () -> myActivityListeners.remove(runnable));
+  }
+
+  public void addActivityListener(@NotNull Runnable runnable, @NotNull CoroutineScope coroutineScope) {
+    myActivityListeners.add(runnable);
+    removeListenerOnCompletion(coroutineScope, runnable, myActivityListeners);
   }
 
   public void addDispatcher(@NotNull EventDispatcher dispatcher, @Nullable Disposable parent) {

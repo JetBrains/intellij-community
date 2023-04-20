@@ -35,9 +35,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
-/**
- * @author Irina.Chernushina on 3/30/2016.
- */
 public final class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
   public static final Topic<Runnable> JSON_SCHEMA_CHANGED = Topic.create("JsonSchemaVfsListener.Json.Schema.Changed", Runnable.class);
   public static final Topic<Runnable> JSON_DEPS_CHANGED = Topic.create("JsonSchemaVfsListener.Json.Deps.Changed", Runnable.class);

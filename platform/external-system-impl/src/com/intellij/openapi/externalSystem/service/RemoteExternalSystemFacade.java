@@ -21,8 +21,6 @@ import java.util.Set;
  * <p/>
  * The main idea is that we don't want to use it directly from an ide process (to avoid unnecessary heap/perm gen pollution, 
  * memory leaks etc). So, we use it at external process and current class works as a facade to it from ide process.
- * 
- * @author Denis Zhdanov
  */
 public interface RemoteExternalSystemFacade<S extends ExternalSystemExecutionSettings> extends Remote, ExternalSystemTaskAware {
 

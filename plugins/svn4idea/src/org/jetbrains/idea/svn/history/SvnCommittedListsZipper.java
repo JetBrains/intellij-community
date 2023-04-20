@@ -18,9 +18,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-/**
-* @author Konstantin Kolosovsky.
-*/
 public class SvnCommittedListsZipper implements VcsCommittedListsZipper {
 
   private static final Logger LOG = Logger.getInstance(SvnCommittedListsZipper.class);

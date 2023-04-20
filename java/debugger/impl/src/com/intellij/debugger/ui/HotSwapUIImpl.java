@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerManagerEx;
@@ -79,6 +79,12 @@ public final class HotSwapUIImpl extends HotSwapUI {
     return ContainerUtil.exists(sessions, DebuggerSession::isPaused);
   }
 
+  /**
+   * After a compilation has finished successfully,
+   * decide which sessions and classes participate in the hotswap and reload them.
+   *
+   * @param generatedPaths the relative paths of the {@code .class} files that were compiled, grouped by their content root
+   */
   private void hotSwapSessions(@NotNull List<DebuggerSession> sessions,
                                @Nullable Map<String, Collection<String>> generatedPaths,
                                @Nullable NotNullLazyValue<List<String>> outputPaths,
@@ -294,6 +300,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
   public void compileAndReload(@NotNull DebuggerSession session, VirtualFile @NotNull ... files) {
     dontAskHotswapAfterThisCompilation();
     ProjectTaskManager.getInstance(session.getProject()).compile(files);
+    // The control flow continues at MyCompilationStatusListener.finished.
   }
 
   public void dontAskHotswapAfterThisCompilation() {

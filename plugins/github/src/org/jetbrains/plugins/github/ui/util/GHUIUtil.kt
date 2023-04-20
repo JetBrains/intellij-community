@@ -29,7 +29,6 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedR
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
-import java.awt.Color
 import java.awt.Component
 import java.awt.Cursor
 import java.awt.event.ActionListener
@@ -74,16 +73,9 @@ object GHUIUtil {
     }
 
   fun createIssueLabelLabel(label: GHLabel): JBLabel = JBLabel(" ${label.name} ", UIUtil.ComponentStyle.SMALL).apply {
-    background = getLabelBackground(label)
-    foreground = getLabelForeground(background)
+    background = CollaborationToolsUIUtil.getLabelBackground(label.color)
+    foreground = CollaborationToolsUIUtil.getLabelForeground(background)
   }.andOpaque()
-
-  fun getLabelBackground(label: GHLabel): JBColor {
-    val apiColor = ColorUtil.fromHex(label.color)
-    return JBColor(apiColor, ColorUtil.darker(apiColor, 3))
-  }
-
-  fun getLabelForeground(bg: Color): Color = if (ColorUtil.isDark(bg)) Color.white else Color.black
 
   fun formatActionDate(date: Date): String {
     val prettyDate = DateFormatUtil.formatPrettyDate(date).toLowerCase()

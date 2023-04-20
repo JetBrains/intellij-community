@@ -11,9 +11,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenSurefireReportInConsoleTest extends LightJavaCodeInsightFixtureTestCase {
 
   private Filter myFilter;

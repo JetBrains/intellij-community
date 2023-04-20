@@ -19,9 +19,6 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 
-/**
- * @author ilyas
- */
 public interface GrLoopStatement extends GrStatement {
   <T extends GrCondition> T replaceBody (T statement) throws IncorrectOperationException;
   GrStatement getBody();

@@ -298,7 +298,7 @@ class CompositeChildAbstractEntityData : WorkspaceEntityData<CompositeChildAbstr
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return CompositeChildAbstractEntity(entitySource) {
-      this.parentInList = parents.filterIsInstance<CompositeAbstractEntity>().single()
+      parents.filterIsInstance<CompositeAbstractEntity>().singleOrNull()?.let { this.parentInList = it }
       this.parentEntity = parents.filterIsInstance<ParentChainEntity>().singleOrNull()
     }
   }

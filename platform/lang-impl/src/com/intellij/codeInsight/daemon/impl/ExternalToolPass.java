@@ -40,9 +40,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Function;
 
-/**
- * @author ven
- */
 public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance(ExternalToolPass.class);
 
@@ -243,7 +240,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
   private void doFinish(@NotNull List<? extends HighlightInfo> highlights, long modificationStampBefore) {
     Editor editor = getEditor();
     ModalityState modalityState =
-      editor != null ? ModalityState.stateForComponent(editor.getComponent()) : ModalityState.defaultModalityState();
+      editor == null ? ModalityState.defaultModalityState() : ModalityState.stateForComponent(editor.getComponent());
     ApplicationManager.getApplication().invokeLater(() -> {
       if (!documentChanged(modificationStampBefore) && !myProject.isDisposed()) {
         int start = myRestrictRange.getStartOffset();

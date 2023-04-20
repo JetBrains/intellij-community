@@ -24,9 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author Denis Zhdanov
- */
 public class EmptyArrangementRuleComponent extends JPanel implements ArrangementRepresentationAware {
   
   private final int myHeight;

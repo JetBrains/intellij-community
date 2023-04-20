@@ -23,8 +23,6 @@ import java.util.List;
 
 /**
  * Not thread-safe.
- * 
- * @author Denis Zhdanov
  */
 public class DefaultArrangementEntry implements ArrangementEntry {
 

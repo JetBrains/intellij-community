@@ -180,7 +180,7 @@ internal class MutableEntityStorageImpl(
       }
       else {
         @Suppress("USELESS_CAST") //this is needed to work around a bug in Kotlin compiler (KT-55555)
-        createEntityTreeCopy(entity) as ModifiableWorkspaceEntityBase<T, *>
+        entity.createEntityTreeCopy(true) as ModifiableWorkspaceEntityBase<T, *>
       }
       
       entityToAdd.applyToBuilder(this)

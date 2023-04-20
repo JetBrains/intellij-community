@@ -22,9 +22,6 @@ import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author dsl
- */
 public class MethodDuplicatesAction extends BaseJavaRefactoringAction {
   @Override
   protected boolean isAvailableInEditorOnly() {

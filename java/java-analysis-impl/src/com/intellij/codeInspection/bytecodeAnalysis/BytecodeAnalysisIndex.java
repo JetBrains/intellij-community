@@ -21,9 +21,6 @@ import java.util.*;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
 
-/**
- * @author lambdamix
- */
 public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
   static final ID<HMember, Void> NAME = ID.create("bytecodeAnalysis");
 

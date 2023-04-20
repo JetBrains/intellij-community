@@ -61,9 +61,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * @author vlan
- */
 public final class PyPackageUtil {
   public static final String SETUPTOOLS = "setuptools";
   public static final String PIP = "pip";

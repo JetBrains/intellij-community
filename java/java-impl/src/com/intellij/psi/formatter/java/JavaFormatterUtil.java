@@ -25,9 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.impl.PsiImplUtil.isTypeAnnotation;
 
-/**
- * @author Denis Zhdanov
- */
 public final class JavaFormatterUtil {
   /**
    * Holds type of AST elements that are considered to be assignments.

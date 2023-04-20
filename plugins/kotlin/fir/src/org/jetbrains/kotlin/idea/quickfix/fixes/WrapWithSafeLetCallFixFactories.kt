@@ -59,7 +59,7 @@ object WrapWithSafeLetCallFixFactories {
      *  `isImplicitInvokeCallToMemberProperty` controls the behavior when hoisting up the nullable expression. It should be set to true
      *  if the call is to a invocable member property.
      */
-    val applicator: KotlinApplicator<KtExpression, Input> = applicator {
+    private val applicator: KotlinApplicator<KtExpression, Input> = applicator {
         familyAndActionName(KotlinBundle.lazyMessage("wrap.with.let.call"))
         applyTo { targetExpression, input ->
             val nullableExpression = input.nullableExpressionPointer.element ?: return@applyTo

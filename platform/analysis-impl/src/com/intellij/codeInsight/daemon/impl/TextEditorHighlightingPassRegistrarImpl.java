@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.*;
+import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -182,7 +183,9 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
         }
         TextEditorHighlightingPassFactory factory = passConfig.passFactory;
         TextEditorHighlightingPass pass =
-          isDumb && !DumbService.isDumbAware(factory) ? null : factory.createHighlightingPass(psiFile, editor);
+          isDumb && !DumbService.isDumbAware(factory)
+          || !ProblemHighlightFilter.shouldHighlightFile(psiFile)
+          ? null : factory.createHighlightingPass(psiFile, editor);
         if (pass == null || isDumb && !DumbService.isDumbAware(pass)) {
           passesRefusedToCreate.add(passId);
         }

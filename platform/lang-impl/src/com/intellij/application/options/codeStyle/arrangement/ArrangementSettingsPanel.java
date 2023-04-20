@@ -34,9 +34,6 @@ import java.util.Collection;
 import java.util.List;
 
 
-/**
- * @author Denis Zhdanov
- */
 public class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
   @NotNull private final JPanel myContent = new JPanel(new GridBagLayout());

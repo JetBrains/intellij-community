@@ -6,6 +6,7 @@ import com.intellij.compiler.cache.CompilerCacheLoadingSettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import io.netty.channel.Channel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
@@ -51,7 +52,9 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
         CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage cacheDownloadMessage = msg.getCacheDownloadMessage();
         ProgressIndicator progressIndicator = getProgressIndicator();
         progressIndicator.setIndeterminate(false);
-        progressIndicator.setText(cacheDownloadMessage.getDescriptionText());
+        // Used only in internal development thus shouldn't be localized
+        @NlsSafe String descriptionText = cacheDownloadMessage.getDescriptionText();
+        progressIndicator.setText(descriptionText);
         if (cacheDownloadMessage.hasDone()) {
           progressIndicator.setFraction(cacheDownloadMessage.getDone());
         }

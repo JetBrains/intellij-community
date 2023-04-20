@@ -9,9 +9,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 
-/**
- * @author ilyas
- */
 public class GrParenthesizedExpressionImpl extends GrExpressionImpl implements GrParenthesizedExpression {
 
   public GrParenthesizedExpressionImpl(@NotNull ASTNode node) {

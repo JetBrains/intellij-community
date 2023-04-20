@@ -10,9 +10,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Sergey Evdokimov
- */
 class JavaFindJarFix extends FindJarFix {
   JavaFindJarFix(@NotNull PsiQualifiedReferenceElement ref) {
     super(ref);

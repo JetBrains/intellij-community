@@ -3,21 +3,22 @@ package com.intellij.ide.starters.local.generator
 
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.starters.local.*
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.file.CanonicalPathUtil.toNioPath
-import com.intellij.openapi.file.NioPathUtil
-import com.intellij.openapi.file.VirtualFileUtil
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.util.io.*
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.nio.file.Path
+import kotlin.io.path.writeBytes
+import kotlin.io.path.writeText
 
 @ApiStatus.Experimental
+@ApiStatus.NonExtendable
 interface AssetsProcessor {
+
+  @RequiresWriteLock
   fun generateSources(
     outputDirectory: Path,
     assets: List<GeneratorAsset>,
@@ -25,11 +26,15 @@ interface AssetsProcessor {
   ): List<Path>
 
   companion object {
+
+    @JvmStatic
     fun getInstance(): AssetsProcessor = service()
   }
 }
 
-abstract class AbstractAssetsProcessor : AssetsProcessor {
+@ApiStatus.Internal
+open class AssetsProcessorImpl : AssetsProcessor {
+
   override fun generateSources(
     outputDirectory: Path,
     assets: List<GeneratorAsset>,
@@ -50,7 +55,7 @@ abstract class AbstractAssetsProcessor : AssetsProcessor {
       val defaultProperties = templateManager.defaultProperties
       val content = asset.template.getText(defaultProperties + properties)
       val file = findOrCreateFile(outputDirectory, asset.targetFileName)
-      setTextContent(file, content)
+      writeText(file, content)
       return file
     }
     catch (e: Throwable) {
@@ -62,7 +67,7 @@ abstract class AbstractAssetsProcessor : AssetsProcessor {
     try {
       val content = asset.resource.openStream().use { it.readBytes() }
       val file = findOrCreateFile(outputDirectory, asset.targetFileName)
-      setBinaryContent(file, content)
+      writeBytes(file, content)
       return file
     }
     catch (e: Throwable) {
@@ -74,94 +79,29 @@ abstract class AbstractAssetsProcessor : AssetsProcessor {
     return findOrCreateDirectory(outputDirectory, asset.targetFileName)
   }
 
-  protected abstract fun setTextContent(file: Path, content: String)
-  protected abstract fun setBinaryContent(file: Path, content: ByteArray)
-  protected abstract fun findOrCreateFile(outputDirectory: Path, relativePath: String): Path
-  protected abstract fun findOrCreateDirectory(outputDirectory: Path, relativePath: String): Path
+  protected open fun writeText(file: Path, content: String) {
+    file.writeText(content)
+  }
+
+  protected open fun writeBytes(file: Path, content: ByteArray) {
+    file.writeBytes(content)
+  }
+
+  protected open fun findOrCreateFile(outputDirectory: Path, relativePath: String): Path {
+    LOG.info("Creating file $relativePath in $outputDirectory")
+    return outputDirectory.findOrCreateFile(relativePath)
+  }
+
+  protected open fun findOrCreateDirectory(outputDirectory: Path, relativePath: String): Path {
+    LOG.info("Creating directory $relativePath in $outputDirectory")
+    return outputDirectory.findOrCreateDirectory(relativePath)
+  }
+
+  companion object {
+
+    private val LOG: Logger = logger<AssetsProcessor>()
+  }
 }
 
 private class TemplateProcessingException(t: Throwable) : IOException("Unable to process template", t)
 private class ResourceProcessingException(t: Throwable) : IOException("Unable to process resource", t)
-
-class AssetsProcessorImpl : AbstractAssetsProcessor() {
-  @Suppress("SSBasedInspection")
-  private val LOG: Logger = logger<AssetsProcessor>()
-
-  override fun setTextContent(file: Path, content: String) {
-    NioPathUtil.setTextContent(file, content)
-  }
-
-  override fun setBinaryContent(file: Path, content: ByteArray) {
-    NioPathUtil.setBinaryContent(file, content)
-  }
-
-  override fun findOrCreateFile(outputDirectory: Path, relativePath: String): Path {
-    LOG.info("Creating file $relativePath in $outputDirectory")
-    return NioPathUtil.findOrCreateFile(outputDirectory, relativePath)
-  }
-
-  override fun findOrCreateDirectory(outputDirectory: Path, relativePath: String): Path {
-    LOG.info("Creating directory $relativePath in $outputDirectory")
-    return NioPathUtil.findOrCreateDirectory(outputDirectory, relativePath)
-  }
-}
-
-@Suppress("TestOnlyProblems")
-fun convertOutputLocationForTests(moduleContentRoot: VirtualFile): Path {
-  if (ApplicationManager.getApplication().isUnitTestMode) {
-    return TestFileSystemLocation(moduleContentRoot, Path.of(moduleContentRoot.name))
-  }
-
-  return moduleContentRoot.toNioPath()
-}
-
-@TestOnly
-class TestFileSystemLocation(
-  val virtualFile: VirtualFile,
-  /**
-   * Fake Path for debug-purpose only, should never be used for disk operations
-   */
-  val debugPath: Path
-): Path by debugPath {
-  override fun toString(): String {
-    return "TestFileSystemLocation($debugPath)"
-  }
-}
-
-@TestOnly
-class TestAssetsProcessorImpl : AbstractAssetsProcessor() {
-  override fun setTextContent(file: Path, content: String) {
-    if (file is TestFileSystemLocation) {
-      VirtualFileUtil.setTextContent(file.virtualFile, content)
-    } else {
-      NioPathUtil.setTextContent(file, content)
-    }
-  }
-
-  override fun setBinaryContent(file: Path, content: ByteArray) {
-    if (file is TestFileSystemLocation) {
-      VirtualFileUtil.setBinaryContent(file.virtualFile, content)
-    } else {
-      NioPathUtil.setBinaryContent(file, content)
-    }
-  }
-
-  override fun findOrCreateFile(outputDirectory: Path, relativePath: String): Path {
-    if (outputDirectory is TestFileSystemLocation) {
-      val vFile = VirtualFileUtil.findOrCreateFile(outputDirectory.virtualFile, relativePath)
-      return TestFileSystemLocation(vFile, outputDirectory.debugPath.resolve(relativePath.toNioPath()))
-    } else {
-      return NioPathUtil.findOrCreateFile(outputDirectory, relativePath)
-    }
-  }
-
-  override fun findOrCreateDirectory(outputDirectory: Path, relativePath: String): Path {
-    if (outputDirectory is TestFileSystemLocation) {
-      val vFile = VirtualFileUtil.findOrCreateDirectory(outputDirectory.virtualFile, relativePath)
-
-      return TestFileSystemLocation(vFile, outputDirectory.debugPath.resolve(relativePath.toNioPath()))
-    } else {
-      return NioPathUtil.findOrCreateDirectory(outputDirectory, relativePath)
-    }
-  }
-}

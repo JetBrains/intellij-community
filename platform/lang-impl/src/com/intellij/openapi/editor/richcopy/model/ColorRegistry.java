@@ -17,8 +17,5 @@ package com.intellij.openapi.editor.richcopy.model;
 
 import java.awt.*;
 
-/**
- * @author Denis Zhdanov
- */
 public class ColorRegistry extends AbstractRegistry<Color> {
 }

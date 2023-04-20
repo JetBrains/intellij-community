@@ -33,9 +33,6 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.Optional;
 
-/**
- * @author Pavel.Dolgov
- */
 public class CreateServiceImplementationClassFix extends CreateServiceClassFixBase {
   private String mySuperClassName;
   private String myImplementationClassName;

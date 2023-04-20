@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nls
 import java.io.File
 import java.util.*
 import java.util.function.Consumer
+import java.util.function.Supplier
 
 private val LOG = logger<SpellCheckerManager>()
 private val BUNDLED_EP_NAME = ExtensionPointName<BundledDictionaryProvider>("com.intellij.spellchecker.bundledDictionaryProvider")
@@ -310,14 +311,13 @@ class SpellCheckerManager(val project: Project) : Disposable {
   }
 }
 
-internal enum class DictionaryLevel(private val nameSupplier: () -> String?) {
+internal enum class DictionaryLevel(private val nameSupplier: Supplier<@Nls String>) {
   APP(SpellCheckerBundle.messagePointer("dictionary.name.application.level")),
   PROJECT(SpellCheckerBundle.messagePointer("dictionary.name.project.level")),
   NOT_SPECIFIED(SpellCheckerBundle.messagePointer("dictionary.name.not.specified"));
 
-  @Suppress("HardCodedStringLiteral")
   @Nls
-  fun getName(): String? = nameSupplier()
+  fun getName(): String = nameSupplier.get()
 
   companion object {
     private val DICTIONARY_LEVELS = EnumSet.allOf(DictionaryLevel::class.java).associateBy { it.getName() }

@@ -31,9 +31,6 @@ import java.util.Collection;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertThat;
 
-/**
- * @author dsl
- */
 public class ResolveMethod15Test extends LightResolveTestCase {
   @NotNull
   @Override

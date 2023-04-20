@@ -22,7 +22,6 @@ import javax.swing.*;
  * a configuration using this executor.
  *
  * @see ExecutorRegistry
- * @author spleaner
  */
 public abstract class Executor {
   public static final ExtensionPointName<Executor> EXECUTOR_EXTENSION_NAME = new ExtensionPointName<>("com.intellij.executor");

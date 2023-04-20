@@ -1,5 +1,5 @@
-group "${context.group}"
-version "${context.version}"
+group = "${context.group}"
+version = "${context.version}"
 
 allprojects {
     repositories {

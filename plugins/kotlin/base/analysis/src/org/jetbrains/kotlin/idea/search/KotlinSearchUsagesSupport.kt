@@ -6,7 +6,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
@@ -14,9 +13,11 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.resolve.ImportPath
+import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
 
 interface KotlinSearchUsagesSupport {
 
@@ -49,6 +50,10 @@ interface KotlinSearchUsagesSupport {
 
             return if (kotlinOptions.searchForComponentConventions) this else filter { !it.isComponentElement() }
         }
+
+        fun PsiNamedElement.getClassNameForCompanionObject(): String? =
+            getInstance(project).getClassNameToSearch(this)
+
 
         fun PsiReference.isCallableOverrideUsage(declaration: KtNamedDeclaration): Boolean =
             getInstance(declaration.project).isCallableOverrideUsage(this, declaration)
@@ -84,12 +89,6 @@ interface KotlinSearchUsagesSupport {
 
         fun findDeepestSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> =
             getInstance(method.project).findDeepestSuperMethodsNoWrapping(method)
-
-        fun findTypeAliasByShortName(shortName: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias> =
-            getInstance(project).findTypeAliasByShortName(shortName, project, scope)
-
-        fun isInProjectSource(element: PsiElement, includeScriptsOutsideSourceRoots: Boolean = false): Boolean =
-            getInstance(element.project).isInProjectSource(element, includeScriptsOutsideSourceRoots)
 
         fun KtDeclaration.isOverridable(): Boolean =
             getInstance(project).isOverridable(this)
@@ -155,12 +154,6 @@ interface KotlinSearchUsagesSupport {
 
     fun findDeepestSuperMethodsNoWrapping(method: PsiElement): List<PsiElement>
 
-    fun findSuperMethodsNoWrapping(method: PsiElement): List<PsiElement>
-
-    fun findTypeAliasByShortName(shortName: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias>
-
-    fun isInProjectSource(element: PsiElement, includeScriptsOutsideSourceRoots: Boolean = false): Boolean
-
     fun isOverridable(declaration: KtDeclaration): Boolean
 
     fun isInheritable(ktClass: KtClass): Boolean
@@ -175,4 +168,12 @@ interface KotlinSearchUsagesSupport {
     fun createConstructorHandle(ktDeclaration: KtDeclaration): ConstructorCallHandle
 
     fun createConstructorHandle(psiMethod: PsiMethod): ConstructorCallHandle
+
+    /**
+     * Name for companion object or for invoke located in class without constructor
+     */
+    fun getClassNameToSearch(namedElement : PsiNamedElement): String? =
+        (namedElement is KtObjectDeclaration && namedElement.isCompanion())
+            .ifTrue { namedElement.getNonStrictParentOfType<KtClass>()?.name }
+
 }

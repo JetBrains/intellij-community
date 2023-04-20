@@ -204,6 +204,10 @@
     <keyboard-shortcut first-keystroke="control K" second-keystroke="control back_quote" /><!--Edit.ShowCodeLensMenu-->
     <keyboard-shortcut first-keystroke="control K" second-keystroke="back_quote" />
   </action>
+  <action id="OptimizeImports">
+    <keyboard-shortcut first-keystroke="control R" second-keystroke="G"/>
+    <keyboard-shortcut first-keystroke="control R" second-keystroke="control G"/>
+  </action>
 
 
   <!--MISSING VISUAL STUDIO SHORTCUTS-->

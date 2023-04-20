@@ -26,9 +26,6 @@ import java.util.List;
 
 import static org.jetbrains.concurrency.Promises.resolvedPromise;
 
-/**
- * @author irengrig
- */
 class DummyChangesView implements ChangesViewEx {
   DummyChangesView() {
   }

@@ -27,8 +27,6 @@ import java.awt.*;
  * to the code that knows how to do that.
  * <p/>
  * Current interface defines a contract for such a text drawing delegation task.
- *
- * @author Denis Zhdanov
  */
 public interface TextDrawingCallback {
 

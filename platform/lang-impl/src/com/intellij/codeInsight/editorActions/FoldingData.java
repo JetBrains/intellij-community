@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NonNls;
 import java.awt.datatransfer.DataFlavor;
 import java.io.Serializable;
 
-/**
-* @author Denis Fokin
-*/
 public class FoldingData implements Cloneable, Serializable {
   private static @NonNls DataFlavor ourFlavor;
 

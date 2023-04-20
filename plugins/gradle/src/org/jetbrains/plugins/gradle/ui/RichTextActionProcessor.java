@@ -16,9 +16,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-/**
- * @author Denis Zhdanov
- */
 public class RichTextActionProcessor implements RichTextControlBuilder.RichTextProcessor {
 
   @Override

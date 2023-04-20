@@ -180,7 +180,7 @@ class PyTypeHintsInspection : PyInspection() {
         return
       }
 
-      fun registerProblemForSelves(message: String) {
+      fun registerProblemForSelves(message: @InspectionMessage String) {
         selves.forEach {
           registerProblem(it, message)
         }

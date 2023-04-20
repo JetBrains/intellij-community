@@ -78,9 +78,6 @@ import java.util.List;
 import static org.jetbrains.plugins.groovy.lang.resolve.ReferencesKt.resolvePackageFqn;
 import static org.jetbrains.plugins.groovy.lang.resolve.impl.ConstructorsKt.getAllConstructors;
 
-/**
- * @author ilyas
- */
 public final class GroovyCompletionUtil {
 
   private static volatile boolean isSlowCompletionEnabled = true;

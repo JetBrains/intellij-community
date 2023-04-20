@@ -175,7 +175,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
       sortedClusters.stream().skip(myAlreadyRenderedSnippets.size()).limit(CLUSTER_LIMIT).forEach(cluster -> {
         final Set<SimilarUsage> filteredUsages =
           cluster.getUsages().stream().filter(e -> (e instanceof UsageInfo2UsageAdapter)).collect(Collectors.toSet());
-        renderClusterDescription(filteredUsages);
+        ReadAction.run(() -> renderClusterDescription(filteredUsages));
       });
       if (logMoreSnippetsLoaded) {
         SimilarUsagesCollector.logMoreClustersLoaded(myProject, myUsageView, myAlreadyRenderedSnippets.size());

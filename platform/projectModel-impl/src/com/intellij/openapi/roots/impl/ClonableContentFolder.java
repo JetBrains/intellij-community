@@ -20,9 +20,6 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ContentFolder;
 import org.jetbrains.annotations.NotNull;
 
-/**
- *  @author dsl
- */
 interface ClonableContentFolder {
   @NotNull
   ContentFolder cloneFolder(@NotNull ContentEntry contentEntry);

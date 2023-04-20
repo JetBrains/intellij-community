@@ -220,7 +220,7 @@ class JavaResourceRootPropertiesEntityData : WorkspaceEntityData<JavaResourceRoo
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return JavaResourceRootPropertiesEntity(generated, relativeOutputPath, entitySource) {
-      this.sourceRoot = parents.filterIsInstance<SourceRootEntity>().single()
+      parents.filterIsInstance<SourceRootEntity>().singleOrNull()?.let { this.sourceRoot = it }
     }
   }
 

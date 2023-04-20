@@ -40,9 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author Irina.Chernushina on 10/8/2015.
- */
 public final class NewRunConfigurationPopup {
   static final ConfigurationType HIDDEN_ITEMS_STUB = new ConfigurationType() {
     @NotNull

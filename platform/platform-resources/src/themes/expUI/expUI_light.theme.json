@@ -543,7 +543,8 @@
         "borderInsets": "3,12,3,6",
         "background": "Grey2",
         "hoverBackground": "Grey3",
-        "pressedBackground": "Grey3"
+        "pressedBackground": "Grey3",
+        "maxWidth": 350
       },
       "Button": {
         "buttonInsets": "0,0,0,0"
@@ -655,11 +656,24 @@
 
     "RunWidget" : {
       "foreground": "Grey13",
+      "disabledForeground": "#FFFFFF66",
       "background": "Blue5",
       "runningBackground": "Green5",
       "hoverBackground": "#00000019",
       "pressedBackground": "#00000028",
       "separatorColor": "#FFFFFF40"
+    },
+
+    "MainWindow.Tab" : {
+      "selectedForeground": "Grey9",
+      "selectedBackground": "Grey2",
+      "selectedInactiveBackground": "Grey3",
+      "foreground": "Grey8",
+      "background": "Grey1",
+      "hoverForeground": "Grey9",
+      "hoverBackground": "#171717",
+      "separatorColor": "Grey3",
+      "borderColor": "Grey3"
     }
   },
 

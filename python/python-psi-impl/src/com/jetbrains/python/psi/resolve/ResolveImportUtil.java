@@ -36,9 +36,6 @@ import java.util.List;
 
 import static com.jetbrains.python.psi.FutureFeature.ABSOLUTE_IMPORT;
 
-/**
- * @author dcheryasov
- */
 public final class ResolveImportUtil {
 
   private ResolveImportUtil() {

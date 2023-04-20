@@ -344,11 +344,5 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
       openFile(file);
     }
   }
-
-  /** @deprecated pointless; please use {@link #openFile} instead */
-  @Deprecated(forRemoval = true)
-  public static void selectDirectory(@NotNull File directory) {
-    openFile(directory);
-  }
   //</editor-fold>
 }

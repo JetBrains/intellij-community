@@ -13,7 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.terminal.TerminalView;
+import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
 
 /**
  * An action that activates the terminal window for file, selected by user.
@@ -49,6 +49,6 @@ public class RevealFileInTerminalAction extends DumbAwareAction {
     if (project == null || selectedFile == null) {
       return;
     }
-    TerminalView.getInstance(project).openTerminalIn(selectedFile);
+    TerminalToolWindowManager.getInstance(project).openTerminalIn(selectedFile);
   }
 }

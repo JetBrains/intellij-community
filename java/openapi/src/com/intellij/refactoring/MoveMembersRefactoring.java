@@ -20,9 +20,6 @@ import com.intellij.psi.PsiElement;
 
 import java.util.List;
 
-/**
- * @author dsl
- */
 public interface MoveMembersRefactoring extends Refactoring {
   List<PsiElement> getMembers();
 

@@ -10,9 +10,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
-/**
- * @author ilyas
- */
 public class GrThrowStatementImpl extends GroovyPsiElementImpl implements GrThrowStatement {
   public GrThrowStatementImpl(@NotNull ASTNode node) {
     super(node);

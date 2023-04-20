@@ -26,8 +26,6 @@ import java.util.List;
 /**
  * The object contains a list of import candidates and serves only to show the initial hint;
  * the actual work is done in ImportFromExistingAction..
- *
- * @author dcheryasov
  */
 public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements HighPriorityAction {
 

@@ -7,9 +7,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public class JavaIdentifier extends LightIdentifier {
   private final PsiElement myElement;
 

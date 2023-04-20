@@ -27,9 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 
 import java.util.List;
 
-/**
- * @author ilyas
- */
 public class GroovyArgListSelectioner extends ExtendWordSelectionHandlerBase {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {

@@ -27,7 +27,16 @@ import java.util.concurrent.locks.ReentrantLock;
 import static com.intellij.openapi.vfs.newvfs.persistent.FSRecords.IDE_USE_FS_ROOTS_DATA_LOADER;
 
 final class PersistentFSTreeAccessor {
+  /**
+   * The attribute is a list of child fileId, diff-compressed -- see {@link #doSaveChildren} for details.
+   * The FS super-root ({@link #ROOT_RECORD_ID}) is an exceptional case: there is stored both child fileId
+   * AND child nameId, both diff-compressed -- see {@link #findOrCreateRootRecord(String)} for details.
+   */
   private static final FileAttribute CHILDREN_ATTR = new FileAttribute("FsRecords.DIRECTORY_CHILDREN");
+  /**
+   * fileId of super-root, 'root of all roots' record: superficial file record to which all FS roots are
+   * attached as children -- see {@link #findOrCreateRootRecord(String)} for details.
+   */
   private static final int ROOT_RECORD_ID = 1;
 
   private final PersistentFSAttributeAccessor myAttributeAccessor;
@@ -50,7 +59,7 @@ final class PersistentFSTreeAccessor {
 
       int prevId = parentId;
       for (ChildInfo childInfo : toSave.children) {
-        int childId = childInfo.getId();
+        final int childId = childInfo.getId();
         if (childId <= 0) {
           throw new IllegalArgumentException("ids must be >0 but got: "+childId+"; childInfo: "+childInfo+"; list: "+toSave);
         }
@@ -58,7 +67,7 @@ final class PersistentFSTreeAccessor {
           FSRecords.LOG.error("Cyclic parent-child relations. parentId="+parentId+"; list: "+toSave);
         }
         else {
-          int delta = childId - prevId;
+          final int delta = childId - prevId;
           if (prevId != parentId && delta <= 0) {
             throw new IllegalArgumentException("The list must be sorted by (unique) id but got parentId: " + parentId  + "; delta: " + delta+"; childInfo: "+childInfo+"; prevId: "+prevId+"; toSave: "+toSave);
           }
@@ -133,7 +142,7 @@ final class PersistentFSTreeAccessor {
       PersistentFSConnection connection = myFSConnection;
 
       //TODO RC: with non-strict names enumerator it is possible root==NULL_ID here -> what will happens?
-      int root = connection.getNames().tryEnumerate(rootUrl);
+      int rootNameId = connection.getNames().tryEnumerate(rootUrl);
 
       int[] names = ArrayUtilRt.EMPTY_INT_ARRAY;
       int[] ids = ArrayUtilRt.EMPTY_INT_ARRAY;
@@ -148,7 +157,7 @@ final class PersistentFSTreeAccessor {
           for (int i = 0; i < count; i++) {
             final int name = DataInputOutputUtil.readINT(input) + prevNameId;
             final int id = DataInputOutputUtil.readINT(input) + prevId;
-            if (name == root) {
+            if (name == rootNameId) {
               return id;
             }
 
@@ -159,20 +168,19 @@ final class PersistentFSTreeAccessor {
       }
 
       connection.markDirty();
-      root = connection.getNames().enumerate(rootUrl);
+      rootNameId = connection.getNames().enumerate(rootUrl);
 
-      int id;
       try (DataOutputStream output = myAttributeAccessor.writeAttribute(ROOT_RECORD_ID, CHILDREN_ATTR)) {
-        id = FSRecords.createRecord();
+        final int newRootFileId = FSRecords.createRecord();
 
-        int index = Arrays.binarySearch(ids, id);
-        ids = ArrayUtil.insert(ids, -index - 1, id);
-        names = ArrayUtil.insert(names, -index - 1, root);
+        int index = Arrays.binarySearch(ids, newRootFileId);
+        ids = ArrayUtil.insert(ids, -index - 1, newRootFileId);
+        names = ArrayUtil.insert(names, -index - 1, rootNameId);
 
         saveNameIdSequenceWithDeltas(names, ids, output);
+        return newRootFileId;
       }
 
-      return id;
     }
     finally {
       myRootsAccessLock.unlock();

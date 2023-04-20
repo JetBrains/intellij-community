@@ -22,9 +22,6 @@ import com.intellij.lexer.MergingLexerAdapter;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.TokenSet;
 
-/**
- * @author ilyas
- */
 public class GroovyLexer extends LookAheadLexer {
   private static final TokenSet tokensToMerge = TokenSet.create(
     GroovyTokenTypes.mSL_COMMENT,

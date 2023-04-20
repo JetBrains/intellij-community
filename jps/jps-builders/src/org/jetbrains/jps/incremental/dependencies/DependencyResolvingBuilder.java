@@ -4,6 +4,7 @@ package org.jetbrains.jps.incremental.dependencies;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
@@ -42,6 +43,7 @@ import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
 import org.jetbrains.jps.model.serialization.JpsPathVariablesConfiguration;
 import org.jetbrains.jps.service.JpsServiceManager;
+import org.jetbrains.jps.util.JpsChecksumUtil;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
@@ -53,13 +55,9 @@ import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
-import static org.jetbrains.jps.util.JpsChecksumUtil.getSha256Checksum;
-
 /**
  * Downloads missing Maven repository libraries on which a module depends. IDE should download them automatically when the project is opened,
- * so this builder does nothing in normal cases. However it's needed when the build process is started in standalone mode (not from IDE) or
+ * so this builder does nothing in normal cases. However, it's needed when the build process is started in standalone mode (not from IDE) or
  * if build is triggered before IDE downloads all required dependencies.
  */
 public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
@@ -67,8 +65,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
   private static final String MAVEN_REPOSITORY_PATH_VAR = "MAVEN_REPOSITORY";
   private static final String DEFAULT_MAVEN_REPOSITORY_PATH = ".m2/repository";
 
-  private static final Key<ArtifactRepositoryManager> MANAGER_KEY = GlobalContextKey.create("_artifact_repository_manager_");
-  public static final Key<Map<String, ArtifactRepositoryManager>> NAMED_MANAGERS_KEY = Key.create("_named_artifact_repository_manager_");
+  private static final Key<Pair<ArtifactRepositoryManager, Map<String, ArtifactRepositoryManager>>> MANAGERS_KEY = GlobalContextKey.create("_artifact_repository_manager_"); // pair[unnamedManager: {namedManagers}]
 
   private static final Key<Exception> RESOLVE_ERROR_KEY = Key.create("_artifact_repository_resolve_error_");
   public static final String RESOLUTION_PARALLELISM_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.parallelism";
@@ -87,7 +84,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
 
   @Override
   public @NotNull List<String> getCompilableFileExtensions() {
-    return emptyList();
+    return Collections.emptyList();
   }
 
   @Override
@@ -279,7 +276,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
                                                       boolean verificationSha256SumRequired) {
     boolean verifySha256Checksum = descriptor.isVerifySha256Checksum();
     if (!verifySha256Checksum) {
-      return verificationSha256SumRequired ? singletonList("SHA256 checksum is required, but not enabled") : emptyList();
+      return verificationSha256SumRequired ? Collections.singletonList("SHA256 checksum is required, but not enabled") : Collections.emptyList();
     }
 
     List<String> problems = new ArrayList<>();
@@ -309,7 +306,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
       Path artifact = JpsPathUtil.urlToFile(verification.getUrl()).toPath();
       try {
         String expectedSha256Sum = verification.getSha256sum();
-        String actualSha256Sum = getSha256Checksum(artifact);
+        String actualSha256Sum = JpsChecksumUtil.getSha256Checksum(artifact);
         if (!Objects.equals(expectedSha256Sum, actualSha256Sum)) {
           problems.add("bad checksum for " + artifact.getFileName() + ": expected " + expectedSha256Sum + ", actual " + actualSha256Sum);
         }
@@ -403,10 +400,9 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
    */
   private static synchronized ArtifactRepositoryManager getRepositoryManager(final CompileContext context, @Nullable String remoteRepositoryId)
     throws RemoteRepositoryNotFoundException {
-    ArtifactRepositoryManager manager = MANAGER_KEY.get(context);
-    Map<String, ArtifactRepositoryManager> namedManagers = NAMED_MANAGERS_KEY.get(context);
-
-    if (manager == null || namedManagers == null) {
+    
+    Pair<ArtifactRepositoryManager, Map<String, ArtifactRepositoryManager>> managers = MANAGERS_KEY.get(context);
+    if (managers == null) {
       final List<RemoteRepository> repositories = new SmartList<>();
       for (JpsRemoteRepositoryDescription repo : JpsRemoteRepositoryService.getInstance().getOrCreateRemoteRepositoriesConfiguration(context.getProjectDescriptor().getProject())
           .getRepositories()) {
@@ -436,31 +432,25 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
         }
       };
 
-      if (manager == null) {
-        manager = new ArtifactRepositoryManager(localRepositoryRoot, repositories, progressConsumer, retry);
-        // further init manager here
-        MANAGER_KEY.set(context, manager);
+      final ArtifactRepositoryManager unnamedManager = new ArtifactRepositoryManager(localRepositoryRoot, repositories, progressConsumer, retry);
+      // further init manager here
+      
+      final Map<String, ArtifactRepositoryManager> namedManagers = new HashMap<>();
+      for (RemoteRepository repository : repositories) {
+        namedManagers.put(repository.getId(), new ArtifactRepositoryManager(localRepositoryRoot, Collections.singletonList(repository), progressConsumer, retry));
       }
 
-      if (namedManagers == null) {
-        Map<String, ArtifactRepositoryManager> managers = new HashMap<>();
-        for (var repository : repositories) {
-          managers.put(repository.getId(), new ArtifactRepositoryManager(localRepositoryRoot, singletonList(repository), progressConsumer, retry));
-        }
-        namedManagers = Collections.unmodifiableMap(managers);
-        NAMED_MANAGERS_KEY.set(context, namedManagers);
-      }
+      MANAGERS_KEY.set(context, managers = Pair.create(unnamedManager, Collections.unmodifiableMap(namedManagers)));
     }
 
     if (remoteRepositoryId == null) {
-      return manager;
+      return managers.getFirst();
     }
-
-    ArtifactRepositoryManager found = namedManagers.getOrDefault(remoteRepositoryId, null);
-    if (found == null) {
+    final ArtifactRepositoryManager namedManager = managers.getSecond().get(remoteRepositoryId);
+    if (namedManager == null) {
       throw new RemoteRepositoryNotFoundException(remoteRepositoryId);
     }
-    return found;
+    return namedManager;
   }
 
   private static ArtifactRepositoryManager.ArtifactAuthenticationData obtainAuthenticationData(String url) {

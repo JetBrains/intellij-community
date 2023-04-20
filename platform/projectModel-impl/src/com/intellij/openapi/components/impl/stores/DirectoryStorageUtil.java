@@ -75,6 +75,9 @@ public final class DirectoryStorageUtil {
       }
       return fileToState;
     }
+    catch (DirectoryIteratorException e) {
+      throw e.getCause();
+    }
     catch (NoSuchFileException | NotDirectoryException ignore) {
       return Collections.emptyMap();
     }

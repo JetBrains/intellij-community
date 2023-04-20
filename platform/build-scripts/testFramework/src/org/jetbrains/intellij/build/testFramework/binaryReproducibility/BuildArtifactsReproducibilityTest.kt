@@ -1,37 +1,54 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.testFramework.binaryReproducibility
 
+import com.intellij.openapi.util.io.NioFiles
+import kotlinx.coroutines.channels.Channel
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.reproducibleBuilds.diffTool.FileTreeContentComparison
-import org.jetbrains.jps.api.GlobalOptions
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.extension
+import kotlin.io.path.name
 import kotlin.io.path.writeText
 
-class BuildArtifactsReproducibilityTest {
-  private val buildDateInSeconds = System.getenv(GlobalOptions.BUILD_DATE_IN_SECONDS)?.toLongOrNull()
+internal class BuildArtifactsReproducibilityTest {
   private val randomSeedNumber = Random().nextLong()
+  private val iterationsChannel = Channel<BuildContext>()
+  val iterations = if (isEnabled) 2 else 1
 
   companion object {
     val isEnabled = System.getProperty("intellij.build.test.artifacts.reproducibility") == "true"
   }
 
   fun configure(options: BuildOptions) {
-    assert(isEnabled)
-    requireNotNull(buildDateInSeconds) {
-      "${GlobalOptions.BUILD_DATE_IN_SECONDS} environment variable is required"
-    }
-    options.buildDateInSeconds = buildDateInSeconds
+    if (!isEnabled) return
     options.randomSeedNumber = randomSeedNumber
     options.buildStepsToSkip.remove(BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP)
     options.buildMacArtifactsWithRuntime = true
     options.buildUnixSnaps = true
   }
 
-  fun compare(build1: BuildContext, build2: BuildContext) {
+  suspend fun iterationFinished(iterationNumber: Int, build: BuildContext) {
+    if (!isEnabled) return
+    build.cleanBuildOutput()
+    if (iterationNumber == 1) {
+      iterationsChannel.send(build)
+      /**
+       * Waiting for [compare] to complete not to clean up [BuildPaths.buildOutputDir] of a [build]
+       */
+      iterationsChannel.receive()
+    }
+    else {
+      val otherBuild = iterationsChannel.receive()
+      compare(build, otherBuild)
+      iterationsChannel.send(build)
+    }
+  }
+
+  private fun compare(build1: BuildContext, build2: BuildContext) {
     assert(isEnabled)
     val buildId = System.getProperty("teamcity.build.id")
     val diffDirectory = when {
@@ -56,11 +73,11 @@ class BuildArtifactsReproducibilityTest {
     report(result, diffDirectory, build1)
   }
 
-  private fun report(result: FileTreeContentComparison.ComparisonResult, diffDirectory: Path, context: BuildContext) {
+  private fun report(result: FileTreeContentComparison.ComparisonResult, reportDirectory: Path, context: BuildContext) {
     val report = context.applicationInfo.productName
       .replace(" ", "-")
       .plus("-compared-files.txt")
-      .let(diffDirectory::resolve)
+      .let(reportDirectory::resolve)
     Files.createDirectories(report.parent)
     val reportText = result.comparedFiles
       .sortedBy { it.extension }
@@ -75,6 +92,19 @@ class BuildArtifactsReproducibilityTest {
     }
     require(result.comparedFiles.isNotEmpty()) {
       "Nothing was compared"
+    }
+  }
+
+  private fun BuildContext.cleanBuildOutput() {
+    Files.newDirectoryStream(paths.buildOutputDir).use { content ->
+      content.filter {
+        it != paths.artifactDir && it != paths.logDir
+      }.forEach(NioFiles::deleteRecursively)
+    }
+    Files.newDirectoryStream(paths.artifactDir).use { content ->
+      content.filter {
+        it.name == "unscrambled" || it.name == "scramble-logs"
+      }.forEach(NioFiles::deleteRecursively)
     }
   }
 }

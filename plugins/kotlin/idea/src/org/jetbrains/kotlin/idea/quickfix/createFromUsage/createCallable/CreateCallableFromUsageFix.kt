@@ -135,16 +135,14 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
             append(' ')
 
             val isAbstract = callableInfos.any { it.isAbstract }
-            if (!isAbstract) {
-                if (isExtension) {
-                    append(KotlinBundle.message("text.extension"))
-                    append(' ')
-                } else if (receiverTypeInfo != TypeInfo.Empty) {
-                    append(KotlinBundle.message("text.member"))
-                    append(' ')
-                }
-            } else {
+            if (isAbstract) {
                 append(KotlinBundle.message("text.abstract"))
+                append(' ')
+            } else if (isExtension) {
+                append(KotlinBundle.message("text.extension"))
+                append(' ')
+            } else if (receiverTypeInfo != TypeInfo.Empty) {
+                append(KotlinBundle.message("text.member"))
                 append(' ')
             }
 
@@ -223,7 +221,7 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
 
     private fun getDeclaration(descriptor: ClassifierDescriptor, project: Project): PsiElement? {
         if (descriptor is FunctionClassDescriptor) {
-            val contextElement = element ?: error("Context element is not found")
+            if (element == null) error("Context element is not found")
             val psiFactory = KtPsiFactory(project)
             val syntheticClass = psiFactory.createClass(IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.render(descriptor))
             return psiFactory.createFile("${descriptor.name.asString()}.kt", "").add(syntheticClass)

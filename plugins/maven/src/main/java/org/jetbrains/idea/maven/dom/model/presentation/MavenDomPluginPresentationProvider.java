@@ -4,9 +4,6 @@ import com.intellij.ide.presentation.PresentationProvider;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenDomPluginPresentationProvider extends PresentationProvider<MavenDomPlugin> {
 
   @Nullable

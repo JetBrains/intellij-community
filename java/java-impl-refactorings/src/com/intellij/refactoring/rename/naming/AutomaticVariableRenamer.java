@@ -31,9 +31,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author dsl
- */
 public class AutomaticVariableRenamer extends AutomaticRenamer {
   private final Set<PsiNamedElement> myToUnpluralize = new HashSet<>();
 

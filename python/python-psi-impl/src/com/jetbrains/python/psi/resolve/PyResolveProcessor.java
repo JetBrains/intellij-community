@@ -21,9 +21,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author vlan
- */
 public class PyResolveProcessor implements PsiScopeProcessor {
   @NotNull private final String myName;
   private final boolean myLocalResolve;

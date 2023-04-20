@@ -196,7 +196,7 @@ private class GitUserNameCheckinHandler(project: Project) : GitCheckinHandler(pr
         }
       }
       catch (e: VcsException) {
-        logger<GitUserNameCheckinHandler>().error("Couldn't set user.name and user.email", e)
+        logger<GitUserNameCheckinHandler>().warn("Couldn't set user.name and user.email", e)
         error.set(GitBundle.message("error.cant.set.user.name.email"))
       }
     }

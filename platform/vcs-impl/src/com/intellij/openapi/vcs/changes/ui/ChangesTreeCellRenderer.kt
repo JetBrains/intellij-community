@@ -51,7 +51,7 @@ open class ChangesTreeCellRenderer(protected val textRenderer: ChangesBrowserNod
       isOpaque = false
 
       isVisible = tree.isShowCheckboxes &&
-                  (value is ChangesTree.FixedHeightSampleChangesBrowserNode || // assume checkbox is visible for the sample node
+                  (value is FixedHeightSampleChangesBrowserNode || // assume checkbox is visible for the sample node
                    tree.isInclusionVisible(value))
       if (isVisible) {
         state = tree.getNodeStatus(value)

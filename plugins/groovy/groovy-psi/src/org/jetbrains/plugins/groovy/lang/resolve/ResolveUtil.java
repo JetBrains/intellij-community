@@ -76,9 +76,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PsiTreeUtilKt.treeWalkU
 import static org.jetbrains.plugins.groovy.lang.resolve.ReceiverKt.processReceiverType;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.initialState;
 
-/**
- * @author ven
- */
 public final class ResolveUtil {
   public static final PsiScopeProcessor.Event DECLARATION_SCOPE_PASSED = new PsiScopeProcessor.Event() {};
   public static final Key<String> DOCUMENTATION_DELEGATE_FQN = Key.create("groovy.documentation.delegate.fqn");

@@ -14,8 +14,8 @@ import com.intellij.testFramework.replaceService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import org.mockito.ArgumentMatchers
-import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.`when`
 import java.io.File
 import java.nio.file.FileSystems
 import java.nio.file.StandardWatchEventKinds
@@ -44,6 +44,9 @@ class FileLoggerTest : HeavyPlatformTestCase() {
   override fun tearDown() {
     try {
       dir.deleteRecursively()
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
     }
     finally {
       super.tearDown()

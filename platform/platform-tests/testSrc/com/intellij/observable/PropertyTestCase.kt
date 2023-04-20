@@ -24,6 +24,10 @@ abstract class PropertyTestCase {
     propertyGraph.dependsOn(this, property) { update() }
   }
 
+  fun afterGraphPropagation(listener: () -> Unit) {
+    propertyGraph.afterPropagation(listener)
+  }
+
   protected fun <T> assertProperty(property: ObservableProperty<T>, value: T) {
     Assertions.assertEquals(value, property.get())
   }

@@ -3,8 +3,7 @@ package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.impl.EditorImpl
 
 abstract class FactoryInlayHintsCollector(editor: Editor) : InlayHintsCollector {
-  val factory = PresentationFactory(editor as EditorImpl)
+  val factory = PresentationFactory(editor)
 }

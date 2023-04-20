@@ -14,9 +14,6 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 import java.util.function.Predicate;
 
-/**
- * @author db
- */
 public final class ClassRepr extends ClassFileRepr {
   private final TypeRepr.ClassType mySuperClass;
   private final Set<TypeRepr.AbstractType> myInterfaces;

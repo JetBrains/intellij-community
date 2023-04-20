@@ -7,4 +7,3 @@ public fun message(@PropertyKey(resourceBundle = "<caret>propertyFileUsagesByRef
 fun test() {
     message("foo.bar")
 }
-// FIR_COMPARISON

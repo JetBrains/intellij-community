@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.util.SystemInfoRt;
@@ -51,7 +51,7 @@ public final class FrameBoundsConverter {
         if (b.height > screen.height) {
           b.height = screen.height;
         }
-        return new Pair<>(bounds, gd);
+        return new Pair<>(b, gd);
       }
     }
 
@@ -66,12 +66,11 @@ public final class FrameBoundsConverter {
    */
   public static Rectangle convertToDeviceSpace(GraphicsConfiguration gc, @NotNull Rectangle bounds) {
     Rectangle b = bounds.getBounds();
-    if (!shouldConvert()) return b;
-
-    try {
-      scaleUp(b, gc);
-    }
-    catch (HeadlessException ignore) {
+    if (shouldConvert()) {
+      try {
+        scaleUp(b, gc);
+      }
+      catch (HeadlessException ignore) { }
     }
     return b;
   }

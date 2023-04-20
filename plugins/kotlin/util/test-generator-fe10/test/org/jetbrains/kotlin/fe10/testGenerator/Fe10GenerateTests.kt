@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.fe10.testGenerator
 
 import org.jetbrains.kotlin.AbstractDataFlowValueRenderingTest
@@ -98,6 +98,7 @@ import org.jetbrains.kotlin.idea.parameterInfo.AbstractParameterInfoTest
 import org.jetbrains.kotlin.idea.perf.stats.AbstractPerformanceBasicCompletionHandlerStatNamesTest
 import org.jetbrains.kotlin.idea.perf.stats.AbstractPerformanceHighlightingStatNamesTest
 import org.jetbrains.kotlin.idea.perf.synthetic.*
+import org.jetbrains.kotlin.idea.projectView.AbstractKotlinProjectViewTest
 import org.jetbrains.kotlin.idea.quickfix.AbstractK1QuickFixTest
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixMultiFileTest
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixMultiModuleTest
@@ -701,6 +702,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("refactoring/renameMultiModule", pattern = TEST, flatten = true)
         }
 
+        testClass<AbstractKotlinProjectViewTest> {
+            model("projectView", pattern = TEST)
+        }
+
         testClass<AbstractOutOfBlockModificationTest> {
             model("codeInsight/outOfBlock", pattern = Patterns.forRegex("^(.+)\\.(kt|kts|java)$"))
         }
@@ -776,7 +781,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractKotlinFileStructureTest> {
-            model("structureView/fileStructure", pattern = KT_WITHOUT_DOTS)
+            model("structureView/fileStructure", pattern = KT_OR_KTS_WITHOUT_DOTS)
         }
 
         testClass<AbstractExpressionSelectionTest> {
@@ -988,7 +993,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractKotlinNavBarTest> {
-            model("navigationToolbar", isRecursive = false)
+            model("navigationToolbar", pattern = KT_OR_KTS, isRecursive = false)
         }
     }
 

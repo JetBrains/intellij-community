@@ -86,9 +86,10 @@ public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStora
     }
     this.maxRecords = maxRecords;
     //this.records = new UnsafeBuffer(maxRecords * RECORD_SIZE_IN_BYTES+ HEADER_SIZE);
-    this.records = ByteBuffer.allocate(maxRecords * RECORD_SIZE_IN_BYTES + HEADER_SIZE);
+    this.records = ByteBuffer.allocate(maxRecords * RECORD_SIZE_IN_BYTES + HEADER_SIZE)
+      .order(ByteOrder.nativeOrder());
 
-    if(Files.exists(path)) {
+    if (Files.exists(path)) {
       final long fileSize = Files.size(path);
       if (fileSize > records.capacity()) {
         final long recordsInFile = (fileSize - HEADER_SIZE) / RECORD_SIZE_IN_BYTES;
@@ -249,7 +250,7 @@ public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStora
   public void cleanRecord(final int recordId) throws IOException {
     allocatedRecordsCount.updateAndGet(allocatedRecords -> Math.max(recordId + 1, allocatedRecords));
     //fill record with zeros, by 4 bytes at once:
-    final int recordStartAtBytes = offsetOfInBytes(recordId, 0);
+    final int recordStartAtBytes = recordOffsetInBytes(recordId, 0);
     for (int wordNo = 0; wordNo < RECORD_SIZE_IN_INTS; wordNo++) {
       final int offset = recordStartAtBytes + wordNo * Integer.BYTES;
       INT_HANDLE.setVolatile(records, offset, 0);
@@ -336,12 +337,13 @@ public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStora
       setIntHeaderField(HEADER_GLOBAL_MOD_COUNT_OFFSET, globalModCount.get());
 
       final long actualDataLength = actualDataLength();
-      records.position(0)
-        .limit((int)actualDataLength);
+      final ByteBuffer actualRecordsToStore = records.duplicate();
+      actualRecordsToStore.position(0)
+        .limit((int)actualDataLength)
+        .order(records.order());
       try (final SeekableByteChannel channel = Files.newByteChannel(storagePath, WRITE, CREATE)) {
-        channel.write(records);
+        channel.write(actualRecordsToStore);
       }
-      records.clear();  //position <- 0, limit <- capacity
       markNotDirty();
     }
   }
@@ -359,33 +361,33 @@ public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStora
   private void setLongField(final int recordId,
                             final int fieldRelativeOffset,
                             final long fieldValue) {
-    final int offset = offsetOfInBytes(recordId, fieldRelativeOffset);
+    final int offset = recordOffsetInBytes(recordId, fieldRelativeOffset);
     LONG_HANDLE.setVolatile(records, offset, fieldValue);
     markDirty();
   }
 
   private long getLongField(final int recordId,
                             final int fieldRelativeOffset) {
-    final int offset = offsetOfInBytes(recordId, fieldRelativeOffset);
-    return (Long)LONG_HANDLE.getVolatile(records, offset);
+    final int offset = recordOffsetInBytes(recordId, fieldRelativeOffset);
+    return (long)LONG_HANDLE.getVolatile(records, offset);
   }
 
   private void setIntField(final int recordId,
                            final int fieldRelativeOffset,
                            final int fieldValue) {
-    final int offset = offsetOfInBytes(recordId, fieldRelativeOffset);
+    final int offset = recordOffsetInBytes(recordId, fieldRelativeOffset);
     INT_HANDLE.setVolatile(records, offset, fieldValue);
     markDirty();
   }
 
   private int getIntField(final int recordId,
                           final int fieldRelativeOffset) {
-    final int offset = offsetOfInBytes(recordId, fieldRelativeOffset);
-    return (Integer)INT_HANDLE.getVolatile(records, offset);
+    final int offset = recordOffsetInBytes(recordId, fieldRelativeOffset);
+    return (int)INT_HANDLE.getVolatile(records, offset);
   }
 
-  private int offsetOfInBytes(final int recordId,
-                              final int fieldRelativeOffset) throws IndexOutOfBoundsException {
+  private int recordOffsetInBytes(final int recordId,
+                                  final int fieldRelativeOffset) throws IndexOutOfBoundsException {
     checkFileId(recordId);
     return (RECORD_SIZE_IN_INTS * recordId + fieldRelativeOffset) * Integer.BYTES + HEADER_SIZE;
   }
@@ -406,7 +408,7 @@ public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStora
 
   private long getLongHeaderField(@HeaderOffset final int headerRelativeOffsetBytes) {
     checkHeaderOffset(headerRelativeOffsetBytes);
-    return (Long)LONG_HANDLE.getVolatile(records, headerRelativeOffsetBytes);
+    return (long)LONG_HANDLE.getVolatile(records, headerRelativeOffsetBytes);
   }
 
   private void setIntHeaderField(@HeaderOffset final int headerRelativeOffsetBytes,
@@ -419,7 +421,7 @@ public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStora
 
   private int getIntHeaderField(@HeaderOffset final int headerRelativeOffsetBytes) {
     checkHeaderOffset(headerRelativeOffsetBytes);
-    return (Integer)INT_HANDLE.getVolatile(records, headerRelativeOffsetBytes);
+    return (int)INT_HANDLE.getVolatile(records, headerRelativeOffsetBytes);
   }
 
   private static void checkHeaderOffset(final int headerRelativeOffset) {

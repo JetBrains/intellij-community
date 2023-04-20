@@ -9,9 +9,6 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.SmartEnterUtil;
 
-/**
- * Author: Alexey.Ivanov
- */
 public class PyCommentBreakerEnterProcessor implements EnterProcessor {
   @Override
   public boolean doEnter(Editor editor, PsiElement psiElement, boolean isModified) {

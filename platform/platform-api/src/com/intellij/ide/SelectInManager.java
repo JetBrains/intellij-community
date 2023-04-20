@@ -29,14 +29,6 @@ public final class SelectInManager  {
     myTargets = SimpleSmartExtensionPoint.create(myProject.getExtensionArea(), SelectInTarget.EP_NAME);
   }
 
-  /**
-   * @deprecated targets should be registered as extension points ({@link SelectInTarget#EP_NAME}).
-   */
-  @Deprecated(forRemoval = true)
-  public void addTarget(SelectInTarget target) {
-    myTargets.addExplicitExtension(target);
-  }
-
   public void removeTarget(SelectInTarget target) {
     myTargets.removeExplicitExtension(target);
   }

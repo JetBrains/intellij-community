@@ -19,9 +19,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProces
 
 import java.util.Objects;
 
-/**
- * @author ilyas
- */
 public class GrDocMethodReferenceImpl extends GrDocMemberReferenceImpl implements GrDocMethodReference {
 
   public GrDocMethodReferenceImpl(@NotNull ASTNode node) {

@@ -16,4 +16,3 @@ fun usage() {
     A(foo = ":)")
 }
 
-// FIR_COMPARISON

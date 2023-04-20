@@ -8,9 +8,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
-/**
- * @author ilyas
- */
 public interface GrReferenceList extends GroovyPsiElement, PsiReferenceList {
 
   @Nullable

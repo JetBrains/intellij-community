@@ -86,10 +86,6 @@ internal class IntentionPreviewModel {
 
         return@mapNotNull DiffInfo(newText, fragment.startLine1, fragment.endLine2 - fragment.startLine2, highlightingType, highlightRange)
       }
-      if (diffs.any { info -> info.highlightingType != HighlightingType.DELETED || info.updatedRange != null }) {
-        // Do not display deleted fragments if anything is added
-        diffs = diffs.filter { info -> info.highlightingType != HighlightingType.DELETED || info.updatedRange != null }
-      }
       if (diffs.isNotEmpty()) {
         val last = diffs.last()
         val maxLine = if (result.normalDiff) last.startLine + last.length else -1

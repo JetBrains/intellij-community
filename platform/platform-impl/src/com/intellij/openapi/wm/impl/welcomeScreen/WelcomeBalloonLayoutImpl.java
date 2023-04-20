@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.icons.AllIcons;
@@ -27,12 +27,12 @@ import java.awt.event.ComponentEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.notification.impl.NotificationsManagerImpl.BORDER_COLOR;
 import static com.intellij.notification.impl.NotificationsManagerImpl.FILL_COLOR;
 
 public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
-
   public static final Topic<BalloonNotificationListener> BALLOON_NOTIFICATION_TOPIC =
     Topic.create("balloon notification changed", BalloonNotificationListener.class);
   private static final int NOTIFICATION_BORDER = 5;
@@ -43,8 +43,7 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
   private final BalloonPanel myBalloonPanel = new BalloonPanel();
   private boolean myVisible;
 
-  public WelcomeBalloonLayoutImpl(@NotNull JRootPane parent,
-                                  @NotNull Insets insets) {
+  public WelcomeBalloonLayoutImpl(@NotNull JRootPane parent, @NotNull Insets insets) {
     super(parent, insets);
   }
 
@@ -58,14 +57,14 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
   }
 
   @Override
-  public void add(@NotNull Balloon balloon, @Nullable Object layoutData) {
+  public void add(@NotNull Balloon newBalloon, @Nullable Object layoutData) {
     if (layoutData instanceof BalloonLayoutData
         && ((BalloonLayoutData)layoutData).welcomeScreen
-        && balloon instanceof BalloonImpl) {
-      addToPopup((BalloonImpl)balloon, (BalloonLayoutData)layoutData);
+        && newBalloon instanceof BalloonImpl) {
+      addToPopup((BalloonImpl)newBalloon, (BalloonLayoutData)layoutData);
     }
     else {
-      super.add(balloon, layoutData);
+      super.add(newBalloon, layoutData);
     }
   }
 
@@ -121,12 +120,12 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
     Disposer.register(balloon, new Disposable() {
       @Override
       public void dispose() {
-        myBalloons.remove(balloon);
+        balloons.remove(balloon);
         myBalloonPanel.remove(balloon.getContent());
         updatePopup();
       }
     });
-    myBalloons.add(balloon);
+    balloons.add(balloon);
 
     updatePopup();
   }
@@ -137,7 +136,7 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
       myPopupBalloon.getComponent().setVisible(true);
     }
     else {
-      myPopupBalloon.show(myLayeredPane);
+      myPopupBalloon.show(layeredPane);
       myVisible = true;
     }
   }
@@ -156,9 +155,9 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
       return;
     }
 
-    Dimension layeredSize = myLayeredPane.getSize();
+    Dimension layeredSize = Objects.requireNonNull(layeredPane).getSize();
     Dimension size = new Dimension(myPopupBalloon.getPreferredSize());
-    Point point = SwingUtilities.convertPoint(myLayoutBaseComponent, 0, 0, myLayeredPane);
+    Point point = SwingUtilities.convertPoint(myLayoutBaseComponent, 0, 0, layeredPane);
     Point location = new Point(point.x, point.y + 5);
     int x = layeredSize.width - size.width - 5;
     int fullHeight = location.y;

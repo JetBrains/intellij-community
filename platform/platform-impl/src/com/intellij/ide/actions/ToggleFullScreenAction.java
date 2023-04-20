@@ -15,9 +15,6 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author pegov
- */
 final class ToggleFullScreenAction extends DumbAwareAction implements LightEditCompatible {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

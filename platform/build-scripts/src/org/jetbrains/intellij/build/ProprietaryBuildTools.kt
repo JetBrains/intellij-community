@@ -9,11 +9,11 @@ import org.jetbrains.intellij.build.fus.FeatureUsageStatisticsProperties
 import java.nio.file.Path
 
 /**
- * Describes proprietary tools which are used to build the product. Pass the instance of this class to {@link BuildContext#createContext} method.
+ * Describes proprietary tools which are used to build the product. Pass the instance of this class to [org.jetbrains.intellij.build.impl.BuildContextImpl.createContext] method.
  */
 class ProprietaryBuildTools(
   /**
-   * This tool is required to sign *.exe files in Windows distribution. If it is {@code null} the files won't be signed and Windows may show
+   * This tool is required to sign files in distribution. If it is null the files won't be signed and OS may show
    * a warning when user tries to run them.
    */
   val signTool: SignTool,

@@ -18,8 +18,6 @@ import java.util.*;
 
 /**
  * Wraps {@link ArrangementStandardSettingsAware} for the common arrangement UI managing code.
- *
- * @author Denis Zhdanov
  */
 public class ArrangementStandardSettingsManager {
 

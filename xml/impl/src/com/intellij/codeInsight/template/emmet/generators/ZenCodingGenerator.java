@@ -19,9 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 
-/**
- * @author Eugene.Kudelevsky
- */
 public abstract class ZenCodingGenerator {
   private static final ExtensionPointName<ZenCodingGenerator> EP_NAME = new ExtensionPointName<>("com.intellij.xml.zenCodingGenerator");
 

@@ -4,20 +4,19 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.analysis.AnalysisScope
 import com.intellij.codeInspection.*
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptPane.*
+import com.intellij.codeInspection.options.OptionController
+import com.intellij.codeInspection.options.RegexValidator
 import com.intellij.codeInspection.reference.RefEntity
 import com.intellij.codeInspection.reference.RefFile
 import com.intellij.codeInspection.reference.RefPackage
-import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.ui.LabeledComponent
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
-import com.intellij.ui.EditorTextField
 import com.siyeh.ig.BaseGlobalInspection
 import com.siyeh.ig.psiutils.TestUtils
 import org.intellij.lang.annotations.Language
-import org.intellij.lang.regexp.RegExpFileType
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -37,9 +36,7 @@ import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.supertypes
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import java.awt.BorderLayout
 import java.util.regex.PatternSyntaxException
-import javax.swing.JPanel
 
 data class NamingRule(val message: String, val matcher: (String) -> Boolean)
 
@@ -128,24 +125,10 @@ class NamingConventionInspectionSettings(
 
     fun getDefaultErrorMessage() = KotlinBundle.message("doesn.t.match.regex.0", namePattern)
 
-    fun createOptionsPanel(): JPanel = NamingConventionOptionsPanel(this)
-
-    private class NamingConventionOptionsPanel(settings: NamingConventionInspectionSettings) : JPanel() {
-        init {
-            layout = BorderLayout()
-
-            val regexField = EditorTextField(settings.namePattern, null, RegExpFileType.INSTANCE).apply {
-                setOneLineMode(true)
-            }
-            regexField.document.addDocumentListener(object : DocumentListener {
-                override fun documentChanged(e: DocumentEvent) {
-                    settings.namePattern = regexField.text
-                }
-            })
-            val labeledComponent = LabeledComponent.create(regexField, KotlinBundle.message("text.pattern"), BorderLayout.WEST)
-            add(labeledComponent, BorderLayout.NORTH)
-        }
-    }
+    fun getOptionsPane(): OptPane = pane(string("namePattern", KotlinBundle.message("text.pattern"), 30, RegexValidator()))
+    
+    fun getOptionController(): OptionController = OptionController.empty()
+        .onValue("namePattern", this::namePattern)
 }
 
 sealed class NamingConventionInspection(
@@ -176,8 +159,10 @@ sealed class NamingConventionInspection(
         return namingSettings.getNameMismatchMessage(name, rules)
     }
 
-    override fun createOptionsPanel(): JPanel = namingSettings.createOptionsPanel()
+    override fun getOptionsPane(): OptPane = namingSettings.getOptionsPane()
 
+    override fun getOptionController(): OptionController = namingSettings.getOptionController()
+    
     override fun readSettings(node: Element) {
         super.readSettings(node)
         namingSettings.namePattern = namePattern
@@ -305,7 +290,7 @@ abstract class PropertyNameInspectionBase protected constructor(
 
             private && containingClassOrObject is KtObjectDeclaration -> PropertyKind.OBJECT_PRIVATE
 
-            !private && (containingClassOrObject is KtObjectDeclaration || isTopLevel) -> PropertyKind.OBJECT_OR_TOP_LEVEL
+            !private && (containingClassOrObject is KtObjectDeclaration) || isTopLevel -> PropertyKind.OBJECT_OR_TOP_LEVEL
 
             hasModifier(KtTokens.CONST_KEYWORD) -> PropertyKind.CONST
 
@@ -511,7 +496,9 @@ class PackageNameInspection : BaseGlobalInspection() {
         namingSettings.namePattern = namePattern
     }
 
-    override fun createOptionsPanel() = namingSettings.createOptionsPanel()
+    override fun getOptionsPane(): OptPane = namingSettings.getOptionsPane()
+
+    override fun getOptionController(): OptionController = namingSettings.getOptionController()
 
     override fun getSharedLocalInspectionTool(): LocalInspectionTool {
         return PackageNameInspectionLocal(this, namingSettings)

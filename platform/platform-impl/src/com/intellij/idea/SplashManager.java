@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
 import com.intellij.diagnostic.Activity;
@@ -17,7 +17,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
@@ -120,40 +119,6 @@ public final class SplashManager {
     frame.setVisible(true);
     activity.end();
     return frame;
-  }
-
-  public static void executeWithHiddenSplash(@NotNull Window window, @NotNull Runnable runnable) {
-    if (SPLASH_WINDOW == null) {
-      if (PROJECT_FRAME != null) {
-        // just destroy frame
-        hide();
-      }
-      runnable.run();
-      return;
-    }
-
-    WindowListener listener = new WindowAdapter() {
-      @Override
-      public void windowOpened(WindowEvent e) {
-        setVisible(false);
-      }
-    };
-    window.addWindowListener(listener);
-
-    runnable.run();
-
-    setVisible(true);
-    window.removeWindowListener(listener);
-  }
-
-  private static void setVisible(boolean value) {
-    Splash splash = SPLASH_WINDOW;
-    if (splash != null) {
-      splash.setVisible(value);
-      if (value) {
-        splash.paint(splash.getGraphics());
-      }
-    }
   }
 
   public static @Nullable JFrame getAndUnsetProjectFrame() {

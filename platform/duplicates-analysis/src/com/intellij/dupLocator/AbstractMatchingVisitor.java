@@ -24,9 +24,6 @@ import com.intellij.dupLocator.iterators.SiblingNodeIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public abstract class AbstractMatchingVisitor {
 
   public abstract boolean matchSequentially(@NotNull NodeIterator nodes, @NotNull NodeIterator nodes2);

@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
-import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.vcs.commit.AmendCommitModeListener
 import com.intellij.vcs.commit.ToggleAmendCommitOption
@@ -76,7 +75,7 @@ open class HgCommitAdditionalComponent(private val myCommitPanel: CheckinProject
     updateCommitSubreposState()
   }
 
-  fun isAmend(): Boolean = amendHandler.isAmendCommitMode
+  private fun isAmend(): Boolean = amendHandler.isAmendCommitMode
 
   private fun updateCommitSubreposState() {
     if (commitSubrepos != null) {

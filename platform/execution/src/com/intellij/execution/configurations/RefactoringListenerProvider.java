@@ -24,8 +24,6 @@ import org.jetbrains.annotations.Nullable;
  * moved (for example, a Java run configuration needs to update the class name stored in its settings when the class is renamed).
  * Note that if you provide a listener, and the run configuration has a generated name, the name will be automatically updated after
  * the refactoring.
- *
- * @author spleaner
  */
 public interface RefactoringListenerProvider {
 

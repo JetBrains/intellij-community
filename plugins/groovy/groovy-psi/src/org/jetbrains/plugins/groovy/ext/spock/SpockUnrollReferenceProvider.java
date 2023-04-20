@@ -19,9 +19,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Sergey Evdokimov
- */
 public class SpockUnrollReferenceProvider extends PsiReferenceProvider {
 
   private static final Pattern PATTERN = Pattern.compile("\\#([\\w_]+)");

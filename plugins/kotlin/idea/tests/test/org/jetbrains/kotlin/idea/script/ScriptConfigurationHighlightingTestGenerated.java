@@ -85,11 +85,6 @@ public abstract class ScriptConfigurationHighlightingTestGenerated extends Abstr
             runTest("testData/script/definition/highlighting/emptyAsyncResolver/");
         }
 
-        @TestMetadata("errorResolver")
-        public void testErrorResolver() throws Exception {
-            runTest("testData/script/definition/highlighting/errorResolver/");
-        }
-
         @TestMetadata("implicitReceiver")
         public void testImplicitReceiver() throws Exception {
             runTest("testData/script/definition/highlighting/implicitReceiver/");
@@ -128,11 +123,6 @@ public abstract class ScriptConfigurationHighlightingTestGenerated extends Abstr
         @TestMetadata("simple")
         public void testSimple() throws Exception {
             runTest("testData/script/definition/highlighting/simple/");
-        }
-
-        @TestMetadata("throwingResolver")
-        public void testThrowingResolver() throws Exception {
-            runTest("testData/script/definition/highlighting/throwingResolver/");
         }
     }
 

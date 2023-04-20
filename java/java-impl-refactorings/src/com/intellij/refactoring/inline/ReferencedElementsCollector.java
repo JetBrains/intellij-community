@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 
-/**
- * @author ven
- */
 public class ReferencedElementsCollector extends JavaRecursiveElementVisitor {
   final HashSet<PsiMember> myReferencedMembers = new HashSet<>();
 

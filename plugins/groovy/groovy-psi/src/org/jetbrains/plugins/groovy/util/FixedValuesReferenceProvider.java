@@ -23,9 +23,6 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Sergey Evdokimov
- */
 public class FixedValuesReferenceProvider extends PsiReferenceProvider {
 
   private final String[] myValues;

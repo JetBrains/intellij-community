@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection.custom;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -67,6 +67,19 @@ public class MetaDataDialog extends DialogWrapper {
     if (StringUtil.isEmpty(name)) {
       warnings.add(new ValidationInfo(RegExpBundle.message("dialog.message.name.must.not.be.empty"), myNameTextField));
     }
+    else {
+      for (RegExpInspectionConfiguration configuration : configurations) {
+        if (myNewInspection) {
+          if (configuration.getName().equals(name)) {
+            warnings.add(new ValidationInfo(RegExpBundle.message("dialog.message.inspection.with.name.exists.warning", name), myNameTextField));
+            break;
+          }
+        } else if (!configuration.getUuid().equals(myConfiguration.getUuid()) && configuration.getName().equals(name)) {
+          warnings.add(new ValidationInfo(RegExpBundle.message("dialog.message.inspection.with.name.exists.warning", name), myNameTextField));
+          break;
+        }
+      }
+    }
     final String suppressId = getSuppressId();
     if (!StringUtil.isEmpty(suppressId)) {
       if (!mySuppressIdPattern.matcher(suppressId).matches()) {
@@ -96,10 +109,10 @@ public class MetaDataDialog extends DialogWrapper {
   protected void doOKAction() {
     super.doOKAction();
     if (getOKAction().isEnabled()) {
-      myConfiguration.name = getName();
-      myConfiguration.description = getDescription();
-      myConfiguration.suppressId = getSuppressId();
-      myConfiguration.problemDescriptor = getProblemDescriptor();
+      myConfiguration.setName(getName());
+      myConfiguration.setDescription(getDescription());
+      myConfiguration.setSuppressId(getSuppressId());
+      myConfiguration.setProblemDescriptor(getProblemDescriptor());
     }
   }
 

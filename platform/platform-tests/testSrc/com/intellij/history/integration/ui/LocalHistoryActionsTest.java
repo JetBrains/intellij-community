@@ -102,7 +102,7 @@ public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
 
     assertTrue(e.getPresentation().isEnabled());
 
-    assertEquals("Show History for Selection", e.getPresentation().getText());
+    assertEquals("Show History for Selection…", e.getPresentation().getText());
   }
 
   public void testShowSelectionHistoryActionIsDisabledForNonFiles() {

@@ -67,7 +67,7 @@ import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getModuleId;
 
 /**
- * @author Denis Zhdanov, Vladislav Soroka
+ * @author Vladislav Soroka
  */
 public class GradleProjectResolver implements ExternalSystemProjectResolver<GradleExecutionSettings> {
 

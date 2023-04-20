@@ -9,6 +9,7 @@ import org.apache.commons.compress.archivers.ArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.apache.commons.io.FileExistsException
+import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.io.unmapBuffer
 import java.nio.channels.FileChannel
@@ -17,6 +18,7 @@ import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
 import java.util.*
+import java.util.concurrent.TimeUnit
 import java.util.function.BiConsumer
 import java.util.zip.ZipEntry
 import kotlin.io.path.readText
@@ -107,7 +109,7 @@ fun ZipArchiveOutputStream.dir(startDir: Path,
       else if (attributes.isSymbolicLink) {
         val entry = ZipArchiveEntryAssertName(prefix + FileUtilRt.toSystemIndependentName(startDir.relativize(file).toString()))
         entry.method = ZipEntry.STORED
-        entry.lastModifiedTime = zeroTime
+        entry.lastModifiedTime = buildTime
         entry.unixMode = Files.readAttributes(file, "unix:mode", LinkOption.NOFOLLOW_LINKS)["mode"] as Int
         val path = Files.readSymbolicLink(file).let { if (it.isAbsolute) prefix + startDir.relativize(it) else it.toString() }
         val data = path.toByteArray()
@@ -137,7 +139,10 @@ internal fun ZipArchiveOutputStream.entryToDir(file: Path, zipPath: String) {
   entry("$zipPath/${file.fileName}", file)
 }
 
-private val zeroTime = FileTime.fromMillis(0)
+/**
+ * Cannot be set to zero, see [BuildOptions.buildDateInSeconds] initialization code.
+ */
+private val buildTime = FileTime.from(BuildOptions().buildDateInSeconds, TimeUnit.SECONDS)
 
 internal fun ZipArchiveOutputStream.entry(name: String, file: Path, unixMode: Int = -1) {
   val entry = ZipArchiveEntryAssertName(name)
@@ -150,7 +155,7 @@ internal fun ZipArchiveOutputStream.entry(name: String, file: Path, unixMode: In
 internal fun ZipArchiveOutputStream.entry(name: String, data: ByteArray) {
   val entry = ZipArchiveEntryAssertName(name)
   entry.size = data.size.toLong()
-  entry.lastModifiedTime = zeroTime
+  entry.lastModifiedTime = buildTime
   putArchiveEntry(entry)
   write(data)
   closeArchiveEntry()
@@ -190,7 +195,7 @@ private fun assertRelativePathIsCorrectForPackaging(relativeName: String) {
 }
 
 private fun writeFileEntry(file: Path, entry: ZipArchiveEntry, out: ZipArchiveOutputStream) {
-  entry.lastModifiedTime = zeroTime
+  entry.lastModifiedTime = buildTime
   out.putArchiveEntry(entry)
   Files.copy(file, out)
   out.closeArchiveEntry()

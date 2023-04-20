@@ -9,6 +9,7 @@ import com.intellij.util.io.pagecache.impl.PagesTable;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -16,7 +17,8 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static java.util.Comparator.comparing;
@@ -158,8 +160,8 @@ public final class FilePageCacheLockFree implements AutoCloseable {
     }
   }
 
-  protected Future<?> enqueueStoragePagesClosing(final @NotNull PagedFileStorageLockFree storage,
-                                                 final @NotNull CompletableFuture<Object> finish) {
+  Future<?> enqueueStoragePagesClosing(final @NotNull PagedFileStorageLockFree storage,
+                                       final @NotNull CompletableFuture<Object> finish) {
     checkNotClosed();
     final CloseStorageCommand task = new CloseStorageCommand(storage, finish);
     commandsQueue.add(task);
@@ -233,9 +235,9 @@ public final class FilePageCacheLockFree implements AutoCloseable {
   //        Also use it to estimate how much 'eager flushes' needs to be done.
   //     2. In .allocatePageBuffer(): trace counts of .flush() invoked
   //     3. If a lot of .flush() invoked -> increase probability of 'eager flushes' in (2)
-  //     4. 'Buffer bargaining': if in allocatePageBuffer() we reclaimed a page with
-  //         (buffer.capacity() == bufferSize) => use the buffer directly, instead of returning
-  //         it to the pool and than query it from there again.
+  //     4. Optimize pagesToProbablyReclaimQueue: use fixed-size ring buffer with volatile cursors
+  //        Avoids Queue node allocations, much faster access, and also allows to insert new candidates
+  //        right into the buffer, instead of collecting them to temporary lists, as now.
 
 
   //================================================================================================
@@ -428,13 +430,24 @@ public final class FilePageCacheLockFree implements AutoCloseable {
 
 
   /**
-   * Method tries to unmap and reclaim all pages of a given PagesTable. It moves all pages
-   * to {@link PageImpl#STATE_ABOUT_TO_UNMAP} state, and if page has usageCount=0 -> reclaim it immediately.
-   * Pages with usageCount > 0 are not reclaimed, and method returns false if there is at least one
-   * such a page. Method is designed to be called repeatedly, until all pages are reclaimed.
+   * Method tries to unmap and reclaim all pages of a given PagesTable. It is basically for a
+   * 'finalize & cleanup' after page storage owning pagesTable is closed -- i.e. it is known
+   * there will be no new clients of storage pages, and current clients are about to release
+   * their pages soon.
+   * <p/>
+   * Since some pages could be still in use, there is no guarantee the method could reclaim
+   * all pages right now -- hence, the method is designed to be called repeatedly, until it
+   * returns true, which means all pages are reclaimed.
+   * <p/>
+   * Method moves all pages to {@link PageImpl#STATE_ABOUT_TO_UNMAP} state, and if page has
+   * usageCount=0 -> reclaim it immediately. Pages with usageCount > 0 are not reclaimed, and
+   * the method returns false if there is at least one such a page.
+   *
+   * @return true if all pages are reclaimed, false if there are some pages that are still in
+   * use and can't be reclaimed right now -- so method should be called again, later
    */
-  protected boolean tryToReclaimAll(final @NotNull PagesTable pagesTable) {
-    pagesTable.pagesLock().writeLock().lock();
+  boolean tryToReclaimAll(final @NotNull PagesTable pagesTable) {
+    pagesTable.pagesLock().lock();      //RC: Do we need a lock here really?
     try {
       final AtomicReferenceArray<PageImpl> pages = pagesTable.pages();
       boolean somePagesStillInUse = false;
@@ -512,7 +525,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
       return somePagesStillInUse;
     }
     finally {
-      pagesTable.pagesLock().writeLock().unlock();
+      pagesTable.pagesLock().unlock();
     }
   }
 
@@ -521,66 +534,90 @@ public final class FilePageCacheLockFree implements AutoCloseable {
    * Page must be in state=TOMBSTONE (throws AssertionError otherwise)
    */
   private void unmapPageAndReclaimBuffer(final @NotNull PageImpl pageToReclaim) {
-    if (!pageToReclaim.isPreTombstone()) {
-      throw new AssertionError("Bug: page must be PRE_TOMBSTONE: " + pageToReclaim);
+    final ByteBuffer pageBuffer = entombPageAndGetPageBuffer(pageToReclaim);
+
+    reclaimPageBuffer(pageBuffer);
+  }
+
+  /**
+   * Release buffer to the pool if it is a direct buffer, or just release it, if it is a heap buffer.
+   * Adjust statistical counters accordingly.
+   */
+  private void reclaimPageBuffer(final @NotNull ByteBuffer pageBuffer) {
+    if (pageBuffer.isDirect()) {
+      DirectByteBufferAllocator.ALLOCATOR.release(pageBuffer);
+      totalNativeBytesCached.addAndGet(-pageBuffer.capacity());
+      statistics.pageReclaimedNative(pageBuffer.capacity());
     }
-    if (pageToReclaim.isDirty()) {
+    else {
+      totalHeapBytesCached.addAndGet(-pageBuffer.capacity());
+      statistics.pageReclaimedHeap(pageBuffer.capacity());
+    }
+  }
+
+  private static @NotNull ByteBuffer entombPageAndGetPageBuffer(final @NotNull PageImpl pageToUnmap) {
+    if (!pageToUnmap.isPreTombstone()) {
+      throw new AssertionError("Bug: page must be PRE_TOMBSTONE: " + pageToUnmap);
+    }
+    if (pageToUnmap.isDirty()) {
       //MAYBE RC: flush() could be off-loaded to IO thread pool, instead of slowing down housekeeper
       //         thread
       try {
-        pageToReclaim.flush();
+        pageToUnmap.flush();
       }
       catch (IOException e) {
-        throw new UncheckedIOException("Can't flush page: " + pageToReclaim, e);
+        throw new UncheckedIOException("Can't flush page: " + pageToUnmap, e);
       }
     }
-
-    final ByteBuffer data = pageToReclaim.detachTombstoneBuffer();
-    if (data.isDirect()) {
-      DirectByteBufferAllocator.ALLOCATOR.release(data);
-      totalNativeBytesCached.addAndGet(-data.capacity());
-      statistics.pageReclaimedNative(data.capacity());
-    }
-    else {
-      totalHeapBytesCached.addAndGet(-data.capacity());
-      statistics.pageReclaimedHeap(data.capacity());
-    }
-    pageToReclaim.entomb();
+    //TODO RC: instead of returning buffer to the allocator pool, we may immediately re-use it for the new page
+    //         if buffer size fits us -- this reduces the cost on page allocation path.
+    final ByteBuffer pageBuffer = pageToUnmap.detachTombstoneBuffer();
+    pageToUnmap.entomb();
+    return pageBuffer;
   }
 
-  @NotNull
-  protected ByteBuffer allocatePageBuffer(final int bufferSize) {
+  @NotNull ByteBuffer allocatePageBuffer(final int bufferSize) {
     checkNotClosed();
-    final boolean reclaimedSuccessfully = tryReclaimEnoughPages(bufferSize, MAX_PAGES_TO_RECLAIM_AT_ONCE);
-    if (reclaimedSuccessfully) {
-      final ByteBuffer buffer = DirectByteBufferAllocator.ALLOCATOR.allocate(bufferSize);
-      totalNativeBytesCached.addAndGet(buffer.capacity());
-      statistics.pageAllocatedDirect(bufferSize);
-      return buffer;
+    final ByteBuffer reclaimedBuffer = tryReclaimPageOfSize(bufferSize, MAX_PAGES_TO_RECLAIM_AT_ONCE);
+
+    if (reclaimedBuffer != null) {
+      statistics.pageReclaimedByHandover(bufferSize, reclaimedBuffer.isDirect());
+      return reclaimedBuffer;
     }
     else {
-      //RC: instead of forcing existing pages to unload -- allocate heap buffers.
-      //    (And after that, get them out ASAP during regular background scans?..)
-      totalHeapBytesCached.addAndGet(bufferSize);
-      statistics.pageAllocatedHeap(bufferSize);
-      return ByteBuffer.allocate(bufferSize);
+      //if we have >= bufferSize of free capacity -> just allocate new direct buffer:
+      final long capacityReserveBytes = cacheCapacityBytes - totalNativeBytesCached.get();
+      if (capacityReserveBytes >= bufferSize) {
+        final ByteBuffer buffer = DirectByteBufferAllocator.ALLOCATOR.allocate(bufferSize);
+        totalNativeBytesCached.addAndGet(buffer.capacity());
+        statistics.pageAllocatedNative(bufferSize);
+        return buffer;
+      }
+      else {
+        //RC: instead of forcing existing pages to unload -- allocate heap buffers.
+        //    (We'll get them out progressively, during regular background page scans)
+        totalHeapBytesCached.addAndGet(bufferSize);
+        statistics.pageAllocatedHeap(bufferSize);
+        return ByteBuffer.allocate(bufferSize);
+      }
     }
   }
 
   /**
-   * Methods tries to reclaim some pages from .pagesToProbablyReclaim queue so what cache has free
-   * capacity for additional bufferSize. Method tries to reclaim no more than maxPagesToTry, and
-   * return false if cache capacity is still exhausted after what, or true if cache has at least
-   * bufferSize of free capacity
+   * Method scans through .pagesToProbablyReclaimQueue and reclaims pages until either:
+   * 1. Page with buffer.capacity() == bufferSize is reclaimed
+   * 2. Cache has free capacity for additional bufferSize.
+   * 3. maxPagesToTry were examined, or queue is empty, and none of the above is true.
+   * In 1-st case, method returns buffer just reclaimed. In 2nd and 3rd cases method returns null,
+   * and it is left to the caller to check cache capacity and find out which case it was.
    */
-  private boolean tryReclaimEnoughPages(final int bufferSize,
-                                        final int maxPagesToTry) {
+  private @Nullable ByteBuffer tryReclaimPageOfSize(final int bufferSize,
+                                                    final int maxPagesToTry) {
     int dirtyPagesSkipped = 0;
-    for (int i = 0; i < maxPagesToTry
-                    && totalNativeBytesCached.get() > cacheCapacityBytes - bufferSize; i++) {
+    for (int i = 0; i < maxPagesToTry && totalNativeBytesCached.get() > cacheCapacityBytes - bufferSize; i++) {
       final PageImpl candidateToReclaim = pagesToProbablyReclaimQueue.poll();
       if (candidateToReclaim == null) {
-        return false;//nothing more to reclaim
+        return null;//nothing more to reclaim
       }
       if (candidateToReclaim.usageCount() > 0) {
         continue;//page is in use by somebody
@@ -597,7 +634,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
         if (dirtyPagesSkipped <= rnd10) {
           dirtyPagesSkipped++;
           pagesToProbablyReclaimQueue.offer(candidateToReclaim);
-          //MAYBE RC: also queue async flush for the page?
+          //MAYBE RC: also queue async .flush() for the page?
           continue;
         }
       }
@@ -605,10 +642,17 @@ public final class FilePageCacheLockFree implements AutoCloseable {
       final boolean succeed = candidateToReclaim.tryMoveTowardsPreTombstone(/*entombYoung: */false);
       if (succeed) {
         // > 1 thread could try to reclaim the page, but we win the race:
-        unmapPageAndReclaimBuffer(candidateToReclaim);
+        final ByteBuffer reclaimedBuffer = entombPageAndGetPageBuffer(candidateToReclaim);
+        if (reclaimedBuffer.capacity() == bufferSize) {
+          reclaimedBuffer.clear().limit(bufferSize);
+          return reclaimedBuffer;
+        }
+        else {
+          reclaimPageBuffer(reclaimedBuffer);
+        }
       }
     }
-    return true;
+    return null;
   }
 
   private void checkNotClosed() throws IllegalStateException {

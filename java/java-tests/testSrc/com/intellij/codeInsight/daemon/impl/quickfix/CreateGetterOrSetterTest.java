@@ -6,9 +6,6 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.util.VisibilityUtil;
 
-/**
- * @author Danila Ponomarenko
- */
 public class CreateGetterOrSetterTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected void setUp() throws Exception {

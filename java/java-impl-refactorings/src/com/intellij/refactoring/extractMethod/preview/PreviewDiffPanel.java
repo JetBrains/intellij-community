@@ -53,9 +53,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author Pavel.Dolgov
- */
 final class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewTreeListener {
   private final Project myProject;
   private final PreviewTree myTree;

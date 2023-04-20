@@ -26,9 +26,6 @@ import org.jetbrains.annotations.NotNull
 
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.BY_NAME
 
-/**
- * @author Eugene.Kudelevsky
- */
 class XmlRearrangerTest extends AbstractRearrangerTest {
   XmlRearrangerTest() {
     fileType = XmlFileType.INSTANCE

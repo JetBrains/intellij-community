@@ -298,7 +298,7 @@ class ContentRootTestEntityData : WorkspaceEntityData<ContentRootTestEntity>() {
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return ContentRootTestEntity(entitySource) {
-      this.module = parents.filterIsInstance<ModuleTestEntity>().single()
+      parents.filterIsInstance<ModuleTestEntity>().singleOrNull()?.let { this.module = it }
     }
   }
 

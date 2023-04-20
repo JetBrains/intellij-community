@@ -196,6 +196,7 @@ enum class StdlibType(val artifact: String) {
     StdlibJdk7("stdlib-jdk7"),
     StdlibJdk8("stdlib-jdk8"),
     StdlibJs("stdlib-js"),
+    StdlibWasm("stdlib-wasm"),
     StdlibCommon("stdlib-common"),
 }
 

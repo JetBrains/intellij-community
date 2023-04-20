@@ -19,9 +19,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
-/**
- * @author ilyas
- */
 public class GrLabeledStatementImpl extends GroovyPsiElementImpl implements GrLabeledStatement {
   public GrLabeledStatementImpl(@NotNull ASTNode node) {
     super(node);

@@ -20,7 +20,7 @@ import org.editorconfig.plugincomponents.SettingsProviderComponent
 class EditorSettingsManager : EditorFactoryListener {
   companion object {
     // Handles the following EditorConfig settings:
-    const val maxLineLengthKey = "max_line_length"
+    private const val maxLineLengthKey = "max_line_length"
 
     fun applyEditorSettings(editor: Editor) {
       val document = editor.document

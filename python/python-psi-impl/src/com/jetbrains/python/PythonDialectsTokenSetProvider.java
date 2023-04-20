@@ -14,7 +14,6 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Provides element types of various kinds for known Python dialects.
  *
- * @author vlan
  */
 @Service
 public final class PythonDialectsTokenSetProvider implements Disposable {

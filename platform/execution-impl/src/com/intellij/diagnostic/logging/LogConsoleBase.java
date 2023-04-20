@@ -59,9 +59,6 @@ import java.io.Reader;
 import java.util.List;
 import java.util.function.BiConsumer;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public abstract class LogConsoleBase extends AdditionalTabComponent implements LogConsole, LogFilterListener {
   private static final Logger LOG = Logger.getInstance(LogConsoleBase.class);
 

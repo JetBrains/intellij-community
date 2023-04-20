@@ -15,9 +15,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author Irina.Chernushina on 2/24/2016.
- */
 public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderFactory, DumbAware {
   public static final int TOTAL_PROVIDERS = 3;
   private static final String SCHEMA_JSON_FILE_NAME = "schema.json";

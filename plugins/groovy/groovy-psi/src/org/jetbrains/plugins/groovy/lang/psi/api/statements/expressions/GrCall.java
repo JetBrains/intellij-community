@@ -12,9 +12,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
-/**
- * @author ven
- */
 public interface GrCall extends GroovyPsiElement {
   @Nullable
   GrArgumentList getArgumentList();

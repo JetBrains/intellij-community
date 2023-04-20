@@ -19,9 +19,6 @@ package com.intellij.refactoring.safeDelete.usageInfo;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 
-/**
- * @author dsl
- */
 public abstract class SafeDeleteReferenceUsageInfo extends SafeDeleteUsageInfo implements SafeDeleteCustomUsageInfo {
   protected final boolean mySafeDelete;
 

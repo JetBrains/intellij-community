@@ -24,9 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-/**
- *  @author dsl
- */
 public class AutocreatingSingleSourceRootMoveDestination extends AutocreatingMoveDestination {
   private final VirtualFile mySourceRoot;
 

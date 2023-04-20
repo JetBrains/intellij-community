@@ -5,9 +5,6 @@ package com.intellij.ide.highlighter.custom.tokens;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CustomHighlighterTokenType;
 
-/**
- * @author dsl
- */
 public final class HexNumberParser extends PrefixedTokenParser {
   private HexNumberParser(String prefix) {
     super(prefix, CustomHighlighterTokenType.NUMBER);

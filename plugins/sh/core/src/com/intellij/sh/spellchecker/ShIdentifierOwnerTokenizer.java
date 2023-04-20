@@ -14,7 +14,7 @@ public class ShIdentifierOwnerTokenizer extends Tokenizer<PsiNameIdentifierOwner
   public static final ShIdentifierOwnerTokenizer INSTANCE = new ShIdentifierOwnerTokenizer();
 
   @Override
-  public void tokenize(@NotNull PsiNameIdentifierOwner element, TokenConsumer consumer) {
+  public void tokenize(@NotNull PsiNameIdentifierOwner element, @NotNull TokenConsumer consumer) {
     PsiElement identifier = element.getNameIdentifier();
     if (identifier == null) {
       return;

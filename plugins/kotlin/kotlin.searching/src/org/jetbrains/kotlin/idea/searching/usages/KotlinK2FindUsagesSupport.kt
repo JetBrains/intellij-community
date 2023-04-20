@@ -3,13 +3,11 @@
 package org.jetbrains.kotlin.idea.searching.usages
 
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiFormatUtil
 import com.intellij.psi.util.PsiFormatUtilBase
 import com.intellij.util.Processor
@@ -196,9 +194,6 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
         }
     }
 
-    override fun sourcesAndLibraries(delegate: GlobalSearchScope, project: Project): GlobalSearchScope {
-        return delegate
-    }
 }
 
 // temp duplicate of org.jetbrains.kotlin.idea.refactoring.formatPsiClass

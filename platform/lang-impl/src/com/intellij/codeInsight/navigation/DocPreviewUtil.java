@@ -19,8 +19,6 @@ import java.util.regex.Pattern;
  * Provides utility methods for building documentation preview.
  * <p/>
  * Thread-safe.
- *
- * @author Denis Zhdanov
  */
 public final class DocPreviewUtil {
   private static final IntSet ALLOWED_LINK_SEPARATORS = new IntOpenHashSet();

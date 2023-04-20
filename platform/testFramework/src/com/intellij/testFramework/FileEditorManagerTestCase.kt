@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
 import com.intellij.openapi.components.ExpandMacroToPathMap
@@ -18,6 +18,7 @@ import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockManager
+import com.intellij.util.childScope
 import com.intellij.util.io.write
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.nio.file.Path
@@ -28,7 +29,8 @@ abstract class FileEditorManagerTestCase : BasePlatformTestCase() {
 
   public override fun setUp() {
     super.setUp()
-    manager = FileEditorManagerImpl(project)
+    @Suppress("DEPRECATION")
+    manager = FileEditorManagerImpl(project, project.coroutineScope.childScope())
     project.replaceService(FileEditorManager::class.java, manager!!, testRootDisposable)
     (FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl).clearSelectedProviders()
     check(DockManager.getInstance(project).containers.size == 1) {
@@ -75,7 +77,7 @@ abstract class FileEditorManagerTestCase : BasePlatformTestCase() {
     map.addMacroExpand(PathMacroUtil.PROJECT_DIR_MACRO_NAME, testDataPath)
     map.substitute(rootElement, true, true)
     runBlockingModalWithRawProgressReporter(project, "") {
-      manager!!.mainSplitters.restoreEditors(EditorSplitterState(rootElement), onStartup = false, anyEditorOpened = null)
+      manager!!.mainSplitters.restoreEditors(EditorSplitterState(rootElement), onStartup = false)
     }
   }
 }

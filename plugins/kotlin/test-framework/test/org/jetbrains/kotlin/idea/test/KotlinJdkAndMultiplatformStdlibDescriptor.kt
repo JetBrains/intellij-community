@@ -13,12 +13,9 @@ class KotlinJdkAndMultiplatformStdlibDescriptor private constructor(private val 
     override fun getSdk(): Sdk = IdeaTestUtil.getMockJdk18()
 
     override fun configureModule(module: Module, model: ModifiableRootModel) {
-        ConfigLibraryUtil.addLibrary(model, STDLIB_COMMON_LIB_NAME) {
+        ConfigLibraryUtil.addLibrary(model, STDLIB_LIB_NAME) {
             addRoot(TestKotlinArtifacts.kotlinStdlibCommon, OrderRootType.CLASSES)
             addRoot(TestKotlinArtifacts.kotlinStdlibCommonSources, OrderRootType.SOURCES)
-        }
-
-        ConfigLibraryUtil.addLibrary(model, STDLIB_LIB_NAME) {
             addRoot(TestKotlinArtifacts.kotlinStdlib, OrderRootType.CLASSES)
             addRoot(TestKotlinArtifacts.kotlinStdlibSources, OrderRootType.SOURCES)
         }
@@ -28,7 +25,6 @@ class KotlinJdkAndMultiplatformStdlibDescriptor private constructor(private val 
         val JDK_AND_MULTIPLATFORM_STDLIB_WITH_SOURCES = KotlinJdkAndMultiplatformStdlibDescriptor(true)
         val JDK_AND_MULTIPLATFORM_STDLIB = KotlinJdkAndMultiplatformStdlibDescriptor(false)
 
-        private const val STDLIB_COMMON_LIB_NAME = "stdlib-common"
         private const val STDLIB_LIB_NAME = "stdlib"
     }
 }

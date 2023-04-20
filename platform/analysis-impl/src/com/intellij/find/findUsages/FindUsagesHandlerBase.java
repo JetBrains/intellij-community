@@ -24,8 +24,16 @@ public class FindUsagesHandlerBase {
 
   @NotNull
   protected final PsiElement myPsiElement;
+  private final Project myProject;
 
-  public FindUsagesHandlerBase(@NotNull PsiElement psiElement) {myPsiElement = psiElement;}
+  public FindUsagesHandlerBase(@NotNull PsiElement psiElement) {
+    this(psiElement, psiElement.getProject());
+  }
+
+  public FindUsagesHandlerBase(@NotNull PsiElement psiElement, Project project) {
+    myPsiElement = psiElement;
+    myProject = project;
+  }
 
   @NotNull
   public final PsiElement getPsiElement() {
@@ -34,7 +42,7 @@ public class FindUsagesHandlerBase {
 
   @NotNull
   public final Project getProject() {
-    return myPsiElement.getProject();
+    return myProject;
   }
 
   public PsiElement @NotNull [] getPrimaryElements() {

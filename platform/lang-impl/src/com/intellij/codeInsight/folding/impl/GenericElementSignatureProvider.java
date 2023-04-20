@@ -24,8 +24,6 @@ import org.jetbrains.annotations.Nullable;
  * Aggregates 'generic' (language-agnostic) {@link ElementSignatureProvider signature providers}.
  * <p/>
  * Thread-safe.
- * 
- * @author Denis Zhdanov
  */
 public class GenericElementSignatureProvider implements ElementSignatureProvider {
   

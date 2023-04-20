@@ -7,9 +7,6 @@ import com.intellij.util.ui.UIUtil;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author Denis Zhdanov
- */
 public class ArrangementRuleIndexControl extends JPanel {
 
   private boolean myIsError;

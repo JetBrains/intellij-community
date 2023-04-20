@@ -22,9 +22,6 @@ import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.util.IncorrectOperationException;
 
-/**
- *  @author dsl
- */
 public class ReferenceParameterListTest extends JavaPsiTestCase {
   private static final Logger LOG = Logger.getInstance(ReferenceParameterListTest.class);
   public void testParameterListInExtends() {

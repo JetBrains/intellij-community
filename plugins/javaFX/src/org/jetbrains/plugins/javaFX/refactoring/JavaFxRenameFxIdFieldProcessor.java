@@ -17,9 +17,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaFxRenameFxIdFieldProcessor extends RenamePsiElementProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {

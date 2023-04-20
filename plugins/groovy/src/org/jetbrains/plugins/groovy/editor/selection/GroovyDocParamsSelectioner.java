@@ -25,9 +25,6 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParams;
 
 import java.util.List;
 
-/**
- * @author ilyas
- */
 public class GroovyDocParamsSelectioner extends ExtendWordSelectionHandlerBase {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {

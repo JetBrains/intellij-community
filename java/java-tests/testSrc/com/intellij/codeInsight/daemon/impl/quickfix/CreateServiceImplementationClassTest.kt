@@ -9,9 +9,6 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiJavaFile
 import junit.framework.TestCase
 
-/**
- * @author Pavel.Dolgov
- */
 class CreateServiceImplementationClassTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   fun testExistingPackageAllQualified() {

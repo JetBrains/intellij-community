@@ -24,7 +24,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.IconReplacer
+import com.intellij.ui.RetrievableIcon
 import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBDimension
@@ -72,7 +73,7 @@ private class RedesignedRunToolbarWrapper : AnAction(), CustomComponentAction {
     return createRunActionToolbar {
       presentation.getClientProperty(runToolbarDataKey) ?: false
     }.component.let {
-      Wrapper(it).apply { border = JBUI.Borders.empty(RunWidgetDefaults.toolbarBorderHeight(), 12, RunWidgetDefaults.toolbarBorderHeight(), 2) }
+      DynamicBorderWrapper(it) { JBUI.Borders.empty(RunWidgetDefaults.toolbarBorderHeight(), 12, RunWidgetDefaults.toolbarBorderHeight(), 2) }
     }
   }
 
@@ -136,6 +137,22 @@ class RunToolbarTopLevelExecutorActionGroup : ActionGroup() {
   }
 }
 
+private class DisabledIcon(private val width: Int, private val height: Int, private val iconFn: () -> Icon) : RetrievableIcon {
+  override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+    iconFn().paintIcon(c, g, x, y)
+  }
+
+  override fun getIconWidth(): Int = width
+
+  override fun getIconHeight(): Int = height
+
+  override fun retrieveIcon(): Icon = iconFn()
+
+  override fun replaceBy(replacer: IconReplacer): Icon {
+    return DisabledIcon(width, height) { replacer.replaceIcon(iconFn()) }
+  }
+}
+
 private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () -> Boolean) : IdeaActionButtonLook() {
   override fun getStateBackground(component: JComponent, state: Int): Color {
 
@@ -185,12 +202,18 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
     }
   }
 
+  override fun getDisabledIcon(icon: Icon): Icon = DisabledIcon(icon.iconWidth, icon.iconHeight) {
+    IconUtil.toStrokeIcon(icon, JBUI.CurrentTheme.RunWidget.DISABLED_FOREGROUND)
+  }
 
   override fun paintIcon(g: Graphics, actionButton: ActionButtonComponent, icon: Icon, x: Int, y: Int) {
     if (icon.iconWidth == 0 || icon.iconHeight == 0) {
       return
     }
-    super.paintIcon(g, actionButton, IconUtil.toStrokeIcon(icon, RunWidgetDefaults.FOREGROUND), x, y)
+
+    val toStrokeIcon = if (icon is DisabledIcon) icon else IconUtil.toStrokeIcon(icon, RunWidgetDefaults.FOREGROUND)
+
+    super.paintIcon(g, actionButton, toStrokeIcon, x, y)
   }
 
   override fun paintLookBorder(g: Graphics, rect: Rectangle, color: Color) {}
@@ -236,9 +259,10 @@ private class MoreRunToolbarActions : TogglePopupAction(
   override fun getActionGroup(e: AnActionEvent): ActionGroup? {
     val project = e.project ?: return null
     val selectedConfiguration = RunManager.getInstance(project).selectedConfiguration
-    return createOtherRunnersSubgroup(selectedConfiguration, project)
+    val result = createOtherRunnersSubgroup(selectedConfiguration, project)
+    addAdditionalActionsToRunConfigurationOptions(project, selectedConfiguration, result, true)
+    return result
   }
-
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 }
 
@@ -247,14 +271,24 @@ internal val excludeRunAndDebug: (Executor) -> Boolean = {
   it.id != ToolWindowId.RUN && it.id != ToolWindowId.DEBUG
 }
 
-private fun createOtherRunnersSubgroup(runConfiguration: RunnerAndConfigurationSettings?, project: Project): ActionGroup? {
+private fun createOtherRunnersSubgroup(runConfiguration: RunnerAndConfigurationSettings?, project: Project): DefaultActionGroup {
   if (runConfiguration != null) {
     return RunConfigurationsComboBoxAction.SelectConfigAction(runConfiguration, project, excludeRunAndDebug)
   }
   if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
     return RunConfigurationsComboBoxAction.RunCurrentFileAction(excludeRunAndDebug)
   }
-  return ActionGroup.EMPTY_GROUP
+  return DefaultActionGroup()
+}
+
+internal fun addAdditionalActionsToRunConfigurationOptions(project: Project,
+                                                           selectedConfiguration: RunnerAndConfigurationSettings?,
+                                                           targetGroup: DefaultActionGroup,
+                                                           isWidget: Boolean) {
+  val additionalActions = AdditionalRunningOptions.getInstance(project).getAdditionalActions(selectedConfiguration, isWidget)
+  for (action in additionalActions.getChildren(null).reversed()) {
+    targetGroup.add(action, Constraints.FIRST)
+  }
 }
 
 private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomComponentAction, DumbAware {
@@ -293,6 +327,7 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
       override fun getMargins(): Insets = JBInsets.create(0, 10)
       override fun iconTextSpace(): Int = JBUI.scale(6)
       override fun shallPaintDownArrow() = true
+      override fun getInactiveTextColor() = JBUI.CurrentTheme.RunWidget.DISABLED_FOREGROUND
     }.also {
       it.foreground = RunWidgetDefaults.FOREGROUND
       it.setHorizontalTextAlignment(SwingConstants.LEFT)

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.jna.JnaLoader;
@@ -34,16 +34,13 @@ import java.util.concurrent.TimeUnit;
 
 public final class FileSystemUtil {
   private static final Logger LOG = Logger.getInstance(FileSystemUtil.class);
+
   static final String FORCE_USE_NIO2_KEY = "idea.io.use.nio2";
 
   private static final String COARSE_TIMESTAMP_KEY = "idea.io.coarse.ts";
 
   @ApiStatus.Internal
   public static final boolean DO_NOT_RESOLVE_SYMLINKS = Boolean.getBoolean("idea.symlinks.no.resolve");
-
-  private volatile static boolean MAC_CASE_SENSITIVITY_NATIVE_API_AVAILABLE = true;
-  private volatile static boolean LINUX_CASE_SENSITIVITY_NATIVE_API_AVAILABLE = true;
-  private volatile static boolean WINDOWS_CASE_SENSITIVITY_NATIVE_API_AVAILABLE = true;
 
   interface Mediator {
     @Nullable FileAttributes getAttributes(@NotNull String path) throws IOException;
@@ -389,13 +386,13 @@ public final class FileSystemUtil {
     if (JnaLoader.isLoaded()) {
       File parent = anyChild.getParentFile();
       String path = (parent != null ? parent : anyChild).getAbsolutePath();
-      if (SystemInfo.isWin10OrNewer && WINDOWS_CASE_SENSITIVITY_NATIVE_API_AVAILABLE) {
+      if (SystemInfo.isWin10OrNewer && WINDOWS_CS_API_AVAILABLE) {
         detected = OSAgnosticPathUtil.isAbsoluteDosPath(path) ? getNtfsCaseSensitivity(path) : FileAttributes.CaseSensitivity.UNKNOWN;
       }
-      else if (SystemInfo.isMac && MAC_CASE_SENSITIVITY_NATIVE_API_AVAILABLE) {
+      else if (SystemInfo.isMac && MAC_CS_API_AVAILABLE) {
         detected = getMacOsCaseSensitivity(path);
       }
-      else if (SystemInfo.isLinux && LINUX_CASE_SENSITIVITY_NATIVE_API_AVAILABLE) {
+      else if (SystemInfo.isLinux && LINUX_CS_API_AVAILABLE) {
         detected = getLinuxCaseSensitivity(path);
       }
     }
@@ -432,6 +429,8 @@ public final class FileSystemUtil {
   }
 
   //<editor-fold desc="Windows case sensitivity detection (NTFS-only)">
+  private volatile static boolean WINDOWS_CS_API_AVAILABLE = true;
+
   private static FileAttributes.CaseSensitivity getNtfsCaseSensitivity(String path) {
     Kernel32 kernel32;
     NtOsKrnl ntOsKrnl;
@@ -439,8 +438,9 @@ public final class FileSystemUtil {
       kernel32 = Kernel32.INSTANCE;
       ntOsKrnl = NtOsKrnl.INSTANCE;
     }
-    catch (Throwable e) {
-      WINDOWS_CASE_SENSITIVITY_NATIVE_API_AVAILABLE = false;
+    catch (Throwable t) {
+      LOG.warn(t);
+      WINDOWS_CS_API_AVAILABLE = false;
       return FileAttributes.CaseSensitivity.UNKNOWN;
     }
     try {
@@ -512,13 +512,16 @@ public final class FileSystemUtil {
   //</editor-fold>
 
   //<editor-fold desc="macOS case sensitivity detection">
+  private volatile static boolean MAC_CS_API_AVAILABLE = true;
+
   private static FileAttributes.CaseSensitivity getMacOsCaseSensitivity(String path) {
     CoreFoundation cf;
     try {
       cf = CoreFoundation.INSTANCE;
     }
-    catch (Throwable e) {
-      MAC_CASE_SENSITIVITY_NATIVE_API_AVAILABLE = false;
+    catch (Throwable t) {
+      LOG.warn(t);
+      MAC_CS_API_AVAILABLE = false;
       return FileAttributes.CaseSensitivity.UNKNOWN;
     }
     try {
@@ -569,14 +572,16 @@ public final class FileSystemUtil {
   //</editor-fold>
 
   //<editor-fold desc="Linux case sensitivity detection">
+  private volatile static boolean LINUX_CS_API_AVAILABLE = true;
+
   private static FileAttributes.CaseSensitivity getLinuxCaseSensitivity(String path) {
     LibC libC;
     try {
       libC = LibC.INSTANCE;
     }
-    catch (Throwable e) {
-      ourLibExt2FsPresent = false;
-      LINUX_CASE_SENSITIVITY_NATIVE_API_AVAILABLE = false;
+    catch (Throwable t) {
+      LOG.warn(t);
+      LINUX_CS_API_AVAILABLE = false;
       return FileAttributes.CaseSensitivity.UNKNOWN;
     }
     try {
@@ -600,8 +605,9 @@ public final class FileSystemUtil {
           try {
             e2P = E2P.INSTANCE;
           }
-          catch (Throwable e) {
-            LINUX_CASE_SENSITIVITY_NATIVE_API_AVAILABLE = false;
+          catch (Throwable t) {
+            LOG.warn(t);
+            ourLibExt2FsPresent = false;
             return FileAttributes.CaseSensitivity.UNKNOWN;
           }
           LongByReference flags = new LongByReference();
@@ -615,10 +621,6 @@ public final class FileSystemUtil {
           }
         }
       }
-    }
-    catch (UnsatisfiedLinkError e) {
-      ourLibExt2FsPresent = false;
-      LOG.warn(e);
     }
     catch (Throwable t) {
       LOG.warn("path: " + path, t);

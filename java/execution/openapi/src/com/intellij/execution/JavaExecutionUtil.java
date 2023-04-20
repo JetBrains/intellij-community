@@ -28,9 +28,6 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author spleaner
- */
 public final class JavaExecutionUtil {
   private static final Logger LOG = Logger.getInstance(JavaExecutionUtil.class);
 

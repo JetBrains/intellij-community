@@ -29,9 +29,6 @@ import java.util.Objects;
 
 import static com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys.CLASS_SHORT_NAMES;
 
-/**
- * @author ilyas
- */
 public class GroovyShortNamesCache extends PsiShortNamesCache {
   private final Project myProject;
 

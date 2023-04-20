@@ -35,9 +35,6 @@ import java.util.function.IntConsumer;
 
 import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.OrderUtil.reversedPostOrder;
 
-/**
- * @author ven
- */
 public final class ReachingDefinitionsCollector {
   private ReachingDefinitionsCollector() {
   }

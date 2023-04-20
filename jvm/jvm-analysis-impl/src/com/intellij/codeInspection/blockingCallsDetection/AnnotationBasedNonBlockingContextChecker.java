@@ -40,10 +40,17 @@ public final class AnnotationBasedNonBlockingContextChecker implements NonBlocki
 
   @Override
   public ContextType computeContextType(@NotNull ElementContext elementContext) {
-    UCallExpression callExpression = UastContextKt.toUElement(elementContext.getElement(), UCallExpression.class);
-    if (callExpression == null) return Unsure.INSTANCE;
+    UMethod callingMethod;
+    var method = UastContextKt.toUElement(elementContext.getElement(), UMethod.class);
+    if (method != null) {
+      callingMethod = method;
+    }
+    else {
+      UCallExpression callExpression = UastContextKt.toUElement(elementContext.getElement(), UCallExpression.class);
+      if (callExpression == null) return Unsure.INSTANCE;
+      callingMethod = UastUtils.getParentOfType(callExpression, UMethod.class);
+    }
 
-    UMethod callingMethod = UastUtils.getParentOfType(callExpression, UMethod.class);
     if (callingMethod == null) return Unsure.INSTANCE;
     PsiMethod psiCallingMethod = callingMethod.getJavaPsi();
 

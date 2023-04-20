@@ -311,26 +311,24 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
     override fun visitQualifiedExpression(expression: KtQualifiedExpression) {
         val other = getTreeElementDepar<KtQualifiedExpression>() ?: return
         myMatchingVisitor.result = expression.operationSign == other.operationSign
-                && myMatchingVisitor.match(expression.receiverExpression, other.receiverExpression)
                 && myMatchingVisitor.match(expression.selectorExpression, other.selectorExpression)
+                && myMatchingVisitor.match(expression.receiverExpression, other.receiverExpression)
     }
 
     override fun visitDotQualifiedExpression(expression: KtDotQualifiedExpression) {
         val other = getTreeElementDepar<KtExpression>() ?: return
         val receiverHandler = getHandler(expression.receiverExpression)
         if (receiverHandler is SubstitutionHandler && receiverHandler.minOccurs == 0 && other !is KtDotQualifiedExpression) { // can match without receiver
-            val receiverType = other.resolveExprType()
-            val receiverTypeMatches = if (receiverType != null) {
-                receiverHandler.findPredicate(KotlinExprTypePredicate::class.java)?.match(receiverType) ?: true
-            } else true
             myMatchingVisitor.result = other.parent !is KtDotQualifiedExpression
                     && other.parent !is KtCallExpression // don't match name reference of calls
-                    && receiverTypeMatches
                     && myMatchingVisitor.match(expression.selectorExpression, other)
+                    && receiverHandler.findPredicate(KotlinExprTypePredicate::class.java)?.let { predicate ->
+                        other.resolveReceiverType()?.let { type -> predicate.match(type) } ?: false
+                    } ?: true
         } else {
             myMatchingVisitor.result = other is KtDotQualifiedExpression
-                    && myMatchingVisitor.matchOptionally(expression.receiverExpression, other.receiverExpression)
                     && myMatchingVisitor.match(expression.selectorExpression, other.selectorExpression)
+                    && myMatchingVisitor.matchOptionally(expression.receiverExpression, other.receiverExpression)
         }
     }
 
@@ -339,8 +337,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
         val lambdaVP = lambdaExpression.valueParameters
         val otherVP = other.valueParameters
 
-        myMatchingVisitor.result =
-            (!lambdaExpression.functionLiteral.hasParameterSpecification()
+        myMatchingVisitor.result = (!lambdaExpression.functionLiteral.hasParameterSpecification()
                     || myMatchingVisitor.matchSequentially(lambdaVP, otherVP)
                     || lambdaVP.sumOf { p -> getHandler(p).let { if (it is SubstitutionHandler) it.minOccurs else 1 } } == 1
                     && !other.functionLiteral.hasParameterSpecification()

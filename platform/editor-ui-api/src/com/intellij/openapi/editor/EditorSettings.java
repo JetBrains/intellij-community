@@ -25,6 +25,9 @@ public interface EditorSettings {
   boolean isTrailingWhitespaceShown();
   void setTrailingWhitespaceShown(boolean val);
 
+  boolean isSelectionWhitespaceShown();
+  void setSelectionWhitespaceShown(boolean val);
+
   int getRightMargin(Project project);
   void setRightMargin(int myRightMargin);
 

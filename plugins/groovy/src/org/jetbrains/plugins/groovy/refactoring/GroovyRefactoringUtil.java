@@ -54,9 +54,6 @@ import java.util.function.BiPredicate;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isPlusPlusOrMinusMinus;
 
-/**
- * @author ilyas
- */
 public abstract class GroovyRefactoringUtil {
   private static final Logger LOG = Logger.getInstance(GroovyRefactoringUtil.class);
 

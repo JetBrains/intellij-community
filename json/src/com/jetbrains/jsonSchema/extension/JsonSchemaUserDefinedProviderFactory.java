@@ -23,9 +23,6 @@ import java.util.Map;
 import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isAbsoluteUrl;
 import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isHttpPath;
 
-/**
- * @author Irina.Chernushina on 2/13/2016.
- */
 public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderFactory, DumbAware {
   @NotNull
   @Override

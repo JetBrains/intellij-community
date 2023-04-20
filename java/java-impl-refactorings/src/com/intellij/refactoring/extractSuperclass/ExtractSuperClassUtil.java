@@ -32,9 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author dsl
- */
 public final class ExtractSuperClassUtil {
   private static final Logger LOG = Logger.getInstance(ExtractSuperClassUtil.class);
 

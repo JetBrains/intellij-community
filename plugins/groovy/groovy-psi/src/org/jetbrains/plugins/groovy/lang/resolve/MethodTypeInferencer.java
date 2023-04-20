@@ -28,9 +28,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 
 import java.util.List;
 
-/**
- * @author ven
- */
 public class MethodTypeInferencer implements Computable<PsiType> {
   private final GrStatementOwner myBlock;
 

@@ -17,9 +17,6 @@ package com.jetbrains.python.psi.types;
 
 import com.jetbrains.python.psi.PyElementType;
 
-/**
- * @author vlan
- */
 public final class PyTypeTokenTypes {
   private PyTypeTokenTypes() {}
 

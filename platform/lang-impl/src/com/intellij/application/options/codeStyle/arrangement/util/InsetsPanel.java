@@ -23,8 +23,6 @@ import java.awt.*;
 
 /**
  * Panel which occupies horizontal and vertical space even if it's content is invisible.
- * 
- * @author Denis Zhdanov
  */
 public class InsetsPanel extends JPanel {
 

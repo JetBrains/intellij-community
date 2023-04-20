@@ -19,8 +19,6 @@ import com.intellij.util.ArrayFactory;
 
 /**
  * Represents a PSI element which can be used as the value of an annotation element.
- *
- * @author ven
  */
 public interface PsiAnnotationMemberValue extends PsiElement {
   /**

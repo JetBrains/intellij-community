@@ -37,8 +37,6 @@ class KotlinCodeBlockModificationListener(project: Project) : PsiTreeChangePrepr
 
     val kotlinOutOfCodeBlockTracker: ModificationTracker = kotlinOutOfCodeBlockTrackerImpl
 
-    private val pureKotlinCodeBlockModificationListener: PureKotlinCodeBlockModificationListener = project.service()
-
     override fun treeChanged(event: PsiTreeChangeEventImpl) {
         if (!PsiModificationTrackerImpl.canAffectPsi(event)) {
             return
@@ -67,19 +65,8 @@ class KotlinCodeBlockModificationListener(project: Project) : PsiTreeChangePrepr
         val messageBusConnection = project.messageBus.connect(this)
 
         val perModuleOutOfCodeBlockTrackerUpdater = KotlinModuleOutOfCodeBlockModificationTracker.getUpdaterInstance(project)
-        pureKotlinCodeBlockModificationListener.addListener(
-            object : PureKotlinOutOfCodeBlockModificationListener {
-                override fun kotlinFileOutOfCodeBlockChanged(file: KtFile, physical: Boolean) {
-                    messageBusConnection.deliverImmediately()
 
-                    if (physical) {
-                        incModificationCount()
-                        perModuleOutOfCodeBlockTrackerUpdater.onKotlinPhysicalFileOutOfBlockChange(file, true)
-                    }
-                }
-            },
-            this
-        )
+        PureKotlinCodeBlockModificationListener.getInstance(project) //ensure pom listener is attached as well
 
         (PsiManager.getInstance(project) as PsiManagerImpl).addTreeChangePreprocessor(this)
 

@@ -17,7 +17,7 @@ import javax.swing.JComponent
 
 internal class GHOAuthCredentialsUi(
   val factory: GithubApiRequestExecutor.Factory,
-  val isAccountUnique: UniqueLoginPredicate
+  private val isAccountUnique: UniqueLoginPredicate
 ) : GHCredentialsUi() {
 
   override fun getPreferredFocusableComponent(): JComponent? = null

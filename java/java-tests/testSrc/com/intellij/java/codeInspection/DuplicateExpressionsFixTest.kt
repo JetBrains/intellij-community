@@ -11,9 +11,6 @@ import com.intellij.ui.ChooserInterceptor
 import com.intellij.ui.UiInterceptors
 import java.util.regex.Pattern
 
-/**
- * @author Pavel.Dolgov
- */
 class DuplicateExpressionsFixTest : LightJavaCodeInsightFixtureTestCase() {
   val inspection = DuplicateExpressionsInspection()
 

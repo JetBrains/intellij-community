@@ -39,6 +39,10 @@ class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSy
     forEachListener { it.onStart(id, workingDir) }
   }
 
+  override fun onEnvironmentPrepared(id: ExternalSystemTaskId) {
+    forEachListener { it.onEnvironmentPrepared(id) }
+  }
+
   override fun onStatusChange(event: ExternalSystemTaskNotificationEvent) {
     forEachListener { it.onStatusChange(event) }
   }
@@ -141,6 +145,11 @@ class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSy
       if (taskId !== ALL_TASKS_KEY && taskId != id) return
       @Suppress("DEPRECATION")
       delegate.onStart(id)
+    }
+
+    override fun onEnvironmentPrepared(id: ExternalSystemTaskId) {
+      if (taskId !== ALL_TASKS_KEY && taskId != id) return
+      delegate.onEnvironmentPrepared(id)
     }
 
     override fun equals(other: Any?): Boolean {

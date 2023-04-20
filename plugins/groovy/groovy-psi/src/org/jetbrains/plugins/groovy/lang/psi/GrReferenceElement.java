@@ -8,9 +8,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 
-/**
- * @author ven
- */
 public interface GrReferenceElement<Q extends PsiElement> extends GroovyPsiElement, GroovyReference, GrQualifiedReference<Q> {
 
   @Override

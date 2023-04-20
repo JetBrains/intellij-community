@@ -23,9 +23,6 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Irina.Chernushina on 2/20/2017.
- */
 public class JsonJsonGenericValueAdapter implements JsonValueAdapter {
   @NotNull private final JsonValue myValue;
 

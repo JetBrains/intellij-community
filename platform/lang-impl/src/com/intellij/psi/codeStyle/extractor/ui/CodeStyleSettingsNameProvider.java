@@ -19,9 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author Roman.Shein
- */
 public class CodeStyleSettingsNameProvider implements CodeStyleSettingsCustomizable {
 
   protected Map<SettingsType, Map<SettingsGroup, List<CodeStyleSettingPresentation>>> mySettings =

@@ -7,9 +7,6 @@ import org.jetbrains.idea.maven.model.MavenPlugin;
 
 import java.util.Properties;
 
-/**
- * @author Sergey Evdokimov
- */
 public abstract class MavenPropertiesGenerator {
 
   public abstract void generate(@NotNull Properties modelProperties,

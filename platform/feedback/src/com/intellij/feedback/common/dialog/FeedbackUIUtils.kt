@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.util.ui.JBUI
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import javax.swing.SwingConstants
@@ -62,7 +63,10 @@ fun <T> Panel.createSegmentedButtonWithBottomLabels(@NlsContexts.Label mainLabel
     row {
       if (leftBottomLabel != null) {
         label(leftBottomLabel)
-          .applyToComponent { font = ComponentPanelBuilder.getCommentFont(font) }
+          .applyToComponent {
+            font = ComponentPanelBuilder.getCommentFont(font)
+            foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
+          }
           .widthGroup("Group")
           .apply {
             if (midBottomLabel == null) {
@@ -72,7 +76,10 @@ fun <T> Panel.createSegmentedButtonWithBottomLabels(@NlsContexts.Label mainLabel
       }
       if (midBottomLabel != null) {
         label(midBottomLabel)
-          .applyToComponent { font = ComponentPanelBuilder.getCommentFont(font) }
+          .applyToComponent {
+            font = ComponentPanelBuilder.getCommentFont(font)
+            foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
+          }
           .align(AlignX.CENTER)
           .resizableColumn()
       }
@@ -80,6 +87,7 @@ fun <T> Panel.createSegmentedButtonWithBottomLabels(@NlsContexts.Label mainLabel
         label(rightBottomLabel)
           .applyToComponent {
             font = ComponentPanelBuilder.getCommentFont(font)
+            foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
             horizontalAlignment = SwingConstants.RIGHT
           }
           .widthGroup("Group")

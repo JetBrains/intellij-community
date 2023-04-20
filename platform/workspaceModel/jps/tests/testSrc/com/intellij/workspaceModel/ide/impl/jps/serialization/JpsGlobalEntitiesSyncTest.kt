@@ -110,7 +110,7 @@ class JpsGlobalEntitiesSyncTest {
     loadedProjects.forEach { loadedProject ->
       val projectWorkspaceModel = WorkspaceModel.getInstance(loadedProject)
       projectWorkspaceModel as WorkspaceModelImpl
-      val projectLibraryEntities = projectWorkspaceModel.entityStorage.current.entities(LibraryEntity::class.java).toList()
+      val projectLibraryEntities = projectWorkspaceModel.currentSnapshot.entities(LibraryEntity::class.java).toList()
       UsefulTestCase.assertSameElements(projectLibrariesNames + globalLibrariesNames, projectLibraryEntities.map { it.name })
     }
   }

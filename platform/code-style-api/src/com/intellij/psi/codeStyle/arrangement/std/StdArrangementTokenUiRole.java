@@ -15,9 +15,6 @@
  */
 package com.intellij.psi.codeStyle.arrangement.std;
 
-/**
- * @author Denis Zhdanov
- */
 public enum StdArrangementTokenUiRole {
   LABEL,
   CHECKBOX,

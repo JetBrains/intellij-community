@@ -5,7 +5,6 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.StaticallyImportable;
 import com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider;
 import com.intellij.codeInsight.hints.Option;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.java.codeInsight.AbstractParameterInfoTestCase;
@@ -321,54 +320,6 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END);
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>1,<hint text=\"radix:\"/>2 ) } }<caret>");
-  }
-
-  public void testIntroduceVariableIntention() {
-    disableVirtualComma();
-
-    configureJava("""
-                    class C {
-                        void m() {
-                            Character.for<caret>
-                        }
-                    }""");
-    complete("forDigit");
-    waitForAllAsyncStuff();
-    IntentionAction intention = myFixture.findSingleIntention("Introduce local variable");
-    assertNotNull(intention);
-    myFixture.launchAction(intention);
-    checkResult("""
-                  class C {
-                      void m() {
-                          int i = ;
-                          Character.forDigit(i<caret>, )
-                      }
-                  }""");
-  }
-
-  public void testIntroduceVariableIntentionInIfWithoutBraces() {
-    disableVirtualComma();
-
-    configureJava("""
-                    class C {
-                        void m() {
-                            if (true) Character.for<caret>
-                        }
-                    }""");
-    complete("forDigit");
-    waitForAllAsyncStuff();
-    IntentionAction intention = myFixture.findSingleIntention("Introduce local variable");
-    assertNotNull(intention);
-    myFixture.launchAction(intention);
-    checkResult("""
-                  class C {
-                      void m() {
-                          if (true) {
-                              int i = ;
-                              Character.forDigit(i<caret>, )
-                          }
-                      }
-                  }""");
   }
 
   public void testPrevParameterFromOutside() {

@@ -312,6 +312,51 @@ class KotlinSSTypeModifierTest : KotlinStructuralSearchTest() {
     """.trimIndent())
     }
 
+    fun testTypeCallExpressionWithoutReceiverImported() {
+        myFixture.addFileToProject("A.kt", """
+            object A {
+                fun foo() { }
+            }
+        """.trimIndent())
+        myFixture.addFileToProject("B.kt", """
+            object B {
+                fun foo() { }
+            }
+        """.trimIndent())
+        doTest("'_{0,1}:[exprtype(A)].'_()", """
+            import A.foo
+            
+            fun main() {
+                <warning descr="SSR">A.foo()</warning>
+                B.foo()
+                <warning descr="SSR">foo()</warning>
+            }
+    """.trimIndent())
+    }
+
+    fun testTypeCallExpressionWithoutReceiverImportedJava() {
+        myFixture.addFileToProject("A.java", """
+            class A {
+                public static void foo() { }
+            }
+        """.trimIndent())
+        myFixture.addFileToProject("B.kt", """
+            object B {
+                fun foo() { }
+            }
+        """.trimIndent())
+        doTest("'_{0,1}:[exprtype(A)].'_()", """
+            import A.foo
+            
+            fun main() {
+                <warning descr="SSR">A.foo()</warning>
+                B.foo()
+                <warning descr="SSR">foo()</warning>
+            }
+    """.trimIndent())
+    }
+
+
     fun testTypeCallExpressionWithoutReceiverOnHigherOrderFunction() {
         myFixture.addFileToProject("A.kt", """
             object A {

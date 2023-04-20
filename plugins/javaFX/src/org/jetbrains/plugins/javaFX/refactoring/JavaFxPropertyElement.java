@@ -11,9 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxPropertyReference;
 
-/**
- * @author Pavel.Dolgov
- */
 public final class JavaFxPropertyElement extends BeanPropertyElement {
   private final JavaFxPropertyReference myPropertyReference;
 

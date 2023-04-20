@@ -9,9 +9,6 @@ import groovy.transform.CompileStatic
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PROTECTED
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PUBLIC
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.BY_NAME
-/**
- * @author Denis Zhdanov
- */
 @CompileStatic
 class JavaRearrangerByNameTest extends AbstractJavaRearrangerTest {
 

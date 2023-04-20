@@ -8,9 +8,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author Irina.Chernushina on 4/22/2017.
- */
 public final class MatchResult {
   public final List<JsonSchemaObject> mySchemas;
   public final List<Collection<? extends JsonSchemaObject>> myExcludingSchemas;

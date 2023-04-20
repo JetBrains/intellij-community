@@ -108,14 +108,14 @@ public interface Constants {
   @NonNls String INDENT_NEXT_LINE_PATTERN = "indentNextLinePattern";
   @NonNls String UNINDENTED_LINE_PATTERN = "unIndentedLinePattern";
 
-  // we should depend on intellij util classes as least as possible
+  // we should depend on intellij util classes as little as possible
   @SuppressWarnings("SSBasedInspection")
   Collection<TextMateBracePair> DEFAULT_HIGHLIGHTING_BRACE_PAIRS =
     Arrays.asList(new TextMateBracePair('[', ']'),
                   new TextMateBracePair('{', '}'),
                   new TextMateBracePair('(', ')'));
 
-  // we should depend on intellij util classes as least as possible
+  // we should depend on intellij util classes as little as possible
   @SuppressWarnings("SSBasedInspection")
   Collection<TextMateBracePair> DEFAULT_SMART_TYPING_BRACE_PAIRS =
     Arrays.asList(new TextMateBracePair('"', '"'),

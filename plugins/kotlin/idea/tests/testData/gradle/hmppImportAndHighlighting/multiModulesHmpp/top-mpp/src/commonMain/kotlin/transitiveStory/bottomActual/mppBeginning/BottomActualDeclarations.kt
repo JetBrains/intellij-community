@@ -26,9 +26,9 @@ fun bottActualApiCaller(k: KotlinApiContainer, s: JavaApiContainer) {
 internal val tlInternalInCommon = 42
 
 // has a child in jsJvm18Main
-open class <!LINE_MARKER("descr='Is subclassed by ChildOfCommonInMacos ChildOfCommonInShared Subclass  Click or press ... to navigate'")!>Outer<!> {
+open class <!LINE_MARKER("descr='Is subclassed by ChildOfCommonInMacos (transitiveStory.bottomActual.mppBeginning) ChildOfCommonInShared (transitiveStory.bottomActual.intermediateSrc) Subclass (transitiveStory.bottomActual.intermediateSrc) Press ... to navigate'")!>Outer<!> {
     private val a = 1
-    protected open val <!LINE_MARKER("descr='Is overridden in transitiveStory.bottomActual.mppBeginning.ChildOfCommonInMacos transitiveStory.bottomActual.intermediateSrc.ChildOfCommonInShared transitiveStory.bottomActual.intermediateSrc.Subclass'")!>b<!> = 2
+    protected open val <!LINE_MARKER("descr='Is overridden in ChildOfCommonInMacos (transitiveStory.bottomActual.mppBeginning) ChildOfCommonInShared (transitiveStory.bottomActual.intermediateSrc) Subclass (transitiveStory.bottomActual.intermediateSrc) Press ... to navigate'")!>b<!> = 2
     internal val c = 3
     val d = 4  // public by default
 
@@ -38,7 +38,7 @@ open class <!LINE_MARKER("descr='Is subclassed by ChildOfCommonInMacos ChildOfCo
 }
 
 // has a child in jsJvm18Main
-expect open class <!LINE_MARKER("descr='Has actuals in [multimod-hmpp.top-mpp.linuxMain, multimod-hmpp.top-mpp.macosMain, multimod-hmpp.top-mpp.jsJvm18iOSMain] module'"), LINE_MARKER("descr='Is subclassed by ChildOfMPOuterInMacos ChildOfMPOuterInShared  Click or press ... to navigate'")!>MPOuter<!> {
+expect open class <!LINE_MARKER("descr='Has actuals in [multimod-hmpp.top-mpp.linuxMain, multimod-hmpp.top-mpp.macosMain, multimod-hmpp.top-mpp.jsJvm18iOSMain] module'"), LINE_MARKER("descr='Is subclassed by ChildOfMPOuterInMacos (transitiveStory.bottomActual.mppBeginning) ChildOfMPOuterInShared (transitiveStory.bottomActual.intermediateSrc) Press ... to navigate'")!>MPOuter<!> {
     protected open val <!LINE_MARKER("descr='Has actuals in [multimod-hmpp.top-mpp.linuxMain, multimod-hmpp.top-mpp.macosMain, multimod-hmpp.top-mpp.jsJvm18iOSMain] module'")!>b<!>: Int
     internal val <!LINE_MARKER("descr='Has actuals in [multimod-hmpp.top-mpp.linuxMain, multimod-hmpp.top-mpp.macosMain, multimod-hmpp.top-mpp.jsJvm18iOSMain] module'")!>c<!>: Int
     val <!LINE_MARKER("descr='Has actuals in [multimod-hmpp.top-mpp.linuxMain, multimod-hmpp.top-mpp.macosMain, multimod-hmpp.top-mpp.jsJvm18iOSMain] module'")!>d<!>: Int // public by default

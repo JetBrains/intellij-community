@@ -20,9 +20,6 @@ import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.util.IncorrectOperationException;
 
-/**
- * @author ven
- */
 public interface PsiClassOwner extends PsiFile {
   /**
    * @return classes owned by this element.

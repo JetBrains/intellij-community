@@ -220,7 +220,7 @@ class ChildSingleFirstEntityData : WorkspaceEntityData<ChildSingleFirstEntity>()
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return ChildSingleFirstEntity(commonData, firstData, entitySource) {
-      this.parentEntity = parents.filterIsInstance<ParentSingleAbEntity>().single()
+      parents.filterIsInstance<ParentSingleAbEntity>().singleOrNull()?.let { this.parentEntity = it }
     }
   }
 

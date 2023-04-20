@@ -10,9 +10,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 
-/**
- * @author ilyas
- */
 public interface GrReferenceExpression extends GrExpression, GrReferenceElement<GrExpression> {
 
   @Nullable

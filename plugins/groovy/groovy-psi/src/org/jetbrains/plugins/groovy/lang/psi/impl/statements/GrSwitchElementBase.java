@@ -14,9 +14,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author ilyas
- */
 public abstract class GrSwitchElementBase extends GroovyPsiElementImpl implements GrSwitchElement {
 
   public GrSwitchElementBase(@NotNull ASTNode node) {

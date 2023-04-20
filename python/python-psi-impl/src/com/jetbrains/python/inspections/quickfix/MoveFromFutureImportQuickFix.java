@@ -26,9 +26,6 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFromImportStatement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Alexey.Ivanov
- */
 public class MoveFromFutureImportQuickFix implements LocalQuickFix {
   @Override
   @NotNull

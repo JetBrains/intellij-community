@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.ide.JavaUiBundle
@@ -172,7 +172,7 @@ private fun doCreateFromWizard(project: Project?, wizard: AbstractProjectWizard)
         val openProcessor = (projectBuilder as DeprecatedProjectBuilderForImport).getProjectOpenProcessor()
         runBlockingUnderModalProgress {
           // openProjectAsync must be implemented
-          openProcessor.openProjectAsync(virtualFile = file, projectToClose = null, forceOpenInNewFrame = false)!!.orElse(null)
+          openProcessor.openProjectAsync(virtualFile = file, projectToClose = null, forceOpenInNewFrame = false)!!
         }
       }
     }

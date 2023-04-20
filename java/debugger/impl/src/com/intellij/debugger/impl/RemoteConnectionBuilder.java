@@ -28,8 +28,7 @@ import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
-import org.jetbrains.intellij.build.impl.DebuggerAgentDownloader;
+import org.jetbrains.intellij.build.BuildDependenciesJps;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -188,16 +187,20 @@ public class RemoteConnectionBuilder {
           JavaSdkVersion sdkVersion = JavaSdk.getInstance().getVersion(jdk);
           if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_1_7)) {
             Path agentArtifactPath;
-            if (PluginManagerCore.isRunningFromSources()) {
+
+            Path classesRoot = Path.of(PathUtil.getJarPathForClass(DebuggerManagerImpl.class));
+            if (Files.isDirectory(classesRoot)) {
+              // Code runs from IDEA run configuration (code from .class file in out/ directory)
               try {
                 // The agent file must have a fixed name (AGENT_JAR_NAME) which is mentioned in MANIFEST.MF inside
                 Path debuggerAgentDir =
                   FileUtil.createTempDirectory(new File(PathManager.getTempPath()), "debugger-agent", "", true).toPath();
                 agentArtifactPath = debuggerAgentDir.resolve(AGENT_JAR_NAME);
 
-                BuildDependenciesCommunityRoot communityRoot =
-                  new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath()));
-                Path downloadedAgent = DebuggerAgentDownloader.INSTANCE.downloadDebuggerAgent(communityRoot);
+                Path communityRoot = Path.of(PathManager.getCommunityHomePath());
+                Path iml = BuildDependenciesJps.getProjectModule(communityRoot, "intellij.java.debugger.agent.holder");
+                Path downloadedAgent = BuildDependenciesJps.getModuleLibrarySingleRoot(iml, "debugger-agent");
+
                 Files.copy(downloadedAgent, agentArtifactPath);
               }
               catch (IOException e) {
@@ -205,8 +208,7 @@ public class RemoteConnectionBuilder {
               }
             }
             else {
-              Path classesRoot = Path.of(PathUtil.getJarPathForClass(DebuggerManagerImpl.class));
-              agentArtifactPath = classesRoot.resolve("rt").resolve(AGENT_JAR_NAME);
+              agentArtifactPath = classesRoot.resolveSibling("rt").resolve(AGENT_JAR_NAME);
             }
 
             if (Files.exists(agentArtifactPath)) {
@@ -218,7 +220,7 @@ public class RemoteConnectionBuilder {
               }
             }
             else {
-              LOG.warn("Capture agent not found: " + agentArtifactPath);
+              LOG.error("Capture agent not found: " + agentArtifactPath);
             }
           }
           else {

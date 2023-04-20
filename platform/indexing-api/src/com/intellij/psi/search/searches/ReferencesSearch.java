@@ -79,15 +79,6 @@ public final class ReferencesSearch extends ExtensibleQueryFactory<PsiReference,
     }
 
 
-    /**
-     * @deprecated Same as {@link #getScopeDeterminedByUser()}, use {@link #getEffectiveSearchScope} instead
-     */
-    @Deprecated(forRemoval = true)
-    @NotNull
-    public SearchScope getScope() {
-      return myScope;
-    }
-
     public boolean isIgnoreAccessScope() {
       return myIgnoreAccessScope;
     }

@@ -270,8 +270,8 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
   public @NotNull OptPane getOptionsPane() {
     return pane(
       checkbox("commentsAreContent", JavaBundle.message("checkbox.comments.and.javadoc.count.as.content")),
-      stringSet("EXCLUDE_ANNOS", JavaBundle.message("special.annotations.annotations.list"),
-                new JavaClassValidator().annotationsOnly()));
+      stringList("EXCLUDE_ANNOS", JavaBundle.message("special.annotations.annotations.list"),
+                 new JavaClassValidator().annotationsOnly()));
   }
 
   private static class DeleteMethodIntention implements LocalQuickFix {

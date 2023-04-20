@@ -23,9 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author db
- */
 public class PsiTypeVariableFactory {
   private int myCurrent;
   private final List<Set<PsiTypeVariable>> myClusters = new LinkedList<>();

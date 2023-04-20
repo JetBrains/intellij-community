@@ -122,7 +122,7 @@ public abstract class FileSetTestCase extends TestSuite {
 
     @Override
     public int countTestCases() {
-      return 1;
+      return super.countTestCases();
     }
 
     @Override

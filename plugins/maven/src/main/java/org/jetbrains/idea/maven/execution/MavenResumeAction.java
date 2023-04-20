@@ -52,9 +52,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenResumeAction extends AnAction {
 
   private static final Logger LOG = Logger.getInstance(MavenResumeAction.class);

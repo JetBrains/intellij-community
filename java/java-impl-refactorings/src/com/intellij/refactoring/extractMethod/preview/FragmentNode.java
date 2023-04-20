@@ -21,9 +21,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * @author Pavel.Dolgov
- */
 abstract class FragmentNode extends DefaultMutableTreeNode implements Comparable<FragmentNode> {
   private final @NotNull TextChunk @NotNull [] myTextChunks;
   private final TextChunk myLineNumberChunk;

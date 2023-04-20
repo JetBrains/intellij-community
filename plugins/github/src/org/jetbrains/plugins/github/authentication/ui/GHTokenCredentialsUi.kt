@@ -29,7 +29,7 @@ import javax.swing.event.DocumentEvent
 internal class GHTokenCredentialsUi(
   private val serverTextField: ExtendableTextField,
   val factory: GithubApiRequestExecutor.Factory,
-  val isAccountUnique: UniqueLoginPredicate
+  private val isAccountUnique: UniqueLoginPredicate
 ) : GHCredentialsUi() {
 
   private val tokenTextField = JBPasswordField()

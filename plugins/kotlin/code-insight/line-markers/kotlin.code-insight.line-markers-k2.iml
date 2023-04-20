@@ -27,5 +27,7 @@
     <orderEntry type="module" module-name="kotlin.searching.k2" />
     <orderEntry type="module" module-name="kotlin.code-insight.k2" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="kotlin.base.highlighting" />
+    <orderEntry type="module" module-name="kotlin.highlighting" />
   </component>
 </module>

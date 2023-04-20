@@ -15,8 +15,10 @@ import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.ui.tree.ui.Control
 import com.intellij.ui.tree.ui.DefaultControl
+import com.intellij.ui.util.getAvailTextLength
 import com.intellij.util.PlatformIcons
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UpdateScaleHelper
 import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
@@ -25,16 +27,17 @@ import git4idea.GitLocalBranch
 import git4idea.GitRemoteBranch
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchType
+import git4idea.branch.GitBranchUtil
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.GitBranchPopupActions
+import git4idea.ui.branch.GitBranchesClippedNamesCache
+import git4idea.ui.branch.popup.GitBranchesTreePopup
+import git4idea.ui.branch.tree.GitBranchesTreeModel.BranchUnderRepository
 import icons.DvcsImplIcons
 import org.jetbrains.annotations.Nls
-import java.awt.Component
-import java.awt.Container
-import java.awt.GridBagConstraints
-import java.awt.GridBagLayout
+import java.awt.*
 import javax.accessibility.AccessibleContext
 import javax.swing.*
 import javax.swing.tree.TreeCellRenderer
@@ -46,7 +49,12 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
 
   private val colorManager = RepositoryChangesBrowserNode.getColorManager(project)
 
+  private val updateScaleHelper = UpdateScaleHelper()
+
   abstract fun hasRightArrow(nodeUserObject: Any?): Boolean
+
+  private fun getBranchNameClipper(treeNode: Any?): SimpleColoredComponent.FragmentTextClipper? =
+    GitBranchesTreeRendererClipper.create(project, treeNode)
 
   fun getLeftTreeIconRenderer(path: TreePath): Control? {
     val lastComponent = path.lastPathComponent
@@ -60,7 +68,7 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
     val value = treeNode ?: return null
     return when (value) {
       is GitBranchesTreeModel.BranchesPrefixGroup -> PlatformIcons.FOLDER_ICON
-      is GitBranchesTreeModel.BranchUnderRepository -> getBranchIcon(value.branch, listOf(value.repository), isSelected)
+      is BranchUnderRepository -> getBranchIcon(value.branch, listOf(value.repository), isSelected)
       is GitBranch -> getBranchIcon(value, repositories, isSelected)
       else -> null
     }
@@ -84,7 +92,7 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
   private fun getSecondaryText(treeNode: Any?): @NlsSafe String? {
     return when (treeNode) {
       is PopupFactoryImpl.ActionItem -> KeymapUtil.getFirstKeyboardShortcutText(treeNode.action)
-      is GitRepository -> treeNode.currentBranch?.name.orEmpty()
+      is GitRepository -> GitBranchUtil.getDisplayableBranchText(treeNode)
       is GitLocalBranch -> {
         treeNode.getCommonTrackedBranch(repositories)?.name
       }
@@ -232,7 +240,7 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
       foreground = JBUI.CurrentTheme.Tree.foreground(selected, true)
 
       clear()
-      append(getText(userObject, treeModel, repositories).orEmpty())
+      appendWithClipping(getText(userObject, treeModel, repositories).orEmpty(), getBranchNameClipper(userObject))
     }
 
     val (inOutIcon, inOutTooltip) = getIncomingOutgoingIconWithTooltip(userObject)
@@ -265,6 +273,10 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
       SpeedSearchUtil.applySpeedSearchHighlightingFiltered(tree, value, mainTextComponent, true, selected)
     }
 
+    if (updateScaleHelper.saveScaleAndUpdateUIIfChanged(mainPanel)) {
+      tree?.rowHeight = GitBranchesTreePopup.treeRowHeight
+    }
+
     return mainPanel
   }
 
@@ -289,11 +301,30 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
             GitBranchType.REMOTE -> GitBundle.message("group.Git.Remote.Branch.title")
           }
         }
-        is GitBranchesTreeModel.BranchUnderRepository -> getText(value.branch, treeModel, repositories)
+        is BranchUnderRepository -> getText(value.branch, treeModel, repositories)
         is GitBranch -> if (treeModel.isPrefixGrouping) value.name.split('/').last() else value.name
         is PopupFactoryImpl.ActionItem -> value.text
         else -> null
       }
+    }
+  }
+}
+
+private class GitBranchesTreeRendererClipper(private val project: Project) : SimpleColoredComponent.FragmentTextClipper {
+
+  override fun clipText(component: SimpleColoredComponent, g2: Graphics2D, fragmentIndex: Int, text: String, availTextWidth: Int): String {
+    if (component.fragmentCount > 1) return text
+    val clipCache = project.service<GitBranchesClippedNamesCache>()
+    return clipCache.getOrCache(text, component.getAvailTextLength(text, availTextWidth))
+  }
+
+  companion object {
+    fun create(project: Project, treeNode: Any?): SimpleColoredComponent.FragmentTextClipper? {
+      if (treeNode is BranchUnderRepository ||
+          treeNode is GitBranch) {
+        return GitBranchesTreeRendererClipper(project)
+      }
+      return null
     }
   }
 }

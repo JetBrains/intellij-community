@@ -21,6 +21,7 @@ import com.jediterm.terminal.CursorShape;
 import com.jediterm.terminal.TerminalColor;
 import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.emulator.ColorPalette;
+import com.jediterm.terminal.ui.AwtTransformers;
 import com.jediterm.terminal.ui.TerminalAction;
 import com.jediterm.terminal.ui.TerminalActionPresentation;
 import com.jediterm.terminal.ui.settings.DefaultTabbedSettingsProvider;
@@ -33,6 +34,8 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static com.jediterm.terminal.ui.AwtTransformers.fromAwtToTerminalColor;
 
 public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsProvider {
 
@@ -204,26 +207,26 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
 
   @Override
   public TextStyle getSelectionColor() {
-    return new TextStyle(TerminalColor.awt(getColorsScheme().getColor(EditorColors.SELECTION_FOREGROUND_COLOR)),
-                         TerminalColor.awt(getColorsScheme().getColor(EditorColors.SELECTION_BACKGROUND_COLOR)));
+    return new TextStyle(fromAwtToTerminalColor(getColorsScheme().getColor(EditorColors.SELECTION_FOREGROUND_COLOR)),
+                         fromAwtToTerminalColor(getColorsScheme().getColor(EditorColors.SELECTION_BACKGROUND_COLOR)));
   }
 
   @Override
   public TextStyle getFoundPatternColor() {
-    return new TextStyle(TerminalColor.awt(getColorsScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES).getForegroundColor()),
-                         TerminalColor.awt(getColorsScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES).getBackgroundColor()));
+    return new TextStyle(fromAwtToTerminalColor(getColorsScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES).getForegroundColor()),
+                         fromAwtToTerminalColor(getColorsScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES).getBackgroundColor()));
   }
 
   @Override
   public TextStyle getHyperlinkColor() {
-    return new TextStyle(TerminalColor.awt(getColorsScheme().getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR).getForegroundColor()),
-                         TerminalColor.awt(getColorsScheme().getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR).getBackgroundColor()));
+    return new TextStyle(fromAwtToTerminalColor(getColorsScheme().getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR).getForegroundColor()),
+                         fromAwtToTerminalColor(getColorsScheme().getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR).getBackgroundColor()));
   }
 
   @Override
   public TextStyle getDefaultStyle() {
-    return new TextStyle(new TerminalColor(() -> myUiSettingsManager.getDefaultForeground()),
-                         new TerminalColor(() -> myUiSettingsManager.getDefaultBackground()));
+    return new TextStyle(new TerminalColor(() -> AwtTransformers.fromAwtColor(myUiSettingsManager.getDefaultForeground())),
+                         new TerminalColor(() -> AwtTransformers.fromAwtColor(myUiSettingsManager.getDefaultBackground())));
   }
 
   @Override

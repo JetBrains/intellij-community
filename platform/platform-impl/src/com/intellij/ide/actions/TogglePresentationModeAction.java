@@ -50,7 +50,7 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
   }
 
   public static void setPresentationMode(@Nullable Project project, boolean inPresentation) {
-    boolean layoutStored = project != null && storeToolWindows(project);
+    storeToolWindows(project);
     log(String.format("Will tweak full screen mode for presentation=%b", inPresentation));
 
     UISettings settings = UISettings.getInstance();
@@ -65,9 +65,7 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
 
     Job callback = project == null ? CompletableDeferredKt.CompletableDeferred(Unit.INSTANCE) : tweakFrameFullScreen(project, inPresentation);
     callback.invokeOnCompletion(__ -> {
-      if (layoutStored) {
-        restoreToolWindows(project, inPresentation);
-      }
+      restoreToolWindows(project);
       return Unit.INSTANCE;
     });
   }
@@ -104,28 +102,45 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
     return hasVisible;
   }
 
-  static boolean storeToolWindows(@NotNull Project project) {
+  private static void storeToolWindows(@Nullable Project project) {
+     storeToolWindows(project, ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled());
+  }
+
+  static void storeToolWindows(@Nullable Project project, boolean inDistractionFree) {
+    if (project == null) return;
+
+    boolean inPresentation = UISettings.getInstance().getPresentationMode();
     ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(project);
 
     DesktopLayout layout = manager.getLayout().copy();
-    boolean hasVisible = hideAllToolWindows(manager);
-    if (hasVisible) {
-      manager.setLayoutToRestoreLater(layout);
+    if (hideAllToolWindows(manager)) {
+      if (shouldStoreOrRestoreToolWindowLayout(inPresentation, inDistractionFree)) {
+        manager.setLayoutToRestoreLater(layout);
+      }
       manager.activateEditorComponent();
     }
-    return hasVisible;
   }
 
-  static void restoreToolWindows(@NotNull Project project, boolean inPresentation) {
+  private static void restoreToolWindows(@Nullable Project project) {
+    restoreToolWindows(project, ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled());
+  }
+
+  static void restoreToolWindows(@Nullable Project project, boolean inDistractionFree) {
+    if (project == null) return;
+
+    boolean inPresentation = UISettings.getInstance().getPresentationMode();
     log(String.format("Will restore tool windows for presentation=%b", inPresentation));
 
     ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(project);
     DesktopLayout restoreLayout = manager.getLayoutToRestoreLater();
-    if (!inPresentation &&
-        !ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled() &&
-        restoreLayout != null) {
+    if (shouldStoreOrRestoreToolWindowLayout(inPresentation, inDistractionFree) && restoreLayout != null) {
       manager.setLayout(restoreLayout);
+      manager.setLayoutToRestoreLater(null);
     }
+  }
+
+  private static boolean shouldStoreOrRestoreToolWindowLayout(boolean inPresentation, boolean inDistractionFree) {
+    return !inPresentation && !inDistractionFree;
   }
 
   private static void log(String message) {

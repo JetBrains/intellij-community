@@ -11,9 +11,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.util.TestUtils
 
-/**
- * @author ven
- */
 class ControlFlowTest extends LightJavaCodeInsightFixtureTestCase {
 
   final String basePath = TestUtils.testDataPath + "groovy/controlFlow/"

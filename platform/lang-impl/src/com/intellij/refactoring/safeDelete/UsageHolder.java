@@ -28,9 +28,6 @@ import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author dsl
- */
 class UsageHolder {
   private final SmartPsiElementPointer myElementPointer;
   private int myUnsafeUsages;

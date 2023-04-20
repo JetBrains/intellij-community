@@ -220,7 +220,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
     if (parent instanceof PsiParameterList) {
       return parent.getParent();
     }
-    if (parent instanceof PsiForeachStatement) {
+    if (parent instanceof PsiForeachStatementBase) {
       return parent;
     }
     if (parent instanceof PsiCatchSection) {

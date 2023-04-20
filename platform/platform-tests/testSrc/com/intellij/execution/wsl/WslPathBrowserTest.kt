@@ -54,7 +54,7 @@ class WslPathBrowserTest {
     val roots = createFileChooserDescriptor(wslRule.wsl, true).roots.map { it.toNioPath() }
     Assert.assertEquals("Wrong number of roots: ${roots.joinToString(",")}", rootDrives.count() + 1, roots.size)
     for (root in roots) {
-      if (root != wslRule.wsl.uncRootPath && root !in rootDrives) {
+      if (root != wslRule.wsl.getUNCRootPath() && root !in rootDrives) {
         Assert.fail("Unexpected root $root")
       }
     }
@@ -63,6 +63,6 @@ class WslPathBrowserTest {
   @Test
   fun fileDescriptorNoWindows() {
     val roots = createFileChooserDescriptor(wslRule.wsl, false).roots.map { it.toNioPath() }
-    Assert.assertEquals(roots.toList(), listOf(wslRule.wsl.uncRootPath))
+    Assert.assertEquals(roots.toList(), listOf(wslRule.wsl.getUNCRootPath()))
   }
 }

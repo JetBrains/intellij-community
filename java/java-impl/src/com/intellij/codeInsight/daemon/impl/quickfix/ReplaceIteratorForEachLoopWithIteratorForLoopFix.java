@@ -30,9 +30,6 @@ import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Pavel.Dolgov
- */
 public final class ReplaceIteratorForEachLoopWithIteratorForLoopFix implements IntentionAction {
   private final PsiForeachStatement myStatement;
 
@@ -80,6 +77,9 @@ public final class ReplaceIteratorForEachLoopWithIteratorForLoopFix implements I
       return;
     }
     final PsiParameter iterationParameter = myStatement.getIterationParameter();
+    if (iterationParameter == null) {
+      return;
+    }
     final String iterationParameterName = iterationParameter.getName();
     final PsiStatement forEachBody = myStatement.getBody();
 

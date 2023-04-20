@@ -8,8 +8,6 @@ import org.jetbrains.idea.maven.model.MavenArtifact;
 
 /**
  * See org.apache.maven.artifact.Artifact#getDependencyConflictId()
- *
- * @author Sergey Evdokimov
  */
 public class DependencyConflictId {
   private final String groupId;

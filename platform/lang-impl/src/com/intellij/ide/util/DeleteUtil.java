@@ -15,9 +15,6 @@ import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author dsl
- */
 public final class DeleteUtil {
   private DeleteUtil() { }
 

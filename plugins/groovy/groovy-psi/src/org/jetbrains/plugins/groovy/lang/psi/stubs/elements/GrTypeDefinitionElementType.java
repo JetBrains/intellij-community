@@ -17,9 +17,6 @@ import java.io.IOException;
 import static org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils.readStringArray;
 import static org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils.writeStringArray;
 
-/**
- * @author ilyas
- */
 public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefinition>
   extends GrStubElementType<GrTypeDefinitionStub, TypeDef> {
 

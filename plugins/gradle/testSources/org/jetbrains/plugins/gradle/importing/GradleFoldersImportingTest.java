@@ -801,12 +801,13 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
   public void testExcludedFoldersWithIdeaPlugin() throws Exception {
     createProjectSubDirs("submodule");
     importProject(
-      "apply plugin: 'idea'\n" +
-      "idea {\n" +
-      "  module {\n" +
-      "    excludeDirs += file('submodule')\n" +
-      "  }\n" +
-      "}"
+      """
+        apply plugin: 'idea'
+        idea {
+          module {
+            excludeDirs += file('submodule')
+          }
+        }"""
     );
 
     assertModules("project");

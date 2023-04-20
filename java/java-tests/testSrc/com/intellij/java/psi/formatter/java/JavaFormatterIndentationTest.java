@@ -24,8 +24,6 @@ import com.intellij.util.IncorrectOperationException;
 
 /**
  * Is intended to hold java formatting indentation-specific tests.
- *
- * @author Denis Zhdanov
  */
 public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
 

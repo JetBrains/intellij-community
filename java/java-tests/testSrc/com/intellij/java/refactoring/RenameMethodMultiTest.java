@@ -14,9 +14,6 @@ import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import org.junit.Assert;
 
-/**
- * @author dsl
- */
 public class RenameMethodMultiTest extends LightMultiFileTestCase {
   @Override
   protected String getTestDataPath() {

@@ -16,9 +16,6 @@ import javax.swing.event.DocumentListener;
 import java.io.File;
 import java.io.IOException;
 
-/**
- *  @author dsl
- */
 public class PathMacroEditor extends DialogWrapper {
   private JTextField myNameField;
   private JPanel myPanel;

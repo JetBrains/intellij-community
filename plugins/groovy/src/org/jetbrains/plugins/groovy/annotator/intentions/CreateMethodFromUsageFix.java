@@ -29,9 +29,6 @@ import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 
 import java.util.List;
 
-/**
- * @author ven
- */
 public class CreateMethodFromUsageFix extends GrCreateFromUsageBaseFix implements IntentionAction {
 
   public CreateMethodFromUsageFix(@NotNull GrReferenceExpression refExpression) {

@@ -8,29 +8,51 @@ import javax.swing.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.*;
+
 public final class SearchFieldStatisticsCollector implements Disposable {
 
   private final Project myProject;
   private final JTextField myTextField;
+  private final SearchPerformanceTracker myPerformanceTracker;
 
   private int mySymbolKeysTyped;
   private int myNavKeysTyped;
 
-  private SearchFieldStatisticsCollector(JTextField field, Project project) {
+  private SearchFieldStatisticsCollector(JTextField field, SearchPerformanceTracker performanceTracker, Project project) {
     myProject = project;
+    myPerformanceTracker = performanceTracker;
     myTextField = field;
   }
 
   public static SearchFieldStatisticsCollector createAndStart(JTextField field,
+                                                              SearchPerformanceTracker performanceTracker,
                                                               Project project) {
-    SearchFieldStatisticsCollector res = new SearchFieldStatisticsCollector(field, project);
+    SearchFieldStatisticsCollector res = new SearchFieldStatisticsCollector(field, performanceTracker, project);
     res.initListeners();
     return res;
   }
 
   @Override
   public void dispose() {
-    SearchEverywhereUsageTriggerCollector.SESSION_FINISHED.log(myProject, myNavKeysTyped, mySymbolKeysTyped);
+    SearchSessionPerformanceInfo info = myPerformanceTracker.getPerformanceInfo();
+    SESSION_FINISHED.log(myProject, pairs -> {
+      FinishedSearchPerformanceInfo firstSearch = info.getFirstSearch();
+      if (firstSearch != null) {
+        pairs.add(FIRST_TAB_ID.with(firstSearch.getTab()));
+        pairs.add(TIME_TO_FIRST_RESULT.with(firstSearch.getTimeToFirstResult()));
+      }
+
+      FinishedSearchPerformanceInfo lastSearch = info.getLastSearch();
+      if (lastSearch != null) {
+        pairs.add(LAST_TAB_ID.with(lastSearch.getTab()));
+        pairs.add(TIME_TO_FIRST_RESULT_LAST_QUERY.with(lastSearch.getTimeToFirstResult()));
+      }
+
+      pairs.add(TYPED_NAVIGATION_KEYS.with(myNavKeysTyped));
+      pairs.add(TYPED_SYMBOL_KEYS.with(mySymbolKeysTyped));
+      pairs.add(DURATION_MS.with(info.getDuration()));
+    });
   }
 
   private void initListeners() {

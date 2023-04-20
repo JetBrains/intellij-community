@@ -10,9 +10,9 @@ import java.nio.file.Path;
 
 /**
  */
-public class AttributesStorageOnTheTopOfSmallStreamlinedBlobStorageTest extends AttributesStorageOnTheTopOfStreamlinedBlobStorageTestBase {
+public class AttributesStorageOnTheTopOfSmallStreamlinedBlobStorageTest extends AttributesStorageOnTheTopOfBlobStorageTestBase {
   @Override
-  protected AttributesStorageOnTheTopOfBlobStorage openAttributesStorage(final Path storagePath) throws IOException {
+  protected AttributesStorageOverBlobStorage openAttributesStorage(final Path storagePath) throws IOException {
     final PagedFileStorage pagedStorage = new PagedFileStorage(
       storagePath,
       LOCK_CONTEXT,
@@ -24,7 +24,7 @@ public class AttributesStorageOnTheTopOfSmallStreamlinedBlobStorageTest extends 
       pagedStorage,
       new DataLengthPlusFixedPercentStrategy(256, 64, 30)
     );
-    return new AttributesStorageOnTheTopOfBlobStorage(storage);
+    return new AttributesStorageOverBlobStorage(storage);
   }
 
 }

@@ -175,8 +175,6 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     if (myDisposed) return;
     myDisposed = true;
 
-    myFoldingModel.destroy();
-
     Disposer.dispose(myModel);
 
     Disposer.dispose(myResultHolder);

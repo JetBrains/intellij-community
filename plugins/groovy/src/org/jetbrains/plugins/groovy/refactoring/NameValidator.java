@@ -18,9 +18,6 @@ package org.jetbrains.plugins.groovy.refactoring;
 
 import com.intellij.openapi.project.Project;
 
-/**
- * @author ilyas
- */
 public interface NameValidator {
   String validateName(String name, boolean increaseNumber);
 

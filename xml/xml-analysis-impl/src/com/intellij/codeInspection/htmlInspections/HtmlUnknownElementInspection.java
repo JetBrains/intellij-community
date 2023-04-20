@@ -26,9 +26,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlChildRole;
-import java.util.StringTokenizer;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.StringTokenizer;
 
 public abstract class HtmlUnknownElementInspection extends HtmlLocalInspectionTool implements XmlEntitiesInspection {
   public JDOMExternalizableStringList myValues;
@@ -89,18 +89,9 @@ public abstract class HtmlUnknownElementInspection extends HtmlLocalInspectionTo
     return StringUtil.join(myValues, ",");
   }
 
-  public void enableCustomValues(boolean customValuesEnabled) {
-    myCustomValuesEnabled = customValuesEnabled;
-  }
-
   public void updateAdditionalEntries(@NotNull final String values) {
     myValues = reparseProperties(values);
   }
-
-  protected abstract @Nls String getCheckboxTitle();
-
-  @NotNull
-  protected abstract String getPanelTitle();
 
   @NotNull
   protected abstract Logger getLogger();

@@ -16,9 +16,6 @@
 
 package com.intellij.diagnostic.logging;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public abstract class IndependentLogFilter extends LogFilter {
   protected IndependentLogFilter(String name) {
     super(name);

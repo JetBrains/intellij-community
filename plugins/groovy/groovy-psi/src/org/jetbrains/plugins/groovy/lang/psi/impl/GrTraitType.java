@@ -12,6 +12,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -36,6 +37,7 @@ public final class GrTraitType extends PsiType {
   }
 
   @NotNull
+  @Unmodifiable
   public List<PsiType> getTraitTypes() {
     return myTraitTypes;
   }

@@ -5,7 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
-import org.jetbrains.plugins.terminal.TerminalView
+import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 
 open class TerminalNewSessionAction : DumbAwareAction(
   IdeBundle.messagePointer("action.DumbAware.TerminalView.text.new.session"),
@@ -13,7 +13,7 @@ open class TerminalNewSessionAction : DumbAwareAction(
   AllIcons.General.Add) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val terminalView = TerminalView.getInstance(project)
-    terminalView.newTab(terminalView.toolWindow, null)
+    val terminalToolWindowManager = TerminalToolWindowManager.getInstance(project)
+    terminalToolWindowManager.newTab(terminalToolWindowManager.toolWindow, null)
   }
 }

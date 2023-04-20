@@ -32,9 +32,6 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParams;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
-/**
- * @author ilyas
- */
 public class GroovyDocMethodHandler implements ContextSpecificInsertHandler {
 
   @Override

@@ -4,9 +4,6 @@ import com.intellij.openapi.application.PluginPathManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxColorRgbInspection;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaFxColorRgbInspectionTest extends AbstractJavaFXTestCase {
   @Override
   protected void enableInspections() {

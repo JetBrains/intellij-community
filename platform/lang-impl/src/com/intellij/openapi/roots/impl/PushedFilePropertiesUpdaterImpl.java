@@ -343,14 +343,13 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     Stream<Runnable> tasksStream;
     if (StandardContributorsKt.shouldIndexProjectBasedOnIndexableEntityProviders()) {
       Sequence<ModuleEntity> modulesSequence = ReadAction.compute(() ->
-                                                                    WorkspaceModel.getInstance(project).getEntityStorage().
-                                                                      getCurrent().entities(ModuleEntity.class));
+                                                                    WorkspaceModel.getInstance(project).getCurrentSnapshot().entities(ModuleEntity.class));
       List<ModuleEntity> moduleEntities = SequencesKt.toList(modulesSequence);
       IndexableFilesDeduplicateFilter indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create();
       tasksStream = moduleEntities.stream()
         .flatMap(moduleEntity -> {
           return ReadAction.compute(() -> {
-            EntityStorage storage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
+            EntityStorage storage = WorkspaceModel.getInstance(project).getCurrentSnapshot();
             Module module = ModuleEntityUtils.findModule(moduleEntity, storage);
             if (module == null) {
               return Stream.empty();

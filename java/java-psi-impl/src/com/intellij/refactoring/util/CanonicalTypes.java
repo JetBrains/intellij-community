@@ -17,9 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-/**
- * @author dsl
- */
 public final class CanonicalTypes {
   private CanonicalTypes() { }
 

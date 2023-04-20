@@ -19,9 +19,6 @@ package com.intellij.psi.search;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 @FunctionalInterface
 public interface TextOccurenceProcessor {
   boolean execute(@NotNull PsiElement element, int offsetInElement);

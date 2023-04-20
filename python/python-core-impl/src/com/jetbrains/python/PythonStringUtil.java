@@ -19,7 +19,6 @@ import java.util.regex.Pattern;
 
 /**
  * @author Alexei Orischenko
- * @author vlan
  */
 public final class PythonStringUtil {
 

@@ -22,8 +22,6 @@ import com.intellij.util.IncorrectOperationException;
 /**
  * Is intended to hold specific java formatting tests for {@code 'Place on New Line'} settings (
  * {@code Project Settings - Code Style - Alignment and Braces - Place on New Line}).
- *
- * @author Denis Zhdanov
  */
 public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
 

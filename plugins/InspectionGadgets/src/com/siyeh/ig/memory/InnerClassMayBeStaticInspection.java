@@ -50,7 +50,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
-import static com.intellij.codeInspection.options.OptPane.stringSet;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 public class InnerClassMayBeStaticInspection extends BaseInspection {
 
@@ -67,8 +67,8 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      stringSet("ignorableAnnotations", InspectionGadgetsBundle.message("ignore.if.annotated.by"),
-                new JavaClassValidator().annotationsOnly()));
+      stringList("ignorableAnnotations", InspectionGadgetsBundle.message("ignore.if.annotated.by"),
+                 new JavaClassValidator().annotationsOnly()));
   }
 
   @Override

@@ -1,7 +1,7 @@
 PsiJavaFile:SwitchLabelsIncomplete3.java
   PsiSwitchLabelStatement
     PsiKeyword:default('default')
-    PsiErrorElement:':' expected
+    PsiErrorElement:':' or '->' expected
       <empty list>
   PsiWhiteSpace(' ')
   PsiExpressionStatement

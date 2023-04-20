@@ -21,9 +21,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult;
 
 import java.util.ArrayList;
 
-/**
- * @author ilyas
- */
 public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl implements GrDocParameterReference {
 
   public GrDocParameterReferenceImpl(@NotNull ASTNode node) {

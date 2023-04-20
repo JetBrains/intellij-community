@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UForEachExpression
 import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.UParameter
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameter
 import org.jetbrains.uast.psi.UastPsiParameterNotResolved
 
@@ -28,6 +29,8 @@ class KotlinUForEachExpression(
                 ?: UastPsiParameterNotResolved(sourcePsi, KotlinLanguage.INSTANCE)
         KotlinUParameter(parameter, sourcePsi, this)
     }
+    override val parameter: UParameter
+        get() = variable
 
     override val forIdentifier: UIdentifier
         get() = KotlinUIdentifier(null, this)

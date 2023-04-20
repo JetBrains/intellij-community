@@ -23,9 +23,6 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author dsl
- */
 public class MoveInstanceMethodViewDescriptor extends UsageViewDescriptorAdapter {
   private final PsiMethod myMethod;
   private final PsiVariable myTargetVariable;

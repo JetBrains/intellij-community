@@ -2,6 +2,7 @@
 package com.intellij.refactoring.rename.api
 
 import com.intellij.model.Pointer
+import com.intellij.usages.impl.rules.UsageType
 
 /**
  * Usages include both declarations and references.
@@ -18,6 +19,12 @@ interface RenameUsage {
    * Other (`false`) usages may include references, text usages, model usages, etc.
    */
   val declaration: Boolean
+
+  /**
+   * @see com.intellij.usages.impl.rules.UsageTypeGroupingRule
+   */
+  val usageType: UsageType?
+    get() = null
 
   /**
    * Example: setting Kotlin function name to a string which is not a valid Java identifier will break references in Java.

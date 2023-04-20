@@ -132,7 +132,7 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
     assertSources("m3", "user-sources");
     assertSources("m4", "user-sources", "src/main/java");
 
-    ModuleEntity mFour = WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent().resolve(new ModuleId("m4"));
+    ModuleEntity mFour = WorkspaceModel.getInstance(myProject).getCurrentSnapshot().resolve(new ModuleId("m4"));
     assertNotNull(mFour);
     //noinspection OptionalGetWithoutIsPresent
     EntitySource sourceEntitySource =

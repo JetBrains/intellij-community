@@ -25,7 +25,7 @@ class Test {
 
     switch (n) {
       case <error descr="Type pattern expected">MyNumber</error>: break;
-      case <error descr="Type pattern expected">Integer</error><error descr="':' expected"> </error>break;
+      case <error descr="Type pattern expected">Integer</error><error descr="':' or '->' expected"> </error>break;
       case default: break;
     }
     result = switch (n) {

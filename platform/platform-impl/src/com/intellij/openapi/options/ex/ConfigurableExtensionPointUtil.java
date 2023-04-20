@@ -35,7 +35,7 @@ public final class ConfigurableExtensionPointUtil {
     List<String> idsInEpOrder = new ArrayList<>();
     for (ConfigurableEP<Configurable> ep : extensions) {
       Configurable configurable = ConfigurableWrapper.wrapConfigurable(ep);
-      if (isSuppressed(configurable, filter)) {
+      if (filter != null && !filter.isIncluded(configurable)) {
         continue;
       }
       if (configurable instanceof HierarchicalConfigurable) {
@@ -365,32 +365,38 @@ public final class ConfigurableExtensionPointUtil {
     return null;
   }
 
-  /**
-   * @param project         a project used to load project settings for or {@code null}
-   * @param withIdeSettings specifies whether to load application settings or not
-   * @return the list of all valid settings according to parameters
-   */
   @ApiStatus.Internal
   public static @NotNull List<Configurable> getConfigurables(@Nullable Project project, boolean withIdeSettings) {
+    return getConfigurables(project, withIdeSettings, true);
+  }
+
+    /**
+     * @param project         a project used to load project settings for or {@code null}
+     * @param withIdeSettings specifies whether to load application settings or not
+     * @return the list of all valid settings according to parameters
+     */
+  @ApiStatus.Internal
+  public static @NotNull List<Configurable> getConfigurables(@Nullable Project project, boolean withIdeSettings, boolean checkNonDefaultProject) {
     List<Configurable> list = new ArrayList<>();
     if (withIdeSettings) {
       Application application = ApplicationManager.getApplication();
       if (application != null) {
         for (ConfigurableEP<Configurable> extension : Configurable.APPLICATION_CONFIGURABLE.getExtensionList()) {
-          addValid(list, ConfigurableWrapper.wrapConfigurable(extension, true), null);
+          addValid(list, ConfigurableWrapper.wrapConfigurable(extension, true), null, checkNonDefaultProject);
         }
       }
     }
     if (project != null && !project.isDisposed()) {
       for (ConfigurableEP<Configurable> extension : Configurable.PROJECT_CONFIGURABLE.getExtensions(project)) {
-        addValid(list, ConfigurableWrapper.wrapConfigurable(extension, true), project);
+        addValid(list, ConfigurableWrapper.wrapConfigurable(extension, true), project, checkNonDefaultProject);
       }
     }
     return list;
   }
 
-  private static void addValid(@NotNull List<? super Configurable> list, Configurable configurable, Project project) {
-    if (isValid(configurable, project)) {
+  private static void addValid(@NotNull List<? super Configurable> list, Configurable configurable, Project project,
+                               boolean checkNonDefaultProject) {
+    if (isValid(configurable, project, checkNonDefaultProject)) {
       list.add(configurable);
     }
   }
@@ -400,11 +406,11 @@ public final class ConfigurableExtensionPointUtil {
    * @param project      current project, default template project or {@code null} for IDE settings
    * @return {@code true} if the specified configurable must be shown in the settings dialog
    */
-  private static boolean isValid(Configurable configurable, Project project) {
+  private static boolean isValid(Configurable configurable, Project project, boolean checkNonDefault) {
     if (configurable == null) {
       return false;
     }
-    return project == null || !project.isDefault() || !ConfigurableWrapper.isNonDefaultProject(configurable);
+    return project == null || !checkNonDefault || !project.isDefault() || !ConfigurableWrapper.isNonDefaultProject(configurable);
   }
 
   public static @Nullable ResourceBundle getBundle(@NonNls @NotNull String resource,
@@ -462,7 +468,7 @@ public final class ConfigurableExtensionPointUtil {
   }
 
   private static boolean isSuppressed(Configurable each, ConfigurableFilter filter) {
-    return !isValid(each, null) || (filter != null && !filter.isIncluded(each));
+    return filter != null && !filter.isIncluded(each);
   }
 
   public static @Nullable Configurable createProjectConfigurableForProvider(@NotNull Project project, Class<? extends ConfigurableProvider> providerClass) {

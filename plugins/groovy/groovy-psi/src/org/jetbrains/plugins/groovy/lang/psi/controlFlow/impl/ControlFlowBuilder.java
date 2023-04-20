@@ -49,9 +49,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.VariableDescriptorFactory.createDescriptor;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isNullLiteral;
 
-/**
- * @author ven
- */
 public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   private static final Logger LOG = Logger.getInstance(ControlFlowBuilder.class);
 

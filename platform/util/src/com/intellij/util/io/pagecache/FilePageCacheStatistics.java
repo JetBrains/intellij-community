@@ -20,6 +20,7 @@ public class FilePageCacheStatistics {
 
   private final AtomicInteger totalPagesAllocated = new AtomicInteger();
   private final AtomicInteger totalPagesReclaimed = new AtomicInteger();
+  private final AtomicInteger totalPagesHandedOver = new AtomicInteger();
 
   private final AtomicLong totalBytesRead = new AtomicLong();
   private final AtomicLong totalBytesWritten = new AtomicLong();
@@ -61,7 +62,7 @@ public class FilePageCacheStatistics {
     }
   }
 
-  public void pageAllocatedDirect(final int pageSize) {
+  public void pageAllocatedNative(final int pageSize) {
     totalNativeBytesAllocated.addAndGet(pageSize);
     totalPagesAllocated.incrementAndGet();
   }
@@ -79,6 +80,19 @@ public class FilePageCacheStatistics {
   public void pageReclaimedHeap(final int pageSize) {
     totalHeapBytesReclaimed.addAndGet(pageSize);
     totalPagesReclaimed.incrementAndGet();
+  }
+
+  public void pageReclaimedByHandover(final int pageSize,
+                                      final boolean direct) {
+    totalPagesHandedOver.incrementAndGet();
+    if (direct) {
+      pageReclaimedNative(pageSize);
+      pageAllocatedNative(pageSize);
+    }
+    else {
+      pageReclaimedHeap(pageSize);
+      pageAllocatedHeap(pageSize);
+    }
   }
 
 
@@ -177,6 +191,8 @@ public class FilePageCacheStatistics {
            "heapBytes: " +
            "{allocated: " + totalHeapBytesAllocated + ", reclaimed: " + totalHeapBytesReclaimed + "}, " +
 
+           "pages handed over: " + totalPagesHandedOver + ", " +
+
            "bytes: {requested: " + totalBytesRequested + ", read: " + totalBytesRead + ", written=" + totalBytesWritten + "}, " +
 
            "housekeeperTurns: {done: " + housekeeperTurnDone + ", skipped: " + housekeeperTurnSkipped + "}, " +
@@ -189,10 +205,11 @@ public class FilePageCacheStatistics {
     return String.format(
       "Statistics: {\n" +
       " pages: {\n" +
-      "   requested: %s\n" +
-      "   allocated: %s (~%2.1f%% of requested)\n" +
-      "   written:   %s (~%2.1f%% of allocated)\n" +
-      "   reclaimed: %s (~%2.1f%% of allocated)\n" +
+      "   requested:   %s\n" +
+      "   allocated:   %s (~%2.1f%% of requested)\n" +
+      "   written:     %s (~%2.1f%% of allocated)\n" +
+      "   reclaimed:   %s (~%2.1f%% of allocated)\n" +
+      "   handed over: %s (~%2.1f%% of allocated)\n" +
       " }\n" +
 
       " total bytes: {\n" +
@@ -225,6 +242,7 @@ public class FilePageCacheStatistics {
       totalPagesAllocated, (totalPagesAllocated.get() * 100.0 / totalPagesRequested.get()),
       totalPagesWritten, (totalPagesWritten.get() * 100.0 / totalPagesAllocated.get()),
       totalPagesReclaimed, (totalPagesReclaimed.get() * 100.0 / totalPagesAllocated.get()),
+      totalPagesHandedOver, (totalPagesHandedOver.get() * 100.0 / totalPagesAllocated.get()),
 
       totalBytesRequested,
       totalBytesRead, (totalBytesRead.get() * 100.0 / totalBytesRequested.get()),

@@ -24,8 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Scrolls to the top of the target editor without changing its caret position.
- * 
- * @author Denis Zhdanov
  */
 public class ScrollToTopAction extends InactiveEditorAction {
 

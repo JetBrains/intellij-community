@@ -23,8 +23,6 @@ import org.jetbrains.annotations.Nullable;
  * Identifies a strategy that can tweak default {@link ArrangementSettings arrangement settings} (de)serialization mechanism.
  * <p/>
  * Implementations of this interface are expected to be thread-safe.
- * 
- * @author Denis Zhdanov
  */
 public interface ArrangementSettingsSerializer {
 

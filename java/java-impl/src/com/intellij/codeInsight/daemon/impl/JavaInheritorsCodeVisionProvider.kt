@@ -4,10 +4,14 @@ package com.intellij.codeInsight.daemon.impl
 import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
 import com.intellij.codeInsight.hints.codeVision.InheritorsCodeVisionProvider
 import com.intellij.java.JavaBundle
+import com.intellij.lang.OuterModelsModificationTrackerManager
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiUtil
 import java.awt.event.MouseEvent
 
@@ -23,7 +27,7 @@ class JavaInheritorsCodeVisionProvider : InheritorsCodeVisionProvider() {
 
   override fun getHint(element: PsiElement, file: PsiFile): String? {
     if (element is PsiClass && element !is PsiTypeParameter) {
-      val inheritors = JavaTelescope.collectInheritingClasses(element)
+      val inheritors = computeClassInheritors(element, file.project)
       if (inheritors > 0) {
         val isInterface: Boolean = element.isInterface
         return if (isInterface) JavaBundle.message("code.vision.implementations.hint", inheritors)
@@ -31,7 +35,7 @@ class JavaInheritorsCodeVisionProvider : InheritorsCodeVisionProvider() {
       }
     }
     else if (element is PsiMethod) {
-      val overrides = JavaTelescope.collectOverridingMethods(element)
+      val overrides = computeMethodInheritors(element, file.project)
       if (overrides > 0) {
         val isAbstractMethod = isAbstractMethod(element)
         return if (isAbstractMethod) JavaBundle.message("code.vision.implementations.hint", overrides)
@@ -39,6 +43,20 @@ class JavaInheritorsCodeVisionProvider : InheritorsCodeVisionProvider() {
       }
     }
     return null
+  }
+
+  private fun computeMethodInheritors(element: PsiMethod, project: Project) : Int {
+    return CachedValuesManager.getCachedValue(element, CachedValueProvider {
+      val overrides = JavaTelescope.collectOverridingMethods(element)
+      CachedValueProvider.Result(overrides, OuterModelsModificationTrackerManager.getInstance(project).tracker)
+    })
+  }
+
+  private fun computeClassInheritors(element: PsiClass, project: Project) : Int {
+    return CachedValuesManager.getCachedValue(element, CachedValueProvider {
+      val overrides = JavaTelescope.collectInheritingClasses(element)
+      CachedValueProvider.Result(overrides, OuterModelsModificationTrackerManager.getInstance(project).tracker)
+    })
   }
 
   override fun logClickToFUS(element: PsiElement, hint: String) {

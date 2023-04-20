@@ -21,9 +21,6 @@ import java.util.Comparator;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
-/**
- * @author ven
- */
 public final class PsiEquivalenceUtil {
   private static final Logger LOG = Logger.getInstance(PsiEquivalenceUtil.class);
 

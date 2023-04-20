@@ -18,9 +18,6 @@ import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.refactoring.extract.InitialInfo
 import org.jetbrains.plugins.groovy.util.TestUtils
 
-/**
- * @author ilyas
- */
 class ExtractMethodTest extends LightGroovyTestCase {
 
   final String basePath = TestUtils.testDataPath + 'groovy/refactoring/extractMethod/'

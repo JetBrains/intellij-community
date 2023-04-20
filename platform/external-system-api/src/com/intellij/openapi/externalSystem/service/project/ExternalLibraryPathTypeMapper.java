@@ -14,8 +14,6 @@ import org.jetbrains.annotations.Nullable;
  * make it ineligible for unit testing.
  * <p/>
  * Implementations of this interface are expected to be thread-safe.
- *
- * @author Denis Zhdanov
  */
 public interface ExternalLibraryPathTypeMapper {
   @Nullable

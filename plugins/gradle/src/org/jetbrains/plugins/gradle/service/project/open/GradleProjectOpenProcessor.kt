@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project.open
 
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
@@ -7,7 +7,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectOpenProcessor
 import icons.GradleIcons
 import org.jetbrains.plugins.gradle.util.GradleBundle
-import java.util.*
 import javax.swing.Icon
 
 class GradleProjectOpenProcessor : ProjectOpenProcessor() {
@@ -25,8 +24,8 @@ class GradleProjectOpenProcessor : ProjectOpenProcessor() {
 
   override suspend fun openProjectAsync(virtualFile: VirtualFile,
                                         projectToClose: Project?,
-                                        forceOpenInNewFrame: Boolean): Optional<Project> {
-    return Optional.ofNullable(openGradleProject(virtualFile, projectToClose, forceOpenInNewFrame))
+                                        forceOpenInNewFrame: Boolean): Project? {
+    return openGradleProject(projectFile = virtualFile, projectToClose = projectToClose, forceOpenInNewFrame = forceOpenInNewFrame)
   }
 
   override fun canImportProjectAfterwards(): Boolean = true

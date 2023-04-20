@@ -7,9 +7,6 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InstructionImpl;
 
 import java.util.Collections;
 
-/**
- * @author ven
- */
 public class CallInstruction extends InstructionImpl {
   private final InstructionImpl myCallee;
 

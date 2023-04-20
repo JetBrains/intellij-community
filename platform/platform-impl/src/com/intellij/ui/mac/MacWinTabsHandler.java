@@ -36,11 +36,11 @@ import java.lang.reflect.Method;
 /**
  * @author Alexander Lobas
  */
-public final class MacWinTabsHandler {
+public class MacWinTabsHandler {
   private static final String WIN_TAB_FILLER = "WIN_TAB_FILLER_KEY";
   private static final String CLOSE_MARKER = "TABS_CLOSE_MARKER";
 
-  private final JFrame myFrame;
+  protected final IdeFrameImpl myFrame;
   private final boolean myFrameAllowed;
 
   @SuppressWarnings("FieldCanBeLocal")
@@ -48,6 +48,10 @@ public final class MacWinTabsHandler {
   private static ID myObserverDelegate;
 
   public static @NotNull JComponent wrapRootPaneNorthSide(@NotNull JRootPane rootPane, @NotNull JComponent northComponent) {
+    if (isVersion2()) {
+      return MacWinTabsHandlerV2._wrapRootPaneNorthSide(rootPane, northComponent);
+    }
+
     JPanel panel = new NonOpaquePanel(new BorderLayout());
 
     JPanel filler = new OpaquePanel();
@@ -62,16 +66,28 @@ public final class MacWinTabsHandler {
   }
 
   public static void fastInit(@NotNull IdeFrameImpl frame) {
+    if (isVersion2()) {
+      MacWinTabsHandlerV2._fastInit(frame);
+      return;
+    }
     if (JdkEx.setTabbingMode(frame, getWindowId(), () -> updateTabBars(null))) {
       Foundation.invoke("NSWindow", "setAllowsAutomaticWindowTabbing:", true);
     }
   }
 
-  public MacWinTabsHandler(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
-    myFrame = frame;
-    myFrameAllowed = isAllowedFrame(frame) && JdkEx.setTabbingMode(frame, getWindowId(), () -> updateTabBars(null));
+  public static boolean isVersion2() {
+    return Registry.is("ide.mac.os.wintabs.version2", false);
+  }
 
-    if (myFrameAllowed) {
+  public MacWinTabsHandler(@NotNull IdeFrameImpl frame, @NotNull Disposable parentDisposable) {
+    myFrame = frame;
+    myFrameAllowed = initFrame(frame, parentDisposable);
+  }
+
+  protected boolean initFrame(@NotNull IdeFrameImpl frame, @NotNull Disposable parentDisposable) {
+    boolean allowed = isAllowedFrame(frame) && JdkEx.setTabbingMode(frame, getWindowId(), () -> updateTabBars(null));
+
+    if (allowed) {
       Foundation.invoke("NSWindow", "setAllowsAutomaticWindowTabbing:", true);
 
       Disposer.register(parentDisposable, new Disposable() { // don't convert to lambda
@@ -81,15 +97,19 @@ public final class MacWinTabsHandler {
         }
       });
     }
+
+    return allowed;
   }
 
   private static boolean isAllowedFrame(@Nullable JFrame frame) {
     return frame == null || frame instanceof IdeFrameImpl;
   }
 
-  @NotNull
-  private static String getWindowId() {
-    return ApplicationNamesInfo.getInstance().getProductName() + (PluginManagerCore.isRunningFromSources() ? "-Snapshot" : "") + "-AwtWindow-WithTabs";
+  static @NotNull String getWindowId() {
+    return (isVersion2() ? "+" : "") +
+           ApplicationNamesInfo.getInstance().getProductName() +
+           (PluginManagerCore.isRunningFromSources() ? "-Snapshot" : "") +
+           "-AwtWindow-WithTabs";
   }
 
   public void setProject() {

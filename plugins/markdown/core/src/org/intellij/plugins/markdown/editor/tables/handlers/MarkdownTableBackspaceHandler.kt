@@ -36,7 +36,7 @@ internal class MarkdownTableBackspaceHandler: BackspaceHandlerDelegate() {
     executeCommand(table.project) {
       table.modifyColumn(
         cellIndex,
-        transformSeparator = { updateSeparator(document, it, width) },
+        transformSeparator = { updateSeparator(document, it, width.coerceAtLeast(1)) },
         transformCell = { cell ->
           val range = cell.textRange
           if (range.length > width && text[range.endOffset - 1] == ' ' && text[range.endOffset - 2] == ' ') {

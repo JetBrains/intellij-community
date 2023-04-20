@@ -12,8 +12,6 @@ import java.util.Set;
 
 /**
  * Not thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class JavaElementArrangementEntry extends DefaultArrangementEntry
   implements TypeAwareArrangementEntry, NameAwareArrangementEntry, ModifierAwareArrangementEntry {

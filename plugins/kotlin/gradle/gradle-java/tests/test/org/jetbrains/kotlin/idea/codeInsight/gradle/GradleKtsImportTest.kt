@@ -73,7 +73,7 @@ abstract class GradleKtsImportTest : KotlinGradleImportingTestCase() {
             val (managerClassFiles, managerSourceFiles) = getDependenciesFromManager(ktsFile)
             val (sdkClasses, sdkSources) = getSdkDependencies(ktsFile)
 
-            val entityStorage = WorkspaceModel.getInstance(myProject).entityStorage.current
+            val entityStorage = WorkspaceModel.getInstance(myProject).currentSnapshot
             val scriptEntity = entityStorage.entities(KotlinScriptEntity::class.java).find { it.path.contains(fileName) }
                 ?: error("Workspace model is unaware of script $fileName")
 

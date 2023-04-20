@@ -5,9 +5,6 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ven
- */
 public interface ThrownExceptionInfo {
   void setType(PsiClassType type);
 

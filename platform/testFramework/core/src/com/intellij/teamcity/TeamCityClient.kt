@@ -50,7 +50,7 @@ class TeamCityClient(
       .plus(System.getProperties().map { it.key.toString() to it.value.toString() })
   }
 
-  val restUri = baseUri.resolve("/app/rest/")
+  private val restUri = baseUri.resolve("/app/rest/")
   val guestAuthUri = baseUri.resolve("/guestAuth/app/rest/")
 
   val buildNumber by lazy { System.getenv("BUILD_NUMBER") ?: "" }
@@ -64,7 +64,7 @@ class TeamCityClient(
     loadProperties(Path(configurationPropertiesFile))
   }
 
-  fun getExistingParameter(name: String, impreciseNameMatch: Boolean = false): String {
+  private fun getExistingParameter(name: String, impreciseNameMatch: Boolean = false): String {
     val totalParams = systemProperties.plus(buildParams)
 
     val paramValue = if (impreciseNameMatch) {
@@ -118,7 +118,7 @@ class TeamCityClient(
     return requireNotNull(result) { "Request ${request.uri} failed" }
   }
 
-  fun downloadChangesPatch(buildTypeId: String, modificationId: String, isPersonal: Boolean): String {
+  private fun downloadChangesPatch(buildTypeId: String, modificationId: String, isPersonal: Boolean): String {
     val uri = baseUri.resolve("/downloadPatch.html?buildTypeId=${buildTypeId}&modId=${modificationId}&personal=$isPersonal")
 
     return Cache.get(uri) {
@@ -192,7 +192,7 @@ class TeamCityClient(
     do {
       val fullUrl = restUri
         .resolve("testOccurrences?locator=build:(id:$buildId),count:$countOfTestsOnPage,start:$startPosition" +
-                 "&includePersonal=true&fields=testOccurrence(id,name,status,duration,runOrder)")
+                 "&includePersonal=true&fields=testOccurrence(id,name,status,duration,runOrder,currentlyMuted)")
 
       val rawData = Cache.get(fullUrl) { get(fullUrl).toString() }
 
@@ -214,7 +214,7 @@ class TeamCityClient(
 
   fun getTestRunInfo(): List<JsonNode> = getTestRunInfo(buildId)
 
-  fun getBuildInfo(buildId: String): JsonNode {
+  private fun getBuildInfo(buildId: String): JsonNode {
     val fullUrl = restUri.resolve("builds/$buildId")
 
     val rawData = Cache.get(fullUrl) { get(fullUrl).toString() }
@@ -223,7 +223,7 @@ class TeamCityClient(
 
   fun getBuildInfo(): JsonNode = getBuildInfo(buildId)
 
-  fun getTriggeredByInfo(buildId: String): JsonNode = getBuildInfo(buildId).findValue("triggered")
+  private fun getTriggeredByInfo(buildId: String): JsonNode = getBuildInfo(buildId).findValue("triggered")
 
   fun getTriggeredByInfo(): JsonNode = getTriggeredByInfo(buildId)
 }

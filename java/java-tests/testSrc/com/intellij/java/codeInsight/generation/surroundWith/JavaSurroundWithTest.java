@@ -28,9 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author Denis Zhdanov
- */
 public class JavaSurroundWithTest extends LightJavaCodeInsightTestCase {
   private static final String BASE_PATH = "/codeInsight/generation/surroundWith/java/";
 

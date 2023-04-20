@@ -25,7 +25,6 @@ import java.util.concurrent.TimeUnit;
 
 
 /**
- * @author Denis Fokin
  * @author Nikita Provotorov
  */
 public final class WinDockDelegate implements SystemDock.Delegate {

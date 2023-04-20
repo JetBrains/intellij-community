@@ -20,7 +20,6 @@ import java.io.IOException;
 
 /**
  * Packs property description for storage in a stub.
- * User: dcheryasov
  */
 public class PropertyStubStorage extends PropertyBunch<String> implements CustomTargetExpressionStub {
 

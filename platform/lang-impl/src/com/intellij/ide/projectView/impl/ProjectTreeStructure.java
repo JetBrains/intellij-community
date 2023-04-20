@@ -7,10 +7,6 @@ import com.intellij.ide.projectView.ProjectViewSettings;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- * */
-
 public abstract class ProjectTreeStructure extends AbstractProjectTreeStructure implements ProjectViewSettings {
   private final String myId;
 

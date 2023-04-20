@@ -34,9 +34,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class DefaultSchemasConfigurable implements Configurable {
   private final Project myProject;
   private JRadioButton myHtml4RadioButton;

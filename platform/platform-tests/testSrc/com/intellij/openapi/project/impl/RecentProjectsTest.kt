@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.openapi.project.impl
@@ -22,7 +22,6 @@ import org.junit.Test
 import org.junit.rules.ExternalResource
 import java.awt.Color
 import java.nio.file.Path
-import java.util.*
 
 class RecentProjectsTest {
   companion object {
@@ -48,7 +47,7 @@ class RecentProjectsTest {
   val tempDir = TemporaryDirectory()
 
   @Test
-  fun testMostRecentOnTop() = runBlocking {
+  fun mostRecentOnTop() = runBlocking {
     val p1 = createAndOpenProject("p1")
     val p2 = createAndOpenProject("p2")
     val p3 = createAndOpenProject("p3")
@@ -61,7 +60,7 @@ class RecentProjectsTest {
   }
 
   @Test
-  fun testGroupsOrder() = runBlocking {
+  fun groupOrder() = runBlocking {
     val p1 = createAndOpenProject("p1")
     val p2 = createAndOpenProject("p2")
     val p3 = createAndOpenProject("p3")
@@ -98,7 +97,7 @@ class RecentProjectsTest {
       project = projectManager.openProjectAsync(z1, createTestOpenProjectOptions(runPostStartUpActivities = false))!!
       recentProjectManager.projectOpened(project)
       recentProjectManager.updateLastProjectPath()
-      // "Timestamp for opened project has not been updated"
+      // "Timestamp for an opened project has not been updated"
       assertThat(getProjectOpenTimestamp("z1")).isGreaterThan(timestamp)
     }
     finally {
@@ -107,7 +106,7 @@ class RecentProjectsTest {
   }
 
   @Test
-  fun testSlnLikeProjectIcon() {
+  fun solutionLikeProjectIcon() {
     // For Rider
     val rpm = (RecentProjectsManager.getInstance() as RecentProjectsManagerBase)
 

@@ -1819,6 +1819,11 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
                 runTest("../idea/tests/testData/editor/enterHandler/AutoIndentInWhenClause.after.kt");
             }
 
+            @TestMetadata("AutoIndentInWhenClauseWithoutCondition.after.kt")
+            public void testAutoIndentInWhenClauseWithoutCondition() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/AutoIndentInWhenClauseWithoutCondition.after.kt");
+            }
+
             @TestMetadata("BeforePropertyGetter.after.kt")
             public void testBeforePropertyGetter() throws Exception {
                 runTest("../idea/tests/testData/editor/enterHandler/BeforePropertyGetter.after.kt");
@@ -1987,6 +1992,11 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
             @TestMetadata("InMultilineLambdaAfterArrow.after.kt")
             public void testInMultilineLambdaAfterArrow() throws Exception {
                 runTest("../idea/tests/testData/editor/enterHandler/InMultilineLambdaAfterArrow.after.kt");
+            }
+
+            @TestMetadata("InMultilineLambdaAfterArrow2.after.kt")
+            public void testInMultilineLambdaAfterArrow2() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/InMultilineLambdaAfterArrow2.after.kt");
             }
 
             @TestMetadata("IndentBeforeElseWithBlock.after.kt")

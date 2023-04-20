@@ -347,12 +347,19 @@ private suspend fun checkThatExeInstallerAndZipWithJbrAreTheSame(zipPath: Path,
   val tempExe = withContext(Dispatchers.IO) { Files.createTempDirectory(tempDir, "exe-${arch.dirName}") }
   try {
     withContext(Dispatchers.IO) {
-      runProcess(args = listOf("7z", "x", "-bd", exePath.toString()), workingDir = tempExe)
-      runProcess(args = listOf("unzip", "-q", zipPath.toString()), workingDir = tempZip)
-      @Suppress("SpellCheckingInspection")
-      NioFiles.deleteRecursively(tempExe.resolve("\$PLUGINSDIR"))
+      try {
+        runProcess(args = listOf("7z", "x", "-bd", exePath.toString()), workingDir = tempExe)
+        runProcess(args = listOf("unzip", "-q", zipPath.toString()), workingDir = tempZip)
+        @Suppress("SpellCheckingInspection")
+        NioFiles.deleteRecursively(tempExe.resolve("\$PLUGINSDIR"))
 
-      runProcess(args = listOf("diff", "-q", "-r", tempZip.toString(), tempExe.toString()))
+        runProcess(args = listOf("diff", "-q", "-r", tempZip.toString(), tempExe.toString()))
+      }
+      finally {
+        withContext(Dispatchers.IO + NonCancellable) {
+          NioFiles.deleteRecursively(tempZip)
+        }
+      }
     }
     if (!context.options.buildStepsToSkip.contains(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
       RepairUtilityBuilder.generateManifest(context, tempExe, OsFamily.WINDOWS, arch)
@@ -360,7 +367,6 @@ private suspend fun checkThatExeInstallerAndZipWithJbrAreTheSame(zipPath: Path,
   }
   finally {
     withContext(Dispatchers.IO + NonCancellable) {
-      NioFiles.deleteRecursively(tempZip)
       NioFiles.deleteRecursively(tempExe)
     }
   }

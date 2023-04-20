@@ -18,9 +18,6 @@ package com.intellij.refactoring.introduceParameter;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
 
-/**
- * @author dsl
- */
 public class ExternalUsageInfo extends UsageInfo {
   public ExternalUsageInfo(PsiElement element) {
     super(element);

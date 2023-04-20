@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "OVERRIDE_DEPRECATION")
 
 package com.intellij.ide
@@ -11,6 +11,7 @@ import com.intellij.ide.impl.ProjectUtil.isSameProject
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.idea.AppMode
+import com.intellij.notification.impl.NotificationsToolWindowFactory
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -18,6 +19,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ProjectManager
@@ -27,7 +29,9 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
@@ -38,7 +42,10 @@ import com.intellij.util.SingleAlarm
 import com.intellij.util.io.isDirectory
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -259,6 +266,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
 
   @TestOnly
   fun openProjectSync(projectFile: Path, openProjectOptions: OpenProjectTask): Project? {
+    @Suppress("RAW_RUN_BLOCKING")
     return runBlocking { openProject(projectFile, openProjectOptions) }
   }
 
@@ -284,7 +292,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
     else {
       // If .idea is missing in the recent project's dir; this might mean, for instance, that 'git clean' was called.
       // Reopening such a project should be similar to opening the dir first time (and trying to import known project formats)
-      // IDEA-144453 IDEA rejects opening recent project if there are no .idea subfolder
+      // IDEA-144453 IDEA rejects opening a recent project if there are no .idea subfolder
       // CPP-12106 Auto-load CMakeLists.txt on opening from Recent projects when .idea and cmake-build-debug were deleted
       return ProjectUtil.openOrImportAsync(projectFile, effectiveOptions)
     }
@@ -313,26 +321,12 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
     override fun onFrameActivated(frame: IdeFrame) = frame.notifyProjectActivation()
   }
 
-  suspend fun projectOpened(project: Project, recentProjectMetaInfo: RecentProjectMetaInfo?, openTimestamp: Long) {
-    if (LightEdit.owns(project)) {
-      return
-    }
-
-    if (recentProjectMetaInfo == null) {
-      projectOpened(project)
-    }
-    else {
-      synchronized(stateLock) {
-        recentProjectMetaInfo.projectOpenTimestamp = openTimestamp
-      }
-    }
-
-    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      updateSystemDockMenu()
-    }
+  @Internal
+  suspend fun projectOpened(project: Project) {
+    projectOpened(project, System.currentTimeMillis())
   }
 
-  fun projectOpened(project: Project) {
+  internal suspend fun projectOpened(project: Project, openTimestamp: Long) {
     if (LightEdit.owns(project)) {
       return
     }
@@ -343,10 +337,14 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
       val info = markPathRecent(path = projectPath, project = project)
       info.opened = true
       info.displayName = getProjectDisplayName(project)
-      info.projectOpenTimestamp = System.currentTimeMillis()
+      info.projectOpenTimestamp = openTimestamp
 
       state.lastOpenedProject = projectPath
-      state.validateRecentProjects(modCounter)
+      validateRecentProjects(modCounter, state.additionalInfo)
+    }
+
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      updateSystemDockMenu()
     }
   }
 
@@ -356,7 +354,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
     override fun projectClosingBeforeSave(project: Project) {
       val app = ApplicationManagerEx.getApplicationEx()
       if (app.isExitInProgress) {
-        // appClosing updates project info (even more - on project closed full screen state maybe not correct)
+        // `appClosing` handler updates project info (even more - on `projectClosed` the full-screen state maybe not correct)
         return
       }
 
@@ -373,7 +371,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
 
     override fun projectClosed(project: Project) {
       if (ApplicationManagerEx.getApplicationEx().isExitInProgress) {
-        // appClosing updates project info (even more - on project closed full screen state maybe not correct)
+        // `appClosing` handler updates project info (even more - on `projectClosed` the full-screen state maybe not correct)
         return
       }
 
@@ -387,7 +385,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
 
   fun getRecentPaths(): List<String> {
     synchronized(stateLock) {
-      state.validateRecentProjects(modCounter)
+      validateRecentProjects(modCounter, state.additionalInfo)
       return state.additionalInfo.keys.reversed()
     }
   }
@@ -520,7 +518,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
           }
         }
 
-        // we open project windows in the order projects were opened historically (to preserve taskbar order)
+        // we open project windows in the order projects were opened historically (to preserve taskbar order),
         // but once the windows are created, we start project loading from the latest active project (and put its window at front)
         taskList.add(activeTask!!)
         taskList.reverse()
@@ -537,10 +535,8 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
       }
       catch (e: Exception) {
         withContext(NonCancellable + Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          @Suppress("SSBasedInspection")
           (entry.second.frame as MyProjectUiFrameManager?)?.dispose()
           while (iterator.hasNext()) {
-            @Suppress("SSBasedInspection")
             (iterator.next().second.frame as MyProjectUiFrameManager?)?.dispose()
           }
         }
@@ -642,8 +638,18 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
         writeInfoFile(frameInfo, frame)
       }
 
-      if (workspaceId != null && ProjectSelfieUtil.isEnabled) {
-        ProjectSelfieUtil.takeProjectSelfie(frameHelper.frame.rootPane, workspaceId)
+      if (workspaceId != null) {
+        val selfieLocation = ProjectSelfieUtil.getSelfieLocation(workspaceId)
+        if (ProjectSelfieUtil.isEnabled) {
+          NotificationsToolWindowFactory.clearAll(project)
+          frameHelper.balloonLayout?.closeAll()
+          (project.serviceIfCreated<ToolWindowManager>() as? ToolWindowManagerEx)?.closeBalloons()
+
+          ProjectSelfieUtil.takeProjectSelfie(frameHelper.frame.rootPane, workspaceId, selfieLocation)
+        }
+        else {
+          Files.deleteIfExists(selfieLocation)
+        }
       }
     }.getOrLogException(LOG)
   }
@@ -759,7 +765,7 @@ int32 "extendedState"
 
     override fun projectFrameClosed() {
       // ProjectManagerListener.projectClosed cannot be used to call updateLastProjectPath,
-      // because called even if project closed on app exit
+      // because called even if a project closed on app exit
       getInstanceEx().updateLastProjectPath()
     }
   }
@@ -810,6 +816,33 @@ private fun updateSystemDockMenu() {
   if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
     runActivity("system dock menu") {
       SystemDock.updateMenu()
+    }
+  }
+}
+
+private fun validateRecentProjects(modCounter: LongAdder, map: MutableMap<String, RecentProjectMetaInfo>) {
+  val limit = AdvancedSettings.getInt("ide.max.recent.projects")
+  var toRemove = map.size - limit
+  if (limit < 1 || toRemove <= 0) {
+    return
+  }
+
+  val iterator = map.values.iterator()
+  while (true) {
+    if (!iterator.hasNext()) {
+      break
+    }
+
+    val info = iterator.next()
+    if (info.opened) {
+      continue
+    }
+
+    iterator.remove()
+    toRemove--
+
+    if (toRemove <= 0) {
+      break
     }
   }
 }

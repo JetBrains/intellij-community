@@ -20,9 +20,6 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 
-/**
- * @author dsl
- */
 public class JavaCodeFragmentTableCellEditor extends CodeFragmentTableCellEditorBase {
 
   public JavaCodeFragmentTableCellEditor(final Project project) {

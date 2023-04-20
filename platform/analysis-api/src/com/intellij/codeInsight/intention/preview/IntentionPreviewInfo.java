@@ -3,8 +3,6 @@ package com.intellij.codeInsight.intention.preview;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.ide.util.PsiNavigationSupport;
-import com.intellij.navigation.NavigationRequest;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
@@ -14,14 +12,11 @@ import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.NavigatablePsiElement;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.ui.DeferredIcon;
 import com.intellij.util.IconUtil;
-import com.intellij.util.MathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -29,10 +24,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Predicate;
 
 /**
  * Possible result for IntentionPreview.
@@ -286,11 +281,23 @@ public interface IntentionPreviewInfo {
   static IntentionPreviewInfo addListOption(@NotNull List<@NlsSafe String> updatedList,
                                             @NotNull String addedOption,
                                             @NotNull @Nls String title) {
+    return addListOption(updatedList, title, Predicate.isEqual(addedOption));
+  }
+
+  /**
+   * @param updatedList list after updating (containing new option)
+   * @param title       a title text for the list
+   * @param toSelect    predicate, which returns true if the option should be selected in preview
+   * @return a presentation describing that the action will add the specified option to the options list
+   */
+  static IntentionPreviewInfo addListOption(@NotNull List<@NlsSafe String> updatedList,
+                                            @NotNull @Nls String title, 
+                                            @NotNull Predicate<String> toSelect) {
     int maxToList = Math.min(7, updatedList.size() + 2);
-    HtmlChunk select = HtmlChunk.tag("select").attr("size", maxToList)
+    HtmlChunk select = HtmlChunk.tag("select").attr("multiple", "multiple").attr("size", maxToList)
       .children(ContainerUtil.map2Array(updatedList, HtmlChunk.class, pref -> {
         HtmlChunk.Element chunk = HtmlChunk.tag("option").addText(pref);
-        return pref.equals(addedOption) ? chunk.attr("selected", "selected") : chunk;
+        return toSelect.test(pref) ? chunk.attr("selected", "selected") : chunk;
       }));
     HtmlChunk content = new HtmlBuilder().append(title)
       .br().br()

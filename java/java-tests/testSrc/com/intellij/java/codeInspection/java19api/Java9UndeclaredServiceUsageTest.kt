@@ -7,9 +7,6 @@ import com.intellij.java.JavaBundle
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-/**
- * @author Pavel.Dolgov
- */
 class Java9UndeclaredServiceUsageTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_9
 

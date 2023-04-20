@@ -27,9 +27,6 @@ import javax.swing.ButtonGroup
 import javax.swing.Icon
 import javax.swing.JPanel
 
-/**
- * @author vlan
- */
 class PyAddSdkGroupPanel(private val nameGetter: java.util.function.Supplier<@Nls String>,
                          panelIcon: Icon,
                          val panels: List<PyAddSdkPanel>,

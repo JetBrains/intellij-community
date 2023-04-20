@@ -31,8 +31,8 @@ public interface FMap<K, V> {
   /**
    * @return an empty {@code FMap}. No additional instances of empty {@code FMap} should be created as they are indistinguishable
    */
-  @SuppressWarnings("unchecked")
   static <K, V> FMap<K, V> empty() {
+    //noinspection unchecked
     return (FMap<K, V>)EmptyFMap.INSTANCE;
   }
 
@@ -60,7 +60,7 @@ public interface FMap<K, V> {
    * @param value a value to be associated with the key
    * @return an updated {@code FMap} (this or newly created)
    */
-  @NotNull FMap<K, V> plus(K key, V value);
+  @NotNull FMap<K, V> plus(@NotNull K key, @NotNull V value);
 
   /**
    * Returns a {@code FMap} which consists of the same elements as this FMap,
@@ -70,7 +70,7 @@ public interface FMap<K, V> {
    * @param key a key to remove
    * @return an updated {@code FMap} (this or newly created)
    */
-  @NotNull FMap<K, V> minus(K key);
+  @NotNull FMap<K, V> minus(@NotNull K key);
 
   /**
    * Returns a value associated with given key in this {@code FMap}, or {@code null} if no value is associated.
@@ -79,7 +79,7 @@ public interface FMap<K, V> {
    * @param key a key to get the value associated with
    * @return a value associated with a given {@code key} or {@code null} if there's no such value
    */
-  @Nullable V get(K key);
+  @Nullable V get(@NotNull K key);
 
   /**
    * @return {@code true} if this {@code FMap} is empty, otherwise {@code false}

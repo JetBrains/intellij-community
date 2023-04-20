@@ -13,7 +13,6 @@ import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl;
 import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.impl.source.xml.TagNameReference;
-import com.intellij.psi.impl.source.xml.XmlDocumentImpl;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.CachedValueProvider;
@@ -24,6 +23,7 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.impl.XmlNsDescriptorUtil;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
@@ -138,7 +138,7 @@ public abstract class XmlExtension {
   public @NotNull XmlNSDescriptor wrapNSDescriptor(@NotNull XmlTag element, @NotNull String namespacePrefix, @NotNull XmlNSDescriptor descriptor) {
     if (element instanceof HtmlTag && !(descriptor instanceof HtmlNSDescriptorImpl)) {
       XmlFile obj = descriptor.getDescriptorFile();
-      XmlNSDescriptor result = obj == null ? null : XmlDocumentImpl.getCachedHtmlNsDescriptor(obj, namespacePrefix);
+      XmlNSDescriptor result = obj == null ? null : XmlNsDescriptorUtil.getCachedHtmlNsDescriptor(obj, namespacePrefix);
       return result == null ? new HtmlNSDescriptorImpl(descriptor) : result;
     }
     return descriptor;

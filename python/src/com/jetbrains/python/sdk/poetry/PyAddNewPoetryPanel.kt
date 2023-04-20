@@ -37,7 +37,6 @@ import javax.swing.event.DocumentEvent
 /**
  * The UI panel for adding the poetry interpreter for the project.
  *
- * @author vlan
  */
 
 /**

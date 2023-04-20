@@ -1,0 +1,38 @@
+MODULES
+    project
+    project.consumer
+    project.consumer.androidTest
+        testDebugUnitTest|:consumer|android
+        jvmTest|:consumer|jvm
+    project.consumer.commonMain
+    project.consumer.commonTest
+        testDebugUnitTest|:consumer|android
+        jvmTest|:consumer|jvm
+    project.consumer.jvmAndAndroidMain
+    project.consumer.jvmMain
+    project.consumer.jvmTest
+        jvmTest|:consumer|jvm
+    project.consumer.main
+    project.consumer.unitTest
+        testDebugUnitTest|:consumer|android
+        jvmTest|:consumer|jvm
+    project.producer
+    project.producer.androidTest
+        testDebugUnitTest|:producer|android
+        jvmTest|:producer|jvm
+    project.producer.commonMain
+    project.producer.commonTest
+        testDebugUnitTest|:producer|android
+        jvmTest|:producer|jvm
+    project.producer.jvmAndAndroidMain
+    project.producer.jvmMain
+    project.producer.jvmTest
+        jvmTest|:producer|jvm
+    project.producer.main
+    project.producer.unitTest
+        testDebugUnitTest|:producer|android
+        jvmTest|:producer|jvm
+
+Test configuration:
+- hiding following roots: resources, android-specific roots, generated
+- hiding following standard dependencies: sdk, self

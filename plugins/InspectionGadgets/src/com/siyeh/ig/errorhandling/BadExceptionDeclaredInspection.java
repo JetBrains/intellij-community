@@ -72,8 +72,8 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      stringSet("exceptions", InspectionGadgetsBundle.message("choose.exception.label"),
-                new JavaClassValidator().withSuperClass(CommonClassNames.JAVA_LANG_THROWABLE)
+      stringList("exceptions", InspectionGadgetsBundle.message("choose.exception.label"),
+                 new JavaClassValidator().withSuperClass(CommonClassNames.JAVA_LANG_THROWABLE)
                   .withTitle(InspectionGadgetsBundle.message("choose.exception.class"))),
       checkbox("ignoreLibraryOverrides", InspectionGadgetsBundle.message("ignore.exceptions.declared.on.library.override.option")));
   }

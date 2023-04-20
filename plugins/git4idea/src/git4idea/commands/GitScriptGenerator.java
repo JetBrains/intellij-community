@@ -42,7 +42,8 @@ public class GitScriptGenerator extends ScriptGeneratorImpl {
         NativeSshAskPassAppHandler.IJ_SSH_ASK_PASS_PORT_ENV,
         GitAskPassAppHandler.IJ_ASK_PASS_HANDLER_ENV,
         GitAskPassAppHandler.IJ_ASK_PASS_PORT_ENV,
-        GitRebaseEditorAppHandler.IJ_EDITOR_HANDLER_ENV);
+        GitRebaseEditorAppHandler.IJ_EDITOR_HANDLER_ENV,
+        GitRebaseEditorAppHandler.IJ_EDITOR_PORT_ENV);
       sb.append("export WSLENV=");
       sb.append(StringUtil.join(envs, it -> it + "/w", ":"));
       sb.append("\n");

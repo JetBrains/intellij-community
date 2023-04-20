@@ -53,9 +53,6 @@ import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.impl.CallReferenceImplKt.resolveWithArguments;
 
-/**
- * @author ven
- */
 public final class GroovyExpectedTypesProvider {
   private static final ExtensionPointName<GroovyExpectedTypesContributor> EP_NAME = new ExtensionPointName<>("org.intellij.groovy.expectedTypesContributor");
 

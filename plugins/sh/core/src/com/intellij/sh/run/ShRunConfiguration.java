@@ -7,7 +7,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.execution.wsl.WSLUtil;
-import com.intellij.openapi.application.Experiments;
+import com.intellij.execution.wsl.WslPath;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -16,14 +16,12 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.sh.psi.ShFile;
 import com.intellij.util.EnvironmentUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -241,14 +239,10 @@ public final class ShRunConfiguration extends LocatableConfigurationBase impleme
     if (!WSLUtil.isSystemCompatible()) return null;
     if (EnvironmentUtil.getValue("SHELL") != null) return null;
     if (scriptPath != null && (scriptPath.endsWith("cmd") || scriptPath.endsWith("bat"))) return null;
-    if (interpreterPath != null) {
-      String path = toSystemDependentName(interpreterPath);
-      if (path.startsWith(WslConstants.UNC_PREFIX)) return ContainerUtil.getFirstItem(WSLUtil.getAvailableDistributions());
+    WslPath wslPath = interpreterPath != null ? WslPath.parseWindowsUncPath(interpreterPath) : null;
+    if (wslPath == null && scriptPath != null) {
+      wslPath = WslPath.parseWindowsUncPath(scriptPath);
     }
-    if (scriptPath != null) {
-      String path = toSystemDependentName(scriptPath);
-      if (path.startsWith(WslConstants.UNC_PREFIX)) return ContainerUtil.getFirstItem(WSLUtil.getAvailableDistributions());
-    }
-    return null;
+    return wslPath != null ? wslPath.getDistribution() : null;
   }
 }

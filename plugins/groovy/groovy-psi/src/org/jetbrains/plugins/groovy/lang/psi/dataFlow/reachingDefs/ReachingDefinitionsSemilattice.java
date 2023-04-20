@@ -8,9 +8,6 @@ import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.DefinitionMap.NEUTRAL;
 
-/**
- * @author ven
- */
 public class ReachingDefinitionsSemilattice implements Semilattice<DefinitionMap> {
 
   @NotNull

@@ -20,9 +20,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
 
-/**
- * @author dsl
- */
 public class BindToGenericClassTest extends GenericsTestCase {
   @Override
   protected void setUp() throws Exception {

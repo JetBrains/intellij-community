@@ -36,9 +36,6 @@ import java.util.HashSet;
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 import static com.intellij.openapi.util.NlsContexts.DialogTitle;
 
-/**
- * @author ven
- */
 public final class CommonRefactoringUtil {
   private CommonRefactoringUtil() { }
 

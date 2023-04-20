@@ -61,7 +61,7 @@ object TableModificationUtils {
 
   fun MarkdownTableCell.hasCorrectPadding(): Boolean {
     val cellText = text
-    return text.length >= TableProps.MIN_CELL_WIDTH && cellText.startsWith(" ") && cellText.endsWith(" ")
+    return cellText.startsWith(" ") && cellText.endsWith(" ")
   }
 
   @Suppress("MemberVisibilityCanBePrivate")
@@ -96,9 +96,6 @@ object TableModificationUtils {
 
   fun MarkdownTableCell.hasValidAlignment(expected: CellAlignment): Boolean {
     val content = text
-    if (content.length < TableProps.MIN_CELL_WIDTH) {
-      return false
-    }
     if (content.isBlank()) {
       return true
     }
@@ -132,19 +129,18 @@ object TableModificationUtils {
   }
 
   fun buildSeparatorCellContent(alignment: CellAlignment, cellContentWidth: Int): String {
-    check(cellContentWidth > 4)
     return when (alignment) {
       CellAlignment.NONE -> "-".repeat(cellContentWidth)
-      CellAlignment.LEFT -> ":${"-".repeat(cellContentWidth - 1)}"
-      CellAlignment.RIGHT -> "${"-".repeat(cellContentWidth - 1)}:"
-      CellAlignment.CENTER -> ":${"-".repeat(cellContentWidth - 2)}:"
+      CellAlignment.LEFT -> ":${"-".repeat((cellContentWidth - 1).coerceAtLeast(1))}"
+      CellAlignment.RIGHT -> "${"-".repeat((cellContentWidth - 1).coerceAtLeast(1))}:"
+      CellAlignment.CENTER -> ":${"-".repeat((cellContentWidth - 2).coerceAtLeast(1))}:"
     }
   }
 
   fun buildRealignedCellContent(cellContent: String, wholeCellWidth: Int, alignment: CellAlignment): String {
     check(wholeCellWidth >= cellContent.length)
     return when (alignment) {
-      CellAlignment.RIGHT -> "${" ".repeat(wholeCellWidth - cellContent.length - 1)}$cellContent "
+      CellAlignment.RIGHT -> "${" ".repeat((wholeCellWidth - cellContent.length - 1).coerceAtLeast(0))}$cellContent "
       CellAlignment.CENTER -> {
         val leftPadding = (wholeCellWidth - cellContent.length) / 2
         val rightPadding = wholeCellWidth - cellContent.length - leftPadding
@@ -159,7 +155,7 @@ object TableModificationUtils {
         }
       }
       // MarkdownTableSeparatorRow.CellAlignment.LEFT
-      else -> " $cellContent${" ".repeat(wholeCellWidth - cellContent.length - 1)}"
+      else -> " $cellContent${" ".repeat((wholeCellWidth - cellContent.length - 1).coerceAtLeast(0))}"
     }
   }
 
@@ -172,7 +168,6 @@ object TableModificationUtils {
   fun MarkdownTableSeparatorRow.updateAlignment(document: Document, columnIndex: Int, alignment: CellAlignment) {
     val cellRange = getCellRange(columnIndex)!!
     val width = cellRange.length
-    //check(width >= TableProps.MIN_CELL_WIDTH)
     val replacement = buildSeparatorCellContent(alignment, width)
     document.replaceString(cellRange.startOffset, cellRange.endOffset, replacement)
   }
@@ -207,7 +202,7 @@ object TableModificationUtils {
     columnIndex: Int,
     after: Boolean = true,
     alignment: CellAlignment = CellAlignment.NONE,
-    columnWidth: Int = TableProps.MIN_CELL_WIDTH
+    columnWidth: Int = 5
   ) {
     val cells = getColumnCells(columnIndex, withHeader = false)
     val headerCell = headerRow?.getCell(columnIndex)!!

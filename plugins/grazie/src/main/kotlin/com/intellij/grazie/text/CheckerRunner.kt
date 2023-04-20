@@ -4,6 +4,7 @@ package com.intellij.grazie.text
 
 import ai.grazie.nlp.tokenizer.sentence.StandardSentenceTokenizer
 import ai.grazie.utils.toLinkedSet
+import org.jetbrains.annotations.ApiStatus
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemDescriptorBase
@@ -168,7 +169,9 @@ class CheckerRunner(val text: TextContent) {
     return patternRange != null && sentence != null && SuppressionPattern(errorText, sentence).isSuppressed()
   }
 
-  private fun findSentence(problem: TextProblem) =
+  // used in rider
+  @ApiStatus.Experimental
+  fun findSentence(problem: TextProblem) =
     sentences.find { problem.highlightRanges.any { range -> range.intersects(it.range.first, it.range.last + 1) } }?.token
 
   fun toFixes(problem: TextProblem, descriptor: ProblemDescriptor): Array<LocalQuickFix> {
@@ -202,7 +205,9 @@ class CheckerRunner(val text: TextContent) {
       .toList()
   }
 
-  private fun defaultSuppressionPattern(problem: TextProblem, sentenceText: String?): SuppressionPattern {
+  // used in rider
+  @ApiStatus.Experimental
+  fun defaultSuppressionPattern(problem: TextProblem, sentenceText: String?): SuppressionPattern {
     val text = problem.text
     val patternRange = problem.patternRange
     if (patternRange != null) {

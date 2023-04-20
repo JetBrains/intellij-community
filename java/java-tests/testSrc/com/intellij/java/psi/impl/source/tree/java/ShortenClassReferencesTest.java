@@ -25,9 +25,6 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-/**
- * @author dsl
- */
 public class ShortenClassReferencesTest extends LightJavaCodeInsightFixtureTestCase {
   private static final String BASE_PATH = PathManagerEx.getTestDataPath() + "/psi/shortenClassRefs";
 

@@ -24,7 +24,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 
 /**
  * synthetic method (either getter or setter) generated for groovy property
- * @author ven
  */
 public interface GrAccessorMethod extends PsiMethod, PsiMirrorElement {
   GrAccessorMethod[] EMPTY_ARRAY = new GrAccessorMethod[0];

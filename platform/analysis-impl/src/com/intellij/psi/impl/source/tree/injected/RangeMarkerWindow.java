@@ -3,6 +3,7 @@
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -13,6 +14,7 @@ import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 class RangeMarkerWindow implements RangeMarkerEx {
+  private static final Logger LOG = Logger.getInstance(RangeMarkerWindow.class);
   private final DocumentWindow myDocumentWindow;
   private final RangeMarkerEx myHostMarker;
   private final int myStartShift;
@@ -26,6 +28,9 @@ class RangeMarkerWindow implements RangeMarkerEx {
     myEndShift = endOffset - Math.max(0, documentWindow.hostToInjected(hostRange.getEndOffset()));
     RangeMarker hostMarker = createHostRangeMarkerToTrack(hostRange, surviveOnExternalChange);
     myHostMarker = (RangeMarkerEx)hostMarker;
+    if (documentWindow.isValid() && !isValid()) {
+      LOG.error(this + " is invalid immediately after creation");
+    }
   }
 
   @NotNull

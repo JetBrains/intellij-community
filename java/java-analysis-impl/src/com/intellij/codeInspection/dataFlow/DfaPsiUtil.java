@@ -10,15 +10,18 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
 import com.intellij.codeInspection.dataFlow.java.inst.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.DfaListener;
 import com.intellij.codeInspection.dataFlow.lang.ir.*;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
@@ -791,5 +794,35 @@ public final class DfaPsiUtil {
       }
     }
     return false;
+  }
+
+  /**
+   * @param cond1 first condition
+   * @param cond2 second condition
+   * @return true if conditions cannot be true at the same time.
+   */
+  public static boolean mutuallyExclusive(@NotNull PsiExpression cond1, @NotNull PsiExpression cond2) {
+    Project project = cond1.getProject();
+    PsiPolyadicExpression expr =
+      (PsiPolyadicExpression)JavaPsiFacade.getElementFactory(project).createExpressionFromText("a && b", cond1);
+    PsiExpression[] operands = expr.getOperands();
+    operands[0].replace(cond1);
+    operands[1].replace(cond2);
+    DfaValueFactory factory = new DfaValueFactory(project);
+    ControlFlow flow = ControlFlowAnalyzer.buildFlow(expr, factory, true);
+    if (flow == null) return false;
+    var listener = new JavaDfaListener() {
+      final Set<DfType> results = new HashSet<>();
+
+      @Override
+      public void beforeExpressionPush(@NotNull DfaValue value, @NotNull PsiExpression expression, @NotNull DfaMemoryState state) {
+        if (expression == expr) {
+          results.add(value.getDfType());
+        }
+      }
+    };
+    StandardDataFlowInterpreter interpreter = new StandardDataFlowInterpreter(flow, listener);
+    if (interpreter.interpret(new DfaMemoryStateImpl(factory)) != RunnerResult.OK) return false;
+    return DfTypes.FALSE.equals(ContainerUtil.getOnlyItem(listener.results));
   }
 }

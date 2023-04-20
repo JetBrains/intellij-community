@@ -28,9 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-/**
- * @author Pavel.Dolgov
- */
 
 @TestFor(classes = SdkSetupNotificationProvider.class)
 public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtureTestCase {

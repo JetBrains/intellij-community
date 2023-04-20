@@ -8,7 +8,10 @@ import java.nio.file.Path
 import java.util.function.Predicate
 
 abstract class MacDistributionCustomizer(
-  internal val extraExecutables: List<String> = emptyList(),
+  /**
+   * Relative paths to files in macOS distribution which should take 'executable' permissions
+   */
+  val extraExecutables: List<String> = emptyList()
 ) {
   /**
    * Path to icns file containing product icon bundle for macOS distribution
@@ -142,5 +145,23 @@ abstract class MacDistributionCustomizer(
   }
 
   protected open fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: Path, arch: JvmArchitecture) {
+  }
+
+  open fun generateExecutableFilesPatterns(context: BuildContext, includeRuntime: Boolean, arch: JvmArchitecture): List<String> {
+    var executableFilePatterns = persistentListOf(
+      "bin/*.sh",
+      "plugins/**/*.sh",
+      "bin/fsnotifier",
+      "bin/printenv",
+      "bin/restarter",
+      "MacOS/*"
+    )
+    executableFilePatterns.addAll(RepairUtilityBuilder.executableFilesPatterns(context))
+    if (includeRuntime) {
+      executableFilePatterns = executableFilePatterns.addAll(context.bundledRuntime.executableFilesPatterns(OsFamily.MACOS, context))
+    }
+    return executableFilePatterns
+      .addAll(extraExecutables)
+      .addAll(context.getExtraExecutablePattern(OsFamily.MACOS))
   }
 }

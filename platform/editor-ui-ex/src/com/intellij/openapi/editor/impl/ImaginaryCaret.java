@@ -49,11 +49,13 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
 
   @Override
   public void moveToOffset(int offset) {
-    myStart = myPos = myEnd = offset;
+    moveToOffset(offset, false);
   }
 
   @Override
   public void moveToOffset(int offset, boolean locateBeforeSoftWrap) {
+    if (offset < 0)
+      offset = 0;
     myStart = myPos = myEnd = offset;
   }
 
@@ -145,7 +147,8 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
 
   @Override
   public void setSelection(int startOffset, int endOffset) {
-    if (startOffset < 0) throw new IllegalArgumentException();
+    if (startOffset < 0) startOffset = 0;
+    if (endOffset < 0) endOffset = 0;
     // mimicking CaretImpl's doSetSelection: removing selection if startOffset == endOffset
     if (startOffset == endOffset) {
       myStart = myPos;

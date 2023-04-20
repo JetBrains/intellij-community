@@ -19,8 +19,8 @@ class ProcessHandlerReader(processHandler: ProcessHandler) {
   private val stdErrImpl: Channel<String> = Channel()
   private val processResult: Channel<Int> = Channel()
   private val scope = CoroutineScope(Dispatchers.IO)
-  val stdOut: ReceiveChannel<String> = stdOutImpl
-  val stdErr: ReceiveChannel<String> = stdErrImpl
+  private val stdOut: ReceiveChannel<String> = stdOutImpl
+  private val stdErr: ReceiveChannel<String> = stdErrImpl
   val result: ReceiveChannel<Int> = processResult
 
   constructor(process: Process) : this(BaseOSProcessHandler(process, "some command line", null).apply { startNotify() })

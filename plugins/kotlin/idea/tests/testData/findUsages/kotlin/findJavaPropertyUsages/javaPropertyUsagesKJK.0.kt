@@ -28,4 +28,3 @@ fun test() {
 }
 
 // FIR_IGNORE
-// FIR_COMPARISON

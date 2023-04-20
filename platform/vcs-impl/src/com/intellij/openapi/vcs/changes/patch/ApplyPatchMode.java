@@ -18,9 +18,6 @@ package com.intellij.openapi.vcs.changes.patch;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.util.NlsContexts;
 
-/**
- * @author irengrig
- */
 public enum ApplyPatchMode {
   APPLY(VcsBundle.message("patch.apply.dialog.title"), true),
   UNSHELVE(VcsBundle.message("unshelve.changes.dialog.title"), false),

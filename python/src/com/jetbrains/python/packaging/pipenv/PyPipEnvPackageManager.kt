@@ -21,9 +21,6 @@ import com.jetbrains.python.sdk.pipenv.pipFileLockRequirements
 import com.jetbrains.python.sdk.pipenv.runPipEnv
 import com.jetbrains.python.sdk.pythonSdk
 
-/**
- * @author vlan
- */
 class PyPipEnvPackageManager(sdk: Sdk) : PyPackageManager(sdk ) {
   @Volatile
   private var packages: List<PyPackage>? = null

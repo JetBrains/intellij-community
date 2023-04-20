@@ -211,6 +211,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
 
 
     if (MavenUtil.isLinearImportEnabled()) {
+      MavenLog.LOG.warn("performImport: Linear Import is enabled");
       Module dummy = MavenImportingManager.getInstance(project).openProjectAndImport(
         new FilesList(MavenUtil.collectFiles(selectedProjects)),
         importingSettings,
@@ -225,6 +226,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
         return Collections.emptyList();
       }
     }
+    MavenLog.LOG.warn("performImport: Linear Import is disabled");
 
     if (isVeryNewProject && Registry.is("maven.create.dummy.module.on.first.import")) {
       Module previewModule = createPreviewModule(project, selectedProjects);

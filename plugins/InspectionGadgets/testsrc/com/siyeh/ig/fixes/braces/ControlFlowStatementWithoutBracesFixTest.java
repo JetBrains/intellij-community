@@ -8,9 +8,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.style.ControlFlowStatementWithoutBracesInspection;
 
-/**
- * @author Pavel.Dolgov
- */
 public class ControlFlowStatementWithoutBracesFixTest extends IGQuickFixesTestCase {
 
   public void testSimpleIfBody() { doTest("if"); }

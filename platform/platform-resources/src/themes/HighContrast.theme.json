@@ -512,6 +512,7 @@
 
     "RunWidget" : {
       "foreground": "#ffffff",
+      "disabledForeground": "#FFFFFF66",
       "background": "#3369d6",
       "runningBackground": "#599e5e",
       "hoverBackground": "#00000019",

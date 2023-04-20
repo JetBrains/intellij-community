@@ -28,9 +28,6 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTagValueToken;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 
-/**
- * @author ilyas
- */
 public abstract class GrDocMemberReferenceImpl extends GroovyDocPsiElementImpl implements GrDocMemberReference {
   public GrDocMemberReferenceImpl(@NotNull ASTNode node) {
     super(node);

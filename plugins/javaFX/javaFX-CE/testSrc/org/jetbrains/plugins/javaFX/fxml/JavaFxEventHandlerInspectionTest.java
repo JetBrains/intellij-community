@@ -6,9 +6,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxEventHandlerInspection;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaFxEventHandlerInspectionTest extends AbstractJavaFXTestCase {
 
   @Override

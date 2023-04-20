@@ -15,8 +15,6 @@ import java.util.List;
 /**
  * Specialized lite version of {@link org.jetbrains.org.objectweb.asm.tree.analysis.Analyzer}.
  * No processing of Subroutines. May be used for methods without JSR/RET instructions.
- *
- * @author lambdamix
  */
 public class LiteAnalyzer<V extends Value> implements Opcodes {
   private final Interpreter<V> interpreter;

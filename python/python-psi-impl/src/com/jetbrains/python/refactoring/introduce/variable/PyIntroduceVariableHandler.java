@@ -25,9 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PyIntroduceVariableHandler extends IntroduceHandler {
   public PyIntroduceVariableHandler() {
     super(new VariableValidator(), PyPsiBundle.message("refactoring.introduce.variable.dialog.title"));

@@ -19,16 +19,6 @@ import java.util.List;
 
 public class OverrideImplementsAnnotationsHandlerImpl implements OverrideImplementsAnnotationsHandler {
   @Override
-  public String[] getAnnotations(Project project) {
-    List<String> annotations = getCoreAnnotations(project);
-
-    CodeStyleSettings settings = CodeStyle.getSettings(project);
-    annotations.addAll(settings.getCustomSettings(JavaCodeStyleSettings.class).getRepeatAnnotations());
-
-    return ArrayUtilRt.toStringArray(annotations);
-  }
-
-  @Override
   public void transferToTarget(String annotation, PsiModifierListOwner source, PsiModifierListOwner target) {
     Project project = source.getProject();
     NullableNotNullManager manager = NullableNotNullManager.getInstance(project);

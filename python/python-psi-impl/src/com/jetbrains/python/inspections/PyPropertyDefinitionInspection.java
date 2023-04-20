@@ -36,7 +36,6 @@ import java.util.function.Predicate;
 /**
  * Checks that arguments to property() and @property and friends are ok.
  * <br/>
- * User: dcheryasov
  */
 public class PyPropertyDefinitionInspection extends PyInspection {
 

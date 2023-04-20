@@ -86,14 +86,6 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
     myModifierProvider.init();
   }
 
-  @Override
-  @RequiresEdt
-  protected void onDispose() {
-    myModel.clear();
-    myFoldingModel.destroy();
-    super.onDispose();
-  }
-
   @NotNull
   @Override
   protected List<AnAction> createToolbarActions() {

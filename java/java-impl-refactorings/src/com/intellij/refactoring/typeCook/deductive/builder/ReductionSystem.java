@@ -28,9 +28,6 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
-/**
- * @author db
- */
 public class ReductionSystem {
   final Set<Constraint> myConstraints = new HashSet<>();
   final Set<PsiElement> myElements;

@@ -68,6 +68,11 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix {
   );
 
   @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
   public void applyFix(@NotNull Project project,
                        CommonProblemDescriptor @NotNull [] descriptors,
                        @NotNull List<PsiElement> psiElementsToIgnore,

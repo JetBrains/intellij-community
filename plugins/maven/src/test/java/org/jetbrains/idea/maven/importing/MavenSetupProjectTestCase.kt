@@ -88,6 +88,7 @@ abstract class MavenSetupProjectTestCase : MavenImportingTestCase() {
       withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
         projectManager.waitForResolvingCompletion()
         projectManager.performScheduledImportInTests()
+        projectManager.waitForImportCompletion()
       }
     }
   }

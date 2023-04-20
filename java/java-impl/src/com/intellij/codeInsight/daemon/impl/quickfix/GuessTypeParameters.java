@@ -23,9 +23,6 @@ import java.util.Map;
 import static com.intellij.codeInsight.ExpectedTypeInfo.*;
 import static com.intellij.util.containers.ContainerUtil.map;
 
-/**
- * @author ven
-  */
 public class GuessTypeParameters {
 
   private static final Logger LOG = Logger.getInstance(GuessTypeParameters.class);

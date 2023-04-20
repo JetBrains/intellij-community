@@ -48,6 +48,7 @@ interface ResolutionFacade {
     @FrontendInternals
     fun <T : Any> tryGetFrontendService(element: PsiElement, serviceClass: Class<T>): T?
 
+    @Deprecated("DO NOT USE IT AS IT IS A ROOT CAUSE OF KTIJ-17649")
     @FrontendInternals
     fun <T : Any> getFrontendService(moduleDescriptor: ModuleDescriptor, serviceClass: Class<T>): T
 

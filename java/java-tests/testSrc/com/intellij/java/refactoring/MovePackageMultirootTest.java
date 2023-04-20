@@ -37,9 +37,6 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 
 import java.util.Set;
 
-/**
- * @author dsl
- */
 public class MovePackageMultirootTest extends MultiFileTestCase {
 
   @NotNull

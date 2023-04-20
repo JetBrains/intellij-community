@@ -7,9 +7,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
 
-/**
- * @author lex
- */
 public interface ProgressIndicatorListener {
   default void cancelled() { }
 

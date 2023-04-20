@@ -9,8 +9,6 @@ import java.util.List;
 
 /**
  * Represents a single {@code catch} section of a Java {@code try ... catch} statement.
- *
- * @author ven
  */
 public interface PsiCatchSection extends PsiElement {
   /**

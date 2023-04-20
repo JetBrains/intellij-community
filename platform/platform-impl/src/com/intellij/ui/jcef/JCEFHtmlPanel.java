@@ -26,7 +26,11 @@ public class JCEFHtmlPanel extends JBCefBrowser {
     this(ourCefClient, url);
   }
 
-  public JCEFHtmlPanel(JBCefClient client, String url) {
+  public JCEFHtmlPanel(boolean isOffScreenRendering, @Nullable String url) {
+    this(isOffScreenRendering, ourCefClient, url);
+  }
+
+  public JCEFHtmlPanel(@Nullable JBCefClient client, @Nullable String url) {
     this(true, client, url); // should no pass url to ctor
   }
 

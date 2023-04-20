@@ -42,7 +42,17 @@ object URIUtil {
   }
 }
 
-fun URI.resolveRelative(path: String): URI = resolve("./$path")
+fun URI.resolveRelative(path: String): URI {
+  val newPath: String
+  if (path.startsWith("/")) newPath = path.replace("//+", "/")
+  else {
+    val currentPath = this.toString() // to avoid path decoding
+    if (currentPath.endsWith("/")) newPath = currentPath + path.replace("//+", "/")
+    else newPath = currentPath + "/" + path.replace("//+", "/")
+  }
+
+  return resolve(newPath).normalize()
+}
 
 fun URI.withQuery(searchQuery: String): URI {
   if (searchQuery.isBlank()) return this

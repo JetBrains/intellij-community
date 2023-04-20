@@ -19,9 +19,6 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.ui.JBColor;
 
-/**
- * @author Denis Zhdanov
- */
 public class SyntaxInfoConstructionTest extends BasePlatformTestCase {
   public void testBlockSelection() {
     String text =

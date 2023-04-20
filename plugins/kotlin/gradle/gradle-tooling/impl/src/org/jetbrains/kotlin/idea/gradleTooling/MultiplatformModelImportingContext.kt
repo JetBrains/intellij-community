@@ -118,7 +118,7 @@ internal class MultiplatformModelImportingContextImpl(
     override lateinit var projectPlatforms: Collection<KotlinPlatform>
         private set
 
-    internal fun initializeSourceSets(sourceSetsByNames: Map<String, KotlinSourceSetImpl>) {
+    private fun initializeSourceSets(sourceSetsByNames: Map<String, KotlinSourceSetImpl>) {
         require(!this::sourceSetsByName.isInitialized) {
             "Attempt to re-initialize source sets for $this. Previous value: ${this.sourceSetsByName}"
         }

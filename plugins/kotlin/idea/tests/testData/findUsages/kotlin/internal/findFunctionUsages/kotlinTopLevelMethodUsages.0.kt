@@ -5,4 +5,3 @@ package server
 
 internal fun <caret>processRequest() = "foo"
 
-// FIR_COMPARISON

@@ -19,9 +19,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.util.NullableComputable
 
-/**
- * @author vlan
- */
 class PyLazySdk(name: String, private val create: NullableComputable<Sdk>) : ProjectJdkImpl(name, PythonSdkType.getInstance(), null, null) {
   fun create(): Sdk? = create.compute()
 }

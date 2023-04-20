@@ -1,10 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle
 
+import org.jetbrains.kotlin.gradle.newTests.testServices.GradleProjectLinkingService.linkGradleProject
+import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
 import org.jetbrains.kotlin.idea.gradleTooling.PrepareKotlinIdeImportTaskModel
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
+import org.junit.Assume.assumeTrue
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -14,7 +17,6 @@ class PrepareKotlinIdeaImportTest : MultiplePluginVersionGradleImportingTestCase
 
     private val KotlinToolingVersion.isPrepareKotlinIdeaImportSupportExpected: Boolean
         get() = this >= KotlinToolingVersion("1.6.255-SNAPSHOT")
-
 
     @Test
     @PluginTargetVersions(pluginVersion = "1.5+")
@@ -111,5 +113,21 @@ class PrepareKotlinIdeaImportTest : MultiplePluginVersionGradleImportingTestCase
                 )
             }
         }
+    }
+
+    @Test
+    @PluginTargetVersions
+    fun `testPrepareKotlinIdeaImport-compositeBuild`() {
+        /* Only run against a single configuration */
+        assumeTrue(kotlinPluginVersion == KotlinGradlePluginVersions.latest)
+        configureByFiles()
+        linkGradleProject("consumerBuild", myProjectRoot.toNioPath(), myProject)
+        val consumerStateFile = myProjectRoot.toNioPath().resolve("consumerBuild/consumerA/prepareKotlinIdeaImport.executed").toFile()
+        if(!consumerStateFile.exists()) fail("consumerA: prepareKotlinIdeaImport not executed")
+        if(consumerStateFile.readText() != "OK") fail("Unexpected content in consumerStateFile: ${consumerStateFile.readText()}")
+
+        val producerStateFile = myProjectRoot.toNioPath().resolve("producerBuild/producerA/prepareKotlinIdeaImport.executed").toFile()
+        if(!producerStateFile.exists()) fail("producerA: prepareKotlinIdeaImport not executed")
+        if(producerStateFile.readText() != "OK") fail("Unexpected content in producerStateFile: ${consumerStateFile.readText()}")
     }
 }

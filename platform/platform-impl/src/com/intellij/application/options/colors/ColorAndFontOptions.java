@@ -7,6 +7,8 @@ import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.application.options.schemes.SchemesModel;
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.execution.impl.ConsoleViewUtil;
+import com.intellij.internal.inspector.PropertyBean;
+import com.intellij.internal.inspector.UiInspectorContextProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -737,7 +739,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     }
   }
 
-  private static final class SchemeTextAttributesDescription extends TextAttributesDescription {
+  private static final class SchemeTextAttributesDescription extends TextAttributesDescription implements UiInspectorContextProvider {
     @NotNull private final TextAttributes myInitialAttributes;
     @NotNull private final TextAttributesKey key;
 
@@ -771,6 +773,13 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
         getTextAttributes().copyFrom(myFallbackAttributes);
       }
       initCheckedStatus();
+    }
+
+    @Override
+    public @NotNull List<PropertyBean> getUiInspectorContext() {
+      List<PropertyBean> result = new ArrayList<>();
+      result.add(new PropertyBean("Text Attributes Key", key.getExternalName(), true));
+      return result;
     }
 
     @NotNull
@@ -815,7 +824,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     }
   }
 
-  private static class EditorSettingColorDescription extends ColorAndFontDescription {
+  private static class EditorSettingColorDescription extends ColorAndFontDescription implements UiInspectorContextProvider {
     private final ColorKey myColorKey;
     @NotNull
     private final ColorDescriptor.Kind myKind;
@@ -855,6 +864,13 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
         //setInheritedAttributes(getTextAttributes());
       }
       initCheckedStatus();
+    }
+
+    @Override
+    public @NotNull List<PropertyBean> getUiInspectorContext() {
+      List<PropertyBean> result = new ArrayList<>();
+      result.add(new PropertyBean("Color Key", myColorKey.getExternalName(), true));
+      return result;
     }
 
     @Override

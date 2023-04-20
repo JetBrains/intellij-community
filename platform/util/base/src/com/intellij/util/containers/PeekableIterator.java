@@ -35,7 +35,7 @@ public interface PeekableIterator<T> extends Iterator<T> {
 
     @Override
     public void remove() {
-      throw new UnsupportedOperationException("remove");
+      PeekableIterator.super.remove();
     }
   };
 }

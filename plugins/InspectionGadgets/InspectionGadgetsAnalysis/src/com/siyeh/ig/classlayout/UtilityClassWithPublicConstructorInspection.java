@@ -104,7 +104,7 @@ public class UtilityClassWithPublicConstructorInspection
       }
 
       final SearchScope scope = GlobalSearchScope.projectScope(aClass.getProject());
-      final Query<PsiClass> query = ClassInheritorsSearch.search(aClass, scope, true);
+      final Query<PsiClass> query = ClassInheritorsSearch.search(aClass, scope, false);
       final PsiClass subclass = query.findFirst();
       Boolean hasInheritors = subclass != null;
 

@@ -25,9 +25,6 @@ import com.intellij.ui.EditorNotificationPanel.ActionHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaProjectSdkSetupValidator implements ProjectSdkSetupValidator {
   public static final JavaProjectSdkSetupValidator INSTANCE = new JavaProjectSdkSetupValidator();
 

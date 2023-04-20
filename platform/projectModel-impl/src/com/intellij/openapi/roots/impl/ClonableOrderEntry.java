@@ -22,9 +22,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-/**
- *  @author dsl
- */
 @FunctionalInterface
 @ApiStatus.Internal
 public interface ClonableOrderEntry {

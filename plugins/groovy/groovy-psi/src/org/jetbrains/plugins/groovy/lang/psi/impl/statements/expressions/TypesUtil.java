@@ -38,9 +38,6 @@ import java.util.*;
 
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
-/**
- * @author ven
- */
 public final class TypesUtil implements TypeConstants {
 
   public static final PsiPrimitiveType[] PRIMITIVES = {

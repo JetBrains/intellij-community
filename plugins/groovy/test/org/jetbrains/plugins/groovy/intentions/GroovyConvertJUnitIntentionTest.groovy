@@ -19,9 +19,6 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-/**
- * @author Sergey Evdokimov
- */
 class GroovyConvertJUnitIntentionTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testAssertFalse() {

@@ -58,16 +58,6 @@ public interface PsiModificationTracker extends ModificationTracker {
 
   /**
    * This key can be passed as a dependency in a {@link CachedValueProvider}.
-   * The corresponding {@link CachedValue} will then be flushed on every physical PSI change that doesn't happen inside a Java code block.
-   * This can include changes on Java class or file level, or changes in non-Java files, e.g. XML. Rarely needed.
-   * @deprecated rarely supported by language plugins; also a wrong way for optimisations
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  Key OUT_OF_CODE_BLOCK_MODIFICATION_COUNT = MODIFICATION_COUNT;
-
-  /**
-   * This key can be passed as a dependency in a {@link CachedValueProvider}.
    * The corresponding {@link CachedValue} will then be flushed on every physical PSI change that can affect Java structure and resolve.
    * @deprecated rarely supported by JVM language plugins; also a wrong way for optimisations
    */

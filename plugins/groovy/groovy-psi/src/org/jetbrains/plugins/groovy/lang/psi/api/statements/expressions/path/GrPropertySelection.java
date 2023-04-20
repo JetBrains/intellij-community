@@ -5,9 +5,6 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-/**
- * @author ilyas
- */
 public interface GrPropertySelection extends GrExpression {
   @NotNull
   GrExpression getQualifier();

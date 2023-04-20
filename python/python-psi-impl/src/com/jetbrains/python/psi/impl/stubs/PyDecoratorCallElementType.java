@@ -25,7 +25,6 @@ import java.util.Map;
 
 /**
  * Actual serialized data of a decorator call.
- * User: dcheryasov
  */
 public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStub, PyDecorator> {
   public PyDecoratorCallElementType() {

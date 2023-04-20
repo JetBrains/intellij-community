@@ -22,9 +22,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharSequenceSubSequence;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* @author Sergey Evdokimov
-*/
 public class LexerEditorHighlighterLexer extends LexerBase {
   private HighlighterIterator iterator;
   private CharSequence buffer;

@@ -47,4 +47,9 @@ public class ProjectTemplateBuildFileGenerationTestGenerated extends AbstractPro
     public void testNativeApplication() throws Exception {
         runTest("testData/projectTemplatesBuildFileGeneration/nativeApplication/");
     }
+
+    @TestMetadata("simpleWasmApplication")
+    public void testSimpleWasmApplication() throws Exception {
+        runTest("testData/projectTemplatesBuildFileGeneration/simpleWasmApplication/");
+    }
 }

@@ -19,15 +19,14 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public class ValidationRulesPersistedStorage implements IntellijValidationRulesStorage {
   private static final Logger LOG = Logger.getInstance(ValidationRulesPersistedStorage.class);
 
-  protected final ConcurrentMap<String, EventGroupRules> eventsValidators = new ConcurrentHashMap<>();
+  protected volatile Map<String, EventGroupRules> eventsValidators = Map.of();
+
   private final @NotNull Semaphore mySemaphore;
   private final @NotNull String myRecorderId;
   private @Nullable String myVersion;
@@ -83,8 +82,8 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
       EventLogBuild build = EventLogBuild.fromString(EventLogConfiguration.getInstance().getBuild());
       Map<String, EventGroupRules> result = createValidators(build, groups);
       myIsInitialized.set(false);
-      eventsValidators.clear();
-      eventsValidators.putAll(result);
+
+      eventsValidators = Map.copyOf(result);
 
       myIsInitialized.set(true);
       return groups.version;

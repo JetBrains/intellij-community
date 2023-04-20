@@ -33,9 +33,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author dsl
- */
 public class PsiImportStaticReferenceElementImpl extends CompositePsiElement implements PsiImportStaticReferenceElement {
   private static final Logger LOG = Logger.getInstance(PsiImportStaticReferenceElementImpl.class);
   private volatile String myCanonicalText;

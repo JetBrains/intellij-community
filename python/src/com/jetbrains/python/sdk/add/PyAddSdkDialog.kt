@@ -41,7 +41,6 @@ import javax.swing.JPanel
  *
  * Use [show] to instantiate and show the dialog.
  *
- * @author vlan
  */
 class PyAddSdkDialog private constructor(private val project: Project?,
                                          private val module: Module?,

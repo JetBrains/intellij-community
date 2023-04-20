@@ -27,9 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author dsl
- */
 @TestDataPath("$CONTENT_ROOT/testData")
 public class IntroduceParameterTest extends LightRefactoringTestCase  {
   @NotNull

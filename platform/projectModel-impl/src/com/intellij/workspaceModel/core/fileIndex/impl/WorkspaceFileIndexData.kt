@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.application.ApplicationManager
@@ -47,7 +47,7 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
 
   private fun registerAllEntities(storageKind: EntityStorageKind) {
     val (storage, contributors) = when (storageKind) {
-      EntityStorageKind.MAIN -> WorkspaceModel.getInstance(project).entityStorage.current to contributors
+      EntityStorageKind.MAIN -> WorkspaceModel.getInstance(project).currentSnapshot to contributors
       EntityStorageKind.UNLOADED -> WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities to contributorsForUnloaded 
     }
     val registrar = StoreFileSetsRegistrarImpl(storageKind)
@@ -64,11 +64,7 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
                   includeExternalSets: Boolean,
                   includeExternalSourceSets: Boolean): WorkspaceFileInternalInfo {
     if (!file.isValid) return WorkspaceFileInternalInfo.NonWorkspace.INVALID
-    if (hasDirtyEntities && ApplicationManager.getApplication().isWriteAccessAllowed) {
-      updateDirtyEntities()
-    }
-    ApplicationManager.getApplication().assertReadAccessAllowed()
-    nonIncrementalContributors.updateIfNeeded(fileSets, fileSetsByPackagePrefix)
+    ensureIsUpToDate()
 
     val originalAcceptedKindMask = 
       (if (includeContentSets) WorkspaceFileKindMask.CONTENT else 0) or 
@@ -97,7 +93,7 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
             val acceptedFileSets = ArrayList<WorkspaceFileSetImpl>()
             //copy a mutable variable used from lambda to a 'val' to ensure that kotlinc won't wrap it into IntRef
             val currentKindMask = acceptedKindsMask 
-            //this should be a rare case so it's ok to use less optimal code here and check 'isUnloaded' again
+            //this should be a rare case, so it's ok to use less optimal code here and check 'isUnloaded' again
             storedFileSets.forEach { fileSet ->
               if (fileSet is WorkspaceFileSetImpl && fileSet.kind.toMask() and currentKindMask != 0 && !fileSet.isUnloaded(project)) {
                 acceptedFileSets.add(fileSet)
@@ -119,6 +115,28 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
       return WorkspaceFileInternalInfo.NonWorkspace.EXCLUDED
     }
     return WorkspaceFileInternalInfo.NonWorkspace.NOT_UNDER_ROOTS
+  }
+
+  private fun ensureIsUpToDate() {
+    if (hasDirtyEntities && ApplicationManager.getApplication().isWriteAccessAllowed) {
+      updateDirtyEntities()
+    }
+    ApplicationManager.getApplication().assertReadAccessAllowed()
+    nonIncrementalContributors.updateIfNeeded(fileSets, fileSetsByPackagePrefix)
+  }
+
+  fun visitFileSets(visitor: WorkspaceFileSetVisitor) {
+    ensureIsUpToDate()
+    for (value in fileSets.values) {
+      value.forEach { storedFileSet ->
+        when (storedFileSet) {
+          is WorkspaceFileSetImpl -> {
+            visitor.visitIncludedRoot(storedFileSet)
+          }
+          is ExcludedFileSet -> Unit
+        }
+      }
+    }
   }
 
   private fun <E : WorkspaceEntity> getContributors(entityClass: Class<out E>, storageKind: EntityStorageKind): List<WorkspaceFileIndexContributor<E>> {
@@ -217,7 +235,7 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
     for (file in dirtyFiles) {
       fileSets.remove(file)
     }
-    val storage = WorkspaceModel.getInstance(project).entityStorage.current
+    val storage = WorkspaceModel.getInstance(project).currentSnapshot
     val removeRegistrar = RemoveFileSetsRegistrarImpl(EntityStorageKind.MAIN)
     val storeRegistrar = StoreFileSetsRegistrarImpl(EntityStorageKind.MAIN)
     for (reference in dirtyEntities) {
@@ -252,12 +270,12 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
     if (!dir.isDirectory) return null
 
     val fileSet = when (val info = getFileInfo(dir, true, true, true, true)) {
-                    is WorkspaceFileSetWithCustomData<*> -> info.takeIf { it.data is JvmPackageRootData }
-                    is MultipleWorkspaceFileSets -> info.find(JvmPackageRootData::class.java)
+                    is WorkspaceFileSetWithCustomData<*> -> info.takeIf { it.data is JvmPackageRootDataInternal }
+                    is MultipleWorkspaceFileSets -> info.find(JvmPackageRootDataInternal::class.java)
                     else -> null
                   } ?: return null
 
-    val packagePrefix = (fileSet.data as JvmPackageRootData).packagePrefix
+    val packagePrefix = (fileSet.data as JvmPackageRootDataInternal).packagePrefix
     val packageName = VfsUtilCore.getRelativePath(dir, fileSet.root, '.') 
                       ?: error("${dir.presentableUrl} is not under ${fileSet.root.presentableUrl}")
     return when {
@@ -300,7 +318,7 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
                                  customData: WorkspaceFileSetData?) {
       val fileSet = WorkspaceFileSetImpl(root, kind, entity.createReference(), storageKind, customData ?: DummyWorkspaceFileSetData)
       fileSets.putValue(root, fileSet)
-      if (customData is JvmPackageRootData) {
+      if (customData is JvmPackageRootDataInternal) {
         fileSetsByPackagePrefix.addFileSet(customData.packagePrefix, fileSet)
       }
     }
@@ -351,7 +369,7 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
                                  entity: WorkspaceEntity,
                                  customData: WorkspaceFileSetData?) {
       fileSets.removeValueIf(root) { it is WorkspaceFileSetImpl && isOriginatedFrom(it, entity) }
-      if (customData is JvmPackageRootData) {
+      if (customData is JvmPackageRootDataInternal) {
         fileSetsByPackagePrefix.removeByPrefixAndReference(customData.packagePrefix, entity.createReference())
       }
     }

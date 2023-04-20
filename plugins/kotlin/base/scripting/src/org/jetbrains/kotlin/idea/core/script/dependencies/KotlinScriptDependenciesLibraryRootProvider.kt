@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.dependencies
 
+import com.intellij.java.workspaceModel.fileIndex.JvmPackageRootData
 import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -8,15 +9,18 @@ import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
 import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider
 import com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider.LibraryRoots
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
+import com.intellij.workspaceModel.core.fileIndex.impl.ModuleOrLibrarySourceRootData
 import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.storage.EntityStorage
-import org.jetbrains.deft.annotations.Child
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptEntity
-import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryEntity
 import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryRootTypeId
 import org.jetbrains.kotlin.idea.core.script.ucache.scriptsAsEntities
 import javax.swing.Icon
@@ -32,22 +36,45 @@ class KotlinScriptProjectModelInfoProvider : CustomEntityProjectModelInfoProvide
         entities: Sequence<KotlinScriptEntity>,
         entityStorage: EntityStorage
     ): Sequence<LibraryRoots<KotlinScriptEntity>> =
-        if (!scriptsAsEntities) { // see KotlinScriptDependenciesLibraryRootProvider
+        if (!scriptsAsEntities || useWorkspaceFileContributor()) { // see KotlinScriptDependenciesLibraryRootProvider
             emptySequence()
         } else {
             entities.flatMap { scriptEntity ->
                 scriptEntity.dependencies
                     .map { entityStorage.resolve(it) ?: error("Unresolvable library: ${it.name}, script=${scriptEntity.path} ") }
                     .map { libEntity ->
-                    val (classes, sources) = libEntity.roots.partition { it.type == KotlinScriptLibraryRootTypeId.COMPILED }
-                    val classFiles = classes.mapNotNull { it.url.virtualFile }
-                    val sourceFiles = sources.mapNotNull { it.url.virtualFile }
-                    LibraryRoots(scriptEntity, sourceFiles, classFiles, emptyList(), null)
-                }
+                        val (classes, sources) = libEntity.roots.partition { it.type == KotlinScriptLibraryRootTypeId.COMPILED }
+                        val classFiles = classes.mapNotNull { it.url.virtualFile }
+                        val sourceFiles = sources.mapNotNull { it.url.virtualFile }
+                        LibraryRoots(scriptEntity, sourceFiles, classFiles, emptyList(), null)
+                    }
             }
         }
 }
 
+fun useWorkspaceFileContributor() = Registry.`is`("kotlin.script.use.workspace.file.index.contributor.api")
+
+class KotlinScriptWorkspaceFileIndexContributor : WorkspaceFileIndexContributor<KotlinScriptEntity> {
+    override val entityClass: Class<KotlinScriptEntity>
+        get() = KotlinScriptEntity::class.java
+
+    override fun registerFileSets(entity: KotlinScriptEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
+        if (!scriptsAsEntities || !useWorkspaceFileContributor()) return // see KotlinScriptDependenciesLibraryRootProvider
+        entity.dependencies.map { storage.resolve(it) ?: error("Unresolvable library: ${it.name}, script=${entity.path} ") }
+            .forEach { libEntity ->
+                val (classes, sources) = libEntity.roots.partition { it.type == KotlinScriptLibraryRootTypeId.COMPILED }
+                classes.mapNotNull { it.url.virtualFile }.forEach {
+                    registrar.registerFileSet(it, WorkspaceFileKind.EXTERNAL, entity, RootData)
+                }
+                sources.mapNotNull { it.url.virtualFile }.forEach {
+                    registrar.registerFileSet(it, WorkspaceFileKind.EXTERNAL_SOURCE, entity, RootSourceData)
+                }
+            }
+    }
+
+    private object RootData : JvmPackageRootData
+    private object RootSourceData : JvmPackageRootData, ModuleOrLibrarySourceRootData
+}
 
 class KotlinScriptDependenciesLibraryRootProvider : AdditionalLibraryRootsProvider() {
 

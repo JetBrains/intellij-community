@@ -188,7 +188,6 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     myStructureTreeModel = new StructureTreeModel<>(myFilteringStructure, this);
     myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, this);
-    myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
     myTree = new MyTree(myAsyncTreeModel);
     StructureViewComponent.registerAutoExpandListener(myTree, myTreeModel);
     PopupUtil.applyNewUIBackground(myTree);

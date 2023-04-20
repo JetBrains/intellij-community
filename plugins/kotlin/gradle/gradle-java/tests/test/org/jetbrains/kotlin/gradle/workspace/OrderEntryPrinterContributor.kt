@@ -70,7 +70,8 @@ internal class OrderEntryPrinterContributor : ModulePrinterContributor {
                 config.hideStdlib && isStdlibModule(entry) ||
                 config.hideKotlinTest && isKotlinTestModule(entry) ||
                 config.hideKonanDist && isKonanDistModule(entry) ||
-                config.excludeDependenciesRegex != null && config.excludeDependenciesRegex!!.matches(entry.presentableName)
+                config.excludeDependencies != null && config.excludeDependencies!!.matches(entry.presentableName) ||
+                config.onlyDependencies != null && !config.onlyDependencies!!.matches(entry.presentableName)
     }
 
     // In IJ workspace model, each source module should have a dependency on itself
@@ -80,13 +81,16 @@ internal class OrderEntryPrinterContributor : ModulePrinterContributor {
     private fun isSdkDependency(orderEntry: OrderEntry): Boolean =
         orderEntry is JdkOrderEntry
 
-    private fun PrinterContext.isStdlibModule(orderEntry: OrderEntry): Boolean =
-        presentableNameWithoutVersion(orderEntry) in STDLIB_MODULES
+    private fun PrinterContext.isStdlibModule(orderEntry: OrderEntry): Boolean {
+        val name = presentableNameWithoutVersion(orderEntry)
+        return name in STDLIB_MODULES || name.startsWith(NATIVE_STDLIB_PREFIX)
+    }
 
     private fun PrinterContext.isKotlinTestModule(orderEntry: OrderEntry): Boolean =
         presentableNameWithoutVersion(orderEntry) in KOTLIN_TEST_MODULES
 
-    private fun isKonanDistModule(orderEntry: OrderEntry): Boolean = NATIVE_DISTRIBUTION_LIBRARY_PATTERN.matches(orderEntry.presentableName)
+    private fun PrinterContext.isKonanDistModule(orderEntry: OrderEntry): Boolean =
+        !isStdlibModule(orderEntry) && NATIVE_DISTRIBUTION_LIBRARY_PATTERN.matches(orderEntry.presentableName)
 
     private fun PrinterContext.presentableNameWithoutVersion(orderEntry: OrderEntry): String =
         orderEntry.presentableName.replace(kotlinGradlePluginVersion.toString(), "{{KGP_VERSION}}")
@@ -136,8 +140,10 @@ internal class OrderEntryPrinterContributor : ModulePrinterContributor {
             "Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}}",
             "Gradle: org.jetbrains:annotations:13.0",
             "Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}}",
-            "Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}}"
+            "Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}}",
         )
+        // K/N stdlib has suffix of platform, so plain contains wouldn't work
+        private val NATIVE_STDLIB_PREFIX: String = "Kotlin/Native {{KGP_VERSION}} - stdlib"
 
         private val KOTLIN_TEST_MODULES = setOf(
             "Gradle: org.jetbrains.kotlin:kotlin-test-common:{{KGP_VERSION}}",

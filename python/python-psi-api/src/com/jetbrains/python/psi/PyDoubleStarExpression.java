@@ -17,9 +17,6 @@ package com.jetbrains.python.psi;
 
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author vlan
- */
 public interface PyDoubleStarExpression extends PyExpression {
   @Nullable
   PyExpression getExpression();

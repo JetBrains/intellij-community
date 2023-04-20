@@ -17,8 +17,6 @@ import java.util.Set;
  * <b>Note:</b> type-unaware entry will not be matched by the current rule.
  * <p/>
  * Thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class ByTypeArrangementEntryMatcher implements ArrangementEntryMatcher {
 

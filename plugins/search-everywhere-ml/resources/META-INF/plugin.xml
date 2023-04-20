@@ -14,6 +14,7 @@
   <content>
     <module name="intellij.searchEverywhereMl.yaml"/>
     <module name="intellij.searchEverywhereMl.vcs"/>
+    <module name="intellij.searchEverywhereMl.java"/>
   </content>
 
   <resource-bundle>messages.searchEverywhereMlBundle</resource-bundle>

@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicButtonUI;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
@@ -369,7 +370,10 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     @Override
     public void updateUI() {
-      super.updateUI();
+      Object uiClassName = UIManager.get(getUIClassID());
+      setUI(uiClassName == null ?
+            BasicButtonUI.createUI(this) :
+            UIManager.getUI(this));
       setMargin(JBUI.insets(0, 8, 0, 5));
     }
 

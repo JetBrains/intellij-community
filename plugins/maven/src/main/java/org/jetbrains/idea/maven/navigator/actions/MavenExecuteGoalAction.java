@@ -24,9 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static org.jetbrains.idea.maven.execution.MavenRunAnythingProvider.HELP_COMMAND;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenExecuteGoalAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {

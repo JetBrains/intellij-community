@@ -33,9 +33,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 
-/**
- * @author ilyas
- */
 public class GroovyInlineHandler implements InlineHandler {
 
   @Override

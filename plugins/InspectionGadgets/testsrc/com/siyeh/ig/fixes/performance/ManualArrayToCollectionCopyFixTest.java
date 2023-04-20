@@ -19,9 +19,6 @@ import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.performance.ManualArrayToCollectionCopyInspection;
 
-/**
- * @author Pavel.Dolgov
- */
 public class ManualArrayToCollectionCopyFixTest extends IGQuickFixesTestCase {
 
   @Override

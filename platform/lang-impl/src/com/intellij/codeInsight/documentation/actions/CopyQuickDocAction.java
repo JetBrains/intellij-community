@@ -12,9 +12,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.StringSelection;
 
-/**
- * @author Denis Zhdanov
- */
 public class CopyQuickDocAction extends AnAction implements DumbAware, HintManagerImpl.ActionToIgnore {
 
   public CopyQuickDocAction() {

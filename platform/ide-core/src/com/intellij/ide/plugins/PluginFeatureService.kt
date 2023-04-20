@@ -10,6 +10,8 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.extensions.ExtensionPointName
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 
 @ApiStatus.Internal
 @Service(Service.Level.APP)
@@ -24,21 +26,21 @@ class PluginFeatureService : SerializablePersistentStateComponent<PluginFeatureS
 
   @Serializable
   data class FeaturePluginList(
-    val featureMap: Map<String, FeaturePluginData> = emptyMap(),
+    val featureMap: Map<@NonNls String, FeaturePluginData> = emptyMap(),
   )
 
   @Serializable
   data class State(
-    val features: Map<String, FeaturePluginList> = emptyMap(),
+    val features: Map<@NonNls String, FeaturePluginList> = emptyMap(),
   )
 
   fun <T : Any> collectFeatureMapping(
-    featureType: String,
+    featureType: @NonNls String,
     ep: ExtensionPointName<T>,
-    idMapping: (T) -> String,
-    displayNameMapping: (T) -> String,
+    idMapping: (T) -> @NonNls String,
+    displayNameMapping: (T) -> @Nls String,
   ) {
-    val featureMap = LinkedHashMap<String, FeaturePluginData>()
+    val featureMap = LinkedHashMap<@NonNls String, FeaturePluginData>()
 
     // fold
     ep.processWithPluginDescriptor { ext, descriptor ->
@@ -55,8 +57,8 @@ class PluginFeatureService : SerializablePersistentStateComponent<PluginFeatureS
 
   @ApiStatus.Experimental
   fun updateFeatureMapping(
-    featureType: String,
-    featureMap: Map<String, FeaturePluginData>,
+    featureType: @NonNls String,
+    featureMap: Map<@NonNls String, FeaturePluginData>,
   ) {
     updateState { oldState ->
       val oldFeatures = oldState.features
@@ -66,9 +68,10 @@ class PluginFeatureService : SerializablePersistentStateComponent<PluginFeatureS
   }
 
   fun getPluginForFeature(
-    featureType: String,
-    implementationName: String,
+    featureType: @NonNls String,
+    implementationName: @NonNls String,
   ): FeaturePluginData? = state.features.getFeatureMap(featureType)?.get(implementationName)
 
-  private fun Map<String, FeaturePluginList>.getFeatureMap(featureType: String) = get(featureType)?.featureMap
+  private fun Map<@NonNls String, FeaturePluginList>.getFeatureMap(featureType: @NonNls String) =
+    get(featureType)?.featureMap
 }

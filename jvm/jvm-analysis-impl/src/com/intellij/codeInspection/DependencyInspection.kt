@@ -3,11 +3,11 @@ package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
-import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.codeInsight.options.JavaInspectionButtons
+import com.intellij.codeInsight.options.JavaInspectionControls
+import com.intellij.codeInspection.options.OptPane
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.packageDependencies.DependenciesBuilder
 import com.intellij.packageDependencies.DependencyRule
 import com.intellij.packageDependencies.DependencyValidationManager
@@ -15,21 +15,11 @@ import com.intellij.packageDependencies.ui.DependencyConfigurable
 import com.intellij.psi.PsiFile
 import com.intellij.util.SmartList
 import com.intellij.util.containers.FactoryMap
-import java.awt.FlowLayout
-import javax.swing.JButton
-import javax.swing.JComponent
-import javax.swing.JPanel
 
 class DependencyInspection : AbstractBaseUastLocalInspectionTool() {
-  override fun createOptionsPanel(): JComponent = JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-    add(JButton(JvmAnalysisBundle.message("jvm.inspections.dependency.configure.button.text")).apply {
-      addActionListener {
-        val project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this))
-                      ?: ProjectManager.getInstance().defaultProject
-        ShowSettingsUtil.getInstance().editConfigurable(this, DependencyConfigurable(project))
-      }
-    })
-  }
+  override fun getOptionsPane(): OptPane = OptPane.pane(
+    JavaInspectionControls.button(JavaInspectionButtons.ButtonKind.DEPENDENCY_CONFIGURATION),
+  )
 
   override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
     val validationManager = DependencyValidationManager.getInstance(file.project)

@@ -9,7 +9,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.applyIf
-import com.intellij.util.concurrency.annotations.RequiresWriteLock
+import com.intellij.workspaceModel.ide.BuilderSnapshot
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
@@ -29,7 +29,7 @@ import kotlin.io.path.relativeTo
  */
 
 fun KotlinScriptEntity.listDependencies(project: Project, rootTypeId: KotlinScriptLibraryRootTypeId? = null): List<VirtualFile> {
-    val storage = WorkspaceModel.getInstance(project).entityStorage.current
+    val storage = WorkspaceModel.getInstance(project).currentSnapshot
     return dependencies.asSequence()
         .mapNotNull { storage.resolve(it) }
         .flatMap { it.roots }
@@ -39,16 +39,17 @@ fun KotlinScriptEntity.listDependencies(project: Project, rootTypeId: KotlinScri
         .toList()
 }
 
+internal fun BuilderSnapshot.syncScriptEntities(
+    project: Project,
+    scriptFilesToAddOrUpdate: List<VirtualFile>,
+    scriptFilesToRemove: List<VirtualFile>
+) {
+    builder.syncScriptEntities(scriptFilesToAddOrUpdate, scriptFilesToRemove, project)
 
-@RequiresWriteLock
-internal fun Project.syncScriptEntities(scriptFilesToAddOrUpdate: List<VirtualFile>, scriptFilesToRemove: List<VirtualFile>) {
-    WorkspaceModel.getInstance(this).updateProjectModel("Syncing scripts...") { builder ->
-        builder.syncScriptEntities(scriptFilesToAddOrUpdate, scriptFilesToRemove, this)
-    }
 /*
     // Use these ancillary functions for troubleshooting, they allow seeing resulting scripts-to-libraries (and vice versa) relations.
-    val scriptsDebugInfo = scriptsDebugInfo();
-    val scriptLibrariesDebugInfo = scriptLibrariesDebugInfo();
+    val scriptsDebugInfo = project.scriptsDebugInfo();
+    val scriptLibrariesDebugInfo = project.scriptLibrariesDebugInfo();
     Unit // <= toggle breakpoint here and enjoy
 */
 }
@@ -56,7 +57,7 @@ internal fun Project.syncScriptEntities(scriptFilesToAddOrUpdate: List<VirtualFi
 @Suppress("unused")
 // Use this method troubleshooting to see scripts-to-libraries relations
 private fun Project.scriptsDebugInfo(): String {
-    val storage = WorkspaceModel.getInstance(this).entityStorage.current
+    val storage = WorkspaceModel.getInstance(this).currentSnapshot
     val scriptEntities = storage.entities(KotlinScriptEntity::class.java).toList()
 
     return buildString {
@@ -72,7 +73,7 @@ private fun Project.scriptsDebugInfo(): String {
 @Suppress("unused")
 // Use this method troubleshooting to see libraries-to-scripts relations
 private fun Project.scriptLibrariesDebugInfo(): String {
-    val storage = WorkspaceModel.getInstance(this).entityStorage.current
+    val storage = WorkspaceModel.getInstance(this).currentSnapshot
     val scriptLibraries = storage.entities(KotlinScriptLibraryEntity::class.java).toList()
 
     return buildString {

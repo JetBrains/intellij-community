@@ -10,9 +10,6 @@ import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author Fedor.Korotkov
- */
 public class MicrodataCompletionTest extends CodeInsightFixtureTestCase {
 
   @Override

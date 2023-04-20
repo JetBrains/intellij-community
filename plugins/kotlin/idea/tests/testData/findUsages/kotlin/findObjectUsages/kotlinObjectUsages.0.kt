@@ -6,4 +6,3 @@ object <caret>O {
     var foo: String = "foo"
 }
 
-// FIR_COMPARISON

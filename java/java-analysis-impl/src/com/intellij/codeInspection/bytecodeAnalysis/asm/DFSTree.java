@@ -6,9 +6,6 @@ import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph.Edge;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author lambdamix
- */
 public final class DFSTree {
   public final int[] preOrder, postOrder;
   public final Set<Edge> nonBack, back;

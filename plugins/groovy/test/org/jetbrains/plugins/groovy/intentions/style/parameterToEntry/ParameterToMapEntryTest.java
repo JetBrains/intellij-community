@@ -20,9 +20,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
-/**
- * @author ilyas
- */
 public class ParameterToMapEntryTest extends GroovyFormatterTestCase {
   @Override
   protected String getBasePath() {

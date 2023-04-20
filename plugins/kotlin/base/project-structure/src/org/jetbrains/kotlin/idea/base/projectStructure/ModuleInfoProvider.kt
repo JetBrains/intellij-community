@@ -19,6 +19,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclaration
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
+import org.jetbrains.kotlin.asJava.classes.runReadAction
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
@@ -179,7 +180,7 @@ class ModuleInfoProvider(private val project: Project) {
         collectByUserData(UserDataModuleContainer.ForVirtualFile(virtualFile, project))
         collectSourceRelatedByFile(virtualFile)
 
-        for (orderEntry in fileIndex.getOrderEntriesForFile(virtualFile)) {
+        for (orderEntry in runReadAction { fileIndex.getOrderEntriesForFile(virtualFile) }) {
             collectByOrderEntry(virtualFile, orderEntry, isLibrarySource)
         }
 
@@ -188,7 +189,8 @@ class ModuleInfoProvider(private val project: Project) {
 
     private suspend fun SequenceScope<Result<IdeaModuleInfo>>.collectSourceRelatedByFile(virtualFile: VirtualFile) {
         val modules = sequence {
-            yieldIfNotNull(fileIndex.getModuleForFile(virtualFile))
+            val module = runReadAction { fileIndex.getModuleForFile(virtualFile) }
+            yieldIfNotNull(module)
 
             callExtensions { findContainingModules(project, virtualFile) }
         }

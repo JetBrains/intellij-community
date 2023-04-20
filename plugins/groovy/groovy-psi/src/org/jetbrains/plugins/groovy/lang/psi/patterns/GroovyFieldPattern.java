@@ -21,9 +21,6 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 
-/**
- * @author Sergey Evdokimov
- */
 public class GroovyFieldPattern extends PsiMemberPattern<GrField, GroovyFieldPattern> {
 
   public GroovyFieldPattern() {

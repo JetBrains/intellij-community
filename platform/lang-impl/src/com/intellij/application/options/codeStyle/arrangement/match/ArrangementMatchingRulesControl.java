@@ -30,9 +30,6 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-/**
- * @author Denis Zhdanov
- */
 public class ArrangementMatchingRulesControl extends JBTable {
   @NotNull protected final IntObjectMap<ArrangementListRowDecorator> myComponents   = new IntObjectMap<>();
   @NotNull private final IntList mySelectedRows = new IntArrayList();

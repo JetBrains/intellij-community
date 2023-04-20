@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl
 
 import com.intellij.UtilBundle
@@ -89,9 +89,9 @@ internal class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
       myModel.clearAll(project)
     }
 
-    fun getStateNotifications(project: Project) = myModel.getStateNotifications(project)
+    fun getStateNotifications(project: Project): List<Notification> = myModel.getStateNotifications(project)
 
-    fun getNotifications(project: Project?) = myModel.getNotifications(project)
+    fun getNotifications(project: Project?): List<Notification> = myModel.getNotifications(project)
   }
 
   override fun isApplicable(project: Project) = ActionCenter.isEnabled()
@@ -1769,7 +1769,7 @@ fun Project.closeAllBalloons() {
   balloonLayout.closeAll()
 }
 
-class ClearAllNotificationsAction : DumbAwareAction(IdeBundle.message("clear.all.notifications"), null, AllIcons.Actions.GC) {
+private class ClearAllNotificationsAction : DumbAwareAction(IdeBundle.message("clear.all.notifications"), null, AllIcons.Actions.GC) {
   override fun update(e: AnActionEvent) {
     val project = e.project
     e.presentation.isEnabled = NotificationsToolWindowFactory.getNotifications(project).isNotEmpty() ||

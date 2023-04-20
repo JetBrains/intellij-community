@@ -24,9 +24,6 @@ import static com.intellij.psi.search.PsiSearchHelper.SearchCostResult.FEW_OCCUR
 import static com.intellij.psi.util.PsiUtil.skipParenthesizedExprDown;
 import static com.intellij.psi.util.PsiUtil.skipParenthesizedExprUp;
 
-/**
- * @author Pavel.Dolgov
- */
 public class AtomicReferenceImplicitUsageProvider implements ImplicitUsageProvider {
   private static final Set<String> ourUpdateMethods = ContainerUtil.set(
     "compareAndSet", "weakCompareAndSet", "set", "lazySet", "getAndSet", "getAndIncrement", "getAndDecrement", "getAndAdd",

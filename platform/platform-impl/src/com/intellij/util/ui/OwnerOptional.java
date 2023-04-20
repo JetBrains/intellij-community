@@ -11,9 +11,6 @@ import com.intellij.util.Consumer;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author Denis Fokin
- */
 public final class OwnerOptional {
   private static Window findOwnerByComponent(Component component) {
     if (component == null) component = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();

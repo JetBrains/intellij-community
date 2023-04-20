@@ -3,13 +3,11 @@ package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.CommonBundle
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
-import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
 import com.intellij.collaboration.ui.util.swingAction
-import com.intellij.openapi.actionSystem.CommonShortcuts
-import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -54,8 +52,7 @@ internal class GHEditableHtmlPaneHandle(private val project: Project,
         }
       }
 
-      val submitShortcutText = KeymapUtil.getFirstKeyboardShortcutText(CommentInputComponentFactory.defaultSubmitShortcut)
-      val newLineShortcutText = KeymapUtil.getFirstKeyboardShortcutText(CommonShortcuts.ENTER)
+      val submitShortcutText = CommentInputActionsComponentFactory.submitShortcutText
 
       val cancelAction = swingAction(CommonBundle.getCancelButtonText()) {
         hideEditor()
@@ -63,14 +60,11 @@ internal class GHEditableHtmlPaneHandle(private val project: Project,
 
       val actions = CommentInputActionsComponentFactory.Config(
         primaryAction = MutableStateFlow(model.submitAction(GithubBundle.message("pull.request.comment.save"))),
-        additionalActions = MutableStateFlow(listOf(cancelAction)),
-        hintInfo = MutableStateFlow(CommentInputActionsComponentFactory.HintInfo(
-          submitHint = GithubBundle.message("pull.request.comment.save.hint", submitShortcutText),
-          newLineHint = GithubBundle.message("pull.request.new.line.hint", newLineShortcutText)
-        ))
+        cancelAction = MutableStateFlow(cancelAction),
+        submitHint = MutableStateFlow( GithubBundle.message("pull.request.comment.save.hint", submitShortcutText))
       )
 
-      editor = GHCommentTextFieldFactory(model).create(GHCommentTextFieldFactory.ActionsConfig(actions, cancelAction))
+      editor = GHCommentTextFieldFactory(model).create(actions)
       panel.remove(paneComponent)
       with(panel) {
         layout = editorPaneLayout

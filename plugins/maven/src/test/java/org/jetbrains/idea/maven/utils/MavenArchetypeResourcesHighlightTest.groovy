@@ -19,9 +19,6 @@ import com.intellij.codeInsight.daemon.ProblemHighlightFilter
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.junit.Test
-/**
- * @author Sergey Evdokimov
- */
 class MavenArchetypeResourcesHighlightTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Test

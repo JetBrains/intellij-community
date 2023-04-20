@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
+import org.assertj.core.api.Assertions;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Rule;
 import org.junit.Test;
@@ -103,6 +104,29 @@ public class FileSetLimiterTest {
           );
         }
       }
+    }
+  }
+
+  @Test
+  public void uniqueFileNamesCreatedIfCalledMoreThanOnceInASecond() throws IOException, ParseException {
+    final Path dir = temporaryDirectory.newFolder().toPath();
+
+    final String dateTimeFormat = "yyyy-MM-dd-HH-mm-ss";
+    final String dateAsString = "2022-11-04-21-08-13";
+
+    final Date parsedDateTime = new SimpleDateFormat(dateTimeFormat)
+      .parse(dateAsString);
+    final Clock clock = clockPositionedAt(parsedDateTime.getTime());
+
+    for (int i = 0; i < 100; i++) {
+      final Path path = FileSetLimiter.inDirectory(dir)
+        .withBaseNameAndDateFormatSuffix("my-file.log", dateTimeFormat)
+        .withMaxFilesToKeep(MAX_FILES_TO_KEEP)
+        .createNewFile(clock);
+
+      Assertions.assertThat(path.getFileName().toString())
+        .describedAs("Created file should have name [my-file." + dateAsString + ".<i>.log]")
+        .startsWith("my-file." + dateAsString+".log");
     }
   }
 

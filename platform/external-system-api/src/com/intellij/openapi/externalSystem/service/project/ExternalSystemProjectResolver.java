@@ -28,8 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Defines common interface for resolving external system project..
- *
- * @author Denis Zhdanov
  */
 public interface ExternalSystemProjectResolver<S extends ExternalSystemExecutionSettings> {
 

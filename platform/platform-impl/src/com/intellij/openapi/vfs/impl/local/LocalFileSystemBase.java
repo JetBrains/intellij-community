@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.core.CoreBundle;
@@ -688,7 +688,8 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public @NotNull String getCanonicallyCasedName(@NotNull VirtualFile file) {
-    if (file.getParent().isCaseSensitive()) {
+    var parent = file.getParent();
+    if (parent == null || parent.isCaseSensitive()) {
       return super.getCanonicallyCasedName(file);
     }
 

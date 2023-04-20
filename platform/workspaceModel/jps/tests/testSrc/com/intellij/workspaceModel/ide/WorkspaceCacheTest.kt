@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.Disposable
@@ -29,6 +29,7 @@ import org.apache.commons.lang.RandomStringUtils
 import org.junit.*
 import org.junit.Assert.*
 import java.io.File
+import java.nio.file.Files
 import kotlin.io.path.exists
 
 class WorkspaceCacheTest {
@@ -111,7 +112,7 @@ class WorkspaceCacheTest {
 
     val project2 = loadProject(projectData.projectDir)
 
-    val modules = WorkspaceModel.getInstance(project2).entityStorage.current.entities(ModuleEntity::class.java).toList()
+    val modules = WorkspaceModel.getInstance(project2).currentSnapshot.entities(ModuleEntity::class.java).toList()
     assertTrue(modules.any { it.name == "MyTestModule" })
   }
 
@@ -139,7 +140,7 @@ class WorkspaceCacheTest {
     ExtensionTestUtil.maskExtensions(WORKSPACE_MODEL_CACHE_VERSION_EP, listOf(VersionTwo), anotherPointDisposable)
     val project2 = loadProject(projectData.projectDir)
 
-    val modules = WorkspaceModel.getInstance(project2).entityStorage.current.entities(ModuleEntity::class.java).toList()
+    val modules = WorkspaceModel.getInstance(project2).currentSnapshot.entities(ModuleEntity::class.java).toList()
     assertFalse(modules.any { it.name == "MyTestModule" })
   }
 
@@ -150,13 +151,11 @@ class WorkspaceCacheTest {
     val projectData = copyAndLoadProject(projectFile, virtualFileManager)
     val storage = projectData.storage
 
-    val cacheFile = projectData.projectDir.resolve(cacheFileName())
-    cacheFile.createNewFile()
+    val cacheFile = projectData.projectDir.resolve(cacheFileName()).toPath()
+    Files.createFile(cacheFile)
     WorkspaceModelCacheImpl.testCacheFile = cacheFile
 
-    cacheFile.outputStream().use {
-      serializer.serializeCache(it, storage)
-    }
+    serializer.serializeCache(cacheFile, storage)
     return projectData
   }
 

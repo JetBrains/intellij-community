@@ -7,8 +7,6 @@ import java.util.EventListener;
 
 /**
  * Defines contract for callback to listen external task notifications.
- *
- * @author Denis Zhdanov
  */
 public interface ExternalSystemTaskNotificationListener extends EventListener {
 
@@ -30,6 +28,9 @@ public interface ExternalSystemTaskNotificationListener extends EventListener {
    */
   @Deprecated(forRemoval = true)
   void onStart(@NotNull ExternalSystemTaskId id);
+
+  default void onEnvironmentPrepared(@NotNull ExternalSystemTaskId id) {
+  }
 
   /**
    * Notifies about processing state change of task with the given id.

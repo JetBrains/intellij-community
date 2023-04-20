@@ -7,4 +7,3 @@ public class A {
     }
 }
 
-// FIR_COMPARISON

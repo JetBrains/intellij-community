@@ -45,9 +45,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author ven
- */
 public class MoveInstanceMethodHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance(MoveInstanceMethodHandler.class);
 

@@ -69,7 +69,7 @@ class DeclarativeInlayHintsPass(
       val inlaysAtOffset = offsetToExistingEolElements.computeIfAbsent(eolElement.offset, IntFunction { SmartList() })
       inlaysAtOffset.add(eolElement)
     }
-    val storage = InlayHintsUtils.getTextMetricStorage(editor as EditorImpl)
+    val storage = InlayHintsUtils.getTextMetricStorage(editor)
     for (inlayData in inlayDatas) {
       when (val position = inlayData.position) {
         is EndOfLinePosition -> {

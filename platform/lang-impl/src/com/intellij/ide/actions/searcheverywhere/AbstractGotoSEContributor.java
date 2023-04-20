@@ -11,8 +11,8 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.gotoByName.*;
-import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
+import com.intellij.ide.util.scopeChooser.ScopeModel;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.actionSystem.*;
@@ -36,7 +36,6 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -63,7 +62,6 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
   );
 
   protected final Project myProject;
-  protected boolean myEverywhere;
   protected ScopeDescriptor myScopeDescriptor;
 
   private final GlobalSearchScope myEverywhereScope;
@@ -108,13 +106,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
 
   protected List<ScopeDescriptor> createScopes() {
     DataContext context = createContext(myProject, myPsiContext);
-    List<ScopeDescriptor> res = new ArrayList<>();
-    ScopeChooserCombo.processScopes(
-      myProject, context,
-      ScopeChooserCombo.OPT_LIBRARIES | ScopeChooserCombo.OPT_EMPTY_SCOPES,
-      new CommonProcessors.CollectProcessor<>(res));
-
-    return res;
+    return ScopeModel.getScopeDescriptors(myProject, context, EnumSet.of(ScopeModel.Option.LIBRARIES, ScopeModel.Option.EMPTY_SCOPES));
   }
 
   @NotNull
@@ -303,7 +295,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
 
   @Override
   public @NotNull List<SearchEverywhereCommandInfo> getSupportedCommands() {
-    return Collections.emptyList();
+    return WeightedSearchEverywhereContributor.super.getSupportedCommands();
   }
 
   @NotNull

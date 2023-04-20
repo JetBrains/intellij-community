@@ -5,7 +5,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
-import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.OperatorToFunctionIntention
+import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.lexer.KtToken
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -123,12 +123,12 @@ abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
      * @return A pair of resulting function call expression and a [KtSimpleNameExpression] pointing to the function name in that expression.
      */
     private fun convertOperatorToFunctionCall(opExpression: KtOperationExpression): Pair<KtExpression, KtSimpleNameExpression> =
-        OperatorToFunctionIntention.convert(opExpression)
+        OperatorToFunctionConverter.convert(opExpression)
 
     protected abstract fun replaceWithImplicitInvokeInvocation(newExpression: KtDotQualifiedExpression): KtExpression?
 
     private fun AbstractKtReference<out KtExpression>.renameImplicitConventionalCall(newName: String): KtExpression {
-        val (newExpression, newNameElement) = OperatorToFunctionIntention.convert(expression)
+        val (newExpression, newNameElement) = OperatorToFunctionConverter.convert(expression)
         if (OperatorNameConventions.INVOKE.asString() == newName && newExpression is KtDotQualifiedExpression) {
             replaceWithImplicitInvokeInvocation(newExpression)?.let { return it }
         }

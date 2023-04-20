@@ -33,7 +33,7 @@ public class GrDocCommentTokenizer extends Tokenizer<PsiDocComment> {
   private static final Set<String> excludedTags = ContainerUtil.immutableSet("author", "see", "by", "link");
 
   @Override
-  public void tokenize(@NotNull PsiDocComment comment, TokenConsumer consumer) {
+  public void tokenize(@NotNull PsiDocComment comment, @NotNull TokenConsumer consumer) {
     final CommentSplitter splitter = CommentSplitter.getInstance();
 
     for (PsiElement el : comment.getChildren()) {

@@ -39,8 +39,6 @@ import java.util.List;
  * about parsing and they are free to store necessary information for further usage.
  * <p/>
  * Not thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class SoftWrapApplianceManager implements Dumpable {
   private static final Logger LOG = Logger.getInstance(SoftWrapApplianceManager.class);

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.authentication.accounts
 
 import com.intellij.collaboration.auth.AccountManagerBase
+import com.intellij.collaboration.auth.AccountsRepository
 import com.intellij.collaboration.auth.PasswordSafeCredentialsRepository
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
@@ -16,10 +17,9 @@ internal val GithubAccount.isGHAccount: Boolean get() = server.isGithubDotCom
  * Handles application-level Github accounts
  */
 @Service
-internal class GHAccountManager
-  : AccountManagerBase<GithubAccount, String>(logger<GHAccountManager>()), Disposable {
+class GHAccountManager: AccountManagerBase<GithubAccount, String>(logger<GHAccountManager>()), Disposable {
 
-  override fun accountsRepository() = service<GHPersistentAccounts>()
+  override fun accountsRepository(): AccountsRepository<GithubAccount> = service<GHPersistentAccounts>()
 
   override fun credentialsRepository() =
     PasswordSafeCredentialsRepository<GithubAccount, String>(GithubUtil.SERVICE_DISPLAY_NAME,

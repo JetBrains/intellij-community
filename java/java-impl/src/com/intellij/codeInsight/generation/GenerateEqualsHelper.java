@@ -22,9 +22,6 @@ import org.jetbrains.java.generate.template.TemplateResource;
 
 import java.util.*;
 
-/**
- * @author dsl
- */
 public class GenerateEqualsHelper implements Runnable {
   private static final Logger LOG = Logger.getInstance(GenerateEqualsHelper.class);
 

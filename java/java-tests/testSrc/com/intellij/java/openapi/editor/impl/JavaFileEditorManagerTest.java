@@ -13,8 +13,10 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.FileEditorManagerTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.ui.tabs.TabInfo;
+import org.intellij.lang.annotations.Language;
 
 import java.io.File;
 
@@ -22,47 +24,56 @@ import static com.intellij.testFramework.CoroutineKt.executeSomeCoroutineTasksAn
 
 public class JavaFileEditorManagerTest extends FileEditorManagerTestCase {
   public void testAsyncOpening() {
-    openFiles("""
-                <component name="FileEditorManager">
-                    <leaf>
-                      <file pinned="false" current="true" current-in-tab="true">
-                        <entry file="file://$PROJECT_DIR$/src/Bar.java">
-                          <provider selected="true" editor-type-id="text-editor">
-                            <state vertical-scroll-proportion="0.032882012" vertical-offset="0" max-vertical-offset="517">
-                              <caret line="1" column="26" selection-start="45" selection-end="45" />
-                              <folding>
-                                <element signature="e#69#70#0" expanded="true" />
-                              </folding>
-                            </state>
-                          </provider>
-                        </entry>
-                      </file>
-                    </leaf>
-                  </component>""");
+    @Language("XML")
+    String FEM_XML = """
+      <component name="FileEditorManager">
+          <leaf>
+            <file pinned="false" current="true" current-in-tab="true">
+              <entry file="file://$PROJECT_DIR$/src/Bar.java">
+                <provider selected="true" editor-type-id="text-editor">
+                  <state vertical-scroll-proportion="0.032882012" vertical-offset="0" max-vertical-offset="517">
+                    <caret line="1" column="26" selection-start="45" selection-end="45" />
+                    <folding>
+                      <element signature="e#69#70#0" expanded="true" />
+                    </folding>
+                  </state>
+                </provider>
+              </entry>
+            </file>
+          </leaf>
+        </component>""";
+    openFiles(FEM_XML);
   }
 
   public void testFoldingIsNotBlinkingOnNavigationToSingleLineMethod() {
-    VirtualFile file = getFile("/src/Bar.java");
-    PsiJavaFile psiFile = (PsiJavaFile)getPsiManager().findFile(file);
-    assertNotNull(psiFile);
-    PsiMethod method = psiFile.getClasses()[0].getMethods()[0];
-    method.navigate(true);
+    VirtualFile dir = getFile("/src");
+    PsiTestUtil.addSourceContentToRoots(getModule(), dir);
+    try {
+      VirtualFile file = getFile("/src/Bar.java");
+      PsiJavaFile psiFile = (PsiJavaFile)getPsiManager().findFile(file);
+      assertNotNull(psiFile);
+      PsiMethod method = psiFile.getClasses()[0].getMethods()[0];
+      method.navigate(true);
 
-    FileEditor[] editors = manager.getEditors(file);
-    assertEquals(1, editors.length);
-    Editor editor = ((TextEditor)editors[0]).getEditor();
-    EditorTestUtil.waitForLoading(editor);
-    FoldRegion[] regions = editor.getFoldingModel().getAllFoldRegions();
-    assertEquals(2, regions.length);
-    assertTrue(regions[0].isExpanded());
-    assertTrue(regions[1].isExpanded());
+      FileEditor[] editors = manager.getEditors(file);
+      assertEquals(1, editors.length);
+      Editor editor = ((TextEditor)editors[0]).getEditor();
+      EditorTestUtil.waitForLoading(editor);
+      FoldRegion[] regions = editor.getFoldingModel().getAllFoldRegions();
+      assertEquals(2, regions.length);
+      assertTrue(regions[0].isExpanded());
+      assertTrue(regions[1].isExpanded());
 
-    CodeInsightTestFixtureImpl.instantiateAndRun(psiFile, editor, new int[]{Pass.UPDATE_ALL, Pass.LOCAL_INSPECTIONS}, false);
+      CodeInsightTestFixtureImpl.instantiateAndRun(psiFile, editor, new int[]{Pass.UPDATE_ALL, Pass.LOCAL_INSPECTIONS}, false);
 
-    regions = editor.getFoldingModel().getAllFoldRegions();
-    assertEquals(2, regions.length);
-    assertTrue(regions[0].isExpanded());
-    assertTrue(regions[1].isExpanded());
+      regions = editor.getFoldingModel().getAllFoldRegions();
+      assertEquals(2, regions.length);
+      assertTrue(regions[0].isExpanded());
+      assertTrue(regions[1].isExpanded());
+    }
+    finally {
+      PsiTestUtil.removeSourceRoot(getModule(), dir);
+    }
   }
 
   public void testOpenModuleDescriptorFile() {

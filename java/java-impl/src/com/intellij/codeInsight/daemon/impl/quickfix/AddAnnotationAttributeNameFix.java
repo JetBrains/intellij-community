@@ -30,9 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * @author Pavel.Dolgov
- */
 public class AddAnnotationAttributeNameFix extends LocalQuickFixAndIntentionActionOnPsiElement implements IntentionActionWithFixAllOption {
   private final String myName;
 

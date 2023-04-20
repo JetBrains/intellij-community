@@ -17,6 +17,10 @@
                  description="Whether to show group name of the tip in Tips of the Day dialog."
                  defaultValue="FALSE"
                  restartRequired="false"/>
+    <registryKey key="tips.of.the.day.force.show"
+                 description="Whether to show tip dialog automatically after any project opening even if tips were already shown today."
+                 defaultValue="FALSE"
+                 restartRequired="false"/>
   </extensions>
 
   <projectListeners>

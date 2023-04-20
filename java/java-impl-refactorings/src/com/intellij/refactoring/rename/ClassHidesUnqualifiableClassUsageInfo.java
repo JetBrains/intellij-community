@@ -22,9 +22,6 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 
-/**
- * @author dsl
- */
 public class ClassHidesUnqualifiableClassUsageInfo extends UnresolvableCollisionUsageInfo {
   private final PsiClass myHiddenClass;
 

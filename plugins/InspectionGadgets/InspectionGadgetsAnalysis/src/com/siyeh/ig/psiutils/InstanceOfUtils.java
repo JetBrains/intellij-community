@@ -22,6 +22,7 @@ import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -40,7 +41,9 @@ public final class InstanceOfUtils {
 
   private InstanceOfUtils() {}
 
-  public static PsiInstanceOfExpression getConflictingInstanceof(PsiType castType, PsiReferenceExpression operand, PsiElement context) {
+  public static PsiInstanceOfExpression getConflictingInstanceof(@Nullable PsiType castType,
+                                                                 @NotNull PsiReferenceExpression operand,
+                                                                 @NotNull PsiElement context) {
     if (!(castType instanceof PsiClassType)) {
       return null;
     }
@@ -119,7 +122,7 @@ public final class InstanceOfUtils {
   }
 
   @Nullable
-  private static PsiElement findInterestingParent(PsiElement context) {
+  private static PsiElement findInterestingParent(@NotNull PsiElement context) {
     while (true) {
       PsiElement parent = context.getParent();
       if (parent == null) return null;
@@ -140,7 +143,7 @@ public final class InstanceOfUtils {
     }
   }
 
-  private static boolean isInstanceOfAssertionCall(InstanceofChecker checker, PsiMethodCallExpression call) {
+  private static boolean isInstanceOfAssertionCall(@NotNull InstanceofChecker checker, @Nullable PsiMethodCallExpression call) {
     if (call == null) return false;
     List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(call);
     if (contracts.isEmpty()) return false;
@@ -205,10 +208,8 @@ public final class InstanceOfUtils {
    */
   @Nullable
   public static PsiInstanceOfExpression findCorrespondingInstanceOf(@NotNull PsiTypeCastExpression cast) {
-    PsiIdentifier identifier = null;
     PsiElement context = PsiUtil.skipParenthesizedExprUp(cast.getParent());
     if (context instanceof PsiLocalVariable) {
-      identifier = ((PsiLocalVariable)context).getNameIdentifier();
       context = context.getParent();
     } else {
       while (true) {
@@ -266,7 +267,6 @@ public final class InstanceOfUtils {
             }
           }
         }
-        if (isConflictingNameDeclaredInside(identifier, stmt)) return null;
         if (stmt instanceof PsiSwitchLabelStatementBase) break;
       }
       if (parent.getParent() instanceof PsiBlockStatement) {
@@ -277,7 +277,7 @@ public final class InstanceOfUtils {
     return processParent(cast, context, parent);
   }
 
-  public static @Nullable PsiTypeElement findCheckTypeElement(PsiInstanceOfExpression expression) {
+  public static @Nullable PsiTypeElement findCheckTypeElement(@NotNull PsiInstanceOfExpression expression) {
     PsiTypeElement typeElement = expression.getCheckType();
     if (typeElement == null) {
       typeElement = JavaPsiPatternUtil.getPatternTypeElement(expression.getPattern());
@@ -285,7 +285,9 @@ public final class InstanceOfUtils {
     return typeElement;
   }
 
-  private static PsiInstanceOfExpression processParent(PsiTypeCastExpression cast, PsiElement context, PsiElement parent) {
+  private static PsiInstanceOfExpression processParent(@NotNull PsiTypeCastExpression cast,
+                                                       @NotNull PsiElement context,
+                                                       @Nullable PsiElement parent) {
     if (parent instanceof PsiIfStatement) {
       PsiIfStatement ifStatement = (PsiIfStatement)parent;
       if (ifStatement.getThenBranch() == context) {
@@ -299,29 +301,6 @@ public final class InstanceOfUtils {
       return findInstanceOf(((PsiConditionalLoopStatement)parent).getCondition(), cast, true);
     }
     return null;
-  }
-
-  private static boolean isConflictingNameDeclaredInside(@Nullable PsiIdentifier identifier, @NotNull PsiElement statement) {
-    if (identifier == null) return false;
-    class Visitor extends JavaRecursiveElementWalkingVisitor {
-      boolean hasConflict = false;
-
-      @Override
-      public void visitClass(final @NotNull PsiClass aClass) {}
-
-      @Override
-      public void visitVariable(@NotNull PsiVariable variable) {
-        String name = variable.getName();
-        if (name != null && identifier.textMatches(name)) {
-          hasConflict = true;
-          stopWalking();
-        }
-        super.visitVariable(variable);
-      }
-    }
-    Visitor visitor = new Visitor();
-    statement.accept(visitor);
-    return visitor.hasConflict;
   }
 
   private static boolean canCompleteNormally(@NotNull PsiElement parent, @Nullable PsiStatement statement) {
@@ -389,6 +368,65 @@ public final class InstanceOfUtils {
       }
     }
     return false;
+  }
+
+  /**
+   * @param variable a variable, which is used to check if the scope contains variables with the same name
+   * @param instanceOf an instanceof expression that is used to calculate declaration scope
+   * @return true if other declared variables with the same name are found in the scope of instanceof with variable patterns.
+   * The scope from {@link JavaSharedImplUtil#getPatternVariableDeclarationScope(PsiInstanceOfExpression)} is used
+   */
+  public static boolean hasConflictingDeclaredNames(@NotNull PsiLocalVariable variable, @NotNull PsiInstanceOfExpression instanceOf) {
+    PsiIdentifier identifier = variable.getNameIdentifier();
+    if (identifier == null) {
+      return false;
+    }
+
+    PsiElement scope = JavaSharedImplUtil.getPatternVariableDeclarationScope(instanceOf);
+    if (scope == null) {
+      return false;
+    }
+    return isConflictingNameDeclaredInside(variable, scope);
+  }
+
+  private static boolean isConflictingNameDeclaredInside(@Nullable PsiVariable myVariable,
+                                                         @Nullable PsiElement statement) {
+    if (myVariable == null || statement == null) return false;
+    PsiIdentifier identifier = myVariable.getNameIdentifier();
+    if (identifier == null) {
+      return false;
+    }
+    HasDeclaredVariableWithTheSameNameVisitor visitor = new HasDeclaredVariableWithTheSameNameVisitor(myVariable);
+    statement.accept(visitor);
+    return visitor.hasConflict;
+  }
+
+  private static class HasDeclaredVariableWithTheSameNameVisitor extends JavaRecursiveElementWalkingVisitor {
+    boolean hasConflict = false;
+
+    private final PsiVariable myVariable;
+    private final PsiIdentifier myIdentifier;
+
+    private HasDeclaredVariableWithTheSameNameVisitor(@NotNull PsiVariable variable) {
+      myVariable = variable;
+      myIdentifier = variable.getNameIdentifier();
+      if (myIdentifier == null) {
+        stopWalking();
+      }
+    }
+
+    @Override
+    public void visitClass(final @NotNull PsiClass aClass) {}
+
+    @Override
+    public void visitVariable(@NotNull PsiVariable variable) {
+      String name = variable.getName();
+      if (name != null && myVariable != variable && myIdentifier.textMatches(name)) {
+        hasConflict = true;
+        stopWalking();
+      }
+      super.visitVariable(variable);
+    }
   }
 
   private static class InstanceofChecker extends JavaElementVisitor {

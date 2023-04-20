@@ -10,9 +10,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 
-/**
- * @author ilyas
- */
 public interface GrClosableBlock extends GrFunctionalExpression, GrCodeBlock {
   GrClosableBlock[] EMPTY_ARRAY = new GrClosableBlock[0];
 

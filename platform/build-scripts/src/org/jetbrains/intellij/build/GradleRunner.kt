@@ -19,7 +19,7 @@ class GradleRunner(
   private val additionalParams: List<String> = emptyList(),
 ) {
   /**
-   * Invokes Gradle tasks on {@link #gradleProjectDir} project.
+   * Invokes Gradle tasks on [gradleProjectDir] project.
    * Logs error and stops the build process if Gradle process is failed.
    */
   fun run(title: String, vararg tasks: String) = runInner(title = title,
@@ -35,8 +35,8 @@ class GradleRunner(
                                                                     tasks = tasks.asList())
 
   /**
-   * Invokes Gradle tasks on {@code buildFile} project.
-   * However, gradle wrapper from project {@link #gradleProjectDir} is used.
+   * Invokes Gradle tasks on [buildFile] project.
+   * However, gradle wrapper from project [gradleProjectDir] is used.
    * Logs error and stops the build process if Gradle process is failed.
    */
   fun run(title: String, buildFile: File, vararg tasks: String) = runInner(title = title,
@@ -91,6 +91,8 @@ class GradleRunner(
     val processBuilder = ProcessBuilder(command).directory(gradleProjectDir.toFile())
     processBuilder.environment().put("JAVA_HOME", JdkDownloader.getJdkHome(communityRoot, Span.current()::addEvent).toString())
     processBuilder.inheritIO()
-    return processBuilder.start().waitFor() == 0
+    synchronized(gradleProjectDir.toString().intern()) {
+      return processBuilder.start().waitFor() == 0
+    }
   }
 }

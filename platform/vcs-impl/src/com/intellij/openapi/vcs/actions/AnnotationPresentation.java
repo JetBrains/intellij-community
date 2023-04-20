@@ -40,9 +40,15 @@ class AnnotationPresentation implements TextAnnotationPresentation {
     return myFileAnnotation;
   }
 
+
   @Override
   public int getAnnotationLine(int editorLine) {
-    return myUpToDateLineNumberProvider.getLineNumber(editorLine);
+    return getAnnotationLine(editorLine, false);
+  }
+
+  @Override
+  public int getAnnotationLine(int editorLine, boolean approximate) {
+    return myUpToDateLineNumberProvider.getLineNumber(editorLine, approximate);
   }
 
   @Override

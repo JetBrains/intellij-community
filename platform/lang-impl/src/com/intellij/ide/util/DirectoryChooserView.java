@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author dsl
- */
 public interface DirectoryChooserView {
   JComponent getComponent();
 

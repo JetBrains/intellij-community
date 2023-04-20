@@ -86,8 +86,8 @@ fun LanguageFeature.State.assertApplicableInMultiplatform() {
         throw UnsupportedOperationException("Disabling the language feature is unsupported for multiplatform")
 }
 
-val MIN_GRADLE_VERSION_FOR_NEW_JVM_TOOLCHAIN_SYNTAX: GradleVersion = GradleVersion.version("6.7")
+val MIN_GRADLE_VERSION_FOR_JVM_TOOLCHAIN_SYNTAX: GradleVersion = GradleVersion.version("6.7")
     @ApiStatus.Internal get
 
-fun useNewJvmToolchainSyntax(gradleVersion: GradleVersionInfo): Boolean =
-    gradleVersion >= GradleVersionProvider.getVersion(MIN_GRADLE_VERSION_FOR_NEW_JVM_TOOLCHAIN_SYNTAX.version)
+fun useJvmToolchainSyntax(gradleVersion: GradleVersionInfo): Boolean =
+    gradleVersion >= GradleVersionProvider.getVersion(MIN_GRADLE_VERSION_FOR_JVM_TOOLCHAIN_SYNTAX.version)

@@ -2,10 +2,7 @@
 package org.jetbrains.kotlin.idea.gradle.diagnostic
 
 import com.intellij.diagnostic.KotlinCompilerCrash
-import com.intellij.diagnostic.LogMessage
-import com.intellij.diagnostic.MessagePool
 import com.intellij.openapi.diagnostic.Attachment
-import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectPostStartupActivity
@@ -75,18 +72,10 @@ class KotlinGradleBuildErrorsChecker : ProjectPostStartupActivity {
             ?.forEach {
                 try {
                     readErrorFileAndProcessEvent(it) { crashException, rawException ->
-                        val logMessage = crashException.message!! // KotlinCompilerCrash guaranties that message is nonnull field
-                        val logEvent = LogMessage.createEvent(
-                            crashException,
-                            logMessage,
-                            Attachment("raw exception", rawException),
-                            Attachment("Kotlin version", crashException.version)
+                        logger.error("Exception happen during Kotlin compilation", crashException,
+                                     Attachment("Kotlin version", crashException.version),
+                                     Attachment("raw exception", rawException)
                         )
-                        val ideaEvent =
-                            IdeaLoggingEvent(logMessage, RuntimeException("Kotlin build exception: $it"), logEvent.data)
-                        //Add compilation exception to idea.log for AndroidStudio
-                        logger.error("Exception happen during Kotlin compilation", crashException)
-                        MessagePool.getInstance().addIdeFatalMessage(ideaEvent)
                     }
                     it.delete()
                 } catch (e: Exception) {

@@ -20,6 +20,9 @@ import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceLis
 import com.intellij.workspaceModel.storage.impl.extractOneToManyParent
 import com.intellij.workspaceModel.storage.impl.updateOneToManyParentOfChild
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
@@ -220,7 +223,7 @@ class JavaSourceRootPropertiesEntityData : WorkspaceEntityData<JavaSourceRootPro
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return JavaSourceRootPropertiesEntity(generated, packagePrefix, entitySource) {
-      this.sourceRoot = parents.filterIsInstance<SourceRootEntity>().single()
+      parents.filterIsInstance<SourceRootEntity>().singleOrNull()?.let { this.sourceRoot = it }
     }
   }
 

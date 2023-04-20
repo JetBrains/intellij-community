@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * {@linkplain RefactoringElementListenerProvider} receives a notification on undo.
- * @author dsl
  */
 public interface UndoRefactoringElementListener {
   void undoElementMovedOrRenamed(@NotNull PsiElement newElement, @NotNull String oldQualifiedName);

@@ -42,9 +42,6 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import java.util.*;
 
-/**
- * @author db
- */
 public class TypeMigrationLabeler {
   private static final Logger LOG = Logger.getInstance(TypeMigrationLabeler.class);
   private boolean myShowWarning = true;

@@ -30,7 +30,6 @@ import com.intellij.vcs.log.util.UserNameRegex;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogFiltersKt;
 import com.intellij.vcsUtil.VcsFileUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBranchesCollection;
@@ -603,16 +602,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
 
   @Override
   public @NotNull VirtualFile getVcsRoot(@NotNull Project project, @NotNull VirtualFile detectedRoot, @NotNull FilePath path) {
-    if (VcsUtil.getFilePath(detectedRoot).equals(path)) {
-      GitRepository repository = myRepositoryManager.getRepositoryForRootQuick(detectedRoot);
-      if (repository != null) {
-        GitSubmodule submodule = GitSubmoduleKt.asSubmodule(repository);
-        if (submodule != null) {
-          return submodule.getParent().getRoot();
-        }
-      }
-    }
-    return detectedRoot;
+    return getCorrectedVcsRoot(myRepositoryManager, detectedRoot, path);
   }
 
   @SuppressWarnings("unchecked")
@@ -667,5 +657,20 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
       return null;
     }
     return repository;
+  }
+
+  @NotNull
+  public static VirtualFile getCorrectedVcsRoot(@NotNull GitRepositoryManager repositoryManager,
+                                                @NotNull VirtualFile detectedRoot,
+                                                @NotNull FilePath path) {
+    if (path.isDirectory()) return detectedRoot;
+    GitRepository repository = repositoryManager.getRepositoryForRootQuick(path);
+    if (repository != null && repository.getRoot().equals(detectedRoot)) {
+      GitSubmodule submodule = GitSubmoduleKt.asSubmodule(repository);
+      if (submodule != null) {
+        return submodule.getParent().getRoot();
+      }
+    }
+    return detectedRoot;
   }
 }

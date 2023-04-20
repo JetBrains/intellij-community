@@ -9,9 +9,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Method;
 
-/**
- * @author Denis Fokin
- */
 public final class ModalityHelper {
   private static final Logger LOG = Logger.getInstance(ModalityHelper.class);
 

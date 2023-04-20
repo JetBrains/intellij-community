@@ -54,12 +54,17 @@ public class UpToDateLineNumberProviderImpl implements UpToDateLineNumberProvide
 
   @Override
   public int getLineNumber(int currentNumber) {
+    return getLineNumber(currentNumber, false);
+  }
+
+  @Override
+  public int getLineNumber(int currentNumber, boolean approximate) {
     LineStatusTracker<?> tracker = getTracker();
     if (tracker == null) {
       return currentNumber;
     }
     else {
-      return tracker.transferLineToVcs(currentNumber, false);
+      return tracker.transferLineToVcs(currentNumber, approximate);
     }
   }
 

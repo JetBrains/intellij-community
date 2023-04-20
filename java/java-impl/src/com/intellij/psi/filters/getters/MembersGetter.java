@@ -111,12 +111,12 @@ public abstract class MembersGetter {
       if (mayProcessMembers(psiClass)) {
         final FilterScopeProcessor<PsiElement> declProcessor = new FilterScopeProcessor<>(TrueFilter.INSTANCE);
         psiClass.processDeclarations(declProcessor, ResolveState.initial(), null, myPlace);
-        doProcessMembers(acceptMethods, results, psiType == baseType, declProcessor.getResults());
+        doProcessMembers(acceptMethods, results, psiType == baseType, psiClass, declProcessor.getResults());
 
         String name = psiClass.getName();
         if (name != null && searchFactoryMethods) {
           Collection<PsiMember> factoryMethods = JavaStaticMemberTypeIndex.getInstance().getStaticMembers(name, project, scope);
-          doProcessMembers(acceptMethods, results, false, factoryMethods);
+          doProcessMembers(acceptMethods, results, false, psiClass, factoryMethods);
         }
       }
     };
@@ -139,7 +139,9 @@ public abstract class MembersGetter {
 
   private void doProcessMembers(boolean acceptMethods,
                                 Consumer<? super LookupElement> results,
-                                boolean isExpectedTypeMember, Collection<? extends PsiElement> declarations) {
+                                boolean isExpectedTypeMember,
+                                PsiClass origClass,
+                                Collection<? extends PsiElement> declarations) {
     for (final PsiElement result : declarations) {
       if (result instanceof PsiMember && !(result instanceof PsiClass)) {
         final PsiMember member = (PsiMember)result;
@@ -169,7 +171,8 @@ public abstract class MembersGetter {
           continue;
         }
 
-        final LookupElement item = result instanceof PsiMethod ? createMethodElement((PsiMethod)result) : createFieldElement((PsiField)result);
+        final LookupElement item = result instanceof PsiMethod method ? createMethodElement(method, origClass) :
+                                   createFieldElement((PsiField)result, origClass);
         if (item != null) {
           item.putUserData(EXPECTED_TYPE_MEMBER, isExpectedTypeMember);
           results.consume(AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(item));
@@ -179,8 +182,8 @@ public abstract class MembersGetter {
   }
 
   @Nullable
-  protected abstract LookupElement createFieldElement(PsiField field);
+  protected abstract LookupElement createFieldElement(@NotNull PsiField field, @NotNull PsiClass origClass);
 
   @Nullable
-  protected abstract LookupElement createMethodElement(PsiMethod method);
+  protected abstract LookupElement createMethodElement(@NotNull PsiMethod method, @NotNull PsiClass origClass);
 }

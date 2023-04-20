@@ -30,9 +30,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/**
- *  @author dsl
- */
 public class LibraryOrderTest extends JavaPsiTestCase {
 
   public void test1() {

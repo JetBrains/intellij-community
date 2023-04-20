@@ -5,6 +5,7 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,25 +22,27 @@ public interface InspectionOptionPaneRenderer {
   }
 
   /**
-   * @param tool inspection tool whose options should be modified. 
-   *             It should have {@link InspectionProfileEntry#getOptionsPane()} implemented.
-   * @param pane pane to render
-   * @param parent parent disposable whose lifecycle corresponds to the lifecycle of the created panel
-   * @return swing options panel described by supplied inspection 
+   * @param tool    inspection tool whose options should be modified.
+   * @param pane    pane to render
+   * @param parent  parent disposable whose lifecycle corresponds to the lifecycle of the created panel
+   * @param project context project
+   * @return swing options panel described by supplied inspection
    */
-  @NotNull JComponent render(@NotNull InspectionProfileEntry tool, @NotNull OptPane pane, @Nullable Disposable parent);
+  @NotNull JComponent render(@NotNull InspectionProfileEntry tool, @NotNull OptPane pane, @Nullable Disposable parent,
+                             @Nullable Project project);
 
   /**
-   * @param tool inspection tool
-   * @param parent parent disposable
+   * @param tool    inspection tool
+   * @param parent  parent disposable
+   * @param project context project
    * @return swing options panel for supplied inspection; null if inspection provides no options
    */
-  static JComponent createOptionsPanel(@NotNull InspectionProfileEntry tool, @Nullable Disposable parent) {
+  static JComponent createOptionsPanel(@NotNull InspectionProfileEntry tool, @Nullable Disposable parent, @NotNull Project project) {
     OptPane pane = tool.getOptionsPane();
     if (pane.equals(OptPane.EMPTY)) {
       return tool.createOptionsPanel();
     }
-    return getInstance().render(tool, pane, parent);
+    return getInstance().render(tool, pane, parent, project);
   }
 
   /**

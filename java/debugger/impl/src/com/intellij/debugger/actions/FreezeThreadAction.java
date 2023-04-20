@@ -12,9 +12,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author lex
- */
 public class FreezeThreadAction extends DebuggerAction {
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {

@@ -43,7 +43,7 @@ class MLRankingConfigurable(private val availableProviders: List<RankingModelPro
     group(displayName) {
       row {
         enableRankingCheckbox = checkBox(MLCompletionBundle.message("ml.completion.enable"))
-          .bindSelected({ settings.isRankingEnabled }, { settings.isRankingEnabled = it })
+          .bindSelected(settings::isRankingEnabled, settings::setRankingEnabled)
           .gap(RightGap.SMALL)
         contextHelp(MLCompletionBundle.message("ml.completion.enable.help"))
       }
@@ -58,14 +58,14 @@ class MLRankingConfigurable(private val availableProviders: List<RankingModelPro
       }
       row {
         checkBox(MLCompletionBundle.message("ml.completion.show.diff"))
-          .bindSelected({ settings.isShowDiffEnabled }, { settings.isShowDiffEnabled = it })
+          .bindSelected(settings::isShowDiffEnabled, settings::setShowDiffEnabled)
           .enabledIf(enableRankingCheckbox.selected)
           .gap(RightGap.SMALL)
         icon(UP_DOWN_ICON)
       }
       row {
         checkBox(MLCompletionBundle.message("ml.completion.decorate.relevant"))
-          .bindSelected({ settings.isDecorateRelevantEnabled }, { settings.isDecorateRelevantEnabled = it })
+          .bindSelected(settings::isDecorateRelevantEnabled, settings::setDecorateRelevantEnabled)
           .enabledIf(enableRankingCheckbox.selected)
           .gap(RightGap.SMALL)
         icon(RELEVANT_ICON)

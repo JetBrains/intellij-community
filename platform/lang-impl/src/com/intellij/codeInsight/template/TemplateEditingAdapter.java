@@ -19,9 +19,6 @@ package com.intellij.codeInsight.template;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public abstract class TemplateEditingAdapter implements TemplateEditingListener {
 
   @Override

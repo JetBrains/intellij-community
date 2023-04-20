@@ -24,9 +24,6 @@ import static com.intellij.psi.util.PsiTreeUtil.getNextSiblingOfType;
 import static com.intellij.psi.util.PsiTreeUtil.getPrevSiblingOfType;
 import static com.siyeh.ig.psiutils.ControlFlowUtils.statementMayCompleteNormally;
 
-/**
- * @author Pavel.Dolgov
- */
 public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBaseIntentionAction {
 
   @Nls(capitalization = Nls.Capitalization.Sentence)

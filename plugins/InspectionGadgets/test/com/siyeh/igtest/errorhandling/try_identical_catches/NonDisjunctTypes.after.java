@@ -14,7 +14,8 @@ public class NonDisjunctTypes {
       if(Math.random() > 0.5) {
         throw new Ex3();
       }
-    } catch(RuntimeException | Ex1 ex) {
+    }
+    catch(RuntimeException | Ex1 ex) {
       ex.printStackTrace();
     }
   }

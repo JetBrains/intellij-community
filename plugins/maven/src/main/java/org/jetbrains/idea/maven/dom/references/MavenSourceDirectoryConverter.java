@@ -21,9 +21,6 @@ import org.jetbrains.idea.maven.dom.converters.MavenDomSoftAwareConverter;
 import org.jetbrains.idea.maven.dom.model.MavenDomBuild;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenSourceDirectoryConverter extends MavenDirectoryPathReferenceConverter implements MavenDomSoftAwareConverter {
   @Override
   public boolean isSoft(@NotNull DomElement element) {

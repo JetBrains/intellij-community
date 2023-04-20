@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Collections;
 
-class JavaSourceRootPropertiesIndexableEntityProvider implements IndexableEntityProvider<JavaSourceRootPropertiesEntity> {
+class JavaSourceRootPropertiesIndexableEntityProvider implements IndexableEntityProvider.Enforced<JavaSourceRootPropertiesEntity> {
 
   @Override
   public @NotNull Class<JavaSourceRootPropertiesEntity> getEntityClass() {

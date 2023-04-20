@@ -7,9 +7,6 @@ import com.intellij.psi.PsiNameIdentifierOwner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ven
- */
 public interface GrNamedElement extends PsiNameIdentifierOwner, GroovyPsiElement {
 
   @NotNull

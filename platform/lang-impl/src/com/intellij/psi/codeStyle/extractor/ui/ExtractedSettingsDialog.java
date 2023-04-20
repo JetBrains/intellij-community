@@ -40,9 +40,6 @@ import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author Roman.Shein
- */
 public class ExtractedSettingsDialog extends DialogWrapper {
   protected CodeStyleSettingsNameProvider myNameProvider;
   protected List<Value> myValues;

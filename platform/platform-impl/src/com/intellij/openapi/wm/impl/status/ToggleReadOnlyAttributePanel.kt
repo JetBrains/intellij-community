@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class, ExperimentalCoroutinesApi::class)
 
 package com.intellij.openapi.wm.impl.status
@@ -35,8 +35,6 @@ internal class ToggleReadOnlyAttributePanel(private val dataContext: WidgetPrese
 
   init {
     val disposable = Disposer.newDisposable()
-    scope.coroutineContext.job.invokeOnCompletion { Disposer.dispose(disposable) }
-
     val connection = dataContext.project.messageBus.connect(disposable)
     connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: List<VFileEvent>) {
@@ -48,6 +46,7 @@ internal class ToggleReadOnlyAttributePanel(private val dataContext: WidgetPrese
         }
       }
     })
+    scope.coroutineContext.job.invokeOnCompletion { Disposer.dispose(disposable) }
   }
 
   private fun createFileFlow(): Flow<VirtualFile?> {

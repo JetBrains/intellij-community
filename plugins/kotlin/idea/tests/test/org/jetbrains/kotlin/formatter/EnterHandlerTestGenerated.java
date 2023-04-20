@@ -1819,6 +1819,11 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
                 runTest("testData/editor/enterHandler/AutoIndentInWhenClause.after.kt");
             }
 
+            @TestMetadata("AutoIndentInWhenClauseWithoutCondition.after.kt")
+            public void testAutoIndentInWhenClauseWithoutCondition() throws Exception {
+                runTest("testData/editor/enterHandler/AutoIndentInWhenClauseWithoutCondition.after.kt");
+            }
+
             @TestMetadata("BeforePropertyGetter.after.kt")
             public void testBeforePropertyGetter() throws Exception {
                 runTest("testData/editor/enterHandler/BeforePropertyGetter.after.kt");
@@ -1987,6 +1992,11 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
             @TestMetadata("InMultilineLambdaAfterArrow.after.kt")
             public void testInMultilineLambdaAfterArrow() throws Exception {
                 runTest("testData/editor/enterHandler/InMultilineLambdaAfterArrow.after.kt");
+            }
+
+            @TestMetadata("InMultilineLambdaAfterArrow2.after.kt")
+            public void testInMultilineLambdaAfterArrow2() throws Exception {
+                runTest("testData/editor/enterHandler/InMultilineLambdaAfterArrow2.after.kt");
             }
 
             @TestMetadata("IndentBeforeElseWithBlock.after.kt")

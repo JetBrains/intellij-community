@@ -20,5 +20,7 @@ dependencies {
 
 // VERSION: 1.7.20-M1-release-125
 kotlin {
-    jvmToolchain(8)
+    jvmToolchain {
+        (this as JavaToolchainSpec).languageVersion.set(JavaLanguageVersion.of(8))
+    }
 }

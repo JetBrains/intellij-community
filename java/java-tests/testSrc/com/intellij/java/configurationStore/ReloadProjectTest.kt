@@ -135,7 +135,7 @@ class ReloadProjectTest {
       val changedFacet = FacetManager.getInstance(module).getFacetByType(MockFacetType.ID)!!
       assertThat(changedFacet.configuration.data).isEqualTo("changed-data")
 
-      val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
+      val entityStorage = WorkspaceModel.getInstance(project).currentSnapshot
       assumeTrue(entityStorage.entities(ModuleEntity::class.java).single().entitySource is DummyParentEntitySource)
       assumeTrue(entityStorage.entities(ModuleCustomImlDataEntity::class.java).single().entitySource is JpsImportedEntitySource)
       val moduleOptionsEntity = entityStorage.entities(ExternalSystemModuleOptionsEntity::class.java).single()

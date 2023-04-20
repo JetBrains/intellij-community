@@ -6,9 +6,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-/**
- * @author spleaner
- */
 public enum NotificationType {
   IDE_UPDATE,
   INFORMATION,

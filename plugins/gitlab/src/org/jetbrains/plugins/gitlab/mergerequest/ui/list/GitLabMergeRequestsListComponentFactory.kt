@@ -11,7 +11,7 @@ import com.intellij.ui.CollectionListModel
 import com.intellij.ui.components.JBList
 import icons.CollaborationToolsIcons
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortDTO
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortRestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeStatus
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
@@ -20,9 +20,9 @@ internal object GitLabMergeRequestsListComponentFactory {
   private const val AVATAR_SIZE = 20
 
   fun create(
-    listModel: CollectionListModel<GitLabMergeRequestShortDTO>,
+    listModel: CollectionListModel<GitLabMergeRequestShortRestDTO>,
     avatarIconsProvider: IconsProvider<GitLabUserDTO>
-  ): JBList<GitLabMergeRequestShortDTO> {
+  ): JBList<GitLabMergeRequestShortRestDTO> {
     return ReviewListComponentFactory(listModel).create { mergeRequest ->
       ReviewListItemPresentation.Simple(
         title = mergeRequest.title,

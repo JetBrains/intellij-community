@@ -41,6 +41,9 @@ class Test {
       val statsDir = pathProvider.getStatsDataDirectory()
       statsDir.deleteRecursively()
     }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
     finally {
       super.tearDown()
     }

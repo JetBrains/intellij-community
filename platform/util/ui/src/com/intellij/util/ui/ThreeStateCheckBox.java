@@ -16,9 +16,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 
-/**
- * @author spleaner
- */
 public class ThreeStateCheckBox extends JCheckBox {
   public static final String THREE_STATE_CHECKBOX_STATE = "ThreeStateCheckbox.state";
 

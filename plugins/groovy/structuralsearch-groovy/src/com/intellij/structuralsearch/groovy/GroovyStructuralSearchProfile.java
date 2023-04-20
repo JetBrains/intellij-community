@@ -21,9 +21,6 @@ import org.jetbrains.plugins.groovy.template.GroovyTemplateContextType;
 
 import java.util.List;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class GroovyStructuralSearchProfile extends StructuralSearchProfileBase {
   public static final PatternContext FILE_CONTEXT = new PatternContext("File", () -> SSRBundle.message("pattern.context.default"));
   public static final PatternContext CLASS_CONTEXT = new PatternContext("Class", () -> SSRBundle.message("pattern.context.class.member"));

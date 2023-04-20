@@ -3,6 +3,7 @@ package com.intellij.codeInspection.test.junit
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInspection.*
+import com.intellij.codeInspection.fix.ReplaceMethodCallFix
 import com.intellij.psi.PsiArrayType
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile

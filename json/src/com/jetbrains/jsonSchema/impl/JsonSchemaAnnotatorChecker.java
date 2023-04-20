@@ -24,9 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * @author Irina.Chernushina on 4/25/2017.
- */
 public final class JsonSchemaAnnotatorChecker implements JsonValidationHost {
   private static final Set<JsonSchemaType> PRIMITIVE_TYPES =
     ContainerUtil.set(JsonSchemaType._integer, JsonSchemaType._number, JsonSchemaType._boolean, JsonSchemaType._string, JsonSchemaType._null);

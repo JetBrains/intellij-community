@@ -18,7 +18,6 @@ package org.intellij.plugins.intelliLang.pattern;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.RefactoringQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -28,9 +27,9 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
-import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.siyeh.ig.fixes.IntroduceVariableFix;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.IntelliLangBundle;
 import org.intellij.plugins.intelliLang.util.AnnotateFix;
@@ -144,7 +143,9 @@ public class PatternValidator extends LocalInspectionTool {
               element = AnnotationUtilEx.getAnnotatedElementFor(expression, AnnotationUtilEx.LookupType.PREFER_CONTEXT);
             }
             if (element != null && PsiUtilEx.isLanguageAnnotationTarget(element)) {
-              PsiAnnotation[] annotations = AnnotationUtilEx.getAnnotationFrom(element, Configuration.getInstance().getAdvancedConfiguration().getPatternAnnotationPair(), true);
+              PsiAnnotation[] annotations = AnnotationUtilEx.getAnnotationFrom(element,
+                                                                               Configuration.getInstance().getAdvancedConfiguration()
+                                                                                 .getPatternAnnotationPair(), true);
               checkExpression(expression, annotations, holder);
             }
           }
@@ -194,7 +195,8 @@ public class PatternValidator extends LocalInspectionTool {
 
           final String name = StringUtil.getShortName(fqn);
           holder.registerProblem(expression,
-                                 IntelliLangBundle.message("inspection.message.expression.does.not.match.pattern", o, name, pattern.pattern()));
+                                 IntelliLangBundle.message("inspection.message.expression.does.not.match.pattern", o, name,
+                                                           pattern.pattern()));
         }
         else {
           holder.registerProblem(expression,
@@ -214,41 +216,26 @@ public class PatternValidator extends LocalInspectionTool {
         else {
           e = expr;
         }
-        final PsiModifierListOwner owner = e instanceof PsiModifierListOwner? (PsiModifierListOwner)e : null;
+        final PsiModifierListOwner owner = ObjectUtils.tryCast(e, PsiModifierListOwner.class);
         LocalQuickFix quickFix;
         if (owner != null && PsiUtilEx.isLanguageAnnotationTarget(owner)) {
-          PsiAnnotation[] resolvedAnnos = AnnotationUtilEx.getAnnotationFrom(owner, configuration.getAdvancedConfiguration().getPatternAnnotationPair(), true);
-          if (resolvedAnnos.length == 2 && annotations.length == 2 && Comparing.strEqual(resolvedAnnos[1].getQualifiedName(), annotations[1].getQualifiedName())) {
+          PsiAnnotation[] resolvedAnnos =
+            AnnotationUtilEx.getAnnotationFrom(owner, configuration.getAdvancedConfiguration().getPatternAnnotationPair(), true);
+          if (resolvedAnnos.length == 2 &&
+              annotations.length == 2 &&
+              Comparing.strEqual(resolvedAnnos[1].getQualifiedName(), annotations[1].getQualifiedName())) {
             // both target and source annotated indirectly with the same anno
             return;
           }
 
           final String classname = configuration.getAdvancedConfiguration().getSubstAnnotationPair().first;
-          quickFix = AnnotateFix.canApplyOn(owner) ? new AnnotateFix(classname) : new IntroduceVariableFix();
+          quickFix = AnnotateFix.canApplyOn(owner) ? AnnotateFix.create(e, classname) : new IntroduceVariableFix(false);
         }
         else {
-          quickFix = new IntroduceVariableFix();
+          quickFix = new IntroduceVariableFix(false);
         }
         holder.registerProblem(expr, IntelliLangBundle.message("inspection.pattern.validator.description"), quickFix);
       }
-    }
-  }
-
-  private static class IntroduceVariableFix implements RefactoringQuickFix {
-
-    IntroduceVariableFix() {}
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return IntelliLangBundle.message("introduce.variable.fix.family.name");
-    }
-
-    @NotNull
-    @Override
-    public RefactoringActionHandler getHandler() {
-      // how to automatically annotate the variable after it has been introduced?
-      return JavaRefactoringActionHandlerFactory.getInstance().createIntroduceVariableHandler();
     }
   }
 }

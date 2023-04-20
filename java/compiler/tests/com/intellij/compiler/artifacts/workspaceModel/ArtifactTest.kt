@@ -309,8 +309,8 @@ class ArtifactTest : ArtifactsTestCase() {
         ArtifactManager.getInstance(project).addArtifact("Artifact-0", PlainArtifactType.getInstance(), element_0)
       }
     }
-    val chosenArtifactEntity = WorkspaceModel.getInstance(project).entityStorage.current.entities(ArtifactEntity::class.java).toList()[0]
-    val chosenArtifact = WorkspaceModel.getInstance(project).entityStorage.current.artifactsMap.getDataByEntity(chosenArtifactEntity)!!
+    val chosenArtifactEntity = WorkspaceModel.getInstance(project).currentSnapshot.entities(ArtifactEntity::class.java).toList()[0]
+    val chosenArtifact = WorkspaceModel.getInstance(project).currentSnapshot.artifactsMap.getDataByEntity(chosenArtifactEntity)!!
     val happyResult_2 = run {
       val modifiableModel = ArtifactManager.getInstance(project).createModifiableModel()
       val modifiableArtifact = modifiableModel.getOrCreateModifiableArtifact(chosenArtifact)
@@ -368,8 +368,8 @@ class ArtifactTest : ArtifactsTestCase() {
       ArtifactManager.getInstance(project).addArtifact("Artifact-0", PlainArtifactType.getInstance(), element_0)
       return@run null
     }
-    val chosenArtifactEntity = WorkspaceModel.getInstance(project).entityStorage.current.entities(ArtifactEntity::class.java).toList()[0]
-    val chosenArtifact = WorkspaceModel.getInstance(project).entityStorage.current.artifactsMap.getDataByEntity(chosenArtifactEntity)!!
+    val chosenArtifactEntity = WorkspaceModel.getInstance(project).currentSnapshot.entities(ArtifactEntity::class.java).toList()[0]
+    val chosenArtifact = WorkspaceModel.getInstance(project).currentSnapshot.artifactsMap.getDataByEntity(chosenArtifactEntity)!!
     val happyResult_2 = run {
       val modifiableModel = ArtifactManager.getInstance(project).createModifiableModel()
       val modifiableArtifact = modifiableModel.getOrCreateModifiableArtifact(chosenArtifact)
@@ -574,7 +574,7 @@ class ArtifactTest : ArtifactsTestCase() {
 
     repeat(1000) {
       val workspaceModel = WorkspaceModel.getInstance(project)
-      val artifacts = workspaceModel.entityStorage.current.entities(ArtifactEntity::class.java).toList()
+      val artifacts = workspaceModel.currentSnapshot.entities(ArtifactEntity::class.java).toList()
       runWriteAction {
         workspaceModel.updateProjectModel {
           artifacts.forEach { artifact ->
@@ -636,7 +636,7 @@ class ArtifactTest : ArtifactsTestCase() {
     anotherModifiableArtifact.rootElement = anotherRootElement
     anotherModifiableModel.commit()
 
-    val rootElements = WorkspaceModel.getInstance(project).entityStorage.current.entities(ArtifactRootElementEntity::class.java).toList()
+    val rootElements = WorkspaceModel.getInstance(project).currentSnapshot.entities(ArtifactRootElementEntity::class.java).toList()
     assertOneElement(rootElements)
     Unit
   }
@@ -654,8 +654,7 @@ class ArtifactTest : ArtifactsTestCase() {
       anotherModifiableModel.commit()
 
       val properties = WorkspaceModel.getInstance(project)
-        .entityStorage
-        .current
+        .currentSnapshot
         .entities(ArtifactPropertiesEntity::class.java)
         .filter { it.providerType == MockArtifactPropertiesProvider.getInstance().id }
         .toList()

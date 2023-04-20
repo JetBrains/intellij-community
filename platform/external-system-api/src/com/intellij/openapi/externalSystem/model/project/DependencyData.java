@@ -5,8 +5,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Implementations of this interface are not obliged to be thread-safe.
- * 
- * @author Denis Zhdanov
  */
 public interface DependencyData<T extends ExternalEntityData> extends ExternalEntityData {
   

@@ -27,8 +27,6 @@ import java.util.List;
 
 /**
  * Extends {@link SoftWrapModel} in order to define implementation-specific contract.
- *
- * @author Denis Zhdanov
  */
 public interface SoftWrapModelEx extends SoftWrapModel {
 

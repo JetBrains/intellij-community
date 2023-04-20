@@ -32,9 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil
 import org.jetbrains.plugins.groovy.util.TestUtils
-/**
- * @author ilyas
- */
 class InlineVariableTest extends LightJavaCodeInsightFixtureTestCase {
   final String basePath = TestUtils.testDataPath + "groovy/refactoring/inlineLocal/"
 

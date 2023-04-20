@@ -8,9 +8,6 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author lex
- */
 public class AssignmentEvaluator implements Evaluator {
   private final Evaluator myLeftEvaluator;
   private final Evaluator myRightEvaluator;

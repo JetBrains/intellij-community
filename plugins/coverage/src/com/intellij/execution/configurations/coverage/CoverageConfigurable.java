@@ -45,7 +45,6 @@ import java.util.Objects;
  * group.addEditor(title, yourConfigurable);
  * group.addEditor(title, yourCoverageConfigurable);
  * </code>
- * @author ven
  */
 public final class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
   private static final Logger LOG = Logger.getInstance(CoverageConfigurable.class);

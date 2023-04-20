@@ -65,7 +65,7 @@ inline fun <S, reified V : Enum<V>> SettingsFragmentsContainer<S>.addVariantFrag
   info: LabeledSettingsFragmentInfo,
   crossinline getter: S.() -> V,
   crossinline setter: S.(V) -> Unit,
-  crossinline getText: (V) -> String
+  crossinline getText: (V) -> @Nls String
 ) = addLabeledSettingsEditorFragment(
   ComboBox(CollectionComboBoxModel(EnumSet.allOf(V::class.java).toList())),
   info,
@@ -370,7 +370,7 @@ fun <S, C : JComponent, F : SettingsEditorFragment<S, C>> F.applyToComponent(act
 class SettingsEditorLabeledComponent<C : JComponent>(label: @NlsContexts.Label String, component: C) : LabeledComponent<C>() {
   fun modifyComponentSize(configure: C.() -> Unit) {
     layout = WrapLayout(FlowLayout.LEADING, UIUtil.DEFAULT_HGAP, 2)
-    border = JBUI.Borders.empty(0, -UIUtil.DEFAULT_HGAP, 0, 0)
+    border = JBUI.Borders.emptyLeft(-UIUtil.DEFAULT_HGAP)
     component.configure()
   }
 

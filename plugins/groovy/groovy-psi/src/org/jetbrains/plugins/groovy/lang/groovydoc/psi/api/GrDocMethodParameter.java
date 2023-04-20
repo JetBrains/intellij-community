@@ -19,9 +19,6 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.psi.api;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ilyas
- */
 public interface GrDocMethodParameter extends GroovyDocPsiElement {
   @NotNull
   GrDocReferenceElement getTypeElement();

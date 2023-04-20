@@ -13,6 +13,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 private const val MODULE_NAME = "intellij.platform.builtInHelp"
+private val LUCENE_LIBRARIES = setOf("lucene-queryparser", "lucene-highlighter", "lucene-memory")
 
 internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): PluginLayout? {
   val productName = context.applicationInfo.productName
@@ -46,6 +47,7 @@ internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): Plug
                                 content = pluginXml(buildContext, pluginVersion),
                                 overwrite = true)
     }
+    LUCENE_LIBRARIES.forEach { spec.withProjectLibrary(it) }
   }
 }
 
@@ -82,7 +84,7 @@ private suspend fun buildResourcesForHelpPlugin(resourceRoot: Path, classPath: L
   spanBuilder("index help topics").useWithScope {
     runIdea(context = context, mainClass = "com.jetbrains.builtInHelp.indexer.HelpIndexer",
             args = listOf(resourceRoot.resolve("search").toString(),
-                                                          resourceRoot.resolve("topics").toString()),
+                          resourceRoot.resolve("topics").toString()),
             jvmArgs = emptyList(),
             classPath = classPath)
 

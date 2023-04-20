@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.siyeh.ig.LightJavaInspectionTestCase;
@@ -29,13 +28,5 @@ public class UtilityClassWithPublicConstructorInspectionTest extends LightJavaCo
   }
   public void testUtilityClassWithInheritor() {
     doTest();
-  }
-
-  public void testQuickfix() {
-    doTest();
-    final IntentionAction intention = myFixture.getAvailableIntention("Fix all 'Utility class with 'public' constructor' problems in file");
-    assertNotNull(intention);
-    myFixture.launchAction(intention);
-    myFixture.checkResultByFile(getTestName(false) + ".after.java");
   }
 }

@@ -3,9 +3,6 @@ package com.intellij.ui.mac.foundation;
 
 import com.sun.jna.NativeLong;
 
-/**
- * @author spleaner
- */
 public class Selector extends NativeLong {
 
   private String myName;

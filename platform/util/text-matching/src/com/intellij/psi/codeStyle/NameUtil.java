@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.text.Strings;
@@ -16,8 +16,7 @@ public final class NameUtil {
 
   private NameUtil() {}
 
-  @NotNull
-  public static List<String> nameToWordsLowerCase(@NotNull String name){
+  public static @NotNull List<String> nameToWordsLowerCase(@NotNull String name){
     String[] words = NameUtilCore.nameToWords(name);
     List<String> list = new ArrayList<>(words.length);
     for (String word : words) {
@@ -26,18 +25,16 @@ public final class NameUtil {
     return list;
   }
 
-  @NotNull
-  public static String buildRegexp(@NotNull String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
+  public static @NotNull String buildRegexp(@NotNull String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
     return buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, false, false);
   }
 
-  @NotNull
-  public static String buildRegexp(@NotNull String pattern,
-                                   int exactPrefixLen,
-                                   boolean allowToUpper,
-                                   boolean allowToLower,
-                                   boolean lowerCaseWords,
-                                   boolean forCompletion) {
+  public static @NotNull String buildRegexp(@NotNull String pattern,
+                                            int exactPrefixLen,
+                                            boolean allowToUpper,
+                                            boolean allowToLower,
+                                            boolean lowerCaseWords,
+                                            boolean forCompletion) {
     final int eol = pattern.indexOf('\n');
     if (eol != -1) {
       pattern = pattern.substring(0, eol);
@@ -46,7 +43,7 @@ public final class NameUtil {
       pattern = pattern.substring(0, MAX_LENGTH);
     }
 
-    @NonNls final StringBuilder buffer = new StringBuilder();
+    final @NonNls StringBuilder buffer = new StringBuilder();
     final boolean endsWithSpace = !forCompletion && Strings.endsWithChar(pattern, ' ');
     if (!forCompletion) {
       pattern = pattern.trim();
@@ -173,13 +170,12 @@ public final class NameUtil {
     return buffer.toString();
   }
 
-  @NotNull
-  public static List<String> getSuggestionsByName(@NotNull String name,
-                                                  @NotNull String prefix,
-                                                  @NotNull String suffix,
-                                                  boolean upperCaseStyle,
-                                                  boolean preferLongerNames,
-                                                  boolean isArray) {
+  public static @NotNull List<String> getSuggestionsByName(@NotNull String name,
+                                                           @NotNull String prefix,
+                                                           @NotNull String suffix,
+                                                           boolean upperCaseStyle,
+                                                           boolean preferLongerNames,
+                                                           boolean isArray) {
     ArrayList<String> answer = new ArrayList<>();
     String[] words = NameUtilCore.nameToWords(name);
 
@@ -199,15 +195,14 @@ public final class NameUtil {
     return answer;
   }
 
-  @NotNull
-  private static String compoundSuggestion(@NotNull String prefix,
-                                           boolean upperCaseStyle,
-                                           String @NotNull [] words,
-                                           int wordCount,
-                                           @NotNull String startWord,
-                                           char c,
-                                           boolean isArray,
-                                           boolean skip_) {
+  private static @NotNull String compoundSuggestion(@NotNull String prefix,
+                                                    boolean upperCaseStyle,
+                                                    String @NotNull [] words,
+                                                    int wordCount,
+                                                    @NotNull String startWord,
+                                                    char c,
+                                                    boolean isArray,
+                                                    boolean skip_) {
     StringBuilder buffer = new StringBuilder();
 
     buffer.append(prefix);
@@ -277,7 +272,7 @@ public final class NameUtil {
     return buildMatcher(pattern, options);
   }
 
-  public static class MatcherBuilder {
+  public static final class MatcherBuilder {
     private final String pattern;
     private String separators = "";
     private MatchingCaseSensitivity caseSensitivity = MatchingCaseSensitivity.NONE;
@@ -326,13 +321,11 @@ public final class NameUtil {
     }
   }
 
-  @NotNull
-  public static MatcherBuilder buildMatcher(@NotNull String pattern) {
+  public static @NotNull MatcherBuilder buildMatcher(@NotNull String pattern) {
     return new MatcherBuilder(pattern);
   }
 
-  @NotNull
-  public static MinusculeMatcher buildMatcher(@NotNull String pattern, @NotNull MatchingCaseSensitivity options) {
+  public static @NotNull MinusculeMatcher buildMatcher(@NotNull String pattern, @NotNull MatchingCaseSensitivity options) {
     return buildMatcher(pattern).withCaseSensitivity(options).build();
   }
 
@@ -344,13 +337,11 @@ public final class NameUtil {
            : new MatcherWithFallback(buildMatcher(pattern, options), buildMatcher(fallbackPattern, options));
   }
 
-  @NotNull
-  public static String capitalizeAndUnderscore(@NotNull String name) {
+  public static @NotNull String capitalizeAndUnderscore(@NotNull String name) {
     return splitWords(name, '_', Strings::toUpperCase);
   }
 
-  @NotNull
-  public static String splitWords(@NotNull String text, char separator, @NotNull Function<? super String, String> transformWord) {
+  public static @NotNull String splitWords(@NotNull String text, char separator, @NotNull Function<? super String, String> transformWord) {
     final String[] words = NameUtilCore.nameToWords(text);
     boolean insertSeparator = false;
     final StringBuilder buf = new StringBuilder();

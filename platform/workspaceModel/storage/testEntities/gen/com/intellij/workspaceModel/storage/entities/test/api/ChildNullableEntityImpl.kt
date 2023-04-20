@@ -201,7 +201,7 @@ class ChildNullableEntityData : WorkspaceEntityData<ChildNullableEntity>() {
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return ChildNullableEntity(childData, entitySource) {
-      this.parentEntity = parents.filterIsInstance<ParentNullableEntity>().single()
+      parents.filterIsInstance<ParentNullableEntity>().singleOrNull()?.let { this.parentEntity = it }
     }
   }
 

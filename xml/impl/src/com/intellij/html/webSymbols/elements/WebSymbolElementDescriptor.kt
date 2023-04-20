@@ -2,10 +2,10 @@
 package com.intellij.html.webSymbols.elements
 
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.html.impl.RelaxedHtmlFromSchemaElementDescriptor
 import com.intellij.html.webSymbols.WebSymbolsFrameworkHtmlSupport
 import com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator.HtmlElementDescriptorBasedSymbol
 import com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator.StandardHtmlSymbol
-import com.intellij.html.impl.RelaxedHtmlFromSchemaElementDescriptor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl
 import com.intellij.psi.impl.source.xml.XmlDescriptorUtil
@@ -13,7 +13,10 @@ import com.intellij.psi.impl.source.xml.XmlDescriptorUtil.wrapInDelegating
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.asSafely
-import com.intellij.webSymbols.*
+import com.intellij.webSymbols.SymbolKind
+import com.intellij.webSymbols.SymbolNamespace
+import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbolQualifiedName
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.utils.nameSegments
@@ -56,9 +59,9 @@ open class WebSymbolElementDescriptor private constructor(private val tag: XmlTa
                              virtualSymbols: Boolean = true): List<WebSymbolCodeCompletionItem> =
     runCodeCompletionQuery(listOf(WebSymbolQualifiedName(namespace, kind, name)), position, virtualSymbols)
 
-  fun runCodeCompletionQuery(path: List<WebSymbolQualifiedName>,
-                             position: Int,
-                             virtualSymbols: Boolean = true): List<WebSymbolCodeCompletionItem> =
+  private fun runCodeCompletionQuery(path: List<WebSymbolQualifiedName>,
+                                     position: Int,
+                                     virtualSymbols: Boolean = true): List<WebSymbolCodeCompletionItem> =
     WebSymbolsQueryExecutorFactory.create(tag)
       .runCodeCompletionQuery(path, position, virtualSymbols, listOf(symbol))
 

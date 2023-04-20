@@ -23,7 +23,7 @@
       serviceImplementation="com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl"
     />
 
-    <vfs.asyncListener implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.RootsChangeWatcher$RootsChangeWatcherDelegator"/>
+    <vfs.asyncListener implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelRootWatcher"/>
     <projectService
       serviceInterface="com.intellij.openapi.module.ModuleManager"
       serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge" preload="await"/>

@@ -17,7 +17,6 @@ import java.util.regex.Pattern;
 
 /**
  * Base for cases that need marked PSI elements.
- * User: dcheryasov
  */
 public abstract class LightMarkedTestCase extends PyTestCase {
   protected PsiFile myFile;

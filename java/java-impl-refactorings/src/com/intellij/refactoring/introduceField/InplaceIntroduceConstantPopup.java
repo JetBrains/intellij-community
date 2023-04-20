@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -11,11 +11,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.ui.NameSuggestionsGenerator;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 import com.intellij.util.ui.JBInsets;
@@ -145,10 +147,12 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
   }
 
   @Override
-  protected String[] suggestNames(PsiType defaultType, String propName) {
-    return IntroduceConstantDialog.createNameSuggestionGenerator(propName, myExpr != null && myExpr.isValid() ? myExpr : null, JavaCodeStyleManager.getInstance(myProject), null,
-                                                                 getParentClass())
-      .getSuggestedNameInfo(defaultType).names;
+  protected SuggestedNameInfo suggestNames(PsiType defaultType, String propName) {
+    PsiExpression expression = myExpr != null && myExpr.isValid() ? myExpr : null;
+    JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myProject);
+    NameSuggestionsGenerator generator =
+      IntroduceConstantDialog.createNameSuggestionGenerator(propName, expression, codeStyleManager, null, getParentClass());
+    return generator.getSuggestedNameInfo(defaultType);
   }
 
   @Override

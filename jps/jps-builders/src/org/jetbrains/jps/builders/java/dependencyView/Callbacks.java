@@ -9,9 +9,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.Future;
 
-/**
- * @author db
- */
 public final class Callbacks {
 
   public interface ConstantRef {

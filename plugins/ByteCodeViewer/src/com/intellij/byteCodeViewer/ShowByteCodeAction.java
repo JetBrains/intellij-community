@@ -85,7 +85,7 @@ final class ShowByteCodeAction extends AnAction {
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(virtualFile) &&
+        if (ReadAction.compute(() -> ProjectRootManager.getInstance(project).getFileIndex().isInContent(virtualFile)) &&
             isMarkedForCompilation(project, virtualFile)) {
           myErrorTitle = JavaByteCodeViewerBundle.message("class.file.may.be.out.of.date");
         }

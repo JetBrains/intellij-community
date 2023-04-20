@@ -30,9 +30,6 @@ import com.jetbrains.python.psi.PyTypedElement;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author vlan
- */
 public class PyiTypeTest extends PyTestCase {
 
   private Disposable myDisposable;

@@ -3257,8 +3257,16 @@ public class JBTabsImpl extends JComponent
   @Override
   public void sortTabs(Comparator<? super TabInfo> comparator) {
     myVisibleInfos.sort(comparator);
-
+    resetTabsCache();
     relayout(true, false);
+  }
+
+  protected void reorderTab(@NotNull TabInfo tabInfo, int newIndex) {
+    if (myVisibleInfos.remove(tabInfo)) {
+      myVisibleInfos.add(newIndex, tabInfo);
+      resetTabsCache();
+      relayout(true, false);
+    }
   }
 
   private boolean isRequestFocusOnLastFocusedComponent() {
@@ -3521,6 +3529,10 @@ public class JBTabsImpl extends JComponent
   @Override
   public int getDropInfoIndex() {
     return myDropInfoIndex;
+  }
+
+  protected DragHelper getDragHelper() {
+    return myDragHelper;
   }
 
   @Override

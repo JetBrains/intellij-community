@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of target source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.impl
 
 import com.google.common.collect.HashBiMap
@@ -6,7 +6,7 @@ import com.google.common.collect.HashMultimap
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.workspaceModel.storage.*
-import java.io.File
+import java.nio.file.Path
 import java.util.*
 
 internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: MutableEntityStorageImpl) {
@@ -399,10 +399,10 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
   // For serializing current model during the debug process
   @Suppress("unused")
   private fun serialize(path: String) {
-    val folder = File(path)
-    target.serializeTo(folder.resolve("Instant_Save_Target").outputStream())
-    diff.serializeTo(folder.resolve("Instant_Save_Source").outputStream())
-    diff.serializeDiff(folder.resolve("Instant_Save_Diff").outputStream())
+    val folder = Path.of(path)
+    target.serializeTo(folder.resolve("Instant_Save_Target"))
+    diff.serializeTo(folder.resolve("Instant_Save_Source"))
+    diff.serializeDiff(folder.resolve("Instant_Save_Diff"))
   }
 
   companion object {

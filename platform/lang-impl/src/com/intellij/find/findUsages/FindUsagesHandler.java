@@ -3,6 +3,7 @@ package com.intellij.find.findUsages;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -26,6 +27,9 @@ public abstract class FindUsagesHandler extends FindUsagesHandlerBase implements
 
   protected FindUsagesHandler(@NotNull PsiElement psiElement) {
     super(psiElement);
+  }
+  protected FindUsagesHandler(@NotNull PsiElement psiElement, Project project) {
+    super(psiElement, project);
   }
 
   @Override
@@ -52,7 +56,7 @@ public abstract class FindUsagesHandler extends FindUsagesHandlerBase implements
 
   private static final class NullFindUsagesHandler extends FindUsagesHandler {
     private NullFindUsagesHandler() {
-      super(PsiUtilCore.NULL_PSI_ELEMENT);
+      super(PsiUtilCore.NULL_PSI_ELEMENT, null);
     }
 
     @NotNull

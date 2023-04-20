@@ -40,7 +40,7 @@ public class ImageFileEditorState implements TransferableFileEditorState, Serial
   private double zoomFactor;
   private boolean zoomFactorChanged;
 
-  ImageFileEditorState(boolean backgroundVisible, boolean gridVisible, double zoomFactor, boolean zoomFactorChanged) {
+  public ImageFileEditorState(boolean backgroundVisible, boolean gridVisible, double zoomFactor, boolean zoomFactorChanged) {
     this.backgroundVisible = backgroundVisible;
     this.gridVisible = gridVisible;
     this.zoomFactor = zoomFactor;

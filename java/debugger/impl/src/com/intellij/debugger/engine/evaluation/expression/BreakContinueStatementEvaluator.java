@@ -3,9 +3,6 @@ package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 
-/**
- * @author lex
- */
 public final class BreakContinueStatementEvaluator {
   private BreakContinueStatementEvaluator() {
   }

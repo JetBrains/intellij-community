@@ -4,8 +4,7 @@ package org.jetbrains.plugins.gradle.service.project.open
 
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
-import com.intellij.openapi.file.IoFileUtil.toCanonicalPath
-import com.intellij.openapi.file.NioPathUtil.toCanonicalPath
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
@@ -76,7 +75,7 @@ fun suggestGradleHome(project: Project?): String? {
     return lastUsedGradleHome
   }
   val gradleHome = GradleInstallationManager.getInstance().getAutodetectedGradleHome(project)
-  return gradleHome?.toCanonicalPath()
+  return gradleHome?.toPath()?.toCanonicalPath()
 }
 
 private fun validateGradleProject(projectFilePath: String, project: Project): ValidationInfo? {

@@ -23,6 +23,16 @@ public class KotlinNavBarTestGenerated extends AbstractKotlinNavBarTest {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("build1.gradle.kts")
+    public void testBuild1_gradle() throws Exception {
+        runTest("testData/navigationToolbar/build1.gradle.kts");
+    }
+
+    @TestMetadata("build2.gradle.kts")
+    public void testBuild2_gradle() throws Exception {
+        runTest("testData/navigationToolbar/build2.gradle.kts");
+    }
+
     @TestMetadata("ClassProperty.kt")
     public void testClassProperty() throws Exception {
         runTest("testData/navigationToolbar/ClassProperty.kt");

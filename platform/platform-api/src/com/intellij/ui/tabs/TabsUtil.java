@@ -14,9 +14,6 @@ import java.awt.geom.GeneralPath;
 
 import static javax.swing.SwingConstants.*;
 
-/**
- * @author pegov
- */
 public final class TabsUtil {
   public static final int NEW_TAB_VERTICAL_PADDING = JBUIScale.scale(2);
 

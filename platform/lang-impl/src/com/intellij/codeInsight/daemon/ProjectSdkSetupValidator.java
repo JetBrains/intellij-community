@@ -14,9 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 
-/**
- * @author Pavel.Dolgov
- */
 public interface ProjectSdkSetupValidator {
   ExtensionPointName<ProjectSdkSetupValidator> EP_NAME = ExtensionPointName.create("com.intellij.projectSdkSetupValidator");
 

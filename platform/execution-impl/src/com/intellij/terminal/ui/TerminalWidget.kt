@@ -4,15 +4,18 @@ package com.intellij.terminal.ui
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.terminal.TerminalTitle
+import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
-import com.pty4j.WinSize
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
 interface TerminalWidget : ComponentContainer {
   val terminalTitle: TerminalTitle
 
-  val windowSize: WinSize
+  /**
+   * terminal size; null, if the terminal size is 0x0, e.g. the component is not laid out yet
+   */
+  val termSize: TermSize?
 
   fun connectToTty(ttyConnector: TtyConnector)
 
@@ -34,6 +37,5 @@ interface TerminalWidget : ComponentContainer {
    */
   fun addNotification(notificationComponent: JComponent, disposable: Disposable)
 
-  fun addTerminationCallback(onTerminated: Runnable)
-  fun removeTerminationCallback(onTerminated: Runnable)
+  fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable)
 }

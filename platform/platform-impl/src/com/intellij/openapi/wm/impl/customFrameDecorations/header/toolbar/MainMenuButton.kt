@@ -179,7 +179,7 @@ private fun createMenuButton(action: AnAction): ActionButton {
     }
   }
 
-  button.setLook(HeaderToolbarButtonLook())
+  button.setLook(HeaderToolbarButtonLook(iconSize = { JBUI.CurrentTheme.Toolbar.burgerMenuButtonIconSize() }))
   return button
 }
 

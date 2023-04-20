@@ -23,9 +23,6 @@ import com.intellij.refactoring.ConvertToInstanceMethodRefactoring;
 import com.intellij.refactoring.RefactoringImpl;
 import com.intellij.refactoring.convertToInstanceMethod.ConvertToInstanceMethodProcessor;
 
-/**
- * @author dsl
- */
 public class ConvertToInstanceMethodRefactoringImpl extends RefactoringImpl<ConvertToInstanceMethodProcessor> implements ConvertToInstanceMethodRefactoring {
   ConvertToInstanceMethodRefactoringImpl(Project project, PsiMethod method, PsiParameter targetParameter) {
     super(new ConvertToInstanceMethodProcessor(project, method, targetParameter, null));

@@ -247,7 +247,7 @@ class TestModulePropertiesEntityData : WorkspaceEntityData<TestModulePropertiesE
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return TestModulePropertiesEntity(productionModuleId, entitySource) {
-      this.module = parents.filterIsInstance<ModuleEntity>().single()
+      parents.filterIsInstance<ModuleEntity>().singleOrNull()?.let { this.module = it }
     }
   }
 

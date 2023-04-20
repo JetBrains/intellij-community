@@ -40,9 +40,6 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Set;
 
-/**
- * @author Denis Zhdanov
- */
 public class ArrangementListRowDecorator extends JPanel implements ArrangementUiComponent {
 
   @NotNull private final JLabel mySortLabel = new JLabel(AllIcons.ObjectBrowser.Sorted);

@@ -31,9 +31,6 @@ import com.intellij.util.IncorrectOperationException;
 
 import java.io.File;
 
-/**
- * @author dsl
- */
 @HeavyPlatformTestCase.WrapInCommand
 public class BindToElementTest extends JavaCodeInsightTestCase {
   public static final String TEST_ROOT = PathManagerEx.getTestDataPath() + "/psi/impl/bindToElementTest/".replace('/', File.separatorChar);

@@ -37,6 +37,6 @@ public class RefreshFileHistoryAction extends RefreshAction implements DumbAware
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
+    return super.getActionUpdateThread();
   }
 }

@@ -25,8 +25,6 @@ import static com.intellij.codeInspection.options.OptPane.*;
 
 /**
  * Looks for the 'self' or its equivalents.
- *
- * @author dcheryasov
  */
 public class PyMethodParametersInspection extends PyInspection {
   private static final @NlsSafe String MODE_MCS = "mcs";

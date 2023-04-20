@@ -54,9 +54,6 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author ilyas
- */
 public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefinitionStub>
   implements GrTypeDefinition, StubBasedPsiElement<GrTypeDefinitionStub> {
 

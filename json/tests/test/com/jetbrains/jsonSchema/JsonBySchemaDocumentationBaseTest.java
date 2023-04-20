@@ -28,9 +28,6 @@ import org.junit.Assert;
 
 import java.util.ArrayList;
 
-/**
- * @author Irina.Chernushina on 2/20/2017.
- */
 public abstract class JsonBySchemaDocumentationBaseTest extends JsonSchemaHeavyAbstractTest {
   protected void doTest(boolean hasDoc, String extension) throws Exception {
     final JsonSchemaDocumentationProvider provider = new JsonSchemaDocumentationProvider();

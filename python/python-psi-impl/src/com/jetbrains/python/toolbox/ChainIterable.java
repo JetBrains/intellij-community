@@ -27,7 +27,6 @@ import java.util.function.Function;
 
 /**
  * Iterable that splices other iterables and iterates over them sequentially.
- * User: dcheryasov
  */
 public class ChainIterable<T> implements Iterable<T> {
 

@@ -14,9 +14,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
 
-/**
- * @author dsl
- */
 public class ChangeClassSignatureTest extends LightRefactoringTestCase {
   @NonNls private static final String DATA_PATH = "/refactoring/changeClassSignature/";
 

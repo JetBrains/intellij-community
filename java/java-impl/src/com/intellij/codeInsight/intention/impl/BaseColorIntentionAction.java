@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Danila Ponomarenko
  * @author Konstantin Bulenkov
  */
 public abstract class BaseColorIntentionAction extends PsiElementBaseIntentionAction implements HighPriorityAction {

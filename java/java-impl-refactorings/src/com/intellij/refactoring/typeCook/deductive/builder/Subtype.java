@@ -18,9 +18,6 @@ package com.intellij.refactoring.typeCook.deductive.builder;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
 
-/**
- * @author db
- */
 public class Subtype extends Constraint {
   public Subtype(PsiType left, PsiType right) {
     super(left, right);

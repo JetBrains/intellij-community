@@ -25,6 +25,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.module.Module;
@@ -55,7 +56,6 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.ui.EditorTextFieldWithBrowseButton;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.jdom.Element;
 
@@ -127,10 +127,11 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
       assertEquals(ModuleManager.getInstance(myProject).getModules().length + 1, comboBox.getModel().getSize()); //no module
       comboBox.setSelectedModule(module1);
       assertTrue(configurable.isModified());
-      UIUtil.dispatchAllInvocationEvents();
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       configurable.apply();
       assertFalse(configurable.isModified());
-      assertEquals(Collections.singleton(module1), new HashSet<>(Arrays.asList(configuration.getModules())));
+      assertEquals(Collections.singleton(module1), ContainerUtil.newHashSet(configuration.getModules()));
     }
     finally {
       Disposer.dispose(editor);
@@ -459,11 +460,13 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     PsiClass testA = findTestA(getModule2());
     JUnitConfiguration configuration = createConfiguration(testA);
     JUnitConfigurable editor = new JUnitConfigurable(myProject);
-    UIUtil.dispatchAllInvocationEvents();
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     try {
       Configurable configurable = new RunConfigurationConfigurableAdapter(editor, configuration);
       configurable.reset();
-      UIUtil.dispatchAllInvocationEvents();
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       final EditorTextFieldWithBrowseButton component =
         ((LabeledComponent<EditorTextFieldWithBrowseButton>)editor.getTestLocation(JUnitConfigurationModel.CLASS)).getComponent();
       assertEquals(testA.getQualifiedName(), component.getText());
@@ -593,9 +596,9 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
           try {
             List<CompilerMessage> messages = tester.make();
             assertFalse(messages.stream().filter(message -> message.getCategory() == CompilerMessageCategory.ERROR)
-                                .map(message -> message.getMessage())
-                                .findFirst().orElse("Compiles fine"),
-                        messages.stream().anyMatch(message -> message.getCategory() == CompilerMessageCategory.ERROR));
+                          .map(message -> message.getMessage())
+                          .findFirst().orElse("Compiles fine"),
+                        ContainerUtil.exists(messages, message -> message.getCategory() == CompilerMessageCategory.ERROR));
             task.startSearch();
           }
           finally {

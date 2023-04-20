@@ -3,22 +3,27 @@ object J {
     fun main(args: Array<String>) {
         // should strip two trailing spaces
         val s = """
-    red
+                red
 
-    """.trimIndent()
+                """.trimIndent()
 
-        // should preserve two escaped trailing spaces
+        // should preserve escaped trailing spaces
+        // an even number of leading backslashes prevents the escaping
         val s2 = """
-    trailing  
-    white space
+                trailing  
+                trailing\040
+                trailing\ 
+                trailing\\040
 
-    """.trimIndent()
+                """.trimIndent()
+
         // \s is the same as \040
         val colors = """
-    red   
-    green 
-    blue  
+                trailing 
+                trailing\s
+                trailing\ 
+                trailing\\s
 
-    """.trimIndent()
+                """.trimIndent()
     }
 }

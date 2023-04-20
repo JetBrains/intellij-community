@@ -124,15 +124,19 @@ public class RepositoryLibraryDescription {
 
   @NotNull
   public Icon getIcon() {
-    LayeredIcon icon = new LayeredIcon(4);
-    icon.setIcon(DEFAULT_ICON, 0);
+    if (sha256sumCheckEnabled && jarRemoteRepositoryId != null) {
+      return OpenapiIcons.MavenBindChecksum;
+    }
+
     if (sha256sumCheckEnabled) {
-      icon.setIcon(OpenapiIcons.TransparentStub, 1);
+      return OpenapiIcons.MavenChecksum;
     }
+
     if (jarRemoteRepositoryId != null) {
-      icon.setIcon(OpenapiIcons.TransparentStub, 3);
+      return OpenapiIcons.MavenBind;
     }
-    return icon;
+
+    return OpenapiIcons.RepositoryLibraryLogo;
   }
 
   @Nullable

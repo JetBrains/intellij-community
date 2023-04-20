@@ -109,10 +109,10 @@ public final class ScopeToolState {
   }
 
   @Nullable
-  public JComponent getAdditionalConfigPanel(Disposable parent) {
+  public JComponent getAdditionalConfigPanel(Disposable parent, @NotNull Project project) {
     if (myAdditionalConfigPanelState == null) {
       myAdditionalConfigPanelState = ConfigPanelState.of(
-        InspectionOptionPaneRenderer.createOptionsPanel(myToolWrapper.getTool(), parent), myToolWrapper);
+        InspectionOptionPaneRenderer.createOptionsPanel(myToolWrapper.getTool(), parent, project), myToolWrapper);
     }
     return myAdditionalConfigPanelState.getPanel(isEnabled());
   }

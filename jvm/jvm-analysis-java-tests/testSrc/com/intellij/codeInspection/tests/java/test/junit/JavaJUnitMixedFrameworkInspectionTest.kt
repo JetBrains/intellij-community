@@ -54,7 +54,21 @@ class JavaJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTestB
     """.trimIndent(), fileName = "MyTest")
   }
 
-  fun `test junit 3 test case with junit 4 test quickfix`() {
+  fun `test junit 3 test case with junit 4 test remove before each annotation quickfix`() {
+    myFixture.testQuickFix(ULanguage.JAVA, """
+      public class MyTest extends junit.framework.TestCase {
+        @org.junit.jupiter.api.BeforeEach
+        public void do<caret>Something() { }
+      }
+    """.trimIndent(), """
+      public class MyTest extends junit.framework.TestCase {
+        public void doSomething() { }
+      }
+    """.trimIndent(), fileName = "MyTest", hint = "Remove '@BeforeEach' annotation", testPreview = true)
+  }
+
+
+  fun `test junit 3 test case with junit 4 test remove test annotation without rename quickfix`() {
     myFixture.testQuickFix(ULanguage.JAVA, """
       public class MyTest extends junit.framework.TestCase {
         @org.junit.Test

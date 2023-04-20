@@ -50,7 +50,7 @@ public class DeconstructionPatternEvaluator extends PatternEvaluator {
 
   @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
-    return null;
+    return super.evaluate(context);
   }
 
   @Override

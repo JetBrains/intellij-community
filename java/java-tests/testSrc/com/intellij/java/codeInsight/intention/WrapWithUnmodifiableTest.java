@@ -7,9 +7,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_11_ANNOTATED;
 
-/**
- * @author Pavel.Dolgov
- */
 public class WrapWithUnmodifiableTest extends LightIntentionActionTestCase {
   @NotNull
   @Override

@@ -6,9 +6,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 
-/**
- * @author ilyas
- */
 public class GroovyDocElementType extends IElementType implements IGroovyDocElementType {
 
   public GroovyDocElementType(@NotNull @NonNls String debugName) {

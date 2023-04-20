@@ -20,8 +20,6 @@ import com.intellij.usageView.UsageInfo;
 
 /**
  * Represents refactoring in IDE.
- *
- * @author dsl
  */
 public interface Refactoring {
   /**

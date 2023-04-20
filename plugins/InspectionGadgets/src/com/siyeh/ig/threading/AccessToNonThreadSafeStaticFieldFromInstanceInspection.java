@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
-import static com.intellij.codeInspection.options.OptPane.stringSet;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 public class AccessToNonThreadSafeStaticFieldFromInstanceInspection extends BaseInspection {
 
@@ -40,8 +40,8 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection extends Base
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      stringSet("nonThreadSafeClasses", InspectionGadgetsBundle.message("access.to.non.thread.safe.static.field.from.instance.option.title"),
-                new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("access.to.non.thread.safe.static.field.from.instance.class.chooser.title")))
+      stringList("nonThreadSafeClasses", InspectionGadgetsBundle.message("access.to.non.thread.safe.static.field.from.instance.option.title"),
+                 new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("access.to.non.thread.safe.static.field.from.instance.class.chooser.title")))
     );
   }
 

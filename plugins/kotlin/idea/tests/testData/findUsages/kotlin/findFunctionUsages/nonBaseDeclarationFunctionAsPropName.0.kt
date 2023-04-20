@@ -7,4 +7,3 @@ class SomeXImpl : SomeX {
 }
 
 fun foo(x: SomeXImpl) = x.smth
-// FIR_COMPARISON

@@ -267,9 +267,12 @@ public final class IdeKeyEventDispatcher {
     }
 
     if (window instanceof IdeFrameImpl) {
-      Component pane = ((JFrame)window).getGlassPane();
-      if (pane instanceof IdeGlassPaneEx) {
-        return ((IdeGlassPaneEx) pane).isInModalContext();
+      JRootPane rootPane = ((JFrame)window).getRootPane();
+      if (rootPane != null) {
+        Component pane = rootPane.getGlassPane();
+        if (pane instanceof IdeGlassPaneEx) {
+          return ((IdeGlassPaneEx) pane).isInModalContext();
+        }
       }
     }
 

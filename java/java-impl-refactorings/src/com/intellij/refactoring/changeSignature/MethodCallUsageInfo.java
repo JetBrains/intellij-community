@@ -19,9 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.usageView.UsageInfo;
 
-/**
- * @author ven
- */
 public class MethodCallUsageInfo extends UsageInfo {
   private static final Logger LOG = Logger.getInstance(MethodCallUsageInfo.class);
   private final boolean myToChangeArguments;

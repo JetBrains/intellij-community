@@ -44,7 +44,6 @@ import javax.swing.plaf.basic.BasicComboBoxEditor
  *
  * To fill this box in async mode use [addInterpretersAsync]
  *
- * @author vlan
  */
 class PySdkPathChoosingComboBox @JvmOverloads constructor(sdks: List<Sdk> = emptyList(),
                                                           suggestedFile: VirtualFile? = null,

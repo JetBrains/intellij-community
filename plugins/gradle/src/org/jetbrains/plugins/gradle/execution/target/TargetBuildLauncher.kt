@@ -23,6 +23,7 @@ internal class TargetBuildLauncher(connection: TargetProjectConnection) :
   override fun forTasks(tasks: Iterable<Task>) = apply { forLaunchables(tasks) }
   override fun forLaunchables(vararg launchables: Launchable) = apply { forLaunchables(launchables.asList()) }
   override fun forLaunchables(launchables: Iterable<Launchable>) = apply { operationParamsBuilder.setLaunchables(launchables) }
+  override fun getServerRunner() = GradleServerRunner(connection, consumerOperationParameters, true)
 
   init {
     operationParamsBuilder.setEntryPoint("TargetBuildLauncher API")

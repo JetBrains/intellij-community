@@ -3,6 +3,7 @@ package com.intellij.grazie
 
 import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
+import com.intellij.util.ArrayUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import java.util.function.Supplier
@@ -22,7 +23,8 @@ object GrazieBundle {
   }
 
   @JvmStatic
-  fun messagePointer(@PropertyKey(resourceBundle = DEFAULT_BUNDLE_NAME) key: String, vararg params: Any): Supplier<String> = Supplier {
-    message(key, *params)
+  fun messagePointer(@PropertyKey(resourceBundle = DEFAULT_BUNDLE_NAME) key: String, vararg params: Any): Supplier<String> {
+    val actualParams = if (params.isEmpty()) ArrayUtil.EMPTY_OBJECT_ARRAY else params
+    return Supplier { message(key, *actualParams) }
   }
 }

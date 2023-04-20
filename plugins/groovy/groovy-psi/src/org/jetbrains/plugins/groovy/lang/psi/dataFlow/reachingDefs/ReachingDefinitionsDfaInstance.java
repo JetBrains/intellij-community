@@ -7,9 +7,6 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
 
-/**
- * @author ven
- */
 public class ReachingDefinitionsDfaInstance implements DfaInstance<DefinitionMap> {
 
   public static final Logger LOG = Logger.getInstance(ReachingDefinitionsDfaInstance.class);

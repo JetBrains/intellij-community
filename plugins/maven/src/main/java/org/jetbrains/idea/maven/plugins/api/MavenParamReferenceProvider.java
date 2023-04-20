@@ -21,9 +21,6 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.model.MavenDomConfiguration;
 
-/**
- * @author Sergey Evdokimov
- */
 public interface MavenParamReferenceProvider {
 
   PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull MavenDomConfiguration domCfg, @NotNull ProcessingContext context);

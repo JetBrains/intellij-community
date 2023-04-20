@@ -6,4 +6,3 @@ package server
 
 fun <caret>processRequest() = "foo"
 
-// FIR_COMPARISON

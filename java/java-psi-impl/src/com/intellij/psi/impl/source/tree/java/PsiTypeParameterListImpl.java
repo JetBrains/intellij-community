@@ -25,9 +25,6 @@ import com.intellij.psi.impl.source.JavaStubPsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- *  @author dsl
- */
 public class PsiTypeParameterListImpl extends JavaStubPsiElement<PsiTypeParameterListStub> implements PsiTypeParameterList {
   private static final Logger LOG = Logger.getInstance(PsiTypeParameterListImpl.class);
 

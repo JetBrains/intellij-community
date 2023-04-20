@@ -42,9 +42,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
   public static final XmlZenCodingGeneratorImpl INSTANCE = new XmlZenCodingGeneratorImpl();
 

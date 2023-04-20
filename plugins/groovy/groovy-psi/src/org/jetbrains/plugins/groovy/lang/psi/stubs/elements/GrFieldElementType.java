@@ -21,9 +21,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Set;
 
-/**
- * @author ilyas
- */
 public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> {
 
   public GrFieldElementType(String debugName) {

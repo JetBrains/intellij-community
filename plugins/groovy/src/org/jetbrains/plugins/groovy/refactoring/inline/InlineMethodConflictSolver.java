@@ -21,7 +21,6 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 /**
  * Utility class to solve name conflicts related to local variable names of method to be inlined
- * @author ilyas
  */
 public final class InlineMethodConflictSolver {
   private InlineMethodConflictSolver() {}

@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.settings
 
-import com.intellij.ide.wizard.setMinimumWidth
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBox
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBoxConverter
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -16,6 +15,7 @@ import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
 import com.intellij.openapi.ui.validation.WHEN_GRAPH_PROPAGATION_FINISHED
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ValidationInfoBuilder
+import com.intellij.ui.util.minimumWidth
 import com.intellij.util.ui.JBUI
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Nls
@@ -56,16 +56,18 @@ class IdeaGradleDefaultProjectSettingsControl : GradleSettingsControl() {
       group(GradleBundle.message("gradle.project.settings.distribution.group")) {
         row {
           label(GradleBundle.message("gradle.project.settings.distribution"))
-            .applyToComponent { setMinimumWidth(MINIMUM_LABEL_WIDTH) }
-          comboBox(listOf(WRAPPER, LOCAL)) { it.text }
+            .applyToComponent { minimumWidth = MINIMUM_LABEL_WIDTH }
+          comboBox(listOf(WRAPPER, LOCAL), listCellRenderer { text = it.text })
             .columns(COLUMNS_SHORT)
             .bindItem(distributionTypeProperty)
         }
+        // TODO(@Pavel Porvatov) replace with visibleId and validation enableIf
+        // https://youtrack.jetbrains.com/issue/IDEA-310738/Kotlin-DSL-Cannot-disable-validation-for-invisible-components
         placeholderGroup {
           component(WRAPPER) {
             row {
               label(GradleBundle.message("gradle.project.settings.distribution.wrapper.version"))
-                .applyToComponent { setMinimumWidth(MINIMUM_LABEL_WIDTH) }
+                .applyToComponent { minimumWidth = MINIMUM_LABEL_WIDTH }
               cell(TextCompletionComboBox(null, TextCompletionComboBoxConverter.Default()))
                 .columns(8)
                 .applyToComponent { bindSelectedItem(gradleVersionProperty) }
@@ -81,7 +83,7 @@ class IdeaGradleDefaultProjectSettingsControl : GradleSettingsControl() {
           component(LOCAL) {
             row {
               label(GradleBundle.message("gradle.project.settings.distribution.local.location"))
-                .applyToComponent { setMinimumWidth(MINIMUM_LABEL_WIDTH) }
+                .applyToComponent { minimumWidth = MINIMUM_LABEL_WIDTH }
               val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
                 .withPathToTextConvertor(::getPresentablePath)
                 .withTextToPathConvertor(::getCanonicalPath)

@@ -22,9 +22,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author Denis Zhdanov
- */
 public class StaticTextWhiteSpaceDefinitionStrategy extends AbstractWhiteSpaceFormattingStrategy {
   private final Set<CharSequence> myWhiteSpaces = new HashSet<>();
 

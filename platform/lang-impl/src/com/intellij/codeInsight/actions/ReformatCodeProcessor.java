@@ -5,7 +5,6 @@ package com.intellij.codeInsight.actions;
 import com.intellij.CodeStyleBundle;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.formatting.FormattingProgressTask;
 import com.intellij.formatting.KeptLineFeedsCollector;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
@@ -27,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
@@ -171,7 +171,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
       LOG.warn("Invalid file " + file.getName() + ", skipping reformat");
       return false;
     }
-    FormattingProgressTask.FORMATTING_CANCELLED_FLAG.set(false);
+    CodeFormatterFacade.FORMATTING_CANCELLED_FLAG.set(false);
     try {
       Document document = PsiDocumentManager.getInstance(myProject).getDocument(fileToProcess);
       final LayoutCodeInfoCollector infoCollector = getInfoCollector();
@@ -226,7 +226,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
         prepareUserNotificationMessage(document, before);
       }
 
-      return !FormattingProgressTask.FORMATTING_CANCELLED_FLAG.get();
+      return !CodeFormatterFacade.FORMATTING_CANCELLED_FLAG.get();
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

@@ -14,9 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author irengrig
- */
 public interface ApplyPatchExecutor<T extends AbstractFilePatchInProgress<?>> {
   @Nls(capitalization = Nls.Capitalization.Title)
   String getName();

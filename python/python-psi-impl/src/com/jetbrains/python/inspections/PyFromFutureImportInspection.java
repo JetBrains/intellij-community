@@ -29,9 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PyFromFutureImportInspection extends PyInspection {
 
   @NotNull

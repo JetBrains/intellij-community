@@ -15,9 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author Sergey Evdokimov
- */
 public class GrLightParameterListBuilder extends LightElement implements GrParameterList {
   private final List<GrParameter> myParameters = new ArrayList<>();
   private GrParameter[] myCachedParameters;

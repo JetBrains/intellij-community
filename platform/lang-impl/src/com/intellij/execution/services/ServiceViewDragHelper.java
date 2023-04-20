@@ -184,6 +184,10 @@ final class ServiceViewDragHelper {
       if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
         return ContainerUtil.map2Array(myItems, ServiceViewItem::getValue);
       }
+      if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
+        ServiceViewItem item = ContainerUtil.getOnlyItem(myItems);
+        return item != null ? item.getValue() : null;
+      }
       return null;
     }
   }

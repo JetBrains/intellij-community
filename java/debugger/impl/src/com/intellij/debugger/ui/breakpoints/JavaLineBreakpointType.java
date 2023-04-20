@@ -190,7 +190,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     @Override
     public String getText() {
       return myElement != null
-             ? StringUtil.shortenTextWithEllipsis(myElement.getText(), 100, 0)
+             ? StringUtil.shortenTextWithEllipsis(ReadAction.compute(() -> myElement.getText()), 100, 0)
              : JavaDebuggerBundle.message("breakpoint.variant.text.line");
     }
 

@@ -60,9 +60,6 @@ import java.util.stream.Collectors;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.pathToUrl;
 
-/**
- * @author Denis Zhdanov
- */
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
 public final class ContentRootDataService extends AbstractProjectDataService<ContentRootData, ContentEntry> {
   public static final com.intellij.openapi.util.Key<Boolean> CREATE_EMPTY_DIRECTORIES =

@@ -7,9 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.basicAttributesIfExists
-import com.intellij.util.io.inputStream
 import com.intellij.util.io.lastModified
 import com.intellij.util.io.write
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
@@ -46,7 +44,7 @@ abstract class AbstractWorkspaceModelCache(cacheVersionsContributor: () -> Map<S
     LOG.debug("Loading cache from $file")
 
     val start = System.currentTimeMillis()
-    val deserializationResult = file.inputStream().use { serializer.deserializeCache(it) }
+    val deserializationResult = serializer.deserializeCache(file)
     LOG.debug { "Loaded cache from $file in ${System.currentTimeMillis() - start}ms" }
 
     return deserializationResult
@@ -64,23 +62,25 @@ abstract class AbstractWorkspaceModelCache(cacheVersionsContributor: () -> Map<S
   // Serialize and atomically replace cacheFile. Delete temporary file in any cache to avoid junk in cache folder
   internal fun saveCache(storage: EntityStorageSnapshot, file: Path) {
     LOG.debug("Saving Workspace model cache to $file")
-    val tmpFile = FileUtil.createTempFile(file.parent.toFile(), "cache", ".tmp")
+    val dir = file.parent
+    Files.createDirectories(dir)
+    val tmpFile = Files.createTempFile(dir, "cache", ".tmp")
     try {
-      val serializationResult = tmpFile.outputStream().use { serializer.serializeCache(it, cachePreProcess(storage)) }
+      val serializationResult = serializer.serializeCache(tmpFile, cachePreProcess(storage))
       if (serializationResult is SerializationResult.Fail<*>) {
         LOG.warn("Workspace model cache was not serialized: ${serializationResult.info}")
       }
 
       try {
-        Files.move(tmpFile.toPath(), file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+        Files.move(tmpFile, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
       }
       catch (e: AtomicMoveNotSupportedException) {
         LOG.warn(e)
-        Files.move(tmpFile.toPath(), file, StandardCopyOption.REPLACE_EXISTING)
+        Files.move(tmpFile, file, StandardCopyOption.REPLACE_EXISTING)
       }
     }
     finally {
-      tmpFile.delete()
+      Files.deleteIfExists(tmpFile)
     }
   }
 

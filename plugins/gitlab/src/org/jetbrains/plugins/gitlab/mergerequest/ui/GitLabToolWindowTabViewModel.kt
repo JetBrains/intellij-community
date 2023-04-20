@@ -7,11 +7,11 @@ import com.intellij.collaboration.ui.icon.AsyncImageIconsProvider
 import com.intellij.collaboration.ui.icon.CachingIconsProvider
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.URIUtil
+import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
@@ -29,26 +29,15 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsP
 import org.jetbrains.plugins.gitlab.providers.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
-internal class GitLabToolWindowTabViewModel(private val scope: CoroutineScope,
+internal class GitLabToolWindowTabViewModel(parentCs: CoroutineScope,
                                             private val connectionManager: GitLabProjectConnectionManager,
                                             projectsManager: GitLabProjectsManager,
                                             accountManager: GitLabAccountManager) {
 
-  private val connectionState = MutableStateFlow<GitLabProjectConnection?>(null)
-
-  init {
-    scope.launch {
-      connectionState.collectLatest {
-        if (it != null) {
-          it.awaitClose()
-          connectionState.compareAndSet(it, null)
-        }
-      }
-    }
-  }
+  private val cs = parentCs.childScope()
 
   private val singleRepoAndAccountState: StateFlow<Pair<GitLabProjectMapping, GitLabAccount>?> =
-    combineState(scope, projectsManager.knownRepositoriesState, accountManager.accountsState) { repos, accounts ->
+    combineState(cs, projectsManager.knownRepositoriesState, accountManager.accountsState) { repos, accounts ->
       repos.singleOrNull()?.let { repo ->
         accounts.singleOrNull { URIUtil.equalWithoutSchema(it.server.toURI(), repo.repository.serverPath.toURI()) }?.let {
           repo to it
@@ -56,7 +45,7 @@ internal class GitLabToolWindowTabViewModel(private val scope: CoroutineScope,
       }
     }
 
-  val nestedViewModelState: StateFlow<NestedViewModel> = connectionState.mapStateScoped(scope) { scope, connection ->
+  val nestedViewModelState: StateFlow<NestedViewModel> = connectionManager.connectionState.mapStateScoped(cs) { scope, connection ->
     if (connection != null) {
       MergeRequests(scope, connection, accountManager)
     }
@@ -80,7 +69,9 @@ internal class GitLabToolWindowTabViewModel(private val scope: CoroutineScope,
   }
 
   private suspend fun connect(project: GitLabProjectMapping, account: GitLabAccount) {
-    connectionState.value = connectionManager.connect(scope, project, account)
+    withContext(cs.coroutineContext) {
+      connectionManager.openConnection(project, account)
+    }
   }
 
   internal sealed interface NestedViewModel {
@@ -88,7 +79,7 @@ internal class GitLabToolWindowTabViewModel(private val scope: CoroutineScope,
 
     class MergeRequests(
       scope: CoroutineScope,
-      connection: GitLabProjectConnection,
+      val connection: GitLabProjectConnection,
       accountManager: GitLabAccountManager
     ) : NestedViewModel {
       private val avatarIconsProvider: IconsProvider<GitLabUserDTO> = CachingIconsProvider(

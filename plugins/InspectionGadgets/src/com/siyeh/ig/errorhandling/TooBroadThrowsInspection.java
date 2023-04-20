@@ -49,7 +49,7 @@ public class TooBroadThrowsInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean ignoreThrown = false;
   @SuppressWarnings("PublicField")
-  public int hiddenExceptionsThreshold = 100;
+  public int hiddenExceptionsThreshold = 10;
 
   @Override
   @NotNull

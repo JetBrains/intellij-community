@@ -1,0 +1,23 @@
+<html>
+<body>
+Reports string templates that are used as arguments to <b>SLF4J</b> and <b>Log4j 2</b> logging methods.
+String templates are evaluated at runtime even when the logging message is not logged; this can negatively impact performance.
+It is recommended to use a parameterized log message instead, which will not be evaluated when logging is disabled.
+<p><b>Example (for Kotlin):</b></p>
+<pre><code>
+      val variable1 = getVariable()
+      logger.info("variable1: $variable1")
+</code></pre>
+<p><b>After the quick-fix is applied (for Kotlin):</b></p>
+<pre><code>
+      val variable1 = getVariable()
+      logger.info("variable1: {}", variable1)
+</code></pre>
+<p>
+  Note that, the suggested replacement might not be equivalent to the original code, for example,
+  when string templates contain method calls or assignment expressions.
+</p>
+<!-- tooltip end -->
+<p><small>New in 2023.1</small></p>
+</body>
+</html>

@@ -18,7 +18,6 @@ import java.awt.*;
 import java.util.Map;
 
 /**
- * @author Irina Chernushina
  * @author Konstantin Bulenkov
  */
 public class AspectAnnotationFieldGutter extends AnnotationFieldGutter {

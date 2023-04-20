@@ -69,8 +69,7 @@ public class EqualsWithItselfInspection extends BaseInspection {
   private static final CallMatcher ASSERTJ_ASSERT_THAT =
     CallMatcher.staticCall("org.assertj.core.api.Assertions", "assertThat").parameterCount(1);
 
-  private static final CallMatcher TEST_ASSERTIONS = CallMatcher.anyOf(ASSERT_ARGUMENT_COMPARISON, ASSERT_ARGUMENTS_THE_SAME,
-                                                                       ASSERTJ_COMPARISON, ASSERTJ_THE_SAME, ASSERTJ_ASSERT_THAT);
+  private static final CallMatcher POSSIBLE_TO_SKIP_TEST_ASSERTIONS = CallMatcher.anyOf(ASSERT_ARGUMENT_COMPARISON, ASSERTJ_COMPARISON);
 
   @SuppressWarnings("PublicField")
   public boolean ignoreNonFinalClassesInTest = false;
@@ -108,13 +107,13 @@ public class EqualsWithItselfInspection extends BaseInspection {
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (ignoreNonFinalClassesInTest &&
-          TEST_ASSERTIONS.test(expression) &&
+          POSSIBLE_TO_SKIP_TEST_ASSERTIONS.test(expression) &&
           !isFinalLibraryClassOrPrimitives(expression)) {
         return;
       }
       if (isEqualsWithItself(expression)) {
         registerMethodCallError(expression, !ignoreNonFinalClassesInTest &&
-                                            TEST_ASSERTIONS.test(expression) &&
+                                            POSSIBLE_TO_SKIP_TEST_ASSERTIONS.test(expression) &&
                                             !isFinalLibraryClassOrPrimitives(expression));
       }
     }
@@ -179,19 +178,7 @@ public class EqualsWithItselfInspection extends BaseInspection {
   }
 
   private static boolean isTheSame(@Nullable PsiExpression left, @Nullable PsiExpression right) {
-    left = PsiUtil.skipParenthesizedExprDown(left);
-    right = PsiUtil.skipParenthesizedExprDown(right);
-
-    if (!(left instanceof PsiReferenceExpression leftReference && right instanceof PsiReferenceExpression rightReference)) {
-      return false;
-    }
-    PsiElement resolvedFromLeft = leftReference.resolve();
-    PsiElement resolvedFromRight = rightReference.resolve();
-    boolean equalReferences = resolvedFromLeft != null && resolvedFromLeft == resolvedFromRight;
-    if (!equalReferences) return false;
-    PsiExpression leftQualifier = ExpressionUtils.getEffectiveQualifier(leftReference);
-    PsiExpression rightQualifier = ExpressionUtils.getEffectiveQualifier(rightReference);
-    return leftQualifier == rightQualifier || isTheSame(leftQualifier, rightQualifier);
+    return isItself(left, right) && !ExpressionUtils.isNewObject(left);
   }
 
   private static boolean isItself(@Nullable PsiExpression left, @Nullable PsiExpression right) {

@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.ContainerUtil
@@ -122,7 +123,15 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project) : 
         val storage = CompilerPluginRegistrar.ExtensionStorage()
         for (pluginRegistrar in pluginRegistrars) {
             with(pluginRegistrar) {
-                storage.registerExtensions(compilerConfiguration)
+                try {
+                    storage.registerExtensions(compilerConfiguration)
+                }
+                catch (e : ProcessCanceledException) {
+                    throw e
+                }
+                catch (e: Throwable) {
+                    LOG.error(e)
+                }
             }
         }
         return storage
@@ -149,5 +158,6 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project) : 
         fun getInstance(project: Project): KtCompilerPluginsProviderIdeImpl {
             return project.getService(KtCompilerPluginsProvider::class.java) as KtCompilerPluginsProviderIdeImpl
         }
+        private val LOG = logger<KtCompilerPluginsProviderIdeImpl>()
     }
 }

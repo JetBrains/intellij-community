@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.idea.structuralsearch.visitor.KotlinRecursiveElement
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocTag
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
 class KotlinStructuralSearchProfile : StructuralSearchProfile() {
     override fun isMatchNode(element: PsiElement?): Boolean = element !is PsiWhiteSpace
@@ -93,13 +94,13 @@ class KotlinStructuralSearchProfile : StructuralSearchProfile() {
         project: Project,
         physical: Boolean
     ): Array<PsiElement> {
-        var elements: List<PsiElement>
+        var elements: Array<PsiElement>
         val factory = KtPsiFactory(project, false)
 
         if (PROPERTY_CONTEXT.id == contextId) {
             try {
                 val fragment = factory.createProperty(text)
-                elements = listOf(getNonWhitespaceChildren(fragment).first().parent)
+                elements = arrayOf(getNonWhitespaceChildren(fragment).first().parent)
                 if (elements.first() !is KtProperty) return PsiElement.EMPTY_ARRAY
             } catch (e: Exception) {
                 return arrayOf(factory.createComment("//").apply {
@@ -107,33 +108,31 @@ class KotlinStructuralSearchProfile : StructuralSearchProfile() {
                 })
             }
         } else {
-            val fragment = factory.createBlockCodeFragment("Unit\n$text", null).let {
-                if (physical) it else it.copy() // workaround to create non-physical code fragment
+            val block = factory.createBlock(text).let {
+                if (physical) it else it.copy() as KtBlockExpression // workaround to create non-physical code fragment
             }
-            elements = when (fragment.lastChild) {
-                is PsiComment -> getNonWhitespaceChildren(fragment).drop(1)
-                else -> getNonWhitespaceChildren(fragment.firstChild).drop(1)
+
+            elements = getNonWhitespaceChildren(block).drop(1).dropLast(1).toTypedArray()
+
+            if (block.statements.size == 1) {
+                val statement = block.firstStatement
+                // Standalone annotation support
+                if (statement is KtAnnotatedExpression && statement.lastChild is PsiErrorElement) {
+                    elements = getNonWhitespaceChildren(statement).dropLast(1).toTypedArray()
+                }
+                // Standalone KtNullableType || KtUserType w/ type parameter support
+                else if (elements.last() is PsiErrorElement && elements.last().firstChild.elementType == KtTokens.QUEST
+                    || elements.first() is KtCallExpression && (elements.first() as KtCallExpression).valueArgumentList == null) {
+                    try {
+                        elements = arrayOf(factory.createType(text))
+                    } catch (_: KotlinExceptionWithAttachments) {}
+                }
             }
         }
 
-        if (elements.isEmpty()) return PsiElement.EMPTY_ARRAY
+        //for (element in elements) print(DebugUtil.psiToString(element, false))
 
-        // Standalone KtAnnotationEntry support
-        if (elements.first() is KtAnnotatedExpression && elements.first().lastChild is PsiErrorElement)
-            elements = getNonWhitespaceChildren(elements.first()).dropLast(1)
-
-        // Standalone KtNullableType || KtUserType w/ type parameter support
-        if (elements.last() is PsiErrorElement && elements.last().firstChild.elementType == KtTokens.QUEST
-            || elements.first() is KtCallExpression && (elements.first() as KtCallExpression).valueArgumentList == null) {
-            try {
-                val fragment = factory.createType(text)
-                elements = listOf(getNonWhitespaceChildren(fragment).first().parent)
-            } catch (e: Exception) {}
-        }
-
-//        for (element in elements) print(DebugUtil.psiToString(element, false))
-
-        return elements.toTypedArray()
+        return elements
     }
 
     inner class KotlinValidator : KotlinRecursiveElementWalkingVisitor() {

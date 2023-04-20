@@ -24,9 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.regex.Pattern;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public abstract class LogFilterModel {
   private Pattern myCustomPattern;
 

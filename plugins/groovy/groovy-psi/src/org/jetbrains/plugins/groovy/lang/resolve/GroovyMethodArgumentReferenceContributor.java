@@ -31,9 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-/**
- * @author Sergey Evdokimov
- */
 public final class GroovyMethodArgumentReferenceContributor extends PsiReferenceContributor {
 
   @Override

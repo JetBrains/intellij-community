@@ -295,6 +295,6 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
   @NotNull
   @Override
   public EditorKind getEditorKind() {
-    throw notImplemented();
+    return EditorKind.UNTYPED;
   }
 }

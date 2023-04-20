@@ -41,7 +41,7 @@ public class RefusedBequestInspection extends BaseInspection {
   public @NotNull OptPane getOptionsPane() {
     return pane(
       checkbox("onlyReportWhenAnnotated", InspectionGadgetsBundle.message("inspection.refused.bequest.super.annotated.option"),
-               stringSet("annotations", "", new JavaClassValidator().annotationsOnly())),
+               stringList("annotations", "", new JavaClassValidator().annotationsOnly())),
       checkbox("ignoreEmptySuperMethods", InspectionGadgetsBundle.message("refused.bequest.ignore.empty.super.methods.option")),
       checkbox("ignoreDefaultSuperMethods", InspectionGadgetsBundle.message("refused.bequest.ignore.default.super.methods.option"))
     );

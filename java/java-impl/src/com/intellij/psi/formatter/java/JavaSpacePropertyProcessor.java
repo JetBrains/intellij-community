@@ -825,13 +825,24 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   @Override
   public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
+    handleForeach();
+  }
+
+  @Override
+  public void visitForeachPatternStatement(@NotNull PsiForeachPatternStatement statement) {
+    handleForeach();
+  }
+
+  private void handleForeach() {
     if (myRole1 == ChildRole.FOR_KEYWORD && myRole2 == ChildRole.LPARENTH) {
       createSpaceInCode(mySettings.SPACE_BEFORE_FOR_PARENTHESES);
     }
     else if (myRole1 == ChildRole.LPARENTH || myRole2 == ChildRole.RPARENTH) {
       createSpaceInCode(mySettings.SPACE_WITHIN_FOR_PARENTHESES);
     }
-    else if ((myRole1 == ChildRole.FOR_ITERATION_PARAMETER && myRole2 == ChildRole.COLON && myJavaSettings.SPACE_BEFORE_COLON_IN_FOREACH) ||
+    else if (((myRole1 == ChildRole.FOR_ITERATION_PARAMETER || ElementType.JAVA_PATTERN_BIT_SET.contains(myType1)) &&
+              myRole2 == ChildRole.COLON
+              && myJavaSettings.SPACE_BEFORE_COLON_IN_FOREACH) ||
              myRole1 == ChildRole.COLON && myRole2 == ChildRole.FOR_ITERATED_VALUE) {
       createSpaceInCode(true);
     }

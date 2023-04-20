@@ -5,9 +5,6 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.refactoring.introduce.IntroduceValidator;
 
-/**
- * @author Alexey.Ivanov
- */
 public class ConstantValidator extends IntroduceValidator {
   @Override
   public String check(String name, PsiElement psiElement) {

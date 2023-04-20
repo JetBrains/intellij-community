@@ -23,7 +23,6 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.breakpoints.*;
-import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
@@ -200,37 +199,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   public boolean canGetMethodReturnValue() {
     return myReturnValueWatcher != null;
-  }
-
-  /**
-   * @deprecated use {@link #getAutoRendererAsync(Type)}
-   */
-  @Deprecated(forRemoval = true)
-  public NodeRenderer getAutoRenderer(ValueDescriptor descriptor) {
-    Type type = descriptor.getType();
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-    // in case evaluation is not possible, force default renderer
-    if (!isEvaluationPossible()) {
-      return getDefaultRenderer(type);
-    }
-
-    try {
-      Object res = myNodeRenderersMap.get(type);
-      if (res instanceof NodeRenderer) {
-        return (NodeRenderer)res;
-      }
-      NodeRenderer renderer = myRenderers.stream().
-        filter(NodeRenderer::isEnabled).
-        filter(r -> DebuggerUtilsImpl.suppressExceptions(() -> r.isApplicable(type), false, true, ClassNotPreparedException.class)).
-        findFirst().orElseGet(() -> getDefaultRenderer(type));
-      myNodeRenderersMap.put(type, renderer);
-      return renderer;
-    }
-    catch (ClassNotPreparedException e) {
-      LOG.info(e);
-      // use default, but do not cache
-      return getDefaultRenderer(type);
-    }
   }
 
   @NotNull

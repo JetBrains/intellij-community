@@ -27,8 +27,6 @@ import java.util.*;
  * {@link ArrangementUiComponent Component} for showing {@link ArrangementCompositeMatchCondition composite nodes}.
  * <p/>
  * Not thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class ArrangementAndMatchConditionComponent extends JPanel implements ArrangementUiComponent {
 

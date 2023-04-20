@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author Denis Zhdanov
- */
 public interface ExternalSystemUiAware {
 
   @NotNull

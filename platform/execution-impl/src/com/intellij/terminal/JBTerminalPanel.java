@@ -38,6 +38,7 @@ import com.jediterm.terminal.model.hyperlinks.LinkInfo;
 import com.jediterm.terminal.ui.TerminalAction;
 import com.jediterm.terminal.ui.TerminalActionProvider;
 import com.jediterm.terminal.ui.TerminalPanel;
+import com.jediterm.terminal.ui.hyperlinks.LinkInfoEx;
 import com.pty4j.windows.conpty.WinConPtyProcess;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
@@ -234,7 +235,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
   private TerminalActionProvider getTerminalActionProvider(@Nullable LinkInfo linkInfo, @NotNull MouseEvent e) {
     // copied from super.createPopupMenu() and adjusted to our needs:
     TerminalActionProvider provider;
-    LinkInfo.PopupMenuGroupProvider popupMenuGroupProvider = linkInfo != null ? linkInfo.getPopupMenuGroupProvider() : null;
+    LinkInfoEx.PopupMenuGroupProvider popupMenuGroupProvider = LinkInfoEx.getPopupMenuGroupProvider(linkInfo);
     if (popupMenuGroupProvider != null) {
       provider = new TerminalActionProvider() {
         @Override

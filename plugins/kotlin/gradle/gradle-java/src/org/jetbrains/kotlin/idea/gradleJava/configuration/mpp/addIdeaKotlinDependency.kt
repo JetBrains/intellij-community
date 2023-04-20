@@ -23,7 +23,7 @@ fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinDependency
 
 fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinProjectArtifactDependency): List<DataNode<out ModuleDependencyData>> {
     val project = this.getParent(ProjectData::class.java) ?: return emptyList()
-    return KotlinProjectArtifactDependencyResolver(project).resolve(dependency)
+    return KotlinProjectArtifactDependencyResolver().resolve(project, this, dependency)
         .mapNotNull { sourceDependency -> addDependency(sourceDependency) }
 }
 

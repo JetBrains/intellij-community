@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-/**
- *  @author dsl
- */
 public class SingleSourceRootMoveDestination implements MoveDestination {
   private static final Logger LOG = Logger.getInstance(SingleSourceRootMoveDestination.class);
   @NotNull

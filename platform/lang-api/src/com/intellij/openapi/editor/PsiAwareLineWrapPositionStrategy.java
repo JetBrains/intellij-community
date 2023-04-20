@@ -30,8 +30,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Base super-class for {@link LineWrapPositionStrategy} implementations that want to restrict wrap positions
  * only for particular elements/tokens (e.g. we may want to avoid line wrap in the middle of xml tag name etc).
- * 
- * @author Denis Zhdanov
  */
 public abstract class PsiAwareLineWrapPositionStrategy implements LineWrapPositionStrategy {
 

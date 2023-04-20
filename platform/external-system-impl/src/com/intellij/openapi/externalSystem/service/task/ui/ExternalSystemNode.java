@@ -19,9 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
-/**
- * @author Denis Zhdanov
- */
 @SuppressWarnings("unchecked")
 public class ExternalSystemNode<T> extends DefaultMutableTreeNode {
 

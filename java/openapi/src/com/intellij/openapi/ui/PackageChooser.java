@@ -22,9 +22,6 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 
-/**
- * @author ven
- */
 public abstract class PackageChooser extends DialogWrapper {
   public PackageChooser(Project project, boolean canBeParent) {
     super(project, canBeParent);

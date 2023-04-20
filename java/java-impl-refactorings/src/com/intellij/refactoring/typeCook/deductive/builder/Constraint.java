@@ -19,9 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
 
-/**
- * @author db
- */
 public abstract class Constraint {
   private static final Logger LOG = Logger.getInstance(Constraint.class);
 

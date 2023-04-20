@@ -61,8 +61,8 @@ object UpdateChecker {
   private const val DISABLED_UPDATE = "disabled_update.txt"
   private const val DISABLED_PLUGIN_UPDATE = "plugin_disabled_updates.txt"
   private const val PRODUCT_DATA_TTL_MIN = 5L
-  private const val MACHINE_ID_DISABLED_PROPERTY = "machine.id.disabled"
-  private const val MACHINE_ID_PARAMETER = "mid"
+  const val MACHINE_ID_DISABLED_PROPERTY = "machine.id.disabled"
+  const val MACHINE_ID_PARAMETER = "mid"
 
   private enum class NotificationKind { PLATFORM, PLUGINS, EXTERNAL }
 

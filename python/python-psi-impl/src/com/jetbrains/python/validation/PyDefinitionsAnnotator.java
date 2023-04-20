@@ -28,7 +28,6 @@ import java.util.Objects;
 
 /**
  * Highlights class definitions, functrion definitions, and decorators.
- * User: dcheryasov
  */
 public class PyDefinitionsAnnotator extends PyAnnotator {
 

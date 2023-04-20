@@ -4,8 +4,10 @@ package com.intellij.execution.services;
 import com.intellij.execution.ui.layout.impl.JBRunnerTabs;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTabbedPaneUI;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.ContentUI;
 import com.intellij.ui.content.TabbedPaneContentUI;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,7 +18,7 @@ public final class ServiceViewUIUtils {
   private ServiceViewUIUtils() {
   }
 
-  public static ContentUI getServicesAlignedTabbedPaneContentUI() {
+  public static @NotNull ContentUI getServicesAlignedTabbedPaneContentUI() {
     TabbedPaneContentUI contentUI = new TabbedPaneContentUI(SwingConstants.TOP);
     JComponent component = contentUI.getComponent();
     if (component instanceof TabbedPaneWrapper.TabbedPaneHolder) {
@@ -34,6 +36,17 @@ public final class ServiceViewUIUtils {
       }
     }
     return contentUI;
+  }
+
+  public static @NotNull JPanel getServicesAlignedPanelWrapper(@NotNull JComponent wrapped) {
+    return new NonOpaquePanel(wrapped) {
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension size = super.getPreferredSize();
+        size.height = JBRunnerTabs.getTabLabelPreferredHeight();
+        return size;
+      }
+    };
   }
 
   private static class ServiceViewDetailsTabbedPaneUI extends DarculaTabbedPaneUI {

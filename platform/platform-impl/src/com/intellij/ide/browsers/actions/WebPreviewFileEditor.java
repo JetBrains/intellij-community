@@ -41,7 +41,7 @@ public class WebPreviewFileEditor extends UserDataHolderBase implements FileEdit
 
   public WebPreviewFileEditor(@NotNull Project project, @NotNull WebPreviewVirtualFile file) {
     myFile = file.getOriginalFile();
-    myPanel = new JCEFHtmlPanel(file.getPreviewUrl().toExternalForm());
+    myPanel = new JCEFHtmlPanel(false, file.getPreviewUrl().toExternalForm());
     myUrl = file.getPreviewUrl().toExternalForm();
     reloadPage();
     previewsOpened++;

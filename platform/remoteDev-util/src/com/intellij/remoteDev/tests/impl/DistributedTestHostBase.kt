@@ -17,9 +17,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.remoteDev.tests.*
-import com.intellij.remoteDev.tests.modelGenerated.RdTestSessionException
-import com.intellij.remoteDev.tests.modelGenerated.RdTestSessionExceptionCause
-import com.intellij.remoteDev.tests.modelGenerated.RdTestSessionStackTraceElement
 import com.intellij.remoteDev.tests.modelGenerated.distributedTestModel
 import com.intellij.util.application
 import com.intellij.util.ui.ImageUtil
@@ -42,13 +39,11 @@ import java.util.concurrent.TimeoutException
 import javax.imageio.ImageIO
 import kotlin.reflect.full.createInstance
 
-
 class DistributedTestHost(private val agentProject: Project) : DistributedTestHostBase() {
   override val projectOrNull: Project
     get() = agentProject
   override val project: Project
     get() = agentProject
-
 }
 
 class DistributedTestHostGateway : DistributedTestHostBase() {
@@ -56,16 +51,18 @@ class DistributedTestHostGateway : DistributedTestHostBase() {
     get() = null
   override val project: Project
     get() = error("Project shouldn't be referenced for gateway")
-
 }
 
 @ApiStatus.Internal
-abstract class DistributedTestHostBase() {
-
+abstract class DistributedTestHostBase {
   companion object {
     private val logger = Logger.getInstance(DistributedTestHostBase::class.java)
 
     const val screenshotOnFailureFileName = "ScreenshotOnFailure"
+
+    fun getDistributedTestPort(): Int? =
+      (System.getProperty(AgentConstants.protocolPortEnvVar)
+       ?: System.getenv(AgentConstants.protocolPortEnvVar))?.toIntOrNull()
   }
 
   protected abstract val projectOrNull: Project?
@@ -84,12 +81,10 @@ abstract class DistributedTestHostBase() {
       false -> InetAddress.getLoopbackAddress()
     }
 
-    logger.info("Host address=${hostAddress}")
-
-    val port = System.getenv(AgentConstants.protocolPortEnvVar)?.toIntOrNull()
+    val port = getDistributedTestPort()
 
     if (port != null) {
-      logger.info("Queue creating protocol on port $port")
+      logger.info("Queue creating protocol on $hostAddress:$port")
       application.invokeLater { createProtocol(hostAddress, port) }
     }
   }
@@ -112,79 +107,84 @@ abstract class DistributedTestHostBase() {
         logger.info("New test session: ${session.testClassName}.${session.testMethodName}")
         logger.info("Setting up loggers")
         AgentTestLoggerFactory.bindSession(lt, session)
-
-        // Create test class
-        val testClass = Class.forName(session.testClassName)
-        val testClassObject = testClass.kotlin.createInstance() as DistributedTestPlayer
-
-        // Tell test we are running it inside an agent
-        val agentInfo = AgentInfo(session.agentId, session.testMethodName)
-        val queue = testClassObject.initAgent(agentInfo)
-
-        // Play test method
-        val testMethod = testClass.getMethod(session.testMethodName)
-        testClassObject.performInit(testMethod)
-        testMethod.invoke(testClassObject)
-
-        // Advice for processing events
-        session.runNextAction.set { _, _ ->
-          var actionTitle: String? = null
-          try {
-            assert(ClientId.current.isLocal) { "ClientId '${ClientId.current}' should be local when test method starts" }
-
-            val action = queue.remove()
-            actionTitle = action.title
-            logger.info("'$actionTitle': preparing to start action")
-            showNotification(actionTitle)
-
-            // Flush all events to process pending protocol events and other things
-            //   before actual test method execution
-            IdeEventQueue.getInstance().flushQueue()
-
-            // Execute test method
-            lateinit var result: RdTask<Boolean>
-            logger.info("'$actionTitle': starting action")
-            val elapsedAction = measureTimeMillis {
-              result = action.action.invoke(context)
-            }
-            logger.info("'$actionTitle': completed action in ${elapsedAction}ms")
-
-            projectOrNull?.let {
-              // Sync state across all IDE agents to maintain proper order in protocol events
-              logger.info("'$actionTitle': Sync protocol events after execution...")
-              val elapsedSync = measureTimeMillis {
-                DistributedTestBridge.getInstance(it).syncProtocolEvents()
-                IdeEventQueue.getInstance().flushQueue()
-              }
-              logger.info("'$actionTitle': Protocol state sync completed in ${elapsedSync}ms")
-            }
-
-            // Assert state
-            assertStateAfterTestMethod()
-
-            return@set result
-          }
-          catch (ex: Throwable) {
-            logger.warn("Test action ${actionTitle?.let { "'$it' " }.orEmpty()}hasn't finished successfully", ex)
-            if (!application.isHeadlessEnvironment)
-              actionTitle?.let { makeScreenshot("${it}_$screenshotOnFailureFileName") }
-            return@set RdTask.faulted(ex)
-          }
+        if (session.testMethodName == null) {
+          logger.info("Test session without test class to run.")
         }
+        else {
+          // Create test class
+          val testClass = Class.forName(session.testClassName)
+          val testClassObject = testClass.kotlin.createInstance() as DistributedTestPlayer
 
-        session.shutdown.advise(lifetime) {
-          projectOrNull?.let {
-            logger.info("Close project...")
+          // Tell test we are running it inside an agent
+          val agentInfo = AgentInfo(session.agentId, session.testMethodName)
+          val queue = testClassObject.initAgent(agentInfo)
+
+          // Play test method
+          val testMethod = testClass.getMethod(session.testMethodName)
+          testClassObject.performInit(testMethod)
+          testMethod.invoke(testClassObject)
+
+
+          // Advice for processing events
+          session.runNextAction.set { _, _ ->
+            var actionTitle: String? = null
             try {
-              ProjectManagerEx.getInstanceEx().forceCloseProject(it)
+              assert(ClientId.current.isLocal) { "ClientId '${ClientId.current}' should be local when test method starts" }
+
+              val action = queue.remove()
+              actionTitle = action.title
+              logger.info("'$actionTitle': preparing to start action")
+              showNotification(actionTitle)
+
+              // Flush all events to process pending protocol events and other things
+              //   before actual test method execution
+              IdeEventQueue.getInstance().flushQueue()
+
+              // Execute test method
+              lateinit var result: RdTask<Boolean>
+              logger.info("'$actionTitle': starting action")
+              val elapsedAction = measureTimeMillis {
+                result = action.action.invoke(context)
+              }
+              logger.info("'$actionTitle': completed action in ${elapsedAction}ms")
+
+              projectOrNull?.let {
+                // Sync state across all IDE agents to maintain proper order in protocol events
+                logger.info("'$actionTitle': Sync protocol events after execution...")
+                val elapsedSync = measureTimeMillis {
+                  DistributedTestBridge.getInstance(it).syncProtocolEvents()
+                  IdeEventQueue.getInstance().flushQueue()
+                }
+                logger.info("'$actionTitle': Protocol state sync completed in ${elapsedSync}ms")
+              }
+
+              // Assert state
+              assertStateAfterTestMethod()
+
+              return@set result
             }
-            catch (e: Exception) {
-              logger.error("Error on project closing", e)
+            catch (ex: Throwable) {
+              logger.warn("Test action ${actionTitle?.let { "'$it' " }.orEmpty()}hasn't finished successfully", ex)
+              if (!application.isHeadlessEnvironment)
+                actionTitle?.let { makeScreenshot("${it}_$screenshotOnFailureFileName") }
+              return@set RdTask.faulted(ex)
             }
           }
 
-          logger.info("Shutdown application...")
-          application.exit(true, true, false)
+          session.shutdown.advise(lifetime) {
+            projectOrNull?.let {
+              logger.info("Close project...")
+              try {
+                ProjectManagerEx.getInstanceEx().forceCloseProject(it)
+              }
+              catch (e: Exception) {
+                logger.error("Error on project closing", e)
+              }
+            }
+
+            logger.info("Shutdown application...")
+            application.exit(true, true, false)
+          }
         }
 
         session.dumpThreads.adviseOn(lifetime, DistributedTestInplaceScheduler) {
@@ -280,27 +280,5 @@ abstract class DistributedTestHostBase() {
                                     NotificationType.INFORMATION)
     Notifications.Bus.notify(notification)
     return notification
-  }
-
-  private fun Throwable.toModel(): RdTestSessionException {
-    fun getRdTestStackTraceElement(trace: Array<StackTraceElement>?): List<RdTestSessionStackTraceElement> =
-      trace?.map { it ->
-        RdTestSessionStackTraceElement(it.className, it.methodName, it.fileName.orEmpty(), it.lineNumber)
-      } ?: emptyList()
-
-    val rdTestSessionExceptionCause = this.cause?.let { cause ->
-      RdTestSessionExceptionCause(
-        cause.javaClass.typeName,
-        cause.message,
-        getRdTestStackTraceElement(cause.stackTrace)
-      )
-    }
-
-    return RdTestSessionException(
-      this.javaClass.typeName,
-      this.message,
-      getRdTestStackTraceElement(this.stackTrace),
-      rdTestSessionExceptionCause
-    )
   }
 }

@@ -95,10 +95,11 @@ internal fun DeclarationDescriptor.canonicalRender(): String = DescriptorRendere
 internal fun checkRedeclarations(
     declaration: KtNamedDeclaration,
     newName: String,
-    result: MutableList<UsageInfo>,
-    resolutionFacade: ResolutionFacade = declaration.getResolutionFacade(),
-    descriptor: DeclarationDescriptor = declaration.unsafeResolveToDescriptor(resolutionFacade)
+    result: MutableList<UsageInfo>
 ) {
+    val resolutionFacade: ResolutionFacade = declaration.getResolutionFacade()
+    val descriptor: DeclarationDescriptor = declaration.unsafeResolveToDescriptor(resolutionFacade)
+
     fun DeclarationDescriptor.isTopLevelPrivate(): Boolean =
         this is DeclarationDescriptorWithVisibility && visibility == DescriptorVisibilities.PRIVATE && containingDeclaration is PackageFragmentDescriptor
 
@@ -170,7 +171,7 @@ internal fun checkRedeclarations(
         is ClassifierDescriptor -> {
 
             @OptIn(FrontendInternals::class)
-            val typeSpecificityComparator = resolutionFacade.getFrontendService(descriptor.module, TypeSpecificityComparator::class.java)
+            val typeSpecificityComparator = resolutionFacade.getFrontendService(TypeSpecificityComparator::class.java)
             OverloadChecker(typeSpecificityComparator)
         }
         else -> null

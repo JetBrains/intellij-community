@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.server;
 
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.impl.TrustedProjects;
-import com.intellij.ide.impl.trustedProjects.TrustedProjectsListener;
+import com.intellij.ide.trustedProjects.TrustedProjectsListener;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
@@ -86,7 +86,7 @@ public final class MavenServerManager implements Disposable {
     synchronized (myMultimoduleDirToConnectorMap) {
       getAllConnectors().forEach(it -> {
         if (project.equals(it.getProject()) && condition.test(it)) {
-          connectorsToShutDown.add(it);
+          connectorsToShutDown.add(removeConnector(it));
         }
       });
     }
@@ -95,7 +95,7 @@ public final class MavenServerManager implements Disposable {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         connectorsToShutDown.forEach(it -> {
-          shutdownConnector(it, wait);
+          it.stop(wait);
         });
       }
     });

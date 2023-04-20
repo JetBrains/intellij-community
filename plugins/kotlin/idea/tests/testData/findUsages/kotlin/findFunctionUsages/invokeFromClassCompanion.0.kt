@@ -11,4 +11,3 @@ fun f1() {
     Foo()
 }
 
-// FIR_COMPARISON

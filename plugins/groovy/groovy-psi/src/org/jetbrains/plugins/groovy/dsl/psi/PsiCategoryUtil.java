@@ -5,9 +5,6 @@ package org.jetbrains.plugins.groovy.dsl.psi;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ilyas
- */
 public final class PsiCategoryUtil {
 
   @Nullable

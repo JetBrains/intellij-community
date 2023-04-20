@@ -8,9 +8,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
-/**
- * @author ilyas
- */
 public class GrBlockStatementImpl extends GroovyPsiElementImpl implements GrBlockStatement {
 
   public GrBlockStatementImpl(@NotNull ASTNode node) {

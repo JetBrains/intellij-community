@@ -11,7 +11,6 @@ import java.awt.event.ActionListener;
 import java.util.List;
 
 /**
- * @author ven
  * @deprecated Not needed and not used in IJ project
  */
 @Deprecated

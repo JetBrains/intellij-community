@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.icons;
 
 import com.intellij.ui.IconManager;
@@ -991,8 +991,8 @@ public class AllIcons {
   }
 
   public static final class Profiler {
-    /** 9x9 */ public static final @NotNull Icon CollapseNode = load("profiler/collapseNode.svg", -1235241716, 0);
-    /** 9x9 */ public static final @NotNull Icon ExpandNode = load("profiler/expandNode.svg", 1494161233, 0);
+    /** 9x9 */ public static final @NotNull Icon CollapseNode = load("profiler/collapseNode.svg", -1235241716, 2);
+    /** 9x9 */ public static final @NotNull Icon ExpandNode = load("profiler/expandNode.svg", 1494161233, 2);
     /** 12x12 */ public static final @NotNull Icon Rec = load("profiler/rec.svg", 817869116, 2);
     /** 12x12 */ public static final @NotNull Icon RecInactive = load("profiler/recInactive.svg", 1510218185, 2);
   }
@@ -1095,6 +1095,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon ToolbarError = load("runConfigurations/toolbarError.svg", 377479880, 2);
     /** 16x16 */ public static final @NotNull Icon ToolbarFailed = load("runConfigurations/toolbarFailed.svg", -976551404, 2);
     /** 16x16 */ public static final @NotNull Icon ToolbarPassed = load("runConfigurations/toolbarPassed.svg", -612404887, 2);
+    /** 16x16 */ public static final @NotNull Icon ToolbarPassedIgnored = load("runConfigurations/toolbarPassedIgnored.svg", -2057153635, 2);
     /** 16x16 */ public static final @NotNull Icon ToolbarSkipped = load("runConfigurations/toolbarSkipped.svg", 1602720714, 2);
     /** 16x16 */ public static final @NotNull Icon ToolbarTerminated = load("runConfigurations/toolbarTerminated.svg", 1903197216, 2);
     /** 16x16 */ public static final @NotNull Icon TrackCoverage = load("runConfigurations/trackCoverage.svg", -1785737081, 2);
@@ -1109,6 +1110,10 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Production = load("scope/production.svg", -531705307, 0);
     /** 16x16 */ public static final @NotNull Icon Scratches = load("scope/scratches.svg", 746266347, 0);
     /** 16x16 */ public static final @NotNull Icon Tests = load("scope/tests.svg", 483983235, 0);
+  }
+
+  public static final class Status {
+    /** 16x16 */ public static final @NotNull Icon FailedInProgress = load("status/failedInProgress.svg", -1938290202, 0);
   }
 
   public static final class Toolbar {

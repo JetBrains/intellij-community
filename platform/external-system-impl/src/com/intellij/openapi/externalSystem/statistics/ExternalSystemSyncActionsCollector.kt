@@ -39,14 +39,14 @@ class ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
     private val activityIdField = EventFields.Long("ide_activity_id")
     private val importPhaseField = EventFields.Enum<Phase>("phase")
 
-    val syncStartedEvent = GROUP.registerEvent("gradle.sync.started", activityIdField)
-    val syncFinishedEvent = GROUP.registerEvent("gradle.sync.finished", activityIdField, Boolean("sync_successful"))
+    private val syncStartedEvent = GROUP.registerEvent("gradle.sync.started", activityIdField)
+    private val syncFinishedEvent = GROUP.registerEvent("gradle.sync.finished", activityIdField, Boolean("sync_successful"))
     private val phaseStartedEvent = GROUP.registerEvent("phase.started", activityIdField, importPhaseField)
-    val phaseFinishedEvent = GROUP.registerVarargEvent("phase.finished",
-                                                       activityIdField,
-                                                       importPhaseField,
-                                                       DurationMs,
-                                                       Int("error_count"))
+    private val phaseFinishedEvent = GROUP.registerVarargEvent("phase.finished",
+                                                               activityIdField,
+                                                               importPhaseField,
+                                                               DurationMs,
+                                                               Int("error_count"))
 
     private val errorField = StringValidatedByCustomRule("error", ClassNameRuleValidator::class.java)
     private val severityField = EventFields.String("severity", listOf("fatal", "warning"))

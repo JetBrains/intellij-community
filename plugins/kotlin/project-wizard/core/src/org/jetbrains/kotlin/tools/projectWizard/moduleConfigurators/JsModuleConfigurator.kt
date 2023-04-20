@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.ModuleKind
 import org.jetbrains.kotlin.tools.projectWizard.templates.ReactJsClientTemplate
 import org.jetbrains.kotlin.tools.projectWizard.templates.SimpleJsClientTemplate
 import org.jetbrains.kotlin.tools.projectWizard.templates.SimpleNodeJsTemplate
+import org.jetbrains.kotlin.tools.projectWizard.templates.SimpleWasmClientTemplate
 import java.nio.file.Path
 
 interface JSConfigurator : ModuleConfiguratorWithModuleType, ModuleConfiguratorWithSettings {
@@ -61,7 +62,8 @@ interface JSConfigurator : ModuleConfiguratorWithModuleType, ModuleConfiguratorW
                     kindCandidate == JsTargetKind.LIBRARY
                             && (reference.module?.template is SimpleJsClientTemplate ||
                             reference.module?.template is ReactJsClientTemplate ||
-                            reference.module?.template is SimpleNodeJsTemplate) -> false
+                            reference.module?.template is SimpleNodeJsTemplate ||
+                            reference.module?.template is SimpleWasmClientTemplate) -> false
                     else -> true
                 }
             }
@@ -106,15 +108,19 @@ interface JSConfigurator : ModuleConfiguratorWithModuleType, ModuleConfiguratorW
 
 interface JsBrowserBasedConfigurator {
     companion object : ModuleConfiguratorSettings() {
-        private fun Reader.cssSupportNeeded(module: Module): Boolean =
-            isApplication(module) || settingValue(module, testFramework) != KotlinTestFramework.NONE
+        private fun Reader.cssSupportNeeded(module: Module, cssSupportNeeded: Boolean): Boolean =
+            cssSupportNeeded && (isApplication(module) || settingValue(module, testFramework) != KotlinTestFramework.NONE)
 
-        fun GradleIRListBuilder.browserSubTarget(module: Module, reader: Reader) {
+        fun GradleIRListBuilder.browserSubTarget(
+            module: Module,
+            reader: Reader,
+            cssSupportNeeded: Boolean
+        ) {
             if (reader.isApplication(module)) {
                 applicationSupport()
             }
             "browser" {
-                if (reader.cssSupportNeeded(module)) commonCssSupport(reader)
+                if (reader.cssSupportNeeded(module, cssSupportNeeded)) commonCssSupport(reader)
             }
         }
     }
@@ -176,7 +182,7 @@ object BrowserJsSinglePlatformModuleConfigurator : JsSinglePlatformModuleConfigu
     override val moduleKind = ModuleKind.singlePlatformJsBrowser
 
     override fun GradleIRListBuilder.subTarget(module: Module, reader: Reader) {
-        browserSubTarget(module, reader)
+        browserSubTarget(module, reader, cssSupportNeeded = true)
     }
 
     override val text = KotlinNewProjectWizardBundle.message("module.configurator.simple.js.browser")

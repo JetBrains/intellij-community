@@ -39,9 +39,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author Denis Zhdanov
- */
 public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorTest {
   
   public void testUnexpectedClassLevelJavadocExpandingOnClassSignatureChange() {

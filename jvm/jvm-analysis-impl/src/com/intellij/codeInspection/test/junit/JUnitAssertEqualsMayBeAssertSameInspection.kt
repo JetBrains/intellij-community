@@ -3,6 +3,7 @@ package com.intellij.codeInspection.test.junit
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInspection.*
+import com.intellij.codeInspection.fix.ReplaceMethodCallFix
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtil
 import com.intellij.uast.UastHintedVisitorAdapter

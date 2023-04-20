@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import org.jetbrains.annotations.NotNull;
@@ -24,19 +25,16 @@ public interface IndexableFilesIndex {
   /**
    * See {@link com.intellij.util.indexing.roots.StandardContributorsKt#shouldIndexProjectBasedOnIndexableEntityProviders()}
    */
-  static boolean shouldBeUsed() {
+  static boolean isEnabled() {
    return (Registry.is("indexing.use.indexable.files.index") ||
-            (ApplicationManager.getApplication().isUnitTestMode() && TestModeFlags.is(ENABLE_IN_TESTS))) &&
-           Registry.is("indexing.enable.entity.provider.based.indexing");
-  }
-
-  static boolean isIntegrationFullyEnabled(){
-    return shouldBeUsed() && Registry.is("indexing.fully.use.indexable.files.index");
+           (ApplicationManager.getApplication().isUnitTestMode() && TestModeFlags.is(ENABLE_IN_TESTS))) &&
+          WorkspaceFileIndexEx.IS_ENABLED &&
+          Registry.is("indexing.enable.entity.provider.based.indexing");
   }
 
   @NotNull
   static IndexableFilesIndex getInstance(@NotNull Project project) {
-    assert shouldBeUsed();
+    assert isEnabled();
     return project.getService(IndexableFilesIndex.class);
   }
 

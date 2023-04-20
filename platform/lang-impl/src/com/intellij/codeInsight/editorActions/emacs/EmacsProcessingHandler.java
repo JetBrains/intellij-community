@@ -22,8 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * This interface is assumed to define general contract for Emacs-like functionality.
- * 
- * @author Denis Zhdanov
  */
 public interface EmacsProcessingHandler {
 

@@ -4,9 +4,6 @@ package com.intellij.debugger.engine.evaluation.expression;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 
-/**
- * @author lex
- */
 public class BreakException extends EvaluateException {
   private final String myLabelName;
 

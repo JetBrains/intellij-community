@@ -24,6 +24,7 @@ import org.jetbrains.annotations.*;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.*;
 
 /**
@@ -369,6 +370,13 @@ public class VfsUtilCore {
   public static boolean isInvalidLink(@NotNull VirtualFile link) {
     VirtualFile target = link.getCanonicalFile();
     return target == null || target.equals(link) || isAncestor(target, link, true);
+  }
+
+  public static void saveText(@NotNull VirtualFile file, @NotNull String text) throws IOException {
+    Charset charset = file.getCharset();
+    try (OutputStream stream = file.getOutputStream(file)) {
+      stream.write(text.getBytes(charset));
+    }
   }
 
   public static @NotNull String loadText(@NotNull VirtualFile file) throws IOException {

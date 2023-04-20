@@ -363,7 +363,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
       throw ce
     }
     catch (e: Throwable) {
-      LOG.warn(Throwable(e))
+      LOG.error(Throwable(e))
       reportCommitCheckFailure(CommitProblem.createError(e))
       return NonModalCommitChecksFailure.ERROR
     }

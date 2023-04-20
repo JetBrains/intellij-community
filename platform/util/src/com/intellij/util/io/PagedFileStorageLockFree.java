@@ -154,7 +154,7 @@ public class PagedFileStorageLockFree implements PagedStorage {
 
     final int pageIndex = toPageIndex(offsetInFile);
     final int offsetOnPage = toOffsetInPage(offsetInFile);
-    try (final Page page = pageByIndex(pageIndex)) {
+    try (final Page page = pageByIndex(pageIndex, /*forWrite: */ true)) {
       page.putInt(offsetOnPage, value);
     }
   }
@@ -165,7 +165,7 @@ public class PagedFileStorageLockFree implements PagedStorage {
 
     final int pageIndex = toPageIndex(offsetInFile);
     final int offsetInPage = toOffsetInPage(offsetInFile);
-    try (final Page page = pageByIndex(pageIndex)) {
+    try (final Page page = pageByIndex(pageIndex, /*forWrite: */ false)) {
       return page.getInt(offsetInPage);
     }
   }
@@ -177,7 +177,7 @@ public class PagedFileStorageLockFree implements PagedStorage {
 
     final int pageIndex = toPageIndex(offsetInFile);
     final int offsetInPage = toOffsetInPage(offsetInFile);
-    try (final Page page = pageByIndex(pageIndex)) {
+    try (final Page page = pageByIndex(pageIndex, /*forWrite: */ true)) {
       page.putLong(offsetInPage, value);
     }
   }
@@ -188,7 +188,7 @@ public class PagedFileStorageLockFree implements PagedStorage {
 
     final int pageIndex = toPageIndex(offsetInFile);
     final int offsetInPage = toOffsetInPage(offsetInFile);
-    try (final Page page = pageByIndex(pageIndex)) {
+    try (final Page page = pageByIndex(pageIndex, /*forWrite: */ false)) {
       return page.getLong(offsetInPage);
     }
   }
@@ -201,7 +201,7 @@ public class PagedFileStorageLockFree implements PagedStorage {
 
     final int pageIndex = toPageIndex(offsetInFile);
     final int offsetInPage = toOffsetInPage(offsetInFile);
-    try (final Page page = pageByIndex(pageIndex)) {
+    try (final Page page = pageByIndex(pageIndex, /*forWrite: */ true)) {
       page.putFromBuffer(data, offsetInPage);
     }
   }
@@ -210,7 +210,7 @@ public class PagedFileStorageLockFree implements PagedStorage {
   public byte get(final long offsetInFile) throws IOException {
     final int pageIndex = toPageIndex(offsetInFile);
     final int offsetInPage = toOffsetInPage(offsetInFile);
-    try (final Page page = pageByIndex(pageIndex)) {
+    try (final Page page = pageByIndex(pageIndex, /*forWrite: */ false)) {
       return page.get(offsetInPage);
     }
   }
@@ -220,7 +220,7 @@ public class PagedFileStorageLockFree implements PagedStorage {
                   final byte value) throws IOException {
     final int pageIndex = toPageIndex(offsetInFile);
     final int offsetInPage = toOffsetInPage(offsetInFile);
-    try (final Page page = pageByIndex(pageIndex)) {
+    try (final Page page = pageByIndex(pageIndex, /*forWrite: */ true)) {
       page.put(offsetInPage, value);
     }
   }
@@ -237,7 +237,7 @@ public class PagedFileStorageLockFree implements PagedStorage {
       final int offsetInPage = toOffsetInPage(currentOffsetInFile);
 
       int bytesToRead = Math.min(remainingBytesToRead, pageSize - offsetInPage);
-      try (final Page page = pageByIndex(pageIndex)) {
+      try (final Page page = pageByIndex(pageIndex, /*forWrite: */ false)) {
         page.readToArray(destination, currentOffsetInArray, offsetInPage, bytesToRead);
       }
 
@@ -259,7 +259,7 @@ public class PagedFileStorageLockFree implements PagedStorage {
       final int offsetInPage = toOffsetInPage(i);
 
       final int page_len = Math.min(l, pageSize - offsetInPage);
-      try (final Page page = pageByIndex(pageIndex)) {
+      try (final Page page = pageByIndex(pageIndex, /*forWrite: */ true)) {
         page.putFromArray(src, o, offsetInPage, page_len);
       }
       l -= page_len;
@@ -392,6 +392,7 @@ public class PagedFileStorageLockFree implements PagedStorage {
     return closingInProgress;
   }
 
+  @Override
   public int toOffsetInPage(final long offsetInFile) {
     return (int)(offsetInFile % pageSize);
   }
@@ -435,10 +436,6 @@ public class PagedFileStorageLockFree implements PagedStorage {
 
   protected PagesTable pages() {
     return pages;
-  }
-
-  protected Page pageByIndex(final int pageIndex) throws IOException {
-    return pageByIndex(pageIndex, true);
   }
 
   <R> R useChannel(final @NotNull OpenChannelsCache.ChannelProcessor<R> processor,

@@ -24,11 +24,18 @@ public class ToolbarComboWidgetUI extends ComponentUI {
 
   private static final int ELEMENTS_GAP = 5;
   private static final Icon EXPAND_ICON = AllIcons.General.ChevronDown;
-  private static final int MIN_TEXT_LENGTH = 5;
   private static final int SEPARATOR_WIDTH = 1;
+  private static final int DEFAULT_MAX_WIDTH = 350;
 
   private final HoverAreaTracker hoverTracker = new HoverAreaTracker();
   private final ClickListener clickListener = new ClickListener();
+  private TextCutStrategy textCutStrategy = new DefaultCutStrategy();
+  private int maxWidth;
+
+  public ToolbarComboWidgetUI() {
+    maxWidth = UIManager.getInt("MainToolbar.Dropdown.maxWidth");
+    if (maxWidth == 0) maxWidth = DEFAULT_MAX_WIDTH;
+  }
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static ComponentUI createUI(JComponent c) {
@@ -119,6 +126,14 @@ public class ToolbarComboWidgetUI extends ComponentUI {
     return textRect.y + fm.getAscent();
   }
 
+  public void setTextCutStrategy(TextCutStrategy strategy) {
+    textCutStrategy = strategy;
+  }
+
+  public void setMaxWidth(int width) {
+    maxWidth = width;
+  }
+
   private void paintBackground(Graphics g, ToolbarComboWidget c) {
     Graphics g2 = g.create();
     try {
@@ -140,25 +155,14 @@ public class ToolbarComboWidgetUI extends ComponentUI {
     }
   }
 
-  private static void drawText(JComponent c, @NotNull String fullText, Graphics2D g, Rectangle textBounds) {
+  private void drawText(JComponent c, @NotNull String fullText, Graphics2D g, Rectangle textBounds) {
     FontMetrics metrics = c.getFontMetrics(c.getFont());
 
     int baseline = c.getBaseline(textBounds.width, textBounds.height);
-    String text = calcShownText(fullText, metrics, textBounds.width);
+    String text = textCutStrategy.calcShownText(fullText, metrics, textBounds.width);
     Rectangle strBounds = metrics.getStringBounds(text, g).getBounds();
     strBounds.setLocation((int)(textBounds.getCenterX() - strBounds.getCenterX()), baseline);
     SwingUtilities2.drawString(c, g, text, strBounds.x, strBounds.y);
-  }
-
-  private static String calcShownText(String text, FontMetrics metrics, int maxWidth) {
-    int width = metrics.stringWidth(text);
-    if (width <= maxWidth) return text;
-
-    while (width > maxWidth && text.length() > MIN_TEXT_LENGTH) {
-      text = text.substring(0, text.length() - 1);
-      width = metrics.stringWidth(text + "...");
-    }
-    return text + "...";
   }
 
   private static int calcMaxTextWidth(ToolbarComboWidget c, Rectangle paintRect) {
@@ -247,6 +251,7 @@ public class ToolbarComboWidgetUI extends ComponentUI {
     res.height += insets.top + insets.bottom;
     res.width += insets.left + insets.right;
 
+    res.width = Integer.min(maxWidth, res.width);
     return res;
   }
 
@@ -340,6 +345,24 @@ public class ToolbarComboWidgetUI extends ComponentUI {
     private void notifyPressListeners(MouseEvent e) {
       ActionEvent ae = new ActionEvent(comp, 0, null, System.currentTimeMillis(), e.getModifiersEx());
       comp.getPressListeners().forEach(listener -> listener.actionPerformed(ae));
+    }
+  }
+
+  private static class DefaultCutStrategy implements TextCutStrategy {
+
+    private static final int MIN_TEXT_LENGTH = 5;
+
+    @NotNull
+    @Override
+    public String calcShownText(@NotNull String text, @NotNull FontMetrics metrics, int maxWidth) {
+      int width = metrics.stringWidth(text);
+      if (width <= maxWidth) return text;
+
+      while (width > maxWidth && text.length() > MIN_TEXT_LENGTH) {
+        text = text.substring(0, text.length() - 1);
+        width = metrics.stringWidth(text + "...");
+      }
+      return text + "...";
     }
   }
 }

@@ -33,8 +33,6 @@ import org.jetbrains.annotations.Nullable;
  * Generally, it puts currently selected text to the {@link KillRingTransferable kill ring}.
  * <p/>
  * Thread-safe.
- * 
- * @author Denis Zhdanov
  */
 public class KillRingSaveAction extends TextComponentEditorAction {
 

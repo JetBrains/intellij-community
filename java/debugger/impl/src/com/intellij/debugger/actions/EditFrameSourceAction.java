@@ -7,9 +7,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author lex
- */
 public class EditFrameSourceAction extends GotoFrameSourceAction {
   @Override
   public void update(@NotNull AnActionEvent e) {

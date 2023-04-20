@@ -184,6 +184,7 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
     String text = getFilterText();
     if (text.isEmpty()) {
       myContext.setHoldingFilter(false);
+      myHits = null;
       myFiltered = null;
     }
     else {

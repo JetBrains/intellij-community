@@ -7,9 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public abstract class EquivalenceDescriptorProvider {
   public static final ExtensionPointName<EquivalenceDescriptorProvider> EP_NAME = ExtensionPointName.create("com.intellij.equivalenceDescriptorProvider");
 

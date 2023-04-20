@@ -97,8 +97,8 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
         endColor = WARNING_END_COLOR;
       }
       else {
-        startColor = getStartColor();
-        endColor = getEndColor();
+        startColor = getStartColor(c);
+        endColor = getEndColor(c);
       }
 
       int pHeight = progressBar.getPreferredSize().height;
@@ -157,11 +157,11 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
     }
   }
 
-  protected Color getStartColor() {
+  protected Color getStartColor(JComponent c) {
     return INDETERMINATE_START_COLOR;
   }
 
-  protected Color getEndColor() {
+  protected Color getEndColor(JComponent c) {
     return INDETERMINATE_END_COLOR;
   }
 
@@ -242,7 +242,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
         g2.setColor(WARNING_COLOR);
       }
       else {
-        g2.setColor(getFinishedColor());
+        g2.setColor(getFinishedColor(c));
       }
       g2.fill(coloredShape);
 
@@ -260,7 +260,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
     return TRACK_COLOR;
   }
 
-  protected Color getFinishedColor() {
+  protected Color getFinishedColor(JComponent c) {
     return PROGRESS_COLOR;
   }
 

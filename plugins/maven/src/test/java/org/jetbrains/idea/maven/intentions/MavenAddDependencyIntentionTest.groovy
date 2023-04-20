@@ -22,9 +22,6 @@ import com.intellij.maven.testFramework.MavenDomTestCase
 import org.jetbrains.idea.maven.dom.intentions.AddMavenDependencyQuickFix
 import org.junit.Test
 
-/**
- * @author Sergey Evdokimov
- */
 class MavenAddDependencyIntentionTest extends MavenDomTestCase {
 
   @Override

@@ -20,9 +20,6 @@ import groovy.transform.CompileStatic
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.BY_NAME
-/**
- * @author Denis Zhdanov
- */
 @CompileStatic
 class JavaRearrangerByTypeTest extends AbstractJavaRearrangerTest {
 

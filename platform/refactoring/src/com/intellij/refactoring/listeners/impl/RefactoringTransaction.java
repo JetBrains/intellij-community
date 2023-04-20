@@ -20,9 +20,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author dsl
- */
 public interface RefactoringTransaction {
   /**
    * Returns listener for element (element must belong to set of affected elements).

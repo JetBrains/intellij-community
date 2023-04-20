@@ -42,9 +42,6 @@ import java.util.*;
 
 import static org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier.GrModifierConstant;
 
-/**
- * @author Sergey Evdokimov
- */
 public class GrLightMethodBuilder extends LightElement implements GrMethod, OriginInfoAwareElement {
 
   public static final Key<String> KIND_KEY = Key.create("GrLightMethodBuilder.Key");

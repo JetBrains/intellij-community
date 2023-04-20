@@ -21,9 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.border.Border;
 import java.awt.*;
 
-/**
- * @author spleaner
- */
 public class BreadcrumbsXmlWrapper extends BreadcrumbsPanel implements Border {
   private final VirtualFile myFile;
 

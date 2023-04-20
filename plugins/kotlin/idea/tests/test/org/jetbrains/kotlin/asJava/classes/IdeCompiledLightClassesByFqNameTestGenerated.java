@@ -240,6 +240,11 @@ public abstract class IdeCompiledLightClassesByFqNameTestGenerated extends Abstr
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/AnnotationRepeatable.kt"));
         }
 
+        @TestMetadata("BackingFields.kt")
+        public void testBackingFields() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/BackingFields.kt"));
+        }
+
         @TestMetadata("CompanionObject.kt")
         public void testCompanionObject() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/CompanionObject.kt"));
@@ -383,6 +388,11 @@ public abstract class IdeCompiledLightClassesByFqNameTestGenerated extends Abstr
         @TestMetadata("StubOrderForOverloads.kt")
         public void testStubOrderForOverloads() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/StubOrderForOverloads.kt"));
+        }
+
+        @TestMetadata("Throws.kt")
+        public void testThrows() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/Throws.kt"));
         }
 
         @TestMetadata("TypePararametersInClass.kt")

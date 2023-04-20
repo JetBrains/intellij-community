@@ -55,6 +55,7 @@ abstract class ApplicationStarterBase protected constructor(private vararg val a
       throw e
     }
     catch (e: Exception) {
+      e.printStackTrace() // The dialog may sometimes not be shown e.g. in remote dev scenarios.
       val title = ApplicationBundle.message("app.command.exec.error.title", commandName)
       val message = ApplicationBundle.message("app.command.exec.error", commandName, e.message)
       withContext(Dispatchers.EDT) {

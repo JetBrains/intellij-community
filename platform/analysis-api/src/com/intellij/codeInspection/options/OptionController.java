@@ -2,8 +2,13 @@
 package com.intellij.codeInspection.options;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.util.ReflectionUtil;
+import kotlin.reflect.KMutableProperty0;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Field;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -36,36 +41,56 @@ public interface OptionController {
    * @see #setOption(String, Object)
    * @see InspectionProfileEntry#getOptionController()
    */
+  @Nullable
   Object getOption(@NotNull String bindId);
 
   /**
    * @param bindId bindId of the option value to process especially; setting of this option is not supported
-   *               (can be used e.g. with {@link OptSet} control where setter is unnecessary)
+   *               (can be used e.g. with {@link OptStringList} control where setter is unnecessary)
    * @param getter getter for an option with a given bindId
    * @return a new controller that processes the specified bindId with a specified getter,
    * and delegates to this controller for any other bindId.
    */
+  @Contract(pure = true)
   default @NotNull OptionController onValue(@NotNull String bindId, @NotNull Supplier<@NotNull Object> getter) {
     return onValue(bindId, getter, (value) -> {
-      throw new UnsupportedOperationException("Setting value is not supported");
+      if (value != getter.get()) {
+        throw new UnsupportedOperationException("Setting value is not supported");
+      }
     });
   }
 
   /**
+   * @param bindId bindId of the option value to process especially
+   * @param property a Kotlin property to bind to
+   * @return a new controller that binds the specified bindId to a specified Kotlin property,
+   * and delegates to this controller for any other bindId.
+   */
+  @Contract(pure = true)
+  default @NotNull OptionController onValue(@NotNull String bindId, @NotNull KMutableProperty0<?> property) {
+    @SuppressWarnings("unchecked") 
+    KMutableProperty0<Object> unchecked = (KMutableProperty0<Object>)property;
+    return onValue(bindId, property::get, unchecked::set);
+  }
+
+  /**
+   * @param <T> type of property
    * @param bindId bindId of the option value to process especially
    * @param getter getter for an option with a given bindId
    * @param setter setter for an option with a given bindId
    * @return a new controller that processes the specified bindId with a specified getter and setter,
    * and delegates to this controller for any other bindId.
    */
-  default @NotNull OptionController onValue(@NotNull String bindId, @NotNull Supplier<@NotNull Object> getter,
-                                            @NotNull Consumer<@NotNull Object> setter) {
+  @Contract(pure = true)
+  default <T> @NotNull OptionController onValue(@NotNull String bindId, @NotNull Supplier<@NotNull T> getter,
+                                                @NotNull Consumer<@NotNull T> setter) {
     OptionController controller = this;
     return new OptionController() {
       @Override
       public void setOption(@NotNull String _bindId, Object value) {
         if (_bindId.equals(bindId)) {
-          setter.accept(value);
+          //noinspection unchecked
+          setter.accept((T)value);
         }
         else {
           controller.setOption(_bindId, value);
@@ -87,6 +112,7 @@ public interface OptionController {
    * @param consumer additional action performed when setting an option with supplied bindId
    * @return a controller that behaves like this one but also performs an additional action when setting an option with supplied bindId
    */
+  @Contract(pure = true)
   default @NotNull OptionController onValueSet(@NotNull String bindId, @NotNull Consumer<Object> consumer) {
     OptionController delegate = this;
     return new OptionController() {
@@ -109,6 +135,7 @@ public interface OptionController {
    * @param consumer additional action performed when setting any option
    * @return a controller that behaves like this one but also performs an additional action when setting any option
    */
+  @Contract(pure = true)
   default @NotNull OptionController onValueSet(@NotNull BiConsumer<@NotNull String, Object> consumer) {
     OptionController delegate = this;
     return new OptionController() {
@@ -132,6 +159,7 @@ public interface OptionController {
    * @return a new controller that processes the options having specified prefix with a specified getter and setter,
    * and delegates to this controller for any other bindId.
    */
+  @Contract(pure = true)
   default @NotNull OptionController onPrefix(@NotNull String prefix,
                                              @NotNull Function<@NotNull String, Object> getter,
                                              @NotNull BiConsumer<@NotNull String, Object> setter) {
@@ -144,6 +172,7 @@ public interface OptionController {
    * @return a new controller that processes the options having specified prefix with a specified controller,
    * and delegates to this controller for any other bindId.
    */
+  @Contract(pure = true)
   default @NotNull OptionController onPrefix(@NotNull String prefix, @NotNull OptionController prefixController) {
     String fullPrefix = prefix + ".";
     OptionController controller = this;
@@ -173,7 +202,8 @@ public interface OptionController {
    * @param setter setter function
    * @return a new controller that encapsulates specified getter and setter
    */
-  static OptionController of(@NotNull Function<@NotNull String, Object> getter, @NotNull BiConsumer<@NotNull String, Object> setter) {
+  @Contract(pure = true)
+  static @NotNull OptionController of(@NotNull Function<@NotNull String, Object> getter, @NotNull BiConsumer<@NotNull String, Object> setter) {
     return new OptionController() {
       @Override
       public void setOption(@NotNull String bindId, Object value) {
@@ -191,7 +221,8 @@ public interface OptionController {
    * @return an empty controller that cannot get or set any option. Can be used as an initial value to build more complex controller
    * using subsequent {@code onPrefix}, {@code onValue}, etc. calls.
    */
-  static OptionController empty() {
+  @Contract(pure = true)
+  static @NotNull OptionController empty() {
     return new OptionController() {
       @Override
       public void setOption(@NotNull String bindId, Object value) {
@@ -203,5 +234,38 @@ public interface OptionController {
         throw new IllegalArgumentException(bindId);
       }
     };
+  }
+
+  /**
+   * @param obj object to bind to
+   * @return an OptionController, which reads and writes obj instance fields whose names are the same as bindId
+   */
+  @Contract(pure = true)
+  static @NotNull OptionController fieldsOf(@NotNull Object obj) {
+    return of(
+      bindId -> {
+        Field field;
+        try {
+          field = ReflectionUtil.findAssignableField(obj.getClass(), null, bindId);
+        }
+        catch (NoSuchFieldException e) {
+          throw new IllegalArgumentException("Inspection " + obj.getClass().getName() + ": Unable to find bindId = " + bindId, e);
+        }
+        return ReflectionUtil.getFieldValue(field, obj);
+      },
+      (bindId, value) -> {
+        try {
+          final Field field = ReflectionUtil.findAssignableField(obj.getClass(), null, bindId);
+          if (ReflectionUtil.getFieldValue(field, obj) != value) {
+            // Avoid updating field if new value is not the same
+            // this way we can support final mutable fields, used by e.g. OptSet 
+            field.set(obj, value);
+          }
+        }
+        catch (NoSuchFieldException | IllegalAccessException e) {
+          throw new IllegalArgumentException("Inspection " + obj.getClass().getName() + ": Unable to find bindId = " + bindId, e);
+        }
+      }
+    );
   }
 }

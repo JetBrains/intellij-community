@@ -24,9 +24,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 
-/**
- * @author ven
- */
 public class AddAssertStatementFix implements LocalQuickFix {
   private final String myText;
 

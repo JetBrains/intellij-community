@@ -48,6 +48,10 @@ open class JBLoadingPanel(manager: LayoutManager?,
     decorator!!.loadingText = text
   }
 
+  fun getLoadingText(): String? {
+    return decorator!!.loadingText
+  }
+
   open fun stopLoading() {
     decorator!!.stopLoading()
     for (listener in listeners) {

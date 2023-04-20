@@ -6,6 +6,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.WindowManager
 import com.intellij.util.PlatformUtils
 
 private class TipOfTheDayStartupActivity : ProjectPostStartupActivity {
@@ -17,7 +19,8 @@ private class TipOfTheDayStartupActivity : ProjectPostStartupActivity {
 
   override suspend fun execute(project: Project) {
     val tipManager = TipAndTrickManager.getInstance()
-    if (tipManager.canShowDialogAutomaticallyNow(project)) {
+    if (tipManager.canShowDialogAutomaticallyNow(project)
+        && WindowManager.getInstance().mostRecentFocusedWindow is IdeFrame) { // prevent tip dialog showing when any popup already open
       TipsOfTheDayUsagesCollector.triggerDialogShown(TipsOfTheDayUsagesCollector.DialogType.automatically)
       tipManager.showTipDialog(project)
     }

@@ -12,9 +12,6 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocElementType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocLexer;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentImpl;
 
-/**
- * @author ilyas
- */
 public interface GroovyDocElementTypes {
 
   /**

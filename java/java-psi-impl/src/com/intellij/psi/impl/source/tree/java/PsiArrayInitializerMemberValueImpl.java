@@ -24,9 +24,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public class PsiArrayInitializerMemberValueImpl extends CompositePsiElement implements PsiArrayInitializerMemberValue {
   private static final Logger LOG = Logger.getInstance(PsiArrayInitializerMemberValueImpl.class);
   private static final TokenSet MEMBER_SET = ElementType.ANNOTATION_MEMBER_VALUE_BIT_SET;

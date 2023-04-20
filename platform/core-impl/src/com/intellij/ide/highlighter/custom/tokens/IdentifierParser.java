@@ -19,9 +19,6 @@ package com.intellij.ide.highlighter.custom.tokens;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.tree.IElementType;
 
-/**
- * @author dsl
- */
 public class IdentifierParser extends TokenParser {
   private final KeywordParser myKeywordParser;
 

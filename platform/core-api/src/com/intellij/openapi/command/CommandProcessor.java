@@ -113,13 +113,7 @@ public abstract class CommandProcessor {
   /**
    * @deprecated use {@link CommandListener#TOPIC}
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public abstract void addCommandListener(@NotNull CommandListener listener);
-
-  /**
-   * @deprecated use {@link CommandListener#TOPIC}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public abstract void removeCommandListener(@NotNull CommandListener listener);
 }

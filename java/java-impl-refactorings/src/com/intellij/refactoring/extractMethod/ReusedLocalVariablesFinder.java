@@ -15,8 +15,6 @@ import java.util.*;
 
 /**
  * Finds local variables declared inside a code fragment and then used outside of that code fragment
- *
- * @author Pavel.Dolgov
  */
 final class ReusedLocalVariablesFinder {
   private final ControlFlow myControlFlow;

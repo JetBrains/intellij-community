@@ -36,4 +36,3 @@ open class <caret>A : X {
     }
 }
 
-// FIR_COMPARISON

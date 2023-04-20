@@ -6,9 +6,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
-/**
- * @author Pavel.Dolgov
- */
 class PreviewExclusionHandler implements ExclusionHandler<DefaultMutableTreeNode> {
   private final PreviewPanel myPanel;
 

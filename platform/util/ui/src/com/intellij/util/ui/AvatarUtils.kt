@@ -47,7 +47,9 @@ class AvatarIcon(private val targetSize: Int,
   override fun getIconHeight(): Int = getIconSize()
 
   override fun copy(): AvatarIcon {
-    return AvatarIcon(targetSize, arcRatio, gradientSeed, avatarName, palette)
+    val copy = AvatarIcon(targetSize, arcRatio, gradientSeed, avatarName, palette)
+    copy.updateContextFrom(this)
+    return copy
   }
 }
 

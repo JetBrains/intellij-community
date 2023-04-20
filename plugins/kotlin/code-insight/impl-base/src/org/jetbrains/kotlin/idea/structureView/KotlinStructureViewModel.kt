@@ -25,11 +25,14 @@ open class KotlinStructureViewModel(ktFile: KtFile, editor: Editor?, rootElement
         withSorters(KotlinVisibilitySorter, Sorter.ALPHA_SORTER)
     }
 
-    override fun isSuitable(element: PsiElement?): Boolean = element is KtDeclaration &&
+    override fun isSuitable(element: PsiElement?): Boolean =
+        element is KtDeclaration &&
             element !is KtPropertyAccessor &&
             element !is KtFunctionLiteral &&
-            !(element is KtProperty && element.parent !is KtFile && element.containingClassOrObject !is KtNamedDeclaration) &&
-            !(element is KtFunction && element.parent !is KtFile && element.containingClassOrObject !is KtNamedDeclaration)
+            !((element is KtProperty || element is KtFunction) && !element.topLevelDeclaration && element.containingClassOrObject !is KtNamedDeclaration)
+
+    private val KtDeclaration.topLevelDeclaration: Boolean
+        get() = parent is KtFile || parent is KtBlockExpression && parent.parent is KtScript
 
     override fun getFilters() = FILTERS
 

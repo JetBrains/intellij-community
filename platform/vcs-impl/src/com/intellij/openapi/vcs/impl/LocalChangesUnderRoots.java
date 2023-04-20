@@ -20,7 +20,6 @@ import java.util.Map;
 /**
  * Utility class to sort changes by roots.
  *
- * @author irengrig
  * @author Kirill Likhodedov
  */
 public final class LocalChangesUnderRoots {

@@ -18,9 +18,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author Sergey Evdokimov
- */
 public class SwingBuilderNamedArgumentProvider extends GroovyNamedArgumentProvider {
 
   @Override

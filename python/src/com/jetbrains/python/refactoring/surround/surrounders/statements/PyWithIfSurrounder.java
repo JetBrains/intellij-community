@@ -12,9 +12,6 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PyWithIfSurrounder extends PyStatementSurrounder {
   @Override
   @Nullable

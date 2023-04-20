@@ -663,15 +663,6 @@ public final class MavenIndex implements MavenSearchIndex {
     return processor.getResults();
   }
 
-  /**
-   * @deprecated use {@link MavenIndexUtils#normalizePathOrUrl(String)}
-   */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  public static String normalizePathOrUrl(@NotNull String pathOrUrl) {
-    return MavenIndexUtils.normalizePathOrUrl(pathOrUrl);
-  }
-
   private static class SetDescriptor implements DataExternalizer<Set<String>> {
     @Override
     public void save(@NotNull DataOutput s, Set<String> set) throws IOException {

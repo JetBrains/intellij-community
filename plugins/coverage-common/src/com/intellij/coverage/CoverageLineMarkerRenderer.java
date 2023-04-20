@@ -53,9 +53,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.TreeMap;
 
-/**
- * @author ven
- */
 public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMarkerRendererWithErrorStripe {
   private static final int THICKNESS = 8;
   private final TextAttributesKey myKey;

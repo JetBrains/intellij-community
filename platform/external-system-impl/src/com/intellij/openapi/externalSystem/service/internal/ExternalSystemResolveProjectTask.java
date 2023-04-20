@@ -48,8 +48,6 @@ import static com.intellij.openapi.externalSystem.statistics.ExternalSystemUsage
 
 /**
  * Thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask {
 

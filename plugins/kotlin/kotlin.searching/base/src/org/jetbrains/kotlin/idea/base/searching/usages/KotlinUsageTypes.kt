@@ -51,7 +51,7 @@ object KotlinUsageTypes {
     }
 
     // types
-    val TYPE_CONSTRAINT = UsageType(KotlinBundle.lazyMessage("find.usages.type.type.constraint"))
+    private val TYPE_CONSTRAINT = UsageType(KotlinBundle.lazyMessage("find.usages.type.type.constraint"))
     private val VALUE_PARAMETER_TYPE = UsageType(KotlinBundle.lazyMessage("find.usages.type.value.parameter.type"))
     private val NON_LOCAL_PROPERTY_TYPE = UsageType(KotlinBundle.lazyMessage("find.usages.type.nonLocal.property.type"))
     private val FUNCTION_RETURN_TYPE = UsageType(KotlinBundle.lazyMessage("find.usages.type.function.return.type"))
@@ -80,7 +80,7 @@ object KotlinUsageTypes {
     private val PACKAGE_MEMBER_ACCESS = UsageType(KotlinBundle.lazyMessage("find.usages.type.packageMemberAccess"))
 
     // common usage types
-    val CALLABLE_REFERENCE = UsageType(KotlinBundle.lazyMessage("find.usages.type.callable.reference"))
-    val CONSTRUCTOR_DELEGATION_REFERENCE = UsageType(KotlinBundle.lazyMessage("find.usages.type.constructor.delegation.reference"))
+    private val CALLABLE_REFERENCE = UsageType(KotlinBundle.lazyMessage("find.usages.type.callable.reference"))
+    private val CONSTRUCTOR_DELEGATION_REFERENCE = UsageType(KotlinBundle.lazyMessage("find.usages.type.constructor.delegation.reference"))
     private val NAMED_ARGUMENT = UsageType(KotlinBundle.lazyMessage("find.usages.type.named.argument"))
 }

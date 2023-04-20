@@ -7,6 +7,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootModificationTracker
@@ -52,15 +53,8 @@ class SettingsProviderComponent(private val project: Project) : SimpleModificati
     }
     return CachedValuesManager.getManager(project).getCachedValue(project) {
       val dirs: MutableSet<VirtualFile> = HashSet()
-      val projectBase = project.baseDir
-      if (projectBase != null) {
-        dirs.add(projectBase)
-        ReadAction.run<RuntimeException> {
-          ModuleManager.getInstance(project).modules.asSequence()
-            .flatMap { module -> ModuleRootManager.getInstance(module).contentRoots.asSequence() }
-            .filter { root -> !VfsUtilCore.isAncestor(projectBase, root, false) }
-            .toCollection(dirs)
-        }
+      ReadAction.run<RuntimeException> {
+        dirs.addAll(project.getBaseDirectories())
       }
       // TODO move this into the above ReadAction and use refreshAndFindFileByPath?
       LocalFileSystem.getInstance().findFileByPath(PathManager.getConfigPath())?.let { dirs.add(it) }

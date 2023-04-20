@@ -66,7 +66,7 @@ public class PathEditor {
     return myModified;
   }
 
-  public VirtualFile[] getRoots() {
+  public VirtualFile @NotNull [] getRoots() {
     final int count = getRowCount();
     if (count == 0) {
       return VirtualFile.EMPTY_ARRAY;

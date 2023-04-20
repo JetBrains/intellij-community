@@ -38,7 +38,8 @@ class NastradamusClient(
         runOrder = json.findValue("runOrder").asInt(),
         duration = json.findValue("duration")?.asLong() ?: 0,
         buildType = teamCityClient.buildTypeId,
-        buildStatusMessage = teamCityClient.getBuildInfo().findValue("statusText").asText()
+        buildStatusMessage = teamCityClient.getBuildInfo().findValue("statusText").asText(),
+        isMuted = json.findValue("currentlyMuted")?.asBoolean() ?: false
       )
     }
 

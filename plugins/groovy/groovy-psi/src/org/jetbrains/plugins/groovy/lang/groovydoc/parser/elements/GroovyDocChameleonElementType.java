@@ -22,9 +22,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 
-/**
- * @author ilyas
- */
 public abstract class GroovyDocChameleonElementType extends ILazyParseableElementType {
   public GroovyDocChameleonElementType(@NonNls String debugName) {
     super(debugName);

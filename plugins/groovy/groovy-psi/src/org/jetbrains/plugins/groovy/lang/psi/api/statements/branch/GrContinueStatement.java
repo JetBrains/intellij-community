@@ -16,8 +16,5 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.branch;
 
-/**
- * @author ilyas
- */
 public interface GrContinueStatement extends GrFlowInterruptingStatement {
 }

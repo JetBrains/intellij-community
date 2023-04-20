@@ -4,9 +4,6 @@ package com.intellij.platform.externalSystem.testFramework;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.util.messages.Topic;
 
-/**
- * @author Denis Zhdanov
- */
 public final class ExternalSystemTestUtil {
 
   public static final ProjectSystemId TEST_EXTERNAL_SYSTEM_ID = new ProjectSystemId("TEST_EXTERNAL_SYSTEM_ID");

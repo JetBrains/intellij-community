@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @author spleaner
  * @author Konstantin Bulenkov
  */
 public final class FileColorsModel implements Cloneable {

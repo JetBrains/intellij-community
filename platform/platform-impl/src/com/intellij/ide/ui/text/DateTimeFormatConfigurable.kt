@@ -39,16 +39,13 @@ class DateTimeFormatConfigurable : BoundSearchableConfigurable(
 
       row {
         overrideSystemDateFormatting = checkBox(IdeBundle.message("date.format.override.system.date.and.time.format"))
-          .bindSelected(
-            { settings.isOverrideSystemDateFormat },
-            { settings.isOverrideSystemDateFormat = it })
+          .bindSelected(settings::isOverrideSystemDateFormat, settings::setOverrideSystemDateFormat)
       }
 
       indent {
         row(IdeBundle.message("date.format.date.format")) {
           dateFormatField = textField()
-            .bindText({ settings.dateFormatPattern },
-                      { settings.dateFormatPattern = it })
+            .bindText(settings::getDateFormatPattern, settings::setDateFormatPattern)
             .columns(16)
             .validationOnInput { field ->
               validateDatePattern(field.text)?.let { error(it) }
@@ -66,8 +63,7 @@ class DateTimeFormatConfigurable : BoundSearchableConfigurable(
 
         row {
           use24HourCheckbox = checkBox(IdeBundle.message("date.format.24.hours"))
-            .bindSelected({ settings.isUse24HourTime },
-                          { settings.isUse24HourTime = it })
+            .bindSelected(settings::isUse24HourTime, settings::setUse24HourTime)
             .applyToComponent {
               addChangeListener { updateCommentField() }
             }
@@ -80,9 +76,7 @@ class DateTimeFormatConfigurable : BoundSearchableConfigurable(
 
       row {
         checkBox(IdeBundle.message("date.format.pretty"))
-          .bindSelected(
-            { settings.isPrettyFormattingAllowed },
-            { settings.isPrettyFormattingAllowed = it })
+          .bindSelected(settings::isPrettyFormattingAllowed, settings::setPrettyFormattingAllowed)
           .comment(IdeBundle.message("date.format.relative"))
       }.topGap(TopGap.SMALL)
 

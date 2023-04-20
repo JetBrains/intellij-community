@@ -53,6 +53,11 @@ class TypeInstantiationItems(
   private val forOrdinaryCompletion: Boolean,
   val indicesHelper: KotlinIndicesHelper
 ) {
+    companion object {
+        private val FUNCTIONS_OR_CLASSIFIERS_MASK =
+            DescriptorKindFilter(DescriptorKindFilter.FUNCTIONS_MASK or DescriptorKindFilter.CLASSIFIERS_MASK)
+    }
+
     fun addTo(
         items: MutableCollection<LookupElement>,
         inheritanceSearchers: MutableCollection<InheritanceItemsSearcher>,
@@ -323,7 +328,7 @@ class TypeInstantiationItems(
                 }
                 scope.collectSyntheticStaticMembersAndConstructors(
                     resolutionFacade,
-                    DescriptorKindFilter.FUNCTIONS
+                    FUNCTIONS_OR_CLASSIFIERS_MASK
                 ) { classifier.name == it }
                     .filterIsInstance<SamConstructorDescriptor>()
                     .singleOrNull() ?: return

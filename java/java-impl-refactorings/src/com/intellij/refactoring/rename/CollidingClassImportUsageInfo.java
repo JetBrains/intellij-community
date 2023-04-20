@@ -18,9 +18,6 @@ package com.intellij.refactoring.rename;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiImportStatement;
 
-/**
- * @author dsl
- */
 public class CollidingClassImportUsageInfo extends ResolvableCollisionUsageInfo {
   private final PsiImportStatement myImportStatement;
 

@@ -9,9 +9,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
 
-/**
- * @author ven
- */
 public final class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcodes {
   private static final String IAE_CLASS_NAME = "java/lang/IllegalArgumentException";
   private static final String ISE_CLASS_NAME = "java/lang/IllegalStateException";

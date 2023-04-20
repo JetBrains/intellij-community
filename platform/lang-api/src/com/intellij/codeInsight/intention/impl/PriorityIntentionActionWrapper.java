@@ -15,9 +15,6 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Danila Ponomarenko
- */
 public final class PriorityIntentionActionWrapper implements IntentionAction, PriorityAction, IntentionActionDelegate {
   private final IntentionAction myAction;
   private final Priority myPriority;

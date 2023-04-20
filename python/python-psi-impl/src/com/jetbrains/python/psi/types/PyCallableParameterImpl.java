@@ -31,9 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-/**
- * @author vlan
- */
 public final class PyCallableParameterImpl implements PyCallableParameter {
   @Nullable private final String myName;
   @Nullable private final Ref<PyType> myType;

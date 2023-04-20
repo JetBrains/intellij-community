@@ -45,8 +45,8 @@ public class PublicFieldInspection extends BaseInspection {
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      stringSet("ignorableAnnotations", InspectionGadgetsBundle.message("ignore.if.annotated.by"),
-                new JavaClassValidator().annotationsOnly()),
+      stringList("ignorableAnnotations", InspectionGadgetsBundle.message("ignore.if.annotated.by"),
+                 new JavaClassValidator().annotationsOnly()),
       checkbox("ignoreEnums", InspectionGadgetsBundle.message("public.field.ignore.enum.type.fields.option"))
     );
   }

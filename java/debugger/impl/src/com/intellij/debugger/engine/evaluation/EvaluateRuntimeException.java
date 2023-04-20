@@ -15,9 +15,6 @@
  */
 package com.intellij.debugger.engine.evaluation;
 
-/**
- * @author lex
- */
 public class EvaluateRuntimeException extends RuntimeException {
   public EvaluateRuntimeException(EvaluateException e) {
     super(e);

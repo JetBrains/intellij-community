@@ -24,9 +24,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Danila Ponomarenko
- */
 public abstract class BaseElementAtCaretIntentionAction extends BaseIntentionAction {
   private volatile boolean useElementToTheLeft;
 

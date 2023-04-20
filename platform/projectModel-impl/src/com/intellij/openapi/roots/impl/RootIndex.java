@@ -330,7 +330,7 @@ class RootIndex {
       }
     }
 
-    EntityStorage snapshot = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
+    EntityStorage snapshot = WorkspaceModel.getInstance(project).getCurrentSnapshot();
     for (CustomEntityProjectModelInfoProvider<?> provider : CustomEntityProjectModelInfoProvider.EP.getExtensionList()) {
       handleCustomEntities(provider, info, snapshot);
     }

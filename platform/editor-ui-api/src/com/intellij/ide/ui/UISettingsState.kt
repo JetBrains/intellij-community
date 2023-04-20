@@ -112,6 +112,9 @@ class UISettingsState : BaseState() {
   var hideKnownExtensionInTabs by property(false)
   var showTreeIndentGuides by property(false)
   var compactTreeIndents by property(false)
+  @get:ReportValue
+  @get:OptionTag("UI_DENSITY")
+  var uiDensity by enum(UIDensity.DEFAULT)
 
   @get:OptionTag("SORT_TABS_ALPHABETICALLY")
   var sortTabsAlphabetically by property(false)

@@ -7,8 +7,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Defines general contract for processing that may be executed by parts, i.e. it remembers the state after every iteration
  * and allows to resume the processing any time.
- *
- * @author Denis Zhdanov
  */
 public interface SequentialTask {
   /**

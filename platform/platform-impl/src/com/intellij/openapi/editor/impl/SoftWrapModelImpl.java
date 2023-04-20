@@ -46,8 +46,6 @@ import java.util.List;
  * utility methods built on top of subcomponents API.
  * <p/>
  * Not thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   implements SoftWrapModelEx, PrioritizedDocumentListener, FoldingListener,

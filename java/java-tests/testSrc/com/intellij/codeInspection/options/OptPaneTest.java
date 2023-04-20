@@ -47,4 +47,10 @@ public class OptPaneTest {
     assertTrue(three instanceof OptCheckbox checkbox && checkbox.label().label().equals("Three"));
   }
   
+  @Test
+  public void asCheckbox() {
+    OptPane pane = pane(checkbox("nested", "Nested"));
+    OptPane outer = pane(pane.asCheckbox("outer", "Outer"));
+    assertTrue(outer.findControl("nested") instanceof OptCheckbox checkbox && checkbox.label().label().equals("Nested"));
+  }
 }

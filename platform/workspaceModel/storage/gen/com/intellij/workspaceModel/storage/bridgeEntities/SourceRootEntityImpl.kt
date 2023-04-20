@@ -24,6 +24,9 @@ import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.workspaceModel.storage.impl.updateOneToManyParentOfChild
 import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
@@ -403,7 +406,7 @@ class SourceRootEntityData : WorkspaceEntityData<SourceRootEntity>() {
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return SourceRootEntity(url, rootType, entitySource) {
-      this.contentRoot = parents.filterIsInstance<ContentRootEntity>().single()
+      parents.filterIsInstance<ContentRootEntity>().singleOrNull()?.let { this.contentRoot = it }
     }
   }
 

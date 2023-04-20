@@ -36,7 +36,6 @@ import java.util.List;
 
 /**
  * Base class that simplifies external system settings management.
- * @author Denis Zhdanov
  */
 public abstract class AbstractExternalSystemConfigurable<
   ProjectSettings extends ExternalProjectSettings,

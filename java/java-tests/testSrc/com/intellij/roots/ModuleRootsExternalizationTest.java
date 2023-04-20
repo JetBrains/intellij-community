@@ -33,9 +33,6 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- *  @author dsl
- */
 public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
   private @NotNull ModuleRootManager createTempModuleRootManager() {
     Module module = createModule(getTempDir().newPath("tst" + ModuleFileType.DOT_DEFAULT_EXTENSION));

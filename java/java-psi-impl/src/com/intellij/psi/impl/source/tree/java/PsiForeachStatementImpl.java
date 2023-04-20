@@ -13,12 +13,10 @@ import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
- * @author dsl
- */
 public class PsiForeachStatementImpl extends PsiLoopStatementImpl implements PsiForeachStatement, Constants {
   private static final Logger LOG = Logger.getInstance(PsiForeachStatementImpl.class);
   public PsiForeachStatementImpl() {
@@ -28,23 +26,7 @@ public class PsiForeachStatementImpl extends PsiLoopStatementImpl implements Psi
   @Override
   @NotNull
   public PsiParameter getIterationParameter() {
-    PsiParameter parameter = (PsiParameter)findChildByRoleAsPsiElement(ChildRole.FOR_ITERATION_PARAMETER);
-    if (parameter == null) {
-      LOG.error("getIterationParameter is used when forEach element contains pattern. Migrate to getIterationDeclaration()");
-      return new LightParameter("__pattern_replacement__", PsiType.BOOLEAN, this);
-    }
-    return parameter;
-  }
-
-  @Override
-  @NotNull
-  public PsiForeachDeclarationElement getIterationDeclaration() {
-    PsiParameter parameter = (PsiParameter)findChildByRoleAsPsiElement(ChildRole.FOR_ITERATION_PARAMETER);
-    if (parameter != null) {
-      return parameter;
-    } else {
-      return Objects.requireNonNull(PsiTreeUtil.getChildOfType(this, PsiPattern.class));
-    }
+    return (PsiParameter)Objects.requireNonNull(findChildByRoleAsPsiElement(ChildRole.FOR_ITERATION_PARAMETER));
   }
 
   @Override
@@ -60,7 +42,7 @@ public class PsiForeachStatementImpl extends PsiLoopStatementImpl implements Psi
   @Override
   @NotNull
   public PsiJavaToken getLParenth() {
-    return (PsiJavaToken) findChildByRoleAsPsiElement(ChildRole.LPARENTH);
+    return (PsiJavaToken)Objects.requireNonNull(findChildByRoleAsPsiElement(ChildRole.LPARENTH));
   }
 
   @Override
@@ -144,16 +126,7 @@ public class PsiForeachStatementImpl extends PsiLoopStatementImpl implements Psi
       // Parent element should not see our vars
       return true;
 
-    PsiForeachDeclarationElement iterationDeclaration = getIterationDeclaration();
-    if (iterationDeclaration instanceof PsiParameter) {
-      PsiParameter parameter = (PsiParameter)iterationDeclaration;
-      return processor.execute(parameter, state);
-    } else if (iterationDeclaration instanceof PsiDeconstructionPattern) {
-      PsiDeconstructionPattern deconstructionPattern = (PsiDeconstructionPattern)iterationDeclaration;
-      return deconstructionPattern.processDeclarations(processor, state, lastParent, place);
-    } {
-      return false;
-    }
+    return processor.execute(getIterationParameter(), state);
   }
 
   @Override

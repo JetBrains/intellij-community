@@ -29,9 +29,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public final class DeleteMethodBodyFix implements IntentionActionWithFixAllOption {
   private final PsiMethod myMethod;
 

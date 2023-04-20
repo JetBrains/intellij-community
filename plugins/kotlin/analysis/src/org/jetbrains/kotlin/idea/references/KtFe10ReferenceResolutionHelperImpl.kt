@@ -62,6 +62,7 @@ class KtFe10ReferenceResolutionHelperImpl : KtFe10ReferenceResolutionHelper {
             correctContext,
             resolutionFacade,
             declarationDescriptor,
+            element,
             kdocLink.getTagIfSubject(),
             element.getQualifiedName()
         )

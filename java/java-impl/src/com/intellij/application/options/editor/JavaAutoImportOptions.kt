@@ -19,7 +19,6 @@ import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.layout.listCellRenderer
 import javax.swing.JComponent
 
 class JavaAutoImportOptions(val project: Project) : UiDslUnnamedConfigurable.Simple(), AutoImportOptionsProvider {
@@ -35,20 +34,20 @@ class JavaAutoImportOptions(val project: Project) : UiDslUnnamedConfigurable.Sim
     group(JavaLanguage.INSTANCE.displayName) {
       row(JavaBundle.message("label.show.import.popup.for")) {
         checkBox(JavaBundle.message("show.import.popup.for.classes"))
-          .bindSelected({ dcaSettings.isImportHintEnabled }, { dcaSettings.isImportHintEnabled = it })
+          .bindSelected(dcaSettings::isImportHintEnabled, dcaSettings::setImportHintEnabled)
         checkBox(JavaBundle.message("show.import.popup.for.static.methods.and.fields"))
           .bindSelected(ciSettings::ADD_MEMBER_IMPORTS_ON_THE_FLY)
       }.layout(RowLayout.INDEPENDENT)
       row(JavaBundle.message("combobox.paste.insert.imports")) {
         comboBox(
           CollectionComboBoxModel(listOf(CodeInsightSettings.YES, CodeInsightSettings.NO, CodeInsightSettings.ASK)),
-          listCellRenderer { value, _, _ ->
-            setText(when (value) {
-                      CodeInsightSettings.YES -> ApplicationBundle.message("combobox.insert.imports.all")
-                      CodeInsightSettings.NO -> ApplicationBundle.message("combobox.insert.imports.none")
-                      CodeInsightSettings.ASK -> ApplicationBundle.message("combobox.insert.imports.ask")
-                      else -> ""
-                    })
+          listCellRenderer {
+            text = when (it) {
+              CodeInsightSettings.YES -> ApplicationBundle.message("combobox.insert.imports.all")
+              CodeInsightSettings.NO -> ApplicationBundle.message("combobox.insert.imports.none")
+              CodeInsightSettings.ASK -> ApplicationBundle.message("combobox.insert.imports.ask")
+              else -> ""
+            }
           }
         ).bindItem(ciSettings::ADD_IMPORTS_ON_PASTE.toNullableProperty())
       }
@@ -60,7 +59,7 @@ class JavaAutoImportOptions(val project: Project) : UiDslUnnamedConfigurable.Sim
       }
       row {
         checkBox(ApplicationBundle.message("checkbox.optimize.imports.on.the.fly"))
-          .bindSelected({ ciWorkspaceSettings.isOptimizeImportsOnTheFly }, { ciWorkspaceSettings.isOptimizeImportsOnTheFly = it })
+          .bindSelected(ciWorkspaceSettings::isOptimizeImportsOnTheFly, ciWorkspaceSettings::setOptimizeImportsOnTheFly)
           .also { dataContextOwner = it.component }
           .gap(RightGap.SMALL)
         cell(ContextHelpLabel.createWithLink(

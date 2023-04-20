@@ -33,27 +33,27 @@ public class ConvertJUnitInspectionTest extends BaseTestNGInspectionsTest {
   }
 
   public void testClass() {
-    doTest();
+    doTestWithPreview();
   }
 
   public void testFail() {
-    doTest();
+    doTestWithPreview();
   }
 
   public void testUnaryAssertions() {
-    doTest();
+    doTestWithPreview();
   }
 
   public void testBinaryAssertions() {
-    doTest();
+    doTestWithPreview();
   }
 
   public void testIncompatible() {
-    doTest();
+    doTestWithPreview();
   }
 
   public void testDelta() {
-    doTest();
+    doTestWithPreview();
   }
 
   @Override

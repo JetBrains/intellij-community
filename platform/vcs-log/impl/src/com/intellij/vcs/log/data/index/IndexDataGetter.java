@@ -219,42 +219,24 @@ public final class IndexDataGetter {
   private void filter(@Nullable IntIterable candidates,
                       @NotNull Predicate<String> condition,
                       @NotNull IntConsumer consumer) throws IOException {
-    VcsLogStore store = myIndexStorage.store;
+    VcsLogStorageBackend store = myIndexStorage.store;
     if (candidates == null) {
-      store.processMessages((commit, message) -> filterCommit(message, commit, condition, consumer));
+      store.processMessages((commit, message) -> {
+        if (message != null && condition.test(message)) {
+          consumer.accept(commit);
+        }
+        return true;
+      });
     }
     else {
       for (IntIterator iterator = candidates.iterator(); iterator.hasNext(); ) {
         int commit = iterator.nextInt();
-        if (!filterCommit(store.getMessage(commit), commit, condition, consumer)) {
-          break;
-        }
-      }
-    }
-  }
-
-  private boolean filterCommit(@Nullable String value,
-                               int commit,
-                               @NotNull Predicate<String> condition,
-                               @NotNull IntConsumer consumer) {
-    try {
-      if (value != null) {
-        if (condition.test(value)) {
+        String value = store.getMessage(commit);
+        if (value != null && condition.test(value)) {
           consumer.accept(commit);
         }
       }
     }
-    catch (Exception e) {
-      //noinspection ConstantValue,InstanceofCatchParameter
-      if (e instanceof IOException) {
-        myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
-        return false;
-      }
-      else {
-        throw e;
-      }
-    }
-    return true;
   }
 
   //
@@ -323,10 +305,7 @@ public final class IndexDataGetter {
     }
 
     @Override
-    public @Nullable EdgeData<FilePath> findRename$intellij_platform_vcs_log_impl(int parent,
-                                                                                  int child,
-                                                                                  @NotNull FilePath path,
-                                                                                  boolean isChildPath) {
+    public @Nullable EdgeData<FilePath> findRename(int parent, int child, @NotNull FilePath path, boolean isChildPath) {
       VirtualFile root = Objects.requireNonNull(getRoot(path));
       return executeAndCatch(() -> {
         return myIndexStorage.paths.findRename(parent, child, root, path, isChildPath);
@@ -388,12 +367,9 @@ public final class IndexDataGetter {
     }
 
     @Override
-    public @Nullable EdgeData<FilePath> findRename$intellij_platform_vcs_log_impl(int parent,
-                                                                                  int child,
-                                                                                  @NotNull FilePath path,
-                                                                                  boolean isChildPath) {
+    public @Nullable EdgeData<FilePath> findRename(int parent, int child, @NotNull FilePath path, boolean isChildPath) {
       if (path.isDirectory()) return findFolderRename(parent, child, path, isChildPath);
-      return super.findRename$intellij_platform_vcs_log_impl(parent, child, path, isChildPath);
+      return super.findRename(parent, child, path, isChildPath);
     }
 
     private @Nullable EdgeData<FilePath> findFolderRename(int parent, int child, @NotNull FilePath path, boolean isChildPath) {

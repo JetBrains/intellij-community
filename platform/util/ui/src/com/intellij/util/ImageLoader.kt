@@ -311,7 +311,7 @@ object ImageLoader {
                      isUpScaleNeeded = !path.endsWith(".svg"))
   }
 
-  fun adjustScaleFactor(allowFloatScaling: Boolean, scale: Float): Float {
+  private fun adjustScaleFactor(allowFloatScaling: Boolean, scale: Float): Float {
     return if (allowFloatScaling) scale else if (isHiDPI(scale.toDouble())) 2f else 1f
   }
 
@@ -490,19 +490,24 @@ private fun addFileNameVariant(retina: Boolean,
                                scale: Float,
                                list: MutableList<ImageDescriptor>) {
   val effectiveExt = if (isSvg) "svg" else ext
-  val effectiveScale: Float = if (isSvg) scale else if (retina) 2f else 1f
+  val retinaScale = if (isSvg) scale else 2f
+  val nonRetinaScale = if (isSvg) scale else 1f
   if (isStroke) {
-    list.add(ImageDescriptor(name + "_stroke." + effectiveExt, effectiveScale, isSvg, false, true))
+    list.add(ImageDescriptor(name + "_stroke." + effectiveExt, if (retina) retinaScale else nonRetinaScale, isSvg, false, true))
   }
-  if (retina && isDark) {
-    list.add(ImageDescriptor("$name@2x_dark.$effectiveExt", effectiveScale, isSvg, true, false))
+  val descriptors = if (isDark) {
+    mutableListOf(ImageDescriptor("${name}@2x_dark.$effectiveExt", retinaScale, isSvg, true, false),
+                  ImageDescriptor("${name}_dark@2x.$effectiveExt", retinaScale, isSvg, true, false),
+                  ImageDescriptor("${name}_dark.$effectiveExt", nonRetinaScale, isSvg, true, false))
   }
-  list.add(
-    ImageDescriptor(name + (if (isDark) "_dark" else "") + (if (retina) "@2x" else "") + "." + effectiveExt, effectiveScale, isSvg, isDark, false))
-  if (retina) {
-    // a fallback to 1x icon
-    list.add(ImageDescriptor(name + (if (isDark) "_dark" else "") + "." + effectiveExt, if (isSvg) scale else 1f, isSvg, isDark, false))
+  else {
+    mutableListOf(ImageDescriptor("${name}@2x.$effectiveExt", retinaScale, isSvg, false, false),
+                  ImageDescriptor("${name}.$effectiveExt", nonRetinaScale, isSvg, false, false))
   }
+  if (!retina) {
+    descriptors.reverse()
+  }
+  list.addAll(descriptors)
 }
 
 private fun loadByDescriptor(descriptor: ImageDescriptor,

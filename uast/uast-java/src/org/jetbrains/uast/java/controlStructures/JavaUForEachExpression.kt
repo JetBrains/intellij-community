@@ -25,8 +25,15 @@ class JavaUForEachExpression(
   override val sourcePsi: PsiForeachStatement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UForEachExpression {
+  @Deprecated("property may throw exception if foreach doesn't have variable", replaceWith = ReplaceWith("parameter"))
   override val variable: UParameter
-    get() = JavaUParameter(sourcePsi.iterationParameter, this)
+    get() = JavaUParameter(sourcePsi.iterationParameter ?: error("Migrate code to $parameter"), this)
+
+  override val parameter: UParameter?
+    get() {
+      val psiParameter = sourcePsi.iterationParameter ?: return null
+      return JavaUParameter(psiParameter, this)
+    }
 
   override val iteratedValue: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.iteratedValue, this) }
   override val body: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.body, this) }

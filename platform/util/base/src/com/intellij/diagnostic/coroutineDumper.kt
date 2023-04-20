@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 @file:OptIn(ExperimentalCoroutinesApi::class, InternalCoroutinesApi::class)
 
@@ -18,8 +18,10 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 fun enableCoroutineDump() {
-  DebugProbes.enableCreationStackTraces = false
-  DebugProbes.install()
+  runCatching {
+    DebugProbes.enableCreationStackTraces = false
+    DebugProbes.install()
+  }
 }
 
 @JvmOverloads
@@ -40,17 +42,17 @@ fun dumpCoroutines(scope: CoroutineScope? = null): String? {
  * Example output:
  * ```
  * - BlockingCoroutine{Completing}@2a5c959b [BlockingEventLoop@1d80b9da]
- * 	- StandaloneCoroutine{Active}@154d1536, state: SUSPENDED, name: 'root rb 0' [BlockingEventLoop@1d80b9da]
+ * 	- "root rb 0":StandaloneCoroutine{Active}@154d1536, state: SUSPENDED [BlockingEventLoop@1d80b9da]
  * 		at kotlinx.coroutines.DelayKt.awaitCancellation(Delay.kt:148)
  * 		at com.intellij.internal.TestCoroutineProgressAction$cancellableBGProgress$1$1$2$2.invokeSuspend(TestCoroutineProgressAction.kt:91)
- * 	- StandaloneCoroutine{Completing}@1b7e4b1f, name: 'root rb 1' [BlockingEventLoop@1d80b9da]
- * 		- StandaloneCoroutine{Active}@56b4c42, state: SUSPENDED, name: 'root rb 1:0' [BlockingEventLoop@1d80b9da]
+ * 	- "root rb 1":StandaloneCoroutine{Completing}@1b7e4b1f [BlockingEventLoop@1d80b9da]
+ * 		- "root rb 1:0":StandaloneCoroutine{Active}@56b4c42, state: SUSPENDED [BlockingEventLoop@1d80b9da]
  * 			at kotlinx.coroutines.DelayKt.awaitCancellation(Delay.kt:148)
  * 			at com.intellij.internal.TestCoroutineProgressAction$cancellableBGProgress$1$1$2$3$1.invokeSuspend(TestCoroutineProgressAction.kt:95)
- * 	- StandaloneCoroutine{Active}@491608fb, state: SUSPENDED, name: 'root rb 2' [BlockingEventLoop@1d80b9da]
+ * 	- "root rb 2":StandaloneCoroutine{Active}@491608fb, state: SUSPENDED [BlockingEventLoop@1d80b9da]
  * 		at kotlinx.coroutines.DelayKt.awaitCancellation(Delay.kt:148)
  * 		at com.intellij.internal.TestCoroutineProgressAction$cancellableBGProgress$1$1$2$4.invokeSuspend(TestCoroutineProgressAction.kt:102)
- * 		- StandaloneCoroutine{Active}@2d37afba, state: SUSPENDED, name: 'root rb 2:0' [BlockingEventLoop@1d80b9da]
+ * 		- "root rb 2:0":StandaloneCoroutine{Active}@2d37afba, state: SUSPENDED [BlockingEventLoop@1d80b9da]
  * 			at kotlinx.coroutines.DelayKt.awaitCancellation(Delay.kt:148)
  * 			at com.intellij.internal.TestCoroutineProgressAction$cancellableBGProgress$1$1$2$4$1.invokeSuspend(TestCoroutineProgressAction.kt:100)
  * ```
@@ -73,17 +75,23 @@ private fun dumpCoroutines(jobTree: List<JobTreeNode>, out: PrintStream) {
 
     out.print(indent) // -- header line start
     out.print("- ")
-    out.print(job)
-    if (info !== null) {
-      out.print(", state: ${info.state}")
-    }
     val context: CoroutineContext = when {
       job is AbstractCoroutine<*> -> job.context
       info !== null -> info.context
       else -> EmptyCoroutineContext
     }
-    context[CoroutineName]?.name?.let {
-      out.print(", name: '$it'")
+    if (job is AbstractCoroutine<*> && DEBUG) {
+      // in DEBUG the name is displayed as part of `job.toString()` for AbstractCoroutine
+      // see kotlinx.coroutines.AbstractCoroutine.nameString
+    }
+    else {
+      context[CoroutineName]?.let {
+        out.print("\"${it.name}\":") // repeat format from kotlinx.coroutines.AbstractCoroutine.nameString
+      }
+    }
+    out.print(job)
+    if (info !== null) {
+      out.print(", state: ${info.state}")
     }
     val interestingContext = context.minusKey(Job).minusKey(CoroutineName)
     if (interestingContext != EmptyCoroutineContext) {

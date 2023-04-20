@@ -52,9 +52,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author vlan
- */
 public final class PyUserSkeletonsUtil {
   public static final String USER_SKELETONS_DIR = "python-skeletons";
   private static final Logger LOG = Logger.getInstance(PyUserSkeletonsUtil.class);

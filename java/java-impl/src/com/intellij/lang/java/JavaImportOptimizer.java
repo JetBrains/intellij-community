@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java;
 
 import com.intellij.ide.scratch.ScratchUtil;
@@ -49,11 +49,13 @@ public class JavaImportOptimizer implements ImportOptimizer {
           assert oldImportList != null;
           final List<String> oldImports = new ArrayList<>();
           for (PsiImportStatementBase statement : oldImportList.getAllImportStatements()) {
-            oldImports.add(statement.getText());
+            PsiJavaCodeReferenceElement reference = statement.getImportReference();
+            oldImports.add(reference == null ? statement.getText() : removeWhiteSpace(reference.getText()));
           }
           oldImportList.replace(newImportList);
           for (PsiImportStatementBase statement : newImportList.getAllImportStatements()) {
-            if (!oldImports.remove(statement.getText())) {
+            PsiJavaCodeReferenceElement reference = statement.getImportReference();
+            if (!oldImports.remove(reference == null ? statement.getText() : removeWhiteSpace(reference.getText()))) {
               myImportsAdded++;
             }
           }
@@ -86,5 +88,21 @@ public class JavaImportOptimizer implements ImportOptimizer {
                                      ScratchUtil.isScratch(virtualFile));
     }
     return false;
+  }
+
+  private static String removeWhiteSpace(String string) {
+    StringBuilder result = null;
+    for (int i = 0, length = string.length(); i < length; i++) {
+      char c = string.charAt(i);
+      if (c == ' ' || c == '\t' || c == '\f' || c == '\n' || c == '\r') { // jls-3.6
+        if (result == null) {
+          result = new StringBuilder(string.substring(0, i));
+        }
+      }
+      else if (result != null) {
+        result.append(c);
+      }
+    }
+    return result == null ? string : result.toString();
   }
 }

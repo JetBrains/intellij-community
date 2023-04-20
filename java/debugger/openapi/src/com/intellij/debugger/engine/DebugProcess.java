@@ -32,9 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author lex
- */
 public interface DebugProcess extends UserDataHolder {
   @NonNls String JAVA_STRATUM = "Java";
 

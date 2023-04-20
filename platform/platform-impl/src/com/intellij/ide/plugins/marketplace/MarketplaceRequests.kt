@@ -337,24 +337,26 @@ class MarketplaceRequests : PluginInfoProvider {
       }
     // Marketplace Search Service can produce objects without "externalUpdateId". It means that an update is not in the search index yet.
     return marketplaceSearchPluginData
-      .filter {
-        it.externalUpdateId != null
-        || it.nearestUpdate?.compatible == true
-        || includeIncompatible && it.nearestUpdate?.supports(suggestedIdeCode) == true
-      }
-      .map {
+      .mapNotNull {
         val pluginNode = it.toPluginNode()
 
-        if (it.externalUpdateId == null
-            && it.nearestUpdate != null
-            && !it.nearestUpdate.compatible
+        if (it.externalUpdateId != null) return@mapNotNull pluginNode
+        if (it.nearestUpdate == null) return@mapNotNull null
+        if (it.nearestUpdate.compatible) return@mapNotNull pluginNode
+
+        // filter out plugins which version is not compatible with the current IDE version,
+        // but they have versions compatible with Community
+        if (includeIncompatible
             && !it.nearestUpdate.supports(activeProductCode)
             && it.nearestUpdate.supports(suggestedIdeCode)) {
+
           pluginNode.suggestedCommercialIde = suggestedIdeCode
           pluginNode.tags = ((pluginNode.tags ?: emptyList()) + Tags.Ultimate.name).distinct()
+
+          return@mapNotNull pluginNode
         }
 
-        pluginNode
+        null
       }
   }
 

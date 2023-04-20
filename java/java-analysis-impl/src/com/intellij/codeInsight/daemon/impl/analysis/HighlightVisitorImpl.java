@@ -194,7 +194,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         if (progress == null) throw new IllegalStateException("Must be run under progress");
         Project project = file.getProject();
         Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-        TextRange dirtyScope = document == null ? null : DaemonCodeAnalyzerEx.getInstanceEx(project).getFileStatusMap().getFileDirtyScope(document, Pass.UPDATE_ALL);
+        TextRange dirtyScope = document == null ? null : DaemonCodeAnalyzerEx.getInstanceEx(project).getFileStatusMap().getFileDirtyScope(document, file, Pass.UPDATE_ALL);
         if (dirtyScope == null) dirtyScope = file.getTextRange();
         RefCountHolder refCountHolder = RefCountHolder.get(file, dirtyScope);
         if (refCountHolder == null) {
@@ -411,18 +411,26 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
 
     if (!myHolder.hasErrorResults() && functionalInterfaceType != null) {
-      String parentInferenceErrorMessage = null;
       PsiCallExpression callExpression = parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCallExpression ?
                                                (PsiCallExpression)parent.getParent() : null;
-      JavaResolveResult containingCallResolveResult = callExpression != null ? callExpression.resolveMethodGenerics() : null;
-      if (containingCallResolveResult instanceof MethodCandidateInfo) {
-        parentInferenceErrorMessage = ((MethodCandidateInfo)containingCallResolveResult).getInferenceErrorMessage();
+      MethodCandidateInfo parentCallResolveResult =
+        callExpression != null ? tryCast(callExpression.resolveMethodGenerics(), MethodCandidateInfo.class) : null;
+      String parentInferenceErrorMessage = parentCallResolveResult != null ? parentCallResolveResult.getInferenceErrorMessage() : null;
+      PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
+      Map<PsiElement, @Nls String> returnErrors = null;
+      Set<PsiTypeParameter> parentTypeParameters = parentCallResolveResult == null ? Set.of() : Set.of(parentCallResolveResult.getElement().getTypeParameters());
+      // If return type of the lambda was not fully inferred and lambda parameters don't mention the same type,
+      // it means that lambda is not responsible for inference failure and blaming it would be unreasonable.
+      boolean skipReturnCompatibility = parentCallResolveResult != null &&
+                                        PsiTypesUtil.mentionsTypeParameters(returnType, parentTypeParameters)
+                                        && !lambdaParametersMentionTypeParameter(functionalInterfaceType, parentTypeParameters);
+      if (!skipReturnCompatibility) {
+        returnErrors = LambdaUtil.checkReturnTypeCompatible(expression, returnType);
       }
-      Map<PsiElement, @Nls String> returnErrors = LambdaUtil.checkReturnTypeCompatible(expression, LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType));
       if (parentInferenceErrorMessage != null && (returnErrors == null || !returnErrors.containsValue(parentInferenceErrorMessage))) {
         if (returnErrors == null) return;
         HighlightInfo.Builder info = HighlightMethodUtil.createIncompatibleTypeHighlightInfo(callExpression, getResolveHelper(myHolder.getProject()),
-                                                                                             (MethodCandidateInfo)containingCallResolveResult, expression);
+                                                                                             parentCallResolveResult, expression);
         if (info != null) {
           returnErrors.keySet().forEach(k -> {
             IntentionAction action = AdjustFunctionContextFix.createFix(k);
@@ -467,6 +475,17 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         add(HighlightControlFlowUtil.checkUnreachableStatement((PsiCodeBlock)body));
       }
     }
+  }
+
+  private static boolean lambdaParametersMentionTypeParameter(PsiType functionalInterfaceType, Set<PsiTypeParameter> parameters) {
+    if (!(functionalInterfaceType instanceof PsiClassType classType)) return false;
+    PsiSubstitutor substitutor = classType.resolveGenerics().getSubstitutor();
+    PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
+    if (method == null) return false;
+    for (PsiParameter parameter : method.getParameterList().getParameters()) {
+      if (PsiTypesUtil.mentionsTypeParameters(substitutor.substitute(parameter.getType()), parameters)) return true;
+    }
+    return false;
   }
 
   @Override
@@ -836,7 +855,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) add(GenericsHighlightUtil.checkInstanceOfGenericType(myLanguageLevel, expression));
     if (!myHolder.hasErrorResults() &&
         myLanguageLevel.isAtLeast(LanguageLevel.JDK_16) &&
-        // 5.20.2 Removed restriction on pattern instanceof for total patterns (JEP 427)
+        // 5.20.2 Removed restriction on pattern instanceof for unconditional patterns (JEP 427)
         myLanguageLevel.isLessThan(LanguageLevel.JDK_19_PREVIEW)) {
       add(HighlightUtil.checkInstanceOfPatternSupertype(expression));
     }
@@ -1963,6 +1982,15 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
   }
 
+  @Override
+  public void visitPatternVariable(@NotNull PsiPatternVariable variable) {
+    super.visitPatternVariable(variable);
+    if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_20_PREVIEW) && variable.getPattern() instanceof PsiDeconstructionPattern) {
+      String message = JavaErrorBundle.message("identifier.is.not.allowed.here");
+      add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(variable).descriptionAndTooltip(message));
+    }
+  }
+
   @Nullable
   private static HighlightInfo.Builder checkGuardingExpressionHasBooleanType(@Nullable PsiExpression guardingExpression) {
     if (guardingExpression != null && !TypeConversionUtil.isBooleanType(guardingExpression.getType())) {
@@ -1979,23 +2007,21 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     add(checkFeature(deconstructionPattern, HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS));
     if (myHolder.hasErrorResults()) return;
     PsiElement parent = deconstructionPattern.getParent();
-    if (parent instanceof PsiForeachStatement forEach) {
+    if (parent instanceof PsiForeachPatternStatement forEach) {
       add(checkFeature(deconstructionPattern, HighlightingFeature.RECORD_PATTERNS_IN_FOR_EACH));
-      if (!myHolder.hasErrorResults()) {
-        PsiTypeElement typeElement = JavaPsiPatternUtil.getPatternTypeElement(deconstructionPattern);
-        if (typeElement == null) return;
-        PsiType patternType = typeElement.getType();
-        PsiExpression iteratedValue = forEach.getIteratedValue();
-        PsiType itemType = iteratedValue == null ? null : JavaGenericsUtil.getCollectionItemType(iteratedValue);
-        if (itemType == null) return;
-        checkForEachPatternApplicable(deconstructionPattern, patternType, itemType);
-        if (!myHolder.hasErrorResults()) {
-          if (!PatternsInSwitchBlockHighlightingModel.checkRecordExhaustiveness(Collections.singletonList(deconstructionPattern))) {
-            String description = JavaErrorBundle.message("pattern.is.not.exhaustive", JavaHighlightUtil.formatType(patternType),
-                                                         JavaHighlightUtil.formatType(itemType));
-            add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(deconstructionPattern).descriptionAndTooltip(description));
-          }
-        }
+      if (myHolder.hasErrorResults()) return;
+      PsiTypeElement typeElement = JavaPsiPatternUtil.getPatternTypeElement(deconstructionPattern);
+      if (typeElement == null) return;
+      PsiType patternType = typeElement.getType();
+      PsiExpression iteratedValue = forEach.getIteratedValue();
+      PsiType itemType = iteratedValue == null ? null : JavaGenericsUtil.getCollectionItemType(iteratedValue);
+      if (itemType == null) return;
+      checkForEachPatternApplicable(deconstructionPattern, patternType, itemType);
+      if (myHolder.hasErrorResults()) return;
+      if (!PatternsInSwitchBlockHighlightingModel.checkRecordExhaustiveness(Collections.singletonList(deconstructionPattern))) {
+        String description = JavaErrorBundle.message("pattern.is.not.exhaustive", JavaHighlightUtil.formatType(patternType),
+                                                     JavaHighlightUtil.formatType(itemType));
+        add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(deconstructionPattern).descriptionAndTooltip(description));
       }
     }
   }

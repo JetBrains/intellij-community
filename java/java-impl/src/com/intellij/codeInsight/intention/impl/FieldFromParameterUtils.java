@@ -39,9 +39,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author Danila Ponomarenko
- */
 public final class FieldFromParameterUtils {
   @Nullable
   public static PsiParameter findParameterAtCursor(@NotNull PsiFile file, @NotNull Editor editor) {

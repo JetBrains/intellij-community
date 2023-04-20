@@ -24,9 +24,6 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 
-/**
- * @author ven
- */
 public class PropertiesReferenceProvider extends PsiReferenceProvider {
   public PropertiesReferenceProvider() {
   }

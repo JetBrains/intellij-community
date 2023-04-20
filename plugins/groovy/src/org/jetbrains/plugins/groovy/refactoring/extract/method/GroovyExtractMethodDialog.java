@@ -46,9 +46,6 @@ import java.util.EventListener;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author ilyas
- */
 public class GroovyExtractMethodDialog extends DialogWrapper {
   private final ExtractMethodInfoHelper myHelper;
 

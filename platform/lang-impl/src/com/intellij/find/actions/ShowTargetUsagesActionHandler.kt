@@ -7,6 +7,7 @@ import com.intellij.find.usages.api.UsageOptions.createOptions
 import com.intellij.find.usages.impl.AllSearchOptions
 import com.intellij.find.usages.impl.buildUsageViewQuery
 import com.intellij.ide.nls.NlsMessages
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.lang.LangBundle
 import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
@@ -68,6 +69,9 @@ internal data class ShowTargetUsagesActionHandler(
   override fun getTargetLanguage(): Language? = null
 
   override fun getTargetClass(): Class<*> = target::class.java
+  override fun getEventData(): List<EventPair<*>> {
+    return emptyList();
+  }
 
   companion object {
 

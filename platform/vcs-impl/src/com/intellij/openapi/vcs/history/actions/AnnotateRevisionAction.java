@@ -109,4 +109,11 @@ public class AnnotateRevisionAction extends AnnotateRevisionActionBase implement
 
     return revision;
   }
+
+  @Override
+  protected int getAnnotatedLine(@NotNull AnActionEvent e) {
+    Editor editor = getEditor(e);
+    if (editor == null) return -1;
+    return editor.getCaretModel().getLogicalPosition().line;
+  }
 }

@@ -26,7 +26,7 @@ interface CompletionGolfEvaluationVisitor : CompletionEvaluationVisitor {
     val safeCodeFragment: CodeFragment
       get() = codeFragment ?: throw PsiConverterException("Invoke 'accept' with visitor on PSI first")
 
-    val prop = SimpleTokenProperties.create(TypeProperty.LINE, SymbolLocation.UNKNOWN) {}
+    private val prop = SimpleTokenProperties.create(TypeProperty.LINE, SymbolLocation.UNKNOWN) {}
 
     private var lastOffset = 0
 

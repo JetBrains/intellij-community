@@ -18,9 +18,6 @@ import com.intellij.util.IncorrectOperationException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author dsl
- */
 public final class ChangeSignatureUtil {
   private ChangeSignatureUtil() { }
 

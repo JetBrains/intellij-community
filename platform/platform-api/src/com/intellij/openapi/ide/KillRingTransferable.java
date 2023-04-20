@@ -36,8 +36,6 @@ import java.lang.ref.WeakReference;
  * to distinguish if particular copy-paste strings are adjacent.
  * <p/>
  * Thread-safe.
- * 
- * @author Denis Zhdanov
  */
 public class KillRingTransferable implements Transferable {
 

@@ -369,7 +369,7 @@ class EclipseProjectPropertiesEntityData : WorkspaceEntityData<EclipseProjectPro
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return EclipseProjectPropertiesEntity(variablePaths, eclipseUrls, unknownCons, knownCons, forceConfigureJdk, expectedModuleSourcePlace,
                                           srcPlace, entitySource) {
-      this.module = parents.filterIsInstance<ModuleEntity>().single()
+      parents.filterIsInstance<ModuleEntity>().singleOrNull()?.let { this.module = it }
     }
   }
 

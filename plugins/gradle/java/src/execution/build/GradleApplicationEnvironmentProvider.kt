@@ -15,7 +15,7 @@ import com.intellij.task.ExecuteRunConfigurationTask
 /**
  * @author Vladislav.Soroka
  */
-internal class GradleApplicationEnvironmentProvider : GradleBaseApplicationEnvironmentProvider<ApplicationConfiguration>() {
+open class GradleApplicationEnvironmentProvider : GradleBaseApplicationEnvironmentProvider<ApplicationConfiguration>() {
   override fun isApplicable(task: ExecuteRunConfigurationTask): Boolean = task.runProfile is ApplicationConfiguration
 
   override fun generateInitScript(applicationConfiguration: ApplicationConfiguration,
@@ -30,9 +30,6 @@ internal class GradleApplicationEnvironmentProvider : GradleBaseApplicationEnvir
     val workingDir = ProgramParametersUtil.getWorkingDir(applicationConfiguration, module.project, module)?.let {
       FileUtil.toSystemIndependentName(it)
     }
-
-    val argsString = createEscapedParameters(params.programParametersList.parameters, "args") +
-                     createEscapedParameters(params.vmParametersList.parameters, "jvmArgs")
 
     val useManifestJar = applicationConfiguration.shortenCommandLine === ShortenCommandLine.MANIFEST
     val useArgsFile = applicationConfiguration.shortenCommandLine === ShortenCommandLine.ARGS_FILE
@@ -73,7 +70,7 @@ internal class GradleApplicationEnvironmentProvider : GradleBaseApplicationEnvir
           project.tasks.create(name: runAppTaskName, overwrite: overwrite, type: JavaExec) {
             if (javaExePath) executable = javaExePath
             main = mainClass
-            $argsString
+            ${argsString(params)}
             if (_workingDir) workingDir = _workingDir
             standardInput = System.in
             if (javaModuleName) {

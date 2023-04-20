@@ -124,20 +124,28 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
     checkResult(after)
   }
 
-  protected fun JavaCodeInsightTestFixture.testQuickFix(file: String, hint: String = InspectionsBundle.message(
-    "fix.all.inspection.problems.in.file", InspectionTestUtil.instantiateTool(inspection.javaClass).displayName
-  )) {
+  protected fun JavaCodeInsightTestFixture.testQuickFix(
+    file: String,
+    hint: String = InspectionsBundle.message(
+      "fix.all.inspection.problems.in.file", InspectionTestUtil.instantiateTool(inspection.javaClass).displayName
+    ),
+    checkPreview: Boolean = false) {
     configureByFile(file)
-    runQuickFix(hint)
+    runQuickFix(hint, checkPreview)
     checkResultByFile(file.replace(".", ".after."))
   }
 
-  protected fun JavaCodeInsightTestFixture.runQuickFix(hint: String) {
+  protected fun JavaCodeInsightTestFixture.runQuickFix(hint: String, checkPreview: Boolean = false) {
     val action = getIntention(hint)
-    launchAction(action)
+    if (checkPreview) {
+      checkPreviewAndLaunchAction(action)
+    }
+    else {
+      launchAction(action)
+    }
   }
 
-  protected fun JavaCodeInsightTestFixture.getIntention(hint: String): IntentionAction {
+  private fun JavaCodeInsightTestFixture.getIntention(hint: String): IntentionAction {
     return getAvailableIntention(hint) ?: throw AssertionError("Quickfix '$hint' is not available")
   }
 

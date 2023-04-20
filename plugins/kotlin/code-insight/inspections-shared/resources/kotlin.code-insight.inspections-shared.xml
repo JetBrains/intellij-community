@@ -193,5 +193,14 @@
             language="JAVA"
             key="inspection.enum.values.method.soft.deprecate.in.java.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RedundantValueArgumentInspection"
+            groupPath="Kotlin"
+            groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+            enabledByDefault="false"
+            level="WEAK WARNING"
+            language="kotlin"
+            key="inspection.redundant.value.argument.display.name" bundle="messages.KotlinBundle"/>
+
   </extensions>
 </idea-plugin>

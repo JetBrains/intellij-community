@@ -22,9 +22,6 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Denis Zhdanov
- */
 public class ScrollLeftAction extends InactiveEditorAction {
   public ScrollLeftAction() {
     super(new Handler());

@@ -15,9 +15,6 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
-/**
- * @author Irina.Chernushina on 4/24/2017.
- */
 enum SchemaResolveState {
   normal, conflict, brokenDefinition, cyclicDefinition
 }

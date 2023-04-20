@@ -7,9 +7,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Pavel.Dolgov
- */
 class ElementsRange {
   private final PsiElement myStart;
   private final PsiElement myEnd;

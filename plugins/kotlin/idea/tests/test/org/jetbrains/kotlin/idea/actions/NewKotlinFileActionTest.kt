@@ -51,7 +51,7 @@ class NewKotlinFileActionTest : LightJavaCodeInsightFixtureTestCase() {
     }
 
     private fun validateName(name: String, errorMessage: String?) {
-        val actualError = NewKotlinFileAction.nameValidator.getErrorText(name)
+        val actualError = createFileNameValidator.getErrorText(name)
         Assert.assertEquals("Invalid error message", errorMessage, actualError)
     }
 }

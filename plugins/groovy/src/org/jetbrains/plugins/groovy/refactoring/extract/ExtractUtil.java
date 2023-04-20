@@ -41,9 +41,6 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
 import java.util.*;
 
-/**
- * @author ilyas
- */
 public final class ExtractUtil {
   private static final Logger LOG = Logger.getInstance(ExtractUtil.class);
 

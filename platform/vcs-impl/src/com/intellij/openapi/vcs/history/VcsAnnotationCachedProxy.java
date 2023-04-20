@@ -22,9 +22,6 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author irengrig
- */
 public class VcsAnnotationCachedProxy implements AnnotationProvider, CacheableAnnotationProvider {
   private final VcsHistoryCache myCache;
   private final AbstractVcs myVcs;

@@ -23,9 +23,6 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/**
- * @author ilyas
- */
 public final class GroovyNameSuggestionUtil {
 
   private GroovyNameSuggestionUtil() {

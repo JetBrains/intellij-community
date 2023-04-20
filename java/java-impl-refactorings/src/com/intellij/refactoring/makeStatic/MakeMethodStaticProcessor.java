@@ -38,9 +38,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author dsl
- */
 public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<PsiMethod> {
   private static final Logger LOG = Logger.getInstance(MakeMethodStaticProcessor.class);
   private @Nullable List<PsiMethod> myAdditionalMethods;

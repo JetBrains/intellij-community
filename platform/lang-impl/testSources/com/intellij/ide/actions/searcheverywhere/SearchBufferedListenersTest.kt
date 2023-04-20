@@ -95,7 +95,10 @@ class SearchBufferedListenersTest : BasePlatformTestCase() {
 
   fun `test events order for WaitForContributorsListenerWrapper`() {
     val mockListener = myMockery!!.mock(SearchListener::class.java)
-    val wfcWrapper = WaitForContributorsListenerWrapper(mockListener, MixedSearchListModel())
+    val wfcWrapper = WaitForContributorsListenerWrapper(mockListener, MixedSearchListModel(),
+                                                        WaitForContributorsListenerWrapper.DEFAULT_WAIT_TIMEOUT_MS,
+                                                        WaitForContributorsListenerWrapper.DEFAULT_THROTTLING_TIMEOUT_MS,
+                                                        {"?"})
 
     myMockery!!.checking(object : Expectations() {
       init {
@@ -190,14 +193,17 @@ class SearchBufferedListenersTest : BasePlatformTestCase() {
 
   fun `test previous search items are cleared (WaitForContributorsListenerWrapper)`() {
     val mockListener = myMockery!!.mock(SearchListener::class.java)
-    val wfcWrapper = WaitForContributorsListenerWrapper(mockListener, MixedSearchListModel())
+    val wfcWrapper = WaitForContributorsListenerWrapper(mockListener, MixedSearchListModel(),
+                                                        WaitForContributorsListenerWrapper.DEFAULT_WAIT_TIMEOUT_MS,
+                                                        WaitForContributorsListenerWrapper.DEFAULT_THROTTLING_TIMEOUT_MS,
+                                                        {"?"})
     doTestClearPreviousResults(mockListener, wfcWrapper)
     myMockery!!.assertIsSatisfied()
   }
 
   fun `test WaitForContributorsListenerWrapper waits for non-slow contributors`() {
     val mockListener = myMockery!!.mock(SearchListener::class.java)
-    val wfcWrapper = WaitForContributorsListenerWrapper(mockListener, MixedSearchListModel(), 2000, 100)
+    val wfcWrapper = WaitForContributorsListenerWrapper(mockListener, MixedSearchListModel(), 2000, 100, {"?"})
 
     myMockery!!.checking(object : Expectations() {
       init {
@@ -229,7 +235,7 @@ class SearchBufferedListenersTest : BasePlatformTestCase() {
 
   fun `test WaitForContributorsListenerWrapper flushes buffer on timeout`() {
     val mockListener = myMockery!!.mock(SearchListener::class.java)
-    val wfcWrapper = WaitForContributorsListenerWrapper(mockListener, MixedSearchListModel(), 500, 100)
+    val wfcWrapper = WaitForContributorsListenerWrapper(mockListener, MixedSearchListModel(), 500, 100, {"?"})
     val executorService = Executors.newSingleThreadScheduledExecutor()
 
     myMockery!!.checking(object : Expectations() {
@@ -277,7 +283,7 @@ class SearchBufferedListenersTest : BasePlatformTestCase() {
 
   fun `test WaitForContributorsListenerWrapper uses buffer after non-slow contributors finished`() {
     val mockListener = myMockery!!.mock(SearchListener::class.java)
-    val wfcWrapper = WaitForContributorsListenerWrapper(mockListener, MixedSearchListModel(), 500, 500)
+    val wfcWrapper = WaitForContributorsListenerWrapper(mockListener, MixedSearchListModel(), 500, 500, {"?"})
     val executorService = Executors.newSingleThreadScheduledExecutor()
 
     myMockery!!.checking(object : Expectations() {

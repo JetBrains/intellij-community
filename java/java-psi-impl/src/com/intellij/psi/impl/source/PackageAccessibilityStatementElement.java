@@ -11,9 +11,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Pavel.Dolgov
- */
 public class PackageAccessibilityStatementElement extends CompositeElement {
   public PackageAccessibilityStatementElement(@NotNull IElementType type) {
     super(type);

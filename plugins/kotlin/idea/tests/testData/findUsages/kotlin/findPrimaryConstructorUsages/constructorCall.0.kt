@@ -6,4 +6,4 @@ fun test() {
 
 class KK()
 
-// FIR_COMPARISON
+

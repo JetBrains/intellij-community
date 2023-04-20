@@ -23,9 +23,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 
-/**
- * @author Sergey Evdokimov
- */
 final class IvyAttachSourceProvider extends AbstractAttachSourceProvider {
 
   private static final Logger LOG = Logger.getInstance(IvyAttachSourceProvider.class);

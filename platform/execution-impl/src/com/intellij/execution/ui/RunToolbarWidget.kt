@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.ex.InlineActionsHolder
 import com.intellij.openapi.components.*
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -198,6 +199,8 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
   }
 }
 
+private val recentLimit: Int get() = AdvancedSettings.getInt("ide.max.recent.run.configurations")
+
 internal fun createRunConfigurationsActionGroup(project: Project, addHeader: Boolean = true): ActionGroup {
   val actions = DefaultActionGroup()
   val registry = ExecutorRegistry.getInstance()
@@ -212,7 +215,7 @@ internal fun createRunConfigurationsActionGroup(project: Project, addHeader: Boo
     }
   }
   actions.add(Separator.create(ExecutionBundle.message("run.toolbar.widget.dropdown.recent.separator.text")))
-  RunConfigurationStartHistory.getInstance(project).history().forEach { conf ->
+  RunConfigurationStartHistory.getInstance(project).history().take(recentLimit).forEach { conf ->
     val actionGroupWithInlineActions = createRunConfigurationWithInlines(runExecutor, debugExecutor, conf, project)
     actions.add(actionGroupWithInlineActions)
   }
@@ -314,7 +317,9 @@ private fun createRunConfigurationWithInlines(runExecutor: Executor,
   inlineActions.add(RunToolbarWidgetRunAction(runExecutor) { conf })
   inlineActions.add(RunToolbarWidgetRunAction(debugExecutor) { conf })
 
-  return SelectRunConfigurationWithInlineActions(inlineActions, conf, project, shouldBeShown)
+  val result = SelectRunConfigurationWithInlineActions(inlineActions, conf, project, shouldBeShown)
+  addAdditionalActionsToRunConfigurationOptions(project, conf, result, false)
+  return result
 }
 
 private fun createRunConfigurationPopup(context: DataContext, project: Project): JBPopup {
@@ -406,8 +411,8 @@ class StopWithDropDownAction : AnAction(), CustomComponentAction, DumbAware {
       }
       isPaintEnable = false
       isCombined = true
-    }.let { Wrapper(it).apply {
-      border = JBUI.Borders.empty(if (Registry.`is`("ide.experimental.ui.redesigned.run.widget")) JBUI.CurrentTheme.RunWidget.toolbarBorderHeight() else 7,6)
+    }.let { DynamicBorderWrapper(it) {
+      JBUI.Borders.empty(if (Registry.`is`("ide.experimental.ui.redesigned.run.widget")) JBUI.CurrentTheme.RunWidget.toolbarBorderHeight() else 7,6)
     } }
   }
 
@@ -844,7 +849,7 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
   }
 
   fun register(setting: RunnerAndConfigurationSettings) {
-    _state = State(_state.history.take(30).toMutableList().apply {
+    _state = State(_state.history.take(recentLimit*2).toMutableList().apply {
       add(0, Element(setting.uniqueID))
     }.toMutableSet())
   }
@@ -911,10 +916,6 @@ enum class RunState {
   fun isRunningState(): Boolean {
     return this == SCHEDULED || this == STARTED
   }
-}
-
-private fun isPersistedTask(env: ExecutionEnvironment): Boolean {
-  return getPersistedConfiguration(env.runnerAndConfigurationSettings) != null
 }
 
 private fun getPersistedConfiguration(configuration: RunnerAndConfigurationSettings?): RunnerAndConfigurationSettings? {

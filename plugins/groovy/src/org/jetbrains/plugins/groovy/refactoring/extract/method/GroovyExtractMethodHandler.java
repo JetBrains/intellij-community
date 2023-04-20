@@ -55,9 +55,6 @@ import java.util.function.Consumer;
 
 import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
-/**
- * @author ilyas
- */
 public class GroovyExtractMethodHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance(GroovyExtractMethodHandler.class);
 

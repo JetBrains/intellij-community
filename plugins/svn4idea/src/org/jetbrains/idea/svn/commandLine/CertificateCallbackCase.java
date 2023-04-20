@@ -8,9 +8,6 @@ import org.jetbrains.idea.svn.auth.AuthenticationService;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class CertificateCallbackCase extends AuthCallbackCase {
 
   private static final @NonNls String CERTIFICATE_ERROR = "Error validating server certificate for";

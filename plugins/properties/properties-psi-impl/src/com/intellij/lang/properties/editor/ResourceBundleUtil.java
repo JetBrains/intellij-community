@@ -14,9 +14,6 @@ import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Denis Zhdanov
- */
 public final class ResourceBundleUtil {
 
   private ResourceBundleUtil() {

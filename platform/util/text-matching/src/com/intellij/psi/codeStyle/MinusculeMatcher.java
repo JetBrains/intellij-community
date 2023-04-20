@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.TextRange;
@@ -18,12 +18,11 @@ import java.util.Iterator;
  *
  * @see NameUtil#buildMatcher(String)
  */
-abstract public class MinusculeMatcher implements Matcher {
+public abstract class MinusculeMatcher implements Matcher {
 
   protected MinusculeMatcher() {}
 
-  @NotNull
-  abstract public String getPattern();
+  public abstract @NotNull String getPattern();
 
   @Override
   public boolean matches(@NotNull String name) {

@@ -77,7 +77,7 @@ public class JavaMembersGetter extends MembersGetter {
         for (PsiField field : charsetsClass.getFields()) {
           if (field.hasModifierProperty(PsiModifier.STATIC) &&
               field.hasModifierProperty(PsiModifier.PUBLIC) && myExpectedType.isAssignableFrom(field.getType())) {
-            LookupElement element = createFieldElement(field);
+            LookupElement element = createFieldElement(field, charsetsClass);
             if (element != null && field.getName().equals(constantClass.priorityConstant)) {
               element = PrioritizedLookupElement.withPriority(element, 1.0);
             }
@@ -161,18 +161,18 @@ public class JavaMembersGetter extends MembersGetter {
 
   @Override
   @Nullable
-  protected LookupElement createFieldElement(PsiField field) {
+  protected LookupElement createFieldElement(@NotNull PsiField field, @NotNull PsiClass origClass) {
     if (!myExpectedType.isAssignableFrom(field.getType())) {
       return null;
     }
 
     return new VariableLookupItem(field, false)
-      .qualifyIfNeeded(ObjectUtils.tryCast(myParameters.getPosition().getParent(), PsiJavaCodeReferenceElement.class));
+      .qualifyIfNeeded(ObjectUtils.tryCast(myParameters.getPosition().getParent(), PsiJavaCodeReferenceElement.class), origClass);
   }
 
   @Override
   @Nullable
-  protected LookupElement createMethodElement(PsiMethod method) {
+  protected LookupElement createMethodElement(@NotNull PsiMethod method, @NotNull PsiClass origClass) {
     JavaMethodCallElement item = new JavaMethodCallElement(method, false, false);
     item.setInferenceSubstitutorFromExpectedType(myPlace, myExpectedType);
     PsiType type = item.getType();

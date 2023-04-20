@@ -117,7 +117,7 @@ public final class TraverseUIStarter implements ApplicationStarter {
           extension.beforeStart();
         }
 
-        SearchUtil.processConfigurables(ShowSettingsUtilImpl.getConfigurables(ProjectManager.getInstance().getDefaultProject(), true), options, i18n);
+        SearchUtil.processConfigurables(ShowSettingsUtilImpl.getConfigurables(ProjectManager.getInstance().getDefaultProject(), true, false), options, i18n);
 
         for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
           extension.afterTraversal(options);

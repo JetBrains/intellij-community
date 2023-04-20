@@ -288,6 +288,11 @@ public final class ExpectedTypeUtils {
     }
 
     @Override
+    public void visitPatternGuard(@NotNull PsiPatternGuard guard) {
+      expectedType = PsiType.BOOLEAN;
+    }
+
+    @Override
     public void visitWhileStatement(@NotNull PsiWhileStatement whileStatement) {
       expectedType = PsiType.BOOLEAN;
     }

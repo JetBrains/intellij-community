@@ -49,6 +49,11 @@ public abstract class ProjectTemplateNewWizardProjectImportTestGenerated extends
         public void testNativeApplication() throws Exception {
             runTest("testData/projectTemplatesBuildFileGeneration/nativeApplication/");
         }
+
+        @TestMetadata("simpleWasmApplication")
+        public void testSimpleWasmApplication() throws Exception {
+            runTest("testData/projectTemplatesBuildFileGeneration/simpleWasmApplication/");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -82,6 +87,11 @@ public abstract class ProjectTemplateNewWizardProjectImportTestGenerated extends
         public void testNativeApplication() throws Exception {
             runTest("testData/projectTemplatesBuildFileGeneration/nativeApplication/");
         }
+
+        @TestMetadata("simpleWasmApplication")
+        public void testSimpleWasmApplication() throws Exception {
+            runTest("testData/projectTemplatesBuildFileGeneration/simpleWasmApplication/");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -114,6 +124,11 @@ public abstract class ProjectTemplateNewWizardProjectImportTestGenerated extends
         @TestMetadata("nativeApplication")
         public void testNativeApplication() throws Exception {
             runTest("testData/projectTemplatesBuildFileGeneration/nativeApplication/");
+        }
+
+        @TestMetadata("simpleWasmApplication")
+        public void testSimpleWasmApplication() throws Exception {
+            runTest("testData/projectTemplatesBuildFileGeneration/simpleWasmApplication/");
         }
     }
 }

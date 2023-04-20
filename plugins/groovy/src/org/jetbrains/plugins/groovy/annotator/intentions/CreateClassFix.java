@@ -40,9 +40,6 @@ import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 
 import static org.jetbrains.plugins.groovy.intentions.base.IntentionUtils.createTemplateForMethod;
 
-/**
- * @author ilyas
- */
 public abstract class CreateClassFix {
 
   public static IntentionAction createClassFromNewAction(final GrNewExpression expression) {

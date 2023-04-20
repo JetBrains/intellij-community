@@ -5,8 +5,6 @@ import com.intellij.openapi.application.ApplicationManager;
 
 /**
  * Creates {@link RefactoringActionHandler}s for various refactorings.
- *
- * @author dsl
  */
 public abstract class RefactoringActionHandlerFactory {
 

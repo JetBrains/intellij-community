@@ -396,6 +396,11 @@ public final class EditPropertyValueAction extends BaseRefactoringAction {
       presentation.setHoveredIcon(AllIcons.Actions.SearchNewLineHover);
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
     private static class Handler extends EditorWriteActionHandler {
       @Override
       public void executeWriteAction(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {

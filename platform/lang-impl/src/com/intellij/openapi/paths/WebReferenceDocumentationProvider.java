@@ -6,9 +6,6 @@ import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nls;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class WebReferenceDocumentationProvider extends AbstractDocumentationProvider {
   @Override
   public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {

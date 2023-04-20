@@ -63,7 +63,7 @@ class WorkspaceModelTest {
 
     assertTrue(updated)
 
-    val moduleEntity = WorkspaceModel.getInstance(projectModel.project).entityStorage.current.entities(ModuleEntity::class.java).single()
+    val moduleEntity = WorkspaceModel.getInstance(projectModel.project).currentSnapshot.entities(ModuleEntity::class.java).single()
     assertEquals("MyModule", moduleEntity.name)
   }
 
@@ -115,7 +115,7 @@ class WorkspaceModelTest {
       }
     }
 
-    val entities = model.entityStorage.current.entities(ModuleEntity::class.java).toList()
+    val entities = model.currentSnapshot.entities(ModuleEntity::class.java).toList()
     assertEquals(2, entities.size)
     assertEquals(setOf(firstModuleName, secondModuleName), entities.map { it.name }.toSet())
   }

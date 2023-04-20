@@ -207,7 +207,8 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     JComponent westComponent;
     if (ExperimentalUI.isNewUI()) {
       westComponent = createNewActionsToolbar();
-    } else {
+    }
+    else {
       westComponent = JBUI.Panels.simplePanel()
         .addToLeft(createLeftActionsToolbar())
         .addToRight(createRightActionsToolbar());

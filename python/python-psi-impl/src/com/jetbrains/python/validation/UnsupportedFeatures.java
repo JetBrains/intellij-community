@@ -34,9 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 
-/**
- * @author Alexey.Ivanov
- */
 public class UnsupportedFeatures extends CompatibilityVisitor {
 
   public UnsupportedFeatures() {

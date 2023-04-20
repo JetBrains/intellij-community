@@ -29,9 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-/**
- * @author Denis Zhdanov
- */
 public class ExternalSystemTaskLocation extends PsiLocation<PsiElement> {
 
   @NotNull private final ExternalTaskExecutionInfo myTaskInfo;

@@ -12,9 +12,6 @@ import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessor;
 import com.intellij.refactoring.ui.YesNoPreviewUsagesDialog;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author dsl
- */
 public final class ExtractClassUtil {
   public static void askAndTurnRefsToSuper(final Project project,
                                            final SmartPsiElementPointer classPointer,

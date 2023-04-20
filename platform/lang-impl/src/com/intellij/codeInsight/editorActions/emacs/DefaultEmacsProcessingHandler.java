@@ -20,9 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Denis Zhdanov
- */
 public class DefaultEmacsProcessingHandler implements EmacsProcessingHandler {
 
   @NotNull

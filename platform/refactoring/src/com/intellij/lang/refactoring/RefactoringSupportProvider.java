@@ -11,8 +11,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Allows a custom language plugin to control the operation of refactorings for
  * files in the language.
- *
- * @author ven
  */
 public abstract class RefactoringSupportProvider {
   /**

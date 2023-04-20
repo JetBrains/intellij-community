@@ -25,4 +25,3 @@ enum class E {
 }
 
 // FIR_IGNORE
-// FIR_COMPARISON

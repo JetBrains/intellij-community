@@ -133,7 +133,7 @@ public final class EventLogToolWindowFactory implements ToolWindowFactory, DumbA
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
+      return super.getActionUpdateThread();
     }
   }
 

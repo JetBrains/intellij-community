@@ -10,7 +10,6 @@ import com.intellij.execution.filters.ConsoleFilterProvider;
 import com.intellij.execution.filters.Filter;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +66,7 @@ public class JavaDebuggerConsoleFilterProvider implements ConsoleFilterProvider 
 
     @Override
     public EditorCustomElementRenderer createInlayRenderer(Editor editor) {
-      PresentationFactory factory = new PresentationFactory((EditorImpl)editor);
+      PresentationFactory factory = new PresentationFactory(editor);
       InlayPresentation presentation = factory.referenceOnHover(
         factory.roundWithBackground(factory.smallText("Attach debugger")),
         (event, point) -> {

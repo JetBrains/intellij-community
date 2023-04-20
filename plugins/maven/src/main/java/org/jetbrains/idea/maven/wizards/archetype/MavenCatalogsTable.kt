@@ -65,7 +65,7 @@ class MavenCatalogsTable(private val project: Project) : ListTableWithButtons<Ma
   }
 
   private fun column(name: @NlsContexts.ColumnName String, getter: MavenCatalog.() -> @Nls String) =
-    object : ColumnInfo<MavenCatalog, @org.jetbrains.annotations.Nls String>(name) {
+    object : ColumnInfo<MavenCatalog, @Nls String>(name) {
       override fun valueOf(item: MavenCatalog) = item.getter()
     }
 

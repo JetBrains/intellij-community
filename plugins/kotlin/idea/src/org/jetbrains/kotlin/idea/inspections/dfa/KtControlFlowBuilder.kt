@@ -348,7 +348,13 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         for (idx in indexes) {
             processExpression(idx)
             val lastIndex = idx == indexes.last()
-            val anchor = if (lastIndex) KotlinExpressionAnchor(expr) else null
+            val anchor = if (lastIndex) {
+                if (storedValue != null)
+                    KotlinExpressionAnchor(PsiTreeUtil.findCommonParent(expr, storedValue) as? KtExpression ?: expr)
+                else
+                    KotlinExpressionAnchor(expr)
+            }
+            else null
             val expectedType = if (lastIndex) expr.getKotlinType()?.toDfType() ?: DfType.TOP else DfType.TOP
             var indexType = idx.getKotlinType()
             val constructor = indexType?.constructor as? IntegerLiteralTypeConstructor

@@ -4,9 +4,6 @@ package org.jetbrains.jps.maven.compiler;
 import java.io.IOException;
 import java.util.regex.Pattern;
 
-/**
- * @author Sergey Evdokimov
- */
 public final class MavenEscapeWindowsCharacterUtils {
 
     // See org.apache.maven.shared.filtering.FilteringUtils.PATTERN

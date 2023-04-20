@@ -58,9 +58,11 @@ interface CellBase<out T : CellBase<T>> {
   fun enabledIf(property: ObservableProperty<Boolean>): CellBase<T>
 
   @Deprecated("Use align method instead")
+  @ApiStatus.ScheduledForRemoval
   fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBase<T>
 
   @Deprecated("Use align method instead")
+  @ApiStatus.ScheduledForRemoval
   fun verticalAlign(verticalAlign: VerticalAlign): CellBase<T>
 
   /**

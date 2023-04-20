@@ -21,6 +21,9 @@ import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceLis
 import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
@@ -235,7 +238,7 @@ class SourceRootOrderEntityData : WorkspaceEntityData<SourceRootOrderEntity>() {
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return SourceRootOrderEntity(orderOfSourceRoots, entitySource) {
-      this.contentRootEntity = parents.filterIsInstance<ContentRootEntity>().single()
+      parents.filterIsInstance<ContentRootEntity>().singleOrNull()?.let { this.contentRootEntity = it }
     }
   }
 

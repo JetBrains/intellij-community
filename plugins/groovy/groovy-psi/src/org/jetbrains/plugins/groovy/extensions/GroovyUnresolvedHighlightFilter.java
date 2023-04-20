@@ -19,9 +19,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
-/**
- * @author Sergey Evdokimov
- */
 public abstract class GroovyUnresolvedHighlightFilter {
 
   public static final ExtensionPointName<GroovyUnresolvedHighlightFilter> EP_NAME = ExtensionPointName.create("org.intellij.groovy.unresolvedHighlightFilter");

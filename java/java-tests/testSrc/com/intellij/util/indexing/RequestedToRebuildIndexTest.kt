@@ -35,7 +35,7 @@ class RequestedToRebuildIndexTest : JavaCodeInsightFixtureTestCase() {
   }
 
   private fun reindexFile(fileA: VirtualFile) {
-    val storage = WorkspaceModel.getInstance(project).entityStorage.current
+    val storage = WorkspaceModel.getInstance(project).currentSnapshot
     val moduleEntity = storage.entities(ModuleEntity::class.java).iterator().next()
     assertNotNull(moduleEntity)
     val iterators = createIterators(moduleEntity, listOf(fileA), storage)

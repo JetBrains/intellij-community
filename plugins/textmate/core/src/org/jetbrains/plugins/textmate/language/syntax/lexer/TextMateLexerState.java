@@ -14,7 +14,7 @@ public class TextMateLexerState {
   @NotNull public final SyntaxNodeDescriptor syntaxRule;
   @NotNull public final MatchData matchData;
   @NotNull public final TextMateWeigh.Priority priorityMatch;
-  // offset on line where state was emitted. used for local loop protection only
+  // offset in line where state was emitted. used for local loop protection only
   public final int enterByteOffset;
   public final boolean matchedEOL;
   @Nullable public final StringWithId string;

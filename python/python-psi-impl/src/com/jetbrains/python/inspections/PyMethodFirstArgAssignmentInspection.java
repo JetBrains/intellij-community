@@ -17,7 +17,6 @@ import java.util.List;
 
 /**
  * Reports assignment to 'self' or 'cls'.
- * @author dcheryasov
  */
 public class PyMethodFirstArgAssignmentInspection extends PyInspection {
 

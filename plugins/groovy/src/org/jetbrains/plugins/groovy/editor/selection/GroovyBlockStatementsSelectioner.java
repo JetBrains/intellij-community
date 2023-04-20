@@ -26,9 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 import java.util.List;
 
-/**
- * @author ilyas
- */
 public class GroovyBlockStatementsSelectioner extends ExtendWordSelectionHandlerBase {
 
   @Override

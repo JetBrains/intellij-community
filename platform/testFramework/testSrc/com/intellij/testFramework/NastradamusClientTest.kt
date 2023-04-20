@@ -3,7 +3,10 @@ package com.intellij.testFramework
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.nastradamus.NastradamusClient
-import com.intellij.nastradamus.model.*
+import com.intellij.nastradamus.model.BuildInfo
+import com.intellij.nastradamus.model.ChangeEntity
+import com.intellij.nastradamus.model.SortRequestEntity
+import com.intellij.nastradamus.model.TestCaseEntity
 import com.intellij.teamcity.TeamCityClient
 import com.intellij.tool.Cache
 import com.intellij.tool.withErrorThreshold
@@ -111,25 +114,6 @@ class NastradamusClientTest {
   }
 
   @Test
-  @Ignore("Do not use TC. Use mocks / test data")
-  fun collectingTestResultsFromTC() {
-    val tests = tcClient.getTestRunInfo("226830449")
-
-    val testResultEntities = tests.map { json ->
-      TestResultEntity(
-        name = json.findValue("name").asText(),
-        status = TestStatus.fromString(json.findValue("status").asText()),
-        runOrder = json.findValue("runOrder").asInt(),
-        duration = json.findValue("duration")?.asLong() ?: 0,
-        buildType = tcClient.buildTypeId,
-        buildStatusMessage = tcClient.getBuildInfo().findValue("statusText").asText()
-      )
-    }
-
-    println(testResultEntities)
-  }
-
-  @Test
   fun getBuildInfoTriggeredByAggregator() {
     tcMockServer.enqueue(getOkResponse("teamcity/Build_Info_Triggered_By_Aggregator.json"))
 
@@ -232,5 +216,6 @@ class NastradamusClientTest {
 
     Assert.assertEquals("Requested path should be equal", "/result/?build_id=100500", request.path)
     Assert.assertEquals("POST request should be sent", "POST", request.method)
+    Assert.assertTrue("Converted test entities must have 2 muted tests", testResultRequestEntity.testRunResults.count { it.isMuted } == 2)
   }
 }

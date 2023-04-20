@@ -18,7 +18,6 @@ import java.util.concurrent.Future;
 /**
  * Refreshes file history.
  *
- * @author irengrig
  * @author Kirill Likhodedov
  */
 public class FileHistoryRefresher implements FileHistoryRefresherI {

@@ -23,6 +23,7 @@ public interface UpToDateLineNumberProvider {
 
   int getLineCount();
   int getLineNumber(int currentNumber);
+  int getLineNumber(int currentNumber, boolean approximate);
   boolean isLineChanged(int currentNumber);
   boolean isRangeChanged(final int start, final int end);
 }

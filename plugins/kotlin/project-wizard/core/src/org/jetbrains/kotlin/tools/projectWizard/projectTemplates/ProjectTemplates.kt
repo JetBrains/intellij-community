@@ -76,6 +76,7 @@ abstract class ProjectTemplate : DisplayableSettingItem {
             FullStackWebApplicationProjectTemplate,
             MultiplatformLibraryProjectTemplate,
             NativeApplicationProjectTemplate,
+            WasmApplicationProjectTemplate,
             FrontendApplicationProjectTemplate,
             ReactApplicationProjectTemplate,
             NodeJsApplicationProjectTemplate,
@@ -234,6 +235,32 @@ object NativeApplicationProjectTemplate : ProjectTemplate() {
                 )
             )
         )
+}
+
+object WasmApplicationProjectTemplate : ProjectTemplate() {
+    override val title: String = KotlinNewProjectWizardBundle.message("project.template.wasm.browser.title")
+    override val description: String = KotlinNewProjectWizardBundle.message("project.template.wasm.browser.description")
+    override val id = "simpleWasmApplication"
+    override val icon: Icon
+        get() = KotlinIcons.Wizard.WEB
+
+    @NonNls
+    override val suggestedProjectName: String = "myWasmApplication"
+    override val projectKind: ProjectKind = ProjectKind.Multiplatform
+    override val setsPluginSettings: List<SettingWithValue<*, *>> = listOf(
+        KotlinPlugin.modules.reference withValue listOf(
+            MultiplatformModule(
+                "application",
+                permittedTemplateIds = emptySet(),
+                targets = listOf(
+                    ModuleType.common.createDefaultTarget(),
+                    ModuleType.wasm.createDefaultTarget(permittedTemplateIds = setOf(SimpleWasmClientTemplate.id)).apply {
+                        withTemplate(SimpleWasmClientTemplate)
+                    }
+                )
+            )
+        )
+    )
 }
 
 object FrontendApplicationProjectTemplate : ProjectTemplate() {

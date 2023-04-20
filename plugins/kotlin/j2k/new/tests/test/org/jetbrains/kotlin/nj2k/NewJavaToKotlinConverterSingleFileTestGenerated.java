@@ -2162,6 +2162,16 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/field/varWithoutInit.java");
         }
 
+        @TestMetadata("volatileCommon.java")
+        public void testVolatileCommon() throws Exception {
+            runTest("testData/newJ2k/field/volatileCommon.java");
+        }
+
+        @TestMetadata("volatileJvm.java")
+        public void testVolatileJvm() throws Exception {
+            runTest("testData/newJ2k/field/volatileJvm.java");
+        }
+
         @TestMetadata("volatileTransientAndStrictFp.java")
         public void testVolatileTransientAndStrictFp() throws Exception {
             runTest("testData/newJ2k/field/volatileTransientAndStrictFp.java");
@@ -2879,6 +2889,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("ktij-16665.java")
         public void testKtij_16665() throws Exception {
             runTest("testData/newJ2k/implicitCasts/ktij-16665.java");
+        }
+
+        @TestMetadata("ktij-8518.java")
+        public void testKtij_8518() throws Exception {
+            runTest("testData/newJ2k/implicitCasts/ktij-8518.java");
         }
 
         @TestMetadata("operationsWithChar.java")
@@ -3831,11 +3846,6 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("stringEscaping.java")
         public void testStringEscaping() throws Exception {
             runTest("testData/newJ2k/literalExpression/stringEscaping.java");
-        }
-
-        @TestMetadata("stringOctalChars.java")
-        public void testStringOctalChars() throws Exception {
-            runTest("testData/newJ2k/literalExpression/stringOctalChars.java");
         }
 
         @TestMetadata("trueOrFalse.java")
@@ -5193,24 +5203,9 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("escapedBackslash.java")
-        public void testEscapedBackslash() throws Exception {
-            runTest("testData/newJ2k/strings/escapedBackslash.java");
-        }
-
-        @TestMetadata("escapedDollar.java")
-        public void testEscapedDollar() throws Exception {
-            runTest("testData/newJ2k/strings/escapedDollar.java");
-        }
-
         @TestMetadata("formattedString.java")
         public void testFormattedString() throws Exception {
             runTest("testData/newJ2k/strings/formattedString.java");
-        }
-
-        @TestMetadata("octalEscape.java")
-        public void testOctalEscape() throws Exception {
-            runTest("testData/newJ2k/strings/octalEscape.java");
         }
     }
 

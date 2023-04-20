@@ -23,9 +23,6 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author Denis Zhdanov
- */
 public class ArrangementGroupingRulesControl extends JBTable {
 
   @NotNull public static final DataKey<ArrangementGroupingRulesControl> KEY = DataKey.create("Arrangement.Rule.Group.Control");

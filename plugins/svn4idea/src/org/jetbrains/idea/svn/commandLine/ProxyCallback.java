@@ -11,9 +11,6 @@ import org.jetbrains.idea.svn.auth.AuthenticationService;
 
 import java.net.PasswordAuthentication;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class ProxyCallback extends AuthCallbackCase {
 
   private static final Logger LOG = Logger.getInstance(ProxyCallback.class);

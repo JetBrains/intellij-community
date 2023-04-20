@@ -365,12 +365,14 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   @Deprecated("Use align method instead")
+  @ApiStatus.ScheduledForRemoval
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): PanelImpl {
     super.horizontalAlign(horizontalAlign)
     return this
   }
 
   @Deprecated("Use align method instead")
+  @ApiStatus.ScheduledForRemoval
   override fun verticalAlign(verticalAlign: VerticalAlign): PanelImpl {
     super.verticalAlign(verticalAlign)
     return this

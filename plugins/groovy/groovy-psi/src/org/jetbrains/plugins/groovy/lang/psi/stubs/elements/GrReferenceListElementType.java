@@ -19,9 +19,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author ilyas
- */
 public class GrReferenceListElementType<T extends GrReferenceList> extends GrStubElementType<GrReferenceListStub, T> {
   public GrReferenceListElementType(final String debugName) {
     super(debugName);

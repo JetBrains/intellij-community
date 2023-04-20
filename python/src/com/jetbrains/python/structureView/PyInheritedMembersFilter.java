@@ -26,9 +26,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
-/**
- * @author vlan
- */
 public class PyInheritedMembersFilter implements FileStructureFilter {
   private static final String ID = "SHOW_INHERITED";
 

@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
-import org.jetbrains.kotlin.idea.base.codeInsight.isEnumValuesMethod
+import org.jetbrains.kotlin.idea.base.codeInsight.isSoftDeprecatedEnumValuesMethod
 import org.jetbrains.kotlin.idea.base.codeInsight.isEnumValuesSoftDeprecateEnabled
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
@@ -51,7 +51,7 @@ abstract class EnumValuesSoftDeprecateMigrationInspectionBase : AbstractKotlinIn
                     }
                     val resolvedCall = callExpression.resolveCall().successfulFunctionCallOrNull() ?: return
                     val resolvedCallSymbol = resolvedCall.partiallyAppliedSymbol.symbol
-                    if (isEnumValuesMethod(resolvedCallSymbol)) {
+                    if (isSoftDeprecatedEnumValuesMethod(resolvedCallSymbol)) {
                         val quickFix = createQuickFix(callExpression, resolvedCallSymbol) ?: return
                         holder.registerProblem(
                             callExpression,

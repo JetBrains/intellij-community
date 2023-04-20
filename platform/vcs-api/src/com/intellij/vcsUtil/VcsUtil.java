@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ThrowableConvertor;
@@ -256,18 +255,6 @@ public final class VcsUtil {
     if (virtualFile != null) return IconUtil.getIcon(virtualFile, 0, project);
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(filePath.getName());
     return fileType.getIcon();
-  }
-
-  /**
-   * @deprecated use {@link StatusBar.Info#set(String, Project)} directly.
-   */
-  @Deprecated(forRemoval = true)
-  public static void showStatusMessage(@NotNull Project project, @Nullable @Nls String message) {
-    SwingUtilities.invokeLater(() -> {
-      if (project.isOpen()) {
-        StatusBar.Info.set(message, project);
-      }
-    });
   }
 
   /**

@@ -148,28 +148,26 @@ final class FileTypeDetectionService implements Disposable {
         finishRedetectionIfEnqueued(file);
       }
 
-      if (!files.isEmpty()) {
-        return new AsyncFileListener.ChangeApplier() {
-          @Override
-          public void beforeVfsChange() {
-            myCanUseCachedDetectedFileType = false;
-          }
+      return new AsyncFileListener.ChangeApplier() {
+        @Override
+        public void beforeVfsChange() {
+          myCanUseCachedDetectedFileType = false;
+        }
 
-          @Override
-          public void afterVfsChange() {
-            try {
-              synchronized (filesToRedetect) {
-                if (filesToRedetect.addAll(files)) {
-                  awakeReDetectExecutor();
-                }
+        @Override
+        public void afterVfsChange() {
+          try {
+            synchronized (filesToRedetect) {
+              if (filesToRedetect.addAll(files)) {
+                awakeReDetectExecutor();
               }
             }
-            finally {
-              myCanUseCachedDetectedFileType = true;
-            }
           }
-        };
-      }
+          finally {
+            myCanUseCachedDetectedFileType = true;
+          }
+        }
+      };
     }
     return null;
   }

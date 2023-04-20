@@ -91,7 +91,7 @@ internal class LibrariesAndSdkContributors(private val project: Project,
     registerLibraryRoots(OrderRootType.SOURCES, WorkspaceFileKind.EXTERNAL_SOURCE, reference, LibrarySourceRootFileSetData(null, ""))
     (library as? LibraryEx)?.let { rootFileSupplier.getExcludedRoots(it) }?.forEach {
       if (RootFileSupplier.ensureValid(it, library, null)) {
-        fileSets.putValue(it, ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.EXTERNAL, reference, EntityStorageKind.MAIN))
+        fileSets.putValue(it, ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.EXTERNAL, reference))
         libraryRoots.putValue(library, it)
       }
     }

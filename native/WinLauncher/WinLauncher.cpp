@@ -20,6 +20,10 @@
 
 #include "resource.h"
 
+#ifdef USE_CEF_SANDBOX
+#include "include/cef_sandbox_win.h"
+void* cef_sandbox_info = nullptr;
+#endif // USE_CEF_SANDBOX
 
 #define IDE_HOME_MACRO "%IDE_HOME%"
 
@@ -140,7 +144,7 @@ bool FindJVMInSettings() {
     std::wstring path(copy);
     path += module.substr(module.find_last_of('\\')) + L".jdk";
     FILE *f;
-    if (!_wfopen_s(&f, path.c_str(), L"rt")) return false;
+    if (_wfopen_s(&f, path.c_str(), L"rt")) return false;
 
     char line[_MAX_PATH];
     if (!fgets(line, _MAX_PATH, f)) {
@@ -197,7 +201,7 @@ void TrimLine(char* line)
 
 static bool LoadVMOptionsFile(const char* path, std::vector<std::string>& vmOptionLines) {
   FILE *f;
-  if (!fopen_s(&f, path, "rt")) return false;
+  if (fopen_s(&f, path, "rt")) return false;
 
   char line[4096];
   while (fgets(line, sizeof(line), f)) {
@@ -354,6 +358,14 @@ static void LoadVMOptions(const std::string &homeDir) {
   AddClassPathOptions(homeDir, lines);
   AddBootClassPathOptions(homeDir, lines);
   AddPredefinedVMOptions(homeDir, lines);
+
+#ifdef USE_CEF_SANDBOX
+  if (cef_sandbox_info) {
+    char buf[64];
+    snprintf(buf, sizeof(buf), "-Djcef.sandbox.ptr=%p", cef_sandbox_info);
+    lines.push_back(std::string(buf));
+  }
+#endif // USE_CEF_SANDBOX
 
   vmOptionCount = (int)lines.size() + 1;
   vmOptions = (JavaVMOption *)calloc(vmOptionCount, sizeof(JavaVMOption));
@@ -839,6 +851,27 @@ void PrintUsage()
   MessageBoxA(NULL, buf.str().c_str(), "Command-line Options", MB_OK);
 }
 
+#ifdef USE_CEF_SANDBOX
+bool isCefSubprocess() {
+  return wcsstr(GetCommandLineW(), L"--type=");
+}
+
+typedef int(*cef_execute_process_proc)(HINSTANCE, void *);
+
+int execute_cef_subprocess(HINSTANCE hInstance) {
+    std::string helperPath = std::string(jvmPath) + "\\bin\\jcef_helper.dll";
+    HMODULE hCefHelper = LoadLibraryA(helperPath.c_str());
+    if (hCefHelper) {
+      cef_execute_process_proc proc = (cef_execute_process_proc) GetProcAddress(hCefHelper, "execute_subprocess");
+      if (proc) return proc(hInstance, cef_sandbox_info);
+      fprintf(stderr, "ERROR: can't load execute_subprocess from jcef_helper\n");
+    } else {
+      fprintf(stderr, "ERROR: can't load jcef_helper, path='%s'\n", helperPath.c_str());
+    }
+    return 1;
+}
+#endif // USE_CEF_SANDBOX
+
 int APIENTRY _tWinMain(HINSTANCE hInstance,
                        HINSTANCE hPrevInstance,
                        LPTSTR    lpCmdLine,
@@ -857,6 +890,19 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
     }
   }
 
+  std::string homeDir = GetHomeDir();
+  if (!LocateJVM(homeDir)) return 1;
+
+#ifdef USE_CEF_SANDBOX
+  CefScopedSandboxInfo scoped_sandbox;
+  cef_sandbox_info = scoped_sandbox.sandbox_info();
+
+  // We must use the same executable for the browser process and all sub-processes.
+  // The CefSettings.browser_subprocess_path setting cannot be used in combination with the sandbox.
+  // see https://bitbucket.org/chromiumembedded/cef/wiki/SandboxSetup#markdown-header-windows
+  if (isCefSubprocess()) return execute_cef_subprocess(hInstance);
+#endif // USE_CEF_SANDBOX
+
   // ensures path variables are defined
   SetPathVariable(L"APPDATA", FOLDERID_RoamingAppData);
   SetPathVariable(L"LOCALAPPDATA", FOLDERID_LocalAppData);
@@ -874,8 +920,6 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
   args = RemovePredefinedArgs(args);
 
-  std::string homeDir = GetHomeDir();
-  if (!LocateJVM(homeDir)) return 1;
   LoadVMOptions(homeDir);
   if (!LoadJVMLibrary()) return 1;
   JNIEnv* jenv = CreateJVM();

@@ -14,9 +14,6 @@ import java.util.EnumSet;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_KINDS_METHOD_PROPERTY;
 
-/**
- * @author ven
- */
 public final class CompletionProcessor extends ResolverProcessorImpl {
   private CompletionProcessor(PsiElement place, final EnumSet<DeclarationKind> resolveTargets, final String name) {
     super(name, resolveTargets, place, PsiType.EMPTY_ARRAY);

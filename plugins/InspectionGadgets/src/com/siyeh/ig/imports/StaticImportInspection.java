@@ -70,8 +70,8 @@ public class StaticImportInspection extends BaseInspection {
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      stringSet("allowedClasses", InspectionGadgetsBundle.message("static.import.options.border.title"),
-                new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("static.import.options.chooserTitle"))),
+      stringList("allowedClasses", InspectionGadgetsBundle.message("static.import.options.border.title"),
+                 new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("static.import.options.chooserTitle"))),
       checkbox("ignoreSingleFieldImports", InspectionGadgetsBundle.message("ignore.single.field.static.imports.option")),
       checkbox("ignoreSingeMethodImports", InspectionGadgetsBundle.message("ignore.single.method.static.imports.option"))
     );

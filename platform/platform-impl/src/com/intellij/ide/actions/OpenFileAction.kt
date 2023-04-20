@@ -1,8 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.GeneralSettings
+import com.intellij.ide.GeneralLocalSettings
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.impl.OpenProjectTask
@@ -67,8 +67,9 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible {
     val showFiles = project != null || PlatformProjectOpenProcessor.getInstanceIfItExists() != null
     val descriptor: FileChooserDescriptor = if (showFiles) ProjectOrFileChooserDescriptor() else ProjectOnlyFileChooserDescriptor()
     var toSelect: VirtualFile? = null
-    if (!GeneralSettings.getInstance().defaultProjectDirectory.isNullOrEmpty()) {
-      toSelect = VfsUtil.findFileByIoFile(File(GeneralSettings.getInstance().defaultProjectDirectory), true)
+    val defaultProjectDirectory = GeneralLocalSettings.getInstance().defaultProjectDirectory
+    if (defaultProjectDirectory.isNotEmpty()) {
+      toSelect = VfsUtil.findFileByIoFile(File(defaultProjectDirectory), true)
     }
     descriptor.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, toSelect == null && showFiles)
     FileChooser.chooseFiles(descriptor, project, toSelect ?: pathToSelect) { files ->

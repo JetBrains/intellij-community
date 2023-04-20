@@ -18,9 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author Denis Zhdanov
- */
 public class GradleScriptContributor extends NonCodeMembersContributor {
 
   public static final Set<String> BUILD_PROJECT_SCRIPT_BLOCKS = ContainerUtil.newHashSet(

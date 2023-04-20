@@ -16,7 +16,6 @@ import java.util.function.Supplier;
  * Represents a language level (i.e. features available) of a Java code.
  * The {@link org.jetbrains.jps.model.java.LanguageLevel} class is a compiler-side counterpart of this enum.
  *
- * @author dsl
  * @see LanguageLevelProjectExtension
  * @see LanguageLevelModuleExtension
  * @see JavaSdkVersion

@@ -20,9 +20,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author irengrig
- */
 public class CustomChangelistTodoTreeStructure extends TodoTreeStructure {
   private final PsiTodoSearchHelper myCustomSearchHelper;
 

@@ -206,26 +206,32 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
   }
 
   fun getSelectedRepositories(branchInfo: BranchInfo): Set<GitRepository> {
-    val paths = selectionPaths ?: return emptySet()
-    return paths.asSequence()
-      .filter {
-        val lastPathComponent = it.lastPathComponent
-        lastPathComponent is BranchTreeNode && lastPathComponent.getNodeDescriptor().branchInfo == branchInfo
-      }
-      .mapNotNull { findNodeDescriptorInPath(it) { descriptor -> Objects.nonNull(descriptor.repository) } }
-      .mapNotNull(BranchNodeDescriptor::repository)
-      .toSet()
+    return getSelectedRepositories(branchInfo, selectionPaths)
   }
 
-  private fun findNodeDescriptorInPath(path: TreePath, condition: (BranchNodeDescriptor) -> Boolean): BranchNodeDescriptor? {
-    var curPath: TreePath? = path
-    while (curPath != null) {
-      val node = curPath.lastPathComponent as? BranchTreeNode
-      if (node != null && condition(node.getNodeDescriptor())) return node.getNodeDescriptor()
-      curPath = curPath.parentPath
+  companion object {
+    internal fun getSelectedRepositories(branchInfo: BranchInfo, selectionPaths: Array<TreePath>?): Set<GitRepository> {
+      val paths = selectionPaths ?: return emptySet()
+      return paths.asSequence()
+        .filter {
+          val lastPathComponent = it.lastPathComponent
+          lastPathComponent is BranchTreeNode && lastPathComponent.getNodeDescriptor().branchInfo == branchInfo
+        }
+        .mapNotNull { findNodeDescriptorInPath(it) { descriptor -> Objects.nonNull(descriptor.repository) } }
+        .mapNotNull(BranchNodeDescriptor::repository)
+        .toSet()
     }
 
-    return null
+    private fun findNodeDescriptorInPath(path: TreePath, condition: (BranchNodeDescriptor) -> Boolean): BranchNodeDescriptor? {
+      var curPath: TreePath? = path
+      while (curPath != null) {
+        val node = curPath.lastPathComponent as? BranchTreeNode
+        if (node != null && condition(node.getNodeDescriptor())) return node.getNodeDescriptor()
+        curPath = curPath.parentPath
+      }
+
+      return null
+    }
   }
 }
 
@@ -271,7 +277,7 @@ internal class FilteringBranchesTree(
 
   init {
     runInEdt {
-      PopupHandler.installPopupMenu(component, BranchesTreeActionGroup(project, this), place)
+      PopupHandler.installPopupMenu(component, BranchesTreeActionGroup(), place)
       setupTreeListeners()
     }
   }
@@ -310,8 +316,9 @@ internal class FilteringBranchesTree(
 
         val wordMatchers = hashSetOf<MinusculeMatcher>()
         for (word in StringUtil.split(text, " ")) {
+          val trimmedWord = word.trim() //otherwise Character.isSpaceChar would affect filtering
           wordMatchers.add(
-            FixingLayoutMatcher("*$word", NameUtil.MatchingCaseSensitivity.NONE, ""))
+            FixingLayoutMatcher("*$trimmedWord", NameUtil.MatchingCaseSensitivity.NONE, ""))
         }
 
         return wordMatchers

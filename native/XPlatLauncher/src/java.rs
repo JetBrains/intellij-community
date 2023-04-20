@@ -75,6 +75,11 @@ unsafe fn prepare_jni_env(
     java_home: &Path,
     vm_options: Vec<String>
 ) -> Result<jni::JNIEnv<'static>> {
+    // Read current directory and pass it to JVM through environment variable. The real current directory will be changed
+    // in load_libjvm().
+    let work_dir = std::env::current_dir().context("Failed to get current directory")?;
+    std::env::set_var("IDEA_INITIAL_DIRECTORY", &work_dir);
+
     debug!("Resolving libjvm");
     let libjvm_path = get_libjvm(&java_home)?;
     debug!("libjvm resolved as {libjvm_path:?}");

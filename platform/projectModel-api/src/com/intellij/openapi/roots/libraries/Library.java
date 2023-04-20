@@ -24,9 +24,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.*;
 
-/**
- * @author dsl
- */
 @ApiStatus.NonExtendable
 public interface Library extends JDOMExternalizable, Disposable, ProjectModelElement {
   Library[] EMPTY_ARRAY = new Library[0];

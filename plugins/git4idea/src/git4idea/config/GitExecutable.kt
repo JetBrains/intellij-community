@@ -9,9 +9,7 @@ import com.intellij.execution.wsl.WSLCommandLineOptions
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil
 import git4idea.commands.GitHandler
 import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.Nls
@@ -98,25 +96,12 @@ sealed class GitExecutable {
 
       // 'C:\Users\file.txt' -> '/mnt/c/Users/file.txt'
       val wslPath = distribution.getWslPath(path)
-      if (wslPath != null) return wslPath
-
-      // '\\wsl$\Ubuntu\home\user\file.txt' -> '/home/user/file.txt'
-      val uncRoot = distribution.uncRoot
-      if (FileUtil.isAncestor(uncRoot, file, false)) {
-        return StringUtil.trimStart(FileUtil.toSystemIndependentName(path),
-                                    FileUtil.toSystemIndependentName(uncRoot.path))
-      }
-
-      return path
+      return wslPath ?: path
     }
 
     override fun convertFilePathBack(path: String, workingDir: File): File {
       // '/mnt/c/Users/file.txt' -> 'C:\Users\file.txt'
-      val localPath = distribution.getWindowsPath(path)
-      if (localPath != null) return File(localPath)
-
-      // '/home/user/file.txt' -> '\\wsl$\Ubuntu\home\user\file.txt'
-      return File(distribution.uncRoot, path)
+      return File(distribution.getWindowsPath(path))
     }
 
     override fun patchCommandLine(handler: GitHandler, commandLine: GeneralCommandLine, executableContext: GitExecutableContext) {

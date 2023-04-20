@@ -60,7 +60,7 @@ public class JavaStaticMemberProcessor extends StaticMemberProcessor {
 
         super.handleInsert(context);
       }
-    }.qualifyIfNeeded(ObjectUtils.tryCast(getPosition().getParent(), PsiJavaCodeReferenceElement.class)));
+    }.qualifyIfNeeded(ObjectUtils.tryCast(getPosition().getParent(), PsiJavaCodeReferenceElement.class), containingClass));
   }
 
   private PsiReference createReferenceToMemberName(@NotNull PsiMember member) {

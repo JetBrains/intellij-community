@@ -31,9 +31,6 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author ilyas
- */
 public final class GantScriptType extends GroovyRunnableScriptType {
   @NonNls public static final String DEFAULT_EXTENSION = "gant";
 

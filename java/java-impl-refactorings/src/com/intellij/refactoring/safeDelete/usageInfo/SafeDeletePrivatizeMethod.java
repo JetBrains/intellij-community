@@ -20,9 +20,6 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 
-/**
- * @author dsl
- */
 public class SafeDeletePrivatizeMethod extends SafeDeleteOverrideAnnotation {
   public SafeDeletePrivatizeMethod(PsiMethod method, PsiMethod overridenMethod) {
     super(method, overridenMethod);

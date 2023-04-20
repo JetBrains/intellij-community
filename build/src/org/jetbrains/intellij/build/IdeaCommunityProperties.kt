@@ -5,6 +5,7 @@ import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.BuildContextImpl
+import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 
 import java.nio.file.Path
 
@@ -111,7 +112,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     }
   }
 
-  protected open  inner class CommunityLinuxDistributionCustomizer : LinuxDistributionCustomizer() {
+  protected open inner class CommunityLinuxDistributionCustomizer : LinuxDistributionCustomizer() {
     init {
       iconPngPath = "${communityHomeDir}/build/conf/ideaCE/linux/images/icon_CE_128.png"
       iconPngPathForEAP = "${communityHomeDir}/build/conf/ideaCE/linux/images/icon_CE_EAP_128.png"
@@ -119,19 +120,18 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
       snapDescription =
         "The most intelligent Java IDE. Every aspect of IntelliJ IDEA is specifically designed to maximize developer productivity. " +
         "Together, powerful static code analysis and ergonomic design make development not only productive but also an enjoyable experience."
-      extraExecutables = persistentListOf(
-        "plugins/Kotlin/kotlinc/bin/kotlin",
-        "plugins/Kotlin/kotlinc/bin/kotlinc",
-        "plugins/Kotlin/kotlinc/bin/kotlinc-js",
-        "plugins/Kotlin/kotlinc/bin/kotlinc-jvm",
-        "plugins/Kotlin/kotlinc/bin/kotlin-dce-js"
-      )
     }
 
     override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String) = "idea-IC-$buildNumber"
+
+    override fun generateExecutableFilesPatterns(context: BuildContext, includeRuntime: Boolean, arch: JvmArchitecture): List<String> {
+      return super.generateExecutableFilesPatterns(context, includeRuntime, arch)
+        .plus(KotlinBinaries.kotlinCompilerExecutables)
+        .filterNot { it == "plugins/**/*.sh" }
+    }
   }
 
-  protected open  inner class CommunityMacDistributionCustomizer : MacDistributionCustomizer() {
+  protected open inner class CommunityMacDistributionCustomizer : MacDistributionCustomizer() {
     init {
       icnsPath = "${communityHomeDir}/build/conf/ideaCE/mac/images/idea.icns"
       urlSchemes = listOf("idea")
@@ -149,6 +149,13 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
       else {
         "IntelliJ IDEA CE.app"
       }
+    }
+
+    override fun generateExecutableFilesPatterns(context: BuildContext, includeRuntime: Boolean, arch: JvmArchitecture): List<String> {
+      return super.generateExecutableFilesPatterns(context, includeRuntime, arch).asSequence()
+        .plus(KotlinBinaries.kotlinCompilerExecutables)
+        .filterNot { it == "plugins/**/*.sh" }
+        .toList()
     }
   }
 

@@ -29,7 +29,7 @@ class PyPackageRepositories : PersistentStateComponent<PyPackageRepositories> {
     XmlSerializerUtil.copyBean(state, this)
   }
 
-  fun findByUrl(url: String): PyPackageRepository? {
+  private fun findByUrl(url: String): PyPackageRepository? {
     return repositories.find { url == it.repositoryUrl }
   }
 

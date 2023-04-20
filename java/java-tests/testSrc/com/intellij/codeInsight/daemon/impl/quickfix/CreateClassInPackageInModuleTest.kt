@@ -6,9 +6,6 @@ import com.intellij.codeInsight.intention.impl.CreateClassInPackageInModuleFix
 import com.intellij.psi.PsiJavaFile
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-/**
- * @author Pavel.Dolgov
- */
 class CreateClassInPackageInModuleTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testExportsMissingDir() = doTestMissingDir("exports")

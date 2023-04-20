@@ -25,8 +25,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents an entry in the classpath of a module (as shown in the "Order/Export" page
  * of the module configuration dialog).
- *
- * @author dsl
  */
 @ApiStatus.NonExtendable
 public interface OrderEntry extends Synthetic, Comparable<OrderEntry> {

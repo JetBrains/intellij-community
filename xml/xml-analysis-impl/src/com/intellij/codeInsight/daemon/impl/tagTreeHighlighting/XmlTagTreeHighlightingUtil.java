@@ -17,9 +17,6 @@ import java.awt.*;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public final class XmlTagTreeHighlightingUtil {
   private XmlTagTreeHighlightingUtil() {
   }

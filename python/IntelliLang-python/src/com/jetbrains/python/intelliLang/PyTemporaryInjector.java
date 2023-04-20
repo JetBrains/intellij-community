@@ -30,9 +30,6 @@ import org.intellij.plugins.intelliLang.inject.TemporaryPlacesRegistry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author vlan
- */
 public class PyTemporaryInjector extends PyInjectorBase {
   @Override
   public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {

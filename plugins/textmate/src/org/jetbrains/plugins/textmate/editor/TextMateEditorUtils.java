@@ -155,6 +155,10 @@ public final class TextMateEditorUtils {
   private TextMateEditorUtils() {
   }
 
+  /**
+   * @deprecated use {@link TextMateEditorUtilsKt#fileNameExtensions(CharSequence)} instead
+   */
+  @Deprecated(forRemoval = true)
   public static void processExtensions(@NotNull CharSequence fileName, @NotNull Processor<? super CharSequence> processor) {
     if (!processor.process(fileName)) {
       return;

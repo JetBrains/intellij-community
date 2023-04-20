@@ -632,8 +632,8 @@ public interface Test {
   }
 
   static def registerCompletionContributor(Class contributor, Disposable parentDisposable, LoadingOrder order) {
-    def extension = new CompletionContributorEP(language: 'any', implementationClass: contributor.name)
-    extension.setPluginDescriptor(new DefaultPluginDescriptor("registerCompletionContributor"))
+    def pluginDescriptor = new DefaultPluginDescriptor("registerCompletionContributor")
+    def extension = new CompletionContributorEP('any', contributor.name, pluginDescriptor)
     CompletionContributor.EP.getPoint().registerExtension(extension, order, parentDisposable)
   }
 

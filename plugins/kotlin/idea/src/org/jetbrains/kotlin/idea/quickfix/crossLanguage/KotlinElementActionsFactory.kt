@@ -186,6 +186,8 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
         //TODO: make similar to `createAddMethodActions`
         val (kToken, shouldPresentMapped) = when {
             modifier == JvmModifier.FINAL -> KtTokens.OPEN_KEYWORD to !shouldPresent
+            modifier == JvmModifier.STATIC && !shouldPresent && kModifierOwner is KtClass && !kModifierOwner.isTopLevel() ->
+                KtTokens.INNER_KEYWORD to true
             modifier == JvmModifier.PUBLIC && shouldPresent ->
                 kModifierOwner.visibilityModifierType()
                     ?.takeIf { it != KtTokens.DEFAULT_VISIBILITY_KEYWORD }

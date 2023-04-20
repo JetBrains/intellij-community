@@ -30,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Checks that properties are accessed correctly.
- * User: dcheryasov
  */
 public class PyPropertyAccessInspection extends PyInspection {
 

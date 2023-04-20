@@ -25,9 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-/**
- * @author lex
- */
 public abstract class GotoFrameSourceAction extends DebuggerAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

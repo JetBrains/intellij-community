@@ -29,7 +29,7 @@ public class JavaEditablePostfixTemplate
   public JavaEditablePostfixTemplate(@NotNull String templateName,
                                      @NotNull String templateText,
                                      @NotNull String example,
-                                     @NotNull Set<JavaPostfixTemplateExpressionCondition> expressionConditions,
+                                     @NotNull Set<? extends JavaPostfixTemplateExpressionCondition> expressionConditions,
                                      @NotNull LanguageLevel minimumLanguageLevel,
                                      boolean useTopmostExpression,
                                      @NotNull PostfixTemplateProvider provider) {
@@ -41,7 +41,7 @@ public class JavaEditablePostfixTemplate
                                      @NotNull String templateName,
                                      @NotNull String templateText,
                                      @NotNull String example,
-                                     @NotNull Set<JavaPostfixTemplateExpressionCondition> expressionConditions,
+                                     @NotNull Set<? extends JavaPostfixTemplateExpressionCondition> expressionConditions,
                                      @NotNull LanguageLevel minimumLanguageLevel,
                                      boolean useTopmostExpression,
                                      @NotNull PostfixTemplateProvider provider) {
@@ -53,7 +53,7 @@ public class JavaEditablePostfixTemplate
                                      @NotNull String templateName,
                                      @NotNull TemplateImpl liveTemplate,
                                      @NotNull String example,
-                                     @NotNull Set<JavaPostfixTemplateExpressionCondition> expressionConditions,
+                                     @NotNull Set<? extends JavaPostfixTemplateExpressionCondition> expressionConditions,
                                      @NotNull LanguageLevel minimumLanguageLevel,
                                      boolean useTopmostExpression,
                                      @NotNull PostfixTemplateProvider provider) {
@@ -83,12 +83,8 @@ public class JavaEditablePostfixTemplate
     }
 
 
-    return ContainerUtil.filter(expressions, Conditions.and(e -> {
-      if (!PSI_ERROR_FILTER.value(e) || !(e instanceof PsiExpression) || e.getTextRange().getEndOffset() != offset) {
-        return false;
-      }
-      return true;
-    }, getExpressionCompositeCondition()));
+    return ContainerUtil.filter(expressions, Conditions.and(e -> PSI_ERROR_FILTER.value(e)
+                                                                 && e instanceof PsiExpression && e.getTextRange().getEndOffset() == offset, getExpressionCompositeCondition()));
   }
 
   @NotNull

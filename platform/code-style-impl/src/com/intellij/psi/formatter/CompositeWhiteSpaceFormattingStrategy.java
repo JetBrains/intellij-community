@@ -28,8 +28,6 @@ import java.util.List;
  * Allows to combine multiple {@link WhiteSpaceFormattingStrategy} implementations.
  * <p/>
  * Not thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class CompositeWhiteSpaceFormattingStrategy implements WhiteSpaceFormattingStrategy {
 

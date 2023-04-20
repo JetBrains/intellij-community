@@ -9,5 +9,5 @@ class DependencyToolWindowViewModelExtractor : ToolWindowViewModelExtractor {
   override fun isApplicable(toolWindowId: String, clientId: ClientId?) =
     toolWindowId == DependencyToolWindowFactory.DEPENDENCIES_TOOL_WINDOW_ID
 
-  override fun getMode() = ToolWindowExtractorMode.DISABLE
+  override fun getMode() = ToolWindowExtractorMode.UNSUPPORTED
 }

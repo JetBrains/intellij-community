@@ -23,9 +23,6 @@ import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescripto
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.MAIN
 import com.intellij.openapi.util.io.FileUtil
 
-/**
- * @author Pavel.Dolgov
- */
 class Java9ReflectionClassVisibilityTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/java9ReflectionClassVisibility"

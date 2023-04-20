@@ -55,9 +55,6 @@ import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.filter;
 import static java.util.Objects.requireNonNull;
 
-/**
- * @author irengrig
- */
 public class TodoCheckinHandlerWorker {
   private final static Logger LOG = Logger.getInstance(TodoCheckinHandlerWorker.class);
 

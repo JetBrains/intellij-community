@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ide
 
 import com.intellij.ide.navbar.NavBarItem
@@ -20,6 +20,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.util.childScope
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -28,24 +29,24 @@ import javax.swing.JComponent
 
 @Service(PROJECT)
 internal class NavBarService(private val project: Project) : Disposable {
-
   companion object {
-
     @JvmStatic
     fun getInstance(project: Project): NavBarService = project.service()
   }
 
+  @Suppress("DEPRECATION")
   @OptIn(ExperimentalCoroutinesApi::class)
-  private val cs: CoroutineScope = CoroutineScope(
-    SupervisorJob() +
-    Dispatchers.Default.limitedParallelism(1) // allows to reason about the ordering
+  private val coroutineScope: CoroutineScope = project.coroutineScope.childScope(
+    Dispatchers.Default.limitedParallelism(1) // allows reasoning about the ordering
   )
 
   override fun dispose() {
-    cs.cancel()
+    coroutineScope.cancel()
   }
 
-  private val staticNavBarVm = StaticNavBarVmImpl(cs, project, UISettings.getInstance().isNavbarShown())
+  private val staticNavBarVm = StaticNavBarVmImpl(coroutineScope = coroutineScope,
+                                                  project = project,
+                                                  initiallyVisible = UISettings.getInstance().isNavbarShown())
   private var floatingBarJob: Job? = null
 
   fun uiSettingsChanged(uiSettings: UISettings) {
@@ -57,7 +58,7 @@ internal class NavBarService(private val project: Project) : Disposable {
 
   val staticNavBarPanel: JComponent by lazy(LazyThreadSafetyMode.NONE) {
     EDT.assertIsEdt()
-    StaticNavBarPanel(cs, staticNavBarVm, project)
+    StaticNavBarPanel(coroutineScope, staticNavBarVm, project)
   }
 
   fun jumpToNavbar(dataContext: DataContext) {
@@ -76,7 +77,11 @@ internal class NavBarService(private val project: Project) : Disposable {
   }
 
   private fun showFloatingNavbar(dataContext: DataContext) {
-    val job = cs.launch(ModalityState.current().asContextElement()) {
+    if (floatingBarJob != null) {
+      return
+    }
+
+    val job = coroutineScope.launch(ModalityState.current().asContextElement()) {
       val model = contextModel(dataContext, project).ifEmpty {
         defaultModel(project)
       }

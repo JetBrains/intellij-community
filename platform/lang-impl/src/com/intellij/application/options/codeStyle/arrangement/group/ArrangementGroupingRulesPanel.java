@@ -31,9 +31,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-/**
- * @author Denis Zhdanov
- */
 public class ArrangementGroupingRulesPanel extends JPanel implements DataProvider {
 
   @NotNull private final ArrangementGroupingRulesControl myControl;

@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.impl.wsl;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.wsl.WslPath;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.Application;
@@ -42,7 +43,6 @@ public class WslFileWatcher extends PluggableFileWatcher {
   }
 
   private static final String FSNOTIFIER_WSL = "fsnotifier-wsl";
-  private static final int NAME_START = WslConstants.UNC_PREFIX.length();
   private static final String ROOTS_COMMAND = "ROOTS";
   private static final String EXIT_COMMAND = "EXIT";
   private static final int MAX_PROCESS_LAUNCH_ATTEMPT_COUNT = 10;
@@ -125,13 +125,10 @@ public class WslFileWatcher extends PluggableFileWatcher {
 
   private static void sortRoots(List<String> roots, Map<String, VmData> vms, List<? super String> ignored, boolean recursive) {
     for (String root : roots) {
-      int nameEnd;
-      if (StringUtil.startsWithIgnoreCase(root, WslConstants.UNC_PREFIX) && (nameEnd = root.indexOf('\\', NAME_START)) > NAME_START) {
-        String prefix = root.substring(0, nameEnd);
-        String name = root.substring(NAME_START, nameEnd);
-        VmData vm = vms.computeIfAbsent(name, k -> new VmData(k, prefix));
-        String path = root.substring(nameEnd).replace('\\', '/');
-        (recursive ? vm.recursive : vm.flat).add(path);
+      WslPath wslPath = WslPath.parseWindowsUncPath(root);
+      if (wslPath != null) {
+        VmData vm = vms.computeIfAbsent(wslPath.getDistributionId(), k -> new VmData(k, wslPath.getWslRoot()));
+        (recursive ? vm.recursive : vm.flat).add(wslPath.getLinuxPath());
       }
       else {
         ignored.add(root);

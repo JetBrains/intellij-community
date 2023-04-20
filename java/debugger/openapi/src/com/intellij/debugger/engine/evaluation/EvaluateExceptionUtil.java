@@ -5,9 +5,6 @@ import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.sun.jdi.*;
 
-/**
- * @author lex
- */
 public final class EvaluateExceptionUtil {
   public static final EvaluateException INCONSISTEND_DEBUG_INFO = createEvaluateException(
     JavaDebuggerBundle.message("evaluation.error.inconsistent.debug.info"));

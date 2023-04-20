@@ -30,9 +30,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-/**
- * @author ilyas
- */
 public final class LibrariesUtil {
   public static final String SOME_GROOVY_CLASS = "org.codehaus.groovy.control.CompilationUnit";
   @NlsSafe private static final String LIB = "lib";

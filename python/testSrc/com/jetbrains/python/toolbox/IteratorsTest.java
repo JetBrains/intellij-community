@@ -23,7 +23,6 @@ import java.util.List;
 
 /**
  * Tests all iterators and iterables.
- * User: dcheryasov
  */
 public class IteratorsTest extends TestCase {
 

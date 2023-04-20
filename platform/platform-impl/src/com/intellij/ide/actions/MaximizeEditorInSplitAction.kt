@@ -91,7 +91,7 @@ internal class MaximizeEditorInSplitAction : DumbAwareAction() {
   companion object {
     val CURRENT_STATE_IS_MAXIMIZED_KEY = Key.create<Boolean>("CURRENT_STATE_IS_MAXIMIZED")
 
-    fun getSplittersToMaximize(project: Project, editorComponent: Component?): Set<Pair<Splitter, Boolean>> {
+    private fun getSplittersToMaximize(project: Project, editorComponent: Component?): Set<Pair<Splitter, Boolean>> {
       val editorManager = FileEditorManager.getInstance(project) as? FileEditorManagerImpl ?: return emptySet()
       val set = HashSet<Pair<Splitter, Boolean>>()
       var component = editorComponent

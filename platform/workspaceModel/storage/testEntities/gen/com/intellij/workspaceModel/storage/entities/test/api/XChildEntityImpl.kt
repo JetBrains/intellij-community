@@ -284,7 +284,7 @@ class XChildEntityData : WorkspaceEntityData<XChildEntity>() {
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return XChildEntity(childProperty, entitySource) {
       this.dataClass = this@XChildEntityData.dataClass
-      this.parentEntity = parents.filterIsInstance<XParentEntity>().single()
+      parents.filterIsInstance<XParentEntity>().singleOrNull()?.let { this.parentEntity = it }
     }
   }
 

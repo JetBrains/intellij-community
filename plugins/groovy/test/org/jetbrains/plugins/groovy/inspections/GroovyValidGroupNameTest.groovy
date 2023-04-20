@@ -20,9 +20,6 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.siyeh.ig.dataflow.UnnecessaryLocalVariableInspection
 import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
 
-/**
- * @author Sergey Evdokimov
- */
 class GroovyValidGroupNameTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testGroupNamesIsSame() {

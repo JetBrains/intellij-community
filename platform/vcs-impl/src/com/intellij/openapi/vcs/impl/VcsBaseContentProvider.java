@@ -8,9 +8,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author irengrig
- */
 public interface VcsBaseContentProvider {
 
   @ApiStatus.Internal

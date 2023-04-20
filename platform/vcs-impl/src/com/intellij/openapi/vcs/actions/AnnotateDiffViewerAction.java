@@ -463,8 +463,14 @@ public class AnnotateDiffViewerAction {
 
     @Override
     public int getLineNumber(int currentNumber) {
+      return getLineNumber(currentNumber, false);
+    }
+
+    @Override
+    public int getLineNumber(int currentNumber, boolean approximate) {
       int number = myViewer.transferLineFromOnesideStrict(mySide, currentNumber);
-      return number != -1 ? myLocalChangesProvider.getLineNumber(number) : FAKE_LINE_NUMBER;
+      if (number == -1) return FAKE_LINE_NUMBER;
+      return myLocalChangesProvider.getLineNumber(number, approximate);
     }
 
     @Override

@@ -23,7 +23,7 @@ fun getBestWindowsPathFromLinuxPath(distro: WSLDistribution, linuxPath: String):
   @Suppress("NAME_SHADOWING")
   val linuxPath = linuxPath.trim()
   val logger = Logger.getInstance(WslPathBrowser::class.java)
-  logger.info("Open $linuxPath in ${distro.uncRootPath}${FileUtil.toSystemDependentName(FileUtil.normalize(linuxPath))}")
+  logger.info("Open $linuxPath in ${distro.getUNCRootPath()}${FileUtil.toSystemDependentName(FileUtil.normalize(linuxPath))}")
   distro.getWindowsPath(linuxPath).let {
     var fileName: String? = it
     while (file == null && fileName != null) {
@@ -43,7 +43,7 @@ fun getBestWindowsPathFromLinuxPath(distro: WSLDistribution, linuxPath: String):
 fun getRootsForFileDescriptor(distro: WSLDistribution, accessWindowsFs: Boolean): MutableList<VirtualFile> {
   val fs = LocalFileSystem.getInstance()
   val roots = mutableListOf<VirtualFile>()
-  fs.findFileByNioFile(distro.uncRootPath)?.let { roots.add(it) }
+  fs.findFileByNioFile(distro.getUNCRootPath())?.let { roots.add(it) }
   if (accessWindowsFs) {
     roots.addAll(FileSystems.getDefault().rootDirectories.mapNotNull { fs.findFileByNioFile(it) })
   }

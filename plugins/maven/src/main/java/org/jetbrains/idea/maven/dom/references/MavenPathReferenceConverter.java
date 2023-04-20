@@ -25,9 +25,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenPathReferenceConverter extends PathReferenceConverter {
 
   private final Condition<PsiFileSystemItem> myCondition;

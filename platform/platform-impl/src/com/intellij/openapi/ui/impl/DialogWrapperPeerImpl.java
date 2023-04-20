@@ -683,7 +683,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         if (initial == null) initial = new Dimension();
         if (initial.width <= 0 || initial.height <= 0) {
           maximize(initial, getSize()); // cannot be less than packed size
-          if (!SystemInfo.isLinux && Registry.is("ide.dialog.wrapper.resize.by.tables")) {
+          if (!SystemInfo.isLinux && Registry.is("ide.dialog.wrapper.resize.by.tables", false)) {
             // [kb] temporary workaround for IDEA-253643
             maximize(initial, getSizeForTableContainer(getContentPane()));
           }

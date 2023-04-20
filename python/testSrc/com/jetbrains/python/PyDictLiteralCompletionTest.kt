@@ -67,12 +67,23 @@ class PyDictLiteralCompletionTest : PyTestCase() {
     assertCompletionContains("'x'")
   }
 
+  // PY-58374
+  fun testEditingKeyWithExistingValue() {
+    val variants = getVariants()
+    assertContainsElements(variants, "coordinateX", "coordinateZ")
+    assertDoesntContain(variants, "coordinateY")
+  }
+
   private fun assertCompletionContains(vararg expected: String) {
+    val variants = getVariants()
+    assertContainsElements(variants, *expected)
+  }
+
+  private fun getVariants(): List<String> {
     myFixture.copyDirectoryToProject(getTestName(false), "")
     myFixture.configureByFile("main.py")
     myFixture.completeBasic()
-    val variants = myFixture.lookupElementStrings ?: emptyList()
-    assertContainsElements(variants, *expected)
+    return myFixture.lookupElementStrings ?: emptyList()
   }
 
 

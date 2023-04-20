@@ -8,9 +8,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-/**
- * @author Denis Zhdanov
- */
 public final class SyntaxInfo {
   private final int myOutputInfoCount;
   private final byte[] myOutputInfosSerialized;

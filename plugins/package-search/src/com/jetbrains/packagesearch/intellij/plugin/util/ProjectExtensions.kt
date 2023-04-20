@@ -5,7 +5,7 @@ import com.intellij.ProjectTopics
 import com.intellij.externalSystem.DependencyModifierService
 import com.intellij.facet.FacetManager
 import com.intellij.ide.impl.isTrusted
-import com.intellij.ide.impl.trustedProjects.TrustedProjectsListener
+import com.intellij.ide.trustedProjects.TrustedProjectsListener
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.application.ApplicationManager

@@ -55,14 +55,14 @@ internal class NonIncrementalContributors(private val project: Project,
           }
           val newRoots = HashSet<VirtualFile>()
           Object2IntMaps.fastForEach(newExcludedRoots) { 
-            fileSets.putValue(it.key, ExcludedFileSet.ByFileKind(it.intValue, NonIncrementalMarker, EntityStorageKind.MAIN))
+            fileSets.putValue(it.key, ExcludedFileSet.ByFileKind(it.intValue, NonIncrementalMarker))
             newRoots.add(it.key)
           }
           newFileSets.forEach { (root, sets) ->
             sets.forEach { set ->
               fileSets.putValue(root, set)
               val fileSet = set as? WorkspaceFileSetImpl
-              if (fileSet != null && fileSet.data is JvmPackageRootData) {
+              if (fileSet != null && fileSet.data is JvmPackageRootDataInternal) {
                 fileSetsByPackagePrefix.addFileSet("", fileSet)
               }
             }
@@ -129,7 +129,7 @@ internal class NonIncrementalContributors(private val project: Project,
         registerRoots(library.sourceRoots, WorkspaceFileKind.EXTERNAL_SOURCE, if (library is JavaSyntheticLibrary) LibrarySourceRootFileSetData(null, "") else SyntheticLibrarySourceRootData)
         registerRoots(library.binaryRoots, WorkspaceFileKind.EXTERNAL, if (library is JavaSyntheticLibrary) LibraryRootFileSetData(null, "") else DummyWorkspaceFileSetData)
         library.excludedRoots.forEach {
-          result.putValue(it, ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.EXTERNAL, NonIncrementalMarker, EntityStorageKind.MAIN))
+          result.putValue(it, ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.EXTERNAL, NonIncrementalMarker))
         }
         library.unitedExcludeCondition?.let { condition ->
           val predicate = { file: VirtualFile -> condition.value(file) }

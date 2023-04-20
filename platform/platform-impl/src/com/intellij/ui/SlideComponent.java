@@ -20,7 +20,6 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 
 /**
- * @author Alexey Pegov
  * @author Konstantin Bulenkov
  */
 class SlideComponent extends JComponent {

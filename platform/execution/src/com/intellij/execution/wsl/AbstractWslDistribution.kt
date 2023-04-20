@@ -5,8 +5,8 @@ import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 
 /**
  * This is a temporary interface used for wsl classes transition. Please, do not use it
@@ -47,12 +47,8 @@ interface AbstractWslDistribution {
 
   /**
    * @return UNC root for the distribution, e.g. `\\wsl$\Ubuntu`
-   * @implNote there is a hack in [LocalFileSystemBase.getAttributes] which causes all network
-   * virtual files to exists all the time. So we need to check explicitly that root exists. After implementing proper non-blocking check
-   * for the network resource availability, this method may be simplified to findFileByIoFile
-   * @see VfsUtil.findFileByIoFile
    */
   @ApiStatus.Experimental
-  fun getUNCRootVirtualFile(refreshIfNeed: Boolean): VirtualFile?
+  fun getUNCRootPath(): Path
 
 }

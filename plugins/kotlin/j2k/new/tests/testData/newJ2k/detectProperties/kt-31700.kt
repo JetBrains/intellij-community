@@ -1,8 +1,9 @@
 //Interface
 interface Parent {
     val x: Unit
-} //Subclass
+}
 
+//Subclass
 class Child : Parent {
     override val x: Unit
         get() {}

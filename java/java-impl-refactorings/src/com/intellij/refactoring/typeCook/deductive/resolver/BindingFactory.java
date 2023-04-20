@@ -38,9 +38,6 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Set;
 
-/**
- * @author db
- */
 @SuppressWarnings({"SuspiciousNameCombination"})
 public class BindingFactory {
   private static final Logger LOG = Logger.getInstance(BindingFactory.class);

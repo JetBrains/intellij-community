@@ -40,7 +40,7 @@ UFile (package = ) [import java.util.stream.Stream...]
                 UDeclarationsExpression [var baz: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = fun () {...}]
                     ULocalVariable (name = baz) [var baz: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = fun () {...}]
                         ULambdaExpression [fun () {...}] : PsiType:Function0<? extends Unit>
-                            UBlockExpression [{...}] : PsiType:<ErrorType>
+                            UBlockExpression [{...}] : PsiType:void
                                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : PsiType:<ErrorType>
                                     UIdentifier (Identifier (Local)) [UIdentifier (Identifier (Local))]
                                     USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:<ErrorType>

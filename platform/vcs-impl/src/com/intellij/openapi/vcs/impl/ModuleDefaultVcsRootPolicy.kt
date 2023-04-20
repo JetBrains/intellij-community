@@ -33,7 +33,7 @@ open class ModuleDefaultVcsRootPolicy(project: Project) : DefaultVcsRootPolicy(p
     }
 
     result += runReadAction {
-      WorkspaceModel.getInstance(myProject).entityStorage.current
+      WorkspaceModel.getInstance(myProject).currentSnapshot
         .entities(ContentRootEntity::class.java)
         .mapNotNull { it.url.virtualFile }
         .filter { it.isInLocalFileSystem }

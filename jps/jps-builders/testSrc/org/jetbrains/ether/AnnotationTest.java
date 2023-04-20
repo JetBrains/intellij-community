@@ -15,9 +15,6 @@
  */
 package org.jetbrains.ether;
 
-/**
- * @author db
- */
 public class AnnotationTest extends IncrementalTestCase {
   public AnnotationTest() {
     super("annotations");

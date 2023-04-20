@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Common parts functionality.
- * User: dcheryasov
  */
 public class PyPartitionedElementImpl extends PyElementImpl {
   public PyPartitionedElementImpl(ASTNode astNode) {

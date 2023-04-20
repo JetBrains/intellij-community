@@ -29,9 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import java.io.File;
 import java.util.regex.Pattern;
 
-/**
- * @author ilyas
- */
 public abstract class GroovyUtils {
 
   public static File[] getFilesInDirectoryByPattern(String dirPath, final String patternString) {

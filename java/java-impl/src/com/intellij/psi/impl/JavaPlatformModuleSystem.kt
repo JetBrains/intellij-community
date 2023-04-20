@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.AddExportsDirectiveFix
 import com.intellij.codeInsight.daemon.impl.quickfix.AddRequiresDirectiveFix
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.Module
@@ -226,6 +227,13 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
         PsiManager.getInstance(project).dropPsiCaches()
         DaemonCodeAnalyzer.getInstance(project).restart()
       }
+    }
+
+    override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+      val origOptions = JavaCompilerConfigurationProxy.getAdditionalOptions(module.project, module)
+      val options = origOptions.toMutableList()
+      update(options)
+      return IntentionPreviewInfo.addListOption(options, JavaBundle.message("compiler.options")) { opt -> !origOptions.contains(opt) }
     }
 
     protected abstract fun update(options: MutableList<String>)

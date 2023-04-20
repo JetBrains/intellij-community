@@ -27,7 +27,7 @@ public final class FileNavigatorImpl implements FileNavigator {
 
   @Override
   public boolean canNavigate(@NotNull OpenFileDescriptor descriptor) {
-    return descriptor.getFile().isValid();
+    return FileNavigator.super.canNavigate(descriptor);
   }
 
   @Override

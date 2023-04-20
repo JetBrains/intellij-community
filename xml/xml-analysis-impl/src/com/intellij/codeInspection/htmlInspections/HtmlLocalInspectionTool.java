@@ -27,9 +27,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author spleaner
- */
 public abstract class HtmlLocalInspectionTool extends XmlSuppressableInspectionTool {
 
   @Override

@@ -10,9 +10,6 @@ import org.intellij.lang.regexp.psi.RegExpProperty;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author vnikolaenko
- */
 public final class RegExpDocumentationProvider extends AbstractDocumentationProvider {
   @Override
   @Nullable

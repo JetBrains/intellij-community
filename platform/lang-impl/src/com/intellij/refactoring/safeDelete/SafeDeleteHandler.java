@@ -32,9 +32,6 @@ import java.util.Set;
 
 import static com.intellij.refactoring.safeDelete.impl.SafeDeleteKt.safeDelete;
 
-/**
- * @author dsl
- */
 public class SafeDeleteHandler implements RefactoringActionHandler {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {

@@ -1,0 +1,13 @@
+fragment discussion on Discussion {
+  id
+  replyId
+  createdAt
+  notes(first: 1000) {
+    pageInfo {
+      ...pageInfo
+    }
+    nodes {
+      ...note
+    }
+  }
+}

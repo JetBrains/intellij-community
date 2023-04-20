@@ -48,9 +48,6 @@ import java.util.*;
 
 import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
-/**
- * @author ilyas
- */
 public final class GroovyInlineMethodUtil {
   private GroovyInlineMethodUtil() {
   }

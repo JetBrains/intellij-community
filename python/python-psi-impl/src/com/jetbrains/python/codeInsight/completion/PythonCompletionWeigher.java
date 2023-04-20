@@ -32,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Weighs down items starting with two underscores.
  * <br/>
- * User: dcheryasov
  */
 public class PythonCompletionWeigher extends CompletionWeigher {
 

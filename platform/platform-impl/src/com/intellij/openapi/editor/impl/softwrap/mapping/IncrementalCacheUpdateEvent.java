@@ -11,8 +11,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Encapsulates information about incremental soft wraps cache update.
- *
- * @author Denis Zhdanov
  */
 public class IncrementalCacheUpdateEvent {
   private final int myStartOffset;

@@ -12,9 +12,6 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
 
 import java.util.Collection;
 
-/**
- * @author ilyas
- */
 public class GrFullClassNameIndex extends CharSequenceHashStubIndexExtension<PsiClass> {
   public static final StubIndexKey<CharSequence, PsiClass> KEY = StubIndexKey.createIndexKey("gr.class.fqn");
 

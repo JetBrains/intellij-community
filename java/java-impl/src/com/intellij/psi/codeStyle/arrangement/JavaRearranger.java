@@ -37,9 +37,6 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Gr
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.*;
 
-/**
- * @author Denis Zhdanov
- */
 public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
                                        ArrangementSectionRuleAwareSettings,
                                        ArrangementStandardSettingsAware,

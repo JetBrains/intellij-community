@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -70,6 +70,7 @@ class IntroduceConstantDialog extends DialogWrapper {
   private final int myOccurrencesCount;
   private PsiClass myTargetClass;
   private final TypeSelectorManager myTypeSelectorManager;
+  private NameSuggestionsManager myNameSuggestionsManager;
 
   private NameSuggestionsField myNameField;
   private JCheckBox myCbReplaceAll;
@@ -217,11 +218,11 @@ class IntroduceConstantDialog extends DialogWrapper {
     else {
       propertyName = null;
     }
-    final NameSuggestionsManager nameSuggestionsManager =
+    myNameSuggestionsManager =
       new NameSuggestionsManager(myTypeSelector, myNameField, createNameSuggestionGenerator(propertyName, myInitializerExpression,
                                                                                             myCodeStyleManager, myEnteredName, myParentClass));
 
-    nameSuggestionsManager.setLabelsFor(myTypeLabel, myNameSuggestionLabel);
+    myNameSuggestionsManager.setLabelsFor(myTypeLabel, myNameSuggestionLabel);
     //////////
     if (myOccurrencesCount > 1) {
       myCbReplaceAll.addItemListener(new ItemListener() {
@@ -476,6 +477,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     }
 
     RecentsManager.getInstance(myProject).registerRecentEntry(RECENTS_KEY, targetClassName);
+    myNameSuggestionsManager.nameSelected();
     super.doOKAction();
   }
 

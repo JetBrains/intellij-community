@@ -19,9 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Objects;
 
-/**
- *  @author dsl
- */
 public class MultipleRootsMoveDestination extends AutocreatingMoveDestination {
   private static final Logger LOG = Logger.getInstance(MultipleRootsMoveDestination.class);
 

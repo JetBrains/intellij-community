@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
 import com.intellij.openapi.externalSystem.util.runReadAction
-import com.intellij.openapi.externalSystem.util.textContent
+import com.intellij.openapi.vfs.readText
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.assertInstanceOf
 import org.gradle.util.GradleVersion
@@ -40,7 +40,7 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
       val file = getFile("build.gradle")
       runReadAction {
         val psiFile = fixture.psiManager.findFile(file)!!
-        val offset = file.textContent.indexOf("transitive") + 1
+        val offset = file.readText().indexOf("transitive") + 1
         val reference = psiFile.findReferenceAt(offset)!!
         val method = assertInstanceOf<PsiMethod>(reference.resolve())
         assertEquals("setTransitive", method.name)
@@ -56,6 +56,19 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
       testHighlighting("""
         jar {
           archiveClassifier = "a"
+        }
+      """.trimIndent())
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testGeneratedSetter2(gradleVersion: GradleVersion) {
+    test(gradleVersion, JAVA_PROJECT) {
+      fixture.enableInspections(GroovyAssignabilityCheckInspection::class.java)
+      testHighlighting("""
+        tasks.register('jc', Jar) {
+            archiveBaseName = 'abcde'
         }
       """.trimIndent())
     }

@@ -27,9 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.util.TestUtils
 
-/**
- * @author ven
- */
 @CompileStatic
 class FindUsagesTest extends LightGroovyTestCase {
   @Override

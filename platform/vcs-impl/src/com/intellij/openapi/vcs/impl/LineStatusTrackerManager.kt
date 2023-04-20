@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.openapi.vcs.impl
@@ -18,7 +18,7 @@ import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -94,7 +94,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   private val loader = MyBaseRevisionLoader()
 
   companion object {
-    private val LOG = Logger.getInstance(LineStatusTrackerManager::class.java)
+    private val LOG = logger<LineStatusTrackerManager>()
 
     @JvmStatic
     fun getInstance(project: Project): LineStatusTrackerManagerI = project.service()
@@ -114,12 +114,13 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   }
 
   private fun startListenForEditors() {
-    val busConnection = project.messageBus.connect()
-    busConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, MyLineStatusTrackerSettingListener())
-    busConnection.subscribe(VcsFreezingProcess.Listener.TOPIC, MyFreezeListener())
-    busConnection.subscribe(CommandListener.TOPIC, MyCommandListener())
-    busConnection.subscribe(ChangeListListener.TOPIC, MyChangeListListener())
-    busConnection.subscribe(ChangeListAvailabilityListener.TOPIC, MyChangeListAvailabilityListener())
+    val connection = project.messageBus.connect(this)
+    connection.subscribe(LineStatusTrackerSettingListener.TOPIC, MyLineStatusTrackerSettingListener())
+    connection.subscribe(VcsFreezingProcess.Listener.TOPIC, MyFreezeListener())
+    connection.subscribe(CommandListener.TOPIC, MyCommandListener())
+    connection.subscribe(ChangeListListener.TOPIC, MyChangeListListener())
+    connection.subscribe(ChangeListAvailabilityListener.TOPIC, MyChangeListAvailabilityListener())
+    connection.subscribe(FileStatusListener.TOPIC, MyFileStatusListener())
 
     ApplicationManager.getApplication().messageBus.connect(this)
       .subscribe(VirtualFileManager.VFS_CHANGES, MyVirtualFileListener())
@@ -135,7 +136,6 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
       }
 
       ApplicationManager.getApplication().addApplicationListener(MyApplicationListener(), this)
-      FileStatusManager.getInstance(project).addFileStatusListener(MyFileStatusListener(), this)
 
       EditorFactory.getInstance().eventMulticaster.addDocumentListener(MyDocumentListener(), this)
 
@@ -1149,7 +1149,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
  */
 private abstract class SingleThreadLoader<Request, T> : Disposable {
   companion object {
-    private val LOG = Logger.getInstance(SingleThreadLoader::class.java)
+    private val LOG = logger<SingleThreadLoader<*, *>>()
   }
 
   private val LOCK: Any = Any()
@@ -1161,6 +1161,7 @@ private abstract class SingleThreadLoader<Request, T> : Disposable {
 
   private var isScheduled: Boolean = false
   private var isDisposed: Boolean = false
+  @Suppress("DEPRECATION")
   private val scope = ApplicationManager.getApplication().coroutineScope.childScope()
 
   @RequiresBackgroundThread

@@ -5,9 +5,6 @@ import com.intellij.JavaTestUtil;
 import com.intellij.openapi.util.registry.Registry;
 import org.junit.Assert;
 
-/**
- * @author ven
- */
 public class MoveJavaFileTest extends MoveFileTestCase {
   @Override
   protected String getTestDataPath() {

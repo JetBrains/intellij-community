@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.context
 
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -27,7 +27,7 @@ private class OpenEditorsContextProvider : WorkingContextProvider() {
     val fileEditorManager = getFileEditorManager(project)
     if (fileEditorManager != null) {
       runBlockingModalWithRawProgressReporter(project, TaskBundle.message("open.editors.and.positions")) {
-        fileEditorManager.mainSplitters.restoreEditors(state = EditorSplitterState(element), onStartup = false, anyEditorOpened = null)
+        fileEditorManager.mainSplitters.restoreEditors(state = EditorSplitterState(element), onStartup = false)
       }
     }
     val dockState = element.getChild("state")

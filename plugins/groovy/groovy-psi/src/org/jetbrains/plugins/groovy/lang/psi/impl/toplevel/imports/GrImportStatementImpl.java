@@ -28,9 +28,6 @@ import java.util.Objects;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.PsiImportUtil.createImportFromStatement;
 
-/**
- * @author ilyas
- */
 public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementStub> implements GrImportStatement, StubBasedPsiElement<GrImportStatementStub> {
 
   public GrImportStatementImpl(@NotNull ASTNode node) {

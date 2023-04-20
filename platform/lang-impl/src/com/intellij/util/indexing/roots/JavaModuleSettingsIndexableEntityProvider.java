@@ -14,7 +14,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-class JavaModuleSettingsIndexableEntityProvider implements IndexableEntityProvider<JavaModuleSettingsEntity> {
+class JavaModuleSettingsIndexableEntityProvider implements IndexableEntityProvider.Enforced<JavaModuleSettingsEntity> {
 
   @Override
   public @NotNull Class<JavaModuleSettingsEntity> getEntityClass() {

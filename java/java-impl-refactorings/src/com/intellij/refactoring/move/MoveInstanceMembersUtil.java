@@ -15,9 +15,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author ven
- */
 public final class MoveInstanceMembersUtil {
   private static final Logger LOG = Logger.getInstance(MoveInstanceMembersUtil.class);
 

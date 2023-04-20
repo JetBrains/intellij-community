@@ -6,16 +6,11 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installBulkVirtualFileListener
 import com.intellij.openapi.externalSystem.util.*
+import com.intellij.openapi.util.io.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.*
-import com.intellij.openapi.file.CanonicalPathUtil.getRelativePath
-import com.intellij.openapi.file.NioPathUtil.toCanonicalPath
-import com.intellij.openapi.file.VirtualFileUtil
-import com.intellij.openapi.file.VirtualFileUtil.getAbsoluteNioPath
-import com.intellij.openapi.file.system.LocalFileSystemUtil
-import com.intellij.openapi.file.system.VirtualFileSystemUtil
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.common.runAll
@@ -63,7 +58,7 @@ internal class FileTestFixtureImpl(
     val configuration = createFixtureConfiguration()
 
     excludedFiles = configuration.excludedFiles
-      .map { root.getAbsoluteNioPath(it) }
+      .map { root.path.getResolvedNioPath(it) }
       .toSet()
 
     withSuppressedErrors {
@@ -89,17 +84,17 @@ internal class FileTestFixtureImpl(
 
   private fun createFixtureRoot(relativePath: String): VirtualFile {
     val systemPath = Path.of(PathManager.getSystemPath())
-    val systemDirectory = LocalFileSystemUtil.findOrCreateDirectory(systemPath)
+    val systemDirectory = systemPath.findOrCreateDirectory().getVirtualDirectory()
     val fixtureRoot = "FileTestFixture/$relativePath"
     VfsRootAccess.allowRootAccess(testRootDisposable, systemDirectory.path + "/$fixtureRoot")
     return runWriteActionAndGet {
-      VirtualFileUtil.findOrCreateDirectory(systemDirectory, fixtureRoot)
+      systemDirectory.findOrCreateDirectory(fixtureRoot)
     }
   }
 
   private fun createFixtureStateFile(): VirtualFile {
     return runWriteActionAndGet {
-      VirtualFileUtil.findOrCreateFile(root, "_FileTestFixture.xml")
+      root.findOrCreateFile("_FileTestFixture.xml")
     }
   }
 
@@ -113,20 +108,20 @@ internal class FileTestFixtureImpl(
     }
     else {
       for ((path, text) in snapshots) {
-        revertFile(path, text)
+        revertFile(path.toNioPath(), text)
       }
     }
   }
 
   private fun invalidateFixtureCaches() {
     runWriteActionAndWait {
-      VirtualFileUtil.deleteChildren(root) { it != fixtureStateFile }
+      root.deleteChildrenRecursively { it != fixtureStateFile }
     }
   }
 
   private fun dumpFixtureState() {
     val errors = errors.map { it.message ?: it.toString() }
-    val snapshots = snapshots.entries.associate { (k, v) -> getRelativePath(k) to v.orElse(null) }
+    val snapshots = snapshots.entries.associate { (k, v) -> k.toCanonicalPath() to v.orElse(null) }
     writeFixtureState(State(isInitialized, isSuppressedErrors, errors, snapshots))
   }
 
@@ -176,7 +171,7 @@ internal class FileTestFixtureImpl(
   }
 
   override fun snapshot(relativePath: String) {
-    snapshot(root.getAbsoluteNioPath(relativePath))
+    snapshot(root.path.getResolvedNioPath(relativePath))
   }
 
   private fun snapshot(path: Path) {
@@ -193,7 +188,7 @@ internal class FileTestFixtureImpl(
   }
 
   override fun rollback(relativePath: String) {
-    rollback(root.getAbsoluteNioPath(relativePath))
+    rollback(root.path.getResolvedNioPath(relativePath))
   }
 
   private fun rollback(path: Path) {
@@ -203,31 +198,24 @@ internal class FileTestFixtureImpl(
     dumpFixtureState()
   }
 
-  private fun revertFile(relativePath: String, text: String?) {
-    revertFile(root.getAbsoluteNioPath(relativePath), text)
-  }
-
   private fun revertFile(path: Path, text: String?) {
     runWriteActionAndWait {
       if (text != null) {
-        val file = VirtualFileSystemUtil.findOrCreateFile(root.fileSystem, path)
-        VirtualFileUtil.reloadDocument(file)
-        VirtualFileUtil.setTextContent(file, text)
+        path.findOrCreateFile()
+        val file = path.getVirtualFile()
+        file.reloadDocument()
+        file.writeText(text)
       }
       else {
-        VirtualFileSystemUtil.deleteFileOrDirectory(root.fileSystem, path)
+        val file = path.findVirtualFile()
+        file?.deleteRecursively()
       }
     }
   }
 
-  private fun getRelativePath(path: Path): String {
-    return root.path.getRelativePath(path.toCanonicalPath())
-           ?: path.toCanonicalPath()
-  }
-
   private fun getTextContent(path: Path): String? {
-    val file = VirtualFileSystemUtil.findFile(root.fileSystem, path) ?: return null
-    return VirtualFileUtil.getTextContent(file)
+    val file = path.findVirtualFile() ?: return null
+    return file.readText()
   }
 
   override fun suppressErrors(isSuppressedErrors: Boolean) {

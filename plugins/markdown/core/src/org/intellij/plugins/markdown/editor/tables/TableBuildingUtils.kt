@@ -1,10 +1,13 @@
 package org.intellij.plugins.markdown.editor.tables
 
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
-import kotlin.math.max
 
-internal fun buildEmptyRow(columns: Int, fillCharacter: Char = ' ', builder: StringBuilder = StringBuilder()): StringBuilder {
-  val width = max(TableProps.MIN_CELL_WIDTH, 3)
+internal fun buildEmptyRow(
+  columns: Int,
+  fillCharacter: Char = ' ',
+  width: Int = 5,
+  builder: StringBuilder = StringBuilder()
+): StringBuilder {
   return builder.apply {
     repeat(columns) {
       append(TableProps.SEPARATOR_CHAR)
@@ -16,18 +19,18 @@ internal fun buildEmptyRow(columns: Int, fillCharacter: Char = ' ', builder: Str
   }
 }
 
-internal fun buildHeaderSeparator(columns: Int, builder: StringBuilder = StringBuilder()): StringBuilder {
-  return buildEmptyRow(columns, '-', builder)
+internal fun buildHeaderSeparator(columns: Int, width: Int = 5, builder: StringBuilder = StringBuilder()): StringBuilder {
+  return buildEmptyRow(columns, '-', width, builder)
 }
 
-internal fun buildEmptyTable(contentRows: Int, columns: Int): String {
+internal fun buildEmptyTable(contentRows: Int, columns: Int, cellWidth: Int = 5): String {
   val builder = StringBuilder()
-  buildEmptyRow(columns, builder = builder)
+  buildEmptyRow(columns, width = cellWidth, builder = builder)
   builder.append('\n')
-  buildHeaderSeparator(columns, builder = builder)
+  buildHeaderSeparator(columns, width = cellWidth, builder = builder)
   builder.append('\n')
   repeat(contentRows) {
-    buildEmptyRow(columns, builder = builder)
+    buildEmptyRow(columns, width = cellWidth, builder = builder)
     builder.append('\n')
   }
   return builder.toString()

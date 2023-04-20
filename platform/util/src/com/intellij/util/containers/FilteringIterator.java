@@ -10,7 +10,6 @@ import java.util.NoSuchElementException;
 
 /**
  * {@link #remove} throws {@link IllegalStateException} if called after {@link #hasNext}
- *  @author dsl
  *  @author dyoma
  */
 public final class FilteringIterator<Dom, E extends Dom> implements PeekableIterator<E> {

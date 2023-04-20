@@ -35,7 +35,7 @@ object BuildUtils {
   fun propertiesToJvmArgs(properties: List<Pair<String, String>>): List<String> {
     val result = ArrayList<String>(properties.size)
     for ((key, value) in properties) {
-      addVmProperty(result, key, value.toString())
+      addVmProperty(result, key, value)
     }
     return result
   }
@@ -62,3 +62,5 @@ fun convertLineSeparators(file: Path, newLineSeparator: String) {
     Files.writeString(file, convertedData)
   }
 }
+
+fun String.withTrailingSlash() = if (endsWith('/')) this else "${this}/"

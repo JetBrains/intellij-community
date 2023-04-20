@@ -29,9 +29,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.jetbrains.python.psi.PyUtil.sure;
 
-/**
- * Author: Alexey.Ivanov
- */
 public class PyConditionalStatementPartFixer extends PyFixer<PyConditionalStatementPart> {
   public PyConditionalStatementPartFixer() {
     super(PyConditionalStatementPart.class);

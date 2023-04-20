@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author dsl
- */
 public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(ChangeClassSignatureProcessor.class);
   private PsiClass myClass;

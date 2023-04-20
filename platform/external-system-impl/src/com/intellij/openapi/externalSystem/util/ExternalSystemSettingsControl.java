@@ -26,7 +26,6 @@ import java.awt.*;
 /**
  * Defines contract for a component which knows how to manage particular settings.
  * 
- * @author Denis Zhdanov
  * @param <S>  settings type
  */
 public interface ExternalSystemSettingsControl<S> {

@@ -19,7 +19,6 @@ import com.intellij.psi.*;
 
 /**
  * ClassReferenceVisitor that does nothing.
- * @author dsl
  */
 public class ClassReferenceVisitorAdapter implements ClassReferenceVisitor {
   public static final ClassReferenceVisitorAdapter INSTANCE = new ClassReferenceVisitorAdapter();

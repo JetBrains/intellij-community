@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Set;
 
-/**
- * @author Denis Zhdanov
- */
 public class DelegatingExternalSystemSettingsListener<S extends ExternalProjectSettings> implements ExternalSystemSettingsListener<S> {
   
   @NotNull private final ExternalSystemSettingsListener<S> myDelegate;

@@ -25,8 +25,6 @@ import org.jetbrains.annotations.NotNull;
  * Example: we can define a rule like 'private final non-static fields' or 'public static methods' etc.
  * <p/>
  * Not thread-safe.
- * 
- * @author Denis Zhdanov
  */
 public class ArrangementMatchRule {
 

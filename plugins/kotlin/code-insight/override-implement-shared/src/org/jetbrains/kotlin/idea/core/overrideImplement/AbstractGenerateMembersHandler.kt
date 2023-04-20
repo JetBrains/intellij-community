@@ -6,8 +6,11 @@ import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.generation.ClassMember
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.ide.util.MemberChooser
+import com.intellij.java.analysis.JavaAnalysisBundle
 import com.intellij.lang.LanguageCodeInsightActionHandler
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
@@ -22,6 +25,13 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 @ApiStatus.Internal
 abstract class AbstractGenerateMembersHandler<T : ClassMember> : LanguageCodeInsightActionHandler {
     abstract val toImplement: Boolean
+
+    fun collectMembersToGenerateUnderProgress(classOrObject: KtClassOrObject): Collection<T> {
+        return ProgressManager.getInstance().runProcessWithProgressSynchronously<Collection<T>, RuntimeException>(
+            { runReadAction { collectMembersToGenerate(classOrObject) } },
+            JavaAnalysisBundle.message("dialog.progress.collect.members.to.generate"), true, classOrObject.project
+        )
+    }
 
     abstract fun collectMembersToGenerate(classOrObject: KtClassOrObject): Collection<T>
 
@@ -66,7 +76,7 @@ abstract class AbstractGenerateMembersHandler<T : ClassMember> : LanguageCodeIns
 
         if (!FileModificationService.getInstance().prepareFileForWrite(file)) return
 
-        val members = collectMembersToGenerate(classOrObject)
+        val members = collectMembersToGenerateUnderProgress(classOrObject)
         if (members.isEmpty() && !implementAll) {
             HintManager.getInstance().showErrorHint(editor, getNoMembersFoundHint())
             return

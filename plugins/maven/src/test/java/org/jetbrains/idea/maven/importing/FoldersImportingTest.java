@@ -44,15 +44,6 @@ import java.util.function.Consumer;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
-
-  //public static Test suite() throws ClassNotFoundException {
-  //  return new TestSuite(
-  //    Class.forName("_FirstInSuiteTest"),
-  //    FoldersImportingTest.class,
-  //    Class.forName("_LastInSuiteTest")
-  //  );
-  //}
-
   @Test
   public void testSimpleProjectStructure() {
     createStdProjectFolders();
@@ -1036,6 +1027,52 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertSources("project",
                   "src/main/java",
                   "target/generated-sources");
+    assertResources("project", "src/main/resources");
+  }
+
+  @Test
+  public void testOverrideAnnotationSourcesWhenAutodetect() throws Exception {
+    createStdProjectFolders();
+
+    MavenProjectsManager.getInstance(myProject).getImportingSettings().setGeneratedSourcesFolder(
+      MavenImportingSettings.GeneratedSourcesFolder.AUTODETECT);
+
+    createProjectSubFile("target/generated-sources/com/A.java", "package com; class A {}");
+    createProjectSubFile("target/generated-sources/annotations/com/B.java", "package com; class B {}");
+
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
+
+    assertSources("project",
+                  "src/main/java",
+                  "target/generated-sources");
+    assertResources("project", "src/main/resources");
+  }
+
+
+  @Test
+  public void testOverrideTestAnnotationSourcesWhenAutodetect() throws Exception {
+    createStdProjectFolders();
+
+    MavenProjectsManager.getInstance(myProject).getImportingSettings().setGeneratedSourcesFolder(
+      MavenImportingSettings.GeneratedSourcesFolder.AUTODETECT);
+
+    createProjectSubFile("target/generated-test-sources/com/A.java", "package com; class A {}");
+    createProjectSubFile("target/generated-test-sources/test-annotations/com/B.java", "package com; class B {}");
+
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
+
+    assertSources("project", "src/main/java");
+    assertTestSources("project",
+                      "src/test/java",
+                      "target/generated-test-sources");
     assertResources("project", "src/main/resources");
   }
 

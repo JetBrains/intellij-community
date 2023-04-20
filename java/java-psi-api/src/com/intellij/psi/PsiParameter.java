@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents the parameter of a Java method, foreach (enhanced for) statement or catch block.
  */
-public interface PsiParameter extends PsiVariable, JvmParameter, PsiJvmModifiersOwner, PsiForeachDeclarationElement {
+public interface PsiParameter extends PsiVariable, JvmParameter, PsiJvmModifiersOwner {
   /**
    * The empty array of PSI parameters which can be reused to avoid unnecessary allocations.
    */

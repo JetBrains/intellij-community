@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.workspaceModel.storage.WorkspaceEntity
@@ -39,9 +39,9 @@ internal class ClassToIntConverter {
 
   fun getMap(): Map<Class<*>, Int> = map.get().classToInt
 
-  fun fromMap(map: Map<Class<*>, Int>) {
+  fun fromMap(map: Object2IntMap<Class<*>>) {
     val entry = Entry(
-      Object2IntOpenHashMap(map),
+      map,
       Array<Class<*>?>(map.values.maxOrNull() ?: 0) { null }.also { map.forEach { (clazz, index) -> it[index] = clazz } }
     )
     this.map.set(entry)

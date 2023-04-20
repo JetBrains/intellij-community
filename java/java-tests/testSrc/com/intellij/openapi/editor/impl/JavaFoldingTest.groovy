@@ -27,9 +27,6 @@ import com.intellij.util.DocumentUtil
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.NotNull
 
-/**
- * @author Denis Zhdanov
- */
 @SuppressWarnings("ALL") // too many warnings in injections
 class JavaFoldingTest extends JavaFoldingTestCase {
   @NotNull

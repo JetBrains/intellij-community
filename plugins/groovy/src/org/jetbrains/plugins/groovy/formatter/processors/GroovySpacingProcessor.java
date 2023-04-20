@@ -74,9 +74,6 @@ import static org.jetbrains.plugins.groovy.formatter.blocks.BlocksKt.shouldHandl
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.*;
 
-/**
- * @author ilyas
- */
 public class GroovySpacingProcessor extends GroovyElementVisitor {
   private PsiElement myParent;
 

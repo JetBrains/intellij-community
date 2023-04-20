@@ -28,7 +28,6 @@ import java.util.List;
 
 /**
  * Base class for java run configurations with enabled code coverage
- * @author ven
  */
 public final class JavaCoverageEnabledConfiguration extends CoverageEnabledConfiguration {
   private ClassFilter[] myCoveragePatterns;

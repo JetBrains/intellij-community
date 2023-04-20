@@ -54,9 +54,6 @@ import static com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPIN
 import static com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPING_FINAL_EXT;
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * @author vlan
- */
 public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   public static final String TYPING = "typing";

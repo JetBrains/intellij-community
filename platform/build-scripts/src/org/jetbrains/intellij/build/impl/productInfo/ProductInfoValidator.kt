@@ -19,7 +19,7 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 
 /**
- * Checks that product-info.json file located in `archivePath` archive in `pathInArchive` subdirectory is correct
+ * Checks that product-info.json file located in [archiveFile] archive in [pathInArchive] subdirectory is correct
  */
 internal fun checkInArchive(archiveFile: Path, pathInArchive: String, context: BuildContext) {
   val productJsonPath = joinPaths(pathInArchive, PRODUCT_INFO_FILE_NAME)
@@ -28,7 +28,7 @@ internal fun checkInArchive(archiveFile: Path, pathInArchive: String, context: B
   validateProductJson(jsonText = entryData.decodeToString(),
                       relativePathToProductJson = "",
                       installationDirectories = emptyList(),
-                      installationArchives = listOf(Pair(archiveFile, pathInArchive)),
+                      installationArchives = listOf(archiveFile to pathInArchive),
                       context = context)
 }
 

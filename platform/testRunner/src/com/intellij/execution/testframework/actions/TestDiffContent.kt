@@ -38,8 +38,9 @@ class TestDiffContent(
       try {
         myDuringModification = true
         val element = elemPtr.element ?: return
-        ElementManipulators.handleContentChange(element, event.document.text)
-      } finally {
+        ElementManipulators.getManipulator(element)?.handleContentChange(element, event.document.text)
+      }
+      finally {
         myDuringModification = false
       }
     }

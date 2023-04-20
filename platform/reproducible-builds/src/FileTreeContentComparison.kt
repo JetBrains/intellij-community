@@ -200,7 +200,11 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
   private fun Path.writeContent(target: Path) {
     val content = when (extension) {
       "tar.gz", "gz", "tar" -> error("$this is expected to be already unpacked")
-      "jar", "zip", "ijx", "sit" -> if (isUnzipAvailable) process("unzip", "-l", "$this").stdOut else null
+      "jar", "zip", "ijx", "sit" -> when {
+        is7zAvailable -> process("7z", "l", "$this").stdOut
+        isUnzipAvailable -> process("unzip", "-l", "$this").stdOut
+        else -> null
+      }
       "class" -> if (isJavapAvailable) process("javap", "-verbose", "$this").stdOut else null
       "dmg", "exe" -> if (is7zAvailable) process("7z", "l", "$this").stdOut else null
       "json", "manifest" -> gson.toJson(JsonParser.parseString(readText()))

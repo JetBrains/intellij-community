@@ -45,9 +45,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.CompileStaticUtil.isCom
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses;
 import static org.jetbrains.plugins.groovy.lang.typing.TuplesKt.getMultiAssignmentType;
 
-/**
- * @author ven
- */
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public final class TypeInferenceHelper {
   private static final Logger LOG = Logger.getInstance(TypeInferenceHelper.class);

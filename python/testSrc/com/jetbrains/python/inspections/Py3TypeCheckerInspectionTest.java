@@ -5,9 +5,6 @@ import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author vlan
- */
 public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public static final String TEST_DIRECTORY = "inspections/PyTypeCheckerInspection/";
 

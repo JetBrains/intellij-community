@@ -209,7 +209,7 @@ class SdkEntityData : WorkspaceEntityData<SdkEntity>() {
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return SdkEntity(homeUrl, entitySource) {
-      this.library = parents.filterIsInstance<LibraryEntity>().single()
+      parents.filterIsInstance<LibraryEntity>().singleOrNull()?.let { this.library = it }
     }
   }
 

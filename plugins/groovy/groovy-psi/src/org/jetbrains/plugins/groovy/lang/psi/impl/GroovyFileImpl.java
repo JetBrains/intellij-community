@@ -44,8 +44,6 @@ import static org.jetbrains.plugins.groovy.lang.resolve.bindings.BindingsKt.proc
 
 /**
  * Implements all abstractions related to Groovy file
- *
- * @author ilyas
  */
 public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, PsiModifiableCodeBlock {
 

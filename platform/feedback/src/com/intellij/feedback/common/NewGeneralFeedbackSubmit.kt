@@ -2,6 +2,7 @@
 package com.intellij.feedback.common
 
 import com.intellij.feedback.common.notification.ThanksForFeedbackNotification
+import com.intellij.notification.Notification
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -90,7 +91,7 @@ fun submitFeedback(project: Project?,
                    onDone: () -> Unit,
                    onError: () -> Unit,
                    feedbackRequestType: FeedbackRequestType = FeedbackRequestType.TEST_REQUEST,
-                   showNotification: Boolean = true) {
+                   thanksNotification: Notification? = ThanksForFeedbackNotification()) {
   ApplicationManager.getApplication().executeOnPooledThread {
     val feedbackUrl = when (feedbackRequestType) {
       FeedbackRequestType.NO_REQUEST -> return@executeOnPooledThread
@@ -100,9 +101,9 @@ fun submitFeedback(project: Project?,
     sendFeedback(feedbackUrl, feedbackData, onDone, onError)
   }
 
-  if (showNotification) {
+  if (thanksNotification != null) {
     ApplicationManager.getApplication().invokeLater {
-      ThanksForFeedbackNotification().notify(project)
+      thanksNotification.notify(project)
     }
   }
 }

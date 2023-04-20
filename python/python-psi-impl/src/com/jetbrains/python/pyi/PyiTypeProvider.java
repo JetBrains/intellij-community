@@ -31,9 +31,6 @@ import java.util.Map;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * @author vlan
- */
 public class PyiTypeProvider extends PyTypeProviderBase {
   @Override
   public Ref<PyType> getParameterType(@NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context) {

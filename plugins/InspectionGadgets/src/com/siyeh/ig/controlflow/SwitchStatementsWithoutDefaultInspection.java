@@ -20,7 +20,6 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiCodeBlock;
@@ -32,10 +31,9 @@ import com.siyeh.ig.psiutils.SwitchUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
 import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel;
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class SwitchStatementsWithoutDefaultInspection extends AbstractBaseJavaLocalInspectionTool {
 
@@ -78,8 +76,8 @@ public class SwitchStatementsWithoutDefaultInspection extends AbstractBaseJavaLo
         }
         else {
           CompletenessResult completenessResult = PatternsInSwitchBlockHighlightingModel.evaluateSwitchCompleteness(statement);
-          if (completenessResult == CompletenessResult.UNEVALUATED || completenessResult == CompletenessResult.COMPLETE_WITH_TOTAL) return;
-          if (m_ignoreFullyCoveredEnums && completenessResult == CompletenessResult.COMPLETE_WITHOUT_TOTAL) {
+          if (completenessResult == CompletenessResult.UNEVALUATED || completenessResult == CompletenessResult.COMPLETE_WITH_UNCONDITIONAL) return;
+          if (m_ignoreFullyCoveredEnums && completenessResult == CompletenessResult.COMPLETE_WITHOUT_UNCONDITIONAL) {
             if (!isOnTheFly) return;
             infoMode = true;
           }

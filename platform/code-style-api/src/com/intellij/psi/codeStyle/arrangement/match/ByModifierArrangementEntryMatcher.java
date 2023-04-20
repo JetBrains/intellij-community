@@ -11,9 +11,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author Denis Zhdanov
- */
 public class ByModifierArrangementEntryMatcher implements ArrangementEntryMatcher {
 
   @NotNull private final Set<ArrangementAtomMatchCondition> myModifiers = new HashSet<>();

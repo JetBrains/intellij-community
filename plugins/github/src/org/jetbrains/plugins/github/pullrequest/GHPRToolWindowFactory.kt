@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest
 
-import com.intellij.collaboration.async.DisposingMainScope
+import com.intellij.collaboration.async.DisposingScope
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.EmptyAction
@@ -15,7 +15,6 @@ import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.content.Content
 import com.intellij.util.cancelOnDispose
-import com.intellij.util.childScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -66,13 +65,13 @@ internal class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   private fun configureContent(project: Project, content: Content) {
-    val scope = DisposingMainScope(content)
+    val scope = DisposingScope(content)
     val repositoriesManager = project.service<GHHostedRepositoriesManager>()
+    val connectionManager = project.service<GHRepositoryConnectionManager>()
     val accountManager = service<GHAccountManager>()
-    val connectionManager = GHRepositoryConnectionManager(repositoriesManager, accountManager, project.service())
     val vm = GHPRToolWindowTabViewModel(scope, repositoriesManager, accountManager, connectionManager, project.service())
 
-    val controller = GHPRToolWindowTabControllerImpl(scope.childScope(), project, vm, content)
+    val controller = GHPRToolWindowTabControllerImpl(scope, project, vm, content)
     content.putUserData(GHPRToolWindowTabController.KEY, controller)
   }
 

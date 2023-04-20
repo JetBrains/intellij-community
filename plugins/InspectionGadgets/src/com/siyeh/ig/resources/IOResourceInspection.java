@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.codeInspection.options.OptPane.stringSet;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 public class IOResourceInspection extends ResourceInspection {
   final List<String> ignoredTypes = new ArrayList<>();
@@ -48,8 +48,8 @@ public class IOResourceInspection extends ResourceInspection {
   @Override
   public @NotNull OptPane getOptionsPane() {
     return super.getOptionsPane()
-      .prepend(stringSet("ignoredTypes", InspectionGadgetsBundle.message("ignored.io.resource.types.label"),
-                        new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("choose.io.resource.type.to.ignore"))
+      .prepend(stringList("ignoredTypes", InspectionGadgetsBundle.message("ignored.io.resource.types.label"),
+                          new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("choose.io.resource.type.to.ignore"))
                           .withSuperClass("java.io.Closeable")));
   }
 

@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
+import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.TestLoggerFactory.TestLoggerAssertionError
 import com.intellij.util.concurrency.Semaphore
@@ -22,7 +23,13 @@ const val TEST_TIMEOUT_MS: Long = 1000
 
 fun timeoutRunBlocking(action: suspend CoroutineScope.() -> Unit) {
   runBlocking {
-    withTimeout(TEST_TIMEOUT_MS, action)
+    try {
+      withTimeout(TEST_TIMEOUT_MS, action)
+    }
+    catch (e: TimeoutCancellationException) {
+      println(dumpCoroutines())
+      throw e
+    }
   }
 }
 

@@ -282,7 +282,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       return CommitChecksResult.Cancelled
     }
     catch (e: Throwable) {
-      LOG.warn(Throwable(e))
+      LOG.error(Throwable(e))
       return CommitChecksResult.ExecutionError
     }
   }
@@ -414,7 +414,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
         throw e
       }
       catch (e: Throwable) {
-        LOG.warn(e)
+        LOG.error(e)
         return CommitProblem.createError(e)
       }
       finally {

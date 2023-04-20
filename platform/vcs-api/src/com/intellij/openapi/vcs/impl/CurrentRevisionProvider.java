@@ -19,9 +19,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 
-/**
- * @author irengrig
- */
 public interface CurrentRevisionProvider {
   VcsRevisionNumber getCurrentRevision() throws VcsException;
   Pair<VcsRevisionNumber, byte[]> get() throws VcsException;

@@ -2,7 +2,7 @@
 package com.intellij.openapi.vcs.roots;
 
 import com.intellij.ide.impl.TrustedProjects;
-import com.intellij.ide.impl.trustedProjects.TrustedProjectsListener;
+import com.intellij.ide.trustedProjects.TrustedProjectsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;

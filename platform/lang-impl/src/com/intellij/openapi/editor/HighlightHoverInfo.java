@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.ex.ErrorStripTooltipRendererProvider;
 import com.intellij.openapi.editor.ex.TooltipAction;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.Ref;
@@ -138,8 +139,9 @@ final class HighlightHoverInfo {
       return null;
     }
     try {
-      TooltipAction tooltipAction = ReadAction
-        .nonBlocking(() -> TooltipActionProvider.calcTooltipAction(info, editor))
+      Project project = editor.getProject();
+      TooltipAction tooltipAction = project == null ? null : ReadAction
+        .nonBlocking(() -> TooltipActionProvider.calcTooltipAction(info, project, editor))
         .executeSynchronously();
       return new HighlightHoverInfo(tooltip, tooltipAction);
     }

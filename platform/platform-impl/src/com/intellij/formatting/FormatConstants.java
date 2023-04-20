@@ -11,8 +11,6 @@ import static com.intellij.psi.util.PsiUtilBase.getLanguageInEditor;
  * Is assumed to be a single place to hold various constants to use during formatting.
  * <p/>
  * Thread-safe.
- *
- * @author Denis Zhdanov
  */
 public final class FormatConstants {
 

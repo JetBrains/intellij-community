@@ -17,9 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-/**
- * @author Pavel.Dolgov
- */
 final class DuplicateExpressionsContext {
   private static final Key<Map<PsiCodeBlock, DuplicateExpressionsContext>> CONTEXTS_KEY = Key.create("DuplicateExpressionsContext");
 

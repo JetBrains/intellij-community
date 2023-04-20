@@ -57,7 +57,7 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
     return super.getOptionController().onValue(
       "effectiveLanguageLevel",
       { effectiveLanguageLevel?.name ?: "null" },
-      { value -> effectiveLanguageLevel = if (value == "null") null else LanguageLevel.valueOf(value as String) }
+      { value -> effectiveLanguageLevel = if (value == "null") null else LanguageLevel.valueOf(value) }
     )
   }
   

@@ -18,9 +18,6 @@ import java.util.List;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-/**
- * @author Irina.Chernushina on 2/20/2017.
- */
 public abstract class JsonBySchemaCompletionBaseTest extends BasePlatformTestCase {
   protected List<LookupElement> myItems;
 

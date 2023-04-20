@@ -12,9 +12,6 @@ import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.createGlobalContextForTool
 import org.intellij.lang.annotations.Language
 
-/**
- * @author Pavel.Dolgov
- */
 class Java9RedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()

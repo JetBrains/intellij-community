@@ -6,6 +6,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.ComponentStyle
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.ComponentStyleState
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.StyleManager
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBInsets
@@ -93,6 +94,14 @@ internal open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
 
   val closeButton: JButton = createButton("Close", myCloseAction)
 
+  internal var isCompactMode: Boolean
+    set(value) {
+      panel.isCompactMode = value
+    }
+    get() {
+      return panel.isCompactMode
+    }
+
   var isSelected = false
     set(value) {
       if(field != value) {
@@ -161,6 +170,11 @@ internal open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
   }
 
   private class TitleButtonsPanel : JPanel(FlowLayout(FlowLayout.LEADING, 0, 0)) {
+    var isCompactMode = false
+      set(value) {
+        field = value
+        updateScaledPreferredSize()
+      }
 
     init {
       isOpaque = false
@@ -171,8 +185,13 @@ internal open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
       add(component, "top")
     }
 
+    private fun updateScaledPreferredSize() {
+      components.forEach { (it as? JComponent)?.setScaledPreferredSize() }
+    }
+
     private fun JComponent.setScaledPreferredSize() {
-      val size = CurrentTheme.TitlePane.buttonPreferredSize()
+      val size = CurrentTheme.TitlePane.buttonPreferredSize().clone() as Dimension
+      if (isCompactMode) size.height = JBUIScale.scale(30)
       preferredSize = Dimension((size.width * UISettings.defFontScale).toInt(), (size.height * UISettings.defFontScale).toInt())
     }
 

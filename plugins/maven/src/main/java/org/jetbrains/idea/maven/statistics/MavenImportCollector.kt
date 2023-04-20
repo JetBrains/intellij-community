@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class MavenImportCollector : CounterUsagesCollector() {
   companion object {
-    val GROUP = EventLogGroup("maven.import", 8)
+    val GROUP = EventLogGroup("maven.import", 9)
 
     @JvmField
     val HAS_USER_ADDED_LIBRARY_DEP = GROUP.registerEvent("hasUserAddedLibraryDependency")
@@ -110,6 +110,10 @@ class MavenImportCollector : CounterUsagesCollector() {
                                                      CONFIG_MODULES_DURATION_MS,
                                                      BEFORE_APPLY_DURATION_MS,
                                                      AFTER_APPLY_DURATION_MS)
+
+
+    @JvmField
+    val POST_IMPORT_TASKS_RUN =  GROUP.registerEvent("post_import_tasks_run", ACTIVITY_ID, TOTAL_DURATION_MS)
   }
 
   override fun getGroup(): EventLogGroup {

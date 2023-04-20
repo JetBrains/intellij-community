@@ -4,9 +4,6 @@ package com.intellij.java.refactoring;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
-/**
- *  @author dsl
- */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
   IntroduceVariableTest.class,

@@ -3,8 +3,5 @@ package com.intellij.platform.externalSystem.testFramework;
 
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 
-/**
- * @author Denis Zhdanov
- */
 public class TestExternalSystemExecutionSettings extends ExternalSystemExecutionSettings {
 }

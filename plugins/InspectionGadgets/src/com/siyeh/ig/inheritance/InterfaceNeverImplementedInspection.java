@@ -54,8 +54,8 @@ public class InterfaceNeverImplementedInspection extends BaseInspection {
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      stringSet("ignorableAnnotations", InspectionGadgetsBundle.message("ignore.if.annotated.by"),
-                new JavaClassValidator().annotationsOnly()),
+      stringList("ignorableAnnotations", InspectionGadgetsBundle.message("ignore.if.annotated.by"),
+                 new JavaClassValidator().annotationsOnly()),
       checkbox("ignoreInterfacesThatOnlyDeclareConstants", InspectionGadgetsBundle.message("interface.never.implemented.option"))
     );
   }

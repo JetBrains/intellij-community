@@ -87,7 +87,7 @@ class ImlReplaceBySourceTest {
 
     val replaceWith = MutableEntityStorage.create()
     val source = builder.entities(ModuleEntity::class.java).first().entitySource as JpsFileEntitySource.FileInDirectory
-    JpsProjectEntitiesLoader.loadModule(moduleFile.toPath(), source, configLocation, replaceWith, TestErrorReporter, virtualFileManager)
+    JpsProjectEntitiesLoader.loadModule(moduleFile.toPath(), source, configLocation, replaceWith, replaceWith, TestErrorReporter, virtualFileManager)
 
     val before = builder.toSnapshot()
 
@@ -113,12 +113,13 @@ class ImlReplaceBySourceTest {
   private fun replaceBySourceFullReplace(projectFile: File) {
     var storageBuilder1 = MutableEntityStorage.create()
     val data = com.intellij.workspaceModel.ide.impl.jps.serialization.loadProject(projectFile.asConfigLocation(virtualFileManager),
-                                                                                  storageBuilder1, virtualFileManager)
+                                                                                  storageBuilder1, storageBuilder1, virtualFileManager)
 
     val storageBuilder2 = MutableEntityStorage.create()
     val reader = CachingJpsFileContentReader(projectFile.asConfigLocation(virtualFileManager))
     runBlocking {
-      data.loadAll(reader, storageBuilder2, MutableEntityStorage.create(), emptySet(), TestErrorReporter, null)
+      val builder = MutableEntityStorage.create()
+      data.loadAll(reader, storageBuilder2, builder, builder, emptySet(), TestErrorReporter, null)
     }
 
     val before = storageBuilder1.toSnapshot()

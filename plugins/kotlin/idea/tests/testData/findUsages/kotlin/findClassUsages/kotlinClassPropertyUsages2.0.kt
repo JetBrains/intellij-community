@@ -37,4 +37,3 @@ open class <caret>A(val t: String, var u: String) : X {
     }
 }
 
-// FIR_COMPARISON

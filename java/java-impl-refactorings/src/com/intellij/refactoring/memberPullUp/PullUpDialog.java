@@ -35,9 +35,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.List;
 
-/**
- * @author dsl
- */
 public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo, PsiMember, PsiClass> {
   private final Callback myCallback;
   private DocCommentPanel myJavaDocPanel;

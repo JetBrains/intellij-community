@@ -16,4 +16,3 @@ public interface AI {
     }
 }
 
-// FIR_COMPARISON

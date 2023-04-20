@@ -39,9 +39,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.IntConsumer;
 
-/**
- & @author ven
- */
 public final class UnusedDefInspection extends GroovyLocalInspectionBase {
   private static final Logger LOG = Logger.getInstance(UnusedDefInspection.class);
 

@@ -18,6 +18,8 @@ const val DOUBLE_UNDERSCORE = "__"
 val HIDE_TYPES: Set<String> = setOf("function", "type", "classobj", "module")
 val HIDE_MODULES: Set<String> = setOf("typing")
 
+open class PyXValueGroup(groupName: String, val groupType: ProcessDebugger.GROUP_TYPE) : XValueGroup(groupName)
+
 
 fun extractChildrenToGroup(groupName: String,
                            icon: Icon,
@@ -61,17 +63,17 @@ fun addGroupValues(groupName: String,
                    myDebugProcess: PyFrameAccessor?,
                    groupType: ProcessDebugger.GROUP_TYPE,
                    nameSuffix: String?) {
-  val group = object : XValueGroup(groupName) {
+  val group = object : PyXValueGroup(groupName, groupType) {
     override fun computeChildren(node: XCompositeNode) {
-        val list: XValueChildrenList? =
-          if (groupType == ProcessDebugger.GROUP_TYPE.DEFAULT) {
-            getDefaultGroupNodes(groupElements, nameSuffix)
-          }
-          else {
-            myDebugProcess?.let { getSpecialGroupNodes(it, nameSuffix, groupType) }
-          }
+      val list: XValueChildrenList? =
+        if (groupType == ProcessDebugger.GROUP_TYPE.DEFAULT) {
+          getDefaultGroupNodes(groupElements, nameSuffix)
+        }
+        else {
+          myDebugProcess?.let { getSpecialGroupNodes(it, nameSuffix, groupType) }
+        }
 
-        list?.let { node.addChildren(list, true) }
+      list?.let { node.addChildren(list, true) }
     }
 
     override fun getIcon(): Icon {

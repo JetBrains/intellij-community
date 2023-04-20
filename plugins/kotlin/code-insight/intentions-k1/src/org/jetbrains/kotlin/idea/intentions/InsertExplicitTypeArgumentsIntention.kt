@@ -5,6 +5,8 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
+import org.jetbrains.kotlin.diagnostics.Errors.DEFINITELY_NON_NULLABLE_AS_REIFIED
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -22,6 +24,7 @@ import org.jetbrains.kotlin.resolve.calls.inference.CapturedType
 import org.jetbrains.kotlin.resolve.calls.tower.NewResolvedCallImpl
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.types.DefinitelyNotNullType
 import org.jetbrains.kotlin.types.checker.NewCapturedType
 import org.jetbrains.kotlin.types.error.ErrorUtils
 
@@ -43,12 +46,12 @@ class InsertExplicitTypeArgumentsIntention : SelfTargetingRangeIntention<KtCallE
 
             val resolvedCall = element.getResolvedCall(bindingContext) ?: return false
             val typeArgs = resolvedCall.typeArguments
-            if (resolvedCall is NewResolvedCallImpl<*>) {
-                val valueParameterTypes = resolvedCall.resultingDescriptor.valueParameters.map { it.type }
-                if (valueParameterTypes.any { ErrorUtils.containsErrorType(it) }) {
-                    return false
-                }
-            }
+            val valueParameters = resolvedCall.resultingDescriptor.valueParameters
+            if (resolvedCall is NewResolvedCallImpl<*> && valueParameters.any { ErrorUtils.containsErrorType(it.type) }) return false
+
+            /** Can't use definitely-non-nullable type as reified type argument, see [DEFINITELY_NON_NULLABLE_AS_REIFIED] */
+            if (valueParameters.any { it.type is DefinitelyNotNullType && (it.original.type.constructor.declarationDescriptor as? TypeParameterDescriptor)?.isReified == true })
+                return false
 
             return typeArgs.isNotEmpty() && typeArgs.values.none { ErrorUtils.containsErrorType(it) || it is CapturedType || it is NewCapturedType }
         }

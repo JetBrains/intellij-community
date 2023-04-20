@@ -663,21 +663,24 @@ public final class Strings {
   }
 
   @Contract(pure = true)
-  public static @NotNull String join(final int @NotNull [] strings, final @NotNull String separator) {
+  public static @NotNull String join(int @NotNull [] values, @NotNull String separator) {
+    if (values.length == 0) return "";
+
     final StringBuilder result = new StringBuilder();
-    for (int i = 0; i < strings.length; i++) {
+    for (int i = 0; i < values.length; i++) {
       if (i > 0) result.append(separator);
-      result.append(strings[i]);
+      result.append(values[i]);
     }
     return result.toString();
   }
 
   @Contract(pure = true)
-  public static @NotNull String join(final String @NotNull ... strings) {
+  public static @NotNull String join(String @NotNull ... strings) {
     if (strings.length == 0) return "";
+    if (strings.length == 1) return strings[0];
 
     final StringBuilder builder = new StringBuilder();
-    for (final String string : strings) {
+    for (String string : strings) {
       builder.append(string);
     }
     return builder.toString();

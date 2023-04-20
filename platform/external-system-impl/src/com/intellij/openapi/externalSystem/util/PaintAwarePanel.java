@@ -21,9 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author Denis Zhdanov
- */
 public class PaintAwarePanel extends JPanel {
 
   @Nullable private Consumer<? super Graphics> myPaintCallback;

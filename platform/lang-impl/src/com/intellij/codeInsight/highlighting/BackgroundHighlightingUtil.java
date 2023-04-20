@@ -35,8 +35,8 @@ public final class BackgroundHighlightingUtil {
    */
   static <T> void lookForInjectedFileInOtherThread(@NotNull Project project,
                                                    @NotNull Editor editor,
-                                                   @NotNull BiFunction<? super PsiFile, ? super Editor, ? extends @NotNull T> backgroundProcessor,
-                                                   @NotNull TriConsumer<? super PsiFile, ? super Editor, ? super @NotNull T> edtProcessor) {
+                                                   @NotNull BiFunction<? super PsiFile, ? super Editor, ? extends T> backgroundProcessor,
+                                                   @NotNull TriConsumer<? super PsiFile, ? super Editor, ? super T> edtProcessor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!isValidEditor(editor)) return;
 
@@ -76,7 +76,7 @@ public final class BackgroundHighlightingUtil {
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
-  private static boolean isValidEditor(@NotNull Editor editor) {
+  static boolean isValidEditor(@NotNull Editor editor) {
     Project editorProject = editor.getProject();
     return editorProject != null && !editorProject.isDisposed() && !editor.isDisposed() &&
            UIUtil.isShowing(editor.getContentComponent());
@@ -94,7 +94,7 @@ public final class BackgroundHighlightingUtil {
   }
 
   @NotNull
-  private static PsiFile getInjectedFileIfAny(int offset, @NotNull PsiFile psiFile) {
+  static PsiFile getInjectedFileIfAny(int offset, @NotNull PsiFile psiFile) {
     PsiElement injectedElement = InjectedLanguageManager.getInstance(psiFile.getProject()).findInjectedElementAt(psiFile, offset);
     if (injectedElement != null) {
       PsiFile injected = injectedElement.getContainingFile();

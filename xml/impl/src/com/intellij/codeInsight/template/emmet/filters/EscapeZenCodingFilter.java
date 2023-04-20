@@ -21,9 +21,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class EscapeZenCodingFilter extends ZenCodingFilter {
   @NotNull
   @Override

@@ -20,4 +20,3 @@ open class B : A<String>() {
         }
 }
 
-// FIR_COMPARISON

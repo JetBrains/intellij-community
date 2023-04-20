@@ -34,9 +34,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author Pavel.Dolgov
- */
 public final class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspectionTool {
   private static final Logger LOG = Logger.getInstance(JavaFxRedundantPropertyValueInspection.class);
 

@@ -26,8 +26,6 @@ import java.util.Map;
 
 /**
  * Something that can be called, passed parameters to, and return something back.
- *
- * @author dcheryasov
  */
 public interface PyCallable extends PyTypedElement, PyQualifiedNameOwner {
 

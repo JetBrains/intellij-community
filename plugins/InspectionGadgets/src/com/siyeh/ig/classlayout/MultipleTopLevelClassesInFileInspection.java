@@ -15,6 +15,10 @@
  */
 package com.siyeh.ig.classlayout;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaFile;
@@ -29,7 +33,18 @@ public class MultipleTopLevelClassesInFileInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new MoveClassFix();
+    return new MoveClassFix() {
+      @Override
+      public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+        PsiElement elementToRefactor = getElementToRefactor(previewDescriptor.getPsiElement());
+        if (elementToRefactor instanceof PsiClass aClass) {
+          String className = aClass.getName();
+          return new IntentionPreviewInfo.Html(
+            JavaRefactoringBundle.message("move.class.to.new.file.or.make.inner.class.preview", className));
+        }
+        return IntentionPreviewInfo.EMPTY;
+      }
+    };
   }
 
   @Override

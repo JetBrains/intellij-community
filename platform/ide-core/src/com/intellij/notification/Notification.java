@@ -40,7 +40,6 @@ import static com.intellij.openapi.util.NlsContexts.*;
  * @see NotificationAction
  * @see com.intellij.notification.SingletonNotificationManager
  *
- * @author spleaner
  * @author Alexander Lobas
  */
 public class Notification {

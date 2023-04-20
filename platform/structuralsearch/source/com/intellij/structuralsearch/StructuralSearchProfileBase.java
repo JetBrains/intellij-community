@@ -31,9 +31,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public abstract class StructuralSearchProfileBase extends StructuralSearchProfile {
   private static final String DELIMITER_CHARS = ",;.[]{}():";
 

@@ -23,9 +23,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author ilyas
- */
 public class GrDocMethodParamsImpl extends GroovyDocPsiElementImpl implements GrDocMethodParams {
 
   private static final Logger LOG = Logger.getInstance(GrDocMethodParamsImpl.class);

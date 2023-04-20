@@ -19,9 +19,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.imports.*;
 import org.jetbrains.plugins.groovy.lang.resolve.imports.impl.GroovyImportCollector;
 
-/**
- * @author ven
- */
 public class GroovyCodeFragment extends GroovyFileImpl implements JavaCodeFragment, IntentionFilterOwner, GrUnAmbiguousClosureContainer {
   private static final Logger LOG = Logger.getInstance(GroovyCodeFragment.class);
 

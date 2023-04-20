@@ -29,9 +29,6 @@ import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-/**
- * @author Denis Fokin
- */
 
 public class WinPathChooserDialog implements PathChooserDialog, FileChooserDialog {
 

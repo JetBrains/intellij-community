@@ -163,6 +163,7 @@ public final class ContainerUtil {
   }
 
   @Contract(pure = true)
+  @Unmodifiable
   public static @NotNull <T> List<T> newArrayList(T @NotNull [] elements, int start, int end) {
     if (start < 0 || start > end || end > elements.length) {
       throw new IllegalArgumentException("start:" + start + " end:" + end + " length:" + elements.length);
@@ -809,17 +810,6 @@ public final class ContainerUtil {
       set.add(value);
     }
     return hashMap;
-  }
-
-  /**
-   * @deprecated Use {@link Collections#emptyList()} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  @Contract(pure = true)
-  @Unmodifiable
-  public static @NotNull <T> Iterable<T> emptyIterable() {
-    return Collections.emptyList();
   }
 
   @Contract(pure=true)
@@ -2119,7 +2109,9 @@ public final class ContainerUtil {
   }
 
   /**
-   * please use {@link Set#of(Object[])} instead
+   * Please use {@link Set#of(Object[])} instead
+   * If you need a mutable {@link Set} please use {@link HashSet#HashSet()};
+   * If you need a mutable {@link Set} pre-populated with elements, use {@link #newHashSet}
    */
   @SafeVarargs
   public static @NotNull <T> Set<T> set(T @NotNull ... items) {
@@ -2356,7 +2348,6 @@ public final class ContainerUtil {
    * Processes the list, remove all duplicates and return the list with unique elements.
    * @param list must be sorted (according to the comparator), all elements must be not-null
    */
-  @Contract(mutates = "param1")
   public static @NotNull <T> List<? extends T> removeDuplicatesFromSorted(@NotNull List<? extends T> list, @NotNull Comparator<? super T> comparator) {
     T prev = null;
     List<T> result = null;

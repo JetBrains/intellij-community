@@ -42,7 +42,6 @@ import static com.intellij.patterns.StandardPatterns.or;
  * <b>NOTE: many matchers here use original tree, not the grafted identifier in the copied tree.</b>
  * This should not lead to any problems, because all such code is private, and the user data used to pass the original
  * element is cleared after matching.
- * User: dcheryasov
  */
 @SuppressWarnings({"InstanceVariableOfConcreteClass"})
 public class PyKeywordCompletionContributor extends CompletionContributor implements DumbAware {

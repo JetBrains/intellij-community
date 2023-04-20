@@ -26,9 +26,6 @@ import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author dsl
- */
 public class ImportStatementBaseElement extends CompositeElement {
   private static final Logger LOG = Logger.getInstance(ImportStatementBaseElement.class);
 

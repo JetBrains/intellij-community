@@ -8,9 +8,6 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class ParseVersionTest {
 
   @Test

@@ -11,9 +11,6 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
 
-/**
- * @author Sergey Evdokimov
- */
 public class EditMavenRunConfigurationAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

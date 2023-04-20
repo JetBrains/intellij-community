@@ -9,9 +9,6 @@ import com.intellij.util.containers.ObjectIntMap;
 
 import java.util.List;
 
-/**
- * @author Pavel.Dolgov
- */
 class ComplexityHolder {
   static final int MAX_ACCEPTABLE = 12;
   static final int TOO_COMPLEX = 100;

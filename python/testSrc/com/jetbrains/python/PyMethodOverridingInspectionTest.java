@@ -20,9 +20,6 @@ import com.jetbrains.python.inspections.PyInspection;
 import com.jetbrains.python.inspections.PyMethodOverridingInspection;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author vlan
- */
 public class PyMethodOverridingInspectionTest extends PyInspectionTestCase {
   public void testArgsKwargsOverrideArg() {
     doTest();

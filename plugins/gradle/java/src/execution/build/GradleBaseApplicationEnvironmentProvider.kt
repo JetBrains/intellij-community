@@ -52,6 +52,11 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     sourceSetName: String, javaModuleName: String?
   ): String?
 
+  protected open fun argsString(params: JavaParameters): String {
+    return createEscapedParameters(params.programParametersList.parameters, "args") +
+           createEscapedParameters(params.vmParametersList.parameters, "jvmArgs")
+  }
+
   override fun createExecutionEnvironment(project: Project,
                                           executeRunConfigurationTask: ExecuteRunConfigurationTask,
                                           executor: Executor?): ExecutionEnvironment? {

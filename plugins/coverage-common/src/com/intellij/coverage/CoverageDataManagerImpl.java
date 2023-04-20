@@ -63,9 +63,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 
-/**
- * @author ven
- */
 @State(name = "com.intellij.coverage.CoverageDataManagerImpl", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class CoverageDataManagerImpl extends CoverageDataManager implements Disposable, PersistentStateComponent<Element> {
   private final List<CoverageSuiteListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();

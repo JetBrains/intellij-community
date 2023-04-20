@@ -10,7 +10,7 @@ import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.JBValue;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsRef;
@@ -38,8 +38,6 @@ import java.util.Objects;
 public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphCommitCell>
   implements VcsLogCellRenderer {
   private static final int MAX_GRAPH_WIDTH = 6;
-  private static final int VERTICAL_PADDING = JBUIScale.scale(7);
-  private static final @NotNull JBValue.UIInteger LOG_ROW_HEIGHT = new JBValue.UIInteger("VersionControl.Log.Commit.rowHeight", 26);
 
   private final @NotNull VcsLogData myLogData;
   private final @NotNull VcsLogGraphTable myGraphTable;
@@ -275,12 +273,12 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     private int calculateHeight() {
       int rowContentHeight = calculateRowContentHeight();
       return ExperimentalUI.isNewUI() ?
-             Math.max(rowContentHeight, LOG_ROW_HEIGHT.get()) :
+             Math.max(rowContentHeight, JBUI.CurrentTheme.VersionControl.Log.rowHeight()) :
              rowContentHeight;
     }
 
     private int calculateRowContentHeight() {
-      return Math.max(myReferencePainter.getSize().height, getFontMetrics(myFont).getHeight() + VERTICAL_PADDING);
+      return Math.max(myReferencePainter.getSize().height, getFontMetrics(myFont).getHeight() + JBUI.scale(JBUI.CurrentTheme.VersionControl.Log.verticalPadding()));
     }
 
     public int getPreferredHeight() {

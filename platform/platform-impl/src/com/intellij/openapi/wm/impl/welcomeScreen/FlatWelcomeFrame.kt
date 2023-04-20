@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen
 
 import com.intellij.icons.AllIcons
@@ -44,7 +44,10 @@ import com.intellij.ui.mac.touchbar.Touchbar
 import com.intellij.ui.mac.touchbar.TouchbarActionCustomizations
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.IconUtil
-import com.intellij.util.ui.*
+import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor
 import com.intellij.util.ui.update.UiNotifyConnector
 import com.jetbrains.JBR
@@ -140,9 +143,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
       }
     })
     connection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
-      if (balloonLayout != null) {
-        Disposer.dispose(balloonLayout!!)
-      }
+      balloonLayout?.dispose()
       balloonLayout = WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8))
       updateComponentsAndResize()
       repaint()
@@ -228,7 +229,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     super.dispose()
     balloonLayout?.let {
       balloonLayout = null
-      Disposer.dispose(it)
+      it.dispose()
     }
     Disposer.dispose(screen)
     WelcomeFrame.resetInstance()

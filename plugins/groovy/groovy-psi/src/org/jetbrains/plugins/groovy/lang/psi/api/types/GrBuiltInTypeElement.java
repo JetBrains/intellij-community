@@ -16,8 +16,5 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.types;
 
-/**
- * @author ilyas
- */
 public interface GrBuiltInTypeElement extends GrTypeElement {
 }

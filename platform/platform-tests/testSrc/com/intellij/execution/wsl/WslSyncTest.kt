@@ -75,7 +75,7 @@ class WslSyncTest(private val linToWin: Boolean) {
   val timeoutRule = Timeout(30, TimeUnit.SECONDS)
 
   private val linuxDirAsPath: Path
-    get() = wslRule.wsl.getUNCRootVirtualFile(true)!!.toNioPath().resolve(linuxDirRule.dir)
+    get() = wslRule.wsl.getUNCRootPath().resolve(linuxDirRule.dir)
 
   @Test
   fun testLinksReported() {

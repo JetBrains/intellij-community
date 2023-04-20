@@ -29,9 +29,7 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.usages.UsageView;
@@ -126,7 +124,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     }
 
     List<Object> allElements = new ArrayList<>(targets.length + additionalActions.size());
-    Collections.addAll(allElements, targets);
+    allElements.addAll(gotoData.getPointers());
     allElements.addAll(additionalActions);
 
     final IPopupChooserBuilder<Object> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(allElements);
@@ -147,7 +145,14 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
             ((AdditionalAction)element).execute();
           }
           else {
-            Navigatable nav = element instanceof Navigatable ? (Navigatable)element : EditSourceUtil.getDescriptor((PsiElement)element);
+            Navigatable nav;
+            if (element instanceof Navigatable) {
+              nav = (Navigatable)element;
+            }
+            else {
+              PsiElement psiElement = ((SmartPsiElementPointer<?>)element).getElement();
+              nav = psiElement == null ? null : EditSourceUtil.getDescriptor(psiElement);
+            }
             try {
               if (nav != null && nav.canNavigate()) {
                 navigateToElement(nav);
@@ -163,7 +168,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       withHintUpdateSupply().
       setMovable(true).
       setCancelCallback(() -> {
-        final BackgroundUpdaterTask task = gotoData.listUpdaterTask;
+        final BackgroundUpdaterTaskBase<Object> task = gotoData.listUpdaterTask;
         if (task != null) {
           task.cancelTask();
         }
@@ -311,9 +316,10 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     public boolean isCanceled;
 
     private boolean hasDifferentNames;
-    public BackgroundUpdaterTask listUpdaterTask;
+    public BackgroundUpdaterTaskBase<Object> listUpdaterTask;
     protected final Set<String> myNames;
     public Map<Object, TargetPresentation> presentations = new HashMap<>();
+    private List<SmartPsiElementPointer<?>> myPointers;
 
     public GotoData(@NotNull PsiElement source, PsiElement @NotNull [] targets, @NotNull List<AdditionalAction> additionalActions) {
       this.source = source;
@@ -335,16 +341,30 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       return hasDifferentNames;
     }
 
-    public boolean addTarget(final PsiElement element) {
-      if (ArrayUtil.find(targets, element) > -1) return false;
-      targets = ArrayUtil.append(targets, element);
-      presentations.put(element, ReadAction.compute(() -> computePresentation(element, hasDifferentNames)));
+    public SmartPsiElementPointer<PsiElement> addTarget(final PsiElement element) {
+      if (ArrayUtil.find(targets, element) > -1) return null;
+
       if (!hasDifferentNames && element instanceof PsiNamedElement) {
         final String name = ReadAction.compute(() -> ((PsiNamedElement)element).getName());
         myNames.add(name);
         hasDifferentNames = myNames.size() > 1;
+        if (hasDifferentNames) {
+          for (PsiElement target : targets) {
+            initPresentation(target, true);
+          }
+        }
       }
-      return true;
+
+      targets = ArrayUtil.append(targets, element);
+      return initPresentation(element, hasDifferentNames);
+    }
+
+    private SmartPsiElementPointer<PsiElement> initPresentation(PsiElement target, boolean hasDifferentNames) {
+      SmartPsiElementPointer<PsiElement> pointer = ReadAction.compute(() -> SmartPointerManager.createPointer(target));
+      TargetPresentation presentation = ReadAction.compute(() -> computePresentation(target, hasDifferentNames));
+      presentations.put(target, presentation);
+      presentations.put(pointer, presentation);
+      return pointer;
     }
 
     public @NotNull TargetPresentation getPresentation(Object value) {
@@ -362,7 +382,19 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
     @VisibleForTesting
     public void initPresentations() {
-      presentations.putAll(computePresentationInBackground(source.getProject(), targets, hasDifferentNames));
+      Map<PsiElement, TargetPresentation> map =
+        computePresentationInBackground(source.getProject(), targets, hasDifferentNames);
+      presentations.putAll(map);
+      myPointers = new ArrayList<>(map.keySet().size());
+      for (Map.Entry<PsiElement, TargetPresentation> entry : map.entrySet()) {
+        SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.createPointer(entry.getKey());
+        myPointers.add(pointer);
+        presentations.put(pointer, entry.getValue());
+      }
+    }
+
+    public List<SmartPsiElementPointer<?>> getPointers() {
+      return myPointers;
     }
   }
 

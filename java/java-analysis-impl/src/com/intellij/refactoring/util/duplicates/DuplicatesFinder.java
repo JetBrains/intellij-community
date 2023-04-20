@@ -25,9 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author dsl
- */
 public final class DuplicatesFinder {
   private static final Logger LOG = Logger.getInstance(DuplicatesFinder.class);
   public static final Key<Parameter> PARAMETER = Key.create("PARAMETER");

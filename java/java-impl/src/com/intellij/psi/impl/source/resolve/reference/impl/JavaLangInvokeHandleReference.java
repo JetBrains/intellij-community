@@ -22,9 +22,6 @@ import java.util.function.Predicate;
 
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralExpression>
   implements InsertHandler<LookupElement>, PsiMemberReference {
 

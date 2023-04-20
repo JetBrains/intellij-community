@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen
 
 import com.intellij.CommonBundle
@@ -80,8 +80,8 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
 
   companion object {
     @JvmField
-    val EP = ExtensionPointName<WelcomeFrameProvider>("com.intellij.welcomeFrameProvider")
-    const val DIMENSION_KEY = "WELCOME_SCREEN"
+    val EP: ExtensionPointName<WelcomeFrameProvider> = ExtensionPointName("com.intellij.welcomeFrameProvider")
+    const val DIMENSION_KEY: String = "WELCOME_SCREEN"
 
     private var instance: IdeFrame? = null
 

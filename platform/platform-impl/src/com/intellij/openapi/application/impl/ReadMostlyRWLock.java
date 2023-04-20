@@ -92,8 +92,7 @@ final class ReadMostlyRWLock {
   }
 
   boolean isReadAllowed() {
-    return (isWriteThread() && (isImplicitReadAllowed() || isWriteLocked() || isWriteIntentLocked()))
-           || isReadLockedByThisThread();
+    return isReadGrantedByStrongerLock() || isReadLockedByThisThread();
   }
 
   boolean isReadLockedByThisThread() {
@@ -106,13 +105,7 @@ final class ReadMostlyRWLock {
 
   // null means lock already acquired, Reader means lock acquired successfully
   Reader startRead() {
-    // We have read lock, if:
-    // (a) This is write thread
-    //    AND
-    // (b.1) Implicit read lock is enabled
-    //   OR
-    // (b.2) Explicit write lock has been acquired.
-    if (Thread.currentThread() == writeThread && (allowImplicitRead || writeAcquired))
+    if (isReadGrantedByStrongerLock())
       return null;
     Reader status = R.get();
     throwIfImpatient(status);
@@ -136,13 +129,7 @@ final class ReadMostlyRWLock {
 
   // return tristate: null means lock already acquired, Reader with readRequested==true means lock was successfully acquired, Reader with readRequested==false means lock was not acquired
   Reader startTryRead() {
-    // We have read lock, if:
-    // (a) This is write thread
-    //    AND
-    // (b.1) Implicit read lock is enabled
-    //   OR
-    // (b.2) Explicit write lock has been acquired.
-    if (Thread.currentThread() == writeThread && (allowImplicitRead || writeAcquired))
+    if (isReadGrantedByStrongerLock())
       return null;
     Reader status = R.get();
     throwIfImpatient(status);
@@ -256,6 +243,8 @@ final class ReadMostlyRWLock {
 
   void writeIntentLock() {
     checkWriteThreadAccess();
+    checkReadIsNotHeld("Write Intent");
+
     for (int iter=0; ;iter++) {
       if (writeIntent.compareAndSet(false, true)) {
         assert !writeRequested;
@@ -285,6 +274,7 @@ final class ReadMostlyRWLock {
 
   void writeLock() {
     checkWriteThreadAccess();
+    checkReadIsNotHeld("Write");
     assert !writeRequested;
     assert !writeAcquired;
 
@@ -350,6 +340,13 @@ final class ReadMostlyRWLock {
     }
   }
 
+  private void checkReadIsNotHeld(String want) {
+    Reader r = R.get();
+    if (r.readRequested) {
+      throw new IllegalStateException("Current thread: " + Thread.currentThread() + " holds read lock and requests " + want);
+    }
+  }
+
   private void checkReadThreadAccess() {
     if (Thread.currentThread() == writeThread) {
       throw new IllegalStateException("Must not start read from the write thread: "+Thread.currentThread());
@@ -380,6 +377,19 @@ final class ReadMostlyRWLock {
 
   void setImplicitReadAllowance(boolean enable) {
     allowImplicitRead = enable;
+  }
+
+
+  private boolean isReadGrantedByStrongerLock() {
+    // We have read lock, if:
+    // (a) This is write thread
+    //    AND
+    // (b.1) Implicit read lock is enabled
+    //   OR
+    // (b.2) Explicit write lock has been acquired.
+    //   OR
+    // (b.3) Explicit write intent lock has been acquired
+    return isWriteThread() && (isImplicitReadAllowed() || isWriteLocked() || isWriteIntentLocked());
   }
 
   @Override

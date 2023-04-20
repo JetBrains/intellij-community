@@ -18,9 +18,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyFileImports;
 
-/**
- * @author ilyas
- */
 public interface GroovyFileBase extends PsiFile, GrVariableDeclarationOwner, GrStatementOwner, PsiClassOwner, GrControlFlowOwner, PsiImportHolder,
                                         GrDeclarationHolder {
   String[] IMPLICITLY_IMPORTED_PACKAGES = {

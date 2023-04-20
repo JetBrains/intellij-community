@@ -23,11 +23,6 @@ import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.ReentrantLock
 import javax.swing.SwingUtilities
 
-/**
- * @author Denis Fokin
- *
- */
-
 internal class Testable {
 
   private val isRun = AtomicBoolean(false)

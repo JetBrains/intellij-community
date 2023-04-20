@@ -24,9 +24,6 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PyOverrideMethodsHandler implements LanguageCodeInsightActionHandler {
 
   @Override

@@ -17,9 +17,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.java.JavaBundle.message;
 
-/**
- * @author Pavel.Dolgov
- */
 public class SwitchLabeledRuleCanBeCodeBlockInspection extends LocalInspectionTool {
   @NotNull
   @Override

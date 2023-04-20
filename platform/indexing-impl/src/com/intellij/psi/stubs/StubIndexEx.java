@@ -333,33 +333,6 @@ public abstract class StubIndexEx extends StubIndex {
   }
 
   @Override
-  public @NotNull <Key> IdIterator getContainingIds(@NotNull StubIndexKey<Key, ?> indexKey,
-                                                    @NotNull Key dataKey,
-                                                    final @NotNull Project project,
-                                                    final @Nullable GlobalSearchScope scope) {
-    IntSet result = getContainingIds(indexKey, dataKey, project, null, scope);
-    if (result == null) return IdIterator.EMPTY;
-    return new IdIterator() {
-      final IntIterator iterator = result.iterator();
-
-      @Override
-      public boolean hasNext() {
-        return iterator.hasNext();
-      }
-
-      @Override
-      public int next() {
-        return iterator.nextInt();
-      }
-
-      @Override
-      public int size() {
-        return result.size();
-      }
-    };
-  }
-
-  @Override
   public @NotNull <Key> Iterator<VirtualFile> getContainingFilesIterator(@NotNull StubIndexKey<Key, ?> indexKey,
                                                                          @NotNull Key dataKey,
                                                                          @NotNull Project project,

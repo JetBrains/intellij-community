@@ -70,8 +70,8 @@ public class PyPep8NamingInspection extends PyInspection {
     return pane(
       checkbox("ignoreOverriddenFunctions", PyPsiBundle.message("ignore.overridden.functions")),
       horizontalStack(
-        stringSet("ignoredBaseClasses", PyPsiBundle.message("INSP.pep8.naming.column.name.excluded.base.classes")),
-        stringSet("ignoredErrors", PyPsiBundle.message("INSP.pep8.naming.column.name.ignored.errors"))
+        stringList("ignoredBaseClasses", PyPsiBundle.message("INSP.pep8.naming.column.name.excluded.base.classes")),
+        stringList("ignoredErrors", PyPsiBundle.message("INSP.pep8.naming.column.name.ignored.errors"))
       )
     );
   }

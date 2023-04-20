@@ -20,9 +20,6 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-/**
- * @author Sergey Evdokimov
- */
 public abstract class SourceSearcher {
   private static final String MAVEN_POM_ENTRY_PREFIX = "META-INF/maven/";
 

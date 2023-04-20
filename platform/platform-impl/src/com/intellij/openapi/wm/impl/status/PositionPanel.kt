@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status
 
 import com.intellij.ide.util.EditorGotoLineNumberDialog
@@ -51,7 +51,6 @@ open class PositionPanel(private val dataContext: WidgetPresentationDataContext,
 
   init {
     val disposable = Disposer.newDisposable()
-    scope.coroutineContext.job.invokeOnCompletion { Disposer.dispose(disposable) }
     val multicaster = EditorFactory.getInstance().eventMulticaster
     multicaster.addCaretListener(object : CaretListener {
       override fun caretPositionChanged(e: CaretEvent) {
@@ -86,6 +85,7 @@ open class PositionPanel(private val dataContext: WidgetPresentationDataContext,
           .let(::updatePosition)
       }
     }, disposable)
+    scope.coroutineContext.job.invokeOnCompletion { Disposer.dispose(disposable) }
 
     // combine uses the latest emitted values, so, we must emit something
     check(charCountRequests.tryEmit(CodePointCountTask(text = "", startOffset = 0, endOffset = 0)))

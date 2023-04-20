@@ -26,8 +26,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Marks built-in names.
- *
- * @author dcheryasov
  */
 public class PyBuiltinAnnotator extends PyAnnotator {
   @Override

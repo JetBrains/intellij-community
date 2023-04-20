@@ -115,6 +115,7 @@ public interface JavaElementType {
   IElementType WHILE_STATEMENT = new JavaCompositeElementType("WHILE_STATEMENT", () -> new PsiWhileStatementImpl());
   IElementType FOR_STATEMENT = new JavaCompositeElementType("FOR_STATEMENT", () -> new PsiForStatementImpl());
   IElementType FOREACH_STATEMENT = new JavaCompositeElementType("FOREACH_STATEMENT", () -> new PsiForeachStatementImpl());
+  IElementType FOREACH_PATTERN_STATEMENT = new JavaCompositeElementType("FOREACH_PATTERN_STATEMENT", () -> new PsiForeachPatternStatementImpl());
   IElementType DO_WHILE_STATEMENT = new JavaCompositeElementType("DO_WHILE_STATEMENT", () -> new PsiDoWhileStatementImpl());
   IElementType SWITCH_STATEMENT = new JavaCompositeElementType("SWITCH_STATEMENT", () -> new PsiSwitchStatementImpl());
   IElementType SWITCH_EXPRESSION = new JavaCompositeElementType("SWITCH_EXPRESSION", () -> new PsiSwitchExpressionImpl());

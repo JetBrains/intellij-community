@@ -25,9 +25,6 @@ import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.util.ArrayList;
 
-/**
- * @author ilyas
- */
 public final class GantUtils {
   @NonNls public static final String GANT_JAR_FILE_PATTERN = "gant((_groovy)?|-)\\d.*\\.jar";
 

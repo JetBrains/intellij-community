@@ -12,4 +12,3 @@ interface Y : X {
 
 }
 
-// FIR_COMPARISON

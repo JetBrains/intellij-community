@@ -11,7 +11,6 @@ import com.intellij.psi.search.TodoPattern;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author irengrig
  * moved from PsiSearchHelperImpl
  */
 public class TodoItemsCreator {

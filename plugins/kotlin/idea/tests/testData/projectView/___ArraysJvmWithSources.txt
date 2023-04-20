@@ -1,0 +1,215 @@
+Node: ArraysKt___ArraysJvmKt
+User object class: KtInternalFileTreeNode
+
+Value: KtLightClassForDecompiledDeclaration of PsiFile:ArraysKt___ArraysJvmKt.class
+Value file: kotlin-stdlib.jar!/kotlin/collections/ArraysKt___ArraysJvmKt.class
+
+Navigation item #0: KtFile: _ArraysJvm.kt
+Navigation item file #0: kotlin-stdlib-sources.jar!/generated/_ArraysJvm.kt
+
+
+-Project
+ +PsiDirectory: src
+ -External Libraries
+  +Library: < java 11 >
+  -Library: kotlin-stdlib
+   -PsiDirectory: kotlin-stdlib.jar
+    -PsiDirectory: kotlin
+     +PsiDirectory: annotation
+     -PsiDirectory: collections
+      +PsiDirectory: builders
+      +PsiDirectory: jdk8
+      +PsiDirectory: unsigned
+      AbstractCollection
+      AbstractIterator
+      AbstractList
+      AbstractMap
+      AbstractMutableCollection
+      AbstractMutableList
+      AbstractMutableMap
+      AbstractMutableSet
+      AbstractSet
+      ArrayAsCollection.class
+      ArrayDeque
+      ArraysUtilJVM
+      BooleanIterator
+      ByteIterator
+      CharIterator
+      collections.kotlin_builtins
+      DoubleIterator
+      EmptyIterator
+      EmptyList
+      EmptyMap.class
+      EmptySet
+      FloatIterator
+      Grouping
+      IndexedValue
+      IndexingIterable
+      IndexingIterator
+      IntIterator
+      LongIterator
+      MapWithDefault.class
+      MapWithDefaultImpl.class
+      MovingSubList
+      MutableMapWithDefault.class
+      MutableMapWithDefaultImpl.class
+      ReversedList.class
+      ReversedListReadOnly.class
+      RingBuffer.class
+      ShortIterator
+      State.class
+      ArraysKt
+      [ArraysKt___ArraysJvmKt]
+      ArraysKt___ArraysKt
+      ArraysKt__ArraysJVMKt
+      ArraysKt__ArraysKt
+      CollectionsKt
+      CollectionsKt___CollectionsJvmKt
+      CollectionsKt___CollectionsKt
+      CollectionsKt__CollectionsJVMKt
+      CollectionsKt__CollectionsKt
+      CollectionsKt__IterablesKt
+      CollectionsKt__IteratorsJVMKt
+      CollectionsKt__IteratorsKt
+      CollectionsKt__MutableCollectionsJVMKt
+      CollectionsKt__MutableCollectionsKt
+      CollectionsKt__ReversedViewsKt
+      GroupingKt
+      GroupingKt__GroupingJVMKt
+      GroupingKt__GroupingKt
+      MapAccessorsKt
+      MapsKt
+      MapsKt___MapsJvmKt
+      MapsKt___MapsKt
+      MapsKt__MapsJVMKt
+      MapsKt__MapsKt
+      MapsKt__MapWithDefaultKt
+      SetsKt
+      SetsKt___SetsKt
+      SetsKt__SetsJVMKt
+      SetsKt__SetsKt
+      SlidingWindowKt
+      TypeAliasesKt
+      UArraySortingKt
+      UCollectionsKt
+      UCollectionsKt___UCollectionsKt
+     +PsiDirectory: comparisons
+     +PsiDirectory: concurrent
+     +PsiDirectory: contracts
+     +PsiDirectory: coroutines
+     +PsiDirectory: enums
+     +PsiDirectory: experimental
+     +PsiDirectory: internal
+     +PsiDirectory: io
+     +PsiDirectory: jdk7
+     +PsiDirectory: js
+     +PsiDirectory: jvm
+     +PsiDirectory: math
+     +PsiDirectory: properties
+     +PsiDirectory: random
+     +PsiDirectory: ranges
+     +PsiDirectory: reflect
+     +PsiDirectory: sequences
+     +PsiDirectory: streams
+     +PsiDirectory: system
+     +PsiDirectory: text
+     +PsiDirectory: time
+     _Assertions
+     BuilderInference
+     ContextFunctionTypeParams
+     DeepRecursiveFunction
+     DeepRecursiveScope
+     DeepRecursiveScopeImpl.class
+     Deprecated
+     DeprecatedSinceKotlin
+     DeprecationLevel
+     DslMarker
+     ExperimentalMultiplatform
+     ExperimentalStdlibApi
+     ExperimentalSubclassOptIn
+     ExperimentalUnsignedTypes
+     ExtensionFunctionType
+     Function
+     InitializedLazyImpl
+     kotlin.kotlin_builtins
+     KotlinNothingValueException
+     KotlinNullPointerException
+     KotlinVersion
+     KotlinVersionCurrentValue.class
+     Lazy
+     LazyThreadSafetyMode
+     Metadata
+     NotImplementedError
+     NoWhenBranchMatchedException
+     OptIn
+     OptionalExpectation
+     OverloadResolutionByLambdaReturnType
+     Pair
+     ParameterName
+     PublishedApi
+     ReplaceWith
+     RequiresOptIn
+     Result
+     SafePublicationLazyImpl.class
+     SinceKotlin
+     SubclassOptInRequired
+     Suppress
+     SynchronizedLazyImpl.class
+     Triple
+     TypeCastException
+     UByte
+     UByteArray
+     UInt
+     UIntArray
+     ULong
+     ULongArray
+     UNINITIALIZED_VALUE
+     UninitializedPropertyAccessException
+     Unit
+     UnsafeLazyImpl
+     UnsafeVariance
+     UShort
+     UShortArray
+     WasExperimental
+     ArrayIntrinsicsKt
+     CharCodeJVMKt
+     CharCodeKt
+     CompareToKt
+     DeepRecursiveKt
+     ExceptionsKt
+     ExceptionsKt__ExceptionsKt
+     HashCodeKt
+     LateinitKt
+     LazyKt
+     LazyKt__LazyJVMKt
+     LazyKt__LazyKt
+     NumbersKt
+     NumbersKt__BigDecimalsKt
+     NumbersKt__BigIntegersKt
+     NumbersKt__FloorDivModKt
+     NumbersKt__NumbersJVMKt
+     NumbersKt__NumbersKt
+     PreconditionsKt
+     PreconditionsKt__AssertionsJVMKt
+     PreconditionsKt__PreconditionsKt
+     PropertyReferenceDelegatesKt
+     ResultKt
+     StandardKt
+     StandardKt__StandardKt
+     StandardKt__SynchronizedKt
+     SuspendKt
+     ThrowsKt
+     TuplesKt
+     TypeAliasesKt
+     UByteArrayKt
+     UByteKt
+     UIntArrayKt
+     UIntKt
+     ULongArrayKt
+     ULongKt
+     UnsignedKt
+     UNumbersKt
+     UShortArrayKt
+     UShortKt
+    +PsiDirectory: META-INF
+   +PsiDirectory: kotlin-stdlib-common.jar

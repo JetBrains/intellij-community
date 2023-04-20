@@ -31,9 +31,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * @author ilyas
- */
 public class PsiElementCategory implements PsiEnhancerCategory {
 
   @Nullable

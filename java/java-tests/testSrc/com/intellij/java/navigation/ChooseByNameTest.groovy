@@ -624,6 +624,7 @@ class Intf {
       myScopeDescriptor = new ScopeDescriptor(FindSymbolParameters.searchScopeFor(myProject, state))
     }
 
+    @NotNull
     @Override
     String getSearchProviderId() {
       return "ClassSearchEverywhereContributor"
@@ -640,6 +641,7 @@ class Intf {
       myScopeDescriptor = new ScopeDescriptor(FindSymbolParameters.searchScopeFor(myProject, state))
     }
 
+    @NotNull
     @Override
     String getSearchProviderId() {
       return "FileSearchEverywhereContributor"
@@ -656,6 +658,7 @@ class Intf {
       myScopeDescriptor = new ScopeDescriptor(FindSymbolParameters.searchScopeFor(myProject, state))
     }
 
+    @NotNull
     @Override
     String getSearchProviderId() {
       return "SymbolSearchEverywhereContributor"

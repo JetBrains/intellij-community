@@ -27,9 +27,6 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author vlan
- */
 public class PySdkFlavorTest extends PyTestCase {
   public void testPython27VersionString() {
     final PythonSdkFlavor flavor = UnixPythonSdkFlavor.getInstance();

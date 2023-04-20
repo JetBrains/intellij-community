@@ -13,8 +13,8 @@ import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnAlignment
 import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnCells
 import org.intellij.plugins.markdown.editor.tables.TableUtils.isHeaderRow
 import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 import org.jetbrains.annotations.ApiStatus
 import java.lang.Integer.max
@@ -58,12 +58,13 @@ object TableFormattingUtils {
     separatorCellRange: TextRange?,
     trimToMaxContent: Boolean
   ): Int {
+    val trimToMaxContent = trimToMaxContent && !cells.all { it.text.isBlank() }
     val contentCellsWidth = when {
       trimToMaxContent -> cellsContentsWithCarets.asSequence().map { it.trimmedContentWithoutCarets }.maxOfOrNull { it.length + 2 }
       else -> cells.maxOfOrNull { it.textRange.length }
     }
     checkNotNull(contentCellsWidth)
-    return max(max(contentCellsWidth, separatorCellRange?.length ?: -1), TableProps.MIN_CELL_WIDTH)
+    return max(contentCellsWidth, separatorCellRange?.length ?: 0)
   }
 
   private fun calculateNewCaretsPositions(content: String, cellRange: TextRange): Array<Int> {

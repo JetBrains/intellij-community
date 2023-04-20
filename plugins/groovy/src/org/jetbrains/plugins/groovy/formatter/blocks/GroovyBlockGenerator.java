@@ -65,8 +65,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
 /**
  * Utility class to generate myBlock hierarchy
- *
- * @author ilyas
  */
 public class GroovyBlockGenerator {
 

@@ -26,8 +26,9 @@ private val log = logger<CustomConfigMigrationOption>()
  * ```
  */
 sealed class CustomConfigMigrationOption {
-  fun writeConfigMarkerFile() {
-    val markerFile = getCustomConfigMarkerFilePath(PathManager.getConfigDir())
+  @JvmOverloads
+  fun writeConfigMarkerFile(configDir: Path = PathManager.getConfigDir()) {
+    val markerFile = getCustomConfigMarkerFilePath(configDir)
     if (markerFile.exists()) {
       log.error("Marker file $markerFile shouldn't exist")
     }

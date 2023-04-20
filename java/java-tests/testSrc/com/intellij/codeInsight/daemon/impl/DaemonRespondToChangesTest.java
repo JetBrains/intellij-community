@@ -204,12 +204,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     highlightErrors();
     List<HighlightInfo> errors = DaemonCodeAnalyzerImpl.getHighlights(document, HighlightSeverity.ERROR, getProject());
     assertEquals(1, errors.size());
-    TextRange dirty = myDaemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(document, Pass.UPDATE_ALL);
+    TextRange dirty = myDaemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(document, getFile(), Pass.UPDATE_ALL);
     assertNull(dirty);
 
     type(' ');
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    dirty = myDaemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(document, Pass.UPDATE_ALL);
+    dirty = myDaemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(document, getFile(), Pass.UPDATE_ALL);
     assertNotNull(dirty);
   }
 
@@ -222,7 +222,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     backspace();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
-    TextRange dirty = myDaemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(document, Pass.UPDATE_ALL);
+    TextRange dirty = myDaemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(document, getFile(), Pass.UPDATE_ALL);
     assertEquals(getFile().getTextRange(), dirty); // have to rehighlight whole file in case no PSI events have come
   }
 
@@ -233,7 +233,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals(0, infos.size());
     PsiClass psiClass = ((PsiJavaFile)getFile()).getClasses()[0];
     new RenameProcessor(myProject, psiClass, "Class2", false, false).run();
-    TextRange dirty = myDaemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(document, Pass.UPDATE_ALL);
+    TextRange dirty = myDaemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(document, getFile(), Pass.UPDATE_ALL);
     assertEquals(getFile().getTextRange(), dirty);
 
     highlightErrors();
@@ -252,7 +252,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     PsiElement elementAtCaret = myFile.findElementAt(myEditor.getCaretModel().getOffset());
     assertTrue(elementAtCaret instanceof PsiWhiteSpace);
 
-    TextRange dirty = myDaemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(document, Pass.UPDATE_ALL);
+    TextRange dirty = myDaemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(document, getFile(), Pass.UPDATE_ALL);
     assertEquals(elementAtCaret.getTextRange(), dirty);
     highlightErrors();
     assertTrue(myDaemonCodeAnalyzer.isErrorAnalyzingFinished(getFile()));
@@ -2099,13 +2099,13 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     List<HighlightInfo> errors = highlightErrors();
     assertEmpty(errors);
     FileStatusMap me = DaemonCodeAnalyzerEx.getInstanceEx(getProject()).getFileStatusMap();
-    TextRange scope = me.getFileDirtyScope(getEditor().getDocument(), Pass.UPDATE_ALL);
+    TextRange scope = me.getFileDirtyScope(getEditor().getDocument(), getFile(), Pass.UPDATE_ALL);
     assertNull(scope);
 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> ((PsiJavaFile)PsiManager.getInstance(myProject).findFile(excluded)).getClasses()[0].getMethods()[0].delete());
 
     UIUtil.dispatchAllInvocationEvents();
-    scope = me.getFileDirtyScope(getEditor().getDocument(), Pass.UPDATE_ALL);
+    scope = me.getFileDirtyScope(getEditor().getDocument(), getFile(), Pass.UPDATE_ALL);
     assertNull(scope);
   }
 
@@ -2119,7 +2119,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       List<HighlightInfo> errors = highlightErrors();
       assertEmpty(errors);
       FileStatusMap me = DaemonCodeAnalyzerEx.getInstanceEx(getProject()).getFileStatusMap();
-      TextRange scope = me.getFileDirtyScope(getEditor().getDocument(), Pass.UPDATE_ALL);
+      TextRange scope = me.getFileDirtyScope(getEditor().getDocument(), getFile(), Pass.UPDATE_ALL);
       assertNull(scope);
 
       WriteCommandAction.runWriteCommandAction(getProject(), () -> {
@@ -2128,7 +2128,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       });
       UIUtil.dispatchAllInvocationEvents();
-      scope = me.getFileDirtyScope(getEditor().getDocument(), Pass.UPDATE_ALL);
+      scope = me.getFileDirtyScope(getEditor().getDocument(), getFile(), Pass.UPDATE_ALL);
       assertNull(scope);
       return Unit.INSTANCE;
     });
@@ -2364,20 +2364,21 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     FileStatusMap fileStatusMap = myDaemonCodeAnalyzer.getFileStatusMap();
 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      GCWatcher.tracking(PsiDocumentManager.getInstance(getProject()).getCachedPsiFile(document)).ensureCollected();
-      assertNull(PsiDocumentManager.getInstance(getProject()).getCachedPsiFile(document));
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
+      GCWatcher.tracking(documentManager.getCachedPsiFile(document)).ensureCollected();
+      assertNull(documentManager.getCachedPsiFile(document));
 
       @Language("JAVA")
       String text = "class X { void foo() {}}";
       document.insertString(0, text);
-      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      assertEquals(TextRange.from(0, document.getTextLength()), fileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL));
+      documentManager.commitAllDocuments();
+      assertEquals(TextRange.from(0, document.getTextLength()), fileStatusMap.getFileDirtyScope(document, documentManager.getPsiFile(document), Pass.UPDATE_ALL));
 
       FileContentUtilCore.reparseFiles(file);
-      assertEquals(TextRange.from(0, document.getTextLength()), fileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL));
+      assertEquals(TextRange.from(0, document.getTextLength()), fileStatusMap.getFileDirtyScope(document, documentManager.getPsiFile(document), Pass.UPDATE_ALL));
 
       findClass("X").getMethods()[0].delete();
-      assertEquals(TextRange.from(0, document.getTextLength()), fileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL));
+      assertEquals(TextRange.from(0, document.getTextLength()), fileStatusMap.getFileDirtyScope(document, documentManager.getPsiFile(document), Pass.UPDATE_ALL));
     });
   }
 

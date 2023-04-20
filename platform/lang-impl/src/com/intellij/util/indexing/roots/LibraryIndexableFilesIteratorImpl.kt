@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots
 
 import com.intellij.openapi.application.runReadAction
@@ -69,13 +69,15 @@ private constructor(private val libraryName: @NlsSafe String?,
 
     @RequiresReadLock
     @JvmStatic
-    fun createIterator(library: Library, roots: List<VirtualFile>? = null): LibraryIndexableFilesIteratorImpl? =
+    fun createIterator(library: Library,
+                       roots: List<VirtualFile>? = null,
+                       sourceRoots: List<VirtualFile>? = null): LibraryIndexableFilesIteratorImpl? =
       if (library is LibraryEx && library.isDisposed)
         null
       else
         LibraryIndexableFilesIteratorImpl(library.name, library.presentableName,
                                           collectFiles(library, OrderRootType.CLASSES, roots),
-                                          collectFiles(library, OrderRootType.SOURCES, roots))
+                                          collectFiles(library, OrderRootType.SOURCES, sourceRoots))
 
     @JvmStatic
     fun createIteratorList(library: Library): List<IndexableFilesIterator> =

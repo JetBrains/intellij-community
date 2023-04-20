@@ -77,7 +77,7 @@ public class ModuleUtilCore {
     if (project.isDefault()) {
       return null;
     }
-    return ProjectFileIndex.getInstance(project).getModuleForFile(file);
+    return ReadAction.compute(() -> ProjectFileIndex.getInstance(project).getModuleForFile(file));
   }
 
   /**

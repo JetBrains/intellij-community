@@ -22,9 +22,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author dsl
- */
 public class ExpressionReturnValue implements ReturnValue {
   private final PsiExpression myExpression;
 

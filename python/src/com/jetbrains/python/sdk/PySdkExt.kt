@@ -72,9 +72,6 @@ import kotlin.io.path.pathString
 private data class TargetAndPath(val target: TargetEnvironmentConfiguration?,
                                  val path: FullPathOnTarget?)
 
-/**
- * @author vlan
- */
 
 val BASE_DIR: Key<Path> = Key.create("PYTHON_PROJECT_BASE_PATH")
 

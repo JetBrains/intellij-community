@@ -42,7 +42,6 @@ import java.util.regex.Matcher;
 /**
  * Copy pasted from org.apache.maven.artifact.resolver.DefaultArtifactResolver,
  * overriden method resolve( Artifact artifact, List<ArtifactRepository> remoteRepositories, RepositorySystemSession session )
- * @author Sergey Evdokimov
  */
 @Component(role = ArtifactResolver.class, hint = "ide")
 public class CustomMaven30ArtifactResolver

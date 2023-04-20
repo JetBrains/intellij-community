@@ -15,9 +15,6 @@
  */
 package com.intellij.debugger.impl;
 
-/**
- * @author lex
- */
 public class EventQueueClosedException extends Exception {
   @Override
   public synchronized Throwable fillInStackTrace() {

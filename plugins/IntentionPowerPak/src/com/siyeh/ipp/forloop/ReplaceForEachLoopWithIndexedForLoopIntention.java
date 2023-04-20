@@ -61,6 +61,9 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
       return;
     }
     final PsiParameter iterationParameter = statement.getIterationParameter();
+    if (iterationParameter == null) {
+      return;
+    }
     final PsiType type = iterationParameter.getType();
     final PsiType iteratedValueType = iteratedValue.getType();
     if (iteratedValueType == null) {

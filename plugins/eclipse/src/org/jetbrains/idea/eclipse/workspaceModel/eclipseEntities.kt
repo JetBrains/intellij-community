@@ -103,14 +103,6 @@ data class EclipseProjectFile(
     get() = internalSource
 }
 
-fun MutableEntityStorage.addEclipseProjectPropertiesEntity(module: ModuleEntity, source: EntitySource): EclipseProjectPropertiesEntity {
-  val entity = EclipseProjectPropertiesEntity(LinkedHashMap(), ArrayList(), ArrayList(), ArrayList(), false, 0, LinkedHashMap(), source) {
-    this.module = module
-}
-  this.addEntity(entity)
-  return entity
-}
-
 
 fun EclipseProjectPropertiesEntity.Builder.setVariable(kind: String, name: String, path: String) {
   variablePaths = variablePaths.toMutableMap().also { it[kind + path] = name }

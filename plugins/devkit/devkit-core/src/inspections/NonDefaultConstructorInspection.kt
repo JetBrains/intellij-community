@@ -250,7 +250,8 @@ private val allowedServiceQualifiedNames = setOf(
   "com.intellij.util.messages.MessageBus",
   "com.intellij.openapi.options.SchemeManagerFactory",
   "com.intellij.openapi.editor.actionSystem.TypedActionHandler",
-  "com.intellij.database.Dbms"
+  "com.intellij.database.Dbms",
+  "kotlinx.coroutines.CoroutineScope"
 ) + allowedClientAppSessionsQualifiedNames + allowedClientProjectSessionsQualifiedNames
 
 private val allowedServiceNames = allowedServiceQualifiedNames.mapTo(HashSet(allowedServiceQualifiedNames.size)) { it.substringAfterLast('.') }

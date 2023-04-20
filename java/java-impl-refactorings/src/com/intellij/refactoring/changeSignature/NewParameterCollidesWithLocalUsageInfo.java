@@ -22,9 +22,6 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 
-/**
- *  @author dsl
- */
 public class NewParameterCollidesWithLocalUsageInfo extends UnresolvableCollisionUsageInfo {
   private final PsiElement myConflictingElement;
   private final PsiMethod myMethod;

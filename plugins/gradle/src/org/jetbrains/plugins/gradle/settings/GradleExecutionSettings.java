@@ -8,9 +8,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
- * @author Denis Zhdanov
- */
 public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   private static final boolean USE_VERBOSE_GRADLE_API_BY_DEFAULT = Boolean.parseBoolean(System.getProperty("gradle.api.verbose"));

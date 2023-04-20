@@ -101,21 +101,33 @@ class ListLayout private constructor(
     nonDefaultGrowComponents.remove(component)
   }
 
-  override fun minimumLayoutSize(container: Container): Dimension =
-    getSize(container.components.asIterable(), Component::getMinimumSize).also {
-      JBInsets.addTo(it, container.insets)
+  override fun minimumLayoutSize(container: Container): Dimension {
+    val visibleComponents = getVisibleComponents(container)
+    return getSize(visibleComponents, Component::getMinimumSize).also {
+      if (visibleComponents.isNotEmpty()) {
+        JBInsets.addTo(it, container.insets)
+      }
     }
+  }
 
-  override fun preferredLayoutSize(container: Container): Dimension =
-    getSize(container.components.asIterable(), Component::getPreferredSize).also {
-      JBInsets.addTo(it, container.insets)
+  override fun preferredLayoutSize(container: Container): Dimension {
+    val visibleComponents = getVisibleComponents(container)
+    return getSize(visibleComponents, Component::getPreferredSize).also {
+      if (visibleComponents.isNotEmpty()) {
+        JBInsets.addTo(it, container.insets)
+      }
     }
+  }
 
-  override fun maximumLayoutSize(target: Container): Dimension =
-    getSize(target.components.asIterable(), Component::getPreferredSize).also {
-      JBInsets.addTo(it, target.insets)
+  override fun maximumLayoutSize(target: Container): Dimension {
+    val visibleComponents = getVisibleComponents(target)
+    return getSize(visibleComponents, Component::getPreferredSize).also {
+      if (visibleComponents.isNotEmpty()) {
+        JBInsets.addTo(it, target.insets)
+      }
       if (minorAxis == Axis.X) it.width = Int.MAX_VALUE else it.height = Int.MAX_VALUE
     }
+  }
 
   private fun getSize(components: Iterable<Component>, dimensionGetter: (Component) -> Dimension): Dimension {
     var majorAxisSpan: Long = 0
@@ -140,8 +152,8 @@ class ListLayout private constructor(
   }
 
   override fun layoutContainer(container: Container) {
-    val components = container.components
-    if (components.isEmpty()) return
+    val visibleComponents = getVisibleComponents(container)
+    if (visibleComponents.isEmpty()) return
 
     val bounds = Rectangle(Point(0, 0), container.size)
     JBInsets.removeFrom(bounds, container.insets)
@@ -150,8 +162,8 @@ class ListLayout private constructor(
 
     var majorAxisStart = bounds.startOn(majorAxis)
     val majorAxisAllocation = bounds.on(majorAxis)
-    val majorAxisMin = getSize(components.asIterable(), Component::getMinimumSize).on(majorAxis)
-    val majorAxisPref = getSize(components.asIterable(), Component::getPreferredSize).on(majorAxis)
+    val majorAxisMin = getSize(visibleComponents, Component::getMinimumSize).on(majorAxis)
+    val majorAxisPref = getSize(visibleComponents, Component::getPreferredSize).on(majorAxis)
     val majorAxisDeltaFactor = getDeltaFactor(majorAxisMin, majorAxisPref, majorAxisAllocation)
 
     var majorAxisRoundingErrorSum = 0f
@@ -159,9 +171,7 @@ class ListLayout private constructor(
 
     val gap = gapValue.get()
 
-    for (component in components) {
-      if (!component.isVisible) continue
-
+    for (component in visibleComponents) {
       val minSize = component.minimumSize
       val prefSize = component.preferredSize
       val maxSize = component.maximumSize
@@ -239,6 +249,12 @@ class ListLayout private constructor(
 
   override fun invalidateLayout(target: Container) = Unit
 
+  override fun toString(): String =
+    when (majorAxis) {
+      Axis.X -> "HorizontalListLayout(minorAxisAlignment=$minorAxisAlignment, defaultGrowPolicy=$defaultGrowPolicy, gap=$gap)"
+      Axis.Y -> "VerticalListLayout(minorAxisAlignment=$minorAxisAlignment, defaultGrowPolicy=$defaultGrowPolicy, gap=$gap)"
+    }
+
   companion object {
     /**
      * Create a simple horizontal variant - major axis [Axis.X]
@@ -277,5 +293,9 @@ class ListLayout private constructor(
     private fun Rectangle.startOn(axis: Axis): Int = if (axis == Axis.X) x else y
     private fun Rectangle.on(axis: Axis): Int = if (axis == Axis.X) width else height
     private fun Dimension.on(axis: Axis): Int = if (axis == Axis.X) width else height
+
+    private fun getVisibleComponents(container: Container): List<Component> = container.components.filter { it.isVisible }
   }
+
+
 }

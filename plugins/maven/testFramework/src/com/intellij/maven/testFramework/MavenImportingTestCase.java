@@ -62,10 +62,12 @@ import org.junit.Assume;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.intellij.testFramework.PlatformTestUtil.waitForFuture;
 import static com.intellij.testFramework.PlatformTestUtil.waitForPromise;
 
 public abstract class MavenImportingTestCase extends MavenTestCase {
@@ -685,7 +687,11 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
                               Arrays.asList(profiles),
                               disabledProfiles);
       myProjectsManager.initForTests();
-      myReadContext = flow.readMavenFiles(initialImportContext, getMavenProgressIndicator());
+      Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        myReadContext = flow.readMavenFiles(initialImportContext, getMavenProgressIndicator());
+      });
+      edt(() -> waitForFuture(future, 10_000));
+
       flow.updateProjectManager(myReadContext);
     }
     else {

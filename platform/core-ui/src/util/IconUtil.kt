@@ -143,6 +143,10 @@ object IconUtil {
       override fun getIconWidth(): Int = icon.iconWidth
 
       override fun getIconHeight(): Int = icon.iconHeight
+
+      override fun toString(): String {
+        return "IconUtil.flip for $icon"
+      }
     }
   }
 
@@ -331,6 +335,10 @@ object IconUtil {
       override fun getIconWidth(): Int = iconUnderSelection.iconWidth
 
       override fun getIconHeight(): Int = iconUnderSelection.iconHeight
+
+      override fun toString(): String {
+        return "IconUtil.wrapToSelectionAwareIcon for $iconUnderSelection"
+      }
     }
   }
 
@@ -346,6 +354,10 @@ object IconUtil {
       override fun getIconWidth(): Int = (source.iconWidth * clampedScale).toInt()
 
       override fun getIconHeight(): Int = (source.iconHeight * clampedScale).toInt()
+
+      override fun toString(): String {
+        return "IconUtil.scale for $source"
+      }
     }
   }
 
@@ -361,6 +373,10 @@ object IconUtil {
       override fun getIconWidth(): Int = sizeValue.get()
 
       override fun getIconHeight(): Int = sizeValue.get()
+
+      override fun toString(): String {
+        return "IconUtil.resizeSquared for $source"
+      }
     }
   }
 
@@ -638,6 +654,10 @@ object IconUtil {
 
       private val isJreHiDPI: Boolean
         get() = JreHiDpiUtil.isJreHiDPI(sysScale)
+
+      override fun toString(): String {
+        return "IconUtil.toRetinaAwareIcon for $image"
+      }
     }
   }
 
@@ -778,7 +798,7 @@ private fun filterFileIconFlags(file: VirtualFile, @IconFlags flags: Int): Int {
   return flags and flagIgnoreMask.inv()
 }
 
-private class TextIcon(private val text: String, component: Component, private val fontSize: Float) : JBScalableIcon() {
+class TextIcon(val text: String, component: Component, val fontSize: Float) : JBScalableIcon() {
   private var font: Font? = null
   private var metrics: FontMetrics? = null
   private val componentRef = WeakReference(component)

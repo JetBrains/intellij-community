@@ -20,6 +20,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.icons.LoadIconParameters;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ResourceUtil;
@@ -97,8 +98,11 @@ public final class TipUtils {
       .orElse(null);
   }
 
-  public static List<TextParagraph> loadAndParseTip(@Nullable TipAndTrickBean tip) {
-    return loadAndParseTip(tip, false);
+  /**
+   * @param contextComponent is used for obtaining system scale to properly load and scale the images
+   */
+  public static List<TextParagraph> loadAndParseTip(@Nullable TipAndTrickBean tip, @Nullable Component contextComponent) {
+    return loadAndParseTip(tip, contextComponent, false);
   }
 
   /**
@@ -106,10 +110,12 @@ public final class TipUtils {
    */
   @TestOnly
   public static List<TextParagraph> loadAndParseTipStrict(@Nullable TipAndTrickBean tip) {
-    return loadAndParseTip(tip, true);
+    return loadAndParseTip(tip, null, true);
   }
 
-  private static List<TextParagraph> loadAndParseTip(@Nullable TipAndTrickBean tip, boolean isStrict) {
+  private static List<TextParagraph> loadAndParseTip(@Nullable TipAndTrickBean tip,
+                                                     @Nullable Component contextComponent,
+                                                     boolean isStrict) {
     Trinity<@NotNull String, @Nullable ClassLoader, @Nullable String> result = loadTip(tip, isStrict);
     String text = result.first;
     @Nullable ClassLoader loader = result.second;
@@ -118,7 +124,7 @@ public final class TipUtils {
     Document tipHtml = Jsoup.parse(text);
     Element tipContent = tipHtml.body();
 
-    Map<String, Icon> icons = loadImages(tipContent, loader, tipsPath, isStrict);
+    Map<String, Icon> icons = loadImages(tipContent, loader, tipsPath, contextComponent, isStrict);
     inlineProductInfo(tipContent);
 
     List<TextParagraph> paragraphs = new TipContentConverter(tipContent, icons, isStrict).convert();
@@ -209,6 +215,7 @@ public final class TipUtils {
   private static Map<String, Icon> loadImages(@NotNull Element tipContent,
                                               @Nullable ClassLoader loader,
                                               @Nullable String tipsPath,
+                                              @Nullable Component contextComponent,
                                               boolean isStrict) {
     if (tipsPath == null) return Collections.emptyMap();
     Map<String, Icon> icons = new HashMap<>();
@@ -246,8 +253,9 @@ public final class TipUtils {
         if (isDark) {
           flags |= ImageLoader.USE_DARK;
         }
-        image = ImageLoader.INSTANCE.loadImage(tipsPath + path, LoadIconParameters.Companion.defaultParameters(isDark),
-                                               null, loader, flags, !path.endsWith(".svg"));
+        ScaleContext context = ScaleContext.create(contextComponent);
+        LoadIconParameters parameters = new LoadIconParameters(Collections.emptyList(), context, isDark, null, false);
+        image = ImageLoader.INSTANCE.loadImage(tipsPath + path, parameters, null, loader, flags, !path.endsWith(".svg"));
       }
 
       if (image != null) {
@@ -259,7 +267,7 @@ public final class TipUtils {
         icons.put(path, icon);
       }
       else {
-        handleWarning("Not found icon for path: " + path, isStrict);
+        handleWarning("Not found icon for path: " + tipsPath + path, isStrict);
       }
     });
     return icons;

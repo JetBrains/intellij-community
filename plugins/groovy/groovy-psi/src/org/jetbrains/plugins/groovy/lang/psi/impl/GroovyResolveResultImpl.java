@@ -12,9 +12,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.EmptyGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 
-/**
- * @author ven
- */
 public class GroovyResolveResultImpl implements GroovyResolveResult {
   private final @NotNull PsiElement myElement;
   private final boolean myIsAccessible;

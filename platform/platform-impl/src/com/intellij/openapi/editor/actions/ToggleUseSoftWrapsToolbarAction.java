@@ -23,8 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * {@link ToggleUseSoftWrapsMenuAction} extension that doesn't suppress configured icon (if any).
- *
- * @author Denis Zhdanov
  */
 public class ToggleUseSoftWrapsToolbarAction extends AbstractToggleUseSoftWrapsAction {
 
