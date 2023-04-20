@@ -78,9 +78,9 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
           }
           if (popup.content.preferredSize != size) {
             popup.content.preferredSize = size
-            adjustPosition(originalPopup)
           }
           if (popup.size != size) {
+            adjustPosition(originalPopup)
             popup.size = size
           }
         }
@@ -193,10 +193,13 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
     component.editors.forEach {
       it.softWrapModel.addSoftWrapChangeListener(object : SoftWrapChangeListener {
         override fun recalculationEnds() {
-          val height = (it as EditorImpl).offsetToXY(it.document.textLength).y + it.lineHeight + 6
-          it.component.preferredSize = Dimension(it.component.preferredSize.width, min(height, MAX_HEIGHT))
-          it.component.parent.invalidate()
-          popup.pack(true, true)
+          val height = (it as EditorImpl).offsetToXY(it.document.textLength).y + it.lineHeight + (it.lineHeight / 3)
+          val dimension = Dimension(it.component.preferredSize.width, min(height, MAX_HEIGHT))
+          if (dimension != it.component.preferredSize) {
+            it.component.preferredSize = dimension
+            it.component.parent.invalidate()
+            popup.pack(true, true)
+          }
         }
 
         override fun softWrapsChanged() {}
