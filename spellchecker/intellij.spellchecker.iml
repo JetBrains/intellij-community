@@ -190,6 +190,18 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
+      <library name="ai.grazie.utils.lucene.lt.compatibility" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.utils:utils-lucene-lt-compatibility-jvm:0.2.145" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-lucene-lt-compatibility-jvm/0.2.145/utils-lucene-lt-compatibility-jvm-0.2.145.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-lucene-lt-compatibility-jvm/0.2.145/utils-lucene-lt-compatibility-jvm-0.2.145-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
       <library name="java-string-similarity" type="repository">
         <properties include-transitive-deps="false" maven-id="info.debatty:java-string-similarity:2.0.0" />
         <CLASSES>
@@ -202,7 +214,7 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="lucene-core" level="project" />
-    <orderEntry type="library" name="lucene-analyzers-common" level="project" />
+    <orderEntry type="library" name="lucene-analysis-common" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />

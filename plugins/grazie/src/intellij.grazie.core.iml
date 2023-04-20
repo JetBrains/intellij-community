@@ -214,7 +214,19 @@
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="lucene-core" level="project" />
-    <orderEntry type="library" name="lucene-analyzers-common" level="project" />
+    <orderEntry type="library" name="lucene-analysis-common" level="project" />
+    <orderEntry type="module-library">
+      <library name="ai.grazie.utils.lucene.lt.compatibility" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.utils:utils-lucene-lt-compatibility-jvm:0.2.145" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-lucene-lt-compatibility-jvm/0.2.145/utils-lucene-lt-compatibility-jvm-0.2.145.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-lucene-lt-compatibility-jvm/0.2.145/utils-lucene-lt-compatibility-jvm-0.2.145-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
     <orderEntry type="module-library">
       <library name="ai.grazie.spell.gec.engine.local" type="repository">
         <properties include-transitive-deps="false" maven-id="ai.grazie.spell:gec-spell-engine-local-jvm:0.2.112" />
