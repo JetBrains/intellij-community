@@ -77,7 +77,7 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
 
         // annotate diagnostics on fly: show diagnostics as soon as front-end reports them
         // don't create quick fixes as it could require some resolve
-        val highlightInfoByDiagnostic = mutableMapOf<Diagnostic, HighlightInfo>()
+        val highlightInfoByDiagnostic = HashMap<Diagnostic, HighlightInfo>()
 
         // render of on-fly diagnostics with descriptors could lead to recursion
         fun checkIfDescriptor(candidate: Any?): Boolean =
