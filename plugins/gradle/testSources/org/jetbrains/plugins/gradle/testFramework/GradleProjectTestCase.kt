@@ -55,25 +55,28 @@ abstract class GradleProjectTestCase : GradleProjectBaseTestCase() {
     }
   }
 
-  fun writeText(relativePath: String, text: String) {
+  fun writeText(relativePath: String, text: String): VirtualFile {
     val file = findOrCreateFile(relativePath)
     runWriteActionAndWait {
       file.writeText(text)
     }
+    return file
   }
 
-  fun appendText(relativePath: String, text: String) {
+  fun appendText(relativePath: String, text: String): VirtualFile {
     val file = getFile(relativePath)
     runWriteActionAndWait {
       file.writeText(file.readText() + "\n" + text)
     }
+    return file
   }
 
-  fun prependText(relativePath: String, text: String) {
+  fun prependText(relativePath: String, text: String): VirtualFile {
     val file = getFile(relativePath)
     runWriteActionAndWait {
       file.writeText(text + "\n" + file.readText())
     }
+    return file
   }
 
   companion object {

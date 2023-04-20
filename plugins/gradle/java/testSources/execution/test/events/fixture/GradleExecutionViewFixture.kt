@@ -95,13 +95,13 @@ class GradleExecutionViewFixture(
   }
 
   fun assertTestConsoleContains(testAssertion: TreeAssertion.Node<AbstractTestProxy>, expectedTextSample: String) {
-    testAssertion.assertValueIfPresent { testProxy ->
+    testAssertion.assertValue { testProxy ->
       assertContains(expectedTextSample, getTestConsoleText(testProxy))
     }
   }
 
   fun assertTestConsoleDoesNotContain(testAssertion: TreeAssertion.Node<AbstractTestProxy>, unexpectedTextSample: String) {
-    testAssertion.assertValueIfPresent { testProxy ->
+    testAssertion.assertValue { testProxy ->
       assertDoesNotContain(unexpectedTextSample, getTestConsoleText(testProxy))
     }
   }
@@ -131,7 +131,7 @@ class GradleExecutionViewFixture(
   }
 
   fun assertPsiLocation(testAssertion: TreeAssertion.Node<AbstractTestProxy>, className: String, methodName: String?) {
-    testAssertion.assertValueIfPresent { testProxy ->
+    testAssertion.assertValue { testProxy ->
       if (methodName == null) {
         val psiClass = testProxy.getPsiElement<PsiClass>()
         Assertions.assertEquals(className, psiClass.name)

@@ -1,9 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.events
 
+import com.intellij.openapi.application.PathManager
+import com.intellij.rt.execution.junit.FileComparisonFailure
+import junit.framework.ComparisonFailure
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
+import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleTestAssertionTest : GradleExecutionTestCase() {
@@ -589,6 +596,85 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
                   |java.lang.AssertionError: assertion message expected same:<string> was not:<string>
                 """.trimMargin())
               }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test intellij file comparison test`(gradleVersion: GradleVersion) {
+    val fixture = GradleTestFixtureBuilder.create("GradleTestAssertionTest-file-comparison") {
+      withSettingsFile {
+        setProjectName("GradleTestAssertionTest-file-comparison")
+      }
+      withBuildFile(gradleVersion) {
+        withJavaPlugin()
+        withJUnit()
+        addTestImplementationDependency(call("files", list(
+          PathManager.getJarPathForClass(FileComparisonFailure::class.java)!!,
+          PathManager.getJarPathForClass(ComparisonFailure::class.java)!!
+        )))
+      }
+    }
+    test(gradleVersion, fixture) {
+      val expectedPath = writeText("expected.txt", "Expected text.").path
+      val actualPath = writeText("actual.txt", "Actual text.").path
+      writeText("src/test/java/org/example/TestCase.java", """
+        |package org.example;
+        |
+        |import com.intellij.rt.execution.junit.FileComparisonFailure;
+        |import $jUnitTestAnnotationClass;
+        |
+        |public class TestCase {
+        |
+        |  @Test
+        |  public void test_file_comparison_failure() {
+        |    throw new FileComparisonFailure("assertion message", "Expected text.", "Actual text.", "$expectedPath", "$actualPath");
+        |  }
+        |
+        |  @Test
+        |  public void test_file_comparison_failure_without_actual_file() {
+        |    throw new FileComparisonFailure("assertion message", "Expected text.", "Actual text.", "$expectedPath", null);
+        |  }
+        |}
+      """.trimMargin())
+
+      executeTasks(":test")
+      assertTestTreeView {
+        assertNode("TestCase") {
+          assertNode("test_file_comparison_failure") {
+            assertTestConsoleContains("""
+              |
+              |assertion message
+              |Expected :Expected text.
+              |Actual   :Actual text.
+              |<Click to see difference>
+              |
+              |com.intellij.rt.execution.junit.FileComparisonFailure: assertion message expected:<[Expected] text.> but was:<[Actual] text.>
+            """.trimMargin())
+            assertValue { testProxy ->
+              val diffViewerProvider = testProxy.diffViewerProvider!!
+              Assertions.assertEquals(expectedPath, diffViewerProvider.filePath)
+              Assertions.assertEquals(actualPath, diffViewerProvider.actualFilePath)
+            }
+          }
+          assertNode("test_file_comparison_failure_without_actual_file") {
+            assertTestConsoleContains("""
+              |
+              |assertion message
+              |Expected :Expected text.
+              |Actual   :Actual text.
+              |<Click to see difference>
+              |
+              |com.intellij.rt.execution.junit.FileComparisonFailure: assertion message expected:<[Expected] text.> but was:<[Actual] text.>
+            """.trimMargin())
+            assertValue { testProxy ->
+              val diffViewerProvider = testProxy.diffViewerProvider!!
+              Assertions.assertEquals(expectedPath, diffViewerProvider.filePath)
+              Assertions.assertEquals(null, diffViewerProvider.actualFilePath)
             }
           }
         }

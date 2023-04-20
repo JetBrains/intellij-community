@@ -126,10 +126,9 @@ class IJTestEventLogger {
     def expected = escapeCdata(exception.expected)
     def actual = escapeCdata(exception.actual)
     def filePath = escapeCdata(exception.filePath)
-    def actualFilePath = null
-    if (exception.hasProperty('actualFilePath')) {
-      actualFilePath = escapeCdata(exception.actualFilePath)
-    }
+    def actualFilePath = exception.hasProperty('actualFilePath')
+      ? escapeCdata(exception.actualFilePath)
+      : escapeCdata(null)
 
     xml.failureType('comparison')
     xml.mkp.yieldUnescaped("<expected>$expected</expected>")
@@ -139,10 +138,8 @@ class IJTestEventLogger {
   }
 
   private static String escapeCdata(String s) {
-    if (s == null) {
-      return null
-    }
-    def encodedString = s.getBytes("UTF-8").encodeBase64()
+    def string = s ?: ""
+    def encodedString = string.getBytes("UTF-8").encodeBase64()
     return "<![CDATA[$encodedString]]>"
   }
 
