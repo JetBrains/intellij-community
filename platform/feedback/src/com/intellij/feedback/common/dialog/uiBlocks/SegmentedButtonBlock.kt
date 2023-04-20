@@ -80,8 +80,4 @@ class SegmentedButtonBlock<T>(myProperty: ObservableMutableProperty<T>,
       }
     }
   }
-
-  override fun collectInput(): T {
-    return myProperty.get()
-  }
 }

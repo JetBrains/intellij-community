@@ -25,7 +25,7 @@ import javax.swing.JComponent
 import javax.swing.JList
 
 class ProductivityFeedbackDialog(
-  private val project: Project?,
+  project: Project?,
   private val forTest: Boolean
 ) : BaseFeedbackDialog(project) {
 
@@ -66,7 +66,7 @@ class ProductivityFeedbackDialog(
                                                                    proficiencyProperty.get(),
                                                                    mapExperienceToInt(usingExperience.get()))
     val feedbackData = FeedbackRequestData(feedbackReportId, createCollectedDataJsonString())
-    submitFeedback(project, feedbackData,
+    submitFeedback(myProject, feedbackData,
                    { }, { },
                    if (forTest) FeedbackRequestType.TEST_REQUEST else FeedbackRequestType.PRODUCTION_REQUEST,
                    ThanksForFeedbackNotification(description = ProductivityFeedbackBundle.message(
@@ -146,8 +146,8 @@ class ProductivityFeedbackDialog(
       }.bottomGap(BottomGap.MEDIUM)
 
       row {
-        feedbackAgreement(project, CommonFeedbackBundle.message("dialog.feedback.consent.withoutEmail")) {
-          showFeedbackSystemInfoDialog(project, systemInfoData.value)
+        feedbackAgreement(myProject, CommonFeedbackBundle.message("dialog.feedback.consent.withoutEmail")) {
+          showFeedbackSystemInfoDialog(myProject, systemInfoData.value)
         }
       }.bottomGap(BottomGap.SMALL)
     }.also { dialog ->

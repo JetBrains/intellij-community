@@ -37,7 +37,4 @@ class TextAreaBlock(myProperty: ObservableMutableProperty<String>,
     }
   }
 
-  override fun collectInput(): String {
-    return myProperty.get()
-  }
 }
