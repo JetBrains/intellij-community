@@ -56,7 +56,7 @@ mod tests {
     fn selecting_product_jdk_env_runtime_test() {
         let test = prepare_test_env(LauncherLocation::Standard);
         let expected_rt = test.create_jbr_link("_prod_jdk_jbr");
-        let env = HashMap::from([("XL_JDK", expected_rt.to_str().unwrap())]);
+        let env = HashMap::from([("XPLAT_JDK", expected_rt.to_str().unwrap())]);
 
         let _lock = RT_LOCK.lock().expect("Failed to acquire the runtime lock");
         let result = run_launcher_ext(&test, LauncherRunSpec::standard().assert_status().with_env(&env));
@@ -73,7 +73,8 @@ mod tests {
         let custom_config_dir = get_custom_config_dir();
         test.delete_later(&custom_config_dir);
 
-        let jdk_config_file = custom_config_dir.join("xplat.jdk");
+        let jdk_config_name = if cfg!(target_os = "windows") { "xplat64.exe.jdk" } else { "xplat.jdk" };
+        let jdk_config_file = custom_config_dir.join(jdk_config_name);
         fs::create_dir_all(custom_config_dir).unwrap();
         File::create(jdk_config_file).unwrap()
             .write_all(expected_rt.to_str().unwrap().as_bytes()).unwrap();

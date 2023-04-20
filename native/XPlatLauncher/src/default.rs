@@ -16,10 +16,11 @@ const IDE_HOME_LOOKUP_DEPTH: usize = 5;
 pub struct DefaultLaunchConfiguration {
     pub product_info: ProductInfo,
     pub ide_home: PathBuf,
-    pub config_home: PathBuf,
     pub ide_bin: PathBuf,
+    pub user_config_dir: PathBuf,
     pub args: Vec<String>,
-    pub vm_options_base_filename: String
+    pub launcher_base_name: String,
+    pub env_var_base_name: String
 }
 
 impl LaunchConfiguration for DefaultLaunchConfiguration {
@@ -92,7 +93,7 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
     }
 
     fn prepare_for_launch(&self) -> Result<PathBuf> {
-        let java_executable = self.get_java_executable()?;
+        let java_executable = self.locate_runtime()?;
         let java_home = java_executable
             .parent_or_err()?
             .parent_or_err()?;
@@ -118,216 +119,142 @@ impl DefaultLaunchConfiguration {
         let product_info = read_product_info(&product_info_file)?;
         assert!(!product_info.launch.is_empty());
 
+        let user_config_dir = config_home.join(&product_info.productVendor).join(&product_info.dataDirectoryName);
+
         let vm_options_file_path = product_info.launch[0].vmOptionsFilePath.as_str();
-        let vm_options_base_filename = Self::get_base_executable_name(vm_options_file_path);
+        let launcher_base_name = Self::get_launcher_base_name(vm_options_file_path);
+        let env_var_base_name = Self::get_env_var_base_name(&launcher_base_name);
 
         let config = DefaultLaunchConfiguration {
             product_info,
             ide_home,
-            config_home,
             ide_bin,
+            user_config_dir,
             args,
-            vm_options_base_filename
+            launcher_base_name,
+            env_var_base_name
         };
 
         Ok(config)
     }
 
-    // "bin/idea64.exe.vmoptions" -> idea
-    // "bin/idea64.vmoptions -> idea
-    // "../bin/idea.vmoptions" -> idea
-    fn get_base_executable_name(vm_options_file_path: &str) -> String {
-        debug!("vm_options_file_path={vm_options_file_path}");
-
-        // split on last path separator
-        // bin/idea64.exe.vmoptions -> idea64.exe.vmoptions
-        let vm_options_filename = match vm_options_file_path.rsplit_once("/") {
-            Some((_, suffix)) => { suffix }
-            None => vm_options_file_path
+    /// Extracts a base name (i.e. a name without the extension and architecture suffix)
+    /// from a relative path to the VM options file.
+    ///
+    /// Example: `"bin/idea64.exe.vmoptions"` (Windows), `"bin/idea.vmoptions"` (macOS),
+    /// and`"bin/idea64.vmoptions"` (Linux) should all return `"idea"`.
+    fn get_launcher_base_name(vm_options_rel_path: &str) -> String {
+        // split on the last path separator ("bin/idea64.exe.vmoptions" -> "idea64.exe.vmoptions")
+        let vm_options_filename = match vm_options_rel_path.rsplit_once("/") {
+            Some((_, suffix)) => suffix,
+            None => vm_options_rel_path
         };
-        debug!("vm_options_filename={vm_options_filename}");
 
-        // split on first dot
-        // idea64.exe.vmoptions -> idea64
+        // split on the first dot ("idea64.exe.vmoptions" -> "idea64")
         let vm_options_filename_no_last_extension = match vm_options_filename.split_once(".") {
-            Some((prefix, _)) => { prefix }
+            Some((prefix, _)) => prefix,
             None => vm_options_filename
         };
-        debug!("vm_options_filename_no_last_extension={vm_options_filename_no_last_extension}");
 
-        // drop the 64 if it's there
-        // idea64 -> idea
+        // strip the "64" suffix ("idea64" -> "idea")
         let base_product_name = match vm_options_filename_no_last_extension.split_once("64") {
-            Some((prefix, _)) => { prefix }
+            Some((prefix, _)) => prefix,
             None => vm_options_filename_no_last_extension
         };
-        debug!("base_product_name={base_product_name}");
 
+        debug!("get_launcher_base_name('{vm_options_rel_path}') -> {base_product_name}");
         base_product_name.to_string()
     }
 
-    // TODO: potentially a behaviour change if _JDK env var is defined
-    fn get_java_executable(&self) -> Result<PathBuf> {
-        let product_code = &self.product_info.productCode;
-        let product_code_env_var = &(product_code.to_owned() + "_JDK");
+    /// Converts a launcher base name (extracted from a VM options relative path),
+    /// to a base name of product-specific environment variables (like `<PRODUCT>_JDK`).
+    ///
+    /// See also: `org.jetbrains.intellij.build.ProductProperties#getEnvironmentVariableBaseName`.
+    fn get_env_var_base_name(launcher_base_name: &str) -> String {
+        match launcher_base_name {
+            "webstorm" => "WEBIDE".to_string(),
+            "idea-dbst" => "IDEA".to_string(),
+            _ => launcher_base_name.to_ascii_uppercase().replace('-', "_")
+        }
+    }
 
-        debug!("Trying to resolve runtime from product code env var {product_code_env_var}");
-        match self.get_java_executable_from_java_root_env_var(product_code_env_var) {
+    /// Locates the Java runtime and returns a path tpo the standard launcher (`bin/java` or `bin\\java.exe`).
+    /// The lookup sequence is described in the [support article](https://intellij-support.jetbrains.com/hc/en-us/articles/206544879-Selecting-the-JDK-version-the-IDE-will-run-under).
+    fn locate_runtime(&self) -> Result<PathBuf> {
+        debug!("[1] Looking for runtime at product-specific environment variable");
+        let product_env_var = self.env_var_base_name.to_owned() + "_JDK";
+        match self.get_runtime_from_env_var(&product_env_var) {
             Ok(p) => { return Ok(p); }
-            Err(e) => { debug!("Didn't find runtime from env var: {product_code_env_var}, error: {e}") }
+            Err(e) => { debug!("Failed: {}", e.to_string()); }
         }
 
-        debug!("Trying to resolve runtime from custom user file");
-        match self.get_user_jre() {
+        debug!("[2] Looking for runtime in a user configuration file");
+        match self.get_runtime_from_user_config() {
             Ok(p) => { return Ok(p) }
-            Err(e) => { debug!("Didn't find runtime from custom user file, error: {e}") }
+            Err(e) => { debug!("Failed: {}", e.to_string()); }
         }
 
-        debug!("Resolving runtime jbr dir in ide home");
-        match self.get_from_jbr_dir() {
+        debug!("[3] Looking for bundled runtime");
+        match self.get_bundled_runtime() {
             Ok(p) => { return Ok(p) }
-            Err(e) => { debug!("Didn't find runtime from jbr dir in ide home. Error: {e}") }
+            Err(e) => { debug!("Failed: {}", e.to_string()); }
         }
 
-        debug!("Resolving runtime from default env vars");
-        match self.get_from_java_env_vars() {
-            Ok(p) => { return Ok(p) }
-            Err(e) => { debug!("Didn't find runtime from jbr dir in ide home. Error: {e}") }
+        debug!("[4] Looking for runtime at JDK_HOME");
+        match self.get_runtime_from_env_var("JDK_HOME") {
+            Ok(p) => { return Ok(p); }
+            Err(e) => { debug!("Failed: {}", e.to_string()); }
         }
 
-        // TODO: timeout?
-        // if [ -z "$JRE" ]; then
-        //   JAVA_BIN=$(command -v java)
-        // else
-        //   JAVA_BIN="$JRE/bin/java"
-        // fi
-
-        let default_java_output = std::process::Command::new("command")
-            .arg("-v")
-            .arg("java")
-            .output()?;
-
-        let stderr = String::from_utf8_lossy(&default_java_output.stderr);
-        let stdout = String::from_utf8_lossy(&default_java_output.stdout);
-        let exit_code = match default_java_output.status.code() {
-            None => { "None".to_string() }
-            Some(i) => { i.to_string() }
-        };
-
-        if !default_java_output.status.success() {
-            bail!("'command -v java' didn't succeed, exit code: {exit_code}, stdout: {stdout}, stderr: {stderr}");
+        debug!("[5] Looking for runtime at JAVA_HOME");
+        match self.get_runtime_from_env_var("JAVA_HOME") {
+            Ok(p) => { return Ok(p); }
+            Err(e) => { debug!("Failed: {}", e.to_string()); }
         }
 
-        // TODO: check if it's executable? (will be a behaviour change)
-        let java_bin = Path::new(&stdout.to_string()).join("bin").join("java");
-        Ok(java_bin)
+        bail!("Runtime not found")
     }
 
-    // # shellcheck disable=SC2153
-    // if [ -z "$JRE" ]; then
-    //   if [ -n "$JDK_HOME" ] && [ -x "$JDK_HOME/bin/java" ]; then
-    //     JRE="$JDK_HOME"
-    //   elif [ -n "$JAVA_HOME" ] && [ -x "$JAVA_HOME/bin/java" ]; then
-    //     JRE="$JAVA_HOME"
-    //   fi
-    // fi
-    fn get_from_java_env_vars(&self) -> Result<PathBuf> {
-        match self.get_java_executable_from_java_root_env_var("JDK_HOME") {
-            Ok(p) => { return Ok(p) }
-            Err(e) => { debug!("Didn't find a valid runtime from JDK_HOME env var, error: {e}") }
-        }
-
-        return self.get_java_executable_from_java_root_env_var("JAVA_HOME");
+    fn get_runtime_from_env_var(&self, env_var_name: &str) -> Result<PathBuf> {
+        let env_var = env::var(env_var_name);
+        debug!("${env_var_name} = {env_var:?}");
+        let env_var_value = env_var?;
+        Self::check_runtime(&env_var_value)
     }
 
-    // if [ -z "$JRE" ] && [ "$OS_TYPE" = "Linux" ] && [ "$OS_ARCH" = "x86_64" ] && [ -d "$IDE_HOME/jbr" ]; then
-    // JRE="$IDE_HOME/jbr"
-    // fi
-    fn get_from_jbr_dir(&self) -> Result<PathBuf> {
-        // TODO: check if that's actually used in other launchers, it probably is
-        // if env::consts::OS != "linux" && env::consts::ARCH != "x86_64" {
-        //     let message = format!("Can't use jbr dir in ide home for OS {} and ARCH {}", env::consts::OS, env::consts::ARCH);
-        //     return err_from_string(message)
-        // }
+    fn get_runtime_from_user_config(&self) -> Result<PathBuf> {
+        let config_ext = if env::consts::OS == "windows" { "64.exe.jdk" } else { ".jdk" };
+        let config_name = self.launcher_base_name.to_owned() + config_ext;
+        let config_path = self.user_config_dir.join(config_name);
+        debug!("Reading {config_path:?}");
+        let config_value = read_file_to_end(config_path.as_path())?;
+        debug!("Content: {:?}", config_value.trim());
+        Self::check_runtime(&config_value)
+    }
 
+    fn get_bundled_runtime(&self) -> Result<PathBuf> {
         let jbr_dir = self.ide_home.join("jbr");
-        if !jbr_dir.is_dir() {
-            bail!("{jbr_dir:?} is not a directory");
-        };
-
-        // TODO: non-mac
-        let java_executable = get_bin_java_path(&jbr_dir);
-
-        match is_executable(&java_executable)? {
-            true => Ok(java_executable),
-            // TODO: check if exists, separate method
-            false => bail!("{java_executable:?} is not an executable")
-        }
+        debug!("Checking {jbr_dir:?}");
+        Self::check_runtime_dir(&jbr_dir)
     }
 
-    // if [ -z "$JRE" ] && [ -s "${CONFIG_HOME}/__product_vendor__/__system_selector__/__vm_options__.jdk" ]; then
-    // USER_JRE=$(cat "${CONFIG_HOME}/__product_vendor__/__system_selector__/__vm_options__.jdk")
-    // if [ -x "$USER_JRE/bin/java" ]; then
-    // JRE="$USER_JRE"
-    // fi
-
-    // seems different from windows:
-    // GetModuleFileName(NULL, buffer, _MAX_PATH);
-    // std::wstring module(buffer);
-    // IDS_VM_OPTIONS_PATH=%APPDATA%\\\\${context.applicationInfo.shortCompanyName}\\\\${context.systemSelector}
-    // if (LoadString(hInst, IDS_VM_OPTIONS_PATH, buffer, _MAX_PATH)) {
-    // ExpandEnvironmentStrings(buffer, copy, _MAX_PATH - 1);
-    // std::wstring path(copy);
-    // path += module.substr(module.find_last_of('\\')) + L".jdk";
-
-    fn get_user_jre(&self) -> Result<PathBuf> {
-        let jre_path_file_name = self.vm_options_base_filename.to_owned() + ".jdk";
-        let jre_path_file = self.config_home
-            .join(&self.product_info.productVendor)
-            .join(&self.product_info.dataDirectoryName)
-            .join(jre_path_file_name);
-
-        let metadata = jre_path_file.metadata()?;
-        if metadata.len() == 0 {
-            bail!("vmoptions file by path {jre_path_file:?} has zero length, will not try to resolve runtime from it");
+    fn check_runtime(path: &str) -> Result<PathBuf> {
+        let path_trimmed = path.trim();
+        if path_trimmed.is_empty() {
+            bail!("Path is empty");
         }
-
-        let content = read_file_to_end(jre_path_file.as_path())?;
-        let user_jre_path = Path::new(content.as_str());
-
-        let java_executable = get_bin_java_path(&user_jre_path);
-
-        match is_executable(&java_executable)? {
-            true => { Ok(java_executable) }
-            false => {
-                bail!("{java_executable:?} specified in {jre_path_file:?} is not a valid executable");
-            }
-        }
+        Self::check_runtime_dir(Path::new(path_trimmed))
     }
 
-    // if [ -n "$__product_uc___JDK" ] && [ -x "$__product_uc___JDK/bin/java" ]; then
-    // JRE="$__product_uc___JDK"
-    // fi
-    fn get_java_executable_from_java_root_env_var(&self, env_var_name: &str) -> Result<PathBuf> {
-        let env_var_value = env::var(env_var_name)?;
-
-        if env_var_value.is_empty() {
-            bail!("Env var {env_var_value} is not set, skipping JDK detection from it");
-        }
-
-        let product_jdk_dir = Path::new(env_var_value.as_str());
-        let java_executable = get_bin_java_path(product_jdk_dir);
-
+    fn check_runtime_dir(runtime_home: &Path) -> Result<PathBuf> {
+        let java_executable = get_bin_java_path(&runtime_home);
         if !java_executable.exists() {
-            bail!("Java executable from JDK {java_executable:?} does not exist");
+            bail!("Java executable not found at {java_executable:?}");
         }
-
-        // TODO: write the same code ourselves instead of using is_executable crate?
         if !is_executable(&java_executable)? {
-            bail!("{java_executable:?} is not an executable file");
+            bail!("Not an executable file: {java_executable:?}");
         }
-
-        return Ok(java_executable);
+        Ok(java_executable)
     }
 
     // VM_OPTIONS=""
@@ -384,7 +311,7 @@ impl DefaultLaunchConfiguration {
     }
 
     fn get_vm_options_file_name(&self) -> Result<String> {
-        let vm_options_base_file_name = (&self.vm_options_base_filename).to_owned();
+        let vm_options_base_file_name = (&self.launcher_base_name).to_owned();
         // TODO: there is a relative path in product-info json (launch), maybe use that?
         let vm_options_file_name = vm_options_base_file_name +
             match env::consts::OS {
@@ -415,10 +342,7 @@ impl DefaultLaunchConfiguration {
 
         let vm_options_file_name = self.get_vm_options_file_name()?;
 
-        let options_from_ide = self.config_home
-            .join(&self.product_info.productVendor)
-            .join(&self.product_info.dataDirectoryName)
-            .join(vm_options_file_name);
+        let options_from_ide = self.user_config_dir.join(vm_options_file_name);
 
         is_readable(options_from_ide)
     }
