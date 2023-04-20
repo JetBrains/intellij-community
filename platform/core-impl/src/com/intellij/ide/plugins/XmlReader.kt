@@ -917,7 +917,13 @@ private fun readInclude(reader: XMLStreamReader2,
   }
 }
 
+
+
 private fun checkConditionalIncludeIsSupported(attribute: String, pluginDescriptor: RawPluginDescriptor) {
+  // Android Studio: allow conditional includes in our own plugins and tests during transition to K2
+  val vendor = pluginDescriptor.vendor
+  if (vendor != null && (vendor.contains("Google") || vendor.contains("Android"))) return
+  if (PluginManagerCore.isUnitTestMode) return
   if (pluginDescriptor.id !in KNOWN_KOTLIN_PLUGIN_IDS) {
     throw IllegalArgumentException("$attribute of 'include' is not supported")
   }
