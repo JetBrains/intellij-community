@@ -1111,6 +1111,11 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
             runTest("testData/stepping/custom/breakpointOnWhen.kt");
         }
 
+        @TestMetadata("breakpointsInNestedLambdas.kt")
+        public void testBreakpointsInNestedLambdas() throws Exception {
+            runTest("testData/stepping/custom/breakpointsInNestedLambdas.kt");
+        }
+
         @TestMetadata("breakpointsInOneLineLambdas.kt")
         public void testBreakpointsInOneLineLambdas() throws Exception {
             runTest("testData/stepping/custom/breakpointsInOneLineLambdas.kt");
