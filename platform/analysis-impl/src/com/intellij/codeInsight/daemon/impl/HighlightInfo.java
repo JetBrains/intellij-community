@@ -1015,20 +1015,23 @@ public class HighlightInfo implements Segment {
   // convert ranges to markers: from quickFixRanges -> quickFixMarkers and fixRange -> fixMarker
   // TODO rework to lock-free
   synchronized void updateQuickFixFields(@NotNull Document document,
-                            @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
-                            long finalHighlighterRange) {
+                                         @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
+                                         long finalHighlighterRange) {
     if (quickFixActionMarkers != null && quickFixActionRanges != null && quickFixActionRanges.size() == quickFixActionMarkers.size() +1) {
       // markers already created, make quickFixRanges <-> quickFixMarkers consistent by adding new marker to the quickFixMarkers if necessary
       Pair<IntentionActionDescriptor, TextRange> last = ContainerUtil.getLastItem(quickFixActionRanges);
       Segment textRange = last.getSecond();
-      RangeMarker marker = getOrCreate(document, range2markerCache, TextRangeScalarUtil.toScalarRange(textRange));
-      quickFixActionMarkers.add(Pair.create(last.getFirst(), marker));
+      if (textRange.getEndOffset() <= document.getTextLength()) {
+        RangeMarker marker = getOrCreate(document, range2markerCache, TextRangeScalarUtil.toScalarRange(textRange));
+        quickFixActionMarkers.add(Pair.create(last.getFirst(), marker));
+      }
       return;
     }
     if (quickFixActionRanges != null && quickFixActionMarkers == null) {
       List<Pair<IntentionActionDescriptor, RangeMarker>> list = new ArrayList<>(quickFixActionRanges.size());
       for (Pair<IntentionActionDescriptor, TextRange> pair : quickFixActionRanges) {
         TextRange textRange = pair.second;
+        if (textRange.getEndOffset() > document.getTextLength()) continue;
         RangeMarker marker = getOrCreate(document, range2markerCache, TextRangeScalarUtil.toScalarRange(textRange));
         list.add(Pair.create(pair.first, marker));
       }
@@ -1037,7 +1040,7 @@ public class HighlightInfo implements Segment {
     if (fixRange == finalHighlighterRange) {
       fixMarker = null; // null means it the same as highlighter's range
     }
-    else {
+    else if (TextRangeScalarUtil.endOffset(fixRange) <= document.getTextLength()) {
       fixMarker = getOrCreate(document, range2markerCache, fixRange);
     }
   }
