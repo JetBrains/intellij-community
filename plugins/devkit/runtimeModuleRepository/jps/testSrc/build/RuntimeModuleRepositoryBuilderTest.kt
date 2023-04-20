@@ -7,6 +7,7 @@ import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDe
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
 import org.jetbrains.jps.builders.CompileScopeTestBuilder
 import org.jetbrains.jps.builders.JpsBuildTestCase
+import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -31,6 +32,14 @@ class RuntimeModuleRepositoryBuilderTest : JpsBuildTestCase() {
     addModule("a", withTests = false, withSources = false)
     buildAndCheck { 
       descriptor("a", resourceDirName = null)
+    }
+  }
+  
+  fun `test module with resources only`() {
+    val module = addModule("a", withTests = false, withSources = false)
+    module.addSourceRoot(getUrl("a/res"), JavaResourceRootType.RESOURCE)
+    buildAndCheck { 
+      descriptor("a")
     }
   }
 
