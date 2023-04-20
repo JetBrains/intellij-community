@@ -9,18 +9,25 @@ use anyhow::{bail, Result};
 use log::{debug, warn};
 use utils::{canonical_non_unc, get_current_exe, get_path_from_env_var, get_readable_file_from_env_var, is_executable, is_readable, PathExt, read_file_to_end};
 
-use crate::{get_config_home, LaunchConfiguration, ProductInfo};
+use crate::{get_config_home, LaunchConfiguration, ProductInfo, ProductInfoLaunchField};
 
 const IDE_HOME_LOOKUP_DEPTH: usize = 5;
 
 pub struct DefaultLaunchConfiguration {
     pub product_info: ProductInfo,
+    launch_data_idx: usize,
     pub ide_home: PathBuf,
     pub ide_bin: PathBuf,
     pub user_config_dir: PathBuf,
     pub args: Vec<String>,
     pub launcher_base_name: String,
     pub env_var_base_name: String
+}
+
+impl DefaultLaunchConfiguration {
+    fn launch_data(&self) -> &ProductInfoLaunchField {
+        &self.product_info.launch[self.launch_data_idx]
+    }
 }
 
 impl LaunchConfiguration for DefaultLaunchConfiguration {
@@ -30,7 +37,7 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
 
     fn get_intellij_vm_options(&self) -> Result<Vec<String>> {
         let vm_options_from_files = self.get_merged_vm_options_from_files()?;
-        let additional_jvm_arguments = &self.product_info.get_current_platform_launch_field()?.additionalJvmArguments;
+        let additional_jvm_arguments = &self.launch_data().additionalJvmArguments;
 
         let mut result = Vec::with_capacity(vm_options_from_files.capacity() + additional_jvm_arguments.capacity());
         result.extend_from_slice(&vm_options_from_files);
@@ -59,7 +66,7 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
     }
 
     fn get_class_path(&self) -> Result<Vec<String>> {
-        let class_path = &self.product_info.launch[0].bootClassPathJarNames;
+        let class_path = &self.launch_data().bootClassPathJarNames;
         let lib_path = &self.ide_home.join("lib");
 
         let lib_path_canonical = std::fs::canonicalize(lib_path)?;
@@ -117,16 +124,17 @@ impl DefaultLaunchConfiguration {
         debug!("OS config dir: '{config_home:?}'");
 
         let product_info = read_product_info(&product_info_file)?;
-        assert!(!product_info.launch.is_empty());
+        let launch_data_idx = Self::get_launch_data_idx(&product_info)?;
 
         let user_config_dir = config_home.join(&product_info.productVendor).join(&product_info.dataDirectoryName);
 
-        let vm_options_file_path = product_info.launch[0].vmOptionsFilePath.as_str();
+        let vm_options_file_path = product_info.launch[launch_data_idx].vmOptionsFilePath.as_str();
         let launcher_base_name = Self::get_launcher_base_name(vm_options_file_path);
         let env_var_base_name = Self::get_env_var_base_name(&launcher_base_name);
 
         let config = DefaultLaunchConfiguration {
             product_info,
+            launch_data_idx,
             ide_home,
             ide_bin,
             user_config_dir,
@@ -136,6 +144,18 @@ impl DefaultLaunchConfiguration {
         };
 
         Ok(config)
+    }
+
+    /// Locates the OS-specific launch information block, when there are more than one.
+    fn get_launch_data_idx(product_info: &ProductInfo) -> Result<usize> {
+        match product_info.launch.len() {
+            0 => bail!("Product descriptor is corrupted: 'launch' field is missing"),
+            1 => Ok(0),
+            _ => match product_info.launch.iter().enumerate().find(|(_, rec)| rec.os.to_lowercase() == env::consts::OS) {
+                Some((idx, _)) => Ok(idx),
+                None => bail!("Product descriptor is corrupted: no 'launch' field for '{}'", env::consts::OS)
+            },
+        }
     }
 
     /// Extracts a base name (i.e. a name without the extension and architecture suffix)

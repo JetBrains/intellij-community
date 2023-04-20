@@ -14,8 +14,8 @@
       "javaExecutablePath": "../jbr/Contents/Home/bin/java",
       "vmOptionsFilePath": "../bin/xplat.vmoptions",
       "bootClassPathJarNames": [
-        "test.jar",
-        "app.jar"
+        "app.jar",
+        "boot-macos.jar"
       ],
       "additionalJvmArguments": [
         "-Didea.vendor.name=JetBrains",

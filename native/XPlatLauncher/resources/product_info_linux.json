@@ -16,7 +16,7 @@
       "startupWmClass": "jetbrains-idea",
       "bootClassPathJarNames": [
         "app.jar",
-        "test.jar"
+        "boot-linux.jar"
       ],
       "additionalJvmArguments": [
         "-Didea.vendor.name=JetBrains",

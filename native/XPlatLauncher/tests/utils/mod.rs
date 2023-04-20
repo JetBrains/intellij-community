@@ -200,7 +200,7 @@ fn layout_launcher(launcher_location: LauncherLocation, target_dir: &Path, share
     // │   └── idea.properties
     // ├── lib/
     // │   └── app.jar
-    // │   └── test.jar
+    // │   └── boot-linux.jar
     // ├── jbr/
     // └── product-info.json
 
@@ -214,7 +214,7 @@ fn layout_launcher(launcher_location: LauncherLocation, target_dir: &Path, share
         vec![
             "bin/idea.properties",
             "bin/xplat64.vmoptions",
-            "lib/test.jar"
+            "lib/boot-linux.jar"
         ],
         vec![
             (&shared_env.launcher_path, launcher_rel_path),
@@ -239,7 +239,7 @@ fn layout_launcher(launcher_location: LauncherLocation, target_dir: &Path, share
     //     │   └── product-info.json
     //     ├── lib/
     //     │   └── app.jar
-    //     │   └── test.jar
+    //     │   └── boot-macos.jar
     //     └── jbr/
 
     let launcher_rel_path = match launcher_location {
@@ -253,7 +253,7 @@ fn layout_launcher(launcher_location: LauncherLocation, target_dir: &Path, share
         vec![
             "bin/idea.properties",
             "bin/xplat.vmoptions",
-            "lib/test.jar"
+            "lib/boot-macos.jar"
         ],
         vec![
             (&shared_env.launcher_path, launcher_rel_path),
@@ -276,7 +276,7 @@ fn layout_launcher(launcher_location: LauncherLocation, target_dir: &Path, share
     // │   └── idea.properties
     // ├── lib/
     // │   └── app.jar
-    // │   └── test.jar
+    // │   └── boot-windows.jar
     // ├── jbr/
     // └── product-info.json
 
@@ -290,7 +290,7 @@ fn layout_launcher(launcher_location: LauncherLocation, target_dir: &Path, share
         vec![
             "bin\\idea.properties",
             "bin\\xplat64.exe.vmoptions",
-            "lib\\test.jar"
+            "lib\\boot-windows.jar"
         ],
         vec![
             (&shared_env.launcher_path, launcher_rel_path),

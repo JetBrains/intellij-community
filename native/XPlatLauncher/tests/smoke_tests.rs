@@ -4,7 +4,7 @@ pub mod utils;
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
-    use std::fs;
+    use std::{env, fs};
     use std::fs::File;
     use std::io::Write;
     use std::path::PathBuf;
@@ -24,10 +24,10 @@ mod tests {
         let dump = run_launcher(&LauncherRunSpec::standard().with_dump().assert_status()).dump();
         let classpath = &dump.systemProperties["java.class.path"];
 
-        assert!(
-            classpath.contains("app.jar"),
-            "app.jar is not present in classpath"
-        );
+        assert!(classpath.contains("app.jar"), "app.jar is not present in classpath: {}", classpath);
+
+        let os_specific_jar = format!("boot-{}.jar", env::consts::OS);
+        assert!(classpath.contains(&os_specific_jar), "{} is not present in classpath: {}", os_specific_jar, classpath);
     }
 
     #[test]

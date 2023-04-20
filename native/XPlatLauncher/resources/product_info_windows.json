@@ -14,8 +14,8 @@
       "javaExecutablePath": "jbr/bin/java.exe",
       "vmOptionsFilePath": "bin/xplat64.exe.vmoptions",
       "bootClassPathJarNames": [
-        "test.jar",
-        "app.jar"
+        "app.jar",
+        "boot-windows.jar"
       ],
       "additionalJvmArguments": [
         "-Didea.vendor.name=JetBrains",

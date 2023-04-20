@@ -150,19 +150,6 @@ pub struct ProductInfoLaunchField {
     pub additionalJvmArguments: Vec<String>
 }
 
-impl ProductInfo {
-    pub fn get_current_platform_launch_field(&self) -> Result<&ProductInfoLaunchField> {
-        let current_os = env::consts::OS;
-        let os_specific_launch_field =
-            self.launch.iter().find(|&l| l.os.to_lowercase() == current_os);
-
-        match os_specific_launch_field {
-            None => bail!("Could not find current os {current_os} launch element in product-info.json 'launch' field"),
-            Some(x) => Ok(x),
-        }
-    }
-}
-
 trait LaunchConfiguration {
     fn get_args(&self) -> &[String];
 
