@@ -1,8 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndex
 import java.nio.file.Path
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.listDirectoryEntries
 
 class JpsCompilationData(val dataStorageRoot: Path, val buildLogFile: Path, categoriesWithDebugLevelNullable: String?) {
   val compiledModules: MutableSet<String> = LinkedHashSet()
@@ -14,7 +16,8 @@ class JpsCompilationData(val dataStorageRoot: Path, val buildLogFile: Path, cate
 
   val categoriesWithDebugLevel: String = categoriesWithDebugLevelNullable ?: ""
   internal fun isIncrementalCompilationDataAvailable(): Boolean {
-    return CompilerReferenceIndex.exists(dataStorageRoot.toFile())
+    return dataStorageRoot.exists() && dataStorageRoot.isDirectory() &&
+           dataStorageRoot.listDirectoryEntries().any()
   }
 
   fun reset() {
