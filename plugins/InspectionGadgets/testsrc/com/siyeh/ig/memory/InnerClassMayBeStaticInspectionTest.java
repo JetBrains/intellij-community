@@ -1,7 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.memory;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +16,17 @@ public class InnerClassMayBeStaticInspectionTest extends LightJavaInspectionTest
                         "public @interface Nested {}");
   }
 
-  public void testInnerClassMayBeStatic() { doTest(); }
+  public void testInnerClassMayBeStatic() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15, () -> {
+      doTest();
+    });
+  }
+
+  public void testInnerStaticsJDK16() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_16, () -> {
+      doTest();
+    });
+  }
 
   @Nullable
   @Override

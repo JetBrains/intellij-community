@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ig.memory;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.BatchQuickFix;
@@ -212,11 +213,11 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      if (aClass.getContainingClass() != null && !aClass.hasModifierProperty(PsiModifier.STATIC)) {
-        return;
-      }
-      if (PsiUtil.isLocalOrAnonymousClass(aClass)) {
-        return;
+      if (aClass.getContainingClass() != null && !aClass.hasModifierProperty(PsiModifier.STATIC) ||
+          PsiUtil.isLocalOrAnonymousClass(aClass)) {
+        if (!HighlightingFeature.INNER_STATICS.isAvailable(aClass)) {
+          return;
+        }
       }
       for (PsiClass innerClass : aClass.getInnerClasses()) {
         if (innerClass.hasModifierProperty(PsiModifier.STATIC)) {
