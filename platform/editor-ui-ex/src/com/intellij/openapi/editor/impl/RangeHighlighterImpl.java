@@ -355,12 +355,13 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
 
   private void fireChanged(boolean renderersChanged, boolean fontStyleChanged, boolean foregroundColorChanged) {
     if (isFlagSet(IN_BATCH_CHANGE_MASK)) {
+      // under IN_BATCH_CHANGE_MASK, do not fire events, just add flags above
       int changedFlags = CHANGED_MASK|RENDERERS_CHANGED_MASK|FONT_STYLE_CHANGED_MASK|FOREGROUND_COLOR_CHANGED_MASK;
       int value = CHANGED_MASK
         | (renderersChanged ? RENDERERS_CHANGED_MASK : 0)
         | (fontStyleChanged ? FONT_STYLE_CHANGED_MASK : 0)
         | (foregroundColorChanged ? FOREGROUND_COLOR_CHANGED_MASK : 0);
-      setMask(changedFlags, value);
+      setMask(changedFlags, value | myFlags);
     }
     else {
       myModel.fireAttributesChanged(this, renderersChanged, fontStyleChanged, foregroundColorChanged);
