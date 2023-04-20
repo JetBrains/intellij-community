@@ -137,7 +137,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
             MacToolbarFrameHeader(frame = frame, root = this)
           }
           else {
-            ToolbarFrameHeader(frame = frame, ideMenu = IdeMenuBar.createMenuBar())
+            ToolbarFrameHeader(frame = frame)
           }
         }
         else {
@@ -148,7 +148,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
           customFrameTitlePane = customFrameTitlePane,
           selectedEditorFilePath = selectedEditorFilePath,
         )
-        layeredPane.add(customFrameTitlePane.getComponent(), (JLayeredPane.DEFAULT_LAYER - 2) as Any)
+        layeredPane.add(customFrameTitlePane.getComponent(), (JLayeredPane.DEFAULT_LAYER - 3) as Any)
       }
       else {
         helper = UndecoratedHelper

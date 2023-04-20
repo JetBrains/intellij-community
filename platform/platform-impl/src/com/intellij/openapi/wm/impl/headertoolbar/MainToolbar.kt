@@ -44,7 +44,7 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
   init {
     background = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true)
     isOpaque = true
-    mainMenuButton = if (IdeRootPane.isMenuButtonInToolbar) MainMenuButton() else null
+    mainMenuButton = if (IdeRootPane.isMenuButtonInToolbar) MainMenuButton(null) else null
     ClientProperty.put(this, IdeBackgroundUtil.NO_BACKGROUND, true)
   }
 
