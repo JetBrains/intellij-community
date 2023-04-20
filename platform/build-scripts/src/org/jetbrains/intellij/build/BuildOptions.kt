@@ -356,11 +356,6 @@ class BuildOptions(
   val nonBundledPluginDirectoriesToInclude: Set<String> = getSetProperty("intellij.build.non.bundled.plugin.dirs.to.include")
 
   /**
-   * Specifies [org.jetbrains.intellij.build.JetBrainsRuntimeDistribution] build to be bundled with distributions. If `null` then `runtimeBuild` from [org.jetbrains.intellij.build.dependencies.DependenciesProperties] will be used.
-   */
-  var bundledRuntimeBuild: String? = System.getProperty("intellij.build.bundled.jre.build")
-
-  /**
    * Specifies a prefix to use when looking for an artifact of a [org.jetbrains.intellij.build.JetBrainsRuntimeDistribution] to be bundled with distributions.
    * If `null`, `"jbr_jcef-"` will be used.
    */
