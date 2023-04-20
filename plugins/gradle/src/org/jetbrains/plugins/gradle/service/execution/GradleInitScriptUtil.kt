@@ -79,15 +79,19 @@ fun loadJvmDebugInitScript(
   debuggerId: String,
   parameters: String
 ): String {
-  return loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/JvmDebugInit.gradle", java.util.Map.of(
-    "IMPORT_GRADLE_TASKS_UTIL", loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/GradleTasksUtil.gradle"),
-    "DEBUGGER_ID", debuggerId.toGroovyStringLiteral(),
-    "PROCESS_PARAMETERS", parameters.toGroovyStringLiteral()
+  return loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/JvmDebugInit.gradle", mapOf(
+    "IMPORT_GRADLE_TASKS_UTIL" to loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/GradleTasksUtil.gradle"),
+    "DEBUGGER_ID" to debuggerId.toGroovyStringLiteral(),
+    "PROCESS_PARAMETERS" to parameters.toGroovyStringLiteral()
   ))
 }
 
-private fun loadInitScript(resourcePath: String, parameters: Map<String, String>): String {
-  var script = loadInitScript(resourcePath)
+private fun loadInitScript(resourcePath: String, parameters: Map<String, String> = emptyMap()): String {
+  return loadInitScript(Init::class.java, resourcePath, parameters)
+}
+
+private fun loadInitScript(aClass: Class<*>, resourcePath: String, parameters: Map<String, String>): String {
+  var script = loadInitScript(aClass, resourcePath)
   for ((key, value) in parameters) {
     val replacement = Matcher.quoteReplacement(value)
     script = script.replaceFirst(key.toRegex(), replacement)
@@ -95,8 +99,8 @@ private fun loadInitScript(resourcePath: String, parameters: Map<String, String>
   return script
 }
 
-private fun loadInitScript(resourcePath: String): String {
-  val resource = Init::class.java.getResource(resourcePath)
+private fun loadInitScript(aClass: Class<*>, resourcePath: String): String {
+  val resource = aClass.getResource(resourcePath)
   if (resource == null) {
     throw IllegalArgumentException("Cannot find init file $resourcePath")
   }
@@ -109,22 +113,25 @@ private fun loadInitScript(resourcePath: String): String {
 }
 
 fun createInitScript(prefix: String, content: String): File {
+  val tempDirectory = File(FileUtil.getTempDirectory())
   val contentBytes = content.toByteArray(StandardCharsets.UTF_8)
-  val contentLength = contentBytes.size
-  return FileUtil.findSequentFile(File(FileUtil.getTempDirectory()), prefix, GradleConstants.EXTENSION) { file: File ->
+  return FileUtil.findSequentFile(tempDirectory, prefix, GradleConstants.EXTENSION) { file ->
     try {
       if (!file.exists()) {
-        FileUtil.writeToFile(file, contentBytes, false)
-        @Suppress("SSBasedInspection")
+        file.writeBytes(contentBytes)
         file.deleteOnExit()
         return@findSequentFile true
       }
-      if (contentLength.toLong() != file.length()) return@findSequentFile false
-      return@findSequentFile content == FileUtil.loadFile(file, StandardCharsets.UTF_8)
+      return@findSequentFile isContentEquals(file, contentBytes)
     }
     catch (ignore: IOException) {
       // Skip file with access issues. Will attempt to check the next file
     }
     false
   }
+}
+
+private fun isContentEquals(file: File, content: ByteArray): Boolean {
+  return content.size.toLong() == file.length() &&
+         content.contentEquals(file.readBytes())
 }
