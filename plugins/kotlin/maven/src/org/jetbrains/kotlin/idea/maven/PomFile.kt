@@ -291,22 +291,8 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
         return plugin.executions.executions.firstOrNull { it.id.stringValue == executionId }
     }
 
-    fun isExecutionEnabled(plugin: MavenPlugin?, executionId: String): Boolean {
-        if (plugin == null) {
-            return true
-        }
-
-        if (domModel.build.plugins.plugins.any {
-                it.groupId.stringValue == "org.apache.maven.plugins"
-                        && it.artifactId.stringValue == "maven-compiler-plugin"
-                        && it.executions.executions.any { it.id.stringValue == executionId && it.phase.stringValue == DefaultPhases.None }
-            }) {
-            return false
-        }
-
-        return plugin.executions.filter { it.executionId == executionId }.all { execution ->
-            execution.phase == DefaultPhases.None
-        }
+    fun findExecution(plugin: MavenPlugin?, executionId: String): MavenPlugin.Execution? {
+        return plugin?.executions?.firstOrNull { it.executionId == executionId }
     }
 
     fun executionSourceDirs(execution: MavenDomPluginExecution, sourceDirs: List<String>, forceSingleSource: Boolean = false) {
