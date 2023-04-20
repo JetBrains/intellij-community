@@ -3,9 +3,6 @@
 import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper
 
 //noinspection GrUnresolvedAccess
-IMPORT_GRADLE_TASKS_UTIL
-
-//noinspection GrUnresolvedAccess
 String debuggerId = DEBUGGER_ID
 //noinspection GrUnresolvedAccess
 String processParameters = PROCESS_PARAMETERS

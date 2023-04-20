@@ -66,12 +66,13 @@ fun createWrapperInitScript(
 }
 
 fun createTestInitScript(tasks: List<GradleCommandLineTask>): File {
-  val initScript = loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/TestInit.gradle", mapOf(
-    "IMPORT_GRADLE_TASKS_UTIL" to loadInitScript(
-      "/org/jetbrains/plugins/gradle/tooling/internal/init/GradleTasksUtil.gradle"),
-    "TEST_TASKS_WITH_PATTERNS" to tasks.associate { it.name to it.getTestPatterns() }
-      .toGroovyMapLiteral({ toGroovyStringLiteral() }, { toGroovyListLiteral { toGroovyStringLiteral() } })
-  ))
+  val initScript = joinInitScripts(
+    loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/GradleTasksUtil.gradle"),
+    loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/TestInit.gradle", mapOf(
+      "TEST_TASKS_WITH_PATTERNS" to tasks.associate { it.name to it.getTestPatterns() }
+        .toGroovyMapLiteral({ toGroovyStringLiteral() }, { toGroovyListLiteral { toGroovyStringLiteral() } })
+    ))
+  )
   return createInitScript(TEST_INIT_SCRIPT_NAME, initScript)
 }
 
@@ -79,11 +80,17 @@ fun loadJvmDebugInitScript(
   debuggerId: String,
   parameters: String
 ): String {
-  return loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/JvmDebugInit.gradle", mapOf(
-    "IMPORT_GRADLE_TASKS_UTIL" to loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/GradleTasksUtil.gradle"),
-    "DEBUGGER_ID" to debuggerId.toGroovyStringLiteral(),
-    "PROCESS_PARAMETERS" to parameters.toGroovyStringLiteral()
-  ))
+  return joinInitScripts(
+    loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/GradleTasksUtil.gradle"),
+    loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/JvmDebugInit.gradle", mapOf(
+      "DEBUGGER_ID" to debuggerId.toGroovyStringLiteral(),
+      "PROCESS_PARAMETERS" to parameters.toGroovyStringLiteral()
+    ))
+  )
+}
+
+private fun joinInitScripts(vararg initScripts: String): String {
+  return initScripts.joinToString(System.lineSeparator())
 }
 
 private fun loadInitScript(resourcePath: String, parameters: Map<String, String> = emptyMap()): String {
