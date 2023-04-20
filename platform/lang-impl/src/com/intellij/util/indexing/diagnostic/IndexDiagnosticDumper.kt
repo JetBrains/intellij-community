@@ -266,7 +266,6 @@ class IndexDiagnosticDumper : Disposable {
   }
 
   fun onScanningFinished(projectScanningHistory: ProjectScanningHistoryImpl) {
-    projectScanningHistory.finishTracking()
     // try {
     if (!shouldDumpAlternativeDiagnostics) {
       return

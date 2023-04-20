@@ -553,17 +553,12 @@ public class UnindexedFilesScanner implements FilesScanningTask {
     ProjectIndexingHistoryImpl projectIndexingHistory =
       new ProjectIndexingHistoryImpl(myProject, myIndexingReason, myScanningType);
     ProjectScanningHistoryImpl scanningHistory = new ProjectScanningHistoryImpl(myProject, myIndexingReason, myScanningType);
-    try {
-      myIndex.loadIndexes();
-      myIndex.filesUpdateStarted(myProject, isFullIndexUpdate());
-      IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
-    }
-    catch (Throwable e) {
-      scanningHistory.finishTracking();
-      throw e;
-    }
+    myIndex.loadIndexes();
+    myIndex.filesUpdateStarted(myProject, isFullIndexUpdate());
+    IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
     Ref<StatusMark> markRef = new Ref<>();
     try {
+      scanningHistory.startDumbModeBeginningTracking();
       ((GistManagerImpl)GistManager.getInstance()).
         runWithMergingDependentCacheInvalidations(() -> scanAndUpdateUnindexedFiles(projectIndexingHistory, scanningHistory,
                                                                                     indicator, markRef));
@@ -577,6 +572,7 @@ public class UnindexedFilesScanner implements FilesScanningTask {
       throw e;
     }
     finally {
+      scanningHistory.finishDumbModeBeginningTracking();
       myIndex.filesUpdateFinished(myProject);
       projectIndexingHistory.finishTotalUpdatingTime();
       if (DependenciesIndexedStatusService.shouldBeUsed() && IndexInfrastructure.hasIndices()) {
