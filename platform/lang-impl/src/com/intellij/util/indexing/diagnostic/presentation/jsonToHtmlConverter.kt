@@ -1092,10 +1092,6 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
 
               tr { td("Scanning stages w/o pauses: iterators creation time"); td(times.creatingIteratorsTime.presentableDuration()) }
               tr {
-                td("Scanning stages w/o pauses: pushing properties of refreshed files time")
-                td(times.delayedPushPropertiesStageTime.presentableDuration())
-              }
-              tr {
                 td("Scanning stages w/o pauses: time of collecting files to compute index values")
                 td(times.scanFilesTime.presentableDuration())
               }
