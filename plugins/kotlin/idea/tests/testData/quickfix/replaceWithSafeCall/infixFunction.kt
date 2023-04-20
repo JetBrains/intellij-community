@@ -2,7 +2,6 @@
 infix fun Int.add(other: Int?): Int {
     return this + 0
 }
-
 fun foo() {
     val name: String? = null
 
