@@ -23,7 +23,7 @@ import java.io.File
 import java.util.regex.Pattern
 
 abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotlinConverterTest() {
-    val testHeaderPattern = Pattern.compile("//(element|expression|statement|method|class|file|comp)\n")
+    private val testHeaderPattern: Pattern = Pattern.compile("//(element|expression|statement|method|class|file|comp)\n")
 
     // FIXME: remove after KTIJ-5630
     private fun doTestWithSlowAssertion(directives: Directives, block: () -> Unit) {
@@ -171,7 +171,7 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
         return myFixture.configureByText("converterTestFile.java", text) as PsiJavaFile
     }
 
-    protected fun createKotlinFile(text: String): KtFile {
+    private fun createKotlinFile(text: String): KtFile {
         return myFixture.configureByText("converterTestFile.kt", text) as KtFile
     }
 }
