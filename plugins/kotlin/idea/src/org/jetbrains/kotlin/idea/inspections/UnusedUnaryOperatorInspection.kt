@@ -7,11 +7,14 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.prevLeafs
+import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -92,14 +95,21 @@ class UnusedUnaryOperatorInspection : AbstractKotlinInspection() {
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val prefixExpression = descriptor.psiElement as? KtPrefixExpression ?: return
             val baseExpression = prefixExpression.baseExpression ?: return
-            val prevLeaf = prefixExpression.getPrevLeafIgnoringWhitespaceAndComments() ?: return
+            val prevLeafStartOffset = prefixExpression.getPrevLeafIgnoringWhitespaceAndComments()?.startOffset ?: return
+            val prefixEndOffset = prefixExpression.endOffset
 
             val editor = prefixExpression.findExistingEditor() ?: return
             val document = editor.document
+            val documentManager = PsiDocumentManager.getInstance(project)
+            val file = prefixExpression.containingFile
 
             prefixExpression.replace(baseExpression)
-            PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document)
-            document.insertString(prevLeaf.startOffset + 1, " ${prefixExpression.operationReference.text}")
+            documentManager.doPostponedOperationsAndUnblockDocument(document)
+
+            document.insertString(prevLeafStartOffset + 1, " ${prefixExpression.operationReference.text}")
+            documentManager.commitDocument(document)
+
+            CodeStyleManager.getInstance(project).adjustLineIndent(file, TextRange(prevLeafStartOffset, prefixEndOffset))
         }
     }
 }

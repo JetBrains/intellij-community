@@ -2,5 +2,5 @@
 // WITH_STDLIB
 fun main() {
     val a = "2".toBigDecimal() -
-    "4".toBigDecimal()
+            "4".toBigDecimal()
 }

@@ -3,5 +3,5 @@ fun foo() = 1.1
 
 fun main() {
     val a = 2 - foo() - // comment
-    4
+            4
 }
