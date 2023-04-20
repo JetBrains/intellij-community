@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
+import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
@@ -83,7 +84,7 @@ class UnusedUnaryOperatorInspection : AbstractKotlinInspection() {
         }
     }
 
-    private class MoveUnaryOperatorToPreviousLineFix : LocalQuickFix {
+    private class MoveUnaryOperatorToPreviousLineFix : LocalQuickFix, HighPriorityAction {
         override fun getName() = KotlinBundle.message("move.unary.operator.to.previous.line.fix.text")
 
         override fun getFamilyName() = name
