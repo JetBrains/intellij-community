@@ -8,10 +8,7 @@ import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 import org.jetbrains.plugins.textmate.plist.PListValue;
 import org.jetbrains.plugins.textmate.plist.Plist;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ShellVariablesRegistryImpl implements ShellVariablesRegistry {
@@ -38,7 +35,7 @@ public class ShellVariablesRegistryImpl implements ShellVariablesRegistry {
 
   public void addVariable(@NotNull TextMateShellVariable variable) {
     if (!variable.name.isEmpty()) {
-      myVariables.computeIfAbsent(variable.name, (key) -> new ArrayList<>()).add(variable);
+      myVariables.computeIfAbsent(variable.name, key -> Collections.synchronizedList(new ArrayList<>())).add(variable);
     }
   }
 
