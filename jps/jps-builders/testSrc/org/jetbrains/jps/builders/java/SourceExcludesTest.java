@@ -51,11 +51,15 @@ public class SourceExcludesTest extends JpsBuildTestCase {
   }
 
   public void testJavadocSnippetsExcludedInSourceRoot() {
-    String file = createFile("src/A.java", "public class A {}");
-    createFile("src/snippet-files/B.java", "public class B {}");
+    JpsJavaExtensionService.getInstance().getCompilerConfiguration(myProject).addResourcePattern("*.txt");
+
+    String file = createFile(JavadocSnippetsSkipFilter.SNIPPETS_FOLDER + "/src/A.java", "public class A {}");
+    createFile(JavadocSnippetsSkipFilter.SNIPPETS_FOLDER + "/src/res.txt", "COPIED RESOURCE");
+    createFile(JavadocSnippetsSkipFilter.SNIPPETS_FOLDER + "/src/" + JavadocSnippetsSkipFilter.SNIPPETS_FOLDER + "/B.java", "public class B {}");
+    createFile(JavadocSnippetsSkipFilter.SNIPPETS_FOLDER + "/src/" + JavadocSnippetsSkipFilter.SNIPPETS_FOLDER + "/res.txt", "FILTERED RESOURCE");
     JpsModule m = addModule("m");
     m.addSourceRoot(JpsPathUtil.pathToUrl(PathUtil.getParentPath(file)), JavaSourceRootType.SOURCE);
     rebuildAllModules();
-    assertOutput(m, fs().file("A.class"));
+    assertOutput(m, fs().file("A.class").file("res.txt", "COPIED RESOURCE"));
   }
 }

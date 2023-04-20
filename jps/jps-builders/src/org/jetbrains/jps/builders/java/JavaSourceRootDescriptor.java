@@ -1,11 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java;
 
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.incremental.BuilderRegistry;
@@ -18,7 +15,6 @@ import java.io.FileFilter;
 import java.util.Set;
 
 public class JavaSourceRootDescriptor extends BuildRootDescriptor {
-  private static final String SNIPPET_DIR_PATTERN = "/snippet-files/";
   private final FileFilter myFilterForExcludedPatterns;
   @NotNull
   public final File root;
@@ -99,12 +95,8 @@ public class JavaSourceRootDescriptor extends BuildRootDescriptor {
   public FileFilter createFileFilter() {
     final JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getCompilerConfiguration(target.getModule().getProject()).getCompilerExcludes();
     final FileFilter baseFilter = BuilderRegistry.getInstance().getModuleBuilderFileFilter();
-    return file -> baseFilter.accept(file) && !excludes.isExcluded(file) && !isJavadocExtSnippet(file) && myFilterForExcludedPatterns.accept(file);
-  }
-
-  private static boolean isJavadocExtSnippet(File file) {
-    String path = FileUtilRt.toSystemIndependentName(file.getPath());
-    return SystemInfoRt.isFileSystemCaseSensitive? StringUtil.contains(path, SNIPPET_DIR_PATTERN) : StringUtil.containsIgnoreCase(path, SNIPPET_DIR_PATTERN);
+    final JavadocSnippetsSkipFilter snippetsSkipFilter = new JavadocSnippetsSkipFilter(getRootFile());
+    return file -> baseFilter.accept(file) && !excludes.isExcluded(file) && snippetsSkipFilter.accept(file) && myFilterForExcludedPatterns.accept(file);
   }
 
   @Override
