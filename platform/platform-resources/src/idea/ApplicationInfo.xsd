@@ -86,7 +86,9 @@
     <xs:attribute type="xs:string" name="script">
       <xs:annotation>
         <xs:documentation>
-          Base name of the script files (*.exe, *.bat, *.sh) from the product 'bin' directory without extension.
+          The base name (i.e. a name without the extension and architecture suffix)
+          of launcher files (bin/xxx64.exe, bin/xxx.bat, bin/xxx.sh, MacOS/xxx),
+          usually a short product name in lower case (e.g. "idea").
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>

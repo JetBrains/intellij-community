@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
@@ -18,8 +18,12 @@ import java.util.function.BiPredicate
  */
 abstract class ProductProperties {
   /**
-   *  The base name for script files (*.bat, *.sh, *.exe), usually a shortened product name in lower case
-   * (e.g. 'idea' for IntelliJ IDEA, 'datagrip' for DataGrip).
+   * The base name (i.e. a name without the extension and architecture suffix)
+   * of launcher files (bin/xxx64.exe, bin/xxx.bat, bin/xxx.sh, MacOS/xxx),
+   * usually a short product name in lower case (`"idea"` for IntelliJ IDEA, `"webstorm"` for WebStorm, etc.).
+   *
+   * **Important:** please make sure that this property and the `//names@script` attribute in the product's `*ApplicationInfo.xml` file
+   * have the same value.
    */
   abstract val baseFileName: String
 
@@ -241,11 +245,11 @@ abstract class ProductProperties {
   var runtimeDistribution: JetBrainsRuntimeDistribution = JetBrainsRuntimeDistribution.JCEF
 
   /**
-   * A prefix for names of environment variables used by Windows and Linux distributions
+   * A prefix for names of environment variables used by product distributions
    * to allow users to customize location of the product runtime (`<PRODUCT>_JDK` variable),
    * *.vmoptions file (`<PRODUCT>_VM_OPTIONS`), `idea.properties` file (`<PRODUCT>_PROPERTIES`).
    */
-  open fun getEnvironmentVariableBaseName(appInfo: ApplicationInfoProperties) = appInfo.upperCaseProductName
+  open fun getEnvironmentVariableBaseName(appInfo: ApplicationInfoProperties) = appInfo.launcherName.uppercase().replace('-', '_')
 
   /**
    * Override this method to copy additional files to distributions of all operating systems.

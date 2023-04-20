@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -184,8 +184,9 @@ public final class ApplicationNamesInfo {
   }
 
   /**
-   * Returns the base name of the launcher file (*.exe, *.bat, *.sh) located in the product home's 'bin/' directory
-   * ({@code "idea"} for IntelliJ IDEA, {@code "webstorm"} for WebStorm etc.).
+   * Returns the base name (i.e. a name without the extension and architecture suffix)
+   * of launcher files (bin/xxx64.exe, bin/xxx.bat, bin/xxx.sh, MacOS/xxx)
+   * ({@code "idea"} for IntelliJ IDEA, {@code "webstorm"} for WebStorm, etc.).
    */
   public String getScriptName() {
     return myScriptName;
