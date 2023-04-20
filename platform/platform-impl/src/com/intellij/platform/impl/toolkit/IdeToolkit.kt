@@ -27,9 +27,12 @@ class IdeToolkit : SunToolkit() {
     val instance: IdeToolkit
       get() = Toolkit.getDefaultToolkit() as IdeToolkit
 
-    val clientInstance: ClientToolkit
+    private val isPluginEnabled: Boolean by lazy {
+      PluginManagerCore.getPluginSet().isPluginEnabled(PluginId.getId("com.jetbrains.codeWithMe"))
+    }
+
+    private val clientInstance: ClientToolkit
       get() {
-        val isPluginEnabled = PluginManagerCore.getPluginSet().isPluginEnabled(PluginId.getId("com.jetbrains.codeWithMe"))
         assert(isPluginEnabled) { "CodeWithMe plugin is not enabled" }
         return service()
       }
