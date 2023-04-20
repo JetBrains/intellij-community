@@ -1,19 +1,28 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
+import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.SelectInContextImpl;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.presentation.FilePresentationService;
 import com.intellij.psi.PsiElement;
+import com.intellij.toolWindow.InternalDecoratorImpl;
+import com.intellij.toolWindow.ToolWindowHeader;
 import com.intellij.ui.ClientProperty;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.popup.HintUpdateSupply;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.tabs.FileColorManagerImpl;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +37,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class ProjectViewTree extends DnDAwareTree {
+public class ProjectViewTree extends DnDAwareTree implements SpeedSearchSupply.SpeedSearchLocator, @NotNull DataProvider {
   private static final Logger LOG = Logger.getInstance(ProjectViewTree.class);
 
   /**
@@ -59,6 +68,8 @@ public class ProjectViewTree extends DnDAwareTree {
       }
       return editor;
     });
+
+    DataManager.registerDataProvider(this, this);
   }
 
   /**
@@ -88,6 +99,30 @@ public class ProjectViewTree extends DnDAwareTree {
   @Override
   public boolean isFileColorsEnabled() {
     return isFileColorsEnabledFor(this);
+  }
+
+  @Override
+  public @Nullable RelativeRectangle getSizeAndLocation(JComponent target) {
+    if (target == this) {
+      InternalDecoratorImpl tw = UIUtil.getParentOfType(InternalDecoratorImpl.class, this);
+      if (tw != null) {
+        ToolWindowHeader header = UIUtil.findComponentOfType(tw, ToolWindowHeader.class);
+        if (header != null) {
+          RelativePoint rp = new RelativePoint(header, new Point(-JBUI.scale(1), 0));
+          Dimension d = new Dimension(header.getWidth() + 2 * JBUI.scale(1), header.getHeight());
+          return new RelativeRectangle(rp, d);
+        }
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public @Nullable Object getData(@NotNull String dataId) {
+    if (PlatformDataKeys.SPEED_SEARCH_LOCATOR.is(dataId)) {
+      return this;
+    }
+    return null;
   }
 
   public static boolean isFileColorsEnabledFor(JTree tree) {
