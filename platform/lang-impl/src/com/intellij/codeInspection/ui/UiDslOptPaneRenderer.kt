@@ -237,8 +237,9 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
         is OptExpandableString -> {
           expandableTextField({s -> s.split(component.separator).toMutableList()}, 
                               {list -> list.joinToString(component.separator)})
+            .resizableColumn()
+            .align(Align.FILL)
             .applyToComponent {
-              columns = 40 // TODO: expand to the whole width 
               text = context.getOption(component.bindId) as String? ?: ""
             }
             .onChanged {
