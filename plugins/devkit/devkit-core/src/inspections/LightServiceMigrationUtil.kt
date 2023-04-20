@@ -39,14 +39,19 @@ internal object LightServiceMigrationUtil {
     val extensionPoint = extension.extensionPoint
     if (extensionPoint == null || !DomUtil.hasXml(extensionPoint.beanClass)) return null
     if (ServiceDescriptor::class.java.name != extensionPoint.beanClass.stringValue) return null
-    val serviceInterface = DevKitDomUtil.getAttribute(extension, "serviceInterface")
-    if (serviceInterface != null && DomUtil.hasXml(serviceInterface)) return null
-    val preload = DevKitDomUtil.getAttribute(extension, "preload")
-    if (preload != null && DomUtil.hasXml(preload)) return null
+    if (hasDisallowedAttributes(extension)) return null
     val serviceImplementation = DevKitDomUtil.getAttribute(extension, "serviceImplementation") ?: return null
     if (!DomUtil.hasXml(serviceImplementation)) return null
     val aClass = serviceImplementation.value as? PsiClass ?: return null
     return ServiceInfo(aClass, level)
+  }
+
+  private fun hasDisallowedAttributes(extension: Extension): Boolean {
+    for (attributeName in disallowedAttributes) {
+      val attribute = DevKitDomUtil.getAttribute(extension, attributeName)
+      if (attribute != null && DomUtil.hasXml(attribute)) return true
+    }
+    return false
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -70,3 +75,5 @@ internal object LightServiceMigrationUtil {
     return buildNumber != null && buildNumber.baselineVersion >= 193
   }
 }
+
+private val disallowedAttributes = setOf("serviceInterface", "os", "client", "overrides", "id", "preload")
