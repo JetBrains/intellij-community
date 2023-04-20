@@ -6877,6 +6877,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/decreaseVisibility/exposedReceiverType.kt");
         }
 
+        @TestMetadata("exposedReceiverTypeInternal.kt")
+        public void testExposedReceiverTypeInternal() throws Exception {
+            runTest("testData/quickfix/decreaseVisibility/exposedReceiverTypeInternal.kt");
+        }
+
+        @TestMetadata("exposedReceiverTypePrivate.kt")
+        public void testExposedReceiverTypePrivate() throws Exception {
+            runTest("testData/quickfix/decreaseVisibility/exposedReceiverTypePrivate.kt");
+        }
+
         @TestMetadata("exposedReturnType.kt")
         public void testExposedReturnType() throws Exception {
             runTest("testData/quickfix/decreaseVisibility/exposedReturnType.kt");
