@@ -487,6 +487,7 @@ private const val SECTION_STATS_PER_INDEXER_TITLE = "Statistics per indexer"
 private const val SECTION_SCANNING_ID = "id-scanning"
 private const val SECTION_SCANNING_TITLE = "Scanning"
 private const val SECTION_SCANNING_PER_PROVIDER_TITLE = "Scanning per provider"
+private const val SECTION_SCANNING_OF_REFRESHED_FILES_TITLE = "Scanning of refreshed files"
 
 private const val SECTION_INDEXING_ID = "id-indexing"
 private const val SECTION_INDEXING_TITLE = "Indexing"
@@ -1248,7 +1249,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
           if (scanningStatistics.numberOfScannedFiles != 0) {
             li {
               a("#$SECTION_SCANNING_ID") {
-                text(SECTION_SCANNING_TITLE)
+                text(SECTION_SCANNING_OF_REFRESHED_FILES_TITLE)
               }
             }
           }
@@ -1522,7 +1523,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
             table(classes = "table-with-margin narrow-activity-table") {
               thead {
                 tr {
-                  th("Scanning of refreshed files") { colSpan = "2" }
+                  th(SECTION_SCANNING_OF_REFRESHED_FILES_TITLE) { colSpan = "2" }
                 }
               }
               tbody {
