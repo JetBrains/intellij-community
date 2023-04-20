@@ -33,11 +33,13 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
     myAddStaticImport = addStaticImport;
   }
 
-  enum ApplicableType {NONE, ONLY_ARGUMENT, PARTLY, APPLICABLE}
+  enum ApplicableType {NONE, PARTLY, APPLICABLE}
+
   protected abstract ApplicableType isApplicable(@NotNull T member, @NotNull PsiElement place);
 
-  record MembersToImport<K>(List<K> applicable, List<K> all) {
+  record MembersToImport<K>(@NotNull List<K> applicable,@NotNull List<K> all) {
   }
+
   @NotNull MembersToImport<T> getMembersToImport() {
     final List<Pair<T, ApplicableType>> list = new ArrayList<>();
     final List<T> applicableList = new ArrayList<>();
@@ -45,13 +47,19 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
       registerMember(methodEntry.getKey(), methodEntry.getValue(), list, applicableList);
     }
 
+    Comparator<T> comparator = CodeInsightUtil.createSortIdenticalNamedMembersComparator(myPlace);
     if (applicableList.isEmpty()) {
-      list.sort(Comparator.<Pair<T, ApplicableType>, ApplicableType>comparing(t->t.getSecond(), Comparator.naturalOrder())
+      list.sort(Comparator.<Pair<T, ApplicableType>, ApplicableType>comparing(t -> t.getSecond(), Comparator.naturalOrder())
                   .reversed()
-                  .thenComparing(t->t.getFirst(), CodeInsightUtil.createSortIdenticalNamedMembersComparator(myPlace)));
+                  .thenComparing(t -> t.getFirst(), comparator));
     }
     else {
-      applicableList.sort(CodeInsightUtil.createSortIdenticalNamedMembersComparator(myPlace));
+      applicableList.sort(comparator);
+      applicableList.addAll(list.stream()
+                              .filter(t -> t.getSecond() == ApplicableType.PARTLY)
+                              .map(t -> t.getFirst())
+                              .sorted(comparator)
+                              .toList());
     }
     return new MembersToImport<>(applicableList, ContainerUtil.map(list, t -> t.getFirst()));
   }
@@ -72,9 +80,13 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
     ExpectedTypeInfo[] expectedTypes = getExpectedTypes();
     for (ExpectedTypeInfo info : expectedTypes) {
       if (TypeConversionUtil.isAssignable(info.getType(), fieldType)) return ApplicableType.APPLICABLE;
-      if (TypeConversionUtil.isAssignable(TypeConversionUtil.erasure(info.getType()), fieldType)) return ApplicableType.PARTLY;
+      if (info.getType() instanceof PsiClassType classType &&
+          classType.getParameters().length != 0 &&
+          TypeConversionUtil.isAssignable(TypeConversionUtil.erasure(info.getType()), fieldType)) {
+        return ApplicableType.PARTLY;
+      }
     }
-    return expectedTypes.length == 0 ? ApplicableType.APPLICABLE : ApplicableType.ONLY_ARGUMENT;
+    return expectedTypes.length == 0 ? ApplicableType.APPLICABLE : ApplicableType.NONE;
   }
 
   @Override
