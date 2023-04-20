@@ -1,6 +1,6 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.entities.test.api
 
-import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -14,33 +14,28 @@ import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
-import com.intellij.workspaceModel.storage.impl.extractOneToAbstractManyParent
-import com.intellij.workspaceModel.storage.impl.updateOneToAbstractManyParentOfChild
-import kotlin.jvm.JvmName
-import kotlin.jvm.JvmOverloads
-import kotlin.jvm.JvmStatic
+import com.intellij.workspaceModel.storage.impl.extractOneToManyChildren
+import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
-import org.jetbrains.deft.annotations.Abstract
 import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class SimpleChildAbstractEntityImpl(val dataSource: SimpleChildAbstractEntityData) : SimpleChildAbstractEntity, WorkspaceEntityBase() {
+open class ChainedParentEntityImpl(val dataSource: ChainedParentEntityData) : ChainedParentEntity, WorkspaceEntityBase() {
 
   companion object {
-    internal val PARENTINLIST_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositeAbstractEntity::class.java,
-                                                                                SimpleAbstractEntity::class.java,
-                                                                                ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
+    internal val CHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(ChainedParentEntity::class.java, ChainedEntity::class.java,
+                                                                         ConnectionId.ConnectionType.ONE_TO_MANY, true)
 
     val connections = listOf<ConnectionId>(
-      PARENTINLIST_CONNECTION_ID,
+      CHILD_CONNECTION_ID,
     )
 
   }
 
-  override val parentInList: CompositeAbstractEntity?
-    get() = snapshot.extractOneToAbstractManyParent(PARENTINLIST_CONNECTION_ID, this)
+  override val child: List<ChainedEntity>
+    get() = snapshot.extractOneToManyChildren<ChainedEntity>(CHILD_CONNECTION_ID, this)!!.toList()
 
   override val entitySource: EntitySource
     get() = dataSource.entitySource
@@ -49,9 +44,9 @@ open class SimpleChildAbstractEntityImpl(val dataSource: SimpleChildAbstractEnti
     return connections
   }
 
-  class Builder(result: SimpleChildAbstractEntityData?) : ModifiableWorkspaceEntityBase<SimpleChildAbstractEntity, SimpleChildAbstractEntityData>(
-    result), SimpleChildAbstractEntity.Builder {
-    constructor() : this(SimpleChildAbstractEntityData())
+  class Builder(result: ChainedParentEntityData?) : ModifiableWorkspaceEntityBase<ChainedParentEntity, ChainedParentEntityData>(
+    result), ChainedParentEntity.Builder {
+    constructor() : this(ChainedParentEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -60,7 +55,7 @@ open class SimpleChildAbstractEntityImpl(val dataSource: SimpleChildAbstractEnti
           return
         }
         else {
-          error("Entity SimpleChildAbstractEntity is already created in a different builder")
+          error("Entity ChainedParentEntity is already created in a different builder")
         }
       }
 
@@ -82,6 +77,17 @@ open class SimpleChildAbstractEntityImpl(val dataSource: SimpleChildAbstractEnti
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
       }
+      // Check initialization for list with ref type
+      if (_diff != null) {
+        if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(CHILD_CONNECTION_ID, this) == null) {
+          error("Field ChainedParentEntity#child should be initialized")
+        }
+      }
+      else {
+        if (this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] == null) {
+          error("Field ChainedParentEntity#child should be initialized")
+        }
+      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
@@ -90,7 +96,7 @@ open class SimpleChildAbstractEntityImpl(val dataSource: SimpleChildAbstractEnti
 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as SimpleChildAbstractEntity
+      dataSource as ChainedParentEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       updateChildToParentReferences(parents)
     }
@@ -105,63 +111,70 @@ open class SimpleChildAbstractEntityImpl(val dataSource: SimpleChildAbstractEnti
 
       }
 
-    override var parentInList: CompositeAbstractEntity?
+    // List of non-abstract referenced types
+    var _child: List<ChainedEntity>? = emptyList()
+    override var child: List<ChainedEntity>
       get() {
+        // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToAbstractManyParent(PARENTINLIST_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                                PARENTINLIST_CONNECTION_ID)] as? CompositeAbstractEntity
+          _diff.extractOneToManyChildren<ChainedEntity>(CHILD_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(true,
+                                                                                                                             CHILD_CONNECTION_ID)] as? List<ChainedEntity>
+                                                                                                 ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTINLIST_CONNECTION_ID)] as? CompositeAbstractEntity
+          this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? List<ChainedEntity> ?: emptyList()
         }
       }
       set(value) {
+        // Setter of the list of non-abstract referenced types
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            val data = (value.entityLinks[EntityLink(true, PARENTINLIST_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-            value.entityLinks[EntityLink(true, PARENTINLIST_CONNECTION_ID)] = data
+        if (_diff != null) {
+          for (item_value in value) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
+              // Backref setup before adding to store
+              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
+                item_value.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)] = this
+              }
+              // else you're attaching a new entity to an existing entity that is not modifiable
+
+              _diff.addEntity(item_value)
+            }
           }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
-        }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.updateOneToAbstractManyParentOfChild(PARENTINLIST_CONNECTION_ID, this, value)
+          _diff.updateOneToManyChildrenOfParent(CHILD_CONNECTION_ID, this, value)
         }
         else {
-          // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            val data = (value.entityLinks[EntityLink(true, PARENTINLIST_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-            value.entityLinks[EntityLink(true, PARENTINLIST_CONNECTION_ID)] = data
+          for (item_value in value) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
+              item_value.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)] = this
+            }
+            // else you're attaching a new entity to an existing entity that is not modifiable
           }
-          // else you're attaching a new entity to an existing entity that is not modifiable
 
-          this.entityLinks[EntityLink(false, PARENTINLIST_CONNECTION_ID)] = value
+          this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] = value
         }
-        changedProperty.add("parentInList")
+        changedProperty.add("child")
       }
 
-    override fun getEntityClass(): Class<SimpleChildAbstractEntity> = SimpleChildAbstractEntity::class.java
+    override fun getEntityClass(): Class<ChainedParentEntity> = ChainedParentEntity::class.java
   }
 }
 
-class SimpleChildAbstractEntityData : WorkspaceEntityData<SimpleChildAbstractEntity>() {
+class ChainedParentEntityData : WorkspaceEntityData<ChainedParentEntity>() {
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SimpleChildAbstractEntity> {
-    val modifiable = SimpleChildAbstractEntityImpl.Builder(null)
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ChainedParentEntity> {
+    val modifiable = ChainedParentEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): SimpleChildAbstractEntity {
+  override fun createEntity(snapshot: EntityStorage): ChainedParentEntity {
     return getCached(snapshot) {
-      val entity = SimpleChildAbstractEntityImpl(this)
+      val entity = ChainedParentEntityImpl(this)
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity
@@ -169,7 +182,7 @@ class SimpleChildAbstractEntityData : WorkspaceEntityData<SimpleChildAbstractEnt
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return SimpleChildAbstractEntity::class.java
+    return ChainedParentEntity::class.java
   }
 
   override fun serialize(ser: EntityInformation.Serializer) {
@@ -179,8 +192,7 @@ class SimpleChildAbstractEntityData : WorkspaceEntityData<SimpleChildAbstractEnt
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-    return SimpleChildAbstractEntity(entitySource) {
-      this.parentInList = parents.filterIsInstance<CompositeAbstractEntity>().singleOrNull()
+    return ChainedParentEntity(entitySource) {
     }
   }
 
@@ -193,7 +205,7 @@ class SimpleChildAbstractEntityData : WorkspaceEntityData<SimpleChildAbstractEnt
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as SimpleChildAbstractEntityData
+    other as ChainedParentEntityData
 
     if (this.entitySource != other.entitySource) return false
     return true
@@ -203,7 +215,7 @@ class SimpleChildAbstractEntityData : WorkspaceEntityData<SimpleChildAbstractEnt
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as SimpleChildAbstractEntityData
+    other as ChainedParentEntityData
 
     return true
   }

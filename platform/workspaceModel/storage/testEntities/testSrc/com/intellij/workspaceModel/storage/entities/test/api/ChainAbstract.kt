@@ -48,13 +48,13 @@ fun MutableEntityStorage.modifyEntity(entity: ParentChainEntity, modification: P
 @Abstract
 interface SimpleAbstractEntity : WorkspaceEntity {
 
-  val parentInList: CompositeAbstractEntity
+  val parentInList: CompositeAbstractEntity?
 
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder<T : SimpleAbstractEntity> : SimpleAbstractEntity, WorkspaceEntity.Builder<T>, ObjBuilder<T> {
     override var entitySource: EntitySource
-    override var parentInList: CompositeAbstractEntity
+    override var parentInList: CompositeAbstractEntity?
   }
 
   companion object : Type<SimpleAbstractEntity, Builder<SimpleAbstractEntity>>() {
@@ -82,7 +82,7 @@ interface CompositeAbstractEntity : SimpleAbstractEntity {
   @GeneratedCodeApiVersion(1)
   interface Builder<T : CompositeAbstractEntity> : CompositeAbstractEntity, SimpleAbstractEntity.Builder<T>, WorkspaceEntity.Builder<T>, ObjBuilder<T> {
     override var entitySource: EntitySource
-    override var parentInList: CompositeAbstractEntity
+    override var parentInList: CompositeAbstractEntity?
     override var children: List<SimpleAbstractEntity>
     override var parentEntity: ParentChainEntity?
   }
@@ -107,7 +107,7 @@ interface CompositeChildAbstractEntity : CompositeAbstractEntity {
   @GeneratedCodeApiVersion(1)
   interface Builder : CompositeChildAbstractEntity, CompositeAbstractEntity.Builder<CompositeChildAbstractEntity>, WorkspaceEntity.Builder<CompositeChildAbstractEntity>, ObjBuilder<CompositeChildAbstractEntity> {
     override var entitySource: EntitySource
-    override var parentInList: CompositeAbstractEntity
+    override var parentInList: CompositeAbstractEntity?
     override var children: List<SimpleAbstractEntity>
     override var parentEntity: ParentChainEntity?
   }
@@ -138,7 +138,7 @@ interface SimpleChildAbstractEntity : SimpleAbstractEntity {
   @GeneratedCodeApiVersion(1)
   interface Builder : SimpleChildAbstractEntity, SimpleAbstractEntity.Builder<SimpleChildAbstractEntity>, WorkspaceEntity.Builder<SimpleChildAbstractEntity>, ObjBuilder<SimpleChildAbstractEntity> {
     override var entitySource: EntitySource
-    override var parentInList: CompositeAbstractEntity
+    override var parentInList: CompositeAbstractEntity?
   }
 
   companion object : Type<SimpleChildAbstractEntity, Builder>(SimpleAbstractEntity) {
