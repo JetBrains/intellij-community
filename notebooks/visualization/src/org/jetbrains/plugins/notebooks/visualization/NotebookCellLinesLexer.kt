@@ -10,7 +10,7 @@ import org.jetbrains.plugins.notebooks.visualization.NotebookCellLines.MarkersAt
 import kotlin.math.max
 
 interface NotebookCellLinesLexer {
-  fun markerSequence(chars: CharSequence, ordinalIncrement: Int, offsetIncrement: Int): Sequence<Marker>
+  fun markerSequence(chars: CharSequence, ordinalIncrement: Int, offsetIncrement: Int, defaultLanguage: Language): Sequence<Marker>
 
   data class Marker(
     val ordinal: Int,
@@ -47,7 +47,7 @@ interface NotebookCellLinesLexer {
       }
     }
 
-    private fun defaultIntervals(document: Document, markers: List<Marker>): List<NotebookCellLines.Interval> {
+    fun defaultIntervals(document: Document, markers: List<Marker>): List<NotebookCellLines.Interval> {
       val intervals = toIntervalsInfo(document, markers)
 
       val result = mutableListOf<NotebookCellLines.Interval>()
@@ -60,12 +60,6 @@ interface NotebookCellLinesLexer {
       return result
     }
 
-    fun intervalsGeneratorFromLexer(lexer: NotebookCellLinesLexer): IntervalsGenerator = object : IntervalsGenerator {
-      override fun makeIntervals(document: Document): List<NotebookCellLines.Interval> {
-        val markers = lexer.markerSequence(document.charsSequence, 0, 0).toList()
-        return defaultIntervals(document, markers)
-      }
-    }
   }
 }
 
