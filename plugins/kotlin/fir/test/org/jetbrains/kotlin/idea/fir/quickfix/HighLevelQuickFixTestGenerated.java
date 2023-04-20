@@ -909,6 +909,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../idea/tests/testData/quickfix/modifiers/abstractVarWithPrivateSetter.kt");
         }
 
+        @TestMetadata("addDataForJvmRecord.kt")
+        public void testAddDataForJvmRecord() throws Exception {
+            runTest("../idea/tests/testData/quickfix/modifiers/addDataForJvmRecord.kt");
+        }
+
         @TestMetadata("addLateinit.kt")
         public void testAddLateinit() throws Exception {
             runTest("../idea/tests/testData/quickfix/modifiers/addLateinit.kt");

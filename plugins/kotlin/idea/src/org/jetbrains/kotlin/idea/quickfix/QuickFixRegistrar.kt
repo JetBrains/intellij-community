@@ -768,5 +768,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         WRONG_EXTENSION_FUNCTION_TYPE.registerFactory(RemoveAnnotationFix.ExtensionFunctionType)
         WRONG_EXTENSION_FUNCTION_TYPE_WARNING.registerFactory(RemoveAnnotationFix.ExtensionFunctionType)
+
+        NON_DATA_CLASS_JVM_RECORD.registerFactory(AddModifierFixFE10.createFactory(DATA_KEYWORD))
     }
 }

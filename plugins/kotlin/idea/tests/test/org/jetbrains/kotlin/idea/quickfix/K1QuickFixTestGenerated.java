@@ -10214,6 +10214,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/modifiers/abstractVarWithPrivateSetter.kt");
             }
 
+            @TestMetadata("addDataForJvmRecord.kt")
+            public void testAddDataForJvmRecord() throws Exception {
+                runTest("testData/quickfix/modifiers/addDataForJvmRecord.kt");
+            }
+
             @TestMetadata("addLateinit.kt")
             public void testAddLateinit() throws Exception {
                 runTest("testData/quickfix/modifiers/addLateinit.kt");
