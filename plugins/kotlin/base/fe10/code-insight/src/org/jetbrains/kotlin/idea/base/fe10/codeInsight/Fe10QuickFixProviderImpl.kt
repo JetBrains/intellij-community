@@ -33,7 +33,11 @@ class Fe10QuickFixProviderImpl : Fe10QuickFixProvider {
         val first = diagnostics.first()
         for (intentionActionsFactory in intentionActionsFactories) {
             if ((unresolvedReferenceQuickFixOnly || replaceUnresolvedReferenceQuickFix) && intentionActionsFactory is UnresolvedReferenceQuickFixFactory) {
-                if (unresolvedReferenceQuickFixOnly || intentionActionsFactory.areActionsAvailable(first)) {
+                if (
+                    // UnresolvedReferenceQuickFixUpdater works only when reference is available
+                    first.psiElement.reference != null &&
+                    (unresolvedReferenceQuickFixOnly || intentionActionsFactory.areActionsAvailable(first))
+                ) {
                     actions.putValue(first, RegisterQuickFixesLaterIntentionAction)
                     if (unresolvedReferenceQuickFixOnly) break
                     continue
