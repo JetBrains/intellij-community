@@ -1,3 +1,4 @@
+// ERROR: Unresolved reference: SomeAnnotation
 package to
 
 @SomeAnnotation
