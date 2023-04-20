@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.decompiler.navigation
 
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
