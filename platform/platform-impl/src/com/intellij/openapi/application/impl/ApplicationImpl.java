@@ -642,8 +642,13 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
             LOG.error(e);
           }
         }
-        //noinspection TestOnlyProblems
-        disposeContainer();
+        try {
+          //noinspection TestOnlyProblems
+          disposeContainer();
+        }
+        catch (Throwable t) {
+          LOG.error(t);
+        }
         return true;
       });
 
