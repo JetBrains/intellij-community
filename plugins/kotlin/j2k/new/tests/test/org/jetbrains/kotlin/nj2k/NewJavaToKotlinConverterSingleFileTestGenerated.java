@@ -1129,6 +1129,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("Arrays.java")
+        public void testArrays() throws Exception {
+            runTest("testData/newJ2k/collections/Arrays.java");
+        }
+
         @TestMetadata("common.java")
         public void testCommon() throws Exception {
             runTest("testData/newJ2k/collections/common.java");

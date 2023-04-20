@@ -41,7 +41,7 @@ internal class EnumTest {
 
         // Array methods not suitable for List
         MyEnum.entries.toTypedArray().clone()
-        val y = Arrays.toString(MyEnum.entries.toTypedArray())
+        val y = MyEnum.entries.toTypedArray().contentToString()
         Array.get(MyEnum.entries.toTypedArray(), 1)
 
         // Stream methods

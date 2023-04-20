@@ -666,10 +666,51 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                 }
             },
 
+            Method("java.util.Arrays.copyOf")
+                    convertTo ExtensionMethod("kotlin.collections.copyOf")
+                    withByArgumentsFilter { it.size == 2 }
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+
+            Method("java.util.Arrays.copyOfRange")
+                    convertTo ExtensionMethod("kotlin.collections.copyOfRange")
+                    withByArgumentsFilter { it.size == 3 }
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+
+            Method("java.util.Arrays.equals")
+                    convertTo ExtensionMethod("kotlin.collections.contentEquals")
+                    withByArgumentsFilter { it.size == 2 }
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+
+            Method("java.util.Arrays.deepEquals")
+                    convertTo ExtensionMethod("kotlin.collections.contentDeepEquals")
+                    withByArgumentsFilter { it.size == 2 }
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+
+            Method("java.util.Arrays.hashCode")
+                    convertTo ExtensionMethod("kotlin.collections.contentHashCode")
+                    withByArgumentsFilter { it.size == 1 }
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+
+            Method("java.util.Arrays.deepHashCode")
+                    convertTo ExtensionMethod("kotlin.collections.contentDeepHashCode")
+                    withByArgumentsFilter { it.size == 1 }
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+
+            Method("java.util.Arrays.toString")
+                    convertTo ExtensionMethod("kotlin.collections.contentToString")
+                    withByArgumentsFilter { it.size == 1 }
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+
+            Method("java.util.Arrays.deepToString")
+                    convertTo ExtensionMethod("kotlin.collections.contentDeepToString")
+                    withByArgumentsFilter { it.size == 1 }
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+
             Method("java.util.Arrays.asList")
                     convertTo Method("kotlin.collections.mutableListOf")
                     withByArgumentsFilter { containsOnlyLiterals(it) && (it.size > 1 || !containsNull(it.cast())) }
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+
             Method("java.util.Set.of")
                     convertTo Method("kotlin.collections.setOf")
                     withByArgumentsFilter { containsOnlyLiterals(it) && containsOnlyUnique(it.cast()) && !containsNull(it.cast()) }
