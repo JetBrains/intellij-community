@@ -4,6 +4,8 @@ package com.intellij.feedback.common.dialog.uiBlocks
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 
 abstract class SingleInputFeedbackBlock<T>(val myProperty: ObservableMutableProperty<T>) : BaseFeedbackBlock() {
-  
-  abstract fun collectInput(): T
+
+  open fun collectInput(): T {
+    return myProperty.get()
+  }
 }
