@@ -2,6 +2,6 @@
 package to
 
 @SomeAnnotation
-fun foo(): String? {
+fun foo(): String {
     return ""
 }

@@ -25,7 +25,7 @@
 class A {
     fun someOther() = false
 
-    private fun formatElement(element: PsiElement): String? {
+    private fun formatElement(element: PsiElement): String {
         var element: PsiElement = element
         element = JetPsiUtil.ascendIfPropertyAccessor(element)
         if (element is JetNamedFunction || element is JetProperty) {
@@ -48,11 +48,11 @@ class A {
         return JetRefactoringUtil.formatPsiMethod(element as PsiMethod, true, false)
     }
 
-    protected fun getDimensionServiceKey(): String? {
+    protected fun getDimensionServiceKey(): String {
         return "#org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinOverridingDialog"
     }
 
-    fun getSelected(): ArrayList<UsageInfo>? {
+    fun getSelected(): ArrayList<UsageInfo> {
         val result: ArrayList<UsageInfo> = ArrayList<UsageInfo>()
         for (i in 0 until myChecked.length) {
             if (myChecked.get(i)) {
