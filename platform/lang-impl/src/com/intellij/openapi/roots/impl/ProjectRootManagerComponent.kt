@@ -50,6 +50,8 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
 import java.lang.Runnable
 import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 private val LOG = logger<ProjectRootManagerComponent>()
 private val LOG_CACHES_UPDATE by lazy(LazyThreadSafetyMode.NONE) {
@@ -72,8 +74,9 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
   var rootsToWatch: MutableSet<WatchRequest> = CollectionFactory.createSmallMemoryFootprintSet()
     private set
 
-  // accessed in EDT
   private var rootPointersDisposable = Disposer.newDisposable()
+  private var lastInProgressRootPointersDisposable: Disposable? = null
+  private val rootWatchLock = ReentrantLock()
 
   private val rootsChangedListener: VirtualFilePointerListener = object : VirtualFilePointerListener {
     private fun getPointersChanges(pointers: Array<VirtualFilePointer>): RootsChangeRescanningInfo {
@@ -182,15 +185,19 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     LocalFileSystem.getInstance().removeWatchedRoots(rootsToWatch)
   }
 
-  @RequiresEdt
   private fun addRootsToWatch() {
     if (myProject.isDefault) {
       return
     }
 
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired()
-    val oldDisposable = rootPointersDisposable
-    val newDisposable = Disposer.newDisposable()
+    val oldDisposable: Disposable
+    val newDisposable: Disposable
+    rootWatchLock.withLock {
+      oldDisposable = rootPointersDisposable
+      newDisposable = Disposer.newDisposable()
+      lastInProgressRootPointersDisposable = newDisposable
+    }
+
     if (ApplicationManager.getApplication().isUnitTestMode) {
       val watchRoots = collectWatchRoots(newDisposable)
       postCollect(newDisposable, oldDisposable, watchRoots)
@@ -200,9 +207,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
       myProject.coroutineScope.launch {
         val job = launch(start = CoroutineStart.LAZY) {
           val watchRoots = readAction { collectWatchRoots(newDisposable) }
-          withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-            postCollect(newDisposable, oldDisposable, watchRoots)
-          }
+          postCollect(newDisposable, oldDisposable, watchRoots)
         }
         collectWatchRootsJob.getAndSet(job)?.cancelAndJoin()
         job.start()
@@ -210,12 +215,19 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     }
   }
 
-  private fun postCollect(newDisposable: Disposable, oldDisposable: Disposable, watchRoots: Pair<Set<String>, Set<String>>) {
-    rootPointersDisposable = newDisposable
-    // dispose after the re-creating container to keep VFPs from disposing and re-creating back;
-    // instead, just increment/decrement their usage count
-    Disposer.dispose(oldDisposable)
-    rootsToWatch = LocalFileSystem.getInstance().replaceWatchedRoots(rootsToWatch, watchRoots.first, watchRoots.second)
+  private fun postCollect(newDisposable: Disposable,
+                          oldDisposable: Disposable,
+                          watchRoots: Pair<Set<String>, Set<String>>) = rootWatchLock.withLock {
+    if (rootPointersDisposable == oldDisposable && lastInProgressRootPointersDisposable == newDisposable) {
+      rootPointersDisposable = newDisposable
+      // dispose after the re-creating container to keep VFPs from disposing and re-creating back;
+      // instead, just increment/decrement their usage count
+      Disposer.dispose(oldDisposable)
+      rootsToWatch = LocalFileSystem.getInstance().replaceWatchedRoots(rootsToWatch, watchRoots.first, watchRoots.second)
+    }
+    else {
+      Disposer.dispose(newDisposable)
+    }
   }
 
   override fun fireBeforeRootsChangeEvent(fileTypes: Boolean) {
@@ -388,7 +400,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
   override fun dispose() {}
 
   @TestOnly
-  fun disposeVirtualFilePointersAfterTest() {
+  fun disposeVirtualFilePointersAfterTest() = rootWatchLock.withLock {
     Disposer.dispose(rootPointersDisposable)
   }
 
