@@ -1,6 +1,5 @@
 // "Replace with safe (?.) call" "true"
 // WITH_STDLIB
-
 fun foo
 {
     val nullable: Int? = null
