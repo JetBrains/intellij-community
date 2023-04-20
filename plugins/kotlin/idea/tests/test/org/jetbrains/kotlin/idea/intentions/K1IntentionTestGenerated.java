@@ -16819,14 +16819,61 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/replaceUntilWithRangeTo")
-    public static class ReplaceUntilWithRangeTo extends AbstractK1IntentionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    public abstract static class ReplaceUntilWithRangeTo extends AbstractK1IntentionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/intentions/replaceUntilWithRangeTo/ranteUntil")
+        public static class RanteUntil extends AbstractK1IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("byte.kt")
+            public void testByte() throws Exception {
+                runTest("testData/intentions/replaceUntilWithRangeTo/ranteUntil/byte.kt");
+            }
+
+            @TestMetadata("char.kt")
+            public void testChar() throws Exception {
+                runTest("testData/intentions/replaceUntilWithRangeTo/ranteUntil/char.kt");
+            }
+
+            @TestMetadata("int.kt")
+            public void testInt() throws Exception {
+                runTest("testData/intentions/replaceUntilWithRangeTo/ranteUntil/int.kt");
+            }
+
+            @TestMetadata("long.kt")
+            public void testLong() throws Exception {
+                runTest("testData/intentions/replaceUntilWithRangeTo/ranteUntil/long.kt");
+            }
+
+            @TestMetadata("short.kt")
+            public void testShort() throws Exception {
+                runTest("testData/intentions/replaceUntilWithRangeTo/ranteUntil/short.kt");
+            }
+
+            @TestMetadata("uInt.kt")
+            public void testUInt() throws Exception {
+                runTest("testData/intentions/replaceUntilWithRangeTo/ranteUntil/uInt.kt");
+            }
+
+            @TestMetadata("uLong.kt")
+            public void testULong() throws Exception {
+                runTest("testData/intentions/replaceUntilWithRangeTo/ranteUntil/uLong.kt");
+            }
         }
 
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("testData/intentions/replaceUntilWithRangeTo/simple.kt");
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/intentions/replaceUntilWithRangeTo")
+        public static class Uncategorized extends AbstractK1IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("testData/intentions/replaceUntilWithRangeTo/simple.kt");
+            }
         }
     }
 
