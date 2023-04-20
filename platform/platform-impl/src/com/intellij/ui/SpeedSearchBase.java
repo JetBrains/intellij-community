@@ -815,14 +815,16 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     y = Math.max(y, windowP.y - lPaneP.y);
     Point location = new Point(componentP.x - lPaneP.x + r.x, y);
 
-    SpeedSearchLocator locator = DataManager.getInstance().getDataContext(myComponent).getData(PlatformDataKeys.SPEED_SEARCH_LOCATOR);
-    if (locator != null) {
-      RelativeRectangle relativeRectangle = locator.getSizeAndLocation(myComponent);
-      if (relativeRectangle != null) {
-        Rectangle rect = relativeRectangle.getRectangleOn(myPopupLayeredPane);
-        location = rect.getLocation();
-        prefSize = rect.getSize();
-        mySearchPopup.setPreferredSize(prefSize);
+    if (Registry.is("ide.speed.search.allow.custom.location")) {
+      SpeedSearchLocator locator = DataManager.getInstance().getDataContext(myComponent).getData(PlatformDataKeys.SPEED_SEARCH_LOCATOR);
+      if (locator != null) {
+        RelativeRectangle relativeRectangle = locator.getSizeAndLocation(myComponent);
+        if (relativeRectangle != null) {
+          Rectangle rect = relativeRectangle.getRectangleOn(myPopupLayeredPane);
+          location = rect.getLocation();
+          prefSize = rect.getSize();
+          mySearchPopup.setPreferredSize(prefSize);
+        }
       }
     }
 
