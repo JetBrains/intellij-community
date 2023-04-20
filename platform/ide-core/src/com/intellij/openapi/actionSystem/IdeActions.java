@@ -235,6 +235,7 @@ public interface IdeActions {
   String GROUP_EDITOR_BIDI_TEXT_DIRECTION = "EditorBidiTextDirection";
 
   String ACTION_TOGGLE_LINE_BREAKPOINT = "ToggleLineBreakpoint";
+  String ACTION_TOGGLE_BREAKPOINT_AT_LINE = "ToggleBreakpointAtLine";
   String ACTION_RUN_TO_CURSOR = "RunToCursor";
   String ACTION_RESET_FRAME = "Debugger.PopFrame";
 
