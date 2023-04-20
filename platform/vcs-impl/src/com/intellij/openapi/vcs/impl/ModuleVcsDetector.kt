@@ -53,6 +53,10 @@ internal class ModuleVcsDetector(private val project: Project) {
           usedVcses.add(foundVcs)
         }
       }
+
+    val directMappings = detectedRoots.map { it.first }.toMutableSet()
+    vcsManager.findVersioningVcs(contentRoots, directMappings, usedVcses, detectedRoots)
+
     if (detectedRoots.isEmpty()) return
     MAPPING_DETECTION_LOG.debug("ModuleVcsDetector.autoDetectDefaultRoots - detectedRoots", detectedRoots)
 

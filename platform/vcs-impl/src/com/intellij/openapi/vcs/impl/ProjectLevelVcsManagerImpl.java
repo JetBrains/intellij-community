@@ -47,6 +47,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.ViewUpdateInfoNotification;
 import com.intellij.vcs.console.VcsConsoleTabService;
+import kotlin.Pair;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
@@ -614,6 +615,26 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
       }
     }
     return findVcsByName(foundVcs);
+  }
+
+  public void findVersioningVcs(Collection<VirtualFile> contentRoots, Set<VirtualFile> mappedDirs, Collection<AbstractVcs> usedVcs,
+                                Set<Pair<VirtualFile, AbstractVcs>> detectedRoots) {
+    ArrayList<Pair<String, Collection<VirtualFile>>> foundVcss = new ArrayList<>();
+    for (VcsRootChecker rootChecker : VcsRootChecker.EXTENSION_POINT_NAME.getExtensionList()) {
+      Collection<VirtualFile> mappings = rootChecker.detectProjectMappings(myProject, contentRoots, mappedDirs);
+      if (mappings != null && !mappings.isEmpty()) {
+        String vcsName = rootChecker.getSupportedVcs().getName();
+        foundVcss.add(new Pair<>(vcsName, mappings));
+      }
+    }
+
+    for (Pair<String, Collection<VirtualFile>> entry : foundVcss) {
+      AbstractVcs vcs = findVcsByName(entry.getFirst());
+      usedVcs.add(vcs);
+      for (VirtualFile file : entry.getSecond()) {
+        detectedRoots.add(new Pair<>(file, vcs));
+      }
+    }
   }
 
   @Override
