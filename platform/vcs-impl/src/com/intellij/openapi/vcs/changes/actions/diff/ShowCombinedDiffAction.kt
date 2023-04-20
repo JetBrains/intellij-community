@@ -45,7 +45,9 @@ class ShowCombinedDiffAction : DumbAwareAction() {
       }.associateBy { CombinedPathBlockId(it.filePath, it.fileStatus) }
 
       val sourceId = UUID.randomUUID().toString()
-      project.service<CombinedDiffModelRepository>().registerModel(sourceId, CombinedDiffModelImpl(project, producers))
+      val model = CombinedDiffModelImpl(project)
+      project.service<CombinedDiffModelRepository>().registerModel(sourceId, model)
+      model.setBlocks(producers)
       val allInOneDiffFile = CombinedDiffVirtualFile(sourceId, VcsBundle.message("changes.combined.diff"))
 
       DiffEditorTabFilesManager.getInstance(project).showDiffFile(allInOneDiffFile, true)

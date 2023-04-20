@@ -19,9 +19,17 @@ interface CombinedDiffModel {
   val context: DiffContext
   val requests: Map<CombinedBlockId, DiffRequestProducer>
 
-  fun init()
+  fun cleanBlocks()
   fun reload()
-  fun reset(requests: Map<CombinedBlockId, DiffRequestProducer>)
+
+  /**
+   * Updates current model with the new requests
+   */
+  fun setBlocks(requests: Map<CombinedBlockId, DiffRequestProducer>)
+
+  fun addBlock(blockId: CombinedBlockId, diffRequestProducer: DiffRequestProducer, position: InsertPosition)
+  fun removeBlock(blockId: CombinedBlockId)
+
   fun getCurrentRequest(): DiffRequest?
 
   fun getLoadedRequests(): List<DiffRequest>
@@ -40,7 +48,6 @@ interface CombinedDiffModel {
 
 interface CombinedDiffModelListener : EventListener {
   fun onModelReset()
-  fun onContentReloadRequested(requests: Map<CombinedBlockId, DiffRequest>)
 
   @RequiresEdt
   fun onRequestAdded(requestData: NewRequestData, request: DiffRequest, onAdded: (CombinedBlockId) -> Unit)

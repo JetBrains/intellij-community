@@ -171,7 +171,11 @@ internal abstract class GHPRCombinedDiffPreviewBase(private val dataProvider: GH
 private class GHPRCombinedDiffPreviewModel(tree: ChangesTree,
                                            private val producerFactory: ChangeDiffRequestProducerFactory,
                                            parentDisposable: Disposable) :
-  CombinedDiffPreviewModel(tree, prepareCombinedDiffModelRequests(tree.project, tree.getAllChanges(producerFactory)), parentDisposable) {
+  CombinedDiffPreviewModel(tree, parentDisposable) {
+
+  init {
+    setBlocks(prepareCombinedDiffModelRequests(tree.project, tree.getAllChanges((producerFactory))))
+  }
 
   override fun iterateAllChanges(): Iterable<Wrapper> {
     return tree.iterateAllChanges(producerFactory)

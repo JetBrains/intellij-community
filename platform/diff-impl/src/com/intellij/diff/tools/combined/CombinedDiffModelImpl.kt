@@ -26,9 +26,7 @@ import com.intellij.util.ui.update.Update
 import java.util.concurrent.atomic.AtomicInteger
 
 open class CombinedDiffModelImpl(protected val project: Project,
-                                 requests: Map<CombinedBlockId, DiffRequestProducer>,
                                  parentDisposable: Disposable? = null) : CombinedDiffModel {
-
   override val haveParentDisposable = parentDisposable != null
 
   override val ourDisposable = Disposer.newCheckedDisposable().also {
@@ -42,7 +40,7 @@ open class CombinedDiffModelImpl(protected val project: Project,
 
   private val pendingUpdatesCount = AtomicInteger()
 
-  private var _requests = requests.toMutableMap()
+  private var _requests: Map<CombinedBlockId, DiffRequestProducer> = emptyMap()
 
   private val loadedRequests = mutableMapOf<CombinedBlockId, DiffRequest>()
 
@@ -50,23 +48,33 @@ open class CombinedDiffModelImpl(protected val project: Project,
 
   override val context: DiffContext = CombinedDiffContext(project)
 
-  override fun init() {
+  override fun cleanBlocks() {
+    cleanLoadedRequests()
+  }
+
+  private fun cleanLoadedRequests() {
     loadedRequests.forEach { it.value.onAssigned(false) }
     loadedRequests.clear()
   }
 
   override fun reload() {
     val previouslyLoaded = loadedRequests.toMap()
-    init()
+    cleanLoadedRequests()
     if (previouslyLoaded.isNotEmpty()) {
-      modelListeners.multicaster.onContentReloadRequested(previouslyLoaded)
+      loadRequestContents(previouslyLoaded.keys, null)
     }
   }
 
-  override fun reset(requests: Map<CombinedBlockId, DiffRequestProducer>) {
-    init()
+  override fun setBlocks(requests: Map<CombinedBlockId, DiffRequestProducer>) {
+    cleanLoadedRequests()
     _requests = requests.toMutableMap()
     modelListeners.multicaster.onModelReset()
+  }
+
+  override fun addBlock(blockId: CombinedBlockId, diffRequestProducer: DiffRequestProducer, position: CombinedDiffModel.InsertPosition) {
+  }
+
+  override fun removeBlock(blockId: CombinedBlockId) {
   }
 
   override fun getCurrentRequest(): DiffRequest? {

@@ -80,7 +80,7 @@ abstract class CombinedDiffPreview(protected val tree: ChangesTree,
       val changes = model.iterateSelectedOrAllChanges().toList()
       if (changes.isNotEmpty()) {
         model.refresh(true)
-        model.reset(prepareCombinedDiffModelRequests(project, changes))
+        model.setBlocks(prepareCombinedDiffModelRequests(project, changes))
       }
     }
   }
@@ -109,9 +109,8 @@ abstract class CombinedDiffPreview(protected val tree: ChangesTree,
 }
 
 abstract class CombinedDiffPreviewModel(protected val tree: ChangesTree,
-                                        requests: Map<CombinedBlockId, DiffRequestProducer>,
                                         parentDisposable: Disposable) :
-  CombinedDiffModelImpl(tree.project, requests, parentDisposable), DiffPreviewUpdateProcessor, DiffRequestProcessorWithProducers {
+  CombinedDiffModelImpl(tree.project, parentDisposable), DiffPreviewUpdateProcessor, DiffRequestProcessorWithProducers {
 
   var selected by Delegates.equalVetoingObservable<Wrapper?>(null) { change ->
     if (change != null) {
@@ -145,7 +144,7 @@ abstract class CombinedDiffPreviewModel(protected val tree: ChangesTree,
   }
 
   override fun clear() {
-    init()
+    cleanBlocks()
   }
 
   override fun refresh(fromModelRefresh: Boolean) {

@@ -14,7 +14,7 @@ class CombinedChangeDiffComponentFactoryProvider : CombinedDiffComponentFactoryP
   private inner class MyFactory(model: CombinedDiffModel) : CombinedDiffComponentFactory(model) {
 
     init {
-      model.init()
+      model.cleanBlocks()
     }
 
     override fun createGoToChangeAction(): AnAction = MyGoToChangePopupAction()

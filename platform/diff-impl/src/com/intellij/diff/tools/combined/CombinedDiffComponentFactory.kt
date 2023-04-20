@@ -37,10 +37,10 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
   private var combinedViewer: CombinedDiffViewer
 
   init {
-    if (model.haveParentDisposable) {
+    if (model.haveParentDisposable) { // diff preview scenario?
       Disposer.register(model.ourDisposable, ourDisposable)
     }
-    else {
+    else { // diff from action
       Disposer.register(ourDisposable, model.ourDisposable)
     }
     model.addListener(ModelListener(), ourDisposable)
@@ -82,10 +82,6 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
       Disposer.dispose(combinedViewer)
       combinedViewer = createCombinedViewer()
       buildCombinedDiffChildBlocks()
-    }
-
-    override fun onContentReloadRequested(requests: Map<CombinedBlockId, DiffRequest>) {
-      model.loadRequestContents(requests.keys.toList(), null)
     }
 
     @RequiresEdt
