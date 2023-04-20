@@ -245,6 +245,16 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       if (RUN_ON_TARGET_NAME_KEY.is(dataId)) {
         return TargetEnvironmentConfigurations.getEffectiveTargetName(myRunOnTargetPanel.getDefaultTargetName(), myProject);
       }
+      if (RunConfigurationSelector.KEY.is(dataId)) {
+        return new RunConfigurationSelector() {
+          @Override
+          public void select(@NotNull RunConfiguration configuration) {
+            RunDialog.editConfiguration(myProject,
+                                        new RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(myProject), configuration),
+                                        ExecutionBundle.message("edit.run.configuration.for.item.dialog.title", configuration.getName()));
+          }
+        };
+      }
       return null;
     });
     Dimension size = result.getPreferredSize();
