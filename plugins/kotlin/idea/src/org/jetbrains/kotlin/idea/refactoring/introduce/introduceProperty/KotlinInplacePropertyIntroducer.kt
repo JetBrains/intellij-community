@@ -6,10 +6,8 @@ import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Pass
 import com.intellij.psi.PsiElement
 import com.intellij.ui.NonFocusableCheckBox
-import com.intellij.ui.PopupMenuListenerAdapter
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionResult
@@ -25,7 +23,10 @@ import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.types.KotlinType
 import java.awt.event.ItemEvent
-import javax.swing.*
+import javax.swing.JCheckBox
+import javax.swing.JComboBox
+import javax.swing.JLabel
+import javax.swing.JPanel
 
 class KotlinInplacePropertyIntroducer(
     property: KtProperty,
@@ -102,20 +103,16 @@ class KotlinInplacePropertyIntroducer(
             val condition = { isInitializer() }
 
             createVarCheckBox?.let {
-                val initializer = object : Pass<JComponent>() {
-                    override fun pass(t: JComponent) {
-                        (t as JCheckBox).isSelected = property.isVar
-                    }
-                }
-                addPanelControl(ControlWrapper(it, condition, initializer))
+                addPanelControl(ControlWrapper(it, condition
+                ) {
+                    (it as JCheckBox).isSelected = property.isVar
+                })
             }
             createExplicitTypeCheckBox?.let {
-                val initializer = object : Pass<JComponent>() {
-                    override fun pass(t: JComponent) {
-                        (t as JCheckBox).isSelected = property.typeReference != null
-                    }
-                }
-                addPanelControl(ControlWrapper(it, condition, initializer))
+                addPanelControl(ControlWrapper(it, condition
+                ) {
+                    (it as JCheckBox).isSelected = property.typeReference != null
+                })
             }
         }
 

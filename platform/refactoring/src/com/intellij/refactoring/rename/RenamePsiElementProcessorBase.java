@@ -206,7 +206,7 @@ public abstract class RenamePsiElementProcessorBase {
     final PsiElement psiElement = substituteElementToRename(element, editor);
     if (psiElement == null) return;
     if (!PsiElementRenameHandler.canRename(psiElement.getProject(), editor, psiElement)) return;
-    renameCallback.pass(psiElement);
+    renameCallback.accept(psiElement);
   }
 
   public void findCollisions(@NotNull PsiElement element,

@@ -136,7 +136,7 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
             } else {
                 substitutedJavaElement
             }
-            renameCallback.pass(elementToProcess)
+            renameCallback.accept(elementToProcess)
         }
 
         substituteForExpectOrActual(element)?.let { return preprocessAndPass(it) }

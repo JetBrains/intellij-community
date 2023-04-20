@@ -353,7 +353,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
       final PsiClass containingClass = psiMethod.getContainingClass();
       if (containingClass == null) return;
       if (!Comparing.strEqual(psiMethod.getName(), containingClass.getName())) {
-        renameCallback.pass(psiMethod);
+        renameCallback.accept(psiMethod);
         return;
       }
       super.substituteElementToRename(element, editor, renameCallback);
@@ -361,14 +361,14 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     else {
       PsiRecordComponent recordComponent = JavaPsiRecordUtil.getRecordComponentForAccessor(psiMethod);
       if (recordComponent != null) {
-        renameCallback.pass(recordComponent);
+        renameCallback.accept(recordComponent);
         return;
       }
       SuperMethodWarningUtil.checkSuperMethod(psiMethod, new PsiElementProcessor<>() {
         @Override
         public boolean execute(@NotNull PsiMethod method) {
           if (!PsiElementRenameHandler.canRename(method.getProject(), editor, method)) return false;
-          renameCallback.pass(method);
+          renameCallback.accept(method);
           return false;
         }
       }, editor);
