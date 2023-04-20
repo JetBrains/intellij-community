@@ -856,6 +856,15 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     createSettingsFile("include 'api', 'impl' ");
     String archiveBaseName = (isGradleOlderThan("7.0") ? "baseName" : "archiveBaseName") + " = 'my-archive'\n";
 
+    String propertyBasedFromClasses;
+    if (isGradleOlderThan("4.0")) {
+      propertyBasedFromClasses = "new File(project.buildDir, 'classes/mySourceSet')";
+    } else if (isGradleOlderThan("4.1")) {
+      propertyBasedFromClasses = "new File(project.buildDir, 'classes/java/mySourceSet')";
+    } else {
+      propertyBasedFromClasses = "project.layout.getBuildDirectory().dir('classes/java/mySourceSet')";
+    }
+
     importProject(
       createBuildScriptBuilder()
         .allprojects(TestGradleBuildScriptBuilder::withJavaPlugin)
@@ -866,9 +875,9 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                           sourceSets { mySourceSet }
                           tasks.create("myJar", Jar) {
                             dependsOn compileMySourceSetJava
-                          """ +  archiveBaseName + """
-                            from project.layout.getBuildDirectory().dir("classes/java/mySourceSet")
-                            from new File(project.layout.getBuildDirectory().get().getAsFile(), "resources/mySourceSet")
+                          """ + archiveBaseName + """
+                           from\s""" + propertyBasedFromClasses + """
+                            from new File(project.buildDir, "resources/mySourceSet")
                           }
                           artifacts { myConfig myJar }
                           """);
