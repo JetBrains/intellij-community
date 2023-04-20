@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -9,6 +10,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -93,7 +95,8 @@ public final class DebuggerUIUtil {
   public static RelativePoint getPositionForPopup(@NotNull Editor editor, int line) {
     if (line > -1) {
       Point p = editor.logicalPositionToXY(new LogicalPosition(line + 1, 0));
-      if (editor.getScrollingModel().getVisibleArea().contains(p)) {
+      boolean isRemoteEditor = !ClientId.isLocal(ClientEditorManager.getClientId(editor));
+      if (isRemoteEditor || editor.getScrollingModel().getVisibleArea().contains(p)) {
         return new RelativePoint(editor.getContentComponent(), p);
       }
     }
