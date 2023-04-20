@@ -22,7 +22,6 @@ public final class ApplicationNamesInfo {
   private final String myFullProductName;
   private final String myEditionName;
   private final String myScriptName;
-  private final String myDefaultLauncherName;
   private final String myMotto;
 
   private static volatile ApplicationNamesInfo instance;
@@ -129,7 +128,6 @@ public final class ApplicationNamesInfo {
     myFullProductName = names.getAttributeValue("fullname", myProductName);
     myEditionName = names.getAttributeValue("edition");
     myScriptName = names.getAttributeValue("script");
-    myDefaultLauncherName = names.getAttributeValue("default-launcher-name", myScriptName);
     myMotto = names.getAttributeValue("motto", "The Drive to Develop");
   }
 
@@ -192,11 +190,11 @@ public final class ApplicationNamesInfo {
     return myScriptName;
   }
 
-  /**
-   * Returns the default name of the command-line launcher to be suggested in 'Create Launcher Script' dialog.
-   */
+  /** @deprecated separate command-line launchers are no longer supported. Please use {@link #getScriptName()} instead. */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public String getDefaultLauncherName() {
-    return myDefaultLauncherName;
+    return getScriptName();
   }
 
   /**

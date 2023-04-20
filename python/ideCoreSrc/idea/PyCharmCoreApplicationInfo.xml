@@ -10,7 +10,7 @@
          copyrightForeground="ffffff" linkColor="589bf2"/>
   <icon ico="PyCharmCore.ico" svg="/pycharm-ce.svg" svg-small="/pycharm-ce_16.svg"/>
   <icon-eap svg="/pycharm-ce-eap.svg" svg-small="/pycharm-ce-eap_16.svg"/>
-  <names product="PyCharm" edition="Community Edition" script="pycharm" default-launcher-name="charm" motto="Python IDE for Professional Developers"/>
+  <names product="PyCharm" edition="Community Edition" script="pycharm" motto="Python IDE for Professional Developers"/>
 
   <essential-plugin>PythonCore</essential-plugin>
   <essential-plugin>com.jetbrains.pycharm.community.customization</essential-plugin>
