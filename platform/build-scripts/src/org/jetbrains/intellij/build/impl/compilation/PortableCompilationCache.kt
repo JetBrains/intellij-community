@@ -37,8 +37,8 @@ class PortableCompilationCache(private val context: CompilationContext) {
     val skipUpload = bool(SKIP_UPLOAD_PROPERTY)
     val dir: Path get() = context.compilationData.dataStorageRoot
 
-    val maybeAvailableLocally: Boolean by lazy {
-      context.compilationData.listDataStorageRoot(context.messages).any()
+    val isIncrementalCompilationDataAvailable: Boolean by lazy {
+      context.compilationData.isIncrementalCompilationDataAvailable()
     }
   }
 
@@ -85,9 +85,9 @@ class PortableCompilationCache(private val context: CompilationContext) {
    * [org.jetbrains.intellij.build.CompilationTasks.resolveProjectDependencies]
    * and perform incremental compilation if necessary.
    *
-   * When force rebuilding incremental compilation flag has to be set to false otherwise backward-refs won't be created.
-   * During rebuild JPS checks condition [org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndex.exists] || [org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter.isRebuildInAllJavaModules]
-   * and if incremental compilation is enabled JPS won't create [org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter].
+   * If rebuild is forced, incremental compilation flag has to be set to false, otherwise backward-refs won't be created.
+   * During rebuild, JPS checks condition [org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndex.exists] || [org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter.isRebuildInAllJavaModules]
+   * and if incremental compilation is enabled, JPS won't create [org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter].
    * For more details see [org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter.initialize]
    */
   fun downloadCacheAndCompileProject() {
@@ -119,7 +119,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
 
   private fun isCompilationRequired() = forceRebuild || isLocalCacheUsed() || isRemoteCacheStale()
 
-  private fun isLocalCacheUsed() = !forceRebuild && !forceDownload && jpsCaches.maybeAvailableLocally
+  private fun isLocalCacheUsed() = !forceRebuild && !forceDownload && jpsCaches.isIncrementalCompilationDataAvailable
 
   private fun isRemoteCacheStale() = !downloader.availableForHeadCommit
 

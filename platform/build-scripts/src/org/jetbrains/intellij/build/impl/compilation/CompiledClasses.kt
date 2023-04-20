@@ -132,11 +132,11 @@ internal object CompiledClasses {
     context.messages.progress("Compiling project")
     context.compilationData.statisticsReported = false
     val runner = JpsCompilationRunner(context)
-    val localCompilationDataExists = context.options.incrementalCompilation &&
-                                     context.compilationData.listDataStorageRoot(context.messages).any()
+    val isIncrementalCompilationDataAvailable = context.options.incrementalCompilation &&
+                                                context.compilationData.isIncrementalCompilationDataAvailable()
     try {
       runner.compile(context, moduleNames, includingTestsInModules)
-      if (localCompilationDataExists) {
+      if (isIncrementalCompilationDataAvailable) {
         context.messages.buildStatus("Compiled using local cache")
       } else {
         context.messages.buildStatus("Clean build")
