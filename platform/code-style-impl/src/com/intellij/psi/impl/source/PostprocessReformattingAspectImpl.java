@@ -171,13 +171,17 @@ public final class PostprocessReformattingAspectImpl extends PostprocessReformat
   private void decrementPostponedCounter() {
     Application application = ApplicationManager.getApplication();
     if (--getContext().myPostponedCounter == 0) {
-      if (application.isWriteAccessAllowed() || !application.isWriteIntentLockAcquired()) {
+      if (application.isWriteAccessAllowed() || !application.isWriteIntentLockAcquired() || noWriteIsNecessary()) {
         doPostponedFormatting();
       }
       else {
         application.runWriteAction((Runnable)this::doPostponedFormatting);
       }
     }
+  }
+
+  private boolean noWriteIsNecessary() {
+    return ContainerUtil.all(getContext().myUpdatedProviders.keySet(), vp -> !vp.isEventSystemEnabled());
   }
 
   @Override
