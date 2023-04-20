@@ -6,7 +6,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.configurations.SimpleProgramParameters;
-import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.ide.macro.MacroWithParams;
@@ -119,7 +119,7 @@ public class ProgramParametersConfigurator {
       return path;
     }
 
-    DataContext threadContext = ExecutionEnvironment.getThreadContext();
+    DataContext threadContext = ExecutionUtil.getThreadContext();
     DataContext context = threadContext == null ? dataContext : new DataContext() {
       @Override
       public @Nullable Object getData(@NotNull String dataId) {
