@@ -12,7 +12,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SingleRowPassInfo extends LayoutPassInfo {
+public final class SingleRowPassInfo extends LayoutPassInfo {
   private final JBTabsImpl tabs;
   final Dimension layoutSize;
   final int contentCount;
@@ -29,10 +29,9 @@ public class SingleRowPassInfo extends LayoutPassInfo {
 
   public Insets insets;
 
-  public WeakReference<JComponent> comp;
+  public WeakReference<JComponent> component;
   public Rectangle tabRectangle;
   final int scrollOffset;
-
 
   public SingleRowPassInfo(SingleRowLayout layout, List<TabInfo> visibleInfos) {
     super(visibleInfos);

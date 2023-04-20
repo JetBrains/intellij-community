@@ -94,7 +94,7 @@ public class DelayTypeCommand extends KeyCodeTypeCommand {
       });
 
       if (calculateAnalyzesTime) {
-        job.get().waitForComplete();
+        job.get().blockingWaitForComplete();
       }
       result.setResult(null);
     }));

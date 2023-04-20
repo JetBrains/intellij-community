@@ -173,6 +173,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon IdeaModule = load("expui/fileTypes/ideaModule.svg", 1417127557, 2);
     /** 16x16 */ public static final @NotNull Icon Idl = load("expui/fileTypes/idl.svg", -1553952385, 2);
     /** 16x16 */ public static final @NotNull Icon Ignored = load("expui/fileTypes/ignored.svg", -676991736, 2);
+    /** 16x16 */ public static final @NotNull Icon Image = load("expui/fileTypes/image.svg", -1705666596, 2);
     /** 16x16 */ public static final @NotNull Icon Java = load("expui/fileTypes/java.svg", 1155678562, 2);
     /** 16x16 */ public static final @NotNull Icon JavaScript = load("expui/fileTypes/javaScript.svg", 390154029, 2);
     /** 16x16 */ public static final @NotNull Icon Jest = load("expui/fileTypes/jest.svg", -2044269766, 0);
@@ -380,6 +381,15 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon Regex = load("expui/inline/regex.svg", -158907388, 2);
     /** 16x16 */ public static final @NotNull Icon SearchHistory = load("expui/inline/searchHistory.svg", -630387088, 2);
     /** 16x16 */ public static final @NotNull Icon Variables = load("expui/inline/variables.svg", 300038818, 2);
+  }
+
+  public static final class Javaee {
+    /** 16x16 */ public static final @NotNull Icon Home = load("expui/javaee/home.svg", 660865721, 2);
+    /** 16x16 */ public static final @NotNull Icon PersistenceEntity = load("expui/javaee/persistenceEntity.svg", 1817675335, 2);
+    /** 16x16 */ public static final @NotNull Icon UpdateRunningApplication = load("expui/javaee/updateRunningApplication.svg", 2011370774, 2);
+    /** 16x16 */ public static final @NotNull Icon WebModuleGroup = load("expui/javaee/webModuleGroup.svg", -1561928104, 2);
+    /** 16x16 */ public static final @NotNull Icon WebService = load("expui/javaee/webService.svg", -2074926921, 2);
+    /** 16x16 */ public static final @NotNull Icon WebServiceClient = load("expui/javaee/webServiceClient.svg", 82747397, 2);
   }
 
   public static final class MeetNewUi {

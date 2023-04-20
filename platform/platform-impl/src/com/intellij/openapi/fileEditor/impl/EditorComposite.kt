@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.FocusWatcher
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
-import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.tabs.JBTabs
@@ -502,7 +501,7 @@ private class EditorCompositePanel(realComponent: JComponent,
   }
 }
 
-private class TopBottomPanel : JBPanelWithEmptyText() {
+private class TopBottomPanel : JPanel() {
   init {
     layout = BoxLayout(this, BoxLayout.Y_AXIS)
   }

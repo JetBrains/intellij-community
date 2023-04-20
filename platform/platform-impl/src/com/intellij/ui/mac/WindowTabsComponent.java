@@ -14,7 +14,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.ClientProperty;
@@ -70,7 +69,8 @@ public final class WindowTabsComponent extends JBTabsImpl {
   private final Map<IdeFrameImpl, Integer> myIndexes = new HashMap<>();
 
   public WindowTabsComponent(@NotNull IdeFrameImpl nativeWindow, @Nullable Project project, @NotNull Disposable parentDisposable) {
-    super(project, IdeFocusManager.getInstance(project), parentDisposable);
+    super(project, parentDisposable);
+
     myNativeWindow = nativeWindow;
     myParentDisposable = parentDisposable;
 
@@ -78,7 +78,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
       @Override
       public @NotNull UiDecoration getDecoration() {
         //noinspection UseDPIAwareInsets
-        return new UiDecoration(JBFont.medium(), new Insets(-1, myDropInfo == null ? 0 : -1, -1, -1));
+        return new UiDecoration(JBFont.medium(), new Insets(-1, getDropInfo() == null ? 0 : -1, -1, -1));
       }
     });
 
@@ -98,12 +98,12 @@ public final class WindowTabsComponent extends JBTabsImpl {
   }
 
   @Override
-  protected SingleRowLayout createSingleRowLayout() {
+  protected @NotNull SingleRowLayout createSingleRowLayout() {
     return new WindowTabsLayout(this);
   }
 
   @Override
-  public Dimension getPreferredSize() {
+  public @NotNull Dimension getPreferredSize() {
     return new Dimension(super.getPreferredSize().width, JBUI.scale(TAB_HEIGHT));
   }
 
@@ -113,13 +113,13 @@ public final class WindowTabsComponent extends JBTabsImpl {
     return source != null ? source : super.getDraggedTabSelectionInfo();
   }
 
-  private static boolean isSelectionClick(@NotNull MouseEvent e) {
+  private static boolean _isSelectionClick(@NotNull MouseEvent e) {
     return e.getClickCount() == 1 && !e.isPopupTrigger() && e.getButton() == MouseEvent.BUTTON1
            && !e.isControlDown() && !e.isAltDown() && !e.isMetaDown();
   }
 
   @Override
-  protected TabLabel createTabLabel(TabInfo info) {
+  protected @NotNull TabLabel createTabLabel(@NotNull TabInfo info) {
     return new TabLabel(this, info) {
       {
         for (MouseListener listener : getMouseListeners()) {
@@ -129,7 +129,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
         addMouseListener(new MouseAdapter() {
           @Override
           public void mousePressed(MouseEvent e) {
-            if (!UIUtil.isCloseClick(e, MouseEvent.MOUSE_PRESSED) && !isSelectionClick(e)) {
+            if (!UIUtil.isCloseClick(e, MouseEvent.MOUSE_PRESSED) && !_isSelectionClick(e)) {
               handlePopup(e);
             }
           }
@@ -141,7 +141,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
 
           @Override
           public void mouseClicked(MouseEvent e) {
-            if (isSelectionClick(e)) {
+            if (_isSelectionClick(e)) {
               Component c = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
               if (c instanceof InplaceButton) return;
               myTabs.select(info, true);
@@ -185,7 +185,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
   }
 
   @Override
-  protected TabPainterAdapter createTabPainterAdapter() {
+  protected @NotNull TabPainterAdapter createTabPainterAdapter() {
     return new TabPainterAdapter() {
       private final JBTabPainter myTabPainter = new JBDefaultTabPainter(new DefaultTabTheme() {
         @Override
@@ -547,7 +547,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
 
       @Override
       public void dragOutStarted(@NotNull MouseEvent mouseEvent, @NotNull TabInfo info) {
-        WindowFrameDockableContent content = new WindowFrameDockableContent(WindowTabsComponent.this, info, myInfo2Label.get(info));
+        WindowFrameDockableContent content = new WindowFrameDockableContent(WindowTabsComponent.this, info, getInfoToLabel().get(info));
         info.setHidden(true);
         DockManagerImpl manager = getDockManager();
         updateDockContainers(manager);

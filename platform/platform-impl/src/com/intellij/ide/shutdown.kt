@@ -48,7 +48,11 @@ internal fun joinBlocking(containerScope: CoroutineScope, debugString: String, p
     return
   }
   LOG.trace("$debugString: waiting for scope completion")
-  val dumpJob = dumpCoroutinesLater(debugString)
+  @OptIn(DelicateCoroutinesApi::class)
+  val dumpJob = GlobalScope.launch {
+    delay(delayUntilCoroutineDump)
+    LOG.warn("$debugString: scope was not completed in $delayUntilCoroutineDump.\n${dumpCoroutines(scope = containerScope)}")
+  }
   try {
     pumpEvents(containerJob)
   }
@@ -59,16 +63,3 @@ internal fun joinBlocking(containerScope: CoroutineScope, debugString: String, p
 }
 
 private val delayUntilCoroutineDump: Duration = 10.seconds
-
-/**
- * Schedules dump of coroutines after [delayUntilCoroutineDump].
- * @return a job, which is expected to be cancelled once the dump is not needed anymore
- */
-private fun dumpCoroutinesLater(debugString: String): Job {
-  @OptIn(DelicateCoroutinesApi::class)
-  return GlobalScope.launch {
-    delay(delayUntilCoroutineDump)
-    LOG.warn("$debugString: scope was not completed in $delayUntilCoroutineDump.\n${dumpCoroutines()}")
-  }
-}
-

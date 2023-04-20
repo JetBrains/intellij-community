@@ -1135,6 +1135,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/custom/filterChainedFunctionCallsWithLambdas.kt");
         }
 
+        @TestMetadata("filterConstructors.kt")
+        public void testFilterConstructors() throws Exception {
+            runTest("testData/stepping/custom/filterConstructors.kt");
+        }
+
         @TestMetadata("filterFunctionCallsFromClass.kt")
         public void testFilterFunctionCallsFromClass() throws Exception {
             runTest("testData/stepping/custom/filterFunctionCallsFromClass.kt");
@@ -1350,6 +1355,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/custom/smartStepIntoFunWithDefaultArgs.kt");
         }
 
+        @TestMetadata("smartStepIntoFunWithInlineParameter.kt")
+        public void testSmartStepIntoFunWithInlineParameter() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoFunWithInlineParameter.kt");
+        }
+
         @TestMetadata("smartStepIntoInlineFun.kt")
         public void testSmartStepIntoInlineFun() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoInlineFun.kt");
@@ -1473,6 +1483,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
         @TestMetadata("smartStepIntoToLambdaParameterAfterSam.kt")
         public void testSmartStepIntoToLambdaParameterAfterSam() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoToLambdaParameterAfterSam.kt");
+        }
+
+        @TestMetadata("smartStepIntoWithDelegateWithSameName.kt")
+        public void testSmartStepIntoWithDelegateWithSameName() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoWithDelegateWithSameName.kt");
         }
 
         @TestMetadata("smartStepIntoWithDelegates.kt")

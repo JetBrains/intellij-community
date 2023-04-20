@@ -282,7 +282,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     val parentRow = createChildRow(indent = indent, title = title, isSeparated = isSeparated, incrementsIndent = isSeparated)
     parentRow.init()
     val result = parentRow.createChildRow()
-    result.placeholder()
+    result.internalPlaceholder()
     result.largeGapAfter()
     return result
   }

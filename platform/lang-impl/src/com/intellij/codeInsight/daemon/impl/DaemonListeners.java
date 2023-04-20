@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.ProjectTopics;
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProviders;
@@ -306,17 +305,8 @@ public final class DaemonListeners implements Disposable {
         if (document == null) {
           return;
         }
-
-        // highlight markers no more
-        //todo clear all highlights regardless the pass id
-
-        // Here color scheme required for TextEditorFields, as far as I understand this
-        // code related to standard file editors, which always use Global color scheme,
-        // thus we can pass null here.
-        UpdateHighlightersUtil.setHighlightersToEditor(myProject, document, 0, document.getTextLength(),
-                                                       Collections.emptyList(),
-                                                       null,
-                                                       Pass.UPDATE_ALL);
+        // when the file becomes un-highlighteable, clear all highlighters from previous HighlightPasses
+        removeAllHighlightersFromHighlightPasses(document, project);
       }
     });
     connection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
@@ -412,6 +402,17 @@ public final class DaemonListeners implements Disposable {
         }
       }));
     HeavyProcessLatch.INSTANCE.addListener(this, __ -> stopDaemon(true, "re-scheduled to execute after heavy processing finished"));
+  }
+
+  private void removeAllHighlightersFromHighlightPasses(@NotNull Document document, @NotNull Project project) {
+    MarkupModel model = DocumentMarkupModel.forDocument(document, project, false);
+    if (model == null) return;
+    for (RangeHighlighter highlighter : model.getAllHighlighters()) {
+      Object tooltip = highlighter.getErrorStripeTooltip();
+      if (tooltip instanceof HighlightInfo) {
+        highlighter.dispose();
+      }
+    }
   }
 
   void repaintTrafficLightIconForAllEditors() {

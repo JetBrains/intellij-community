@@ -2,7 +2,7 @@
 package foo
 
 class KotlinClass {
-    companion object {
+    public companion object {
         @JvmStatic
         fun s1(a: Int, b: Long, c: String): Double = -1.0
 
@@ -21,7 +21,7 @@ class KotlinClass {
 interface KotlinInterface {
     companion object {
         @JvmStatic
-        private fun s1(): String = "y"
+        fun s1(): String = "y"
     }
 }
 

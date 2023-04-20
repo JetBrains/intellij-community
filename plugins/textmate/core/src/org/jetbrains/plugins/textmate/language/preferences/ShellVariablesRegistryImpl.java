@@ -12,10 +12,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ShellVariablesRegistryImpl implements ShellVariablesRegistry {
 
-  @NotNull private final Map<String, Collection<TextMateShellVariable>> myVariables = new HashMap<>();
+  @NotNull private final Map<String, Collection<TextMateShellVariable>> myVariables = new ConcurrentHashMap<>();
 
   /**
    * Append table with new variables

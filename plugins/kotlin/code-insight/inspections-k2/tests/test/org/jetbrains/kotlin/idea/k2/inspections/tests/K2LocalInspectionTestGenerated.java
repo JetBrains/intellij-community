@@ -2372,6 +2372,39 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     @TestMetadata("testData/inspectionsLocal")
     public abstract static class InspectionsLocal extends AbstractK2LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/canBePrimaryConstructorProperty")
+        public static class CanBePrimaryConstructorProperty extends AbstractK2LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("commentAfter.kt")
+            public void testCommentAfter() throws Exception {
+                runTest("testData/inspectionsLocal/canBePrimaryConstructorProperty/commentAfter.kt");
+            }
+
+            @TestMetadata("commentAhead.kt")
+            public void testCommentAhead() throws Exception {
+                runTest("testData/inspectionsLocal/canBePrimaryConstructorProperty/commentAhead.kt");
+            }
+
+            @TestMetadata("protectedOpenVar.kt")
+            public void testProtectedOpenVar() throws Exception {
+                runTest("testData/inspectionsLocal/canBePrimaryConstructorProperty/protectedOpenVar.kt");
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("testData/inspectionsLocal/canBePrimaryConstructorProperty/simple.kt");
+            }
+
+            @TestMetadata("vararg.kt")
+            public void testVararg() throws Exception {
+                runTest("testData/inspectionsLocal/canBePrimaryConstructorProperty/vararg.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/destructuringWrongNameInspection")
         public static class DestructuringWrongNameInspection extends AbstractK2LocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {

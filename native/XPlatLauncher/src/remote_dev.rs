@@ -290,12 +290,33 @@ impl RemoteDevLaunchConfiguration {
             // For pre-configured environment (e.g. cloud) the version is fixed anyway
             ("ide.no.platform.update", "true"),
 
+            // Don't ask user about indexes download
+            ("shared.indexes.download", "true"),
+            ("shared.indexes.download.auto.consent", "true"),
+
             // TODO: disable once IDEA doesn't require JBA login for remote dev
             ("eap.login.enabled", "false"),
 
             // TODO: CWM-5782 figure out why posix_spawn / jspawnhelper does not work in tests
             // ("jdk.lang.Process.launchMechanism", "vfork"),
         ];
+
+        match env::var("REMOTE_DEV_NEW_UI_ENABLED") {
+            Ok(remote_dev_new_ui_enabled) => {
+                match remote_dev_new_ui_enabled.as_str() {
+                    "1" | "true" => {
+                        info!("Force enable new UI");
+                        remote_dev_properties.push(("ide.experimental.ui", "true"));
+                    },
+                    _ => {
+                        bail!("Unsupported value for REMOTE_DEV_NEW_UI_ENABLED variable: '{}'", remote_dev_new_ui_enabled);
+                    },
+                }
+            }
+            Err(_) => {
+                info!("Using ui config with default values");
+            }
+        }
 
         match env::var("REMOTE_DEV_JDK_DETECTION") {
             Ok(remote_dev_jdk_detection_value) => {

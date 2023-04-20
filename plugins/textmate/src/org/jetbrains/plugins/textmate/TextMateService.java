@@ -15,6 +15,7 @@ import org.jetbrains.plugins.textmate.language.preferences.ShellVariablesRegistr
 import org.jetbrains.plugins.textmate.language.preferences.SnippetsRegistry;
 import org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateTextAttributesAdapter;
 
+import java.nio.file.Path;
 import java.util.Map;
 
 public abstract class TextMateService {
@@ -42,7 +43,7 @@ public abstract class TextMateService {
    * @return bundle object or {@code null} if directory doesn't exist or bundle type can't be defined
    */
   @Nullable
-  public TextMateBundleReader readBundle(@Nullable VirtualFile directory) {
+  public TextMateBundleReader readBundle(@Nullable Path directory) {
     return null;
   }
 

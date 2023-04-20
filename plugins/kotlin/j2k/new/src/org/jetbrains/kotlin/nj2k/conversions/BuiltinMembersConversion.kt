@@ -241,19 +241,23 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
 
     private val conversions: Map<String, List<Conversion>> =
         listOf(
-            Method("java.lang.Byte.valueOf") convertTo numericValueOfReplacement()
+            Method("java.lang.Boolean.valueOf") convertTo valueOfReplacement()
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
-            Method("java.lang.Short.valueOf") convertTo numericValueOfReplacement()
+            Method("java.lang.Byte.valueOf") convertTo valueOfReplacement()
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
-            Method("java.lang.Integer.valueOf") convertTo numericValueOfReplacement()
+            Method("java.lang.Short.valueOf") convertTo valueOfReplacement()
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
-            Method("java.lang.Long.valueOf") convertTo numericValueOfReplacement()
+            Method("java.lang.Integer.valueOf") convertTo valueOfReplacement()
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
-            Method("java.lang.Float.valueOf") convertTo numericValueOfReplacement()
+            Method("java.lang.Long.valueOf") convertTo valueOfReplacement()
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
-            Method("java.lang.Double.valueOf") convertTo numericValueOfReplacement()
+            Method("java.lang.Float.valueOf") convertTo valueOfReplacement()
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+            Method("java.lang.Double.valueOf") convertTo valueOfReplacement()
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
 
+            Method("java.lang.Boolean.parseBoolean") convertTo ExtensionMethod("kotlin.text.toBoolean")
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
             Method("java.lang.Byte.parseByte") convertTo ExtensionMethod("kotlin.text.toByte")
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
             Method("java.lang.Short.parseShort") convertTo ExtensionMethod("kotlin.text.toShort")
@@ -700,7 +704,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
         ).groupBy { it.from.fqName }
 
     private fun castReceiverToJavaLangObject() = CustomExpression { expr ->
-        val parent = expr.parent!!
+        val parent = expr.parent ?: return@CustomExpression expr
         val (receiver, selector) = if (parent is JKQualifiedExpression) {
             parent.receiver.detach(parent)
             parent.selector.detach(parent)
@@ -724,7 +728,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
         return (cast.type.type as? JKClassType)?.classReference?.fqName != "java.lang.Object"
     }
 
-    private fun numericValueOfReplacement() = CustomExpression { expression ->
+    private fun valueOfReplacement() = CustomExpression { expression ->
         val arguments = (expression as JKCallExpression).arguments
         if (arguments.arguments.isEmpty()) return@CustomExpression expression
         val detachedArguments = arguments::arguments.detached()

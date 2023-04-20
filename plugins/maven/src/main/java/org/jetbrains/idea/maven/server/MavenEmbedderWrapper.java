@@ -166,9 +166,14 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   }
 
   @NotNull
-  public MavenArtifact resolve(@NotNull final MavenArtifactInfo info,
-                               @NotNull final List<MavenRemoteRepository> remoteRepositories) throws MavenProcessCanceledException {
-    return performCancelable(() -> getOrCreateWrappee().resolve(info, remoteRepositories, ourToken));
+  public MavenArtifact resolve(@NotNull MavenArtifactInfo info,
+                               @NotNull List<MavenRemoteRepository> remoteRepositories) throws MavenProcessCanceledException {
+    return resolve(List.of(new MavenArtifactResolutionRequest(info, remoteRepositories))).get(0);
+  }
+
+  @NotNull
+  public List<MavenArtifact> resolve(@NotNull Collection<MavenArtifactResolutionRequest> requests) throws MavenProcessCanceledException {
+    return performCancelable(() -> getOrCreateWrappee().resolve(requests, ourToken));
   }
 
   /**

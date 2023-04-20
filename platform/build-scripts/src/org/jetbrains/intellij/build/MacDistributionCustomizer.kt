@@ -20,7 +20,7 @@ abstract class MacDistributionCustomizer(
   lateinit var icnsPath: String
 
   /**
-   * Path to icns file for EAP builds (if {@code null} {@link #icnsPath} will be used)
+   * Path to icns file for EAP builds (if `null` [icnsPath] will be used)
    */
   var icnsPathForEAP: String? = null
 
@@ -79,7 +79,7 @@ abstract class MacDistributionCustomizer(
   var architectures: PersistentList<String> = persistentListOf("arm64", "x86_64")
 
   /**
-   * If {@code true} *.ipr files will be associated with the product in Info.plist
+   * If `true` *.ipr files will be associated with the product in Info.plist
    */
   var associateIpr = false
 
@@ -94,7 +94,7 @@ abstract class MacDistributionCustomizer(
   open fun getBinariesToSign(context: BuildContext, arch: JvmArchitecture): List<String> = listOf()
 
   /**
-   * Path to an image which will be injected into .dmg file for EAP builds (if {@code null} dmgImagePath will be used)
+   * Path to an image which will be injected into .dmg file for EAP builds (if `null` dmgImagePath will be used)
    */
   var dmgImagePathForEAP: String? = null
 
@@ -132,8 +132,8 @@ abstract class MacDistributionCustomizer(
   /**
    * Additional files to be copied to the distribution with specific architecture, e.g. help bundle or debugger binaries
    *
-   * Method is invoked after {@link #copyAdditionalFiles(org.jetbrains.intellij.build.BuildContext, java.lang.String)}.
-   * In this method invocation {@code targetDirectory} may be different from in aforementioned method and may contain nothing.
+   * Method is invoked after [copyAdditionalFiles].
+   * In this method invocation `targetDirectory` may be different from in aforementioned method and may contain nothing.
    *
    * @param context build context that contains information about build directories, product properties and application info
    * @param targetDirectory application bundle directory

@@ -55,7 +55,7 @@ public interface TargetEnvironmentAwareRunProfileState extends RunProfileState {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            promise.setResult(afterPreparation.compute());
+            promise.setResult(env.computeWithDataContext(afterPreparation));
           }
           catch (ProcessCanceledException e) {
             promise.setError(ExecutionBundle.message("canceled.starting.run.configuration"));

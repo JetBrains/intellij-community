@@ -5,7 +5,7 @@ import com.intellij.webSymbols.WebSymbol
 
 data class ComplexPatternOptions(
   val additionalScope: WebSymbol? = null,
-  val isDeprecated: Boolean? = null,
+  val deprecation: WebSymbol.Deprecated? = null,
   val isRequired: Boolean = true,
   val priority: WebSymbol.Priority? = null,
   val proximity: Int? = null,

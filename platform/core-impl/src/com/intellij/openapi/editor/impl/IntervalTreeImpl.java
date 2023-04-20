@@ -60,9 +60,6 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     IntervalNode(@NotNull IntervalTreeImpl<E> intervalTree, @NotNull E key, int start, int end) {
       // maxEnd == 0 so to not disrupt existing maxes
       myIntervalTree = intervalTree;
-      if (start < 0 || end < 0) {
-        throw new IllegalArgumentException("Invalid offsets: start=" + start+"; end="+end);
-      }
       myRange = TextRangeScalarUtil.toScalarRange(start, end);
       intervals = new SmartList<>(createGetter(key));
       setValid(true);
@@ -780,9 +777,6 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
   @NotNull
   public IntervalTreeImpl.IntervalNode<T> addInterval(@NotNull T interval, int start, int end,
                                                       boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
-    if (start < 0 || start > end) {
-      throw new IllegalArgumentException("invalid offsets: start="+start+"; end="+end);
-    }
     l.writeLock().lock();
     try {
       if (firingBeforeRemove) {
@@ -962,7 +956,6 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     l.writeLock().lock();
     try {
       incModCount();
-
       if (!((RangeMarkerEx)interval).isValid()) return false;
       checkBelongsToTheTree(interval, true);
       checkMax(true);
@@ -971,7 +964,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
       IntervalNode<T> node = lookupNode(interval);
       if (node == null) return false;
 
-      beforeRemove(interval, "Explicit Dispose");
+      beforeRemove(interval);
 
       node.removeInterval(interval);
       return true;
@@ -1286,7 +1279,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
   public void clear() {
     l.writeLock().lock();
     processAll(t -> {
-      beforeRemove(t, "Clear all");
+      beforeRemove(t);
       return true;
     });
     try {
@@ -1307,19 +1300,19 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     collectGced(root.getRight(), gced);
   }
 
-  void fireBeforeRemoved(@NotNull T markerEx, @NotNull @NonNls Object reason) {
+  void fireBeforeRemoved(@NotNull T markerEx) {
   }
 
   private boolean firingBeforeRemove; // accessed under l.writeLock() only
 
   // must be called under l.writeLock()
-  void beforeRemove(@NotNull T markerEx, @NonNls @NotNull Object reason) {
+  void beforeRemove(@NotNull T markerEx) {
     if (firingBeforeRemove) {
       throw new IllegalStateException("must not remove range markers from within beforeRemove() listener");
     }
     firingBeforeRemove = true;
     try {
-      fireBeforeRemoved(markerEx, reason);
+      fireBeforeRemoved(markerEx);
     }
     finally {
       firingBeforeRemove = false;

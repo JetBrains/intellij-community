@@ -35,14 +35,7 @@ internal class PortableCompilationCacheDownloader(
    */
   val availableForHeadCommit by lazy { availableCommitDepth == 0 }
 
-  private val lastCommits by lazy {
-    val ultimateHomeDir = context.paths.communityHomeDir.parent
-    git.log(COMMITS_COUNT) + if (git.dir != ultimateHomeDir) {
-      // IntelliJ is checked out inside another repository, Rider for example
-      Git(ultimateHomeDir).log(COMMITS_COUNT)
-    }
-    else emptyList()
-  }
+  private val lastCommits by lazy { git.log(COMMITS_COUNT) }
 
   private fun downloadString(url: String): String = retryWithExponentialBackOff {
     if (url.isS3()) {
@@ -70,7 +63,7 @@ internal class PortableCompilationCacheDownloader(
     }
   }
 
-  private val availableCommitDepth by lazy {
+  val availableCommitDepth by lazy {
     if (availableForHeadCommitForced) 0 else lastCommits.indexOfFirst {
       availableCachesKeys.contains(it)
     }

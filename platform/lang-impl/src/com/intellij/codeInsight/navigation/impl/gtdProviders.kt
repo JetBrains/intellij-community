@@ -4,7 +4,6 @@ package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.navigation.*
-import com.intellij.codeInsight.navigation.BaseCtrlMouseInfo.getReferenceRanges
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.SingleTarget
 import com.intellij.openapi.editor.Editor
@@ -54,18 +53,6 @@ private class GTDProviderData(
 
   init {
     require(targetElements.isNotEmpty())
-  }
-
-  @Suppress("DEPRECATION")
-  @Deprecated("Unused in v2 implementation")
-  override fun ctrlMouseInfo(): CtrlMouseInfo {
-    val singleTarget = targetElements.singleOrNull()
-    return if (singleTarget == null) {
-      MultipleTargetElementsInfo(leafElement)
-    }
-    else {
-      SingleTargetElementInfo(leafElement, singleTarget)
-    }
   }
 
   override fun ctrlMouseData(): CtrlMouseData {

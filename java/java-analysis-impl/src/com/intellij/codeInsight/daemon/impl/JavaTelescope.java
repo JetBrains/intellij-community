@@ -24,13 +24,23 @@ import java.util.function.Consumer;
  * Utility class to support Code Vision for java
  */
 final class JavaTelescope {
-  private static final int TOO_MANY_USAGES = -1;
+  static final int TOO_MANY_USAGES = -1;
 
-  static @Nls String usagesHint(@NotNull PsiMember member, @NotNull PsiFile file) {
+  static class UsagesHint {
+    @Nls
+    public String hint;
+    public int count;
+    UsagesHint(@Nls String hint, int count) {
+        this.hint = hint;
+        this.count = count;
+    }
+  }
+
+  static @Nls UsagesHint usagesHint(@NotNull PsiMember member, @NotNull PsiFile file) {
     int totalUsageCount = UsagesCountManager.getInstance(member.getProject()).countMemberUsages(file, member);
     if (totalUsageCount == TOO_MANY_USAGES) return null;
     if (totalUsageCount < AdvancedSettings.getInt("code.vision.java.minimal.usages")) return null;
-    return JavaBundle.message("usages.telescope", totalUsageCount);
+    return new UsagesHint(JavaBundle.message("usages.telescope", totalUsageCount), totalUsageCount);
   }
 
   public static int usagesCount(@NotNull PsiFile file, List<PsiMember> members, SearchScope scope) {

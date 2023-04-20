@@ -8,7 +8,6 @@ import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
 import com.intellij.collaboration.ui.util.DimensionRestrictions
 import com.intellij.collaboration.ui.util.JComponentOverlay
 import com.intellij.collaboration.ui.util.bindProgressIn
-import com.intellij.ide.ui.AntialiasingType
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
@@ -21,45 +20,31 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
-import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.panels.ListLayout
 import com.intellij.ui.content.Content
 import com.intellij.ui.speedSearch.NameFilteringListModel
 import com.intellij.ui.speedSearch.SpeedSearch
-import com.intellij.util.ui.*
+import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.SingleComponentCenteringLayout
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
-import java.awt.Color
-import java.awt.Insets
-import java.awt.Shape
+import java.awt.*
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.event.DocumentEvent
-import javax.swing.text.DefaultCaret
-import javax.swing.text.Element
-import javax.swing.text.View
-import javax.swing.text.html.HTML
-import javax.swing.text.html.InlineView
-import javax.swing.text.html.StyleSheet
 import kotlin.properties.Delegates
 
 object CollaborationToolsUIUtil {
   val COMPONENT_SCOPE_KEY = Key.create<CoroutineScope>("Collaboration.Component.Coroutine.Scope")
-
-  /**
-   * Show tooltip from HTML title attribute
-   *
-   * Syntax is `<{CONTENT_TAG} title="{text}">`
-   */
-  val CONTENT_TOOLTIP: ExtendableHTMLViewFactory.Extension = ContentTooltipExtension()
 
   val animatedLoadingIcon = AnimatedIcon.Default.INSTANCE
 
@@ -308,15 +293,41 @@ object CollaborationToolsUIUtil {
 
 @Suppress("FunctionName")
 fun VerticalListPanel(gap: Int = 0): JPanel =
-  JPanel(ListLayout.vertical(gap)).apply {
+  ScrollablePanel(ListLayout.vertical(gap), SwingConstants.VERTICAL).apply {
     isOpaque = false
   }
 
 @Suppress("FunctionName")
 fun HorizontalListPanel(gap: Int = 0): JPanel =
-  JPanel(ListLayout.horizontal(gap)).apply {
+  ScrollablePanel(ListLayout.horizontal(gap), SwingConstants.HORIZONTAL).apply {
     isOpaque = false
   }
+
+private class ScrollablePanel(layout: LayoutManager?, private val orientation: Int)
+  : JPanel(layout), Scrollable {
+
+  private var verticalUnit = 1
+  private var horizontalUnit = 1
+
+  override fun addNotify() {
+    super.addNotify()
+    val fontMetrics = getFontMetrics(font)
+    verticalUnit = fontMetrics.maxAscent + fontMetrics.maxDescent
+    horizontalUnit = fontMetrics.charWidth('W')
+  }
+
+  override fun getScrollableUnitIncrement(visibleRect: Rectangle, orientation: Int, direction: Int): Int =
+    if (orientation == SwingConstants.HORIZONTAL) horizontalUnit else verticalUnit
+
+  override fun getScrollableBlockIncrement(visibleRect: Rectangle, orientation: Int, direction: Int): Int =
+    if (orientation == SwingConstants.HORIZONTAL) visibleRect.width else visibleRect.height
+
+  override fun getPreferredScrollableViewportSize(): Dimension? = preferredSize
+
+  override fun getScrollableTracksViewportWidth(): Boolean = orientation == SwingConstants.VERTICAL
+
+  override fun getScrollableTracksViewportHeight(): Boolean = orientation == SwingConstants.HORIZONTAL
+}
 
 /**
  * Loading label with animated icon
@@ -335,56 +346,6 @@ fun TransparentScrollPane(content: JComponent): JScrollPane =
     isOpaque = false
     viewport.isOpaque = false
   }
-
-/**
- * Read-only editor pane intended to display simple HTML snippet
- */
-@Suppress("FunctionName")
-fun SimpleHtmlPane(additionalStyleSheet: StyleSheet? = null, @Language("HTML") body: @Nls String? = null): JEditorPane =
-  JEditorPane().apply {
-    editorKit = HTMLEditorKitBuilder().withViewFactoryExtensions(
-      ExtendableHTMLViewFactory.Extensions.WORD_WRAP,
-      CollaborationToolsUIUtil.CONTENT_TOOLTIP
-    ).apply {
-      if (additionalStyleSheet != null) {
-        val defaultStyleSheet = StyleSheetUtil.getDefaultStyleSheet()
-        additionalStyleSheet.addStyleSheet(defaultStyleSheet)
-        withStyleSheet(additionalStyleSheet)
-      }
-    }.build()
-
-    isEditable = false
-    isOpaque = false
-    addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
-    margin = JBInsets.emptyInsets()
-    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent())
-
-    (caret as DefaultCaret).updatePolicy = DefaultCaret.NEVER_UPDATE
-
-    name = "Simple HTML Pane"
-
-    if (body != null) {
-      setHtmlBody(body)
-    }
-  }
-
-/**
- * Read-only editor pane intended to display simple HTML snippet
- */
-@Suppress("FunctionName")
-fun SimpleHtmlPane(@Language("HTML") body: @Nls String? = null): JEditorPane = SimpleHtmlPane(null, body)
-
-fun JEditorPane.setHtmlBody(@Language("HTML") body: @Nls String) {
-  if (body.isEmpty()) {
-    text = ""
-  }
-  else {
-    //language=HTML
-    text = "<html><body>$body</body></html>"
-  }
-  // JDK bug - need to force height recalculation (see JBR-2256)
-  setSize(Int.MAX_VALUE / 2, Int.MAX_VALUE / 2)
-}
 
 internal fun <E> ListModel<E>.findIndex(item: E): Int {
   for (i in 0 until size) {
@@ -414,21 +375,4 @@ fun ComboBoxModel<*>.selectFirst() {
   }
   val first = getElementAt(0)
   selectedItem = first
-}
-
-private class ContentTooltipExtension : ExtendableHTMLViewFactory.Extension {
-  override fun invoke(elem: Element, defaultView: View): View? {
-    if (defaultView !is InlineView) return null
-
-    return object : InlineView(elem) {
-      override fun getToolTipText(x: Float, y: Float, allocation: Shape?): String? {
-        val title = element.attributes.getAttribute(HTML.Attribute.TITLE) as? String
-        if (!title.isNullOrEmpty()) {
-          return title
-        }
-
-        return super.getToolTipText(x, y, allocation)
-      }
-    }
-  }
 }

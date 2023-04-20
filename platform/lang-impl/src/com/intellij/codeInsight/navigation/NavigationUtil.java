@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -213,7 +213,10 @@ public final class NavigationUtil {
     FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(element.getProject());
     boolean wasAlreadyOpen = fileEditorManager.isFileOpen(vFile);
     if (!wasAlreadyOpen) {
-      fileEditorManager.openFile(vFile, null, new FileEditorOpenOptions().withRequestFocus().withReuseOpen(searchForOpen));
+      fileEditorManager.openFile(
+        vFile, null,
+        new FileEditorOpenOptions().withRequestFocus(requestFocus).withReuseOpen(searchForOpen)
+      );
     }
 
     TextRange range = element.getTextRange();

@@ -162,4 +162,42 @@ class GradleTestEventTest : GradleTestEventTestCase() {
       }
     }
   }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test test execution status`(gradleVersion: GradleVersion) {
+    testJavaProject(gradleVersion) {
+      writeText("src/test/java/org/example/TestCase.java", """
+        |package org.example;
+        |
+        |public class TestCase {
+        |
+        |  @$jUnitTestAnnotationClass
+        |  public void successTest() {}
+        |
+        |  @$jUnitTestAnnotationClass
+        |  public void failedTest() { 
+        |    throw new RuntimeException(); 
+        |  }
+        |
+        |  @$jUnitIgnoreAnnotationClass
+        |  @$jUnitTestAnnotationClass
+        |  public void ignoredTest() {}
+        |}
+      """.trimMargin())
+
+      executeTasks(":test")
+      assertTestTreeView {
+        assertNode("TestCase") {
+          assertNode("successTest")
+          assertNode("failedTest")
+          assertNode("ignoredTest")
+        }
+      }
+      assertTestEventCount("TestCase", 1, 1, 0, 0, 0, 0)
+      assertTestEventCount("successTest", 0, 0, 1, 1, 0, 0)
+      assertTestEventCount("failedTest", 0, 0, 1, 1, 1, 0)
+      assertTestEventCount("ignoredTest", 0, 0, 1, 1, 0, 1)
+    }
+  }
 }

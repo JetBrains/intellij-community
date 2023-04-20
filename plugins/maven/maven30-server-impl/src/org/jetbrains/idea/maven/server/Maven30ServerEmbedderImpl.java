@@ -963,16 +963,6 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
   @NotNull
   @Override
-  public MavenArtifact resolve(@NotNull MavenArtifactInfo info,
-                               @NotNull List<MavenRemoteRepository> remoteRepositories,
-                               MavenToken token)
-    throws RemoteException {
-    MavenServerUtil.checkToken(token);
-    return doResolve(info, remoteRepositories);
-  }
-
-  @NotNull
-  @Override
   public List<MavenArtifact> resolveTransitively(@NotNull List<MavenArtifactInfo> artifacts,
                                                  @NotNull List<MavenRemoteRepository> remoteRepositories, MavenToken token)
     throws RemoteException {
@@ -1065,6 +1055,19 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       Maven3ServerGlobals.getLogger().info(e);
       return new PluginResolutionResponse(pluginId, false, artifacts);
     }
+  }
+
+  @NotNull
+  @Override
+  public List<MavenArtifact> resolve(@NotNull Collection<MavenArtifactResolutionRequest> requests, MavenToken token)
+    throws RemoteException {
+    MavenServerUtil.checkToken(token);
+    List<MavenArtifact> artifacts = new ArrayList<>();
+    for (MavenArtifactResolutionRequest request : requests) {
+      MavenArtifact artifact = doResolve(request.getArtifactInfo(), request.getRemoteRepositories());
+      artifacts.add(artifact);
+    }
+    return artifacts;
   }
 
   private MavenArtifact doResolve(MavenArtifactInfo info, List<MavenRemoteRepository> remoteRepositories) throws RemoteException {

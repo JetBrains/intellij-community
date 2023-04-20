@@ -98,7 +98,7 @@ public final class HighlightingSettingsPerFile extends HighlightingLevelManager 
         return setting;
       }
     }
-    return EssentialHighlightingMode.Companion.isEnabled() ? FileHighlightingSetting.ESSENTIAL : FileHighlightingSetting.FORCE_HIGHLIGHTING;
+    return EssentialHighlightingMode.INSTANCE.isEnabled() ? FileHighlightingSetting.ESSENTIAL : FileHighlightingSetting.FORCE_HIGHLIGHTING;
   }
 
   private static FileHighlightingSetting @NotNull [] getDefaults(@NotNull PsiFile file) {

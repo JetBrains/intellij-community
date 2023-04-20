@@ -259,6 +259,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
       FileEditor[] editors = manager.openFile(file, false);
       assertEquals(ContainerUtil.map(editors, ed-> ed + " of " + ed.getClass()).toString(), 1, editors.length);
       DumbServiceImpl.getInstance(getProject()).setDumb(false);
+      manager.waitForAsyncUpdateOnDumbModeFinished();
       executeSomeCoroutineTasksAndDispatchAllInvocationEvents(getProject());
       assertEquals(2, manager.getAllEditors(file).length);
     }

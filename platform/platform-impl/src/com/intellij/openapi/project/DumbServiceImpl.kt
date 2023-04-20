@@ -247,6 +247,9 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   }
 
   private fun enterDumbModeIfSmart(modality: ModalityState, trace: Throwable) {
+    application.assertWriteIntentLockAcquired()
+    if (myState.get() == State.DUMB) return // don't event start unneeded write action
+
     val entered = WriteAction.compute<Boolean, RuntimeException> {
       if (!myState.compareAndSet(State.SMART, State.DUMB)) {
         return@compute false
@@ -263,6 +266,9 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   }
 
   private fun enterSmartModeIfDumb() {
+    application.assertWriteIntentLockAcquired()
+    if (myState.get() == State.SMART) return // don't event start unneeded write action
+
     val entered = WriteAction.compute<Boolean, RuntimeException> {
       if (!myState.compareAndSet(State.DUMB, State.SMART)) {
         return@compute false

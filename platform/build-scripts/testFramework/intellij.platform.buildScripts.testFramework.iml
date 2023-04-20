@@ -28,5 +28,7 @@
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="module" module-name="intellij.platform.reproducibleBuilds.diffTool" />
     <orderEntry type="module" module-name="intellij.platform.jps.build" />
+    <orderEntry type="module" module-name="intellij.devkit.runtimeModuleRepository.jps" />
+    <orderEntry type="module" module-name="intellij.platform.runtime.repository" />
   </component>
 </module>

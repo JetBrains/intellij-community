@@ -179,7 +179,7 @@ sealed class BaseLayout {
   }
 
   /**
-   * @param resourcePath path to resource file or directory relative to {@code moduleName} module content root
+   * @param resourcePath path to resource file or directory relative to `moduleName` module content root
    * @param relativeOutputPath target path relative to the plugin root directory
    */
   fun withResourceFromModule(moduleName: String, resourcePath: String, relativeOutputPath: String) {

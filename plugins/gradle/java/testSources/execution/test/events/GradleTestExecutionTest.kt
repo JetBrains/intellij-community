@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.events
 
+import com.intellij.idea.Bombed
 import com.intellij.openapi.util.SystemInfo
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
@@ -13,7 +14,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
   @TargetVersions("4.7+")
   @AllGradleVersionsSource
   fun `test grouping events of the same suite comes from different tasks`(gradleVersion: GradleVersion) {
-    testJavaProject(gradleVersion) {
+    testJunit5Project(gradleVersion) {
       writeText("src/test/java/org/example/AppTest.java", """
         |package org.example;
         |import $jUnitTestAnnotationClass;
@@ -38,7 +39,6 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test :additionalTest")
-
       assertTestTreeView {
         assertNode("AppTest") {
           assertNode("test")
@@ -54,7 +54,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":processTestResources")
           assertNode(":testClasses")
           assertNode(":test") {
-            if (isSupportedTestLauncher()) {
+            if (isTestLauncherSupported()) {
               assertNode("Gradle Test Run :test") {
                 assertNode("Gradle Test Executor 1") {
                   assertNode("AppTest") {
@@ -65,7 +65,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
             }
           }
           assertNode(":additionalTest") {
-            if (isSupportedTestLauncher()) {
+            if (isTestLauncherSupported()) {
               assertNode("Gradle Test Run :additionalTest") {
                 assertNode("Gradle Test Executor 2") {
                   assertNode("AppTest") {
@@ -80,7 +80,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
               assertNode("There were failing tests. See the report at: .*".toRegex())
             }
           }
-          if (isSupportedTestLauncher()) {
+          if (isTestLauncherSupported()) {
             assertNode("Test failed.")
           }
         }
@@ -112,7 +112,6 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test")
-
       assertTestTreeView {
         assertNode("AppTest") {
           assertNode("test")
@@ -142,7 +141,6 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test")
-
       assertTestTreeView {
         assertNode("AppTest") {
           assertNode("test")
@@ -157,7 +155,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":processTestResources")
           assertNode(":testClasses")
           assertNode(":test") {
-            if (isSupportedTestLauncher()) {
+            if (isTestLauncherSupported()) {
               assertNode("Gradle Test Run :test") {
                 assertNode("Gradle Test Executor 1") {
                   assertNode("AppTest") {
@@ -169,44 +167,6 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           }
         }
       }
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  fun `test test execution status`(gradleVersion: GradleVersion) {
-    testJavaProject(gradleVersion) {
-      writeText("src/test/java/org/example/TestCase.java", """
-        |package org.example;
-        |
-        |public class TestCase {
-        |
-        |  @$jUnitTestAnnotationClass
-        |  public void successTest() {}
-        |
-        |  @$jUnitTestAnnotationClass
-        |  public void failedTest() { 
-        |    throw new RuntimeException(); 
-        |  }
-        |
-        |  @$jUnitIgnoreAnnotationClass
-        |  @$jUnitTestAnnotationClass
-        |  public void ignoredTest() {}
-        |}
-      """.trimMargin())
-
-      executeTasks(":test")
-      assertTestTreeView {
-        assertNode("TestCase") {
-          assertNode("failedTest")
-          assertNode("ignoredTest")
-          assertNode("successTest")
-        }
-      }
-      assertTestEventCount("TestCase", 1, 1, 0, 0, 0, 0)
-      assertTestEventCount("successTest", 0, 0, 1, 1, 0, 0)
-      assertTestEventCount("failedTest", 0, 0, 1, 1, 1, 0)
-      assertTestEventCount("ignoredTest", 0, 0, 1, 1, 0, 1)
     }
   }
 
@@ -287,7 +247,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":processTestResources")
           assertNode(":testClasses")
           assertNode(":test") {
-            if (isSupportedTestLauncher()) {
+            if (isTestLauncherSupported()) {
               assertNode("Gradle Test Run :test") {
                 assertNode("Gradle Test Executor 1") {
                   assertNode("TestCase") {
@@ -315,7 +275,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":processTestResources")
           assertNode(":testClasses")
           assertNode(":test") {
-            if (isSupportedTestLauncher()) {
+            if (isTestLauncherSupported()) {
               assertNode("Gradle Test Run :test") {
                 assertNode("Gradle Test Executor 2") {
                   assertNode("TestCase") {
@@ -388,7 +348,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":processTestResources")
           assertNode(":testClasses")
           assertNode(":test") {
-            if (isSupportedTestLauncher()) {
+            if (isTestLauncherSupported()) {
               assertNode("Gradle Test Run :test") {
                 assertNode("Gradle Test Executor 1") {
                   assertNode("TestCase") {
@@ -406,7 +366,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       assertTestTreeViewIsEmpty()
       assertBuildExecutionTree {
         val status = when {
-          isSupportedTestLauncher() -> "failed"
+          isTestLauncherSupported() -> "failed"
           else -> "successful"
         }
         assertNode(status) {
@@ -418,24 +378,8 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test")
           assertNode(":allTests")
-          if (isSupportedTestLauncher()) {
+          if (isTestLauncherSupported()) {
             assertNode("No matching tests found in any candidate test task.")
-          }
-        }
-      }
-
-      executeTasks(":allTests --tests *", isRunAsTest = true)
-      assertTestTreeViewIsEmpty()
-      assertBuildExecutionTree {
-        assertNode("failed") {
-          when {
-            isSupportedTestLauncher() ->
-              assertNode(
-                "Task ':allTests' of type 'org.gradle.api.DefaultTask_Decorated' " +
-                "not supported for executing tests via TestLauncher API."
-              )
-            else ->
-              assertNode("Unknown command-line option '--tests'")
           }
         }
       }
@@ -465,6 +409,49 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test")
           assertNode(":allTests")
+        }
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  @Bombed(
+    year = 2024, month = 1, day = 1, user = "Sergei Vorobyov",
+    description = """
+      Happy New Year! Deprecation cycle has ended.
+      Please remove org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper.fixUpGradleCommandLine,
+      And resolve IDEA-318304 issue.
+    """
+  )
+  fun `test hacky non test task execution`(gradleVersion: GradleVersion) {
+    testJavaProject(gradleVersion) {
+      writeText("src/test/java/org/example/TestCase.java", """
+        |package org.example;
+        |import $jUnitTestAnnotationClass;
+        |public class TestCase {
+        |  @Test public void test() {}
+        |}
+      """.trimMargin())
+      appendText("build.gradle", """
+        |tasks.create('allTests') {
+        |    dependsOn(tasks.findByPath(':test'))
+        |}
+      """.trimMargin())
+
+      executeTasks(":allTests --tests *", isRunAsTest = true)
+      assertTestTreeViewIsEmpty()
+      assertBuildExecutionTree {
+        assertNode("failed") {
+          when {
+            isTestLauncherSupported() ->
+              assertNode(
+                "Task ':allTests' of type 'org.gradle.api.DefaultTask_Decorated' " +
+                "not supported for executing tests via TestLauncher API."
+              )
+            else ->
+              assertNode("Unknown command-line option '--tests'")
+          }
         }
       }
 
@@ -504,7 +491,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":processTestResources")
           assertNode(":testClasses")
           assertNode(":test") {
-            if (isSupportedTestLauncher()) {
+            if (isTestLauncherSupported()) {
               assertNode("Gradle Test Run :test") {
                 assertNode("Gradle Test Executor 1") {
                   assertNode("TestCase") {
@@ -526,7 +513,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":processTestResources")
           assertNode(":testClasses")
           assertNode(":test") {
-            if (isSupportedTestLauncher()) {
+            if (isTestLauncherSupported()) {
               assertNode("Gradle Test Run :test") {
                 assertNode("Gradle Test Executor 2") {
                   assertNode("TestCase") {
@@ -550,7 +537,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":processTestResources")
           assertNode(":testClasses")
           assertNode(":test") {
-            if (isSupportedTestLauncher()) {
+            if (isTestLauncherSupported()) {
               assertNode("Gradle Test Run :test") {
                 assertNode("Gradle Test Executor 3") {
                   assertNode("TestCase") {

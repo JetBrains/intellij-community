@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -20,20 +20,28 @@ public final class OpenSourceUtil {
     navigate(requestFocus, false, CommonDataKeys.NAVIGATABLE_ARRAY.getData(context));
   }
 
+  /**
+   * @deprecated use {@link #openSourcesFrom(DataContext, boolean)} instead
+   */
+  @Deprecated
   public static void openSourcesFrom(@NotNull DataProvider context, boolean requestFocus) {
-    navigate(requestFocus, CommonDataKeys.NAVIGATABLE_ARRAY.getData(context));
+    openSourcesFrom((DataContext)context::getData, requestFocus);
   }
 
   /**
    * @return {@code true} if the specified {@code object} is {@link Navigatable} and supports navigation
+   * @deprecated check instanceof/null on the caller side
    */
+  @Deprecated
   public static boolean canNavigate(@Nullable Object object) {
     return object instanceof Navigatable && ((Navigatable)object).canNavigate();
   }
 
   /**
    * @return {@code true} if the specified {@code object} is {@link Navigatable} and supports navigation to source
+   * @deprecated check instanceof/null on the caller side
    */
+  @Deprecated
   public static boolean canNavigateToSource(@Nullable Object object) {
     return object instanceof Navigatable && ((Navigatable)object).canNavigateToSource();
   }
@@ -86,7 +94,7 @@ public final class OpenSourceUtil {
       if (navigateToSource(requestFocus, tryNotToScroll, navigatable)) {
         navigatedSourcesCounter++;
       }
-      else if (navigatedSourcesCounter == 0 && nonSourceNavigatable == null && canNavigate(navigatable)) {
+      else if (navigatedSourcesCounter == 0 && nonSourceNavigatable == null && navigatable != null && navigatable.canNavigate()) {
         nonSourceNavigatable = navigatable;
       }
     }
@@ -131,7 +139,7 @@ public final class OpenSourceUtil {
    * @return {@code true} if navigation is done, {@code false} otherwise
    */
   public static boolean navigateToSource(boolean requestFocus, boolean tryNotToScroll, @Nullable Navigatable navigatable) {
-    if (!canNavigateToSource(navigatable)) {
+    if (navigatable == null || !navigatable.canNavigateToSource()) {
       return false;
     }
     if (tryNotToScroll && navigatable instanceof StatePreservingNavigatable) {

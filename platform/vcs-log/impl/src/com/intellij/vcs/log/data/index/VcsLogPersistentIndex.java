@@ -19,7 +19,6 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.StorageLockContext;
 import com.intellij.vcs.log.VcsLogProperties;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsUserRegistry;
@@ -55,7 +54,7 @@ import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 import static com.intellij.vcs.log.data.index.VcsLogFullDetailsIndex.INDEX;
-import static com.intellij.vcs.log.util.PersistentUtil.calcIndexId;
+import static com.intellij.vcs.log.util.PersistentUtil.calcLogId;
 
 public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable {
   static final Logger LOG = Logger.getInstance(VcsLogPersistentIndex.class);
@@ -106,12 +105,9 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     myIndexers = getAvailableIndexers(providers);
     myRoots = new LinkedHashSet<>(myIndexers.keySet());
 
-    VcsUserRegistry userRegistry = myProject.getService(VcsUserRegistry.class);
-
-    String logId = calcIndexId(myProject, myIndexers);
-    myIndexStorageId = new StorageId(myProject.getName(), INDEX, logId,
-                                     VcsLogStorageImpl.VERSION + VERSION);
-    myIndexStorage = createIndexStorage(myIndexStorageId, errorHandler, userRegistry);
+    String logId = calcLogId(myProject, providers);
+    myIndexStorageId = new StorageId(myProject.getName(), INDEX, logId, VcsLogStorageImpl.VERSION + VERSION);
+    myIndexStorage = createIndexStorage(myStorage, myRoots, myIndexStorageId, errorHandler);
     if (myIndexStorage != null) {
       myDataGetter = new IndexDataGetter(myProject, ContainerUtil.filter(providers, root -> myRoots.contains(root)),
                                          myIndexStorage, myStorage, myErrorHandler);
@@ -139,12 +135,15 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     return Math.max(1, Registry.intValue("vcs.log.index.limit.minutes"));
   }
 
-  private IndexStorage createIndexStorage(@NotNull StorageId indexStorageId,
-                                          @NotNull VcsLogErrorHandler errorHandler,
-                                          @NotNull VcsUserRegistry registry) {
+  private @Nullable IndexStorage createIndexStorage(@NotNull VcsLogStorage storage,
+                                                    @NotNull Set<VirtualFile> roots,
+                                                    @NotNull StorageId indexStorageId,
+                                                    @NotNull VcsLogErrorHandler errorHandler) {
+    VcsUserRegistry userRegistry = myProject.getService(VcsUserRegistry.class);
+
     try {
       return IOUtil.openCleanOrResetBroken(
-        () -> new IndexStorage(indexStorageId, myStorage, registry, myRoots, errorHandler, this),
+        () -> new IndexStorage(indexStorageId, storage, userRegistry, roots, errorHandler, this),
         () -> {
           if (!indexStorageId.cleanupAllStorageFiles()) {
             LOG.error("Could not clean up storage files in " + indexStorageId.getProjectStorageDir());
@@ -152,7 +151,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
         });
     }
     catch (IOException e) {
-      myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
+      errorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
     }
     return null;
   }
@@ -262,6 +261,11 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     IntCollectionUtil.add(myCommitsToIndex, root, index);
   }
 
+  private synchronized void markForIndexing(@NotNull IntSet commits, @NotNull VirtualFile root) {
+    IntSet commitsToIndex = myCommitsToIndex.computeIfAbsent(root, __ -> new IntOpenHashSet());
+    commitsToIndex.addAll(commits);
+  }
+
   @Override
   public @Nullable IndexDataGetter getDataGetter() {
     if (myIndexStorage == null) return null;
@@ -320,31 +324,12 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
           store = (VcsLogStorageBackend)storage;
         }
         else {
-          StorageLockContext storageLockContext = new StorageLockContext();
-          store = new PhmVcsLogStorageBackend(indexStorageId, storage, roots, userRegistry, storageLockContext, errorHandler, this);
+          store = new PhmVcsLogStorageBackend(indexStorageId, storage, roots, userRegistry, errorHandler, this);
         }
-
-        reportEmpty();
       }
       catch (Throwable t) {
         Disposer.dispose(this);
         throw t;
-      }
-    }
-
-    private void reportEmpty() throws IOException {
-      if (store.isEmpty()) {
-        return;
-      }
-
-      var trigramsEmpty = store.getTrigramsEmpty();
-      boolean usersEmpty = store.isUsersEmpty();
-      boolean pathsEmpty = store.isPathsEmpty();
-      if ((trigramsEmpty != null && trigramsEmpty) || usersEmpty || pathsEmpty) {
-        LOG.warn("Some of the index maps empty:\n" +
-                 "trigrams empty " + trigramsEmpty + "\n" +
-                 "users empty " + usersEmpty + "\n" +
-                 "paths empty " + pathsEmpty);
       }
     }
 
@@ -598,18 +583,16 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     }
 
     private void markCommits() {
-      synchronized (VcsLogPersistentIndex.this) {
-        IndexStorage indexStorage = myIndexStorage;
-        if (indexStorage == null || !myRoots.contains(myRoot)) {
-          return;
-        }
-        try {
-          IntSet set = myCommitsToIndex.computeIfAbsent(myRoot, __ -> new IntOpenHashSet());
-          indexStorage.store.collectMissingCommits(myCommits, set);
-        }
-        catch (IOException e) {
-          myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
-        }
+      IndexStorage indexStorage = myIndexStorage;
+      if (indexStorage == null || !myRoots.contains(myRoot)) {
+        return;
+      }
+      try {
+        IntSet missingCommits = indexStorage.store.collectMissingCommits(myCommits);
+        markForIndexing(missingCommits, myRoot);
+      }
+      catch (IOException e) {
+        myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
       }
     }
 

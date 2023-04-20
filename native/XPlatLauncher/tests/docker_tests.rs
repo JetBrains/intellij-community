@@ -4,8 +4,6 @@ pub mod utils;
 
 #[cfg(test)]
 mod tests {
-    use rstest::*;
-
     #[cfg(target_os = "linux")]
     use {
         std::fs::{File, create_dir_all},
@@ -17,14 +15,12 @@ mod tests {
     };
 
     #[cfg(target_os = "windows")]
-    use {
-        xplat_launcher::is_service_present
-    };
+    use xplat_launcher::is_service_present;
 
     #[cfg(target_os = "linux")]
     const TEST_CLASS_DIR_NAME: &str = "DockerTestData";
 
-    #[rstest]
+    #[test]
     #[cfg(target_os = "linux")]
     fn is_docker_env_file_exist_file_exist() {
         let env = prepare_env();
@@ -34,7 +30,7 @@ mod tests {
         assert!(is_docker_env_file_exist(Some(home_dir)).unwrap());
     }
 
-    #[rstest]
+    #[test]
     #[cfg(target_os = "linux")]
     fn is_docker_env_file_exist_file_not_exist() {
         let env = prepare_env();
@@ -44,7 +40,7 @@ mod tests {
         assert!(!is_docker_env_file_exist(Some(home_dir)).unwrap());
     }
 
-    #[rstest]
+    #[test]
     #[cfg(target_os = "linux")]
     fn is_docker_env_file_exist_root_not_exist() {
         let env = prepare_env();
@@ -55,7 +51,7 @@ mod tests {
         );
     }
 
-    #[rstest]
+    #[test]
     #[cfg(target_os = "linux")]
     fn is_docker_init_file_exist_file_exist() {
         let env = prepare_env();
@@ -65,7 +61,7 @@ mod tests {
         assert!(is_docker_init_file_exist(Some(home_dir)).unwrap());
     }
 
-    #[rstest]
+    #[test]
     #[cfg(target_os = "linux")]
     fn is_docker_init_file_exist_file_not_exist() {
         let env = prepare_env();
@@ -75,7 +71,7 @@ mod tests {
         assert!(!is_docker_init_file_exist(Some(home_dir)).unwrap());
     }
 
-    #[rstest]
+    #[test]
     #[cfg(target_os = "linux")]
     fn is_docker_init_file_exist_root_not_exist() {
         let env = prepare_env();
@@ -86,7 +82,7 @@ mod tests {
         );
     }
 
-    #[rstest]
+    #[test]
     #[cfg(target_os = "linux")]
     fn is_control_group_matches_docker_contains_docker() {
         let env = prepare_env();
@@ -108,7 +104,7 @@ mod tests {
         assert!(is_control_group_matches_docker(Some(cgroup_dir)));
     }
 
-    #[rstest]
+    #[test]
     #[cfg(target_os = "linux")]
     fn is_control_group_matches_docker_does_not_contain_docker() {
         let env = prepare_env();
@@ -130,25 +126,25 @@ mod tests {
         assert!(!is_control_group_matches_docker(Some(cgroup_dir)));
     }
 
-    #[rstest]
+    #[test]
     #[cfg(target_os = "windows")]
     fn is_service_present_service_exist() {
         assert!(is_service_present("Dnscache"));
     }
 
-    #[rstest]
+    #[test]
     #[cfg(target_os = "windows")]
     fn is_service_present_service_not_exist() {
         assert!(!is_service_present("ServiceDoesNotExist"));
     }
 
-    #[rstest]
+    #[test]
     #[cfg(target_os = "linux")]
     fn is_control_group_matches_docker_in_container() {
         // TODO: Start a real container from java image with a cgroup file and get result.
     }
 
-    #[rstest]
+    #[test]
     #[cfg(target_os = "windows")]
     fn is_service_present_in_container() {
         // TODO: Start a real container from win image with running 'cexecsvc' service running and get result.
@@ -163,17 +159,10 @@ mod tests {
     fn prepare_env() -> DockerTestEnvironment {
         info!("Prepare Docker test environment");
         info!("Preparing test environment");
-        let layout_spec = LayoutSpec {
-            launcher_location: LauncherLocation::MainBin,
-            java_type: JavaType::JBR
-        };
-
-        let environment = prepare_test_env(&layout_spec);
+        let environment = prepare_test_env(LauncherLocation::Standard);
 
         info!("Preparing temp directory");
-        let test_temp_directory = environment.test_root_dir.path().join(TEST_CLASS_DIR_NAME);
-        create_dir_all(&test_temp_directory)
-            .expect(&format!("Unable to create test class temp directory: {}", test_temp_directory.display()));
+        let test_temp_directory = environment.create_temp_dir(TEST_CLASS_DIR_NAME);
 
         return DockerTestEnvironment { test_temp_directory }
     }

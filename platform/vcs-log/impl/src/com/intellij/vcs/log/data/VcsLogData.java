@@ -135,22 +135,18 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
   }
 
   private @NotNull VcsLogStorage createStorage(@NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
-    VcsLogStorage vcsLogStorage;
     try {
       if (useSqlite) {
         Set<VirtualFile> roots = new LinkedHashSet<>(logProviders.keySet());
         String logId = PersistentUtil.calcLogId(myProject, logProviders);
-        vcsLogStorage = new SqliteVcsLogStorageBackend(myProject, logId, roots, logProviders, this);
+        return new SqliteVcsLogStorageBackend(myProject, logId, roots, logProviders, this);
       }
-      else {
-        vcsLogStorage = new VcsLogStorageImpl(myProject, myLogProviders, myErrorHandler, this);
-      }
+      return new VcsLogStorageImpl(myProject, myLogProviders, myErrorHandler, this);
     }
     catch (IOException e) {
-      vcsLogStorage = new InMemoryStorage();
       LOG.error("Falling back to in-memory hashes", e);
+      return new InMemoryStorage();
     }
-    return vcsLogStorage;
   }
 
   public void initialize() {

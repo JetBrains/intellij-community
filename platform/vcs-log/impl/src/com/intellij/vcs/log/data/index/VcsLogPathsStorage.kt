@@ -10,9 +10,6 @@ import java.io.IOException
 import java.util.function.ObjIntConsumer
 
 internal interface VcsLogPathsStorage {
-  @Throws(IOException::class)
-  fun isPathsEmpty(): Boolean
-
   @Throws(IOException::class, StorageException::class)
   fun iterateChangesInCommits(root: VirtualFile, path: FilePath, consumer: ObjIntConsumer<List<VcsLogPathsIndex.ChangeKind>>)
 

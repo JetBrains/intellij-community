@@ -7,7 +7,7 @@ publish = false
 
 [profile.release]
 strip = "debuginfo"
-opt-level = "z"  # Optimize for size.
+opt-level = "z"  # optimize for size
 lto = true
 codegen-units = 1
 
@@ -36,7 +36,6 @@ cargo-deny = "0.13.5" # checks licenses / vulns
 cargo-about = "0.5.1" # generates license report
 
 [dev-dependencies]
-rstest = "0.17.0"
 tempfile = "3.5.0"
 
 [target.'cfg(target_os = "windows")'.dev-dependencies]

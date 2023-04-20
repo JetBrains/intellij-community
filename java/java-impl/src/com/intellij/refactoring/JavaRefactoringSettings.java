@@ -76,6 +76,7 @@ public class JavaRefactoringSettings implements PersistentStateComponent<JavaRef
 
   public boolean EXTRACT_STATIC_METHOD = true;
   public boolean EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = false;
+  public boolean DECLARE_VAR_TYPE = false;
 
   public static JavaRefactoringSettings getInstance() {
     return ApplicationManager.getApplication().getService(JavaRefactoringSettings.class);

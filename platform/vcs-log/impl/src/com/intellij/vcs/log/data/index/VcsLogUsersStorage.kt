@@ -7,9 +7,6 @@ import it.unimi.dsi.fastutil.ints.IntSet
 import java.io.IOException
 
 internal interface VcsLogUsersStorage {
-  @Throws(IOException::class)
-  fun isUsersEmpty(): Boolean
-
   fun getCommitterOrAuthorForCommit(commitId: Int): VcsUser?
 
   fun getAuthorForCommit(commitId: Int): VcsUser?

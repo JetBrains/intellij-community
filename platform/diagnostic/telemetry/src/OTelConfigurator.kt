@@ -115,8 +115,7 @@ class OTelConfigurator(private val mainScope: CoroutineScope,
     metricsReportingPath?: return emptyList()
 
     val metricsExporters = mutableListOf<MetricExporter>()
-    val writeMetricsTo = MetricsExporterUtils.generateFileForMetrics(metricsReportingPath)
-    metricsExporters.add(FilteredMetricsExporter(CsvMetricsExporter(RollingFileSupplier(writeMetricsTo))) { metric ->
+    metricsExporters.add(FilteredMetricsExporter(CsvMetricsExporter(RollingFileSupplier(metricsReportingPath))) { metric ->
       !metric.name.contains("lux") && !metric.name.contains("rdct")
     })
     return metricsExporters

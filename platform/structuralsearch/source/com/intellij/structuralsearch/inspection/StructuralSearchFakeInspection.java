@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -14,7 +14,9 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.profile.codeInspection.ui.InspectionMetaDataDialog;
 import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.*;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.DoubleClickListener;
@@ -22,6 +24,7 @@ import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
@@ -75,6 +78,14 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
   @Override
   public boolean isEnabledByDefault() {
     return true;
+  }
+
+  public boolean isCleanup() {
+    return isCleanupAllowed() && myMainConfiguration.isCleanup();
+  }
+
+  private boolean isCleanupAllowed() {
+    return ContainerUtil.exists(myConfigurations, c -> c instanceof ReplaceConfiguration);
   }
 
   @NotNull
@@ -171,8 +182,10 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
       return;
     }
     final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
-    final StructuralSearchProfileActionProvider.InspectionDataDialog dialog =
-      new StructuralSearchProfileActionProvider.InspectionDataDialog(project, inspection, myMainConfiguration, false);
+    final InspectionMetaDataDialog dialog = inspection.createMetaDataDialog(project, myMainConfiguration);
+    if (isCleanupAllowed()) {
+      dialog.showCleanupOption(myMainConfiguration.isCleanup());
+    }
     if (!dialog.showAndGet()) {
       return;
     }
@@ -180,6 +193,10 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     for (Configuration c : myConfigurations) {
       c.setName(name);
     }
+    myMainConfiguration.setDescription(dialog.getDescription());
+    myMainConfiguration.setProblemDescriptor(dialog.getProblemDescriptor());
+    myMainConfiguration.setSuppressId(dialog.getSuppressId());
+    myMainConfiguration.setCleanup(dialog.isCleanup());
     inspection.removeConfigurationsWithUuid(myMainConfiguration.getUuid());
     inspection.addConfigurations(myConfigurations);
     profile.setModified(true);
@@ -211,6 +228,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     target.setDescription(source.getDescription());
     target.setSuppressId(source.getSuppressId());
     target.setProblemDescriptor(source.getProblemDescriptor());
+    target.setCleanup(source.isCleanup());
     source.setDescription(null);
     source.setSuppressId(null);
     source.setProblemDescriptor(null);

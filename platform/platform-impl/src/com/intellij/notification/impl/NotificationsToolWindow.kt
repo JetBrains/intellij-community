@@ -1058,10 +1058,15 @@ private class NotificationComponent(val project: Project,
 
         button.isVisible = false
 
+        val timeWrapper = JPanel(BorderLayout())
+        timeWrapper.isOpaque = false
+        timeWrapper.border = JBUI.Borders.emptyTop(3)
+        timeWrapper.add(timeComponent, BorderLayout.NORTH)
+
         val eastPanel = JPanel(BorderLayout())
         eastPanel.isOpaque = false
         eastPanel.add(buttonWrapper, BorderLayout.WEST)
-        eastPanel.add(timeComponent, BorderLayout.EAST)
+        eastPanel.add(timeWrapper, BorderLayout.EAST)
         titlePanel!!.add(eastPanel, BorderLayout.EAST)
       }
       else {

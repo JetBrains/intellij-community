@@ -36,7 +36,7 @@ open class LoadingDecorator @JvmOverloads constructor(
 
   var overlayBackground: Color? = null
 
-  private val pane: JLayeredPane = MyLayeredPane(if (useMinimumSize) content else null)
+  private val pane: JLayeredPane = LoadingDecoratorLayeredPane(if (useMinimumSize) content else null)
   private val loadingLayer: LoadingLayer = LoadingLayer(icon)
   private val fadeOutAnimator: Animator
   private var startRequestJob: Job? = null
@@ -254,7 +254,7 @@ class LoadingLayerAnimator(
   }
 }
 
-private class MyLayeredPane(private val content: JComponent?) : JBLayeredPane(), LoadingDecorator.CursorAware {
+private class LoadingDecoratorLayeredPane(private val content: JComponent?) : JBLayeredPane(), LoadingDecorator.CursorAware {
   override fun getMinimumSize(): Dimension {
     return if (content != null && !isMinimumSizeSet) content.minimumSize else super.getMinimumSize()
   }

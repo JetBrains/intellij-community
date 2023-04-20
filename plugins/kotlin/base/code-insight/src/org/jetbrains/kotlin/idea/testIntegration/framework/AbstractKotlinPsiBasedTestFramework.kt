@@ -1,32 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.testIntegration.framework
 
-import com.intellij.openapi.roots.ProjectRootModificationTracker
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
+import com.intellij.java.library.JavaLibraryUtil
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework.Companion.KOTLIN_TEST_IGNORE
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
-import java.util.concurrent.ConcurrentHashMap
 
 abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework {
     abstract val markerClassFqn: String
     abstract val disabledTestAnnotation: String
 
     protected fun isFrameworkAvailable(element: KtElement): Boolean {
-        // TODO: migrate to JavaLibraryUtils
-        val project = element.project
         val module = element.module ?: return false
-        val resolveScope = element.resolveScope
-        val map = CachedValuesManager.getManager(project).getCachedValue(module) {
-            CachedValueProvider.Result.create(ConcurrentHashMap<String, Boolean>(), ProjectRootModificationTracker.getInstance(project))
-        }
-        return map.computeIfAbsent(markerClassFqn) {
-            JavaPsiFacade.getInstance(project).findClass(markerClassFqn, resolveScope) != null
-        }
+        return JavaLibraryUtil.hasLibraryClass(module, markerClassFqn)
     }
 
     override fun responsibleFor(declaration: KtNamedDeclaration): Boolean {

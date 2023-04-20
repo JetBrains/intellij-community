@@ -116,7 +116,7 @@ fn main_impl(remote_dev: bool, verbose: bool) -> Result<()> {
     debug!("** Preparing configuration");
     let configuration = &get_configuration(remote_dev)?;
 
-    debug!("** Preparing runtime");
+    debug!("** Locating runtime");
     let java_home = &configuration.prepare_for_launch()?;
     debug!("Resolved runtime: {java_home:?}");
 

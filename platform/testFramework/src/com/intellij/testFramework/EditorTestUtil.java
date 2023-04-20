@@ -36,7 +36,6 @@ import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManage
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
-import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -56,8 +55,8 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,7 +68,6 @@ import java.nio.charset.Charset;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
@@ -708,16 +706,8 @@ public final class EditorTestUtil {
     return result[0];
   }
 
-  public static void waitForLoading(Editor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (EditorUtil.isRealFileEditor(editor)) {
-      UIUtil.dispatchAllInvocationEvents(); // if editor is loaded synchronously,
-                                            // background loading thread stays blocked in 'invokeAndWait' call
-      while (!AsyncEditorLoader.isEditorLoaded(editor)) {
-        LockSupport.parkNanos(100_000_000);
-        UIUtil.dispatchAllInvocationEvents();
-      }
-    }
+  @RequiresEdt
+  public static void waitForLoading(@SuppressWarnings("unused") Editor editor) {
   }
 
   public static void testUndoInEditor(@NotNull Editor editor, @NotNull Runnable runnable) {

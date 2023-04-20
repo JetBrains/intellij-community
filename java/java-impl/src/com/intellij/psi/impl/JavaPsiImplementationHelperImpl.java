@@ -12,9 +12,6 @@ import com.intellij.model.Pointer;
 import com.intellij.model.Symbol;
 import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.navigation.NavigatableSymbol;
-import com.intellij.navigation.NavigationRequest;
-import com.intellij.navigation.NavigationService;
-import com.intellij.navigation.NavigationTarget;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -36,6 +33,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.platform.backend.documentation.DocumentationSymbol;
 import com.intellij.platform.backend.documentation.DocumentationTarget;
+import com.intellij.platform.backend.navigation.NavigationRequest;
+import com.intellij.platform.backend.navigation.NavigationRequests;
+import com.intellij.platform.backend.navigation.NavigationTarget;
 import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -442,7 +442,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
 
           @Override
           public @Nullable NavigationRequest navigationRequest() {
-            return NavigationService.getInstance().sourceNavigationRequest(myVirtualFile, myRangeInFile.getStartOffset());
+            return NavigationRequests.getInstance().sourceNavigationRequest(myVirtualFile, myRangeInFile.getStartOffset());
           }
         }
       );

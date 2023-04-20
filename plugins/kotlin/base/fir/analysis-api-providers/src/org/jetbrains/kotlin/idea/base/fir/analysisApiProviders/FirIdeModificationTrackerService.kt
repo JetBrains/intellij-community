@@ -5,66 +5,68 @@ package org.jetbrains.kotlin.idea.base.fir.analysisApiProviders
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.TestOnly
+import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.SimpleModificationTracker
+import org.jetbrains.kotlin.analysis.api.fir.utils.createCompositeModificationTracker
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicLong
 
 internal class FirIdeModificationTrackerService(val project : Project) : Disposable {
-    private val _projectGlobalOutOfBlockInKotlinFilesModificationCount = AtomicLong()
-    val projectGlobalOutOfBlockInKotlinFilesModificationCount: Long
-        get() = _projectGlobalOutOfBlockInKotlinFilesModificationCount.get()
+    /**
+     * A project-wide out-of-block modification tracker for Kotlin sources. The modification count of this tracker will be incremented on
+     * global PSI tree changes or for test purposes.
+     */
+    val projectOutOfBlockModificationTracker: SimpleModificationTracker = SimpleModificationTracker()
 
-    fun getOutOfBlockModificationCountForModules(module: Module): Long =
-        moduleModificationsState.getModificationsCountForModule(module)
+    /**
+     * A module modification tracker is used by dependents which want to depend on *specific* module changes. This modification tracker for
+     * *all* modules gives us the option to force such an update for all source modules.
+     *
+     * That functionality is distinct from [projectOutOfBlockModificationTracker], because a dependent will explicitly use a project OOB
+     * tracker if it wants to depend on *any* OOB modification in the project.
+     */
+    private val allModulesOutOfBlockModificationTracker: SimpleModificationTracker = SimpleModificationTracker()
 
-    private val moduleModificationsState = ModuleModificationsState()
+    private val moduleOutOfBlockModificationTrackerWrappers = ConcurrentHashMap<Module, ModuleOutOfBlockModificationTrackerWrapper>()
+
+    fun getModuleOutOfBlockModificationTracker(module: Module): ModificationTracker =
+      getModuleOutOfBlockModificationTrackerWrapper(module).compositeModificationTracker
+
+    private fun getModuleOutOfBlockModificationTrackerWrapper(module: Module): ModuleOutOfBlockModificationTrackerWrapper =
+        moduleOutOfBlockModificationTrackerWrappers.computeIfAbsent(module) {
+            ModuleOutOfBlockModificationTrackerWrapper(
+                allModulesOutOfBlockModificationTracker,
+                SimpleModificationTracker(),
+            )
+        }
 
     override fun dispose() {}
 
     fun increaseModificationCountForAllModules() {
-        _projectGlobalOutOfBlockInKotlinFilesModificationCount.incrementAndGet()
-        moduleModificationsState.increaseModificationCountForAllModules()
+        projectOutOfBlockModificationTracker.incModificationCount()
+        allModulesOutOfBlockModificationTracker.incModificationCount()
     }
 
-    @TestOnly
     fun increaseModificationCountForModule(module: Module) {
-        moduleModificationsState.increaseModificationCountForModule(module)
+        getModuleOutOfBlockModificationTrackerWrapper(module).moduleModificationTracker.incModificationCount()
     }
-    
+
     fun increaseModificationCountForModuleAndProject(module: Module?) {
         if (module != null) {
-            moduleModificationsState.increaseModificationCountForModule(module)
+            increaseModificationCountForModule(module)
         }
-        _projectGlobalOutOfBlockInKotlinFilesModificationCount.incrementAndGet()
+        projectOutOfBlockModificationTracker.incModificationCount()
     }
 }
 
-private class ModuleModificationsState {
-    private val modificationCountForModule = ConcurrentHashMap<Module, ModuleModifications>()
-    private val state = AtomicLong()
-
-    fun getModificationsCountForModule(module: Module) = modificationCountForModule.compute(module) { _, modifications ->
-        val currentState = state.get()
-        when {
-            modifications == null -> ModuleModifications(0, currentState)
-            modifications.state == currentState -> modifications
-            else -> ModuleModifications(modificationsCount = modifications.modificationsCount + 1, state = currentState)
-        }
-    }!!.modificationsCount
-
-    fun increaseModificationCountForAllModules() {
-        state.incrementAndGet()
-    }
-
-    fun increaseModificationCountForModule(module: Module) {
-        modificationCountForModule.compute(module) { _, modifications ->
-            val currentState = state.get()
-            when (modifications) {
-                null -> ModuleModifications(0, currentState)
-                else -> ModuleModifications(modifications.modificationsCount + 1, currentState)
-            }
-        }
-    }
-
-    private data class ModuleModifications(val modificationsCount: Long, val state: Long)
+/**
+ * The module's out-of-block modification tracker is a _composite_ modification tracker because it is made up of both the specific module's
+ * tracker and the tracker for _all_ modules. Should these trackers be flattened into another composite modification tracker, the
+ * "all modules" modification tracker will only be contained once in the resulting modification tracker, because modification trackers are
+ * flattened uniquely by identity and there must only be a single instance of the "all modules" modification tracker per project.
+ */
+internal class ModuleOutOfBlockModificationTrackerWrapper(
+    allModulesModificationTracker: ModificationTracker,
+    val moduleModificationTracker: SimpleModificationTracker,
+) {
+    val compositeModificationTracker = listOf(allModulesModificationTracker, moduleModificationTracker).createCompositeModificationTracker()
 }

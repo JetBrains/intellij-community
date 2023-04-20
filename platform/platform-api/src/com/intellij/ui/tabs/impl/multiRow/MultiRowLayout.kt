@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("removal", "DEPRECATION")
+@file:Suppress("removal", "DEPRECATION", "ReplaceGetOrSet")
 
 package com.intellij.ui.tabs.impl.multiRow
 
@@ -36,9 +36,9 @@ abstract class MultiRowLayout(protected val tabs: JBTabsImpl,
       data.tabsRectangle = Rectangle(toFitRec.x, getRowY(data, topRowInd), toFitRec.width, data.rowCount * data.rowHeight)
     }
 
-    tabs.myTitleWrapper.bounds = data.titleRect
-    tabs.myMoreToolbar.component.bounds = data.moreRect
-    tabs.myEntryPointToolbar?.component?.bounds = data.entryPointRect
+    tabs.titleWrapper.bounds = data.titleRect
+    tabs.moreToolbar!!.component.bounds = data.moreRect
+    tabs.entryPointToolbar?.component?.bounds = data.entryPointRect
 
     tabs.selectedInfo?.let { layoutTabComponent(data, it) }
     return data
@@ -66,7 +66,7 @@ abstract class MultiRowLayout(protected val tabs: JBTabsImpl,
   }
 
   private fun layoutTabComponent(data: MultiRowPassInfo, info: TabInfo) {
-    val toolbar = tabs.myInfo2Toolbar[info]
+    val toolbar = tabs.infoToToolbar.get(info)
 
     val componentY = when (tabs.position) {
       JBTabsPosition.top -> data.rowCount * data.rowHeight
@@ -79,7 +79,7 @@ abstract class MultiRowLayout(protected val tabs: JBTabsImpl,
       else -> error("MultiRowLayout is not supported for vertical placements")
     }
 
-    if (!tabs.myHorizontalSide && toolbar != null && !toolbar.isEmpty) {
+    if (!tabs.horizontalSide && toolbar != null && !toolbar.isEmpty) {
       val toolbarWidth = toolbar.preferredSize.width
       val vSeparatorWidth = if (toolbarWidth > 0) tabs.separatorWidth else 0
       if (tabs.isSideComponentBefore) {
@@ -137,8 +137,8 @@ abstract class MultiRowLayout(protected val tabs: JBTabsImpl,
       for (i in 0 until data.myVisibleInfos.size - 1) {
         val firstInfo = data.myVisibleInfos[i]
         val secondInfo = data.myVisibleInfos[i + 1]
-        val first = tabs.myInfo2Label[firstInfo]!!
-        val second = tabs.myInfo2Label[secondInfo]!!
+        val first = tabs.infoToLabel.get(firstInfo)!!
+        val second = tabs.infoToLabel.get(secondInfo)!!
         val firstBounds = first.bounds
         val secondBounds = second.bounds
         val between = firstBounds.maxX < point.x

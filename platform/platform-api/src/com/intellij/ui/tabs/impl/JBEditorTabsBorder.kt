@@ -57,7 +57,7 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
       }
 
       private fun bounds(tabInfo: TabInfo?): Rectangle? {
-        return tabs.myInfo2Label.get(tabInfo ?: return null)?.bounds
+        return tabs.infoToLabel.get(tabInfo ?: return null)?.bounds
       }
     })
   }
@@ -80,27 +80,27 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
       return
     }
 
-    val myInfo2Label = tabs.myInfo2Label
-    val firstLabel = myInfo2Label[tabs.visibleInfos[0]] ?: return
+    val myInfo2Label = tabs.infoToLabel
+    val firstLabel = myInfo2Label[tabs.getVisibleInfos()[0]] ?: return
 
     when (tabs.position) {
       JBTabsPosition.top -> {
         val startY = firstLabel.y - if (tabs.position == JBTabsPosition.bottom) 0 else thickness
         val startRow = if (ExperimentalUI.isNewUI()) 1 else 0
-        val lastRow = tabs.lastLayoutPass.rowCount
+        val lastRow = tabs.lastLayoutPass!!.rowCount
         for (eachRow in startRow until lastRow) {
-          val yl = (eachRow * tabs.myHeaderFitSize.height) + startY
+          val yl = (eachRow * tabs.headerFitSize!!.height) + startY
           tabs.tabPainter.paintBorderLine(g, thickness, Point(x, yl), Point(x + width, yl))
         }
         if (!ExperimentalUI.isNewUI() || (tabs as? JBEditorTabs)?.shouldPaintBottomBorder() == true) {
-          val yl = lastRow * tabs.myHeaderFitSize.height + startY
+          val yl = lastRow * tabs.headerFitSize!!.height + startY
           tabs.tabPainter.paintBorderLine(g, thickness, Point(x, yl), Point(x + width, yl))
         }
       }
       JBTabsPosition.bottom -> {
-        val rowCount = tabs.lastLayoutPass.rowCount
+        val rowCount = tabs.lastLayoutPass!!.rowCount
         for (rowInd in 0 until rowCount) {
-          val curY = height - (rowInd + 1) * tabs.myHeaderFitSize.height
+          val curY = height - (rowInd + 1) * tabs.headerFitSize!!.height
           tabs.tabPainter.paintBorderLine(g, thickness, Point(x, curY), Point(x + width, curY))
         }
       }

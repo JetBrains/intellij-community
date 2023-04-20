@@ -2,9 +2,9 @@
 package com.intellij.webSymbols.query.impl
 
 import com.intellij.model.Pointer
-import com.intellij.navigation.NavigationTarget
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.WebSymbol.Priority
@@ -12,6 +12,7 @@ import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 import com.intellij.webSymbols.documentation.WebSymbolDocumentationTarget
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.query.WebSymbolMatch
+import com.intellij.webSymbols.utils.coalesceApiStatus
 import com.intellij.webSymbols.utils.merge
 import javax.swing.Icon
 
@@ -81,11 +82,8 @@ internal open class WebSymbolMatchImpl private constructor(override val matchedN
   override val required: Boolean?
     get() = reversedSegments().flatMap { it.symbols }.mapNotNull { it.required }.firstOrNull()
 
-  override val experimental: Boolean
-    get() = reversedSegments().flatMap { it.symbols }.map { it.experimental }.firstOrNull() ?: false
-
-  override val deprecated: Boolean
-    get() = reversedSegments().map { it.deprecated }.firstOrNull() ?: false
+  override val apiStatus: WebSymbol.ApiStatus?
+    get() = coalesceApiStatus(reversedSegments().flatMap { it.symbols }) { it.apiStatus }
 
   override val icon: Icon?
     get() = reversedSegments().flatMap { it.symbols }.mapNotNull { it.icon }.firstOrNull()
@@ -178,7 +176,7 @@ internal open class WebSymbolMatchImpl private constructor(override val matchedN
         val segment2 = other[i]
         if (segment1.start - startOffset1 != segment2.start - startOffset2
             || segment1.end - startOffset1 != segment2.end - startOffset2
-            || segment1.deprecated != segment2.deprecated
+            || segment1.apiStatus != segment2.apiStatus
             || segment1.symbols != segment2.symbols
             || segment1.problem != segment2.problem
             || segment1.displayName != segment2.displayName

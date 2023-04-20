@@ -1,33 +1,50 @@
 package com.intellij.settingsSync
 
-import com.intellij.util.containers.map2Array
 import org.junit.Test
-import org.junit.runner.RunWith
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
 import org.junit.runners.Parameterized
+import java.util.stream.Stream
 
-@RunWith(Parameterized::class)
-class MatrixIDEStartPluginManagerTest(
-  private val ide: Boolean?,
-  private val json: Boolean?
-) : BasePluginManagerTest() {
+class MatrixIDEStartPluginManagerTest : BasePluginManagerTest() {
   companion object {
 
     @JvmStatic
-    @Parameterized.Parameters(name = "ide, plugins.json :{0}, {1}")
-    fun parameters(): Array<Array<Any?>> {
+    fun nonBundledParams(): Stream<Arguments> {
+      val argumentsBuilder = Stream.builder<Arguments>()
       val tfn = arrayOf(true, false, null)
-      val list = mutableListOf<Any>()
       for (ide in tfn) {
         for (json in tfn) {
-          list.add(arrayOf(ide, json))
+          argumentsBuilder.add(Arguments.of(ide, json))
         }
       }
-      return list.map2Array { it as Array<Any?> }
+      return argumentsBuilder.build()
+    }
+    @JvmStatic
+    fun bundledParams(): Stream<Arguments> {
+      val argumentsBuilder = Stream.builder<Arguments>()
+      for (ide in arrayOf(true, false)) {
+        for (json in arrayOf(true, false, null)) {
+          argumentsBuilder.add(Arguments.of(ide, json))
+        }
+      }
+      return argumentsBuilder.build()
+    }
+
+    @JvmStatic
+    fun essentialParams(): Stream<Arguments> {
+      val argumentsBuilder = Stream.builder<Arguments>()
+      for (json in arrayOf(true, false, null)) {
+        argumentsBuilder.add(Arguments.of(true, json))
+      }
+      return argumentsBuilder.build()
     }
   }
 
-  @Test
-  fun `check non-bundled plugin`() {
+  @ParameterizedTest(name = "ide, plugins.json:{0}, {1}")
+  @MethodSource("nonBundledParams")
+  fun `check non-bundled plugin`(ide: Boolean?, json: Boolean?) {
     val myPlugin = TestPluginDescriptor(
       "myPlugin",
       listOf(TestPluginDependency("com.intellij.modules.platform", isOptional = false)),
@@ -57,11 +74,9 @@ class MatrixIDEStartPluginManagerTest(
     })
   }
 
-  @Test
-  fun `check bundled plugin`() {
-    if (ide == null) {
-      return // do not test absent bundled plugin
-    }
+  @ParameterizedTest(name = "ide, plugins.json:{0}, {1}")
+  @MethodSource("bundledParams")
+  fun `check bundled plugin`(ide: Boolean, json: Boolean?) {
     val myPlugin = TestPluginDescriptor(
       "myBundledPlugin",
       listOf(TestPluginDependency("com.intellij.modules.platform", isOptional = false)),
@@ -83,11 +98,10 @@ class MatrixIDEStartPluginManagerTest(
     })
   }
 
-  @Test
-  fun `check essential plugin`() {
-    if (ide == null || !ide) {
-      return // do not test absent bundled plugin
-    }
+  @ParameterizedTest(name = "ide, plugins.json:{0}, {1}")
+  @MethodSource("essentialParams")
+  fun `check essential plugin`(ide: Boolean?, json: Boolean?) {
+    assert(ide!!)
     val myPlugin = TestPluginDescriptor(
       "myBundledPlugin",
       listOf(TestPluginDependency("com.intellij.modules.platform", isOptional = false)),

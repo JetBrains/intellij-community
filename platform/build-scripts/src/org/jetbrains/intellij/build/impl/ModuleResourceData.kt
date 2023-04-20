@@ -18,7 +18,7 @@ internal data class ModuleResourceData(
   @JvmField
   val relativeOutputPath: String,
 
-  /** If {@code true} resource is packed into the zip archive */
+  /** If `true` resource is packed into the zip archive */
   @JvmField
   val packToZip: Boolean = false,
 )

@@ -3,8 +3,8 @@ package org.jetbrains.plugins.textmate.configuration
 import com.intellij.CommonBundle
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
-import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
 import com.intellij.openapi.ui.Messages
@@ -79,18 +79,17 @@ class TextMateBundlesListPanel : Disposable {
         }
       })
       .setAddAction {
-        val chooserDescriptor = FileChooserDescriptor(true, true, false, false, false, true).withFileFilter { false }
-        val fileChooser = FileChooserFactory.getInstance().createFileChooser(chooserDescriptor, null, myBundlesList)
         val fileToSelect = PropertiesComponent.getInstance().getValue(TEXTMATE_LAST_ADDED_BUNDLE)?.let { lastAddedBundlePath ->
           LocalFileSystem.getInstance().findFileByPath(lastAddedBundlePath)
         }
-        val bundleDirectories = fileChooser.choose(null, fileToSelect)
+        val chooserDescriptor = FileChooserDescriptor(true, true, false, false, false, true).withFileFilter { false }
+        val bundleDirectories = FileChooser.chooseFiles(chooserDescriptor, myBundlesList, null, fileToSelect)
         if (bundleDirectories.isNotEmpty()) {
           var errorMessage: String? = null
           for (bundleDirectory in bundleDirectories) {
             PropertiesComponent.getInstance().setValue(TEXTMATE_LAST_ADDED_BUNDLE, bundleDirectory.path)
             val readBundleProcess = ThrowableComputable<TextMateBundleReader?, Exception> {
-              TextMateService.getInstance().readBundle(bundleDirectory)
+              TextMateService.getInstance().readBundle(bundleDirectory.toNioPath())
             }
             val bundleReader = runCatching {
               ProgressManager.getInstance()

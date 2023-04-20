@@ -335,7 +335,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     testPatterns?.let { allSystemProperties.putIfAbsent("intellij.build.test.patterns", it) }
     testGroups?.let { allSystemProperties.putIfAbsent("intellij.build.test.groups", it) }
     allSystemProperties.putIfAbsent("intellij.build.test.sorter", System.getProperty("intellij.build.test.sorter"))
-    allSystemProperties.putIfAbsent("bootstrap.testcases", "com.intellij.AllTests")
+    allSystemProperties.putIfAbsent(TestingTasks.BOOTSTRAP_TESTCASES_PROPERTY, "com.intellij.AllTests")
     allSystemProperties.putIfAbsent(TestingOptions.PERFORMANCE_TESTS_ONLY_FLAG, options.isPerformanceTestsOnly.toString())
     val allJvmArgs = ArrayList(jvmArgs)
     prepareEnvForTestRun(allJvmArgs, allSystemProperties, bootstrapClasspath.toMutableList(), remoteDebugging)

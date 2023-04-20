@@ -21,6 +21,9 @@ class TerminalBlocksController(
 
   init {
     blocksComponent = TerminalBlocksComponent(project, session, settings, commandExecutor = this, parentDisposable = this)
+    // Show initial terminal output (prior to the first prompt) in a separate block.
+    // `initialized` event will finish the block.
+    blocksComponent.installRunningPanel()
     blocksComponent.addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent?) {
         sizeTerminalToComponent()
@@ -55,12 +58,20 @@ class TerminalBlocksController(
     }
   }
 
+  override fun initialized() {
+    finishCommandBlock(true)
+  }
+
   override fun commandStarted(command: String) {
     session.model.isCommandRunning = true
   }
 
   override fun commandFinished(command: String, exitCode: Int, duration: Long) {
-    blocksComponent.makeCurrentBlockReadOnly()
+    finishCommandBlock(false)
+  }
+
+  private fun finishCommandBlock(removeIfEmpty: Boolean) {
+    blocksComponent.makeCurrentBlockReadOnly(removeIfEmpty)
 
     val model = session.model
     model.isCommandRunning = false
@@ -78,7 +89,7 @@ class TerminalBlocksController(
   }
 
   fun sizeTerminalToComponent() {
-    val newSize = blocksComponent.getTerminalSize()
+    val newSize = blocksComponent.getTerminalSize() ?: return
     val model = session.model
     if (newSize.columns != model.width || newSize.rows != model.height) {
       // TODO: is it needed?
@@ -87,7 +98,7 @@ class TerminalBlocksController(
     }
   }
 
-  fun getTerminalSize(): TermSize = blocksComponent.getTerminalSize()
+  fun getTerminalSize(): TermSize? = blocksComponent.getTerminalSize()
 
   fun isFocused(): Boolean {
     return blocksComponent.isFocused()

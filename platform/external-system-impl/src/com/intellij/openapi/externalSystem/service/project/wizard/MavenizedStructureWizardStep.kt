@@ -103,7 +103,7 @@ abstract class MavenizedStructureWizardStep<Data : Any>(val context: WizardConte
           .withValidationOnApply { validateLocation() }
           .withValidationOnInput { validateLocation() }
       }
-      hideableRow(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.coordinates.title")) {
+      hideableRow(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.coordinates.title"), true) {
         row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.group.id.label")) {
           textField(groupIdProperty)
             .withValidationOnApply { validateGroupId() }

@@ -1,4 +1,4 @@
-// "Create actual class for module testProject.jvmTest (JVM)" "true"
+// "Add missing actual declarations" "true"
 // ACTION: Convert to secondary constructor
 
 package my.project.pack

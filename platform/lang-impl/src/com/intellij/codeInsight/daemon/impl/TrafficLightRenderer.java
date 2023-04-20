@@ -17,6 +17,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,6 +40,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.GridBag;
@@ -129,7 +131,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       }
 
       @Override
-      public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+      public void afterRemoved(@NotNull RangeHighlighterEx highlighter) {
         incErrorCount(highlighter, -1);
       }
     });
@@ -189,9 +191,13 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
    * @see ErrorStripeUpdateManager#setOrRefreshErrorStripeRenderer(EditorMarkupModel, PsiFile)
    */
   public boolean isValid() {
-    PsiFile psiFile = getPsiFile();
-    return psiFile != null
-           && HighlightingSettingsPerFile.getInstance(psiFile.getProject()).getModificationCount() == myHighlightingSettingsModificationCount;
+    PsiFile psiFile;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-301732, EA-829415")) {
+      psiFile = getPsiFile();
+      if (psiFile == null) return false;
+    }
+    HighlightingSettingsPerFile settings = HighlightingSettingsPerFile.getInstance(psiFile.getProject());
+    return settings.getModificationCount() == myHighlightingSettingsModificationCount;
   }
 
   @ApiStatus.Internal

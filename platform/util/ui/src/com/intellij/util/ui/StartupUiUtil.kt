@@ -47,8 +47,6 @@ object StartupUiUtil {
                                        "TextField.font", "FormattedTextField.font", "Spinner.font", "PasswordField.font",
                                        "TextArea.font", "TextPane.font", "EditorPane.font",
                                        "TitledBorder.font", "ToolBar.font", "ToolTip.font", "Tree.font")
-  const val ARIAL_FONT_NAME = "Arial"
-
   @JvmStatic
   val isUnderDarcula: Boolean
     get() = UIManager.getLookAndFeel().name.contains("Darcula")

@@ -9,8 +9,8 @@ import com.intellij.model.Pointer
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.PsiSourcedWebSymbol
 import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.query.WebSymbolDefaultIconProvider
 import com.intellij.webSymbols.completion.impl.WebSymbolCodeCompletionItemImpl
+import com.intellij.webSymbols.query.WebSymbolDefaultIconProvider
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import javax.swing.Icon
 
@@ -107,7 +107,7 @@ interface WebSymbolCodeCompletionItem {
                symbol: WebSymbol? = null,
                priority: WebSymbol.Priority? = symbol?.priority,
                proximity: Int? = symbol?.proximity,
-               deprecated: Boolean = symbol?.deprecated ?: false,
+               deprecated: Boolean = symbol?.apiStatus is WebSymbol.Deprecated,
                aliases: Set<String> = emptySet(),
                icon: Icon? = symbol?.let {
                  it.icon

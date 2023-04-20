@@ -2,9 +2,12 @@ package com.intellij.settingsSync
 
 import com.intellij.idea.TestFor
 import com.intellij.openapi.components.SettingsCategory
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Test
 
 class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
 
+  @Test
   fun `test install missing plugins`() {
     pluginManager.pushChangesToIde(state {
       quickJump(enabled = false)
@@ -18,6 +21,7 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
     assertTrue(installedPluginIds.containsAll(listOf(typengo.pluginId, ideaLight.pluginId)))
   }
 
+  @Test
   fun `test do not install when plugin sync is disabled`() {
     SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.PLUGINS, false)
     try {
@@ -37,6 +41,7 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
     }
   }
 
+  @Test
   fun `test do not install UI plugin when UI category is disabled`() {
     SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.UI, false)
     try {
@@ -56,6 +61,7 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
     }
   }
 
+  @Test
   fun `test disable installed plugin`() {
     testPluginManager.addPluginDescriptors(quickJump)
     pluginManager.updateStateFromIdeOnStart(null)
@@ -78,6 +84,7 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
     }
   }
 
+  @Test
   fun `test disable two plugins at once`() {
     // install two plugins
     testPluginManager.addPluginDescriptors(quickJump, typengo)
@@ -91,6 +98,7 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
     assertFalse(typengo.isEnabled)
   }
 
+  @Test
   fun `test update state from IDE`() {
     testPluginManager.addPluginDescriptors(quickJump, typengo, git4idea)
 
@@ -118,6 +126,7 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
     }
   }
 
+  @Test
   fun `test do not remove entries about disabled plugins which are not installed`() {
     testPluginManager.addPluginDescriptors(typengo, git4idea)
 
@@ -136,6 +145,7 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
     }
   }
 
+  @Test
   fun `test push settings to IDE`() {
     testPluginManager.addPluginDescriptors(quickJump, typengo, git4idea)
     pluginManager.updateStateFromIdeOnStart(null)
@@ -163,6 +173,7 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
     }
   }
 
+  @Test
   @TestFor(issues = ["IDEA-313300"])
   fun `test update removed from IDE on start`() {
     quickJump.isEnabled = false
@@ -183,6 +194,7 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
     }
   }
 
+  @Test
   @TestFor(issues = ["IDEA-314934"])
   fun `test don't disable effective essential plugins`() {
     testPluginManager.addPluginDescriptors(javascript, css)
@@ -201,6 +213,7 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
     }
   }
 
+  @Test
   @TestFor(issues = ["IDEA-314934"])
   fun `test don't disable essential plugins`() {
     testPluginManager.addPluginDescriptors(javascript)
@@ -218,6 +231,7 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
     }
   }
 
+  @Test
   @TestFor(issues = ["IDEA-303581"])
   fun `test don't fail the sync on plugins' action fail`() {
     testPluginManager.addPluginDescriptors(git4idea, quickJump.withEnabled(false))
@@ -240,6 +254,7 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
     assertPluginManagerState(pushedState)
   }
 
+  @Test
   @TestFor(issues = ["IDEA-303581"])
   fun `test don't fail the sync when plugin install fails`() {
     testPluginManager.addPluginDescriptors(git4idea, quickJump.withEnabled(false))

@@ -21,6 +21,7 @@ import com.intellij.vcs.log.impl.VcsLogErrorHandler
 import com.intellij.vcs.log.impl.VcsLogIndexer
 import com.intellij.vcs.log.impl.VcsLogIndexer.PathsEncoder
 import com.intellij.vcs.log.util.StorageId
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import java.io.DataInput
@@ -37,7 +38,6 @@ internal class PhmVcsLogStorageBackend(
   storage: VcsLogStorage,
   roots: Set<VirtualFile>,
   userRegistry: VcsUserRegistry,
-  storageLockContext: StorageLockContext,
   private val errorHandler: VcsLogErrorHandler,
   disposable: Disposable,
 ) : VcsLogStorageBackend {
@@ -58,6 +58,8 @@ internal class PhmVcsLogStorageBackend(
   override var isFresh = false
 
   init {
+    val storageLockContext = StorageLockContext()
+
     val messagesStorage = storageId.getStorageFile("messages")
     isFresh = !Files.exists(messagesStorage)
 
@@ -117,10 +119,24 @@ internal class PhmVcsLogStorageBackend(
     users = VcsLogUserIndex(storageId, storageLockContext, userRegistry, errorHandler, disposable)
 
     trigrams = VcsLogMessagesTrigramIndex(storageId, storageLockContext, errorHandler, disposable)
+
+    reportEmpty()
   }
 
-  override val trigramsEmpty: Boolean
-    get() = trigrams.isEmpty
+  @Throws(IOException::class)
+  private fun reportEmpty() {
+    if (messages.keysCountApproximately() == 0) return
+
+    val trigramsEmpty = trigrams.isEmpty
+    val usersEmpty = users.isEmpty
+    val pathsEmpty = paths.isEmpty
+    if (trigramsEmpty || usersEmpty || pathsEmpty) {
+      VcsLogPersistentIndex.LOG.warn("Some of the index maps empty:\n" +
+                                     "trigrams empty $trigramsEmpty\n" +
+                                     "users empty $usersEmpty\n" +
+                                     "paths empty $pathsEmpty")
+    }
+  }
 
   override fun createWriter(): VcsLogWriter {
     return object : VcsLogWriter {
@@ -158,11 +174,6 @@ internal class PhmVcsLogStorageBackend(
     }
   }
 
-  override val isEmpty: Boolean
-    get() {
-      return messages.keysCountApproximately() == 0
-    }
-
   override fun markCorrupted() {
     messages.markCorrupted()
     messages.force()
@@ -170,12 +181,14 @@ internal class PhmVcsLogStorageBackend(
 
   override fun containsCommit(commitId: Int) = messages.containsMapping(commitId)
 
-  override fun collectMissingCommits(commitIds: IntSet, missing: IntSet) {
+  override fun collectMissingCommits(commitIds: IntSet): IntSet {
+    val missing = IntOpenHashSet()
     commitIds.forEach(IntConsumer {
       if (!messages.containsMapping(it)) {
         missing.add(it)
       }
     })
+    return missing
   }
 
   fun force() {
@@ -183,9 +196,9 @@ internal class PhmVcsLogStorageBackend(
     committers.force()
     timestamps.force()
     trigrams.flush()
-    messages.force()
     users.flush()
     paths.flush()
+    messages.force()
   }
 
   override fun getMessage(commitId: Int): String? = messages.get(commitId)
@@ -288,10 +301,6 @@ internal class PhmVcsLogStorageBackend(
   override fun getCommitsForUsers(users: Set<VcsUser>): IntSet {
     return this.users.getCommitsForUsers(users)
   }
-
-  override fun isPathsEmpty() = paths.isEmpty
-
-  override fun isUsersEmpty() = users.isEmpty
 }
 
 private inline fun catchAndWarn(runnable: () -> Unit) {

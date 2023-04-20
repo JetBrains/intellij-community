@@ -16654,79 +16654,106 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/unusedUnaryOperator")
-    public static class UnusedUnaryOperator extends AbstractLocalInspectionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    public abstract static class UnusedUnaryOperator extends AbstractLocalInspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/unusedUnaryOperator/moveToPrevLine")
+        public static class MoveToPrevLine extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("bigDecimal.kt")
+            public void testBigDecimal() throws Exception {
+                runTest("testData/inspectionsLocal/unusedUnaryOperator/moveToPrevLine/bigDecimal.kt");
+            }
+
+            @TestMetadata("int.kt")
+            public void testInt() throws Exception {
+                runTest("testData/inspectionsLocal/unusedUnaryOperator/moveToPrevLine/int.kt");
+            }
+
+            @TestMetadata("intAndDouble.kt")
+            public void testIntAndDouble() throws Exception {
+                runTest("testData/inspectionsLocal/unusedUnaryOperator/moveToPrevLine/intAndDouble.kt");
+            }
         }
 
-        @TestMetadata("annotation.kt")
-        public void testAnnotation() throws Exception {
-            runTest("testData/inspectionsLocal/unusedUnaryOperator/annotation.kt");
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/unusedUnaryOperator")
+        public static class Uncategorized extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
 
-        @TestMetadata("annotation2.kt")
-        public void testAnnotation2() throws Exception {
-            runTest("testData/inspectionsLocal/unusedUnaryOperator/annotation2.kt");
-        }
+            @TestMetadata("annotation.kt")
+            public void testAnnotation() throws Exception {
+                runTest("testData/inspectionsLocal/unusedUnaryOperator/annotation.kt");
+            }
 
-        @TestMetadata("annotation3.kt")
-        public void testAnnotation3() throws Exception {
-            runTest("testData/inspectionsLocal/unusedUnaryOperator/annotation3.kt");
-        }
+            @TestMetadata("annotation2.kt")
+            public void testAnnotation2() throws Exception {
+                runTest("testData/inspectionsLocal/unusedUnaryOperator/annotation2.kt");
+            }
 
-        @TestMetadata("annotation4.kt")
-        public void testAnnotation4() throws Exception {
-            runTest("testData/inspectionsLocal/unusedUnaryOperator/annotation4.kt");
-        }
+            @TestMetadata("annotation3.kt")
+            public void testAnnotation3() throws Exception {
+                runTest("testData/inspectionsLocal/unusedUnaryOperator/annotation3.kt");
+            }
 
-        @TestMetadata("annotation5.kt")
-        public void testAnnotation5() throws Exception {
-            runTest("testData/inspectionsLocal/unusedUnaryOperator/annotation5.kt");
-        }
+            @TestMetadata("annotation4.kt")
+            public void testAnnotation4() throws Exception {
+                runTest("testData/inspectionsLocal/unusedUnaryOperator/annotation4.kt");
+            }
 
-        @TestMetadata("annotation6.kt")
-        public void testAnnotation6() throws Exception {
-            runTest("testData/inspectionsLocal/unusedUnaryOperator/annotation6.kt");
-        }
+            @TestMetadata("annotation5.kt")
+            public void testAnnotation5() throws Exception {
+                runTest("testData/inspectionsLocal/unusedUnaryOperator/annotation5.kt");
+            }
 
-        @TestMetadata("basic.kt")
-        public void testBasic() throws Exception {
-            runTest("testData/inspectionsLocal/unusedUnaryOperator/basic.kt");
-        }
+            @TestMetadata("annotation6.kt")
+            public void testAnnotation6() throws Exception {
+                runTest("testData/inspectionsLocal/unusedUnaryOperator/annotation6.kt");
+            }
 
-        @TestMetadata("basic2.kt")
-        public void testBasic2() throws Exception {
-            runTest("testData/inspectionsLocal/unusedUnaryOperator/basic2.kt");
-        }
+            @TestMetadata("basic.kt")
+            public void testBasic() throws Exception {
+                runTest("testData/inspectionsLocal/unusedUnaryOperator/basic.kt");
+            }
 
-        @TestMetadata("namedParameter.kt")
-        public void testNamedParameter() throws Exception {
-            runTest("testData/inspectionsLocal/unusedUnaryOperator/namedParameter.kt");
-        }
+            @TestMetadata("basic2.kt")
+            public void testBasic2() throws Exception {
+                runTest("testData/inspectionsLocal/unusedUnaryOperator/basic2.kt");
+            }
 
-        @TestMetadata("plusAfterDiv.kt")
-        public void testPlusAfterDiv() throws Exception {
-            runTest("testData/inspectionsLocal/unusedUnaryOperator/plusAfterDiv.kt");
-        }
+            @TestMetadata("namedParameter.kt")
+            public void testNamedParameter() throws Exception {
+                runTest("testData/inspectionsLocal/unusedUnaryOperator/namedParameter.kt");
+            }
 
-        @TestMetadata("plusAfterMinus.kt")
-        public void testPlusAfterMinus() throws Exception {
-            runTest("testData/inspectionsLocal/unusedUnaryOperator/plusAfterMinus.kt");
-        }
+            @TestMetadata("plusAfterDiv.kt")
+            public void testPlusAfterDiv() throws Exception {
+                runTest("testData/inspectionsLocal/unusedUnaryOperator/plusAfterDiv.kt");
+            }
 
-        @TestMetadata("usedAsExpression.kt")
-        public void testUsedAsExpression() throws Exception {
-            runTest("testData/inspectionsLocal/unusedUnaryOperator/usedAsExpression.kt");
-        }
+            @TestMetadata("plusAfterMinus.kt")
+            public void testPlusAfterMinus() throws Exception {
+                runTest("testData/inspectionsLocal/unusedUnaryOperator/plusAfterMinus.kt");
+            }
 
-        @TestMetadata("usedAsExpression2.kt")
-        public void testUsedAsExpression2() throws Exception {
-            runTest("testData/inspectionsLocal/unusedUnaryOperator/usedAsExpression2.kt");
-        }
+            @TestMetadata("usedAsExpression.kt")
+            public void testUsedAsExpression() throws Exception {
+                runTest("testData/inspectionsLocal/unusedUnaryOperator/usedAsExpression.kt");
+            }
 
-        @TestMetadata("userOperator.kt")
-        public void testUserOperator() throws Exception {
-            runTest("testData/inspectionsLocal/unusedUnaryOperator/userOperator.kt");
+            @TestMetadata("usedAsExpression2.kt")
+            public void testUsedAsExpression2() throws Exception {
+                runTest("testData/inspectionsLocal/unusedUnaryOperator/usedAsExpression2.kt");
+            }
+
+            @TestMetadata("userOperator.kt")
+            public void testUserOperator() throws Exception {
+                runTest("testData/inspectionsLocal/unusedUnaryOperator/userOperator.kt");
+            }
         }
     }
 

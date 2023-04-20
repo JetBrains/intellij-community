@@ -19,7 +19,7 @@ class ScrollableMultiRowLayout(tabs: JBTabsImpl,
 
   override fun splitToRows(data: MultiRowPassInfo): List<TabsRow> {
     val (pinned, unpinned) = splitToPinnedUnpinned(data.myVisibleInfos)
-    val withTitle = tabs.myTitleWrapper.preferredSize.width > 0
+    val withTitle = tabs.titleWrapper.preferredSize.width > 0
     val withEntryPoint = tabs.entryPointPreferredSize.width > 0
     return if (pinned.isNotEmpty() && unpinned.isNotEmpty()) {
       listOf(CompressibleTabsRow(pinned, withTitle, withEntryPoint),

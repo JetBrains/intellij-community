@@ -2,23 +2,14 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
-import org.jetbrains.kotlin.analysis.api.annotations.KtArrayAnnotationValue
-import org.jetbrains.kotlin.analysis.api.annotations.KtEnumEntryAnnotationValue
-import org.jetbrains.kotlin.analysis.api.annotations.annotationsByClassId
-import org.jetbrains.kotlin.analysis.api.components.buildClassType
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtFunctionalTypeRenderer
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
-import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
@@ -32,15 +23,14 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.MovePropertyT
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
-import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.types.Variance
 
-internal class MovePropertyToConstructorIntention :
-    AbstractKotlinApplicableIntentionWithContext<KtProperty, MovePropertyToConstructorIntention.Context>(KtProperty::class) {
+class MovePropertyToConstructorIntention :
+    AbstractKotlinApplicableIntentionWithContext<KtProperty, MovePropertyToConstructorIntention.Context>(KtProperty::class),
+    LocalQuickFix {
 
     sealed interface Context
 
@@ -134,6 +124,11 @@ internal class MovePropertyToConstructorIntention :
     private fun KtProperty.findConstructorParameter(): KtParameter? {
         val constructorParam = initializer?.mainReference?.resolveToSymbol() as? KtValueParameterSymbol ?: return null
         return constructorParam.psi as? KtParameter
+    }
+
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        val property = descriptor.psiElement as? KtProperty ?: return
+        applyTo(property, null)
     }
 
     override fun apply(element: KtProperty, context: Context, project: Project, editor: Editor?) {

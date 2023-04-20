@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.*;
@@ -32,11 +33,11 @@ class PersistentRangeMarker extends RangeMarkerImpl {
 
   PersistentRangeMarker(@NotNull DocumentEx document, int startOffset, int endOffset, boolean register) {
     super(document, startOffset, endOffset, register, false);
-    myLinesCols = Objects.requireNonNull(storeLinesAndCols(document, getStartOffset(), getEndOffset()));
+    myLinesCols = Objects.requireNonNull(storeLinesAndCols(document, TextRangeScalarUtil.toScalarRange(startOffset, endOffset)));
     documentLoaded = true;
   }
 
-  // constructor which creates marker without document and saves it in the virtual file directly. Can be cheaper than loading document.
+  // The constructor which creates a marker without a document and saves it in the virtual file directly. Can be cheaper than loading the entire document.
   PersistentRangeMarker(@NotNull VirtualFile virtualFile,
                         int startOffset,
                         int endOffset,
@@ -52,9 +53,9 @@ class PersistentRangeMarker extends RangeMarkerImpl {
   }
 
   @Nullable
-  static LinesCols storeLinesAndCols(@NotNull Document myDocument, int startOffset, int endOffset) {
-    LineCol start = calcLineCol(myDocument, startOffset);
-    LineCol end = calcLineCol(myDocument, endOffset);
+  static LinesCols storeLinesAndCols(@NotNull Document document, long range) {
+    LineCol start = calcLineCol(document, TextRangeScalarUtil.startOffset(range));
+    LineCol end = calcLineCol(document, TextRangeScalarUtil.endOffset(range));
 
     if (start == null || end == null) {
       return null;
@@ -85,7 +86,7 @@ class PersistentRangeMarker extends RangeMarkerImpl {
     }
   }
   @Nullable
-  static Pair.NonNull<TextRange, LinesCols> translateViaDiff(@NotNull final DocumentEventImpl event, @NotNull LinesCols linesCols) {
+  static Pair.NonNull<TextRange, LinesCols> translateViaDiff(@NotNull DocumentEventImpl event, @NotNull LinesCols linesCols) {
     try {
       int myStartLine = event.translateLineViaDiffStrict(linesCols.myStartLine);
       Document document = event.getDocument();
@@ -119,40 +120,30 @@ class PersistentRangeMarker extends RangeMarkerImpl {
   }
 
   @Override
-  protected void changedUpdateImpl(@NotNull DocumentEvent e) {
+  protected void changedUpdateImpl(@NotNull DocumentEvent event) {
     if (!isValid()) return;
 
-    Pair<TextRange, LinesCols> pair =
-      applyChange(e, this, intervalStart(), intervalEnd(), isGreedyToLeft(), isGreedyToRight(), isStickingToRight(), myLinesCols);
-    if (pair == null) {
-      invalidate(e);
-      return;
+    long translatedRange = -1;
+    LinesCols translatedLineCols = null;
+    if (PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, toScalarRange())) {
+      Pair.NonNull<TextRange, LinesCols> translated = translateViaDiff((DocumentEventImpl)event, myLinesCols);
+      translatedRange = translated == null ? -1 : TextRangeScalarUtil.toScalarRange(translated.first);
+      translatedLineCols = Pair.getSecond(translated);
     }
-
-    setRange(TextRangeScalarUtil.toScalarRange(pair.first));
-    myLinesCols = pair.second;
-  }
-
-  @Nullable
-  private static Pair.NonNull<TextRange, LinesCols> applyChange(@NotNull DocumentEvent event, @NotNull Segment range,
-                                                                int intervalStart, int intervalEnd,
-                                                                boolean greedyLeft, boolean greedyRight, boolean stickingToRight,
-                                                                @NotNull LinesCols linesCols) {
-    boolean shouldTranslateViaDiff = PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, range.getStartOffset(), range.getEndOffset());
-    Pair.NonNull<TextRange, LinesCols> translated = null;
-    if (shouldTranslateViaDiff) {
-      translated = translateViaDiff((DocumentEventImpl)event, linesCols);
+    if (translatedRange == -1) {
+      RangeMarkerTree.RMNode<RangeMarkerEx> node = myNode;
+      translatedRange = node == null ? -1 : applyChange(event, node.toScalarRange(), isGreedyToLeft(), isGreedyToRight(), isStickingToRight());
+      if (translatedRange != -1) {
+        translatedLineCols = storeLinesAndCols(event.getDocument(), translatedRange);
+      }
     }
-    if (translated == null) {
-      TextRange fallback = applyChange(event, intervalStart, intervalEnd, greedyLeft, greedyRight, stickingToRight);
-      if (fallback == null) return null;
-
-      LinesCols lc = storeLinesAndCols(event.getDocument(), fallback.getStartOffset(), fallback.getEndOffset());
-      if (lc == null) return null;
-
-      translated = Pair.createNonNull(fallback, lc);
+    if (translatedRange == -1 || translatedLineCols == null) {
+      invalidate();
     }
-    return translated;
+    else {
+      setRange(translatedRange);
+      myLinesCols = translatedLineCols;
+    }
   }
 
   @Override

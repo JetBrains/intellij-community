@@ -25,9 +25,11 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
+import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -128,7 +130,8 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
     return result
   }
 
-  private suspend fun createFrameManager(loadingScope: CoroutineScope, rawProjectDeferred: CompletableDeferred<Project>): FrameLoadingState {
+  private suspend fun createFrameManager(loadingScope: CoroutineScope,
+                                         rawProjectDeferred: CompletableDeferred<Project>): FrameLoadingState {
     var frame = options.frame
     if (frame == null) {
       val windowManager = ApplicationManager.getApplication().serviceAsync<WindowManager>().await() as WindowManagerImpl
@@ -311,19 +314,37 @@ private suspend fun restoreEditors(project: Project, deferredProjectFrameHelper:
   val (editorComponent, editorState) = withContext(Dispatchers.EDT) { fileEditorManager.init() }
 
   coroutineScope {
-    launch(Dispatchers.EDT) {
-      deferredProjectFrameHelper.await().rootPane.getToolWindowPane().setDocumentComponent(editorComponent)
-    }
-
     // only after FileEditorManager.init - DaemonCodeAnalyzer uses FileEditorManager
     launch {
       project.serviceAsync<WolfTheProblemSolver>().join()
       project.serviceAsync<DaemonCodeAnalyzer>().join()
     }
 
-    if (editorState != null) {
-      runActivity(StartUpMeasurer.Activities.EDITOR_RESTORING) {
-        editorComponent.restoreEditors(state = editorState, onStartup = true)
+    if (editorState == null) {
+      val frameHelper = deferredProjectFrameHelper.await()
+      withContext(Dispatchers.EDT) {
+        frameHelper.rootPane.getToolWindowPane().setDocumentComponent(editorComponent)
+      }
+    }
+    else {
+      val component = subtask(StartUpMeasurer.Activities.EDITOR_RESTORING) {
+        editorComponent.createEditors(state = editorState)
+      }
+
+      val frameHelper = deferredProjectFrameHelper.await()
+      subtask("editor reopening post-processing", Dispatchers.EDT) {
+        editorComponent.add(component, BorderLayout.CENTER)
+        for (window in editorComponent.getWindows()) {
+          // clear empty splitters
+          if (window.tabCount == 0) {
+            window.removeFromSplitter()
+          }
+        }
+
+        frameHelper.rootPane.getToolWindowPane().setDocumentComponent(editorComponent)
+        // validate and focus container only when it is added to the frame
+        editorComponent.validate()
+        focusSelectedEditor(editorComponent)
       }
     }
   }
@@ -350,6 +371,19 @@ private suspend fun restoreEditors(project: Project, deferredProjectFrameHelper:
     if (!hasOpenFiles && !isNotificationSilentMode(project)) {
       project.putUserData(FileEditorManagerImpl.NOTHING_WAS_OPENED_ON_START, true)
       findAndOpenReadmeIfNeeded(project)
+    }
+  }
+}
+
+private fun focusSelectedEditor(editorComponent: EditorsSplitters) {
+  val composite = editorComponent.currentWindow?.selectedComposite ?: return
+  val editor = (composite.selectedEditor as? TextEditor)?.editor
+  if (editor == null) {
+    composite.preferredFocusedComponent?.requestFocusInWindow()
+  }
+  else {
+    AsyncEditorLoader.performWhenLoaded(editor) {
+      composite.preferredFocusedComponent?.requestFocusInWindow()
     }
   }
 }

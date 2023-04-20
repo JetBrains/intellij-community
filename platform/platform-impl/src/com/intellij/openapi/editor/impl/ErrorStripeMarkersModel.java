@@ -177,7 +177,7 @@ final class ErrorStripeMarkersModel {
     myListeners.forEach(l -> l.errorMarkerChanged(new ErrorStripeEvent(myEditor, null, h)));
   }
 
-  private void removeErrorStripeMarker(ErrorStripeMarkerImpl errorStripeMarker) {
+  private void removeErrorStripeMarker(@NotNull ErrorStripeMarkerImpl errorStripeMarker) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     RangeHighlighterEx highlighter = errorStripeMarker.getHighlighter();
     treeFor(highlighter).removeInterval(errorStripeMarker);
@@ -197,6 +197,7 @@ final class ErrorStripeMarkersModel {
     }
   }
 
+  @NotNull
   MarkupIterator<RangeHighlighterEx> highlighterIterator(int startOffset, int endOffset) {
     return new HighlighterIterator(startOffset, endOffset);
   }

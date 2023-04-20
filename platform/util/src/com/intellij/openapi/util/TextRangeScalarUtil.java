@@ -61,7 +61,4 @@ public final class TextRangeScalarUtil {
   public static TextRange create(long range) {
     return TextRange.create(startOffset(range), endOffset(range));
   }
-  public static boolean equalsToRange(@NotNull TextRange thisRange, long otherRange) {
-    return thisRange.getStartOffset() == startOffset(otherRange) && thisRange.getEndOffset() == endOffset(otherRange);
-  }
 }

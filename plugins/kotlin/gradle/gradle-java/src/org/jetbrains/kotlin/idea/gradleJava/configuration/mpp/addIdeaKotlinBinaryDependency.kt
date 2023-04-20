@@ -29,9 +29,6 @@ fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinBinaryDepe
         createChild(ProjectKeys.LIBRARY_DEPENDENCY, LibraryDependencyData(this.data, libraryData, libraryLevel))
     }
 
-    /* Track dependencies associated with this node */
-    dependencyNode.kotlinDependencies.add(dependency)
-
     /*
     Handle dependencies that are marked as 'project level'.
     Those dependencies are not bound to the particular SourceSet!

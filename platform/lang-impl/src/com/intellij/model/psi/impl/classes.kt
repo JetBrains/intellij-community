@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.psi.impl
 
-import com.intellij.codeInsight.navigation.BaseCtrlMouseInfo
+import com.intellij.codeInsight.navigation.getReferenceRanges
 import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiSymbolDeclaration
 import com.intellij.model.psi.PsiSymbolReference
@@ -76,7 +76,7 @@ internal sealed class PsiOrigin {
 
   class Leaf(val leaf: PsiElement) : PsiOrigin() {
 
-    override val absoluteRanges: List<TextRange> get() = BaseCtrlMouseInfo.getReferenceRanges(leaf)
+    override val absoluteRanges: List<TextRange> get() = getReferenceRanges(leaf)
 
     override val elementAtPointer: PsiElement get() = leaf
 

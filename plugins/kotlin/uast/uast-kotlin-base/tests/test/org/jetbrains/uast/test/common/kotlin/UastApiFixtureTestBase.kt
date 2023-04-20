@@ -41,6 +41,30 @@ interface UastApiFixtureTestBase : UastPluginSelection {
         )
     }
 
+    fun checkArgumentForParameter_smartcast(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                open class A
+                class B : A()
+
+                private fun processB(b: B): Int = 2
+
+                fun test(a: A) {
+                    if (a is B) {
+                        process<caret>B(a)
+                    }
+                }
+            """.trimIndent()
+        )
+
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        val arg = uCallExpression.getArgumentForParameter(0)
+        TestCase.assertNotNull(arg)
+        TestCase.assertTrue(arg is USimpleNameReferenceExpression)
+        TestCase.assertEquals("a", (arg as? USimpleNameReferenceExpression)?.resolvedName)
+    }
+
     fun checkDivByZero(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "MyClass.kt", """

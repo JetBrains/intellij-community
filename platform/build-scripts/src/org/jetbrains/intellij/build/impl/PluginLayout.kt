@@ -57,7 +57,7 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
   var scrambleClasspathFilter: (BuildContext, Path) -> Boolean = { _, _ -> true }
 
   /**
-   * See {@link org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec#zkmScriptStub}
+   * See [org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec.zkmScriptStub]
    */
   var zkmScriptStub: String? = null
   var pluginCompatibilityExactVersion: Boolean = false
@@ -71,18 +71,18 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
 
   companion object {
     /**
-     * Creates the plugin layout description. The default plugin layout is composed of a jar with name {@code mainModuleName}.jar containing
-     * production output of {@code mainModuleName} module, and the module libraries of {@code mainModuleName} with scopes 'Compile' and 'Runtime'
-     * placed under 'lib' directory in a directory with name {@code mainModuleName}.
+     * Creates the plugin layout description. The default plugin layout is composed of a jar with name [mainModuleName].jar containing
+     * production output of [mainModuleName] module, and the module libraries of [mainModuleName] with scopes 'Compile' and 'Runtime'
+     * placed under 'lib' directory in a directory with name [mainModuleName].
      * If you need to include additional resources or modules in the plugin layout, specify them in
-     * {@code body} parameter. If you don't need to change the default layout there is no need to call this method at all, it's enough to
+     * [body] parameter. If you don't need to change the default layout there is no need to call this method at all, it's enough to
      * specify the plugin module in [org.jetbrains.intellij.build.ProductModulesLayout.bundledPluginModules],
      * [org.jetbrains.intellij.build.ProductModulesLayout.bundledPluginModules],
      * [org.jetbrains.intellij.build.ProductModulesLayout.pluginModulesToPublish] list.
      *
      * <p>Note that project-level libraries on which the plugin modules depend are automatically put to 'IDE_HOME/lib' directory for all IDEs
      * which are compatible with the plugin. If this isn't desired (e.g. a library is used in a single plugin only, or if plugins where
-     * a library is used aren't bundled with IDEs, so we don't want to increase the size of the distribution, you may invoke {@link PluginLayoutSpec#withProjectLibrary}
+     * a library is used aren't bundled with IDEs, so we don't want to increase the size of the distribution, you may invoke [PluginLayoutSpec.withProjectLibrary]
      * to include such a library to the plugin distribution.</p>
      * @param mainModuleName name of the module containing META-INF/plugin.xml file of the plugin
      */
@@ -151,7 +151,7 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
     }
 
     /**
-     * @param resourcePath path to resource file or directory relative to {@code moduleName} module content root
+     * @param resourcePath path to resource file or directory relative to `moduleName` module content root
      * @param relativeOutputPath target path relative to the plugin root directory
      */
     fun withResourceFromModule(moduleName: String, resourcePath: String, relativeOutputPath: String) {
@@ -167,7 +167,7 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
     var directoryName: String = convertModuleNameToFileName(layout.mainModule)
       /**
        * Custom name of the directory (under 'plugins' directory) where the plugin should be placed. By default, the main module name is used
-       * (with stripped {@code intellij} prefix and dots replaced by dashes).
+       * (with stripped `intellij` prefix and dots replaced by dashes).
        * <strong>Don't set this property for new plugins</strong>; it is temporary added to keep the layout of old plugins unchanged.
        */
       set(value) {
@@ -182,7 +182,7 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
       get() = layout.mainModule
 
     /**
-     * Returns {@link PluginBundlingRestrictions} instance which can be used to exclude the plugin from some distributions.
+     * Returns [PluginBundlingRestrictions] instance which can be used to exclude the plugin from some distributions.
      */
     val bundlingRestrictions: PluginBundlingRestrictions.Builder = PluginBundlingRestrictions.Builder()
 
@@ -190,7 +190,7 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
       get() = layout.mainJarName
       /**
        * Custom name of the main plugin JAR file.
-       * By default, the main module name with 'jar' an extension is used (with stripped {@code intellij}
+       * By default, the main module name with 'jar' an extension is used (with stripped `intellij`
        * prefix and dots replaced by dashes).
        * <strong>Don't set this property for new plugins</strong>; it is temporary added to keep the layout of old plugins unchanged.
        */
@@ -234,7 +234,7 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
     }
 
     /**
-     * @param resourcePath path to resource file or directory relative to {@code moduleName} module content root
+     * @param resourcePath path to resource file or directory relative to `moduleName` module content root
      * @param relativeOutputFile target path relative to the plugin root directory
      */
     fun withResourceArchiveFromModule(moduleName: String, resourcePath: String, relativeOutputFile: String) {
@@ -263,7 +263,7 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
 
     /**
      * This plugin will be compatible only with exactly the same IDE version.
-     * See {@link org.jetbrains.intellij.build.CompatibleBuildRange#EXACT}
+     * See [org.jetbrains.intellij.build.CompatibleBuildRange.EXACT]
      */
     fun pluginCompatibilityExactVersion() {
       layout.pluginCompatibilityExactVersion = true
@@ -278,7 +278,7 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
     }
 
     /**
-     * Do not automatically include module libraries from {@code moduleNames}
+     * Do not automatically include module libraries from `moduleNames`
      * <strong>Do not use this for new plugins, this method is temporary added to keep layout of old plugins</strong>.
      */
     fun doNotCopyModuleLibrariesAutomatically(moduleNames: List<String>) {
@@ -287,7 +287,7 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
 
     /**
      * Specifies a relative path to a plugin jar that should be scrambled.
-     * Scrambling is performed by the {@link org.jetbrains.intellij.build.ProprietaryBuildTools#scrambleTool}
+     * Scrambling is performed by the [org.jetbrains.intellij.build.ProprietaryBuildTools.scrambleTool]
      * If scramble tool is not defined, scrambling will not be performed
      * Multiple invocations of this method will add corresponding paths to a list of paths to be scrambled
      *
@@ -298,8 +298,8 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
     }
 
     /**
-     * Specifies a relative to {@link org.jetbrains.intellij.build.BuildPaths#communityHome} path to a zkm script stub file.
-     * If scramble tool is not defined, scramble toot will expect to find the script stub file at "{@link org.jetbrains.intellij.build.BuildPaths#projectHome}/plugins/{@code pluginName}/build/script.zkm.stub".
+     * Specifies a relative to [org.jetbrains.intellij.build.BuildPaths.communityHome] path to a zkm script stub file.
+     * If scramble tool is not defined, scramble toot will expect to find the script stub file at "[org.jetbrains.intellij.build.BuildPaths.projectHome]/plugins/`pluginName`/build/script.zkm.stub".
      * Project home cannot be used since it is not constant (for example for Rider).
      *
      * @param communityRelativePath - a path to a jar file relative to community project home directory
@@ -310,7 +310,7 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
 
     /**
      * Specifies a dependent plugin name to be added to scrambled classpath
-     * Scrambling is performed by the {@link org.jetbrains.intellij.build.ProprietaryBuildTools#scrambleTool}
+     * Scrambling is performed by the [org.jetbrains.intellij.build.ProprietaryBuildTools.scrambleTool]
      * If scramble tool is not defined, scrambling will not be performed
      * Multiple invocations of this method will add corresponding plugin names to a list of name to be added to scramble classpath
      *

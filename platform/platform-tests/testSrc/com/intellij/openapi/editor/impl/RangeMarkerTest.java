@@ -1677,4 +1677,10 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     assertFalse(marker.isValid());
     assertEquals(range, marker.getTextRange());
   }
+
+  public void testInvalidOffsetMustThrow() {
+    assertThrows(IllegalArgumentException.class, () -> createMarker("xxxx", 2, 1));
+    assertThrows(IllegalArgumentException.class, () -> createMarker("xxxx", -1, 1));
+    assertThrows(IllegalArgumentException.class, () -> createMarker("xxxx", 1, 5));
+  }
 }

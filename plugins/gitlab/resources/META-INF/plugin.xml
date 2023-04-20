@@ -45,29 +45,37 @@
   </extensions>
 
   <actions>
-    <action id="GitLab.Merge.Requests.Refresh"
+    <action id="GitLab.Merge.Request.List.Refresh"
+            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestListRefreshAction"
+            use-shortcut-of="Refresh"
+            icon="AllIcons.Actions.Refresh"/>
+    <action id="GitLab.Merge.Request.Refresh"
             class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestRefreshAction"
             use-shortcut-of="Refresh"/>
-    <action id="GitLab.Merge.Requests.Branch.Checkout.Remote"
+    <action id="GitLab.Merge.Request.Branch.Checkout.Remote"
             class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestCheckoutRemoteBranchAction"/>
+    <action id="GitLab.Merge.Request.Show"
+            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabShowMergeRequestAction"/>
+    <action id="GitLab.Merge.Request.Open.In.Browser"
+            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabOpenMergeRequestInBrowserAction"/>
 
-    <group id="GitLab.Merge.Requests.List.Actions">
-      <action id="GitLab.Merge.Request.Show"
-              class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabShowMergeRequestAction"/>
-      <action id="GitLab.Merge.Request.Open.In.Browser"
-              class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabOpenMergeRequestInBrowserAction"/>
+    <group id="GitLab.Merge.Request.List.Actions">
+      <reference id="GitLab.Merge.Request.Show"/>
+      <reference id="GitLab.Merge.Request.Open.In.Browser"/>
+      <separator/>
+      <reference id="GitLab.Merge.Request.List.Refresh"/>
     </group>
 
-    <group id="GitLab.Merge.Requests.Details.Popup">
-      <reference id="GitLab.Merge.Requests.Refresh"/>
+    <group id="GitLab.Merge.Request.Details.Popup">
+      <reference id="GitLab.Merge.Request.Refresh"/>
     </group>
 
-    <group id="GitLab.Merge.Requests.Changes.Popup">
+    <group id="GitLab.Merge.Request.Changes.Popup">
       <reference id="Diff.ShowDiff"/>
       <reference id="Diff.ShowStandaloneDiff"/>
-      <reference id="GitLab.Merge.Requests.Refresh"/>
+      <reference id="GitLab.Merge.Request.Refresh"/>
       <reference id="EditSource"/>
-      <group id="GitLab.Merge.Requests.Details.Commit.Tree.ViewOptions" icon="AllIcons.Actions.Show" popup="true">
+      <group id="GitLab.Merge.Request.Details.Commit.Tree.ViewOptions" icon="AllIcons.Actions.Show" popup="true">
         <reference id="ChangesView.GroupBy"/>
       </group>
       <separator/>

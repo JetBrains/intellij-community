@@ -3,10 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create
 
 import com.intellij.CommonBundle
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
-import com.intellij.collaboration.ui.CollaborationToolsUIUtil
-import com.intellij.collaboration.ui.HorizontalListPanel
-import com.intellij.collaboration.ui.ListenableProgressIndicator
-import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.*
 import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
@@ -49,7 +46,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowRepositoryContentController
 import org.jetbrains.plugins.github.ui.util.DisableableDocument
-import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import java.awt.Component
 import java.awt.Container
@@ -328,12 +324,11 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
 
   private fun createErrorAlreadyExistsLabel(loadingModel: GHSimpleLoadingModel<GHPRIdentifier?>): JComponent {
     val iconLabel = JLabel(AllIcons.Ide.FatalError)
-    val textPane = HtmlEditorPane().apply {
-      setBody(HtmlBuilder()
-                .append(GithubBundle.message("pull.request.create.already.exists"))
-                .appendLink("VIEW", GithubBundle.message("pull.request.create.already.exists.view"))
-                .toString())
-      removeHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
+    val textPane = SimpleHtmlPane(addBrowserListener = false).apply {
+      setHtmlBody(HtmlBuilder()
+                    .append(GithubBundle.message("pull.request.create.already.exists"))
+                    .appendLink("VIEW", GithubBundle.message("pull.request.create.already.exists.view"))
+                    .toString())
       addHyperlinkListener(object : HyperlinkAdapter() {
         override fun hyperlinkActivated(e: HyperlinkEvent) {
           if (e.description == "VIEW") {
@@ -366,7 +361,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
                                             commitsCountModel: SingleValueModel<Int?>,
                                             loadingModel: GHLoadingModel): JComponent {
       val iconLabel = JLabel(AllIcons.General.Warning)
-      val textPane = HtmlEditorPane()
+      val textPane = SimpleHtmlPane()
 
       val panel = textPaneWithIcon(iconLabel, textPane)
       fun update() {
@@ -374,7 +369,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
         panel.isVisible = commits == 0 && loadingModel.error == null
         val base = directionModel.baseBranch?.name.orEmpty()
         val head = directionModel.headBranch?.name.orEmpty()
-        textPane.setBody(GithubBundle.message("pull.request.create.no.changes", base, head))
+        textPane.text = GithubBundle.message("pull.request.create.no.changes", base, head)
       }
 
       commitsCountModel.addAndInvokeListener { update() }
@@ -387,13 +382,13 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
 
     private fun createErrorLabel(loadingModel: GHLoadingModel, @Nls prefix: String? = null): JComponent {
       val iconLabel = JLabel(AllIcons.Ide.FatalError)
-      val textPane = HtmlEditorPane()
+      val textPane = SimpleHtmlPane()
 
       val panel = textPaneWithIcon(iconLabel, textPane)
 
       fun update() {
         panel.isVisible = loadingModel.error != null
-        textPane.setBody(prefix?.plus(" ").orEmpty() + loadingModel.error?.message.orEmpty())
+        textPane.setHtmlBody(prefix?.plus(" ").orEmpty() + loadingModel.error?.message.orEmpty())
       }
       loadingModel.addStateChangeListener(object : GHLoadingModel.StateChangeListener {
         override fun onLoadingStarted() = update()
@@ -403,7 +398,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
       return panel
     }
 
-    private fun textPaneWithIcon(iconLabel: JLabel, textPane: HtmlEditorPane) =
+    private fun textPaneWithIcon(iconLabel: JLabel, textPane: JEditorPane) =
       JPanel(MigLayout(LC().insets("0").gridGap("0", "0"))).apply {
         add(iconLabel, CC().alignY("top").gapRight("${iconLabel.iconTextGap}"))
         add(textPane, CC().minWidth("0"))

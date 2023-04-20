@@ -479,25 +479,17 @@ impl DefaultLaunchConfiguration {
 
 #[cfg(target_os = "linux")]
 fn get_bin_java_path(java_home: &Path) -> PathBuf {
-    java_home
-        .join("bin")
-        .join("java")
+    java_home.join("bin/java")
 }
 
 #[cfg(target_os = "windows")]
 fn get_bin_java_path(java_home: &Path) -> PathBuf {
-    java_home
-        .join("bin")
-        .join("java.exe")
+    java_home.join("bin\\java.exe")
 }
 
 #[cfg(target_os = "macos")]
 fn get_bin_java_path(java_home: &Path) -> PathBuf {
-    java_home
-        .join("Contents")
-        .join("Home")
-        .join("bin")
-        .join("java")
+    java_home.join("Contents/Home/bin/java")
 }
 
 fn read_vm_options(path: Result<PathBuf>) -> Result<Vec<String>> {

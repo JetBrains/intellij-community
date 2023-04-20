@@ -30,6 +30,10 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
     doTest("html/attributes/v-foo", null, true, "basic-pattern")
   }
 
+  fun testDeprecationAndExperimentalStatus() {
+    doTest("html/elements/", null, "api-status")
+  }
+
   fun testVirtualAttributes() {
     doTest("html/attributes", null, true, "basic-pattern")
   }
@@ -283,15 +287,15 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
   }
 
   fun testNamingRules4() {
-    doTest("js/properties/prop-one", "vue", true, "naming-rules")
+    doTest("js/custom-properties/prop-one", "vue", true, "naming-rules")
   }
 
   fun testNamingRules5() {
-    doTest("js/properties/propOne", "vue", true, "naming-rules")
+    doTest("js/custom-properties/propOne", "vue", true, "naming-rules")
   }
 
   fun testNamingRules6() {
-    doTest("js/properties/prop-two-three", "vue", true, "naming-rules")
+    doTest("js/custom-properties/prop-two-three", "vue", true, "naming-rules")
   }
 
   fun testNestedNamingRules1() {
@@ -396,6 +400,38 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
            "reference-with-complex-name-conversion")
   }
 
+  fun testBasicCustomElementsManifest1() {
+    doTest("html/elements/my-EleMeNt", customElementsManifests = listOf("basic"))
+  }
+
+  fun testBasicCustomElementsManifest2() {
+    doTest("html/elements/my-EleMeNt/attributes/disabled", customElementsManifests = listOf("basic"))
+  }
+
+  fun testBasicCustomElementsManifest3() {
+    doTest("html/elements/my-EleMeNt/attributes/", customElementsManifests = listOf("basic"))
+  }
+
+  fun testBasicCustomElementsManifest4() {
+    doTest("html/elements/my-EleMeNt/js/events/", customElementsManifests = listOf("basic"))
+  }
+
+  fun testBasicCustomElementsManifest5() {
+    doTest("html/elements/my-EleMeNt/css/properties/", customElementsManifests = listOf("basic"))
+  }
+
+  fun testBasicCustomElementsManifest6() {
+    doTest("html/elements/my-EleMeNt/css/parts/", customElementsManifests = listOf("basic"))
+  }
+
+  fun testBasicCustomElementsManifest7() {
+    doTest("html/elements/my-EleMeNt/js/properties/", customElementsManifests = listOf("basic"))
+  }
+
+  fun testBasicCustomElementsManifest8() {
+    doTest("html/elements/my-element/js/static-properties/", customElementsManifests = listOf("basic"))
+  }
+
   fun testNestedPattern1() {
     webSymbolsQueryExecutorFactory.addScope(
       object : WebSymbolsScope {
@@ -436,8 +472,16 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
   }
 
   fun doTest(path: String, framework: String?, includeVirtual: Boolean, vararg webTypes: String) {
+    doTest(path, framework, includeVirtual, webTypes = webTypes.toList())
+  }
+
+  fun doTest(path: String,
+             framework: String? = null,
+             includeVirtual: Boolean = true,
+             webTypes: List<String> = emptyList(),
+             customElementsManifests: List<String> = emptyList()) {
     doTest(testPath) {
-      registerFiles(framework, *webTypes)
+      registerFiles(framework, webTypes, customElementsManifests)
       val matches = webSymbolsQueryExecutorFactory.create(null)
         .runNameMatchQuery(parseWebTypesPath(path, null), includeVirtual, false)
       printMatches(matches)

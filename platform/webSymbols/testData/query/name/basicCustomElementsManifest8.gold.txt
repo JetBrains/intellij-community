@@ -1,0 +1,14 @@
+[
+ {
+  matchedName: "js/static-properties/staticField",
+  origin: "basic@null (<none>)",
+  complete: true,
+  priority: NORMAL,
+  segments: [
+   {
+    name-part: "staticField",
+    symbol: <self>,
+   },
+  ],
+ },
+]

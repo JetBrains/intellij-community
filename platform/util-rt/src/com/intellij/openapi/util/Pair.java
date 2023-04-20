@@ -2,6 +2,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.util.Function;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,7 +13,7 @@ import java.util.Comparator;
  */
 public class Pair<A, B> {
   public final A first;
-  public final B second;
+  @Nls public final B second;
 
   @NotNull
   public static <A, B> Pair<A, B> create(A first, B second) {

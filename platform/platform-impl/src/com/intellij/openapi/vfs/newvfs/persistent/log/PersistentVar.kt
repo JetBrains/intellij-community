@@ -11,23 +11,27 @@ import java.nio.file.StandardOpenOption.*
 import java.util.*
 import kotlin.reflect.KProperty
 
+/**
+ * Caches a value for fast reading. There should not be two or more instances on the same path.
+ */
 abstract class PersistentVar<T>(
-  path: Path
+  path: Path,
+  readValue: DataInput.() -> T?,
+  private val writeValue: DataOutput.(value: T) -> Unit
 ) {
   init {
     FileUtil.createIfNotExists(path.toFile())
   }
 
   protected val fileChannelRetryer = FileChannelInterruptsRetryer(path, EnumSet.of(READ, WRITE, CREATE))
-
-  abstract fun DataInput.readValue(): T?
-  abstract fun DataOutput.writeValue(value: T)
+  protected var cachedValue: T? =
+    fileChannelRetryer.retryIfInterrupted {
+      DataInputStream(Channels.newInputStream(it.position(0))).readValue()
+    }
 
   @Throws(IOException::class)
   operator fun getValue(thisRef: Any?, property: KProperty<*>): T? = synchronized(this) {
-    return fileChannelRetryer.retryIfInterrupted {
-      DataInputStream(Channels.newInputStream(it.position(0))).readValue()
-    }
+    return cachedValue
   }
 
   @Throws(IOException::class)
@@ -40,32 +44,35 @@ abstract class PersistentVar<T>(
         DataOutputStream(Channels.newOutputStream(it.position(0))).writeValue(value)
       }
       it.force(false)
+      cachedValue = value
     }
   }
 
   companion object {
-    fun integer(path: Path) = object : PersistentVar<Int>(path) {
-      override fun DataInput.readValue(): Int? =
+    fun integer(path: Path) = object : PersistentVar<Int>(
+      path,
+      readValue = {
         try {
           readInt()
         }
         catch (e: EOFException) {
           null
         }
+      },
+      writeValue = { writeInt(it) }
+    ) {}
 
-      override fun DataOutput.writeValue(value: Int) = writeInt(value)
-    }
-
-    fun long(path: Path) = object : PersistentVar<Long>(path) {
-      override fun DataInput.readValue(): Long? =
+    fun long(path: Path) = object : PersistentVar<Long>(
+      path,
+      readValue = {
         try {
           readLong()
         }
         catch (e: EOFException) {
           null
         }
-
-      override fun DataOutput.writeValue(value: Long) = writeLong(value)
-    }
+      },
+      writeValue = { writeLong(it) }
+    ) {}
   }
 }

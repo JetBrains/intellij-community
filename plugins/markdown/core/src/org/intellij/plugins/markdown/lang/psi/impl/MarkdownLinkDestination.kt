@@ -4,8 +4,8 @@ package org.intellij.plugins.markdown.lang.psi.impl
 import com.intellij.lang.ASTNode
 import com.intellij.model.Pointer
 import com.intellij.model.psi.PsiExternalReferenceHost
-import com.intellij.navigation.NavigationTarget
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.AbstractElementManipulator
 import com.intellij.psi.PsiElementVisitor

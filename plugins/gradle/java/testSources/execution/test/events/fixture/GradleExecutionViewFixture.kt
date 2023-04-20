@@ -3,23 +3,27 @@ package org.jetbrains.plugins.gradle.execution.test.events.fixture
 
 import com.intellij.build.BuildTreeConsoleView
 import com.intellij.build.BuildView
-import com.intellij.execution.impl.ConsoleViewImpl
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.execution.testframework.TestConsoleProperties
+import com.intellij.execution.testframework.sm.runner.ui.MockPrinter
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.IdeaTestFixture
-import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole
 import org.jetbrains.plugins.gradle.testFramework.util.tree.Tree
-import org.jetbrains.plugins.gradle.testFramework.util.tree.TreeAssertion
+import org.jetbrains.plugins.gradle.testFramework.util.tree.assertion.TreeAssertion
 import org.jetbrains.plugins.gradle.testFramework.util.tree.buildTree
-import org.jetbrains.plugins.gradle.testFramework.util.tree.sortedTree
 import org.junit.jupiter.api.AssertionFailureBuilder
 import org.junit.jupiter.api.Assertions
 
 class GradleExecutionViewFixture(
+  private val project: Project,
   private val executionEnvironmentFixture: GradleExecutionEnvironmentFixture
 ) : IdeaTestFixture {
 
@@ -69,51 +73,36 @@ class GradleExecutionViewFixture(
     return buildTree(treeString)
   }
 
-  private fun getSimplifiedTestTreeView(): Tree<Nothing?> {
-    val testExecutionConsole = getTestExecutionConsole()
-    val treeView = testExecutionConsole.resultsViewer.treeView!!
-    val treeString = invokeAndWaitIfNeeded {
-      PlatformTestUtil.print(treeView, false)
-    }
-    invokeAndWaitIfNeeded {
-      PlatformTestUtil.waitWhileBusy(treeView)
-    }
-    val tree = buildTree(treeString)
-    return tree.sortedTree()
-  }
-
   private fun getTestConsoleText(): String {
     val testExecutionConsole = getTestExecutionConsole()
-    val tree = testExecutionConsole.resultsViewer.treeView!!
-    return invokeAndWaitIfNeeded {
-      TreeUtil.selectFirstNode(tree)
-      PlatformTestUtil.waitWhileBusy(tree)
-      val console = testExecutionConsole.console as ConsoleViewImpl
-      console.flushDeferredText()
-      PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
-      console.text
+    val rootProxy = testExecutionConsole.resultsViewer.root
+    return getTestConsoleText(rootProxy)
+  }
+
+  private fun getTestConsoleText(testProxy: AbstractTestProxy): String {
+    val printer = MockPrinter()
+    printer.setShowHyperLink(true)
+    testProxy.printOn(printer)
+    return printer.allOut
+  }
+
+  fun assertTestConsoleContains(expectedTextSample: String) {
+    assertContains(expectedTextSample, getTestConsoleText())
+  }
+
+  fun assertTestConsoleDoesNotContain(unexpectedTextSample: String) {
+    assertDoesNotContain(unexpectedTextSample, getTestConsoleText())
+  }
+
+  fun assertTestConsoleContains(testAssertion: TreeAssertion.Node<AbstractTestProxy>, expectedTextSample: String) {
+    testAssertion.assertValueIfPresent { testProxy ->
+      assertContains(expectedTextSample, getTestConsoleText(testProxy))
     }
   }
 
-  fun assertTestConsoleContains(expected: String) {
-    val actual = getTestConsoleText()
-    if (expected !in actual) {
-      throw AssertionFailureBuilder.assertionFailure()
-        .message("Test execution console doesn't contain but should")
-        .expected(expected)
-        .actual(actual)
-        .build()
-    }
-  }
-
-  fun assertTestConsoleDoesNotContain(expected: String) {
-    val actual = getTestConsoleText()
-    if (expected in actual) {
-      throw AssertionFailureBuilder.assertionFailure()
-        .message("Test execution console contains but shouldn't")
-        .expected(expected)
-        .actual(actual)
-        .build()
+  fun assertTestConsoleDoesNotContain(testAssertion: TreeAssertion.Node<AbstractTestProxy>, unexpectedTextSample: String) {
+    testAssertion.assertValueIfPresent { testProxy ->
+      assertDoesNotContain(unexpectedTextSample, getTestConsoleText(testProxy))
     }
   }
 
@@ -123,9 +112,13 @@ class GradleExecutionViewFixture(
     }
   }
 
-  fun assertTestTreeView(assert: TreeAssertion.Node<Nothing?>.() -> Unit) {
-    TreeAssertion.assertTree(getSimplifiedTestTreeView()) {
-      assertNode("[root]", assert)
+  fun assertTestTreeView(assert: TreeAssertion<AbstractTestProxy>.() -> Unit) {
+    val testExecutionConsole = getTestExecutionConsole()
+    val resultsViewer = testExecutionConsole.resultsViewer
+    val roots = resultsViewer.root.children
+    val tree = buildTree(roots, { name }, { children })
+    runReadAction { // all navigation tests requires read action
+      TreeAssertion.assertTree(tree, isUnordered = true, assert)
     }
   }
 
@@ -137,13 +130,43 @@ class GradleExecutionViewFixture(
     assertTestTreeView {}
   }
 
-  fun assertSMTestProxyTree(assert: TreeAssertion<AbstractTestProxy>.() -> Unit) {
-    val testExecutionConsole = getTestExecutionConsole()
-    val resultsViewer = testExecutionConsole.resultsViewer
-    val roots = resultsViewer.root.children
-    val tree = buildTree(roots, { name }, { children })
-    runReadAction { // all navigation tests requires read action
-      TreeAssertion.assertTree(tree.sortedTree(), assert)
+  fun assertPsiLocation(testAssertion: TreeAssertion.Node<AbstractTestProxy>, className: String, methodName: String?) {
+    testAssertion.assertValueIfPresent { testProxy ->
+      if (methodName == null) {
+        val psiClass = testProxy.getPsiElement<PsiClass>()
+        Assertions.assertEquals(className, psiClass.name)
+      }
+      else {
+        val psiMethod = testProxy.getPsiElement<PsiMethod>()
+        Assertions.assertEquals(methodName, psiMethod.name)
+        Assertions.assertEquals(className, psiMethod.containingClass?.name)
+      }
+    }
+  }
+
+  private inline fun <reified T : PsiElement> AbstractTestProxy.getPsiElement(): T {
+    val location = getLocation(project, GlobalSearchScope.allScope(project))
+    Assertions.assertNotNull(location) { "Cannot resolve location for $locationUrl" }
+    return location.psiElement as T
+  }
+
+  private fun assertContains(expectedTextSample: String, actualText: String) {
+    if (expectedTextSample !in actualText) {
+      throw AssertionFailureBuilder.assertionFailure()
+        .message("Text doesn't contain text sample but should")
+        .expected(expectedTextSample)
+        .actual(actualText)
+        .build()
+    }
+  }
+
+  private fun assertDoesNotContain(unexpectedTextSample: String, actualText: String) {
+    if (unexpectedTextSample in actualText) {
+      throw AssertionFailureBuilder.assertionFailure()
+        .message("Text contains text sample but shouldn't")
+        .expected(unexpectedTextSample)
+        .actual(actualText)
+        .build()
     }
   }
 }

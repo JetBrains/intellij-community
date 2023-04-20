@@ -5,6 +5,7 @@ import io.opentelemetry.sdk.metrics.export.MetricExporter
 import java.time.Duration
 
 class RdctExportersProvider : OTelExportersProvider {
+  private val duration = System.getProperty("rdct.connection.metrics.interval")?.toLong()
   override fun getSpanExporters(): List<AsyncSpanExporter> {
     val spanExporters = mutableListOf<AsyncSpanExporter>()
     val rdctOtlpEndpoint = System.getProperty("rdct.diagnostic.otlp")
@@ -35,6 +36,6 @@ class RdctExportersProvider : OTelExportersProvider {
   }
 
   override fun getReadsInterval(): Duration {
-    return Duration.ofSeconds(1)
+    return duration?.let { Duration.ofSeconds(it) } ?: Duration.ofSeconds(1)
   }
 }

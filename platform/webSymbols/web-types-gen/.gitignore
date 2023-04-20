@@ -1,2 +1,3 @@
 target/
 *.iml
+/resources/custom-elements-manifest.json

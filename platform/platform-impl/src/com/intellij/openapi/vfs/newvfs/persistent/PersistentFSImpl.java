@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.newvfs.impl.*;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.*;
-import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.*;
 import com.intellij.util.io.ReplicatorInputStream;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -1513,6 +1512,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Applying " + event);
     }
+    myVfsLog.getVFileEventApplicationListener().beforeApply(event);
+    Throwable exception = null;
     try {
       if (event instanceof VFileCreateEvent) {
         VFileCreateEvent ce = (VFileCreateEvent)event;
@@ -1559,10 +1560,15 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       }
     }
     catch (ProcessCanceledException e) {
+      exception = e;
       throw e;
     }
     catch (Exception e) {
+      exception = e;
       LOG.error(e);
+    }
+    finally {
+      myVfsLog.getVFileEventApplicationListener().afterApply(event, exception);
     }
   }
 
@@ -1696,10 +1702,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static void invalidateSubtree(@NotNull VirtualFile file, @NotNull Object source, @NotNull Object reason) {
     VirtualFileSystemEntry root = (VirtualFileSystemEntry)file;
     if (root.isDirectory()) {
-      Stack<VirtualFileSystemEntry> stack = new Stack<>((Collection)root.getCachedChildren());
-      while (!stack.isEmpty()) {
-        VirtualFileSystemEntry child = stack.pop();
-        stack.addAll((Collection)child.getCachedChildren());
+      Queue<VirtualFile> queue = new ArrayDeque<>(root.getCachedChildren());
+      while (!queue.isEmpty()) {
+        VirtualFileSystemEntry child = (VirtualFileSystemEntry)queue.remove();
+        queue.addAll(child.getCachedChildren());
         doInvalidate(child, source, reason);
       }
     }

@@ -15,7 +15,7 @@ class MultiRowPassInfo(val tabs: JBTabsImpl,
   val lengths: MutableMap<TabInfo, Int> = HashMap()
 
   val rowHeight: Int
-    get() = tabs.myHeaderFitSize.height
+    get() = tabs.headerFitSize!!.height
 
   var tabsRectangle: Rectangle = Rectangle()
   var reqLength: Int = toFitRec.width - toFitRec.x

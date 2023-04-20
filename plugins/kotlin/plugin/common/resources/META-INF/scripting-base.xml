@@ -57,11 +57,8 @@
 
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.core.script.LoadScriptDefinitionsStartupActivity" order="last"/>
 
-    <java.elementFinder implementation="org.jetbrains.kotlin.idea.core.script.KotlinScriptDependenciesClassFinder" order="last"/>
-
     <java.shortNamesCache implementation="org.jetbrains.kotlin.idea.core.script.dependencies.JavaClassesInScriptDependenciesShortNameCache"/>
 
-    <additionalLibraryRootsProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptDependenciesLibraryRootProvider"/>
 
     <psi.clsCustomNavigationPolicy implementation="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependencySourceNavigationPolicyForJavaClasses"/>
 
@@ -72,21 +69,7 @@
     <workspaceModel.cache.version implementation="org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptWorkspaceModelCacheVersion"/>
 
     <!--suppress PluginXmlValidity -->
-    <customEntityProjectModelInfoProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptProjectModelInfoProvider"/>
-
-    <indexableIteratorBuilderHandler implementation="org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryIndexableIteratorHandler"/>
-
-    <!--suppress PluginXmlValidity -->
     <projectView.externalLibraries.workspaceModelNodesProvider implementation="org.jetbrains.kotlin.idea.core.script.KotlinScriptExternalLibrariesNodesProvider"/>
-
-    <!--suppress PluginXmlValidity -->
-    <indexableEntityProvider implementation="org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptDependencyIndexableEntityProvider"/>
-
-    <registryKey
-            key="kotlin.scripts.as.entities"
-            description="Enables explicit script dependencies support"
-            defaultValue="true"
-            restartRequired="true"/>
 
     <registryKey
             key="kotlin.scripting.support.warning"
@@ -111,11 +94,6 @@
             description="Index script dependencies sources eagerly (not deferred)"
             defaultValue="false"
             restartRequired="true"/>
-
-    <registryKey
-            key="kotlin.script.use.workspace.file.index.contributor.api"
-            description="Use new WorkspaceFileIndexContributor API for custom entities. The flag is temporary, legacy API will be removed in the future."
-            defaultValue="true"/>
 
     <fileType name="script-definition-marker" fieldName="INSTANCE"
               implementationClass="org.jetbrains.kotlin.idea.script.ScriptDefinitionMarkerFileType"/>

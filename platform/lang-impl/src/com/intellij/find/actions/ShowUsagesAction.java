@@ -411,7 +411,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
     Project project = parameters.project;
     UsageViewImpl usageView = createUsageView(project);
-    UsageViewStatisticsCollector.logSearchStarted(project, usageView, CodeNavigateSource.ShowUsagesPopup, actionHandler.getEventData());
+    ReadAction.nonBlocking(() -> actionHandler.getEventData()).submit(AppExecutorUtil.getAppExecutorService()).onSuccess(
+      (eventData) -> UsageViewStatisticsCollector.logSearchStarted(project, usageView, CodeNavigateSource.ShowUsagesPopup, eventData));
     final SearchScope searchScope = actionHandler.getSelectedScope();
     final AtomicInteger outOfScopeUsages = new AtomicInteger();
     AtomicBoolean manuallyResized = new AtomicBoolean();
@@ -444,7 +445,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     AbstractPopup popup = createUsagePopup(usageView, showUsagesPopupData, itemChosenCallback, tableResizer);
 
     popup.addResizeListener(() -> manuallyResized.set(true), popup);
-    Ref<Long> popupShownTime = new Ref<>();
+    Ref<Long> popupShownTimeRef = new Ref<>();
     popup.addListener(new JBPopupListener() {
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {
@@ -452,9 +453,20 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         Usage usage = node != null ? node.getUsage() : null;
         UsageInfo2UsageAdapter usageAdapter = ObjectUtils.tryCast(usage, UsageInfo2UsageAdapter.class);
         UsageInfo usageInfo = usageAdapter != null ? usageAdapter.getUsageInfo() : null;
-        UsageViewStatisticsCollector.logPopupClosed(project, usageView, event.isOk(), getRowNumber(preselectedRow.get(), table),
-                                                    getRowNumber(node, table), visibleUsages.size(), popupShownTime.get(),
-                                                    actionHandler.buildFinishEventData(usageInfo));
+        int preselectedRowNumber = getRowNumber(preselectedRow.get(), table);
+        int selectedRowNumber = getRowNumber(node, table);
+        Long popupShownTime = popupShownTimeRef.get();
+        Long durationTime = popupShownTime != null ? System.currentTimeMillis() - popupShownTime : null;
+        ReadAction.nonBlocking(() ->
+                                 actionHandler.buildFinishEventData(usageInfo)
+        ).submit(AppExecutorUtil.getAppExecutorService()).onSuccess((finishEventData) -> {
+          UsageViewStatisticsCollector.logPopupClosed(project, usageView, event.isOk(),
+                                                      preselectedRowNumber,
+                                                      selectedRowNumber, visibleUsages.size(),
+                                                      durationTime,
+                                                      finishEventData
+          );
+        });
       }
     });
     ProgressIndicator indicator = new ProgressIndicatorBase();
@@ -465,7 +477,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       // show popup only if find usages takes more than 300ms, otherwise it would flicker needlessly
       EdtScheduledExecutorService.getInstance().schedule(() -> {
         if (!usageView.isDisposed()) {
-          showPopupIfNeedTo(popup, parameters.popupPosition, popupShownTime);
+          showPopupIfNeedTo(popup, parameters.popupPosition, popupShownTimeRef);
         }
       }, ourPopupDelayTimeout, TimeUnit.MILLISECONDS);
     }
@@ -480,7 +492,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       List<Usage> copy;
       synchronized (usages) {
         // open up popup as soon as the first usage has been found
-        if (!popup.isVisible() && (usages.isEmpty() || !showPopupIfNeedTo(popup, parameters.popupPosition, popupShownTime))) {
+        if (!popup.isVisible() && (usages.isEmpty() || !showPopupIfNeedTo(popup, parameters.popupPosition, popupShownTimeRef))) {
           return;
         }
         addUsageNodes(usageView.getRoot(), usageView, nodes);

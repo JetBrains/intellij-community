@@ -6,9 +6,9 @@ expect class Platform {
     fun name2(param: String = "name2"): String
 }
 
-// MODULE: jvm
+// MODULE: jvm(common)
 // FILE: jvm.kt
-// DEPENDS_ON: common
+
 
 actual class Platform {
     actual fun name1() = "name1"

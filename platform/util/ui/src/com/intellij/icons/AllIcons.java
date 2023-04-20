@@ -399,6 +399,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Htaccess = load("fileTypes/htaccess.svg", -2088610418, 0);
     /** 16x16 */ public static final @NotNull Icon Html = load("fileTypes/html.svg", -1577865559, 0);
     /** 16x16 */ public static final @NotNull Icon Idl = load("fileTypes/idl.svg", -219435872, 0);
+    /** 16x16 */ public static final @NotNull Icon Image = load("fileTypes/image.svg", -1773595662, 0);
     /** 16x16 */ public static final @NotNull Icon Java = load("fileTypes/java.svg", 1910963991, 0);
     /** 16x16 */ public static final @NotNull Icon JavaClass = load("fileTypes/javaClass.svg", 1466981955, 0);
     /** 16x16 */ public static final @NotNull Icon JavaOutsideSource = load("fileTypes/javaOutsideSource.svg", -223692720, 0);
@@ -696,7 +697,7 @@ public class AllIcons {
   /** 100x100 */ public static final @NotNull Icon Idea_logo_welcome = load("idea_logo_welcome.png", 0, 0);
 
   public static final class Javaee {
-    /** 16x16 */ public static final @NotNull Icon Home = load("javaee/home.svg", -1762129996, 1);
+    /** 16x16 */ public static final @NotNull Icon Home = load("javaee/home.svg", -1762129996, 0);
     /** 16x16 */ public static final @NotNull Icon PersistenceEntity = load("javaee/persistenceEntity.svg", -1501668648, 0);
     /** 16x16 */ public static final @NotNull Icon UpdateRunningApplication = load("javaee/updateRunningApplication.svg", -36399267, 2);
     /** 16x16 */ public static final @NotNull Icon WebModuleGroup = load("javaee/webModuleGroup.svg", 125213459, 0);

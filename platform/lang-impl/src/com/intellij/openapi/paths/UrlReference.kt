@@ -9,13 +9,13 @@ import com.intellij.lang.annotation.AnnotationBuilder
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
 import com.intellij.navigation.NavigatableSymbol
-import com.intellij.navigation.NavigationRequest
-import com.intellij.navigation.NavigationService
-import com.intellij.navigation.NavigationTarget
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.backend.navigation.NavigationRequest
+import com.intellij.platform.backend.navigation.NavigationRequests
+import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
@@ -56,7 +56,7 @@ private class UrlSymbol(
 
   override fun navigationRequest(): NavigationRequest? {
     // TODO support url request natively
-    return NavigationService.getInstance().rawNavigationRequest(UrlNavigatable(url))
+    return NavigationRequests.getInstance().rawNavigationRequest(UrlNavigatable(url))
   }
 }
 

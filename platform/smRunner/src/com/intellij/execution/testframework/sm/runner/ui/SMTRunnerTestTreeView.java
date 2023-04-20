@@ -21,9 +21,12 @@ import com.intellij.execution.testframework.TestTreeView;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerNodeDescriptor;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.actionSystem.DataKey;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
@@ -35,6 +38,7 @@ public class SMTRunnerTestTreeView extends TestTreeView {
   public static final DataKey<SMTRunnerTestTreeView> SM_TEST_RUNNER_VIEW  = DataKey.create("SM_TEST_RUNNER_VIEW");
 
   @Nullable private TestResultsViewer myResultsViewer;
+  @Nullable @Nls private String myAccessibleStatus;
 
   @Override
   protected TreeCellRenderer getRenderer(final TestConsoleProperties properties) {
@@ -80,5 +84,23 @@ public class SMTRunnerTestTreeView extends TestTreeView {
   @Override
   protected String getPresentableName(AbstractTestProxy testProxy) {
     return ((SMTestProxy)testProxy).getPresentableName();
+  }
+
+  @ApiStatus.Experimental
+  public @Nullable @Nls String getAccessibleStatus() {
+    return myAccessibleStatus;
+  }
+
+  @ApiStatus.Experimental
+  public void setAccessibleStatus(@Nls @Nullable String accessibleStatus) {
+    myAccessibleStatus = accessibleStatus;
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    AccessibleContext accessibleContext = super.getAccessibleContext();
+    String status = getAccessibleStatus();
+    if (status != null && !status.isEmpty()) accessibleContext.setAccessibleDescription(status);
+    return accessibleContext;
   }
 }

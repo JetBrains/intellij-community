@@ -403,14 +403,16 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         )
     }
 
+    private fun getType(ktDeclaration: KtDeclaration): KotlinType? {
+        return (ktDeclaration.analyze()[BindingContext.DECLARATION_TO_DESCRIPTOR, ktDeclaration] as? CallableDescriptor)?.returnType
+    }
+
     override fun getType(
         ktDeclaration: KtDeclaration,
         containingLightDeclaration: PsiModifierListOwner?,
         isForFake: Boolean,
     ): PsiType? {
-        val returnType = (ktDeclaration.analyze()[BindingContext.DECLARATION_TO_DESCRIPTOR, ktDeclaration] as? CallableDescriptor)
-            ?.returnType
-            ?: return null
+        val returnType = getType(ktDeclaration) ?: return null
         return returnType.toPsiType(
             containingLightDeclaration,
             ktDeclaration,
@@ -440,6 +442,15 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
 
     override fun getFunctionalInterfaceType(uLambdaExpression: KotlinULambdaExpression): PsiType? {
         return uLambdaExpression.getFunctionalInterfaceType()
+    }
+
+    override fun hasInheritedGenericType(psiElement: PsiElement): Boolean {
+        val returnType = getTargetType(psiElement) ?: return false
+        return TypeUtils.isTypeParameter(returnType) &&
+                // explicitly nullable, e.g., T?
+                !returnType.isMarkedNullable &&
+                // non-null upper bound, e.g., T : Any
+                returnType.nullability() != TypeNullability.NOT_NULL
     }
 
     override fun nullability(psiElement: PsiElement): KtTypeNullability? {

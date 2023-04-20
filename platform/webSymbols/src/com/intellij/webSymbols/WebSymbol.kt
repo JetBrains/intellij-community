@@ -4,10 +4,10 @@ package com.intellij.webSymbols
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
 import com.intellij.navigation.NavigatableSymbol
-import com.intellij.navigation.NavigationTarget
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiElement
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -58,13 +58,8 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
   val required: Boolean?
     get() = null
 
-  @get:JvmName("isDeprecated")
-  val deprecated: Boolean
-    get() = false
-
-  @get:JvmName("isExperimental")
-  val experimental: Boolean
-    get() = false
+  val apiStatus: ApiStatus?
+    get() = null
 
   val attributeValue: WebSymbolHtmlAttributeValue?
     get() = null
@@ -137,6 +132,18 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
   fun adjustNameForRefactoring(queryExecutor: WebSymbolsQueryExecutor, newName: String, occurence: String): String =
     queryExecutor.namesProvider.adjustRename(namespace, kind, name, newName, occurence)
 
+  sealed interface ApiStatus
+
+  /**
+   * @param message message with HTML markup
+   */
+  data class Deprecated(@Nls val message: String? = null) : ApiStatus
+
+  /**
+   * @param message message with HTML markup
+   */
+  data class Experimental(@Nls val message: String? = null) : ApiStatus
+
   enum class Priority(val value: Double) {
     LOWEST(0.0),
     LOW(1.0),
@@ -160,9 +167,12 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
     const val KIND_CSS_PSEUDO_CLASSES = "pseudo-classes"
     const val KIND_CSS_FUNCTIONS = "functions"
     const val KIND_CSS_CLASSES = "classes"
+    const val KIND_CSS_PARTS = "parts"
 
     const val KIND_JS_EVENTS = "events"
     const val KIND_JS_PROPERTIES = "properties"
+    const val KIND_JS_STATIC_PROPERTIES = "static-properties"
+    const val KIND_JS_STRING_LITERALS = "string-literals"
 
     /** Specify language to inject in an HTML element */
     const val PROP_INJECT_LANGUAGE = "inject-language"

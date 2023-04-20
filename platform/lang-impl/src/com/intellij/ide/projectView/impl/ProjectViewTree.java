@@ -42,6 +42,12 @@ public class ProjectViewTree extends DnDAwareTree {
 
   public ProjectViewTree(TreeModel model) {
     super((TreeModel)null);
+
+    // not required for Project View, and on start-up, if an editor component is not yet added, it can show confusing "Nothing to show"
+    // a proper fix — wait ~300ms before showing empty status text, or investigating why "Project View" is rendered in the whole area,
+    // including editor, are not safe for 231 and should be addressed separate
+    getEmptyText().setText("");
+
     setLargeModel(true);
     setModel(model);
     setCellRenderer(createCellRenderer());

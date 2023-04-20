@@ -3,20 +3,27 @@ package org.jetbrains.plugins.gradle.execution.test.events
 
 import com.intellij.testFramework.common.runAll
 import org.jetbrains.plugins.gradle.execution.test.events.fixture.GradleOutputFixture
+import org.jetbrains.plugins.gradle.execution.test.events.fixture.TestExecutionConsoleEventFixture
 
 abstract class GradleTestEventTestCase : GradleExecutionTestCase() {
 
+
   private lateinit var outputFixture: GradleOutputFixture
+  private lateinit var testExecutionEventFixture: TestExecutionConsoleEventFixture
 
   override fun setUp() {
     super.setUp()
 
     outputFixture = GradleOutputFixture(project)
     outputFixture.setUp()
+
+    testExecutionEventFixture = TestExecutionConsoleEventFixture(project)
+    testExecutionEventFixture.setUp()
   }
 
   override fun tearDown() {
     runAll(
+      { testExecutionEventFixture.tearDown() },
       { outputFixture.tearDown() },
       { super.tearDown() }
     )
@@ -38,5 +45,11 @@ abstract class GradleTestEventTestCase : GradleExecutionTestCase() {
     return outputFixture.assertExecutionOutputIsReady {
       super.waitForAnyGradleTaskExecution(action)
     }
+  }
+
+  fun assertTestEventCount(
+    name: String, suiteStart: Int, suiteFinish: Int, testStart: Int, testFinish: Int, testFailure: Int, testIgnore: Int
+  ) {
+    testExecutionEventFixture.assertTestEventCount(name, suiteStart, suiteFinish, testStart, testFinish, testFailure, testIgnore)
   }
 }

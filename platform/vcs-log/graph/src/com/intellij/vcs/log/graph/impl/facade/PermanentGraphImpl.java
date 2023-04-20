@@ -5,7 +5,6 @@ package com.intellij.vcs.log.graph.impl.facade;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.*;
@@ -29,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 
 public final class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, PermanentGraphInfo<CommitId> {
   @NotNull private final PermanentCommitsInfoImpl<CommitId> myPermanentCommitsInfo;
@@ -141,7 +141,7 @@ public final class PermanentGraphImpl<CommitId> implements PermanentGraph<Commit
 
   @NotNull
   @Override
-  public Condition<CommitId> getContainedInBranchCondition(@NotNull final Collection<? extends CommitId> heads) {
+  public Predicate<CommitId> getContainedInBranchCondition(@NotNull final Collection<? extends CommitId> heads) {
     List<Integer> headIds = ContainerUtil.map(heads, head -> myPermanentCommitsInfo.getNodeId(head));
     if (!heads.isEmpty() && ContainerUtil.getFirstItem(heads) instanceof Integer) {
       IntSet branchNodes = new IntOpenHashSet();
@@ -238,7 +238,7 @@ public final class PermanentGraphImpl<CommitId> implements PermanentGraph<Commit
     }
   }
 
-  private static class IntContainedInBranchCondition<CommitId> implements Condition<CommitId> {
+  private static class IntContainedInBranchCondition<CommitId> implements Predicate<CommitId> {
     private final IntSet myBranchNodes;
 
     IntContainedInBranchCondition(IntSet branchNodes) {
@@ -246,12 +246,12 @@ public final class PermanentGraphImpl<CommitId> implements PermanentGraph<Commit
     }
 
     @Override
-    public boolean value(CommitId commitId) {
+    public boolean test(CommitId commitId) {
       return myBranchNodes.contains(((Integer)commitId).intValue());
     }
   }
 
-  private static class ContainedInBranchCondition<CommitId> implements Condition<CommitId> {
+  private static class ContainedInBranchCondition<CommitId> implements Predicate<CommitId> {
     private final Set<CommitId> myBranchNodes;
 
     ContainedInBranchCondition(Set<CommitId> branchNodes) {
@@ -259,7 +259,7 @@ public final class PermanentGraphImpl<CommitId> implements PermanentGraph<Commit
     }
 
     @Override
-    public boolean value(CommitId commitId) {
+    public boolean test(CommitId commitId) {
       return myBranchNodes.contains(commitId);
     }
   }

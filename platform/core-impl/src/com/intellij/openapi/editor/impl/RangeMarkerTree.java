@@ -82,7 +82,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
   }
   private @NonNls String errMsg(@NotNull RMNode<T> node) {
     System.gc();
-    final AtomicInteger alive = new AtomicInteger();
+    AtomicInteger alive = new AtomicInteger();
     node.processAliveKeys(t -> {
       alive.incrementAndGet();
       return true;
@@ -150,21 +150,21 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
       return (isGreedyToLeft() ? "[" : "(") + intervalStart() + "," + intervalEnd() + (isGreedyToRight() ? "]" : ")");
     }
 
-    void invalidate(@NotNull Object reason) {
+    void invalidate() {
       setValid(false);
       IntervalTreeImpl<T> tree = getTree();
       tree.assertUnderWriteLock();
       processAliveKeys(markerEx -> {
-        tree.beforeRemove(markerEx, reason);
+        tree.beforeRemove(markerEx);
         return true;
       });
     }
 
-    void invalidateUnderLock(@NotNull String reason) {
+    void invalidateUnderLock() {
       Lock l = getTree().l.writeLock();
       l.lock();
       try {
-        invalidate(reason);
+        invalidate();
       }
       finally {
         l.unlock();
@@ -196,9 +196,9 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
     incModCount();
 
     List<IntervalNode<T>> affected = new SmartList<>();
-    final int start = e.getOffset();
-    final int oldLength = e.getOldLength();
-    final int newLength = e.getNewLength();
+    int start = e.getOffset();
+    int oldLength = e.getOldLength();
+    int newLength = e.getNewLength();
     collectAffectedMarkersAndShiftSubtrees(getRoot(), start, start + oldLength, newLength - oldLength, affected);
     checkMax(false);
 

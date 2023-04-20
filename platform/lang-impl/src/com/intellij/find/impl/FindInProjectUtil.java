@@ -516,21 +516,6 @@ public final class FindInProjectUtil {
     }
 
     @Override
-    public void navigate(boolean requestFocus) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean canNavigate() {
-      return false;
-    }
-
-    @Override
-    public boolean canNavigateToSource() {
-      return false;
-    }
-
-    @Override
     public void showSettings() {
       Content selectedContent = UsageViewContentManager.getInstance(myProject).getSelectedContent(true);
       JComponent component = selectedContent == null ? null : selectedContent.getComponent();

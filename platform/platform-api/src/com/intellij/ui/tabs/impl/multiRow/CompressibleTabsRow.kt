@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.ui.tabs.impl.multiRow
 
 import com.intellij.ui.tabs.TabInfo
@@ -19,9 +21,9 @@ class CompressibleTabsRow(infos: List<TabInfo>,
 ) : TabsRow(infos, withTitle, withEntryPointToolbar) {
   override fun layoutTabs(data: MultiRowPassInfo, x: Int, y: Int, maxLength: Int) {
     val tabs = data.tabs
-    val decoration = tabs.uiDecorator.getDecoration()
+    val decoration = tabs.uiDecorator!!.getDecoration()
     val prefLengths = infos.map {
-      val label = tabs.myInfo2Label[it]!!
+      val label = tabs.infoToLabel.get(it)!!
       label.apply(decoration)
       label.preferredSize.width
     }
@@ -35,7 +37,7 @@ class CompressibleTabsRow(infos: List<TabInfo>,
 
     var curX = x
     for ((index, info) in infos.withIndex()) {
-      val label = tabs.myInfo2Label[info]!!
+      val label = tabs.infoToLabel.get(info)!!
       val len = lengths[index]
       tabs.layout(label, curX, y, len, data.rowHeight)
       curX += len + tabs.tabHGap
@@ -48,7 +50,7 @@ class CompressibleTabsRow(infos: List<TabInfo>,
       val resultLengths = decreaseMaxLengths(decreasedLengths, maxLen)
       val paintBorders = resultLengths.zip(decreasedLengths).all { it.first < it.second }
       for (info in infos) {
-        val label = data.tabs.myInfo2Label[info]!!
+        val label = data.tabs.infoToLabel.get(info)!!
         label.isForcePaintBorders = paintBorders
       }
       return resultLengths
@@ -71,7 +73,7 @@ class CompressibleTabsRow(infos: List<TabInfo>,
         curExtraLen++
         remainingExtraLen--
       }
-      val label = tabs.myInfo2Label[info]!!
+      val label = tabs.infoToLabel.get(info)!!
       val actionsPosition = label.actionsPosition
       val cached = cachedDecorations.find { it.extraLen == curExtraLen && it.actionsPosition == actionsPosition }
       if (cached != null) {
@@ -183,9 +185,9 @@ class CompressibleTabsRow(infos: List<TabInfo>,
   }
 
   private fun createTabInsets(tabs: JBTabsImpl, info: TabInfo): TabInsets {
-    val decoration = TabLabel.mergeUiDecorations(tabs.uiDecorator.getDecoration(),
-                                                 JBTabsImpl.ourDefaultDecorator.getDecoration())
-    val actionsPosition = tabs.myInfo2Label[info]!!.actionsPosition
+    val decoration = TabLabel.mergeUiDecorations(tabs.uiDecorator!!.getDecoration(),
+                                                 JBTabsImpl.defaultDecorator.getDecoration())
+    val actionsPosition = tabs.infoToLabel.get(info)!!.actionsPosition
     val contentInsets = decoration.contentInsetsSupplier.apply(actionsPosition)
     val cornerToText = if (actionsPosition == ActionsPosition.RIGHT) {
       decoration.labelInsets.left + contentInsets.left
@@ -211,11 +213,11 @@ class CompressibleTabsRow(infos: List<TabInfo>,
 
   @Suppress("UseDPIAwareInsets")
   private fun createUiDecoration(tabs: JBTabsImpl, info: TabInfo, insets: TabInsets): UiDecorator.UiDecoration {
-    val actionsPosition = tabs.myInfo2Label[info]!!.actionsPosition
+    val actionsPosition = tabs.infoToLabel.get(info)!!.actionsPosition
     val cornerToActions = insets.cornerToActions + if (actionsPosition == ActionsPosition.NONE && insets.actionsInset > 0) insets.actionsInset else 0
     val contentInsets = Insets(0, if (actionsPosition == ActionsPosition.LEFT) insets.actionsInset else 0,
                                0, if (actionsPosition == ActionsPosition.RIGHT) insets.actionsInset else 0)
-    val originalDec = TabLabel.mergeUiDecorations(tabs.uiDecorator.getDecoration(), JBTabsImpl.ourDefaultDecorator.getDecoration())
+    val originalDec = TabLabel.mergeUiDecorations(tabs.uiDecorator!!.getDecoration(), JBTabsImpl.defaultDecorator.getDecoration())
     val labelInsets = Insets(originalDec.labelInsets.top,
                              if (actionsPosition == ActionsPosition.RIGHT) insets.cornerToText else cornerToActions,
                              originalDec.labelInsets.bottom,

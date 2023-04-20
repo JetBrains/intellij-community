@@ -38,7 +38,7 @@ public class CustomFoldRegionImpl extends FoldRegionImpl implements CustomFoldRe
       myEditor.getFoldingModel().myAffectedCustomRegions.add(this);
     }
     else {
-      invalidate("Line alignment broken");
+      invalidate();
     }
   }
 
@@ -78,7 +78,7 @@ public class CustomFoldRegionImpl extends FoldRegionImpl implements CustomFoldRe
     if (oldHeight != myHeightInPixels) changeFlags |= InlayModel.ChangeFlags.HEIGHT_CHANGED;
     if (!Objects.equals(oldIconRenderer, myGutterIconRenderer)) changeFlags |= InlayModel.ChangeFlags.GUTTER_ICON_PROVIDER_CHANGED;
     if (changeFlags != 0) {
-      myEditor.getFoldingModel().notifyListenersOnPropertiesChange(this, changeFlags);
+      myEditor.getFoldingModel().onCustomFoldRegionPropertiesChange(this, changeFlags);
     }
     else {
       repaint();

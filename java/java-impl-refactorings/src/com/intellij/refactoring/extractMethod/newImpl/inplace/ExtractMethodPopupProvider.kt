@@ -14,6 +14,7 @@ import javax.swing.LayoutFocusTraversalPolicy
 
 class ExtractMethodPopupProvider(val annotateDefault: Boolean? = null,
                                  val makeStaticDefault: Boolean? = null,
+                                 val declareVarTypeDefault: Boolean? = null,
                                  val staticPassFields: Boolean = false) {
 
   var annotate = annotateDefault
@@ -22,8 +23,11 @@ class ExtractMethodPopupProvider(val annotateDefault: Boolean? = null,
   var makeStatic = makeStaticDefault
     private set
 
+  var declareVarType = declareVarTypeDefault
+    private set
+
   val isChanged: Boolean
-    get() = annotate != annotateDefault || makeStatic != makeStaticDefault
+    get() = annotate != annotateDefault || makeStatic != makeStaticDefault || declareVarType != declareVarTypeDefault
 
   private var changeListener: () -> Unit = {}
 
@@ -64,6 +68,16 @@ class ExtractMethodPopupProvider(val annotateDefault: Boolean? = null,
             .selected(makeStatic ?: false)
             .onChanged { component ->
               makeStatic = component.isSelected
+              changeListener.invoke()
+            }
+        }
+      }
+      if (declareVarType != null) {
+        row {
+          checkBox(JavaRefactoringBundle.message("declare.var.type"))
+            .selected(declareVarType ?: false)
+            .onChanged { component ->
+              declareVarType = component.isSelected
               changeListener.invoke()
             }
         }

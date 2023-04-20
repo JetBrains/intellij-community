@@ -52,7 +52,7 @@ public class PyPep8NamingInspection extends PyInspection {
   private static final Pattern MIXEDCASE_REGEX = Pattern.compile("_?_?[\\p{javaUpperCase}][\\p{javaLowerCase}\\p{javaUpperCase}0-9]*");
   // See error codes of the tool "pep8-naming"
   private static final Map<String, Supplier<@InspectionMessage String>> ERROR_CODES_DESCRIPTION = Map.of(
-    "N801", PyPsiBundle.messagePointer("INSP.pep8.naming.class.names.should.use.camelcase.convention"),
+    "N801", PyPsiBundle.messagePointer("INSP.pep8.naming.class.names.should.use.capwords.convention"),
     "N802", PyPsiBundle.messagePointer("INSP.pep8.naming.function.name.should.be.lowercase"),
     "N803", PyPsiBundle.messagePointer("INSP.pep8.naming.argument.name.should.be.lowercase"),
     "N806", PyPsiBundle.messagePointer("INSP.pep8.naming.variable.in.function.should.be.lowercase"),

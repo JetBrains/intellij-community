@@ -10,6 +10,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -216,54 +218,62 @@ public abstract class AbstractValueHint {
     }
   }
 
-  private boolean myInsideShow = false;
+  private boolean myInsideShow = false; // to avoid invoking myHideRunnable for new popups with updated presentation
+
+  private void invokeHideRunnableIfNeeded() {
+    if (myHideRunnable != null && !myInsideShow) {
+      myHideRunnable.run();
+    }
+  }
 
   protected boolean showHint(final JComponent component) {
     myInsideShow = true;
-    hideCurrentHint();
-    myCurrentHint = new LightweightHint(component) {
-      @Override
-      protected boolean canAutoHideOn(TooltipEvent event) {
-        InputEvent inputEvent = event.getInputEvent();
-        if (inputEvent instanceof MouseEvent) {
-          Component comp = inputEvent.getComponent();
-          if (comp instanceof EditorComponentImpl) {
-            EditorImpl editor = ((EditorComponentImpl)comp).getEditor();
-            return !isInsideCurrentRange(editor, ((MouseEvent)inputEvent).getPoint());
+    try {
+      hideCurrentHint();
+      myCurrentHint = new LightweightHint(component) {
+        @Override
+        protected boolean canAutoHideOn(TooltipEvent event) {
+          InputEvent inputEvent = event.getInputEvent();
+          if (inputEvent instanceof MouseEvent) {
+            Component comp = inputEvent.getComponent();
+            if (comp instanceof EditorComponentImpl) {
+              EditorImpl editor = ((EditorComponentImpl)comp).getEditor();
+              return !isInsideCurrentRange(editor, ((MouseEvent)inputEvent).getPoint());
+            }
           }
+          return true;
         }
-        return true;
-      }
-    };
-    myCurrentHint.addHintListener(new HintListener() {
-      @Override
-      public void hintHidden(@NotNull EventObject event) {
-        if (myHideRunnable != null && !myInsideShow) {
-          myHideRunnable.run();
+      };
+      myCurrentHint.addHintListener(new HintListener() {
+        @Override
+        public void hintHidden(@NotNull EventObject event) {
+          invokeHideRunnableIfNeeded();
+          onHintHidden();
         }
-        onHintHidden();
+      });
+
+      // editor may be disposed before later invokator process this action
+      if (myEditor.isDisposed() || myEditor.getComponent().getRootPane() == null) {
+        return false;
       }
-    });
 
-    // editor may be disposed before later invokator process this action
-    if (myEditor.isDisposed() || myEditor.getComponent().getRootPane() == null) {
-      return false;
+      AppUIUtil.targetToDevice(myCurrentHint.getComponent(), myEditor.getComponent());
+      Point p = HintManagerImpl.getHintPosition(myCurrentHint, myEditor, myEditor.xyToLogicalPosition(myPoint), HintManager.UNDER);
+      HintHint hint = HintManagerImpl.createHintHint(myEditor, p, myCurrentHint, HintManager.UNDER, true);
+      hint.setShowImmediately(true);
+      HintManagerImpl.getInstanceImpl().showEditorHint(myCurrentHint, myEditor, p,
+                                                       HintManager.HIDE_BY_ANY_KEY |
+                                                       HintManager.HIDE_BY_TEXT_CHANGE |
+                                                       HintManager.HIDE_BY_SCROLLING, 0, false,
+                                                       hint);
+      if (myHighlighter == null && isCurrentRangeValid()) { // hint text update
+        createHighlighter();
+      }
+      setHighlighterAttributes();
     }
-
-    AppUIUtil.targetToDevice(myCurrentHint.getComponent(), myEditor.getComponent());
-    Point p = HintManagerImpl.getHintPosition(myCurrentHint, myEditor, myEditor.xyToLogicalPosition(myPoint), HintManager.UNDER);
-    HintHint hint = HintManagerImpl.createHintHint(myEditor, p, myCurrentHint, HintManager.UNDER, true);
-    hint.setShowImmediately(true);
-    HintManagerImpl.getInstanceImpl().showEditorHint(myCurrentHint, myEditor, p,
-                                                     HintManager.HIDE_BY_ANY_KEY |
-                                                     HintManager.HIDE_BY_TEXT_CHANGE |
-                                                     HintManager.HIDE_BY_SCROLLING, 0, false,
-                                                     hint);
-    if (myHighlighter == null && isCurrentRangeValid()) { // hint text update
-      createHighlighter();
+    finally {
+      myInsideShow = false;
     }
-    setHighlighterAttributes();
-    myInsideShow = false;
     return true;
   }
 
@@ -365,35 +375,55 @@ public abstract class AbstractValueHint {
   }
 
   private void showPopup(Function<Point, JBPopup> popupPresenter) {
-    if (myEditor.isDisposed() || !isCurrentRangeValid()) {
-      hideHint();
-      return;
-    }
-
-    hideCurrentHint();
-
-    createHighlighter();
-    setHighlighterAttributes();
-
-    // align the popup with the bottom of the line
-    Point point = myEditor.visualPositionToXY(myEditor.xyToVisualPosition(myPoint));
-    point.translate(0, myEditor.getLineHeight());
-
-    myCurrentPopup = popupPresenter.apply(point);
-    myEditor.getScrollingModel().addVisibleAreaListener(e -> {
-      if (!Objects.equals(e.getOldRectangle(), e.getNewRectangle())) {
-        hideCurrentHint();
+    myInsideShow = true;
+    try {
+      if (myEditor.isDisposed() || !isCurrentRangeValid()) {
+        hideHint();
+        return;
       }
-    }, myCurrentPopup);
-    myCurrentPopup.addListener(new JBPopupListener() {
-      @Override
-      public void onClosed(@NotNull LightweightWindowEvent event) {
-        if (myHideRunnable != null) {
-          myHideRunnable.run();
+
+      hideCurrentHint();
+
+      createHighlighter();
+      setHighlighterAttributes();
+
+      // align the popup with the bottom of the line
+      Point point = myEditor.visualPositionToXY(myEditor.xyToVisualPosition(myPoint));
+      point.translate(0, myEditor.getLineHeight());
+
+      myCurrentPopup = popupPresenter.apply(point);
+      myEditor.getScrollingModel().addVisibleAreaListener(e -> {
+        if (!Objects.equals(e.getOldRectangle(), e.getNewRectangle())) {
+          hideCurrentHint();
         }
-        onHintHidden();
-      }
-    });
+      }, myCurrentPopup);
+      myEditor.getCaretModel().addCaretListener(new CaretListener() {
+        @Override
+        public void caretPositionChanged(@NotNull CaretEvent event) {
+          hideCurrentHint();
+        }
+
+        @Override
+        public void caretAdded(@NotNull CaretEvent event) {
+          hideCurrentHint();
+        }
+
+        @Override
+        public void caretRemoved(@NotNull CaretEvent event) {
+          hideCurrentHint();
+        }
+      }, myCurrentPopup);
+      myCurrentPopup.addListener(new JBPopupListener() {
+        @Override
+        public void onClosed(@NotNull LightweightWindowEvent event) {
+          invokeHideRunnableIfNeeded();
+          onHintHidden();
+        }
+      });
+    }
+    finally {
+      myInsideShow = false;
+    }
   }
 
   protected <D> void showTreePopup(@NotNull DebuggerTreeCreator<D> creator, @NotNull D descriptor) {

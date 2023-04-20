@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_CSS_CLASSES
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_CSS_FUNCTIONS
+import com.intellij.webSymbols.WebSymbol.Companion.KIND_CSS_PARTS
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_CSS_PROPERTIES
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_CSS_PSEUDO_CLASSES
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_CSS_PSEUDO_ELEMENTS
@@ -27,7 +28,8 @@ import com.intellij.webSymbols.query.WebSymbolNameConverter
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.utils.NameCaseUtils
 import com.intellij.webSymbols.utils.lastWebSymbol
-import com.intellij.webSymbols.webTypes.WebTypesSymbolTypeSupport
+import com.intellij.webSymbols.webTypes.WebTypesJsonOrigin
+import com.intellij.webSymbols.webTypes.WebTypesSymbol
 import com.intellij.webSymbols.webTypes.filters.WebSymbolsFilter
 import com.intellij.webSymbols.webTypes.json.NameConversionRulesSingle.NameConverter
 import java.util.*
@@ -42,9 +44,10 @@ private fun namespaceOf(host: GenericContributionsHost): SymbolNamespace =
   }
 
 internal fun Contributions.getAllContributions(framework: FrameworkId?): Sequence<Triple<SymbolNamespace, SymbolKind, List<BaseContribution>>> =
-  sequenceOf(css, js, html)
+  sequenceOf(css, html)
     .filter { it != null }
     .flatMap { host -> host.collectDirectContributions(framework).mapWith(namespaceOf(host)) }
+    .plus(js?.collectDirectContributions() ?: emptySequence())
 
 internal fun GenericContributionsHost.getAllContributions(framework: FrameworkId?): Sequence<Triple<SymbolNamespace, SymbolKind, List<BaseContribution>>> =
   if (this is BaseContribution)
@@ -103,7 +106,8 @@ private fun GenericContributionsHost.collectDirectContributions(framework: Frame
       Pair(KIND_CSS_FUNCTIONS, this.functions),
       Pair(KIND_CSS_PROPERTIES, this.properties),
       Pair(KIND_CSS_PSEUDO_CLASSES, this.pseudoClasses),
-      Pair(KIND_CSS_PSEUDO_ELEMENTS, this.pseudoElements)
+      Pair(KIND_CSS_PSEUDO_ELEMENTS, this.pseudoElements),
+      Pair(KIND_CSS_PARTS, this.parts),
     )
     is JsContributionsHost -> sequenceOf(
       Pair(KIND_JS_EVENTS, this.events),
@@ -114,6 +118,13 @@ private fun GenericContributionsHost.collectDirectContributions(framework: Frame
     .plus(this.additionalProperties.asSequence()
             .map { (name, list) -> Pair(name, list?.mapNotNull { it?.value as? GenericContribution } ?: emptyList()) }
             .filter { it.second.isNotEmpty() })
+
+private fun JsGlobal.collectDirectContributions(): Sequence<Triple<SymbolNamespace, SymbolKind, List<BaseContribution>>> =
+ (events?.let { sequenceOf(Triple(NAMESPACE_JS, KIND_JS_EVENTS, it)) } ?: emptySequence())
+   .plus(additionalProperties.asSequence()
+           .filter { (name, _) -> !WebTypesSymbol.WEB_TYPES_JS_FORBIDDEN_GLOBAL_KINDS.contains(name) }
+           .map { (name, list) -> Triple(NAMESPACE_JS, name, list?.mapNotNull { it?.value as? GenericContribution } ?: emptyList()) }
+           .filter { it.second.isNotEmpty() })
 
 internal val GenericContributionsHost.genericContributions: Map<String, List<GenericContribution>>
   get() =
@@ -414,12 +425,12 @@ internal fun <T> buildNameConverters(map: Map<String, T>?,
   }
 }
 
-internal fun List<Type>.mapToTypeReferences(): List<WebTypesSymbolTypeSupport.TypeReference> =
+internal fun List<Type>.mapToTypeReferences(): List<WebSymbolTypeSupport.TypeReference> =
   mapNotNull {
     when (val reference = it.value) {
-      is String -> WebTypesSymbolTypeSupport.TypeReference(null, reference)
+      is String -> WebSymbolTypeSupport.TypeReference(null, reference)
       is TypeReference -> if (reference.name != null)
-        WebTypesSymbolTypeSupport.TypeReference(reference.module, reference.name)
+        WebSymbolTypeSupport.TypeReference(reference.module, reference.name)
       else null
       else -> null
     }
@@ -433,6 +444,7 @@ internal fun ContextBase.evaluate(context: WebSymbolsContext): Boolean =
     is ContextNot -> !not.evaluate(context)
     else -> throw IllegalStateException(this.javaClass.simpleName)
   }
+
 fun parseWebTypesPath(path: String?, context: WebSymbol?): List<WebSymbolQualifiedName> =
   if (path != null)
     parseWebTypesPath(StringUtil.split(path, "/", true, true), context)
@@ -462,3 +474,15 @@ private fun parseWebTypesPath(path: List<String>, context: WebSymbol?): List<Web
   }
   return result
 }
+
+internal fun BaseContribution.toApiStatus(origin: WebTypesJsonOrigin): WebSymbol.ApiStatus? =
+  deprecated?.value?.takeIf { it != false }
+    ?.let { msg -> WebSymbol.Deprecated((msg as? String)?.let { origin.renderDescription(it) }) }
+  ?: experimental?.value?.takeIf { it != false }
+    ?.let { msg -> WebSymbol.Experimental((msg as? String)?.let { origin.renderDescription(it) }) }
+
+
+internal fun NamePatternDefault.toApiStatus(origin: WebTypesJsonOrigin): WebSymbol.ApiStatus? =
+  deprecated?.value
+    ?.takeIf { it != false }
+    ?.let { msg -> WebSymbol.Deprecated((msg as? String)?.let { origin.renderDescription(it) }) }

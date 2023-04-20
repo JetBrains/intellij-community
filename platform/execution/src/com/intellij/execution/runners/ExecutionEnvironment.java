@@ -13,6 +13,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -143,6 +144,22 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
         .handleCreatedTargetEnvironment(myPrepareRemoteEnvironment, targetProgressIndicator);
     }
     return myPrepareRemoteEnvironment;
+  }
+
+  private static final ThreadLocal<DataContext> CONTEXT_THREAD_LOCAL = new ThreadLocal<>();
+
+  public static DataContext getThreadContext() {
+    return CONTEXT_THREAD_LOCAL.get();
+  }
+
+  public <T> T computeWithDataContext(ThrowableComputable<T, ? extends ExecutionException> computable) throws ExecutionException {
+    try {
+      CONTEXT_THREAD_LOCAL.set(getDataContext());
+      return computable.compute();
+    }
+    finally {
+      CONTEXT_THREAD_LOCAL.remove();
+    }
   }
 
   @ApiStatus.Internal

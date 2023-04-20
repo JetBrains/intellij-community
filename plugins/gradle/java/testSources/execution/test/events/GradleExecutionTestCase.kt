@@ -1,194 +1,122 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.events
 
-import com.intellij.execution.ExecutorRegistry
-import com.intellij.execution.RunManager
-import com.intellij.execution.executors.DefaultRunExecutor
-import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.runners.ProgramRunner
-import com.intellij.execution.testframework.AbstractTestProxy
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runWriteActionAndWait
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
-import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
-import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
-import com.intellij.openapi.util.Disposer
-import com.intellij.testFramework.RunAll.Companion.runAll
-import com.intellij.testFramework.fixtures.BuildViewTestFixture
-import com.intellij.testFramework.utils.vfs.deleteRecursively
-import com.intellij.util.LocalTimeCounter
-import org.jetbrains.plugins.gradle.execution.test.events.fixture.GradleExecutionEnvironmentFixture
-import org.jetbrains.plugins.gradle.execution.test.events.fixture.GradleExecutionViewFixture
-import org.jetbrains.plugins.gradle.execution.test.events.fixture.TestExecutionConsoleEventFixture
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isSupportedJUnit5
-import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
-import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
-import org.jetbrains.plugins.gradle.testFramework.GradleProjectTestCase
-import org.jetbrains.plugins.gradle.testFramework.util.tree.TreeAssertion
-import org.jetbrains.plugins.gradle.testFramework.util.tree.buildTree
-import org.jetbrains.plugins.gradle.testFramework.util.waitForAnyExecution
-import org.jetbrains.plugins.gradle.testFramework.util.waitForGradleEventDispatcherClosing
-import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isJunit5Supported
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
+import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.junit.jupiter.api.Assertions
 
-abstract class GradleExecutionTestCase : GradleProjectTestCase() {
-
-  private lateinit var testDisposable: Disposable
-
-  lateinit var executionEnvironmentFixture: GradleExecutionEnvironmentFixture
-  lateinit var executionConsoleFixture: GradleExecutionViewFixture
-  private lateinit var buildViewFixture: BuildViewTestFixture
-  private lateinit var testExecutionEventFixture: TestExecutionConsoleEventFixture
-
-  override fun setUp() {
-    super.setUp()
-
-    cleanupProjectBuildDirectory()
-
-    testDisposable = Disposer.newDisposable()
-
-    executionEnvironmentFixture = GradleExecutionEnvironmentFixture(project)
-    executionEnvironmentFixture.setUp()
-
-    executionConsoleFixture = GradleExecutionViewFixture(executionEnvironmentFixture)
-    executionConsoleFixture.setUp()
-
-    testExecutionEventFixture = TestExecutionConsoleEventFixture(project)
-    testExecutionEventFixture.setUp()
-
-    buildViewFixture = BuildViewTestFixture(project)
-    buildViewFixture.setUp()
-  }
-
-  override fun tearDown() {
-    runAll(
-      { buildViewFixture.tearDown() },
-      { testExecutionEventFixture.tearDown() },
-      { executionConsoleFixture.tearDown() },
-      { executionEnvironmentFixture.tearDown() },
-      { Disposer.dispose(testDisposable) },
-      { cleanupProjectBuildDirectory() },
-      { super.tearDown() },
-    )
-  }
-
-  // '--rerun-tasks' corrupts gradle build caches fo gradle versions before 4.0 (included)
-  private fun cleanupProjectBuildDirectory() {
-    runWriteActionAndWait {
-      projectRoot.deleteRecursively("build")
-    }
-  }
+abstract class GradleExecutionTestCase : GradleExecutionBaseTestCase() {
 
   val jUnitTestAnnotationClass: String
-    get() = when (isSupportedJunit5()) {
+    get() = when (isJunit5Supported()) {
       true -> "org.junit.jupiter.api.Test"
       else -> "org.junit.Test"
     }
 
   val jUnitIgnoreAnnotationClass: String
-    get() = when (isSupportedJunit5()) {
+    get() = when (isJunit5Supported()) {
       true -> "org.junit.jupiter.api.Disabled"
       else -> "org.junit.Ignore"
     }
 
-  fun isSupportedTestLauncher(): Boolean {
+  fun isTestLauncherSupported(): Boolean {
     return isGradleAtLeast("7.6")
   }
 
-  private fun isSupportedJunit5(): Boolean {
-    return isSupportedJUnit5(gradleVersion)
+  private fun isJunit5Supported(): Boolean {
+    return isJunit5Supported(gradleVersion)
   }
 
-  /**
-   * Call this method inside [setUp] to print events trace to console
-   */
-  @Suppress("unused")
-  fun initTextNotificationEventsPrinter() {
-    val notificationManager = ExternalSystemProgressNotificationManager.getInstance()
-    notificationManager.addNotificationListener(object : ExternalSystemTaskNotificationListenerAdapter() {
-      override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
-        when (stdOut) {
-          true -> System.out.print(text)
-          else -> System.err.print(text)
+  fun assertJunit5IsSupported(gradleVersion: GradleVersion) {
+    Assertions.assertTrue(isJunit5Supported(gradleVersion)) {
+      """
+        |Gradle $gradleVersion doesn't support Junit 5.
+        |Please, use @TargetVersions("4.7+") annotation to ignore this version.
+      """.trimMargin()
+    }
+  }
+
+  fun testJunit5Project(gradleVersion: GradleVersion, action: () -> Unit) {
+    assertJunit5IsSupported(gradleVersion)
+    testJavaProject(gradleVersion, action)
+  }
+
+  fun testJunit4Project(gradleVersion: GradleVersion, action: () -> Unit) {
+    test(gradleVersion, JAVA_JUNIT4_FIXTURE, action)
+  }
+
+  fun testTestNGProject(gradleVersion: GradleVersion, action: () -> Unit) {
+    test(gradleVersion, JAVA_TESTNG_FIXTURE, action)
+  }
+
+  fun testJunit5AssertJProject(gradleVersion: GradleVersion, action: () -> Unit) {
+    assertJunit5IsSupported(gradleVersion)
+    test(gradleVersion, JAVA_JUNIT5_ASSERTJ_FIXTURE, action)
+  }
+
+  fun testSpockProject(gradleVersion: GradleVersion, action: () -> Unit) {
+    test(gradleVersion, GROOVY_SPOCK_FIXTURE, action)
+  }
+
+  companion object {
+
+    private val JAVA_JUNIT5_ASSERTJ_FIXTURE = GradleTestFixtureBuilder.create("java-plugin-junit5-assertj-project") { gradleVersion ->
+      withSettingsFile {
+        setProjectName("java-plugin-junit5-assertj-project")
+      }
+      withBuildFile(gradleVersion) {
+        withJavaPlugin()
+        withJUnit5()
+        addTestImplementationDependency("org.assertj:assertj-core:3.24.2")
+      }
+      withDirectory("src/main/java")
+      withDirectory("src/test/java")
+    }
+
+    private val JAVA_JUNIT4_FIXTURE = GradleTestFixtureBuilder.create("java-plugin-junit4-project") { gradleVersion ->
+      withSettingsFile {
+        setProjectName("java-plugin-junit4-project")
+      }
+      withBuildFile(gradleVersion) {
+        withJavaPlugin()
+        withJUnit4()
+      }
+      withDirectory("src/main/java")
+      withDirectory("src/test/java")
+    }
+
+    private val JAVA_TESTNG_FIXTURE = GradleTestFixtureBuilder.create("java-plugin-testng-project") { gradleVersion ->
+      withSettingsFile {
+        setProjectName("java-plugin-testng-project")
+      }
+      withBuildFile(gradleVersion) {
+        withJavaPlugin()
+        withMavenCentral()
+        addImplementationDependency("org.slf4j:slf4j-log4j12:2.0.5")
+        addTestImplementationDependency("org.testng:testng:7.5")
+        configureTestTask {
+          call("useTestNG")
         }
       }
-    }, testDisposable)
-  }
-
-  fun executeTasks(commandLine: String, isRunAsTest: Boolean = true) {
-    val runManager = RunManager.getInstance(project)
-    val runConfigurationName = "GradleTestExecutionTestCase (" + LocalTimeCounter.currentTime() + ")"
-    val runnerSettings = runManager.createConfiguration(runConfigurationName, GradleExternalTaskConfigurationType::class.java)
-    val runConfiguration = runnerSettings.configuration as GradleRunConfiguration
-    runConfiguration.rawCommandLine = commandLine
-    runConfiguration.isRunAsTest = isRunAsTest
-    runConfiguration.settings.externalProjectPath = projectPath
-    runConfiguration.settings.externalSystemIdString = GradleConstants.SYSTEM_ID.id
-    val executorId = DefaultRunExecutor.EXECUTOR_ID
-    val executor = ExecutorRegistry.getInstance().getExecutorById(executorId)!!
-    val runner = ProgramRunner.getRunner(executorId, runConfiguration)!!
-    Assertions.assertEquals(ExternalSystemConstants.RUNNER_ID, runner.runnerId)
-    val environment = ExecutionEnvironment(executor, runner, runnerSettings, project)
-    waitForAnyGradleTaskExecution {
-      runWriteActionAndWait {
-        runner.execute(environment)
-      }
+      withDirectory("src/main/java")
+      withDirectory("src/test/java")
     }
-  }
 
-  open fun <R> waitForAnyGradleTaskExecution(action: () -> R) {
-    executionEnvironmentFixture.assertExecutionEnvironmentIsReady {
-      waitForGradleEventDispatcherClosing {
-        waitForAnyExecution(project) {
-          org.jetbrains.plugins.gradle.testFramework.util.waitForAnyGradleTaskExecution {
-            action()
-          }
-        }
+    private val GROOVY_SPOCK_FIXTURE = GradleTestFixtureBuilder.create("groovy-plugin-spock-project") { gradleVersion ->
+      withSettingsFile {
+        setProjectName("groovy-plugin-spock-project")
       }
-    }
-  }
-
-  fun assertBuildExecutionTree(assert: TreeAssertion.Node<Nothing?>.() -> Unit) {
-    buildViewFixture.assertBuildViewTreeEquals { treeString ->
-      val actualTree = buildTree(treeString!!)
-      TreeAssertion.assertTree(actualTree) {
-        assertNode("", assert)
+      withBuildFile(gradleVersion) {
+        withGroovyPlugin("3.0.0")
+        addTestImplementationDependency(call("platform", "org.spockframework:spock-bom:2.1-groovy-3.0"))
+        addTestImplementationDependency("org.spockframework:spock-core:2.1-groovy-3.0")
+        withJUnit()
       }
+      withDirectory("src/main/groovy")
+      withDirectory("src/test/groovy")
     }
-  }
-
-  fun assertTestConsoleContains(expected: String) {
-    executionConsoleFixture.assertTestConsoleContains(expected)
-  }
-
-  fun assertTestConsoleDoesNotContain(expected: String) {
-    executionConsoleFixture.assertTestConsoleDoesNotContain(expected)
-  }
-
-  fun assertRunTreeView(assert: TreeAssertion.Node<Nothing?>.() -> Unit) {
-    executionConsoleFixture.assertRunTreeView(assert)
-  }
-
-  fun assertTestTreeView(assert: TreeAssertion.Node<Nothing?>.() -> Unit) {
-    executionConsoleFixture.assertTestTreeView(assert)
-  }
-
-  fun assertRunTreeViewIsEmpty() {
-    executionConsoleFixture.assertRunTreeViewIsEmpty()
-  }
-
-  fun assertTestTreeViewIsEmpty() {
-    executionConsoleFixture.assertTestTreeViewIsEmpty()
-  }
-
-  fun assertSMTestProxyTree(assert: TreeAssertion<AbstractTestProxy>.() -> Unit) {
-    executionConsoleFixture.assertSMTestProxyTree(assert)
-  }
-
-  fun assertTestEventCount(
-    name: String, suiteStart: Int, suiteFinish: Int, testStart: Int, testFinish: Int, testFailure: Int, testIgnore: Int
-  ) {
-    testExecutionEventFixture.assertTestEventCount(name, suiteStart, suiteFinish, testStart, testFinish, testFailure, testIgnore)
   }
 }

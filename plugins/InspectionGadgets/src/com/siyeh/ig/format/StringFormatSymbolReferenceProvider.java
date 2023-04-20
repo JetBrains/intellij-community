@@ -11,11 +11,11 @@ import com.intellij.model.psi.PsiSymbolReferenceHints;
 import com.intellij.model.psi.PsiSymbolReferenceProvider;
 import com.intellij.model.search.SearchRequest;
 import com.intellij.navigation.NavigatableSymbol;
-import com.intellij.navigation.NavigationTarget;
 import com.intellij.navigation.SymbolNavigationService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.platform.backend.navigation.NavigationTarget;
 import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -35,12 +35,16 @@ public class StringFormatSymbolReferenceProvider implements PsiSymbolReferencePr
   @Override
   public @NotNull Collection<? extends @NotNull PsiSymbolReference> getReferences(@NotNull PsiExternalReferenceHost element,
                                                                                   @NotNull PsiSymbolReferenceHints hints) {
-    if (!hintsCheck(hints)) return List.of();
     if (!(element instanceof PsiLiteralExpression expression)) return List.of();
-    PsiCallExpression callExpression = findContextCall(element);
+    if (!hintsCheck(hints)) return List.of();
+    return getReferences(expression);
+  }
+
+  static @NotNull List<@NotNull PsiSymbolReference> getReferences(@NotNull PsiLiteralExpression expression) {
+    PsiCallExpression callExpression = findContextCall(expression);
     if (callExpression == null) return List.of();
     FormatDecode.FormatArgument argument = FormatDecode.FormatArgument.extract(callExpression, List.of(), List.of(), true);
-    if (argument == null || !PsiTreeUtil.isAncestor(argument.getExpression(), element, false)) return List.of();
+    if (argument == null || !PsiTreeUtil.isAncestor(argument.getExpression(), expression, false)) return List.of();
     String formatString = ObjectUtils.tryCast(expression.getValue(), String.class);
     if (formatString == null) return List.of();
     PsiExpression[] arguments = Objects.requireNonNull(callExpression.getArgumentList()).getExpressions();

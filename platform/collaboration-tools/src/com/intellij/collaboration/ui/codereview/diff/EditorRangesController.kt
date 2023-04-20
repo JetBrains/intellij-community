@@ -19,7 +19,7 @@ open class EditorRangesController(private val gutterIconRendererFactory: DiffEdi
   init {
     val listenerDisposable = Disposer.newDisposable()
     editor.markupModel.addMarkupModelListener(listenerDisposable, object : MarkupModelListener {
-      override fun beforeRemoved(highlighter: RangeHighlighterEx) {
+      override fun afterRemoved(highlighter: RangeHighlighterEx) {
         val iconRenderer = highlighter.gutterIconRenderer as? AddCommentGutterIconRenderer ?: return
         Disposer.dispose(iconRenderer)
         commentableLines.remove(iconRenderer.line)

@@ -599,7 +599,6 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         return;
       }
 
-      MacroManager.getInstance().cacheMacrosPreview(e.getDataContext(), project);
       RunnerAndConfigurationSettings selectedConfiguration = getSelectedConfiguration(e);
       if (selectedConfiguration != null) {
         run(project, selectedConfiguration, e.getDataContext());

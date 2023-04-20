@@ -91,7 +91,7 @@ interface RowBuilder : BaseBuilder {
   fun hideableRow(@NlsContexts.Separator title: String, incrementsIndent: Boolean = true, init: Row.() -> Unit): Row
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun hideableRow(@NlsContexts.Separator title: String, init: Row.() -> Unit): Row {
     return hideableRow(title = title, true, init)
   }

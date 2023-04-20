@@ -2,36 +2,35 @@
 
 package com.intellij.execution.actions;
 
-import com.intellij.execution.ProgramRunnerUtil;
-import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.configurations.LocatableConfiguration;
-import com.intellij.execution.configurations.LocatableConfigurationBase;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.lineMarker.ExecutorAction;
-import com.intellij.execution.lineMarker.RunLineMarkerProvider;
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.macro.MacroManager;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.Utils;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ThreeState;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+ import com.intellij.execution.ProgramRunnerUtil;
+ import com.intellij.execution.RunnerAndConfigurationSettings;
+ import com.intellij.execution.configurations.ConfigurationType;
+ import com.intellij.execution.configurations.LocatableConfiguration;
+ import com.intellij.execution.configurations.LocatableConfigurationBase;
+ import com.intellij.execution.configurations.RunConfiguration;
+ import com.intellij.execution.lineMarker.ExecutorAction;
+ import com.intellij.execution.lineMarker.RunLineMarkerProvider;
+ import com.intellij.ide.IdeEventQueue;
+ import com.intellij.openapi.actionSystem.*;
+ import com.intellij.openapi.actionSystem.impl.Utils;
+ import com.intellij.openapi.application.ApplicationManager;
+ import com.intellij.openapi.diagnostic.Logger;
+ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+ import com.intellij.openapi.project.Project;
+ import com.intellij.openapi.util.registry.Registry;
+ import com.intellij.openapi.util.text.StringUtil;
+ import com.intellij.openapi.vfs.VirtualFile;
+ import com.intellij.util.ThreeState;
+ import org.jetbrains.annotations.Nls;
+ import org.jetbrains.annotations.NotNull;
+ import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.function.Supplier;
+ import javax.swing.*;
+ import java.util.ArrayList;
+ import java.util.Collections;
+ import java.util.List;
+ import java.util.Objects;
+ import java.util.function.Supplier;
 
 public abstract class BaseRunConfigurationAction extends ActionGroup {
   protected static final Logger LOG = Logger.getInstance(BaseRunConfigurationAction.class);
@@ -116,9 +115,6 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    Project project = e.getProject();
-    LOG.assertTrue(project != null);
-    MacroManager.getInstance().cacheMacrosPreview(e.getDataContext(), project);
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, e.getPlace());
     final RunnerAndConfigurationSettings existing = findExisting(context);
     if (existing == null || dataContext.getData(ExecutorAction.getOrderKey()) != null) {

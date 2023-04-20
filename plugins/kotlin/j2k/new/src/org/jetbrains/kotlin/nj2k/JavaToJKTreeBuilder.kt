@@ -1060,18 +1060,12 @@ class JavaToJKTreeBuilder(
                     body.toJK()
                 )
 
-                is PsiForeachStatement -> {
-                    val parameter = iterationParameter
-                    if (parameter == null) {
-                        JKErrorStatement(this, "patterns in switch are not yet supported")
-                    } else {
-                        JKForInStatement(
-                            parameter.toJK(),
-                            with(expressionTreeMapper) { iteratedValue?.toJK() ?: JKStubExpression() },
-                            body?.toJK() ?: blockStatement()
-                        )
-                    }
-                }
+                is PsiForeachStatement ->
+                    JKForInStatement(
+                        iterationParameter.toJK(),
+                        with(expressionTreeMapper) { iteratedValue?.toJK() ?: JKStubExpression() },
+                        body?.toJK() ?: blockStatement()
+                    )
 
                 is PsiBlockStatement -> JKBlockStatement(codeBlock.toJK())
 

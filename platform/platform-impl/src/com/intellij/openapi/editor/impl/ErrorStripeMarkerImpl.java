@@ -60,7 +60,7 @@ class ErrorStripeMarkerImpl extends RangeMarkerImpl {
     else if (isValid()) {
       reportError("Base highlighter " + myHighlighter + " is invalid, mirror " + this + "(prev state: " + oldStart + "-" + oldEnd +
                   ") is valid after " + e);
-      invalidate(e);
+      invalidate();
     }
   }
 

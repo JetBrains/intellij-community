@@ -11,7 +11,6 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValid
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.lang.Language
 import com.intellij.lang.injection.InjectedLanguageManager
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
@@ -21,6 +20,7 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.usages.Usage
 import com.intellij.usages.UsageView
 import com.intellij.usages.rules.PsiElementUsage
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.Nls
 
 enum class CodeNavigateSource {
@@ -73,14 +73,13 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     @JvmField
     val IS_IN_INJECTED_FILE = EventFields.Boolean("is_in_injected_file")
     @JvmStatic
+    @RequiresBackgroundThread
     fun calculateElementData(psiElement: PsiElement?): ObjectEventData? {
-      if (psiElement == null) return null
+      if (psiElement == null || !psiElement.isValid) return null
       val containingFile = psiElement.containingFile
       val virtualFile = containingFile?.virtualFile
-      val isInTestSources = ReadAction.compute<Boolean, Nothing> {
-        return@compute (virtualFile == null) || ProjectRootManager.getInstance(psiElement.project).fileIndex.isInTestSourceContent(
-          virtualFile)
-      }
+      val isInTestSources = (virtualFile == null) || ProjectRootManager.getInstance(psiElement.project).fileIndex.isInTestSourceContent(
+        virtualFile)
 
       return ObjectEventData(
         REFERENCE_CLASS.with(psiElement.javaClass),
@@ -241,12 +240,17 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
                                      usageView: UsageView,
                                      selectedElement: PsiElement,
                                      showUsagesHandlerData: MutableList<EventPair<*>>) {
-      val containingFile = selectedElement.containingFile
       showUsagesHandlerData.add(USAGE_VIEW.with(usageView))
-      if (project != null && containingFile != null) {
-        showUsagesHandlerData.add(
-          IS_FILE_ALREADY_OPENED.with(FileEditorManager.getInstance(project).isFileOpen(selectedElement.containingFile.virtualFile))
-        )
+      if (selectedElement.isValid) {
+        val containingFile = selectedElement.containingFile
+        if (project != null && containingFile != null) {
+          val virtualFile = containingFile.virtualFile
+          if (virtualFile != null) {
+            showUsagesHandlerData.add(
+              IS_FILE_ALREADY_OPENED.with(FileEditorManager.getInstance(project).isFileOpen(virtualFile))
+            )
+          }
+        }
       }
       itemChosenInPopupFeatures.log(project, showUsagesHandlerData)
     }
@@ -325,7 +329,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
                        preselectRow: Int,
                        selectedRow: Int?,
                        results: Int,
-                       startTime: Long?,
+                       durationTime: Long?,
                        showUsagesHandlerEventData: MutableList<EventPair<*>>) {
       showUsagesHandlerEventData.add(USAGE_VIEW.with(usageView))
       showUsagesHandlerEventData.add(ITEM_CHOSEN.with(itemChosen))
@@ -333,8 +337,8 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
       showUsagesHandlerEventData.add(RESULTS_TOTAL.with(results))
       selectedRow?.let { showUsagesHandlerEventData.add(SELECTED_ROW.with(it)) }
       showUsagesHandlerEventData.addAll(showUsagesHandlerEventData)
-      if (startTime != null) {
-        showUsagesHandlerEventData.add(EventFields.DurationMs.with(System.currentTimeMillis() - startTime))
+      if (durationTime != null) {
+        showUsagesHandlerEventData.add(EventFields.DurationMs.with(durationTime))
       }
       popupClosed.log(project, showUsagesHandlerEventData)
     }

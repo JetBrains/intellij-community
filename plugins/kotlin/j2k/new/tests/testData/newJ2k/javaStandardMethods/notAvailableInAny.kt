@@ -1,5 +1,5 @@
 class J {
-    fun foo(j: J) {
+    fun simple(j: J) {
         (this as Object).notify()
         (this as Object).notifyAll()
         (this as Object).wait()
@@ -10,5 +10,18 @@ class J {
         (j as Object).wait()
         (j as Object).wait(42)
         (j as Object).wait(42, 42)
+    }
+
+    fun withCast(i: Number) {
+        (i as Int as Object).notify()
+        (i as Object).notifyAll()
+        (i as Object).wait()
+        (i as Object).wait(42)
+        (i as Object).wait(42, 42)
+        (i as Object).notify()
+        (i as Object).notifyAll()
+        (i as Object).wait()
+        (i as Object).wait(42)
+        (i as Object).wait(42, 42)
     }
 }

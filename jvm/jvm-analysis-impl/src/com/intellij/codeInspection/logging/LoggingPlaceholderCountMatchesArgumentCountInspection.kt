@@ -7,6 +7,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.java.library.JavaLibraryUtil
 import com.intellij.psi.*
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.uast.UastHintedVisitorAdapter
@@ -55,7 +56,7 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
       val file = element.getContainingUFile() ?: return true
       val sourcePsi = file.sourcePsi
       val project = sourcePsi.project
-      return JavaPsiFacade.getInstance(project).findClass(LoggingUtil.LOG_4_J_LOGGER, sourcePsi.resolveScope) != null
+      return JavaLibraryUtil.hasLibraryClass(project, LoggingUtil.LOG_4_J_LOGGER)
     }
 
     override fun visitCallExpression(node: UCallExpression): Boolean {

@@ -126,14 +126,21 @@ internal object CompiledClasses {
   private fun compileLocally(context: CompilationContext,
                              moduleNames: Collection<String>? = null,
                              includingTestsInModules: List<String>? = null) {
-    require(JavaVersion.current().isAtLeast(17)) {
+    check(JavaVersion.current().isAtLeast(17)) {
       "Build script must be executed under Java 17 to compile intellij project but it's executed under Java ${JavaVersion.current()}"
     }
     context.messages.progress("Compiling project")
     context.compilationData.statisticsReported = false
     val runner = JpsCompilationRunner(context)
+    val localCompilationDataExists = context.options.incrementalCompilation &&
+                                     context.compilationData.listDataStorageRoot(context.messages).any()
     try {
       runner.compile(context, moduleNames, includingTestsInModules)
+      if (localCompilationDataExists) {
+        context.messages.buildStatus("Compiled using local cache")
+      } else {
+        context.messages.buildStatus("Clean build")
+      }
     }
     catch (e: Exception) {
       if (!context.options.incrementalCompilation) {
@@ -148,9 +155,8 @@ internal object CompiledClasses {
       context.options.incrementalCompilation = false
       context.compilationData.reset()
       runner.compile(context, moduleNames, includingTestsInModules)
-      val successMessage = "Compilation successful after clean build retry"
-      context.messages.info(successMessage)
-      println("##teamcity[buildStatus status='SUCCESS' text='$successMessage']")
+      context.messages.info("Compilation successful after clean build retry")
+      println("##teamcity[buildStatus status='SUCCESS' text='Clean build retry']")
       context.messages.reportStatisticValue("Incremental compilation failures", "1")
     }
   }

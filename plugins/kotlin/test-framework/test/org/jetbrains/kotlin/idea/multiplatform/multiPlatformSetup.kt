@@ -156,6 +156,13 @@ private fun AbstractMultiModuleTest.doSetupProject(rootInfos: List<RootInfo>) {
 
     infosByModuleId.entries.forEach { (id, rootInfos) ->
         val module = modulesById[id]!!
+
+        if (id.isTest) {
+            modulesById[id.copy(isTest = false)]?.let { mainModule ->
+                module.addDependency(mainModule)
+            }
+        }
+
         rootInfos.flatMap { it.dependencies }.forEach {
             val platform = id.platform
             when (it) {
@@ -183,25 +190,34 @@ private fun AbstractMultiModuleTest.doSetupProject(rootInfos: List<RootInfo>) {
     }
 
     modulesById.forEach { (nameAndPlatform, module) ->
-        val (name, platform) = nameAndPlatform
+        val (name, platform, isTest) = nameAndPlatform
         val pureKotlinSourceFolders = module.collectSourceFolders()
+
+        val additionalVisibleModuleNames = buildSet {
+            if (isTest) {
+                add(nameAndPlatform.copy(isTest = false).ideaModuleName())
+            }
+        }
+
         when {
             platform.isCommon() -> {
                 module.createMultiplatformFacetM1(
                     platform,
                     useProjectSettings = false,
                     implementedModuleNames = emptyList(),
-                    pureKotlinSourceFolders = pureKotlinSourceFolders
+                    pureKotlinSourceFolders = pureKotlinSourceFolders,
+                    additionalVisibleModuleNames = additionalVisibleModuleNames
                 )
             }
 
             else -> {
-                val commonModuleId = ModuleId(name, CommonPlatforms.defaultCommonPlatform)
+                val commonModuleId = ModuleId(name, CommonPlatforms.defaultCommonPlatform, isTest)
 
                 module.createMultiplatformFacetM1(
                     platform,
                     implementedModuleNames = listOf(commonModuleId.ideaModuleName()),
-                    pureKotlinSourceFolders = pureKotlinSourceFolders
+                    pureKotlinSourceFolders = pureKotlinSourceFolders,
+                    additionalVisibleModuleNames = additionalVisibleModuleNames
                 )
                 module.enableMultiPlatform()
 
@@ -271,10 +287,11 @@ private fun parseDependency(it: String): Dependency {
 
 private fun parseModuleId(parts: List<String>): ModuleId {
     val platform = parsePlatform(parts)
+    val isTest = parseIsTestRoot(parts)
     val name = parseModuleName(parts)
     val id = parseIndex(parts) ?: 0
     assert(id == 0 || !platform.isCommon())
-    return ModuleId(name, platform, id)
+    return ModuleId(name, platform, isTest, id)
 }
 
 private fun parsePlatform(parts: List<String>) =
@@ -297,11 +314,18 @@ private fun parseIndex(parts: List<String>): Int? {
 private data class ModuleId(
     val groupName: String,
     val platform: TargetPlatform,
+    val isTest: Boolean,
     val index: Int = 0
 ) {
-    fun ideaModuleName(): String {
-        val suffix = "_$index".takeIf { index != 0 } ?: ""
-        return "${groupName}_${platform.presentableName}$suffix"
+    fun ideaModuleName(): String = buildString {
+        append(groupName)
+        append("_${platform.presentableName}")
+        if (index != 0) {
+            append("_$index")
+        }
+        if (isTest) {
+            append("Test")
+        }
     }
 }
 

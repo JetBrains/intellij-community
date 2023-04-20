@@ -224,6 +224,15 @@ object InplaceExtractUtils {
       val change = if (popupProvider.annotate == true) ExtractMethodSettingChange.AnnotateOn else ExtractMethodSettingChange.AnnotateOff
       logSettingsChange(project, change)
     }
+    if (popupProvider.declareVarType != popupProvider.declareVarTypeDefault){
+      val change = if (popupProvider.declareVarType == true) {
+        ExtractMethodSettingChange.DeclareVarTypeOn
+      }
+      else {
+        ExtractMethodSettingChange.DeclareVarTypeOff
+      }
+      logSettingsChange(project, change)
+    }
     if (popupProvider.makeStatic != popupProvider.makeStaticDefault) {
       val change = when {
         popupProvider.makeStatic == true && popupProvider.staticPassFields -> ExtractMethodSettingChange.MakeStaticWithFieldsOn

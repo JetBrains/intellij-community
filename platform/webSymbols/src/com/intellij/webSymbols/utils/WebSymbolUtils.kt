@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("WebSymbolUtils")
 
 package com.intellij.webSymbols.utils
@@ -7,10 +7,10 @@ import com.intellij.model.Pointer
 import com.intellij.navigation.EmptyNavigatable
 import com.intellij.navigation.ItemPresentation
 import com.intellij.navigation.NavigationItem
-import com.intellij.navigation.NavigationTarget
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
+import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiModificationTracker
@@ -19,10 +19,7 @@ import com.intellij.webSymbols.*
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.impl.sortSymbolsByPriority
 import com.intellij.webSymbols.impl.toCodeCompletionItems
-import com.intellij.webSymbols.query.WebSymbolMatch
-import com.intellij.webSymbols.query.WebSymbolNamesProvider
-import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
-import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
+import com.intellij.webSymbols.query.*
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
 import java.util.*
 import javax.swing.Icon
@@ -120,17 +117,20 @@ fun WebSymbol.match(nameToMatch: String,
     }
   }
 
-  val queryExecutor = params.queryExecutor
-  val queryNames = queryExecutor.namesProvider.getNames(this.namespace, this.kind,
-                                                        nameToMatch, WebSymbolNamesProvider.Target.NAMES_QUERY)
-  val symbolNames = queryExecutor.namesProvider.getNames(this.namespace, this.kind, this.name,
-                                                         WebSymbolNamesProvider.Target.NAMES_MAP_STORAGE).toSet()
-  return if (queryNames.any { symbolNames.contains(it) }) {
+  return if (nameMatches(nameToMatch, params.queryExecutor)) {
     listOf(this.withMatchedName(nameToMatch))
   }
   else {
     emptyList()
   }
+}
+
+fun WebSymbol.nameMatches(name: String, queryExecutor: WebSymbolsQueryExecutor): Boolean {
+  val queryNames = queryExecutor.namesProvider.getNames(this.namespace, this.kind,
+                                                        name, WebSymbolNamesProvider.Target.NAMES_QUERY)
+  val symbolNames = queryExecutor.namesProvider.getNames(this.namespace, this.kind, this.name,
+                                                         WebSymbolNamesProvider.Target.NAMES_MAP_STORAGE).toSet()
+  return queryNames.any { symbolNames.contains(it) }
 }
 
 fun WebSymbolNameSegment.getProblemKind(): ProblemKind? =
@@ -168,6 +168,29 @@ val (WebSymbolNameSegment.MatchProblem?).isCritical
 fun List<WebSymbolNameSegment>.withOffset(offset: Int): List<WebSymbolNameSegment> =
   if (offset != 0) map { it.withOffset(offset) }
   else this
+
+fun WebSymbol.ApiStatus?.coalesceWith(other: WebSymbol.ApiStatus?): WebSymbol.ApiStatus? =
+  when (this) {
+    null -> other
+    is WebSymbol.Deprecated -> when {
+      message != null -> this
+      other is WebSymbol.Deprecated && other.message != null -> other
+      else -> this
+    }
+    is WebSymbol.Experimental -> when {
+      other is WebSymbol.Deprecated -> other
+      message != null -> this
+      other is WebSymbol.Experimental && other.message != null -> other
+      else -> this
+    }
+  }
+
+fun <T : Any> coalesceApiStatus(collection: Iterable<T>?, mapper: (T) -> WebSymbol.ApiStatus?): WebSymbol.ApiStatus? =
+  coalesceApiStatus(collection?.asSequence(), mapper)
+
+
+fun <T : Any> coalesceApiStatus(sequence: Sequence<T>?, mapper: (T) -> WebSymbol.ApiStatus?): WebSymbol.ApiStatus? =
+  sequence?.map(mapper)?.reduceOrNull { a, b -> a.coalesceWith(b) }
 
 fun Sequence<WebSymbolHtmlAttributeValue?>.merge(): WebSymbolHtmlAttributeValue? {
   var kind: WebSymbolHtmlAttributeValue.Kind? = null

@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.core.script.ucache
 import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.applyIf
@@ -126,6 +125,58 @@ private fun KotlinScriptEntity.debugInfo(storage: EntityStorage): String {
     }
 }
 
+@Suppress("unused") // exists for debug purposes
+private fun managerScriptsDebugInfo(project: Project, scriptFiles: Sequence<VirtualFile>? = null): String = buildString {
+    val configurationManager = ScriptConfigurationManager.getInstance(project)
+
+    val allSourcesSize = configurationManager.getAllScriptDependenciesSources().size
+    val allSdkSourcesSize = configurationManager.getAllScriptSdkDependenciesSources().size
+
+    val allClassesSize = configurationManager.getAllScriptsDependenciesClassFiles().size
+    val allSdkClassesSize = configurationManager.getAllScriptsSdkDependenciesClassFiles().size
+
+    scriptFiles?.forEach {
+        val classDepSize = configurationManager.getScriptDependenciesClassFiles(it).size
+        val sourceDepSize = configurationManager.getScriptDependenciesSourceFiles(it).size
+        append("[${it.path}]: classes: ${classDepSize}, sources: ${sourceDepSize}\n")
+    }
+    insert(
+        0,
+        "==> ScriptConfigurationManager (classes: $allClassesSize, sdkClasses: $allSdkClassesSize, sources: $allSourcesSize, sdkSources: $allSdkSourcesSize)\n"
+    )
+}
+
+@Suppress("unused") // exists for debug purposes
+private fun scriptEntitiesDebugInfo(project: Project, listRoots: Boolean = false): String {
+    fun List<KotlinScriptLibraryRoot>.print(indent: CharSequence = "          ") = asSequence()
+        .mapIndexed { i, root -> "$indent${i + 1}: ${root.url.presentableUrl}" }
+        .joinToString("\n", indent)
+
+    return buildString {
+        val entityStorage = WorkspaceModel.getInstance(project).currentSnapshot
+
+        val allClasses = HashSet<KotlinScriptLibraryRoot>()
+        val allSources = HashSet<KotlinScriptLibraryRoot>()
+
+        entityStorage.entities(KotlinScriptEntity::class.java).forEachIndexed { scriptIndex, scriptEntity ->
+            append("#${scriptIndex + 1}: [${scriptEntity.path}]\n")
+            scriptEntity.dependencies.forEachIndexed dependencies@{ libIndex, libId ->
+                val lib = entityStorage.resolve(libId) ?: return@dependencies
+
+                val (classes, sources) = lib.roots.partition { it.type == KotlinScriptLibraryRootTypeId.COMPILED }
+                allClasses.addAll(classes)
+                allSources.addAll(sources)
+                append("      Lib #${libIndex + 1}: \"${lib.name}\", classes: ${classes.size}, sources: ${sources.size} \n")
+                applyIf(listRoots) {
+                    append("        Classes:\n ${classes.print()}\n")
+                    append("        Sources:\n ${sources.print()}\n")
+                }
+            }
+        }
+
+        insert(0, "==> WorkspaceModel (unique classes: ${allClasses.size}, sources: ${allSources.size})\n")
+    }
+}
 
 private fun MutableEntityStorage.syncScriptEntities(
     scriptFilesToAddOrUpdate: List<VirtualFile>,
@@ -244,7 +295,6 @@ private fun MutableEntityStorage.getActualScriptLibraries(scriptFile: VirtualFil
 
     libraries.fillWithFiles(project, dependenciesClassFiles, dependenciesSourceFiles)
     libraries.fillWithIdeSpecificDependencies(project, scriptFile)
-    libraries.fillWithSdkDependencies(project, scriptFile)
 
     val mergedLibraries = libraries.mergeClassAndSourceRoots()
 
@@ -286,19 +336,6 @@ private fun MutableList<KotlinScriptLibraryEntity>.fillWithIdeSpecificDependenci
             provider.getFiles(OrderRootType.CLASSES).asList(),
             provider.getFiles(OrderRootType.SOURCES).asList(),
         )
-    }
-}
-
-private fun MutableList<KotlinScriptLibraryEntity>.fillWithSdkDependencies(project: Project, scriptFile: VirtualFile) {
-    val configurationManager = ScriptConfigurationManager.getInstance(project)
-
-    val scriptSdk = configurationManager.getScriptSdk(scriptFile)
-    val projectSdk = ProjectRootManager.getInstance(project).projectSdk
-
-    if (scriptSdk?.homePath != projectSdk?.homePath) {
-        val sdkClassFiles = configurationManager.getScriptSdkDependenciesClassFiles(scriptFile)
-        val sdkSourceFiles = configurationManager.getScriptSdkDependenciesSourceFiles(scriptFile)
-        fillWithFiles(project, sdkClassFiles, sdkSourceFiles)
     }
 }
 

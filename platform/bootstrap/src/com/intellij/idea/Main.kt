@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("Main")
-@file:Suppress("RAW_RUN_BLOCKING")
+@file:Suppress("RAW_RUN_BLOCKING", "JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 
 package com.intellij.idea
 
-import com.intellij.platform.impl.toolkit.IdeGraphicEnvironment
+import com.intellij.platform.impl.toolkit.IdeGraphicsEnvironment
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.rootTask
@@ -16,11 +16,15 @@ import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.platform.impl.toolkit.IdeFontManager
+import com.intellij.platform.impl.toolkit.IdeToolkit
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.UrlClassLoader
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
+import sun.font.FontManagerFactory
 import java.awt.GraphicsEnvironment
+import java.awt.Toolkit
 import java.io.IOException
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -88,8 +92,11 @@ private fun initRemoteDevIfNeeded(args: List<String>) {
 
   runActivity("cwm host init") {
     initRemoteDevGraphicsEnvironment()
-    initProjector()
-    initLux()
+    if (isLuxEnabled()) {
+      initLux()
+    } else {
+      initProjector()
+    }
   }
 }
 
@@ -104,20 +111,34 @@ private fun initProjector() {
 
 private fun initRemoteDevGraphicsEnvironment() {
   JBR.getProjectorUtils().setLocalGraphicsEnvironmentProvider {
-    if (isLuxEnabled()) IdeGraphicEnvironment.instance
+    if (isLuxEnabled()) IdeGraphicsEnvironment.instance
     else AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.awt.image.PGraphicsEnvironment").getDeclaredMethod("getInstance").invoke(null) as GraphicsEnvironment
   }
 }
 
+private fun setStaticField(clazz: Class<out Any>, fieldName: String, value: Any) {
+  val lookup = MethodHandles.lookup()
+
+  val field = clazz.getDeclaredField(fieldName)
+  field.isAccessible = true
+  val handle = lookup.unreflectSetter(field)
+  handle.invoke(value)
+}
+
 private fun initLux() {
   if (!isLuxEnabled()) return
-  if (System.getProperty("lux.fonts.disable.projector.font.manager", "false").toBoolean()) {
-    // disable PFontManager
-    System.setProperty("org.jetbrains.projector.server.enable.font.manager", "false")
-  }
 
+  System.setProperty("java.awt.headless", false.toString())
+  System.setProperty("swing.volatileImageBufferEnabled", false.toString())
+  System.setProperty("keymap.current.os.only", false.toString())
   System.setProperty("awt.nativeDoubleBuffering", false.toString())
   System.setProperty("swing.bufferPerWindow", true.toString())
+
+  setStaticField(Toolkit::class.java, "toolkit", IdeToolkit())
+  System.setProperty("awt.toolkit", IdeToolkit::class.java.canonicalName)
+
+  setStaticField(FontManagerFactory::class.java, "instance", IdeFontManager())
+  System.setProperty("sun.font.fontmanager", IdeFontManager::class.java.canonicalName)
 }
 
 private fun bootstrap(startupTimings: MutableList<Any>) {

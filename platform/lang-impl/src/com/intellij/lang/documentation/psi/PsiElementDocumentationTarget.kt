@@ -70,7 +70,7 @@ class PsiElementDocumentationTarget private constructor(
   override val navigatable: Navigatable? get() = targetElement as? Navigatable
 
   override fun computeDocumentationHint(): String? {
-    return SingleTargetElementInfo.generateInfo(targetElement, sourceElement, isNavigatableQuickDoc(sourceElement, targetElement)).text
+    return SingleTargetElementInfo.generateInfo(targetElement, sourceElement, isNavigatableQuickDoc(sourceElement, targetElement))
   }
 
   override fun computeDocumentation(): DocumentationResult? {

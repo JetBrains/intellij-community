@@ -11,14 +11,6 @@ import java.util.function.IntConsumer
 import java.util.function.ToIntFunction
 
 internal interface VcsLogStorageBackend : VcsLogUsersStorage, VcsLogPathsStorage {
-  val isEmpty: Boolean
-
-  /**
-   * null if not applicable
-   */
-  val trigramsEmpty: Boolean?
-    get() = null
-
   var isFresh: Boolean
 
   fun getMessage(commitId: Int): String?
@@ -45,7 +37,7 @@ internal interface VcsLogStorageBackend : VcsLogUsersStorage, VcsLogPathsStorage
   fun containsCommit(commitId: Int): Boolean
 
   @Throws(IOException::class)
-  fun collectMissingCommits(commitIds: IntSet, missing: IntSet)
+  fun collectMissingCommits(commitIds: IntSet): IntSet
 
   @Throws(IOException::class)
   fun processMessages(processor: (Int, String) -> Boolean)

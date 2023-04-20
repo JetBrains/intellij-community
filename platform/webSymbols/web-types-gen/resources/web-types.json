@@ -47,7 +47,7 @@
           "$ref": "#/definitions/css"
         },
         "js": {
-          "$ref": "#/definitions/js"
+          "$ref": "#/definitions/js-global"
         }
       },
       "additionalProperties": false
@@ -736,11 +736,17 @@
       "type": "boolean"
     },
     "deprecated": {
-      "type": "boolean",
+      "type": [
+        "boolean",
+        "string"
+      ],
       "default": false
     },
     "experimental": {
-      "type": "boolean",
+      "type": [
+        "boolean",
+        "string"
+      ],
       "default": false
     },
     "pattern": {
@@ -976,6 +982,13 @@
           "items": {
             "$ref": "#/definitions/css-generic-item"
           }
+        },
+        "parts": {
+          "description": "CSS parts",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/css-generic-item"
+          }
         }
       },
       "patternProperties": {
@@ -1030,7 +1043,7 @@
     },
     "css": {
       "type": "object",
-      "description": "Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are 5 predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements and pseudo-classes.",
+      "description": "Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are6 predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements, pseudo-classes and parts.",
       "allOf": [
         {
           "$ref": "#/definitions/css-contributions-host"
@@ -1172,6 +1185,24 @@
           "$ref": "#/definitions/js-contributions-host"
         }
       ]
+    },
+    "js-global": {
+      "type": "object",
+      "description": "Contains contributions to JS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are 2 predefined kinds, which integrate directly with IDE - properties and events, but only events can be contributed globally.",
+      "properties": {
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/generic-js-contribution"
+          },
+          "description": "DOM events"
+        }
+      },
+      "patternProperties": {
+        "^(?!pattern$).*$": {
+          "$ref": "#/definitions/generic-js-contributions"
+        }
+      }
     },
     "js": {
       "type": "object",

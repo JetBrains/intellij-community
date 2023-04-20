@@ -111,7 +111,7 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
         }
       }
       .setPopupGroup(
-        /* popupGroup = */ { CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_TAB_POPUP) as ActionGroup? },
+        /* popupGroup = */ { CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_TAB_POPUP) as ActionGroup },
         /* place = */ ActionPlaces.EDITOR_TAB_POPUP,
         /* addNavigationGroup = */ false
       )
@@ -207,7 +207,7 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
   fun removeTabAt(componentIndex: Int, indexToSelect: Int) {
     var toSelect = if (indexToSelect >= 0 && indexToSelect < editorTabs.tabCount) editorTabs.getTabAt(indexToSelect) else null
     val info = editorTabs.getTabAt(componentIndex)
-    // removing the hidden tab happens at on end of the drag-out, we've already selected the correct tab for this case in dragOutStarted
+    // removing the hidden tab happens at the end of the drag-out, we've already selected the correct tab for this case in dragOutStarted
     if (info.isHidden || !window.manager.project.isOpen || window.isDisposed) {
       toSelect = null
     }
@@ -551,7 +551,7 @@ private class EditorTabs(
   parentDisposable: Disposable,
   private val window: EditorWindow,
 ) : SingleHeightTabs(window.manager.project, parentDisposable), ComponentWithMnemonics, EditorWindowHolder {
-  private val entryPointActionGroup: DefaultActionGroup
+  private val _entryPointActionGroup: DefaultActionGroup
   private var isActive = false
 
   init {
@@ -578,10 +578,11 @@ private class EditorTabs(
     })
     val source = ActionManager.getInstance().getAction("EditorTabsEntryPoint")
     source.templatePresentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
-    entryPointActionGroup = DefaultActionGroup(source)
+    _entryPointActionGroup = DefaultActionGroup(source)
   }
 
   override fun getEditorWindow(): EditorWindow = window
+
 
   override fun useMultiRowLayout(): Boolean {
     return !isSingleRow || (isHorizontalTabs && (TabLayout.showPinnedTabsSeparately() || !UISettings.getInstance().hideTabsIfNeeded))
@@ -611,14 +612,14 @@ private class EditorTabs(
   }
 
   // return same instance to avoid unnecessary action toolbar updates
-  override fun getEntryPointActionGroup(): DefaultActionGroup = entryPointActionGroup
+  override val entryPointActionGroup: DefaultActionGroup
+    get() = _entryPointActionGroup
 
   override fun createTabLabel(info: TabInfo): TabLabel {
     return EditorTabLabel(info)
   }
 
-  private inner class EditorTabLabel(private val info: TabInfo) : SingleHeightLabel(this, info) {
-
+  private inner class EditorTabLabel(info: TabInfo) : SingleHeightLabel(this, info) {
     init {
       updateFont()
     }
@@ -654,7 +655,7 @@ private class EditorTabs(
     override fun editLabelForeground(baseForeground: Color?): Color? {
       return if (baseForeground != null && paintDimmed()) {
         val blendValue = JBUI.CurrentTheme.EditorTabs.unselectedBlend()
-        val background = getInfo().tabColor ?: myTabs.tabPainter.getTabTheme().background
+        val background = info.tabColor ?: myTabs.tabPainter.getTabTheme().background
         if (background != null) {
           ColorUtil.blendColorsInRgb(background, baseForeground, blendValue.toDouble())
         }
@@ -665,20 +666,22 @@ private class EditorTabs(
 
     override fun editIcon(baseIcon: Icon): Icon {
       return if (paintDimmed()) {
-        IconLoader.getTransparentIcon(baseIcon, JBUI.CurrentTheme.EditorTabs.unselectedAlpha());
+        IconLoader.getTransparentIcon(baseIcon, JBUI.CurrentTheme.EditorTabs.unselectedAlpha())
       }
       else baseIcon
     }
 
     private fun paintDimmed(): Boolean {
-      return ExperimentalUI.isNewUI() && myTabs.selectedInfo != getInfo() && !myTabs.isHoveredTab(this)
+      return ExperimentalUI.isNewUI() && myTabs.selectedInfo != info && !myTabs.isHoveredTab(this)
     }
   }
 
   override fun getTabActionIcon(info: TabInfo, isHovered: Boolean): Icon? {
     if (!tabs.contains(info)) {
-      return null  // can be requested right after tab is removed, return null in this case
+      // can be requested right after the tab is removed, return null in this case
+      return null
     }
+
     val closeTabAction = info.tabLabelActions?.getChildren(null)?.lastOrNull() as? CloseTab
     return closeTabAction?.getIcon(isHovered)
   }
@@ -705,7 +708,7 @@ private class EditorTabs(
     }
   }
 
-  override fun isActiveTabs(info: TabInfo): Boolean = isActive
+  override fun isActiveTabs(info: TabInfo?): Boolean = isActive
 
   override fun getToSelectOnRemoveOf(info: TabInfo): TabInfo? {
     if (window.isDisposed) {
@@ -723,7 +726,7 @@ private class EditorTabs(
     return super.getToSelectOnRemoveOf(info)
   }
 
-  public override fun revalidateAndRepaint(layoutNow: Boolean) {
+  override fun revalidateAndRepaint(layoutNow: Boolean) {
     // called from super constructor
     @Suppress("SENSELESS_COMPARISON")
     if (window != null && window.owner.isInsideChange) {

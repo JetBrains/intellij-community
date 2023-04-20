@@ -163,6 +163,9 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
     if (myRequest != null && myRequest.isInsideHint(editor, point)) {
       return;
     }
+    if (event != null && !event.isOverText()) { // do not trigger if there's no text below
+      return;
+    }
 
     try {
       myCancellableHint = handler.createValueHintAsync(myProject, editor, point, type);

@@ -16,9 +16,7 @@ import com.intellij.lang.PsiStructureViewFactory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.Utils
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -51,8 +49,11 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.TimerUtil
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
@@ -60,7 +61,10 @@ import java.awt.Color
 import java.awt.Container
 import java.awt.KeyboardFocusManager
 import java.awt.event.HierarchyEvent
+import java.lang.Runnable
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
@@ -68,16 +72,21 @@ import javax.swing.SwingUtilities
 /**
  * @author Eugene Belyaev
  */
-class StructureViewWrapperImpl(private val myProject: Project, private val myToolWindow: ToolWindow) : StructureViewWrapper, Disposable {
+@OptIn(FlowPreview::class)
+class StructureViewWrapperImpl(private val myProject: Project,
+                               private val myToolWindow: ToolWindow,
+                               private val coroutineScope: CoroutineScope) : StructureViewWrapper, Disposable {
   private var myFile: VirtualFile? = null
   private var myStructureView: StructureView? = null
   private var myFileEditor: FileEditor? = null
   private var myModuleStructureComponent: ModuleStructureComponent? = null
   private var myPanels: List<JPanel> = emptyList()
-  private val myUpdateQueue: MergingUpdateQueue
-  private var myPendingSelection: Runnable? = null
+  private var pendingSelectionFunc: AtomicReference<(suspend () -> Unit)?> = AtomicReference()
   private var myFirstRun = true
   private var myActivityCount = 0
+  private val pendingRebuild = AtomicBoolean(false)
+
+  private val rebuildRequests = MutableSharedFlow<RebuildDelay>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   init {
     val component = myToolWindow.component
@@ -86,10 +95,6 @@ class StructureViewWrapperImpl(private val myProject: Project, private val myToo
     if (isLight(myProject)) {
       LOG.error("StructureViewWrapperImpl must be not created for light project.")
     }
-
-    myUpdateQueue = MergingUpdateQueue("StructureView", REBUILD_TIME, false, component, this, component)
-      .usePassThroughInUnitTestMode()
-    myUpdateQueue.setRestartTimerOnAdd(true)
 
     // to check on the next turn
     val timer = TimerUtil.createNamedTimer("StructureView", REFRESH_TIME) { _ ->
@@ -120,7 +125,7 @@ class StructureViewWrapperImpl(private val myProject: Project, private val myToo
         }
         else if (!myProject.isDisposed) {
           myFile = null
-          loggedRun("clear a structure on hide") { rebuild() }
+          rebuildNow("clear a structure on hide")
         }
       }
     }
@@ -149,6 +154,19 @@ class StructureViewWrapperImpl(private val myProject: Project, private val myToo
     PsiStructureViewFactory.EP_NAME.addChangeListener({ clearCaches() }, this)
     StructureViewBuilder.EP_NAME.addChangeListener({ clearCaches() }, this)
     ApplicationManager.getApplication().messageBus.connect(this).subscribe(STRUCTURE_CHANGED, Runnable { clearCaches() })
+
+    coroutineScope.launch {
+      rebuildRequests
+        .debounce {
+          when (it) {
+            RebuildDelay.NOW -> 0L
+            RebuildDelay.QUEUE -> REBUILD_TIME
+          }
+        }
+        .collectLatest {
+          rebuildImpl()
+        }
+    }
   }
 
   private fun clearCaches() {
@@ -156,7 +174,7 @@ class StructureViewWrapperImpl(private val myProject: Project, private val myToo
     if (myStructureView != null) {
       myStructureView!!.disableStoreState()
     }
-    rebuild()
+    rebuildNow("clear caches")
   }
 
   private fun checkUpdate() {
@@ -241,44 +259,52 @@ class StructureViewWrapperImpl(private val myProject: Project, private val myToo
     //todo [kirillk]
     // this is dirty hack since some bright minds decided to used different TreeUi every time, so selection may be followed
     // by rebuild on completely different instance of TreeUi
-    val runnable = Runnable {
+    suspend fun selectLater() = withContext(Dispatchers.EDT) {
       if (!Comparing.equal(myFileEditor, fileEditor)) {
         myFile = file
         LOG.debug("replace file on selection: ", file)
-        loggedRun("rebuild a structure immediately: ") { rebuild() }
+        rebuildNow("selected file changed")
       }
       if (myStructureView != null) {
         myStructureView!!.navigateToSelectedElement(requestFocus)
       }
     }
     if (isStructureViewShowing) {
-      if (myUpdateQueue.isEmpty) {
-        runnable.run()
+      if (pendingRebuild.get()) {
+        pendingSelectionFunc.set(::selectLater)
       }
       else {
-        myPendingSelection = runnable
+        coroutineScope.launch { selectLater() }
       }
     }
     else {
-      myPendingSelection = runnable
+      pendingSelectionFunc.set(::selectLater)
     }
+
     return true
+  }
+
+  private enum class RebuildDelay {
+    QUEUE,
+    NOW,
   }
 
   private fun scheduleRebuild() {
     if (!myToolWindow.isVisible) return
-    LOG.debug("request to rebuild a structure")
-    myUpdateQueue.queue(object : Update("rebuild") {
-      override fun run() {
-        if (myProject.isDisposed) return
-        ApplicationManager.getApplication().assertIsDispatchThread()
-        loggedRun("rebuild a structure: ") { rebuild() }
-      }
-    })
+    scheduleRebuild(RebuildDelay.QUEUE, "delayed rebuild")
   }
 
-  fun rebuild() {
-    if (myProject.isDisposed) return
+  fun rebuildNow(why: String) {
+    scheduleRebuild(RebuildDelay.NOW, why)
+  }
+
+  private fun scheduleRebuild(delay: RebuildDelay, why: String) {
+    LOG.debug("request to rebuild a structure view $delay: $why")
+    pendingRebuild.set(true)
+    check(rebuildRequests.tryEmit(delay))
+  }
+
+  private suspend fun rebuildImpl() = withContext(Dispatchers.EDT) {
     val container: Container = myToolWindow.component
     val wasFocused = UIUtil.isFocusAncestor(container)
     if (myStructureView != null) {
@@ -294,7 +320,7 @@ class StructureViewWrapperImpl(private val myProject: Project, private val myToo
     val contentManager = myToolWindow.contentManager
     contentManager.removeAllContents(true)
     if (!isStructureViewShowing) {
-      return
+      return@withContext
     }
 
     val file = myFile ?: run {
@@ -305,13 +331,19 @@ class StructureViewWrapperImpl(private val myProject: Project, private val myToo
     var names = arrayOf<String?>("")
     if (file != null && file.isValid) {
       if (file.isDirectory) {
-        if (ProjectRootsUtil.isModuleContentRoot(file, myProject)) {
-          val module = ModuleUtilCore.findModuleForFile(file, myProject)
-          if (module != null && !ModuleType.isInternal(module)) {
-            myModuleStructureComponent = ModuleStructureComponent(module)
-            createSinglePanel(myModuleStructureComponent!!.component!!)
-            Disposer.register(this, myModuleStructureComponent!!)
+        val module = readAction {
+          if (!ProjectRootsUtil.isModuleContentRoot(file, myProject)) {
+            null
           }
+          else {
+            ModuleUtilCore.findModuleForFile(file, myProject)
+          }
+        }
+
+        if (module != null && !ModuleType.isInternal(module)) {
+          myModuleStructureComponent = ModuleStructureComponent(module)
+          createSinglePanel(myModuleStructureComponent!!.component!!)
+          Disposer.register(this@StructureViewWrapperImpl, myModuleStructureComponent!!)
         }
       }
       else {
@@ -323,7 +355,7 @@ class StructureViewWrapperImpl(private val myProject: Project, private val myToo
           myStructureView = structureView
 
           myFileEditor = editor
-          Disposer.register(this, structureView)
+          Disposer.register(this@StructureViewWrapperImpl, structureView)
           if (structureView is StructureViewComposite) {
             val views: Array<StructureViewDescriptor> = structureView.structureViews
             names = views.map { it.title }.toTypedArray()
@@ -355,10 +387,10 @@ class StructureViewWrapperImpl(private val myProject: Project, private val myToo
       }
     }
 
-    val pendingSelection = myPendingSelection
+    pendingRebuild.set(false)
+    val pendingSelection = pendingSelectionFunc.getAndSet(null)
     if (pendingSelection != null) {
-      myPendingSelection = null
-      pendingSelection.run()
+      pendingSelection()
     }
 
     if (wasFocused) {
@@ -418,7 +450,7 @@ class StructureViewWrapperImpl(private val myProject: Project, private val myToo
       return toolWindow != null && toolWindow.isVisible
     }
 
-  private inner class ContentPanel() : JPanel(BorderLayout()), DataProvider {
+  private inner class ContentPanel : JPanel(BorderLayout()), DataProvider {
     override fun getData(dataId: @NonNls String): Any? {
       if (WRAPPER_DATA_KEY.`is`(dataId)) return this@StructureViewWrapperImpl
       return if (QuickActionProvider.KEY.`is`(dataId)) {
@@ -440,7 +472,7 @@ class StructureViewWrapperImpl(private val myProject: Project, private val myToo
     private val LOG = Logger.getInstance(StructureViewWrapperImpl::class.java)
     private val WRAPPER_DATA_KEY = DataKey.create<StructureViewWrapper>("WRAPPER_DATA_KEY")
     private const val REFRESH_TIME = 100 // time to check if a context file selection is changed or not
-    private const val REBUILD_TIME = 100 // time to wait and merge requests to rebuild a tree model
+    private const val REBUILD_TIME = 100L // time to wait and merge requests to rebuild a tree model
 
     private fun getTargetVirtualFile(asyncDataContext: DataContext): VirtualFile? {
       val explicitlySpecifiedFile = STRUCTURE_VIEW_TARGET_FILE_KEY.getData(asyncDataContext)
@@ -454,6 +486,7 @@ class StructureViewWrapperImpl(private val myProject: Project, private val myToo
     }
 
     private fun loggedRun(message: String, task: Runnable): Boolean {
+      val startTimeNs = System.nanoTime()
       return try {
         if (LOG.isTraceEnabled) LOG.trace("$message: started")
         task.run()
@@ -468,7 +501,7 @@ class StructureViewWrapperImpl(private val myProject: Project, private val myToo
         false
       }
       finally {
-        if (LOG.isTraceEnabled) LOG.trace("$message: finished")
+        if (LOG.isTraceEnabled) LOG.trace("$message: finished in ${(System.nanoTime() - startTimeNs) / 1000000} ms")
       }
     }
   }

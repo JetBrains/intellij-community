@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.docking.DockContainer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.annotations.ApiStatus.Experimental
 import java.awt.Component
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
@@ -163,6 +164,9 @@ abstract class FileEditorManagerEx : FileEditorManager() {
   abstract fun openFile(file: VirtualFile,
                         window: EditorWindow?,
                         options: FileEditorOpenOptions = FileEditorOpenOptions()): FileEditorComposite
+
+  @Experimental
+  abstract suspend fun openFile(file: VirtualFile, options: FileEditorOpenOptions = FileEditorOpenOptions()): FileEditorComposite
 
   abstract fun isChanged(editor: EditorComposite): Boolean
 

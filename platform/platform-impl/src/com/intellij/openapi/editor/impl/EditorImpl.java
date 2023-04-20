@@ -393,7 +393,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       @Override
-      public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+      public void afterRemoved(@NotNull RangeHighlighterEx highlighter) {
         TextAttributes attributes = highlighter.getTextAttributes(getColorsScheme());
         onHighlighterChanged(highlighter, canImpactGutterSize(highlighter),
                              EditorUtil.attributesImpactFontStyle(attributes),

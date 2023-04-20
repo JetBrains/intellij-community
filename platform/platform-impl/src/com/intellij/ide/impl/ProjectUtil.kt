@@ -464,6 +464,7 @@ object ProjectUtil {
    * behaviour, and should only be used in special cases, when we know that user definitely expects it.
    */
   @JvmStatic
+  @RequiresEdt
   fun focusProjectWindow(project: Project?, stealFocusIfAppInactive: Boolean = false) {
     val frame = WindowManager.getInstance().getFrame(project) ?: return
     val appIsActive = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow != null
