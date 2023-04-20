@@ -1723,14 +1723,23 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   @NotNull
   @Override
-  public List<MavenArtifact> resolve(@NotNull Collection<MavenArtifactResolutionRequest> requests, MavenToken token)
+  public List<MavenArtifact> resolve(@NotNull String longRunningTaskId, @NotNull Collection<MavenArtifactResolutionRequest> requests, MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);
+    try (LongRunningTask task = new LongRunningTask(longRunningTaskId, requests.size())) {
+      return resolve(task, requests);
+    }
+  }
+
+  @NotNull
+  private List<MavenArtifact> resolve(@NotNull LongRunningTask task, @NotNull Collection<MavenArtifactResolutionRequest> requests) {
     try {
       List<MavenArtifact> artifacts = new ArrayList<>();
       for (MavenArtifactResolutionRequest request : requests) {
+        if (task.isCanceled()) break;
         MavenArtifact artifact = doResolve(request.getArtifactInfo(), request.getRemoteRepositories());
         artifacts.add(artifact);
+        task.incrementFinishedRequests();
       }
       return artifacts;
     }

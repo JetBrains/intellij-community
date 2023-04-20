@@ -52,7 +52,8 @@ public interface MavenServerEmbedder extends Remote {
                                                                                                MavenServerProcessCanceledException;
 
   @NotNull
-  List<MavenArtifact> resolve(@NotNull Collection<MavenArtifactResolutionRequest> requests,
+  List<MavenArtifact> resolve(@NotNull String longRunningTaskId,
+                              @NotNull Collection<MavenArtifactResolutionRequest> requests,
                               MavenToken token) throws RemoteException, MavenServerProcessCanceledException;
 
   /**
@@ -101,4 +102,9 @@ public interface MavenServerEmbedder extends Remote {
     @NotNull List<MavenArtifactInfo> artifacts,
     @NotNull List<MavenRemoteRepository> remoteRepositories,
     MavenToken token) throws RemoteException;
+
+  @NotNull
+  LongRunningTaskStatus getLongRunningTaskStatus(@NotNull String longRunningTaskId, MavenToken token) throws RemoteException;
+
+  boolean cancelLongRunningTask(@NotNull String longRunningTaskId, MavenToken token) throws RemoteException;
 }

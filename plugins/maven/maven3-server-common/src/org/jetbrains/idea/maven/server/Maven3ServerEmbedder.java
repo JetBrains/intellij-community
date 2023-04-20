@@ -51,7 +51,9 @@ import java.io.File;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -74,6 +76,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
   private final static String MAVEN_VERSION = System.getProperty(MAVEN_EMBEDDER_VERSION);
   private static final Pattern PROPERTY_PATTERN = Pattern.compile("\"-D([\\S&&[^=]]+)(?:=([^\"]+))?\"|-D([\\S&&[^=]]+)(?:=(\\S+))?");
   protected final MavenServerSettings myServerSettings;
+  protected final Map<String, LongRunningTask> myLongRunningTasks = new ConcurrentHashMap<>();
 
   protected Maven3ServerEmbedder(MavenServerSettings settings) {
     myServerSettings = settings;
@@ -599,4 +602,68 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
 
     return lifecycleListeners;
   }
+
+  @NotNull
+  @Override
+  public LongRunningTaskStatus getLongRunningTaskStatus(@NotNull String longRunningTaskId, MavenToken token) {
+    MavenServerUtil.checkToken(token);
+
+    LongRunningTask task = myLongRunningTasks.get(longRunningTaskId);
+
+    if (null == task) return new LongRunningTaskStatus(0, 0);
+
+    return new LongRunningTaskStatus(task.getTotalRequests(), task.getFinishedRequests());
+  }
+
+  @Override
+  public boolean cancelLongRunningTask(@NotNull String longRunningTaskId, MavenToken token) throws RemoteException {
+    MavenServerUtil.checkToken(token);
+
+    LongRunningTask task = myLongRunningTasks.get(longRunningTaskId);
+
+    if (null == task) return false;
+
+    task.cancel();
+    return true;
+  }
+
+  protected class LongRunningTask implements AutoCloseable {
+    @NotNull private final String myId;
+    private final AtomicInteger myFinishedRequests = new AtomicInteger(0);
+    private final int myTotalRequests;
+    private final AtomicBoolean isCanceled = new AtomicBoolean(false);
+
+    protected LongRunningTask(@NotNull String id, int totalRequests) {
+      myId = id;
+      myTotalRequests = totalRequests;
+
+      myLongRunningTasks.put(myId, this);
+    }
+
+    public void incrementFinishedRequests() {
+      myFinishedRequests.incrementAndGet();
+    }
+
+    private int getFinishedRequests() {
+      return myFinishedRequests.get();
+    }
+
+    private int getTotalRequests() {
+      return myTotalRequests;
+    }
+
+    private void cancel() {
+      isCanceled.set(true);
+    }
+
+    public boolean isCanceled() {
+      return isCanceled.get();
+    }
+
+    @Override
+    public void close() {
+      myLongRunningTasks.remove(myId);
+    }
+  }
+
 }

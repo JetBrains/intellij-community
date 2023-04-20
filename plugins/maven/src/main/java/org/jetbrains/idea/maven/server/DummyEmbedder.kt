@@ -44,7 +44,9 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
     return null
   }
 
-  override fun resolve(requests: Collection<MavenArtifactResolutionRequest>, token: MavenToken?): List<MavenArtifact> {
+  override fun resolve(longRunningTaskId: String,
+                       requests: Collection<MavenArtifactResolutionRequest>,
+                       token: MavenToken?): List<MavenArtifact> {
     return listOf()
   }
 
@@ -102,6 +104,10 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
                                                 token: MavenToken?): MutableMap<String, String> {
     return mutableMapOf()
   }
+
+  override fun getLongRunningTaskStatus(longRunningTaskId: String, token: MavenToken?): LongRunningTaskStatus = LongRunningTaskStatus(0, 0)
+
+  override fun cancelLongRunningTask(longRunningTaskId: String, token: MavenToken?) = true
 }
 
 class UntrustedDummyEmbedder(myProject: Project) : DummyEmbedder(myProject) {

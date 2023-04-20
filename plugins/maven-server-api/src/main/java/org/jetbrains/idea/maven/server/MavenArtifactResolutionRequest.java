@@ -8,7 +8,7 @@ import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 import java.io.Serializable;
 import java.util.List;
 
-public class MavenArtifactResolutionRequest implements Serializable {
+public final class MavenArtifactResolutionRequest implements Serializable {
   @NotNull
   private final MavenArtifactInfo myArtifactInfo;
   @NotNull
