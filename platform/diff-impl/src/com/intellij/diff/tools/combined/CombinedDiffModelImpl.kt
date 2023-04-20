@@ -7,7 +7,9 @@ import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -21,8 +23,6 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.update.ComparableObject
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicInteger
 
 open class CombinedDiffModelImpl(protected val project: Project,
@@ -67,22 +67,6 @@ open class CombinedDiffModelImpl(protected val project: Project,
     init()
     _requests = requests.toMutableMap()
     modelListeners.multicaster.onModelReset()
-  }
-
-  override fun add(requestData: CombinedDiffModel.NewRequestData, producer: DiffRequestProducer, onAdded: (CombinedBlockId) -> Unit) {
-    val blockId = requestData.blockId
-    _requests[blockId] = producer
-    val indicator = EmptyProgressIndicator()
-    BackgroundTaskUtil.runUnderDisposeAwareIndicator(ourDisposable, {
-      modelListeners.multicaster.onProgressBar(true)
-
-      val request = indicatorRunBlockingCancellable(indicator) {
-        withContext(Dispatchers.IO) { coroutineToIndicator { loadRequest(indicator, blockId, producer) } }
-      }
-
-      modelListeners.multicaster.onProgressBar(false)
-      runInEdt { modelListeners.multicaster.onRequestAdded(requestData, request, onAdded) }
-    }, indicator)
   }
 
   override fun getCurrentRequest(): DiffRequest? {

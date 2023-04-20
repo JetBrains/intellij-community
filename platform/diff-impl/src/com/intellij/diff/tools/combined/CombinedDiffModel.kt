@@ -12,6 +12,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.util.*
 
+
 interface CombinedDiffModel {
   val haveParentDisposable: Boolean
   val ourDisposable: CheckedDisposable
@@ -21,8 +22,6 @@ interface CombinedDiffModel {
   fun init()
   fun reload()
   fun reset(requests: Map<CombinedBlockId, DiffRequestProducer>)
-
-  fun add(requestData: NewRequestData, producer: DiffRequestProducer, onAdded: (CombinedBlockId) -> Unit = {})
   fun getCurrentRequest(): DiffRequest?
 
   fun getLoadedRequests(): List<DiffRequest>
