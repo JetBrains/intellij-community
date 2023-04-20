@@ -10,6 +10,7 @@ import org.jetbrains.plugins.textmate.plist.Plist;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ShellVariablesRegistryImpl implements ShellVariablesRegistry {
 
@@ -35,7 +36,7 @@ public class ShellVariablesRegistryImpl implements ShellVariablesRegistry {
 
   public void addVariable(@NotNull TextMateShellVariable variable) {
     if (!variable.name.isEmpty()) {
-      myVariables.computeIfAbsent(variable.name, key -> Collections.synchronizedList(new ArrayList<>())).add(variable);
+      myVariables.computeIfAbsent(variable.name, key -> Collections.synchronizedList(new CopyOnWriteArrayList<>())).add(variable);
     }
   }
 
