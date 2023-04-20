@@ -1,38 +1,45 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.feedback.demo.dialog
 
-import com.intellij.feedback.common.*
+import com.intellij.feedback.common.DEFAULT_FEEDBACK_CONSENT_ID
+import com.intellij.feedback.common.FeedbackRequestDataWithDetailedAnswer
+import com.intellij.feedback.common.FeedbackRequestType
 import com.intellij.feedback.common.dialog.BaseFeedbackDialog
 import com.intellij.feedback.common.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
 import com.intellij.feedback.common.dialog.CommonFeedbackSystemInfoData
+import com.intellij.feedback.common.dialog.showFeedbackSystemInfoDialog
 import com.intellij.feedback.common.dialog.uiBlocks.*
+import com.intellij.feedback.common.submitFeedback
 import com.intellij.feedback.demo.bundle.DemoFeedbackBundle
 import com.intellij.feedback.new_ui.CancelFeedbackNotification
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
 import com.intellij.ui.LicensingFacade
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonObject
 import javax.swing.Action
 import javax.swing.JComponent
 
 class DemoFeedbackDialog(
-  private val myProject: Project?,
+  project: Project?,
   private val forTest: Boolean,
-) : BaseFeedbackDialog(myProject) {
+) : BaseFeedbackDialog(project) {
 
   /** Increase the additional number when feedback format is changed */
   override val feedbackJsonVersion: Int = COMMON_FEEDBACK_SYSTEM_INFO_VERSION + 1
   override val feedbackReportId: String = "demo_feedback"
-  
+
   private val TICKET_TITLE_ZENDESK = "Demo in-IDE Feedback"
   private val FEEDBACK_TYPE_ZENDESK = "Demo in-IDE Feedback"
 
-  private val systemInfoData: CommonFeedbackSystemInfoData =  CommonFeedbackSystemInfoData.getCurrentData()
+  private val systemInfoData: CommonFeedbackSystemInfoData = CommonFeedbackSystemInfoData.getCurrentData()
 
   private val propertyGraph = PropertyGraph()
+  private val textFieldEmailProperty = propertyGraph.lazyProperty { LicensingFacade.INSTANCE?.getLicenseeEmail().orEmpty() }
 
   private val jsonConverter = Json { prettyPrint = true }
   
@@ -46,7 +53,7 @@ class DemoFeedbackDialog(
                          DemoFeedbackBundle.message("dialog.segmentedButton.leftHint"),
                          DemoFeedbackBundle.message("dialog.segmentedButton.middleHint"),
                          DemoFeedbackBundle.message("dialog.segmentedButton.rightHint")),
-    EmailBlock(propertyGraph.property(LicensingFacade.INSTANCE?.getLicenseeEmail().orEmpty()), myProject, systemInfoData)
+    EmailBlock(textFieldEmailProperty, myProject) { showFeedbackSystemInfoDialog(myProject, systemInfoData) }
   )
 
   init {

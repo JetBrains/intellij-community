@@ -28,7 +28,10 @@
     <group id="FeedbackDialogGroup" internal="true">
       <separator/>
       <action id="com.intellij.feedback.demo.action.ShowDemoFeedbackDialogAction"
-              class="com.intellij.feedback.demo.action.ShowDemoFeedbackDialogAction" internal="true" />
+              class="com.intellij.feedback.demo.action.ShowDemoFeedbackDialogAction" internal="true"/>
+      <action id="com.intellij.feedback.pycharmUi.TestShowNewUIFeedbackAction"
+              class="com.intellij.feedback.pycharmUi.TestShowNewUIFeedbackAction"
+              internal="true"/>
       <action id="com.intellij.feedback.productivityMetric.TestShowProductivityFeedbackAction"
               class="com.intellij.feedback.productivityMetric.TestShowProductivityFeedbackAction" internal="true"/>
       <action id="com.intellij.feedback.new_ui.TestShowNewUIFeedbackAction"

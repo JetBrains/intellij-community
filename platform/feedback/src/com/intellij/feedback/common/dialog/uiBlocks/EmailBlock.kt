@@ -2,10 +2,8 @@
 package com.intellij.feedback.common.dialog.uiBlocks
 
 import com.intellij.feedback.common.bundle.CommonFeedbackBundle
-import com.intellij.feedback.common.dialog.CommonFeedbackSystemInfoData
 import com.intellij.feedback.common.dialog.EMAIL_REGEX
 import com.intellij.feedback.common.dialog.TEXT_FIELD_EMAIL_COLUMN_SIZE
-import com.intellij.feedback.common.dialog.showFeedbackSystemInfoDialog
 import com.intellij.feedback.common.feedbackAgreement
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.project.Project
@@ -17,7 +15,7 @@ import java.util.function.Predicate
 
 class EmailBlock(property: ObservableMutableProperty<String>,
                  val myProject: Project?,
-                 private val mySystemInfoData: CommonFeedbackSystemInfoData) : SingleInputFeedbackBlock<String>(property) {
+                 private val showFeedbackSystemInfoDialog: () -> Unit) : SingleInputFeedbackBlock<String>(property) {
 
   private var checkBoxEmailProperty: Boolean = false
   private var checkBoxEmail: JBCheckBox? = null
@@ -54,15 +52,10 @@ class EmailBlock(property: ObservableMutableProperty<String>,
 
         row {
           feedbackAgreement(myProject, CommonFeedbackBundle.message("dialog.feedback.consent.withEmail")) {
-            showFeedbackSystemInfoDialog(myProject, mySystemInfoData)
+            showFeedbackSystemInfoDialog()
           }
-        }.bottomGap(BottomGap.SMALL).topGap(TopGap.MEDIUM)
+        }.bottomGap(BottomGap.SMALL)
       }
     }
   }
-
-  override fun collectInput(): String {
-    return myProperty.get()
-  }
-
 }
