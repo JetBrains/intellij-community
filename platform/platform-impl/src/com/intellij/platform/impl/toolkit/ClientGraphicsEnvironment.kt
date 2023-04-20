@@ -23,7 +23,7 @@ interface ClientGraphicsEnvironment {
   fun findGraphicsConfigurationFor(bounds: Rectangle): GraphicsConfiguration {
     val centerX = bounds.x + bounds.width / 2
     val centerY = bounds.y + bounds.height / 2
-    return getScreenDevices().map {it.defaultConfiguration}.minBy { it.bounds.distanceTo(centerX, centerY) }
+    return getScreenDevices().map { it.defaultConfiguration }.minBy { it.bounds.distanceTo(centerX, centerY) }
   }
 
   private fun Rectangle.distanceTo(pointX: Int, pointY: Int): Int {
