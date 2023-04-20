@@ -886,6 +886,47 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleModuleDepScope("project.impl.main", "project.api.mySourceSet", DependencyScope.COMPILE);
   }
 
+  /**
+   * At the moment, IDEA does not support depending on an artifact containing output of multiple source sets.
+   * There is only one source set to choose as the module dependency.
+   * "Owning" sourceSet should be preferred for a jar task with name equal to sourceSet.getJarTaskName()
+   */
+  @Test
+  public void testProjectDependencyOnArtifactsContainingMultipleSourceSets() throws Exception {
+    createSettingsFile("include 'api', 'impl' ");
+    String archiveBaseName = (isGradleOlderThan("7.0") ? "baseName" : "archiveBaseName") + " = 'my-archive'\n";
+
+    importProject(
+      createBuildScriptBuilder()
+        .allprojects(TestGradleBuildScriptBuilder::withJavaPlugin)
+        .project(":api", it -> {
+          it
+            .addPostfix("""
+                          configurations { myConfig }
+                          sourceSets { mainX }
+                          jar { from sourceSets.mainX.output }
+                          def mainXJarTask = tasks.create(sourceSets.mainX.getJarTaskName(), Jar) {
+                            """ +  archiveBaseName + """
+                            from sourceSets.mainX.output
+                          }
+                          artifacts { myConfig mainXJarTask }
+                          """);
+        })
+        .project(":impl", it -> {
+          it.addImplementationDependency(it.project(":api"));
+          it.addTestImplementationDependency(it.project(":api", "myConfig"));
+        })
+        .generate()
+    );
+
+    assertModules("project", "project.main", "project.test",
+                  "project.api", "project.api.main", "project.api.test", "project.api.mainX",
+                  "project.impl", "project.impl.main", "project.impl.test");
+
+    assertModuleModuleDeps("project.impl.main", "project.api.main"); // does not depend on mainX
+    assertModuleModuleDeps("project.impl.test", "project.impl.main", "project.api.main", "project.api.mainX");
+  }
+
   @Test
   public void testCompileAndRuntimeConfigurationsTransitiveDependencyMerge() throws Exception {
     createSettingsFile("""
