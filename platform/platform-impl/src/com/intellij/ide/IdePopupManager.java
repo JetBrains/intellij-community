@@ -42,6 +42,10 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
     LOG.assertTrue(isPopupActive());
 
     if (e.getID() == WindowEvent.WINDOW_LOST_FOCUS || e.getID() == WindowEvent.WINDOW_DEACTIVATED) {
+      if (IdeEventQueueKt.getSkipWindowDeactivationEvents()) {
+        LOG.warn("Skipped e");
+        return false;
+      }
       if (!isPopupActive()) return false;
 
       Window sourceWindow = ((WindowEvent)e).getWindow();
