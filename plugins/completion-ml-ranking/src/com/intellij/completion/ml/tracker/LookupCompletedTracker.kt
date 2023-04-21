@@ -3,7 +3,9 @@
 package com.intellij.completion.ml.tracker
 
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement
 import com.intellij.completion.ml.personalization.UserFactorDescriptions
 import com.intellij.completion.ml.personalization.UserFactorStorage
 import com.intellij.completion.ml.storage.MutableLookupStorage
@@ -44,11 +46,15 @@ class LookupCompletedTracker : LookupFinishListener() {
             }
         }
 
+        val itemStartsWithPrefix = element.lookupString.startsWith(lookup.itemPattern(element))
+        val isTemplate = element.isTemplate()
+        UserFactorStorage.applyOnBoth(lookup.project, UserFactorDescriptions.TEMPLATES_USAGE) { updater ->
+            updater.fireCompletionFinished(itemStartsWithPrefix, isTemplate)
+        }
+
         if (prefixLength > 1) {
-            val pattern = lookup.itemPattern(element)
-            val isMnemonicsUsed = !element.lookupString.startsWith(pattern)
             UserFactorStorage.applyOnBoth(lookup.project, UserFactorDescriptions.MNEMONICS_USAGE) { updater ->
-                updater.fireCompletionFinished(isMnemonicsUsed)
+                updater.fireCompletionFinished(!itemStartsWithPrefix)
             }
 
             val storage = MutableLookupStorage.get(lookup)?.getItemStorage(element.idString())
@@ -59,5 +65,17 @@ class LookupCompletedTracker : LookupFinishListener() {
                 }
             }
         }
+    }
+
+    private fun LookupElement.isTemplate(): Boolean {
+        if (this is LiveTemplateLookupElement) return true
+
+        var item: LookupElement = this
+        while (item is LookupElementDecorator<*>) {
+            item = item.delegate
+            if (item is LiveTemplateLookupElement) return true
+        }
+
+        return false
     }
 }
