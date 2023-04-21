@@ -1,18 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide;
+package com.intellij.ide
 
-import com.intellij.openapi.project.Project;
-import com.intellij.platform.ModuleAttachProcessor;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.project.Project
+import com.intellij.platform.ModuleAttachProcessor.Companion.getMultiProjectDisplayName
 
 /**
- * Used by IDEs where <a href="https://www.jetbrains.com/help/phpstorm/opening-multiple-projects.html">attaching modules</a> is supported.
+ * Used by IDEs where [attaching modules](https://www.jetbrains.com/help/phpstorm/opening-multiple-projects.html) is supported.
  */
-final class AttachedModuleAwareRecentProjectsManager extends RecentProjectsManagerBase {
-  @Override
-  protected @Nullable String getProjectDisplayName(@NotNull Project project) {
-    String name = ModuleAttachProcessor.getMultiProjectDisplayName(project);
-    return name == null ? super.getProjectDisplayName(project) : name;
+internal class AttachedModuleAwareRecentProjectsManager : RecentProjectsManagerBase() {
+  override fun getProjectDisplayName(project: Project): String? {
+    val name = getMultiProjectDisplayName(project)
+    return name ?: super.getProjectDisplayName(project)
   }
 }
