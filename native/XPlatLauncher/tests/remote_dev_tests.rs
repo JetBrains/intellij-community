@@ -61,8 +61,9 @@ mod tests {
         let remote_dev_command = &["warmup", project_dir];
         let output = run_launcher_ext(&test, &LauncherRunSpec::remote_dev().with_args(remote_dev_command)).stdout;
 
+        let project_dir_arg = &format!("--project-dir={}", project_dir.replace('\\', "\\\\"));
         assert!(output.contains("warmup"), "output:\n{}", output);
-        assert!(output.contains(&format!("--project-dir={}", project_dir)), "output:\n{}", output);
+        assert!(output.contains(project_dir_arg), "'{}' is not in the output:\n{}", project_dir_arg, output);
         assert!(!output.contains("Usage: ./remote-dev-server [ij_command_name] [/path/to/project] [arguments...]"), "output:\n{}", output);
     }
 }
