@@ -5,15 +5,13 @@ import com.intellij.ide.IdeBundle
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationDisplayType.*
 import com.intellij.notification.impl.NotificationsConfigurationImpl
+import com.intellij.notification.impl.NotificationsManagerImpl
 import com.intellij.notification.impl.isSoundEnabled
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.dsl.builder.bindItem
-import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.toNullableProperty
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.ui.JBUI
 import javax.swing.DefaultComboBoxModel
@@ -78,7 +76,8 @@ class NotificationSettingsUi(var notification: NotificationSettingsWrapper, priv
     type.model.selectedItem = notification.displayType
     log.isSelected = notification.isShouldLog
     if (isReadAloudEnabled()) {
-      readAloud.isSelected = notification.isShouldReadAloud
+      readAloud.isSelected = notification.isShouldReadAloud && !NotificationsManagerImpl.isAnnouncingEnabled()
+      readAloud.isEnabled = !NotificationsManagerImpl.isAnnouncingEnabled()
     }
     if (isSoundEnabled()) {
       playSound.isSelected = notification.isPlaySound

@@ -286,14 +286,20 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   }
 
   private static void announceNotification(Notification notification) {
-    if (!ScreenReader.isActive()) return;
+    if (!isAnnouncingEnabled()) return;
     EDT.assertIsEdt();
 
-    int mode = Registry.intValue("ide.accessibility.announcing.notifications.mode");
-    if (mode == 0) return;
-
     List<String> components = getComponentsToAnnounce(notification);
-    announceComponents(components, notification, mode);
+    announceComponents(components, notification, getAnnouncingMode());
+  }
+
+  @ApiStatus.Experimental
+  public static boolean isAnnouncingEnabled() {
+    return ScreenReader.isActive() && getAnnouncingMode() != 0;
+  }
+
+  private static int getAnnouncingMode() {
+    return Registry.intValue("ide.accessibility.announcing.notifications.mode");
   }
 
   private static void announceComponents(List<String> components, Notification notification, int mode) {
