@@ -75,6 +75,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static com.intellij.testFramework.ServiceContainerUtil.registerExtension;
+
 public class FileTypesTest extends HeavyPlatformTestCase {
   private static final Logger LOG = Logger.getInstance(FileTypesTest.class);
 
@@ -299,6 +301,35 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     PsiFile psiFile = PsiManagerEx.getInstanceEx(getProject()).getFileManager().findFile(vFile); // autodetect text file if needed
     assertNotNull(psiFile);
     assertEquals(PlainTextFileType.INSTANCE, psiFile.getFileType());
+  }
+
+  public void testFreezedTemporarilyFileTypeHasHighestPriority() throws IOException {
+    File dir = createTempDirectory();
+    VirtualFile vDir = getVirtualFile(dir);
+    VirtualFile vFile = createChildData(vDir, "test.txt");
+    setFileText(vFile, "text");
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+
+    assertEquals("Sanity: PlainText should be autodetected during indexing", PlainTextFileType.INSTANCE, getFileType(vFile));
+
+    MyTestFileType overrideFileType = new MyTestFileType();
+    FileTypeOverrider overrider = file -> {
+      if (file.equals(vFile)) {
+        return overrideFileType;
+      }
+      else {
+        return null;
+      }
+    };
+    registerExtension(ApplicationManager.getApplication(), FileTypeOverrider.EP_NAME, overrider, getTestRootDisposable());
+    assertEquals("Sanity: overrideFileType should override default plain text", overrideFileType, getFileType(vFile));
+
+    MyCustomImageFileType freezedFileType = new MyCustomImageFileType();
+    myFileTypeManager.freezeFileTypeTemporarilyWithProvidedValueIn(vFile, freezedFileType, () -> {
+      assertEquals("freezed type should override everything (1)", freezedFileType, myFileTypeManager.getFileTypeByFile(vFile));
+      assertEquals("freezed type should override everything (2)", freezedFileType, myFileTypeManager.getFileTypeByFile(vFile, null));
+      assertTrue("isFileOfType should be consistent with getFileTypeByFile", myFileTypeManager.isFileOfType(vFile, freezedFileType));
+    });
   }
 
   public void testFileTypeChooser() throws IOException {
