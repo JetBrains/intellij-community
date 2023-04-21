@@ -1,13 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInspection.sourceToSink.propagate;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInspection.sourceToSink;
 
 import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.analysis.problemsView.toolWindow.ProblemsViewToolWindowUtils;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.codeInspection.sourceToSink.MarkAsSafeFix;
-import com.intellij.codeInspection.sourceToSink.TaintAnalyzer;
-import com.intellij.codeInspection.sourceToSink.TaintValue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -31,11 +28,18 @@ import java.util.function.Consumer;
 
 public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
 
+  @NotNull
   private final String myName;
 
-  public PropagateFix(@NotNull PsiElement psiElement, @NotNull String name) {
+  @NotNull
+  private final TaintValueFactory myTaintValueFactory;
+
+  public PropagateFix(@NotNull PsiElement psiElement,
+                      @NotNull String name,
+                      @NotNull TaintValueFactory taintValueFactory) {
     super(psiElement);
     myName = name;
+    myTaintValueFactory = taintValueFactory;
   }
 
   @Override
@@ -57,10 +61,10 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     if (uExpression == null) return;
     PsiElement reportedElement = uExpression.getSourcePsi();
     if (reportedElement == null) return;
-    TaintAnalyzer analyzer = new TaintAnalyzer();
+    TaintAnalyzer analyzer = new TaintAnalyzer(myTaintValueFactory);
     if (analyzer.analyze(uExpression) != TaintValue.UNKNOWN) return;
     PsiElement target = ((UResolvable)uExpression).resolve();
-    TaintNode root = new TaintNode(null, target, reportedElement);
+    TaintNode root = new TaintNode(null, target, reportedElement, myTaintValueFactory);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       Set<TaintNode> toAnnotate = new HashSet<>();
       toAnnotate = PropagateAnnotationPanel.getSelectedElements(root, toAnnotate);
@@ -102,18 +106,18 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     return JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.family");
   }
 
-  private static void annotate(@NotNull Project project, @NotNull Collection<TaintNode> toAnnotate, boolean isHeadlessMode) {
-    List<TaintNode> nonMarkedNodes = ContainerUtil.filter(toAnnotate, PropagateFix::isNonMarked);
+  private void annotate(@NotNull Project project, @NotNull Collection<TaintNode> toAnnotate, boolean isHeadlessMode) {
+    List<TaintNode> nonMarkedNodes = ContainerUtil.filter(toAnnotate, this::isNonMarked);
     Set<PsiElement> psiElements = getPsiElements(nonMarkedNodes);
     if (psiElements == null) return;
-    MarkAsSafeFix.markAsSafe(project, psiElements, isHeadlessMode);
+    MarkAsSafeFix.markAsSafe(project, psiElements, isHeadlessMode, this.myTaintValueFactory.getDefaultUntaintedAnnotation());
   }
 
-  private static boolean isNonMarked(@NotNull TaintNode taintNode) {
+  private boolean isNonMarked(@NotNull TaintNode taintNode) {
     if (taintNode.myTaintValue == TaintValue.TAINTED) return false;
     PsiElement psiElement = taintNode.getPsiElement();
     if (psiElement == null) return true;
-    return TaintAnalyzer.fromAnnotation(psiElement) != TaintValue.UNTAINTED; 
+    return myTaintValueFactory.fromAnnotation(psiElement) != TaintValue.UNTAINTED;
   }
 
   private static @Nullable Set<@NotNull PsiElement> getPsiElements(@NotNull Collection<TaintNode> toAnnotate) {

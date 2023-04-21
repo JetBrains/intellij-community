@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInspection.sourceToSink.propagate;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInspection.sourceToSink;
 
 import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.analysis.problemsView.toolWindow.ProblemsView;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.codeInspection.sourceToSink.TaintValue;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.ide.util.PsiClassRenderingInfo;
 import com.intellij.ide.util.PsiElementRenderingInfo;
@@ -428,7 +427,7 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
 
     @Contract("_, _ -> new")
     private static @NotNull PropagateTree create(@NotNull Disposable parent, @NotNull TaintNode root) {
-      TaintNode rootWrapper = new TaintNode(null, null, null) {
+      TaintNode rootWrapper = new TaintNode(null, null, null, null) {
         @Override
         public List<TaintNode> calcChildren() {
           return Collections.singletonList(root);

@@ -1,9 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.codeInspection.sourceToSink.propagate;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInspection.sourceToSink;
 
-import com.intellij.codeInspection.sourceToSink.NonMarkedElement;
-import com.intellij.codeInspection.sourceToSink.TaintAnalyzer;
-import com.intellij.codeInspection.sourceToSink.TaintValue;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.psi.PsiElement;
@@ -17,17 +14,27 @@ import java.util.*;
 
 public class TaintNode extends PresentableNodeDescriptor<TaintNode> {
 
+  @Nullable
   private final SmartPsiElementPointer<PsiElement> myPsiElement;
+
+  @Nullable
   private final SmartPsiElementPointer<PsiElement> myRef;
   List<TaintNode> myCachedChildren;
   TaintValue myTaintValue = TaintValue.UNKNOWN;
   boolean isTaintFlowRoot;
   private boolean isExcluded;
 
-  TaintNode(TaintNode parent, PsiElement psiElement, @Nullable PsiElement ref) {
+  @Nullable
+  private final TaintValueFactory myTaintValueFactory;
+
+  TaintNode(@Nullable TaintNode parent,
+            @Nullable PsiElement psiElement,
+            @Nullable PsiElement ref,
+            @Nullable TaintValueFactory taintValueFactory) {
     super(parent == null ? null : parent.myProject, parent);
     myPsiElement = psiElement == null ? null : SmartPointerManager.createPointer(psiElement);
     myRef = ref == null ? null : SmartPointerManager.createPointer(ref);
+    myTaintValueFactory = taintValueFactory;
   }
 
   @Override
@@ -61,7 +68,8 @@ public class TaintNode extends PresentableNodeDescriptor<TaintNode> {
   }
 
   private @NotNull List<TaintNode> propagate(@NotNull PsiElement psiElement, @NotNull PsiElement elementRef) {
-    TaintAnalyzer taintAnalyzer = new TaintAnalyzer();
+    if (myTaintValueFactory == null) return List.of();
+    TaintAnalyzer taintAnalyzer = new TaintAnalyzer(myTaintValueFactory);
     TaintValue taintValue = taintAnalyzer.fromElement(psiElement, elementRef, true);
     myTaintValue = taintValue;
     if (taintValue == TaintValue.UNTAINTED) return Collections.emptyList();
@@ -74,7 +82,7 @@ public class TaintNode extends PresentableNodeDescriptor<TaintNode> {
     List<TaintNode> children = new ArrayList<>();
     for (NonMarkedElement nonMarkedElement : taintAnalyzer.getNonMarkedElements()) {
       if (parents.contains(nonMarkedElement.myNonMarked)) continue;
-      TaintNode child = new TaintNode(this, nonMarkedElement.myNonMarked, nonMarkedElement.myRef);
+      TaintNode child = new TaintNode(this, nonMarkedElement.myNonMarked, nonMarkedElement.myRef, myTaintValueFactory);
       children.add(child);
     }
     return children;

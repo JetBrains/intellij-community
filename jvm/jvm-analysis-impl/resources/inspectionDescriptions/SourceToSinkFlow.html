@@ -1,5 +1,5 @@
 <html><body>
-Reports cases when non-safe string is passed to a method with parameter marked with annotation <code>org.checkerframework.checker.tainting.qual.Untainted</code>.
+Reports cases when non-safe string is passed to a method with parameter marked with <code>@Untainted</code> annotations.
 <p>
   Safe string is:
 <ul>
@@ -40,6 +40,8 @@ Here we do not have non-safe string assignments to <code>s</code> so warning is 
 </pre>
 <p>
 Here we have a warning since <code>s1</code> has an unknown state after <code>foo</code> call result assignment.
-<!-- tooltip end -->
+  <!-- tooltip end -->
+<p>Use the <b>Untainted annotations</b> options to specify annotations, which will be used as <code>@Untainted</code> annotations during the analysis
+<p>Use the <b>Tainted annotations</b> options to specify annotations, which will be used as <code>@Tainted</code> annotations during the analysis
 <p><small>New in 2021.2</small></p>
 </body></html>
