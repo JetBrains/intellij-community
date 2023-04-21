@@ -168,13 +168,11 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   @NotNull
   public MavenArtifact resolve(@NotNull MavenArtifactInfo info,
                                @NotNull List<MavenRemoteRepository> remoteRepositories) throws MavenProcessCanceledException {
-    var longRunningTaskId = UUID.randomUUID().toString();
-    return resolve(longRunningTaskId, List.of(new MavenArtifactResolutionRequest(info, remoteRepositories)), null).get(0);
+    return resolve(List.of(new MavenArtifactResolutionRequest(info, remoteRepositories)), null).get(0);
   }
 
   @NotNull
-  public abstract List<MavenArtifact> resolve(@NotNull String longRunningTaskId,
-                                              @NotNull Collection<MavenArtifactResolutionRequest> requests,
+  public abstract List<MavenArtifact> resolve(@NotNull Collection<MavenArtifactResolutionRequest> requests,
                                               @Nullable MavenProgressIndicator progressIndicator)
     throws MavenProcessCanceledException;
 

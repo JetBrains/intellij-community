@@ -6,19 +6,20 @@ import kotlinx.coroutines.*
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
+import java.util.*
 
 abstract class MavenEmbedderWrapperEx(project: Project) : MavenEmbedderWrapper(project) {
   @Throws(MavenProcessCanceledException::class)
-  override fun resolve(longRunningTaskId: String,
-                       requests: MutableCollection<MavenArtifactResolutionRequest>,
+  override fun resolve(requests: MutableCollection<MavenArtifactResolutionRequest>,
                        progressIndicator: MavenProgressIndicator?): MutableList<MavenArtifact> =
     runBlocking {
+      val longRunningTaskId = UUID.randomUUID().toString()
       val embedder = getOrCreateWrappee()
 
       val progressIndication = launch {
-        while (isActive) {
-          delay(1000)
-          if (null != progressIndicator) {
+        if (null != progressIndicator) {
+          while (isActive) {
+            delay(1000)
             val status = embedder.getLongRunningTaskStatus(longRunningTaskId, ourToken)
             progressIndicator.setFraction(status.fraction())
             if (progressIndicator.isCanceled) {

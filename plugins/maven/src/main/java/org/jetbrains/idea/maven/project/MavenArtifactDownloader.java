@@ -184,8 +184,7 @@ public final class MavenArtifactDownloader {
       }
     }
 
-    var longRunningTaskId = UUID.randomUUID().toString();
-    var artifacts = embedder.resolve(longRunningTaskId, requests, myProgress);
+    var artifacts = embedder.resolve(requests, myProgress);
     for (var artifact : artifacts) {
       File file = artifact.getFile();
       if (file.exists()) {
