@@ -146,6 +146,10 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     // Prevent sourcing non-existent 'terminal/fish/config.fish' and 'terminal/.zshenv' by Fig.io
     envs.put("FIG_JETBRAINS_SHELL_INTEGRATION", "1");
 
+    if (Registry.is("ide.experimental.ui.new.terminal", false)) {
+      envs.put("INTELLIJ_TERMINAL_COMMAND_BLOCKS", "1");
+    }
+
     TerminalEnvironment.INSTANCE.setCharacterEncoding(envs);
 
     if (TrustedProjects.isTrusted(myProject)) {

@@ -86,7 +86,7 @@ function _jedi_precmd_hook() {
   precmd_functions=(${precmd_functions:#_jedi_precmd_hook})
   builtin unset -f _jedi_precmd_hook
 
-  [ -r "$_INTELLIJ_ZDOTDIR/hooks.zsh" ] && source "$_INTELLIJ_ZDOTDIR/hooks.zsh"
+  [ -n "$INTELLIJ_TERMINAL_COMMAND_BLOCKS" ] && [ -r "$_INTELLIJ_ZDOTDIR/hooks.zsh" ] && source "$_INTELLIJ_ZDOTDIR/hooks.zsh"
   'builtin' 'unset' '_INTELLIJ_ZDOTDIR'
 }
 
