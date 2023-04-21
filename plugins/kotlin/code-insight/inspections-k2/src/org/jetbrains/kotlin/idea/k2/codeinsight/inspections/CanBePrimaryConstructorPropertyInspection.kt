@@ -19,7 +19,7 @@ internal class CanBePrimaryConstructorPropertyInspection
     : AbstractKotlinApplicableInspectionWithContext<KtProperty, MovePropertyToConstructorInfo>(KtProperty::class) {
 
     override fun getProblemDescription(element: KtProperty, context: MovePropertyToConstructorInfo): String = KotlinBundle.message(
-        "property.is.explicitly.assigned.to.parameter.0.can", element.name!!
+        "property.is.explicitly.assigned.to.parameter.0.can", element.name ?: "???"
     )
 
     override fun getActionFamilyName() = KotlinBundle.message("inspection.can.be.primary.constructor.property.display.name")
