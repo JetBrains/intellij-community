@@ -56,20 +56,19 @@ abstract class AbstractReferenceResolveWithLibTest : AbstractReferenceResolveTes
             }
         }
     }
-
-    override fun getExpectedReferences(text: String, index: Int): List<String> {
-        if (!attachLibrarySources) {
-            val decompiledReferences = getExpectedReferences(text, index, "CLS_REF")
-            if (decompiledReferences.isNotEmpty()) {
-                return decompiledReferences
-            }
-        }
-
-        return super.getExpectedReferences(text, index)
-    }
 }
 
 abstract class AbstractReferenceResolveWithCompiledLibTest : AbstractReferenceResolveWithLibTest() {
     override val attachLibrarySources: Boolean
         get() = false
+
+    override fun getExpectedReferences(text: String, index: Int): List<String> {
+        // Check references to compiled elements first, then fallback to the shared 'REF' ones
+        val decompiledReferences = getExpectedReferences(text, index, "CLS_REF")
+        if (decompiledReferences.isNotEmpty()) {
+            return decompiledReferences
+        }
+
+        return super.getExpectedReferences(text, index)
+    }
 }
