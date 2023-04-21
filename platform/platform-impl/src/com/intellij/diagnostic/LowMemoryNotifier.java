@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.diagnostic.hprof.action.HeapDumpSnapshotRunnable;
 import com.intellij.diagnostic.report.MemoryReportReason;
 import com.intellij.ide.IdeBundle;
@@ -10,7 +11,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.LowMemoryWatcher;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -18,7 +18,7 @@ import java.util.Set;
 import static com.intellij.openapi.util.LowMemoryWatcher.LowMemoryWatcherType.ONLY_AFTER_GC;
 
 final class LowMemoryNotifier implements Disposable {
-  private static final Set<VMOptions.MemoryKind> ourNotifications = ContainerUtil.newConcurrentSet();
+  private static final Set<VMOptions.MemoryKind> ourNotifications = ConcurrentCollectionFactory.createConcurrentSet();
 
   private final LowMemoryWatcher myWatcher = LowMemoryWatcher.register(() -> showNotification(VMOptions.MemoryKind.HEAP, false), ONLY_AFTER_GC);
 

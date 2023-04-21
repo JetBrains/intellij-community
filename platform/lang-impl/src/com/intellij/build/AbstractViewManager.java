@@ -2,6 +2,7 @@
 package com.intellij.build;
 
 import com.intellij.build.events.*;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.LangBundle;
@@ -67,7 +68,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
         return buildsView;
       }
     };
-    myPinnedViews = ContainerUtil.newConcurrentSet();
+    myPinnedViews = ConcurrentCollectionFactory.createConcurrentSet();
     @Nullable BuildViewProblemsService buildViewProblemsService = project.getService(BuildViewProblemsService.class);
     if (buildViewProblemsService != null) {
       buildViewProblemsService.listenToBuildView(this);

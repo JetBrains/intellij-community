@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.auth
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.Disposable
-import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -20,7 +20,7 @@ class AccountUrlAuthenticationFailuresHolder<A : Account>(
         accountManager().getCredentialsFlow(account).first()
         storeMap.remove(account)
       }
-      ContainerUtil.newConcurrentSet()
+      ConcurrentCollectionFactory.createConcurrentSet()
     }.add(url)
   }
 

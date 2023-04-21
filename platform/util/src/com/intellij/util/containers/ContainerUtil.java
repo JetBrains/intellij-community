@@ -8,8 +8,6 @@ import com.intellij.util.*;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.*;
 
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.WeakHashMap;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -363,6 +361,9 @@ public final class ContainerUtil {
     return new THashSet<>();
   }
 
+  /**
+   * Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentSet()} instead, if available
+   */
   @Contract(pure = true)
   public static @NotNull <T> Set<@NotNull T> newConcurrentSet() {
     //noinspection SSBasedInspection

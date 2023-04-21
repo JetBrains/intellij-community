@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.ThreadDumpService;
@@ -72,8 +73,8 @@ final class ActionUpdater {
   private static final Executor ourCommonExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Common)", 2);
   private static final Executor ourFastTrackExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Fast)", 1);
 
-  private static final Set<CancellablePromise<?>> ourPromises = ContainerUtil.newConcurrentSet();
-  private static final Set<CancellablePromise<?>> ourToolbarPromises = ContainerUtil.newConcurrentSet();
+  private static final Set<CancellablePromise<?>> ourPromises = ConcurrentCollectionFactory.createConcurrentSet();
+  private static final Set<CancellablePromise<?>> ourToolbarPromises = ConcurrentCollectionFactory.createConcurrentSet();
   private static FList<String> ourInEDTActionOperationStack = FList.emptyList();
   private static boolean ourNoRulesInEDTSection;
 

@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.impl;
 
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.diagnostic.telemetry.TraceManager;
@@ -75,7 +76,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   /** Computation to be executed -- possible, wrapped into some monitoring */
   private final Callable<? extends T> myActualComputation;
 
-  private static final Set<Submission<?>> ourTasks = ContainerUtil.newConcurrentSet();
+  private static final Set<Submission<?>> ourTasks = ConcurrentCollectionFactory.createConcurrentSet();
   private static final Map<List<?>, Submission<?>> ourTasksByEquality = new HashMap<>();
   private static final SubmissionTracker ourUnboundedSubmissionTracker = new SubmissionTracker();
 

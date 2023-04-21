@@ -22,10 +22,8 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class JarFileSystemImpl extends JarFileSystem implements IntegrityCheckCapableFileSystem {
   private final Set<String> myNoCopyJarPaths;
@@ -36,8 +34,7 @@ public class JarFileSystemImpl extends JarFileSystem implements IntegrityCheckCa
       myNoCopyJarPaths = null;
     }
     else if (SystemInfoRt.isFileSystemCaseSensitive) {
-      //noinspection SSBasedInspection
-      myNoCopyJarPaths = Collections.newSetFromMap(new ConcurrentHashMap<>());
+      myNoCopyJarPaths = ConcurrentCollectionFactory.createConcurrentSet();
     }
     else {
       myNoCopyJarPaths = ConcurrentCollectionFactory.createConcurrentSet(HashingStrategy.caseInsensitive());

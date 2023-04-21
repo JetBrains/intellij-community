@@ -2,6 +2,7 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
@@ -12,7 +13,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -387,7 +387,7 @@ public abstract class Invoker implements Disposable {
   }
 
   public static final class Background extends Invoker {
-    private final Set<Thread> threads = ContainerUtil.newConcurrentSet();
+    private final Set<Thread> threads = ConcurrentCollectionFactory.createConcurrentSet();
     private final ScheduledExecutorService executor;
 
     /**

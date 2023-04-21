@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
@@ -386,7 +387,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     assertNotNull(project);
     assertFalse(project.equals(PlainTextFileType.INSTANCE));
 
-    Set<VirtualFile> detectorCalled = ContainerUtil.newConcurrentSet();
+    Set<VirtualFile> detectorCalled = ConcurrentCollectionFactory.createConcurrentSet();
     FileTypeRegistry.FileTypeDetector detector = new FileTypeRegistry.FileTypeDetector() {
       @Override
       public @Nullable FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText) {
@@ -814,7 +815,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     UserBinaryFileType stuffType = new UserBinaryFileType() {};
     stuffType.setName("stuffType");
 
-    Set<VirtualFile> detectorCalled = ContainerUtil.newConcurrentSet();
+    Set<VirtualFile> detectorCalled = ConcurrentCollectionFactory.createConcurrentSet();
 
     FileTypeRegistry.FileTypeDetector detector = new FileTypeRegistry.FileTypeDetector() {
       @Override
@@ -1418,7 +1419,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   }
 
   public void testDetectorMustWorkForEmptyFileNow() throws IOException {
-    Set<VirtualFile> detectorCalled = ContainerUtil.newConcurrentSet();
+    Set<VirtualFile> detectorCalled = ConcurrentCollectionFactory.createConcurrentSet();
     String magicName = "blah-blah.to.detect";
     FileTypeRegistry.FileTypeDetector detector = (file, __, ___) -> {
       detectorCalled.add(file);

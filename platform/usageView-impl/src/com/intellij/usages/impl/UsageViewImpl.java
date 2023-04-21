@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.find.FindManager;
 import com.intellij.icons.AllIcons;
@@ -169,8 +170,8 @@ public class UsageViewImpl implements UsageViewEx {
     .createBoundedApplicationPoolExecutor("Usage View Update Requests", AppExecutorUtil.getAppExecutorService(),
                                           JobSchedulerImpl.getJobPoolParallelism(), this);
   private final List<ExcludeListener> myExcludeListeners = ContainerUtil.createConcurrentList();
-  private final Set<Pair<Class<? extends PsiReference>, Language>> myReportedReferenceClasses =
-    ContainerUtil.newConcurrentSet();
+  private final Set<Pair<Class<? extends PsiReference>, Language>> myReportedReferenceClasses
+    = ConcurrentCollectionFactory.createConcurrentSet();
 
   private Runnable fusRunnable = () -> {
     if (myTree == null) return;

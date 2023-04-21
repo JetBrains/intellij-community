@@ -13,6 +13,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
@@ -57,7 +58,6 @@ import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -100,8 +100,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final Semaphore myFreezeSemaphore = new Semaphore(1);
   private final Semaphore myFinishSemaphore = new Semaphore(1);
   @NotNull private final OffsetMap myOffsetMap;
-  private final Set<Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions =
-    ContainerUtil.newConcurrentSet();
+  private final Set<Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions
+    = ConcurrentCollectionFactory.createConcurrentSet();
   private final LookupListener myLookupListener = new LookupListener() {
     @Override
     public void lookupCanceled(@NotNull final LookupEvent event) {

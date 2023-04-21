@@ -3,6 +3,7 @@ package com.intellij.util.indexing;
 
 import com.google.common.collect.Iterators;
 import com.intellij.AppTopics;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.startup.ServiceNotReadyException;
@@ -145,7 +146,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private final SimpleMessageBusConnection myConnection;
   private final FileDocumentManager myFileDocumentManager;
 
-  private final Set<ID<?, ?>> myUpToDateIndicesForUnsavedOrTransactedDocuments = ContainerUtil.newConcurrentSet();
+  private final Set<ID<?, ?>> myUpToDateIndicesForUnsavedOrTransactedDocuments = ConcurrentCollectionFactory.createConcurrentSet();
   private volatile SmartFMap<Document, PsiFile> myTransactionMap = SmartFMap.emptyMap();
 
   final boolean myIsUnitTestMode;

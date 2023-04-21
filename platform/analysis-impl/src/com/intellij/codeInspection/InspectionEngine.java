@@ -42,7 +42,8 @@ import java.util.stream.Collectors;
 
 public final class InspectionEngine {
   private static final Logger LOG = Logger.getInstance(InspectionEngine.class);
-  private static final Set<Class<? extends LocalInspectionTool>> RECURSIVE_VISITOR_TOOL_CLASSES = ContainerUtil.newConcurrentSet();
+  private static final Set<Class<? extends LocalInspectionTool>> RECURSIVE_VISITOR_TOOL_CLASSES =
+    ConcurrentCollectionFactory.createConcurrentSet();
 
   private static boolean createVisitorAndAcceptElements(@NotNull LocalInspectionTool tool,
                                                      @NotNull ProblemsHolder holder,
