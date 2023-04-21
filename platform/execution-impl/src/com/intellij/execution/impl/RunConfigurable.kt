@@ -907,6 +907,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     return createNewConfiguration(settings, node, selectedNode)
   }
 
+  @Nls
   private fun suggestName(configuration: RunConfiguration): String? {
     if (configuration is LocatableConfiguration) {
       val name = configuration.suggestedName()
@@ -1243,7 +1244,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       val type = selectedConfigurationType ?: return
       val selectedNodes = selectedNodes
       val typeNode = getConfigurationTypeNode(type) ?: return
-      val folderName = createUniqueName(typeNode, "New Folder", FOLDER)
+      val folderName = createUniqueName(typeNode, ExecutionBundle.message("new.folder"), FOLDER)
       val folders = ArrayList<DefaultMutableTreeNode>()
       collectNodesRecursively(getConfigurationTypeNode(type)!!, folders, FOLDER)
       val folderNode = DefaultMutableTreeNode(folderName)
@@ -1563,7 +1564,7 @@ private fun canRunConfiguration(configuration: SingleConfigurationConfigurable<R
   }
 }
 
-private fun createUniqueName(typeNode: DefaultMutableTreeNode, baseName: String?, vararg kinds: RunConfigurableNodeKind): String {
+private fun createUniqueName(typeNode: DefaultMutableTreeNode, @Nls baseName: String?, vararg kinds: RunConfigurableNodeKind): String {
   val str = baseName ?: ExecutionBundle.message("run.configuration.unnamed.name.prefix")
   val configurationNodes = ArrayList<DefaultMutableTreeNode>()
   collectNodesRecursively(typeNode, configurationNodes, *kinds)
