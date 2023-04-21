@@ -21,17 +21,21 @@ import org.jetbrains.kotlin.types.typeUtil.makeNullable
 
 fun KtExpression.shouldHaveNotNullType(): Boolean {
     val type = when (val parent = parent) {
-        is KtBinaryExpression -> {
+        is KtBinaryExpression ->{
             val default = parent.left?.let { it.getType(it.analyze()) }
             val resolvedCall = parent.operationReference.resolveToCall()
             val function = resolvedCall?.resultingDescriptor as? FunctionDescriptor
             val isInfix = function?.isInfix ?: false
+
             if (isInfix) {
                 val expression = this.let { it.getType(it.analyze()) }?.makeNullable()
                 val valueParameters = function?.valueParameters
                 val typeParameters = function?.typeParameters
-                val isValidType = valueParameters?.any { param -> param.type.toString() == expression.toString() } ?: false
-                        || typeParameters?.isNotEmpty() ?: false
+                val isValidType = valueParameters?.any { param ->
+                            param.type.toString() == expression.toString()
+                        }?:false ||
+                        typeParameters?.isNotEmpty() ?: false
+
                 if (isValidType) {
                     return false
                 } else {
