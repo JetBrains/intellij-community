@@ -34,7 +34,7 @@ variant_size_differences
 use std::env;
 use std::path::PathBuf;
 
-use anyhow::{bail, Result};
+use anyhow::Result;
 use log::{debug, error, LevelFilter, warn};
 use serde::{Deserialize, Serialize};
 use utils::get_current_exe;
