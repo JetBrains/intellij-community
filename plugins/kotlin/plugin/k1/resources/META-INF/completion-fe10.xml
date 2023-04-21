@@ -3,6 +3,11 @@
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.completionExtension"
             interface="org.jetbrains.kotlin.idea.completion.KotlinCompletionExtension" dynamic="true"/>
+
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.completionInformationProvider"
+            interface="org.jetbrains.kotlin.idea.completion.CompletionInformationProvider"
+            dynamic="true"/>
   </extensionPoints>
 
   <projectListeners>

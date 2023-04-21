@@ -5,6 +5,15 @@
             qualifiedName="org.jetbrains.kotlin.j2kConverterExtension"
             interface="org.jetbrains.kotlin.j2k.J2kConverterExtension"
             dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.kotlinIndicesHelperExtension"
+            interface="org.jetbrains.kotlin.idea.core.extension.KotlinIndicesHelperExtension"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.quickFixContributor"
+            interface="org.jetbrains.kotlin.idea.quickfix.QuickFixContributor"
+            dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
