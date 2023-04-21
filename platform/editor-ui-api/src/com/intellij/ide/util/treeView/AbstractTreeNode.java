@@ -35,7 +35,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   private Object myValue;
   private boolean myNullValueSet;
   private final boolean myNodeWrapper;
-  static final Object TREE_WRAPPER_VALUE = new Object();
+  protected static final Object TREE_WRAPPER_VALUE = new Object();
 
   protected AbstractTreeNode(Project project, @NotNull T value) {
     super(project, null);
