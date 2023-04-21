@@ -52,13 +52,16 @@ abstract class AbstractReferenceResolveWithCrossLibTest : AbstractReferenceResol
 
     override fun configureTest() {
         super.configureTest()
+
+        // Read carets from the file opened as a source
         val caretsAndSelections = myFixture.editor.caretModel.caretsAndSelections
 
-        // Open the same file, but inside a library
+        // Then open the same file, but inside an attached library to test cross-library navigation
         val useSiteLibrary = LibraryUtil.findLibrary(module, USE_SITE_LIBRARY_NAME)!!
         val virtualFile = useSiteLibrary.getFiles(OrderRootType.SOURCES).firstNotNullOf { it.findChild(dataFile().name) }
         myFixture.openFileInEditor(virtualFile)
 
+        // Apply the carets we got above
         myFixture.editor.caretModel.caretsAndSelections = caretsAndSelections
     }
 }
