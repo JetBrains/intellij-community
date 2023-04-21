@@ -26,7 +26,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.*
 import com.intellij.openapi.client.ClientKind
-import com.intellij.openapi.client.ClientSessionsManager.Companion.getProjectSession
+import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.getOrLogException
@@ -44,7 +44,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.EditorComposite.Companion.retrofit
-import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl.Companion.getInstanceImpl
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.fileTypes.FileTypeEvent
@@ -975,7 +974,7 @@ open class FileEditorManagerImpl(
     get() {
       val clientId = ClientId.current
       LOG.assertTrue(!clientId.isLocal, "Trying to get ClientFileEditorManager for local ClientId")
-      return getProjectSession(project, clientId)?.serviceOrNull<ClientFileEditorManager>()
+      return ClientSessionsManager.getProjectSession(project, clientId)?.serviceOrNull<ClientFileEditorManager>()
     }
 
   /**
@@ -1170,7 +1169,12 @@ open class FileEditorManagerImpl(
     }
 
     // restore selected editor
-    val provider = if (entry == null) getInstanceImpl().getSelectedFileEditorProvider(composite, project) else entry.selectedProvider
+    val provider = if (entry == null) {
+      FileEditorProviderManagerImpl.getInstanceImpl().getSelectedFileEditorProvider(composite, project)
+    }
+    else {
+      entry.selectedProvider
+    }
     if (provider != null) {
       composite.setSelectedEditor(provider.editorTypeId)
     }
@@ -1186,12 +1190,6 @@ open class FileEditorManagerImpl(
 
     if (newEditor) {
       openFileSetModificationCount.increment()
-    }
-
-    if (!isReopeningOnStartup) {
-      //[jeka] this is a hack to support back-forward navigation
-      // previously there was an incorrect call to fireSelectionChanged() with a side-effect
-      IdeDocumentHistory.getInstance(project).onSelectionChanged()
     }
 
     // update frame and tab title
