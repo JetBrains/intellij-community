@@ -1,6 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-use std::{env, fs, io, thread, time};
+use std::{env, fs, thread, time};
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::fs::File;
@@ -178,17 +178,14 @@ fn command_handler(command: &Output) {
     }
 }
 
-fn get_child_dir(parent: &Path, prefix: &str) -> io::Result<PathBuf> {
-    let read_dir = fs::read_dir(parent)?;
-
-    for dir_entry in read_dir {
-        let dir_entry_ok = dir_entry?;
-        if dir_entry_ok.file_name().to_string_lossy().starts_with(prefix) {
-            return Ok(dir_entry_ok.path());
-        }
+fn get_child_dir(parent: &Path, prefix: &str) -> Result<PathBuf> {
+    let entry = fs::read_dir(parent)?
+        .map(|r| r.unwrap())
+        .find(|e| e.file_name().to_string_lossy().starts_with(prefix));
+    match entry {
+        Some(e) => Ok(e.path()),
+        None => bail!("'{}*' not found in {:?}", prefix, parent)
     }
-
-    return Err(io::Error::new(io::ErrorKind::NotFound, "Child dir not found"));
 }
 
 #[cfg(target_os = "linux")]
