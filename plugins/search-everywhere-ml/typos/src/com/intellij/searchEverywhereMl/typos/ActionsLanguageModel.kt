@@ -55,7 +55,7 @@ internal class ActionsLanguageModel(coroutineScope: CoroutineScope,
   /**
    * Returns true if all words from actions and options have been processed and added to the dictionary
    */
-  val isComputed
+  val isComputed: Boolean
     get() = languageModelComputation.isCompleted
 
   private fun getWordsFromActions() = (ActionManager.getInstance() as ActionManagerImpl)
