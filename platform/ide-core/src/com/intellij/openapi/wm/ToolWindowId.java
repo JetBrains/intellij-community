@@ -21,7 +21,8 @@ public interface ToolWindowId {
   String FIND = "Find";
   String HIERARCHY = "Hierarchy";
   String TODO_VIEW = "TODO";
-  String DEPENDENCIES = "Dependency Viewer";
+  String ANALYZE_DEPENDENCIES = "Dependency Viewer";
+  String BUILD_DEPENDENCIES = "Dependencies";
   String VCS = "Version Control";
   String COMMIT = "Commit";
   String MODULES_DEPENDENCIES = "Module Dependencies";

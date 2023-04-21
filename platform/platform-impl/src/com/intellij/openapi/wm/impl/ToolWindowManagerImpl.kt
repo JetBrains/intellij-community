@@ -1110,6 +1110,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   private fun isToolwindowOfBundledPlugin(task: RegisterToolWindowTask): Boolean {
+    if (ToolWindowId.BUILD_DEPENDENCIES == task.id) return true // platform toolwindow but registered dynamically
+
     val taskPlugin = task.pluginDescriptor
     if (taskPlugin != null) return taskPlugin.isBundled
 
