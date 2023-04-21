@@ -34,7 +34,7 @@ import kotlin.concurrent.write
 
 private val LOG = logger<GitCommitTemplateTracker>()
 
-@Service
+@Service(Service.Level.PROJECT)
 internal class GitCommitTemplateTracker(private val project: Project) : GitConfigListener, AsyncVfsEventsListener, Disposable {
   private val commitTemplates = mutableMapOf<GitRepository, GitCommitTemplate>()
   private val TEMPLATES_LOCK = ReentrantReadWriteLock()

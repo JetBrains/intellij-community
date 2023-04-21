@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class GitConflictsToolWindowManager implements Disposable {
   @NotNull private final Project myProject;
 

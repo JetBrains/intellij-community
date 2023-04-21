@@ -37,7 +37,7 @@ import java.util.regex.PatternSyntaxException;
 import static com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx.MAPPING_DETECTION_LOG;
 import static com.intellij.openapi.vfs.VirtualFileVisitor.*;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class VcsRootScanner implements Disposable {
   private static final Logger LOG = Logger.getInstance(VcsRootScanner.class);
 

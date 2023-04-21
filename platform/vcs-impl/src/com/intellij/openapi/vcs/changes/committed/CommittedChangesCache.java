@@ -42,7 +42,7 @@ import static com.intellij.util.MessageBusUtil.invokeLaterIfNeededOnSyncPublishe
 import static com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptyList;
 
 
-@Service
+@Service(Service.Level.PROJECT)
 @State(
   name = "CommittedChangesCache",
   storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)}
