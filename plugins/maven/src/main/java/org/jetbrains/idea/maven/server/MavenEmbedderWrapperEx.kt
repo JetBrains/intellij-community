@@ -3,15 +3,14 @@ package org.jetbrains.idea.maven.server
 
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.*
-import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import java.util.*
 
 abstract class MavenEmbedderWrapperEx(project: Project) : MavenEmbedderWrapper(project) {
   @Throws(MavenProcessCanceledException::class)
-  override fun resolve(requests: MutableCollection<MavenArtifactResolutionRequest>,
-                       progressIndicator: MavenProgressIndicator?): MutableList<MavenArtifact> =
+  override fun <R> runLongRunningTask(task: LongRunningTask<R>,
+                                      progressIndicator: MavenProgressIndicator?): R =
     runBlocking {
       val longRunningTaskId = UUID.randomUUID().toString()
       val embedder = getOrCreateWrappee()
@@ -24,7 +23,7 @@ abstract class MavenEmbedderWrapperEx(project: Project) : MavenEmbedderWrapper(p
             progressIndicator.setFraction(status.fraction())
             if (progressIndicator.isCanceled) {
               if (embedder.cancelLongRunningTask(longRunningTaskId, ourToken)) {
-                break;
+                break
               }
             }
           }
@@ -34,7 +33,7 @@ abstract class MavenEmbedderWrapperEx(project: Project) : MavenEmbedderWrapper(p
       val result = async {
         try {
           return@async withContext(Dispatchers.IO) {
-            return@withContext embedder.resolve(longRunningTaskId, requests, ourToken)
+            return@withContext task.run(embedder, longRunningTaskId)
           }
         }
         catch (e: Exception) {

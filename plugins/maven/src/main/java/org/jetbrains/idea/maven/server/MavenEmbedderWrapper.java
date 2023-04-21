@@ -172,9 +172,10 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   }
 
   @NotNull
-  public abstract List<MavenArtifact> resolve(@NotNull Collection<MavenArtifactResolutionRequest> requests,
-                                              @Nullable MavenProgressIndicator progressIndicator)
-    throws MavenProcessCanceledException;
+  public List<MavenArtifact> resolve(@NotNull Collection<MavenArtifactResolutionRequest> requests,
+                                     @Nullable MavenProgressIndicator progressIndicator) throws MavenProcessCanceledException {
+    return runLongRunningTask((embedder, longRunningTaskId) -> embedder.resolve(longRunningTaskId, requests, ourToken), progressIndicator);
+  }
 
   /**
    * @deprecated use {@link MavenEmbedderWrapper#resolveArtifactTransitively()}
@@ -316,6 +317,14 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
       myProgressPullingFuture.cancel(true);
     }
     myCustomization = null;
+  }
+
+  protected abstract <R> R runLongRunningTask(@NotNull LongRunningTask<R> task,
+                                              @Nullable MavenProgressIndicator progressIndicator) throws MavenProcessCanceledException;
+
+  @FunctionalInterface
+  protected interface LongRunningTask<R> {
+    R run(MavenServerEmbedder embedder, String longRunningTaskId) throws RemoteException, MavenServerProcessCanceledException;
   }
 
   private static final class Customization {
