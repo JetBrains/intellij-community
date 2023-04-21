@@ -5,6 +5,7 @@ import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.notification.*;
@@ -899,7 +900,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
             group.add(actions.get(i));
           }
 
-          DropDownAction dropDownAction = new DropDownAction(IdeBundle.message("notifications.action.more"),
+          DropDownAction dropDownAction = new DropDownAction(IdeCoreBundle.message("notifications.action.more"),
                                                              (link, _1) -> showPopup(notification, link, group, actionPanel.popupAlarm));
           actionPanel.addAction(dropDownAction);
           Notification.setDataProvider(notification, dropDownAction);
@@ -1565,8 +1566,6 @@ public final class NotificationsManagerImpl extends NotificationsManager {
           int collapseIndex = collapseStart;
           if (myActionPanel.getPreferredSize().width > width) {
             myActionPanel.groupedActionsLink.setVisible(true);
-            myActionPanel.actionLinks.get(collapseIndex).setVisible(false);
-            collapseIndex += collapseDelta;
             myActionPanel.actionLinks.get(collapseIndex).setVisible(false);
             collapseIndex += collapseDelta;
             myActionPanel.doLayout();
