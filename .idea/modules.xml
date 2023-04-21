@@ -548,6 +548,8 @@
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/testing/intellij.c.testing.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/testing/intellij.c.testing.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-base/intellij.cidr.base.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-base/intellij.cidr.base.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-base/plugin/intellij.cidr.base.plugin.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-base/plugin/intellij.cidr.base.plugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-clang-config/intellij.cidr.clangConfig.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-clang-config/intellij.cidr.clangConfig.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-clang-format/intellij.cidr.clangFormat.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-clang-format/intellij.cidr.clangFormat.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-common/intellij.cidr.common.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-common/intellij.cidr.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-common-testFramework/intellij.cidr.common.testFramework.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-common-testFramework/intellij.cidr.common.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-common-testFramework/core/intellij.cidr.common.testFramework.core.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-common-testFramework/core/intellij.cidr.common.testFramework.core.iml" />

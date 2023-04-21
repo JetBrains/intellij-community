@@ -42,6 +42,8 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       "intellij.c.plugin",
       "intellij.cidr.debugger.plugin",
       "intellij.cidr.base.plugin",
+      "intellij.cidr.clangConfig",
+      "intellij.cidr.clangFormat",
     )
 
     private val EXCLUDED_PLUGINS = listOf(
@@ -152,6 +154,8 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       },
       PluginLayout.plugin("intellij.c.clangd"),
       PluginLayout.plugin("intellij.c.clangdBridge"),
+      PluginLayout.plugin("intellij.cidr.clangConfig"),
+      PluginLayout.plugin("intellij.cidr.clangFormat"),
     ))
   }
 
