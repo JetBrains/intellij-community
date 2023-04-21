@@ -15,36 +15,10 @@ import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
 import org.jetbrains.kotlin.types.typeUtil.isUnit
-import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.types.typeUtil.makeNullable
-
 
 fun KtExpression.shouldHaveNotNullType(): Boolean {
     val type = when (val parent = parent) {
-        is KtBinaryExpression ->{
-            val default = parent.left?.let { it.getType(it.analyze()) }
-            val resolvedCall = parent.operationReference.resolveToCall()
-            val function = resolvedCall?.resultingDescriptor as? FunctionDescriptor
-            val isInfix = function?.isInfix ?: false
-
-            if (isInfix) {
-                val expression = this.let { it.getType(it.analyze()) }?.makeNullable()
-                val valueParameters = function?.valueParameters
-                val typeParameters = function?.typeParameters
-                val isValidType = valueParameters?.any { param ->
-                            param.type.toString() == expression.toString()
-                        }?:false ||
-                        typeParameters?.isNotEmpty() ?: false
-
-                if (isValidType) {
-                    return false
-                } else {
-                    default
-                }
-            } else {
-                default
-            }
-        }
+        is KtBinaryExpression -> parent.left?.let { it.getType(it.analyze()) }
         is KtProperty -> parent.typeReference?.let { it.analyze()[BindingContext.TYPE, it] }
         is KtReturnExpression -> parent.getTargetFunctionDescriptor(analyze())?.returnType
         is KtValueArgument -> {
