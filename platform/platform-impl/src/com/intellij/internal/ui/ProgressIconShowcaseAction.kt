@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.ui
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -18,12 +18,17 @@ internal class ProgressIconShowcaseAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val icon = SpinningProgressIcon()
+    val iconBig = SpinningProgressIcon.Big()
     val panel = panel {
       row {
         icon(icon)
         link("Change color") {
-          ColorChooserService.instance.showPopup(null, icon.getIconColor(), { color, _ -> color?.let { icon.setIconColor(it) } })
+          ColorChooserService.instance.showPopup(null, icon.getIconColor(), { color, _ -> color?.let {
+            icon.setIconColor(it)
+            iconBig.setIconColor(it)
+          }})
         }
+        icon(iconBig)
       }
     }
     val dialog = dialog(templatePresentation.text, panel)
