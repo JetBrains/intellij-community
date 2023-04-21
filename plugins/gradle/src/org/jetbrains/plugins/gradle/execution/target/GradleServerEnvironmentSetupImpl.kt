@@ -253,7 +253,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
 
   private fun collectInitScripts(parameters: ConsumerOperationParameters): List<String> {
     val initScriptPaths = ArrayList<String>()
-    val iterator = parameters.arguments.iterator()
+    val iterator = parameters.arguments?.iterator() ?: return emptyList()
     while (iterator.hasNext()) {
       val arg = iterator.next()
       if (arg == INIT_SCRIPT_CMD_OPTION && iterator.hasNext()) {
