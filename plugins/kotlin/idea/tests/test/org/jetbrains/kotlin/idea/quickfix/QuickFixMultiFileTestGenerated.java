@@ -84,19 +84,6 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/quickfix/addJvmDefault")
-    public static class AddJvmDefault extends AbstractQuickFixMultiFileTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
-        }
-
-        @TestMetadata("javaDefaultOverride.before.Main.kt")
-        public void testJavaDefaultOverride() throws Exception {
-            runTest("testData/quickfix/addJvmDefault/javaDefaultOverride.before.Main.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/addSpreadOperatorForArrayAsVarargAfterSam")
     public static class AddSpreadOperatorForArrayAsVarargAfterSam extends AbstractQuickFixMultiFileTest {
         private void runTest(String testDataFilePath) throws Exception {
