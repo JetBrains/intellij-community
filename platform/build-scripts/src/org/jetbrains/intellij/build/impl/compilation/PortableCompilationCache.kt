@@ -45,7 +45,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
   /**
    * Server which stores [PortableCompilationCache]
    */
-  internal class RemoteCache(context: CompilationContext) {
+  internal inner class RemoteCache(context: CompilationContext) {
     val url by lazy { require(URL_PROPERTY, "Remote Cache url", context) }
     val uploadUrl by lazy { require(UPLOAD_URL_PROPERTY, "Remote Cache upload url", context) }
     val authHeader by lazy {
@@ -57,6 +57,9 @@ class PortableCompilationCache(private val context: CompilationContext) {
         else -> "Basic " + Base64.getEncoder().encodeToString("$username:$password".toByteArray())
       }
     }
+
+    val isStale: Boolean get() = !downloader.availableForHeadCommit
+    val shouldBeDownloaded: Boolean get() = !forceRebuild && !isLocalCacheUsed()
   }
 
   private var forceDownload = bool(FORCE_DOWNLOAD_PROPERTY)
@@ -99,14 +102,11 @@ class PortableCompilationCache(private val context: CompilationContext) {
       if (forceRebuild || forceDownload) {
         clean()
       }
-      if (!forceRebuild && !isLocalCacheUsed()) {
+      if (remoteCache.shouldBeDownloaded) {
         downloadCache()
       }
       CompilationTasks.create(context).resolveProjectDependencies()
       if (isCompilationRequired()) {
-        if (forceRebuild) {
-          context.messages.buildStatus("Forced rebuild")
-        }
         context.options.incrementalCompilation = !forceRebuild
         context.messages.block("Compiling project") {
           compileProject(context)
@@ -117,11 +117,9 @@ class PortableCompilationCache(private val context: CompilationContext) {
     }
   }
 
-  private fun isCompilationRequired() = forceRebuild || isLocalCacheUsed() || isRemoteCacheStale()
+  private fun isCompilationRequired() = forceRebuild || isLocalCacheUsed() || remoteCache.isStale
 
   private fun isLocalCacheUsed() = !forceRebuild && !forceDownload && jpsCaches.isIncrementalCompilationDataAvailable
-
-  private fun isRemoteCacheStale() = !downloader.availableForHeadCommit
 
   /**
    * Upload local [PortableCompilationCache] to [PortableCompilationCache.RemoteCache]
@@ -173,6 +171,10 @@ class PortableCompilationCache(private val context: CompilationContext) {
     val jps = JpsCompilationRunner(context)
     try {
       jps.buildAll()
+      when {
+        forceRebuild -> context.messages.buildStatus("Forced rebuild")
+        remoteCache.shouldBeDownloaded && downloader.availableCommitDepth > 0 -> context.messages.buildStatus(remoteCacheUsage())
+      }
     }
     catch (e: Exception) {
       if (!context.options.incrementalCompilation) {
@@ -211,9 +213,6 @@ class PortableCompilationCache(private val context: CompilationContext) {
     context.messages.block("Downloading Portable Compilation Cache") {
       try {
         downloader.download()
-        if (downloader.availableCommitDepth > 0) {
-          context.messages.buildStatus(remoteCacheUsage())
-        }
       }
       catch (e: Exception) {
         e.printStackTrace()
