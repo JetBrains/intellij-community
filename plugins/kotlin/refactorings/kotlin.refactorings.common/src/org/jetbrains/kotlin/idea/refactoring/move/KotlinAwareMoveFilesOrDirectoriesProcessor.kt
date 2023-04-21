@@ -1,29 +1,25 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations
+package org.jetbrains.kotlin.idea.refactoring.move
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.containers.MultiMap
-import com.intellij.util.text.UniqueNameGenerator
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.refactoring.move.MoveConflictUsages
-import org.jetbrains.kotlin.idea.refactoring.move.MoveConflictsFoundException
-import org.jetbrains.kotlin.idea.refactoring.move.MoveFilesWithDeclarationsViewDescriptor
 import org.jetbrains.kotlin.psi.KtFile
 
-class MoveToKotlinFileProcessor @JvmOverloads constructor(
+class KotlinAwareMoveFilesOrDirectoriesProcessor @JvmOverloads constructor(
     project: Project,
-    private val sourceFile: KtFile,
+    private val elementsToMove: List<PsiElement>,
     private val targetDirectory: PsiDirectory,
-    private val targetFileName: String,
+    private val searchReferences: Boolean,
     searchInComments: Boolean,
     searchInNonJavaFiles: Boolean,
     moveCallback: MoveCallback?,
@@ -31,7 +27,7 @@ class MoveToKotlinFileProcessor @JvmOverloads constructor(
     private val throwOnConflicts: Boolean = false
 ) : MoveFilesOrDirectoriesProcessor(
     project,
-    arrayOf(sourceFile),
+    elementsToMove.toTypedArray(),
     targetDirectory,
     true,
     searchInComments,
@@ -39,10 +35,17 @@ class MoveToKotlinFileProcessor @JvmOverloads constructor(
     moveCallback,
     prepareSuccessfulCallback
 ) {
-    override fun getCommandName() = KotlinBundle.message("text.move.file.0", sourceFile.name)
-
     override fun createUsageViewDescriptor(usages: Array<out UsageInfo>): UsageViewDescriptor {
-        return MoveFilesWithDeclarationsViewDescriptor(arrayOf(sourceFile), targetDirectory)
+        return MoveFilesWithDeclarationsViewDescriptor(elementsToMove.toTypedArray(), targetDirectory)
+    }
+
+    override fun findUsages(): Array<UsageInfo> {
+        try {
+            markScopeToMove(elementsToMove)
+            return if (searchReferences) super.findUsages() else UsageInfo.EMPTY_ARRAY
+        } finally {
+            markScopeToMove(null)
+        }
     }
 
     override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
@@ -55,20 +58,18 @@ class MoveToKotlinFileProcessor @JvmOverloads constructor(
         return super.showConflicts(conflicts, usages)
     }
 
-    private fun renameFileTemporarilyIfNeeded() {
-        if (targetDirectory.findFile(sourceFile.name) == null) return
-
-        val containingDirectory = sourceFile.containingDirectory ?: return
-
-        val temporaryName = UniqueNameGenerator.generateUniqueName("temp", "", ".kt") {
-            containingDirectory.findFile(it) == null
+    private fun markPsiFiles(mark: PsiFile.() -> Unit) {
+        fun PsiElement.doMark(mark: PsiFile.() -> Unit) {
+            when (this) {
+                is PsiFile -> mark()
+                is PsiDirectory -> children.forEach { it.doMark(mark) }
+            }
         }
-        sourceFile.name = temporaryName
+
+        elementsToMove.forEach { it.doMark(mark) }
     }
 
-    override fun performRefactoring(usages: Array<UsageInfo>) {
-        renameFileTemporarilyIfNeeded()
-        super.performRefactoring(usages)
-        sourceFile.name = targetFileName
+    private fun markScopeToMove(allElementsToMove: List<PsiElement>?) {
+        markPsiFiles { (this as? KtFile)?.allElementsToMove = allElementsToMove }
     }
 }
