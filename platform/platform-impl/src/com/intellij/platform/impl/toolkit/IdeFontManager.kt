@@ -10,7 +10,7 @@ import java.io.File
 import java.nio.charset.Charset
 import java.util.*
 
-class IdeFontManager: SunFontManager() {
+class IdeFontManager : SunFontManager() {
   companion object {
     internal fun getDefaultIdeFont(): Array<String>? {
       val interFontPath = System.getProperty("java.home") + File.separator + "lib" + File.separator +
@@ -56,28 +56,28 @@ private class IdeFontConfiguration : FontConfiguration {
   constructor(fm: SunFontManager, preferLocaleFonts: Boolean, preferPropFonts: Boolean) :
     super(fm, preferLocaleFonts, preferPropFonts)
 
-  override fun getDefaultFontCharset(fontName: String): Charset {
+  override fun getDefaultFontCharset(fontName: String?): Charset {
     return Charset.forName("UTF-8")
   }
 
-  override fun getEncoding(awtFontName: String, characterSubsetname: String): String {
+  override fun getEncoding(awtFontName: String?, characterSubsetname: String?): String {
     return "default"
   }
 
-  override fun getFaceNameFromComponentFontName(arg0: String): String? {
+  override fun getFaceNameFromComponentFontName(arg0: String?): String? {
     return null
   }
 
-  override fun getFallbackFamilyName(fontName: String, defaultFallback: String): String {
+  override fun getFallbackFamilyName(fontName: String?, defaultFallback: String?): String? {
     return defaultFallback
   }
 
-  override fun getFileNameFromComponentFontName(componentFontName: String): String? {
+  override fun getFileNameFromComponentFontName(componentFontName: String?): String? {
     return getFileNameFromPlatformName(componentFontName)
   }
 
   override fun initReorderMap() {
-    reorderMap = HashMap<String, Any>()
+    reorderMap = HashMap()
   }
 
   override fun getExtraFontPath(): String? {
