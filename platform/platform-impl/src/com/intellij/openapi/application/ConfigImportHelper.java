@@ -705,8 +705,8 @@ public final class ConfigImportHelper {
           idx++;
         }
       }
-      if (configDir.length() > 0) {
-        return Paths.get(fixDirName(configDir.toString())).toString();
+      if (!configDir.isEmpty()) {
+        return Path.of(fixDirName(configDir.toString())).toString();
       }
     }
 
