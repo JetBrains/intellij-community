@@ -116,8 +116,6 @@ class MoveDeclarationsDescriptor @JvmOverloads constructor(
     val searchReferences: Boolean = true
 )
 
-class ConflictUsageInfo(element: PsiElement, val messages: Collection<String>) : UsageInfo(element)
-
 private object ElementHashingStrategy : HashingStrategy<PsiElement> {
     override fun equals(e1: PsiElement?, e2: PsiElement?): Boolean {
         if (e1 === e2) return true
@@ -168,7 +166,7 @@ class MoveKotlinDeclarationsProcessor(
         return MoveMultipleElementsViewDescriptor(elementsToMove.toTypedArray(), targetContainerFqName)
     }
 
-    fun getConflictsAsUsages(): List<UsageInfo> = conflicts.entrySet().map { ConflictUsageInfo(it.key, it.value) }
+    fun getConflictsAsUsages(): List<UsageInfo> = conflicts.entrySet().map { MoveConflictUsageInfo(it.key, it.value) }
 
     public override fun findUsages(): Array<UsageInfo> {
         if (!descriptor.searchReferences || elementsToMove.isEmpty()) return UsageInfo.EMPTY_ARRAY
