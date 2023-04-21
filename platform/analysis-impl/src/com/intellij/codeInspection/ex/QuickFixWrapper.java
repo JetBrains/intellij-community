@@ -42,6 +42,37 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     return fix instanceof IntentionAction ? (IntentionAction)fix : new QuickFixWrapper(descriptor, (LocalQuickFix)fix);
   }
 
+  /**
+   * @param action action previously wrapped with {@link #wrap(ProblemDescriptor, int)}
+   * @return a {@link LocalQuickFix} wrapped inside that action; null if the action was not created via {@link QuickFixWrapper}
+   */
+  public static @Nullable LocalQuickFix unwrap(@NotNull IntentionAction action) {
+    if (action instanceof QuickFixWrapper wrapper) {
+      return wrapper.myFix;
+    }
+    //if (action instanceof ModCommandActionWrapper wrapper &&
+    //    wrapper.action() instanceof ModCommandQuickFixAction qfAction) {
+    //  return qfAction.myFix;
+    //}
+    return null;
+  }
+
+  /**
+   * @param action action to extract the file from
+   * @return PsiFile the action relates to
+   */
+  public static @Nullable PsiFile unwrapFile(@NotNull IntentionAction action) {
+    if (action instanceof QuickFixWrapper wrapper) {
+      return wrapper.getFile();
+    }
+    //if (action instanceof ModCommandActionWrapper wrapper &&
+    //    wrapper.action() instanceof ModCommandQuickFixAction qfAction) {
+    //  PsiElement element = qfAction.myDescriptor.getPsiElement();
+    //  return element == null ? null : element.getContainingFile();
+    //}
+    return null;
+  }
+
   private QuickFixWrapper(@NotNull ProblemDescriptor descriptor, @NotNull LocalQuickFix fix) {
     myDescriptor = descriptor;
     myFix = fix;
@@ -56,7 +87,7 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
   @Override
   @NotNull
   public String getFamilyName() {
-    return getFix().getName();
+    return myFix.getName();
   }
 
   @Override
@@ -75,8 +106,7 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
 
     final PsiElement element = myDescriptor.getPsiElement();
     final PsiFile fileForUndo = element == null ? null : element.getContainingFile();
-    LocalQuickFix fix = getFix();
-    fix.applyFix(project, myDescriptor);
+    myFix.applyFix(project, myDescriptor);
     DaemonCodeAnalyzer.getInstance(project).restart();
     if (fileForUndo != null && !fileForUndo.equals(file)) {
       UndoUtil.markPsiFileForUndo(fileForUndo);
@@ -85,15 +115,21 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
 
   @Override
   public boolean startInWriteAction() {
-    return getFix().startInWriteAction();
+    return myFix.startInWriteAction();
   }
 
   @Nullable
   @Override
   public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
-    return getFix().getElementToMakeWritable(file);
+    return myFix.getElementToMakeWritable(file);
   }
 
+  /**
+   * @return fix wrapped by this {@link QuickFixWrapper}
+   * @deprecated use {@link QuickFixWrapper#unwrap(IntentionAction)} instead. Avoid {@code instanceof QuickFixWrapper} checks,
+   * as the implementation may be different in the future
+   */
+  @Deprecated
   @NotNull
   public LocalQuickFix getFix() {
     return myFix;

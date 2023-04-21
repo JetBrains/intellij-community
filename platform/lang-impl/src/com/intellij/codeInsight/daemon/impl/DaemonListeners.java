@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSettingList
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.facet.Facet;
@@ -738,9 +739,11 @@ public final class DaemonListeners implements Disposable {
       IntentionAction quickFixFromPlugin =
         ((HighlightInfo)errorStripeTooltip).findRegisteredQuickFix((descriptor, range) -> {
           IntentionAction intentionAction = IntentionActionDelegate.unwrap(descriptor.getAction());
-          if (intentionAction.getClass().getClassLoader() == pluginClassLoader ||
-              intentionAction instanceof QuickFixWrapper && ((QuickFixWrapper)intentionAction).getFix().getClass().getClassLoader() ==
-                                                            pluginClassLoader) {
+          if (intentionAction.getClass().getClassLoader() == pluginClassLoader) {
+            return intentionAction;
+          }
+          LocalQuickFix fix = QuickFixWrapper.unwrap(intentionAction);
+          if (fix != null && fix.getClass().getClassLoader() == pluginClassLoader) {
             return intentionAction;
           }
           return null;

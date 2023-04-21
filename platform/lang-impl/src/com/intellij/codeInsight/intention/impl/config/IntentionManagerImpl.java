@@ -107,7 +107,7 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
     }
     if (toolWrapper instanceof GlobalInspectionToolWrapper) {
       GlobalInspectionTool wrappedTool = ((GlobalInspectionToolWrapper)toolWrapper).getTool();
-      if (wrappedTool instanceof GlobalSimpleInspectionTool && (action instanceof LocalQuickFix || action instanceof QuickFixWrapper)) {
+      if (wrappedTool instanceof GlobalSimpleInspectionTool && (action instanceof LocalQuickFix || QuickFixWrapper.unwrap(action) != null)) {
         return createFixAllIntentionInternal(toolWrapper, action);
       }
     }
@@ -123,13 +123,9 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
 
   private static @NotNull IntentionAction createFixAllIntentionInternal(@NotNull InspectionToolWrapper<?, ?> toolWrapper,
                                                                         @NotNull IntentionAction action) {
-    PsiFile file = null;
-    FileModifier fix = action;
-    if (action instanceof QuickFixWrapper) {
-      fix = ((QuickFixWrapper)action).getFix();
-      file = ((QuickFixWrapper)action).getFile();
-    }
-    return new CleanupInspectionIntention(toolWrapper, fix, file, action.getText());
+    LocalQuickFix fix = QuickFixWrapper.unwrap(action);
+    PsiFile file = QuickFixWrapper.unwrapFile(action);
+    return new CleanupInspectionIntention(toolWrapper, fix == null ? action : fix, file, action.getText());
   }
 
   @Override

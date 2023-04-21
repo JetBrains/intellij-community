@@ -159,7 +159,7 @@ internal class IntentionPreviewComputable(private val project: Project,
     if (action.getElementToMakeWritable(originalFile)?.containingFile !== originalFile) return IntentionPreviewInfo.EMPTY
     val action = findCopyIntention(project, editorCopy, psiFileCopy, action) ?: return IntentionPreviewInfo.EMPTY
     val unwrapped = IntentionActionDelegate.unwrap(action)
-    val cls = (if (unwrapped is QuickFixWrapper) unwrapped.fix else unwrapped)::class.java
+    val cls = (QuickFixWrapper.unwrap(unwrapped) ?: unwrapped)::class.java
     val loader = cls.classLoader
     val thirdParty = loader !is PluginAwareClassLoader || !PluginManagerCore.isDevelopedByJetBrains(loader.pluginDescriptor)
     if (!thirdParty) {

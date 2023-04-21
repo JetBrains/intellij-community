@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
@@ -261,7 +262,7 @@ public final class CachedIntentions {
       new IntentionActionWithTextCaching(
         descriptor.getAction(), descriptor.getDisplayName(), descriptor.getIcon(),
         (cached, action) -> {
-          if (action instanceof QuickFixWrapper) {
+          if (QuickFixWrapper.unwrap(action) != null) {
             // remove only inspection fixes after invocation,
             // since intention actions might be still available
             removeActionFromCached(cached);
@@ -356,8 +357,9 @@ public final class CachedIntentions {
     }
     Object iconable = action;
     //custom icon
-    if (action instanceof QuickFixWrapper) {
-      iconable = ((QuickFixWrapper)action).getFix();
+    LocalQuickFix fix = QuickFixWrapper.unwrap(action);
+    if (fix != null) {
+      iconable = fix;
     }
 
     if (iconable instanceof Iconable) {
