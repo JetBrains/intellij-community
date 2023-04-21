@@ -54,7 +54,10 @@ import sun.awt.AWTAccessor;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -110,7 +113,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       ApplicationManager.getApplication().isUnitTestMode() ? 0 : Integer.getInteger("dump.threads.on.long.write.action.waiting", 0);
   }
 
-  private final ExecutorService ourThreadExecutorsService = AppExecutorUtil.getAppExecutorService();
   private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
   @TestOnly
@@ -251,7 +253,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   @Override
   public @NotNull Future<?> executeOnPooledThread(@NotNull Runnable action) {
     Runnable actionDecorated = ClientId.decorateRunnable(action);
-    return ourThreadExecutorsService.submit(new Runnable() {
+    return AppExecutorUtil.getAppExecutorService().submit(new Runnable() {
       @Override
       public void run() {
         if (isDisposed()) {
@@ -282,7 +284,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   @Override
   public @NotNull <T> Future<T> executeOnPooledThread(@NotNull Callable<T> action) {
     Callable<T> actionDecorated = ClientId.decorateCallable(action);
-    return ourThreadExecutorsService.submit(new Callable<>() {
+    return AppExecutorUtil.getAppExecutorService().submit(new Callable<>() {
       @Override
       public T call() {
         if (isDisposed()) {

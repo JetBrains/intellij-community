@@ -3,7 +3,8 @@ package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import kotlinx.coroutines.Dispatchers;
+import kotlinx.coroutines.ExecutorsKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +47,7 @@ import static java.util.stream.Collectors.toList;
  * </pre>
  */
 @ApiStatus.Internal
-public class FileSetLimiter {
+public final class FileSetLimiter {
   private static final Logger LOG = Logger.getInstance(FileSetLimiter.class);
 
   public static final int DEFAULT_FILES_TO_KEEP = 10;
@@ -70,7 +71,7 @@ public class FileSetLimiter {
 
   public static final Consumer<Collection<? extends Path>> DELETE_ASYNC = paths -> {
     if (!paths.isEmpty()) {
-      AppExecutorUtil.getAppExecutorService().execute(() -> {
+      ExecutorsKt.asExecutor(Dispatchers.getIO()).execute(() -> {
         final Thread currentThread = Thread.currentThread();
         final int priority = currentThread.getPriority();
         currentThread.setPriority(Thread.MIN_PRIORITY);
