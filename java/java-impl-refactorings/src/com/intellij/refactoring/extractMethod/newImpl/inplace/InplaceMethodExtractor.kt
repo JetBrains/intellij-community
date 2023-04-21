@@ -157,10 +157,6 @@ class InplaceMethodExtractor(private val editor: Editor,
       if (!popupProvider.staticPassFields && makeStatic != null) {
         JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD = makeStatic
       }
-      val declareVarType = popupProvider.declareVarType
-      if (declareVarType != null) {
-        JavaRefactoringSettings.getInstance().DECLARE_VAR_TYPE = declareVarType
-      }
       restartInplace()
     }
     popupProvider.setShowDialogAction { actionEvent -> restartInDialog(actionEvent == null) }

@@ -25,10 +25,8 @@ import com.intellij.refactoring.JavaRefactoringSettings
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractMethod.ExtractMethodDialog
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
-import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.canDeclareVarType
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.guessMethodName
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.replaceWithMethod
-import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.shouldDeclareVarType
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.findAllOptionsToExtract
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.selectOptionWithTargetClass
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.withFilteredAnnotations
@@ -138,14 +136,12 @@ class MethodExtractor {
     val defaultStatic = with (JavaRefactoringSettings.getInstance()) {
       if (makeStaticAndPassFields) EXTRACT_STATIC_METHOD_AND_PASS_FIELDS else EXTRACT_STATIC_METHOD
     }
-    val dataOutput = options.dataOutput
-    val hasAnnotation = dataOutput.nullability != Nullability.UNKNOWN && dataOutput.type !is PsiPrimitiveType
+    val hasAnnotation = options.dataOutput.nullability != Nullability.UNKNOWN && options.dataOutput.type !is PsiPrimitiveType
     val annotationAvailable = ExtractMethodHelper.isNullabilityAvailable(options)
     return ExtractMethodPopupProvider(
       annotateDefault = if (hasAnnotation && annotationAvailable) needsNullabilityAnnotations(options.project) else null,
       makeStaticDefault = if (showStatic) defaultStatic else null,
-      staticPassFields = makeStaticAndPassFields,
-      declareVarTypeDefault = shouldDeclareVarType(dataOutput).takeIf { canDeclareVarType(dataOutput, options.targetClass) }
+      staticPassFields = makeStaticAndPassFields
     )
   }
 

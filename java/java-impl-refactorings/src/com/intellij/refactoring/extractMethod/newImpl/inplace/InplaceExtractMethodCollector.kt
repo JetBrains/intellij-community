@@ -28,6 +28,5 @@ class InplaceExtractMethodCollector : CounterUsagesCollector() {
 enum class ExtractMethodSettingChange(val fusName: String) {
   AnnotateOn("AnnotateOn"), AnnotateOff("AnnotateOff"), MakeStaticOn("MakeStaticOn"),
   MakeStaticOff("MakeStaticOff"), MakeStaticWithFieldsOn("MakeStaticWithFieldsOn"),
-  MakeStaticWithFieldsOff("MakeStaticWithFieldsOff"), DeclareVarTypeOn("DeclareVarTypeOn"),
-  DeclareVarTypeOff("DeclareVarTypeOff")
+  MakeStaticWithFieldsOff("MakeStaticWithFieldsOff")
 }

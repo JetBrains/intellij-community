@@ -520,15 +520,6 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     doTest()
   }
 
-  fun testKeepVarKeyword(){
-    doTest()
-  }
-
-  fun testDeclareVarType(){
-    JavaRefactoringSettings.getInstance().DECLARE_VAR_TYPE = true
-    doTest()
-  }
-
   fun testRefactoringListener(){
     templateTest {
       configureByFile("$BASE_PATH/${getTestName(false)}.java")
@@ -575,13 +566,11 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     val settings = JavaRefactoringSettings.getInstance()
     val defaultStatic = settings.EXTRACT_STATIC_METHOD
     val defaultPassFields = settings.EXTRACT_STATIC_METHOD_AND_PASS_FIELDS
-    val defaultDeclareVar = settings.DECLARE_VAR_TYPE
     val defaultChangeSignature = DuplicatesMethodExtractor.changeSignatureDefault
     val defaultReplaceDuplicates = DuplicatesMethodExtractor.replaceDuplicatesDefault
     Disposer.register(testRootDisposable) {
       settings.EXTRACT_STATIC_METHOD = defaultStatic
       settings.EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = defaultPassFields
-      settings.DECLARE_VAR_TYPE = defaultDeclareVar
       DuplicatesMethodExtractor.changeSignatureDefault = defaultChangeSignature
       DuplicatesMethodExtractor.replaceDuplicatesDefault = defaultReplaceDuplicates
     }
