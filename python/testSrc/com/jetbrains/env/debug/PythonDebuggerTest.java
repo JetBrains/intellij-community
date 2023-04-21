@@ -777,7 +777,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-iron", "-python3.8", "-python3.9", "-python3.10", "-python3.11"); // PY-38604
+        return ImmutableSet.of("-iron", "-python3.8", "-python3.9", "-python3.10", "-python3.11", "-python3.12"); // PY-38604
       }
     });
   }
@@ -1250,7 +1250,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
       @Override
       public @NotNull Set<String> getTags() {
-        return ImmutableSet.of("-python3.11", "-python2.7"); // PY-59675, PY-59951
+        return ImmutableSet.of("-python3.11", "-python3.12", "-python2.7"); // PY-59675, PY-59951
       }
     });
   }

@@ -57,7 +57,7 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = "-python3.11")
+  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testMultiprocessingSubprocess() {
     runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_multiprocess_args.py") {
@@ -101,7 +101,7 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = "-python3.11")
+  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testPythonSubprocessWithCParameter() {
     runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_python_subprocess_with_c_parameter.py") {
@@ -199,7 +199,7 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = "-python3.11")
+  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSubprocessModule() {
     runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_subprocess_module.py") {
@@ -219,7 +219,7 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = "-python3.11")
+  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSubprocessIsolated() {
     runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_subprocess_isolated.py") {
