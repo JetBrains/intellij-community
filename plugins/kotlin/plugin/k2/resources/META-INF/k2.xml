@@ -63,8 +63,8 @@
     <projectService serviceInterface="org.jetbrains.kotlin.idea.references.KotlinReferenceProviderContributor"
                         serviceImplementation="org.jetbrains.kotlin.idea.references.KotlinFirReferenceContributor"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.idea.navigation.SourceNavigationService"
-            serviceImplementation="org.jetbrains.kotlin.idea.navigation.FirSourceNavigationService"/>
+            serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.SourceNavigationService"
+            serviceImplementation="org.jetbrains.kotlin.idea.fir.FirSourceNavigationService"/>
     <statusBarWidgetFactory id="kotlin.fir.ide" implementation="org.jetbrains.kotlin.idea.fir.FirStatusBarWidgetFactory"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirResolveSessionService"/>
 

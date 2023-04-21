@@ -16,7 +16,7 @@ import com.intellij.util.SmartList
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.fileClasses.isJvmMultifileClassFile
-import org.jetbrains.kotlin.idea.navigation.SourceNavigationService
+import org.jetbrains.kotlin.idea.base.projectStructure.SourceNavigationService
 import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeFqNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinJvmNameAnnotationIndex
 import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils
