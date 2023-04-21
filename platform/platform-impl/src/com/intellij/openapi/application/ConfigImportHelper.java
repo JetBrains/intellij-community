@@ -36,7 +36,6 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AppUIUtilKt;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.Restarter;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -53,6 +52,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.lang.reflect.Constructor;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributes;
@@ -247,12 +247,20 @@ public final class ConfigImportHelper {
   static @Nullable ConfigImportSettings findCustomConfigImportSettings() {
     try {
       String customProviderName = "com.intellij.openapi.application." + PlatformUtils.getPlatformPrefix() + "ConfigImportSettings";
-      @SuppressWarnings("unchecked") Class<ConfigImportSettings> customProviderClass = (Class<ConfigImportSettings>)Class.forName(customProviderName);
+      @SuppressWarnings("unchecked")
+      Class<ConfigImportSettings> customProviderClass = (Class<ConfigImportSettings>)Class.forName(customProviderName);
       if (ConfigImportSettings.class.isAssignableFrom(customProviderClass)) {
-        return ReflectionUtil.newInstance(customProviderClass);
+        Constructor<ConfigImportSettings> constructor = customProviderClass.getDeclaredConstructor();
+        try {
+          constructor.setAccessible(true);
+        }
+        catch (SecurityException ignored) {
+        }
+        return constructor.newInstance();
       }
     }
-    catch (Exception ignored) { }
+    catch (Exception ignored) {
+    }
     return null;
   }
 
