@@ -239,8 +239,11 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
 
   @NotNull
   public List<MavenGoalExecutionResult> executeGoal(@NotNull Collection<MavenGoalExecutionRequest> requests,
-                                                    @NotNull String goal) throws MavenProcessCanceledException {
-    return performCancelable(() -> getOrCreateWrappee().executeGoal(requests, goal, ourToken));
+                                                    @NotNull String goal,
+                                                    @Nullable MavenProgressIndicator progressIndicator)
+    throws MavenProcessCanceledException {
+    return runLongRunningTask(
+      (embedder, longRunningTaskId) -> embedder.executeGoal(longRunningTaskId, requests, goal, ourToken), progressIndicator);
   }
 
   @NotNull

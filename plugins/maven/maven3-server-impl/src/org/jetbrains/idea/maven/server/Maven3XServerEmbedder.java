@@ -1836,20 +1836,28 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   @NotNull
   @Override
-  public List<MavenGoalExecutionResult> executeGoal(@NotNull Collection<MavenGoalExecutionRequest> requests,
+  public List<MavenGoalExecutionResult> executeGoal(@NotNull String longRunningTaskId,
+                                                    @NotNull Collection<MavenGoalExecutionRequest> requests,
                                                     @NotNull String goal,
                                                     MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);
+    try (LongRunningTask task = new LongRunningTask(longRunningTaskId, requests.size())) {
+      return executeGoal(task, requests, goal);
+    }
+  }
+
+  private List<MavenGoalExecutionResult> executeGoal(@NotNull LongRunningTask task,
+                                                     @NotNull Collection<MavenGoalExecutionRequest> requests,
+                                                     @NotNull String goal)
+    throws RemoteException {
     try {
-      /*
-      boolean runInParallel = canResolveDependenciesInParallel();
-      List<MavenGoalExecutionResult> results =
-        MavenServerParallelRunner.execute(runInParallel, requests, request -> doExecute(request, goal));
-      */
       List<MavenGoalExecutionResult> results = new ArrayList<>();
       for (MavenGoalExecutionRequest request : requests) {
-        results.add(doExecute(request, goal));
+        if (task.isCanceled()) break;
+        MavenGoalExecutionResult result = doExecute(request, goal);
+        results.add(result);
+        task.incrementFinishedRequests();
       }
       return results;
     }

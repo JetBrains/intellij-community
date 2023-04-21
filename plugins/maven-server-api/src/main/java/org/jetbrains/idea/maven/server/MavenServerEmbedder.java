@@ -71,7 +71,8 @@ public interface MavenServerEmbedder extends Remote {
     throws RemoteException, MavenServerProcessCanceledException;
 
   @NotNull
-  List<MavenGoalExecutionResult> executeGoal(@NotNull Collection<MavenGoalExecutionRequest> requests,
+  List<MavenGoalExecutionResult> executeGoal(@NotNull String longRunningTaskId,
+                                             @NotNull Collection<MavenGoalExecutionRequest> requests,
                                              @NotNull String goal,
                                              MavenToken token)
     throws RemoteException, MavenServerProcessCanceledException;

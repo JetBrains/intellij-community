@@ -91,7 +91,7 @@ public class MavenFolderResolver {
           entry -> new MavenGoalExecutionRequest(entry.getKey(), entry.getValue().getActivatedProfilesIds())
         );
 
-        var results = embedder.executeGoal(requests, goal);
+        var results = embedder.executeGoal(requests, goal, process);
 
         for (var result : results) {
           var mavenProject = fileToProject.getOrDefault(result.file, null);

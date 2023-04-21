@@ -1130,19 +1130,30 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
   @NotNull
   @Override
-  public List<MavenGoalExecutionResult> executeGoal(@NotNull Collection<MavenGoalExecutionRequest> requests,
+  public List<MavenGoalExecutionResult> executeGoal(@NotNull String longRunningTaskId,
+                                                    @NotNull Collection<MavenGoalExecutionRequest> requests,
                                                     @NotNull String goal,
                                                     MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);
+    try (LongRunningTask task = new LongRunningTask(longRunningTaskId, requests.size())) {
+      return executeGoal(task, requests, goal);
+    }
+  }
+
+  private List<MavenGoalExecutionResult> executeGoal(@NotNull LongRunningTask task,
+                                                     @NotNull Collection<MavenGoalExecutionRequest> requests,
+                                                     @NotNull String goal)
+    throws RemoteException {
     List<MavenGoalExecutionResult> results = new ArrayList<>();
     for (MavenGoalExecutionRequest request : requests) {
+      if (task.isCanceled()) break;
       File file = request.file();
       MavenExplicitProfiles profiles = request.profiles();
       MavenExecutionResult result =
         doExecute(file, new ArrayList<>(profiles.getEnabledProfiles()), new ArrayList<>(profiles.getDisabledProfiles()), goal);
-
       results.add(createEmbedderExecutionResult(file, result));
+      task.incrementFinishedRequests();
     }
     return results;
   }
