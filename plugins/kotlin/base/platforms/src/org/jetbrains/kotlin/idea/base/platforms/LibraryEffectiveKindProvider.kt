@@ -94,7 +94,8 @@ class LibraryEffectiveKindProvider(private val project: Project) {
                 val classRoots = library.getFiles(OrderRootType.CLASSES)
                 val classRoot = classRoots.firstOrNull() ?: return null
 
-                val platformKind: PersistentLibraryKind<*>? = classRoot.getUserData(LIBRARY_KIND_KEY) ?:
+                val platformKind: PersistentLibraryKind<*>? =
+                    classRoot.getUserData(LIBRARY_KIND_KEY)?.takeIf { it != NEEDS_TO_BE_CLARIFIED_KIND } ?:
                     findKind(classRoots)?.let {
                         classRoot.putUserData(LIBRARY_KIND_KEY, it)
                         it
