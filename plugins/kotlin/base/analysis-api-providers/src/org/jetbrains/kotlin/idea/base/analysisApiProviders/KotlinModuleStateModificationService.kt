@@ -11,7 +11,6 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.StandardFileSystems
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
@@ -31,117 +30,78 @@ import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.project.structure.*
-import org.jetbrains.kotlin.analysis.providers.KtModuleStateTracker
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
+import org.jetbrains.kotlin.analysis.providers.KotlinGlobalModificationService
+import org.jetbrains.kotlin.analysis.providers.analysisMessageBus
+import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
+import org.jetbrains.kotlin.idea.base.projectStructure.getBinaryAndSourceModuleInfos
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
-import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
-import org.jetbrains.kotlin.parsing.KotlinParserDefinition
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicLong
+import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
+import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
+import org.jetbrains.kotlin.idea.util.AbstractSingleFileModuleFileListener
 
-@OptIn(Frontend10ApiUsage::class)
-open class KotlinModuleStateTrackerProvider(val project: Project) : Disposable {
+open class KotlinModuleStateModificationService(val project: Project) : Disposable {
     init {
         val busConnection = project.messageBus.connect(this)
         busConnection.subscribe(WorkspaceModelTopics.CHANGED, ModelChangeListener())
         busConnection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, JdkListener())
-        busConnection.subscribe(VirtualFileManager.VFS_CHANGES, ScriptFileListener())
+        busConnection.subscribe(VirtualFileManager.VFS_CHANGES, SingleFileModuleFileListener())
         busConnection.subscribe(VirtualFileManager.VFS_CHANGES, LibraryUpdatesListener())
     }
 
-    private val builtinTracker = ModuleStateTrackerImpl()
-    private val libraryCache = ConcurrentHashMap<Library, ModuleStateTrackerImpl>()
-    private val sourceModuleCache = ConcurrentHashMap<Module, ModuleStateTrackerImpl>()
-    private val sdkCache = ConcurrentHashMap<Sdk, ModuleStateTrackerImpl>()
-    private val scriptCache = ConcurrentHashMap<VirtualFile, ModuleStateTrackerImpl>()
+    protected open fun mayBuiltinsHaveChanged(events: List<VFileEvent>): Boolean { return false }
 
-    protected open fun shouldInvalidateBuiltinSession(events: List<VFileEvent>): Boolean { return false }
-    
-    fun getModuleStateTrackerFor(module: KtModule): KtModuleStateTracker {
-        return when (module) {
-            is KtScriptDependencyModule -> ModuleStateTrackerImpl()
+    private fun invalidateSourceModule(module: Module, isRemoval: Boolean = false) {
+        invalidateByModuleInfos(module.sourceModuleInfos, isRemoval)
+    }
 
-            is KtLibraryModule -> {
-                val libraryInfo = module.moduleInfo as LibraryInfo
-                libraryInfo.checkValidity()
-                return libraryCache.computeIfAbsent(libraryInfo.library) { ModuleStateTrackerImpl() }
-            }
+    private fun invalidateLibraryModule(library: Library, isRemoval: Boolean = false) {
+        invalidateByModuleInfos(library.getBinaryAndSourceModuleInfos(project), isRemoval)
+    }
 
-            is KtSdkModule -> {
-                val sdkInfo = module.moduleInfo as SdkInfo
-                sdkInfo.checkValidity()
-                val sdk = sdkInfo.sdk
-                return sdkCache.computeIfAbsent(sdk) { ModuleStateTrackerImpl() }
-            }
-
-            is KtSourceModule -> {
-                val sourceModule = module.moduleInfo as ModuleSourceInfo
-                sourceModule.checkValidity()
-                return sourceModuleCache.computeIfAbsent(sourceModule.module) { ModuleStateTrackerImpl() }
-            }
-
-            is KtLibrarySourceModule -> getModuleStateTrackerFor(module.binaryLibrary)
-
-            is KtBuiltinsModule -> builtinTracker
-
-            is KtScriptModule -> {
-                val virtualFile = module.file.virtualFile ?: error("Script ${module.file} does not have a backing 'VirtualFile'")
-                scriptCache.computeIfAbsent(virtualFile) { ModuleStateTrackerImpl() }
-            }
-
-            is KtNotUnderContentRootModule -> ModuleStateTrackerImpl() // TODO need proper cache?
+    private fun invalidateByModuleInfos(moduleInfos: Iterable<IdeaModuleInfo>, isRemoval: Boolean) {
+        moduleInfos.forEach { moduleInfo ->
+            project.publishModuleStateModification(moduleInfo.toKtModule(), isRemoval)
         }
     }
 
-    private inner class ScriptFileListener : BulkFileListener {
-        override fun after(events: List<VFileEvent>) {
-            for (event in events) {
-                val file = when (event) {
-                    is VFileDeleteEvent -> event.file
-                    is VFileMoveEvent -> event.file
-                    else -> continue
-                }
+    /**
+     * Publishes module state modification events for script and not-under-content-root [KtModule]s.
+     */
+    private inner class SingleFileModuleFileListener : AbstractSingleFileModuleFileListener(project) {
+        override fun shouldProcessEvent(event: VFileEvent): Boolean = event is VFileDeleteEvent || event is VFileMoveEvent
 
-                if (file.extension == KotlinParserDefinition.STD_SCRIPT_SUFFIX) {
-                    scriptCache.remove(file)?.invalidate()
-                }
-            }
+        override fun processEvent(event: VFileEvent, module: KtModule) {
+            project.publishModuleStateModification(module, isRemoval = event is VFileDeleteEvent)
         }
     }
 
     private inner class LibraryUpdatesListener : BulkFileListener {
         val index = ProjectRootManager.getInstance(project).fileIndex
+
         override fun after(events: List<VFileEvent>) {
-            if (shouldInvalidateBuiltinSession(events)) {
-                builtinTracker.incModificationCount()
-                libraryCache.values.forEach { it.incModificationCount() }
-                sourceModuleCache.values.forEach { it.incModificationCount() }
-                sdkCache.values.forEach { it.incModificationCount() }
-                scriptCache.values.forEach { it.incModificationCount() }
+            if (mayBuiltinsHaveChanged(events)) {
+                KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
                 return
             }
+
             events.mapNotNull { event ->
                 val file = when (event) {
-                    //for all other events workspace model should do the job 
+                    //for all other events workspace model should do the job
                     is VFileContentChangeEvent -> event.file
                     else -> return@mapNotNull null
                 }
                 if (file.extension != "jar") return@mapNotNull null  //react only on jars
                 val jarRoot = StandardFileSystems.jar().findFileByPath(file.path + URLUtil.JAR_SEPARATOR) ?: return@mapNotNull null
                 (index.getOrderEntriesForFile(jarRoot).firstOrNull { it is LibraryOrderEntry } as? LibraryOrderEntry)?.library
-            }.distinct().forEach {
-                    libraryCache[it]?.incModificationCount()
-                }
+            }.distinct().forEach { invalidateLibraryModule(it) }
         }
     }
 
     private inner class JdkListener : ProjectJdkTable.Listener {
         override fun jdkRemoved(jdk: Sdk) {
-            sdkCache.remove(jdk)?.invalidate()
+            project.publishModuleStateModification(SdkInfo(project, jdk).toKtModule(), isRemoval = true)
         }
     }
 
@@ -154,7 +114,7 @@ open class KotlinModuleStateTrackerProvider(val project: Project) : Disposable {
 
         private fun handleContentRootInModuleChanges(event: VersionedStorageChange) {
             for (changedModule in event.getChangedModules()) {
-                sourceModuleCache[changedModule]?.incModificationCount()
+                invalidateSourceModule(changedModule)
             }
         }
 
@@ -192,14 +152,14 @@ open class KotlinModuleStateTrackerProvider(val project: Project) : Disposable {
                 when (change) {
                     is EntityChange.Added -> {}
                     is EntityChange.Removed -> {
-                        change.oldEntity.findLibraryBridge(event.storageBefore)?.let { library ->
-                            libraryCache.remove(library)?.invalidate()
-                        }
+                        change.oldEntity
+                          .findLibraryBridge(event.storageBefore)
+                          ?.let { invalidateLibraryModule(it, isRemoval = true) }
                     }
 
                     is EntityChange.Replaced -> {
                         val changedLibrary = change.getReplacedEntity(event, LibraryEntity::findLibraryBridge) ?: continue
-                        libraryCache[changedLibrary]?.incModificationCount()
+                        invalidateLibraryModule(changedLibrary)
                     }
                 }
             }
@@ -212,67 +172,39 @@ open class KotlinModuleStateTrackerProvider(val project: Project) : Disposable {
                     is EntityChange.Added -> {}
                     is EntityChange.Removed -> {
                         change.oldEntity.findModule(event.storageBefore)?.let { module ->
-                            sourceModuleCache.remove(module)?.invalidate()
+                            invalidateSourceModule(module, isRemoval = true)
                         }
                     }
 
                     is EntityChange.Replaced -> {
                         val changedModule = change.getReplacedEntity(event, ModuleEntity::findModule) ?: continue
-                        sourceModuleCache[changedModule]?.incModificationCount()
+                        invalidateSourceModule(changedModule)
                     }
                 }
             }
         }
     }
 
-    private fun <C : WorkspaceEntity, E> EntityChange.Replaced<C>.getReplacedEntity(
-        event: VersionedStorageChange,
-        get: (C, EntityStorage) -> E
-    ): E {
-        val old = get(oldEntity, event.storageBefore)
-        val new = get(newEntity, event.storageAfter)
-        check(old == new) {
-            "$old should be equal to $new for ${EntityChange.Replaced::class.java}"
-        }
-        return new
-    }
-
-    @TestOnly
-    fun incrementModificationCountForAllModules(includeBinaryModules: Boolean) {
-        sourceModuleCache.forEach { _, tracker -> tracker.incModificationCount() }
-        if (includeBinaryModules) {
-            libraryCache.forEach { _, tracker -> tracker.incModificationCount() }
-            sdkCache.forEach { _, tracker -> tracker.incModificationCount() }
-        }
-    }
-
     override fun dispose() {}
 
     companion object {
-        fun getInstance(project: Project): KotlinModuleStateTrackerProvider =
-            project.getService(KotlinModuleStateTrackerProvider::class.java)
+        fun getInstance(project: Project): KotlinModuleStateModificationService =
+            project.getService(KotlinModuleStateModificationService::class.java)
     }
-
 }
 
-class ModuleStateTrackerImpl : KtModuleStateTracker {
-    private val modificationCount = AtomicLong()
-
-    @Volatile
-    override var isValid: Boolean = true
-        private set
-
-    fun incModificationCount() {
-        if (isValid) {
-            modificationCount.incrementAndGet()
-        }
+private fun <C : WorkspaceEntity, E> EntityChange.Replaced<C>.getReplacedEntity(
+  event: VersionedStorageChange,
+  get: (C, EntityStorage) -> E
+): E {
+    val old = get(oldEntity, event.storageBefore)
+    val new = get(newEntity, event.storageAfter)
+    check(old == new) {
+        "$old should be equal to $new for ${EntityChange.Replaced::class.java}"
     }
+    return new
+}
 
-    fun invalidate() {
-        incModificationCount()
-        isValid = false
-    }
-
-    override val rootModificationCount: Long
-        get() = modificationCount.get()
+private fun Project.publishModuleStateModification(module: KtModule, isRemoval: Boolean) {
+    analysisMessageBus.syncPublisher(KotlinTopics.MODULE_STATE_MODIFICATION).afterModification(module, isRemoval)
 }

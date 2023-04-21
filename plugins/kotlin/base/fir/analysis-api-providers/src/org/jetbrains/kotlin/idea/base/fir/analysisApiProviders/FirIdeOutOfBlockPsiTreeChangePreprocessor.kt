@@ -27,7 +27,7 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
         }
 
         if (event.isGlobalChange()) {
-            project.getService(FirIdeModificationTrackerService::class.java).increaseModificationCountForAllModules()
+            FirIdeOutOfBlockModificationService.getInstance(project).publishGlobalOutOfBlockModification()
             return
         }
 
@@ -63,7 +63,7 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
     }
 
     private fun outOfBlockInvalidation(element: PsiElement) {
-        project.getService(FirIdeModificationTrackerService::class.java).increaseModificationCountForModuleAndProject(element.module)
+        FirIdeOutOfBlockModificationService.getInstance(project).publishModuleAndProjectOutOfBlockModification(element.module)
     }
 
     private fun calculateChangeType(
