@@ -1015,6 +1015,11 @@
       "key": "Plugins.ScreenshotPagination.CurrentImage.fillColor"
     },
     {
+      "key": "ProgressIcon.color",
+      "description": "Color of the spinning icon",
+      "since": "2022.1"
+    },
+    {
       "key": "ComplexPopup.Header.background",
       "description": "Complex popup (like Find in Files) header background (experimental UI only)",
       "since": "2022.1"
