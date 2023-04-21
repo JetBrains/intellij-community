@@ -75,10 +75,10 @@ class ResizingHtmlImageView(element: Element) : View(element) {
       val imageWidth = state.dimension.width.toFloat()
       val imageHeight = state.dimension.height.toFloat()
 
-      val width = min(len, imageWidth)
+      val width = min(len, imageWidth).coerceAtLeast(1f)
 
       val scale = (width / imageWidth).coerceAtMost(1f)
-      val height = imageHeight * scale
+      val height = (imageHeight * scale).coerceAtLeast(1f)
 
       return SizedImageView(state.image, width, height)
     }
