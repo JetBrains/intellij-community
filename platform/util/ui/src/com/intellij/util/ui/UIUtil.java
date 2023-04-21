@@ -630,9 +630,11 @@ public final class UIUtil {
 
     for (int i = 0; i < text.length(); i++) {
       char ch = text.charAt(i);
-      currentAtom.append(ch);
 
-      if (ch == separator) {
+      boolean lineBreak = ch == '\n';
+      if (!lineBreak) currentAtom.append(ch);
+
+      if (lineBreak || ch == separator) {
         currentLine.append(currentAtom);
         currentAtom.setLength(0);
       }
@@ -640,7 +642,7 @@ public final class UIUtil {
       String s = currentLine.toString() + currentAtom;
       int width = fontMetrics.stringWidth(s);
 
-      if (width >= widthLimit - fontMetrics.charWidth('w')) {
+      if (lineBreak || width >= widthLimit - fontMetrics.charWidth('w')) {
         if (!currentLine.isEmpty()) {
           lines.add(currentLine.toString());
           currentLine = new StringBuilder();

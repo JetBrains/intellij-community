@@ -6,5 +6,5 @@ open class A(x: Int) {
     }
 }
 /*
-Text: (<disabled>[y: Boolean],</disabled><highlight> </highlight>[x: Int]), Disabled: false, Strikeout: false, Green: true
+Text: (<disabled>[y: Boolean],</disabled><highlight></highlight> [x: Int]), Disabled: false, Strikeout: false, Green: true
 */
