@@ -630,12 +630,12 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
   protected class LongRunningTask implements AutoCloseable {
     @NotNull private final String myId;
     private final AtomicInteger myFinishedRequests = new AtomicInteger(0);
-    private final int myTotalRequests;
+    private final AtomicInteger myTotalRequests;
     private final AtomicBoolean isCanceled = new AtomicBoolean(false);
 
     protected LongRunningTask(@NotNull String id, int totalRequests) {
       myId = id;
-      myTotalRequests = totalRequests;
+      myTotalRequests = new AtomicInteger(totalRequests);
 
       myLongRunningTasks.put(myId, this);
     }
@@ -649,7 +649,11 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
     }
 
     private int getTotalRequests() {
-      return myTotalRequests;
+      return myTotalRequests.get();
+    }
+
+    public void updateTotalRequests(int newValue) {
+      myTotalRequests.set(newValue);
     }
 
     private void cancel() {

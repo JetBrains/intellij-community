@@ -18,9 +18,7 @@ import org.jetbrains.idea.maven.server.MavenServerExecutionResult;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.server.ProfileApplicationResult;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
-import org.jetbrains.idea.maven.utils.MavenLog;
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
-import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.idea.maven.utils.*;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -515,15 +513,24 @@ public final class MavenProjectReader {
     }
   }
 
-  public Collection<MavenProjectReaderResult> resolveProject(final MavenGeneralSettings generalSettings,
+  // used in third-party plugins
+  public Collection<MavenProjectReaderResult> resolveProject(MavenGeneralSettings generalSettings,
                                                              MavenEmbedderWrapper embedder,
                                                              Collection<VirtualFile> files,
-                                                             final MavenExplicitProfiles explicitProfiles,
-                                                             final MavenProjectReaderProjectLocator locator)
+                                                             MavenExplicitProfiles explicitProfiles,
+                                                             MavenProjectReaderProjectLocator locator)
+    throws MavenProcessCanceledException {
+    return resolveProject(generalSettings, embedder, files, explicitProfiles, locator, null);
+  }
+  public Collection<MavenProjectReaderResult> resolveProject(MavenGeneralSettings generalSettings,
+                                                             MavenEmbedderWrapper embedder,
+                                                             Collection<VirtualFile> files,
+                                                             MavenExplicitProfiles explicitProfiles,
+                                                             MavenProjectReaderProjectLocator locator,
+                                                             @Nullable MavenProgressIndicator process)
     throws MavenProcessCanceledException {
     try {
-      Collection<MavenServerExecutionResult> executionResults = embedder
-        .resolveProject(files, explicitProfiles.getEnabledProfiles(), explicitProfiles.getDisabledProfiles());
+      Collection<MavenServerExecutionResult> executionResults = embedder.resolveProject(files, explicitProfiles, process);
       Map<String, VirtualFile> filesMap = CollectionFactory.createFilePathMap();
       filesMap.putAll(files.stream().collect(toMap(VirtualFile::getPath, Function.identity())));
 

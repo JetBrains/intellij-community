@@ -108,7 +108,7 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
     MavenExplicitProfiles explicitProfiles = tree.getExplicitProfiles();
     Collection<VirtualFile> files = ContainerUtil.map(mavenProjects, p -> p.getFile());
     Collection<MavenProjectReaderResult> results = new MavenProjectReader(myProject)
-      .resolveProject(generalSettings, embedder, files, explicitProfiles, tree.getProjectLocator());
+      .resolveProject(generalSettings, embedder, files, explicitProfiles, tree.getProjectLocator(), process);
 
     MavenResolveResultProblemProcessor.MavenResolveProblemHolder problems = MavenResolveResultProblemProcessor.getProblems(results);
     MavenResolveResultProblemProcessor.notifySyncForProblem(myProject, problems);

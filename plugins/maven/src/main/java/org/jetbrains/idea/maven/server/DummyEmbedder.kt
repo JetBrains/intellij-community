@@ -32,11 +32,6 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
     }
   }
 
-  abstract override fun resolveProject(files: Collection<File>,
-                                       activeProfiles: Collection<String>,
-                                       inactiveProfiles: Collection<String>,
-                                       token: MavenToken?): Collection<MavenServerExecutionResult>
-
   override fun evaluateEffectivePom(file: File,
                                     activeProfiles: List<String>,
                                     inactiveProfiles: List<String>,
@@ -112,7 +107,8 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
 }
 
 class UntrustedDummyEmbedder(myProject: Project) : DummyEmbedder(myProject) {
-  override fun resolveProject(files: Collection<File>,
+  override fun resolveProject(longRunningTaskId: String,
+                              files: Collection<File>,
                               activeProfiles: Collection<String>,
                               inactiveProfiles: Collection<String>,
                               token: MavenToken?): Collection<MavenServerExecutionResult> {
@@ -137,7 +133,8 @@ class MisconfiguredPlexusDummyEmbedder(myProject: Project,
                                        private val myMultimoduleDirectories: MutableSet<String>,
                                        private val myMavenVersion: String?,
                                        private val myUnresolvedId: MavenId?) : DummyEmbedder(myProject) {
-  override fun resolveProject(files: Collection<File>,
+  override fun resolveProject(longRunningTaskId: String,
+                              files: Collection<File>,
                               activeProfiles: Collection<String>,
                               inactiveProfiles: Collection<String>,
                               token: MavenToken?): Collection<MavenServerExecutionResult> {

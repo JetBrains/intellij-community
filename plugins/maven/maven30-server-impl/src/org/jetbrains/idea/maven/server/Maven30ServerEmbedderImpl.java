@@ -542,28 +542,6 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     }
   }
 
-  @NotNull
-  @Override
-  public Collection<MavenServerExecutionResult> resolveProject(@NotNull final Collection<File> files,
-                                                               @NotNull Collection<String> activeProfiles,
-                                                               @NotNull Collection<String> inactiveProfiles, MavenToken token)
-    throws RemoteException {
-    MavenServerUtil.checkToken(token);
-    final DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myConsoleWrapper);
-
-    Collection<MavenExecutionResult> results =
-      doResolveProject(files, new ArrayList<String>(activeProfiles), new ArrayList<String>(inactiveProfiles),
-                       Collections.singletonList(listener));
-    return ContainerUtilRt.map2List(results, result -> {
-      try {
-        return createExecutionResult(result.getPomFile(), result, listener.getRootNode());
-      }
-      catch (RemoteException e) {
-        throw new RuntimeException(e);
-      }
-    });
-  }
-
   @Nullable
   @Override
   public String evaluateEffectivePom(@NotNull File file,
@@ -608,16 +586,55 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   }
 
   @NotNull
-  public Collection<MavenExecutionResult> doResolveProject(@NotNull final Collection<File> files,
-                                                           @NotNull final List<String> activeProfiles,
-                                                           @NotNull final List<String> inactiveProfiles,
-                                                           final List<ResolutionListener> listeners) throws RemoteException {
-    final File file = files.size() == 1 ? files.iterator().next() : null;
-    final MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, null);
+  @Override
+  public Collection<MavenServerExecutionResult> resolveProject(@NotNull String longRunningTaskId,
+                                                               @NotNull Collection<File> files,
+                                                               @NotNull Collection<String> activeProfiles,
+                                                               @NotNull Collection<String> inactiveProfiles, MavenToken token)
+    throws RemoteException {
+    MavenServerUtil.checkToken(token);
+    try (LongRunningTask task = new LongRunningTask(longRunningTaskId, files.size())) {
+      return resolveProject(task, files, activeProfiles, inactiveProfiles);
+    }
+  }
+
+  @NotNull
+  private Collection<MavenServerExecutionResult> resolveProject(@NotNull LongRunningTask task,
+                                                                @NotNull Collection<File> files,
+                                                                @NotNull Collection<String> activeProfiles,
+                                                                @NotNull Collection<String> inactiveProfiles)
+    throws RemoteException {
+    DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myConsoleWrapper);
+
+    Collection<MavenExecutionResult> results = doResolveProject(
+      task,
+      files,
+      new ArrayList<>(activeProfiles),
+      new ArrayList<>(inactiveProfiles),
+      Collections.singletonList(listener));
+
+    return ContainerUtilRt.map2List(results, result -> {
+      try {
+        return createExecutionResult(result.getPomFile(), result, listener.getRootNode());
+      }
+      catch (RemoteException e) {
+        throw new RuntimeException(e);
+      }
+    });
+  }
+
+  @NotNull
+  private Collection<MavenExecutionResult> doResolveProject(@NotNull LongRunningTask task,
+                                                            @NotNull Collection<File> files,
+                                                            @NotNull List<String> activeProfiles,
+                                                            @NotNull List<String> inactiveProfiles,
+                                                            final List<ResolutionListener> listeners) throws RemoteException {
+    File file = files.size() == 1 ? files.iterator().next() : null;
+    MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, null);
 
     request.setUpdateSnapshots(myAlwaysUpdateSnapshots);
 
-    final Collection<MavenExecutionResult> executionResults = new ArrayList<MavenExecutionResult>();
+    Collection<MavenExecutionResult> executionResults = new ArrayList<MavenExecutionResult>();
 
     executeWithMavenSession(request, (Runnable)() -> {
       try {
@@ -632,8 +649,11 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
         }
 
         List<ProjectBuildingResult> buildingResults = getProjectBuildingResults(request, files);
+        task.updateTotalRequests(buildingResults.size());
 
         for (ProjectBuildingResult buildingResult : buildingResults) {
+          if (task.isCanceled()) break;
+
           MavenProject project = buildingResult.getProject();
 
           if (project == null) {
@@ -659,12 +679,12 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
             addMvn2CompatResults(project, exceptions, listeners, myLocalRepository, executionResults);
           }
           else {
-            final DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
-            final List<Dependency> dependencies = dependencyResolutionResult.getDependencies();
+            DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
+            List<Dependency> dependencies = dependencyResolutionResult.getDependencies();
 
             Set<Artifact> artifacts = new LinkedHashSet<Artifact>(dependencies.size());
             for (Dependency dependency : dependencies) {
-              final Artifact artifact = RepositoryUtils.toArtifact(dependency.getArtifact());
+              Artifact artifact = RepositoryUtils.toArtifact(dependency.getArtifact());
               artifact.setScope(dependency.getScope());
               artifact.setOptional(dependency.isOptional());
               artifacts.add(artifact);
@@ -674,6 +694,8 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
             project.setArtifacts(artifacts);
             executionResults.add(new MavenExecutionResult(project, dependencyResolutionResult, exceptions, buildingResult.getProblems()));
           }
+
+          task.incrementFinishedRequests();
         }
       }
       catch (Exception e) {

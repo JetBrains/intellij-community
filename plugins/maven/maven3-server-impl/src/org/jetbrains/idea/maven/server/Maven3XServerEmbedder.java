@@ -784,15 +784,28 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   @NotNull
   @Override
-  public Collection<MavenServerExecutionResult> resolveProject(@NotNull Collection<File> files,
+  public Collection<MavenServerExecutionResult> resolveProject(@NotNull String longRunningTaskId,
+                                                               @NotNull Collection<File> files,
                                                                @NotNull Collection<String> activeProfiles,
                                                                @NotNull Collection<String> inactiveProfiles, MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);
+    try (LongRunningTask task = new LongRunningTask(longRunningTaskId, files.size())) {
+      return resolveProject(task, files, activeProfiles, inactiveProfiles);
+    }
+  }
+
+  @NotNull
+  private Collection<MavenServerExecutionResult> resolveProject(@NotNull LongRunningTask task,
+                                                                @NotNull Collection<File> files,
+                                                                @NotNull Collection<String> activeProfiles,
+                                                                @NotNull Collection<String> inactiveProfiles)
+    throws RemoteException {
     try {
       final DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myConsoleWrapper);
 
       Collection<MavenExecutionResult> results = doResolveProject(
+        task,
         files,
         new ArrayList<>(activeProfiles),
         new ArrayList<>(inactiveProfiles),
@@ -814,7 +827,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   @NotNull
-  private Collection<MavenExecutionResult> doResolveProject(@NotNull final Collection<File> files,
+  private Collection<MavenExecutionResult> doResolveProject(@NotNull LongRunningTask task,
+                                                            @NotNull final Collection<File> files,
                                                             @NotNull final List<String> activeProfiles,
                                                             @NotNull final List<String> inactiveProfiles,
                                                             final List<ResolutionListener> listeners) throws RemoteException {
@@ -874,10 +888,17 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
           }
         }
 
+        task.updateTotalRequests(buildingResultsToResolveDependencies.size());
         boolean runInParallel = canResolveDependenciesInParallel();
         Collection<MavenExecutionResult> execResults =
-          MavenServerParallelRunner.execute(runInParallel, buildingResultsToResolveDependencies.entrySet(), entry ->
-            resolveBuildingResult(repositorySession, addUnresolved, entry.getKey(), entry.getValue())
+          MavenServerParallelRunner.execute(
+            runInParallel,
+            buildingResultsToResolveDependencies.entrySet(), entry -> {
+              if (task.isCanceled()) return new MavenExecutionResult(Collections.emptyList());
+              MavenExecutionResult result = resolveBuildingResult(repositorySession, addUnresolved, entry.getKey(), entry.getValue());
+              task.incrementFinishedRequests();
+              return result;
+            }
           );
 
         executionResults.addAll(execResults);

@@ -38,7 +38,8 @@ public interface MavenServerEmbedder extends Remote {
     throws RemoteException;
 
   @NotNull
-  Collection<MavenServerExecutionResult> resolveProject(@NotNull Collection<File> files,
+  Collection<MavenServerExecutionResult> resolveProject(@NotNull String longRunningTaskId,
+                                                        @NotNull Collection<File> files,
                                                         @NotNull Collection<String> activeProfiles,
                                                         @NotNull Collection<String> inactiveProfiles, MavenToken token)
     throws

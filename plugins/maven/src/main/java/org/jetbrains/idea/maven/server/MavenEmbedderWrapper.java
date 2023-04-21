@@ -128,26 +128,33 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   }
 
   @NotNull
-  public Collection<MavenServerExecutionResult> resolveProject(@NotNull final Collection<VirtualFile> files,
-                                                               @NotNull final Collection<String> activeProfiles,
-                                                               @NotNull final Collection<String> inactiveProfiles)
+  public Collection<MavenServerExecutionResult> resolveProject(@NotNull Collection<VirtualFile> files,
+                                                               @NotNull MavenExplicitProfiles explicitProfiles,
+                                                               @NotNull MavenProgressIndicator progressIndicator)
     throws MavenProcessCanceledException {
-    return performCancelable(() -> {
-      Transformer transformer = files.isEmpty() ?
-                                Transformer.ID :
-                                RemotePathTransformerFactory.createForProject(myProject);
-      final List<File> ioFiles = ContainerUtil.map(files, file -> new File(transformer.toRemotePath(file.getPath())));
-      Collection<MavenServerExecutionResult> results =
-        getOrCreateWrappee().resolveProject(ioFiles, activeProfiles, inactiveProfiles, ourToken);
-      if (transformer != Transformer.ID) {
-        for (MavenServerExecutionResult result : results) {
-          MavenServerExecutionResult.ProjectData data = result.projectData;
-          if (data == null) continue;
-          new MavenBuildPathsChange((String s) -> transformer.toIdePath(s), s -> transformer.canBeRemotePath(s)).perform(data.mavenModel);
-        }
+    Transformer transformer = files.isEmpty() ?
+                              Transformer.ID :
+                              RemotePathTransformerFactory.createForProject(myProject);
+    final List<File> ioFiles = ContainerUtil.map(files, file -> new File(transformer.toRemotePath(file.getPath())));
+
+    var results = runLongRunningTask(
+      (embedder, longRunningTaskId) ->
+        embedder.resolveProject(
+          longRunningTaskId,
+          ioFiles,
+          explicitProfiles.getEnabledProfiles(),
+          explicitProfiles.getDisabledProfiles(),
+          ourToken),
+      progressIndicator);
+
+    if (transformer != Transformer.ID) {
+      for (MavenServerExecutionResult result : results) {
+        MavenServerExecutionResult.ProjectData data = result.projectData;
+        if (data == null) continue;
+        new MavenBuildPathsChange((String s) -> transformer.toIdePath(s), s -> transformer.canBeRemotePath(s)).perform(data.mavenModel);
       }
-      return results;
-    });
+    }
+    return results;
   }
 
   @Nullable
