@@ -37,7 +37,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class ProjectViewTree extends DnDAwareTree implements SpeedSearchSupply.SpeedSearchLocator, @NotNull DataProvider {
+public class ProjectViewTree extends DnDAwareTree implements SpeedSearchSupply.SpeedSearchLocator {
   private static final Logger LOG = Logger.getInstance(ProjectViewTree.class);
 
   /**
@@ -69,7 +69,15 @@ public class ProjectViewTree extends DnDAwareTree implements SpeedSearchSupply.S
       return editor;
     });
 
-    DataManager.registerDataProvider(this, this);
+    DataManager.registerDataProvider(this, new DataProvider() {
+      @Override
+      public @Nullable Object getData(@NotNull String dataId) {
+          if (PlatformDataKeys.SPEED_SEARCH_LOCATOR.is(dataId)) {
+            return ProjectViewTree.this;
+          }
+          return null;
+        }
+    });
   }
 
   /**
@@ -113,14 +121,6 @@ public class ProjectViewTree extends DnDAwareTree implements SpeedSearchSupply.S
           return new RelativeRectangle(rp, d);
         }
       }
-    }
-    return null;
-  }
-
-  @Override
-  public @Nullable Object getData(@NotNull String dataId) {
-    if (PlatformDataKeys.SPEED_SEARCH_LOCATOR.is(dataId)) {
-      return this;
     }
     return null;
   }
