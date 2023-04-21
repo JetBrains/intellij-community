@@ -206,27 +206,46 @@ final class PersistentFSConnector {
         PersistentFSConnection.closeStorages(recordsStorage, namesStorage, attributesStorage, contentHashesEnumerator, contentsStorage);
 
         boolean deleted = FileUtil.delete(corruptionMarkerFile.toFile());
-        deleted &= IOUtil.deleteAllFilesStartingWith(namesFile);
+        if (!deleted) {
+          LOG.info("Can't delete " + corruptionMarkerFile);
+        }
+        deleted = IOUtil.deleteAllFilesStartingWith(namesFile);
+        if (!deleted) {
+          LOG.info("Can't delete " + namesFile);
+        }
         if (FSRecordsImpl.USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION) {
-          deleted &= AttributesStorageOverBlobStorage.deleteStorageFiles(attributesFile);
+          deleted = AttributesStorageOverBlobStorage.deleteStorageFiles(attributesFile);
         }
         else {
-          deleted &= AbstractStorage.deleteFiles(attributesFile);
+          deleted = AbstractStorage.deleteFiles(attributesFile);
         }
-        deleted &= AbstractStorage.deleteFiles(contentsFile);
-        deleted &= IOUtil.deleteAllFilesStartingWith(contentsHashesFile);
-        deleted &= IOUtil.deleteAllFilesStartingWith(recordsFile);
-        //deleted &= IOUtil.deleteAllFilesStartingWith(vfsDependentEnumBaseFile);
-        deleted &= IOUtil.deleteAllFilesStartingWith(persistentFSPaths.getRootsBaseFile());
-        deleted &= IOUtil.deleteAllFilesStartingWith(enumeratedAttributesFile);
-
-        //if (!deleted) {
-        //  throw new IOException("Cannot delete filesystem storage files");
-        //}
+        if (!deleted) {
+          LOG.info("Can't delete " + attributesFile);
+        }
+        deleted = AbstractStorage.deleteFiles(contentsFile);
+        if (!deleted) {
+          LOG.info("Can't delete " + contentsFile);
+        }
+        deleted = IOUtil.deleteAllFilesStartingWith(contentsHashesFile);
+        if (!deleted) {
+          LOG.info("Can't delete " + contentsHashesFile);
+        }
+        deleted = IOUtil.deleteAllFilesStartingWith(recordsFile);
+        if (!deleted) {
+          LOG.info("Can't delete " + recordsFile);
+        }
+        deleted = IOUtil.deleteAllFilesStartingWith(persistentFSPaths.getRootsBaseFile());
+        if (!deleted) {
+          LOG.info("Can't delete " + persistentFSPaths.getRootsBaseFile());
+        }
+        deleted = IOUtil.deleteAllFilesStartingWith(enumeratedAttributesFile);
+        if (!deleted) {
+          LOG.info("Can't delete " + enumeratedAttributesFile);
+        }
       }
       catch (IOException e1) {
         e1.addSuppressed(e);
-        LOG.warn("Cannot rebuild filesystem storage", e1);
+        LOG.warn("Cannot clean filesystem storage", e1);
         throw e1;
       }
 
@@ -365,7 +384,7 @@ final class PersistentFSConnector {
   private static void logNameEnumeratorFiles(final Path basePath,
                                              final Path namesFile) throws IOException {
     final Application application = ApplicationManager.getApplication();
-    final boolean traceNumeratorOps = application!= null
+    final boolean traceNumeratorOps = application != null
                                       && application.isUnitTestMode()
                                       && PlatformUtils.isFleetBackend();
     if (traceNumeratorOps) {
