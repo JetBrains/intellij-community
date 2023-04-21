@@ -1,12 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.telemetry
 
+import com.intellij.openapi.diagnostic.Logger
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.sdk.metrics.data.LongPointData
 import io.opentelemetry.sdk.metrics.internal.data.ImmutableLongPointData
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.bufferedReader
+
+private val LOG: Logger = Logger.getInstance(MetricsImporterUtils.javaClass)
 
 @ApiStatus.Internal
 object MetricsImporterUtils {
@@ -31,22 +34,44 @@ object MetricsImporterUtils {
     val meters = HashMap<String, MutableList<LongPointData>>()
 
     metricsCsvPath.bufferedReader().useLines { lines ->
-      lines.drop(MetricsExporterUtils.csvHeadersLines().size).forEach {
-        // See: [MetricsExporterUtils.concatToCsvLine]
-        // # NAME, PERIOD_START_NANOS, PERIOD_END_NANOS, VALUE
-        val (metricName, startEpochNanos, endEpochNanos, value) = it.split(",")
+      for (line in lines.drop(MetricsExporterUtils.csvHeadersLines().size)) {
+        if (line.trim().isEmpty()) continue
 
-        if (value.isLongNumber()) {
-          val data: LongPointData = ImmutableLongPointData.create(startEpochNanos.toLong(),
-                                                                  endEpochNanos.toLong(),
-                                                                  Attributes.empty(),
-                                                                  value.toLong())
-          val metrics = meters.computeIfAbsent(metricName) { mutableListOf() }
-          metrics.add(data)
+        try {
+          // See: [MetricsExporterUtils.concatToCsvLine]
+          // # NAME, PERIOD_START_NANOS, PERIOD_END_NANOS, VALUE
+          val (metricName, startEpochNanos, endEpochNanos, value) = line.split(",")
+
+          if (value.isLongNumber()) {
+            val data: LongPointData = ImmutableLongPointData.create(startEpochNanos.toLong(),
+                                                                    endEpochNanos.toLong(),
+                                                                    Attributes.empty(),
+                                                                    value.toLong())
+            val metrics = meters.computeIfAbsent(metricName) { mutableListOf() }
+            metrics.add(data)
+          }
+        }
+        catch (e: Exception) {
+          LOG.error("Failure during parsing OpenTelemetry metrics from CSV file $metricsCsvPath on line $line")
+          throw e
         }
       }
 
       return meters
     }
+  }
+
+  @JvmStatic
+  fun fromCsvFile(metricsCsvFiles: Iterable<Path>): HashMap<String, MutableList<LongPointData>> {
+    val meters = HashMap<String, MutableList<LongPointData>>()
+
+    for (csvFile in metricsCsvFiles) {
+      val currentMeters = fromCsvFile(csvFile)
+      currentMeters.forEach { (key, value) ->
+        meters.merge(key, value) { originalList, additionalList -> originalList.plus(additionalList).toMutableList() }
+      }
+    }
+
+    return meters
   }
 }
