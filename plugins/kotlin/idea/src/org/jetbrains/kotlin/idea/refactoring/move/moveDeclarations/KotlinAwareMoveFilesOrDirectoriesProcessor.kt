@@ -13,6 +13,7 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.idea.refactoring.move.MoveConflictUsages
 import org.jetbrains.kotlin.idea.refactoring.move.MoveConflictsFoundException
 import org.jetbrains.kotlin.idea.refactoring.move.MoveFilesWithDeclarationsViewDescriptor
 import org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories.allElementsToMove
@@ -52,7 +53,7 @@ class KotlinAwareMoveFilesOrDirectoriesProcessor @JvmOverloads constructor(
     }
 
     override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
-        val (conflicts, usages) = MoveToKotlinFileProcessor.preprocessConflictUsages(refUsages)
+        val (conflicts, usages) = MoveConflictUsages.preprocess(refUsages)
         return showConflicts(conflicts, usages)
     }
 
