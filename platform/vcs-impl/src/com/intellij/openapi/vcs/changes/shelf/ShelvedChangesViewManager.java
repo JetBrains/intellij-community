@@ -356,7 +356,7 @@ public class ShelvedChangesViewManager implements Disposable {
       super(project, false, false, false);
       myAsyncTreeModel = new ShelfTreeAsyncModel(project, getScope());
 
-      TreeSpeedSearch.installOn(this, true, ChangesBrowserNode.TO_TEXT_CONVERTER.asFunction());
+      TreeSpeedSearch.installOn(this, true, ChangesBrowserNode.TO_TEXT_CONVERTER);
       setKeepTreeState(true);
       setDoubleClickHandler(e -> showShelvedChangesDiff());
       setEnterKeyHandler(e -> showShelvedChangesDiff());

@@ -122,7 +122,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     setShowsRootHandles(true);
     setOpaque(false);
     if (withSpeedSearch) {
-      TreeSpeedSearch.installOn(this, false, ChangesBrowserNode.TO_TEXT_CONVERTER.asFunction());
+      TreeSpeedSearch.installOn(this, false, ChangesBrowserNode.TO_TEXT_CONVERTER);
     }
 
     final ChangesBrowserNodeRenderer nodeRenderer = new ChangesBrowserNodeRenderer(myProject, this::isShowFlatten, highlightProblems);
