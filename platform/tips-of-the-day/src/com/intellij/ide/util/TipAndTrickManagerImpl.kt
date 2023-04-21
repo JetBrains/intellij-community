@@ -19,11 +19,7 @@ class TipAndTrickManagerImpl : TipAndTrickManager {
   override fun showTipDialog(project: Project, tip: TipAndTrickBean) = showTipDialog(project, listOf(tip))
 
   private fun showTipDialog(project: Project?, tips: List<TipAndTrickBean>) {
-    val sortingResult = if (tips.size > 1) {
-      TipsOrderUtil.getInstance().sort(tips, project)
-    }
-    else TipsSortingResult(tips)
-
+    val sortingResult = if (tips.size > 1) TipsOrderUtil.getInstance().sort(tips, project) else TipsSortingResult(tips)
     invokeLater {
       if (project?.isDisposed != true) {
         closeTipDialog()

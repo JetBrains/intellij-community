@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.text.DateFormatUtil
 
 @Service
-internal class TipsOrderUtil {
+internal class TipOrderUtil {
   /**
    * Reorders tips to show the most useful ones in the beginning.
    * If provided project is null, tip applicability will not be taken into account.
@@ -20,7 +20,7 @@ internal class TipsOrderUtil {
    * @return object that contains sorted tips and describes approach of how the tips are sorted
    */
   fun sort(tips: List<TipAndTrickBean>, project: Project?): TipsSortingResult {
-    val registry = ProductivityFeaturesRegistry.getInstance();
+    val registry = ProductivityFeaturesRegistry.getInstance()
     if (registry == null) {
       thisLogger().warn("ProductivityFeaturesRegistry is not created")
       return TipsSortingResult(tips.shuffled(), SHUFFLE_ALGORITHM, "1")
@@ -107,11 +107,11 @@ internal class TipsOrderUtil {
     private const val MIN_SUCCESSIVE_SHOW_INTERVAL_DAYS = 14
 
     @JvmStatic
-    fun getInstance(): TipsOrderUtil = service()
+    fun getInstance(): TipOrderUtil = service()
   }
 }
 
-internal data class TipsSortingResult @JvmOverloads constructor(val tips: List<TipAndTrickBean>,
-                                                                val algorithm: String = "unknown",
-                                                                val version: String? = null)
+internal data class TipsSortingResult @JvmOverloads constructor(@JvmField val tips: List<TipAndTrickBean>,
+                                                                @JvmField val algorithm: String = "unknown",
+                                                                @JvmField val version: String? = null)
 

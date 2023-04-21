@@ -13,8 +13,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public class ShowTipsAction extends AnAction implements DumbAware {
-
+final class ShowTipsAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
@@ -22,7 +21,7 @@ public class ShowTipsAction extends AnAction implements DumbAware {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         TipsOfTheDayUsagesCollector.triggerDialogShown(TipsOfTheDayUsagesCollector.DialogType.manually);
-        TipAndTrickManager.getInstance().showTipDialog(project);
+        TipAndTrickManager.Companion.getInstance().showTipDialog(project);
       }
     }.queue();
   }

@@ -13,7 +13,7 @@ interface TipAndTrickManager {
    * Shows the dialog with the tips sorted in descending order of usefulness.
    * Should be run from background thread, because sorting of the tips can take some time.
    *
-   * If provided project is null, tip applicability will not be taken into account during sorting.
+   * If a provided project is null, tip applicability will not be taken into account during sorting.
    * Also Features Trainer lessons promoter will not be shown.
    */
   @RequiresBackgroundThread
@@ -29,9 +29,8 @@ interface TipAndTrickManager {
   fun canShowDialogAutomaticallyNow(project: Project): Boolean
 
   companion object {
-    val DISABLE_TIPS_FOR_PROJECT = Key.create<Boolean>("DISABLE_TIPS_FOR_PROJECT")
+    val DISABLE_TIPS_FOR_PROJECT: Key<Boolean> = Key.create("DISABLE_TIPS_FOR_PROJECT")
 
-    @JvmStatic
     fun getInstance(): TipAndTrickManager = service()
   }
 }
