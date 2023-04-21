@@ -34,16 +34,16 @@ import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.toLightElements
-import org.jetbrains.kotlin.idea.base.util.module
-import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesHandlerFactory
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.util.projectScope
+import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.base.util.restrictByFileType
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToBeShortenedDescendantsToWaitingSet
 import org.jetbrains.kotlin.idea.codeInsight.shorten.performDelayedRefactoringRequests
 import org.jetbrains.kotlin.idea.core.deleteSingle
-import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesHandlerFactory
 import org.jetbrains.kotlin.idea.refactoring.broadcastRefactoringExit
 import org.jetbrains.kotlin.idea.refactoring.move.*
 import org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories.MoveKotlinClassHandler
@@ -315,7 +315,7 @@ class MoveKotlinDeclarationsProcessor(
     }
 
     override fun showConflicts(conflicts: MultiMap<PsiElement, String>, usages: Array<out UsageInfo>?): Boolean {
-        if (throwOnConflicts && !conflicts.isEmpty) throw RefactoringConflictsFoundException()
+        if (throwOnConflicts && !conflicts.isEmpty) throw MoveConflictsFoundException()
         return super.showConflicts(conflicts, usages)
     }
 
