@@ -651,9 +651,6 @@ class QuickFixRegistrar : QuickFixContributor {
 
         JAVA_MODULE_DOES_NOT_DEPEND_ON_MODULE.registerFactory(KotlinAddRequiredModuleFix)
 
-        JVM_DEFAULT_REQUIRED_FOR_OVERRIDE.registerFactory(AddJvmDefaultAnnotation)
-        NON_JVM_DEFAULT_OVERRIDES_JAVA_DEFAULT.registerFactory(AddJvmDefaultAnnotation)
-
         OPT_IN_USAGE.registerFactory(OptInFixesFactory)
         OPT_IN_USAGE_ERROR.registerFactory(OptInFixesFactory)
         OPT_IN_OVERRIDE.registerFactory(OptInFixesFactory)
