@@ -335,9 +335,9 @@ fn symlink(original: &Path, link: &Path) -> Result<()> {
 }
 
 #[cfg(target_os = "windows")]
-fn symlink(target: &Path, junction: &Path) -> Result<()> {
-    junction::create(target, junction)
-        .context(format!("Failed to create junction {junction:?} pointing to {target:?}"))?;
+fn symlink(original: &Path, link: &Path) -> Result<()> {
+    std::os::windows::fs::symlink_dir(original, link)
+        .context(format!("Failed to create symlink {link:?} pointing to {original:?}"))?;
 
     Ok(())
 }
