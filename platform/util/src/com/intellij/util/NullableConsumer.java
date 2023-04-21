@@ -9,6 +9,12 @@ import org.jetbrains.annotations.Nullable;
  */
 @ApiStatus.Obsolete
 @FunctionalInterface
-public interface NullableConsumer<T> extends Consumer<T> {
+public interface NullableConsumer<T> extends Consumer<@Nullable T>, java.util.function.Consumer<@Nullable T> {
+  @Override
   void consume(@Nullable T t);
+
+  @Override
+  default void accept(@Nullable T t) {
+    consume(t);
+  }
 }

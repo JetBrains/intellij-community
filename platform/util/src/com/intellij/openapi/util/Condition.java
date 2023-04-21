@@ -3,6 +3,8 @@ package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.ApiStatus;
 
+import java.util.function.Predicate;
+
 /**
  * Deprecated. Please use {@link java.util.function.Predicate} instead.
  *
@@ -11,8 +13,13 @@ import org.jetbrains.annotations.ApiStatus;
  * See {@link Conditions} for chained conditions.
  */
 @FunctionalInterface
-public interface Condition<T> {
+public interface Condition<T> extends Predicate<T> {
   boolean value(T t);
+
+  @Override
+  default boolean test(T t) {
+    return value(t);
+  }
 
   /**
    * @deprecated use {@link Conditions#notNull()} instead

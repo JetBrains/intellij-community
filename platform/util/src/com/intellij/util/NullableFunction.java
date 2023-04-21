@@ -9,8 +9,14 @@ import org.jetbrains.annotations.Nullable;
  */
 @ApiStatus.Obsolete
 @FunctionalInterface
-public interface NullableFunction<Param, Result> extends Function<Param, Result> {
+public interface NullableFunction<Param, Result> extends Function<Param, @Nullable Result>, java.util.function.Function<Param, @Nullable Result> {
   @Override
   @Nullable
   Result fun(final Param param);
+
+  @Override
+  @Nullable
+  default Result apply(Param param) {
+    return fun(param);
+  }
 }
