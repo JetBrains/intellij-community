@@ -52,7 +52,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
 
   public static @NotNull ModalityState getDefaultModality() {
     Application app = ApplicationManager.getApplication();
-    return app == null ? ModalityState.NON_MODAL : app.getDefaultModalityState();
+    return app == null || !LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred() ? ModalityState.NON_MODAL : app.getDefaultModalityState();
   }
 
   /**

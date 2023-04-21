@@ -84,7 +84,7 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
   @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   private PerformanceWatcherImpl() {
     Application application = ApplicationManager.getApplication();
-    if (application == null) {
+    if (application == null || !LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred()) {
       throw ExtensionNotApplicableException.create();
     }
 
