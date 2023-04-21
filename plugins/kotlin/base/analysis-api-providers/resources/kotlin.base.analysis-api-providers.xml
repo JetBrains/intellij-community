@@ -13,6 +13,9 @@
             serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinPackageProviderFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiProviders.IdeKotlinPackageProviderFactory"/>
     <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinMessageBusProvider"
+            serviceImplementation="org.jetbrains.kotlin.analysis.providers.impl.KotlinProjectMessageBusProvider"/>
+    <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.providers.PackagePartProviderFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiProviders.PackagePartProviderFactoryIdeImpl"/>
     <projectService

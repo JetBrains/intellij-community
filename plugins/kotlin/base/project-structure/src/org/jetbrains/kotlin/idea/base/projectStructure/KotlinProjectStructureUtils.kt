@@ -12,6 +12,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.FileIndex
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
@@ -94,6 +96,17 @@ private fun Module.hasRootsOfType(rootTypes: Set<JpsModuleSourceRootType<*>>): B
     return rootManager.contentEntries.any { it.getSourceFolders(rootTypes).isNotEmpty() }
 }
 
+fun Library.getBinaryAndSourceModuleInfos(project: Project): List<IdeaModuleInfo> = buildList {
+    LibraryInfoCache.getInstance(project)[this@getBinaryAndSourceModuleInfos].forEach { libraryInfo ->
+        add(libraryInfo)
+        add(libraryInfo.sourcesModuleInfo)
+    }
+}
+
+/**
+ * [forcedModuleInfo] provides a [ModuleInfo] instance for a dummy file. It must not be changed after the first assignment because
+ * [ModuleInfoProvider] might cache the module info.
+ */
 @Suppress("UnusedReceiverParameter")
 var PsiFile.forcedModuleInfo: ModuleInfo? by UserDataProperty(Key.create("FORCED_MODULE_INFO"))
     @ApiStatus.Internal get

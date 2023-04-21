@@ -67,7 +67,7 @@ private fun cachedKtModule(psiFile: PsiFile): KtModule = CachedValuesManager.get
         calculateKtModule(psiFile),
         ProjectRootModificationTracker.getInstance(project),
         JavaLibraryModificationTracker.getInstance(project),
-        KotlinModificationTrackerFactory.getService(project).createProjectWideOutOfBlockModificationTracker(),
+        KotlinModificationTrackerFactory.getInstance(project).createProjectWideOutOfBlockModificationTracker(),
     )
 }
 
