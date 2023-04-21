@@ -14,9 +14,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import de.plushnikov.intellij.plugin.LombokBundle;
-import de.plushnikov.intellij.plugin.Version;
+import com.intellij.openapi.roots.LombokVersion;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
-import de.plushnikov.intellij.plugin.util.LombokLibraryUtil;
+import com.intellij.openapi.roots.LombokLibraryUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -41,10 +41,10 @@ final class LombokProjectValidatorActivity implements StartupActivity.DumbAware 
           if (hasLombokLibrary) {
             String lombokVersion = LombokLibraryUtil.getLombokVersionCached(project);
 
-            if (StringUtil.isNotEmpty(lombokVersion) && Version.isLessThan(lombokVersion, Version.LAST_LOMBOK_VERSION)) {
+            if (StringUtil.isNotEmpty(lombokVersion) && LombokVersion.isLessThan(lombokVersion, LombokVersion.LAST_LOMBOK_VERSION)) {
               return getNotificationGroup().createNotification(
                 LombokBundle.message("config.warn.dependency.outdated.title"),
-                LombokBundle.message("config.warn.dependency.outdated.message", project.getName(), lombokVersion, Version.LAST_LOMBOK_VERSION),
+                LombokBundle.message("config.warn.dependency.outdated.message", project.getName(), lombokVersion, LombokVersion.LAST_LOMBOK_VERSION),
                 NotificationType.WARNING);
             }
           }
@@ -62,6 +62,6 @@ final class LombokProjectValidatorActivity implements StartupActivity.DumbAware 
 
   @NotNull
   private static NotificationGroup getNotificationGroup() {
-    return NotificationGroupManager.getInstance().getNotificationGroup(Version.PLUGIN_NAME);
+    return NotificationGroupManager.getInstance().getNotificationGroup(LombokVersion.PLUGIN_NAME);
   }
 }

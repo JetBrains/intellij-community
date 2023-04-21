@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static de.plushnikov.intellij.plugin.util.LombokLibraryUtil.hasLombokLibrary;
+import static com.intellij.openapi.roots.LombokLibraryUtil.hasLombokLibrary;
 
 /**
  * Provides support for lombok generated elements

@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiJavaFile;
-import de.plushnikov.intellij.plugin.util.LombokLibraryUtil;
+import com.intellij.openapi.roots.LombokLibraryUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class LombokMenuGroup extends DefaultActionGroup implements DumbAware {

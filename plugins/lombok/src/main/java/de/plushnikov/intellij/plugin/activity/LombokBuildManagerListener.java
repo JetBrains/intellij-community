@@ -15,15 +15,15 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokBundle;
-import de.plushnikov.intellij.plugin.Version;
-import de.plushnikov.intellij.plugin.util.LombokLibraryUtil;
+import com.intellij.openapi.roots.LombokVersion;
+import com.intellij.openapi.roots.LombokLibraryUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
 
 import java.util.UUID;
 
 public class LombokBuildManagerListener implements BuildManagerListener {
-  private final SingletonNotificationManager myNotificationManager = new SingletonNotificationManager(Version.PLUGIN_NAME, NotificationType.ERROR);
+  private final SingletonNotificationManager myNotificationManager = new SingletonNotificationManager(LombokVersion.PLUGIN_NAME, NotificationType.ERROR);
 
   @Override
   public void beforeBuildProcessStarted(@NotNull Project project,

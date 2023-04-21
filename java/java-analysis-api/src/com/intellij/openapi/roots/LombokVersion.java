@@ -1,7 +1,7 @@
-package de.plushnikov.intellij.plugin;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.roots;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public interface Version {
+public interface LombokVersion {
   @NonNls String PLUGIN_NAME = "Lombok plugin";
   /**
    * Current version of lombok plugin
@@ -26,7 +26,7 @@ public interface Version {
       return StringUtil.compareVersionNumbers(currentVersion, otherVersion) < 0;
     }
     catch (NumberFormatException e) {
-      Logger.getInstance(Version.class).info("Unable to parse lombok version: " + currentVersion);
+      Logger.getInstance(LombokVersion.class).info("Unable to parse lombok version: " + currentVersion);
       return false;
     }
   }

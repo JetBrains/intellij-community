@@ -3,7 +3,7 @@ package de.plushnikov.intellij.plugin.inspection;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
-import de.plushnikov.intellij.plugin.util.LombokLibraryUtil;
+import com.intellij.openapi.roots.LombokLibraryUtil;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class LombokJavaInspectionBase extends AbstractBaseJavaLocalInspectionTool {

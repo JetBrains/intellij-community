@@ -4,6 +4,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
+import com.intellij.openapi.roots.LombokVersion;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class LombokTestUtil {
 
-  public static final String LOMBOK_MAVEN_COORDINATES = "org.projectlombok:lombok:" + Version.LAST_LOMBOK_VERSION;
+  public static final String LOMBOK_MAVEN_COORDINATES = "org.projectlombok:lombok:" + LombokVersion.LAST_LOMBOK_VERSION;
   private static final String JACKSON_MAVEN_COORDINATES = "com.fasterxml.jackson.core:jackson-databind:2.12.7.1";
 
   public static final DefaultLightProjectDescriptor LOMBOK_DESCRIPTOR = new DefaultLightProjectDescriptor() {
