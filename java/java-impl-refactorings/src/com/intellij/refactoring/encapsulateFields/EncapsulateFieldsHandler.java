@@ -6,7 +6,6 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -116,62 +115,8 @@ public class EncapsulateFieldsHandler implements PreviewableRefactoringActionHan
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;
 
-
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      PsiClass finalAClass = aClass;
-      new EncapsulateFieldsProcessor(project, new EncapsulateFieldsDescriptor() {
-        @Override
-        public FieldDescriptor[] getSelectedFields() {
-          return ContainerUtil.map(preselectedFields, field ->
-            new FieldDescriptorImpl(
-              field,
-              GenerateMembersUtil.suggestGetterName(field),
-              GenerateMembersUtil.suggestSetterName(field),
-              isToEncapsulateGet() ? GenerateMembersUtil.generateGetterPrototype(field) : null,
-              isToEncapsulateSet() ? GenerateMembersUtil.generateSetterPrototype(field) : null
-            )
-          ).toArray(new FieldDescriptor[preselectedFields.size()]);
-        }
-
-        @Override
-        public boolean isToEncapsulateGet() {
-          return true;
-        }
-
-        @Override
-        public boolean isToEncapsulateSet() {
-          return true;
-        }
-
-        @Override
-        public boolean isToUseAccessorsWhenAccessible() {
-          return true;
-        }
-
-        @Override
-        public String getFieldsVisibility() {
-          return PsiModifier.PRIVATE;
-        }
-
-        @Override
-        public String getAccessorsVisibility() {
-          return PsiModifier.PUBLIC;
-        }
-
-        @Override
-        public int getJavadocPolicy() {
-          return DocCommentPolicy.MOVE;
-        }
-
-        @Override
-        public PsiClass getTargetClass() {
-          return finalAClass;
-        }
-      }).run();
-    } else {
-      EncapsulateFieldsDialog dialog = createDialog(project, aClass, preselectedFields);
-      dialog.show();
-    }
+    EncapsulateFieldsDialog dialog = createDialog(project, aClass, preselectedFields);
+    dialog.show();
   }
 
   protected EncapsulateFieldsDialog createDialog(Project project, PsiClass aClass, HashSet<PsiField> preselectedFields) {

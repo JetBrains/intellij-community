@@ -2,9 +2,6 @@
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.ide.projectWizard.NewProjectWizardTestCase;
-import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData;
-import com.intellij.ide.wizard.LanguageNewProjectWizardData;
-import com.intellij.ide.wizard.NewProjectWizardBaseData;
 import com.intellij.ide.wizard.Step;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
@@ -40,7 +37,6 @@ import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData;
 import org.jetbrains.plugins.gradle.util.GradleImportingTestUtil;
 
 import java.io.File;
@@ -48,6 +44,10 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
 
+import static com.intellij.ide.wizard.NewProjectWizardBaseData.getBaseData;
+import static com.intellij.ide.wizard.LanguageNewProjectWizardData.getLanguageData;
+import static com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.getJavaBuildSystemData;
+import static org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.getJavaGradleData;
 import static com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase.collectRootsInside;
 import static org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID;
 
@@ -58,7 +58,7 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
 
   public void testGradleNPWPropertiesSuggestion() throws Exception {
     Project project = createProjectFromTemplate(UIBundle.message("label.project.wizard.empty.project.generator.name"), step -> {
-      NewProjectWizardBaseData.setName(step, "project");
+      getBaseData(step).setName("project");
     });
     assertModules(project, "project");
 
@@ -67,22 +67,22 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
     var externalProjectPath2 = projectPath + "/untitled1";
     GradleImportingTestUtil.waitForProjectReload(() -> {
       return createModuleFromTemplate(project, step -> {
-        LanguageNewProjectWizardData.setLanguage(step, "Java");
-        BuildSystemJavaNewProjectWizardData.setBuildSystem(step, "Gradle");
-        assertNull(GradleJavaNewProjectWizardData.getParentData(step));
-        assertEquals("untitled", NewProjectWizardBaseData.getName(step));
-        assertEquals(projectPath, NewProjectWizardBaseData.getPath(step));
-        GradleJavaNewProjectWizardData.setAddSampleCode(step, false);
+        getLanguageData(step).setLanguage("Java");
+        getJavaBuildSystemData(step).setBuildSystem("Gradle");
+        assertNull(getJavaGradleData(step).getParentData());
+        assertEquals("untitled", getBaseData(step).getName());
+        assertEquals(projectPath, getBaseData(step).getPath());
+        getJavaGradleData(step).setAddSampleCode(false);
       });
     });
     GradleImportingTestUtil.waitForProjectReload(() -> {
       return createModuleFromTemplate(project, step -> {
-        LanguageNewProjectWizardData.setLanguage(step, "Java");
-        BuildSystemJavaNewProjectWizardData.setBuildSystem(step, "Gradle");
-        assertNull(GradleJavaNewProjectWizardData.getParentData(step));
-        assertEquals("untitled1", NewProjectWizardBaseData.getName(step));
-        assertEquals(projectPath, NewProjectWizardBaseData.getPath(step));
-        GradleJavaNewProjectWizardData.setAddSampleCode(step, false);
+        getLanguageData(step).setLanguage("Java");
+        getJavaBuildSystemData(step).setBuildSystem("Gradle");
+        assertNull(getJavaGradleData(step).getParentData());
+        assertEquals("untitled1", getBaseData(step).getName());
+        assertEquals(projectPath, getBaseData(step).getPath());
+        getJavaGradleData(step).setAddSampleCode(false);
       });
     });
     assertModules(
@@ -95,22 +95,22 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
     DataNode<ProjectData> projectNode2 = ExternalSystemApiUtil.findProjectNode(project, SYSTEM_ID, externalProjectPath2);
     GradleImportingTestUtil.waitForProjectReload(() -> {
       return createModuleFromTemplate(project, step -> {
-        LanguageNewProjectWizardData.setLanguage(step, "Java");
-        BuildSystemJavaNewProjectWizardData.setBuildSystem(step, "Gradle");
-        GradleJavaNewProjectWizardData.setParentData(step, projectNode1.getData());
-        assertEquals("untitled2", NewProjectWizardBaseData.getName(step));
-        assertEquals(externalProjectPath1, NewProjectWizardBaseData.getPath(step));
-        GradleJavaNewProjectWizardData.setAddSampleCode(step, false);
+        getLanguageData(step).setLanguage("Java");
+        getJavaBuildSystemData(step).setBuildSystem("Gradle");
+        getJavaGradleData(step).setParentData(projectNode1.getData());
+        assertEquals("untitled2", getBaseData(step).getName());
+        assertEquals(externalProjectPath1, getBaseData(step).getPath());
+        getJavaGradleData(step).setAddSampleCode(false);
       });
     });
     GradleImportingTestUtil.waitForProjectReload(() -> {
       return createModuleFromTemplate(project, step -> {
-        LanguageNewProjectWizardData.setLanguage(step, "Java");
-        BuildSystemJavaNewProjectWizardData.setBuildSystem(step, "Gradle");
-        GradleJavaNewProjectWizardData.setParentData(step, projectNode2.getData());
-        assertEquals("untitled2", NewProjectWizardBaseData.getName(step));
-        assertEquals(externalProjectPath2, NewProjectWizardBaseData.getPath(step));
-        GradleJavaNewProjectWizardData.setAddSampleCode(step, false);
+        getLanguageData(step).setLanguage("Java");
+        getJavaBuildSystemData(step).setBuildSystem("Gradle");
+        getJavaGradleData(step).setParentData(projectNode2.getData());
+        assertEquals("untitled2", getBaseData(step).getName());
+        assertEquals(externalProjectPath2, getBaseData(step).getPath());
+        getJavaGradleData(step).setAddSampleCode(false);
       });
     });
     assertModules(
@@ -126,10 +126,10 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
     final String projectName = "testProject";
     Project project = GradleImportingTestUtil.waitForProjectReload(() -> {
       return createProjectFromTemplate(step -> {
-        NewProjectWizardBaseData.setName(step, projectName);
-        LanguageNewProjectWizardData.setLanguage(step, "Java");
-        BuildSystemJavaNewProjectWizardData.setBuildSystem(step, "Gradle");
-        GradleJavaNewProjectWizardData.setAddSampleCode(step, false);
+        getBaseData(step).setName(projectName);
+        getLanguageData(step).setLanguage("Java");
+        getJavaBuildSystemData(step).setBuildSystem("Gradle");
+        getJavaGradleData(step).setAddSampleCode(false);
       });
     });
 
@@ -175,11 +175,11 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
 
     Module childModule = GradleImportingTestUtil.waitForProjectReload(() -> {
       return createModuleFromTemplate(project, step -> {
-        LanguageNewProjectWizardData.setLanguage(step, "Java");
-        BuildSystemJavaNewProjectWizardData.setBuildSystem(step, "Gradle");
-        assertEquals(projectName, GradleJavaNewProjectWizardData.getParentData(step).getExternalName());
-        GradleJavaNewProjectWizardData.setArtifactId(step, "childModule");
-        GradleJavaNewProjectWizardData.setAddSampleCode(step, false);
+        getLanguageData(step).setLanguage("Java");
+        getJavaBuildSystemData(step).setBuildSystem("Gradle");
+        assertEquals(projectName, getJavaGradleData(step).getParentData().getExternalName());
+        getJavaGradleData(step).setArtifactId("childModule");
+        getJavaGradleData(step).setAddSampleCode(false);
       });
     });
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue());

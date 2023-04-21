@@ -117,7 +117,7 @@ public final class GroovyExtractChooser {
     if (declarationOwner == null &&
         ExtractUtil.isSingleExpression(statements) &&
         statement0 instanceof GrExpression &&
-        PsiType.VOID.equals(((GrExpression)statement0).getType())) {
+        PsiTypes.voidType().equals(((GrExpression)statement0).getType())) {
       throw new GrRefactoringError(GroovyRefactoringBundle.message("selected.expression.has.void.type"));
     }
 

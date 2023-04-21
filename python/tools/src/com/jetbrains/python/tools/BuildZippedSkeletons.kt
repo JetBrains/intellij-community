@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.tools
 
 import com.intellij.openapi.vfs.VfsUtil
@@ -30,7 +30,7 @@ fun main() {
       println("Running on $python")
 
       val executable = PythonSdkUtil.getPythonExecutable(python.absolutePath)!!
-      val sdk = PySdkTools.createTempSdk(VfsUtil.findFileByIoFile(File(executable), true)!!, SdkCreationType.SDK_PACKAGES_ONLY, null)
+      val sdk = PySdkTools.createTempSdk(VfsUtil.findFileByIoFile(File(executable), true)!!, SdkCreationType.SDK_PACKAGES_ONLY, null, null)
 
       val skeletonsDir = File(workingDir, "skeletons-${sdk.versionString!!.replace(" ", "_")}_" + abs(sdk.homePath!!.hashCode()))
       println("Generating skeletons in ${skeletonsDir.absolutePath}")

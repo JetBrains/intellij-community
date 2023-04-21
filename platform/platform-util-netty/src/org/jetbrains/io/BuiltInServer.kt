@@ -1,6 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("BlockingMethodInNonBlockingContext")
-
 package org.jetbrains.io
 
 import com.intellij.openapi.Disposable
@@ -13,7 +12,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.util.concurrent.FastThreadLocalThread
 import io.netty.util.concurrent.GenericFutureListener
 import io.netty.util.internal.logging.InternalLoggerFactory
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.net.InetAddress
@@ -61,49 +60,19 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup,
     private class BuiltInServerThreadFactory : ThreadFactory {
       private val counter = AtomicInteger()
 
-      override fun newThread(r: java.lang.Runnable): Thread {
-        return FastThreadLocalThread(r, "Netty Builtin Server " + counter.incrementAndGet())
-      }
+      override fun newThread(r: Runnable): Thread =
+        FastThreadLocalThread(r, "Netty Builtin Server " + counter.incrementAndGet())
     }
 
-    suspend fun start(firstPort: Int,
-                      portsCount: Int,
-                      tryAnyPort: Boolean,
-                      handler: (() -> ChannelHandler)? = null): BuiltInServer {
+    suspend fun start(firstPort: Int, portsCount: Int, tryAnyPort: Boolean, handler: (() -> ChannelHandler)? = null): BuiltInServer {
       val provider = selectorProvider ?: SelectorProvider.provider()
       val factory = BuiltInServerThreadFactory()
       val eventLoopGroup = NioEventLoopGroup(if (PlatformUtils.isIdeaCommunity()) 2 else 3, factory, provider)
-      return start(
-        parentEventLoopGroup = eventLoopGroup,
-        childEventLoopGroup = eventLoopGroup,
-        isEventLoopGroupOwner = true,
-        firstPort = firstPort,
-        portsCount = portsCount,
-        tryAnyPort = tryAnyPort,
-        handler = handler,
-      )
-    }
-
-    suspend fun start(parentEventLoopGroup: EventLoopGroup,
-                      childEventLoopGroup: EventLoopGroup,
-                      isEventLoopGroupOwner: Boolean,
-                      firstPort: Int,
-                      portsCount: Int,
-                      tryAnyPort: Boolean,
-                      handler: (() -> ChannelHandler)? = null): BuiltInServer {
       val channelRegistrar = ChannelRegistrar()
-      val bootstrap = createServerBootstrap(parentEventLoopGroup, childEventLoopGroup)
-      configureChildHandler(bootstrap = bootstrap, channelRegistrar = channelRegistrar, channelHandler = handler)
-      val port = bind(firstPort = firstPort,
-                      portsCount = portsCount,
-                      tryAnyPort = tryAnyPort,
-                      bootstrap = bootstrap,
-                      channelRegistrar = channelRegistrar,
-                      isEventLoopGroupOwner = isEventLoopGroupOwner)
-      return BuiltInServer(eventLoopGroup = parentEventLoopGroup,
-                           childEventLoopGroup = childEventLoopGroup,
-                           port = port,
-                           channelRegistrar = channelRegistrar)
+      val bootstrap = createServerBootstrap(eventLoopGroup, eventLoopGroup)
+      configureChildHandler(bootstrap, channelRegistrar, handler)
+      val port = bind(firstPort, portsCount, tryAnyPort, bootstrap, channelRegistrar)
+      return BuiltInServer(eventLoopGroup, eventLoopGroup, port, channelRegistrar)
     }
 
     private fun createServerBootstrap(parentEventLoopGroup: EventLoopGroup, childEventLoopGroup: EventLoopGroup): ServerBootstrap {
@@ -123,23 +92,18 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup,
       })
     }
 
-    private suspend fun bind(firstPort: Int,
-                             portsCount: Int,
-                             tryAnyPort: Boolean,
-                             bootstrap: ServerBootstrap,
-                             channelRegistrar: ChannelRegistrar,
-                             isEventLoopGroupOwner: Boolean): Int {
+    private suspend fun bind(firstPort: Int, portsCount: Int, tryAnyPort: Boolean, bootstrap: ServerBootstrap, registrar: ChannelRegistrar): Int {
       val address = InetAddress.getByName("127.0.0.1")
       val maxPort = (firstPort + portsCount) - 1
       for (port in firstPort..maxPort) {
-        // some antiviral software detect viruses by the fact of accessing these ports, so we should not touch them to appear innocent
+        // some antiviral software detects viruses by the fact of accessing these ports, so we should not touch them to appear innocent
         if (port == 6953 || port == 6969 || port == 6970) {
           continue
         }
 
         val future = bootstrap.bind(address, port).asDeferred().await()
         if (future.isSuccess) {
-          channelRegistrar.setServerChannel(future.channel(), isEventLoopGroupOwner)
+          registrar.setServerChannel(future.channel(), true)
           return port
         }
         else if (!tryAnyPort && port == maxPort) {
@@ -150,7 +114,7 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup,
       logger<BuiltInServer>().info("Cannot bind to our default range, so, try to bind to any free port")
       val future = bootstrap.bind(address, 0).asDeferred().await()
       if (future.isSuccess) {
-        channelRegistrar.setServerChannel(future.channel(), isEventLoopGroupOwner)
+        registrar.setServerChannel(future.channel(), true)
         return (future.channel().localAddress() as InetSocketAddress).port
       }
       throw future.cause()

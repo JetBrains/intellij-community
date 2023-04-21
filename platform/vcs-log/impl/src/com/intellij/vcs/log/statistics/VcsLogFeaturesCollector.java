@@ -147,7 +147,7 @@ public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
       private final @NotNull State myState = new State();
 
       @Override
-      public @NotNull State getState() {
+      protected @NotNull State getLogUiState() {
         return myState;
       }
 
@@ -158,11 +158,6 @@ public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
 
       @Override
       public @NotNull List<List<String>> getRecentlyFilteredGroups(@NotNull String filterName) {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public void loadState(@NotNull State state) {
         throw new UnsupportedOperationException();
       }
     };

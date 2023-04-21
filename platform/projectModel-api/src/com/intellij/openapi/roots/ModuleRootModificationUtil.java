@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
@@ -128,10 +127,6 @@ public final class ModuleRootModificationUtil {
 
   public static void setModuleSdk(@NotNull Module module, @Nullable Sdk sdk) {
     updateModel(module, model -> {
-      if (sdk != null && ApplicationManager.getApplication().isUnitTestMode()) {
-        //noinspection TestOnlyProblems
-        WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(sdk, module.getProject()));
-      }
       model.setSdk(sdk);
     });
   }

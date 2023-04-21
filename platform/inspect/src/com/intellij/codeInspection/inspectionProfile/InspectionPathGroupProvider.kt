@@ -3,18 +3,24 @@ package com.intellij.codeInspection.inspectionProfile
 
 import com.intellij.codeInspection.ex.InspectionToolWrapper
 
+private const val PATH_PROVIDER_PREFIX = "ijpath:"
 class InspectionPathGroupProvider : InspectionGroupProvider {
 
-  override fun findGroup(groupId: String): YamlInspectionGroup = object : YamlInspectionGroup {
+  override fun findGroup(groupId: String): YamlInspectionGroup? {
+    if (!groupId.startsWith(PATH_PROVIDER_PREFIX)) return null
+    val path = groupId.substring(PATH_PROVIDER_PREFIX.length)
+    if (path.isBlank()) return null
+    return object : YamlInspectionGroup {
 
-    override val groupId: String = groupId
+      override val groupId: String = groupId
 
-    override fun includesInspection(tool: InspectionToolWrapper<*, *>): Boolean {
-      return try {
-        tool.groupPath.firstOrNull() == groupId
-      }
-      catch (e: AssertionError) {
-        false
+      override fun includesInspection(tool: InspectionToolWrapper<*, *>): Boolean {
+        return try {
+          tool.groupPath.joinToString("/").startsWith(path)
+        }
+        catch (e: AssertionError) {
+          false
+        }
       }
     }
   }

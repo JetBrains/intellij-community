@@ -141,8 +141,7 @@ private class MyCellRenderer : TreeCellRenderer {
     val tab = TreeUtil.getUserObject(WelcomeScreenTab::class.java, value)
     val keyComponent = tab?.getKeyComponent(tree) ?: JLabel("")
     val wrappedPanel: JPanel = JBUI.Panels.simplePanel(keyComponent)
-    UIUtil.setBackgroundRecursively(wrappedPanel, if (isSelected) UIUtil.getListSelectionBackground(cellHasFocus)
-    else WelcomeScreenUIManager.getMainTabListBackground())
+    UIUtil.setOpaqueRecursively(wrappedPanel, false)
     UIUtil.setForegroundRecursively(wrappedPanel, UIUtil.getListForeground(isSelected, cellHasFocus))
     if (tab is Accessible) {
       wrappedPanel.accessibleContext.accessibleName = (tab as Accessible).accessibleContext.accessibleName

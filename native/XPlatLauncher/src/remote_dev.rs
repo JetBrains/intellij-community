@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 use log::{debug, info};
 use path_absolutize::Absolutize;
 use anyhow::{bail, Context, Result};
-use utils::{canonical_non_unc, get_current_exe, get_path_from_env_var, PathExt, read_file_to_end};
+use utils::{canonical_non_unc, get_current_exe, get_path_from_env_var, read_file_to_end};
 use crate::{DefaultLaunchConfiguration, get_cache_home, get_config_home, get_logs_home, LaunchConfiguration};
 use crate::docker::is_running_in_docker;
 
@@ -254,10 +254,8 @@ impl RemoteDevLaunchConfiguration {
         // PROJECT_PATH="$(cd "$(dirname "$PROJECT_PATH")" && pwd)/$(basename "$PROJECT_PATH")"
         // fi
 
-        let absolute_project_path = match project_path.is_dir() {
-            true => project_path,
-            false => project_path.parent_or_err()?,
-        }.absolutize()?.to_path_buf();
+        // taking parent dir in the bash launcher was added by @mfillipov for macos, let's ignore it
+        let absolute_project_path = project_path.absolutize()?.to_path_buf();
 
         return Ok(absolute_project_path);
     }
@@ -294,20 +292,20 @@ impl RemoteDevLaunchConfiguration {
     }
 
     fn get_remote_dev_properties(&self) -> Result<Vec<IdeProperty>> {
-        let config_path = self.config_dir.to_string_lossy();
-        let plugins_path = self.config_dir.join("plugins").to_string_lossy().to_string();
-        let system_path = self.system_dir.to_string_lossy();
+        let config_path_string = escape_for_idea_properties(&self.config_dir);
+        let plugins_path_string = escape_for_idea_properties(&self.config_dir.join("plugins"));
+        let system_path_string = escape_for_idea_properties(&self.system_dir);
 
-        let logs_path = match &self.logs_dir {
-            None => self.system_dir.join("log").to_string_lossy().to_string(),
-            Some(x) => x.to_string_lossy().to_string()
+        let logs_path_string = match &self.logs_dir {
+            None => escape_for_idea_properties(&self.system_dir.join("log")),
+            Some(x) => escape_for_idea_properties(x)
         };
 
         let mut remote_dev_properties = vec![
-            ("idea.config.path", config_path.as_ref()),
-            ("idea.plugins.path", plugins_path.as_ref()),
-            ("idea.system.path", system_path.as_ref()),
-            ("idea.log.path", logs_path.as_ref()),
+            ("idea.config.path", config_path_string.as_str()),
+            ("idea.plugins.path", plugins_path_string.as_str()),
+            ("idea.system.path", system_path_string.as_str()),
+            ("idea.log.path", logs_path_string.as_str()),
 
             // TODO: remove once all of this is disabled for remote dev
             ("jb.privacy.policy.text", "<!--999.999-->"),
@@ -325,8 +323,6 @@ impl RemoteDevLaunchConfiguration {
 
             // TODO: disable once IDEA doesn't require JBA login for remote dev
             ("eap.login.enabled", "false"),
-
-            ("#com.intellij.idea.SocketLock.level", "FINE"),
 
             // TODO: CWM-5782 figure out why posix_spawn / jspawnhelper does not work in tests
             // ("jdk.lang.Process.launchMechanism", "vfork"),
@@ -564,4 +560,8 @@ fn get_remote_dev_launcher_name_for_usage() -> Result<String>{
         .expect("Failed to convert current executable name to string");
 
     Ok(result)
+}
+
+fn escape_for_idea_properties(path: &Path) -> String {
+    path.to_string_lossy().replace("\\", "\\\\")
 }

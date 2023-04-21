@@ -439,7 +439,7 @@ public class TypeMigrationLabeler {
 
     if (originalType == null || originalType.equals(migrationType)) return;
 
-    if (originalType.equals(PsiType.NULL)) {
+    if (originalType.equals(PsiTypes.nullType())) {
       if (migrationType instanceof PsiPrimitiveType) {
         markFailedConversion(Pair.create(originalType, migrationType), expr);
         return;
@@ -455,7 +455,7 @@ public class TypeMigrationLabeler {
 
     if (expr instanceof PsiConditionalExpression) {
       final PsiConditionalExpression condExpr = (PsiConditionalExpression)expr;
-      for (PsiExpression e : ContainerUtil.newArrayList(condExpr.getThenExpression(), condExpr.getElseExpression())) {
+      for (PsiExpression e : new PsiExpression[]{condExpr.getThenExpression(), condExpr.getElseExpression()}) {
         if (e != null) {
           migrateExpressionType(e, migrationType, place, alreadyProcessed, false);
         }
@@ -571,7 +571,7 @@ public class TypeMigrationLabeler {
     if (myAllowedRoots != null && !myAllowedRoots.contains(element)) {
       return false;
     }
-    if (type.equals(PsiType.NULL)) {
+    if (type.equals(PsiTypes.nullType())) {
       return false;
     }
     final PsiElement resolved = Util.normalizeElement(element);
@@ -719,8 +719,8 @@ public class TypeMigrationLabeler {
     if (TypeConversionUtil.isAssignable(migrationType, sourceType)) {
       return null;
     }
-    if (!(migrationType.equals(PsiType.BOOLEAN) || migrationType.equals(PsiType.BOOLEAN.getBoxedType(field))) &&
-        !(sourceType.equals(PsiType.BOOLEAN) || sourceType.equals(PsiType.BOOLEAN.getBoxedType(field)))) {
+    if (!(migrationType.equals(PsiTypes.booleanType()) || migrationType.equals(PsiTypes.booleanType().getBoxedType(field))) &&
+        !(sourceType.equals(PsiTypes.booleanType()) || sourceType.equals(PsiTypes.booleanType().getBoxedType(field)))) {
       return null;
     }
     final PsiMethod[] getters =

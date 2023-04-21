@@ -8,6 +8,8 @@ import com.intellij.openapi.wm.WelcomeScreenLeftPanel;
 import com.intellij.openapi.wm.WelcomeScreenTab;
 import com.intellij.openapi.wm.WelcomeTabFactory;
 import com.intellij.ui.CardLayoutPanel;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBUI;
@@ -61,7 +63,7 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
       leftSidebarHolder.add(quickAccessPanel, BorderLayout.SOUTH);
     }
 
-    leftSidebarHolder.setPreferredSize(new Dimension(JBUI.scale(215), leftSidebarHolder.getPreferredSize().height));
+    leftSidebarHolder.setPreferredSize(new Dimension(JBUI.scale(224), leftSidebarHolder.getPreferredSize().height));
 
     JComponent centralPanel = mainPanel;
     JComponent mainPanelToolbar = createMainPanelToolbar(this);
@@ -73,6 +75,11 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
 
     add(leftSidebarHolder, BorderLayout.WEST);
     add(centralPanel, BorderLayout.CENTER);
+
+    if (ExperimentalUI.isNewUI()) {
+      setBorder(JBUI.Borders.customLineTop(JBColor.border()));
+      centralPanel.setBorder(JBUI.Borders.customLineLeft(JBColor.border()));
+    }
 
     loadTabs(welcomeTabFactories);
   }

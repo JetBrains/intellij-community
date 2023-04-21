@@ -36,7 +36,7 @@ class DependencyToolWindowFactory : StartupActivity {
       AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher() + CoroutineName(this::class.qualifiedName!!)
     )
 
-    project.beforeDispose { scope.cancel("Disposing project") }
+    project.onDispose { scope.cancel("Disposing project") }
 
     scope.launch {
       DependenciesToolWindowTabProvider.awaitFirstAvailable(project)

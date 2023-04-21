@@ -90,7 +90,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
 
-  public static WrapType getWrapType(final int type) {
+  public static @NotNull WrapType getWrapType(final int type) {
     if (type == CommonCodeStyleSettings.DO_NOT_WRAP) return WrapType.NONE;
     if (type == CommonCodeStyleSettings.WRAP_ALWAYS) return WrapType.ALWAYS;
     if (type == CommonCodeStyleSettings.WRAP_AS_NEEDED) return WrapType.NORMAL;
@@ -102,7 +102,9 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
            || elementType == XmlElementType.HTML_RAW_TEXT;
   }
 
-  protected Alignment chooseAlignment(final ASTNode child, final Alignment attrAlignment, final Alignment textAlignment) {
+  protected @Nullable Alignment chooseAlignment(@NotNull ASTNode child,
+                                                @Nullable Alignment attrAlignment,
+                                                @Nullable Alignment textAlignment) {
     if (isTextNode(myNode.getElementType())) return getAlignment();
     final IElementType elementType = child.getElementType();
     if (isAttributeElementType(elementType) && myXmlFormattingPolicy.getShouldAlignAttributes()) return attrAlignment;
@@ -173,11 +175,11 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   @Nullable
-  protected ASTNode processChild(List<Block> result,
-                                 final ASTNode child,
-                                 final Wrap wrap,
-                                 final Alignment alignment,
-                                 final Indent indent) {
+  protected ASTNode processChild(@NotNull List<Block> result,
+                                 @NotNull ASTNode child,
+                                 @Nullable Wrap wrap,
+                                 @Nullable Alignment alignment,
+                                 @Nullable Indent indent) {
     final Language myLanguage = myNode.getPsi().getLanguage();
     final PsiElement childPsi = child.getPsi();
     final Language childLanguage = childPsi.getLanguage();
@@ -263,11 +265,11 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     return resultNode;
   }
 
-  protected void processSimpleChild(final ASTNode child,
-                                    final Indent indent,
-                                    final List<? super Block> result,
-                                    final Wrap wrap,
-                                    final Alignment alignment) {
+  protected void processSimpleChild(@NotNull ASTNode child,
+                                    @Nullable Indent indent,
+                                    @NotNull List<? super Block> result,
+                                    @Nullable Wrap wrap,
+                                    @Nullable Alignment alignment) {
     if (isXmlTag(child)) {
       result.add(createTagBlock(child, indent != null ? indent : Indent.getNoneIndent(), wrap, alignment));
     }

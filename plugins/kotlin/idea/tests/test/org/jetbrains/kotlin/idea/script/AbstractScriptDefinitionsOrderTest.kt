@@ -14,10 +14,6 @@ abstract class AbstractScriptDefinitionsOrderTest : AbstractScriptConfigurationT
     fun doTest(unused: String) {
         configureScriptFile(testDataFile())
 
-        assertThrows(ComparisonFailure::class.java) {
-            checkHighlighting(editor, false, false)
-        }
-
         val definitions = InTextDirectivesUtils.findStringWithPrefixes(myFile.text, "// SCRIPT DEFINITIONS: ")
             ?.split(";")
             ?.map { it.substringBefore(":").trim() to it.substringAfter(":").trim() }

@@ -502,7 +502,7 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
       }
     };
     PsiType initializerType = initializer.getType();
-    if (initializerType != null && initializerType != PsiType.NULL) {
+    if (initializerType != null && initializerType != PsiTypes.nullType()) {
       PsiExpression lambda = AnonymousCanBeLambdaInspection.replaceAnonymousWithLambda(initializer, initializerType);
       if (lambda != null) {
         processor.setParameterInitializer(lambda);

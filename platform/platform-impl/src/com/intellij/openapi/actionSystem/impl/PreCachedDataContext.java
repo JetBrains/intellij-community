@@ -245,12 +245,15 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
       String message = "'" + dataId + "' is requested on EDT by " + ActionUpdater.currentInEDTOperationName() + ". See ActionUpdateThread javadoc.";
       //noinspection StringEquality
       if (message != ourEDTWarnsInterner.intern(message)) return;
-      if (error) {
-        LOG.error(message);
-      }
-      else {
-        LOG.warn(message);
-      }
+      Throwable th = error ? new Throwable(message) : null;
+      AppExecutorUtil.getAppExecutorService().execute(() -> {
+        if (error) {
+          LOG.error(th);
+        }
+        else {
+          LOG.warn(message);
+        }
+      });
     }
   }
 

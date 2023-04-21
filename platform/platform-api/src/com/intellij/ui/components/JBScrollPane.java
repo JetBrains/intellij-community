@@ -830,12 +830,14 @@ public class JBScrollPane extends JScrollPane {
           result.width += viewportExtentSize.width;
           result.height += viewportExtentSize.height;
           if (vsbPolicy == VERTICAL_SCROLLBAR_AS_NEEDED) {
-            if (isVerticalScrollBarNeeded(view, viewLocation, viewPreferredSize, viewportExtentSize)) {
+            if (viewportExtentSize.height < viewPreferredSize.height &&
+                isVerticalScrollBarNeeded(view, viewLocation, viewPreferredSize, viewportExtentSize)) {
               vsbPolicy = VERTICAL_SCROLLBAR_ALWAYS;
             }
           }
           if (hsbPolicy == HORIZONTAL_SCROLLBAR_AS_NEEDED) {
-            if (isHorizontalScrollBarNeeded(view, viewLocation, viewPreferredSize, viewportExtentSize)) {
+            if (viewportExtentSize.width < viewPreferredSize.width &&
+                isHorizontalScrollBarNeeded(view, viewLocation, viewPreferredSize, viewportExtentSize)) {
               hsbPolicy = HORIZONTAL_SCROLLBAR_ALWAYS;
             }
           }

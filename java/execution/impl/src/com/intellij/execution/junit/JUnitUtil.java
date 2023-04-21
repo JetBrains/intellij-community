@@ -151,7 +151,7 @@ public final class JUnitUtil {
       if (psiMethod.getContainingClass() == null) return false;
       if (testCaseClass == null || !psiMethod.getContainingClass().isInheritor(testCaseClass, true)) return false;
     }
-    return PsiType.VOID.equals(psiMethod.getReturnType());
+    return PsiTypes.voidType().equals(psiMethod.getReturnType());
   }
 
   public static boolean isTestCaseInheritor(final PsiClass aClass) {

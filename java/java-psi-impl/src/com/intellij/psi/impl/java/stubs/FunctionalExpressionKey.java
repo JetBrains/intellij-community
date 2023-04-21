@@ -17,6 +17,7 @@ package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +65,7 @@ public class FunctionalExpressionKey {
   }
 
   public static boolean isBooleanCompatible(PsiType samType) {
-    return PsiType.BOOLEAN.equals(samType) || TypeConversionUtil.isAssignableFromPrimitiveWrapper(TypeConversionUtil.erasure(samType));
+    return PsiTypes.booleanType().equals(samType) || TypeConversionUtil.isAssignableFromPrimitiveWrapper(TypeConversionUtil.erasure(samType));
   }
 
   @Override

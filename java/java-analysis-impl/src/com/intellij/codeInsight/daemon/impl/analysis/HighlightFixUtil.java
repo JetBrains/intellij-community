@@ -178,7 +178,7 @@ public final class HighlightFixUtil {
       PsiElement parent = lExpr.getParent();
       if (parent.getParent() instanceof PsiStatement) {
         PsiMethod method = ((PsiMethodCallExpression)stripped).resolveMethod();
-        if (method != null && PsiType.VOID.equals(method.getReturnType())) {
+        if (method != null && PsiTypes.voidType().equals(method.getReturnType())) {
           highlightInfo.registerFix(new ReplaceAssignmentFromVoidWithStatementIntentionAction(parent, stripped), null, null, null, null);
         }
       }
@@ -436,7 +436,7 @@ public final class HighlightFixUtil {
     if (expression instanceof PsiAssignmentExpression) return;
     PsiType type = expression.getType();
     if (type == null) return;
-    if (!type.equals(PsiType.VOID)) {
+    if (!type.equals(PsiTypes.voidType())) {
       IntentionAction action = PriorityIntentionActionWrapper.highPriority(QUICK_FIX_FACTORY.createIterateFix(expression));
       registrar.add(action);
     }
@@ -450,7 +450,7 @@ public final class HighlightFixUtil {
         }
       }
     }
-    if (!type.equals(PsiType.VOID)) {
+    if (!type.equals(PsiTypes.voidType())) {
       IntentionAction action = QUICK_FIX_FACTORY.createIntroduceVariableAction(expression);
       registrar.add(action);
     }
@@ -477,12 +477,12 @@ public final class HighlightFixUtil {
             PsiExpression rExpression = assignment.getRExpression();
             if (rExpression != null) {
               PsiType type = rExpression.getType();
-              if (type instanceof PsiPrimitiveType && !PsiType.VOID.equals(type) && variable.getInitializer() != null) {
+              if (type instanceof PsiPrimitiveType && !PsiTypes.voidType().equals(type) && variable.getInitializer() != null) {
                 type = ((PsiPrimitiveType)type).getBoxedType(variable);
               }
               if (type != null) {
                 type = GenericsUtil.getVariableTypeByExpressionType(type);
-                if (PsiTypesUtil.isDenotableType(type, variable) && !PsiType.VOID.equals(type)) {
+                if (PsiTypesUtil.isDenotableType(type, variable) && !PsiTypes.voidType().equals(type)) {
                   IntentionAction fix = QUICK_FIX_FACTORY.createSetVariableTypeFix(variable, type);
                   info.registerFix(fix, null, null, null, null);
                 }

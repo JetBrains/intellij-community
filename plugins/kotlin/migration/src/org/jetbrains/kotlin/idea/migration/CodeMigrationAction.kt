@@ -13,7 +13,7 @@ class CodeMigrationAction : CodeInspectionMigrationAction(
 
         val project = e.project
         if (project != null) {
-            e.presentation.isEnabledAndVisible = CodeMigrationToggleAction.isEnabled(project)
+            e.presentation.isEnabledAndVisible = CodeMigrationToggleAction.Manager.isEnabled(project)
         }
     }
 

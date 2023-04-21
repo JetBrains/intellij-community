@@ -152,6 +152,11 @@ public abstract class TextProblem {
     /** The text to show in the context action popup */
     String getPresentableText();
 
+    /** If non-null, there's a UI option to invoke all fixes in the file with the same batch id */
+    default @Nullable String getBatchId() {
+      return null;
+    }
+
     /** Create a suggestion for a single replacement operation in the given range */
     static Suggestion replace(TextRange range, CharSequence replacement) {
       return new Suggestion() {

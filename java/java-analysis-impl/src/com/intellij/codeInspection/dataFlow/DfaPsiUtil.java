@@ -648,7 +648,7 @@ public final class DfaPsiUtil {
   public static DfType fromLiteral(@NotNull PsiLiteralExpression expr) {
     PsiType type = expr.getType();
     if (type == null) return DfType.TOP;
-    if (PsiType.NULL.equals(type)) return DfTypes.NULL;
+    if (PsiTypes.nullType().equals(type)) return DfTypes.NULL;
     Object value = expr.getValue();
     if (value == null) return DfTypes.typedObject(type, Nullability.NOT_NULL);
     return DfTypes.constant(value, type);

@@ -53,7 +53,7 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
     if (parent instanceof PsiExpression) {
       final PsiExpression binaryExpression = (PsiExpression)parent;
       final PsiType type = binaryExpression.getType();
-      if (type instanceof PsiPrimitiveType && !type.equals(PsiType.CHAR)) {
+      if (type instanceof PsiPrimitiveType && !type.equals(PsiTypes.charType())) {
         final String typeText = type.getCanonicalText();
         result.add(new CharUsedInArithmeticContentCastFix(typeText));
       }
@@ -154,10 +154,10 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
         if (TypeUtils.isJavaLangString(expressionType)) {
           return;
         }
-        if (PsiType.CHAR.equals(rightType)) {
+        if (PsiTypes.charType().equals(rightType)) {
           registerError(operand, operand);
         }
-        if (PsiType.CHAR.equals(leftType) && i == 1) {
+        if (PsiTypes.charType().equals(leftType) && i == 1) {
           registerError(operands[0], operands[0]);
         }
         leftType = rightType;

@@ -259,22 +259,22 @@ public final class CustomMethodHandlers {
         if (TypeUtils.typeEquals(JAVA_LANG_CHAR_SEQUENCE, type)) {
           return CharSequence.class;
         }
-        if (PsiType.INT.equals(type)) {
+        if (PsiTypes.intType().equals(type)) {
           return int.class;
         }
-        if (PsiType.BOOLEAN.equals(type)) {
+        if (PsiTypes.booleanType().equals(type)) {
           return boolean.class;
         }
-        if (PsiType.CHAR.equals(type)) {
+        if (PsiTypes.charType().equals(type)) {
           return char.class;
         }
-        if (PsiType.LONG.equals(type)) {
+        if (PsiTypes.longType().equals(type)) {
           return long.class;
         }
-        if (PsiType.FLOAT.equals(type)) {
+        if (PsiTypes.floatType().equals(type)) {
           return float.class;
         }
-        if (PsiType.DOUBLE.equals(type)) {
+        if (PsiTypes.doubleType().equals(type)) {
           return double.class;
         }
         return null;
@@ -578,7 +578,7 @@ public final class CustomMethodHandlers {
                                                    PsiMethod method) {
     DfaValue string = arguments.myQualifier;
     DfaValue stringLength = STRING_LENGTH.createValue(factory, string);
-    return factory.getWrapperFactory().createWrapper(typedObject(PsiType.CHAR.createArrayType(), Nullability.NOT_NULL)
+    return factory.getWrapperFactory().createWrapper(typedObject(PsiTypes.charType().createArrayType(), Nullability.NOT_NULL)
       .meet(LOCAL_OBJECT), ARRAY_LENGTH, stringLength);
   }
 

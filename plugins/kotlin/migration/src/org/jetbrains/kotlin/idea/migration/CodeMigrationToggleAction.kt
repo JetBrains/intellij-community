@@ -14,15 +14,15 @@ class CodeMigrationToggleAction : ToggleAction() {
 
     override fun isSelected(e: AnActionEvent): Boolean {
         val project = e.project ?: return false
-        return isEnabled(project)
+        return Manager.isEnabled(project)
     }
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
         val project = e.project ?: return
-        setEnabled(project, state)
+        Manager.setEnabled(project, state)
     }
 
-    companion object {
+    object Manager {
         private const val MIGRATION_OPTION = "kotlin.migration.detection.enabled"
 
         fun setEnabled(project: Project, state: Boolean) {

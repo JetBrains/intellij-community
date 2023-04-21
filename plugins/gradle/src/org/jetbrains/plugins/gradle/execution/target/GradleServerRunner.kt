@@ -30,6 +30,7 @@ import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.ResultHandler
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters
 import org.gradle.tooling.internal.provider.action.BuildActionSerializer
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.service.execution.GradleServerConfigurationProvider
 import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
 import org.jetbrains.plugins.gradle.util.GradleBundle
@@ -257,7 +258,7 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     }
   }
 
-  private class GradleServerProcessListener(private val appStartedMessage: String?,
+  private class GradleServerProcessListener(private val appStartedMessage: @Nls String?,
                                             private val targetProgressIndicator: TargetProgressIndicator,
                                             private val resultHandler: ResultHandler<Any?>,
                                             private val gradleServerEventsListener: GradleServerEventsListener) : ProcessListener {

@@ -90,7 +90,7 @@ public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalPro
   }
 
   @Override
-  protected TtyConnector createTtyConnector(CloudTerminalProcess process) {
+  public TtyConnector createTtyConnector(CloudTerminalProcess process) {
     return new ProcessTtyConnector(process, StandardCharsets.UTF_8) {
       private TermSize myAppliedTermSize;
 

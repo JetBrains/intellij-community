@@ -48,9 +48,10 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   @NonNls private static final String VARIANT = "JTextField.variant";
   @NonNls private static final String INPLACE_HISTORY = "JTextField.Search.InplaceHistory";
   @NonNls private static final String ON_CLEAR = "JTextField.Search.CancelAction";
+  @NonNls private static final String SEARCH_ICON = "JTextField.Search.Icon";
   @NonNls private static final String HISTORY_POPUP_ENABLED = "History.Popup.Enabled";
 
-  protected final LinkedHashMap<String, IconHolder> icons = new LinkedHashMap<>();
+  private final LinkedHashMap<String, IconHolder> icons = new LinkedHashMap<>();
   private final Handler handler = new Handler();
   private boolean monospaced;
   private Object variant;
@@ -289,6 +290,8 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       }
       else if (VARIANT.equals(event.getPropertyName())) {
         setVariant(event.getNewValue());
+      } else if (SEARCH_ICON.equals(event.getPropertyName())) {
+        updateIcons();
       }
     }
 
@@ -304,16 +307,20 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
     @Override
     public void insertUpdate(DocumentEvent event) {
-      changedUpdate(event);
+      updateIcons();
     }
 
     @Override
     public void removeUpdate(DocumentEvent event) {
-      changedUpdate(event);
+      updateIcons();
     }
 
     @Override
     public void changedUpdate(DocumentEvent event) {
+      updateIcons();
+    }
+
+    private void updateIcons() {
       if (!icons.isEmpty()) {
         for (IconHolder holder : icons.values()) {
           updateIcon(holder);
@@ -627,6 +634,10 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
     @Override
     public Icon getIcon(boolean hovered) {
+      Icon icon = (Icon)getComponent().getClientProperty(SEARCH_ICON);
+      if (icon != null) {
+        return icon;
+      }
       return getSearchIcon(hovered, isSearchFieldWithHistoryPopup(TextFieldWithPopupHandlerUI.this.getComponent()));
     }
 

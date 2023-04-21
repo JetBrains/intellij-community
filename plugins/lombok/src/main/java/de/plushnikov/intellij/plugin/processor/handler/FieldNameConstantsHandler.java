@@ -16,7 +16,6 @@ import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -102,7 +101,7 @@ public final class FieldNameConstantsHandler {
         .withMethodReturnType(enumClassType)
         .withBodyText("");
 
-      return Arrays.asList(valuesEnumMethod, valueOfEnumMethod);
+      return List.of(valuesEnumMethod, valueOfEnumMethod);
     });
 
     return lazyClassBuilder;

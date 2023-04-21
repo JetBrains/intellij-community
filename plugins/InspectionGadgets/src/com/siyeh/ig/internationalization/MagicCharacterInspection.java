@@ -17,6 +17,7 @@ package com.siyeh.ig.internationalization;
 
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -60,7 +61,7 @@ public class MagicCharacterInspection extends BaseInspection {
       if (type == null) {
         return;
       }
-      if (!type.equals(PsiType.CHAR)) {
+      if (!type.equals(PsiTypes.charType())) {
         return;
       }
       final String text = expression.getText();

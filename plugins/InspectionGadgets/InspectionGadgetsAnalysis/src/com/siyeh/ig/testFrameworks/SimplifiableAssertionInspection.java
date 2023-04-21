@@ -62,7 +62,7 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
       return false;
     }
     final PsiType type = expression2.getType();
-    return PsiType.BOOLEAN.equals(type);
+    return PsiTypes.booleanType().equals(type);
   }
 
   static boolean isEqualityComparison(PsiExpression expression) {
@@ -279,7 +279,7 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
     }
 
     private boolean isPrimitiveAndBoxedWithOverloads(PsiType lhsType, PsiType rhsType) {
-      if (lhsType instanceof PsiPrimitiveType && !PsiType.FLOAT.equals(lhsType) && !PsiType.DOUBLE.equals(lhsType)) {
+      if (lhsType instanceof PsiPrimitiveType && !PsiTypes.floatType().equals(lhsType) && !PsiTypes.doubleType().equals(lhsType)) {
         return rhsType instanceof PsiClassType;
       }
       return false;

@@ -53,9 +53,9 @@ class InlineCacheTest : LightPlatformCodeInsightTestCase() {
     )
 
     private fun createJavaDeclaration(): PsiDeclarationStatement = javaFactory.createVariableDeclarationStatement(
-        "number",
-        PsiType.INT,
-        javaFactory.createExpressionFromText("1 + 3", null),
+      "number",
+      PsiTypes.intType(),
+      javaFactory.createExpressionFromText("1 + 3", null),
     )
 
     private val javaFactory: PsiElementFactory get() = JavaPsiFacade.getElementFactory(project)

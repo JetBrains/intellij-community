@@ -5,8 +5,10 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
+import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.gradle.newTests.testFeatures.FacetSettingsFilteringConfiguration
 import org.jetbrains.kotlin.gradle.newTests.testFeatures.FacetSettingsFilteringTestFeature
+import org.jetbrains.kotlin.idea.projectModel.KotlinLanguageSettings
 import org.jetbrains.kotlin.platform.TargetPlatform
 import kotlin.reflect.KProperty1
 
@@ -31,6 +33,14 @@ class KotlinFacetSettingsPrinterContributor : ModulePrinterContributor {
                 when (fieldValue) {
                     is TargetPlatform ->
                         println(field.name + " = " + fieldValue.componentPlatforms.joinToStringWithSorting(separator = "/"))
+
+                    is LanguageVersion -> {
+                        val valueSanitized = if (fieldValue == LanguageVersion.LATEST_STABLE)
+                            CURRENT_LANGUAGE_VERSION_PLACEHOLDER
+                        else
+                            fieldValue.versionString
+                        println("${field.name} = $valueSanitized")
+                    }
 
                     is Collection<*> ->
                         println(field.name + " = " + fieldValue.joinToStringWithSorting() )
@@ -66,5 +76,7 @@ class KotlinFacetSettingsPrinterContributor : ModulePrinterContributor {
             KotlinFacetSettings::additionalVisibleModuleNames,
             KotlinFacetSettings::targetPlatform
         )
+
+        private val CURRENT_LANGUAGE_VERSION_PLACEHOLDER = "{{LATEST_STABLE}}"
     }
 }

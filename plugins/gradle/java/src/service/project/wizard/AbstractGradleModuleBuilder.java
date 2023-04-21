@@ -80,7 +80,6 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import static com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode.MODAL_SYNC;
-import static com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl.setupCreatedProject;
 
 @SuppressWarnings("unused")
 public abstract class AbstractGradleModuleBuilder extends AbstractExternalModuleBuilder<GradleProjectSettings> {
@@ -212,6 +211,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
       settings.linkProject(projectSettings);
     }
     if (isCreatingNewProject) {
+      ExternalProjectsManagerImpl.setupCreatedProject(project);
       project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, Boolean.TRUE);
       // Needed to ignore postponed project refresh
       project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, Boolean.TRUE);
@@ -565,7 +565,8 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
   @Nullable
   @Override
   public Project createProject(String name, String path) {
-    return setupCreatedProject(super.createProject(name, path));
+    setCreatingNewProject(true);
+    return super.createProject(name, path);
   }
 
   public boolean isUseKotlinDsl() {

@@ -20,7 +20,7 @@ public class DelegateMethodProcessor extends AbstractMethodProcessor {
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod, @NotNull ProblemSink problemSink) {
     boolean result = true;
-    if (psiMethod.getParameterList().getParametersCount() > 0) {
+    if (psiMethod.hasParameters()) {
       problemSink.addErrorMessage("inspection.message.delegate.legal.only.on.no.argument.methods");
       result = false;
     }

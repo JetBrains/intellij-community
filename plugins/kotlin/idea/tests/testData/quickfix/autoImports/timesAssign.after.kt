@@ -1,4 +1,4 @@
-// "Import extension function 'H.timesAssign'" "true"
+// "Import operator 'H.timesAssign'" "true"
 // ERROR: Unresolved reference: *=
 
 package h

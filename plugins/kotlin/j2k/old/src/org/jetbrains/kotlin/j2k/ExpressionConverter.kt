@@ -137,11 +137,12 @@ class DefaultExpressionConverter : JavaElementVisitor(), ExpressionConverter {
         val currentType = current?.type
         val otherType = other?.type
         if (currentType !is PsiPrimitiveType || otherType !is PsiPrimitiveType) return null
-        if (currentType == PsiType.BOOLEAN || otherType == PsiType.BOOLEAN) return null
+        if (currentType == PsiTypes.booleanType() || otherType == PsiTypes.booleanType()) return null
 
         if (operationTokenType == JavaTokenType.EQEQ
             || operationTokenType == JavaTokenType.NE
-            || currentType == PsiType.CHAR) {
+            || currentType == PsiTypes.charType()
+        ) {
             if (currentType < otherType) return otherType
         }
 
@@ -151,32 +152,32 @@ class DefaultExpressionConverter : JavaElementVisitor(), ExpressionConverter {
     infix operator fun PsiPrimitiveType.compareTo(other: PsiPrimitiveType): Int {
         return when (this) {
             other -> 0
-            PsiType.BYTE -> when (other) {
-                PsiType.CHAR -> 1
+            PsiTypes.byteType() -> when (other) {
+                PsiTypes.charType() -> 1
                 else -> -1
             }
-            PsiType.SHORT -> when (other) {
-                PsiType.CHAR,
-                PsiType.BYTE -> 1
+            PsiTypes.shortType() -> when (other) {
+                PsiTypes.charType(),
+                PsiTypes.byteType() -> 1
                 else -> -1
             }
-            PsiType.INT -> when (other) {
-                PsiType.BYTE,
-                PsiType.SHORT,
-                PsiType.CHAR -> 1
+            PsiTypes.intType() -> when (other) {
+                PsiTypes.byteType(),
+                PsiTypes.shortType(),
+                PsiTypes.charType() -> 1
                 else -> -1
             }
-            PsiType.LONG -> when (other) {
-                PsiType.DOUBLE,
-                PsiType.FLOAT -> -1
+            PsiTypes.longType() -> when (other) {
+                PsiTypes.doubleType(),
+                PsiTypes.floatType() -> -1
                 else -> 1
             }
-            PsiType.FLOAT -> when (other) {
-                PsiType.DOUBLE -> -1
+            PsiTypes.floatType() -> when (other) {
+                PsiTypes.doubleType() -> -1
                 else -> 1
             }
-            PsiType.DOUBLE -> 1
-            PsiType.CHAR -> -1
+            PsiTypes.doubleType() -> 1
+            PsiTypes.charType() -> -1
             else -> throw AssertionError("Unknown primitive type $this")
         }
     }

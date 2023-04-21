@@ -132,7 +132,7 @@ class BooleanReturnModel {
         hasReturnInLoopOrSwitch = isInLoopOrSwitch(body, returnStatement);
       }
       PsiExpression returnValue = returnStatement.getReturnValue();
-      if (returnValue == null || !PsiType.BOOLEAN.equals(returnValue.getType())) return null;
+      if (returnValue == null || !PsiTypes.booleanType().equals(returnValue.getType())) return null;
       if (ControlFlowUtils.blockCompletesWithStatement(body, returnStatement)) {
         terminal.add(returnValue);
       }

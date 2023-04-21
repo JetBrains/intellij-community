@@ -2,9 +2,12 @@
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Query
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
@@ -13,6 +16,7 @@ import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo
 import com.intellij.workspaceModel.storage.EntityReference
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 
 interface WorkspaceFileIndexEx : WorkspaceFileIndex {
   /**
@@ -46,6 +50,12 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
   fun updateDirtyEntities()
 
   /**
+   * Analyzes changes in VFS and determines how the index must be updated.
+   */
+  @RequiresReadLock
+  fun analyzeVfsChanges(events: List<VFileEvent>): VfsChangeApplier? 
+
+  /**
    * Returns package name for [directory] if it's located under source root or classes root of Java library, or `null` otherwise.
    * This is an internal function, plugins must use [com.intellij.openapi.roots.PackageIndex.getPackageNameByDirectory] instead.
    */
@@ -73,6 +83,9 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
    */
   @ApiStatus.Internal
   fun visitFileSets(visitor: WorkspaceFileSetVisitor)
+  
+  @TestOnly
+  fun reset()
 
   companion object {
     @JvmField
@@ -96,8 +109,15 @@ sealed interface WorkspaceFileInternalInfo {
     NOT_UNDER_ROOTS,
 
     /** File is invalid */
-    INVALID
+    INVALID;
+
+    override fun findFileSet(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): WorkspaceFileSetWithCustomData<*>? = null
   }
+
+  /**
+   * Returns a file set stored in this instance which satisfies the given [condition], or `null` if no such file set found.
+   */
+  fun findFileSet(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): WorkspaceFileSetWithCustomData<*>?
 }
 
 internal sealed interface MultipleWorkspaceFileSets : WorkspaceFileInternalInfo {
@@ -109,4 +129,9 @@ internal sealed interface MultipleWorkspaceFileSets : WorkspaceFileInternalInfo 
 @ApiStatus.Internal
 interface WorkspaceFileSetVisitor {
   fun visitIncludedRoot(fileSet: WorkspaceFileSet)
+}
+
+@ApiStatus.Internal
+interface VfsChangeApplier: AsyncFileListener.ChangeApplier {
+  val entitiesToReindex: List<EntityReference<WorkspaceEntity>>
 }

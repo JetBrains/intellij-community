@@ -35,7 +35,7 @@ class CharToStringPredicate implements PsiElementPredicate {
     final PsiLiteralExpression expression =
       (PsiLiteralExpression)element;
     final PsiType type = expression.getType();
-    if (!PsiType.CHAR.equals(type)) {
+    if (!PsiTypes.charType().equals(type)) {
       return false;
     }
     final String charLiteral = element.getText();

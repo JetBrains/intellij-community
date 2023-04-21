@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.editor.impl;
 
@@ -40,20 +40,20 @@ public class SettingsImpl implements EditorSettings {
 
   // This group of settings does not have UI
   private final SoftWrapAppliancePlaces mySoftWrapAppliancePlace;
-  private int                     myAdditionalLinesCount          = Registry.intValue("editor.virtual.lines", 5);
-  private int                     myAdditionalColumnsCount        = 3;
-  private int                     myLineCursorWidth               = EditorUtil.getDefaultCaretWidth();
-  private boolean                 myLineMarkerAreaShown           = true;
-  private boolean                 myAllowSingleLogicalLineFolding;
+  private int myAdditionalLinesCount = Registry.intValue("editor.virtual.lines", 5);
+  private int myAdditionalColumnsCount = 3;
+  private int myLineCursorWidth = EditorUtil.getDefaultCaretWidth();
+  private boolean myLineMarkerAreaShown = true;
+  private boolean myAllowSingleLogicalLineFolding;
   private boolean myAutoCodeFoldingEnabled = true;
 
-  // These comes from CodeStyleSettings
+  // These come from CodeStyleSettings.
   private Integer myTabSize;
   private Integer myCachedTabSize;
   private Boolean myUseTabCharacter;
   private final Object myTabSizeLock = new Object();
 
-  // These comes from EditorSettingsExternalizable defaults.
+  // These come from EditorSettingsExternalizable defaults.
   private Boolean myIsVirtualSpace;
   private Boolean myIsCaretInsideTabs;
   private Boolean myIsCaretBlinking;
@@ -106,7 +106,7 @@ public class SettingsImpl implements EditorSettings {
       mySoftWrapAppliancePlace = SoftWrapAppliancePlaces.MAIN_EDITOR;
     }
   }
-  
+
   @Override
   public boolean isRightMarginShown() {
     return myIsRightMarginShown != null
@@ -424,11 +424,11 @@ public class SettingsImpl implements EditorSettings {
   private VirtualFile getVirtualFile() {
     VirtualFile file = null;
     if (myEditor != null) {
-       file = myEditor.getVirtualFile();
-       if (file == null) {
-         Document document = myEditor.getDocument();
-         file = FileDocumentManager.getInstance().getFile(document);
-       }
+      file = myEditor.getVirtualFile();
+      if (file == null) {
+        Document document = myEditor.getDocument();
+        file = FileDocumentManager.getInstance().getFile(document);
+      }
     }
     return file;
   }
@@ -649,7 +649,7 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public void setVariableInplaceRenameEnabled(boolean val) {
-    myIsRenameVariablesInplace = val? Boolean.TRUE : Boolean.FALSE;
+    myIsRenameVariablesInplace = val ? Boolean.TRUE : Boolean.FALSE;
   }
 
   @Override
@@ -693,7 +693,7 @@ public class SettingsImpl implements EditorSettings {
     myUseSoftWraps = newValue;
     fireEditorRefresh();
   }
-  
+
   void setUseSoftWrapsQuiet() {
     myUseSoftWraps = Boolean.TRUE;
   }
@@ -767,7 +767,7 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public void setShowIntentionBulb(boolean show) {
-    myShowIntentionBulb = show; 
+    myShowIntentionBulb = show;
   }
 
   @Nullable

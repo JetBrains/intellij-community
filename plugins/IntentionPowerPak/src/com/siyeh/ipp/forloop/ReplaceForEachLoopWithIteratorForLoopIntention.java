@@ -80,9 +80,6 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
       newStatement.append("final ");
     }
     final PsiParameter iterationParameter = statement.getIterationParameter();
-    if (iterationParameter == null) {
-      return;
-    }
     final PsiTypeElement parameterType = iterationParameter.getTypeElement();
     final String typeText = parameterType == null ? iterationParameter.getType().getCanonicalText() : parameterType.getText();
     newStatement.append(typeText).append(' ').append(iterationParameter.getName()).append(" = ").append(iterator).append(".next();");

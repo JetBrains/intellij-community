@@ -307,7 +307,7 @@ final class TerminalBlock {
     PsiExpression limit = flipped ? binOp.getLOperand() : binOp.getROperand();
     if(!ExpressionUtils.isSafelyRecomputableExpression(limit) || VariableAccessUtils.variableIsUsed(myVariable, limit)) return this;
     PsiType type = limit.getType();
-    if(!PsiType.INT.equals(type) && !PsiType.LONG.equals(type)) return this;
+    if(!PsiTypes.intType().equals(type) && !PsiTypes.longType().equals(type)) return this;
     if(countExpression instanceof PsiPostfixExpression) {
       delta++;
     }

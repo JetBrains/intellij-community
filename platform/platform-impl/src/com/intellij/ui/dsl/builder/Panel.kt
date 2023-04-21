@@ -164,6 +164,8 @@ interface Panel : CellBase<Panel> {
    * Creates [Placeholder] and [K] identified components for it.
    * These components can be switched using [PlaceholderGroup].
    */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Not needed")
   fun <K> placeholderGroup(init: PlaceholderGroup<K>.() -> Unit): PlaceholderGroup<K>
 
   /**

@@ -35,7 +35,7 @@ public class PsiInstanceOfExpressionImpl extends ExpressionPsiElement implements
 
   @Override
   public PsiType getType() {
-    return PsiType.BOOLEAN;
+    return PsiTypes.booleanType();
   }
 
   @Override

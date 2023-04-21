@@ -149,7 +149,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     @Override
     public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
       final PsiType type = expression.getType();
-      if (PsiType.BOOLEAN.equals(type) || PsiType.NULL.equals(type)) {
+      if (PsiTypes.booleanType().equals(type) || PsiTypes.nullType().equals(type)) {
         // don't search index for literals of other types, as they can be written in many many kinds of ways for the same value.
         if (!handleWord(expression.getText(), CODE, myCompilingVisitor.getContext())) return;
       }
@@ -262,7 +262,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     if (StringUtil.isQuotedString(text)) {
       @Nullable final MatchingHandler handler = myCompilingVisitor.processPatternStringWithFragments(text, LITERAL);
 
-      if (PsiType.CHAR.equals(expression.getType()) &&
+      if (PsiTypes.charType().equals(expression.getType()) &&
           (handler instanceof LiteralWithSubstitutionHandler || handler == null && expression.getValue() == null)) {
         throw new MalformedPatternException(SSRBundle.message("error.bad.character.literal"));
       }
@@ -271,7 +271,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       }
     }
     else {
-      if (!PsiType.NULL.equals(expression.getType()) && expression.getValue() == null) {
+      if (!PsiTypes.nullType().equals(expression.getType()) && expression.getValue() == null) {
         throw new MalformedPatternException(SSRBundle.message("error.bad.literal"));
       }
     }

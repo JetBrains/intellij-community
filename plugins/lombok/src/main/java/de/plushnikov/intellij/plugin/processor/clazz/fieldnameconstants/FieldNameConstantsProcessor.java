@@ -9,9 +9,9 @@ import de.plushnikov.intellij.plugin.processor.handler.FieldNameConstantsHandler
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,14 +28,8 @@ public class FieldNameConstantsProcessor extends AbstractFieldNameConstantsProce
   }
 
   @Override
-  protected boolean possibleToGenerateElementNamed(@Nullable String nameHint,
-                                                   @NotNull PsiClass psiClass,
-                                                   @NotNull PsiAnnotation psiAnnotation) {
-    if (nameHint == null) {
-      return true;
-    }
-    final String typeName = FieldNameConstantsHandler.getTypeName(psiClass, psiAnnotation);
-    return nameHint.equals(typeName);
+  protected Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+    return Collections.singleton(FieldNameConstantsHandler.getTypeName(psiClass, psiAnnotation));
   }
 
   @Override

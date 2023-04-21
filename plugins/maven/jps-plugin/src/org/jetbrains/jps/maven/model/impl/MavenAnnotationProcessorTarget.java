@@ -27,9 +27,10 @@ import java.util.stream.Collectors;
  * annotation processors, which is possible using "annotationProcessorPaths" option of "maven-compiler-plugin"
  */
 public final class MavenAnnotationProcessorTarget extends JVMModuleBuildTarget<BuildRootDescriptor> {
+  @NotNull
   private final MavenAnnotationProcessorTargetType myTargetType;
 
-  public MavenAnnotationProcessorTarget(MavenAnnotationProcessorTargetType targetType, JpsModule module) {
+  public MavenAnnotationProcessorTarget(@NotNull MavenAnnotationProcessorTargetType targetType, JpsModule module) {
     super(targetType, module);
     myTargetType = targetType;
   }

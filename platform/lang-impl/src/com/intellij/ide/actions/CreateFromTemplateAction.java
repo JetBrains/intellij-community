@@ -30,14 +30,21 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnAction implements WriteActionAware {
+
   protected static final Logger LOG = Logger.getInstance(CreateFromTemplateAction.class);
 
+  protected CreateFromTemplateAction() {
+  }
+
   public CreateFromTemplateAction(@NlsActions.ActionText String text,
-                                  @NlsActions.ActionDescription String description, Icon icon) {
+                                  @NlsActions.ActionDescription String description,
+                                  @Nullable Icon icon) {
     super(text, description, icon);
   }
 
-  public CreateFromTemplateAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, Icon icon) {
+  public CreateFromTemplateAction(@NotNull Supplier<String> dynamicText,
+                                  @NotNull Supplier<String> dynamicDescription,
+                                  @Nullable Icon icon) {
     super(dynamicText, dynamicDescription, icon);
   }
 

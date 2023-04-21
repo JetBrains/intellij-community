@@ -38,7 +38,7 @@ public class LombokRenameFieldReferenceProcessor extends RenameJavaVariableProce
     final PsiClass containingClass = psiField.getContainingClass();
     final String currentFieldName = psiField.getName();
     if (null != containingClass) {
-      final boolean isBoolean = PsiType.BOOLEAN.equals(psiField.getType());
+      final boolean isBoolean = PsiTypes.booleanType().equals(psiField.getType());
 
       final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
 

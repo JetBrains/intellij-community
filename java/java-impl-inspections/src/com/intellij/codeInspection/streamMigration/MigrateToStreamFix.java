@@ -72,7 +72,7 @@ class MigrateToStreamFix implements LocalQuickFix {
   private static void removeRedundantPatternVariables(PsiElement element) {
     for (PsiLambdaExpression lambda : PsiTreeUtil.collectElementsOfType(element, PsiLambdaExpression.class)) {
       PsiElement body = lambda.getBody();
-      if (body instanceof PsiExpression expression && PsiType.BOOLEAN.equals(expression.getType())) {
+      if (body instanceof PsiExpression expression && PsiTypes.booleanType().equals(expression.getType())) {
         List<PsiPatternVariable> variables = JavaPsiPatternUtil.getExposedPatternVariablesIgnoreParent(expression);
         for (PsiPatternVariable variable : variables) {
           if (variable.getPattern() instanceof PsiTypeTestPattern pattern && pattern.getParent() instanceof PsiDeconstructionList) {

@@ -1,10 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev;
 
+import com.intellij.util.containers.CollectionFactory;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArraySet;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -56,7 +56,7 @@ public class InvertedFilenameHashBasedIndexTest {
   @Test
   public void allFileIdsAddedToIndexCouldBeFoundByName() {
     final Int2ObjectMap<String> fileIdToName = generateFileNames(ENOUGH_ENTRIES_TO_CHECK);
-    final Map<String, IntArraySet> etalon = new Object2ObjectOpenHashMap<>();
+    final Map<String, IntArraySet> etalon = CollectionFactory.createSmallMemoryFootprintMap();
     for (Int2ObjectMap.Entry<String> e : fileIdToName.int2ObjectEntrySet()) {
       final int fileId = e.getIntKey();
       final String fileName = e.getValue();
@@ -112,7 +112,7 @@ public class InvertedFilenameHashBasedIndexTest {
   @Test//test is flaky by its nature, but failing probability should be quite low
   public void notTooManyFalsePositivesInIndexLookups() {
     final Int2ObjectMap<String> fileIdToName = generateFileNames(ENOUGH_ENTRIES_TO_CHECK);
-    final Map<String, IntArraySet> etalon = new Object2ObjectOpenHashMap<>();
+    final Map<String, IntArraySet> etalon = CollectionFactory.createSmallMemoryFootprintMap();
     for (Int2ObjectMap.Entry<String> e : fileIdToName.int2ObjectEntrySet()) {
       final int fileId = e.getIntKey();
       final String fileName = e.getValue();

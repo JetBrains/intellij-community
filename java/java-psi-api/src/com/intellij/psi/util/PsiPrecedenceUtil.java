@@ -87,10 +87,10 @@ public final class PsiPrecedenceUtil {
     }
 
     if (JavaTokenType.PLUS == tokenType || JavaTokenType.ASTERISK == tokenType) {
-      return !PsiType.FLOAT.equals(primitiveType) && !PsiType.DOUBLE.equals(primitiveType);
+      return !PsiTypes.floatType().equals(primitiveType) && !PsiTypes.doubleType().equals(primitiveType);
     }
     else if (JavaTokenType.EQEQ == tokenType || JavaTokenType.NE == tokenType) {
-      return PsiType.BOOLEAN.equals(primitiveType);
+      return PsiTypes.booleanType().equals(primitiveType);
     }
     else if (JavaTokenType.AND == tokenType || JavaTokenType.OR == tokenType || JavaTokenType.XOR == tokenType) {
       return true;
@@ -213,11 +213,11 @@ public final class PsiPrecedenceUtil {
         final PsiExpression[] operands = childPolyadicExpression.getOperands();
         return !childType.equals(operands[0].getType()) && !childType.equals(operands[1].getType());
       }
-      else if (childType.equals(PsiType.BOOLEAN)) {
+      else if (childType.equals(PsiTypes.booleanType())) {
         final PsiExpression[] operands = childPolyadicExpression.getOperands();
         for (PsiExpression operand : operands) {
           PsiType operandType = operand.getType();
-          if (operandType != null && !PsiType.BOOLEAN.equals(operandType)) {
+          if (operandType != null && !PsiTypes.booleanType().equals(operandType)) {
             return true;
           }
         }

@@ -113,7 +113,7 @@ public final class PsiMethodReferenceUtil {
       methodReturnType = PsiTypesUtil.patchMethodGetClassReturnType(expression, (PsiMethod)resolve);
       if (methodReturnType == null) {
         methodReturnType = ((PsiMethod)resolve).getReturnType();
-        if (PsiType.VOID.equals(methodReturnType)) {
+        if (PsiTypes.voidType().equals(methodReturnType)) {
           return methodReturnType;
         }
 
@@ -153,7 +153,7 @@ public final class PsiMethodReferenceUtil {
     if (interfaceMethod != null) {
       final PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
 
-      if (PsiType.VOID.equals(interfaceReturnType) || interfaceReturnType == null) {
+      if (PsiTypes.voidType().equals(interfaceReturnType) || interfaceReturnType == null) {
         return true;
       }
 

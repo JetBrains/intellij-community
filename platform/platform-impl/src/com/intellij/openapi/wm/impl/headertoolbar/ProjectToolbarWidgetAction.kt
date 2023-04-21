@@ -20,6 +20,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
 import com.intellij.ui.GroupHeaderSeparator
+import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
@@ -38,11 +39,20 @@ import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import java.awt.BorderLayout
 import java.awt.Component
 import java.util.function.Function
+import java.util.function.Predicate
 import javax.swing.*
 
 
 private const val MAX_RECENT_COUNT = 100
 private val projectKey = Key.create<Project>("project-widget-project")
+
+class DefaultOpenProjectSelectionPredicateSupplier : OpenProjectSelectionPredicateSupplier {
+  override fun getPredicate(): Predicate<AnAction> {
+    val openProjects = ProjectUtilCore.getOpenProjects()
+    val paths = openProjects.map { it.basePath }
+    return Predicate { action -> (action as? ReopenProjectAction)?.projectPath in paths }
+  }
+}
 
 class ProjectToolbarWidgetAction : ExpandableComboAction() {
 
@@ -126,25 +136,20 @@ class ProjectToolbarWidgetAction : ExpandableComboAction() {
 
     val group = ActionManager.getInstance().getAction("ProjectWidget.Actions") as ActionGroup
     res.addAll(group.getChildren(initEvent).asList())
-    val openProjects = ProjectUtilCore.getOpenProjects()
-    val actionsMap: Map<Boolean, List<AnAction>> = RecentProjectListActionProvider.getInstance().getActions().take(MAX_RECENT_COUNT).groupBy(createSelector(openProjects))
+    val openProjectsPredicate = OpenProjectSelectionPredicateSupplier.getInstance().getPredicate()
+    val actionsMap: Map<Boolean, List<AnAction>> = RecentProjectListActionProvider.getInstance().getActions().take(MAX_RECENT_COUNT).groupBy { openProjectsPredicate.test(it) }
 
     actionsMap[true]?.let {
-      res.addSeparator(IdeBundle.message("project.widget.open.projects"))
+      res.addSeparator(IdeUICustomization.getInstance().projectMessage("project.widget.open.projects"))
       res.addAll(it)
     }
 
     actionsMap[false]?.let {
-      res.addSeparator(IdeBundle.message("project.widget.recent.projects"))
+      res.addSeparator(IdeUICustomization.getInstance().projectMessage("project.widget.recent.projects"))
       res.addAll(it)
     }
 
     return res
-  }
-
-  private fun createSelector(openProjects: Array<Project>): (AnAction) -> Boolean {
-    val paths = openProjects.map { it.basePath }
-    return { action -> (action as? ReopenProjectAction)?.projectPath in paths }
   }
 
 

@@ -64,7 +64,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     myHelper = helper;
     myColor = getInitializerColor(var);
     myTailText = tailText == null ? getInitializerText(var) : tailText;
-    myNegatable = PsiType.BOOLEAN.isAssignableFrom(var.getType());
+    myNegatable = PsiTypes.booleanType().isAssignableFrom(var.getType());
   }
 
   @ApiStatus.Internal

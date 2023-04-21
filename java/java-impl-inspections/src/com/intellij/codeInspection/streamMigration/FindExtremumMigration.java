@@ -44,22 +44,22 @@ class FindExtremumMigration extends BaseStreamApiMigration {
 
   @Nullable
   static private String getComparingMethod(@NotNull PsiType type) {
-    if (type.equals(PsiType.INT)) return "comparingInt";
-    if (type.equals(PsiType.DOUBLE)) return "comparingDouble";
-    if (type.equals(PsiType.LONG)) return "comparingLong";
+    if (type.equals(PsiTypes.intType())) return "comparingInt";
+    if (type.equals(PsiTypes.doubleType())) return "comparingDouble";
+    if (type.equals(PsiTypes.longType())) return "comparingLong";
     if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_COMPARABLE)) return "comparing";
     return null;
   }
 
   @Nullable
   static private Object getNonFilterableInitialValue(@NotNull PsiType type, boolean isMax) {
-    if (type.equals(PsiType.INT)) {
+    if (type.equals(PsiTypes.intType())) {
       return isMax ? Integer.MIN_VALUE : Integer.MAX_VALUE;
     }
-    else if (type.equals(PsiType.LONG)) {
+    else if (type.equals(PsiTypes.longType())) {
       return isMax ? Long.MIN_VALUE : Long.MAX_VALUE;
     }
-    else if (type.equals(PsiType.DOUBLE)) {
+    else if (type.equals(PsiTypes.doubleType())) {
       return isMax ? Double.MIN_VALUE : Double.MAX_VALUE;
     }
     return null;

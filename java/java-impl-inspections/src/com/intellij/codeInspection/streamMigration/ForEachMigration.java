@@ -45,7 +45,7 @@ class ForEachMigration extends BaseStreamApiMigration {
     if(args.length != 1) return null;
     PsiExpression arg = args[0];
     if(ExpressionUtils.isReferenceTo(arg, tb.getVariable())) return null;
-    if(PsiType.VOID.equals(arg.getType())) return null;
+    if(PsiTypes.voidType().equals(arg.getType())) return null;
     PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
     if(tb.dependsOn(qualifier) ||
        VariableAccessUtils.variableIsUsed(tb.getVariable(), qualifier) ||

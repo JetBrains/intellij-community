@@ -218,7 +218,8 @@ public final class SwitchUtils {
       return false;
     }
     final PsiType type = expression.getType();
-    if (PsiType.CHAR.equals(type) || PsiType.BYTE.equals(type) || PsiType.SHORT.equals(type) || PsiType.INT.equals(type)) {
+    if (PsiTypes.charType().equals(type) || PsiTypes.byteType().equals(type) || PsiTypes.shortType().equals(type) || PsiTypes.intType()
+      .equals(type)) {
       return true;
     }
     else if (type instanceof PsiClassType && languageLevel.isAtLeast(LanguageLevel.JDK_1_5)) {
@@ -479,7 +480,7 @@ public final class SwitchUtils {
     }
     final PsiType type = expression.getType();
     if ((!languageLevel.isAtLeast(LanguageLevel.JDK_1_7) || !TypeUtils.isJavaLangString(type)) &&
-        !PsiType.INT.equals(type) && !PsiType.SHORT.equals(type) && !PsiType.BYTE.equals(type) && !PsiType.CHAR.equals(type)) {
+        !PsiTypes.intType().equals(type) && !PsiTypes.shortType().equals(type) && !PsiTypes.byteType().equals(type) && !PsiTypes.charType().equals(type)) {
       return false;
     }
     final Object value = ExpressionUtils.computeConstantExpression(expression);
@@ -526,8 +527,7 @@ public final class SwitchUtils {
     }
     List<PsiEnumConstant> constants = new ArrayList<>();
     for (PsiCaseLabelElement labelElement : list.getElements()) {
-      if (labelElement instanceof PsiDefaultCaseLabelElement ||
-          ExpressionUtils.isNullLiteral(ObjectUtils.tryCast(labelElement, PsiExpression.class))) {
+      if (labelElement instanceof PsiDefaultCaseLabelElement || ExpressionUtils.isNullLiteral(labelElement)) {
         continue;
       }
       if (labelElement instanceof PsiReferenceExpression) {
@@ -583,7 +583,7 @@ public final class SwitchUtils {
     PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
     return labelElementList != null &&
            labelElementList.getElementCount() == 1 &&
-           labelElementList.getElements()[0] instanceof PsiExpression expr && ExpressionUtils.isNullLiteral(expr);
+           ExpressionUtils.isNullLiteral(labelElementList.getElements()[0]);
   }
 
   /**
@@ -597,7 +597,7 @@ public final class SwitchUtils {
     PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
     return labelElementList != null &&
            labelElementList.getElementCount() == 2 &&
-           labelElementList.getElements()[0] instanceof PsiExpression expr && ExpressionUtils.isNullLiteral(expr) &&
+           ExpressionUtils.isNullLiteral(labelElementList.getElements()[0]) &&
            labelElementList.getElements()[1] instanceof PsiDefaultCaseLabelElement;
   }
 

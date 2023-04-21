@@ -742,6 +742,21 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
                 runTest("../testData/basic/common/extensions/ParametrizedExpectedType.kt");
             }
 
+            @TestMetadata("regularFunctionVsFunctionWithReceiver.kt")
+            public void testRegularFunctionVsFunctionWithReceiver() throws Exception {
+                runTest("../testData/basic/common/extensions/regularFunctionVsFunctionWithReceiver.kt");
+            }
+
+            @TestMetadata("runCatchingInTheScopeWithReceiver.kt")
+            public void testRunCatchingInTheScopeWithReceiver() throws Exception {
+                runTest("../testData/basic/common/extensions/runCatchingInTheScopeWithReceiver.kt");
+            }
+
+            @TestMetadata("runCatchingWithoutScope.kt")
+            public void testRunCatchingWithoutScope() throws Exception {
+                runTest("../testData/basic/common/extensions/runCatchingWithoutScope.kt");
+            }
+
             @TestMetadata("StarTypeArg.kt")
             public void testStarTypeArg() throws Exception {
                 runTest("../testData/basic/common/extensions/StarTypeArg.kt");

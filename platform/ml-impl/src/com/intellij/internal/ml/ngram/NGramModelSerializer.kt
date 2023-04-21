@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.ml.ngram
 
 import com.intellij.completion.ngram.slp.counting.trie.ArrayTrieCounter
@@ -10,7 +10,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 object NGramModelSerializer {
-
   @Throws(IOException::class)
   fun saveNGrams(path: Path, runner: NGramIncrementalModelRunner) {
     ObjectOutputStream(Files.newOutputStream(path)).use { oos ->
@@ -30,7 +29,6 @@ object NGramModelSerializer {
       }
     }
   }
-
 
   @Throws(IOException::class)
   fun loadNGrams(path: Path?, nGramLength: Int): NGramIncrementalModelRunner {

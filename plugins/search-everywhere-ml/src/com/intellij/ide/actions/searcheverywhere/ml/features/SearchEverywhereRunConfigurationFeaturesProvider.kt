@@ -11,7 +11,6 @@ import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.utils.getPluginInfo
-import com.intellij.util.containers.ContainerUtil
 
 internal class SearchEverywhereRunConfigurationFeaturesProvider
   : SearchEverywhereElementFeaturesProvider(RunConfigurationsSEContributor::class.java) {
@@ -56,7 +55,7 @@ internal class SearchEverywhereRunConfigurationFeaturesProvider
     }
 
     private fun findConfigurationTypeById(data: String): ConfigurationType? {
-      return ContainerUtil.find(ConfigurationType.CONFIGURATION_TYPE_EP.extensionList) { type: ConfigurationType -> type.id == data }
+      return ConfigurationType.CONFIGURATION_TYPE_EP.extensionList.find { type: ConfigurationType -> type.id == data }
     }
   }
 }

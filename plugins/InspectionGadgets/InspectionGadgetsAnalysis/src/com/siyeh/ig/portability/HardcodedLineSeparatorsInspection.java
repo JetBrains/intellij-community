@@ -18,6 +18,7 @@ package com.siyeh.ig.portability;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -49,7 +50,7 @@ public class HardcodedLineSeparatorsInspection extends BaseInspection {
     public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
       super.visitLiteralExpression(expression);
       final PsiType type = expression.getType();
-      if (type == null || !TypeUtils.isJavaLangString(type) && !type.equals(PsiType.CHAR)) {
+      if (type == null || !TypeUtils.isJavaLangString(type) && !type.equals(PsiTypes.charType())) {
         return;
       }
       final String text = expression.getText();

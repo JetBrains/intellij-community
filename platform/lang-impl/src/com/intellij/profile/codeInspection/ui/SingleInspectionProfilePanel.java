@@ -1162,7 +1162,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       AnalysisBundle.message("inspections.settings.disable.new.inspections.by.default.checkbox"),
       getProfile().isProfileLocked());
 
-    JPanel panel = new JPanel(new BorderLayout(UIUtil.DEFAULT_HGAP, UIUtil.LARGE_VGAP));
+    JPanel panel = new JPanel(new BorderLayout(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
     panel.add(inspectionTreePanel, BorderLayout.CENTER);
     panel.add(disableNewInspectionsCheckBox, BorderLayout.SOUTH);
     disableNewInspectionsCheckBox.addItemListener(__ -> {

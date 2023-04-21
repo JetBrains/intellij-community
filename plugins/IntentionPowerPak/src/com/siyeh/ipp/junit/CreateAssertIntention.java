@@ -86,7 +86,7 @@ public class CreateAssertIntention extends Intention {
       }
       assert comparingExpression != null;
       final PsiType type = lhs.getType();
-      if (PsiType.DOUBLE.equals(type) || PsiType.FLOAT.equals(type)) {
+      if (PsiTypes.doubleType().equals(type) || PsiTypes.floatType().equals(type)) {
         newStatement = buildNewStatement("assertEquals",
                                           element, comparedExpression.getText(), comparingExpression.getText(), "0.0");
       }

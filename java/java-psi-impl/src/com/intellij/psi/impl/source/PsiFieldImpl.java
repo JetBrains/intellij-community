@@ -127,7 +127,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
       LOG.error("No type element found for field; children classes = " +
                 StringUtil.join(getChildren(), e -> e.getClass().getName(), ", "),
                 new Attachment("tree.txt", DebugUtil.psiTreeToString(this, true)));
-      return PsiType.NULL;
+      return PsiTypes.nullType();
     }
     return JavaSharedImplUtil.getType(typeElement, getNameIdentifier());
   }

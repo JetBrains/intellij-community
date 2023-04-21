@@ -48,6 +48,7 @@ import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.contains
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.diagnostics.KotlinSuppressCache
@@ -79,20 +80,13 @@ fun createPlatformAnalysisSettings(
 class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
     override fun getResolutionFacade(element: KtElement): ResolutionFacade {
         val file = element.fileForElement()
-        if (file.isScript()) {
-            // Scripts support seem to modify some of the important aspects via file user data without triggering PsiModificationTracker.
-            // If in doubt, run ScriptDefinitionsOrderTestGenerated
+        return CachedValuesManager.getCachedValue(file) {
             val settings = file.moduleInfo.platformSettings(file.platform)
-            return getFacadeToAnalyzeFile(file, settings)
-        } else {
-            return CachedValuesManager.getCachedValue(file) {
-                val settings = file.moduleInfo.platformSettings(file.platform)
-                CachedValueProvider.Result(
-                    getFacadeToAnalyzeFile(file, settings),
-                    PsiModificationTracker.MODIFICATION_COUNT,
-                    ProjectRootModificationTracker.getInstance(project),
-                )
-            }
+            CachedValueProvider.Result(
+                getFacadeToAnalyzeFile(file, settings),
+                PsiModificationTracker.MODIFICATION_COUNT,
+                ProjectRootModificationTracker.getInstance(project),
+            )
         }
     }
 

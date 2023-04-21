@@ -9,6 +9,7 @@ import com.intellij.psi.impl.light.LightRecordField
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.asSafely
+import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.internal.CONVERSION_LOGGER
@@ -28,13 +29,13 @@ abstract class AbstractJavaUVariable(
   override val psi
     get() = javaPsi
 
-  override val uastInitializer: UExpression? by lz {
-    val initializer = javaPsi.initializer ?: return@lz null
+  override val uastInitializer: UExpression? by lazyPub {
+    val initializer = javaPsi.initializer ?: return@lazyPub null
     UastFacade.findPlugin(initializer)?.convertElement(initializer, this) as? UExpression
   }
 
-  override val uAnnotations: List<UAnnotation> by lz { javaPsi.annotations.map { JavaUAnnotation(it, this) } }
-  override val typeReference: UTypeReferenceExpression? by lz {
+  override val uAnnotations: List<UAnnotation> by lazyPub { javaPsi.annotations.map { JavaUAnnotation(it, this) } }
+  override val typeReference: UTypeReferenceExpression? by lazyPub {
     javaPsi.typeElement?.let { UastFacade.findPlugin(it)?.convertOpt<UTypeReferenceExpression>(javaPsi.typeElement, this) }
   }
 
@@ -224,7 +225,7 @@ class JavaUEnumConstant(
   override val sourcePsi: PsiEnumConstant,
   givenParent: UElement?
 ) : AbstractJavaUVariable(givenParent), UEnumConstantEx, UCallExpression, PsiEnumConstant by sourcePsi, UMultiResolvable {
-  override val initializingClass: UClass? by lz { UastFacade.findPlugin(sourcePsi)?.convertOpt(sourcePsi.initializingClass, this) }
+  override val initializingClass: UClass? by lazyPub { UastFacade.findPlugin(sourcePsi)?.convertOpt(sourcePsi.initializingClass, this) }
 
   @Suppress("OverridingDeprecatedMember")
   override val psi: PsiEnumConstant
@@ -249,7 +250,7 @@ class JavaUEnumConstant(
   override val valueArgumentCount: Int
     get() = sourcePsi.argumentList?.expressions?.size ?: 0
 
-  override val valueArguments: List<UExpression> by lz {
+  override val valueArguments: List<UExpression> by lazyPub {
     sourcePsi.argumentList?.expressions?.map {
       UastFacade.findPlugin(it)?.convertElement(it, this) as? UExpression ?: UastEmptyExpression(this)
     } ?: emptyList()

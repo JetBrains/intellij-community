@@ -62,7 +62,7 @@ public final class PsiConcatenationUtil {
             addFormatParameter(subExpression, formatString, formatParameters, printfFormat);
           }
           if (stringStarted) {
-            if (optype != null && (optype.equalsToText(JAVA_LANG_STRING) || PsiType.CHAR.equals(optype))) {
+            if (optype != null && (optype.equalsToText(JAVA_LANG_STRING) || PsiTypes.charType().equals(optype))) {
               buildFormatString(op, formatString, formatParameters, printfFormat, escape);
             }
             else {
@@ -117,7 +117,7 @@ public final class PsiConcatenationUtil {
       return arg;
     }
     final PsiType type = arg.getType();
-    if (!(type instanceof PsiPrimitiveType) || type.equals(PsiType.NULL)) {
+    if (!(type instanceof PsiPrimitiveType) || type.equals(PsiTypes.nullType())) {
       return arg;
     }
     final PsiPrimitiveType primitiveType = (PsiPrimitiveType)type;

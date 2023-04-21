@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.tools
 
 import com.intellij.openapi.Disposable
@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.packaging.PyPackagingSettings
 import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.tools.sdkTools.PySdkTools
@@ -31,7 +32,8 @@ fun createSdkForPerformance(module: Module,
   // To disable slow debugging
   val executable = File(PythonSdkUtil.getPythonExecutable(sdkHome) ?: throw AssertionError("No python on $sdkHome"))
   println("Creating Python SDK $sdkHome")
-  return PySdkTools.createTempSdk(VfsUtil.findFileByIoFile(executable, true)!!, sdkCreationType, module)
+  return PySdkTools.createTempSdk(VfsUtil.findFileByIoFile(executable, true)!!, sdkCreationType, module,
+                                  PyPackagingSettings.getInstance(module.project))
 }
 
 

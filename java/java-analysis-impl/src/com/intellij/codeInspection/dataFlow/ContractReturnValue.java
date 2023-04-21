@@ -47,7 +47,7 @@ public abstract class ContractReturnValue {
              : null;
     };
   private static final Validator BOOLEAN_RETURN =
-    method -> PsiType.BOOLEAN.equals(method.getReturnType()) ? null : JavaAnalysisBundle
+    method -> PsiTypes.booleanType().equals(method.getReturnType()) ? null : JavaAnalysisBundle
       .message("contract.return.validator.return.type.must.be.boolean");
 
   private final @NotNull String myName;

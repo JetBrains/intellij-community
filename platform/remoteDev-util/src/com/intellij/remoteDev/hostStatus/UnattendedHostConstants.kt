@@ -8,6 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 data class UnattendedHostPerProjectStatus(
   val projectName: String,
   val projectPath: String,
+  val projectPathLink: String?,
   var dateLastOpened: Long? = null,
 
   val joinLink: String,

@@ -1,8 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.actions;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionWithOptions;
+import com.intellij.codeInspection.util.IntentionName;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -32,5 +34,10 @@ public interface IntentionActionWithFixAllOption extends IntentionActionWithOpti
    */
   default boolean belongsToMyFamily(@NotNull IntentionActionWithFixAllOption action) {
     return action.getClass().equals(getClass());
+  }
+
+  /** The text for the "fix all" intention in the submenu */
+  default @NotNull @IntentionName String getFixAllText() {
+    return AnalysisBundle.message("intention.name.apply.all.fixes.in.file", getFamilyName());
   }
 }

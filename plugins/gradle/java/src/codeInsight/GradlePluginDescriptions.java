@@ -15,6 +15,8 @@
  */
 package org.jetbrains.plugins.gradle.codeInsight;
 
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.util.GradleDocumentationBundle;
@@ -26,8 +28,8 @@ import java.util.Map;
 public class GradlePluginDescriptions implements GradlePluginDescriptionsExtension {
   @NotNull
   @Override
-  public Map<String, String> getPluginDescriptions() {
-    final Collection<String> plugins = StringUtil.split(
+  public Map<@NlsSafe String, @NlsContexts.DetailedDescription String> getPluginDescriptions() {
+    final Collection<@NlsSafe String> plugins = StringUtil.split(
       "java,groovy,idea,eclipse,scala,antlr,application,ear,jetty,maven,osgi,war,announce," +
       "build-announcements,checkstyle,codenarc,eclipse-wtp,findbugs,jdepend,pmd,project-report,signing,sonar", ",");
 
@@ -39,7 +41,7 @@ public class GradlePluginDescriptions implements GradlePluginDescriptionsExtensi
   }
 
   @NotNull
-  private static String getDescription(@NotNull String pluginName) {
+  private static @NlsContexts.DetailedDescription String getDescription(@NotNull String pluginName) {
     return GradleDocumentationBundle.INSTANCE
       .messageOrDefault(String.format("gradle.documentation.org.gradle.api.Project.apply.plugin.%s.non-html", pluginName), "");
   }

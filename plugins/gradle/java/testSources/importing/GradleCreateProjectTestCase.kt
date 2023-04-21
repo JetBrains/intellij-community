@@ -4,11 +4,9 @@ package org.jetbrains.plugins.gradle.importing
 import com.intellij.ide.impl.NewProjectUtil
 import com.intellij.ide.projectWizard.NewProjectWizard
 import com.intellij.ide.projectWizard.ProjectTypeStep
-import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.buildSystem
+import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.javaBuildSystemData
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard
-import com.intellij.ide.wizard.LanguageNewProjectWizardData.Companion.language
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.Step
 import com.intellij.openapi.application.ApplicationManager
@@ -35,12 +33,7 @@ import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.testFramework.useProject
 import com.intellij.ui.UIBundle
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.addSampleCode
-import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.artifactId
-import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.gradleDsl
-import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.groupId
-import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.parentData
-import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.version
+import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.javaGradleData
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep.GradleDsl
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
@@ -150,19 +143,26 @@ abstract class GradleCreateProjectTestCase : UsefulTestCase() {
   }
 
   private fun configureWizardStepSettings(step: NewProjectWizardStep, moduleInfo: ModuleInfo, parentData: ProjectData?) {
-    step.name = moduleInfo.root.name
-    step.path = moduleInfo.root.parent.path
-    step.language = "Java"
-    step.buildSystem = "Gradle"
-    step.gradleDsl = when (moduleInfo.useKotlinDsl) {
+    val baseData = step.baseData!!
+    val buildSystemData = step.javaBuildSystemData!!
+    val gradleData = step.javaGradleData!!
+    baseData.name = moduleInfo.root.name
+    baseData.path = moduleInfo.root.parent.path
+    buildSystemData.language = "Java"
+    buildSystemData.buildSystem = "Gradle"
+    gradleData.gradleDsl = when (moduleInfo.useKotlinDsl) {
       true -> GradleDsl.KOTLIN
       else -> GradleDsl.GROOVY
     }
-    step.parentData = parentData
-    moduleInfo.groupId?.let { step.groupId = it }
-    step.artifactId = moduleInfo.artifactId
-    moduleInfo.version?.let { step.version = it }
-    step.addSampleCode = false
+    gradleData.parentData = parentData
+    if (moduleInfo.groupId != null) {
+      gradleData.groupId = moduleInfo.groupId
+    }
+    gradleData.artifactId = moduleInfo.artifactId
+    if (moduleInfo.version != null) {
+      gradleData.version = moduleInfo.version
+    }
+    gradleData.addSampleCode = false
   }
 
   private fun createProject(directory: String, configure: (NewProjectWizardStep) -> Unit): Project? {

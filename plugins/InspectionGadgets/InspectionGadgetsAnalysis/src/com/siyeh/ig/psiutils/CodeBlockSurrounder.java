@@ -447,7 +447,7 @@ public abstract class CodeBlockSurrounder {
     LambdaCodeBlockSurrounder(@NotNull PsiExpression expression, @NotNull PsiLambdaExpression lambda) {
       super(expression);
       myLambda = lambda;
-      myVoidMode = PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(myLambda));
+      myVoidMode = PsiTypes.voidType().equals(LambdaUtil.getFunctionalInterfaceReturnType(myLambda));
     }
 
     @Override

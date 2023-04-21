@@ -65,7 +65,7 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
         // do not create default module
     }
 
-    private fun findMainScript(testDir: File): File {
+    protected fun findMainScript(testDir: File): File {
         testDir.walkTopDown().find { it.name == SCRIPT_NAME }?.let { return it }
 
         return testDir.walkTopDown().singleOrNull { it.name.contains("script") }

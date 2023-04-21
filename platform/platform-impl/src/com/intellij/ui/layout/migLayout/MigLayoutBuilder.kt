@@ -12,10 +12,12 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.SmartList
 import com.intellij.util.containers.CollectionFactory
 import net.miginfocom.layout.*
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Container
 import javax.swing.*
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Mig Layout is going to be removed, IDEA-306719")
 internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuilderImpl {
   companion object {

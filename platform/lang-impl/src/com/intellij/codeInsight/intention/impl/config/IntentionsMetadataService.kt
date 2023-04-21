@@ -41,7 +41,6 @@ internal class IntentionsMetadataService {
       override fun extensionAdded(extension: IntentionActionBean, pluginDescriptor: PluginDescriptor) {
         // on each plugin load/unload SearchableOptionsRegistrarImpl drops the cache, so, it will be recomputed later on demand
         registerMetaDataForEp(extension)
-        serviceIfCreated<TopHitCache>()?.invalidateCachedOptions(IntentionsOptionsTopHitProvider::class.java)
       }
 
       override fun extensionRemoved(extension: IntentionActionBean, pluginDescriptor: PluginDescriptor) {
@@ -50,7 +49,6 @@ internal class IntentionsMetadataService {
         }
 
         unregisterMetaDataForEP(extension)
-        serviceIfCreated<TopHitCache>()?.invalidateCachedOptions(IntentionsOptionsTopHitProvider::class.java)
       }
     }, null)
   }

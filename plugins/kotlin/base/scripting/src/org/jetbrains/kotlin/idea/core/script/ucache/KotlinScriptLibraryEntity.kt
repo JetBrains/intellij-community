@@ -41,6 +41,8 @@ interface KotlinScriptLibraryEntity : WorkspaceEntityWithSymbolicId {
 
     val roots: List<KotlinScriptLibraryRoot>
 
+    var indexSourceRoots: Boolean
+
     val usedInScripts: Set<KotlinScriptId>
 
     override val symbolicId: KotlinScriptLibraryId
@@ -53,6 +55,7 @@ interface KotlinScriptLibraryEntity : WorkspaceEntityWithSymbolicId {
         override var entitySource: EntitySource
         override var name: String
         override var roots: MutableList<KotlinScriptLibraryRoot>
+        override var indexSourceRoots: Boolean
         override var usedInScripts: MutableSet<KotlinScriptId>
     }
 
@@ -63,6 +66,7 @@ interface KotlinScriptLibraryEntity : WorkspaceEntityWithSymbolicId {
         operator fun invoke(
             name: String,
             roots: List<KotlinScriptLibraryRoot>,
+            indexSourceRoots: Boolean,
             usedInScripts: Set<KotlinScriptId>,
             entitySource: EntitySource,
             init: (Builder.() -> Unit)? = null
@@ -70,6 +74,7 @@ interface KotlinScriptLibraryEntity : WorkspaceEntityWithSymbolicId {
             val builder = builder()
             builder.name = name
             builder.roots = roots.toMutableWorkspaceList()
+            builder.indexSourceRoots = indexSourceRoots
             builder.usedInScripts = usedInScripts.toMutableWorkspaceSet()
             builder.entitySource = entitySource
             init?.invoke(builder)

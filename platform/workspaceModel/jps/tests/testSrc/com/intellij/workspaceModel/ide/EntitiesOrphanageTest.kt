@@ -34,7 +34,7 @@ class EntitiesOrphanageTest {
 
   @BeforeEach
   fun setUp() {
-    Assumptions.assumeTrue(EntitiesOrphanage.use)
+    Assumptions.assumeTrue(EntitiesOrphanage.isEnabled)
   }
 
   @ParameterizedTest

@@ -162,7 +162,7 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val predefinedChan
     return when {
       pattern.parent is PsiExpressionStatement -> false
       pattern is PsiReferenceExpression && pattern.parent is PsiCall -> false
-      pattern is PsiExpression && candidate is PsiExpression -> pattern.type != PsiType.VOID && canBeReplaced(pattern.type, candidate.type)
+      pattern is PsiExpression && candidate is PsiExpression -> pattern.type != PsiTypes.voidType() && canBeReplaced(pattern.type, candidate.type)
       else -> false
     }
   }

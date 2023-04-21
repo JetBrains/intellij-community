@@ -62,7 +62,7 @@ public final class DoHighlighting extends PerformanceCommand {
       ReadAction.nonBlocking(Context.current().wrap((Callable<Void>)() -> {
         Stopwatch timer = Stopwatch.createStarted();
         TraceUtil.runWithSpanThrows(PerformanceTestSpan.TRACER, SPAN_NAME, span -> {
-          DefaultHighlightVisitorBasedInspection.runAnnotatorsInGeneralHighlighting(psiFile, highlightErrorElements, runAnnotators);
+          DefaultHighlightVisitorBasedInspection.runAnnotatorsInGeneralHighlighting(psiFile, highlightErrorElements, runAnnotators,true);
           span.setAttribute("lines", editor.getDocument().getLineCount());
           span.setAttribute("timeToLines", timer.stop().elapsed(TimeUnit.MILLISECONDS) / (Math.max(1, editor.getDocument().getLineCount())));
         });

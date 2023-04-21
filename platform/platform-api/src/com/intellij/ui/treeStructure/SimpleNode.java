@@ -9,7 +9,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.tree.LeafState;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.ComparableObjectCheck;
 import org.jetbrains.annotations.NotNull;
@@ -106,7 +105,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor<Object> imple
 
   private void fillFallbackColor(PresentationData presentation) {
     if (presentation.getForcedTextForeground() == null) {
-      presentation.setForcedTextForeground(myColor == null ? UIUtil.getTreeForeground() : myColor);
+      presentation.setForcedTextForeground(myColor);
     }
   }
 

@@ -139,7 +139,7 @@ class ForConverter(
 
                 val left = condition.lOperand as? PsiReferenceExpression ?: return null
                 val right = condition.rOperand ?: return null
-                if (right.type == PsiType.DOUBLE || right.type == PsiType.FLOAT || right.type == PsiType.CHAR) {
+                if (right.type == PsiTypes.doubleType() || right.type == PsiTypes.floatType() || right.type == PsiTypes.charType()) {
                     return null
                 }
 

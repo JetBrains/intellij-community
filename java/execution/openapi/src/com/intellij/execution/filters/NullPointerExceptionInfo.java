@@ -4,7 +4,6 @@ package com.intellij.execution.filters;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,14 +26,14 @@ public class NullPointerExceptionInfo extends ExceptionInfo {
                                                              "enter (?<monitor>synchronized) block|" +
                                                              "throw (?<athrow>exception))(?: because .+)?");
   private static final Map<String, PsiPrimitiveType> UNBOXING_METHODS = Map.of(
-      "booleanValue", PsiType.BOOLEAN,
-      "byteValue", PsiType.BYTE,
-      "charValue", PsiType.CHAR,
-      "shortValue", PsiType.SHORT,
-      "intValue", PsiType.INT,
-      "longValue", PsiType.LONG,
-      "floatValue", PsiType.FLOAT,
-      "doubleValue", PsiType.DOUBLE);
+    "booleanValue", PsiTypes.booleanType(),
+    "byteValue", PsiTypes.byteType(),
+    "charValue", PsiTypes.charType(),
+    "shortValue", PsiTypes.shortType(),
+    "intValue", PsiTypes.intType(),
+    "longValue", PsiTypes.longType(),
+    "floatValue", PsiTypes.floatType(),
+    "doubleValue", PsiTypes.doubleType());
   private final @NotNull UnaryOperator<PsiElement> myExtractor;
   
   NullPointerExceptionInfo(int offset, String message) {

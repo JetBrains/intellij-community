@@ -23,6 +23,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -58,7 +59,7 @@ class TooltipReferencesPanel extends ReferencesPanel {
     if (refIndex == 0) {
       Color color = type.getBackgroundColor();
       return new LabelIcon(this, height, getBackground(),
-                           refs.size() > 1 ? ContainerUtil.newArrayList(color, color) : Collections.singletonList(color)) {
+                           refs.size() > 1 ? List.of(color, color) : Collections.singletonList(color)) {
         @Override
         public int getIconWidth() {
           return getWidth(myHasGroupWithMultipleRefs ? 2 : 1);

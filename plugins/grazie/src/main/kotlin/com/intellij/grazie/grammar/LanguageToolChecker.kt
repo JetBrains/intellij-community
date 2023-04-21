@@ -8,8 +8,10 @@ import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.text.*
 import com.intellij.grazie.utils.*
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.ClassLoaderUtil
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.Predicates
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.psi.util.CachedValueProvider
@@ -24,6 +26,7 @@ import org.languagetool.rules.GenericUnpairedBracketsRule
 import org.languagetool.rules.RuleMatch
 import org.slf4j.LoggerFactory
 import java.util.*
+import java.util.function.Predicate
 
 open class LanguageToolChecker : TextChecker() {
   override fun getRules(locale: Locale): Collection<Rule> {
@@ -50,10 +53,11 @@ open class LanguageToolChecker : TextChecker() {
         val sentences = tool.sentenceTokenize(str)
         if (sentences.any { it.length > 1000 }) emptyList()
         else {
-          val annotated = AnnotatedTextBuilder().addText(str).build()
-          val matches = tool.check(annotated, true, JLanguageTool.ParagraphHandling.NORMAL,
-            null, JLanguageTool.Mode.ALL, JLanguageTool.Level.PICKY)
+          val matches = runLT(tool, str)
+          val disappearsAfterAddingQuotes by lazy { checkQuotedText(extracted, tool) }
+
           matches.asSequence()
+            .filterNot { possiblyMarkupDependent(it) && disappearsAfterAddingQuotes.test(it) }
             .map { Problem(it, lang, extracted, this is TestChecker) }
             .filterNot { isGitCherryPickedFrom(it.match, extracted) }
             .filterNot { isKnownLTBug(it.match, extracted) }
@@ -74,6 +78,28 @@ open class LanguageToolChecker : TextChecker() {
       emptyList()
     }
   }
+
+  private fun checkQuotedText(extracted: TextContent, tool: JLanguageTool): Predicate<RuleMatch> = when {
+    extracted.markupOffsets().isEmpty() -> Predicates.alwaysFalse()
+    else -> {
+      val quotedText = extracted.replaceMarkupWith('"')
+      val quotedMatches = runLT(tool, quotedText.toString())
+      Predicate { om ->
+        ProgressManager.checkCanceled()
+        quotedMatches.none { qm ->
+          qm.rule == om.rule &&
+          quotedText.offsetToOriginal(qm.fromPos) == om.fromPos &&
+          quotedText.offsetToOriginal(qm.toPos) == om.toPos
+        }
+      }
+    }
+  }
+
+  private fun possiblyMarkupDependent(match: RuleMatch) = match.message.lowercase().contains("capitalize")
+
+  private fun runLT(tool: JLanguageTool, str: String): List<RuleMatch> =
+    tool.check(AnnotatedTextBuilder().addText(str).build(), true, JLanguageTool.ParagraphHandling.NORMAL,
+               null, JLanguageTool.Mode.ALL, JLanguageTool.Level.PICKY)
 
   private fun includeSentenceBounds(text: CharSequence, range: TextRange): TextRange {
     var start = range.startOffset

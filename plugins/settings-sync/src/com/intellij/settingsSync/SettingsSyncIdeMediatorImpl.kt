@@ -25,6 +25,8 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.time.Instant
 import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
+import java.util.function.Consumer
+import java.util.function.Predicate
 import kotlin.concurrent.withLock
 import kotlin.io.path.exists
 import kotlin.io.path.name
@@ -34,10 +36,6 @@ import kotlin.random.Random
 internal class SettingsSyncIdeMediatorImpl(private val componentStore: ComponentStoreImpl,
                                            private val rootConfig: Path,
                                            private val enabledCondition: () -> Boolean) : StreamProvider, SettingsSyncIdeMediator {
-
-  companion object {
-    val LOG = logger<SettingsSyncIdeMediatorImpl>()
-  }
 
   private val appConfig: Path get() = rootConfig.resolve(OPTIONS_DIRECTORY)
   private val fileSpecsToLocks = ConcurrentCollectionFactory.createConcurrentMap<String, ReadWriteLock>()
@@ -73,6 +71,18 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     // 3. after that update the rest of changed settings
     val regularFileStates = snapshot.fileStates.filter { it != settingsSyncFileState }
     writeStatesToAppConfig(regularFileStates)
+
+    // 4. apply changes from custom providers
+    for ((id, state) in snapshot.settingsFromProviders) {
+      val provider = findProviderById(id, state)
+      if (provider != null) {
+        LOG.debug("Applying settings for provider '$id'")
+        provider.applyNewSettings(state)
+      }
+      else {
+        LOG.warn("Couldn't find provider for id '$id' and state '${state.javaClass}'")
+      }
+    }
   }
 
   override fun activateStreamProvider() {
@@ -94,7 +104,16 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
 
     val pluginsState = SettingsSyncPluginManager.getInstance().updateStateFromIdeOnStart(lastSavedSnapshot.plugins)
     LOG.debug("Collected following plugin state: $pluginsState")
-    return SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()), fileStates, pluginsState, emptySet())
+
+    val settingsFromProviders = mutableMapOf<String, Any>()
+    SettingsProvider.SETTINGS_PROVIDER_EP.forEachExtensionSafe(Consumer {
+      val currentSettings = it.collectCurrentSettings()
+      if (currentSettings != null) {
+        settingsFromProviders[it.id] = currentSettings
+      }
+    })
+
+    return SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()), fileStates, pluginsState, settingsFromProviders, emptySet())
   }
 
   override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) {
@@ -111,7 +130,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     }
 
     val snapshot = SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()),
-                                    setOf(FileState.Modified(file, content)), plugins = null, emptySet())
+                                    setOf(FileState.Modified(file, content)), plugins = null, emptyMap(), emptySet())
     SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.IdeChange(snapshot))
   }
 
@@ -179,7 +198,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     }
     if (deleted) {
       val snapshot = SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()),
-                                      setOf(FileState.Deleted(adjustedSpec)), plugins = null, emptySet())
+                                      setOf(FileState.Deleted(adjustedSpec)), plugins = null, emptyMap(), emptySet())
       SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.IdeChange(snapshot))
     }
     return deleted
@@ -299,6 +318,26 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     val fileSpec = schemeManager.fileSpec
     return pathsToCheck.any { path ->
       fileSpec == path || path.startsWith("$fileSpec/")
+    }
+  }
+
+  companion object {
+    val LOG = logger<SettingsSyncIdeMediatorImpl>()
+
+    internal fun <T: Any> findProviderById(id: String, state: T): SettingsProvider<T>? {
+      val provider = SettingsProvider.SETTINGS_PROVIDER_EP.findFirstSafe(Predicate { it.id == id })
+      if (provider != null) {
+        try {
+          return provider as SettingsProvider<T>
+        }
+        catch (e: Exception) {
+          LOG.error("Could not cast the provider '${provider.id}' to expected class ${state::class.java}", e)
+        }
+      }
+      else {
+        LOG.warn("Couldn't find provider for state class '${state::class.java}'")
+      }
+      return null
     }
   }
 }

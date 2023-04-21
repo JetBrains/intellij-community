@@ -105,6 +105,9 @@ class JBCefOsrComponent extends JPanel {
   @Override
   protected void processMouseEvent(MouseEvent e) {
     super.processMouseEvent(e);
+    if (e.isConsumed()) {
+      return;
+    }
 
     double scale = myScale.getIdeBiased();
     myBrowser.sendMouseEvent(new MouseEvent(

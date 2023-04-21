@@ -183,7 +183,7 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
       val rootElement = serializer.serializeIntoXml(rootEntity)
 
       val facetConfigurationElement = if (facet is FacetBridge<*>)
-        serializer.serializeIntoXml(facet.getRootEntity())
+        serializer.serializeIntoXml(facet.config.getEntity())
       else
         FacetUtil.saveFacetConfiguration(facet)
       val facetConfigurationXml = facetConfigurationElement?.let { JDOMUtil.write(it) }

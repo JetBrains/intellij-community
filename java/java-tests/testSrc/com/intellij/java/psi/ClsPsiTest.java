@@ -159,7 +159,7 @@ public class ClsPsiTest extends LightIdeaTestCase {
     assertEquals("field1", field1.getName());
 
     PsiType type1 = field1.getType();
-    assertEquals(PsiType.INT, type1);
+    assertEquals(PsiTypes.intType(), type1);
     assertEquals("int", type1.getPresentableText());
     assertTrue(type1 instanceof PsiPrimitiveType);
 
@@ -179,7 +179,7 @@ public class ClsPsiTest extends LightIdeaTestCase {
     assertNotNull(initializer);
     assertEquals("123", initializer.getText());
     assertEquals(123, initializer.getValue());
-    assertEquals(PsiType.INT, initializer.getType());
+    assertEquals(PsiTypes.intType(), initializer.getType());
 
     assertFalse(field2.hasInitializer());
     assertNull(field2.getInitializer());
@@ -358,7 +358,7 @@ public class ClsPsiTest extends LightIdeaTestCase {
       try {
         PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)method).getDefaultValue();
         assertTrue(String.valueOf(defaultValue), defaultValue instanceof PsiBinaryExpression);
-        PsiPrimitiveType type = method.getName().startsWith("f") ? PsiType.FLOAT : PsiType.DOUBLE;
+        PsiPrimitiveType type = method.getName().startsWith("f") ? PsiTypes.floatType() : PsiTypes.doubleType();
         assertEquals(type, ((PsiBinaryExpression)defaultValue).getType());
       }
       catch (Exception e) {

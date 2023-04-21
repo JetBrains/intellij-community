@@ -41,7 +41,7 @@ public class JavaMembersGetter extends MembersGetter {
     addKnownConstants(results);
 
     addConstantsFromTargetClass(results, searchInheritors);
-    if (myExpectedType instanceof PsiPrimitiveType && PsiType.DOUBLE.isAssignableFrom(myExpectedType)) {
+    if (myExpectedType instanceof PsiPrimitiveType && PsiTypes.doubleType().isAssignableFrom(myExpectedType)) {
       addConstantsFromReferencedClassesInSwitch(results);
     }
 

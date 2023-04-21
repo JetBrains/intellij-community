@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.exp.TerminalWidgetImpl;
 
 import javax.swing.*;
 import java.awt.*;
@@ -128,6 +130,9 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   public @NotNull TerminalWidget createShellTerminalWidget(@NotNull Disposable parent,
                                                            @Nullable String currentWorkingDirectory,
                                                            boolean deferSessionStartUntilUiShown) {
+    if (Registry.is("ide.experimental.ui.new.terminal", false)) {
+      return new TerminalWidgetImpl(myProject, mySettingsProvider, parent);
+    }
     return createTerminalWidget(parent, currentWorkingDirectory, deferSessionStartUntilUiShown).asNewWidget();
   }
 
@@ -196,7 +201,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
 
   protected abstract String getTerminalConnectionName(T process);
 
-  protected abstract TtyConnector createTtyConnector(T process);
+  public abstract TtyConnector createTtyConnector(T process);
 
   protected AnAction createCloseAction(final Executor defaultExecutor, final RunContentDescriptor myDescriptor) {
     return new CloseAction(defaultExecutor, myDescriptor, myProject);

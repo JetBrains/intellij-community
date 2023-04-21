@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -53,7 +53,6 @@ public class IfStatementMissingBreakInLoopInspection extends BaseInspection impl
       PsiStatement body = statement.getBody();
       if (body == null) return;
       PsiParameter parameter = statement.getIterationParameter();
-      if (parameter == null) return;
       Set<PsiVariable> nonFinalVariables = new HashSet<>();
       nonFinalVariables.add(parameter);
       Set<PsiVariable> declaredVariables = new HashSet<>();

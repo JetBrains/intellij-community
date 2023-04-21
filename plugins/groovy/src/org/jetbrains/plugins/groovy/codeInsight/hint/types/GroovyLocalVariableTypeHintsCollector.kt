@@ -4,10 +4,7 @@ package org.jetbrains.plugins.groovy.codeInsight.hint.types
 import com.intellij.codeInsight.hints.FactoryInlayHintsCollector
 import com.intellij.codeInsight.hints.InlayHintsSink
 import com.intellij.openapi.editor.Editor
-import com.intellij.psi.CommonClassNames
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiIdentifier
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
 import com.intellij.util.containers.mapSmart
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
@@ -66,8 +63,8 @@ class GroovyLocalVariableTypeHintsCollector(editor: Editor,
         type to identifier
       }.filterNotNull()
       .filter { (type, _) ->
-        type != PsiType.NULL &&
-        type != PsiType.VOID &&
+        type != PsiTypes.nullType() &&
+        type != PsiTypes.voidType() &&
         !type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)
       }
   }

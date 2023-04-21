@@ -287,7 +287,7 @@ public final class ListPluginComponent extends JPanel {
       }
       else {
         InstalledPluginsState pluginsState = InstalledPluginsState.getInstance();
-        if (pluginsState.wasInstalled(pluginId) || pluginsState.wasUpdated(pluginId)) {
+        if (pluginsState.wasInstalled(pluginId) || pluginsState.wasUpdatedWithRestart(pluginId)) {
           myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
         }
         else {

@@ -29,6 +29,18 @@ public class WitherProcessor extends AbstractClassProcessor {
   }
 
   @Override
+  protected Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+    Collection<String> result = new ArrayList<>();
+
+    final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiClass).withFluent(false);
+    for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
+      result.add(LombokUtils.getWitherName(psiField, accessorsInfo));
+    }
+
+    return result;
+  }
+
+  @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
     validateAnnotationOnRightType(psiClass, builder);
     validateVisibility(psiAnnotation, builder);

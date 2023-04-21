@@ -249,7 +249,8 @@
       "hoverForeground": "Blue9",
       "pressedForeground": "Blue9",
       "visitedForeground": "Blue9",
-      "secondaryForeground": "Blue9"
+      "secondaryForeground": "Blue9",
+      "focusedBorderColor": "Blue7"
     },
 
     "List": {
@@ -289,6 +290,7 @@
     "Notification": {
       "background": "Grey3",
       "borderColor": "Grey4",
+      "foreground": "Grey13",
       "linkForeground": "Blue9",
       "borderInsets": "4,4,4,0",
       "Button": {
@@ -369,6 +371,10 @@
       "progressColor": "Blue7",
       "indeterminateStartColor": "Blue9",
       "indeterminateEndColor": "Blue5",
+      "passedColor": "Green5",
+      "passedEndColor": "Green8",
+      "failedColor": "Red5",
+      "failedEndColor": "Red8",
       "trackColor": "Grey4"
     },
     "ToolBar.verticalToolbarInsets": "7,4,7,4",
@@ -498,8 +504,18 @@
       "Button": {
         "DragAndDrop" : {
           "stripeBackground" : "Grey2",
-          "buttonDropBackground": "#35538F99"
+          "buttonDropBackground": "#35538F99",
+          "buttonDropBorderColor": "Blue8"
         }
+      },
+      "Stripe": {
+        "separatorColor": "Grey4",
+        "DragAndDrop": {
+          "separatorColor": "Blue8"
+        }
+      },
+      "DragAndDrop": {
+        "areaBackground": "#366ACF4D"
       }
     },
 

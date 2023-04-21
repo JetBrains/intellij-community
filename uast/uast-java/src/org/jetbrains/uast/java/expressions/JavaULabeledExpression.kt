@@ -2,6 +2,7 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiLabeledStatement
+import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
@@ -19,7 +20,7 @@ class JavaULabeledExpression(
   override val labelIdentifier: UIdentifier
     get() = UIdentifier(sourcePsi.labelIdentifier, this)
 
-  override val expression: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.statement, this) }
+  override val expression: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.statement, this) }
 
   override fun evaluate(): Any? = expression.evaluate()
 }

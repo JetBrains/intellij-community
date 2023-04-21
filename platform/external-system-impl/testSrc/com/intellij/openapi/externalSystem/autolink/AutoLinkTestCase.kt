@@ -16,6 +16,7 @@ import com.intellij.util.io.systemIndependentPath
 import javax.swing.Icon
 
 abstract class AutoLinkTestCase : ExternalSystemTestCase() {
+
   lateinit var testDisposable: Disposable
     private set
 

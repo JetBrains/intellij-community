@@ -4,82 +4,104 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.facet
 import com.intellij.facet.Facet
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.facetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.mutableFacetMapping
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleSettingsBase
+import org.jetbrains.annotations.ApiStatus
 
 /**
- * Bridge interface for facet which uses custom module settings entity under the hood
+ * Bridge interface for facet which uses custom module settings entity under the hood.
+ * Most often, its implementation comes together with a corresponding [FacetConfigurationBridge] implementation.
  */
-interface FacetBridge<T: ModuleSettingsBase> {
+@ApiStatus.Internal
+interface FacetBridge<T : ModuleSettingsBase> {
   /**
-   * Add root entity which [FacetBridge] uses under the hood, into the storage
+   * Facet configuration
+   */
+  val config: FacetConfigurationBridge<T>
+
+  /**
+   * Add root entity which [FacetBridge] uses under the hood, to [mutableStorage]
    * @param mutableStorage for saving root entity and it's children in it
    * @param moduleEntity corresponds to this [FacetBridge]
    * @param entitySource which should be used for such entities
    */
   fun addToStorage(mutableStorage: MutableEntityStorage, moduleEntity: ModuleEntity, entitySource: EntitySource) {
-    val settingsEntity = config.initSettings(moduleEntity, entitySource)
+    config.init(moduleEntity, entitySource)
+    val settingsEntity = config.getEntity()
     mutableStorage.addEntity(settingsEntity)
     mutableStorage.mutableFacetMapping().addMapping(settingsEntity, this as Facet<*>)
   }
 
   /**
-   * Removes all associated with this bridge entities from the storage
+   * Removes all associated with this bridge entities from [mutableStorage]
    */
   fun removeFromStorage(mutableStorage: MutableEntityStorage) {
-    mutableStorage.removeEntity(getFacetEntity(mutableStorage))
+    getFacetEntities(mutableStorage).forEach { mutableStorage.removeEntity(it) }
   }
+
+  /**
+   * Applies changes from the underlying entity to [mutableStorage]
+   */
+  fun updateInStorage(mutableStorage: MutableEntityStorage) {
+    val existingFacetEntity = getFacetEntityOptional(mutableStorage) ?: return
+    updateExistingEntityInStorage(existingFacetEntity, mutableStorage)
+  }
+
+  /**
+   * Applies changes from the underlying entity to [existingFacetEntity] in [mutableStorage]
+   */
+  fun updateExistingEntityInStorage(existingFacetEntity: T, mutableStorage: MutableEntityStorage)
 
   /**
    * Rename entity associated with this bridge
    */
-  fun rename(mutableStorage: MutableEntityStorage, newName: String)
-
-  /**
-   * Apply changes from the entity which used under the hood into the builder passed as a parameter
-   */
-  fun applyChangesToStorage(mutableStorage: MutableEntityStorage, module: ModuleBridge) {
-    val moduleEntity = mutableStorage.resolve(module.moduleEntityId) ?: return
-
-    val existingFacetEntity = getFacetEntityOptional(mutableStorage)
-
-    if (null == existingFacetEntity) return
-
-    config.applyChangesToStorage(mutableStorage, existingFacetEntity, moduleEntity)
+  fun rename(mutableStorage: MutableEntityStorage, newName: String) {
+    config.rename(newName)
+    val existingFacetEntity = getFacetEntityOptional(mutableStorage) ?: return
+    updateExistingEntityInStorage(existingFacetEntity, mutableStorage)
   }
 
   /**
    * Update facet configuration base on the data from the related entity
    */
-  fun updateFacetConfiguration(rootEntity: T) {
-    config.updateData(rootEntity)
+  fun updateFacetConfiguration(relatedEntity: T) {
+    config.update(relatedEntity)
   }
+
+  private fun getFacetEntities(mutableStorage: MutableEntityStorage) = mutableStorage.facetMapping().getEntities(
+    this as Facet<*>).map { it as T }
 
   /**
-   * Method returns the entity which is used under the hood of this [FacetBridge]
+   * Returns the entity associated with this bridge in [mutableStorage], if it exists
    */
-  fun getRootEntity(): T {
-    return config.getFacetEntity()
-  }
-
-  private fun getFacetEntities(mutableStorage: MutableEntityStorage) = mutableStorage.facetMapping().getEntities(this as Facet<*>).map { it as T }
-
-  fun getFacetEntity(mutableStorage: MutableEntityStorage) : T = getFacetEntities(mutableStorage).single()
-
-  fun getFacetEntityOptional(mutableStorage: MutableEntityStorage) = getFacetEntities(mutableStorage).firstOrNull()
-
-  val config: FacetConfigurationBridge<T>
+  private fun getFacetEntityOptional(mutableStorage: MutableEntityStorage): T? = getFacetEntities(mutableStorage).firstOrNull()
 }
 
-interface FacetConfigurationBridge<T: ModuleSettingsBase> {
-  fun initSettings(moduleEntity: ModuleEntity, entitySource: EntitySource) : T
-  fun applyChangesToStorage(mutableStorage: MutableEntityStorage, existingFacetEntity: T, moduleEntity: ModuleEntity)
-  fun getFacetEntity(): T
-  fun updateData(rootEntity: T)
-  fun rename(newName: String) {
-    (getFacetEntity() as ModuleSettingsBase.Builder<*>).name = newName
-  }
+/**
+ * Interface for facet bridge configuration.
+ * Most often, its implementation comes together with a corresponding [FacetBridge] implementation.
+ */
+@ApiStatus.Internal
+interface FacetConfigurationBridge<T : ModuleSettingsBase> {
+  /**
+   * Initializes this config settings with [moduleEntity] and [entitySource]
+   */
+  fun init(moduleEntity: ModuleEntity, entitySource: EntitySource)
+
+  /**
+   * Updates this config settings from [diffEntity]
+   */
+  fun update(diffEntity: T)
+
+  /**
+   * Updates this config name setting
+   */
+  fun rename(newName: String)
+
+  /**
+   * Returns the entity holding current configuration
+   */
+  fun getEntity(): T
 }

@@ -58,8 +58,16 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
   }
 
   protected boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
-                                                   @NotNull PsiAnnotation psiAnnotation) {
-    return true;
+                                                 @NotNull PsiAnnotation psiAnnotation) {
+    if (null == nameHint) {
+      return true;
+    }
+    final Collection<String> namesOfGeneratedElements = getNamesOfPossibleGeneratedElements(psiClass, psiAnnotation);
+    return namesOfGeneratedElements.isEmpty() || namesOfGeneratedElements.contains(nameHint);
+  }
+
+  protected Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+    return Collections.emptyList();
   }
 
   @NotNull

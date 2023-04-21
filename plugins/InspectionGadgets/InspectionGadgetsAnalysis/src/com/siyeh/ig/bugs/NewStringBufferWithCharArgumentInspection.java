@@ -104,7 +104,7 @@ public class NewStringBufferWithCharArgumentInspection extends BaseInspection {
       }
       final PsiExpression argument = arguments[0];
       final PsiType type = argument.getType();
-      if (!PsiType.CHAR.equals(type)) {
+      if (!PsiTypes.charType().equals(type)) {
         return;
       }
       final PsiMethod constructor = expression.resolveConstructor();

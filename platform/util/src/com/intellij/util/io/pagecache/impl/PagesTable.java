@@ -43,14 +43,11 @@ public class PagesTable {
   private int pagesCount = 0;
 
   /**
-   * Content: Page{state: NOT_READY | READY_FOR_USE | TO_UNMAP}.
    * Reads are non-blocking, writes must be guarded by .pagesLock
    */
   @NotNull
   private volatile AtomicReferenceArray<PageImpl> pages;
 
-  //TODO RC: seems like we don't need R-W lock here -- simple lock is enough, even intrinsic one
-  //         The only method we use readLock is .flushAll(), and it looks like it is flawed anyway
   private transient final ReentrantLock pagesLock = new ReentrantLock();
 
 
@@ -321,12 +318,12 @@ public class PagesTable {
 
   @VisibleForTesting
   public Int2IntMap collectProbeLengthsHistogram() {
-    final Int2IntOpenHashMap histo = new Int2IntOpenHashMap();
+    final Int2IntMap histo = new Int2IntOpenHashMap();
     for (int i = 0; i < pages.length(); i++) {
       final PageImpl page = pages.get(i);
       if (page != null) {
         final int probingLength = probingSequenceLengthFor(pages, page.pageIndex());
-        histo.addTo(probingLength, 1);
+        histo.mergeInt(probingLength, 1, Integer::sum);
       }
     }
     return histo;

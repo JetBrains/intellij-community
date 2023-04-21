@@ -19,7 +19,7 @@ import com.intellij.workspaceModel.core.fileIndex.*;
 import com.intellij.workspaceModel.core.fileIndex.impl.LibraryRootFileIndexContributor;
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleContentOrSourceRootData;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl;
-import com.intellij.workspaceModel.ide.impl.UtilsKt;
+import com.intellij.workspaceModel.ide.VirtualFileUrls;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryEntityUtils;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
 import com.intellij.workspaceModel.storage.EntityReference;
@@ -257,7 +257,7 @@ public class IndexingRootsCollectionUtil {
                                   @NotNull WorkspaceEntity entity,
                                   @Nullable WorkspaceFileSetData customData) {
         if (shouldIgnore(kind, customData)) return;
-        VirtualFile file = UtilsKt.getVirtualFile(root);
+        VirtualFile file = VirtualFileUrls.getVirtualFile(root);
         if (file != null) {
           doRegisterFileSet(file, kind, entity, customData);
         }
@@ -306,6 +306,12 @@ public class IndexingRootsCollectionUtil {
       }
 
       @Override
+    public void registerExcludedRoot(@NotNull VirtualFileUrl excludedRoot,
+                                     @NotNull WorkspaceFileKind excludedFrom,
+                                     @NotNull WorkspaceEntity entity) {
+    }
+
+    @Override
       public void registerExcludedRoot(@NotNull VirtualFile excludedRoot,
                                        @NotNull WorkspaceFileKind excludedFrom,
                                        @NotNull WorkspaceEntity entity) {
@@ -322,6 +328,12 @@ public class IndexingRootsCollectionUtil {
                                              @NotNull Function1<? super VirtualFile, Boolean> condition,
                                              @NotNull WorkspaceEntity entity) {
 
+      }
+
+      @Override
+      public void registerExclusionCondition(@NotNull VirtualFileUrl root,
+                                             @NotNull Function1<? super VirtualFile, Boolean> condition,
+                                             @NotNull WorkspaceEntity entity) {
       }
     };
 

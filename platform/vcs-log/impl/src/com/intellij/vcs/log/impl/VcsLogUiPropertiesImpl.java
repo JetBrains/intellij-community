@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl;
 
-import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.PermanentGraph;
@@ -14,9 +13,8 @@ import java.util.*;
 /**
  * Stores UI configuration based on user activity and preferences.
  */
-public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.State>
-  implements PersistentStateComponent<S>, MainVcsLogUiProperties {
-  private static final Set<VcsLogUiProperties.VcsLogUiProperty> SUPPORTED_PROPERTIES =
+public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.State> implements MainVcsLogUiProperties {
+  private static final Set<VcsLogUiProperties.VcsLogUiProperty<?>> SUPPORTED_PROPERTIES =
     ContainerUtil.newHashSet(CommonUiProperties.SHOW_DETAILS,
                              MainVcsLogUiProperties.SHOW_LONG_EDGES,
                              MainVcsLogUiProperties.BEK_SORT_TYPE,
@@ -31,8 +29,7 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     myAppSettings = appSettings;
   }
 
-  @Override
-  public abstract @NotNull S getState();
+  protected abstract @NotNull S getLogUiState();
 
   @SuppressWarnings("unchecked")
   @Override
@@ -40,7 +37,7 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     if (myAppSettings.exists(property)) {
       return myAppSettings.get(property);
     }
-    S state = getState();
+    S state = getLogUiState();
     if (property instanceof VcsLogHighlighterProperty) {
       Boolean result = state.HIGHLIGHTERS.get(((VcsLogHighlighterProperty)property).getId());
       if (result == null) return (T)Boolean.TRUE;
@@ -73,19 +70,19 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     }
 
     if (CommonUiProperties.SHOW_DETAILS.equals(property)) {
-      getState().SHOW_DETAILS_IN_CHANGES = (Boolean)value;
+      getLogUiState().SHOW_DETAILS_IN_CHANGES = (Boolean)value;
     }
     else if (SHOW_LONG_EDGES.equals(property)) {
-      getState().LONG_EDGES_VISIBLE = (Boolean)value;
+      getLogUiState().LONG_EDGES_VISIBLE = (Boolean)value;
     }
     else if (CommonUiProperties.SHOW_ROOT_NAMES.equals(property)) {
-      getState().SHOW_ROOT_NAMES = (Boolean)value;
+      getLogUiState().SHOW_ROOT_NAMES = (Boolean)value;
     }
     else if (SHOW_ONLY_AFFECTED_CHANGES.equals(property)) {
-      getState().SHOW_ONLY_AFFECTED_CHANGES = (Boolean)value;
+      getLogUiState().SHOW_ONLY_AFFECTED_CHANGES = (Boolean)value;
     }
     else if (BEK_SORT_TYPE.equals(property)) {
-      getState().BEK_SORT_TYPE = ((PermanentGraph.SortType)value).ordinal();
+      getLogUiState().BEK_SORT_TYPE = ((PermanentGraph.SortType)value).ordinal();
     }
     else if (TEXT_FILTER_REGEX.equals(property)) {
       getTextFilterSettings().REGEX = (boolean)(Boolean)value;
@@ -94,10 +91,10 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
       getTextFilterSettings().MATCH_CASE = (boolean)(Boolean)value;
     }
     else if (property instanceof VcsLogHighlighterProperty) {
-      getState().HIGHLIGHTERS.put(((VcsLogHighlighterProperty)property).getId(), (Boolean)value);
+      getLogUiState().HIGHLIGHTERS.put(((VcsLogHighlighterProperty)property).getId(), (Boolean)value);
     }
     else if (property instanceof TableColumnWidthProperty) {
-      getState().COLUMN_ID_WIDTH.put(property.getName(), (Integer)value);
+      getLogUiState().COLUMN_ID_WIDTH.put(property.getName(), (Integer)value);
     }
     else {
       throw new UnsupportedOperationException("Property " + property + " does not exist");
@@ -121,10 +118,10 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
   }
 
   private @NotNull TextFilterSettings getTextFilterSettings() {
-    TextFilterSettings settings = getState().TEXT_FILTER_SETTINGS;
+    TextFilterSettings settings = getLogUiState().TEXT_FILTER_SETTINGS;
     if (settings == null) {
       settings = new TextFilterSettings();
-      getState().TEXT_FILTER_SETTINGS = settings;
+      getLogUiState().TEXT_FILTER_SETTINGS = settings;
     }
     return settings;
   }
@@ -132,16 +129,16 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
   @Override
   public void saveFilterValues(@NotNull String filterName, @Nullable List<String> values) {
     if (values != null) {
-      getState().FILTERS.put(filterName, values);
+      getLogUiState().FILTERS.put(filterName, values);
     }
     else {
-      getState().FILTERS.remove(filterName);
+      getLogUiState().FILTERS.remove(filterName);
     }
   }
 
   @Override
   public @Nullable List<String> getFilterValues(@NotNull String filterName) {
-    return getState().FILTERS.get(filterName);
+    return getLogUiState().FILTERS.get(filterName);
   }
 
   @Override

@@ -160,7 +160,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
   }
 
   private static CompareInfo fromTernary(PsiConditionalExpression ternary) {
-    if (!PsiType.INT.equals(ternary.getType())) return null;
+    if (!PsiTypes.intType().equals(ternary.getType())) return null;
     Map<Integer, PsiExpression> map = extractConditions(ternary);
     return fromMap(map, ternary, ternary);
   }
@@ -296,8 +296,8 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
   @Contract("null, _ -> false")
   private static boolean isTypeConvertible(PsiType type, PsiElement context) {
     type = PsiPrimitiveType.getOptionallyUnboxedType(type);
-    return type != null && (PsiType.DOUBLE.equals(type) ||
-                            PsiType.FLOAT.equals(type) ||
+    return type != null && (PsiTypes.doubleType().equals(type) ||
+                            PsiTypes.floatType().equals(type) ||
                             PsiUtil.isLanguageLevel7OrHigher(context));
   }
 

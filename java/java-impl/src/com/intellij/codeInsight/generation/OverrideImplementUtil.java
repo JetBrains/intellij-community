@@ -322,7 +322,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
   @NotNull
   private static String callSuper(@NotNull PsiMethod superMethod, @NotNull PsiMethod overriding, PsiClass targetClass, boolean prependReturn) {
     @NonNls StringBuilder buffer = new StringBuilder();
-    if (prependReturn && !superMethod.isConstructor() && !PsiType.VOID.equals(superMethod.getReturnType())) {
+    if (prependReturn && !superMethod.isConstructor() && !PsiTypes.voidType().equals(superMethod.getReturnType())) {
       buffer.append("return ");
     }
     PsiClass aClass = superMethod.getContainingClass();
@@ -387,7 +387,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(template.getExtension());
     PsiType returnType = result.getReturnType();
     if (returnType == null) {
-      returnType = PsiType.VOID;
+      returnType = PsiTypes.voidType();
     }
     Properties properties = FileTemplateManager.getInstance(targetClass.getProject()).getDefaultProperties();
     properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnType.getPresentableText());

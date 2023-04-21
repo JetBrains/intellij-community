@@ -146,7 +146,7 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
     if (anchor instanceof PsiExpression) {
       PsiExpression divisor = (PsiExpression)anchor;
       PsiType type = divisor.getType();
-      if (PsiType.LONG.equals(type)) {
+      if (PsiTypes.longType().equals(type)) {
         return AnalysisStartingPoint.create(DfTypes.longValue(0), divisor);
       }
       else if (TypeConversionUtil.isIntegralNumberType(type)) {

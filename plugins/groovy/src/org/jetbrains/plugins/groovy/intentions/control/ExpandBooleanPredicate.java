@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.intentions.control;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -39,7 +40,7 @@ class ExpandBooleanPredicate implements PsiElementPredicate {
     if (returnType == null) {
       return false;
     }
-    return returnType.equals(PsiType.BOOLEAN) || returnType.equalsToText("java.lang.Boolean");
+    return returnType.equals(PsiTypes.booleanType()) || returnType.equalsToText("java.lang.Boolean");
   }
 
   public static boolean isBooleanAssignment(GrStatement expression) {
@@ -60,6 +61,6 @@ class ExpandBooleanPredicate implements PsiElementPredicate {
     if (assignmentType == null) {
       return false;
     }
-    return assignmentType.equals(PsiType.BOOLEAN) || assignmentType.equalsToText("java.lang.Boolean");
+    return assignmentType.equals(PsiTypes.booleanType()) || assignmentType.equalsToText("java.lang.Boolean");
   }
 }

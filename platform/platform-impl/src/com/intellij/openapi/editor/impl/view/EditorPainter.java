@@ -56,7 +56,7 @@ public final class EditorPainter implements TextDrawingCallback {
   private static final Stroke IME_COMPOSED_TEXT_UNDERLINE_STROKE = new BasicStroke(1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0,
                                                                                    new float[]{0, 2, 0, 2}, 0);
   private static final int CARET_DIRECTION_MARK_SIZE = 3;
-  private static final char IDEOGRAPHIC_SPACE = '\u3000'; // http://www.marathon-studios.com/unicode/U3000/Ideographic_Space
+  private static final char IDEOGRAPHIC_SPACE = '\u3000';
   private static final String WHITESPACE_CHARS = " \t" + IDEOGRAPHIC_SPACE;
   private static final Object ourCachedDot = ObjectUtils.sentinel("space symbol");
   public static final String EDITOR_TAB_PAINTING = "editor.tab.painting";
@@ -756,7 +756,7 @@ public final class EditorPainter implements TextDrawingCallback {
       Stroke defaultStroke = myGraphics.getStroke();
       Color whitespacesColor = myEditor.getColorsScheme().getColor(EditorColors.WHITESPACES_COLOR);
       Color tabsColor = myEditor.getColorsScheme().getColor(EditorColors.TABS_COLOR);
-      
+
       boolean isRtl = fragment.isRtl();
       int baseStartOffset = fragment.getStartOffset();
       int startOffset = isRtl ? baseStartOffset - start : baseStartOffset + start;

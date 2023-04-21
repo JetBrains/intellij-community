@@ -89,11 +89,11 @@ class CodeConverter(
             convertedExpression = BangBangExpression.surroundIfNullable(convertedExpression)
         }
 
-        if (expectedType == null || expectedType == PsiType.VOID) return convertedExpression
+        if (expectedType == null || expectedType == PsiTypes.voidType()) return convertedExpression
 
         val actualType = expression.type ?: return convertedExpression
 
-        if ((actualType is PsiPrimitiveType && actualType != PsiType.NULL) || actualType is PsiClassType && expectedType is PsiPrimitiveType) {
+        if ((actualType is PsiPrimitiveType && actualType != PsiTypes.nullType()) || actualType is PsiClassType && expectedType is PsiPrimitiveType) {
             convertedExpression = BangBangExpression.surroundIfNullable(convertedExpression)
         }
 

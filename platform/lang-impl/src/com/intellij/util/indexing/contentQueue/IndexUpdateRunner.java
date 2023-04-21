@@ -30,6 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl;
+import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
 import com.intellij.util.progress.SubTaskProgressIndicator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -529,7 +530,7 @@ public final class IndexUpdateRunner {
   private static class IndexingJob {
     final Project myProject;
     final CachedFileContentLoader myContentLoader;
-    final ConcurrentLinkedQueue<FileIndexingJob> myQueueOfFiles;
+    final ArrayBlockingQueue<FileIndexingJob> myQueueOfFiles; // for Community sources the size is about 615K entries
     final ProgressIndicator myIndicator;
     final int myTotalFiles;
     final AtomicBoolean myNoMoreFilesInQueue = new AtomicBoolean();
@@ -546,12 +547,21 @@ public final class IndexUpdateRunner {
                 @Nullable ProgressSuspender originalProgressSuspender) {
       myProject = project;
       myIndicator = indicator;
-      myQueueOfFiles = new ConcurrentLinkedQueue<>();
+      int maxFilesCount = fileSets.stream().mapToInt(fileSet -> fileSet.files.size()).sum();
+      myQueueOfFiles = new ArrayBlockingQueue<>(maxFilesCount);
+      // UnindexedFilesIndexer may produce duplicates during merging.
+      // E.g. Indexer([origin:someFiles]) + Indexer[anotherOrigin:someFiles] => Indexer([origin:someFiles, anotherOrigin:someFiles])
+      // Don't touch UnindexedFilesIndexer.tryMergeWith now, because eventually we want UnindexedFilesIndexer to process the queue itself
+      // instead of processing and merging queue snapshots
+      IndexableFilesDeduplicateFilter deduplicateFilter = IndexableFilesDeduplicateFilter.create();
       for (FileSet fileSet : fileSets) {
         for (VirtualFile file : fileSet.files) {
-          myQueueOfFiles.add(new FileIndexingJob(file, fileSet));
+          if (deduplicateFilter.accept(file)) {
+            myQueueOfFiles.add(new FileIndexingJob(file, fileSet));
+          }
         }
       }
+      // todo: maybe we want to do something with statistics: deduplicateFilter.getNumberOfSkippedFiles();
       myTotalFiles = myQueueOfFiles.size();
       myContentLoader = contentLoader;
       myAllFilesAreProcessedLatch = new CountDownLatch(myTotalFiles);

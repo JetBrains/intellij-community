@@ -369,6 +369,72 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
   }
 
   @Test
+  public void testResourceFolderPointsToProjectRootParent() {
+    createStdProjectFolders();
+
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <resources>
+                        <resource><directory>${basedir}/..</directory></resource>
+                      </resources>
+                    </build>
+                    """);
+
+    assertModules("project");
+    assertContentRoots("project", getProjectPath());
+
+    assertSources("project", "src/main/java");
+    assertTestSources("project", "src/test/java");
+    assertResources("project");
+    assertTestResources("project", "src/test/resources");
+  }
+
+  @Test
+  public void testSourceFolderPointsToProjectRootParent() {
+    createStdProjectFolders();
+
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>org.codehaus.mojo</groupId>
+                          <artifactId>build-helper-maven-plugin</artifactId>
+                          <version>1.3</version>
+                          <executions>
+                            <execution>
+                              <id>someId</id>
+                              <phase>generate-sources</phase>
+                              <goals>
+                                <goal>add-source</goal>
+                              </goals>
+                              <configuration>
+                                <sources>
+                                  <source>${basedir}/..</source>
+                                </sources>
+                              </configuration>
+                            </execution>
+                          </executions>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """);
+
+    assertModules("project");
+    assertContentRoots("project", getProjectPath());
+
+    assertSources("project", "src/main/java");
+    assertTestSources("project", "src/test/java");
+    assertResources("project", "src/main/resources");
+    assertTestResources("project", "src/test/resources");
+  }
+
+  @Test
   public void testPluginSources() {
     createStdProjectFolders();
     createProjectSubDirs("src1", "src2");

@@ -4,6 +4,7 @@
 package com.intellij.util.ui
 
 import com.intellij.openapi.diagnostic.thisLogger
+import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
 import java.awt.GraphicsEnvironment
 import java.io.IOException
@@ -38,7 +39,7 @@ object StyleSheetUtil {
   }
 
   @JvmStatic
-  fun loadStyleSheet(input: String): StyleSheet {
+  fun loadStyleSheet(@Language("CSS") input: String): StyleSheet {
     val styleSheet = StyleSheet()
     try {
       styleSheet.loadRules(StringReader(input), null)

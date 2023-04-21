@@ -2,72 +2,54 @@
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.jetbrains.kotlin.gradle.idea.proto.tcs.IdeaKotlinDependency
-import org.jetbrains.kotlin.gradle.idea.serialize.IdeaKotlinSerializationContext
+import org.jetbrains.kotlin.gradle.idea.proto.tcs.toByteArray
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinDependency
+import org.jetbrains.kotlin.idea.gradleTooling.serialization.ideaKotlinSerializationContext
 import java.io.Serializable
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
-import kotlin.concurrent.write
 
 
-sealed interface IdeaKotlinDependenciesContainer : Serializable {
+sealed interface IdeaKotlinDependenciesContainer {
     operator fun get(sourceSetName: String): Set<IdeaKotlinDependency>
 }
 
 private data class IdeaKotlinDeserializedDependenciesContainer(
     private val dependencies: Map<String, Set<IdeaKotlinDependency>>
-) : IdeaKotlinDependenciesContainer {
+) : IdeaKotlinDependenciesContainer, Serializable {
     override fun get(sourceSetName: String): Set<IdeaKotlinDependency> {
         return dependencies[sourceSetName].orEmpty()
+    }
+
+    private fun writeReplace(): Any {
+        return IdeaKotlinDependenciesContainerSurrogate(dependencies.mapValues { (_, dependencies) ->
+            dependencies.map { dependency ->
+                dependency.toByteArray(ideaKotlinSerializationContext)
+            }
+        })
     }
 }
 
 class IdeaKotlinSerializedDependenciesContainer(
-    dependencies: Map<String, List<ByteArray>>
-) : IdeaKotlinDependenciesContainer {
+    private val dependencies: Map<String, List<ByteArray>>
+) : IdeaKotlinDependenciesContainer, Serializable {
 
-    private val readWriteLock = ReentrantReadWriteLock()
-
-    private var serializedDependencies: Map<String, List<ByteArray>>? = dependencies
-
-    private var deserializedDependencies: IdeaKotlinDependenciesContainer? = null
-
-    private val isDeserialized: Boolean get() = readWriteLock.read { deserializedDependencies != null }
-
-    override fun get(sourceSetName: String): Set<IdeaKotlinDependency> = readWriteLock.read {
-        val deserializedDependencies = this.deserializedDependencies
-        if (deserializedDependencies == null) {
-            throw NotDeserializedException("${IdeaKotlinDependenciesContainer::class.simpleName} not deserialized yet")
-        }
-
-        deserializedDependencies[sourceSetName]
+    override fun get(sourceSetName: String): Set<IdeaKotlinDependency> {
+        /* This container is only used to be transported into the IDE */
+        throw UnsupportedOperationException("${IdeaKotlinSerializedDependenciesContainer::class.java} can't provide dependencies")
     }
 
-    fun deserialize(context: IdeaKotlinSerializationContext): Unit = readWriteLock.write {
-        val serializedDependencies = this.serializedDependencies
-        if (serializedDependencies == null) {
-            context.logger.warn("${IdeaKotlinDependenciesContainer::class.java.name} already serialized")
-            return@write
+    private fun writeReplace(): Any {
+        return IdeaKotlinDependenciesContainerSurrogate(dependencies)
+    }
+}
+
+private class IdeaKotlinDependenciesContainerSurrogate(private val dependencies: Map<String, List<ByteArray>>) : Serializable {
+    private fun readResolve(): Any {
+        val deserializedDependencies = dependencies.mapValues { (_, dependencies) ->
+            dependencies.mapNotNull { dependency ->
+                ideaKotlinSerializationContext.IdeaKotlinDependency(dependency)
+            }.toSet()
         }
 
-        val deserialized = serializedDependencies.mapNotNull { (sourceSetName, dependencies) ->
-            val deserializedDependencies = dependencies.mapNotNull { dependency ->
-                context.IdeaKotlinDependency(dependency)
-            }
-            sourceSetName to deserializedDependencies.toSet()
-        }.toMap()
-
-        this.serializedDependencies = null
-        this.deserializedDependencies = IdeaKotlinDeserializedDependenciesContainer(deserialized)
+        return IdeaKotlinDeserializedDependenciesContainer(deserializedDependencies)
     }
-
-    fun deserializeIfNecessary(context: IdeaKotlinSerializationContext) {
-        if (isDeserialized) return
-        readWriteLock.write {
-            if (isDeserialized) return
-            deserialize(context)
-        }
-    }
-
-    class NotDeserializedException(message: String) : IllegalStateException(message)
 }

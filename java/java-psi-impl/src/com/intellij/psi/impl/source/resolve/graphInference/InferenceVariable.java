@@ -35,7 +35,7 @@ public class InferenceVariable extends LightTypeParameter {
   private final Map<InferenceBound, List<PsiType>> myBounds = new EnumMap<>(InferenceBound.class);
   private final String myName;
 
-  private PsiType myInstantiation = PsiType.NULL;
+  private PsiType myInstantiation = PsiTypes.nullType();
 
   InferenceVariable(PsiElement context, PsiTypeParameter parameter, String name) {
     super(parameter);
@@ -77,7 +77,7 @@ public class InferenceVariable extends LightTypeParameter {
     List<PsiType> bounds = myBounds.computeIfAbsent(inferenceBound, __ -> new ArrayList<>());
 
     if (classType == null) {
-      classType = PsiType.NULL;
+      classType = PsiTypes.nullType();
     }
 
     if (incorporationPhase == null || !bounds.contains(classType)) {

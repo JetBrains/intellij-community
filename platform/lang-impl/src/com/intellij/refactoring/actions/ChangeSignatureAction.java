@@ -57,7 +57,7 @@ public class ChangeSignatureAction extends BasePlatformRefactoringAction {
   protected boolean isAvailableOnElementInEditorAndFile(@NotNull final PsiElement element, @NotNull final Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
     PsiElement targetMember = findTargetMember(element);
     if (targetMember == null) {
-      final ChangeSignatureHandler targetHandler = getChangeSignatureHandler(file);
+      final ChangeSignatureHandler targetHandler = getChangeSignatureHandler(element);
       if (targetHandler != null) {
         return true;
       }

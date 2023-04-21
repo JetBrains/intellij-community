@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.ContextAwareActionHandler;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
@@ -35,6 +20,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import org.jetbrains.annotations.NotNull;
@@ -45,8 +31,9 @@ import java.util.List;
 public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHandler, ContextAwareActionHandler {
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
-    final List<PsiElement> elements = getElements(editor, file, Ref.create(), true);
-    if (elements.isEmpty()) return false;
+    Ref<@NlsContexts.DialogMessage String> message = Ref.create();
+    final List<PsiElement> elements = getElements(editor, file, message, true);
+    if (elements.isEmpty() || !message.isNull()) return false;
     PsiClass psiClass = PsiTreeUtil.getParentOfType(elements.get(0), PsiClass.class, false);
     if (psiClass == null) return false;
     return ClassInheritorsSearch.search(psiClass).iterator().hasNext();
@@ -58,7 +45,7 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
 
     Ref<@NlsContexts.DialogMessage String> errorMessage = Ref.create();
     List<PsiElement> elements = getElements(editor, file, errorMessage, false);
-    if (elements.isEmpty()) {
+    if (elements.isEmpty() || !errorMessage.isNull()) {
       String message =
         !errorMessage.isNull() ? errorMessage.get() : RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.push.members.from"));
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.MEMBERS_PUSH_DOWN);
@@ -91,9 +78,21 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
         return null;
       }
 
-      if (element instanceof PsiClass && ((PsiClass)element).getQualifiedName() != null || element instanceof PsiField || element instanceof PsiMethod) {
-        if (element instanceof JspClass) {
+      if (element instanceof PsiClass || element instanceof PsiField || element instanceof PsiMethod) {
+        PsiClass aClass = element instanceof PsiClass ? (PsiClass)element : ((PsiMember)element).getContainingClass();
+        if (aClass == null || aClass.getQualifiedName() == null) {
+          return null;
+        }
+        if (aClass instanceof JspClass) {
           return RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("refactoring.is.not.supported.for.jsp.classes"));
+        }
+        if (aClass instanceof PsiAnonymousClass) {
+          return JavaRefactoringBundle.message("class.is.anonymous.warning.message",
+                                               RefactoringUIUtil.getDescription(aClass, false));
+        }
+        if (aClass.hasModifierProperty(PsiModifier.FINAL)) {
+          return JavaRefactoringBundle.message("class.is.final.warning.message",
+                                               RefactoringUIUtil.getDescription(aClass, false));
         }
         elements.add(element);
         return null;
@@ -105,25 +104,11 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
   @Override
   public void invoke(@NotNull final Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     PsiClass aClass = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(elements), PsiClass.class, false);
-    if (aClass == null) return;
+    if (aClass == null || !CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;
 
-    String qualifiedName = aClass.getQualifiedName();
-    if (qualifiedName == null) return;
-
-    final Editor editor = dataContext != null ? CommonDataKeys.EDITOR.getData(dataContext) : null;
-    if (aClass.hasModifierProperty(PsiModifier.FINAL)) {
-      CommonRefactoringUtil.showErrorHint(project, editor,
-                                          RefactoringBundle.message("refactoring.cannot.be.performed") +
-                                          JavaRefactoringBundle.message("class.is.final.warning.message", aClass.getName()),
-                                          getRefactoringName(), HelpID.MEMBERS_PUSH_DOWN);
-      return;
-    }
-
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;
     MemberInfoStorage memberInfoStorage = new MemberInfoStorage(aClass, element -> !(element instanceof PsiEnumConstant));
 
     List<MemberInfo> members = memberInfoStorage.getClassMemberInfos(aClass);
-
     for (MemberInfoBase<PsiMember> member : members) {
       for (PsiElement element : elements) {
         if (PsiTreeUtil.isAncestor(member.getMember(), element, false)) {

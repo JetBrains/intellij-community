@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.actions
 
+import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
@@ -21,6 +22,10 @@ abstract class AbstractKotlinAddImportActionTest : KotlinLightCodeInsightFixture
                 fixture.configureByFile(depFilePath)
             }
         }
+
+        val mainFile = dataFile()
+        val fileText = FileUtil.loadFile(mainFile, true)
+        assertTrue("\"<caret>\" is missing in file \"$mainFile\"", fileText.contains("<caret>"))
 
         fixture.configureByFile(fileName())
 

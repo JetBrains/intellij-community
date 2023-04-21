@@ -9,7 +9,8 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface JpsGlobalModelSynchronizer {
-  fun loadInitialState(mutableStorage: MutableEntityStorage, initialEntityStorage: VersionedEntityStorage, loadedFromCache: Boolean): () -> Unit
+  fun loadInitialState(mutableStorage: MutableEntityStorage, initialEntityStorage: VersionedEntityStorage,
+                       loadedFromCache: Boolean): () -> Unit
   fun delayLoadGlobalWorkspaceModel()
 
   companion object {

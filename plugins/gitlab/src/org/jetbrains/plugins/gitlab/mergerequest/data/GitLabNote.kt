@@ -9,7 +9,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
+import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.api.getResultOrThrow
@@ -35,7 +37,8 @@ private val LOG = logger<GitLabDiscussion>()
 
 class LoadedGitLabNote(
   parentCs: CoroutineScope,
-  private val connection: GitLabProjectConnection,
+  private val api: GitLabApi,
+  private val project: GitLabProjectCoordinates,
   private val eventSink: suspend (GitLabNoteEvent) -> Unit,
   private val noteData: GitLabNoteDTO
 ) : GitLabNote {
@@ -56,7 +59,7 @@ class LoadedGitLabNote(
     withContext(cs.coroutineContext) {
       operationsGuard.withLock {
         withContext(Dispatchers.IO) {
-          connection.apiClient.updateNote(connection.repo.repository, noteData.id, newText).getResultOrThrow()
+          api.updateNote(project, noteData.id, newText).getResultOrThrow()
         }
       }
       _body.value = newText
@@ -67,7 +70,7 @@ class LoadedGitLabNote(
     withContext(cs.coroutineContext) {
       operationsGuard.withLock {
         withContext(Dispatchers.IO) {
-          connection.apiClient.deleteNote(connection.repo.repository, noteData.id).getResultOrThrow()
+          api.deleteNote(project, noteData.id).getResultOrThrow()
         }
       }
       eventSink(GitLabNoteEvent.Deleted(noteData.id))

@@ -37,7 +37,7 @@ class MoveDeclarationsProcessor(
     companion object {
         fun build(file: PsiFile, cookie: MoveDeclarationsEditorCookie): MoveDeclarationsProcessor? {
             val data = cookie.data
-            val project = file.project ?: return null
+            val project = file.project
             val range = cookie.bounds.range ?: return null
 
             val sourceFileUrl = data.sourceFileUrl

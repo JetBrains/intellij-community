@@ -6,19 +6,17 @@ import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 final class DumbServiceGuiExecutor extends MergingQueueGuiExecutor<DumbModeTask> {
-  private final DumbServiceHeavyActivities myHeavyActivities;
 
   DumbServiceGuiExecutor(@NotNull Project project,
                          @NotNull DumbServiceMergingTaskQueue queue,
-                         @NotNull DumbServiceHeavyActivities heavyActivities,
                          @NotNull MergingQueueGuiExecutor.ExecutorStateListener listener) {
-    super(project, queue, listener);
-    myHeavyActivities = heavyActivities;
+    super(project, queue, listener, IndexingBundle.message("progress.indexing"), IndexingBundle.message("progress.indexing.paused"));
   }
 
   @Override
@@ -31,16 +29,10 @@ final class DumbServiceGuiExecutor extends MergingQueueGuiExecutor<DumbModeTask>
     try {
       DumbServiceAppIconProgress.registerForProgress(project, (ProgressIndicatorEx)visibleIndicator);
       DumbModeProgressTitle.getInstance(project).attachDumbModeProgress(visibleIndicator);
-      myHeavyActivities.setCurrentSuspenderAndSuspendIfRequested(suspender);
 
       super.processTasksWithProgress(suspender, visibleIndicator, childActivity);
     }
     finally {
-      // myCurrentSuspender should already be null at this point unless we got here by exception. In any case, the suspender might have
-      // got suspended after the last dumb task finished (or even after the last check cancelled call). This case is handled by
-      // the ProgressSuspender close() method called at the exit of this try-with-resources block which removes the hook if it has been
-      // previously installed.
-      myHeavyActivities.resetCurrentSuspender();
       DumbModeStatisticsCollector.logProcessFinished(childActivity, suspender.isClosed()
                                                                     ? DumbModeStatisticsCollector.IndexingFinishType.TERMINATED
                                                                     : DumbModeStatisticsCollector.IndexingFinishType.FINISHED);

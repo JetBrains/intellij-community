@@ -112,18 +112,16 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
       return state.copy(userEnabledRules = convert(state.userEnabledRules), userDisabledRules = convert(state.userDisabledRules))
     }
 
-    private val instance by lazy { service<GrazieConfig>() }
-
     /**
      * Get copy of Grazie config state
      *
      * Should never be called in GrazieStateLifecycle actions
      */
-    fun get() = instance.state
+    fun get() = service<GrazieConfig>().state
 
     /** Update Grazie config state */
     @Synchronized
-    fun update(change: (State) -> State) = instance.loadState(change(get()))
+    fun update(change: (State) -> State) = service<GrazieConfig>().loadState(change(get()))
 
     fun stateChanged(prevState: State, newState: State) {
       service<GrazieInitializerManager>().publisher.update(prevState, newState)

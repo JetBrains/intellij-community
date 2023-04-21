@@ -17,6 +17,7 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiArrayAccessExpression
 import com.intellij.psi.PsiElement
+import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UArrayAccessExpression
 import org.jetbrains.uast.UElement
@@ -27,8 +28,8 @@ class JavaUArrayAccessExpression(
   override val sourcePsi: PsiArrayAccessExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UArrayAccessExpression {
-  override val receiver: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.arrayExpression, this) }
-  override val indices: List<UExpression> by lz { singletonListOrEmpty(JavaConverter.convertOrNull(sourcePsi.indexExpression, this)) }
+  override val receiver: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.arrayExpression, this) }
+  override val indices: List<UExpression> by lazyPub { singletonListOrEmpty(JavaConverter.convertOrNull(sourcePsi.indexExpression, this)) }
 
   // No operator overloading in Java (yet?)
   override fun resolve(): PsiElement? = null

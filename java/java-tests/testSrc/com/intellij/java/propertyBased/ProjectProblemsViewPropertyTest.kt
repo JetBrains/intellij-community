@@ -381,7 +381,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
     private class ChangeType(member: PsiMember, env: ImperativeCommand.Environment) : Modification(member, env) {
 
       private val typeElement = env.generateValue(Generator.sampledFrom(findTypeElements(member)), null)
-      private val newType = if (typeElement.type == PsiPrimitiveType.INT) TypeUtils.getStringType(typeElement) else PsiPrimitiveType.INT
+      private val newType = if (typeElement.type == PsiTypes.intType()) TypeUtils.getStringType(typeElement) else PsiTypes.intType()
 
       override fun apply(project: Project) {
         val factory = JavaPsiFacade.getElementFactory(project)
@@ -408,7 +408,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
 
       override fun apply(project: Project) {
         val factory = JavaPsiFacade.getElementFactory(project)
-        val param = factory.createParameter(paramName, PsiType.INT)
+        val param = factory.createParameter(paramName, PsiTypes.intType())
         (member as PsiMethod).parameterList.add(param)
       }
 

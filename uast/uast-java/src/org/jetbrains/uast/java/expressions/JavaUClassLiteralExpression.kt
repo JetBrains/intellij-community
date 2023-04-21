@@ -17,6 +17,7 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiClassObjectAccessExpression
 import com.intellij.psi.PsiType
+import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UClassLiteralExpression
 import org.jetbrains.uast.UElement
@@ -31,7 +32,7 @@ class JavaUClassLiteralExpression(
 
   // TODO: return type JavaUTypeReferenceExpression doesn't have anything special,
   //  so UTypeReferenceExpression should be good enough (or checking if the underlying sourcePsi is from Java).
-  override val expression: JavaUTypeReferenceExpression by lz {
+  override val expression: JavaUTypeReferenceExpression by lazyPub {
     JavaUTypeReferenceExpression(sourcePsi.operand, this)
   }
 }

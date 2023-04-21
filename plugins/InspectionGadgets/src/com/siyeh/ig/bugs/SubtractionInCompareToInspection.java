@@ -122,13 +122,13 @@ public class SubtractionInCompareToInspection extends BaseInspection {
     private boolean isSafeSubtraction(PsiBinaryExpression binaryExpression) {
       final PsiType type = binaryExpression.getType();
       if (type == null) return true;
-      if (PsiType.FLOAT.equals(type) || PsiType.DOUBLE.equals(type)) {
+      if (PsiTypes.floatType().equals(type) || PsiTypes.doubleType().equals(type)) {
         // Difference of floats and doubles never overflows.
         // It may lose a precision, but it's not the case when we compare the result with zero
         PsiElement parent = PsiUtil.skipParenthesizedExprUp(binaryExpression.getParent());
         if(parent instanceof PsiTypeCastExpression) {
           PsiType castType = ((PsiTypeCastExpression)parent).getType();
-          if(PsiType.INT.equals(castType) || PsiType.LONG.equals(castType)) {
+          if(PsiTypes.intType().equals(castType) || PsiTypes.longType().equals(castType)) {
             // Precision is lost if result is cast to int/long (e.g. (int)(1.0 - 0.5) == 0)
             return false;
           }
@@ -147,8 +147,8 @@ public class SubtractionInCompareToInspection extends BaseInspection {
       if (lhsType == null || rhsType == null) {
         return false;
       }
-      if ((PsiType.BYTE.equals(lhsType) || PsiType.SHORT.equals(lhsType) || PsiType.CHAR.equals(lhsType)) &&
-          (PsiType.BYTE.equals(rhsType) || PsiType.SHORT.equals(rhsType) || PsiType.CHAR.equals(rhsType))) {
+      if ((PsiTypes.byteType().equals(lhsType) || PsiTypes.shortType().equals(lhsType) || PsiTypes.charType().equals(lhsType)) &&
+          (PsiTypes.byteType().equals(rhsType) || PsiTypes.shortType().equals(rhsType) || PsiTypes.charType().equals(rhsType))) {
         return true;
       }
       if (isSafeOperand(lhs) && isSafeOperand(rhs)) return true;

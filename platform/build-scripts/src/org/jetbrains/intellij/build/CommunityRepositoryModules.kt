@@ -193,6 +193,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.platform.workspaceModel.codegen")
       spec.withModule("intellij.java.devkit")
       spec.withModule("intellij.groovy.devkit")
+      spec.withModule("intellij.kotlin.devkit")
       spec.withModule("intellij.devkit.jps")
     },
     plugin("intellij.eclipse") { spec ->
@@ -270,6 +271,7 @@ object CommunityRepositoryModules {
       "intellij.searchEverywhereMl.yaml",
       "intellij.searchEverywhereMl.vcs",
       "intellij.searchEverywhereMl.java",
+      "intellij.searchEverywhereMl.kotlin",
     )),
     plugin("intellij.platform.testFramework.ui") { spec ->
       spec.withModuleLibrary("intellij.remoterobot.remote.fixtures", spec.mainModule, "")

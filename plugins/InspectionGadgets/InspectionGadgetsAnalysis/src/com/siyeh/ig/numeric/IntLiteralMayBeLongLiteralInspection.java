@@ -4,6 +4,7 @@ package com.siyeh.ig.numeric;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,12 +23,12 @@ public class IntLiteralMayBeLongLiteralInspection extends CastedLiteralMaybeJust
   @NotNull
   @Override
   PsiType getTypeBeforeCast() {
-    return PsiType.INT;
+    return PsiTypes.intType();
   }
 
   @NotNull
   @Override
   PsiPrimitiveType getCastType() {
-    return PsiType.LONG;
+    return PsiTypes.longType();
   }
 }

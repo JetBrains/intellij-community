@@ -208,7 +208,10 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
     }
 
     public boolean isEmpty() {
-      return intentionsToShow.isEmpty() && errorFixesToShow.isEmpty() && inspectionFixesToShow.isEmpty() && guttersToShow.isEmpty() &&
+      return intentionsToShow.isEmpty() &&
+             errorFixesToShow.isEmpty() &&
+             inspectionFixesToShow.isEmpty() &&
+             guttersToShow.isEmpty() &&
              notificationActionsToShow.isEmpty();
     }
 
@@ -271,9 +274,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
    * Collects intention actions from providers intended to be invoked in EDT.
    */
   @ApiStatus.Internal
-  public static void getActionsToShowSync(@NotNull Editor hostEditor,
-                                          @NotNull PsiFile hostFile,
-                                          @NotNull IntentionsInfo intentions) {
+  public static void getActionsToShowSync(@NotNull Editor hostEditor, @NotNull PsiFile hostFile, @NotNull IntentionsInfo intentions) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     EditorNotificationActions.collectActions(hostEditor, intentions);
     intentions.filterActions(hostFile);
@@ -282,10 +283,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
   /**
    * Collects intention actions from providers intended to be invoked in a background thread.
    */
-  public static void getActionsToShow(@NotNull Editor hostEditor,
-                                      @NotNull PsiFile hostFile,
-                                      @NotNull IntentionsInfo intentions,
-                                      int passIdToShowIntentionsFor) {
+  public static void getActionsToShow(@NotNull Editor hostEditor, @NotNull PsiFile hostFile, @NotNull IntentionsInfo intentions, int passIdToShowIntentionsFor) {
     getActionsToShow(hostEditor, hostFile, intentions, passIdToShowIntentionsFor, true);
   }
   private static void getActionsToShow(@NotNull Editor hostEditor,

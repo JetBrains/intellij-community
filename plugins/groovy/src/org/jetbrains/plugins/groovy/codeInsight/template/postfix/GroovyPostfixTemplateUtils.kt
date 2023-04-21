@@ -41,7 +41,7 @@ object GroovyPostfixTemplateUtils {
 
   private fun booleanTypeCondition(expr: GrExpression): Boolean {
     val type = expr.type
-    return type == null || type == PsiType.BOOLEAN || type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)
+    return type == null || type == PsiTypes.booleanType() || type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)
   }
 
   private fun nullableTypeCondition(expr: GrExpression): Boolean = expr.type !is PsiPrimitiveType

@@ -10,6 +10,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -366,6 +367,7 @@ public class CompletionStyleTest extends LightJavaCodeInsightTestCase {
       configureByFile(path + "/AfterNew15.java");
       performSmartCompletion();
       select('\n', getSelected());
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
       checkResultByFile(path + "/AfterNew15-out.java");
     }
     finally {

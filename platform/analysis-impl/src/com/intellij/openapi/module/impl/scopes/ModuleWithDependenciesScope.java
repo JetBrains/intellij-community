@@ -4,7 +4,6 @@ package com.intellij.openapi.module.impl.scopes;
 import com.intellij.model.ModelBranch;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.roots.impl.ProjectFileIndexImpl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -163,15 +162,12 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
-    DirectoryInfo info = myProjectFileIndex.getInfoForFileOrDirectory(file);
     Object2IntMap<VirtualFile> roots = getRoots(file);
     if (hasOption(CONTENT)) {
-      return roots.containsKey(ProjectFileIndexImpl.getContentRootForFile(info, file, true));
+      return roots.containsKey(myProjectFileIndex.getContentRootForFile(file));
     }
-    if (ProjectFileIndexImpl.isFileInContent(file, info) && roots.containsKey(ProjectFileIndexImpl.getSourceRootForFile(file, info))) {
-      return true;
-    }
-    return roots.containsKey(ProjectFileIndexImpl.getClassRootForFile(file, info));
+    VirtualFile root = myProjectFileIndex.getModuleSourceOrLibraryClassesRoot(file);
+    return root != null && roots.containsKey(root);
   }
 
   private Object2IntMap<VirtualFile> getRoots(@NotNull VirtualFile file) {
@@ -209,9 +205,10 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
 
   @Nullable
   private VirtualFile getFileRoot(@NotNull VirtualFile file) {
-    DirectoryInfo info = myProjectFileIndex.getInfoForFileOrDirectory(file);
-    VirtualFile root = ProjectFileIndexImpl.getClassRootForFile(file, info);
-    return root != null ? root : ProjectFileIndexImpl.getSourceRootForFile(file, info);
+    if (hasOption(CONTENT)) {
+      return myProjectFileIndex.getContentRootForFile(file);
+    }
+    return myProjectFileIndex.getModuleSourceOrLibraryClassesRoot(file);
   }
 
   @TestOnly

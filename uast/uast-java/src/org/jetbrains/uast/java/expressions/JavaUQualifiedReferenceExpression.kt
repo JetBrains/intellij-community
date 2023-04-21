@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.ResolveResult
+import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 
@@ -27,11 +28,11 @@ class JavaUQualifiedReferenceExpression(
   override val sourcePsi: PsiJavaCodeReferenceElement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UQualifiedReferenceExpression, UMultiResolvable {
-  override val receiver: UExpression by lz {
+  override val receiver: UExpression by lazyPub {
     sourcePsi.qualifier?.let { JavaConverter.convertPsiElement(it, this, UElement::class.java) as? UExpression } ?: UastEmptyExpression(this)
   }
 
-  override val selector: USimpleNameReferenceExpression by lz {
+  override val selector: USimpleNameReferenceExpression by lazyPub {
     JavaUSimpleNameReferenceExpression(sourcePsi.referenceNameElement, sourcePsi.referenceName ?: "<error>", this, sourcePsi)
   }
 

@@ -289,7 +289,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     }
 
     if (nominal == null) {
-      if (inferred.equals(PsiType.NULL) && CompileStaticUtil.isCompileStatic(refExpr)) {
+      if (inferred.equals(PsiTypes.nullType()) && CompileStaticUtil.isCompileStatic(refExpr)) {
         return TypesUtil.getJavaLangObject(refExpr);
       }
       else {

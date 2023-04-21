@@ -16,6 +16,7 @@ import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.IndexableFilesIterationMethods
 import com.intellij.util.indexing.roots.LibraryIndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
+import org.jetbrains.kotlin.idea.core.script.dependencies.indexSourceRootsEagerly
 
 class KotlinScriptLibraryIndexableFilesIteratorImpl
 private constructor(
@@ -98,7 +99,8 @@ private constructor(
                 KotlinScriptLibraryIndexableFilesIteratorImpl(
                     library.name, library.name,
                     collectFiles(library, OrderRootType.CLASSES, roots),
-                    collectFiles(library, OrderRootType.SOURCES, roots)
+                    if (indexSourceRootsEagerly() || library.indexSourceRoots) collectFiles(library, OrderRootType.SOURCES, roots)
+                    else emptyList()
                 )
     }
 

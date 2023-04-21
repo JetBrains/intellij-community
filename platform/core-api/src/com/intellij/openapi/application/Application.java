@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
@@ -159,6 +159,23 @@ public interface Application extends ComponentManager {
    * @return {@code true} if the action is running, or {@code false} if no action of the specified class is currently executing.
    */
   boolean hasWriteAction(@NotNull Class<?> actionClass);
+
+  /**
+   * Runs the specified computation in a write intent. Must be called from the Swing dispatch thread. The action is executed
+   * immediately if no write action is currently running, or blocked until the currently running write action
+   * completes.
+   * <p>
+   * See also {@link WriteIntentAction#compute} for a more lambda-friendly version.
+   *
+   * @param computation the computation to perform.
+   * @return the result returned by the computation.
+   * @throws E re-frown from ThrowableComputable
+   */
+  @ApiStatus.Experimental
+  default <T, E extends Throwable> T runWriteIntentAction(@NotNull ThrowableComputable<T, E> computation) throws E {
+    assertWriteIntentLockAcquired();
+    return computation.compute();
+  }
 
   /**
    * Asserts whether read access is allowed.
@@ -485,15 +502,17 @@ public interface Application extends ComponentManager {
     runnable.run();
   }
 
+  //<editor-fold desc="Deprecated stuff">
   /**
    * @deprecated this scope will die only with the application => plugin coroutines which use it will leak on unloading.
-   * Instead, use Disposable application service approach described here https://youtrack.jetbrains.com/articles/IDEA-A-237338670
+   * Instead, use <a href="https://youtrack.jetbrains.com/articles/IJPL-A-44/Coroutine-Scopes#service-scopes">service constructor injection</a>.
+   * <a href="https://youtrack.jetbrains.com/articles/IJPL-A-44/Coroutine-Scopes#why-application.getcoroutinescope-are-project.getcoroutinescope-are-bad">Why? See here.</a>
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @ApiStatus.Internal
   CoroutineScope getCoroutineScope();
 
-  //<editor-fold desc="Deprecated stuff">
   /** @deprecated Use {@link #addApplicationListener(ApplicationListener, Disposable)} instead */
   @Deprecated
   void addApplicationListener(@NotNull ApplicationListener listener);

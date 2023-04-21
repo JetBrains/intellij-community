@@ -3,48 +3,34 @@ package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class ThrowableSupplierOnlyThrowExceptionInspectionTest extends LightJavaInspectionTestCase {
-
-  public void testSimple() {
-    doTest("""
-                   import java.util.Optional;
-                   class Bar{
-                   void foo(Optional<String> optional) {
-                        optional.orElseThrow(() -> {
-                            /*Throwable supplier doesn't return any exception*/throw new RuntimeException();/**/
-                        });
-                   }}""");
-  }
-
-  public void testSeveralThrow() {
-    doTest("""
-                   import java.util.Optional;
-                   class Bar{
-                   void foo(Optional<String> optional, String[] args) {
-                      optional.orElseThrow(/*Throwable supplier doesn't return any exception*/() -> {
-                          if (args.length == 1) {
-                              throw  new RuntimeException("test");
-                          } else {
-                              throw new RuntimeException();
-                          }
-                      }/**/);
-                   }}""");
-  }
-
-  @Nullable
   @Override
-  protected InspectionProfileEntry getInspection() {
+  protected @Nullable InspectionProfileEntry getInspection() {
     return new ThrowableSupplierOnlyThrowExceptionInspection();
   }
 
-  @NotNull
   @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
     return JAVA_8;
+  }
+
+  @Override
+  protected String getBasePath() {
+    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/errorhandling/throwable_supplier_only_throw_exception";
+  }
+
+  public void testSimple() {
+    doTest();
+    checkQuickFix(InspectionGadgetsBundle.message("throwable.supplier.only.throw.exception.quickfix"));
+  }
+
+  public void testSeveral() {
+    doTest();
+    checkQuickFixAll();
   }
 }

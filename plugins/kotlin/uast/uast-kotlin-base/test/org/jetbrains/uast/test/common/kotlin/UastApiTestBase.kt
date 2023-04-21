@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.utils.addToStdlib.assertedCast
 import org.jetbrains.kotlin.utils.addToStdlib.cast
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
 import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
@@ -23,7 +22,6 @@ import org.jetbrains.uast.test.env.findElementByText
 import org.jetbrains.uast.test.env.findElementByTextFromPsi
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 import org.junit.Assert
-import java.lang.IllegalStateException
 import kotlin.test.fail as kfail
 
 interface UastApiTestBase : UastPluginSelection {
@@ -532,7 +530,7 @@ interface UastApiTestBase : UastPluginSelection {
                 append(m.name).append(" -> ")
                 fun PsiType.typeWithExtends(): String = buildString {
                     append(this@typeWithExtends)
-                    this@typeWithExtends.safeAs<PsiClassType>()?.resolve()?.extendsList?.referencedTypes?.takeIf { it.isNotEmpty() }
+                    (this@typeWithExtends as? PsiClassType)?.resolve()?.extendsList?.referencedTypes?.takeIf { it.isNotEmpty() }
                         ?.let { e ->
                             append(" extends ")
                             append(e.joinToString(", ") { it.typeWithExtends() })
@@ -689,10 +687,10 @@ interface UastApiTestBase : UastPluginSelection {
         val m = simpleClass.methods.find { it.name == "method" }
             ?: throw IllegalStateException("Target function not found at ${uFile.asRefNames()}")
         // type delegated from LC
-        TestCase.assertEquals(PsiType.VOID, m.returnType)
+        TestCase.assertEquals(PsiTypes.voidType(), m.returnType)
         // type through the base service
         val service = ServiceManager.getService(BaseKotlinUastResolveProviderService::class.java)
-        TestCase.assertEquals(PsiType.VOID, service.getType(m.sourcePsi as KtDeclaration, m as UElement))
+        TestCase.assertEquals(PsiTypes.voidType(), service.getType(m.sourcePsi as KtDeclaration, m as UElement))
 
         val functionCall = m.findElementByText<UElement>("println").uastParent as KotlinUFunctionCallExpression
         // type through the base service: KotlinUElementWithType#getExpressionType

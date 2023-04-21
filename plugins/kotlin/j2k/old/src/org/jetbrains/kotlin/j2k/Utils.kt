@@ -112,7 +112,7 @@ fun PsiMember.isImported(file: PsiJavaFile): Boolean {
     }
 }
 
-fun PsiExpression.isNullLiteral() = this is PsiLiteralExpression && type == PsiType.NULL
+fun PsiExpression.isNullLiteral() = this is PsiLiteralExpression && type == PsiTypes.nullType()
 
 // TODO: set origin for facade classes in library
 fun isFacadeClassFromLibrary(element: PsiElement?) = element is KtLightClass && element.kotlinOrigin == null

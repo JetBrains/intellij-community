@@ -81,7 +81,7 @@ public class SurroundWithArrayFix extends PsiElementBaseIntentionAction implemen
           final PsiType paramType = psiParameters[idx].getType();
           if (paramType instanceof PsiArrayType && !(paramType instanceof PsiEllipsisType)) {
             final PsiType expressionType = TypeConversionUtil.erasure(expression.getType());
-            if (expressionType != null && PsiTypesUtil.isDenotableType(expressionType, element) && expressionType != PsiType.NULL &&
+            if (expressionType != null && PsiTypesUtil.isDenotableType(expressionType, element) && expressionType != PsiTypes.nullType() &&
                 expressionType.getArrayDimensions() < paramType.getArrayDimensions()) {
               final PsiType componentType = ((PsiArrayType)paramType).getComponentType();
               if (TypeConversionUtil.isAssignable(componentType, expressionType)) {

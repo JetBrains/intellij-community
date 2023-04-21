@@ -11,7 +11,7 @@ import com.intellij.openapi.project.DumbAwareAction
 
 class OpenFileInDefaultBrowserAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
-    val result = BaseOpenInBrowserAction.doUpdate(e) ?: return
+    val result = BaseOpenInBrowserAction.Handler.doUpdate(e) ?: return
 
     var description = templatePresentation.description
     if (WebBrowserXmlService.getInstance().isHtmlFile(result.file)) {
@@ -36,7 +36,7 @@ class OpenFileInDefaultBrowserAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    BaseOpenInBrowserAction.openInBrowser(e, findUsingBrowser())
+    BaseOpenInBrowserAction.Handler.openInBrowser(e, findUsingBrowser())
   }
 }
 

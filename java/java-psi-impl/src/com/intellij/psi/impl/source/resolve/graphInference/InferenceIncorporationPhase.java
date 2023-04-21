@@ -87,7 +87,7 @@ public class InferenceIncorporationPhase {
   public boolean incorporate() {
     final Collection<InferenceVariable> inferenceVariables = mySession.getInferenceVariables();
     for (InferenceVariable inferenceVariable : inferenceVariables) {
-      if (inferenceVariable.getInstantiation() != PsiType.NULL) continue;
+      if (inferenceVariable.getInstantiation() != PsiTypes.nullType()) continue;
       final Map<InferenceBound, Set<PsiType>> boundsMap = myCurrentBounds.get(inferenceVariable);
       if (boundsMap == null) continue;
       final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
@@ -247,7 +247,7 @@ public class InferenceIncorporationPhase {
   boolean isFullyIncorporated() {
     boolean needFurtherIncorporation = false;
     for (InferenceVariable inferenceVariable : mySession.getInferenceVariables()) {
-      if (inferenceVariable.getInstantiation() != PsiType.NULL) continue;
+      if (inferenceVariable.getInstantiation() != PsiTypes.nullType()) continue;
       Map<InferenceBound, Set<PsiType>> boundsMap = myCurrentBounds.remove(inferenceVariable);
       if (boundsMap == null) continue;
       final Set<PsiType> upperBounds = boundsMap.get(InferenceBound.UPPER);
@@ -301,10 +301,10 @@ public class InferenceIncorporationPhase {
    */
   private void upDown(Collection<? extends PsiType> eqBounds, Collection<? extends PsiType> upperBounds) {
     for (PsiType upperBound : upperBounds) {
-      if (upperBound == null || PsiType.NULL.equals(upperBound) || upperBound instanceof PsiWildcardType) continue;
+      if (upperBound == null || PsiTypes.nullType().equals(upperBound) || upperBound instanceof PsiWildcardType) continue;
 
       for (PsiType eqBound : eqBounds) {
-        if (eqBound == null || PsiType.NULL.equals(eqBound) || eqBound instanceof PsiWildcardType) continue;
+        if (eqBound == null || PsiTypes.nullType().equals(eqBound) || eqBound instanceof PsiWildcardType) continue;
         if (Registry.is("javac.unchecked.subtyping.during.incorporation", true)) {
           if (TypeCompatibilityConstraint.isUncheckedConversion(upperBound, eqBound, mySession)) {
             if (PsiUtil.resolveClassInType(eqBound) instanceof PsiTypeParameter && !mySession.isProperType(upperBound)) {

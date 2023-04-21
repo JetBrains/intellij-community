@@ -155,6 +155,12 @@ public interface TextContent extends CharSequence, UserDataHolderEx {
   @Contract(pure = true)
   TextContent removeLineSuffixes(Set<Character> suffixChars);
 
+  /** Offsets in this text where exclusions of type {@link ExclusionKind#markup} were applied */
+  int[] markupOffsets();
+
+  /** Return a copy of this text with the specified character inserted into {@link #markupOffsets()} */
+  WithMarkup replaceMarkupWith(char c);
+
   enum TextDomain {
     /** String literals of a programming language */
     LITERALS,
@@ -180,7 +186,7 @@ public interface TextContent extends CharSequence, UserDataHolderEx {
    */
   static TextContent psiFragment(TextDomain domain, PsiElement psi, TextRange rangeInPsi) {
     return new TextContentImpl(domain, Collections.singletonList(
-      new TextContentImpl.PsiToken(rangeInPsi.substring(psi.getText()), psi, rangeInPsi, false)));
+      new TextContentImpl.PsiToken(rangeInPsi.substring(psi.getText()), psi, rangeInPsi, TextContentImpl.TokenKind.text)));
   }
 
   /**
@@ -248,21 +254,49 @@ public interface TextContent extends CharSequence, UserDataHolderEx {
     return domain;
   }
 
+  /** The kind of exclusion to pass into {@link #excludeRanges(List)} */
+  enum ExclusionKind {
+
+    /** Remove a range from this text fragment without any consequences */
+    exclude,
+
+    /**
+     * Remove a range from this text fragment and remember that there was some markup at the resulting offset.
+     * Text checkers may use this information via {@link #markupOffsets()} to produce more relevant warnings.
+     */
+    markup,
+
+    /**
+     * Remove a range from this text fragment assuming that it's replaced with some unknown content.
+     * So the text around that range will probably be malformed, and error reporting there might need suppressing.
+     */
+    unknown
+  }
+
   /** An object representing the range to pass to either {@link #excludeRange} or {@link #markUnknown(TextRange)} */
   class Exclusion {
     public final int start, end;
+    public final ExclusionKind kind;
+
+    /** @deprecated use {@link #kind} */
+    @Deprecated(forRemoval = true)
     public final boolean markUnknown;
 
-    public Exclusion(int start, int end, boolean markUnknown) {
+    public Exclusion(int start, int end, ExclusionKind kind) {
       if (start > end) throw new IllegalArgumentException(start + ">" + end);
       this.start = start;
       this.end = end;
-      this.markUnknown = markUnknown;
+      this.markUnknown = kind == ExclusionKind.unknown;
+      this.kind = kind;
+    }
+
+    public Exclusion(int start, int end, boolean markUnknown) {
+      this(start, end, markUnknown ? ExclusionKind.unknown : ExclusionKind.exclude);
     }
 
     @Override
     public String toString() {
-      return "(" + (markUnknown ? "?" : "") + start + "," + end + ")";
+      return "(" + (kind == ExclusionKind.markup ? "*" : kind == ExclusionKind.unknown ? "?" : "") + start + "," + end + ")";
     }
 
     public static Exclusion markUnknown(TextRange range) {
@@ -272,5 +306,13 @@ public interface TextContent extends CharSequence, UserDataHolderEx {
     public static Exclusion exclude(TextRange range) {
       return new Exclusion(range.getStartOffset(), range.getEndOffset(), false);
     }
+  }
+
+  /** A version of {@link TextContent} with some characters inserted in {@link #markupOffsets()} */
+  interface WithMarkup extends CharSequence {
+
+    /** Given an offset in this {@link CharSequence}, return the corresponding offset in the original {@link TextContent} */
+    int offsetToOriginal(int offsetWithMarkup);
+
   }
 }

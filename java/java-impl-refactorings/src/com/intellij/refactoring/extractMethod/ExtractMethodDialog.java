@@ -276,14 +276,14 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
       @Override
       public PsiType[] getTypesForAll(boolean direct) {
         final PsiType[] types = super.getTypesForAll(direct);
-        return !isVoidReturn() ? types : ArrayUtil.prepend(PsiType.VOID, types);
+        return !isVoidReturn() ? types : ArrayUtil.prepend(PsiTypes.voidType(), types);
       }
     };
     mySelector = manager.getTypeSelector();
     final JComponent component = mySelector.getComponent();
     if (component instanceof ComboBox) {
       if (isVoidReturn()) {
-        mySelector.selectType(PsiType.VOID);
+        mySelector.selectType(PsiTypes.voidType());
       }
       final JPanel returnTypePanel = new JPanel(new BorderLayout(2, 0));
       final JLabel label = new JLabel(RefactoringBundle.message("changeSignature.return.type.prompt"));

@@ -5,7 +5,7 @@ package com.intellij.find;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 
-public class SearchInBackgroundOption implements PerformInBackgroundOption {
+public final class SearchInBackgroundOption implements PerformInBackgroundOption {
   @Override
   public boolean shouldStartInBackground() {
     return GeneralSettings.getInstance().isSearchInBackground();
@@ -15,5 +15,4 @@ public class SearchInBackgroundOption implements PerformInBackgroundOption {
   public void processSentToBackground() {
     GeneralSettings.getInstance().setSearchInBackground(true);
   }
-
 }

@@ -6,7 +6,6 @@ import com.intellij.psi.impl.light.LightClass
 import com.intellij.util.lazyPub
 import org.jetbrains.plugins.groovy.ext.ginq.ast.GinqExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrLiteralClassType
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField
 
 /**
@@ -69,7 +68,7 @@ private fun getTypeMap(ginqExpression: GinqExpression): Map<String, Lazy<PsiType
   val map = mutableMapOf<String, Lazy<PsiType>>()
   for (fragment in ginqExpression.getDataSourceFragments()) {
     val name = fragment.alias.referenceName ?: continue
-    val type = lazyPub { inferDataSourceComponentType(fragment.dataSource.type) ?: GrLiteralClassType.NULL }
+    val type = lazyPub { inferDataSourceComponentType(fragment.dataSource.type) ?: PsiTypes.nullType() }
     map[name] = type
   }
   for (projection in ginqExpression.select?.projections ?: emptyList()) {
@@ -77,7 +76,7 @@ private fun getTypeMap(ginqExpression: GinqExpression): Map<String, Lazy<PsiType
     // The problem is that the key in this case is a toString-ed parsed expression produced by the Groovy AST.
     // It is too hard to compute and maintain such representation in a groovy-compatible way, so we'd rather not support it at all.
     val name = projection.alias?.text ?: continue
-    val type = lazyPub { projection.aggregatedExpression.type ?: GrLiteralClassType.NULL }
+    val type = lazyPub { projection.aggregatedExpression.type ?: PsiTypes.nullType() }
     map[name] = type
   }
   return map

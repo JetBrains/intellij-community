@@ -788,7 +788,11 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     };
 
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(balloon);
-    connection.subscribe(LafManagerListener.TOPIC, source -> lafCallback.run());
+    connection.subscribe(LafManagerListener.TOPIC, source -> {
+      // We need to call this callback in the next iteration,
+      // because otherwise some components inside the balloon may update their borders after all sizes are calculated inside `lafCallback`
+      SwingUtilities.invokeLater(lafCallback);
+    });
     connection.subscribe(UISettingsListener.TOPIC, uiSettings -> lafCallback.run());
 
     Disposer.register(parentDisposable, balloon);

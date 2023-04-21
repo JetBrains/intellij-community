@@ -170,7 +170,7 @@ public final class PsiCapturedWildcardType extends PsiType.Stub {
   }
 
   public PsiType getLowerBound () {
-    return myExistential.isSuper() ? myExistential.getBound() : NULL;
+    return myExistential.isSuper() ? myExistential.getBound() : (PsiPrimitiveType)PsiTypes.nullType();
   }
 
   @NotNull

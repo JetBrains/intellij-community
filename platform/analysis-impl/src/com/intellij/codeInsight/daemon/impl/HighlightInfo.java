@@ -764,16 +764,20 @@ public class HighlightInfo implements Segment {
           key = problemGroupKey;
         }
       }
-      if (key == null) {
-        IntentionAction action = IntentionActionDelegate.unwrap(myAction);
-        if (action instanceof IntentionActionWithOptions) {
-          options = ((IntentionActionWithOptions)action).getOptions();
+      IntentionAction action = IntentionActionDelegate.unwrap(myAction);
+      if (action instanceof IntentionActionWithOptions wo) {
+        if (key == null || wo.getCombiningPolicy() == IntentionActionWithOptions.CombiningPolicy.IntentionOptionsOnly) {
+          options = wo.getOptions();
           if (!options.isEmpty()) {
             return updateOptions(options);
           }
         }
+      }
+
+      if (key == null) {
         return Collections.emptyList();
       }
+
       IntentionManager intentionManager = IntentionManager.getInstance();
       List<IntentionAction> newOptions = intentionManager.getStandardIntentionOptions(key, element);
       InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
@@ -807,7 +811,7 @@ public class HighlightInfo implements Segment {
           }
           return actions;
         }
-        IntentionAction action = IntentionActionDelegate.unwrap(myAction);
+
         if (!(action instanceof EmptyIntentionAction)) {
           newOptions.add(new DisableHighlightingIntentionAction(toolWrapper.getShortName()));
         }

@@ -39,11 +39,11 @@ import java.util.concurrent.atomic.*;
 public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction implements PriorityAction {
   private static final Logger LOG = Logger.getInstance(ConvertFieldToAtomicIntention.class);
   private final Map<PsiType, String> myFromToMap = Map.of(
-    PsiType.INT, AtomicInteger.class.getName(),
-    PsiType.LONG, AtomicLong.class.getName(),
-    PsiType.BOOLEAN, AtomicBoolean.class.getName(),
-    PsiType.INT.createArrayType(), AtomicIntegerArray.class.getName(),
-    PsiType.LONG.createArrayType(), AtomicLongArray.class.getName());
+    PsiTypes.intType(), AtomicInteger.class.getName(),
+    PsiTypes.longType(), AtomicLong.class.getName(),
+    PsiTypes.booleanType(), AtomicBoolean.class.getName(),
+    PsiTypes.intType().createArrayType(), AtomicIntegerArray.class.getName(),
+    PsiTypes.longType().createArrayType(), AtomicLongArray.class.getName());
 
   @NotNull
   @Override

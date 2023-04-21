@@ -19,6 +19,7 @@ import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCa
  * A ThreadPoolExecutor which also implements {@link ScheduledExecutorService} by awaiting scheduled tasks in a separate thread
  * and then executing them in the owned ThreadPoolExecutor.
  * Unlike the existing {@link ScheduledThreadPoolExecutor}, this pool is unbounded.
+ * @see AppExecutorUtil#getAppScheduledExecutorService()
  */
 @ApiStatus.Internal
 public final class AppScheduledExecutorService extends SchedulingWrapper {

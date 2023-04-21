@@ -26,6 +26,7 @@ import com.intellij.psi.codeStyle.arrangement.std.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.awt.*;
 import java.util.List;
@@ -56,36 +57,33 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
   @NotNull private static final ArrangementSettingsToken NO_TYPE = new ArrangementSettingsToken("NO_TYPE", "NO_TYPE");
   //NON-NLS not visible in settings
   @NotNull
-  private static final Map<ArrangementSettingsToken, Set<ArrangementSettingsToken>> MODIFIERS_BY_TYPE =
-    new HashMap<>();
-  @NotNull private static final Collection<Set<ArrangementSettingsToken>> MUTEXES =
-    new ArrayList<>();
+  private static final Map<ArrangementSettingsToken, Set<ArrangementSettingsToken>> MODIFIERS_BY_TYPE;
+  @NotNull private static final Collection<Set<ArrangementSettingsToken>> MUTEXES;
 
-  private static final Set<ArrangementSettingsToken> TYPES_WITH_DISABLED_ORDER = new HashSet<>();
-  private static final Set<ArrangementSettingsToken> TYPES_WITH_DISABLED_NAME_MATCH = new HashSet<>();
+  private static final Set<ArrangementSettingsToken> TYPES_WITH_DISABLED_ORDER;
+  private static final Set<ArrangementSettingsToken> TYPES_WITH_DISABLED_NAME_MATCH;
 
   static {
-    Set<ArrangementSettingsToken> visibilityModifiers = ContainerUtil.newHashSet(PUBLIC, PROTECTED, PACKAGE_PRIVATE, PRIVATE);
-    MUTEXES.add(visibilityModifiers);
-    MUTEXES.add(SUPPORTED_TYPES);
+    Set<ArrangementSettingsToken> visibilityModifiers = Set.of(PUBLIC, PROTECTED, PACKAGE_PRIVATE, PRIVATE);
+    MUTEXES = List.of(visibilityModifiers, SUPPORTED_TYPES);
 
     Set<ArrangementSettingsToken> commonModifiers = concat(visibilityModifiers, STATIC, FINAL);
 
-    MODIFIERS_BY_TYPE.put(NO_TYPE, commonModifiers);
-    MODIFIERS_BY_TYPE.put(ENUM, visibilityModifiers);
-    MODIFIERS_BY_TYPE.put(INTERFACE, visibilityModifiers);
-    MODIFIERS_BY_TYPE.put(CLASS, concat(commonModifiers, ABSTRACT));
-    MODIFIERS_BY_TYPE.put(METHOD, concat(commonModifiers, SYNCHRONIZED, ABSTRACT));
-    MODIFIERS_BY_TYPE.put(CONSTRUCTOR, concat(commonModifiers, SYNCHRONIZED));
-    MODIFIERS_BY_TYPE.put(FIELD, concat(commonModifiers, TRANSIENT, VOLATILE));
-    MODIFIERS_BY_TYPE.put(GETTER, new HashSet<>());
-    MODIFIERS_BY_TYPE.put(SETTER, new HashSet<>());
-    MODIFIERS_BY_TYPE.put(OVERRIDDEN, new HashSet<>());
-    MODIFIERS_BY_TYPE.put(INIT_BLOCK, ContainerUtil.newHashSet(STATIC));
+    MODIFIERS_BY_TYPE = Map.ofEntries(
+      Map.entry(NO_TYPE, commonModifiers),
+      Map.entry(ENUM, visibilityModifiers),
+      Map.entry(INTERFACE, visibilityModifiers),
+      Map.entry(CLASS, concat(commonModifiers, ABSTRACT)),
+      Map.entry(METHOD, concat(commonModifiers, SYNCHRONIZED, ABSTRACT)),
+      Map.entry(CONSTRUCTOR, concat(commonModifiers, SYNCHRONIZED)),
+      Map.entry(FIELD, concat(commonModifiers, TRANSIENT, VOLATILE)),
+      Map.entry(GETTER, Collections.emptySet()),
+      Map.entry(SETTER, Collections.emptySet()),
+      Map.entry(OVERRIDDEN, Collections.emptySet()),
+      Map.entry(INIT_BLOCK, Set.of(STATIC)));
 
-    TYPES_WITH_DISABLED_ORDER.add(INIT_BLOCK);
-
-    TYPES_WITH_DISABLED_NAME_MATCH.add(INIT_BLOCK);
+    TYPES_WITH_DISABLED_ORDER = Set.of(INIT_BLOCK);
+    TYPES_WITH_DISABLED_NAME_MATCH = Set.of(INIT_BLOCK);
   }
 
   private static final StdArrangementRuleAliasToken VISIBILITY = new StdArrangementRuleAliasToken("visibility");
@@ -138,11 +136,11 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
     new DefaultArrangementSettingsSerializer(DEFAULT_SETTINGS);
 
   @NotNull
-  private static Set<ArrangementSettingsToken> concat(@NotNull Set<? extends ArrangementSettingsToken> base,
-                                                      ArrangementSettingsToken... modifiers) {
+  private static @Unmodifiable Set<ArrangementSettingsToken> concat(@NotNull Set<? extends ArrangementSettingsToken> base,
+                                                                    ArrangementSettingsToken... modifiers) {
     Set<ArrangementSettingsToken> result = new HashSet<>(base);
     Collections.addAll(result, modifiers);
-    return result;
+    return Set.of(result.toArray(new ArrangementSettingsToken[0]));
   }
 
   private static void setupGettersAndSetters(@NotNull JavaArrangementParseInfo info) {

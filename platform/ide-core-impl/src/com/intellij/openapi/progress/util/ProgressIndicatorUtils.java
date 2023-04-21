@@ -361,6 +361,9 @@ public final class ProgressIndicatorUtils {
       try {
         success = waiter.compute();
       }
+      catch (ProcessCanceledException pce) {
+        throw pce;
+      }
       catch (Exception e) {
         //noinspection InstanceofCatchParameter
         if (!(e instanceof InterruptedException)) {

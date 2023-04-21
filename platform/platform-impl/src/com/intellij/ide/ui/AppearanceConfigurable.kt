@@ -38,10 +38,10 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.Row
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.editableValueMatches
+import com.intellij.ui.layout.not
+import com.intellij.ui.layout.or
+import com.intellij.ui.layout.selectedValueMatches
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
@@ -55,25 +55,25 @@ import javax.swing.*
 
 private val settings: UISettings
   get() = UISettings.getInstance()
-private val generalSettings
+private val generalSettings: GeneralSettings
   get() = GeneralSettings.getInstance()
-private val lafManager
+private val lafManager: LafManager
   get() = LafManager.getInstance()
 
 private val cdShowToolWindowBars
-  get() = CheckboxDescriptor(message("checkbox.show.tool.window.bars"), PropertyBinding({ !settings.hideToolStripes },
-                                                                                        { settings.hideToolStripes = !it }),
+  get() = CheckboxDescriptor(message("checkbox.show.tool.window.bars"),
+                             { !settings.hideToolStripes }, { settings.hideToolStripes = !it },
                              groupName = windowOptionGroupName)
 private val cdShowToolWindowNumbers
   get() = CheckboxDescriptor(message("checkbox.show.tool.window.numbers"), settings::showToolWindowsNumbers,
                              groupName = windowOptionGroupName)
 private val cdEnableMenuMnemonics
-  get() = CheckboxDescriptor(KeyMapBundle.message("enable.mnemonic.in.menu.check.box"), PropertyBinding({ !settings.disableMnemonics },
-                                                                                                        { settings.disableMnemonics = !it }),
+  get() = CheckboxDescriptor(KeyMapBundle.message("enable.mnemonic.in.menu.check.box"),
+                             { !settings.disableMnemonics }, { settings.disableMnemonics = !it },
                              groupName = windowOptionGroupName)
 private val cdEnableControlsMnemonics
   get() = CheckboxDescriptor(KeyMapBundle.message("enable.mnemonic.in.controls.check.box"),
-                             PropertyBinding({ !settings.disableMnemonicsInControls }, { settings.disableMnemonicsInControls = !it }),
+                             { !settings.disableMnemonicsInControls }, { settings.disableMnemonicsInControls = !it },
                              groupName = windowOptionGroupName)
 private val cdSmoothScrolling
   get() = CheckboxDescriptor(message("checkbox.smooth.scrolling"), settings::smoothScrolling, groupName = uiOptionGroupName)
@@ -208,7 +208,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           val ctrlTab = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, mask))
           val ctrlShiftTab = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, mask + InputEvent.SHIFT_MASK))
           checkBox(message("checkbox.support.screen.readers"))
-            .bindSelected(generalSettings::isSupportScreenReaders, generalSettings::setSupportScreenReaders)
+            .bindSelected(generalSettings::isSupportScreenReaders) { generalSettings.isSupportScreenReaders = it }
             .comment(message("support.screen.readers.tab", ctrlTab, ctrlShiftTab))
             .enabled(!isOverridden)
 

@@ -2,20 +2,20 @@ MODULES
     project
     project.androidTest
         externalProjectId = project
-        languageLevel = 1.8
-        apiLevel = 1.8
+        languageLevel = {{LATEST_STABLE}}
+        apiLevel = {{LATEST_STABLE}}
         mppVersion = M3
         targetPlatform = JVM (1.8)
     project.main
         externalProjectId = project
-        languageLevel = 1.8
-        apiLevel = 1.8
+        languageLevel = {{LATEST_STABLE}}
+        apiLevel = {{LATEST_STABLE}}
         mppVersion = M3
         targetPlatform = JVM (1.8)
     project.unitTest
         externalProjectId = project
-        languageLevel = 1.8
-        apiLevel = 1.8
+        languageLevel = {{LATEST_STABLE}}
+        apiLevel = {{LATEST_STABLE}}
         mppVersion = M3
         targetPlatform = JVM (1.8)
 

@@ -24,6 +24,8 @@ class IdeVirtualFileFinder(private val scope: GlobalSearchScope) : VirtualFileFi
         }
     }
 
+    override fun findMetadataTopLevelClassesInPackage(packageFqName: FqName): Set<String>? = null
+
     override fun hasMetadataPackage(fqName: FqName): Boolean = KotlinMetadataFilePackageIndex.hasSomethingInPackage(fqName, scope)
 
     override fun findBuiltInsData(packageFqName: FqName): InputStream? =

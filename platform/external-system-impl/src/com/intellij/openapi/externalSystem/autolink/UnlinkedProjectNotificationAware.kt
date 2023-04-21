@@ -11,7 +11,7 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker.Companion.LOG
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.ui.ExternalSystemTextProvider
@@ -35,11 +35,11 @@ class UnlinkedProjectNotificationAware(
 
   fun notificationNotify(projectId: ExternalSystemProjectId, callback: () -> Unit) {
     if (projectId.systemId.id in disabledNotifications) {
-      LOG.debug("Unlinked ${projectId.debugName} project notification is disabled")
+      LOG.debug(projectId.debugName + ": notification has been disabled")
       return
     }
     if (projectId in notifiedNotifications.keys) {
-      LOG.debug("Unlinked ${projectId.debugName} project notification has been already notified")
+      LOG.debug(projectId.debugName + ": notification has been already notified")
       return
     }
 
@@ -47,18 +47,22 @@ class UnlinkedProjectNotificationAware(
     val notificationManager = NotificationGroupManager.getInstance()
     val notificationGroup = notificationManager.getNotificationGroup(NOTIFICATION_GROUP_ID)
     val notificationContent = textProvider.getUPNText(projectId.projectName)
-    val notification = notificationGroup.createNotification(notificationContent, NotificationType.INFORMATION)
-      .setSuggestionType(true)
-      .setNotificationHelp(textProvider.getUPNHelpText())
-      .addAction(createSimpleExpiring(textProvider.getUPNLinkActionText()) { callback() })
-      .addAction(createSimpleExpiring(textProvider.getUPNSkipActionText()) {
-        disabledNotifications.add(projectId.systemId.id)
-      })
-
-    notification.notify(project)
-    notifiedNotifications[projectId] = notification
-
-    LOG.debug("Notified unlinked ${projectId.debugName} project notification")
+    notifiedNotifications.computeIfAbsent(projectId) {
+      notificationGroup.createNotification(notificationContent, NotificationType.INFORMATION)
+        .setSuggestionType(true)
+        .setNotificationHelp(textProvider.getUPNHelpText())
+        .addAction(createSimpleExpiring(textProvider.getUPNLinkActionText()) { callback() })
+        .addAction(createSimpleExpiring(textProvider.getUPNSkipActionText()) {
+          disabledNotifications.add(projectId.systemId.id)
+          LOG.debug(projectId.debugName + ": notification is disabled")
+        }).whenExpired {
+          notifiedNotifications.remove(projectId)
+          LOG.debug(projectId.debugName + ": notification is expired")
+        }.apply {
+          notify(project)
+          LOG.debug(projectId.debugName + ": notification is notified")
+        }
+    }
   }
 
   fun notificationExpire(projectId: ExternalSystemProjectId) {
@@ -82,6 +86,9 @@ class UnlinkedProjectNotificationAware(
   data class State(var disabledNotifications: Set<String> = emptySet())
 
   companion object {
+
+    private val LOG = Logger.getInstance("#com.intellij.openapi.externalSystem.autolink")
+
     private const val NOTIFICATION_GROUP_ID = "External System Auto-Link Notification Group"
 
     @JvmStatic

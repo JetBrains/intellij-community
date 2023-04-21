@@ -203,7 +203,7 @@ public final class PsiLambdaExpressionImpl extends JavaStubPsiElement<Functional
     }
 
     PsiType methodReturnType = interfaceMethod.getReturnType();
-    if (methodReturnType != null && !PsiType.VOID.equals(methodReturnType)) {
+    if (methodReturnType != null && !PsiTypes.voidType().equals(methodReturnType)) {
       return LambdaUtil.performWithTargetType(this, leftType, () ->
                LambdaUtil.checkReturnTypeCompatible(this, substitutor.substitute(methodReturnType)) == null);
     }
@@ -220,7 +220,7 @@ public final class PsiLambdaExpressionImpl extends JavaStubPsiElement<Functional
     }
     final PsiType methodReturnType = interfaceMethod.getReturnType();
     final PsiElement body = getBody();
-    if (PsiType.VOID.equals(methodReturnType)) {
+    if (PsiTypes.voidType().equals(methodReturnType)) {
       if (body instanceof PsiCodeBlock) {
         return isVoidCompatible();
       } else {

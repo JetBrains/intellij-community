@@ -14,7 +14,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.presentation.java.ClassPresentationUtil.getNameForClass
 import com.intellij.psi.util.PsiTreeUtil
@@ -95,7 +95,7 @@ private class GroovyFieldRenderer(
 
   fun renderField(): GrField {
     val elementFactory = GroovyPsiElementFactory.getInstance(project)
-    val field = elementFactory.createField(request.fieldName, PsiType.INT)
+    val field = elementFactory.createField(request.fieldName, PsiTypes.intType())
 
     // clean template modifiers
     field.modifierList?.let { list ->

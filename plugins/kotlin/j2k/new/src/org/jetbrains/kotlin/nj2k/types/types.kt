@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.nj2k.types
 
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind
 import com.intellij.psi.PsiPrimitiveType
-import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import org.jetbrains.kotlin.j2k.ast.Nullability
 import org.jetbrains.kotlin.nj2k.symbols.JKClassSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKTypeParameterSymbol
@@ -95,8 +95,8 @@ class JKJavaPrimitiveType private constructor(override val jvmPrimitiveType: Jvm
             ALL.associateBy { JvmPrimitiveTypeKind.getKindByName(it.jvmPrimitiveType.javaKeywordName) }
 
         fun fromPsi(psi: PsiPrimitiveType) = when (psi) {
-            PsiType.VOID -> JKJavaVoidType
-            PsiType.NULL -> JKJavaNullPrimitiveType
+            PsiTypes.voidType() -> JKJavaVoidType
+            PsiTypes.nullType() -> JKJavaNullPrimitiveType
             else -> psiKindToJK[psi.kind] ?: error("Invalid PSI type ${psi.presentableText}")
         }
     }

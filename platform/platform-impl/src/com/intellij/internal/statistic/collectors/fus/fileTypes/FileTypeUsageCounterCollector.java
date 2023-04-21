@@ -151,7 +151,7 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
                                                                    @NotNull VirtualFile file,
                                                                    boolean withWritable) {
     FileType fileType = file.getFileType();
-    List<EventPair<?>> data = ContainerUtil.newArrayList(
+    List<EventPair<?>> data = List.of(
       EventFields.PluginInfoFromInstance.with(fileType),
       EventFields.FileType.with(fileType),
       EventFields.AnonymizedPath.with(file.getPath()),
@@ -159,7 +159,7 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
     );
 
     if (withWritable) {
-      data.add(IS_WRITABLE.with(file.isWritable()));
+      data = ContainerUtil.append(data, IS_WRITABLE.with(file.isWritable()));
     }
     return data;
   }

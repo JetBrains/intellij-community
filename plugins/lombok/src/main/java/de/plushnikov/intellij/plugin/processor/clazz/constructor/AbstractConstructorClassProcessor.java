@@ -39,11 +39,8 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
   }
 
   @Override
-  protected boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
-                                                   @NotNull PsiAnnotation psiAnnotation) {
-    return nameHint == null ||
-           nameHint.equals(getConstructorName(psiClass)) ||
-           nameHint.equals(getStaticConstructorName(psiAnnotation));
+  public Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+    return List.of(getConstructorName(psiClass), getStaticConstructorName(psiAnnotation));
   }
 
   @Override

@@ -15,8 +15,7 @@ import com.intellij.vcs.log.ui.frame.ProgressStripe
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
-import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortRestDTO
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestsListViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabFiltersPanelFactory
 import javax.swing.JComponent
 import javax.swing.ScrollPaneConstants
@@ -68,8 +67,8 @@ internal class GitLabMergeRequestsPanelFactory {
   }
 
   private fun collectMergeRequests(scope: CoroutineScope,
-                                   listVm: GitLabMergeRequestsListViewModel): CollectionListModel<GitLabMergeRequestShortRestDTO> {
-    val listModel = CollectionListModel<GitLabMergeRequestShortRestDTO>()
+                                   listVm: GitLabMergeRequestsListViewModel): CollectionListModel<GitLabMergeRequestDetails> {
+    val listModel = CollectionListModel<GitLabMergeRequestDetails>()
     scope.launch {
       var firstEvent = true
       listVm.listDataFlow.collect {

@@ -11,8 +11,9 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Path
-import kotlin.io.path.writeBytes
-import kotlin.io.path.writeText
+import java.nio.file.attribute.PosixFileAttributeView
+import java.nio.file.attribute.PosixFilePermission
+import kotlin.io.path.*
 
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
@@ -54,11 +55,12 @@ open class AssetsProcessorImpl : AssetsProcessor {
       val templateManager = FileTemplateManager.getDefaultInstance()
       val defaultProperties = templateManager.defaultProperties
       val content = asset.template.getText(defaultProperties + properties)
-      val file = findOrCreateFile(outputDirectory, asset.targetFileName)
+      val file = findOrCreateFile(outputDirectory, asset.relativePath)
+      addPosixFilePermissions(file, asset.permissions)
       writeText(file, content)
       return file
     }
-    catch (e: Throwable) {
+    catch (e: IOException) {
       throw TemplateProcessingException(e)
     }
   }
@@ -66,35 +68,43 @@ open class AssetsProcessorImpl : AssetsProcessor {
   private fun generateSources(outputDirectory: Path, asset: GeneratorResourceFile): Path {
     try {
       val content = asset.resource.openStream().use { it.readBytes() }
-      val file = findOrCreateFile(outputDirectory, asset.targetFileName)
+      val file = findOrCreateFile(outputDirectory, asset.relativePath)
+      addPosixFilePermissions(file, asset.permissions)
       writeBytes(file, content)
       return file
     }
-    catch (e: Throwable) {
+    catch (e: IOException) {
       throw ResourceProcessingException(e)
     }
   }
 
   private fun generateSources(outputDirectory: Path, asset: GeneratorEmptyDirectory): Path {
-    return findOrCreateDirectory(outputDirectory, asset.targetFileName)
+    val file = findOrCreateDirectory(outputDirectory, asset.relativePath)
+    addPosixFilePermissions(file, asset.permissions)
+    return file
   }
 
-  protected open fun writeText(file: Path, content: String) {
-    file.writeText(content)
+  protected open fun writeText(path: Path, content: String) {
+    path.writeText(content)
   }
 
-  protected open fun writeBytes(file: Path, content: ByteArray) {
-    file.writeBytes(content)
+  protected open fun writeBytes(path: Path, content: ByteArray) {
+    path.writeBytes(content)
   }
 
-  protected open fun findOrCreateFile(outputDirectory: Path, relativePath: String): Path {
-    LOG.info("Creating file $relativePath in $outputDirectory")
-    return outputDirectory.findOrCreateFile(relativePath)
+  protected open fun findOrCreateFile(path: Path, relativePath: String): Path {
+    LOG.info("Creating file $relativePath in $path")
+    return path.findOrCreateFile(relativePath)
   }
 
-  protected open fun findOrCreateDirectory(outputDirectory: Path, relativePath: String): Path {
-    LOG.info("Creating directory $relativePath in $outputDirectory")
-    return outputDirectory.findOrCreateDirectory(relativePath)
+  protected open fun findOrCreateDirectory(path: Path, relativePath: String): Path {
+    LOG.info("Creating directory $relativePath in $path")
+    return path.findOrCreateDirectory(relativePath)
+  }
+
+  protected open fun addPosixFilePermissions(path: Path, permissions: Set<PosixFilePermission>) {
+    if (path.fileStore().supportsFileAttributeView(PosixFileAttributeView::class.java))
+      path.setPosixFilePermissions(path.getPosixFilePermissions() + permissions)
   }
 
   companion object {

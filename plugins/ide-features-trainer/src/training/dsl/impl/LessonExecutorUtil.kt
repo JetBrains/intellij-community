@@ -1,28 +1,21 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.dsl.impl
 
-import com.intellij.ide.IdeBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
-import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import com.intellij.openapi.util.Disposer
+import com.intellij.ui.GotItComponentBuilder
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Alarm
-import com.intellij.util.ui.JBUI
 import training.dsl.*
 import training.learn.ActionsRecorder
 import training.ui.LearningUiHighlightingManager
-import training.ui.LessonMessagePane
 import training.ui.MessageFactory
-import training.ui.UISettings
 import java.awt.*
-import java.awt.event.ActionEvent
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 import javax.swing.*
-import javax.swing.border.EmptyBorder
 import javax.swing.tree.TreePath
 
 internal data class TaskProperties(var hasDetection: Boolean = false, var messagesNumber: Int = 0)
@@ -71,61 +64,23 @@ internal object LessonExecutorUtil {
                                  actionsRecorder: ActionsRecorder,
                                  lessonExecutor: LessonExecutor,
                                  useAnimationCycle: Boolean) {
-    val message = MessageFactory.convert(text).singleOrNull()
-                  ?: error("Balloon message should contain only one paragraph")
-    val messagesPane = LessonMessagePane(false)
-    messagesPane.border = null
-    messagesPane.setBounds(0, 0, balloonConfig.width.takeIf { it != 0 } ?: 500, 1000)
-    messagesPane.isOpaque = false
-    messagesPane.addMessage(message, LessonMessagePane.MessageProperties(visualIndex = lessonExecutor.visualIndexNumber))
-
-    val preferredSize = messagesPane.preferredSize
-
-    val balloonPanel = JPanel()
-    balloonPanel.isOpaque = false
-    balloonPanel.layout = BoxLayout(balloonPanel, BoxLayout.Y_AXIS)
-    balloonPanel.border = UISettings.getInstance().balloonAdditionalBorder
-    val insets = UISettings.getInstance().balloonAdditionalBorder.borderInsets
-
-    var height = preferredSize.height + insets.top + insets.bottom
-    val width = (if (balloonConfig.width != 0) balloonConfig.width else (preferredSize.width + insets.left + insets.right + 6))
-    balloonPanel.add(messagesPane)
-    messagesPane.alignmentX = Component.LEFT_ALIGNMENT
-    val gotItCallBack = balloonConfig.gotItCallBack
-    val gotItButton = if (gotItCallBack != null) JButton().also {
-      balloonPanel.add(it)
-      it.alignmentX = Component.LEFT_ALIGNMENT
-      it.border = EmptyBorder(JBUI.scale(10), UISettings.getInstance().balloonIndent, JBUI.scale(2), 0)
-      it.background = Color(0, true)
-      it.putClientProperty("gotItButton", true)
-      it.putClientProperty("JButton.backgroundColor", UISettings.getInstance().tooltipButtonBackgroundColor)
-      it.foreground = UISettings.getInstance().tooltipButtonForegroundColor
-      it.action = object : AbstractAction(IdeBundle.message("got.it.button.name")) {
-        override fun actionPerformed(e: ActionEvent?) {
-          gotItCallBack()
-        }
-      }
-      height += it.preferredSize.height
+    val textBuilder = MessageFactory.convertToGotItFormat(text)
+    val balloonBuilder = GotItComponentBuilder(textBuilder)
+    if (balloonConfig.width > 0) {
+      balloonBuilder.withMaxWidth(balloonConfig.width)
     }
-    else null
-
-    balloonPanel.preferredSize = Dimension(width, height)
-
-    val balloon = JBPopupFactory.getInstance().createBalloonBuilder(balloonPanel)
-      .setCloseButtonEnabled(false)
-      .setAnimationCycle(if (useAnimationCycle) balloonConfig.animationCycle else 0)
-      .setCornerToPointerDistance(balloonConfig.cornerToPointerDistance)
-      .setPointerSize(Dimension(16, 8))
-      .setHideOnAction(false)
-      .setHideOnClickOutside(false)
-      .setBlockClicksThroughBalloon(true)
-      .setFillColor(UISettings.getInstance().tooltipBackgroundColor)
-      .setBorderColor(UISettings.getInstance().tooltipBorderColor)
-      .setHideOnCloseClick(false)
-      .setDisposable(actionsRecorder)
-      .createBalloon()
-
-    Disposer.register(balloon, messagesPane)
+    val balloon: Balloon = balloonBuilder
+      .withStepNumber(lessonExecutor.visualIndexNumber)
+      .showButton(balloonConfig.gotItCallBack != null)
+      .onButtonClick { balloonConfig.gotItCallBack?.invoke() }
+      .requestFocus(balloonConfig.gotItCallBack != null)
+      .build(actionsRecorder) {
+        setCornerToPointerDistance(balloonConfig.cornerToPointerDistance)
+        setAnimationCycle(if (useAnimationCycle) balloonConfig.animationCycle else 0)
+        setCloseButtonEnabled(false)
+        setHideOnCloseClick(false)
+        setRequestFocus(true)
+      }
 
     balloon.addListener(object : JBPopupListener {
       override fun onClosed(event: LightweightWindowEvent) {
@@ -138,8 +93,8 @@ internal object LessonExecutorUtil {
         Alarm().addRequest(checkStopLesson, 500) // it is a hacky a little bit
       }
     })
+
     balloon.show(getPosition(ui, balloonConfig.side), balloonConfig.side)
-    gotItButton?.requestFocus()
   }
 
   private fun getPosition(component: JComponent, side: Balloon.Position): RelativePoint {

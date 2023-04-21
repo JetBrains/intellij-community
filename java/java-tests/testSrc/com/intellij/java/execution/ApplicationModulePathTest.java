@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.execution;
 
 import com.intellij.execution.ExecutionException;
@@ -7,8 +7,12 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
@@ -41,10 +45,10 @@ public class ApplicationModulePathTest extends BaseConfigurationTestCase {
 
   public void testServices() throws ExecutionException {
     Module module2 = createEmptyModule();
-    setupModule(getTestName(true) + "/dep", module2);
+    setupModule(getTestName(true) + "/dep", module2, getTestRootDisposable());
     
     Module module3 = createEmptyModule();
-    setupModule(getTestName(true) + "/dep1", module3);
+    setupModule(getTestName(true) + "/dep1", module3, getTestRootDisposable());
 
     ApplicationConfiguration configuration = setupConfiguration(getTestName(true), myModule);
     ModuleRootModificationUtil.updateModel(myModule, model -> model.addModuleOrderEntry(module2));
@@ -60,7 +64,7 @@ public class ApplicationModulePathTest extends BaseConfigurationTestCase {
   }
 
   private ApplicationConfiguration setupConfiguration(String sources, Module module) {
-    setupModule(sources, module);
+    setupModule(sources, module, getTestRootDisposable());
 
     
     PsiClass aClass = findClass(module, "p.Main");
@@ -69,7 +73,7 @@ public class ApplicationModulePathTest extends BaseConfigurationTestCase {
     return createConfiguration(aClass);
   }
 
-  private static void setupModule(String sources, Module module) {
+  private static void setupModule(String sources, Module module, Disposable parentDisposable) {
     VirtualFile contentRoot = getContentRoot(sources);
     ModuleRootModificationUtil.updateModel(module, model -> {
       ContentEntry contentEntry = model.addContentEntry(contentRoot);
@@ -79,7 +83,9 @@ public class ApplicationModulePathTest extends BaseConfigurationTestCase {
       moduleExtension.inheritCompilerOutputPath(false);
       moduleExtension.setCompilerOutputPath(contentRoot.findFileByRelativePath("out/production"));
     });
-    ModuleRootModificationUtil.setModuleSdk(module, IdeaTestUtil.getMockJdk9());
+    Sdk jdk9 = IdeaTestUtil.getMockJdk9();
+    WriteAction.runAndWait(()-> ProjectJdkTable.getInstance().addJdk(jdk9, parentDisposable));
+    ModuleRootModificationUtil.setModuleSdk(module, jdk9);
   }
 
   protected static VirtualFile getContentRoot(String path) {

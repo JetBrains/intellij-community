@@ -118,7 +118,7 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
     switch (random.nextInt(2)) {
       case 0 -> {
         mark("+");
-        getPsiClass().add(myJavaFacade.getElementFactory().createMethod("foo" + System.currentTimeMillis(), PsiType.FLOAT));
+        getPsiClass().add(myJavaFacade.getElementFactory().createMethod("foo" + System.currentTimeMillis(), PsiTypes.floatType()));
       }
       case 1 -> {
         mark("-");

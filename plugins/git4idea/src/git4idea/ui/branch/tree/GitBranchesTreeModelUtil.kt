@@ -18,6 +18,8 @@ import javax.swing.tree.TreePath
 private typealias PathAndBranch = Pair<List<String>, GitBranch>
 private typealias MatchResult = Pair<Collection<GitBranch>, GitBranch?>
 
+internal val GitRepository.localBranchesOrCurrent get() = branches.localBranches.ifEmpty { currentBranch?.let(::setOf) ?: emptySet() }
+
 private fun getBranchComparator(repositories: List<GitRepository>, isPrefixGrouping: () -> Boolean) = compareBy<GitBranch> {
   it.isNotCurrentBranch(repositories)
 } then compareBy {

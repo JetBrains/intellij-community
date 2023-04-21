@@ -46,7 +46,7 @@ class GrSwitchExhaustivenessCheckInspection : BaseInspection() {
       if (cases.any { it.isDefault }) {
         return
       }
-      val conditionalType = switchElement.condition?.type ?: PsiType.NULL
+      val conditionalType = switchElement.condition?.type ?: PsiTypes.nullType()
       val patterns = cases.flatMap { it.expressions?.asList() ?: emptyList() }.filterNotNull()
       when (conditionalType) {
         is PsiPrimitiveType -> handlePrimitiveType(switchElement, conditionalType, patterns)
@@ -130,7 +130,7 @@ class GrSwitchExhaustivenessCheckInspection : BaseInspection() {
     private fun handlePrimitiveType(switchElement: GrSwitchElement,
                                     conditionalType: PsiPrimitiveType,
                                     patterns: List<GrExpression>) = when (conditionalType) {
-      PsiType.BOOLEAN -> {
+      PsiTypes.booleanType() -> {
         val factory = GroovyPsiElementFactory.getInstance(switchElement.project)
         val patternTexts = patterns.map { it.text }
         val trueLiteral = if ("true" !in patternTexts) factory.createLiteralFromValue(true) else null
@@ -138,7 +138,7 @@ class GrSwitchExhaustivenessCheckInspection : BaseInspection() {
         val necessaryPatterns = listOfNotNull(trueLiteral, falseLiteral)
         insertErrors(switchElement, necessaryPatterns.isNotEmpty(), necessaryPatterns)
       }
-      PsiType.BYTE, PsiType.SHORT, PsiType.INT, PsiType.LONG -> {
+      PsiTypes.byteType(), PsiTypes.shortType(), PsiTypes.intType(), PsiTypes.longType() -> {
         val definedRanges = glueRange(patterns)
         insertErrors(switchElement, definedRanges.size > 1, emptyList())
         val expectedRange = calculateActualRange(conditionalType)
@@ -154,10 +154,10 @@ class GrSwitchExhaustivenessCheckInspection : BaseInspection() {
     }
 
     private fun calculateActualRange(conditionalType: PsiPrimitiveType): Pair<Long, Long> = when (conditionalType) {
-      PsiType.BYTE -> Byte.MIN_VALUE.toLong() to Byte.MAX_VALUE.toLong()
-      PsiType.SHORT -> Short.MIN_VALUE.toLong() to Short.MAX_VALUE.toLong()
-      PsiType.INT -> Int.MIN_VALUE.toLong() to Int.MAX_VALUE.toLong()
-      PsiType.LONG -> Long.MIN_VALUE to Long.MAX_VALUE
+      PsiTypes.byteType() -> Byte.MIN_VALUE.toLong() to Byte.MAX_VALUE.toLong()
+      PsiTypes.shortType() -> Short.MIN_VALUE.toLong() to Short.MAX_VALUE.toLong()
+      PsiTypes.intType() -> Int.MIN_VALUE.toLong() to Int.MAX_VALUE.toLong()
+      PsiTypes.longType() -> Long.MIN_VALUE to Long.MAX_VALUE
       else -> error("unreachable")
     }
 

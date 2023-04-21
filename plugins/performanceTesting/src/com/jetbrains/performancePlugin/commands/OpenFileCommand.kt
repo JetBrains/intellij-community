@@ -21,7 +21,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.CompletableFuture
 
-internal class OpenFileCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
+class OpenFileCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
   companion object {
     const val PREFIX: @NonNls String = CMD_PREFIX + "openFile"
     const val SPAN_NAME: @NonNls String = "firstCodeAnalysis"

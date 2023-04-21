@@ -2,66 +2,43 @@
 package com.intellij.openapi.externalSystem.autolink
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.createExtensionDisposable
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
-import com.intellij.openapi.progress.ProcessCanceledException
-import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.CancellationException
+
 
 @ApiStatus.Internal
-internal suspend fun <Extension : Any> ExtensionPointName<Extension>.forEachExtensionSafe(
-  parentDisposable: Disposable,
-  action: suspend (Extension, Disposable) -> Unit
+internal suspend fun <Extension : Any> ExtensionPointName<Extension>.forEachExtensionSafeAsync(
+  action: suspend (Extension) -> Unit
 ) {
-  extensionList.map {
-    safeLaunch(it, parentDisposable, action)
-  }.joinAll()
+  for (extension in extensionList) {
+    runCatching { action(extension) }
+      .getOrLogException(logger<ExtensionPointImpl<*>>())
+  }
 }
 
 @ApiStatus.Internal
-internal fun <Extension : Any> ExtensionPointName<Extension>.whenExtensionAdded(
+internal suspend fun <Extension : Any> ExtensionPointName<Extension>.withEachExtensionSafeAsync(
   parentDisposable: Disposable,
   action: suspend (Extension, Disposable) -> Unit
 ) {
+  for (extension in extensionList) {
+    val extensionDisposable = createExtensionDisposable(extension, parentDisposable)
+    runCatching { action(extension, extensionDisposable) }
+      .getOrLogException(logger<ExtensionPointImpl<*>>())
+  }
   addExtensionPointListener(object : ExtensionPointListener<Extension> {
     override fun extensionAdded(extension: Extension, pluginDescriptor: PluginDescriptor) {
-      safeLaunch(extension, parentDisposable, action)
+      val extensionDisposable = createExtensionDisposable(extension, parentDisposable)
+      launch(extensionDisposable) {
+        runCatching { action(extension, extensionDisposable) }
+          .getOrLogException(logger<ExtensionPointImpl<*>>())
+      }
     }
   }, parentDisposable)
-}
-
-@ApiStatus.Internal
-internal suspend fun <Extension : Any> ExtensionPointName<Extension>.withEachExtensionSafe(
-  parentDisposable: Disposable,
-  action: suspend (Extension, Disposable) -> Unit
-) {
-  forEachExtensionSafe(parentDisposable, action)
-  whenExtensionAdded(parentDisposable, action)
-}
-
-private fun <Extension : Any> ExtensionPointName<Extension>.safeLaunch(
-  extension: Extension,
-  parentDisposable: Disposable,
-  action: suspend (Extension, Disposable) -> Unit
-): Job {
-  val extensionDisposable = createExtensionDisposable(extension, parentDisposable)
-  return launch(extensionDisposable) {
-    try {
-      action(extension, extensionDisposable)
-    }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      logger<ExtensionPointImpl<*>>().error(e)
-    }
-  }
 }

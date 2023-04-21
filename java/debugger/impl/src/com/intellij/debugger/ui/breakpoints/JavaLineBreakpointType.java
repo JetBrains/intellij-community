@@ -299,7 +299,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     return canPutAtElement(file, line, project, (element, document) -> {
       if (element instanceof PsiField) {
         PsiExpression initializer = ((PsiField)element).getInitializer();
-        if (initializer != null && !PsiType.NULL.equals(initializer.getType())) {
+        if (initializer != null && !PsiTypes.nullType().equals(initializer.getType())) {
           if (DumbService.isDumb(project)) {
             return true;
           }

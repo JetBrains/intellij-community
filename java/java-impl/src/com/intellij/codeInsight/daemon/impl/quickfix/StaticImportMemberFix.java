@@ -34,10 +34,10 @@ abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement> 
   private final long myPsiModificationCount;
 
   StaticImportMemberFix(@NotNull PsiFile file, @NotNull R reference) {
-    if (ApplicationManager.getApplication().isDispatchThread() || !ApplicationManager.getApplication().isReadAccessAllowed()) {
-      // there is a lot of PSI computations and resolve going on here, ensure no freezes are reported
-      throw new IllegalStateException("Must be created in a background thread under the read action");
-    }
+    // there is a lot of PSI computations and resolve going on here,
+    // so it must be created in a background thread under the read action to ensure no freezes are reported
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     Project project = file.getProject();
     myReferencePointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(reference);
     if (!PsiUtil.isLanguageLevel5OrHigher(file)

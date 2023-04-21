@@ -9,7 +9,6 @@ import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +34,7 @@ public final class GrStubUtils {
   public static final int GR_STUB_VERSION = 3;
 
   public static void writeStringArray(@NotNull StubOutputStream dataStream, String @NotNull [] array) throws IOException {
-    writeSeq(dataStream, ContainerUtil.newArrayList(array), dataStream::writeName);
+    writeSeq(dataStream, Arrays.asList(array), dataStream::writeName);
   }
 
   public static String @NotNull [] readStringArray(@NotNull StubInputStream dataStream) throws IOException {

@@ -2,6 +2,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
@@ -121,47 +122,61 @@ public class AnnotationUtil {
     return AnnotationTargetUtil.findAnnotationTarget(annotation, nonTypeUse) != null;
   }
 
+  private static final ParameterizedCachedValueProvider<Map<Collection<String>, List<PsiAnnotation>>, PsiModifierListOwner> NON_CODE_ANNOTATIONS_PROVIDER =
+    (PsiModifierListOwner listOwner) -> {
+      Map<Collection<String>, List<PsiAnnotation>> value = ConcurrentFactoryMap.createMap(
+        annotationNames1 -> {
+          PsiUtilCore.ensureValid(listOwner);
+          final Project project = listOwner.getProject();
+          List<PsiAnnotation> annotations = null;
+          final ExternalAnnotationsManager externalAnnotationsManager = ExternalAnnotationsManager.getInstance(project);
+          for (String annotationName : annotationNames1) {
+            List<PsiAnnotation> externalAnnotations = externalAnnotationsManager.findExternalAnnotations(listOwner, annotationName);
+            if (!externalAnnotations.isEmpty()) {
+              if (annotations == null) {
+                annotations = new SmartList<>();
+              }
+              annotations.addAll(externalAnnotations);
+            }
+          }
+
+          final InferredAnnotationsManager inferredAnnotationsManager = InferredAnnotationsManager.getInstance(project);
+          for (String annotationName : annotationNames1) {
+            final PsiAnnotation annotation = inferredAnnotationsManager.findInferredAnnotation(listOwner, annotationName);
+            if (annotation != null) {
+              if (annotations == null) {
+                annotations = new SmartList<>();
+              }
+              annotations.add(annotation);
+            }
+          }
+          return annotations;
+        }
+      );
+      return CachedValueProvider.Result.create(value, PsiModificationTracker.MODIFICATION_COUNT);
+    };
+
+  private static final Key<ParameterizedCachedValue<Map<Collection<String>, List<PsiAnnotation>>, PsiModifierListOwner>> NON_CODE_ANNOTATIONS_KEY =
+    Key.create("NON_CODE_ANNOTATIONS");
+
   @Nullable
-  private static List<PsiAnnotation> findNonCodeAnnotations(@NotNull PsiModifierListOwner element, @NotNull Collection<String> annotationNames) {
+  private static List<PsiAnnotation> findNonCodeAnnotations(@NotNull PsiModifierListOwner element,
+                                                            @NotNull Collection<String> annotationNames) {
     if (element instanceof PsiLocalVariable) {
       // Non-code annotations for local variables are not supported: don't bother to search them
       return null;
     }
     PsiModifierListOwner listOwner = AnnotationCacheOwnerNormalizer.normalize(element);
-    Map<Collection<String>, List<PsiAnnotation>> map = CachedValuesManager.getCachedValue(
-      listOwner,
-      () -> {
-        Map<Collection<String>, List<PsiAnnotation>> value = ConcurrentFactoryMap.createMap(
-          annotationNames1 -> {
-            PsiUtilCore.ensureValid(listOwner);
-            final Project project = listOwner.getProject();
-            List<PsiAnnotation> annotations = null;
-            final ExternalAnnotationsManager externalAnnotationsManager = ExternalAnnotationsManager.getInstance(project);
-            for (String annotationName : annotationNames1) {
-              List<PsiAnnotation> externalAnnotations = externalAnnotationsManager.findExternalAnnotations(listOwner, annotationName);
-              if (!externalAnnotations.isEmpty()) {
-                if (annotations == null) {
-                  annotations = new SmartList<>();
-                }
-                annotations.addAll(externalAnnotations);
-              }
-            }
 
-            final InferredAnnotationsManager inferredAnnotationsManager = InferredAnnotationsManager.getInstance(project);
-            for (String annotationName : annotationNames1) {
-              final PsiAnnotation annotation = inferredAnnotationsManager.findInferredAnnotation(listOwner, annotationName);
-              if (annotation != null) {
-                if (annotations == null) {
-                  annotations = new SmartList<>();
-                }
-                annotations.add(annotation);
-              }
-            }
-            return annotations;
-          }
-        );
-        return CachedValueProvider.Result.create(value, PsiModificationTracker.MODIFICATION_COUNT);
-      });
+    Map<Collection<String>, List<PsiAnnotation>> map = CachedValuesManager.getManager(element.getProject())
+      .getParameterizedCachedValue(
+        listOwner,
+        NON_CODE_ANNOTATIONS_KEY,
+        NON_CODE_ANNOTATIONS_PROVIDER,
+        false,
+        listOwner
+      );
+
     return map.get(annotationNames);
   }
 

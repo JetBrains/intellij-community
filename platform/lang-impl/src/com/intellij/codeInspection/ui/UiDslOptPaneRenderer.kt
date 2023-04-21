@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui
 
 import com.intellij.codeInsight.hint.HintManager
@@ -23,9 +23,11 @@ import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.layout.selected
+import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.applyIf
-import java.awt.BorderLayout
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UI.PanelFactory
+import com.intellij.util.ui.UIUtil.setEnabledRecursively
 import java.awt.EventQueue
 import javax.swing.*
 import kotlin.math.max
@@ -41,7 +43,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
                       project: Project?): JComponent {
     return panel {
       pane.components.forEachIndexed { i, component ->
-        render(component, RendererContext(tool.optionController, project), i != 0 && !pane.components[i - 1].hasBottomGap)
+        render(component, RendererContext(tool.optionController, project), i == 0, component.hasBottomGap)
       }
     }
       .apply { if (parent != null) registerValidators(parent) }
@@ -80,7 +82,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
           component.children.forEach { tab ->
             tabbedPane.add(tab.label.label(), com.intellij.ui.dsl.builder.panel {
               tab.children.forEachIndexed { i, tabComponent ->
-                render(tabComponent, context, i == 0)
+                render(tabComponent, context, i == 0, tabComponent.hasBottomGap)
               }
             })
           }
@@ -107,9 +109,46 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
         }
       }
       is OptCheckboxPanel -> {
-        panel {
-          // TODO: proper rendering
-          component.children.forEachIndexed { i, child -> render(child, context, i == 0, i == component.children.lastIndex) }
+        row {
+          val panels = mutableListOf<Panel>()
+          val list: CheckBoxList<String> = CheckBoxList<String>(CheckBoxListListener { index, value ->
+            panels[index].enabled(value)
+            context.setOption(component.children[index].bindId, value)
+          })
+            .apply {
+              installCellRenderer {
+                it.apply { border = JBUI.Borders.empty(0, 4) }
+              }
+              // Add checkboxes
+              component.children.forEach { checkbox ->
+                addItem(checkbox.bindId, checkbox.label.label(), context.getOption(checkbox.bindId) == true)
+              }
+              // Show correct panel on checkbox selection
+              addListSelectionListener {
+                panels.forEachIndexed { index, panel -> panel
+                  .visible(index == selectedIndex)
+                  .enabled(isEnabled && isItemSelected(index))
+                }
+              }
+              border = JBUI.Borders.customLine(JBColor.namedColor("Borders.color"))
+            }
+          cell(list)
+          // panel containing one panel for each checkbox, only one visible at a time
+          panel {
+            for (child in component.children) {
+              row {
+                panels.add(panel {
+                  child.children.forEachIndexed { i, component ->
+                    render(component, context, i == 0)
+                  }
+                })
+              }
+            }
+          }
+            .align(Align.FILL)
+          panels.forEach { it.visible(false) }
+          // Default list selection
+          list.selectedIndex = 0
         }
       }
     }
@@ -137,24 +176,33 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
         cell = renderOptCell(component, context)
 
         nestedInRow?.let { nested ->
+          val checkbox = cell.component as JBCheckBox
           renderOptCell(nested, context)
-            .enabledIf((cell.component as JBCheckBox).selected)
+            .enabledIf(checkboxPredicate(checkbox))
         }
       }
     }
+      .layout(RowLayout.PARENT_GRID)
       .applyIf(withBottomGap) { bottomGap(BottomGap.SMALL) }
       .applyIf(component.hasResizableRow) { resizableRow() }
 
     // Nested components
     component.nestedControls?.let { nested ->
+      val controlsToRender = nested.drop(if (nestedInRow != null) 1 else 0)
       val group = indent {
-        nested
-          .drop(if (nestedInRow != null) 1 else 0)
+        controlsToRender
           .forEachIndexed { i, component -> render(component, context, i == 0) }
       }
-      if (cell.component is JBCheckBox) {
-        group.enabledIf((cell.component as JBCheckBox).selected)
+      if (controlsToRender.isNotEmpty() && cell.component is JBCheckBox) {
+        group.enabledIf(checkboxPredicate(cell.component as JBCheckBox))
       }
+    }
+  }
+
+  private fun checkboxPredicate(checkbox: JBCheckBox) = object : ComponentPredicate() {
+    override fun invoke(): Boolean = checkbox.isSelected && checkbox.isEnabled
+    override fun addListener(listener: (Boolean) -> Unit) {
+      checkbox.addChangeListener { listener(invoke()) }
     }
   }
 
@@ -231,7 +279,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
         }
 
         is OptSettingLink -> {
-          val label = HyperlinkLabel(component.displayName)
+          val label = HyperlinkLabel(component.displayName.label())
           label.addHyperlinkListener {
             val dataContext = DataManager.getInstance().getDataContext(label)
 
@@ -262,15 +310,18 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
         is OptStringList -> {
           @Suppress("UNCHECKED_CAST") val list = context.getOption(component.bindId) as MutableList<String>
           val listWithListener = ListWithListener(list) { context.setOption(component.bindId, list) }
-          val validator = component.validator
-          val form = if (validator is StringValidatorWithSwingSelector) {
-            ListEditForm("", component.label.label(), listWithListener, "", validator::select)
-          } else {
-            ListEditForm("", component.label.label(), listWithListener)
+          val form = when (val validator = component.validator) {
+            is StringValidatorWithSwingSelector -> ListEditForm("", component.label.label(), listWithListener, "", validator::select)
+            else -> ListEditForm("", component.label.label(), listWithListener)
           }
           cell(form.contentPanel)
             .align(Align.FILL)
             .resizableColumn()
+            .applyToComponent {
+              addPropertyChangeListener {
+                if (it.propertyName == "enabled") setEnabledRecursively(this, isEnabled)
+              }
+            }
         }
         
         is OptTable -> {
@@ -283,19 +334,23 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
           val panel = ToolbarDecorator.createDecorator(table)
             .setToolbarPosition(ActionToolbarPosition.LEFT)
             .setAddAction { _ ->
-              val tableModel = table.model
-              tableModel.addRow()
+              addRowWithSwingSelectors(table, component, context.project)
               EventQueue.invokeLater { editLastRow(table) }
             }
             .setRemoveAction { _ -> TableUtil.removeSelectedItems(table) }
-            .disableUpDownActions().createPanel()
+            .disableUpDownActions()
+            .setPreferredSize(InspectionOptionsPanel.getMinimumListSize())
+            .createPanel()
           val label = component.label.label()
-          if (!label.isEmpty()) {
-            panel.add(JLabel(label), BorderLayout.NORTH)
-          }
-          cell(panel)
+          cell(when {
+                 label.isBlank() -> panel
+                 else -> PanelFactory.panel(panel)
+                   .withLabel(label)
+                   .moveLabelOnTop()
+                   .resizeY(true)
+                   .createPanel()
+               })
             .align(Align.FILL)
-            .resizableColumn()
         }
 
         is OptCustom -> {
@@ -310,6 +365,21 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
 
         is OptCheckboxPanel, is OptGroup, is OptHorizontalStack, is OptSeparator, is OptTabSet -> { throw IllegalStateException("Unsupported nested component: ${component.javaClass}") }
     }
+  }
+
+  private fun addRowWithSwingSelectors(table: ListTable, component: OptTable, project: Project?) {
+    val tableModel = table.model
+    val row = mutableListOf<String>()
+    for (child in component.children) {
+      val validator = child.validator
+      if (project == null || validator == null || validator !is StringValidatorWithSwingSelector) {
+        row.add("")
+        continue
+      }
+      val selected: String? = validator.select(project)
+      row.add(selected ?: "")
+    }
+    tableModel.addRow(*row.toTypedArray())
   }
 
   private fun RendererContext.getOption(bindId: String): Any? {
@@ -333,13 +403,13 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
     val component = editor.getTableCellEditorComponent(table, tableModel.getValueAt(row, 0), true, row, 0)
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown { IdeFocusManager.getGlobalInstance().requestFocus(component, true) }
   }
-  
+
   private class ListWithListener(val list: MutableList<String>, val changeListener: () -> Unit): MutableList<String> by list {
     override fun removeAt(index: Int): String = list.removeAt(index).also { changeListener() }
     override fun remove(element: String): Boolean = list.remove(element).also { changeListener() }
     override fun add(element: String): Boolean = list.add(element).also { changeListener() }
     override fun set(index: Int, element: String): String = list.set(index, element).also { changeListener() }
-  } 
+  }
 
   private val OptComponent.splitLabel: LocMessage.PrefixSuffix?
     get() = when (this) {
@@ -370,10 +440,10 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
 
 
   private val OptComponent.hasBottomGap: Boolean
-    get() = this is OptGroup
+    get() = this is OptGroup || this is OptStringList || this is OptTable
 
   private val OptComponent.hasResizableRow: Boolean
-    get() = this is OptStringList
+    get() = this is OptStringList || this is OptTable
 
   private fun convertItem(key: String, type: Class<*>): Any {
     @Suppress("UNCHECKED_CAST")
@@ -382,7 +452,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
       type == Int::class.javaObjectType -> key.toInt()
       type.isEnum -> java.lang.Enum.valueOf(type as Class<out Enum<*>>, key)
       type.superclass.isEnum -> java.lang.Enum.valueOf(type.superclass as Class<out Enum<*>>, key)
-      else -> key 
+      else -> key
     }
   }
 

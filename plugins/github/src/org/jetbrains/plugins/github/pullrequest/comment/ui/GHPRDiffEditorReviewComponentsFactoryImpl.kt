@@ -2,9 +2,10 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
-import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
+import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.diff.util.Side
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -134,7 +135,7 @@ internal constructor(private val project: Project,
 
     return GHCommentTextFieldFactory(textFieldModel).create(
       actions,
-      GHCommentTextFieldFactory.AvatarConfig(avatarIconsProvider, currentUser)
+      CommentTextFieldFactory.IconConfig.of(CodeReviewChatItemUIUtil.ComponentType.COMPACT, avatarIconsProvider, currentUser.avatarUrl)
     ).apply {
       border = JBUI.Borders.empty(8)
     }.let { CodeReviewCommentUIUtil.createEditorInlayPanel(it) }

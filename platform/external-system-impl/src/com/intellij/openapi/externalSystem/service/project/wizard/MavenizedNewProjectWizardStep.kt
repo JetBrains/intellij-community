@@ -1,13 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.wizard
 
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logArtifactIdChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logGroupIdChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logParentChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logVersionChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Maven.logArtifactIdChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Maven.logGroupIdChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Maven.logVersionChanged
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardBaseData
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.nameProperty
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.GROUP_ID_PROPERTY_NAME
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
@@ -27,8 +26,9 @@ import java.util.Comparator.comparing
 import java.util.function.Function
 import javax.swing.JList
 
-abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentStep: ParentStep) :
-  AbstractNewProjectWizardStep(parentStep), MavenizedNewProjectWizardData<Data>
+abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(
+  protected val parentStep: ParentStep
+) : AbstractNewProjectWizardStep(parentStep), MavenizedNewProjectWizardData<Data>
   where ParentStep : NewProjectWizardStep,
         ParentStep : NewProjectWizardBaseData {
 
@@ -85,7 +85,7 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
         .bindText(groupIdProperty.trim())
         .columns(COLUMNS_MEDIUM)
         .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_GROUP_ID)
-        .validation { validateGroupId() }
+        .validationInfo { validateGroupId() }
         .whenTextChangedFromUi { logGroupIdChanged() }
     }
   }
@@ -96,9 +96,9 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
         .bindText(artifactIdProperty.trim())
         .columns(COLUMNS_MEDIUM)
         .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_ARTIFACT_ID)
-        .validation { validateArtifactId() }
+        .validationInfo { validateArtifactId() }
         .validationRequestor(WHEN_PROPERTY_CHANGED(artifactIdProperty))
-        .validationRequestor(WHEN_PROPERTY_CHANGED(nameProperty))
+        .validationRequestor(WHEN_PROPERTY_CHANGED(parentStep.nameProperty))
         .whenTextChangedFromUi { logArtifactIdChanged() }
     }
   }

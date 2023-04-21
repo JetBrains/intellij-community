@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.collaboration.ui.codereview.CodeReviewTabs.bindTabText
 import com.intellij.collaboration.ui.codereview.CodeReviewTabs.bindTabUi
-import com.intellij.collaboration.ui.codereview.ReturnToListComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -23,9 +22,7 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.i18n.GithubBundle.messagePointer
 import javax.swing.JComponent
 
-internal class GHPRViewTabsFactory(private val project: Project,
-                                   private val backToListAction: () -> Unit,
-                                   private val disposable: Disposable) {
+internal class GHPRViewTabsFactory(private val project: Project, private val disposable: Disposable) {
 
   private val uiDisposable = Disposer.newDisposable().also {
     Disposer.register(disposable, it)
@@ -64,14 +61,9 @@ internal class GHPRViewTabsFactory(private val project: Project,
 
     val infoTabInfo = TabInfo(infoComponent).apply {
       text = GithubBundle.message("pull.request.info")
-      sideComponent = createReturnToListSideComponent()
     }
-    val filesTabInfo = TabInfo(filesComponent).apply {
-      sideComponent = createReturnToListSideComponent()
-    }
-    val commitsTabInfo = TabInfo(commitsComponent).apply {
-      sideComponent = createReturnToListSideComponent()
-    }.also {
+    val filesTabInfo = TabInfo(filesComponent)
+    val commitsTabInfo = TabInfo(commitsComponent).also {
       scope.bindTabText(it, messagePointer("pull.request.commits"), commitsCountModel)
     }
 
@@ -92,11 +84,5 @@ internal class GHPRViewTabsFactory(private val project: Project,
     }
 
     return tabs
-  }
-
-  private fun createReturnToListSideComponent(): JComponent {
-    return ReturnToListComponent.createReturnToListSideComponent(GithubBundle.message("pull.request.back.to.list")) {
-      backToListAction()
-    }
   }
 }

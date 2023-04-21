@@ -57,7 +57,7 @@ object JpsEntitySourceFactory {
   fun createEntitySourceForGlobalLibrary(): EntitySource {
     val virtualFileUrlManager = VirtualFileUrlManager.getGlobalInstance()
     val globalLibrariesFile = virtualFileUrlManager.fromUrl(PathManager.getOptionsFile(ApplicationLibraryTable.getExternalFileName()).absolutePath)
-    return JpsFileEntitySource.ExactGlobalFile(globalLibrariesFile)
+    return JpsGlobalFileEntitySource(globalLibrariesFile)
   }
 
   private fun createInternalEntitySourceForProjectLibrary(project: Project): JpsFileEntitySource? {

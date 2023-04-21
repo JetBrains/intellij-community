@@ -6,10 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
@@ -89,7 +86,7 @@ public final class ExtractUtil {
     GrStatement[] statements = helper.getStatements();
     GrMethodCallExpression callExpression = createMethodCall(helper);
 
-    if ((outputVars.length == 0 || PsiType.VOID.equals(type)) && !helper.hasReturnValue()) return new GrStatement[]{callExpression};
+    if ((outputVars.length == 0 || PsiTypes.voidType().equals(type)) && !helper.hasReturnValue()) return new GrStatement[]{callExpression};
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(helper.getProject());
     if (helper.hasReturnValue()) {
       return new GrStatement[]{factory.createStatementFromText("return " + callExpression.getText())};
@@ -303,7 +300,7 @@ public final class ExtractUtil {
     buffer.append(") { \n");
 
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(helper.getProject());
-    generateBody(helper, PsiType.VOID.equals(type), buffer, helper.isForceReturn());
+    generateBody(helper, PsiTypes.voidType().equals(type), buffer, helper.isForceReturn());
 
     buffer.append("\n}");
 
@@ -410,7 +407,7 @@ public final class ExtractUtil {
         if (unboxed != null) paramType = unboxed;
 
         String paramTypeText;
-        if (paramType == null || paramType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || paramType.equals(PsiType.NULL)) {
+        if (paramType == null || paramType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || paramType.equals(PsiTypes.nullType())) {
           paramTypeText = "";
         }
         else {

@@ -9,20 +9,16 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.jcef.JBCefApp
-import com.intellij.ui.jcef.JBCefBrowser
 import com.intellij.ui.jcef.JCEFHtmlPanel
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
 import org.cef.handler.CefRequestHandlerAdapter
 import org.cef.network.CefRequest
-import org.intellij.lang.annotations.Language
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
 import org.intellij.plugins.markdown.ui.preview.*
-import org.intellij.plugins.markdown.ui.preview.jcef.impl.FileSchemeResourcesProcessor
-import org.intellij.plugins.markdown.ui.preview.jcef.impl.IncrementalDOMBuilder
-import org.intellij.plugins.markdown.ui.preview.jcef.impl.JcefBrowserPipeImpl
+import org.intellij.plugins.markdown.ui.preview.jcef.impl.*
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -104,7 +100,7 @@ class MarkdownJCEFHtmlPanel(
     Disposer.register(this, browserPipe)
     Disposer.register(this, PreviewStaticServer.instance.registerResourceProvider(resourceProvider))
     Disposer.register(this, PreviewStaticServer.instance.registerResourceProvider(fileSchemeResourcesProcessor))
-    jbCefClient.addRequestHandler(MyFilteringRequestHandler(), cefBrowser)
+    jbCefClient.addRequestHandler(MyFilteringRequestHandler(), cefBrowser, this)
     browserPipe.subscribe(JcefBrowserPipeImpl.WINDOW_READY_EVENT) {
       delayedContent?.let {
         cefBrowser.executeJavaScript(it, null, 0)
@@ -164,6 +160,15 @@ class MarkdownJCEFHtmlPanel(
     firstUpdate = true
     loadIndexContent()
     updateDom(previousRenderClosure, offset)
+  }
+
+  override fun dispose() {
+    for (extension in currentExtensions) {
+      Disposer.dispose(extension)
+    }
+    currentExtensions = emptyList()
+    scrollListeners.clear()
+    super.dispose()
   }
 
   @ApiStatus.Experimental
@@ -258,9 +263,5 @@ class MarkdownJCEFHtmlPanel(
     private val baseStyles = emptyList<String>()
 
     private fun isOffScreenRendering(): Boolean = Registry.`is`("ide.browser.jcef.markdownView.osr.enabled")
-
-    private fun JBCefBrowser.executeJavaScript(@Language("JavaScript") code: String) {
-      cefBrowser.executeJavaScript(code, null, 0)
-    }
   }
 }

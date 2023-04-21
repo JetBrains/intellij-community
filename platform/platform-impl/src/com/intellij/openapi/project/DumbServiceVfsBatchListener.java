@@ -14,7 +14,7 @@ import java.util.Stack;
 public class DumbServiceVfsBatchListener {
 
   public DumbServiceVfsBatchListener(@NotNull Project myProject,
-                                     @NotNull DumbServiceHeavyActivities heavyActivities) {
+                                     @NotNull MergingQueueGuiSuspender heavyActivities) {
     //noinspection UseOfObsoleteCollectionType
     ApplicationManager.getApplication().getMessageBus().connect(myProject)
       .subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener() {

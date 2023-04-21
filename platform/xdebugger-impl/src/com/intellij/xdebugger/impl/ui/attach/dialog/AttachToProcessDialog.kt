@@ -580,4 +580,8 @@ open class AttachToProcessDialog(
       attach(debugger, item)
     }
   }
+
+  override fun getHelpId(): String? {
+    return "debugging.AttachToProcessDialog"
+  }
 }

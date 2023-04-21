@@ -105,7 +105,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection im
     final PsiExpression[] arguments = argumentList.getExpressions();
     if (arguments.length == 3) {
       return (arguments[0].getType() instanceof PsiArrayType || TypeUtils.isJavaLangString(arguments[0].getType())) &&
-             PsiType.INT.equals(arguments[1].getType()) && PsiType.INT.equals(arguments[2].getType());
+             PsiTypes.intType().equals(arguments[1].getType()) && PsiTypes.intType().equals(arguments[2].getType());
     }
     return arguments.length == 1;
   }
@@ -220,7 +220,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection im
         }
         else {
           final PsiExpression argument = arguments[0];
-          if (PsiType.INT.equals(argument.getType())) {
+          if (PsiTypes.intType().equals(argument.getType())) {
             builder = new StringBuilder();
           }
           else if (ParenthesesUtils.getPrecedence(argument) > ParenthesesUtils.ADDITIVE_PRECEDENCE) {
@@ -334,7 +334,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection im
         if (arguments.length == 1 && !TypeUtils.typeEquals(STRING_JOINER, newExpression.getType())) {
           final PsiExpression argument = arguments[0];
           final PsiType type = argument.getType();
-          if (!PsiType.INT.equals(type)) {
+          if (!PsiTypes.intType().equals(type)) {
             if (type != null && type.equalsToText(JAVA_LANG_CHAR_SEQUENCE)) {
               result.append("String.valueOf(").append(tracker.textWithComments(argument)).append(')');
             }

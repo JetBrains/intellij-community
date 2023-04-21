@@ -523,22 +523,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   private @NotNull Border getActionButtonBorder() {
-    return myActionButtonBorder != null ? myActionButtonBorder : new JBEmptyBorder(0) {
-      @Override
-      public Insets getBorderInsets(Component c, Insets insets) {
-        Insets x = getBorderInsets();
-        insets.left = x.left;
-        insets.top = x.top;
-        insets.right = x.right;
-        insets.bottom = x.bottom;
-        return insets;
-      }
-
-      @Override
-      public Insets getBorderInsets() {
-        return myOrientation == SwingConstants.VERTICAL ? JBUI.insets(2, 1) : JBUI.insets(1, 2);
-      }
-    };
+    return myActionButtonBorder != null ? myActionButtonBorder : new ActionButtonBorder(2, 1);
   }
 
   protected @NotNull ActionButton createToolbarButton(@NotNull AnAction action,
@@ -1079,6 +1064,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   public final void setActionButtonBorder(@Nullable Border actionButtonBorder) {
     myActionButtonBorder = actionButtonBorder;
+  }
+
+  public final void setActionButtonBorder(int directionalGap, int orthogonalGap) {
+    setActionButtonBorder(new ActionButtonBorder(directionalGap, orthogonalGap));
   }
 
   public final void setSeparatorCreator(@NotNull Function<? super String, ? extends Component> separatorCreator) {
@@ -1874,5 +1863,32 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   public interface SecondaryGroupUpdater {
     void update(@NotNull AnActionEvent e);
+  }
+
+  private class ActionButtonBorder extends JBEmptyBorder {
+    private final int myDirectionalGap;
+    private final int myOrthogonalGap;
+
+    ActionButtonBorder(int directionalGap, int orthogonalGap) {
+      super(0);
+      myDirectionalGap = directionalGap;
+      myOrthogonalGap = orthogonalGap;
+    }
+
+    @Override
+    public Insets getBorderInsets(Component c, Insets insets) {
+      Insets x = getBorderInsets();
+      insets.left = x.left;
+      insets.top = x.top;
+      insets.right = x.right;
+      insets.bottom = x.bottom;
+      return insets;
+    }
+
+    @Override
+    public Insets getBorderInsets() {
+      return myOrientation == SwingConstants.VERTICAL ?
+             JBUI.insets(myDirectionalGap, myOrthogonalGap) : JBUI.insets(myOrthogonalGap, myDirectionalGap);
+    }
   }
 }

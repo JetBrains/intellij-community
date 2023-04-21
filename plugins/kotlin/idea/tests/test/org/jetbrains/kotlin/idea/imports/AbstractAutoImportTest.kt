@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.imports
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -62,9 +61,9 @@ abstract class AbstractAutoImportTest : KotlinLightCodeInsightFixtureTestCase() 
                     editor, intArrayOf(),
                     /* canChange */ true
                 )
-                ReadAction.nonBlocking {
+                AppExecutorUtil.getAppExecutorService().submit {
                     DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(myFixture.file, myFixture.editor)
-                }.submit(AppExecutorUtil.getAppExecutorService()).get()
+                }.get()
                 
             } finally {
                 ConfigLibraryUtil.unconfigureLibrariesByDirective(module, originalText)

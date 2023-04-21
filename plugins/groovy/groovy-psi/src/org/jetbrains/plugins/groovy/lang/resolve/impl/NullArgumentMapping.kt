@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import org.jetbrains.plugins.groovy.lang.resolve.api.*
 import org.jetbrains.plugins.groovy.lang.resolve.api.ApplicabilityResult.ArgumentApplicability
 
@@ -23,7 +24,7 @@ class NullArgumentMapping<out P : CallParameter>(parameter: P) : ArgumentMapping
   override fun applicability(): Applicability = Applicability.applicable
 
   private companion object {
-    private val singleNullArgument = JustTypeArgument(PsiType.NULL)
+    private val singleNullArgument = JustTypeArgument(PsiTypes.nullType())
     private val singleNullArgumentList = listOf(singleNullArgument)
   }
 

@@ -239,11 +239,9 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
           if (containingClass != null) {
             final boolean isDefinition = PyUtil.isNewMethod(func) || func.getModifier() == PyFunction.Modifier.CLASSMETHOD;
 
-            final PyType genericType = new PyTypingTypeProvider().getGenericType(containingClass, context);
+            final PyCollectionType genericType = PyTypeChecker.findGenericDefinitionType(containingClass, context);
             if (genericType != null) {
-              return isDefinition && genericType instanceof PyInstantiableType
-                     ? ((PyInstantiableType<?>)genericType).toClass()
-                     : genericType;
+              return isDefinition ? genericType.toClass() : genericType;
             }
 
             return new PyClassTypeImpl(containingClass, isDefinition);

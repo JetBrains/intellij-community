@@ -213,13 +213,13 @@ public class OptionalChainInliner implements CallInliner {
     if (type == null) return null;
     String rawName = type.rawType().getCanonicalText();
     if (rawName.equals(OPTIONAL_INT)) {
-      return box ? PsiType.INT.getBoxedType(expression) : PsiType.INT;
+      return box ? PsiTypes.intType().getBoxedType(expression) : PsiTypes.intType();
     }
     if (rawName.equals(OPTIONAL_LONG)) {
-      return box ? PsiType.LONG.getBoxedType(expression) : PsiType.LONG;
+      return box ? PsiTypes.longType().getBoxedType(expression) : PsiTypes.longType();
     }
     if (rawName.equals(OPTIONAL_DOUBLE)) {
-      return box ? PsiType.DOUBLE.getBoxedType(expression) : PsiType.DOUBLE;
+      return box ? PsiTypes.doubleType().getBoxedType(expression) : PsiTypes.doubleType();
     }
     if (!rawName.equals(JAVA_UTIL_OPTIONAL) && !rawName.equals(GUAVA_OPTIONAL)) return null;
     PsiType[] parameters = type.getParameters();

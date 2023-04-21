@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,17 +27,8 @@ public class Splitter extends JPanel implements Splittable {
 
   private int myDividerWidth;
   /**
-   * /------/
-   * |  1   |
-   * This is vertical split |------|
-   * |  2   |
-   * /------/
-   * <p/>
-   * /-------/
-   * |   |   |
-   * This is horizontal split | 1 | 2 |
-   * |   |   |
-   * /-------/
+   * If {@code true}, the components are displayed above one another.<br>
+   * If {@code false}, the components are displayed side by side.
    */
   private boolean myVerticalSplit;
   private boolean myHonorMinimumSize;
@@ -77,31 +68,44 @@ public class Splitter extends JPanel implements Splittable {
 
 
   /**
-   * Creates horizontal split (with components which are side by side) with proportion equals to .5f
+   * Creates a horizontal split (with components that are side by side),
+   * both components get the same proportion of the available space.
    */
   public Splitter() {
     this(false);
   }
 
   /**
-   * Creates split with specified orientation and proportion equals to .5f
+   * Creates a split with the specified orientation,
+   * both components get the same proportion of the available space.
+   * The proportion may later be changed arbitrarily between 0.0 and 1.0.
    *
-   * @param vertical If true, components are displayed above one another. If false, components are displayed side by side.
+   * @param vertical If {@code true}, the components are displayed above one another.
+   *                 If {@code false}, the components are displayed side by side.
    */
   public Splitter(boolean vertical) {
-    this(vertical, .5f);
+    this(vertical, 0.5f);
   }
 
   /**
-   * Creates split with specified orientation and proportion.
+   * Creates a split with the specified orientation and initial proportion.
+   * The proportion may later be changed arbitrarily between 0.0 and 1.0.
    *
-   * @param vertical If true, components are displayed above one another. If false, components are displayed side by side.
-   * @param proportion The initial proportion of the splitter (between 0.0f and 1.0f).
+   * @param vertical If {@code true}, the components are displayed above one another.
+   *                 If {@code false}, the components are displayed side by side.
+   * @param proportion The initial proportion of the splitter, between 0.0 and 1.0.
    */
   public Splitter(boolean vertical, float proportion) {
     this(vertical, proportion, 0.0f, 1.0f);
   }
 
+  /**
+   * Creates a split with the specified orientation and proportion.
+   *
+   * @param vertical If {@code true}, the components are displayed above one another.
+   *                 If {@code false}, the components are displayed side by side.
+   * @param proportion The initial proportion of the splitter, between 0.0 and 1.0.
+   */
   public Splitter(boolean vertical, float proportion, float minProp, float maxProp) {
     myMinProp = minProp;
     myMaxProp = maxProp;
@@ -599,9 +603,6 @@ public class Splitter extends JPanel implements Splittable {
     repaint();
   }
 
-  /**
-   * Swaps components.
-   */
   public void swapComponents() {
     JComponent tmp = myFirstComponent;
     myFirstComponent = mySecondComponent;
@@ -611,7 +612,8 @@ public class Splitter extends JPanel implements Splittable {
   }
 
   /**
-   * @return {@code true} if splitter has vertical orientation, {@code false} otherwise
+   * @return {@code true} if the components are displayed above one another,
+   * {@code false} if the components are displayed side by side
    */
   @Override
   public boolean getOrientation() {
@@ -619,14 +621,16 @@ public class Splitter extends JPanel implements Splittable {
   }
 
   /**
-   * @return true if |-|
+   * @return {@code true} if the components are displayed above one another,
+   * {@code false} if the components are displayed side by side
    */
   public boolean isVertical() {
     return myVerticalSplit;
   }
 
   /**
-   * @param verticalSplit {@code true} means that splitter will have vertical split
+   * @param verticalSplit if {@code true}, the components are displayed above one another;
+   *                      if {@code false}, the components are displayed side by side.
    */
   @Override
   public void setOrientation(boolean verticalSplit) {
@@ -643,8 +647,8 @@ public class Splitter extends JPanel implements Splittable {
   }
 
   /**
-   * Sets component which is located as the "first" split area. The method doesn't validate and
-   * repaint the splitter if there is one already.
+   * Sets the component which is located as the "first" split area.
+   * If the given component is the current one, the method neither validates nor repaints the splitter.
    */
   public void setFirstComponent(@Nullable JComponent component) {
     if (myFirstComponent != component) {
@@ -672,8 +676,8 @@ public class Splitter extends JPanel implements Splittable {
   }
 
   /**
-   * Sets component which is located as the "second" split area. The method doesn't validate and
-   * repaint the splitter.
+   * Sets the component which is located as the "second" split area.
+   * If the given component is the current one, the method neither validates nor repaints the splitter.
    */
   public void setSecondComponent(@Nullable JComponent component) {
     if (mySecondComponent != component) {

@@ -57,7 +57,7 @@ public class ScheduledThreadPoolExecutorWithZeroCoreThreadsInspection extends Ab
     if (args.length != 1) return null;
     final PsiExpression arg = args[0];
     final PsiType argType = arg.getType();
-    if (argType == null || !argType.equals(PsiType.INT)) return null;
+    if (argType == null || !argType.equals(PsiTypes.intType())) return null;
     final Integer value = ObjectUtils.tryCast(CommonDataflow.computeValue(arg), Integer.class);
     return value != null && value.intValue() == 0 ? arg : null;
   }

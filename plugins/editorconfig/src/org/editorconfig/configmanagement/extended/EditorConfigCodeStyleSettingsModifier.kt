@@ -43,21 +43,23 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.function.Consumer
 
+private val LOG = Logger.getInstance(EditorConfigCodeStyleSettingsModifier::class.java)
+
 class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
   private val myReportedErrorIds: MutableSet<String> = HashSet()
 
   override fun modifySettings(settings: TransientCodeStyleSettings, psiFile: PsiFile): Boolean {
     val file = psiFile.virtualFile
     if (Utils.isFullIntellijSettingsSupport() && file != null &&
-        (!ApplicationManager.getApplication().isUnitTestMode || isEnabledInTests())) {
+        (!ApplicationManager.getApplication().isUnitTestMode || Handler.isEnabledInTests())) {
       val project = psiFile.project
       if (!project.isDisposed && Utils.isEnabled(settings)) {
         // Get editorconfig settings
         try {
-          return runWithTimeout(project) {
-            val (properties, editorConfigs) = processEditorConfig(project, psiFile)
+          return Handler.runWithTimeout(project) {
+            val (properties, editorConfigs) = Handler.processEditorConfig(project, psiFile)
             // Apply editorconfig settings for the current editor
-            if (applyCodeStyleSettings(settings, properties, psiFile)) {
+            if (Handler.applyCodeStyleSettings(settings, properties, psiFile)) {
               settings.addDependencies(editorConfigs)
               val navigationFactory = EditorConfigNavigationActionsFactory.getInstance(psiFile)
               navigationFactory?.updateEditorConfigFilePaths(editorConfigs.map { it.path })
@@ -153,15 +155,13 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
     }
   }
 
-  companion object {
-    private val LOG = Logger.getInstance(
-      EditorConfigCodeStyleSettingsModifier::class.java)
+  object Handler { // not a companion object to load less bytecode simultaneously with EditorConfigCodeStyleSettingsModifier
     private val TIMEOUT = Duration.ofSeconds(10)
 
     private var ourEnabledInTestOnly = false
 
     @JvmStatic
-    private fun isEnabledInTests() = ourEnabledInTestOnly
+    internal fun isEnabledInTests() = ourEnabledInTestOnly
 
     @JvmStatic
     @TestOnly
@@ -170,7 +170,7 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
     }
 
     @Throws(TimeoutException::class)
-    private fun runWithTimeout(project: Project,
+    internal fun runWithTimeout(project: Project,
                                callable: Callable<Boolean>): Boolean {
       @Suppress("DEPRECATION_ERROR")
       val future = project.computeOnPooledThread(callable)
@@ -190,7 +190,7 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
       return false
     }
 
-    private fun applyCodeStyleSettings(settings: TransientCodeStyleSettings,
+    internal fun applyCodeStyleSettings(settings: TransientCodeStyleSettings,
                                        properties: ResourceProperties,
                                        file: PsiFile): Boolean {
       val processed: MutableSet<String> = HashSet()
@@ -283,7 +283,7 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
       return null
     }
 
-    private fun processEditorConfig(project: Project, psiFile: PsiFile): Pair<ResourceProperties, List<VirtualFile>> {
+    internal fun processEditorConfig(project: Project, psiFile: PsiFile): Pair<ResourceProperties, List<VirtualFile>> {
       try {
         val file = psiFile.virtualFile
         val filePath = Utils.getFilePath(project, file)

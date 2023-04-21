@@ -210,7 +210,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
       callExpression = (PsiCallExpression)((PsiExpressionStatement) callStatement).getExpression();
     }
     else {
-      if (PsiType.VOID.equals(delegate.getReturnType())) {
+      if (PsiTypes.voidType().equals(delegate.getReturnType())) {
         PsiElement callStatement = factory.createStatementFromText(newName + "();", null);
         callStatement = CodeStyleManager.getInstance(project).reformat(callStatement);
         callStatement = body.add(callStatement);

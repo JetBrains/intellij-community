@@ -84,6 +84,8 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getWhatsNewUrl();
 
+  public abstract String getWhatsNewEapUrl();
+
   public abstract boolean isShowWhatsNewOnUpdate();
 
   public abstract String getWinKeymapUrl();

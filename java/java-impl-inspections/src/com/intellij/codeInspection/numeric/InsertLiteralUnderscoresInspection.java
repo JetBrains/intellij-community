@@ -5,10 +5,7 @@ import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.JavaBundle;
-import com.intellij.psi.JavaElementVisitor;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.text.LiteralFormatUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,8 +27,8 @@ public final class InsertLiteralUnderscoresInspection extends LocalInspectionToo
       @Override
       public void visitLiteralExpression(@NotNull final PsiLiteralExpression literalExpression) {
         final PsiType type = literalExpression.getType();
-        if (!PsiType.INT.equals(type) && !PsiType.LONG.equals(type) &&
-            !PsiType.FLOAT.equals(type) && !PsiType.DOUBLE.equals(type)) return;
+        if (!PsiTypes.intType().equals(type) && !PsiTypes.longType().equals(type) &&
+            !PsiTypes.floatType().equals(type) && !PsiTypes.doubleType().equals(type)) return;
 
         final String text = literalExpression.getText();
         if (text == null || text.contains("_")) return;

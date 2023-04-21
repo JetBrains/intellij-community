@@ -5,12 +5,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.packaging.impl.ui.DirectoryCopyPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
-import com.intellij.workspaceModel.ide.VirtualFileUrlManagerUtil;
+import com.intellij.workspaceModel.ide.VirtualFileUrls;
 import com.intellij.workspaceModel.storage.EntitySource;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.MutableEntityStorage;
-import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
+import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.DirectoryCopyPackagingElementEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +38,7 @@ public class DirectoryCopyPackagingElement extends FileOrDirectoryCopyPackagingE
     WorkspaceEntity existingEntity = getExistingEntity(diff);
     if (existingEntity != null) return existingEntity;
 
-    VirtualFileUrlManager fileUrlManager = VirtualFileUrlManagerUtil.getInstance(VirtualFileUrlManager.Companion, project);
+    VirtualFileUrlManager fileUrlManager = VirtualFileUrls.getVirtualFileUrlManager(project);
     VirtualFileUrl fileUrl = fileUrlManager.fromPath(myFilePath);
     DirectoryCopyPackagingElementEntity addedEntity =
       ExtensionsKt.addDirectoryCopyPackagingElementEntity(diff, fileUrl, source);

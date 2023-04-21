@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env;
 
 import com.google.common.collect.Sets;
@@ -171,7 +171,7 @@ public class PyEnvTaskRunner {
     try {
       final VirtualFile url = VfsUtil.findFileByIoFile(new File(executable), true);
       assert url != null : "No file " + executable;
-      return PySdkTools.createTempSdk(url, SdkCreationType.EMPTY_SDK, null);
+      return PySdkTools.createTempSdk(url, SdkCreationType.EMPTY_SDK, null, null);
     }
     catch (Exception ex) {
       throw new RuntimeException(ex);

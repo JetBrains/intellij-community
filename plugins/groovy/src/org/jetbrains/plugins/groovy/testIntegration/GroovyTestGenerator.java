@@ -143,7 +143,7 @@ public class GroovyTestGenerator implements TestGenerator {
                                      Editor editor,
                                      @Nullable String name, Set<? super String> existingNames) {
     GroovyPsiElementFactory f = GroovyPsiElementFactory.getInstance(targetClass.getProject());
-    PsiMethod method = (PsiMethod)targetClass.add(f.createMethod("dummy", PsiType.VOID));
+    PsiMethod method = (PsiMethod)targetClass.add(f.createMethod("dummy", PsiTypes.voidType()));
     PsiDocumentManager.getInstance(targetClass.getProject()).doPostponedOperationsAndUnblockDocument(editor.getDocument());
     TestIntegrationUtils.runTestMethodTemplate(methodKind, descriptor, editor, targetClass, method, name, true, existingNames);
   }

@@ -734,7 +734,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     if (typeElement.isInferredType()) {
       // replace inferred type with explicit type if possible
       final PsiType type = typeElement.getType();
-      if (type == PsiType.NULL || type instanceof PsiLambdaParameterType || type instanceof PsiLambdaExpressionType) {
+      if (type == PsiTypes.nullType() || type instanceof PsiLambdaParameterType || type instanceof PsiLambdaExpressionType) {
         return typeElement;
       }
       final String canonicalText = type.getCanonicalText();

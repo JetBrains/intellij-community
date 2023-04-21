@@ -3,11 +3,10 @@
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.gradle.api.tasks.Exec
-import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinDependency
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheAwareImpl
+import org.jetbrains.kotlin.idea.gradleTooling.arguments.createCachedArgsInfo
 import org.jetbrains.kotlin.idea.projectModel.*
 import java.io.File
-import org.jetbrains.kotlin.idea.gradleTooling.arguments.createCachedArgsInfo
 
 class KotlinAndroidSourceSetInfoImpl(
     override val kotlinSourceSetName: String,
@@ -34,9 +33,11 @@ class KotlinSourceSetImpl @OptIn(KotlinGradlePluginVersionDependentApi::class) c
     override val androidSourceSetInfo: KotlinAndroidSourceSetInfo?,
     override val actualPlatforms: KotlinPlatformContainerImpl = KotlinPlatformContainerImpl(),
     override var isTestComponent: Boolean = false,
+    override val extras: IdeaKotlinExtras = IdeaKotlinExtras.empty(),
 ) : KotlinSourceSet {
 
     override val dependencies: Array<KotlinDependencyId> = regularDependencies + intransitiveDependencies
+
 
     @OptIn(KotlinGradlePluginVersionDependentApi::class)
     @Suppress("DEPRECATION")
@@ -51,6 +52,7 @@ class KotlinSourceSetImpl @OptIn(KotlinGradlePluginVersionDependentApi::class) c
         allDependsOnSourceSets = kotlinSourceSet.allDependsOnSourceSets.toMutableSet(),
         additionalVisibleSourceSets = kotlinSourceSet.additionalVisibleSourceSets.toMutableSet(),
         androidSourceSetInfo = kotlinSourceSet.androidSourceSetInfo?.let(::KotlinAndroidSourceSetInfoImpl),
+        extras = IdeaKotlinExtras.copy(kotlinSourceSet.extras),
         actualPlatforms = KotlinPlatformContainerImpl(kotlinSourceSet.actualPlatforms),
         isTestComponent = kotlinSourceSet.isTestComponent
     )
@@ -139,7 +141,8 @@ data class KotlinCompilationImpl(
     override val cachedArgsInfo: CachedArgsInfo<*>,
     override val kotlinTaskProperties: KotlinTaskProperties,
     override val nativeExtensions: KotlinNativeCompilationExtensions?,
-    override val associateCompilations: Set<KotlinCompilationCoordinates>
+    override val associateCompilations: Set<KotlinCompilationCoordinates>,
+    override val extras: IdeaKotlinExtras = IdeaKotlinExtras.empty()
 ) : KotlinCompilation {
 
     // create deep copy
@@ -154,7 +157,8 @@ data class KotlinCompilationImpl(
         cachedArgsInfo = createCachedArgsInfo(kotlinCompilation.cachedArgsInfo, cloningCache),
         kotlinTaskProperties = KotlinTaskPropertiesImpl(kotlinCompilation.kotlinTaskProperties),
         nativeExtensions = kotlinCompilation.nativeExtensions?.let(::KotlinNativeCompilationExtensionsImpl),
-        associateCompilations = cloneCompilationCoordinatesWithCaching(kotlinCompilation.associateCompilations, cloningCache)
+        associateCompilations = cloneCompilationCoordinatesWithCaching(kotlinCompilation.associateCompilations, cloningCache),
+        extras = IdeaKotlinExtras.copy(kotlinCompilation.extras)
     ) {
         disambiguationClassifier = kotlinCompilation.disambiguationClassifier
         platform = kotlinCompilation.platform
@@ -205,7 +209,8 @@ data class KotlinTargetImpl(
     override val testRunTasks: Collection<KotlinTestRunTask>,
     override val nativeMainRunTasks: Collection<KotlinNativeMainRunTask>,
     override val jar: KotlinTargetJar?,
-    override val konanArtifacts: List<KonanArtifactModel>
+    override val konanArtifacts: List<KonanArtifactModel>,
+    override val extras: IdeaKotlinExtras
 ) : KotlinTarget {
     override fun toString() = name
 
@@ -241,7 +246,8 @@ data class KotlinTargetImpl(
                 }
         },
         KotlinTargetJarImpl(target.jar?.archiveFile),
-        target.konanArtifacts.map { KonanArtifactModelImpl(it) }.toList()
+        target.konanArtifacts.map { KonanArtifactModelImpl(it) }.toList(),
+        IdeaKotlinExtras.copy(target.extras)
     )
 }
 

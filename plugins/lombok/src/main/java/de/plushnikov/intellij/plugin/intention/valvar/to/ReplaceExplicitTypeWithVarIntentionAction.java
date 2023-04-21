@@ -23,10 +23,9 @@ public class ReplaceExplicitTypeWithVarIntentionAction extends AbstractReplaceEx
 
   @Override
   public boolean isAvailableOnVariable(@NotNull PsiVariable psiVariable) {
-    if (!(psiVariable instanceof PsiParameter)) {
+    if (!(psiVariable instanceof PsiParameter psiParameter)) {
       return false;
     }
-    PsiParameter psiParameter = (PsiParameter) psiVariable;
     PsiElement declarationScope = psiParameter.getDeclarationScope();
     if (!(declarationScope instanceof PsiForStatement) && !(declarationScope instanceof PsiForeachStatement)) {
       return false;

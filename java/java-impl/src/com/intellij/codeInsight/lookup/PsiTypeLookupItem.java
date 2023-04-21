@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.*;
@@ -109,6 +109,8 @@ public final class PsiTypeLookupItem extends LookupItem implements TypedLookupIt
     }
 
     PsiElement position = context.getFile().findElementAt(context.getStartOffset());
+    boolean insideVarDeclaration = position.getParent() instanceof PsiTypeElement typeElement &&
+                                   typeElement.getParent() instanceof PsiVariable;
     if (position != null) {
       int genericsStart = context.getTailOffset();
       context.getDocument().insertString(genericsStart, JavaCompletionUtil.escapeXmlIfNeeded(context, calcGenerics(position, context)));
@@ -124,7 +126,7 @@ public final class PsiTypeLookupItem extends LookupItem implements TypedLookupIt
         targetOffset += braces.length() + 1;
       } else {
         context.getDocument().insertString(targetOffset, braces);
-        targetOffset++;
+        targetOffset += insideVarDeclaration ? braces.length() : 1;
         if (context.getCompletionChar() == '[') {
           context.setAddCompletionChar(false);
         }

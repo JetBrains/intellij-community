@@ -3,7 +3,7 @@ pluginManagement {
         {{kts_kotlin_plugin_repositories}}
     }
     plugins {
-        kotlin("multiplatform") version "{{kotlin_plugin_version}}"
+        kotlin("multiplatform") version "{{kgp_version}}"
     }
 }
 

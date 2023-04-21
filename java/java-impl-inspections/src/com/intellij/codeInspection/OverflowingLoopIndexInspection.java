@@ -25,7 +25,7 @@ public class OverflowingLoopIndexInspection extends AbstractBaseJavaLocalInspect
         PsiLocalVariable indexVariable = findIndexVariable(updateExpression);
         if (indexVariable == null) return;
         PsiType type = indexVariable.getType();
-        if (!type.equals(PsiType.INT) && !type.equals(PsiType.LONG)) return;
+        if (!type.equals(PsiTypes.intType()) && !type.equals(PsiTypes.longType())) return;
 
         ConditionType conditionType = getConditionType(statement.getCondition(), indexVariable);
         if (conditionType == ConditionType.Unknown) return;

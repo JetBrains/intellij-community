@@ -43,7 +43,7 @@ public class ResolveMethodTest extends LightResolveTestCase {
     PsiElement target = resolve();
     assertTrue(target instanceof PsiMethod);
     PsiParameter parm = ((PsiMethod)target).getParameterList().getParameters()[0];
-    assertEquals(PsiType.INT, parm.getType());
+    assertEquals(PsiTypes.intType(), parm.getType());
   }
 
   public void testSimple() {
@@ -56,7 +56,7 @@ public class ResolveMethodTest extends LightResolveTestCase {
     PsiElement target = resolve();
     assertTrue(target instanceof PsiMethod);
     PsiParameter parm = ((PsiMethod)target).getParameterList().getParameters()[0];
-    assertEquals(PsiType.INT, parm.getType());
+    assertEquals(PsiTypes.intType(), parm.getType());
   }
 
   public void testSuper1() {
@@ -74,7 +74,7 @@ public class ResolveMethodTest extends LightResolveTestCase {
   public void testNextMethod() {
     PsiElement target = resolve();
     assertTrue(target instanceof PsiMethod);
-    assertEquals(PsiType.BOOLEAN, ((PsiMethod)target).getParameterList().getParameters()[1].getType());
+    assertEquals(PsiTypes.booleanType(), ((PsiMethod)target).getParameterList().getParameters()[1].getType());
   }
 
   public void testMethodConflict1() {
@@ -85,7 +85,7 @@ public class ResolveMethodTest extends LightResolveTestCase {
   public void testValueOf() {
     PsiElement target = resolve();
     assertTrue(target instanceof PsiMethod);
-    assertEquals(PsiType.INT, ((PsiMethod)target).getParameterList().getParameters()[0].getType());
+    assertEquals(PsiTypes.intType(), ((PsiMethod)target).getParameterList().getParameters()[0].getType());
   }
 
   public void testMethodFromAnonBase() {

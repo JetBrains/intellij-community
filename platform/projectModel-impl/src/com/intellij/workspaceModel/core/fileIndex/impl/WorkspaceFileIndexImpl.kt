@@ -174,12 +174,20 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
     indexData?.resetCustomContributors()
   }
 
+  override fun reset() {
+    indexData = null
+  }
+
   override fun markDirty(entityReferences: Collection<EntityReference<WorkspaceEntity>>, filesToInvalidate: Collection<VirtualFile>) {
     indexData?.markDirty(entityReferences, filesToInvalidate)
   }
 
   override fun updateDirtyEntities() {
     indexData?.updateDirtyEntities()
+  }
+
+  override fun analyzeVfsChanges(events: List<VFileEvent>): VfsChangeApplier? {
+    return indexData?.analyzeVfsChanges(events)
   }
 
   fun onEntitiesChanged(event: VersionedStorageChange, storageKind: EntityStorageKind) {

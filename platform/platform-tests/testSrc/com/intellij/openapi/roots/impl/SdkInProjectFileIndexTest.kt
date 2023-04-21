@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl
 
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -125,6 +126,7 @@ class SdkInProjectFileIndexTest {
   fun `add and remove project SDK inherited in module`() {
     val module2 = projectModel.createModule("module2")
     val sdk2 = projectModel.createSdk("sdk2")
+    WriteAction.runAndWait<RuntimeException> { ProjectJdkTable.getInstance().addJdk(sdk2, projectModel.disposableRule.disposable) }
     ModuleRootModificationUtil.setModuleSdk(module2, sdk2)
     
     val sdk = projectModel.createSdk("unresolved") {

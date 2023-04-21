@@ -147,7 +147,7 @@ public class SeparatorWithText extends JComponent implements Accessible {
   protected class AccessibleSeparatorWithText extends AccessibleJComponent {
     @Override
     public AccessibleRole getAccessibleRole() {
-      return AccessibleRole.LABEL;
+      return myCaption != null ? AccessibleRole.LABEL : AccessibleRole.SEPARATOR;
     }
 
     @Override

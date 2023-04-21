@@ -30,7 +30,7 @@ internal class DynamicPluginEnabler : PluginEnabler {
     PluginEnabler.HEADLESS.enable(descriptors)
     val installedDescriptors = findInstalledPlugins(descriptors)
     return installedDescriptors != null
-           && DynamicPlugins.loadPlugins(installedDescriptors)
+           && DynamicPlugins.loadPlugins(installedDescriptors, project)
   }
 
   override fun disable(descriptors: Collection<IdeaPluginDescriptor>): Boolean =

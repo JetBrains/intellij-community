@@ -48,7 +48,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.*
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesTreeFactory
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRDiffController
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentController
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowRepositoryContentController
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRViewTabsFactory
 import org.jetbrains.plugins.github.ui.util.DisableableDocument
 import org.jetbrains.plugins.github.util.ChangeDiffRequestProducerFactory
@@ -67,7 +67,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
                                          private val settings: GithubPullRequestsProjectUISettings,
                                          private val repositoriesManager: GHHostedRepositoriesManager,
                                          private val dataContext: GHPRDataContext,
-                                         private val viewController: GHPRToolWindowTabComponentController,
+                                         private val viewController: GHPRToolWindowRepositoryContentController,
                                          disposable: Disposable) {
 
   private val repositoryDataService = dataContext.repositoryDataService
@@ -171,7 +171,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
       .create(directionModel, titleDocument, descriptionDocument, metadataModel, commitsCountModel, existenceCheckLoadingModel,
               createLoadingModel)
 
-    GHPRViewTabsFactory(project, viewController::viewList, uiDisposable)
+    GHPRViewTabsFactory(project, uiDisposable)
       .create(infoComponent, diffController,
               createFilesComponent(), filesCountFlow, null,
               createCommitsComponent(), commitsCountFlow).apply {

@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBList
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -32,10 +33,7 @@ import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataS
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import java.awt.FlowLayout
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JPanel
-import javax.swing.ScrollPaneConstants
+import javax.swing.*
 import javax.swing.event.ChangeEvent
 
 internal class GHPRListPanelFactory(private val project: Project,
@@ -80,8 +78,9 @@ internal class GHPRListPanelFactory(private val project: Project,
     }
 
     val listLoaderPanel = createListLoaderPanel(listLoader, list, disposable)
+    val listWrapper = Wrapper()
     val progressStripe = ProgressStripe(
-      listLoaderPanel,
+      listWrapper,
       disposable,
       ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
     ).apply {
@@ -95,22 +94,27 @@ internal class GHPRListPanelFactory(private val project: Project,
     GHPRListPanelController(
       project, scope,
       account, listLoader, searchVm, repository,
-      list.emptyText, listLoaderPanel, progressStripe,
+      list.emptyText, listLoaderPanel, listWrapper,
       disposable
     )
 
     return JBUI.Panels.simplePanel(progressStripe).addToTop(controlsPanel).andTransparent().also {
       DataManager.registerDataProvider(it) { dataId ->
-        if (GHPRActionKeys.SELECTED_PULL_REQUEST.`is`(dataId)) {
-          if (list.isSelectionEmpty) null else list.selectedValue
+        when {
+          GHPRActionKeys.PULL_REQUESTS_LIST_CONTROLLER.`is`(dataId) -> {
+            GHPRListControllerImpl(repositoryDataService, listLoader)
+          }
+          GHPRActionKeys.SELECTED_PULL_REQUEST.`is`(dataId) -> {
+            if (list.isSelectionEmpty) null else list.selectedValue
+          }
+          else -> null
         }
-        else null
       }
       actionManager.getAction("Github.PullRequest.List.Reload").registerCustomShortcutSet(it, disposable)
     }
   }
 
-  private fun createListLoaderPanel(loader: GHListLoader<*>, list: JComponent, disposable: Disposable): JComponent {
+  private fun createListLoaderPanel(loader: GHListLoader<*>, list: JComponent, disposable: Disposable): JScrollPane {
     val scrollPane = ScrollPaneFactory.createScrollPane(list, true).apply {
       isOpaque = false
       viewport.isOpaque = false

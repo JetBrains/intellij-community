@@ -25,6 +25,9 @@ import org.jetbrains.kotlin.types.model.*
 import org.jetbrains.org.objectweb.asm.Type
 
 object KotlinUastTypeMapper {
+    internal val typeSystem: TypeSystemCommonBackendContext
+        get() = SimpleClassicTypeSystemContext
+
     private val staticTypeMappingConfiguration = object : TypeMappingConfiguration<Type> {
         override fun commonSupertype(types: Collection<KotlinType>): KotlinType {
             return CommonSupertypes.commonSupertype(types)

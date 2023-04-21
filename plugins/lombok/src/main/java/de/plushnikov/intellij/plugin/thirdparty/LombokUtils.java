@@ -2,7 +2,7 @@ package de.plushnikov.intellij.plugin.thirdparty;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import org.jetbrains.annotations.NotNull;
 
@@ -381,7 +381,7 @@ public final class LombokUtils {
 
   public static String getGetterName(@NotNull PsiField psiField, @NotNull AccessorsInfo accessorsInfo) {
     final String psiFieldName = psiField.getName();
-    final boolean isBoolean = PsiType.BOOLEAN.equals(psiField.getType());
+    final boolean isBoolean = PsiTypes.booleanType().equals(psiField.getType());
 
     return toGetterName(accessorsInfo, psiFieldName, isBoolean);
   }
@@ -392,11 +392,11 @@ public final class LombokUtils {
   }
 
   public static String getSetterName(@NotNull PsiField psiField, @NotNull AccessorsInfo accessorsInfo) {
-    return toSetterName(accessorsInfo, psiField.getName(), PsiType.BOOLEAN.equals(psiField.getType()));
+    return toSetterName(accessorsInfo, psiField.getName(), PsiTypes.booleanType().equals(psiField.getType()));
   }
 
   public static String getWitherName(@NotNull PsiField psiField, @NotNull AccessorsInfo accessorsInfo) {
-    return toWitherName(accessorsInfo.withFluent(false), psiField.getName(), PsiType.BOOLEAN.equals(psiField.getType()));
+    return toWitherName(accessorsInfo.withFluent(false), psiField.getName(), PsiTypes.booleanType().equals(psiField.getType()));
   }
 
   /**

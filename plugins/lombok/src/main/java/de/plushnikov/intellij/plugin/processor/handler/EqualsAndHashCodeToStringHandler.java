@@ -119,10 +119,9 @@ public final class EqualsAndHashCodeToStringHandler {
         if (onlyExplicitlyIncluded) {
           continue;
         }
-        if (!(psiMember instanceof PsiField)) {
+        if (!(psiMember instanceof PsiField psiField)) {
           continue;
         }
-        final PsiField psiField = (PsiField)psiMember;
         final String fieldName = psiField.getName();
 
         if (ofProperty.contains(fieldName)) {
@@ -158,9 +157,8 @@ public final class EqualsAndHashCodeToStringHandler {
           newMemberName = includeNameValue;
         }
 
-        if ((psiMember instanceof PsiMethod)) {
-          final PsiMethod psiMethod = (PsiMethod)psiMember;
-          if (0 == psiMethod.getParameterList().getParametersCount()) {
+        if ((psiMember instanceof PsiMethod psiMethod)) {
+          if (!psiMethod.hasParameters()) {
             fieldNames2BeReplaced.add(newMemberName);
             int memberRank = calcMemberRank(includeAnnotation);
             result.add(new MemberInfo(psiMethod, psiMethod.getName(), memberRank));

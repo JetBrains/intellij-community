@@ -5,7 +5,6 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsState
 import com.intellij.openapi.application.ApplicationBundle.message
 import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.layout.*
 
 internal const val EDITOR_TABS_OPTIONS_ID = "editor.preferences.tabs"
 
@@ -27,7 +26,7 @@ internal val showTabsTooltips
 internal val showFileIcon
   get() = CheckboxDescriptor(message("checkbox.show.file.icon.in.editor.tabs"), ui::showFileIconInTabs)
 internal val showFileExtension
-  get() = CheckboxDescriptor(message("checkbox.show.file.extension.in.editor.tabs"), PropertyBinding({ !ui.hideKnownExtensionInTabs }, { ui.hideKnownExtensionInTabs = !it }))
+  get() = CheckboxDescriptor(message("checkbox.show.file.extension.in.editor.tabs"), { !ui.hideKnownExtensionInTabs }, { ui.hideKnownExtensionInTabs = !it })
 internal val hideTabsIfNeeded
   get() = CheckboxDescriptor(message("checkbox.editor.scroll.if.need"), ui::hideTabsIfNeeded)
 internal val showPinnedTabsInASeparateRow

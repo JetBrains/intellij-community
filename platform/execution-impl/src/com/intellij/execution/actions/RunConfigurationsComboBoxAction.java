@@ -7,6 +7,7 @@ import com.intellij.execution.executors.ExecutorGroup;
 import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.runToolbar.RunToolbarSlotManager;
+import com.intellij.execution.ui.RedesignedRunWidgetKt;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.idea.ActionsBundle;
@@ -140,7 +141,9 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       }
       presentation.setText(name, false);
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        boolean withLiveIndicator = !(ExperimentalUI.isNewUI() && actionPlace.equals(ActionPlaces.MAIN_TOOLBAR));
+        boolean withLiveIndicator = !(ExperimentalUI.isNewUI() &&
+                                      RedesignedRunWidgetKt.isContrastRunWidget() &&
+                                      actionPlace.equals(ActionPlaces.MAIN_TOOLBAR));
         setConfigurationIcon(presentation, settings, project, withLiveIndicator);
       }
     }

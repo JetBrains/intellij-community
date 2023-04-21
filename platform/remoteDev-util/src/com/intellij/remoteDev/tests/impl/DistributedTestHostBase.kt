@@ -39,11 +39,11 @@ import java.util.concurrent.TimeoutException
 import javax.imageio.ImageIO
 import kotlin.reflect.full.createInstance
 
-class DistributedTestHost(private val agentProject: Project) : DistributedTestHostBase() {
-  override val projectOrNull: Project
-    get() = agentProject
+class DistributedTestHost : DistributedTestHostBase() {
+  override val projectOrNull: Project?
+    get() = ProjectManagerEx.getOpenProjects().singleOrNull()
   override val project: Project
-    get() = agentProject
+    get() = projectOrNull!!
 }
 
 class DistributedTestHostGateway : DistributedTestHostBase() {
@@ -93,7 +93,7 @@ abstract class DistributedTestHostBase {
     logger.info("Creating protocol...")
 
     val lifetime = LifetimeDefinition()
-    (projectOrNull ?: application).whenDisposed { lifetime.terminate() }
+    application.whenDisposed { lifetime.terminate() }
 
     val wire = SocketWire.Client(lifetime, DistributedTestIdeScheduler, port, AgentConstants.protocolName, hostAddress)
     val protocol =
@@ -103,7 +103,6 @@ abstract class DistributedTestHostBase {
     logger.info("Advise for session...")
     model.session.viewNotNull(lifetime) { lt, session ->
       try {
-        val context = AgentContext(session.agentId, application, projectOrNull, protocol)
         logger.info("New test session: ${session.testClassName}.${session.testMethodName}")
         logger.info("Setting up loggers")
         AgentTestLoggerFactory.bindSession(lt, session)
@@ -124,7 +123,6 @@ abstract class DistributedTestHostBase {
           testClassObject.performInit(testMethod)
           testMethod.invoke(testClassObject)
 
-
           // Advice for processing events
           session.runNextAction.set { _, _ ->
             var actionTitle: String? = null
@@ -142,6 +140,7 @@ abstract class DistributedTestHostBase {
 
               // Execute test method
               lateinit var result: RdTask<Boolean>
+              val context = AgentContext(session.agentId, application, projectOrNull, protocol)
               logger.info("'$actionTitle': starting action")
               val elapsedAction = measureTimeMillis {
                 result = action.action.invoke(context)
@@ -204,6 +203,17 @@ abstract class DistributedTestHostBase {
         DebugLogManager.getInstance().applyCategories(
           session.traceCategories.map { DebugLogManager.Category(it, DebugLogManager.DebugLogLevel.TRACE) }
         )
+
+        if (session.waitForProject) {
+          val projectLoadingTimeoutMs = 60 * 1000
+          val startTime = System.currentTimeMillis()
+          while (projectOrNull == null && System.currentTimeMillis() - startTime < projectLoadingTimeoutMs) {
+            IdeEventQueue.getInstance().flushQueue()
+          }
+          if (projectOrNull == null) {
+            error("Failed to load project in $projectLoadingTimeoutMs ms")
+          }
+        }
 
         logger.info("Test session ready!")
         session.ready.value = true

@@ -60,6 +60,7 @@
 + -org-jetbrains-plugins-javaFX-
 + -org-intellij-groovy-
 + -JavaScript-
++ -org-jetbrains-plugins-astro-
 + -com-jetbrains-restClient-
 + -com-jetbrains-php-
 + -com-jetbrains-php-blade-

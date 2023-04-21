@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.hints
 
@@ -33,6 +33,7 @@ import com.intellij.openapi.vcs.annotate.LineAnnotationAspectAdapter
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
+import com.intellij.util.DocumentUtil
 import com.intellij.util.text.nullize
 import com.intellij.vcs.CacheableAnnotationProvider
 import java.awt.event.MouseEvent
@@ -105,7 +106,9 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
           val textRange = InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
           val length = editor.document.textLength
           val adjustedRange = TextRange(min(textRange.startOffset, length), min(textRange.endOffset, length))
-          val codeAuthorInfo = PREVIEW_INFO_KEY.get(editor) ?: getCodeAuthorInfo(element.project, adjustedRange, editor, aspect)
+          val trimmedRange = elementContext.trimInsignificantChildren(element)
+          val adjustedTrimmedRange = TextRange(min(trimmedRange.startOffset, length), min(trimmedRange.endOffset, length))
+          val codeAuthorInfo = PREVIEW_INFO_KEY.get(editor) ?: getCodeAuthorInfo(element.project, adjustedTrimmedRange, editor, aspect)
           val text = codeAuthorInfo.getText()
           val icon = if (codeAuthorInfo.mainAuthor != null) AllIcons.Vcs.Author else null
           val clickHandler = CodeAuthorClickHandler(element, language)
@@ -182,11 +185,13 @@ private fun getCodeAuthorInfo(project: Project, range: TextRange, editor: Editor
   if (authorAspect == null) {
     return VcsCodeAuthorInfo.NEW_CODE
   }
-  val startLine = editor.document.getLineNumber(range.startOffset)
-  val endLine = editor.document.getLineNumber(range.endOffset)
-  val provider = UpToDateLineNumberProviderImpl(editor.document, project)
+  val document = editor.document
+  val startLine = document.getLineNumber(range.startOffset)
+  val endLine = document.getLineNumber(range.endOffset)
+  val provider = UpToDateLineNumberProviderImpl(document, project)
 
   val authorsFrequency = (startLine..endLine)
+    .filterNot { document.getText(DocumentUtil.getLineTextRange(document, it)).isBlank() }
     .map { provider.getLineNumber(it) }
     .mapNotNull { authorAspect.getValue(it).nullize() }
     .groupingBy { it }

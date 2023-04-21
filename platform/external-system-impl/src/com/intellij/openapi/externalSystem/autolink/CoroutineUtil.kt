@@ -3,20 +3,22 @@ package com.intellij.openapi.externalSystem.autolink
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.use
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.EmptyCoroutineContext
 
-
 @ApiStatus.Internal
 internal fun launch(parentDisposable: Disposable, action: suspend CoroutineScope.() -> Unit): Job {
   val coroutineScope = CoroutineScope(EmptyCoroutineContext)
-  val disposable = Disposer.newDisposable(parentDisposable, "CoroutineScope")
-  val job = coroutineScope.launch(start = CoroutineStart.LAZY) {
-    disposable.use {
-      action()
-    }
+  return coroutineScope.launch(parentDisposable, action)
+}
+
+@ApiStatus.Internal
+internal fun CoroutineScope.launch(parentDisposable: Disposable, action: suspend CoroutineScope.() -> Unit): Job {
+  val disposable = Disposer.newDisposable(parentDisposable, "CoroutineUtil.launch")
+  val job = launch(start = CoroutineStart.LAZY, block = action)
+  job.invokeOnCompletion {
+    Disposer.dispose(disposable)
   }
   Disposer.register(disposable, Disposable {
     job.cancel("disposed")

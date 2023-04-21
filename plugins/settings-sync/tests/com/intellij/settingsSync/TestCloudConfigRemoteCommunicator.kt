@@ -35,7 +35,7 @@ internal class TestCloudConfigRemoteCommunicator : TestRemoteCommunicator() {
   }
 
   private fun snapshotForDeletion() =
-    SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo(), isDeleted = true), emptySet(), null, emptySet())
+    SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo(), isDeleted = true), emptySet(), null, emptyMap(), emptySet())
 
   override fun push(snapshot: SettingsSnapshot, force: Boolean, expectedServerVersionId: String?): SettingsSyncPushResult {
     val result = cloudConfigServerCommunicator.push(snapshot, force, expectedServerVersionId)

@@ -27,9 +27,9 @@ class CommonCheckinFilesAction : DumbAwareAction() {
 
     if (project != null) {
       val pathsToCommit = VcsContextUtil.selectedFilePaths(e.dataContext)
-      presentation.text = getActionName(project, pathsToCommit) + StringUtil.ELLIPSIS
+      presentation.text = Manager.getActionName(project, pathsToCommit) + StringUtil.ELLIPSIS
 
-      presentation.isEnabled = presentation.isEnabled && pathsToCommit.any { isActionEnabled(project, it) }
+      presentation.isEnabled = presentation.isEnabled && pathsToCommit.any { Manager.isActionEnabled(project, it) }
     }
   }
 
@@ -37,12 +37,12 @@ class CommonCheckinFilesAction : DumbAwareAction() {
     val project = e.project!!
     val pathsToCommit = VcsContextUtil.selectedFilePaths(e.dataContext)
     val initialChangeList = CheckinActionUtil.getInitiallySelectedChangeListFor(project, pathsToCommit)
-    val actionName = getActionName(project, pathsToCommit)
+    val actionName = Manager.getActionName(project, pathsToCommit)
 
     CheckinActionUtil.performCommonCommitAction(e, project, initialChangeList, pathsToCommit, actionName, null, true)
   }
 
-  companion object {
+  object Manager {
     @ApiStatus.Internal
     fun getActionName(project: Project, pathsToCommit: List<FilePath>): @NlsActions.ActionText String {
       val commonVcs = pathsToCommit.mapNotNull { VcsUtil.getVcsFor(project, it) }.distinct().singleOrNull()

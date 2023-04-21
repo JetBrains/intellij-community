@@ -83,7 +83,7 @@ public final class ReferenceExpressionCompletionContributor {
   private static boolean matchesExpectedType(LookupElement item, PsiType type) {
     Object object = item.getObject();
     if (object instanceof PsiClass) return false;
-    if (PsiType.VOID.equals(type)) return object instanceof PsiMethod;
+    if (PsiTypes.voidType().equals(type)) return object instanceof PsiMethod;
 
     PsiType itemType = JavaCompletionUtil.getLookupElementType(item);
     return itemType != null && type.isAssignableFrom(itemType);
@@ -104,7 +104,7 @@ public final class ReferenceExpressionCompletionContributor {
             final CandidateInfo info = (CandidateInfo)o;
             final PsiElement member = info.getElement();
 
-            if (expectedType.equals(PsiType.VOID)) {
+            if (expectedType.equals(PsiTypes.voidType())) {
               return member instanceof PsiMethod;
             }
 

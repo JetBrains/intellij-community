@@ -14,8 +14,11 @@ import com.intellij.util.io.HttpSecurityUtil
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
 import java.net.http.HttpResponse
 
-class GitLabApi private constructor(httpHelper: HttpApiHelper)
-  : HttpApiHelper by httpHelper,
+interface GitLabApi : HttpApiHelper, JsonHttpApiHelper, GraphQLApiHelper
+
+class GitLabApiImpl private constructor(httpHelper: HttpApiHelper)
+  : GitLabApi,
+    HttpApiHelper by httpHelper,
     JsonHttpApiHelper by JsonHttpApiHelper(logger<GitLabApi>(),
                                            httpHelper,
                                            GitLabRestJsonDataDeSerializer,
@@ -27,11 +30,6 @@ class GitLabApi private constructor(httpHelper: HttpApiHelper)
                                          GitLabGQLDataDeSerializer) {
 
   constructor(tokenSupplier: () -> String) : this(httpHelper(tokenSupplier))
-
-  suspend inline fun <reified T> loadList(uri: String): HttpResponse<out List<T>> {
-    val request = request(uri).GET().build()
-    return loadJsonList(request)
-  }
 
   companion object {
     private fun httpHelper(tokenSupplier: () -> String): HttpApiHelper {
@@ -46,6 +44,11 @@ class GitLabApi private constructor(httpHelper: HttpApiHelper)
                            requestConfigurer = requestConfigurer)
     }
   }
+}
+
+suspend inline fun <reified T> GitLabApi.loadList(uri: String): HttpResponse<out List<T>> {
+  val request = request(uri).GET().build()
+  return loadJsonList(request)
 }
 
 @Throws(GitLabGraphQLMutationException::class)

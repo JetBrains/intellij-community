@@ -3,12 +3,10 @@ package com.intellij.ide.projectWizard.generators
 
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.INTELLIJ
-import com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizardData.Companion.addSampleCode
-import com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizardData.Companion.contentRoot
-import com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizardData.Companion.javaData
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder
-import com.intellij.ide.wizard.chain
+import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtil
@@ -21,7 +19,9 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
 
   override val ordinal = 0
 
-  override fun createStep(parent: JavaNewProjectWizard.Step) = Step(parent).chain(::AssetsStep)
+  override fun createStep(parent: JavaNewProjectWizard.Step): NewProjectWizardStep =
+    Step(parent)
+      .nextStep(::AssetsStep)
 
   class Step(parent: JavaNewProjectWizard.Step) :
     IntelliJNewProjectWizardStep<JavaNewProjectWizard.Step>(parent),
@@ -60,18 +60,21 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
     }
   }
 
-  private class AssetsStep(parent: Step) : AssetsJavaNewProjectWizardStep(parent) {
+  private class AssetsStep(
+    private val parent: Step
+  ) : AssetsJavaNewProjectWizardStep(parent) {
+
     override fun setupAssets(project: Project) {
-      outputDirectory = contentRoot
+      outputDirectory = parent.contentRoot
       addAssets(StandardAssetsProvider().getIntelliJIgnoreAssets())
-      if (addSampleCode) {
-        withJavaSampleCodeAsset("src", "", javaData.generateOnboardingTips)
+      if (parent.addSampleCode) {
+        withJavaSampleCodeAsset("src", "", parent.generateOnboardingTips)
       }
     }
 
     override fun setupProject(project: Project) {
       super.setupProject(project)
-      if (javaData.generateOnboardingTips) {
+      if (parent.generateOnboardingTips) {
         prepareTipsInEditor(project)
       }
     }

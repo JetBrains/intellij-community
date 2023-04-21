@@ -4,7 +4,7 @@ package org.jetbrains.plugins.groovy.transformations.impl;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -35,7 +35,7 @@ public class DefaultTransformationSupport implements AstTransformationSupport {
       String nameNonBoolean = getGetterNameNonBoolean(fieldName);
       if (!hasContradictingMethods(context, nameNonBoolean, false)) {
         context.addMethod(new GrAccessorMethodImpl(field, false, nameNonBoolean));
-        if (PsiType.BOOLEAN.equals(field.getDeclaredType())) {
+        if (PsiTypes.booleanType().equals(field.getDeclaredType())) {
           String nameBoolean = getGetterNameBoolean(fieldName);
           if (!hasContradictingMethods(context, nameBoolean, false)) {
             context.addMethod(new GrAccessorMethodImpl(field, false, nameBoolean));

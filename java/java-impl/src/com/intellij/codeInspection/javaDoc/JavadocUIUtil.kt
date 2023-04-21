@@ -10,9 +10,6 @@ import com.intellij.ui.CheckBoxListListener
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.CardLayout
@@ -21,7 +18,7 @@ import javax.swing.JPanel
 import javax.swing.event.DocumentEvent
 import kotlin.reflect.KMutableProperty0
 
-data class MasterDetailsItem(@NlsContexts.Checkbox val text: String, val checkboxBinding: PropertyBinding<Boolean>, val description: JComponent)
+data class MasterDetailsItem(@NlsContexts.Checkbox val text: String, val checkboxBinding: MutableProperty<Boolean>, val description: JComponent)
 
 object JavadocUIUtil {
 
@@ -43,7 +40,7 @@ object JavadocUIUtil {
   }
 
   fun item(@NlsContexts.Checkbox text: String, checkboxBinding: KMutableProperty0<Boolean>, description: JComponent): MasterDetailsItem {
-    return MasterDetailsItem(text, PropertyBinding(checkboxBinding::get, checkboxBinding::set), description)
+    return MasterDetailsItem(text, MutableProperty(checkboxBinding::get, checkboxBinding::set), description)
   }
 
   private fun createMasterDetails(items: List<MasterDetailsItem>): JPanel {

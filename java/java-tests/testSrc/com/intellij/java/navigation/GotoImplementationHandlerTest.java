@@ -1,10 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.navigation;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.navigation.GotoTargetHandler;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -314,7 +317,9 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   }
 
   public void testPrivateClassInheritorsInJdkDecompiled() {
-    ModuleRootModificationUtil.setModuleSdk(getModule(), IdeaTestUtil.getMockJdk18());
+    Sdk sdk = IdeaTestUtil.getMockJdk18();
+    WriteAction.run(() -> ProjectJdkTable.getInstance().addJdk(sdk, getTestRootDisposable()));
+    ModuleRootModificationUtil.setModuleSdk(getModule(), sdk);
 
     PsiClass aClass = myFixture.getJavaFacade().findClass("java.util.ResourceBundle.CacheKeyReference");
     PsiFile file = aClass.getContainingFile();

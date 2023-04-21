@@ -125,7 +125,7 @@ public final class IntentionUtils {
             try {
               final boolean hasNoReturnType = method1.getReturnTypeElement() == null && method1 instanceof GrMethod;
               if (hasNoReturnType) {
-                ((GrMethod)method1).setReturnType(PsiType.VOID);
+                ((GrMethod)method1).setReturnType(PsiTypes.voidType());
               }
               if (method1.getBody() != null) {
                 FileTemplateManager templateManager = FileTemplateManager.getInstance(project);

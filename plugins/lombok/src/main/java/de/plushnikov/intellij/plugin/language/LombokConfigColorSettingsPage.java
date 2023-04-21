@@ -16,6 +16,8 @@ import java.util.Map;
 
 public class LombokConfigColorSettingsPage implements ColorSettingsPage {
   private static final AttributesDescriptor[] DESCRIPTORS = new AttributesDescriptor[]{
+    new AttributesDescriptor(LombokBundle.messagePointer("color.settings.comment"), LombokConfigSyntaxHighlighter.COMMENT),
+    new AttributesDescriptor(LombokBundle.messagePointer("color.settings.clear"), LombokConfigSyntaxHighlighter.CLEAR),
     new AttributesDescriptor(LombokBundle.messagePointer("color.settings.key"), LombokConfigSyntaxHighlighter.KEY),
     new AttributesDescriptor(LombokBundle.messagePointer("color.settings.separator"), LombokConfigSyntaxHighlighter.SEPARATOR),
     new AttributesDescriptor(LombokBundle.messagePointer("color.settings.value"), LombokConfigSyntaxHighlighter.VALUE),

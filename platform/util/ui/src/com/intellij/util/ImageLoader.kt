@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.util
@@ -16,11 +16,7 @@ import com.intellij.ui.scale.JBUIScale.isHiDPI
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.svg.SvgCacheMapper
 import com.intellij.util.ImageLoader.USE_CACHE
-import com.intellij.util.SVGLoader.DEFAULT_THEME
 import com.intellij.util.SVGLoader.SvgElementColorPatcherProvider
-import com.intellij.util.SVGLoader.load
-import com.intellij.util.SVGLoader.loadFromClassResource
-import com.intellij.util.SVGLoader.loadWithoutCache
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.io.URLUtil
 import com.intellij.util.ui.EmptyIcon
@@ -128,7 +124,7 @@ object ImageLoader {
         val data = getResourceData(path = descriptor.path, resourceClass = null, classLoader = classLoader) ?: continue
         val image: Image
         return if (descriptor.isSvg) {
-          loadWithoutCache(data, descriptor.scale)
+          SVGLoader.loadWithoutCache(data, descriptor.scale)
         }
         else {
           image = loadPng(stream = ByteArrayInputStream(data), scale = descriptor.scale, originalUserSize = null)
@@ -187,7 +183,7 @@ object ImageLoader {
     stream.use {
       return if (flags and USE_SVG == USE_SVG) {
         val mapper = SvgCacheMapper(scale = scale, isDark = flags and USE_DARK == USE_DARK, isStroke = false, docSize = originalUserSize)
-        load(path = path, stream = stream, mapper = mapper, colorPatcher = null)
+        SVGLoader.load(path = path, stream = stream, mapper = mapper, colorPatcher = null)
       }
       else {
         loadPng(stream = stream, scale = scale, originalUserSize = originalUserSize)
@@ -531,7 +527,7 @@ private fun loadByDescriptor(descriptor: ImageDescriptor,
     }
   }
   if (digest == null) {
-    digest = DEFAULT_THEME
+    digest = SVGLoader.DEFAULT_THEME
   }
   if ((flags and USE_CACHE) == USE_CACHE && !tmpPatcher) {
     cacheKey = CacheKey(path = descriptor.path, scale = (if (descriptor.isSvg) descriptor.scale else 0f), digest = digest)
@@ -569,7 +565,7 @@ private fun loadByDescriptorWithoutCache(descriptor: ImageDescriptor,
     (connection as? HttpURLConnection)?.addRequestProperty("User-Agent", "IntelliJ")
     connection.getInputStream().use { stream ->
       image = if (descriptor.isSvg) {
-        load(path = descriptor.path, stream = stream, mapper = descriptor.toSvgMapper(), colorPatcher = colorPatcher)
+        SVGLoader.load(path = descriptor.path, stream = stream, mapper = descriptor.toSvgMapper(), colorPatcher = colorPatcher)
       }
       else {
         loadPng(stream = stream, scale = descriptor.scale, originalUserSize = null)
@@ -581,12 +577,12 @@ private fun loadByDescriptorWithoutCache(descriptor: ImageDescriptor,
   }
   else {
     image = if (descriptor.isSvg) {
-      loadFromClassResource(resourceClass = resourceClass,
-                            classLoader = classLoader,
-                            path = descriptor.path,
-                            rasterizedCacheKey = 0,
-                            mapper = descriptor.toSvgMapper(),
-                            colorPatcher = colorPatcher)
+      SVGLoader.loadFromClassResource(resourceClass = resourceClass,
+                                      classLoader = classLoader,
+                                      path = descriptor.path,
+                                      rasterizedCacheKey = 0,
+                                      mapper = descriptor.toSvgMapper(),
+                                      colorPatcher = colorPatcher)
     }
     else {
       ImageLoader.loadPngFromClassResource(path = descriptor.path,

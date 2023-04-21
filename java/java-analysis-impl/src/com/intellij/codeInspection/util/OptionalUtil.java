@@ -62,9 +62,9 @@ public final class OptionalUtil {
     String className = aClass.getQualifiedName();
     if(className == null) return null;
     return switch (className) {
-      case OPTIONAL_INT -> PsiType.INT;
-      case OPTIONAL_LONG -> PsiType.LONG;
-      case OPTIONAL_DOUBLE -> PsiType.DOUBLE;
+      case OPTIONAL_INT -> PsiTypes.intType();
+      case OPTIONAL_LONG -> PsiTypes.longType();
+      case OPTIONAL_DOUBLE -> PsiTypes.doubleType();
       case JAVA_UTIL_OPTIONAL, GUAVA_OPTIONAL -> {
         PsiType[] parameters = ((PsiClassType)type).getParameters();
         if (parameters.length != 1) yield null;

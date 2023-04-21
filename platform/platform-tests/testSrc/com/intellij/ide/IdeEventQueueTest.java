@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -65,44 +65,44 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
       return false;
     }, getTestRootDisposable());
 
-    int posted = ideEventQueue.myKeyboardEventsPosted.get();
-    int dispatched = ideEventQueue.myKeyboardEventsDispatched.get();
+    int posted = ideEventQueue.keyboardEventPosted.get();
+    int dispatched = ideEventQueue.keyboardEventDispatched.get();
     KeyEvent pressX = new KeyEvent(new JLabel("mykeypress"), KeyEvent.KEY_PRESSED, 1, InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK, 11, 'x');
     postCarefully(pressX);
-    assertEquals(posted+1, ideEventQueue.myKeyboardEventsPosted.get());
-    assertEquals(dispatched, ideEventQueue.myKeyboardEventsDispatched.get());
+    assertEquals(posted+1, ideEventQueue.keyboardEventPosted.get());
+    assertEquals(dispatched, ideEventQueue.keyboardEventDispatched.get());
     dispatchAllInvocationEventsUntilOtherEvent();
     // either it's dispatched by this method or the f*@$ing VCSRefresh activity stomped in, started modal progress and consumed all events via IdeEventQueue.pumpEventsForHierarchy
     assertTrue(isDispatched.contains(pressX) || isConsumed(pressX));
 
-    assertEquals(posted+1, ideEventQueue.myKeyboardEventsPosted.get());
-    assertEquals(dispatched+1, ideEventQueue.myKeyboardEventsDispatched.get());
+    assertEquals(posted+1, ideEventQueue.keyboardEventPosted.get());
+    assertEquals(dispatched+1, ideEventQueue.keyboardEventDispatched.get());
 
     // do not react to other events
     AWTEvent ev2 = new ActionEvent(new JLabel(), ActionEvent.ACTION_PERFORMED, "myCommand");
     postCarefully(ev2);
 
-    assertEquals(posted+1, ideEventQueue.myKeyboardEventsPosted.get());
-    assertEquals(dispatched+1, ideEventQueue.myKeyboardEventsDispatched.get());
+    assertEquals(posted+1, ideEventQueue.keyboardEventPosted.get());
+    assertEquals(dispatched+1, ideEventQueue.keyboardEventDispatched.get());
     dispatchAllInvocationEventsUntilOtherEvent();
     // either it's dispatched by this method or the f*@$ing VCSRefresh activity stomped in, started modal progress and dispatched all events via IdeEventQueue.pumpEventsForHierarchy by itself
     assertTrue(isDispatched.contains(ev2));
 
-    assertEquals(posted+1, ideEventQueue.myKeyboardEventsPosted.get());
-    assertEquals(dispatched+1, ideEventQueue.myKeyboardEventsDispatched.get());
+    assertEquals(posted+1, ideEventQueue.keyboardEventPosted.get());
+    assertEquals(dispatched+1, ideEventQueue.keyboardEventDispatched.get());
 
     KeyEvent keyRelease = new KeyEvent(new JLabel("mykeyrelease"), KeyEvent.KEY_RELEASED, 1, InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK, 11, 'x');
     postCarefully(keyRelease);
 
-    assertEquals(posted+2, ideEventQueue.myKeyboardEventsPosted.get());
-    assertEquals(dispatched+1, ideEventQueue.myKeyboardEventsDispatched.get());
+    assertEquals(posted+2, ideEventQueue.keyboardEventPosted.get());
+    assertEquals(dispatched+1, ideEventQueue.keyboardEventDispatched.get());
 
     dispatchAllInvocationEventsUntilOtherEvent();
     // either it's dispatched by this method or the f*@$ing VCSRefresh activity stomped in, started modal progress and consumed all events via IdeEventQueue.pumpEventsForHierarchy
     assertTrue(isDispatched.contains(keyRelease) || isConsumed(keyRelease));
 
-    assertEquals(posted+2, ideEventQueue.myKeyboardEventsPosted.get());
-    assertEquals(dispatched+2, ideEventQueue.myKeyboardEventsDispatched.get());
+    assertEquals(posted+2, ideEventQueue.keyboardEventPosted.get());
+    assertEquals(dispatched+2, ideEventQueue.keyboardEventDispatched.get());
   }
 
   private static void postCarefully(AWTEvent event) {

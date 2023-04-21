@@ -502,6 +502,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     int positionChangeFix = 0;
     if (myShowPointer) {
       Rectangle rec = getRecForPosition(myPosition, true);
+      JBInsets.removeFrom(rec, getShadowBorderInsets());
 
       if (!myPosition.isOkToHavePointer(myTargetPoint, rec, getPointerLength(myPosition), getPointerWidth(myPosition), getArc())) {
         rec = getRecForPosition(myPosition, false);
@@ -689,6 +690,9 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     return focusComponent;
   }
 
+  /**
+   * @return rectangle with shadow insets
+   */
   private Rectangle getRecForPosition(AbstractPosition position, boolean adjust) {
     Dimension size = getContentSizeFor(position);
     Rectangle rec = new Rectangle(new Point(0, 0), size);
@@ -696,7 +700,10 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     position.setRecToRelativePosition(rec, myTargetPoint);
 
     if (adjust) {
-      rec = myPosition.getUpdatedBounds(this, rec.getSize());
+      rec = myPosition.getUpdatedBounds(this, rec.getSize(), getShadowBorderInsets());
+    }
+    else {
+      JBInsets.addTo(rec, getShadowBorderInsets());
     }
 
     return rec;
@@ -706,7 +713,6 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     Dimension size = myContent.getPreferredSize();
     if (myShadowBorderProvider == null) {
       JBInsets.addTo(size, position.createBorder(this).getBorderInsets());
-      JBInsets.addTo(size, getShadowBorderInsets());
     }
     return size;
   }
@@ -1201,28 +1207,36 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     public void updateBounds(@NotNull final BalloonImpl balloon) {
       if (balloon.myLayeredPane == null || balloon.component == null) return;
 
-      Rectangle bounds = getUpdatedBounds(balloon, balloon.component.getPreferredSize());
+      Insets shadow = balloon.component.getInsets();
+      Dimension prefSize = balloon.component.getPreferredSize();
+      JBInsets.removeFrom(prefSize, shadow);
+      Rectangle bounds = getUpdatedBounds(balloon, prefSize, shadow);
 
-      if (balloon.myShadowBorderProvider == null) {
+      if (balloon.myShadowBorderProvider == null && balloon.myForcedBounds != null) {
         bounds = new Rectangle(getShiftedPoint(bounds.getLocation(), balloon.getShadowBorderInsets()), bounds.getSize());
       }
       balloon.component._setBounds(bounds);
     }
 
+    /**
+     * @param contentSize size without shadow insets
+     * @return adjusted size with shadow insets
+     */
     @NotNull
-    Rectangle getUpdatedBounds(BalloonImpl balloon, Dimension preferredSize) {
+    Rectangle getUpdatedBounds(BalloonImpl balloon, Dimension contentSize, Insets shadowInsets) {
       Dimension layeredPaneSize = balloon.myLayeredPane.getSize();
       Point point = balloon.myTargetPoint;
 
       Rectangle bounds = balloon.myForcedBounds;
       if (bounds == null) {
-        int distance = getDistance(balloon, preferredSize);
+        int distance = getDistance(balloon, contentSize);
         Point location = balloon.myShowPointer
-                         ? getLocation(layeredPaneSize, point, preferredSize, distance)
+                         ? getLocation(layeredPaneSize, point, contentSize, distance)
                          // Now distance is used for pointer enabled balloons only
-                         : new Point(point.x - preferredSize.width / 2, point.y - preferredSize.height / 2);
-        bounds = new Rectangle(location.x, location.y, preferredSize.width, preferredSize.height);
+                         : new Point(point.x - contentSize.width / 2, point.y - contentSize.height / 2);
+        bounds = new Rectangle(location.x, location.y, contentSize.width, contentSize.height);
 
+        JBInsets.addTo(bounds, shadowInsets);
         ScreenUtil.moveToFit(bounds, new Rectangle(0, 0, layeredPaneSize.width, layeredPaneSize.height), balloon.myContainerInsets, true);
       }
 
@@ -1326,6 +1340,9 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
                                               final Point pointTarget,
                                               final BalloonImpl balloon);
 
+    /**
+     * @param bounds rectangle without shadow insets
+     */
     boolean isOkToHavePointer(@NotNull Point targetPoint, @NotNull Rectangle bounds, int pointerLength, int pointerWidth, int arc) {
       if (bounds.x < targetPoint.x &&
           bounds.x + bounds.width > targetPoint.x &&
@@ -1342,11 +1359,11 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
       UnfairTextRange balloonRange;
       UnfairTextRange pointerRange;
       if (isTopBottomPointer()) {
-        balloonRange = new UnfairTextRange(bounds.x + arc - 1, bounds.x + bounds.width - arc * 2 + 1);
+        balloonRange = new UnfairTextRange(bounds.x + arc - 1, bounds.x + bounds.width - arc + 1);
         pointerRange = new UnfairTextRange(targetPoint.x - pointerWidth / 2, targetPoint.x + pointerWidth / 2);
       }
       else {
-        balloonRange = new UnfairTextRange(bounds.y + arc - 1, bounds.y + bounds.height - arc * 2 + 1);
+        balloonRange = new UnfairTextRange(bounds.y + arc - 1, bounds.y + bounds.height - arc + 1);
         pointerRange = new UnfairTextRange(targetPoint.y - pointerWidth / 2, targetPoint.y + pointerWidth / 2);
       }
       return balloonRange.contains(pointerRange);

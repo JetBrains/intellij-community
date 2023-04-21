@@ -126,7 +126,7 @@ fun createCompleteSubstitutor(method: GrMethod,
       REIFIED_AS_TYPE_PARAMETER ->
         instantiation.apply { collector.typeParameterList.add(unit.core.initialTypeParameter) }
       EXTENDS_WILDCARD ->
-        if (instantiation == PsiType.NULL || instantiation == getJavaLangObject(method)) {
+        if (instantiation == PsiTypes.nullType() || instantiation == getJavaLangObject(method)) {
           PsiWildcardType.createUnbounded(method.manager)
         }
         else {

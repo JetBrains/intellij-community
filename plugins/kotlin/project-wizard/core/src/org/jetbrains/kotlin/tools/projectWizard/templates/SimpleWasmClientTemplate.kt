@@ -44,4 +44,8 @@ object SimpleWasmClientTemplate : JsClientTemplate() {
                 +(FileTemplateDescriptor("$id/SimpleTest.kt.vm", "SimpleTest.kt".asPath()) asSrcOf SourcesetType.test)
             }
         }
+
+    override fun indexTitleName(): String {
+        return "Kotlin/Wasm"
+    }
 }

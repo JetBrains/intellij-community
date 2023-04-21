@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +16,7 @@ import java.util.Map;
  * <br>
  * Not thread-safe and should be notified only in EDT
  */
-class ThrottlingListenerWrapper implements SearchListener {
+class ThrottlingListenerWrapper implements SearchListener, Disposable {
 
   private static final int DEFAULT_THROTTLING_TIMEOUT = 100;
 
@@ -33,6 +34,11 @@ class ThrottlingListenerWrapper implements SearchListener {
 
   ThrottlingListenerWrapper(SearchListener delegateListener) {
     this(DEFAULT_THROTTLING_TIMEOUT, delegateListener);
+  }
+
+  @Override
+  public void dispose() {
+    cancelScheduledFlush();
   }
 
   @Override

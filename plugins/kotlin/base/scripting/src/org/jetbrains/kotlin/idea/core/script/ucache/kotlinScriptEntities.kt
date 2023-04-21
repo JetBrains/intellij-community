@@ -5,7 +5,6 @@ import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.applyIf
@@ -37,6 +36,28 @@ fun KotlinScriptEntity.listDependencies(project: Project, rootTypeId: KotlinScri
         .mapNotNull { it.url.virtualFile }
         .filter { it.isValid }
         .toList()
+}
+
+fun VirtualFile.findDependentScripts(project: Project): List<KotlinScriptEntity>? {
+    val storage = WorkspaceModel.getInstance(project).currentSnapshot
+    val index = storage.getVirtualFileUrlIndex()
+    val fileUrlManager = VirtualFileUrlManager.getInstance(project)
+
+    var currentFile: VirtualFile? = this
+    while (currentFile != null) {
+        val entities = index.findEntitiesByUrl(fileUrlManager.fromUrl(currentFile.url))
+        if (entities.none()) {
+            currentFile = currentFile.parent
+            continue
+        }
+
+        return entities
+            .mapNotNull { it.first as? KotlinScriptLibraryEntity }
+            .flatMap { it.usedInScripts }
+            .map { storage.resolve(it) ?: error("Unresolvable script: ${it.path}") }
+            .toList()
+    }
+    return null
 }
 
 internal fun BuilderSnapshot.syncScriptEntities(
@@ -220,10 +241,7 @@ private fun MutableEntityStorage.getActualScriptLibraries(scriptFile: VirtualFil
     val configurationManager = ScriptConfigurationManager.getInstance(project)
 
     val dependenciesClassFiles = configurationManager.getScriptDependenciesClassFiles(scriptFile)
-        .filterRedundantDependencies()
-
     val dependenciesSourceFiles = configurationManager.getScriptDependenciesSourceFiles(scriptFile)
-        .filterRedundantDependencies()
 
     // List builders are not supported by WorkspaceModel yet
     val libraries = mutableListOf<KotlinScriptLibraryEntity>()
@@ -257,7 +275,7 @@ private fun MutableList<KotlinScriptLibraryEntity>.mergeClassAndSourceRoots() =
             else { // 2
                 KotlinScriptLibraryEntity(
                     libsWithSameName.first().name,
-                    libsWithSameName.flatMap { it.roots },
+                    libsWithSameName.flatMap { it.roots }, false,
                     libsWithSameName.first().usedInScripts,
                     libsWithSameName.first().entitySource
                 )
@@ -291,27 +309,6 @@ private fun MutableList<KotlinScriptLibraryEntity>.fillWithSdkDependencies(proje
 private fun KotlinScriptLibraryEntity.hasSameRootsAs(dependency: KotlinScriptLibraryEntity): Boolean =
     this.roots.containsAll(dependency.roots) && dependency.roots.containsAll(this.roots)
 
-internal fun Collection<VirtualFile>.filterRedundantDependencies() =
-    if (Registry.`is`("kotlin.scripting.filter.redundant.deps")) {
-        filterNotTo(hashSetOf()) {
-            it.name.startsWith("groovy") ||
-                    it.name.startsWith("kotlin-daemon-client") ||
-                    it.name.startsWith("kotlin-script-runtime") ||
-                    it.name.startsWith("kotlin-daemon-embeddable") ||
-                    it.name.startsWith("kotlin-util-klib") ||
-                    it.name.startsWith("kotlin-scripting-compiler-embeddable") ||
-                    it.name.startsWith("kotlin-scripting-compiler-impl-embeddable") ||
-                    it.name.startsWith("kotlin-compiler-embeddable") ||
-                    it.name.startsWith("resources") ||
-                    it.name.endsWith("-sources.jar") ||
-                    with(it.toString()) {
-                        contains("unzipped-distribution/gradle-") && contains("subprojects/")
-                    }
-        }
-    } else {
-        toMutableSet()
-    }
-
 fun VirtualFile.relativeName(project: Project): String =
     if (ScratchUtil.isScratch(this) || this is LightVirtualFile) presentableName
     else toNioPath().relativeTo(Path.of(project.basePath!!)).pathString
@@ -327,5 +324,5 @@ private fun Project.createLibraryEntity(
     val libraryEntitySource = KotlinScriptLibraryEntitySource(fileUrl)
     val libraryRoots = mutableListOf(KotlinScriptLibraryRoot(fileUrl, rootTypeId))
 
-    return KotlinScriptLibraryEntity(name, libraryRoots, emptySet(), libraryEntitySource)
+    return KotlinScriptLibraryEntity(name, libraryRoots, false, emptySet(), libraryEntitySource)
 }

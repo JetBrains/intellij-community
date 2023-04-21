@@ -78,7 +78,7 @@ public class ReplaceAddAllArrayToCollectionFix implements IntentionAction {
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
       final PsiClass collectionsClass = psiFacade.findClass("java.util.Collection", GlobalSearchScope.allScope(project));
       if (collectionsClass != null && InheritanceUtil.isInheritorOrSelf(method.getContainingClass(), collectionsClass, true)) {
-        if (Comparing.strEqual(method.getName(), "addAll") && PsiType.BOOLEAN.equals(method.getReturnType())) {
+        if (Comparing.strEqual(method.getName(), "addAll") && PsiTypes.booleanType().equals(method.getReturnType())) {
           final PsiParameter[] psiParameters = method.getParameterList().getParameters();
           if (psiParameters.length == 1 &&
               psiParameters[0].getType() instanceof PsiClassType &&

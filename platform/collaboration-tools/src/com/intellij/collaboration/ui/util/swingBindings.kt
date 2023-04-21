@@ -2,6 +2,7 @@
 package com.intellij.collaboration.ui.util
 
 import com.intellij.collaboration.ui.ComboBoxWithActionsModel
+import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.update.Activatable
@@ -108,6 +109,15 @@ fun JEditorPane.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
   }
 }
 
+fun JEditorPane.bindTextHtml(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    textFlow.collect {
+      setHtmlBody(it)
+      setSize(Int.MAX_VALUE / 2, Int.MAX_VALUE / 2)
+    }
+  }
+}
+
 fun JLabel.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     textFlow.collect {
@@ -128,6 +138,22 @@ fun JButton.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     textFlow.collect {
       text = it
+    }
+  }
+}
+
+fun Action.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    textFlow.collect {
+      putValue(Action.NAME, it)
+    }
+  }
+}
+
+fun Action.bindEnabled(scope: CoroutineScope, enabledFlow: Flow<Boolean>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    enabledFlow.collect {
+      isEnabled = it
     }
   }
 }

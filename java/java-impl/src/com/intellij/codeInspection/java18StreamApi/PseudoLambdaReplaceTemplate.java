@@ -79,7 +79,7 @@ public final class PseudoLambdaReplaceTemplate {
   }
 
   public static List<PseudoLambdaReplaceTemplate> getAllTemplates() {
-    return ContainerUtil.newArrayList(MAP, FILTER, FIND, ALL_MATCH, ANY_MATCH);
+    return List.of(MAP, FILTER, FIND, ALL_MATCH, ANY_MATCH);
   }
 
   public ValidationInfo validate(final PsiMethod method) {
@@ -89,7 +89,7 @@ public final class PseudoLambdaReplaceTemplate {
     final PsiType returnType = method.getReturnType();
 
     if (StreamApiConstants.FAKE_FIND_MATCHED.equals(myStreamApiMethodName)) {
-      if (!PsiType.BOOLEAN.equals(returnType)) {
+      if (!PsiTypes.booleanType().equals(returnType)) {
         return null;
       }
     } else {
@@ -121,8 +121,8 @@ public final class PseudoLambdaReplaceTemplate {
           }
         }
       }
-      else if (PsiType.BOOLEAN.equals(expectedReturnType)) {
-        if (!PsiType.BOOLEAN.equals(returnType)) {
+      else if (PsiTypes.booleanType().equals(expectedReturnType)) {
+        if (!PsiTypes.booleanType().equals(returnType)) {
           return null;
         }
       }
@@ -259,8 +259,8 @@ public final class PseudoLambdaReplaceTemplate {
       return false;
     }
     if (myLambdaRole == LambdaRole.PREDICATE) {
-      final PsiClassType boxedBoolean = PsiType.BOOLEAN.getBoxedType(context);
-      if (!(PsiType.BOOLEAN.equals(lambdaReturnType) || (boxedBoolean != null && boxedBoolean.equals(lambdaReturnType)))) {
+      final PsiClassType boxedBoolean = PsiTypes.booleanType().getBoxedType(context);
+      if (!(PsiTypes.booleanType().equals(lambdaReturnType) || (boxedBoolean != null && boxedBoolean.equals(lambdaReturnType)))) {
         return false;
       }
     }

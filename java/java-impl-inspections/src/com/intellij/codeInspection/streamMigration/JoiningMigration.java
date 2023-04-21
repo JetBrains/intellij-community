@@ -319,7 +319,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
         }
       }
       if (!InheritanceUtil.isInheritor(type, JAVA_LANG_CHAR_SEQUENCE)) {
-        if (!neighborIsString || (type instanceof PsiArrayType && ((PsiArrayType)type).getComponentType().equals(PsiType.CHAR))) {
+        if (!neighborIsString || (type instanceof PsiArrayType && ((PsiArrayType)type).getComponentType().equals(PsiTypes.charType()))) {
           PsiLiteralExpression literalExpression = tryCast(expression, PsiLiteralExpression.class);
           if (literalExpression != null) {
             Object value = literalExpression.getValue();
@@ -478,7 +478,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
         if(arguments.length != 1) return null;
         final PsiExpression argument = arguments[0];
         final PsiType argumentType = argument.getType();
-        if (!PsiType.INT.equals(argumentType)) {
+        if (!PsiTypes.intType().equals(argumentType)) {
           joinParts.add(argument);
         }
       }
@@ -817,7 +817,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
       static LengthBasedJoiningTerminal extractLengthBasedTerminal(@NotNull TerminalBlock terminalBlock,
                                                                    @Nullable List<PsiVariable> nonFinalVariables) {
         if (nonFinalVariables != null && !nonFinalVariables.isEmpty()) return null;
-        ArrayList<PsiStatement> statements = ContainerUtil.newArrayList(terminalBlock.getStatements());
+        List<PsiStatement> statements = List.of(terminalBlock.getStatements());
         if (statements.size() < 2) return null;
         PsiIfStatement ifStatement = tryCast(statements.get(0), PsiIfStatement.class);
         if (ifStatement == null) return null;
@@ -1058,7 +1058,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
       static DelimiterRewriteJoiningTerminal extractDelimiterRewritingTerminal(@NotNull TerminalBlock terminalBlock,
                                                                                @Nullable List<PsiVariable> nonFinalVariables) {
         if (nonFinalVariables != null && nonFinalVariables.size() != 1) return null;
-        List<PsiStatement> statements = ContainerUtil.newArrayList(terminalBlock.getStatements());
+        List<PsiStatement> statements = List.of(terminalBlock.getStatements());
         if (statements.size() < 2) return null;
         // TODO maybe not just last, but check if delimiter not used after assignment?
         PsiAssignmentExpression assignment = extractAssignment(statements.get(statements.size() - 1));
@@ -1262,7 +1262,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
         PsiExpression initializer = loopSource.getVariable().getInitializer();
         Object constantExpression = ExpressionUtils.computeConstantExpression(initializer);
         if (!Integer.valueOf(1).equals(constantExpression)) return null;
-        List<PsiStatement> statements = ContainerUtil.newArrayList(terminalBlock.getStatements());
+        List<PsiStatement> statements = List.of(terminalBlock.getStatements());
         if (statements.isEmpty()) return null;
         List<PsiExpression> joinParts = extractJoinParts(statements);
         if (joinParts == null) return null;

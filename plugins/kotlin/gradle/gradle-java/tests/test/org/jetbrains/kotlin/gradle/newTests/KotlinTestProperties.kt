@@ -1,0 +1,18 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.gradle.newTests
+
+interface KotlinTestsResolvableProperty {
+    val id: String
+    val valuesByAcronyms: Map<String, String>
+    val defaultValue: String
+}
+
+fun KotlinTestsResolvableProperty.resolveFromEnvironment(): String {
+    val acronymOrValue = System.getenv()[id.uppercase()] ?: return defaultValue
+    if (acronymOrValue in valuesByAcronyms.keys) return valuesByAcronyms[acronymOrValue]!!
+    if (acronymOrValue in valuesByAcronyms.values) return acronymOrValue
+
+    val availablePropertyValues = valuesByAcronyms.entries.joinToString(separator = ", ") { (acronym, value) -> "$acronym ($value)" }
+    error("Found value $acronymOrValue for environment variable $id, but it's not a valid acronym or value for this property\n" +
+                  "Available values: $availablePropertyValues")
+}

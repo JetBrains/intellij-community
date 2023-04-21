@@ -45,7 +45,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
     setConstructor(method.isConstructor());
     PsiType returnType = method.getReturnType();
-    setFlag(returnType == null || PsiType.VOID.equals(returnType) ||
+    setFlag(returnType == null || PsiTypes.voidType().equals(returnType) ||
             returnType.equalsToText(CommonClassNames.JAVA_LANG_VOID), IS_RETURN_VALUE_USED_MASK);
   }
 
@@ -124,7 +124,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   private static boolean isAppMain(PsiMethod psiMethod, RefMethod refMethod) {
     if (!refMethod.isStatic()) return false;
-    if (!PsiType.VOID.equals(psiMethod.getReturnType())) return false;
+    if (!PsiTypes.voidType().equals(psiMethod.getReturnType())) return false;
 
     PsiMethod appMainPattern = ((RefMethodImpl)refMethod).getRefJavaManager().getAppMainPattern();
     if (MethodSignatureUtil.areSignaturesEqual(psiMethod, appMainPattern)) return true;

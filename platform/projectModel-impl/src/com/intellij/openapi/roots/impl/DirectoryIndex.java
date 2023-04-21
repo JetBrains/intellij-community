@@ -18,7 +18,9 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * This class is internal low-level API. Consider using {@link com.intellij.openapi.roots.ProjectFileIndex} instead of using this class directly.
+ * This is internal class providing implementation for {@link com.intellij.openapi.roots.ProjectFileIndex}. 
+ * It will be removed when all code switches to use the new implementation (IDEA-276394). 
+ * All plugins which still use this class must be updated to use {@link com.intellij.openapi.roots.ProjectFileIndex} and other APIs instead.
  */
 @ApiStatus.Internal
 public abstract class DirectoryIndex {

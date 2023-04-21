@@ -4,15 +4,14 @@ package com.jetbrains.python.packaging;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.target.TargetEnvironmentRequest;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.PyCondaRunTargetsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 public final class CondaOnTargetPackageManager {
   private CondaOnTargetPackageManager() { }
@@ -27,7 +26,7 @@ public final class CondaOnTargetPackageManager {
                                      new ProcessOutput());
     }
 
-    final ArrayList<String> parameters = ContainerUtil.newArrayList("create", "-p", destinationDir, "-y", "python=" + version);
+    List<String> parameters = List.of("create", "-p", destinationDir, "-y", "python=" + version);
 
     PyCondaRunTargetsKt.runCondaOnTarget(targetEnvironmentRequest, condaExecutable, parameters);
     final String binary = PythonSdkUtil.getPythonExecutable(destinationDir);

@@ -170,7 +170,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
       return false;
     }
 
-    if (!invokedOnDeclaration && PsiType.VOID.equals(typeByExpression)) {
+    if (!invokedOnDeclaration && PsiTypes.voidType().equals(typeByExpression)) {
       String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("selected.expression.has.void.type"));
       showErrorMessage(project, message, editor);
       return false;

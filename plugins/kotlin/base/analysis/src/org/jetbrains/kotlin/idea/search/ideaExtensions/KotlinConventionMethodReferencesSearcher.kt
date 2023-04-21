@@ -7,7 +7,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.canBeResolvedWithFrontEnd
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.canBeResolvedWithFrontEnd
 import org.jetbrains.kotlin.idea.search.usagesSearch.operators.OperatorReferenceSearcher
 
 class KotlinConventionMethodReferencesSearcher : QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters>() {

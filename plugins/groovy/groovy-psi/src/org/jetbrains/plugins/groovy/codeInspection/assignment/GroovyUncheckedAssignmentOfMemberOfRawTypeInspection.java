@@ -53,7 +53,7 @@ public class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseIn
               final PsiType methodType = method.getReturnType();
               final PsiType returnType = value.getType();
               if (methodType != null) {
-                if (!PsiType.VOID.equals(methodType)) {
+                if (!PsiTypes.voidType().equals(methodType)) {
                   if (returnType != null) {
                     checkAssignability(methodType, value, value);
                   }

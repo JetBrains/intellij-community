@@ -42,7 +42,7 @@ public class UnusedReturnValueLocalInspection extends AbstractBaseJavaLocalInspe
   @Override
   public ProblemDescriptor @Nullable [] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (method.isConstructor() ||
-        PsiType.VOID.equals(method.getReturnType()) ||
+        PsiTypes.voidType().equals(method.getReturnType()) ||
         VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(method.getModifierList()), myGlobal.highestModifier) < 0 ||
         myGlobal.IGNORE_BUILDER_PATTERN && PropertyUtilBase.isSimplePropertySetter(method) ||
         method.hasModifierProperty(PsiModifier.NATIVE) ||
@@ -62,7 +62,7 @@ public class UnusedReturnValueLocalInspection extends AbstractBaseJavaLocalInspe
         }
       }
       return element instanceof PsiMethodReferenceExpression &&
-             PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiFunctionalExpression)element));
+             PsiTypes.voidType().equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiFunctionalExpression)element));
     })) {
       if (atLeastOneUsageExists[0]) {
         return new ProblemDescriptor[]{UnusedReturnValue.createProblemDescriptor(method, manager, null, false, isOnTheFly)};

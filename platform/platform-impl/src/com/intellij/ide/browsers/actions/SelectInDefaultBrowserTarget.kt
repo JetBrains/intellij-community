@@ -17,7 +17,7 @@ internal class SelectInDefaultBrowserTarget : SelectInTarget {
   override fun toString() = IdeBundle.message("browser.select.in.default.name")
 
   override fun selectIn(context: SelectInContext, requestFocus: Boolean) {
-    doCreateOpenRequest(context)?.let { BaseOpenInBrowserAction.openInBrowser(it) }
+    doCreateOpenRequest(context)?.let { BaseOpenInBrowserAction.Handler.openInBrowser(it) }
   }
 
   override fun getWeight() = StandardTargetWeights.OS_FILE_MANAGER

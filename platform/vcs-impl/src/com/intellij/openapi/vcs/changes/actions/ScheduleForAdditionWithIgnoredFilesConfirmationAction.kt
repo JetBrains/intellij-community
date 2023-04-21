@@ -28,7 +28,7 @@ import com.intellij.vcsUtil.VcsUtil
 class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditionAction() {
   override fun isEnabled(e: AnActionEvent): Boolean {
     val project = e.getData(CommonDataKeys.PROJECT) ?: return false
-    if (getUnversionedFiles(e, project).isNotEmpty) return true
+    if (Manager.getUnversionedFiles(e, project).isNotEmpty) return true
 
     val changes = e.getData(VcsDataKeys.CHANGES)?.asSequence().orEmpty()
     val files = e.getData(VcsDataKeys.VIRTUAL_FILES)?.asSequence().orEmpty()
@@ -48,7 +48,7 @@ class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditio
     toAdd += collectPathsFromChanges(project, changes)
     toAdd += collectPathsFromFiles(project, files)
 
-    val unversionedFiles = getUnversionedFiles(e, project).toList()
+    val unversionedFiles = Manager.getUnversionedFiles(e, project).toList()
 
     val changeListManager = ChangeListManager.getInstance(project)
     val (ignored, toAddWithoutIgnored) = toAdd.partition(changeListManager::isIgnoredFile)

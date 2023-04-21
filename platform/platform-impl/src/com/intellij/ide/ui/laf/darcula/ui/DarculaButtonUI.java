@@ -119,7 +119,7 @@ public class DarculaButtonUI extends BasicButtonUI {
       return SegmentedActionToolbarComponent.Companion.paintButtonDecorations(g, c, getBackground(c, r));
     }
 
-    JBInsets.removeFrom(r, isSmallVariant(c) || isGotItButton(c) ? c.getInsets() : JBUI.insets(1));
+    JBInsets.removeFrom(r, isSmallVariant(c) ? c.getInsets() : JBUI.insets(1));
 
     if (UIUtil.isHelpButton(c)) {
       g.setPaint(UIUtil.getGradientPaint(0, 0, getButtonColorStart(), 0, r.height, getButtonColorEnd()));
@@ -153,6 +153,14 @@ public class DarculaButtonUI extends BasicButtonUI {
         }
 
         if (c.isEnabled()) {
+          Color outlineFocusColor = (Color)c.getClientProperty("JButton.outlineFocusColor");
+          Integer outlineFocusSize = (Integer)c.getClientProperty("JButton.outlineFocusSize");
+          if (outlineFocusColor != null && outlineFocusSize != null && c.hasFocus()) {
+            g2.setPaint(outlineFocusColor);
+            g2.fill(new RoundRectangle2D.Float(bw - outlineFocusSize, bw - outlineFocusSize,
+                                               r.width - bw * 2 + outlineFocusSize * 2, r.height - bw * 2 + outlineFocusSize * 2,
+                                               arc + outlineFocusSize, arc + outlineFocusSize));
+          }
           g2.setPaint(getBackground(c, r));
           g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
         }

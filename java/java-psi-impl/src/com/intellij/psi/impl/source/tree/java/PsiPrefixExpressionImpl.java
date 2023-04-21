@@ -62,13 +62,14 @@ public class PsiPrefixExpressionImpl extends ExpressionPsiElement implements Psi
     if (opCode == JavaTokenType.PLUS || opCode == JavaTokenType.MINUS || opCode == JavaTokenType.TILDE) {
       if (type == null) return null;
       if (type instanceof PsiClassType) type = PsiPrimitiveType.getUnboxedType(type);
-      return PsiType.BYTE.equals(type) || PsiType.CHAR.equals(type) || PsiType.SHORT.equals(type) ? PsiType.INT : type;
+      return PsiTypes.byteType().equals(type) || PsiTypes.charType().equals(type) || PsiTypes.shortType().equals(type) ? PsiTypes.intType()
+                                                                                                                       : type;
     }
     else if (opCode == JavaTokenType.PLUSPLUS || opCode == JavaTokenType.MINUSMINUS) {
       return type;
     }
     else if (opCode == JavaTokenType.EXCL) {
-      return PsiType.BOOLEAN;
+      return PsiTypes.booleanType();
     }
     else {
       LOG.assertTrue(false);

@@ -6,8 +6,8 @@ class X {
   void foo(List<String> list) {
     list.stream().map(x -> {
       return x.toUpperCase();
-    }).filter(s -> {
-      return s.length() > 3;
+    }).filter(upperCase -> {
+      return upperCase.length() > 3;
     }).count();
   }
 }

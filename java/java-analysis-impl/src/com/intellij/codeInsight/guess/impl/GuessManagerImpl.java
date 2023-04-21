@@ -510,7 +510,7 @@ public final class GuessManagerImpl extends GuessManager {
         type = ((PsiPrimitiveType)type).getBoxedType(expression);
       }
       PsiType rawType = type instanceof PsiClassType ? ((PsiClassType)type).rawType() : type;
-      if (rawType == null || rawType.equals(PsiType.NULL)) return;
+      if (rawType == null || rawType.equals(PsiTypes.nullType())) return;
       if (mySpecificType == null) {
         mySpecificType = rawType;
       }

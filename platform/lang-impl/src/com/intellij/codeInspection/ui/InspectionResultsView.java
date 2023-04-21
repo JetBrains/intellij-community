@@ -50,6 +50,8 @@ import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
+import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.util.Alarm;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
@@ -106,6 +108,8 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   private final Executor myTreeUpdater = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Inspection-View-Tree-Updater");
   private volatile boolean myUpdating;
   private volatile boolean myFixesAvailable;
+  private ToolWindow myToolWindow;
+  private ContentManagerListener myContentManagerListener;
 
   public InspectionResultsView(@NotNull GlobalInspectionContextImpl globalInspectionContext,
                                @NotNull InspectionRVContentProvider provider) {
@@ -196,10 +200,27 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     });
   }
 
-  public void addAdditionalGearActions(@NotNull ToolWindow toolWindow) {
+  public void initAdditionalGearActions(@NotNull ToolWindow toolWindow) {
     if (ExperimentalUI.isNewUI()) {
+      myToolWindow = toolWindow;
+      myContentManagerListener = new ContentManagerListener() {
+        @Override
+        public void selectionChanged(@NotNull ContentManagerEvent event) {
+          boolean selected = ContentManagerEvent.ContentOperation.add == event.getOperation();
+          if (selected && event.getContent().getComponent() == InspectionResultsView.this) {
+            setAdditionalGearActions();
+          }
+        }
+      };
+      myToolWindow.getContentManager().addContentManagerListener(myContentManagerListener);
+      setAdditionalGearActions();
+    }
+  }
+
+  private void setAdditionalGearActions() {
+    if (myToolWindow != null) {
       DefaultActionGroup group = new DefaultActionGroup(myGlobalInspectionContext.createToggleAutoscrollAction());
-      toolWindow.setAdditionalGearActions(group);
+      myToolWindow.setAdditionalGearActions(group);
     }
   }
 
@@ -321,6 +342,9 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     if (myLoadingProgressPreview != null) {
       Disposer.dispose(myLoadingProgressPreview);
       myLoadingProgressPreview = null;
+    }
+    if (myToolWindow != null && myContentManagerListener != null) {
+      myToolWindow.getContentManager().removeContentManagerListener(myContentManagerListener);
     }
   }
 

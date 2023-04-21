@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.help.HelpManager;
@@ -1201,8 +1202,9 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
       project, FindBundle.message("find.usages.progress.title")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        GlobalSearchScope scope = GlobalSearchScopeUtil.toGlobalSearchScope(
-          FindInProjectUtil.getScopeFromModel(project, myHelper.myPreviousModel), project);
+        GlobalSearchScope scope = ReadAction.nonBlocking(
+          () -> GlobalSearchScopeUtil.toGlobalSearchScope(FindInProjectUtil.getScopeFromModel(project, myHelper.myPreviousModel), project)
+        ).wrapProgress(indicator).executeSynchronously();
 
         FindUsagesProcessPresentation processPresentation =
           FindInProjectUtil.setupProcessPresentation(project, myUsageViewPresentation);

@@ -49,11 +49,11 @@ internal object GrMethodReferenceResolver : GroovyResolver<GrMethodReferenceExpr
     return LightMethodBuilder(manager, GroovyLanguage, "fake array constructor").apply {
       setMethodReturnType(type)
       if (dimensions == 0) {
-        addParameter("size", PsiType.INT)
+        addParameter("size", PsiTypes.intType())
       }
       else {
         for (i in 0..dimensions) {
-          addParameter("size$i", PsiType.INT)
+          addParameter("size$i", PsiTypes.intType())
         }
       }
     }

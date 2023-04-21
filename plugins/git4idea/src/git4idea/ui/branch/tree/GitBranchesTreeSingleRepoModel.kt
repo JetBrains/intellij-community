@@ -41,7 +41,7 @@ class GitBranchesTreeSingleRepoModel(
 
   private fun rebuild(matcher: MinusculeMatcher?) {
     branchesTreeCache.keys.clear()
-    val localBranches = repository.branches.localBranches
+    val localBranches = repository.localBranchesOrCurrent
     val remoteBranches = repository.branches.remoteBranches
     localBranchesTree = LazyBranchesSubtreeHolder(localBranches, listOf(repository), matcher, ::isPrefixGrouping)
     remoteBranchesTree = LazyBranchesSubtreeHolder(remoteBranches, listOf(repository), matcher, ::isPrefixGrouping)
@@ -61,7 +61,7 @@ class GitBranchesTreeSingleRepoModel(
                                              || (node === GitBranchType.REMOTE && remoteBranchesTree.isEmpty())
 
   private fun getChildren(parent: Any?): List<Any> {
-    if (parent == null || !haveFilteredBranches()) return emptyList()
+    if (parent == null) return emptyList()
     return when (parent) {
       TreeRoot -> getTopLevelNodes()
       is GitBranchType -> branchesTreeCache.getOrPut(parent) { getBranchTreeNodes(parent, emptyList()) }
@@ -95,7 +95,4 @@ class GitBranchesTreeSingleRepoModel(
   override fun filterBranches(matcher: MinusculeMatcher?) {
     branchNameMatcher = matcher
   }
-
-  private fun haveFilteredBranches(): Boolean =
-    !localBranchesTree.isEmpty() || !remoteBranchesTree.isEmpty()
 }

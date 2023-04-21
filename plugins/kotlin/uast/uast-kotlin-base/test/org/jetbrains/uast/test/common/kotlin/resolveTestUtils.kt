@@ -8,8 +8,6 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
-import org.jetbrains.kotlin.utils.addToStdlib.cast
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
 
 fun UFile.resolvableWithTargets(
@@ -19,7 +17,7 @@ fun UFile.resolvableWithTargets(
         UastFacade.convertToAlternatives<UExpression>(element, arrayOf(UReferenceExpression::class.java, UCallExpression::class.java))
             .filter {
                 when (it) {
-                    is UCallExpression -> it.sourcePsi.safeAs<KtCallElement>()?.calleeExpression !is KtSimpleNameExpression
+                    is UCallExpression -> (it.sourcePsi as? KtCallElement)?.calleeExpression !is KtSimpleNameExpression
                     else -> true
                 }
             }.takeIf { it.any() }
@@ -33,7 +31,7 @@ fun UFile.resolvableWithTargets(
                     append(" -> ")
                     append(ref.asLogString())
                     append(" -> ")
-                    append(renderLightElementDifferently(ref.cast<UResolvable>().resolve()))
+                    append(renderLightElementDifferently((ref as UResolvable).resolve()))
                     append(": ")
                     append(
                         when (ref) {

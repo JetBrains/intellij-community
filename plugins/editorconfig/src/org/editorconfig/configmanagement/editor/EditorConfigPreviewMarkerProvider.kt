@@ -34,8 +34,8 @@ class EditorConfigPreviewMarkerProvider : LineMarkerProviderDescriptor() {
   }
 
   override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? {
-    if (element is EditorConfigHeader && isEditorConfigEnabled(element)) {
-      val actionGroup = createActions(element)
+    if (element is EditorConfigHeader && Handler.isEditorConfigEnabled(element)) {
+      val actionGroup = Handler.createActions(element)
       val child = element.getFirstChild()
       if (child != null && child.node.elementType === EditorConfigElementTypes.L_BRACKET) {
         return SectionLineMarkerInfo(actionGroup,
@@ -66,23 +66,23 @@ class EditorConfigPreviewMarkerProvider : LineMarkerProviderDescriptor() {
   private class ChooseFileAction(private val myHeader: EditorConfigHeader) : DumbAwareAction(message("editor.preview.open")) {
     override fun actionPerformed(e: AnActionEvent) {
       if (myHeader.isValid) {
-        val previewFile = choosePreviewFile(myHeader.project, getRootDir(myHeader), getPattern(myHeader.text))
+        val previewFile = Handler.choosePreviewFile(myHeader.project, Handler.getRootDir(myHeader), Handler.getPattern(myHeader.text))
         if (previewFile != null) {
           val editorConfigFile = myHeader.containingFile.virtualFile
-          openPreview(myHeader.project, editorConfigFile, previewFile)
+          Handler.openPreview(myHeader.project, editorConfigFile, previewFile)
         }
       }
     }
   }
 
-  companion object {
-    private fun isEditorConfigEnabled(element: PsiElement): Boolean = element.isValid && isEnabled(element.project)
+  private object Handler {
+    fun isEditorConfigEnabled(element: PsiElement): Boolean = element.isValid && isEnabled(element.project)
 
-    private fun createActions(header: EditorConfigHeader): ActionGroup = DefaultActionGroup(listOf(ChooseFileAction(header)))
+    fun createActions(header: EditorConfigHeader): ActionGroup = DefaultActionGroup(listOf(ChooseFileAction(header)))
 
-    private fun getPattern(header: String): String = header.trimStart('[').trimEnd(']')
+    fun getPattern(header: String): String = header.trimStart('[').trimEnd(']')
 
-    private fun choosePreviewFile(project: Project, rootDir: VirtualFile, pattern: String): VirtualFile? {
+    fun choosePreviewFile(project: Project, rootDir: VirtualFile, pattern: String): VirtualFile? {
       val descriptor = object : FileChooserDescriptor(true, false, false, false, false, false) {
         override fun isFileVisible(file: VirtualFile, showHiddenFiles: Boolean): Boolean =
           (showHiddenFiles || !FileElement.isFileHidden(file))
@@ -107,12 +107,12 @@ class EditorConfigPreviewMarkerProvider : LineMarkerProviderDescriptor() {
       return glob.match(resource.path.relativize(Ec4jPath.Ec4jPaths.of(filePath)))
     }
 
-    private fun getRootDir(header: EditorConfigHeader): VirtualFile {
+    fun getRootDir(header: EditorConfigHeader): VirtualFile {
       val psiFile = header.containingFile
       return psiFile.virtualFile.parent
     }
 
-    private fun openPreview(project: Project, editorConfigFile: VirtualFile, previewFile: VirtualFile) {
+    fun openPreview(project: Project, editorConfigFile: VirtualFile, previewFile: VirtualFile) {
       FileEditorManager.getInstance(project).closeFile(editorConfigFile)
       EditorConfigPreviewManager.getInstance(project).associateWithPreviewFile(editorConfigFile, previewFile)
       FileEditorManager.getInstance(project).openFile(editorConfigFile, true)

@@ -759,7 +759,7 @@ class CommonIntentionActionsTest : BasePlatformTestCase() {
         myFixture.launchAction(
             createMethodActions(
                 myFixture.atCaret(),
-                methodRequest(project, "baz", listOf(JvmModifier.PRIVATE), PsiType.VOID)
+                methodRequest(project, "baz", listOf(JvmModifier.PRIVATE), PsiTypes.voidType())
             ).findWithText("Add method 'baz' to 'Foo'")
         )
         myFixture.checkResult(
@@ -790,8 +790,8 @@ class CommonIntentionActionsTest : BasePlatformTestCase() {
                     project,
                     methodName = "baz",
                     modifiers = listOf(JvmModifier.PUBLIC),
-                    returnType = expectedTypes(PsiType.INT),
-                    parameters = expectedParams(PsiType.INT)
+                    returnType = expectedTypes(PsiTypes.intType()),
+                    parameters = expectedParams(PsiTypes.intType())
                 )
             ).findWithText("Add method 'baz' to 'Foo'")
         )
@@ -817,7 +817,7 @@ class CommonIntentionActionsTest : BasePlatformTestCase() {
 
         myFixture.launchAction(
             createConstructorActions(
-                myFixture.atCaret(), constructorRequest(project, listOf(pair("param0", PsiType.INT as PsiType)))
+                myFixture.atCaret(), constructorRequest(project, listOf(pair("param0", PsiTypes.intType() as PsiType)))
             ).findWithText("Add primary constructor to 'Foo'")
         )
         myFixture.checkResult(
@@ -839,7 +839,7 @@ class CommonIntentionActionsTest : BasePlatformTestCase() {
         myFixture.launchAction(
             createConstructorActions(
                 myFixture.atCaret(),
-                constructorRequest(project, listOf(pair("param0", PsiType.INT as PsiType)))
+                constructorRequest(project, listOf(pair("param0", PsiTypes.intType() as PsiType)))
             ).findWithText("Add secondary constructor to 'Foo'")
         )
         myFixture.checkResult(
@@ -864,7 +864,7 @@ class CommonIntentionActionsTest : BasePlatformTestCase() {
         myFixture.launchAction(
             createConstructorActions(
                 myFixture.atCaret(),
-                constructorRequest(project, listOf(pair("param0", PsiType.INT as PsiType)))
+                constructorRequest(project, listOf(pair("param0", PsiTypes.intType() as PsiType)))
             ).findWithText("Add 'int' as 1st parameter to constructor 'Foo'")
         )
         myFixture.checkResult(
@@ -1131,11 +1131,11 @@ class CommonIntentionActionsTest : BasePlatformTestCase() {
             createMethodActions(
                 myFixture.atCaret(),
                 SimpleMethodRequest(
-                    project,
-                    methodName = "setBaz",
-                    modifiers = listOf(JvmModifier.PUBLIC),
-                    returnType = expectedTypes(PsiType.VOID),
-                    parameters = expectedParams(
+                  project,
+                  methodName = "setBaz",
+                  modifiers = listOf(JvmModifier.PUBLIC),
+                  returnType = expectedTypes(PsiTypes.voidType()),
+                  parameters = expectedParams(
                         PsiType.getTypeByName("java.lang.String", project, project.allScope()),
                         PsiType.getTypeByName("java.lang.String", project, project.allScope())
                     )

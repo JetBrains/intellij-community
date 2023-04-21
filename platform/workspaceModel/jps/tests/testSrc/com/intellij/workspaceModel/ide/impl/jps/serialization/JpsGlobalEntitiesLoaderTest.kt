@@ -5,7 +5,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.workspaceModel.ide.JpsFileEntitySource
+import com.intellij.workspaceModel.ide.JpsGlobalFileEntitySource
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
@@ -48,7 +48,7 @@ class JpsGlobalEntitiesLoaderTest {
       Assert.assertEquals(librariesNames.size, libraryEntities.size)
       UsefulTestCase.assertSameElements(librariesNames, libraryEntities.map { it.name })
       libraryEntities.forEach { libraryEntity ->
-        Assert.assertEquals(JpsFileEntitySource.ExactGlobalFile::class, libraryEntity.entitySource::class)
+        Assert.assertEquals(JpsGlobalFileEntitySource::class, libraryEntity.entitySource::class)
         Assert.assertEquals(LibraryTableId.GlobalLibraryTableId(LibraryTablesRegistrar.APPLICATION_LEVEL), libraryEntity.tableId)
 
         Assert.assertEquals(1, libraryEntity.roots.size)

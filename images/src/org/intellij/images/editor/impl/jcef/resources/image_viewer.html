@@ -84,16 +84,6 @@
       margin: 0;
     }
 
-    #error_message {
-      user-select: none;
-      width: 100%;
-      overflow: scroll;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-    }
-
     #view_port {
       height: 100%;
       width: 100%;
@@ -144,8 +134,16 @@
       background-image: linear-gradient(to right, grey 1px, transparent 1px),
       linear-gradient(to bottom, grey 1px, transparent 1px);
       background-size: 1px 1px;
-      filter: invert(-1);
       mix-blend-mode: difference;
+    }
+
+    #image_border {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border: 1px solid gray;
+      mix-blend-mode: difference;
+      z-index: 20;
     }
   </style>
   <title>Image viewer</title>
@@ -162,6 +160,7 @@
   <button onclick="reload()">↺</button>
   <button onclick="toggleChessboard()">♔</button>
   <button onclick="toggleGrid()">▦</button>
+  <button onclick="toggleBorder()">Borders</button>
 </div>
 
 <div id="container">
@@ -171,10 +170,10 @@
       <object id="image"></object>
       <div id="chessboard" style="display: none"></div>
       <div id="pixel_grid" style="display: none"></div>
+      <div id="image_border" style="display: none"></div>
       <div id="zoom_anchor_cross_on_canvas"></div>
     </div>
   </div>
-  <div id="error_message" style="display: none"></div>
 </div>
 
 <div id="info_panel" style="display: none">No data</div>
@@ -194,7 +193,6 @@
 
   const gState = {
     'zoom': 1.0,
-    'scroll': { 'x': 0.0, 'y': 0.0 },
     'url': '',
     'grid_visible': false,
     'chessboard_visible': false,
@@ -209,22 +207,30 @@
     'view_port': document.getElementById('view_port'),
     'chessboard': document.getElementById('chessboard'),
     'pixel_grid': document.getElementById('pixel_grid'),
-    'error_message': document.getElementById('error_message'),
     'control_panel': document.getElementById('control_panel'),
     'info_panel': document.getElementById('info_panel'),
+    'image_border': document.getElementById('image_border'),
+  }
+  let send_info = function (info_string) {
   }
 
-  let send_info = function (info_string) {}
+  function _set_error() {
+    gState.status = ViewerStatus.ERROR
+  }
+
+  function _set_image_ready() {
+    gState.status = ViewerStatus.OK
+  }
 
   function _update_info() {
     let canvas_bbox = gUI.canvas.getBoundingClientRect()
     let info = {
-      'status': gUI.error_message.style.display === 'none' ? 'OK' : 'FAILED',
+      'status': gState.status,
 
       'zoom': gState.zoom,
-      'viewportSize': { 'width': gUI.view_port.clientWidth, 'height': gUI.view_port.clientHeight },
-      'imageSize': { 'width': gUI.image.clientWidth, 'height': gUI.image.clientHeight },
-      'canvasBBox': { 'x': canvas_bbox.x, 'y': canvas_bbox.y, 'width': canvas_bbox.width, 'height': canvas_bbox.height},
+      'viewportSize': {'width': gUI.view_port.clientWidth, 'height': gUI.view_port.clientHeight},
+      'imageSize': {'width': gUI.image.clientWidth, 'height': gUI.image.clientHeight},
+      'canvasBBox': {'x': canvas_bbox.x, 'y': canvas_bbox.y, 'width': canvas_bbox.width, 'height': canvas_bbox.height},
 
       'zoomInPossible': gState.zoom < MAX_ZOOM,
       'zoomOutPossible': canvas_bbox.width > MIN_IMAGE_SIZE && canvas_bbox.height > MIN_IMAGE_SIZE,
@@ -245,7 +251,8 @@
     if (gState.grid_visible && gState.zoom > MIN_GRID_ZOOM) {
       gUI.pixel_grid.style.backgroundSize = `${gState.zoom}px ${gState.zoom}px`
       gUI.pixel_grid.style.display = ''
-    } else {
+    }
+    else {
       gUI.pixel_grid.style.display = 'none'
     }
   }
@@ -256,34 +263,27 @@
     if (!image) {
       return
     }
-    for (e of image.getElementsByTagName('svg')) {
+    for (let e of image.getElementsByTagName('svg')) {
       if (e.getAttribute('height') || e.getAttribute('width')) continue
 
       let vb = e.viewBox
       if (!vb || !vb.baseVal) {
-        continue
+        _set_error()
       }
       e.setAttribute('width', vb.baseVal.width + 'px')
     }
 
-    const parserErrors = image.getElementsByTagName('parsererror')
-    const error_message = document.getElementById('error_message')
-    error_message.textContent = ''
-    let view_port = document.getElementById("view_port")
-    if (parserErrors.length > 0) {
-      error_message.appendChild(parserErrors[0])
-      error_message.style.display = ''
-      view_port.style.display = 'none'
-    } else {
-      error_message.style.display = 'none'
-      view_port.style.display = ''
+    if (image.getElementsByTagName('parsererror').length > 0) {
+      _set_error()
+    }
+    else {
+      _set_image_ready()
     }
   }
 
   let _init = function () {
     gUI.control_panel.style.display = gIsDebug ? '' : 'none'
     gUI.info_panel.style.display = gIsDebug ? '' : 'none'
-    gUI.error_message.style.display = 'none'
     document.getElementById('zoom_anchor_cross_on_canvas').style.display = gIsDebug ? '' : 'none'
     document.getElementById('zoom_anchor_cross_in_viewport').style.display = gIsDebug ? '' : 'none'
 
@@ -312,7 +312,7 @@
 
   function setZoom(zoom = 1.0, anchor_on_viewport = null) {
     if (anchor_on_viewport == null) {
-      anchor_on_viewport = {x: gUI.view_port.offsetWidth / 2, y: gUI.view_port.offsetHeight / 2 }
+      anchor_on_viewport = {x: gUI.view_port.offsetWidth / 2, y: gUI.view_port.offsetHeight / 2}
     }
     zoom = Math.min(MAX_ZOOM, zoom)
     zoom = Math.max(zoom, MIN_IMAGE_SIZE / gUI.image.clientWidth, MIN_IMAGE_SIZE / gUI.image.clientHeight)
@@ -360,35 +360,34 @@
   }
 
   function _set_up_canvas(canvas_width, canvas_height) {
-    gUI.canvas.style.width = canvas_width + 'px'
-    gUI.canvas.style.height = canvas_height + 'px'
-
     let translate_x
+    let left_pos
     if (canvas_width > gUI.view_port.clientWidth) {
       translate_x = '0'
-      gUI.canvas.style.left = '0'
+      left_pos = '0'
     }
     else {
       translate_x = '-50%'
-      gUI.canvas.style.left = '50%'
+      left_pos = '50%'
     }
 
     let translate_y
+    let top_pos
     if (canvas_height > gUI.view_port.clientHeight) {
       translate_y = '0'
-      gUI.canvas.style.top = '0'
+      top_pos = '0'
     }
     else {
       translate_y = '-50%'
-      gUI.canvas.style.top = '50%'
+      top_pos = '50%'
     }
 
-    gUI.canvas.style.transform = 'translate(' + translate_x + ", " + translate_y + ")"
+    gUI.canvas.style.cssText = `width: ${canvas_width}px; height: ${canvas_height}px; left: ${left_pos}; top: ${top_pos}; transform: translate(${translate_x}, ${translate_y});`
   }
 
   function getFitToViewportScale() {
-    let x_scale = gUI.view_port.clientWidth / gUI.image.clientWidth
-    let y_scale = gUI.view_port.clientHeight / gUI.image.clientHeight
+    let x_scale = (gUI.view_port.clientWidth - 5) / gUI.image.clientWidth
+    let y_scale = (gUI.view_port.clientHeight - 5) / gUI.image.clientHeight
     return Math.min(x_scale, y_scale)
   }
 
@@ -399,7 +398,9 @@
   function setImageUrl(url) {
     if (!url) return
 
-    let size_observer = new ResizeObserver( () => { setZoom(gState.zoom) })
+    let size_observer = new ResizeObserver(() => {
+      setZoom(gState.zoom)
+    })
     size_observer.observe(gUI.image)
 
     let image_loaded_listener = function () {
@@ -442,6 +443,18 @@
     gState.chessboard_visible = value
     gUI.chessboard.style.display = value ? '' : "none"
     _update_info()
+  }
+
+  function setBorderVisible(value) {
+    gUI.image_border.style.display = value ? '' : 'none'
+  }
+
+  function isBorderVisible() {
+    return gUI.image_border.style.display !== 'none'
+  }
+
+  function toggleBorder() {
+    setBorderVisible(!isBorderVisible())
   }
 </script>
 

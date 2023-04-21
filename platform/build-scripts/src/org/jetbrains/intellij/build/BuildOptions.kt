@@ -13,7 +13,6 @@ import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.TimeUnit
-import kotlin.collections.HashSet
 
 /**
  * Pass comma-separated names of build steps (see below) to this system property to skip them.
@@ -200,12 +199,29 @@ class BuildOptions {
   var targetArch: JvmArchitecture? = null
 
   /**
+   * If `true` the build is running in 'Development mode' i.e. its artifacts aren't supposed to be used in production. In development
+   * mode build scripts won't fail if some non-mandatory dependencies are missing and will just show warnings.
+   *
+   * By default, 'development mode' is enabled if build is not running under continuous integration server (TeamCity).
+   */
+  var isInDevelopmentMode = SystemProperties.getBooleanProperty("intellij.build.dev.mode", System.getenv("TEAMCITY_VERSION") == null)
+  var useCompiledClassesFromProjectOutput = SystemProperties.getBooleanProperty(USE_COMPILED_CLASSES_PROPERTY, isInDevelopmentMode)
+
+  /**
    * Pass comma-separated names of build steps (see below) to [BUILD_STEPS_TO_SKIP_PROPERTY] system property to skip them when building locally.
    */
   var buildStepsToSkip: MutableSet<String> = System.getProperty(BUILD_STEPS_TO_SKIP_PROPERTY, "")
     .split(',')
     .dropLastWhile { it.isEmpty() }
-    .filterTo(HashSet()) { !it.isBlank() }
+    .filterNot { it.isBlank() }
+    .toMutableSet()
+    .apply {
+      /* Skip signing and notarization for local builds */
+      if (isInDevelopmentMode) {
+        add(MAC_SIGN_STEP)
+        add(MAC_NOTARIZE_STEP)
+      }
+    }
 
   var buildMacArtifactsWithoutRuntime = SystemProperties.getBooleanProperty(BUILD_MAC_ARTIFACTS_WITHOUT_RUNTIME,
                                                                             SystemProperties.getBooleanProperty("artifact.mac.no.jdk", false))
@@ -258,15 +274,6 @@ class BuildOptions {
    */
   var compilationLogEnabled = SystemProperties.getBooleanProperty("intellij.build.compilation.log.enabled", true)
   var cleanOutputFolder = SystemProperties.getBooleanProperty(CLEAN_OUTPUT_FOLDER_PROPERTY, true)
-
-  /**
-   * If `true` the build is running in 'Development mode' i.e. its artifacts aren't supposed to be used in production. In development
-   * mode build scripts won't fail if some non-mandatory dependencies are missing and will just show warnings.
-   *
-   * By default, 'development mode' is enabled if build is not running under continuous integration server (TeamCity).
-   */
-  var isInDevelopmentMode = SystemProperties.getBooleanProperty("intellij.build.dev.mode", System.getenv("TEAMCITY_VERSION") == null)
-  var useCompiledClassesFromProjectOutput = SystemProperties.getBooleanProperty(USE_COMPILED_CLASSES_PROPERTY, isInDevelopmentMode)
 
   /**
    * If `true` the build is running as a unit test

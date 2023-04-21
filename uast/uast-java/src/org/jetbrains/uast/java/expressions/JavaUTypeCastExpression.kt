@@ -17,6 +17,7 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeCastExpression
+import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 
@@ -25,12 +26,12 @@ class JavaUTypeCastExpression(
   override val sourcePsi: PsiTypeCastExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UBinaryExpressionWithType {
-  override val operand: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.operand, this) }
+  override val operand: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.operand, this) }
 
   override val type: PsiType
     get() = sourcePsi.castType?.type ?: UastErrorType
 
-  override val typeReference: UTypeReferenceExpression? by lz { sourcePsi.castType?.let { JavaUTypeReferenceExpression(it, this) } }
+  override val typeReference: UTypeReferenceExpression? by lazyPub { sourcePsi.castType?.let { JavaUTypeReferenceExpression(it, this) } }
 
   override val operationKind: UastBinaryExpressionWithTypeKind
     get() = UastBinaryExpressionWithTypeKind.TypeCast.INSTANCE

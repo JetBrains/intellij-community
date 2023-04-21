@@ -189,6 +189,10 @@ public class RemoteConnectionBuilder {
             Path agentArtifactPath;
 
             Path classesRoot = Path.of(PathUtil.getJarPathForClass(DebuggerManagerImpl.class));
+            // isDirectory(classesRoot) is used instead of `PluginManagerCore.isRunningFromSources()`
+            // because we want to use installer's layout when running "IDEA (dev build)" run configuration
+            // where the layout is quite the same as in installers.
+            // but `PluginManagerCore.isRunningFromSources()` still returns `true` in this case
             if (Files.isDirectory(classesRoot)) {
               // Code runs from IDEA run configuration (code from .class file in out/ directory)
               try {

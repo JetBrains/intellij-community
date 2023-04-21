@@ -99,6 +99,7 @@ class PsiElementDocumentationTarget private constructor(
   @RequiresReadLock
   private fun localDocHtml(provider: DocumentationProvider): @Nls String? {
     val originalPsi = targetElement.getUserData(DocumentationManager.ORIGINAL_ELEMENT_KEY)?.element
+                      ?: sourceElement
     val doc = provider.generateDoc(targetElement, originalPsi)
     if (targetElement is PsiFile) {
       val fileDoc = DocumentationManager.generateFileDoc(targetElement, doc == null)

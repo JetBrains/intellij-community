@@ -2,50 +2,94 @@
 package org.jetbrains.kotlin.gradle.newTests.testServices
 
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils
-import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions
+import org.jetbrains.kotlin.gradle.newTests.resolveFromEnvironment
+import org.jetbrains.kotlin.gradle.newTests.testProperties.AndroidGradlePluginVersionTestsProperty
+import org.jetbrains.kotlin.gradle.newTests.testProperties.GradleVersionTestsProperty
+import org.jetbrains.kotlin.gradle.newTests.testProperties.KotlinGradlePluginVersionTestsProperty
+import org.jetbrains.kotlin.gradle.newTests.testProperties.SimpleProperties
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
+import java.io.File
 
 interface KotlinTestPropertiesService {
-    val defaultProperties: Map<String, String>
-    fun substituteKotlinTestPropertiesInText(text: String, properties: Map<String, String>? = null): String
+    fun substituteKotlinTestPropertiesInText(text: String, sourceFile: File): String
 
-    val gradleVersion: String
+    val agpVersion: String
+    val gradleVersion: GradleVersion
     val kotlinGradlePluginVersion: KotlinToolingVersion
+
+    companion object {
+        fun constructFromEnvironment(
+            agpVersionOverride: AndroidGradlePluginVersionTestsProperty.Values? = null,
+            gradleVersionOverride: GradleVersionTestsProperty.Values? = null,
+            kgpVersionOverride: KotlinGradlePluginVersionTestsProperty.Values? = null,
+        ): KotlinTestPropertiesService {
+            val agpVersion = agpVersionOverride?.version
+                ?: AndroidGradlePluginVersionTestsProperty.resolveFromEnvironment()
+
+            val gradleVersionRaw = gradleVersionOverride?.version
+                ?: GradleVersionTestsProperty.resolveFromEnvironment()
+            val gradleVersion = GradleVersion.version(gradleVersionRaw)
+
+            val kgpVersionRaw = kgpVersionOverride?.version
+                ?: KotlinGradlePluginVersionTestsProperty.resolveFromEnvironment()
+            val kgpVersion = KotlinToolingVersion(kgpVersionRaw)
+
+            val simpleProperties = SimpleProperties(gradleVersion, kgpVersion)
+
+            return KotlinTestPropertiesServiceImpl(kgpVersion, gradleVersion, agpVersion, simpleProperties)
+        }
+    }
 }
 
-class KotlinTestPropertiesServiceImpl : KotlinTestPropertiesService {
-    // TODO fix versions when version matrix is ready
-    override val gradleVersion: String = "7.5.1"
-    override val kotlinGradlePluginVersion: KotlinToolingVersion = KotlinGradlePluginVersions.latest
+class KotlinTestPropertiesServiceImpl(
+    override val kotlinGradlePluginVersion: KotlinToolingVersion,
+    override val gradleVersion: GradleVersion,
+    override val agpVersion: String,
+    propertiesValuesById: Map<String, String>,
+) : KotlinTestPropertiesService {
+    private val allPropertiesValuesById = propertiesValuesById.toMutableMap().apply {
+        put(KotlinGradlePluginVersionTestsProperty.id, kotlinGradlePluginVersion.toString())
+        put(GradleVersionTestsProperty.id, gradleVersion.version)
+        put(AndroidGradlePluginVersionTestsProperty.id, agpVersion)
+    }
 
-    override val defaultProperties: Map<String, String> =
-        mapOf(
-            "kotlin_plugin_version" to kotlinGradlePluginVersion.toString(),
-
-            "kts_kotlin_plugin_repositories" to GradleKotlinTestUtils.listRepositories(
-                useKts = true, GradleVersion.version(gradleVersion), kotlinGradlePluginVersion
-            ),
-
-            "kotlin_plugin_repositories" to GradleKotlinTestUtils.listRepositories(
-                useKts = false, GradleVersion.version(gradleVersion), kotlinGradlePluginVersion
-            ),
-
-            "android_gradle_plugin_version" to "7.4.0-beta03",
-            "compile_sdk_version" to "31",
-            "build_tools_version" to "28.0.3",
-
-            // TODO fix hmpp flags when versions matrix is ready
-            "enable_hmpp_flags" to "",
-            "disable_hmpp_flags" to "kotlin.mpp.hierarchicalStructureSupport=false"
-        )
-
-    override fun substituteKotlinTestPropertiesInText(text: String, properties: Map<String, String>?): String {
+    override fun substituteKotlinTestPropertiesInText(text: String, sourceFile: File): String {
         var result = text
-        (properties ?: defaultProperties).forEach { (key, value) ->
-            result = result.replace(Regex("""\{\s*\{\s*${key}\s*}\s*}"""), value)
+        allPropertiesValuesById.forEach { (key, value) ->
+            result = result.replace(Regex("""\{\s*\{\s*${key}\s*\}\s*\}""", RegexOption.IGNORE_CASE), value)
         }
 
+        assertNoPatternsLeftUnsubstituted(result, sourceFile)
         return result
+    }
+
+    private fun assertNoPatternsLeftUnsubstituted(text: String, sourceFile: File) {
+        if (!ANY_TEMPLATE_REGEX.containsMatchIn(text)) return
+
+        // expected testdump files have txt-extension and use `{{ ... }}`-patterns for
+        // templating variable parts of outputs (e.g. version of KGP).
+        // Those patterns are substituted by specific [ModulePrinterContributor] and thus it's
+        // ok to have them unsubstituted here
+        if (sourceFile.extension == "txt") return
+
+        error(
+            """
+                |Not all '{{ ... }}' patterns were substituted in testdata.
+                |
+                |Available patterns: ${allPropertiesValuesById.keys}
+                |
+                |If you've introduced a new TestProperty, check that it is passed to KotlinTestPropertiesService
+                |(simple way to ensure that is to register it in the SimpleProperties)
+                | 
+                |Full text after substitution:
+                |  
+                |${text}
+            """.trimMargin()
+        )
+
+    }
+
+    companion object {
+        val ANY_TEMPLATE_REGEX = Regex("""\{\s*\{\s*.*\s*\}\s*\}""")
     }
 }

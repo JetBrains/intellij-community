@@ -10,7 +10,7 @@ import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -27,7 +27,7 @@ public class IndexOfInliner implements CallInliner {
     PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
     if (qualifier == null) return false;
     PsiExpression arg = call.getArgumentList().getExpressions()[0];
-    DfaVariableValue res = builder.createTempVariable(PsiType.INT);
+    DfaVariableValue res = builder.createTempVariable(PsiTypes.intType());
     String name = call.getMethodExpression().getReferenceName();
     RelationType relationType = RelationType.LT;
     if ("lastIndexOf".equals(name) && TypeUtils.isJavaLangString(arg.getType())) {

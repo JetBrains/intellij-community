@@ -56,10 +56,10 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
       return TypeConversionUtil.isAssignable(myT, myS);
     }
 
-    if (PsiType.NULL.equals(myT) || myT == null) return false;
-    if (PsiType.NULL.equals(myS) || myS == null || myT.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return true;
+    if (PsiTypes.nullType().equals(myT) || myT == null) return false;
+    if (PsiTypes.nullType().equals(myS) || myS == null || myT.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return true;
 
-    if (PsiType.VOID.equals(myS) ^ PsiType.VOID.equals(myT)) return false;
+    if (PsiTypes.voidType().equals(myS) ^ PsiTypes.voidType().equals(myT)) return false;
 
     InferenceVariable inferenceVariable = session.getInferenceVariable(myS);
     if (inferenceVariable != null) {
@@ -155,7 +155,7 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
 
     if (myT instanceof PsiCapturedWildcardType) {
       PsiType lowerBound = ((PsiCapturedWildcardType)myT).getLowerBound();
-      if (lowerBound != PsiType.NULL) {
+      if (lowerBound != PsiTypes.nullType()) {
         constraints.add(new StrictSubtypingConstraint(lowerBound, myS, myCapture));
       }
     }

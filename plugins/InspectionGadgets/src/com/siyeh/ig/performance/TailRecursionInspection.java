@@ -512,7 +512,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
   private static boolean isBeforeVoidReturn(PsiElement element, PsiMethod method) {
     PsiReturnStatement returnStatement =
       ObjectUtils.tryCast(PsiTreeUtil.skipWhitespacesAndCommentsForward(element), PsiReturnStatement.class);
-    return isVoidReturn(returnStatement) && PsiType.VOID.equals(method.getReturnType());
+    return isVoidReturn(returnStatement) && PsiTypes.voidType().equals(method.getReturnType());
   }
 
   private static boolean isVoidReturn(PsiElement element) {

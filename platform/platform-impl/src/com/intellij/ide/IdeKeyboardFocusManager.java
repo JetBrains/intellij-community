@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,7 +29,7 @@ final class IdeKeyboardFocusManager extends DefaultFocusManager /* see javadoc a
   public boolean dispatchEvent(AWTEvent e) {
     if (EventQueue.isDispatchThread()) {
       boolean[] result = {false};
-      IdeEventQueue.performActivity(e, () -> result[0] = super.dispatchEvent(e));
+      IdeEventQueueKt.performActivity(e, () -> result[0] = super.dispatchEvent(e));
       return result[0];
     }
     else {

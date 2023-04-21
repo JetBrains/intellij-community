@@ -270,7 +270,7 @@ public final class AnnotationContext {
         if (var != null &&
             var.getLanguage().isKindOf(JavaLanguage.INSTANCE) &&
             var instanceof PsiMethod &&
-            PsiType.VOID.equals(((PsiMethod)var).getReturnType())) {
+            PsiTypes.voidType().equals(((PsiMethod)var).getReturnType())) {
           // If assignment target is Java, it resolves to the setter
           PsiParameter[] parameters = ((PsiMethod)var).getParameterList().getParameters();
           if (parameters.length == 1) {

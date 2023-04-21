@@ -16,6 +16,7 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiParenthesizedExpression
+import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
@@ -26,6 +27,6 @@ class JavaUParenthesizedExpression(
   override val sourcePsi: PsiParenthesizedExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UParenthesizedExpression {
-  override val expression: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.expression, this) }
+  override val expression: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.expression, this) }
   override fun evaluate(): Any? = expression.evaluate()
 }

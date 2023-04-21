@@ -11,9 +11,7 @@ interface GlobalWorkspaceModelCache {
   fun scheduleCacheSave()
 
   companion object {
-    fun getInstance(): GlobalWorkspaceModelCache? {
-      val application = ApplicationManager.getApplication()
-      return if (!application.isUnitTestMode) application.getService(GlobalWorkspaceModelCache::class.java) else null
-    }
+    fun getInstance(): GlobalWorkspaceModelCache? =
+      ApplicationManager.getApplication().getService(GlobalWorkspaceModelCache::class.java)
   }
 }

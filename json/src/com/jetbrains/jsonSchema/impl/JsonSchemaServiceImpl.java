@@ -18,13 +18,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.jetbrains.jsonSchema.JsonPointerUtil;
-import com.jetbrains.jsonSchema.JsonSchemaCatalogEntry;
-import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration;
-import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
+import com.jetbrains.jsonSchema.*;
 import com.jetbrains.jsonSchema.extension.*;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
@@ -164,8 +162,13 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
       .orElse(null);
   }
 
+  private static boolean shouldIgnoreFile(@NotNull VirtualFile file, @NotNull Project project) {
+    return JsonSchemaMappingsProjectConfiguration.getInstance(project).isIgnoredFile(file);
+  }
+
   @NotNull
   public Collection<VirtualFile> getSchemasForFile(@NotNull VirtualFile file, boolean single, boolean onlyUserSchemas) {
+    if (shouldIgnoreFile(file, myProject)) return Collections.emptyList();
     String schemaUrl = null;
     if (!onlyUserSchemas) {
       // prefer schema-schema if it is specified in "$schema" property
@@ -228,7 +231,18 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
       if (virtualFile != null) return Collections.singletonList(virtualFile);
     }
 
-    return ContainerUtil.createMaybeSingletonList(resolveSchemaFromOtherSources(file));
+    VirtualFile schemaFromOtherSources = resolveSchemaFromOtherSources(file);
+    if (schemaFromOtherSources != null) {
+      return ContainerUtil.createMaybeSingletonList(schemaFromOtherSources);
+    }
+
+    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
+    if (psiFile == null) {
+      return Collections.emptyList();
+    }
+    else {
+      return ContainerUtil.createMaybeSingletonList(getDynamicSchemaForFile(psiFile));
+    }
   }
 
   @NotNull

@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import git4idea.GitUtil
 import git4idea.actions.branch.GitBranchActionsUtil.getAffectedRepositories
+import git4idea.repo.GitRepository
 import git4idea.ui.branch.createOrCheckoutNewBranch
 
 class GitNewBranchAction
@@ -19,7 +20,9 @@ class GitNewBranchAction
   override fun update(e: AnActionEvent) {
     val project = e.project
     val repositories = getAffectedRepositories(e)
-    e.presentation.isEnabledAndVisible = project != null && !repositories.isEmpty()
+    val visible = project != null && !repositories.isEmpty()
+    e.presentation.isVisible = visible
+    e.presentation.isEnabled = visible && !repositories.all(GitRepository::isFresh)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {

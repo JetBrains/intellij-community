@@ -58,6 +58,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
     tabbedPane.addTab("Others", OthersPanel().panel)
     tabbedPane.addTab("Deprecated Api", JScrollPane(DeprecatedApiPanel().panel))
     tabbedPane.addTab("CheckBox/RadioButton", CheckBoxRadioButtonPanel().panel)
+    tabbedPane.addTab("Validation API", ValidationPanel(myDisposable).panel)
     tabbedPane.addTab("OnChange", OnChangePanel().panel)
 
     return panel {

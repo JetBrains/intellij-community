@@ -4,14 +4,14 @@ package com.intellij.codeInspection.dataFlow.types;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.psi.PsiKeyword;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
 final class DfIntRangeType extends DfAbstractRangeType implements DfIntType {
-  static final @NotNull LongRangeSet FULL_RANGE = Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiType.INT));
+  static final @NotNull LongRangeSet FULL_RANGE = Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiTypes.intType()));
 
   DfIntRangeType(@NotNull LongRangeSet range, @Nullable LongRangeSet wideRange) {
     super(checkRange(range), wideRange);
@@ -27,6 +27,6 @@ final class DfIntRangeType extends DfAbstractRangeType implements DfIntType {
   @Override
   public @NotNull String toString() {
     if (getRange() == FULL_RANGE) return PsiKeyword.INT;
-    return PsiKeyword.INT + " " + JvmPsiRangeSetUtil.getPresentationText(getRange(), PsiType.INT);
+    return PsiKeyword.INT + " " + JvmPsiRangeSetUtil.getPresentationText(getRange(), PsiTypes.intType());
   }
 }

@@ -27,26 +27,26 @@ public class CommandsRunner {
     runScript(ProjectManager.getInstance().getOpenProjects()[0], text, false);
   }
 
-  public static boolean areCommandsFailed() {
-    return getInstance().actionCallback.isRejected();
-  }
-
   public static void setActionCallback(ActionCallback actionCallback) {
     getInstance().actionCallback = actionCallback;
   }
 
-  public static boolean areCommandsFinished(boolean isItStarterCommands) {
+  public static boolean haveCommandsFinished() {
     if (getInstance().actionCallback == null) return false;
-    return isItStarterCommands ? getInstance().actionCallback.isDone() : getInstance().actionCallback.isProcessed();
+    return getInstance().actionCallback.isProcessed();
   }
 
-  public static boolean areCommandsFinished() {
-    return areCommandsFinished(false);
+  public static boolean haveCommandsFinishedSuccessfully() {
+    if (getInstance().actionCallback == null) return false;
+    return getInstance().actionCallback.isDone();
+  }
+
+  public static boolean haveCommandsFailed() {
+    return getInstance().actionCallback.isRejected();
   }
 
   public static int getPid() {
-    SystemInfo si = new SystemInfo();
-    OperatingSystem os = si.getOperatingSystem();
+    OperatingSystem os = new SystemInfo().getOperatingSystem();
     OSProcess myProc = os.getProcess(os.getProcessId());
     return myProc.getProcessID();
   }

@@ -476,7 +476,6 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     Project project = super.createProject(name, path);
     if (project != null) {
       ExternalProjectsManagerImpl.setupCreatedProject(project);
-      MavenProjectsManager.setupCreatedMavenProject(project);
       project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true);
     }
     return project;

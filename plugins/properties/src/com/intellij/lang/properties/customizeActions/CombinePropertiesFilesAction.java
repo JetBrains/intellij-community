@@ -16,7 +16,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,7 +89,7 @@ public final class CombinePropertiesFilesAction extends AnAction {
 
   private static @Nullable List<ResourceBundle> getResourceBundles(@NotNull AnActionEvent e) {
     final ResourceBundle[] resourceBundles = e.getData(ResourceBundle.ARRAY_DATA_KEY);
-    return resourceBundles == null ? null : ContainerUtil.newArrayList(resourceBundles);
+    return resourceBundles == null ? null : List.of(resourceBundles);
   }
 
   private static @Nullable List<PropertiesFile> getPropertiesFiles(@NotNull AnActionEvent e) {

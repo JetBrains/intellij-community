@@ -25,6 +25,7 @@ import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl;
 import org.jetbrains.yaml.psi.impl.YAMLBlockSequenceImpl;
 import org.jetbrains.yaml.refactoring.rename.YamlKeyValueRenameInputValidator;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -389,7 +390,7 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
     int leadingDotsNumber = StringUtil.countChars(text, '.', 0, true);
     String dotPrefix = text.substring(0, leadingDotsNumber);
     text = text.substring(leadingDotsNumber);
-    List<String> sequence = StringUtil.split(text, ".");
+    List<String> sequence = new ArrayList<>(StringUtil.split(text, "."));
     if (!dotPrefix.isEmpty() && sequence.size() > 0) {
       sequence.set(0, dotPrefix + sequence.get(0));
     }

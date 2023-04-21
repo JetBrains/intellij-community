@@ -8,7 +8,7 @@ import com.intellij.lang.jvm.actions.createChangeParametersActions
 import com.intellij.lang.jvm.actions.expectedParameter
 import com.intellij.lang.jvm.actions.updateMethodParametersRequest
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiPrimitiveType
+import com.intellij.psi.PsiTypes
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import java.util.function.Supplier
 
@@ -33,7 +33,7 @@ class UpdateMethodParametersTest : LightJavaCodeInsightFixtureTestCase() {
 
     val request = updateMethodParametersRequest(Supplier { method }) { existing ->
       val oldParam = existing[1]
-      val newParam = expectedParameter(PsiPrimitiveType.INT, oldParam.semanticNames.first(), oldParam.expectedAnnotations)
+      val newParam = expectedParameter(PsiTypes.intType(), oldParam.semanticNames.first(), oldParam.expectedAnnotations)
       existing.toMutableList().also { it[1] = newParam }
     }
     myFixture.launchAction(updateParametersAction(method, request))
@@ -62,7 +62,7 @@ class UpdateMethodParametersTest : LightJavaCodeInsightFixtureTestCase() {
 
     val request = updateMethodParametersRequest(Supplier { method }) { existing ->
       val oldParam = existing[1]
-      val newParam = expectedParameter(PsiPrimitiveType.INT, oldParam.semanticNames.first(), oldParam.expectedAnnotations)
+      val newParam = expectedParameter(PsiTypes.intType(), oldParam.semanticNames.first(), oldParam.expectedAnnotations)
       existing.toMutableList().also { it[1] = newParam }
     }
     myFixture.launchAction(updateParametersAction(method, request))
@@ -95,7 +95,7 @@ class UpdateMethodParametersTest : LightJavaCodeInsightFixtureTestCase() {
 
     val request = updateMethodParametersRequest(Supplier { method }) { existing ->
       val oldParam = existing[1]
-      val newParam = expectedParameter(PsiPrimitiveType.INT, oldParam.semanticNames.first(), oldParam.expectedAnnotations)
+      val newParam = expectedParameter(PsiTypes.intType(), oldParam.semanticNames.first(), oldParam.expectedAnnotations)
       existing.toMutableList().also { it[1] = newParam }
     }
     myFixture.launchAction(updateParametersAction(method, request))

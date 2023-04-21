@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.wizards;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
@@ -16,11 +17,13 @@ import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +39,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +47,9 @@ import java.util.Map;
 import static icons.OpenapiIcons.RepositoryLibraryLogo;
 
 public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implements SourcePathsBuilder {
+
+  private boolean isCreatingNewProject;
+
   private MavenProject myAggregatorProject;
   private MavenProject myParentProject;
 
@@ -55,6 +62,26 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
   private MavenEnvironmentForm myEnvironmentForm;
 
   private Map<String, String> myPropertiesToCreateByArtifact;
+
+  @Override
+  public @NotNull Module createModule(@NotNull ModifiableModuleModel moduleModel)
+    throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, ConfigurationException, JDOMException {
+    var module = super.createModule(moduleModel);
+
+    // handle the case when a maven module was deleted / ignored, and then the same module is created again
+    // we need to remove the module from the ignored list, otherwise it will disappear during the subsequent maven import
+    unignorePom(moduleModel);
+
+    return module;
+  }
+
+  private void unignorePom(@NotNull ModifiableModuleModel moduleModel) {
+    var project = moduleModel.getProject();
+    var contentEntryPath = getContentEntryPath();
+    if (null == contentEntryPath) return;
+    var mavenProjectsTree = MavenProjectsManager.getInstance(project).getProjectsTree();
+    mavenProjectsTree.removeIgnoredFilesPaths(List.of(contentEntryPath + "/pom.xml"));
+  }
 
   @Override
   protected void setupModule(Module module) throws ConfigurationException {
@@ -72,8 +99,14 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
     // todo this should be moved to generic ModuleBuilder
     if (myJdk != null) {
       rootModel.setSdk(myJdk);
-    } else {
+    }
+    else {
       rootModel.inheritSdk();
+    }
+
+    if (isCreatingNewProject) {
+      ExternalProjectsManagerImpl.setupCreatedProject(project);
+      project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true);
     }
 
     MavenUtil.runWhenInitialized(project, (DumbAwareRunnable)() -> {
@@ -165,6 +198,14 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
 
   @Override
   public void addSourcePath(Pair<String, String> sourcePathInfo) {
+  }
+
+  public boolean isCreatingNewProject() {
+    return isCreatingNewProject;
+  }
+
+  public void setCreatingNewProject(boolean creatingNewProject) {
+    isCreatingNewProject = creatingNewProject;
   }
 
   public void setAggregatorProject(MavenProject project) {
@@ -265,11 +306,7 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
   @Nullable
   @Override
   public Project createProject(String name, String path) {
-    Project project = super.createProject(name, path);
-    if (project != null) {
-      ExternalProjectsManagerImpl.setupCreatedProject(project);
-      MavenProjectsManager.setupCreatedMavenProject(project);
-    }
-    return project;
+    setCreatingNewProject(true);
+    return super.createProject(name, path);
   }
 }

@@ -25,6 +25,7 @@
     <module name="intellij.devkit.workspaceModel"/>
     <module name="intellij.java.devkit"/>
     <module name="intellij.groovy.devkit"/>
+    <module name="intellij.kotlin.devkit"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">

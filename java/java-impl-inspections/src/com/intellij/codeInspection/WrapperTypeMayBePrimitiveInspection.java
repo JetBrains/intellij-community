@@ -89,7 +89,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
      * @return false if boxing is required anyway
      */
     boolean checkExpression(@NotNull PsiExpression expression) {
-      if (expression.getType() instanceof PsiPrimitiveType && !PsiType.NULL.equals(expression.getType())) {
+      if (expression.getType() instanceof PsiPrimitiveType && !PsiTypes.nullType().equals(expression.getType())) {
         myAfterRemovalOperationCountDiff -= 1;
       }
       else if (isValueOfCall(expression)) {

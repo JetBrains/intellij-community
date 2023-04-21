@@ -71,7 +71,7 @@ final class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    OpenInBrowserRequest request = BaseOpenInBrowserAction.doUpdate(e);
+    OpenInBrowserRequest request = BaseOpenInBrowserAction.Handler.doUpdate(e);
     Project project = e.getProject();
     PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
     boolean enabled = project != null && psiFile != null && request != null && psiFile.getVirtualFile() != null;

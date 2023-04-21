@@ -360,16 +360,16 @@ abstract class WebTypesSymbolsScopeBase : WebSymbolsScope, WebSymbolsContextRule
     override val library: String? = webTypes.name
     private val contextExpr = webTypes.context
 
-    private val descriptionRenderer: (String) -> String? =
+    private val descriptionRenderer: (String) -> String =
       when (webTypes.descriptionMarkupWithLegacy) {
         WebTypes.DescriptionMarkup.HTML -> { doc -> doc }
-        WebTypes.DescriptionMarkup.MARKDOWN -> { doc -> HtmlMarkdownUtils.toHtml(doc, false) }
+        WebTypes.DescriptionMarkup.MARKDOWN -> { doc -> HtmlMarkdownUtils.toHtml(doc, false) ?: ("<p>$doc") }
         else -> { doc -> "<p>" + StringUtil.escapeXmlEntities(doc).replace(EOL_PATTERN, "<br>") }
       }
 
     override val defaultIcon: Icon? = webTypes.defaultIcon?.let { IconLoader.createLazy { loadIcon(it) ?: EmptyIcon.ICON_0 } }
 
-    override fun renderDescription(description: String): String? = descriptionRenderer(description)
+    override fun renderDescription(description: String): String = descriptionRenderer(description)
 
     override fun resolveSourceSymbol(source: SourceBase, cacheHolder: UserDataHolderEx): PsiElement? =
       resolveSourceLocation(source)?.let { sourceSymbolResolver(it, cacheHolder) }

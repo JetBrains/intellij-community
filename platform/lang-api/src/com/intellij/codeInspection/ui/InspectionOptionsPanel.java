@@ -19,6 +19,10 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 
+/**
+ * @deprecated Use {@link InspectionProfileEntry#getOptionsPane} to provide a declarative representation of the options.
+ */
+@Deprecated
 public class InspectionOptionsPanel extends JPanel {
 
   @Nullable

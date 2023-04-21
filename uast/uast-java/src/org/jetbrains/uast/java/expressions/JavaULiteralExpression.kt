@@ -17,6 +17,7 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
+import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
@@ -27,7 +28,7 @@ class JavaULiteralExpression(
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), ULiteralExpression, UInjectionHost {
   override fun evaluate(): Any? = sourcePsi.value
-  override val value: Any? by lz { evaluate() }
+  override val value: Any? by lazyPub { evaluate() }
 
   override val isString: Boolean
     get() = super<UInjectionHost>.isString

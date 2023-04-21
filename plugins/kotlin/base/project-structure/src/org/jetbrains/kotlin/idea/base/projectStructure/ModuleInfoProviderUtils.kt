@@ -7,9 +7,10 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProvider.Configuration
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.psi.KtFile
 
 val PsiElement.moduleInfo: IdeaModuleInfo
-    get() = ModuleInfoProvider.getInstance(project).firstOrNull(this) ?: NotUnderContentRootModuleInfo(project)
+    get() = ModuleInfoProvider.getInstance(project).firstOrNull(this) ?: NotUnderContentRootModuleInfo(project, containingFile as? KtFile)
 
 val PsiElement.moduleInfoOrNull: IdeaModuleInfo?
     get() = ModuleInfoProvider.getInstance(project).firstOrNull(this)

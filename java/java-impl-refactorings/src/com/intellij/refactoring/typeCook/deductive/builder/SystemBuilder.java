@@ -186,7 +186,7 @@ public class SystemBuilder {
                                                  PsiSubstitutor partialSubstitutor,
                                                  PsiElement parent,
                                                  ReductionSystem system) {
-    PsiType substitution = PsiType.NULL;
+    PsiType substitution = PsiTypes.nullType();
     PsiResolveHelper helper = JavaPsiFacade.getInstance(typeParameter.getProject()).getResolveHelper();
     if (parameters.length > 0) {
       for (int j = 0; j < arguments.length; j++) {
@@ -211,11 +211,11 @@ public class SystemBuilder {
           break;
         }
         else if (currentSubstitution instanceof PsiWildcardType) {
-          if (substitution instanceof PsiWildcardType) return PsiType.NULL;
+          if (substitution instanceof PsiWildcardType) return PsiTypes.nullType();
         }
-        else if (PsiType.NULL.equals(currentSubstitution)) continue;
+        else if (PsiTypes.nullType().equals(currentSubstitution)) continue;
 
-        if (PsiType.NULL.equals(substitution)) {
+        if (PsiTypes.nullType().equals(substitution)) {
           substitution = currentSubstitution;
           continue;
         }
@@ -228,7 +228,7 @@ public class SystemBuilder {
       }
     }
 
-    if (PsiType.NULL.equals(substitution)) {
+    if (PsiTypes.nullType().equals(substitution)) {
       substitution = inferMethodTypeParameterFromParent(typeParameter, partialSubstitutor, parent, system);
     }
     return substitution;
@@ -239,7 +239,7 @@ public class SystemBuilder {
                                                      PsiElement parent,
                                                      ReductionSystem system) {
     PsiTypeParameterListOwner owner = typeParameter.getOwner();
-    PsiType substitution = PsiType.NULL;
+    PsiType substitution = PsiTypes.nullType();
     if (owner instanceof PsiMethod) {
       if (parent instanceof PsiMethodCallExpression) {
         PsiMethodCallExpression methodCall = (PsiMethodCallExpression)parent;
@@ -280,7 +280,7 @@ public class SystemBuilder {
     PsiType guess = JavaPsiFacade.getInstance(parent.getProject()).getResolveHelper()
       .getSubstitutionForTypeParameter(typeParameter, returnType, type, false, PsiUtil.getLanguageLevel(parent));
 
-    if (PsiType.NULL.equals(guess)) {
+    if (PsiTypes.nullType().equals(guess)) {
       PsiType superType = substitutor.substitute(typeParameter.getSuperTypes()[0]);
       return superType == null ? PsiType.getJavaLangObject(methodCall.getManager(), methodCall.getResolveScope()) : superType;
     }

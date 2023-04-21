@@ -590,7 +590,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
       return
     }
 
-    if (owner.currentWindow == this) {
+    if (owner.currentWindow.let { it == this || it == null }) {
       val siblings = getSiblings()
       owner.setCurrentWindow(window = siblings.first(), requestFocus = true)
     }

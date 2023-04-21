@@ -24,7 +24,7 @@ public final class MethodReturnFixFactory extends ArgumentFixerActionFactory {
     PsiMethod method = call.resolveMethod();
     if (method == null) return null;
     PsiType type = GenericsUtil.getVariableTypeByExpressionType(toType);
-    if (PsiType.NULL.equals(type)) return null;
+    if (PsiTypes.nullType().equals(type)) return null;
 
     return JavaPsiFacade.getElementFactory(expression.getProject())
       .createExpressionFromText("(" + type.getCanonicalText() + ")null", expression);

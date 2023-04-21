@@ -6,5 +6,5 @@ import kotlinx.coroutines.flow.StateFlow
 
 @Service
 class GitLabApiManager {
-  fun getClient(token: String): GitLabApi = GitLabApi { token }
+  fun getClient(token: String): GitLabApi = GitLabApiImpl { token }
 }

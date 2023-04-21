@@ -16,9 +16,12 @@
 
 package org.jetbrains.uast.java
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiReturnStatement
+import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UReturnExpression
 
 @ApiStatus.Internal
 class JavaUReturnExpression(
@@ -28,5 +31,5 @@ class JavaUReturnExpression(
   override val label: String?
     get() = null
 
-  override val returnExpression: UExpression? by lz { JavaConverter.convertOrNull(sourcePsi.returnValue, this) }
+  override val returnExpression: UExpression? by lazyPub { JavaConverter.convertOrNull(sourcePsi.returnValue, this) }
 }

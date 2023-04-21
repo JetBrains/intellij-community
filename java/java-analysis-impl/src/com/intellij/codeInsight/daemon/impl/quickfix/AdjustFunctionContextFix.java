@@ -43,9 +43,9 @@ public class AdjustFunctionContextFix extends LocalQuickFixAndIntentionActionOnP
       PsiType inType = StreamApiUtil.getStreamElementType(qualifier.getType());
       if (type.equals(inType)) return "map";
     }
-    if (PsiType.INT.equals(type)) return "mapToInt";
-    if (PsiType.LONG.equals(type)) return "mapToLong";
-    if (PsiType.DOUBLE.equals(type)) return "mapToDouble";
+    if (PsiTypes.intType().equals(type)) return "mapToInt";
+    if (PsiTypes.longType().equals(type)) return "mapToLong";
+    if (PsiTypes.doubleType().equals(type)) return "mapToDouble";
     return "mapToObj";
   };
   private static final Function<PsiType, String> FLAT_MAP_NAME_ADJUSTER = type -> {

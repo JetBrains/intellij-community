@@ -6,6 +6,6 @@ class X {
   void foo(List<String> list) {
     list.stream().map((((x) -> {
       return ((x.toUpperCase()));
-    }))).filter(((s -> ((((((s)).length())) > 3))))).count();
+    }))).filter(((upperCase -> ((((((upperCase)).length())) > 3))))).count();
   }
 }

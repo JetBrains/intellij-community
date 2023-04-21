@@ -56,7 +56,7 @@ internal fun convertToJavadocUrl(originalPath: String,
         val relativeToPlatform = jarJavadocPath.substring(EclipseXml.PLATFORM_PROTOCOL.length + "resource".length) // starts with leading /
         val currentRoot = moduleEntity.mainContentRoot?.url?.virtualFile
         val basePath = currentRoot?.parent?.path ?: JpsPathUtil.urlToPath(
-          (moduleEntity.entitySource as EclipseProjectFile).internalSource.projectLocation.baseDirectoryUrl.url)
+          (moduleEntity.entitySource as EclipseProjectFile).projectLocation.baseDirectoryUrl.url)
         val currentModulePath = basePath + relativeToPlatform
         if (EJavadocUtil.isJarFileExist(currentModulePath)) {
           return virtualUrlManager.fromUrl(VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, currentModulePath))
@@ -244,7 +244,7 @@ internal fun convertToEclipsePath(fileUrl: VirtualFileUrl,
         return url.substring(rootUrl.length + 1) //without leading /
       }
     }
-    val projectBaseDir = if (contentRoot != null) contentRoot.parent else entitySource.internalSource.projectLocation.baseDirectoryUrl.virtualFile!!
+    val projectBaseDir = if (contentRoot != null) contentRoot.parent else entitySource.projectLocation.baseDirectoryUrl.virtualFile!!
     val projectUrl = projectBaseDir.url
     if (url.startsWith(projectUrl)) {
       return url.substring(projectUrl.length) //leading /

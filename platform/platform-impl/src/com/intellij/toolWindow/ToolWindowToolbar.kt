@@ -60,8 +60,12 @@ internal abstract class ToolWindowToolbar : JPanel() {
       return null
     }
     val topRect = Rectangle(locationOnScreen, size).also {
-      it.width = it.width.coerceAtLeast(SHADOW_WIDTH)
+      val dWidth = JBUI.scale(AbstractDroppableStripe.DROP_DISTANCE_SENSITIVITY)
+      it.width += dWidth
       it.height = (it.height / 2).coerceAtLeast(SHADOW_WIDTH)
+      if (topStripe.anchor == ToolWindowAnchor.RIGHT) {
+        it.x -= dWidth
+      }
     }
     val bottomRect = Rectangle(topRect).also {
       it.y += topRect.height
@@ -132,6 +136,26 @@ internal abstract class ToolWindowToolbar : JPanel() {
                           override val split: Boolean = false) : AbstractDroppableStripe(paneId, VerticalFlowLayout(0, 0)) {
     override val isNewStripes: Boolean
       get() = true
+
+    override fun getDropToSide(): Boolean? {
+      if (split) {
+        return true
+      }
+      return super.getDropToSide()
+    }
+
+    override fun containsPoint(screenPoint: Point): Boolean {
+      if (isShowing) {
+        val dWidth = JBUI.scale(DROP_DISTANCE_SENSITIVITY)
+        val bounds = Rectangle(locationOnScreen, size)
+        bounds.width += dWidth
+        if (anchor == ToolWindowAnchor.RIGHT || (anchor == ToolWindowAnchor.BOTTOM && split)) {
+          bounds.x -= dWidth
+        }
+        return bounds.contains(screenPoint)
+      }
+      return super.containsPoint(screenPoint)
+    }
 
     override fun getButtonFor(toolWindowId: String) = toolBar.getButtonFor(toolWindowId)
 

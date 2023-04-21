@@ -92,9 +92,9 @@ public class AssertJInliner implements CallInliner {
         }
       }
       case "isTrue" -> {
-        if (PsiType.BOOLEAN.equals(type) || TypeUtils.typeEquals(JAVA_LANG_BOOLEAN, type)) {
+        if (PsiTypes.booleanType().equals(type) || TypeUtils.typeEquals(JAVA_LANG_BOOLEAN, type)) {
           builder
-            .boxUnbox(valueToCheck, PsiType.BOOLEAN)
+            .boxUnbox(valueToCheck, PsiTypes.booleanType())
             .ensure(RelationType.EQ, DfTypes.TRUE, new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
         }
         else if (type instanceof PsiClassType) {
@@ -102,9 +102,9 @@ public class AssertJInliner implements CallInliner {
         }
       }
       case "isFalse" -> {
-        if (PsiType.BOOLEAN.equals(type) || TypeUtils.typeEquals(JAVA_LANG_BOOLEAN, type)) {
+        if (PsiTypes.booleanType().equals(type) || TypeUtils.typeEquals(JAVA_LANG_BOOLEAN, type)) {
           builder
-            .boxUnbox(valueToCheck, PsiType.BOOLEAN)
+            .boxUnbox(valueToCheck, PsiTypes.booleanType())
             .ensure(RelationType.EQ, DfTypes.FALSE, new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
         }
         else if (type instanceof PsiClassType) {

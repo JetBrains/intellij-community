@@ -45,7 +45,7 @@ public final class FilterUtil{
       return PsiType.getJavaLangClass(context.getManager(), context.getResolveScope());
     }
     else if(PsiKeyword.TRUE.equals(keyword) || PsiKeyword.FALSE.equals(keyword)){
-      return PsiType.BOOLEAN;
+      return PsiTypes.booleanType();
     }
     else if(PsiKeyword.THIS.equals(keyword)){
       PsiElement previousElement = getPreviousElement(context, false);

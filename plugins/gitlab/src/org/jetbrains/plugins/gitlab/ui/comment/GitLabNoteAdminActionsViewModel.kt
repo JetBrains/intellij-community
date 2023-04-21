@@ -30,7 +30,7 @@ class GitLabNoteAdminActionsViewModelImpl(parentCs: CoroutineScope, private val 
   override val editVm: Flow<GitLabNoteEditingViewModel?> = isEditing.transformLatest { editing ->
     if (editing) {
       coroutineScope {
-        val editVm = GitLabNoteEditingViewModelImpl(this, note) {
+        val editVm = EditGitLabNoteViewModel(this, note) {
           stopEditing()
         }
         emit(editVm)

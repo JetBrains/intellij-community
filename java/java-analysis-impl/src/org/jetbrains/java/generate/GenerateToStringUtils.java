@@ -133,7 +133,7 @@ public final class GenerateToStringUtils {
 
             // must not return void
             final PsiType returnType = method.getReturnType();
-            if (returnType == null || PsiType.VOID.equals(returnType)) {
+            if (returnType == null || PsiTypes.voidType().equals(returnType)) {
                 continue;
             }
 

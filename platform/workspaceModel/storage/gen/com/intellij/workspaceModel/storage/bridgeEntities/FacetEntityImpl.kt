@@ -130,16 +130,7 @@ open class FacetEntityImpl(val dataSource: FacetEntityData) : FacetEntity, Works
       if (this.moduleId != dataSource.moduleId) this.moduleId = dataSource.moduleId
       if (this.facetType != dataSource.facetType) this.facetType = dataSource.facetType
       if (this.configurationXmlTag != dataSource?.configurationXmlTag) this.configurationXmlTag = dataSource.configurationXmlTag
-      if (parents != null) {
-        val moduleNew = parents.filterIsInstance<ModuleEntity>().single()
-        if ((this.module as WorkspaceEntityBase).id != (moduleNew as WorkspaceEntityBase).id) {
-          this.module = moduleNew
-        }
-        val underlyingFacetNew = parents.filterIsInstance<FacetEntity?>().singleOrNull()
-        if ((underlyingFacetNew == null && this.underlyingFacet != null) || (underlyingFacetNew != null && this.underlyingFacet == null) || (underlyingFacetNew != null && this.underlyingFacet != null && (this.underlyingFacet as WorkspaceEntityBase).id != (underlyingFacetNew as WorkspaceEntityBase).id)) {
-          this.underlyingFacet = underlyingFacetNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 
@@ -311,7 +302,7 @@ class FacetEntityData : WorkspaceEntityData.WithCalculableSymbolicId<FacetEntity
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return FacetEntity(name, moduleId, facetType, entitySource) {
       this.configurationXmlTag = this@FacetEntityData.configurationXmlTag
-      parents.filterIsInstance<ModuleEntity>().singleOrNull()?.let { this.module = it }
+      this.module = parents.filterIsInstance<ModuleEntity>().single()
       this.underlyingFacet = parents.filterIsInstance<FacetEntity>().singleOrNull()
     }
   }

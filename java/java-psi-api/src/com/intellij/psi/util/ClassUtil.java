@@ -266,7 +266,7 @@ public final class ClassUtil {
       signature.append(getBinaryPresentation(param.getType()));
     }
     signature.append(")");
-    signature.append(getBinaryPresentation(Optional.ofNullable(method.getReturnType()).orElse(PsiType.VOID)));
+    signature.append(getBinaryPresentation(Optional.ofNullable(method.getReturnType()).orElse(PsiTypes.voidType())));
     return signature.toString();
   }
 

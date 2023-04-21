@@ -634,4 +634,40 @@ class RecentProjectManagerTest {
     assertThat(manager.getRecentPaths().first()).isEqualTo("/home/boo/project-1998")
     assertThat(manager.getRecentPaths()).hasSize(openedProjectCount / 2)
   }
+
+  @Test
+  fun `remove old recent projects`() {
+    val manager = RecentProjectsManagerBase()
+
+    val entries = StringBuilder()
+    val openedProjectCount = 60
+    for (i in 0 until openedProjectCount) {
+      //language=XML
+      entries.append("""
+          <entry key="/home/boo/project-$i">
+            <value>
+              <RecentProjectMetaInfo>
+              </RecentProjectMetaInfo>
+            </value>
+          </entry>
+      """.trimIndent())
+    }
+
+    @Language("XML")
+    val element = JDOMUtil.load("""
+      <application>
+  <component name="RecentDirectoryProjectsManager">
+    <option name="additionalInfo">
+      <map>
+        $entries
+      </map>
+    </option>
+  </component>
+</application>
+      """.trimIndent())
+    val state = RecentProjectManagerState()
+    element.getChild("component")!!.deserializeInto(state)
+    manager.loadState(state)
+    assertThat(manager.getRecentPaths().joinToString(separator = "\n")).isEqualTo(Array(50) { "/home/boo/project-${it + 10}" }.reversed().joinToString(separator = "\n"))
+  }
 }

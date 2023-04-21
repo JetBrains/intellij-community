@@ -64,7 +64,7 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     return myType.isValid() &&
-           !PsiType.VOID.equals(myType) &&
+           !PsiTypes.voidType().equals(myType) &&
            PsiTypesUtil.isDenotableType(myType, startElement) &&
            PsiTypesUtil.allTypeParametersResolved(startElement, myType) &&
            BaseIntentionAction.canModify(startElement);
@@ -96,7 +96,7 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement
     PsiElement expression = PsiUtil.deparenthesizeExpression(original);
     if (expression == null) return null;
 
-    if (type.equals(PsiType.NULL)) return null;
+    if (type.equals(PsiTypes.nullType())) return null;
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(original.getProject());
     String newLiteral = tryConvertNumericLiteral(expression, type);
     if (newLiteral != null) {

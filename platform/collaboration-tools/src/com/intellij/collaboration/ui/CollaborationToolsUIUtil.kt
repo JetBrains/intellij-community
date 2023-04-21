@@ -2,6 +2,7 @@
 package com.intellij.collaboration.ui
 
 import com.intellij.application.subscribe
+import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
 import com.intellij.collaboration.ui.util.JComponentOverlay
 import com.intellij.ide.ui.AntialiasingType
@@ -16,14 +17,12 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
+import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.panels.ListLayout
 import com.intellij.ui.content.Content
 import com.intellij.ui.speedSearch.NameFilteringListModel
 import com.intellij.ui.speedSearch.SpeedSearch
-import com.intellij.util.ui.GraphicsUtil
-import com.intellij.util.ui.HTMLEditorKitBuilder
-import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import org.intellij.lang.annotations.Language
@@ -36,9 +35,11 @@ import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.event.DocumentEvent
 import javax.swing.text.DefaultCaret
+import javax.swing.text.html.StyleSheet
 import kotlin.properties.Delegates
 
 object CollaborationToolsUIUtil {
+  val animatedLoadingIcon = AnimatedIcon.Default.INSTANCE
 
   /**
    * Connects [searchTextField] to a [list] to be used as a filter
@@ -190,7 +191,7 @@ object CollaborationToolsUIUtil {
   /**
    * Checks if focus is somewhere down the hierarchy from [component]
    */
-  private fun isFocusParent(component: JComponent): Boolean {
+  fun isFocusParent(component: JComponent): Boolean {
     val focusOwner = IdeFocusManager.findInstanceByComponent(component).focusOwner ?: return false
     return SwingUtilities.isDescendingFrom(focusOwner, component)
   }
@@ -243,6 +244,19 @@ object CollaborationToolsUIUtil {
    * Must be used only as a property: `get()`
    */
   fun getSize(oldUI: Int, newUI: Int): Int = if (ExperimentalUI.isNewUI()) newUI else oldUI
+
+  fun createTagLabel(text: @Nls String): JComponent =
+    JLabel(text).apply {
+      font = JBFont.small()
+      foreground = UIUtil.getContextHelpForeground()
+      border = JBUI.Borders.empty(0, 4)
+    }.let {
+      RoundedPanel(SingleComponentCenteringLayout(), 4).apply {
+        border = JBUI.Borders.empty()
+        background = UIUtil.getPanelBackground()
+        add(it)
+      }
+    }
 }
 
 @Suppress("FunctionName")
@@ -258,6 +272,14 @@ fun HorizontalListPanel(gap: Int = 0): JPanel =
   }
 
 /**
+ * Loading label with animated icon
+ */
+@Suppress("FunctionName")
+fun LoadingLabel(): JLabel = JLabel(CollaborationToolsUIUtil.animatedLoadingIcon).apply {
+  name = "Animated loading panel"
+}
+
+/**
  * Scrollpane without background and borders
  */
 @Suppress("FunctionName")
@@ -271,9 +293,15 @@ fun TransparentScrollPane(content: JComponent): JScrollPane =
  * Read-only editor pane intended to display simple HTML snippet
  */
 @Suppress("FunctionName")
-fun SimpleHtmlPane(@Language("HTML") body: @Nls String? = null): JEditorPane =
+fun SimpleHtmlPane(additionalStyleSheet: StyleSheet? = null, @Language("HTML") body: @Nls String? = null): JEditorPane =
   JEditorPane().apply {
-    editorKit = HTMLEditorKitBuilder().withWordWrapViewFactory().build()
+    editorKit = HTMLEditorKitBuilder().withWordWrapViewFactory().apply {
+      if (additionalStyleSheet != null) {
+        val defaultStyleSheet = StyleSheetUtil.getDefaultStyleSheet()
+        additionalStyleSheet.addStyleSheet(defaultStyleSheet)
+        withStyleSheet(additionalStyleSheet)
+      }
+    }.build()
 
     isEditable = false
     isOpaque = false
@@ -289,6 +317,12 @@ fun SimpleHtmlPane(@Language("HTML") body: @Nls String? = null): JEditorPane =
       setHtmlBody(body)
     }
   }
+
+/**
+ * Read-only editor pane intended to display simple HTML snippet
+ */
+@Suppress("FunctionName")
+fun SimpleHtmlPane(@Language("HTML") body: @Nls String? = null): JEditorPane = SimpleHtmlPane(null, body)
 
 fun JEditorPane.setHtmlBody(@Language("HTML") body: @Nls String) {
   if (body.isEmpty()) {

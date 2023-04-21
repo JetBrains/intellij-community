@@ -1,8 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ApplicationLoader")
 @file:Internal
-@file:Suppress("ReplacePutWithAssignment", "RAW_RUN_BLOCKING")
-
+@file:Suppress("RAW_RUN_BLOCKING")
 package com.intellij.idea
 
 import com.intellij.diagnostic.*
@@ -382,7 +381,10 @@ private suspend fun handleExternalCommand(args: List<String>, currentDirectory: 
   if (args.isNotEmpty() && args[0].contains(URLUtil.SCHEME_SEPARATOR)) {
     val result = CommandLineProcessorResult(project = null, result = CommandLineProcessor.processProtocolCommand(args[0]))
     withContext(Dispatchers.EDT) {
-      if (!result.showErrorIfFailed()) {
+      if (result.hasError) {
+        result.showError()
+      }
+      else {
         CommandLineProcessor.findVisibleFrame()?.let { frame ->
           AppIcon.getInstance().requestFocus(frame)
         }

@@ -3,10 +3,7 @@ package org.jetbrains.plugins.groovy.intentions.conversions;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
@@ -97,7 +94,7 @@ public class ConvertSimpleGetterToPropertyIntention extends Intention {
 
         GrStatement statement = statements[0];
         if (!(statement instanceof GrReturnStatement && ((GrReturnStatement)statement).getReturnValue() != null ||
-              statement instanceof GrExpression && !PsiType.VOID.equals(((GrExpression)statement).getType()))) {
+              statement instanceof GrExpression && !PsiTypes.voidType().equals(((GrExpression)statement).getType()))) {
           return false;
         }
         return true;

@@ -46,13 +46,13 @@ final class ThreadingUtils {
     final PsiParameter[] parameters = parameterList.getParameters();
     if (numParams > 0) {
       final PsiType parameterType = parameters[0].getType();
-      if (!parameterType.equals(PsiType.LONG)) {
+      if (!parameterType.equals(PsiTypes.longType())) {
         return false;
       }
     }
     if (numParams > 1) {
       final PsiType parameterType = parameters[1].getType();
-      if (!parameterType.equals(PsiType.INT)) {
+      if (!parameterType.equals(PsiTypes.intType())) {
         return false;
       }
     }

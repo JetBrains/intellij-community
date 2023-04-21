@@ -69,8 +69,6 @@ internal inline fun String?.orAnonymous(kind: String = ""): String {
   return this ?: ("<anonymous" + (if (kind.isNotBlank()) " $kind" else "") + ">")
 }
 
-internal fun <T> lz(initializer: () -> T) = lazy(LazyThreadSafetyMode.SYNCHRONIZED, initializer)
-
 val PsiModifierListOwner.annotations: Array<PsiAnnotation>
   get() = modifierList?.annotations ?: emptyArray()
 

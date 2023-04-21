@@ -42,7 +42,7 @@ fun createGraphFromInferenceVariables(session: GroovyInferenceSession,
       builder.setType(core, instantiation)
     }
     else {
-      builder.setType(core, variable.parameter.extendsListTypes.firstOrNull() ?: PsiType.NULL)
+      builder.setType(core, variable.parameter.extendsListTypes.firstOrNull() ?: PsiTypes.nullType())
     }
     if (isStrict) {
       builder.setDirect(core)
@@ -114,7 +114,7 @@ private fun completeInstantiation(parameter: PsiTypeParameter,
         else -> typeLattice.join(subClasses)
       }.mapConjuncts { signatureTypes.findTypeWithCorrespondingSupertype(it) }
       when {
-        lowerBound != PsiType.NULL -> PsiWildcardType.createSuper(context.manager, lowerBound)
+        lowerBound != PsiTypes.nullType() -> PsiWildcardType.createSuper(context.manager, lowerBound)
         else -> PsiWildcardType.createUnbounded(context.manager)
       }
     }
@@ -168,7 +168,7 @@ private fun PsiType.mapConjuncts(action: (PsiType) -> PsiType): PsiType {
 private class TypeLattice(context: PsiElement) {
   private val manager = context.manager
   private val top = getJavaLangObject(context) as PsiType
-  private val bottom = PsiType.NULL as PsiType
+  private val bottom = PsiTypes.nullType() as PsiType
 
   fun join(types: Iterable<PsiType>): PsiType = types.fold(bottom) { accum, type ->
     GenericsUtil.getLeastUpperBound(accum, type, manager) ?: bottom

@@ -313,6 +313,10 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     callLater(runnable)
   }
 
+  fun setSideToolAndAnchor(anchor: ToolWindowAnchor, split: Boolean, order: Int) {
+    toolWindowManager.setSideToolAndAnchor(id, WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID, anchor, order, split)
+  }
+
   override fun setAutoHide(value: Boolean) {
     toolWindowManager.setToolWindowAutoHide(id, value)
   }

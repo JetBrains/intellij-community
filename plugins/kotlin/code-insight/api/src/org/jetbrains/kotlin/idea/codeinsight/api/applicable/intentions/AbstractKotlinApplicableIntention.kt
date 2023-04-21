@@ -26,4 +26,6 @@ abstract class AbstractKotlinApplicableIntention<ELEMENT : KtElement>(
     }
 
     final override fun applyTo(element: ELEMENT, project: Project, editor: Editor?) = apply(element, project, editor)
+
+    final override fun startInWriteAction(): Boolean = shouldApplyInWriteAction()
 }

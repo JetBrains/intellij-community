@@ -17,11 +17,11 @@ class ActivateAntToolWindowAction : ActivateToolWindowAction(ToolWindowId.ANT_BU
   }
 
   override fun createEmptyState(project: Project) {
-    val toolWindow = createToolWindow(project)
+    val toolWindow = Manager.createToolWindow(project)
     toolWindow.show()
   }
 
-  companion object {
+  object Manager {
     @JvmStatic
     fun createToolWindow(project: Project): ToolWindow {
       val toolWindow = ToolWindowManager.getInstance(project).registerToolWindow(

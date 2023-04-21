@@ -346,7 +346,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       if (myCompletionType == CompletionType.SMART) {
         boolean inReturn = psiElement().withParents(PsiReferenceExpression.class, PsiReturnStatement.class).accepts(myPosition);
         return inReturn ? ThreeState.YES : ThreeState.UNSURE;
-      } else if (ContainerUtil.exists(myExpectedTypes, info -> PsiType.BOOLEAN.isAssignableFrom(info.getDefaultType())) &&
+      } else if (ContainerUtil.exists(myExpectedTypes, info -> PsiTypes.booleanType().isAssignableFrom(info.getDefaultType())) &&
                  !(myPosition.getParent() instanceof PsiIfStatement)) {
         return ThreeState.YES;
       }
@@ -398,11 +398,11 @@ public class PreferByKindWeigher extends LookupElementWeigher {
 
     PsiElement parent = statement.getParent().getParent();
     if (parent instanceof PsiMethod) {
-      return ((PsiMethod)parent).isConstructor() || PsiType.VOID.equals(((PsiMethod)parent).getReturnType());
+      return ((PsiMethod)parent).isConstructor() || PsiTypes.voidType().equals(((PsiMethod)parent).getReturnType());
     }
     if (parent instanceof PsiLambdaExpression) {
       PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(((PsiLambdaExpression)parent).getFunctionalInterfaceType());
-      return method != null && PsiType.VOID.equals(method.getReturnType());
+      return method != null && PsiTypes.voidType().equals(method.getReturnType());
     }
     return false;
   }

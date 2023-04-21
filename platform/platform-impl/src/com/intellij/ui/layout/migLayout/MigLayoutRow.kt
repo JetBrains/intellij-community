@@ -26,6 +26,7 @@ import javax.swing.text.JTextComponent
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Mig Layout is going to be removed, IDEA-306719")
 internal class MigLayoutRow(private val parent: MigLayoutRow?,
                             override val builder: MigLayoutBuilder,
@@ -553,6 +554,8 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   }
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Mig Layout is going to be removed, IDEA-306719")
 private class CellBuilderImpl<T : JComponent>(
   private val builder: MigLayoutBuilder,
   private val row: MigLayoutRow,

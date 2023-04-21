@@ -152,7 +152,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
         ((PsiLambdaExpression)lambda).getBody().replace(method.getBody());
         final PsiType interfaceType;
         if (copyCall.resolveMethod() == null) {
-          return PsiType.NULL;
+          return PsiTypes.nullType();
         }
         else {
           interfaceType = ((PsiLambdaExpression)lambda).getFunctionalInterfaceType();
@@ -162,7 +162,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
       }
     }
 
-    return PsiType.NULL;
+    return PsiTypes.nullType();
   }
 
   public static boolean canBeConvertedToLambda(PsiAnonymousClass aClass,

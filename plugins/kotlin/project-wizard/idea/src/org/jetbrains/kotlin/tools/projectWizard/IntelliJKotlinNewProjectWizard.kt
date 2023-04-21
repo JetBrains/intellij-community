@@ -5,10 +5,8 @@ import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.INTE
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.projectWizard.generators.IntelliJNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.NewProjectWizardStep
-import com.intellij.ide.wizard.chain
+import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.openapi.project.Project
 import com.intellij.ui.dsl.builder.*
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
@@ -19,7 +17,9 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
 
     override val ordinal = 0
 
-    override fun createStep(parent: KotlinNewProjectWizard.Step) = Step(parent).chain(::AssetsStep)
+    override fun createStep(parent: KotlinNewProjectWizard.Step): NewProjectWizardStep =
+        Step(parent)
+            .nextStep(::AssetsStep)
 
     class Step(parent: KotlinNewProjectWizard.Step) :
         IntelliJNewProjectWizardStep<KotlinNewProjectWizard.Step>(parent),
@@ -46,8 +46,8 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
     }
 
     private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
+
         override fun setupAssets(project: Project) {
-            outputDirectory = "$path/$name"
             addAssets(StandardAssetsProvider().getIntelliJIgnoreAssets())
         }
     }

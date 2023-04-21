@@ -4,9 +4,8 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType.FULL
-import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.build
-import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil.Title
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.openapi.util.text.HtmlBuilder
@@ -43,7 +42,7 @@ internal object GHPRTimelineItemUIUtil {
 
   fun createTitlePane(actor: GHActor, date: Date?, additionalPanel: JComponent): JComponent {
     val titleTextPane = createTitleTextPane(actor, date)
-    return HorizontalListPanel(10).apply {
+    return HorizontalListPanel(Title.HORIZONTAL_GAP).apply {
       add(titleTextPane)
       add(additionalPanel)
     }

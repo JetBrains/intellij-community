@@ -209,8 +209,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       override fun changed(event: VersionedStorageChange) {
         LOG.debug("Marking changed entities for save")
         event.getAllChanges().forEach { change ->
-          change.oldEntity?.entitySource?.let { if (it !is JpsFileEntitySource.ExactGlobalFile) sourcesToSave.add(it) }
-          change.newEntity?.entitySource?.let { if (it !is JpsFileEntitySource.ExactGlobalFile) sourcesToSave.add(it) }
+          change.oldEntity?.entitySource?.let { if (it !is JpsGlobalFileEntitySource) sourcesToSave.add(it) }
+          change.newEntity?.entitySource?.let { if (it !is JpsGlobalFileEntitySource) sourcesToSave.add(it) }
         }
       }
     }
@@ -237,7 +237,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       if (GlobalLibraryTableBridge.isEnabled()) {
         childActivity = childActivity?.endAndStart("applying entities from global storage")
         val mutableStorage = MutableEntityStorage.create()
-        GlobalWorkspaceModel.getInstance().applyStateToBuilder(mutableStorage)
+        GlobalWorkspaceModel.getInstance().applyStateToProjectBuilder(project, mutableStorage)
         builder.addDiff(mutableStorage)
       }
       childActivity = childActivity?.endAndStart("applying loaded changes (in queue)")

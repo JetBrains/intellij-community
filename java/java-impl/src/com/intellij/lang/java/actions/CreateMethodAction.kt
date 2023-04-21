@@ -90,7 +90,7 @@ private class JavaMethodRenderer(
   }
 
   fun renderMethod(): PsiMethod {
-    val method = factory.createMethod(request.methodName, PsiType.VOID)
+    val method = factory.createMethod(request.methodName, PsiTypes.voidType())
 
     val modifiersToRender = requestedModifiers.toMutableList()
     if (targetClass.isInterface) {

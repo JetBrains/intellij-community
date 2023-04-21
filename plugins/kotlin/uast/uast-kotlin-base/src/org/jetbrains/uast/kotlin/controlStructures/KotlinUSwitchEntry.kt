@@ -6,7 +6,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtWhenEntry
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.kinds.KotlinSpecialExpressionKinds
 
@@ -60,7 +59,7 @@ class KotlinUSwitchEntry(
                         override val expression: UExpression?
                             get() =
                                 userExpressions.lastOrNull()?.sourcePsi?.let {
-                                    it.safeAs<KtExpression>() ?: it.parent.safeAs<KtExpression>()
+                                    it as? KtExpression ?: it.parentAs<KtExpression>()
                                 }?.let {
                                     baseResolveProviderService.baseKotlinConverter.convertExpression(
                                         it, this, DEFAULT_EXPRESSION_TYPES_LIST

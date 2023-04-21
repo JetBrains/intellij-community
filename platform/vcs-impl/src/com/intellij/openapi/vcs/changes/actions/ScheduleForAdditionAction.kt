@@ -47,14 +47,14 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getRequiredData(CommonDataKeys.PROJECT)
-    val unversionedFiles = getUnversionedFiles(e, project).toList()
+    val unversionedFiles = Manager.getUnversionedFiles(e, project).toList()
 
     performUnversionedFilesAddition(project, unversionedFiles, e.getData(ChangesBrowserBase.DATA_KEY), null)
   }
 
   protected open fun isEnabled(e: AnActionEvent): Boolean {
     val project = e.project
-    return project != null && getUnversionedFiles(e, project).isNotEmpty
+    return project != null && Manager.getUnversionedFiles(e, project).isNotEmpty
   }
 
   protected fun performUnversionedFilesAddition(project: Project,
@@ -76,14 +76,14 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
     FileDocumentManager.getInstance().saveAllDocuments()
 
     if (ModalityState.current() == ModalityState.NON_MODAL) {
-      addUnversionedFilesToVcsInBackground(project, targetChangeList, files, changesConsumer, additionalTask)
+      Manager.addUnversionedFilesToVcsInBackground(project, targetChangeList, files, changesConsumer, additionalTask)
     }
     else {
-      addUnversionedFilesToVcs(project, targetChangeList, files, changesConsumer, additionalTask)
+      Manager.addUnversionedFilesToVcs(project, targetChangeList, files, changesConsumer, additionalTask)
     }
   }
 
-  companion object {
+  object Manager {
     fun getUnversionedFiles(e: AnActionEvent, project: Project): JBIterable<VirtualFile> {
       return getUnversionedFiles(e.dataContext, project)
     }

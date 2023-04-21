@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -380,7 +380,6 @@ public final class Java8MigrationUtils {
     public static MapLoopCondition create(@NotNull PsiForeachStatement statement) {
       PsiExpression iteratedValue = statement.getIteratedValue();
       PsiParameter iterParam = statement.getIterationParameter();
-      if (iterParam == null) return null;
       PsiMethodCallExpression iterCall = extractMapMethodCall(iteratedValue, "keySet");
       if (iterCall != null) return create(iterParam, false, iterCall.getMethodExpression().getQualifierExpression());
 

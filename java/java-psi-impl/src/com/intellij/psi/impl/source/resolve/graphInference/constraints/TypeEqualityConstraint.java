@@ -81,8 +81,8 @@ public class TypeEqualityConstraint implements ConstraintFormula {
       return equal;
     }
 
-    if (myT == null || myT == PsiType.NULL) return false;
-    if (myS == null || myS == PsiType.NULL) return false;
+    if (myT == null || myT == PsiTypes.nullType()) return false;
+    if (myS == null || myS == PsiTypes.nullType()) return false;
 
     InferenceVariable inferenceVariable = session.getInferenceVariable(myS);
     if (inferenceVariable != null && !(myT instanceof PsiPrimitiveType)) {

@@ -120,13 +120,13 @@ public class VariableNotUsedInsideIfInspection extends BaseInspection {
       if (rhs == null) {
         return null;
       }
-      if (PsiType.NULL.equals(rhs.getType())) {
+      if (PsiTypes.nullType().equals(rhs.getType())) {
         if (!(lhs instanceof PsiReferenceExpression)) {
           return null;
         }
         return (PsiReferenceExpression)lhs;
       }
-      if (PsiType.NULL.equals(lhs.getType())) {
+      if (PsiTypes.nullType().equals(lhs.getType())) {
         if (!(rhs instanceof PsiReferenceExpression)) {
           return null;
         }

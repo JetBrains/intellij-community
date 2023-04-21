@@ -322,7 +322,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
             LOG.assertTrue(initializer != null);
             final PsiType type = initializer.getType();
             if (((PsiReferenceExpression)parent).resolve() == null && type != null && !type.equals(psiVariable.getType()) &&
-                !LambdaUtil.notInferredType(type) && !PsiType.NULL.equals(type)) {
+                !LambdaUtil.notInferredType(type) && !PsiTypes.nullType().equals(type)) {
               final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
               final PsiExpression castedExpr =
                 elementFactory.createExpressionFromText("((" + type.getCanonicalText() + ")" + referenceExpression.getText() + ")", parent);

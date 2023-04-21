@@ -45,7 +45,7 @@ public class SwingBuilderNamedArgumentProvider extends GroovyNamedArgumentProvid
         if (argumentName != null && !argumentName.equals(propertyName)) continue;
 
         PsiType methodReturnType = method.getReturnType();
-        if (methodReturnType != null && !PsiType.VOID.equals(methodReturnType)) continue;
+        if (methodReturnType != null && !PsiTypes.voidType().equals(methodReturnType)) continue;
 
         PsiParameter[] parameters = method.getParameterList().getParameters();
 

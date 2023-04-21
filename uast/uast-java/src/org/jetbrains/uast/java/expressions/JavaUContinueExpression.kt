@@ -17,6 +17,7 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiContinueStatement
+import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UContinueExpression
 import org.jetbrains.uast.UElement
@@ -30,7 +31,7 @@ class JavaUContinueExpression(
   override val label: String?
     get() = sourcePsi.labelIdentifier?.text
 
-  override val jumpTarget: UElement? by lz {
+  override val jumpTarget: UElement? by lazyPub {
     sourcePsi.findContinuedStatement().takeIf { it !== sourcePsi }?.let { JavaConverter.convertStatement(it, null, UExpression::class.java) }
   }
 }

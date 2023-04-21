@@ -1,7 +1,6 @@
 MODULES
     project
     project.androidTest
-        testDebugUnitTest|:|android
     project.commonMain
     project.commonTest
         testDebugUnitTest|:|android

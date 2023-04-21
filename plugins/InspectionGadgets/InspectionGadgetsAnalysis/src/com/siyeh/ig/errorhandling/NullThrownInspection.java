@@ -73,7 +73,7 @@ public class NullThrownInspection extends BaseInspection {
         return;
       }
       final PsiType type = exception.getType();
-      if (!PsiType.NULL.equals(type)) {
+      if (!PsiTypes.nullType().equals(type)) {
         return;
       }
       registerError(exception);

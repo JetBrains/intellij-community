@@ -1117,6 +1117,13 @@
     <depends optional="true">-com-intellij-diagram-</depends>
     <depends optional="true">-tslint-</depends>
   </idea-plugin>
+  <idea-plugin url="file://out/intellij.astro/META-INF/plugin.xml">
+    <id>-org-jetbrains-plugins-astro-</id>
+    <name>Astro</name>
+    <depends>-JavaScript-</depends>
+    <depends>com.intellij.modules.xml</depends>
+    <depends>-com-intellij-css-</depends>
+  </idea-plugin>
   <idea-plugin url="file://out/intellij.tslint/META-INF/plugin.xml">
     <id>-tslint-</id>
     <name>tslint</name>

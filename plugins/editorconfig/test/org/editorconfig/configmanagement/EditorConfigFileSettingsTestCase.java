@@ -26,7 +26,7 @@ public abstract class EditorConfigFileSettingsTestCase extends LightPlatformTest
     super.setUp();
     CodeStyle.dropTemporarySettings(getProject());
     myOriginalSettings = CodeStyle.createTestSettings(CodeStyle.getSettings(getProject()));
-    EditorConfigCodeStyleSettingsModifier.setEnabledInTests(true);
+    EditorConfigCodeStyleSettingsModifier.Handler.setEnabledInTests(true);
     Utils.setEnabledInTests(true);
 
     // move test data to temp dir to ensure that IJ Project .editorConfig files don't affect tests
@@ -40,7 +40,7 @@ public abstract class EditorConfigFileSettingsTestCase extends LightPlatformTest
   protected void tearDown() throws Exception {
     try {
       Utils.setEnabledInTests(false);
-      EditorConfigCodeStyleSettingsModifier.setEnabledInTests(false);
+      EditorConfigCodeStyleSettingsModifier.Handler.setEnabledInTests(false);
       CodeStyle.getSettings(getProject()).copyFrom(myOriginalSettings);
     }
     catch (Throwable e) {

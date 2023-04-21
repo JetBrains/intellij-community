@@ -67,7 +67,7 @@ public class SubstitutedExpressionEvaluationHelper {
           PsiMethodCallExpression c = (PsiMethodCallExpression)o;
           PsiMethod m = (PsiMethod)c.getMethodExpression().resolve();
           PsiType returnType = m != null ? m.getReturnType() : null;
-          if (returnType != null && !PsiType.VOID.equals(returnType)) {
+          if (returnType != null && !PsiTypes.voidType().equals(returnType)) {
             // find substitution
             Object substituted = calcSubstituted(m);
             if (substituted != null) return substituted;
@@ -110,7 +110,7 @@ public class SubstitutedExpressionEvaluationHelper {
         uncomputables.add(o);
         if (includeUncomputablesAsLiterals) {
           if (resolvedType != null) {
-            if (PsiType.DOUBLE.isAssignableFrom(resolvedType)) return 1; // magic number!
+            if (PsiTypes.doubleType().isAssignableFrom(resolvedType)) return 1; // magic number!
           }
           StringBuilder sb = new StringBuilder();
           o.accept(new PsiRecursiveElementWalkingVisitor() {

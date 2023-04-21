@@ -1,16 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project.wizard.groovy
 
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logAddSampleCodeChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
 import com.intellij.ide.projectWizard.generators.AssetsJavaNewProjectWizardStep.Companion.createJavaSourcePath
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
-import com.intellij.ide.wizard.chain
+import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.distribution.LocalDistributionInfo
@@ -26,7 +24,9 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
 
   override val ordinal = 200
 
-  override fun createStep(parent: GroovyNewProjectWizard.Step): NewProjectWizardStep = Step(parent).chain(::AssetsStep)
+  override fun createStep(parent: GroovyNewProjectWizard.Step): NewProjectWizardStep =
+    Step(parent)
+      .nextStep(::AssetsStep)
 
   class Step(parent: GroovyNewProjectWizard.Step) :
     GradleNewProjectWizardStep<GroovyNewProjectWizard.Step>(parent),
@@ -89,7 +89,6 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
   private class AssetsStep(private val parent: Step) : AssetsNewProjectWizardStep(parent) {
 
     override fun setupAssets(project: Project) {
-      outputDirectory = "$path/$name"
       addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
       if (parent.addSampleCode) {
         val sourcePath = createJavaSourcePath("src/main/groovy", parent.groupId, "Main.groovy")

@@ -263,7 +263,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
         if (!PsiUtil.isLanguageLevel9OrHigher(finallyBlock) && variableUsedOutsideTry) return null;
         if (!variableUsedOutsideTry && resourceVariable instanceof PsiLocalVariable) {
           PsiExpression initializer = resourceVariable.getInitializer();
-          boolean hasNonNullInitializer = initializer != null && !PsiType.NULL.equals(initializer.getType());
+          boolean hasNonNullInitializer = initializer != null && !PsiTypes.nullType().equals(initializer.getType());
           if (!hasNonNullInitializer) {
             int assignmentStatementIndex = findInitialization(tryStatements, resourceVariable);
             if (assignmentStatementIndex == -1) return null;
@@ -419,10 +419,10 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
       final PsiExpression rhs = binaryExpression.getROperand();
       if (rhs == null) return false;
       final PsiElement variable;
-      if (PsiType.NULL.equals(rhs.getType())) {
+      if (PsiTypes.nullType().equals(rhs.getType())) {
         variable = ExpressionUtils.resolveLocalVariable(lhs);
       }
-      else if (PsiType.NULL.equals(lhs.getType())) {
+      else if (PsiTypes.nullType().equals(lhs.getType())) {
         variable = ExpressionUtils.resolveLocalVariable(rhs);
       }
       else {

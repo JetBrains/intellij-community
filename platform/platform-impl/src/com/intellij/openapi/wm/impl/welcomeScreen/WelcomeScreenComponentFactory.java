@@ -24,10 +24,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StartPagePromoter;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
-import com.intellij.ui.BalloonLayout;
-import com.intellij.ui.ClickListener;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
+import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -91,7 +88,7 @@ public final class WelcomeScreenComponentFactory {
 
     JLabel version = new JLabel(appVersion);
     version.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
-    version.setForeground(Gray._128);
+    version.setForeground(ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.ContextHelp.FOREGROUND : Gray._128);
     NonOpaquePanel textPanel = new NonOpaquePanel();
     textPanel.setLayout(new VerticalFlowLayout(0, 0));
     textPanel.setBorder(JBUI.Borders.empty(28, 10, 25, 10));
@@ -327,7 +324,8 @@ public final class WelcomeScreenComponentFactory {
 
   public static @NotNull JPanel createNotificationPanel(@NotNull Disposable parentDisposable) {
     JPanel panel = new NonOpaquePanel(new FlowLayout(FlowLayout.RIGHT));
-    panel.setBorder(JBUI.Borders.empty(10, 0, 0, 3));
+    panel.setBorder(ExperimentalUI.isNewUI() ? JBUI.Borders.empty(10, 0, 12, 18) :
+                    JBUI.Borders.empty(10, 0, 0, 3));
     panel.add(createErrorsLink(parentDisposable));
     panel.add(createEventLink("", parentDisposable));
     return panel;

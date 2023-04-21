@@ -1,5 +1,5 @@
 // FILE: first.before.kt
-// "Import extension function 'A.invoke'" "true"
+// "Import operator 'A.invoke'" "true"
 // ERROR: Expression 'a' of type 'A' cannot be invoked as a function. The function 'invoke()' is not found
 /* IGNORE_FIR */
 
@@ -27,7 +27,7 @@ operator fun A.invoke() = 42
 
 
 // FILE: first.after.kt
-// "Import extension function 'A.invoke'" "true"
+// "Import operator 'A.invoke'" "true"
 // ERROR: Expression 'a' of type 'A' cannot be invoked as a function. The function 'invoke()' is not found
 /* IGNORE_FIR */
 

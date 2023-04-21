@@ -264,7 +264,7 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
         PsiTypeElement castElement = ((PsiTypeCastExpression)parent).getCastType();
         if (castElement != null && castElement.getType() instanceof PsiPrimitiveType) {
           addCast = false;
-          if (PsiType.INT.equals(castElement.getType())) {
+          if (PsiTypes.intType().equals(castElement.getType())) {
             toReplace = parent;
           }
         }

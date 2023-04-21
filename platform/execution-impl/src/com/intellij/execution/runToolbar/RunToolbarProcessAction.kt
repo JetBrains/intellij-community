@@ -17,7 +17,9 @@ open class RunToolbarProcessAction(override val process: RunToolbarProcess, val 
     return true
   }
 
-  override fun getInformativeIcon(project: Project, selectedConfiguration: RunnerAndConfigurationSettings): Icon {
+  override fun getInformativeIcon(project: Project,
+                                  selectedConfiguration: RunnerAndConfigurationSettings,
+                                  e: AnActionEvent): Icon {
     return executor.icon
   }
 

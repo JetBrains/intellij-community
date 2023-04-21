@@ -4,6 +4,9 @@ package com.intellij.util.flow
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlin.time.Duration
 
 /**
  * Returns a cold flow, which emits values of [this] flow not more often than the given [timeout][timeMs].
@@ -85,9 +88,7 @@ private object UNINITIALIZED
  * ```
  * produces the following emissions
  * ```
- * (1,2)
- * (2,3)
- * (3,4)
+ * (1,2), (2,3), (3,4)
  * ```
  *
  * The returned flow is empty if [this] flow is empty or emits a single element.
@@ -101,6 +102,46 @@ fun <X> Flow<X>.zipWithPrevious(): Flow<Pair<X, X>> {
         emit(Pair(previous, it))
       }
       previous = it
+    }
+  }
+}
+
+/**
+ * Returns a cold flow, which emits values of [this] flow in chunks no often than the given [duration][duration].
+ *
+ * Example:
+ * ```kotlin
+ * flow {
+ *   delay(40)
+ *   emit(1)
+ *   delay(40)
+ *   emit(2)
+ *   delay(120)
+ *   emit(3)
+ *   delay(120)
+ *   emit(4)
+ * }.chunked(100.milliseconds)
+ * ```
+ * produces the following emissions
+ * ```text
+ * [1, 2], [3], [4]
+ * ```
+ */
+fun <T> Flow<T>.debounceBatch(duration: Duration) = channelFlow {
+  val mutex = Mutex()
+  val buffer = mutableListOf<T>()
+  var job: Job? = null
+  collect {
+    mutex.withLock {
+      buffer.add(it)
+      job?.cancel()
+      job = launch {
+        delay(duration)
+        mutex.withLock {
+          send(buffer.toList())
+          buffer.clear()
+        }
+      }
     }
   }
 }

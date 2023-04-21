@@ -220,7 +220,7 @@ public class ActionButtonWithText extends ActionButton {
   }
 
   @NotNull
-  private static Icon getDownArrowIcon() { // later can be done protected by demand
+  protected Icon getDownArrowIcon() {
     return AllIcons.General.LinkDropTriangle;
   }
 

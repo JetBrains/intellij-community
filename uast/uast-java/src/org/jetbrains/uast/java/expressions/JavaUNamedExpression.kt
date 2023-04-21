@@ -16,6 +16,7 @@
 package org.jetbrains.uast.java.expressions
 
 import com.intellij.psi.PsiNameValuePair
+import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
@@ -23,7 +24,6 @@ import org.jetbrains.uast.UNamedExpression
 import org.jetbrains.uast.UastEmptyExpression
 import org.jetbrains.uast.java.JavaAbstractUExpression
 import org.jetbrains.uast.java.JavaConverter
-import org.jetbrains.uast.java.lz
 
 @ApiStatus.Internal
 class JavaUNamedExpression(
@@ -35,7 +35,7 @@ class JavaUNamedExpression(
   override val name: String?
     get() = sourcePsi.name
 
-  override val expression: UExpression by lz {
+  override val expression: UExpression by lazyPub {
     sourcePsi.value?.let { value -> JavaConverter.convertPsiElement(value, this, UElement::class.java) } as? UExpression ?: UastEmptyExpression(this)
   }
 }

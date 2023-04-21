@@ -2,6 +2,9 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.HorizontalListPanel
+import com.intellij.collaboration.ui.VerticalListPanel
+import com.intellij.collaboration.ui.codereview.details.ReviewState
 import com.intellij.collaboration.ui.util.bindContent
 import com.intellij.collaboration.ui.util.bindIcon
 import com.intellij.collaboration.ui.util.bindText
@@ -9,8 +12,6 @@ import com.intellij.collaboration.ui.util.bindVisibility
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ui.components.ActionLink
-import com.intellij.ui.components.panels.HorizontalLayout
-import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.childScope
 import com.intellij.util.ui.JBUI
@@ -28,12 +29,10 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState.Check
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel.ReviewState
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
-import javax.swing.JPanel
 
 internal object GHPRStatusChecksComponentFactory {
   private const val STATUSES_GAP = 10
@@ -50,15 +49,14 @@ internal object GHPRStatusChecksComponentFactory {
   ): JComponent {
     val scope = parentScope.childScope(Dispatchers.Main.immediate)
     val loadingPanel = createLoadingComponent(reviewDetailsVm, securityService)
-    val checksPanel = JPanel(VerticalLayout(STATUSES_GAP)).apply {
-      isOpaque = false
-      add(createChecksStateComponent(scope, reviewDetailsVm), VerticalLayout.TOP)
-      add(createConflictsComponent(scope, reviewDetailsVm), VerticalLayout.TOP)
-      add(createRequiredReviewsComponent(scope, reviewDetailsVm), VerticalLayout.TOP)
-      add(createRestrictionsLabel(scope, reviewDetailsVm), VerticalLayout.TOP)
-      add(createAccessDeniedLabel(reviewDetailsVm, securityService), VerticalLayout.TOP)
-      add(createNeedReviewerLabel(scope, reviewFlowVm), VerticalLayout.TOP)
-      add(createReviewersReviewStateLabel(scope, reviewFlowVm, avatarIconsProvider), VerticalLayout.TOP)
+    val checksPanel = VerticalListPanel(STATUSES_GAP).apply {
+      add(createChecksStateComponent(scope, reviewDetailsVm))
+      add(createConflictsComponent(scope, reviewDetailsVm))
+      add(createRequiredReviewsComponent(scope, reviewDetailsVm))
+      add(createRestrictionsLabel(scope, reviewDetailsVm))
+      add(createAccessDeniedLabel(reviewDetailsVm, securityService))
+      add(createNeedReviewerLabel(scope, reviewFlowVm))
+      add(createReviewersReviewStateLabel(scope, reviewFlowVm, avatarIconsProvider))
     }
 
     return Wrapper().apply {
@@ -75,9 +73,8 @@ internal object GHPRStatusChecksComponentFactory {
       text = GithubBundle.message("pull.request.loading.status")
     }
     val accessDeniedLabel = createAccessDeniedLabel(reviewDetailsVm, securityService)
-    return JPanel(VerticalLayout(STATUSES_GAP)).apply {
+    return VerticalListPanel(STATUSES_GAP).apply {
       name = "Loading statuses panel"
-      isOpaque = false
       add(stateLabel)
       add(accessDeniedLabel)
     }
@@ -96,8 +93,7 @@ internal object GHPRStatusChecksComponentFactory {
       })
     }
 
-    return JPanel(HorizontalLayout(STATUS_COMPONENTS_GAP)).apply {
-      isOpaque = false
+    return HorizontalListPanel(STATUS_COMPONENTS_GAP).apply {
       name = "CI statuses panel"
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
       bindVisibility(scope, reviewDetailsVm.checksState.map { it != ChecksState.NONE })
@@ -112,7 +108,7 @@ internal object GHPRStatusChecksComponentFactory {
       name = "Review conflicts label"
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
       icon = AllIcons.RunConfigurations.TestError
-      text = GithubBundle.message("pull.request.conflicts.must.be.resolved")
+      text = CollaborationToolsBundle.message("review.details.status.conflicts")
       bindVisibility(scope, reviewDetailsVm.hasConflictsState.map { it == true })
     }
   }
@@ -201,8 +197,7 @@ internal object GHPRStatusChecksComponentFactory {
     reviewFlowVm: GHPRReviewFlowViewModel,
     avatarIconsProvider: GHAvatarIconsProvider
   ): JComponent {
-    val panel = JPanel(VerticalLayout(STATUSES_GAP)).apply {
-      isOpaque = false
+    val panel = VerticalListPanel(STATUSES_GAP).apply {
       name = "Reviewers statuses panel"
       border = JBUI.Borders.empty(1, 0)
       bindVisibility(scope, reviewFlowVm.reviewerAndReviewState.map { it.isNotEmpty() })
@@ -212,7 +207,7 @@ internal object GHPRStatusChecksComponentFactory {
       reviewFlowVm.reviewerAndReviewState.collect { reviewerAndReview ->
         panel.removeAll()
         reviewerAndReview.forEach { (reviewer, reviewState) ->
-          panel.add(createReviewerReviewStatus(reviewer, reviewState, avatarIconsProvider), VerticalLayout.TOP)
+          panel.add(createReviewerReviewStatus(reviewer, reviewState, avatarIconsProvider))
         }
         panel.revalidate()
         panel.repaint()
@@ -227,7 +222,7 @@ internal object GHPRStatusChecksComponentFactory {
     reviewState: ReviewState,
     avatarIconsProvider: GHAvatarIconsProvider
   ): JComponent {
-    return JPanel(HorizontalLayout(STATUS_COMPONENTS_GAP)).apply {
+    return HorizontalListPanel(STATUS_COMPONENTS_GAP).apply {
       val reviewStatusIconLabel = JLabel().apply {
         icon = getReviewStateIcon(reviewState)
       }
@@ -236,9 +231,9 @@ internal object GHPRStatusChecksComponentFactory {
         text = getReviewStateText(reviewState, reviewer.shortName)
         iconTextGap = STATUS_COMPONENTS_GAP
       }
-      isOpaque = false
-      add(reviewStatusIconLabel, HorizontalLayout.LEFT)
-      add(reviewerLabel, HorizontalLayout.LEFT)
+
+      add(reviewStatusIconLabel)
+      add(reviewerLabel)
     }
   }
 

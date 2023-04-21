@@ -78,7 +78,7 @@ public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
     final String methodName = nameValuePair.getName();
     LOG.assertTrue(methodName != null);
 
-    PsiMethod method = factory.createMethod(methodName, PsiType.VOID);
+    PsiMethod method = factory.createMethod(methodName, PsiTypes.voidType());
 
     method = (PsiMethod)targetClass.add(method);
 

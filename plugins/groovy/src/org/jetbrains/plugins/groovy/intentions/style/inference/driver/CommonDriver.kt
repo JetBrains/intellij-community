@@ -72,7 +72,7 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
     }
 
     private fun GrParameter.setTypeWithoutFormatting(type: PsiType?) {
-      if (type == null || type == PsiType.NULL || (type is PsiWildcardType && !type.isBounded)) {
+      if (type == null || type == PsiTypes.nullType() || (type is PsiWildcardType && !type.isBounded)) {
         typeElementGroovy?.delete()
       }
       else try {
@@ -148,7 +148,7 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
     for (parameter in targetParameters) {
       constraintCollector.add(ExpressionConstraint(ExpectedType(parameter.type, ASSIGNMENT), parameter.initializerGroovy ?: continue))
     }
-    val candidateSamParameters = targetParameters.map { it to PsiType.NULL as PsiType }.toMap(mutableMapOf())
+    val candidateSamParameters = targetParameters.map { it to PsiTypes.nullType() as PsiType }.toMap(mutableMapOf())
     val definitelySamParameters = mutableSetOf<GrParameter>()
     val mapping = setUpParameterMapping(originalMethod, method)
     for (call in environment.getAllCallsToMethod(method).mapNotNull { it.element.parent }) {
@@ -240,7 +240,7 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
           val component = virtualType.componentType
           (if (component is PsiWildcardType) component.bound else component)?.createArrayType()
         }
-        virtualParameter.typeElement == null -> PsiType.NULL
+        virtualParameter.typeElement == null -> PsiTypes.nullType()
         else -> virtualParameter.type
       }
       actualParameter.setTypeWithoutFormatting(newParamType)
@@ -251,7 +251,7 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
   override fun acceptTypeVisitor(visitor: PsiTypeMapper, resultMethod: GrMethod): InferenceDriver {
     val mapping = setUpParameterMapping(method, resultMethod)
     method.parameters.forEach {
-      val type = if (it.typeElement == null) PsiType.NULL else it.type
+      val type = if (it.typeElement == null) PsiTypes.nullType() else it.type
       mapping.getValue(it).setTypeWithoutFormatting(type.accept(visitor))
     }
     val newClosureDriver = closureDriver.acceptTypeVisitor(visitor, resultMethod)

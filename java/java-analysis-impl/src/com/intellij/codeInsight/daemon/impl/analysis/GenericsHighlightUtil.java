@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -13,7 +13,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -431,30 +430,32 @@ public final class GenericsHighlightUtil {
     return null;
   }
 
-  static HighlightInfo.Builder checkDefaultMethodOverrideEquivalentToObjectNonPrivate(@NotNull LanguageLevel languageLevel,
-                                                                              @NotNull PsiClass aClass,
-                                                                              @NotNull PsiMethod method,
-                                                                              @NotNull PsiElement methodIdentifier) {
-    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && aClass.isInterface() && method.hasModifierProperty(PsiModifier.DEFAULT)) {
-      return checkDefaultMethodOverrideEquivalentToObjectNonPrivate(methodIdentifier, method.getHierarchicalMethodSignature());
+  static HighlightInfo.Builder checkDefaultMethodOverridesMemberOfJavaLangObject(@NotNull LanguageLevel languageLevel,
+                                                                                 @NotNull PsiClass aClass,
+                                                                                 @NotNull PsiMethod method,
+                                                                                 @NotNull PsiElement methodIdentifier) {
+    if (languageLevel.isLessThan(LanguageLevel.JDK_1_8) || !aClass.isInterface() || !method.hasModifierProperty(PsiModifier.DEFAULT)) {
+      return null;
     }
-    return null;
+    return doesMethodOverrideMemberOfJavaLangObject(method)
+           ? HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+             .descriptionAndTooltip(JavaErrorBundle.message("default.method.overrides.object.member", method.getName()))
+             .range(methodIdentifier)
+           : null;
   }
 
-  @Nullable
-  private static HighlightInfo.Builder checkDefaultMethodOverrideEquivalentToObjectNonPrivate(@NotNull PsiElement methodIdentifier, HierarchicalMethodSignature sig) {
-    for (HierarchicalMethodSignature methodSignature : sig.getSuperSignatures()) {
+  private static boolean doesMethodOverrideMemberOfJavaLangObject(@NotNull PsiMethod method) {
+    for (HierarchicalMethodSignature methodSignature : method.getHierarchicalMethodSignature().getSuperSignatures()) {
       PsiMethod objectMethod = methodSignature.getMethod();
       PsiClass containingClass = objectMethod.getContainingClass();
-      if (containingClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName()) && objectMethod.hasModifierProperty(PsiModifier.PUBLIC)) {
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-          .descriptionAndTooltip(JavaErrorBundle.message("default.method.overrides.object.member", sig.getName()))
-          .range(methodIdentifier);
+      if (containingClass != null &&
+          CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName()) &&
+          objectMethod.hasModifierProperty(PsiModifier.PUBLIC)) {
+        return true;
       }
-      HighlightInfo.Builder inHierarchy = checkDefaultMethodOverrideEquivalentToObjectNonPrivate(methodIdentifier, methodSignature);
-      if (inHierarchy != null) return inHierarchy;
+      if (doesMethodOverrideMemberOfJavaLangObject(objectMethod)) return true;
     }
-    return null;
+    return false;
   }
 
   /**
@@ -795,7 +796,7 @@ public final class GenericsHighlightUtil {
   static HighlightInfo.Builder checkReferenceTypeUsedAsTypeArgument(@NotNull PsiTypeElement typeElement, @NotNull LanguageLevel level) {
     PsiType type = typeElement.getType();
     PsiType wildCardBind = type instanceof PsiWildcardType ? ((PsiWildcardType)type).getBound() : null;
-    if (type != PsiType.NULL && type instanceof PsiPrimitiveType || wildCardBind instanceof PsiPrimitiveType) {
+    if (type != PsiTypes.nullType() && type instanceof PsiPrimitiveType || wildCardBind instanceof PsiPrimitiveType) {
       PsiElement element = new PsiMatcherImpl(typeElement)
         .parent(PsiMatchers.hasClass(PsiReferenceParameterList.class))
         .parent(PsiMatchers.hasClass(PsiJavaCodeReferenceElement.class, PsiNewExpression.class))
@@ -938,19 +939,6 @@ public final class GenericsHighlightUtil {
     }
 
     return null;
-  }
-
-  private static final MethodSignature ourValuesEnumSyntheticMethod = MethodSignatureUtil.createMethodSignature("values",
-                                                                                                                PsiType.EMPTY_ARRAY,
-                                                                                                                PsiTypeParameter.EMPTY_ARRAY,
-                                                                                                                PsiSubstitutor.EMPTY);
-
-  static boolean isEnumSyntheticMethod(@NotNull MethodSignature methodSignature, @NotNull Project project) {
-    if (methodSignature.equals(ourValuesEnumSyntheticMethod)) return true;
-    PsiType javaLangString = PsiType.getJavaLangString(PsiManager.getInstance(project), GlobalSearchScope.allScope(project));
-    MethodSignature valueOfMethod = MethodSignatureUtil.createMethodSignature("valueOf", new PsiType[]{javaLangString}, PsiTypeParameter.EMPTY_ARRAY,
-                                                                                    PsiSubstitutor.EMPTY);
-    return MethodSignatureUtil.areSignaturesErasureEqual(valueOfMethod, methodSignature);
   }
 
   static HighlightInfo.Builder checkTypeParametersList(@NotNull PsiTypeParameterList list, PsiTypeParameter @NotNull [] parameters, @NotNull LanguageLevel level) {

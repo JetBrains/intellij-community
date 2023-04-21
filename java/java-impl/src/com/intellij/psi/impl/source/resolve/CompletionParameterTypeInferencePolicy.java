@@ -16,7 +16,7 @@ public final class CompletionParameterTypeInferencePolicy extends ProcessCandida
   @Override
   public PsiType getDefaultExpectedType(PsiCallExpression methodCall) {
     ExpectedTypeInfo expectedType = ExpectedTypesProvider.getSingleExpectedTypeForCompletion(methodCall);
-    return expectedType == null ? PsiType.NULL : expectedType.getType();
+    return expectedType == null ? (PsiPrimitiveType)PsiTypes.nullType() : expectedType.getType();
   }
 
   @Override
@@ -36,7 +36,7 @@ public final class CompletionParameterTypeInferencePolicy extends ProcessCandida
 
   @Override
   public PsiType adjustInferredType(PsiManager manager, PsiType guess, ConstraintType constraintType) {
-    if (guess != null && !(guess instanceof PsiWildcardType) && guess != PsiType.NULL) {
+    if (guess != null && !(guess instanceof PsiWildcardType) && guess != PsiTypes.nullType()) {
       if (constraintType == ConstraintType.SUPERTYPE) return PsiWildcardType.createExtends(manager, guess);
       else if (constraintType == ConstraintType.SUBTYPE) return PsiWildcardType.createSuper(manager, guess);
     }

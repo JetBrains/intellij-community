@@ -11,10 +11,12 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
-import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.GitLabMergeRequestDiscussionResolveViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.GitLabMergeRequestDiscussionResolveViewModelImpl
+import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.GitLabDiscussionResolveViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.GitLabDiscussionResolveViewModelImpl
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModelImpl
+import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
+import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModelImpl
 import java.util.*
 
 interface GitLabMergeRequestTimelineDiscussionViewModel {
@@ -24,9 +26,10 @@ interface GitLabMergeRequestTimelineDiscussionViewModel {
   val mainNote: Flow<GitLabNoteViewModel>
   val replies: Flow<List<GitLabNoteViewModel>>
 
-  val repliesFolded: Flow<Boolean>
+  val collapsed: Flow<Boolean>
 
-  val resolvedVm: GitLabMergeRequestDiscussionResolveViewModel?
+  val resolveVm: GitLabDiscussionResolveViewModel?
+  val newNoteVm: NewGitLabNoteViewModel?
 
   fun setRepliesFolded(folded: Boolean)
 
@@ -37,6 +40,7 @@ private val LOG = logger<GitLabMergeRequestTimelineDiscussionViewModel>()
 
 class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   parentCs: CoroutineScope,
+  currentUser: GitLabUserDTO,
   discussion: GitLabDiscussion
 ) : GitLabMergeRequestTimelineDiscussionViewModel {
 
@@ -52,7 +56,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   override val author: Flow<GitLabUserDTO> = mainNote.map { it.author }
 
   private val _repliesFolded = MutableStateFlow(true)
-  override val repliesFolded: Flow<Boolean> = _repliesFolded.asStateFlow()
+  override val collapsed: Flow<Boolean> = _repliesFolded.asStateFlow()
 
   override val replies: Flow<List<GitLabNoteViewModel>> = discussion.notes
     .map { it.drop(1) }
@@ -63,8 +67,11 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
     )
     .modelFlow(cs, LOG)
 
-  override val resolvedVm: GitLabMergeRequestDiscussionResolveViewModel? =
-    if (discussion.canResolve) GitLabMergeRequestDiscussionResolveViewModelImpl(cs, discussion) else null
+  override val resolveVm: GitLabDiscussionResolveViewModel? =
+    if (discussion.canResolve) GitLabDiscussionResolveViewModelImpl(cs, discussion) else null
+
+  override val newNoteVm: NewGitLabNoteViewModel? =
+    if(discussion.canAddNotes) NewGitLabNoteViewModelImpl(cs, currentUser, discussion) else null
 
   override fun setRepliesFolded(folded: Boolean) {
     _repliesFolded.value = folded

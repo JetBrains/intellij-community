@@ -201,9 +201,9 @@ internal inline fun <reified ActualT : UElement> Class<*>?.el(f: () -> UElement?
   return if (this == null || isAssignableFrom(ActualT::class.java)) f() else null
 }
 
-internal inline fun <reified ActualT : UElement, P : PsiElement> Class<out UElement>.el(arg1: P,
-                                                                                        arg2: UElement?,
-                                                                                        ctor: (P, UElement?) -> UElement?): UElement? {
+private inline fun <reified ActualT : UElement, P : PsiElement> Class<out UElement>.el(arg1: P,
+                                                                                       arg2: UElement?,
+                                                                                       crossinline ctor: (P, UElement?) -> UElement?): UElement? {
   return if (this.isAssignableFrom(ActualT::class.java)) ctor(arg1, arg2) else null
 }
 
@@ -646,17 +646,33 @@ internal object JavaConverter {
   }
 
   private fun convertDeclarations(elements: Array<out PsiElement>, parent: UElement?): UDeclarationsExpression {
-    return JavaUDeclarationsExpression(parent).apply {
-      val declarations = ArrayList<UDeclaration>(elements.size)
-      for (element in elements) {
-        if (element is PsiVariable) {
-          declarations += JavaUVariable.create(element, this)
-        }
-        else if (element is PsiClass) {
-          declarations += JavaUClass.create(element, this)
-        }
+    val expression = JavaUDeclarationsExpression(parent)
+
+    val size = elements.size
+    if (size == 1) {
+      val uDecl = toDeclaration(elements[0], expression)
+      expression.declarations = if (uDecl != null) listOf(uDecl) else emptyList()
+      return expression
+    }
+
+    // almost never happens, most of the cases need only 1 resulting element
+    val declarations = ArrayList<UDeclaration>(elements.size)
+    for (element in elements) {
+      val uDecl = toDeclaration(element, expression)
+      if (uDecl != null) {
+        declarations += uDecl
       }
-      this.declarations = declarations
+    }
+    expression.declarations = declarations
+
+    return expression
+  }
+
+  private fun toDeclaration(element: PsiElement, containing: JavaUDeclarationsExpression): UDeclaration? {
+    return when (element) {
+      is PsiVariable -> JavaUVariable.create(element, containing)
+      is PsiClass -> JavaUClass.create(element, containing)
+      else -> null
     }
   }
 

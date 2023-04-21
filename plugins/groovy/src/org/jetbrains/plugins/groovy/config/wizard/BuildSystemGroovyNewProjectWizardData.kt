@@ -14,11 +14,11 @@ interface BuildSystemGroovyNewProjectWizardData: BuildSystemNewProjectWizardData
   var groovySdk : DistributionInfo?
 
   companion object {
-    @JvmStatic val KEY = Key.create<BuildSystemGroovyNewProjectWizardData>(BuildSystemGroovyNewProjectWizardData::class.java.name)
 
-    @JvmStatic val NewProjectWizardStep.buildSystemData get() = data.getUserData(KEY)!!
+    val KEY = Key.create<BuildSystemGroovyNewProjectWizardData>(BuildSystemGroovyNewProjectWizardData::class.java.name)
 
-    @JvmStatic val NewProjectWizardStep.buildSystemProperty get() = buildSystemData.buildSystemProperty
-    @JvmStatic var NewProjectWizardStep.buildSystem get() = buildSystemData.buildSystem; set(it) { buildSystemData.buildSystem = it }
+    @JvmStatic
+    val NewProjectWizardStep.groovyBuildSystemData: BuildSystemGroovyNewProjectWizardData?
+      get() = data.getUserData(KEY)
   }
 }

@@ -145,7 +145,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
   }
 
   public boolean isValid() {
-    return myPsiFile.isValid();
+    return myPsiFile != null && myPsiFile.isValid();
   }
 
   protected boolean isSuitable(final PsiElement element) {

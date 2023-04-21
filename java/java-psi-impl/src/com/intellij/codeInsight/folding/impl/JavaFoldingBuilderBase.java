@@ -233,7 +233,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     if (typeElement == null) return;
     if (!typeElement.isInferredType()) return;
     PsiType type = expression.getType();
-    if (type instanceof PsiCapturedWildcardType || type.equals(PsiPrimitiveType.NULL)) return;
+    if (type instanceof PsiCapturedWildcardType || type.equals(PsiTypes.nullType())) return;
     String presentableText = type.getPresentableText();
     if (presentableText.length() > 25) return;
     list.add(new FoldingDescriptor(typeElement.getNode(), typeElement.getTextRange(), null, presentableText, true, Collections.emptySet()));

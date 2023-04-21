@@ -19,7 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
@@ -45,7 +45,7 @@ class RemoveLeadingZeroFix extends InspectionGadgetsFix {
 
   static void removeLeadingZeroes(PsiLiteralExpression literal) {
     final String text = literal.getText();
-    final int max = text.length() - (PsiType.LONG.equals(literal.getType()) ? 2 : 1);
+    final int max = text.length() - (PsiTypes.longType().equals(literal.getType()) ? 2 : 1);
     if (max < 1) {
       return;
     }

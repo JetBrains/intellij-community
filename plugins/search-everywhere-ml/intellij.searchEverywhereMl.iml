@@ -44,19 +44,9 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="find-file-model" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-file-model:222.0.1" />
+        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-file-model:223.1.0" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/222.0.1/find-file-model-222.0.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="find-file-model-experimental" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-file-model:223.0.2" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/223.0.2/find-file-model-223.0.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/223.1.0/find-file-model-223.1.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -74,9 +64,9 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="find-classes-model-experimental" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-classes-model:223.2.1" />
+        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-classes-model:231.3.1" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/223.2.1/find-classes-model-223.2.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/231.3.1/find-classes-model-231.3.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -95,5 +85,6 @@
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.vcs" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.yaml" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.java" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.searchEverywhereMl.kotlin" scope="RUNTIME" />
   </component>
 </module>

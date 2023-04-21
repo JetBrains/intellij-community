@@ -163,7 +163,7 @@ object ExtractMethodHelper {
     val type = CommonJavaRefactoringUtil.getTypeByExpressionWithExpectedType(expression)
     return when {
       type != null -> type
-      expression.parent is PsiExpressionStatement -> PsiType.VOID
+      expression.parent is PsiExpressionStatement -> PsiTypes.voidType()
       else -> PsiType.getJavaLangObject(expression.manager, GlobalSearchScope.allScope(expression.project))
     }
   }
@@ -201,7 +201,7 @@ object ExtractMethodHelper {
     if (statements.isEmpty()) return true
     if (! areSame(statements)) return false
     val returnExpressions = statements.mapNotNull { statement -> (statement as? PsiReturnStatement)?.returnValue }
-    return returnExpressions.all { expression -> PsiUtil.isConstantExpression(expression) || expression.type == PsiType.NULL }
+    return returnExpressions.all { expression -> PsiUtil.isConstantExpression(expression) || expression.type == PsiTypes.nullType() }
   }
 
   fun haveReferenceToScope(elements: List<PsiElement>, scope: List<PsiElement>): Boolean {

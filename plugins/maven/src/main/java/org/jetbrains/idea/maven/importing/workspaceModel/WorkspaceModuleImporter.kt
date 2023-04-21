@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.configurationStore.serialize
@@ -18,6 +18,7 @@ import com.intellij.util.containers.addIfNotNull
 import com.intellij.workspaceModel.ide.impl.FileInDirectorySourceNames
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -36,6 +37,7 @@ import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal class WorkspaceModuleImporter(
   private val project: Project,
+  private val storageBeforeImport: EntityStorage,
   private val importData: MavenTreeModuleImportData,
   private val virtualFileUrlManager: VirtualFileUrlManager,
   private val builder: MutableEntityStorage,
@@ -54,7 +56,8 @@ internal class WorkspaceModuleImporter(
                                                                                  existingEntitySourceNames,
                                                                                  moduleName + ModuleManagerEx.IML_EXTENSION)
 
-    val dependencies = collectDependencies(moduleName, importData.dependencies, moduleLibrarySource)
+    val originalModule = storageBeforeImport.resolve(ModuleId(moduleName))
+    val dependencies = collectDependencies(moduleName, originalModule, importData.dependencies, moduleLibrarySource)
     val moduleEntity = createModuleEntity(moduleName, importData.mavenProject, importData.moduleData.type, dependencies,
                                           moduleLibrarySource)
     configureModuleEntity(importData, moduleEntity, folderImportingContext)
@@ -70,11 +73,12 @@ internal class WorkspaceModuleImporter(
                                  mavenModuleType: StandardMavenModuleType,
                                  dependencies: List<ModuleDependencyItem>,
                                  entitySource: EntitySource): ModuleEntity {
-    val moduleEntity = builder.addModuleEntity(moduleName, dependencies, entitySource, ModuleTypeId.JAVA_MODULE)
-    val externalSystemModuleOptionsEntity = ExternalSystemModuleOptionsEntity(entitySource) {
+    val moduleEntity = builder addEntity ModuleEntity(moduleName, dependencies, entitySource) {
+      this.type = ModuleTypeId.JAVA_MODULE
+    }
+    builder addEntity ExternalSystemModuleOptionsEntity(entitySource) {
       ExternalSystemData(moduleEntity, mavenProject.file.path, mavenModuleType).write(this)
     }
-    builder.addEntity(externalSystemModuleOptionsEntity)
     return moduleEntity
 
   }
@@ -90,10 +94,21 @@ internal class WorkspaceModuleImporter(
   }
 
   private fun collectDependencies(moduleName: String,
+                                  originalModule: ModuleEntity?,
                                   dependencies: List<Any>,
                                   moduleLibrarySource: EntitySource): List<ModuleDependencyItem> {
     val result = ArrayList<ModuleDependencyItem>(2 + dependencies.size)
-    result.add(ModuleDependencyItem.InheritedSdkDependency)
+
+    // In this way we keep the manual change of the used JDK
+    // If the user changes the default JDK for the module, this information is not stored to maven and is removed after import
+    // By checking the state of the module before reimport, we can restore the used JDK
+    //
+    // With the new workspace model we can make this process working out of the box. For that we need to extract module
+    //   dependencies as separate entities and add the SDK dependency with the user defined EntitySource. However, this will require
+    //   the refactoring of the ModuleEntity
+    val moduleSdk = originalModule?.dependencies?.find { it is ModuleDependencyItem.SdkDependency }
+                    ?: ModuleDependencyItem.InheritedSdkDependency
+    result.add(moduleSdk)
     result.add(ModuleDependencyItem.ModuleSourceDependency)
 
     for (dependency in dependencies) {
@@ -194,11 +209,8 @@ internal class WorkspaceModuleImporter(
     sourceProvider: () -> EntitySource) {
     if (libraryId in builder) return
 
-    val libraryEntity = builder.addLibraryEntity(libraryId.name,
-                                                 libraryId.tableId,
-                                                 libraryRootsProvider(),
-                                                 emptyList(),
-                                                 sourceProvider())
+    val source = sourceProvider()
+    val libraryEntity = builder addEntity LibraryEntity(libraryId.name, libraryId.tableId, libraryRootsProvider(), source)
 
     if (mavenArtifact == null) return
     addMavenCoordinatesProperties(mavenArtifact, libraryEntity)
@@ -214,10 +226,10 @@ internal class WorkspaceModuleImporter(
                                                                                     mavenArtifact.classifier)).state) ?: return
     libPropertiesElement.name = JpsLibraryTableSerializer.PROPERTIES_TAG;
     val xmlTag = JDOMUtil.writeElement(libPropertiesElement)
-    builder.addEntity(LibraryPropertiesEntity(libraryKind.kindId, libraryEntity.entitySource) {
+    builder addEntity LibraryPropertiesEntity(libraryKind.kindId, libraryEntity.entitySource) {
       library = libraryEntity
       propertiesXmlTag = xmlTag
-    })
+    }
   }
 
   private val MavenArtifact.dependencyScope: ModuleDependencyItem.DependencyScope
@@ -250,8 +262,12 @@ internal class WorkspaceModuleImporter(
         compilerOutputUrlForTests = virtualFileUrlManager.fromPath(importFolderHolder.testOutputPath)
       }
     }
-    builder.addJavaModuleSettingsEntity(inheritCompilerOutput, false, compilerOutputUrl, compilerOutputUrlForTests,
-                                        languageLevel.name, moduleEntity, moduleEntity.entitySource)
+    builder addEntity JavaModuleSettingsEntity(inheritCompilerOutput, false, moduleEntity.entitySource) {
+      this.module = moduleEntity
+      this.compilerOutput = compilerOutputUrl
+      this.compilerOutputForTests = compilerOutputUrlForTests
+      this.languageLevelId = languageLevel.name
+    }
   }
 
   companion object {

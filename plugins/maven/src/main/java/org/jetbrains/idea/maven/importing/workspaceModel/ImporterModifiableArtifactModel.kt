@@ -151,6 +151,10 @@ internal class ImporterModifiableArtifactModel(private val project: Project,
     return true
   }
 
+  // TODO: Could we apply the changes to the storage directly?
+  // This way we could probably replace this old-style modifiable model API with a couple of utility methods
+  // and don't overload MavenWorkspaceConfigurator with artifact-specific knowledge.
+  // (And also avoid keeping intermediate data in memory)
   fun applyToStorage() {
     for (artifact in artifacts) {
       val source = JpsEntitySourceFactory.createEntitySourceForArtifact(project, artifact.externalSource)

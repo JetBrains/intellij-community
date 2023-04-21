@@ -279,7 +279,7 @@ public final class ActionsTreeUtil {
     ActionManager actionManager = ActionManager.getInstance();
     String groupId = actionManager.getId(actionGroup);
     Group group = new Group(groupName, groupId, actionGroup.getTemplatePresentation().getIcon());
-    List<AnAction> children = ContainerUtil.newArrayList(getActions(actionGroup, actionManager));
+    List<AnAction> children = new ArrayList<>(Arrays.asList(getActions(actionGroup, actionManager)));
 
     for (ActionUrl actionUrl : actionUrls) {
       Object component = actionUrl.getComponent();

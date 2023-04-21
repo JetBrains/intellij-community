@@ -13,10 +13,10 @@ import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.util.PathUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.workspaceModel.ide.VirtualFileUrlManagerUtil;
+import com.intellij.workspaceModel.ide.VirtualFileUrls;
 import com.intellij.workspaceModel.storage.EntitySource;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.MutableEntityStorage;
+import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
 import com.intellij.workspaceModel.storage.bridgeEntities.FileCopyPackagingElementEntity;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
@@ -145,7 +145,7 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
     String renamedOutputFileName = this.myRenamedOutputFileName;
     String filePath = this.myFilePath;
     FileCopyPackagingElementEntity addedEntity;
-    VirtualFileUrlManager fileUrlManager = VirtualFileUrlManagerUtil.getInstance(VirtualFileUrlManager.Companion, project);
+    VirtualFileUrlManager fileUrlManager = VirtualFileUrls.getVirtualFileUrlManager(project);
     VirtualFileUrl fileUrl = fileUrlManager.fromPath(filePath);
     if (renamedOutputFileName != null) {
       addedEntity = ExtensionsKt.addFileCopyPackagingElementEntity(diff, fileUrl, renamedOutputFileName, source);

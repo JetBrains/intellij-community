@@ -7,7 +7,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
 
@@ -41,7 +40,7 @@ class KotlinStringTemplateUPolyadicExpression(
         val uParent = this.uastParent as? UExpression ?: return this
         val dotQualifiedExpression = uParent.sourcePsi as? KtDotQualifiedExpression
         if (dotQualifiedExpression != null) {
-            val callExpression = dotQualifiedExpression.selectorExpression.safeAs<KtCallExpression>() ?: return this
+            val callExpression = dotQualifiedExpression.selectorExpression as? KtCallExpression ?: return this
             val resolvedFunctionName = baseResolveProviderService.resolvedFunctionName(callExpression)
             if (resolvedFunctionName == "trimIndent" || resolvedFunctionName == "trimMargin")
                 return uParent

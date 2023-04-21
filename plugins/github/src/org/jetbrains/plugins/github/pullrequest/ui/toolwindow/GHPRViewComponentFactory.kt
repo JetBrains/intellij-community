@@ -4,7 +4,6 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 import com.intellij.collaboration.async.DisposingScope
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.SingleValueModel
-import com.intellij.collaboration.ui.codereview.ReturnToListComponent
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -44,7 +43,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsComponentF
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRCommitsViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.*
 import org.jetbrains.plugins.github.util.DiffRequestChainProducer
-import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.tree.DefaultMutableTreeNode
@@ -53,7 +51,6 @@ import javax.swing.tree.TreeNode
 internal class GHPRViewComponentFactory(private val actionManager: ActionManager,
                                         private val project: Project,
                                         private val dataContext: GHPRDataContext,
-                                        private val viewController: GHPRToolWindowTabComponentController,
                                         pullRequest: GHPRIdentifier,
                                         private val disposable: Disposable) {
   private val dataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequest, disposable)
@@ -124,18 +121,8 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     update()
   }
 
-  fun create(): JComponent {
-    val returnToListActionComponent = ReturnToListComponent.createReturnToListSideComponent(
-      GithubBundle.message("pull.request.back.to.list"),
-      onClick = { viewController.viewList() }
-    )
-    val infoComponent = createInfoComponent()
-
-    return JPanel(BorderLayout()).apply {
-      isOpaque = false
-      add(returnToListActionComponent, BorderLayout.NORTH)
-      add(infoComponent, BorderLayout.CENTER)
-    }.apply {
+  fun create(): JComponent =
+    createInfoComponent().apply {
       DataManager.registerDataProvider(this) { dataId ->
         when {
           GHPRActionKeys.GIT_REPOSITORY.`is`(dataId) -> repository
@@ -145,7 +132,6 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
         }
       }
     }
-  }
 
   private class Controller(
     private val tree: ChangesTree,

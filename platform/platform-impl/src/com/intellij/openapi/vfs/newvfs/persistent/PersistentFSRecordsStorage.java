@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 @ApiStatus.Internal
-abstract class PersistentFSRecordsStorage {
+public abstract class PersistentFSRecordsStorage {
   private static final StorageLockContext PERSISTENT_FS_STORAGE_CONTEXT_RW = new StorageLockContext(true, true, true);
 
   enum RecordsStorageKind {
@@ -44,7 +44,8 @@ abstract class PersistentFSRecordsStorage {
       case IN_MEMORY -> new PersistentInMemoryFSRecordsStorage(file, /*max size: */1 << 24);
 
       case OVER_LOCK_FREE_FILE_CACHE -> createLockFreeStorage(file);
-      case OVER_MMAPPED_FILE -> new PersistentFSRecordsLockFreeOverMMappedFile(file, PersistentFSRecordsLockFreeOverMMappedFile.DEFAULT_PAGE_SIZE);
+      case OVER_MMAPPED_FILE ->
+        new PersistentFSRecordsLockFreeOverMMappedFile(file, PersistentFSRecordsLockFreeOverMMappedFile.DEFAULT_MAPPED_CHUNK_SIZE);
     };
   }
 
@@ -95,57 +96,57 @@ abstract class PersistentFSRecordsStorage {
   /**
    * @return id of newly allocated record
    */
-  abstract int allocateRecord();
+  public abstract int allocateRecord();
 
-  abstract void setAttributeRecordId(int fileId, int recordId) throws IOException;
+  public abstract void setAttributeRecordId(int fileId, int recordId) throws IOException;
 
-  abstract int getAttributeRecordId(int fileId) throws IOException;
+  public abstract int getAttributeRecordId(int fileId) throws IOException;
 
-  abstract int getParent(int fileId) throws IOException;
+  public abstract int getParent(int fileId) throws IOException;
 
-  abstract void setParent(int fileId, int parentId) throws IOException;
+  public abstract void setParent(int fileId, int parentId) throws IOException;
 
-  abstract int getNameId(int fileId) throws IOException;
+  public abstract int getNameId(int fileId) throws IOException;
 
-  abstract void setNameId(int fileId, int nameId) throws IOException;
+  public abstract void setNameId(int fileId, int nameId) throws IOException;
 
   /**
    * @return true if value is changed, false if not (i.e. new value is actually equal to the old one)
    */
-  abstract boolean setFlags(int fileId, int flags) throws IOException;
+  public abstract boolean setFlags(int fileId, int flags) throws IOException;
 
   //TODO RC: boolean updateFlags(fileId, int maskBits, boolean riseOrClean)
 
-  abstract long getLength(int fileId) throws IOException;
+  public abstract long getLength(int fileId) throws IOException;
 
 
   /**
    * @return true if value is changed, false if not (i.e. new value is actually equal to the old one)
    */
-  abstract boolean setLength(int fileId, long length) throws IOException;
+  public abstract boolean setLength(int fileId, long length) throws IOException;
 
-  abstract long getTimestamp(int fileId) throws IOException;
+  public abstract long getTimestamp(int fileId) throws IOException;
 
 
   /**
    * @return true if value is changed, false if not (i.e. new value is actually equal to the old one)
    */
-  abstract boolean setTimestamp(int fileId, long timestamp) throws IOException;
+  public abstract boolean setTimestamp(int fileId, long timestamp) throws IOException;
 
-  abstract int getModCount(int fileId) throws IOException;
+  public abstract int getModCount(int fileId) throws IOException;
 
   //TODO RC: why we need this method? Record modification is detected by actual modification -- there
   //         are (seems to) no way to modify record bypassing it.
   //         We use the method to mark file record modified there something derived is modified -- e.g.
   //         children attribute or content. This looks suspicious to me: why we need to update _file_
   //         record version in those cases?
-  abstract void markRecordAsModified(int fileId) throws IOException;
+  public abstract void markRecordAsModified(int fileId) throws IOException;
 
-  abstract int getContentRecordId(int fileId) throws IOException;
+  public abstract int getContentRecordId(int fileId) throws IOException;
 
-  abstract boolean setContentRecordId(int fileId, int recordId) throws IOException;
+  public abstract boolean setContentRecordId(int fileId, int recordId) throws IOException;
 
-  abstract @PersistentFS.Attributes int getFlags(int fileId) throws IOException;
+  public abstract @PersistentFS.Attributes int getFlags(int fileId) throws IOException;
 
   //TODO RC: what semantics is assumed for the method in concurrent context? If it is 'update atomically' than
   //         it makes it harder to implement a storage in a lock-free way
@@ -153,44 +154,44 @@ abstract class PersistentFSRecordsStorage {
   /**
    * Fills all record fields in one shot
    */
-  abstract void fillRecord(int fileId,
-                           long timestamp,
-                           long length,
-                           int flags,
-                           int nameId,
-                           int parentId,
-                           boolean overwriteAttrRef) throws IOException;
+  public abstract void fillRecord(int fileId,
+                                  long timestamp,
+                                  long length,
+                                  int flags,
+                                  int nameId,
+                                  int parentId,
+                                  boolean overwriteAttrRef) throws IOException;
 
-  abstract void cleanRecord(int fileId) throws IOException;
+  public abstract void cleanRecord(int fileId) throws IOException;
 
   /* ======================== STORAGE HEADER ============================================================================== */
 
-  abstract long getTimestamp() throws IOException;
+  public abstract long getTimestamp() throws IOException;
 
-  abstract void setConnectionStatus(int code) throws IOException;
+  public abstract void setConnectionStatus(int code) throws IOException;
 
-  abstract int getConnectionStatus() throws IOException;
+  public abstract int getConnectionStatus() throws IOException;
 
-  abstract void setVersion(int version) throws IOException;
+  public abstract void setVersion(int version) throws IOException;
 
-  abstract int getVersion() throws IOException;
+  public abstract int getVersion() throws IOException;
 
-  abstract int getGlobalModCount();
+  public abstract int getGlobalModCount();
 
   /**
    * @return length of underlying file storage, in bytes
    */
-  abstract long length();
+  public abstract long length();
 
-  abstract boolean isDirty();
+  public abstract boolean isDirty();
 
   // TODO add a synchronization or requirement to be called on the loading
   @SuppressWarnings("UnusedReturnValue")
-  abstract boolean processAllRecords(@NotNull PersistentFSRecordsStorage.FsRecordProcessor processor) throws IOException;
+  public abstract boolean processAllRecords(@NotNull PersistentFSRecordsStorage.FsRecordProcessor processor) throws IOException;
 
-  abstract void force() throws IOException;
+  public abstract void force() throws IOException;
 
-  abstract void close() throws IOException;
+  public abstract void close() throws IOException;
 
   @FunctionalInterface
   interface FsRecordProcessor {

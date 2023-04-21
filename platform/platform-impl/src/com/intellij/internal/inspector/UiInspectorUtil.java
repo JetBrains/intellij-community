@@ -140,7 +140,10 @@ public final class UiInspectorUtil {
   }
 
   public static @NotNull String getClassPresentation(@NotNull Object value) {
-    Class<?> clazz0 = value.getClass();
+    return getClassPresentation(value.getClass());
+  }
+
+  public static @NotNull String getClassPresentation(@NotNull Class<?> clazz0) {
     Class<?> clazz = clazz0.isAnonymousClass() ? clazz0.getSuperclass() : clazz0;
     String simpleName = clazz.getSimpleName();
     return simpleName + " (" + clazz.getPackageName() + ")";

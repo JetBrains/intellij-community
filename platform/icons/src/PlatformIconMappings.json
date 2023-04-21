@@ -682,6 +682,11 @@
         "vcs/unshelveSilent.svg"
       ],
       "update.svg": "actions/checkOut.svg"
+    },
+    "welcome": {
+      "createNewProjectTab.svg": "welcome/createNewProjectTab.svg",
+      "fromVCSTab.svg": "welcome/fromVCSTab.svg",
+      "open.svg": "welcome/open.svg"
     }
   }
 }

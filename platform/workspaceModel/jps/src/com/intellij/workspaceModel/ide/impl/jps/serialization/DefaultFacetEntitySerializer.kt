@@ -109,6 +109,8 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
     return entity.configurationXmlTag?.let { JDOMUtil.load(it) } ?: Element("configuration")
   }
 
+  override fun serialize(entity: FacetEntity, rootElement: Element): Element = error("Unsupported operation")
+
   companion object {
     val instance: DefaultFacetEntitySerializer
       // It should be rewritten to `findExtensionOrFail` because of caching evaluation result

@@ -110,7 +110,7 @@ public class MathRoundingWithIntArgumentInspection extends BaseInspection {
       PsiExpression argument = arguments[0];
       PsiType type = argument.getType();
       if (type == null) return;
-      if (!PsiType.INT.equals(type) && !type.equalsToText(JAVA_LANG_INTEGER)) {
+      if (!PsiTypes.intType().equals(type) && !type.equalsToText(JAVA_LANG_INTEGER)) {
         return;
       }
 

@@ -29,6 +29,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -136,9 +137,10 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
       }
       if (newName.contains("/")) {
         final List<String> subDirs = StringUtil.split(newName, "/");
-        newName = subDirs.remove(subDirs.size() - 1);
+        newName = ContainerUtil.getLastItem(subDirs);
         boolean firstToken = true;
-        for (String dir : subDirs) {
+        for (int i = 0; i < subDirs.size()-1; i++) {
+          String dir = subDirs.get(i);
           if (firstToken && "~".equals(dir)) {
             final VirtualFile userHomeDir = VfsUtil.getUserHomeDir();
             if (userHomeDir == null) throw new IncorrectOperationException("User home directory not found");
@@ -151,7 +153,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
             if (parentDirectory == null) throw new IncorrectOperationException("Not a valid directory");
             directory = parentDirectory;
           }
-          else if (!".".equals(dir)){
+          else if (!".".equals(dir)) {
             directory = findOrCreateSubdirectory(directory, dir);
           }
           firstToken = false;

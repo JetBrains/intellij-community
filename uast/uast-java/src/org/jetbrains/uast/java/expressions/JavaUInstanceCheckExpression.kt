@@ -17,6 +17,7 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiInstanceOfExpression
 import com.intellij.psi.PsiType
+import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 
@@ -25,8 +26,8 @@ class JavaUInstanceCheckExpression(
   override val sourcePsi: PsiInstanceOfExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UBinaryExpressionWithType {
-  override val operand: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.operand, this) }
-  override val typeReference: JavaUTypeReferenceExpression? by lz { sourcePsi.checkType?.let { JavaUTypeReferenceExpression(it, this) } }
+  override val operand: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.operand, this) }
+  override val typeReference: JavaUTypeReferenceExpression? by lazyPub { sourcePsi.checkType?.let { JavaUTypeReferenceExpression(it, this) } }
 
   override val type: PsiType
     get() = sourcePsi.checkType?.type ?: UastErrorType

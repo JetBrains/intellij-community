@@ -36,17 +36,19 @@ import static com.intellij.diagnostic.telemetry.TraceKt.runWithSpan;
 public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpleInspectionTool {
   private final boolean highlightErrorElements;
   private final boolean runAnnotators;
+  private boolean replaceVisitors;
 
-  protected DefaultHighlightVisitorBasedInspection(boolean highlightErrorElements, boolean runAnnotators) {
+  protected DefaultHighlightVisitorBasedInspection(boolean highlightErrorElements, boolean runAnnotators, boolean visitors) {
     this.highlightErrorElements = highlightErrorElements;
     this.runAnnotators = runAnnotators;
+    replaceVisitors = visitors;
   }
 
   public static class AnnotatorBasedInspection extends DefaultHighlightVisitorBasedInspection {
     static final @NonNls String ANNOTATOR_SHORT_NAME = "Annotator";
 
     public AnnotatorBasedInspection() {
-      super(false, true);
+      super(false, true, true);
     }
 
     @Override
@@ -62,7 +64,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
   }
   public static class SyntaxErrorInspection extends DefaultHighlightVisitorBasedInspection {
     public SyntaxErrorInspection() {
-      super(true, false);
+      super(true, false, true);
     }
     @Nls
     @NotNull
@@ -78,6 +80,24 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
     }
   }
 
+  public static class GenericErrorInspection extends DefaultHighlightVisitorBasedInspection {
+    public GenericErrorInspection() {
+      super(true, true, false);
+    }
+    @Nls
+    @NotNull
+    @Override
+    public String getDisplayName() {
+      return AnalysisBundle.message("inspection.display.name.generic.error");
+    }
+
+    @NotNull
+    @Override
+    public String getShortName() {
+      return "GenericError";
+    }
+  }
+
   @NotNull
   @Override
   public HighlightDisplayLevel getDefaultLevel() {
@@ -90,7 +110,8 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
                         @NotNull ProblemsHolder problemsHolder,
                         @NotNull GlobalInspectionContext globalContext,
                         @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    for (Pair<PsiFile, HighlightInfo> pair : runAnnotatorsInGeneralHighlighting(originalFile, highlightErrorElements, runAnnotators)) {
+    for (Pair<PsiFile, HighlightInfo> pair : runAnnotatorsInGeneralHighlighting(originalFile, highlightErrorElements, runAnnotators,
+                                                                                replaceVisitors)) {
       PsiFile file = pair.first;
       HighlightInfo info = pair.second;
       TextRange range = new TextRange(info.startOffset, info.endOffset);
@@ -112,9 +133,10 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
   @NotNull
   public static List<Pair<PsiFile,HighlightInfo>> runAnnotatorsInGeneralHighlighting(@NotNull PsiFile file,
                                                                                      boolean highlightErrorElements,
-                                                                                     boolean runAnnotators) {
+                                                                                     boolean runAnnotators,
+                                                                                     boolean replaceVisitors) {
     ProgressIndicator indicator = ProgressManager.getGlobalProgressIndicator();
-    MyPsiElementVisitor visitor = new MyPsiElementVisitor(highlightErrorElements, runAnnotators);
+    MyPsiElementVisitor visitor = new MyPsiElementVisitor(highlightErrorElements, runAnnotators, replaceVisitors);
     if (indicator instanceof DaemonProgressIndicator) {
       file.accept(visitor);
     }
@@ -137,10 +159,12 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
     private final boolean highlightErrorElements;
     private final boolean runAnnotators;
     private final List<Pair<PsiFile, HighlightInfo>> result = new ArrayList<>();
+    private boolean replaceVisitors;
 
-    MyPsiElementVisitor(boolean highlightErrorElements, boolean runAnnotators) {
+    MyPsiElementVisitor(boolean highlightErrorElements, boolean runAnnotators, boolean replaceVisitors) {
       this.highlightErrorElements = highlightErrorElements;
       this.runAnnotators = runAnnotators;
+      this.replaceVisitors = replaceVisitors;
     }
 
     @Override
@@ -150,14 +174,15 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
         return;
       }
 
-      result.addAll(runAnnotatorsInGeneralHighlightingPass(file, highlightErrorElements, runAnnotators));
+      result.addAll(runAnnotatorsInGeneralHighlightingPass(file, highlightErrorElements, runAnnotators, replaceVisitors));
     }
   }
 
   @NotNull
   private static List<Pair<PsiFile, HighlightInfo>> runAnnotatorsInGeneralHighlightingPass(@NotNull PsiFile file,
                                                                                            boolean highlightErrorElements,
-                                                                                           boolean runAnnotators) {
+                                                                                           boolean runAnnotators,
+                                                                                           boolean replaceVisitors) {
     Project project = file.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return Collections.emptyList();
@@ -167,13 +192,15 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
     TextEditorHighlightingPassRegistrarEx passRegistrarEx = TextEditorHighlightingPassRegistrarEx.getInstanceEx(project);
     List<TextEditorHighlightingPass> passes = passRegistrarEx.instantiateMainPasses(file, document, HighlightInfoProcessor.getEmpty());
     List<GeneralHighlightingPass> gpasses = ContainerUtil.filterIsInstance(passes, GeneralHighlightingPass.class);
-    for (GeneralHighlightingPass gpass : gpasses) {
-      gpass.setHighlightVisitorProducer(() -> {
-        gpass.incVisitorUsageCount(1);
+    if (replaceVisitors) {
+      for (GeneralHighlightingPass gpass : gpasses) {
+        gpass.setHighlightVisitorProducer(() -> {
+          gpass.incVisitorUsageCount(1);
 
-        HighlightVisitor visitor = new DefaultHighlightVisitor(project, highlightErrorElements, runAnnotators, true);
-        return new HighlightVisitor[]{visitor};
-      });
+          HighlightVisitor visitor = new DefaultHighlightVisitor(project, highlightErrorElements, runAnnotators, true);
+          return new HighlightVisitor[]{visitor};
+        });
+      }
     }
 
     String fileName = file.getName();

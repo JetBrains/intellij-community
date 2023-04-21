@@ -270,11 +270,11 @@ class StreamToLoopReplacementContext extends ChainContext {
           IElementType type = expression.getOperationTokenType();
           if (type.equals(JavaTokenType.ANDAND)) {
             candidate = condition
-              .toPlain(PsiType.BOOLEAN, StreamEx.of(operands, 1, operands.length).map(PsiExpression::getText).joining(" && "), "false");
+              .toPlain(PsiTypes.booleanType(), StreamEx.of(operands, 1, operands.length).map(PsiExpression::getText).joining(" && "), "false");
           }
           else if (type.equals(JavaTokenType.OROR)) {
             candidate = condition
-              .toPlain(PsiType.BOOLEAN, "true", StreamEx.of(operands, 1, operands.length).map(PsiExpression::getText).joining(" || "));
+              .toPlain(PsiTypes.booleanType(), "true", StreamEx.of(operands, 1, operands.length).map(PsiExpression::getText).joining(" || "));
           }
         }
       }

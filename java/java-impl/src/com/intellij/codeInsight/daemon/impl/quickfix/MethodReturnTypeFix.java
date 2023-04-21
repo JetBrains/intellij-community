@@ -260,7 +260,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
 
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiReturnStatement statementToSelect = null;
-    if (!PsiType.VOID.equals(returnType)) {
+    if (!PsiTypes.voidType().equals(returnType)) {
       final ReturnStatementAdder adder = new ReturnStatementAdder(factory, returnType);
 
       for (PsiMethod affectedMethod : affectedMethods) {
@@ -494,7 +494,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     if (containingFile == file.getOriginalFile()) {
       PsiMethod methodCopy = PsiTreeUtil.findSameElementInCopy(method, file);
       updateMethodType(methodCopy, type);
-      if (!PsiType.VOID.equals(type)) {
+      if (!PsiTypes.voidType().equals(type)) {
         ReturnStatementAdder adder = new ReturnStatementAdder(JavaPsiFacade.getElementFactory(project), type);
         adder.addReturnForMethod(file, methodCopy);
       }

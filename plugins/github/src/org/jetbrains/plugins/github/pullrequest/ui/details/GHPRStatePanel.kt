@@ -2,9 +2,11 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.HorizontalListPanel
+import com.intellij.collaboration.ui.codereview.details.ReviewRole
+import com.intellij.collaboration.ui.codereview.details.ReviewState
 import com.intellij.collaboration.ui.util.bindText
 import com.intellij.collaboration.ui.util.bindVisibility
-import com.intellij.collaboration.ui.util.emptyBorders
 import com.intellij.collaboration.ui.util.toAnAction
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
@@ -14,7 +16,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.ui.CardLayoutPanel
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBOptionButton
-import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.childScope
 import com.intellij.util.ui.InlineIconButton
@@ -23,9 +24,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import net.miginfocom.layout.CC
-import net.miginfocom.layout.LC
-import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
@@ -42,7 +40,6 @@ import java.awt.event.ActionListener
 import javax.swing.Action
 import javax.swing.JButton
 import javax.swing.JComponent
-import javax.swing.JPanel
 
 internal class GHPRStatePanel(
   parentScope: CoroutineScope,
@@ -53,7 +50,7 @@ internal class GHPRStatePanel(
   private val stateModel: GHPRStateModel,
   private val metadataModel: GHPRMetadataModel,
   private val avatarIconsProvider: GHAvatarIconsProvider
-) : CardLayoutPanel<GHPRReviewFlowViewModel.ReviewRole, GHPRStatePanel.StateUI, JComponent>() {
+) : CardLayoutPanel<ReviewRole, GHPRStatePanel.StateUI, JComponent>() {
   private val scope = parentScope.childScope(Dispatchers.EDT)
 
   init {
@@ -64,15 +61,15 @@ internal class GHPRStatePanel(
     }
   }
 
-  override fun prepare(key: GHPRReviewFlowViewModel.ReviewRole): StateUI {
+  override fun prepare(key: ReviewRole): StateUI {
     return when (key) {
-      GHPRReviewFlowViewModel.ReviewRole.AUTHOR -> StateUI.Author(
+      ReviewRole.AUTHOR -> StateUI.Author(
         scope, reviewDetailsVm, reviewFlowVm, stateModel, securityService, metadataModel, avatarIconsProvider
       )
-      GHPRReviewFlowViewModel.ReviewRole.REVIEWER -> StateUI.Reviewer(
+      ReviewRole.REVIEWER -> StateUI.Reviewer(
         scope, reviewDetailsVm, reviewFlowVm, stateModel, securityService, metadataModel, avatarIconsProvider, dataProvider
       )
-      GHPRReviewFlowViewModel.ReviewRole.GUEST -> StateUI.Guest(
+      ReviewRole.GUEST -> StateUI.Guest(
         scope, reviewDetailsVm, reviewFlowVm, stateModel, securityService, metadataModel, avatarIconsProvider
       )
     }
@@ -89,14 +86,6 @@ internal class GHPRStatePanel(
     protected val securityService: GHPRSecurityService,
     protected val avatarIconsProvider: GHAvatarIconsProvider
   ) {
-    protected val horizontalLayout = MigLayout(
-      LC()
-        .emptyBorders()
-        .fill()
-        .flowX()
-        .hideMode(3)
-    )
-
     abstract fun createReviewActionsForOpenReview(): JComponent
 
     fun createComponent(): JComponent {
@@ -110,10 +99,9 @@ internal class GHPRStatePanel(
         bindVisibility(scope, reviewDetailsVm.reviewMergeState.map { it == GHPullRequestState.CLOSED })
       }
 
-      return JPanel(HorizontalLayout(0)).apply {
-        isOpaque = false
-        add(reviewActionsComponentForOpenReview, HorizontalLayout.LEFT)
-        add(reviewActionsComponentForCloseReview, HorizontalLayout.LEFT)
+      return HorizontalListPanel().apply {
+        add(reviewActionsComponentForOpenReview)
+        add(reviewActionsComponentForCloseReview)
       }
     }
 
@@ -135,7 +123,7 @@ internal class GHPRStatePanel(
         GHPRSquashMergeAction(stateModel, securityService)
       )
       return JBOptionButton(GHPRCommitMergeAction(stateModel, securityService), actions).apply {
-        bindVisibility(scope, reviewFlowVm.reviewState.map { it == GHPRReviewFlowViewModel.ReviewState.ACCEPTED })
+        bindVisibility(scope, reviewFlowVm.reviewState.map { it == ReviewState.ACCEPTED })
       }
     }
 
@@ -154,8 +142,8 @@ internal class GHPRStatePanel(
           text = CollaborationToolsBundle.message("review.details.action.request")
           action = GHPRRequestReviewAction(stateModel, securityService, metadataModel, avatarIconsProvider)
           bindVisibility(scope, combine(reviewFlowVm.reviewState, reviewFlowVm.requestedReviewersState) { reviewState, requestedReviewers ->
-            reviewState == GHPRReviewFlowViewModel.ReviewState.NEED_REVIEW ||
-            (reviewState == GHPRReviewFlowViewModel.ReviewState.WAIT_FOR_UPDATES && requestedReviewers.isNotEmpty())
+            reviewState == ReviewState.NEED_REVIEW ||
+            (reviewState == ReviewState.WAIT_FOR_UPDATES && requestedReviewers.isNotEmpty())
           })
         }
         val reRequestReviewButton = JButton().apply {
@@ -163,7 +151,7 @@ internal class GHPRStatePanel(
           text = CollaborationToolsBundle.message("review.details.action.rerequest")
           action = GHPRReRequestReviewAction(stateModel, securityService, metadataModel, reviewFlowVm)
           bindVisibility(scope, combine(reviewFlowVm.reviewState, reviewFlowVm.requestedReviewersState) { reviewState, requestedReviewers ->
-            reviewState == GHPRReviewFlowViewModel.ReviewState.WAIT_FOR_UPDATES && requestedReviewers.isEmpty()
+            reviewState == ReviewState.WAIT_FOR_UPDATES && requestedReviewers.isEmpty()
           })
         }
         val mergePullRequest = createMergeReviewButton(scope, reviewFlowVm)
@@ -175,11 +163,11 @@ internal class GHPRStatePanel(
           reviewFlowVm.reviewState.collect { reviewState ->
             actionGroup.removeAll()
             when (reviewState) {
-              GHPRReviewFlowViewModel.ReviewState.NEED_REVIEW, GHPRReviewFlowViewModel.ReviewState.WAIT_FOR_UPDATES -> {
+              ReviewState.NEED_REVIEW, ReviewState.WAIT_FOR_UPDATES -> {
                 actionGroup.add(GHPRCommitMergeAction(stateModel, securityService).toAnAction())
                 actionGroup.add(GHPRCloseAction(stateModel, securityService).toAnAction())
               }
-              GHPRReviewFlowViewModel.ReviewState.ACCEPTED -> {
+              ReviewState.ACCEPTED -> {
                 actionGroup.add(GHPRRequestReviewAction(stateModel, securityService, metadataModel, avatarIconsProvider).toAnAction())
                 actionGroup.add(GHPRCloseAction(stateModel, securityService).toAnAction())
               }
@@ -187,12 +175,11 @@ internal class GHPRStatePanel(
           }
         }
 
-        return JPanel(horizontalLayout).apply {
-          isOpaque = false
-          add(requestReviewButton, CC())
-          add(reRequestReviewButton, CC())
-          add(mergePullRequest, CC())
-          add(moreActions, CC())
+        return HorizontalListPanel().apply {
+          add(requestReviewButton)
+          add(reRequestReviewButton)
+          add(mergePullRequest)
+          add(moreActions)
         }
       }
     }
@@ -218,12 +205,12 @@ internal class GHPRStatePanel(
           reviewFlowVm.reviewState.collect { reviewState ->
             actionGroup.removeAll()
             when (reviewState) {
-              GHPRReviewFlowViewModel.ReviewState.NEED_REVIEW, GHPRReviewFlowViewModel.ReviewState.WAIT_FOR_UPDATES -> {
+              ReviewState.NEED_REVIEW, ReviewState.WAIT_FOR_UPDATES -> {
                 actionGroup.add(GHPRRequestReviewAction(stateModel, securityService, metadataModel, avatarIconsProvider).toAnAction())
                 actionGroup.add(GHPRCommitMergeAction(stateModel, securityService).toAnAction())
                 actionGroup.add(GHPRCloseAction(stateModel, securityService).toAnAction())
               }
-              GHPRReviewFlowViewModel.ReviewState.ACCEPTED -> {
+              ReviewState.ACCEPTED -> {
                 actionGroup.add(GHPRRequestReviewAction(stateModel, securityService, metadataModel, avatarIconsProvider).toAnAction())
                 actionGroup.add(GHPRCloseAction(stateModel, securityService).toAnAction())
               }
@@ -231,11 +218,10 @@ internal class GHPRStatePanel(
           }
         }
 
-        return JPanel(horizontalLayout).apply {
-          isOpaque = false
-          add(submitReviewButton, CC())
-          add(mergeReviewButton, CC())
-          add(moreActions, CC())
+        return HorizontalListPanel().apply {
+          add(submitReviewButton)
+          add(mergeReviewButton)
+          add(moreActions)
         }
       }
 
@@ -260,7 +246,7 @@ internal class GHPRStatePanel(
             GithubBundle.message("pull.request.review.actions.submit", pendingComments)
           })
           bindVisibility(scope, reviewFlowVm.reviewState.map {
-            it == GHPRReviewFlowViewModel.ReviewState.WAIT_FOR_UPDATES || it == GHPRReviewFlowViewModel.ReviewState.NEED_REVIEW
+            it == ReviewState.WAIT_FOR_UPDATES || it == ReviewState.NEED_REVIEW
           })
         }
       }
@@ -288,10 +274,9 @@ internal class GHPRStatePanel(
         }
         val moreButton = createMoreButton(actionGroup)
 
-        return JPanel(horizontalLayout).apply {
-          isOpaque = false
-          add(setAsReviewerButton, CC())
-          add(moreButton, CC())
+        return HorizontalListPanel().apply {
+          add(setAsReviewerButton)
+          add(moreButton)
         }
       }
     }

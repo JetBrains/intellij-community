@@ -36,7 +36,7 @@ class KotlinUCatchClause(
         val typeReference = parameter.typeReference ?: return@lz emptyList<UTypeReferenceExpression>()
         listOf(
             KotlinUTypeReferenceExpression(typeReference, this) {
-                baseResolveProviderService.resolveToType(typeReference, this, boxed = true) ?: UastErrorType
+                baseResolveProviderService.resolveToType(typeReference, this, isBoxed = true) ?: UastErrorType
             }
         )
     }

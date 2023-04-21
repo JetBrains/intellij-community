@@ -396,15 +396,11 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
     }), TIMEOUT)));
   }
 
-  public static void runScript(Project project, String script) {
-    runScript(project, script, true);
-  }
-
   public static void runScript(Project project, String script, boolean mustExitOnFailure) {
     PlaybackRunner playback = new PlaybackRunnerExtended(script, new CommandLogger(), project);
     ActionCallback scriptCallback = playback.run();
     CommandsRunner.setActionCallback(scriptCallback);
-    runScript(scriptCallback, mustExitOnFailure);
+    registerOnFinishRunnables(scriptCallback, mustExitOnFailure);
   }
 
   private static void runScriptFromFile(Project project) {
@@ -415,14 +411,10 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
     }
     ActionCallback scriptCallback = playback.run();
     CommandsRunner.setActionCallback(scriptCallback);
-    runScript(scriptCallback);
+    registerOnFinishRunnables(scriptCallback, true);
   }
 
-  private static void runScript(ActionCallback scriptCallback) {
-    runScript(scriptCallback, true);
-  }
-
-  private static void runScript(ActionCallback scriptCallback, boolean mustExitOnFailure) {
+  private static void registerOnFinishRunnables(ActionCallback scriptCallback, boolean mustExitOnFailure) {
     scriptCallback
       .doWhenDone(() -> {
         LOG.info("Execution of the script has been finished successfully");

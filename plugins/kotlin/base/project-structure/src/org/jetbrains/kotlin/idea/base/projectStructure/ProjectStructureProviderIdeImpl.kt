@@ -8,12 +8,13 @@ import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.psi.KtFile
 
 internal class ProjectStructureProviderIdeImpl(private val project: Project) : ProjectStructureProvider() {
     override fun getKtModuleForKtElement(element: PsiElement): KtModule {
         val config = ModuleInfoProvider.Configuration(createSourceLibraryInfoForLibraryBinaries = false)
         val moduleInfo = ModuleInfoProvider.getInstance(element.project).firstOrNull(element, config)
-            ?: NotUnderContentRootModuleInfo(project)
+            ?: NotUnderContentRootModuleInfo(project, element.containingFile as? KtFile)
 
         return getKtModuleByModuleInfo(moduleInfo)
     }

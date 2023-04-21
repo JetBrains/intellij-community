@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.ide.FileSelectInContext;
+import com.intellij.ide.SelectInContext;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -368,14 +370,24 @@ public abstract class VcsTreeModelData {
     }
     else if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
       VcsTreeModelData treeSelection = selected(tree);
-      return (DataProvider)slowId -> getSlowData(project, treeSelection, slowId);
+      VcsTreeModelData exactSelection = exactlySelected(tree);
+      return (DataProvider)slowId -> getSlowData(project, treeSelection, exactSelection, slowId);
     }
     return null;
   }
 
   @Nullable
-  private static Object getSlowData(@Nullable Project project, @NotNull VcsTreeModelData treeSelection, @NotNull String slowId) {
-    if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(slowId)) {
+  private static Object getSlowData(@Nullable Project project,
+                                    @NotNull VcsTreeModelData treeSelection,
+                                    @NotNull VcsTreeModelData exactSelection,
+                                    @NotNull String slowId) {
+    if (SelectInContext.DATA_KEY.is(slowId)) {
+      if (project == null) return null;
+      VirtualFile file = mapObjectToVirtualFile(exactSelection.iterateRawUserObjects()).first();
+      if (file == null) return null;
+      return new FileSelectInContext(project, file, null);
+    }
+    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(slowId)) {
       return mapToVirtualFile(treeSelection).toArray(VirtualFile.EMPTY_ARRAY);
     }
     else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(slowId)) {
@@ -416,8 +428,12 @@ public abstract class VcsTreeModelData {
 
   @NotNull
   static JBIterable<VirtualFile> mapToVirtualFile(@NotNull VcsTreeModelData data) {
-    return data.iterateUserObjects()
-      .map(entry -> {
+    return mapObjectToVirtualFile(data.iterateUserObjects());
+  }
+
+  @NotNull
+  static JBIterable<VirtualFile> mapObjectToVirtualFile(@NotNull JBIterable<Object> userObjects) {
+    return userObjects.map(entry -> {
         if (entry instanceof Change) {
           FilePath path = ChangesUtil.getAfterPath((Change)entry);
           return path != null ? path.getVirtualFile() : null;

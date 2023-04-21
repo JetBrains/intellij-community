@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.entities.test.api.*
@@ -119,5 +119,47 @@ class MutableStorageTest {
     }
     builder3.addDiff(builder2)
     assertEquals(MySource, snapshot.entities(SampleEntity2::class.java).single().entitySource)
+  }
+
+  @Test
+  fun `check that order of children is preserved after modification`() {
+    val builder = MutableEntityStorage.create()
+    val entity = builder addEntity NamedEntity("123", MySource) {
+      this.children = listOf(
+        NamedChildEntity("One", MySource),
+        NamedChildEntity("Two", MySource),
+      )
+    }
+
+    assertEquals("One", entity.children[0].childProperty)
+    assertEquals("Two", entity.children[1].childProperty)
+
+    builder.modifyEntity(entity) {
+      this.children = listOf(this.children[1], this.children[0])
+    }
+
+    assertEquals("Two", entity.children[0].childProperty)
+    assertEquals("One", entity.children[1].childProperty)
+  }
+
+  @Test
+  fun `check that order of children is preserved after modification with abstract children`() {
+    val builder = MutableEntityStorage.create()
+    val entity = builder addEntity LeftEntity(MySource) {
+      this.children = listOf(
+        LeftEntity(MySource),
+        LeftEntity(AnotherSource),
+      )
+    }
+
+    assertEquals(MySource, entity.children[0].entitySource)
+    assertEquals(AnotherSource, entity.children[1].entitySource)
+
+    builder.modifyEntity(entity) {
+      this.children = listOf(this.children[1], this.children[0])
+    }
+
+    assertEquals(AnotherSource, entity.children[0].entitySource)
+    assertEquals(MySource, entity.children[1].entitySource)
   }
 }

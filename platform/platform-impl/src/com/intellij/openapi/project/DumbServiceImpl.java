@@ -69,7 +69,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private final DumbServiceMergingTaskQueue myTaskQueue;
   private final DumbServiceGuiExecutor myGuiDumbTaskRunner;
   private final DumbServiceSyncTaskQueue mySyncDumbTaskRunner;
-  private final DumbServiceHeavyActivities myHeavyActivities;
   private final DumbServiceAlternativeResolveTracker myAlternativeResolveTracker;
 
   //used from EDT
@@ -84,7 +83,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   // thread, in the EDT thread we invoke cancelAllTasksAndWait. Previously queued task will be executed (because task had not yet been
   // queued by the moment when cancelAllTasksAndWait was invoked, it was waiting for EDT thread and write lock).
   // See test for more details
-  private AtomicInteger myDumbEpoch = new AtomicInteger();
+  private final AtomicInteger myDumbEpoch = new AtomicInteger();
 
   private class DumbTaskListener implements MergingQueueGuiExecutor.ExecutorStateListener {
     /*
@@ -120,13 +119,12 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     myProject = project;
     myTrackedEdtActivityService = new TrackedEdtActivityService(project);
     myTaskQueue = new DumbServiceMergingTaskQueue();
-    myHeavyActivities = new DumbServiceHeavyActivities();
-    myGuiDumbTaskRunner = new DumbServiceGuiExecutor(myProject, myTaskQueue, myHeavyActivities, new DumbTaskListener());
+    myGuiDumbTaskRunner = new DumbServiceGuiExecutor(myProject, myTaskQueue, new DumbTaskListener());
     mySyncDumbTaskRunner = new DumbServiceSyncTaskQueue(myTaskQueue);
 
     myPublisher = project.getMessageBus().syncPublisher(DUMB_MODE);
 
-    new DumbServiceVfsBatchListener(myProject, myHeavyActivities);
+    new DumbServiceVfsBatchListener(myProject, myGuiDumbTaskRunner.getGuiSuspender());
     myBalloon = new DumbServiceBalloon(project, this);
     myAlternativeResolveTracker = new DumbServiceAlternativeResolveTracker();
     myState = new AtomicReference<>(project.isDefault() ? State.SMART : State.WAITING_PROJECT_SMART_MODE_STARTUP_TASKS);
@@ -203,7 +201,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       myRunWhenSmartQueue.clear();
     }
     myTaskQueue.disposePendingTasks();
-    myHeavyActivities.disposeSuspender();
   }
 
   @Override
@@ -218,7 +215,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void suspendIndexingAndRun(@NotNull String activityName, @NotNull Runnable activity) {
-    myHeavyActivities.suspendIndexingAndRun(activityName, activity);
+    myGuiDumbTaskRunner.suspendAndRun(activityName, activity);
   }
 
   @Override
@@ -474,7 +471,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         myTrackedEdtActivityService.executeAllQueuedActivities();
         // cancels all scheduled and running tasks
         myTaskQueue.cancelAllTasks();
-        myHeavyActivities.resumeProgressIfPossible();
+        myGuiDumbTaskRunner.getGuiSuspender().resumeProgressIfPossible();
       });
     }
   }

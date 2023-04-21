@@ -31,7 +31,7 @@ public class ResolveRecordMethodsTest extends LightResolveTestCase {
     assertTrue(target instanceof PsiMethod);
     PsiMethod targetMethod = (PsiMethod)target;
     PsiType returnType = targetMethod.getReturnType();
-    assertEquals(PsiType.INT.createArrayType(), returnType);
+    assertEquals(PsiTypes.intType().createArrayType(), returnType);
 
     PsiJavaFile file = (PsiJavaFile)getFile();
 
@@ -63,7 +63,7 @@ public class ResolveRecordMethodsTest extends LightResolveTestCase {
     assertTrue(target instanceof PsiField);
     PsiField targetField = (PsiField)target;
     PsiType type = targetField.getType();
-    assertEquals(PsiType.INT, type);
+    assertEquals(PsiTypes.intType(), type);
 
     PsiJavaFile file = (PsiJavaFile)getFile();
 
@@ -85,7 +85,7 @@ public class ResolveRecordMethodsTest extends LightResolveTestCase {
     PsiElement target = resolve();
     assertTrue(target instanceof PsiParameter);
     PsiParameter parameter = (PsiParameter)target;
-    assertEquals(PsiType.INT, parameter.getType());
+    assertEquals(PsiTypes.intType(), parameter.getType());
 
     PsiJavaFile file = (PsiJavaFile)getFile();
 

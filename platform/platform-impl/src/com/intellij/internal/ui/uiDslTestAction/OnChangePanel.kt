@@ -56,7 +56,7 @@ internal class OnChangePanel {
       comboBox(listOf("Item 1", "Item 2", "Last"))
         .applyToComponent { isEditable = true }
         .onChangedContext { component, context -> log(component, context, "editable") }
-        .bindItemNullable(::comboBoxEditableValue)
+        .bindItem(::comboBoxEditableValue)
     }
     row {
       dropDownLink("Item 1", listOf("Item 1", "Item 2", "Last"))

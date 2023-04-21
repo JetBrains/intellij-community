@@ -45,7 +45,7 @@ public final class PsiElementUtil {
       for (int i = 0; i < parameters.length; i++) {
         final PsiType type = parameters[i].getType();
         final PsiType parameterType = parameterTypes.get(i);
-        if (PsiType.NULL.equals(parameterType)) {
+        if (PsiTypes.nullType().equals(parameterType)) {
           continue;
         }
         if (parameterType != null && !typesAreEquivalent(type, parameterType)) {
@@ -99,7 +99,7 @@ public final class PsiElementUtil {
     for (int i = 0; i < firstMethodParameterListParameters.length; i++) {
       PsiType firstMethodParameterListParameterType = firstSubstitutor.substitute(firstMethodParameterListParameters[i].getType());
       PsiType secondMethodParameterListParameterType = secondSubstitutor.substitute(secondMethodParameterListParameters[i].getType());
-      if (PsiType.NULL.equals(firstMethodParameterListParameterType)) {
+      if (PsiTypes.nullType().equals(firstMethodParameterListParameterType)) {
         continue;
       }
       if (!typesAreEquivalent(firstMethodParameterListParameterType, secondMethodParameterListParameterType)) {

@@ -157,7 +157,7 @@ public final class ExpectedTypeUtil {
     for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(method.getContainingClass())) {
       PsiType type = helper.inferTypeForMethodTypeParameter(typeParameter, parameters, args, PsiSubstitutor.EMPTY, callExpr.getParent(),
                                                             forCompletion ? CompletionParameterTypeInferencePolicy.INSTANCE : DefaultParameterTypeInferencePolicy.INSTANCE);
-      if (PsiType.NULL.equals(type)) return null;
+      if (PsiTypes.nullType().equals(type)) return null;
       result = result.put(typeParameter, type);
     }
 

@@ -1,0 +1,36 @@
+MODULES
+    project
+    project.javaOnly
+    project.javaOnly.main
+        project.jvmWithJavaProducer.jvmMain (COMPILE)
+        project.jvmWithJavaProducer.commonMain (COMPILE)
+    project.javaOnly.test
+        project.javaOnly.main (friend, COMPILE)
+        project.jvmWithJavaProducer.jvmMain (COMPILE)
+        project.jvmWithJavaProducer.commonMain (COMPILE)
+    project.jvmWithJavaProducer
+    project.jvmWithJavaProducer.commonMain
+    project.jvmWithJavaProducer.commonTest
+        project.jvmWithJavaProducer.commonMain (friend, TEST)
+    project.jvmWithJavaProducer.jvmMain
+        project.jvmWithJavaProducer.commonMain (refines, COMPILE)
+    project.jvmWithJavaProducer.jvmTest
+        project.jvmWithJavaProducer.commonMain (friend, TEST)
+        project.jvmWithJavaProducer.commonTest (refines, TEST)
+        project.jvmWithJavaProducer.jvmMain (friend, TEST)
+        project.jvmWithJavaProducer.jvmMain (friend, RUNTIME)
+    project.jvmWithJavaProducer.main
+    project.jvmWithJavaProducer.test
+    project.kotlinJvmOnly
+    project.kotlinJvmOnly.main
+        project.jvmWithJavaProducer.jvmMain (COMPILE)
+        project.jvmWithJavaProducer.commonMain (COMPILE)
+    project.kotlinJvmOnly.test
+        project.kotlinJvmOnly.main (friend, COMPILE)
+        project.jvmWithJavaProducer.jvmMain (COMPILE)
+        project.jvmWithJavaProducer.commonMain (COMPILE)
+
+Test configuration:
+- hiding following roots: resources, android-specific roots, generated
+- hiding source modules matching .*ios.*
+- hiding following standard dependencies: stdlib, sdk, self

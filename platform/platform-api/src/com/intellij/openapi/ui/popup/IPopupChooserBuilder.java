@@ -79,6 +79,8 @@ public interface IPopupChooserBuilder<T> {
 
   IPopupChooserBuilder<T> setCancelOnWindowDeactivation(boolean cancelOnWindowDeactivation);
 
+  IPopupChooserBuilder<T> setCancelOnOtherWindowOpen(boolean cancelOnWindow);
+
   IPopupChooserBuilder<T> setSelectionMode(int selection);
 
   IPopupChooserBuilder<T> setSelectedValue(T preselection, boolean shouldScroll);

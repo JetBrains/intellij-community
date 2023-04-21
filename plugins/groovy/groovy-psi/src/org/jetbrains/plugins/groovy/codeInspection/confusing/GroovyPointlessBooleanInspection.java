@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
@@ -274,7 +275,7 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
 
   private static boolean isBoolean(GrExpression expression) {
     final PsiType type = expression.getType();
-    return PsiType.BOOLEAN.equals(type);
+    return PsiTypes.booleanType().equals(type);
   }
 
   private static boolean andExpressionIsPointless(GrExpression lhs,

@@ -27,18 +27,23 @@ fun <T> runWriteAction(action: () -> T): T {
 }
 
 /**
+ * Run [action] under a write action if needed, and run outside an action otherwise.
+ */
+fun <T> runWriteActionIfNeeded(isNeeded: Boolean, action: () -> T): T {
+    if (isNeeded) {
+        return ApplicationManager.getApplication().runWriteAction<T>(action)
+    }
+    return action()
+}
+
+/**
  * Run under the write action if the supplied element is physical; run normally otherwise.
  *
  * @param e context element
  * @param action action to execute
  * @return result of action execution
  */
-fun <T> runWriteActionIfPhysical(e: PsiElement, action: () -> T): T {
-    if (e.isPhysical) {
-        return ApplicationManager.getApplication().runWriteAction<T>(action)
-    }
-    return action()
-}
+fun <T> runWriteActionIfPhysical(e: PsiElement, action: () -> T): T = runWriteActionIfNeeded(e.isPhysical, action)
 
 fun Project.executeWriteCommand(@NlsContexts.Command name: String, command: () -> Unit) {
     CommandProcessor.getInstance().executeCommand(this, { runWriteAction(command) }, name, null)

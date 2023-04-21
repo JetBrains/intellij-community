@@ -53,7 +53,7 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
       if (GlobalLibraryTableBridge.isEnabled()) {
         withContext(Dispatchers.EDT) {
           ApplicationManager.getApplication().runWriteAction {
-            GlobalWorkspaceModel.getInstance().applyStateToProject(project, workspaceModel)
+            GlobalWorkspaceModel.getInstance().applyStateToProject(project)
           }
         }
       }

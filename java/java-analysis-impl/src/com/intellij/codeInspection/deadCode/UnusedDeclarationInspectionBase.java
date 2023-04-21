@@ -594,6 +594,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     private final Map<RefClass, Set<RefMethod>> myClassIDtoMethods = new HashMap<>();
     private final Set<RefClass> myInstantiatedClasses = new HashSet<>();
     private int myInstantiatedClassesCount;
+    private final Set<RefClass> myProcessedClasses = new HashSet<>();
     private final Set<RefMethod> myProcessedMethods = new HashSet<>();
     private final Set<RefFunctionalExpression> myProcessedFunctionalExpressions = new HashSet<>();
     private final Stack<RefElement> myNextRound = new Stack<>();
@@ -646,15 +647,13 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     }
 
     @Override public void visitClass(@NotNull RefClass refClass) {
-      boolean alreadyActive = refClass.isReachable();
-      ((RefClassImpl)refClass).setReachable(true);
-
-      if (!alreadyActive) {
+      if (myProcessedClasses.add(refClass)) {
+        ((RefClassImpl)refClass).setReachable(true);
         // Process class's static initializers.
         makeReachable(refClass);
-      }
 
-      addInstantiatedClass(refClass);
+        addInstantiatedClass(refClass);
+      }
     }
 
     @Override public void visitField(@NotNull RefField field) {

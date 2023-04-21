@@ -17,11 +17,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.ProjectModifiableLibraryTabl
 import com.intellij.workspaceModel.storage.CachedValue
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryPropertiesEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal class ProjectModifiableLibraryTableBridgeImpl(
@@ -130,7 +126,7 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
 
   override fun getLibraryByName(name: String): Library? {
     val libraryEntity = diff.resolve(LibraryId(name, LibraryTableId.ProjectLibraryTableId)) ?: return null
-    val libraryBridge = diff.libraryMap.getDataByEntity(libraryEntity)
+    val libraryBridge = diff.libraryMap.getDataByEntity(libraryEntity) ?: return null
     (libraryBridge as LibraryBridgeImpl).setTargetBuilder(this.diff)
     return libraryBridge
   }

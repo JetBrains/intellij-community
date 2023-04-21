@@ -28,7 +28,7 @@ public final class GrTraitType extends PsiType {
     super(PsiAnnotation.EMPTY_ARRAY);
     myDelegate = delegate;
     myExprType = delegate.getConjuncts()[0];
-    myTraitTypes = ContainerUtil.newArrayList(delegate.getConjuncts(), 1, delegate.getConjuncts().length);
+    myTraitTypes = ContainerUtil.subArrayAsList(delegate.getConjuncts(), 1, delegate.getConjuncts().length);
   }
 
   @NotNull

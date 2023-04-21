@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,13 @@
  */
 package com.siyeh.ig.javadoc;
 
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
@@ -47,7 +50,7 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    final boolean annotationWarning = ((Boolean)infos[0]).booleanValue();
+    final boolean annotationWarning = infos[0] == Boolean.TRUE;
     return annotationWarning
            ? InspectionGadgetsBundle.message("missing.deprecated.annotation.problem.descriptor")
            : InspectionGadgetsBundle.message("missing.deprecated.tag.problem.descriptor");
@@ -66,7 +69,8 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    final boolean annotationWarning = ((Boolean)infos[0]).booleanValue();
+    if (infos[0] == null && !ApplicationManager.getApplication().isUnitTestMode()) return null;
+    final boolean annotationWarning = infos[0] == Boolean.TRUE;
     return annotationWarning ? new MissingDeprecatedAnnotationFix() : new MissingDeprecatedTagFix();
   }
 
@@ -96,8 +100,8 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
   }
 
   private static class MissingDeprecatedTagFix extends InspectionGadgetsFix {
-
     @NonNls private static final String DEPRECATED_TAG_NAME = "deprecated";
+    private static final String TEXT = " TODO: explain";
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
@@ -108,54 +112,50 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
 
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      doFix(project, descriptor, false);
-    }
-
-    private static void doFix(Project project, ProblemDescriptor descriptor, boolean inPreview) {
       PsiElement parent = descriptor.getPsiElement().getParent();
-      if (!(parent instanceof PsiJavaDocumentedElement)) {
+      if (!(parent instanceof PsiJavaDocumentedElement documentedElement)) {
         return;
       }
-      PsiJavaDocumentedElement documentedElement = (PsiJavaDocumentedElement)parent;
       PsiDocComment docComment = documentedElement.getDocComment();
       if (docComment != null) {
         PsiDocTag existingTag = docComment.findTagByName(DEPRECATED_TAG_NAME);
-        if (existingTag != null) {
-          moveCaretAfter(existingTag, inPreview);
-          return;
-        }
-        PsiDocTag deprecatedTag = JavaPsiFacade.getElementFactory(project).createDocTagFromText("@" + DEPRECATED_TAG_NAME + " TODO: explain");
-        PsiElement addedTag = docComment.add(deprecatedTag);
-        moveCaretAfter(addedTag, inPreview);
+        PsiDocTag deprecatedTag = JavaPsiFacade.getElementFactory(project).createDocTagFromText("@" + DEPRECATED_TAG_NAME + TEXT);
+        PsiDocTag addedTag = existingTag != null
+                             ? (PsiDocTag)existingTag.replace(deprecatedTag)
+                             : (PsiDocTag)docComment.add(deprecatedTag);
+        moveCaretAfter(addedTag);
       }
       else {
         @NlsSafe PsiDocComment newDocComment = JavaPsiFacade.getElementFactory(project).createDocCommentFromText(
-          StringUtil.join("/**\n", " * ", "@" + DEPRECATED_TAG_NAME + " TODO: explain", "\n */")
+          StringUtil.join("/**\n", " * ", "@" + DEPRECATED_TAG_NAME + TEXT, "\n */")
         );
-        PsiElement addedComment = documentedElement.addBefore(newDocComment, documentedElement.getFirstChild());
-        if (addedComment instanceof PsiDocComment) {
-          PsiDocTag addedTag = ((PsiDocComment)addedComment).findTagByName(DEPRECATED_TAG_NAME);
-          if (addedTag != null) {
-            moveCaretAfter(addedTag, inPreview);
-          }
+        PsiDocComment addedComment = (PsiDocComment)documentedElement.addBefore(newDocComment, documentedElement.getFirstChild());
+        PsiDocTag addedTag = addedComment.findTagByName(DEPRECATED_TAG_NAME);
+        if (addedTag != null) {
+          moveCaretAfter(addedTag);
         }
       }
     }
 
-    @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      doFix(project, previewDescriptor, true);
-      return IntentionPreviewInfo.DIFF;
-    }
-
-    private static void moveCaretAfter(PsiElement newCaretPosition, boolean inPreview) {
-      if (inPreview) {
+    private static void moveCaretAfter(PsiDocTag tag) {
+      if (IntentionPreviewUtils.isPreviewElement(tag)) {
         return;
       }
-      PsiElement sibling = newCaretPosition.getNextSibling();
-      if (sibling instanceof Navigatable) {
-        ((Navigatable)sibling).navigate(true);
+      Editor editor = FileEditorManager.getInstance(tag.getProject()).getSelectedTextEditor();
+      if (editor == null) {
+        return;
       }
+      PsiElement sibling = tag.getNextSibling();
+      if (sibling instanceof Navigatable navigatable) {
+        navigatable.navigate(true);
+      }
+      PsiDocTagValue valueElement = tag.getValueElement();
+      if (valueElement == null) {
+        return;
+      }
+      int start = valueElement.getTextOffset();
+      int end = tag.getTextOffset() + tag.getTextLength();
+      editor.getSelectionModel().setSelection(start, end);
     }
   }
 
@@ -176,7 +176,7 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
       super.visitModule(module);
       if (hasDeprecatedAnnotation(module)) {
         if (warnOnMissingJavadoc && !hasDeprecatedComment(module, true)) {
-          registerModuleError(module, Boolean.FALSE);
+          registerModuleError(module, isOnTheFly() ? Boolean.FALSE : null);
         }
       }
       else if (hasDeprecatedComment(module, false)) {
@@ -189,7 +189,7 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
       super.visitClass(aClass);
       if (hasDeprecatedAnnotation(aClass)) {
         if (warnOnMissingJavadoc && !hasDeprecatedComment(aClass, true)) {
-          registerClassError(aClass, Boolean.FALSE);
+          registerClassError(aClass, isOnTheFly() ? Boolean.FALSE : null);
         }
       }
       else if (hasDeprecatedComment(aClass, false)) {
@@ -211,7 +211,7 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
             }
             m = MethodUtils.getSuper(m);
           }
-          registerMethodError(method, Boolean.FALSE);
+          registerMethodError(method, isOnTheFly() ? Boolean.FALSE : null);
         }
       }
       else if (hasDeprecatedComment(method, false)) {
@@ -223,7 +223,7 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
     public void visitField(@NotNull PsiField field) {
       if (hasDeprecatedAnnotation(field)) {
         if (warnOnMissingJavadoc && !hasDeprecatedComment(field, true)) {
-          registerFieldError(field, Boolean.FALSE);
+          registerFieldError(field, isOnTheFly() ? Boolean.FALSE : null);
         }
       }
       else if (hasDeprecatedComment(field, false)) {
@@ -231,12 +231,12 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
       }
     }
 
-    private boolean hasDeprecatedAnnotation(PsiModifierListOwner element) {
+    private static boolean hasDeprecatedAnnotation(PsiModifierListOwner element) {
       final PsiModifierList modifierList = element.getModifierList();
       return modifierList != null && modifierList.hasAnnotation(CommonClassNames.JAVA_LANG_DEPRECATED);
     }
 
-    private boolean hasDeprecatedComment(PsiJavaDocumentedElement documentedElement, boolean checkContent) {
+    private static boolean hasDeprecatedComment(PsiJavaDocumentedElement documentedElement, boolean checkContent) {
       final PsiDocComment comment = documentedElement.getDocComment();
       if (comment == null) {
         return false;

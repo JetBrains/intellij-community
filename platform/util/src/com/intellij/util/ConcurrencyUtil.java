@@ -193,6 +193,21 @@ public final class ConcurrencyUtil {
       future.get();
     }
   }
+  public static void getAll(long timeout, @NotNull TimeUnit timeUnit, @NotNull Collection<? extends @NotNull Future<?>> futures)
+    throws ExecutionException, InterruptedException, TimeoutException {
+    long deadline = System.nanoTime() + timeUnit.toNanos(timeout);
+    for (Future<?> future : futures) {
+      long toWait = deadline - System.nanoTime();
+      if (toWait < 0) {
+        throw new TimeoutException();
+      }
+      try {
+        future.get(toWait, TimeUnit.NANOSECONDS);
+      }
+      catch (CancellationException ignored) {
+      }
+    }
+  }
 
   @NotNull
   @Contract(pure = true)

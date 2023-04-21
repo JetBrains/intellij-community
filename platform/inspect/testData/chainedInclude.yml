@@ -8,5 +8,5 @@ include:
 inspections:
   - inspection: TodoComment
     ignore:
-      - "file:*.*"
-      - "!file:Main.*"
+      - "ijscope:file:*.*"
+      - "!ijscope:file:Main.*"

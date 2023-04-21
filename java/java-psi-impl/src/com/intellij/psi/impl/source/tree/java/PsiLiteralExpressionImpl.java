@@ -44,29 +44,29 @@ public class PsiLiteralExpressionImpl
   public PsiType getType() {
     final IElementType type = getLiteralElementType();
     if (type == JavaTokenType.INTEGER_LITERAL) {
-      return PsiType.INT;
+      return PsiTypes.intType();
     }
     if (type == JavaTokenType.LONG_LITERAL) {
-      return PsiType.LONG;
+      return PsiTypes.longType();
     }
     if (type == JavaTokenType.FLOAT_LITERAL) {
-      return PsiType.FLOAT;
+      return PsiTypes.floatType();
     }
     if (type == JavaTokenType.DOUBLE_LITERAL) {
-      return PsiType.DOUBLE;
+      return PsiTypes.doubleType();
     }
     if (type == JavaTokenType.CHARACTER_LITERAL) {
-      return PsiType.CHAR;
+      return PsiTypes.charType();
     }
     if (ElementType.STRING_LITERALS.contains(type)) {
       PsiFile file = getContainingFile();
       return PsiType.getJavaLangString(file.getManager(), ResolveScopeManager.getElementResolveScope(file));
     }
     if (type == JavaTokenType.TRUE_KEYWORD || type == JavaTokenType.FALSE_KEYWORD) {
-      return PsiType.BOOLEAN;
+      return PsiTypes.booleanType();
     }
     if (type == JavaTokenType.NULL_KEYWORD) {
-      return PsiType.NULL;
+      return PsiTypes.nullType();
     }
     return null;
   }

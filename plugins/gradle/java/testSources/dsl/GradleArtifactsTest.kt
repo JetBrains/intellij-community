@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.testFramework.assertInstanceOf
@@ -85,7 +85,7 @@ class GradleArtifactsTest : GradleCodeInsightTestCase() {
         val method = assertInstanceOf<PsiMethod>(result.element)
         methodTest(method, "archives", GRADLE_API_ARTIFACT_HANDLER)
         assertTrue(result.isApplicable)
-        assertEquals(PsiType.NULL, call.type)
+        assertEquals(PsiTypes.nullType(), call.type)
       }
     }
   }

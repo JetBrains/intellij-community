@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.script
 
+import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.kotlin.idea.navigation.GotoCheck
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.util.renderAsGotoImplementation
@@ -10,7 +11,14 @@ import org.junit.Assert
 abstract class AbstractScriptConfigurationNavigationTest : AbstractScriptConfigurationTest() {
 
     fun doTest(unused: String) {
-        configureScriptFile(testDataFile())
+        val testDir = testDataFile()
+        val text = findMainScript(testDir).readText()
+
+        InTextDirectivesUtils.getPrefixedBoolean(text, "// INDEX_DEPENDENCIES_SOURCES:")?.let {
+            Registry.get("kotlin.scripting.index.dependencies.sources").setValue(it)
+        }
+
+        configureScriptFile(testDir)
         val reference = file!!.findReferenceAt(myEditor.caretModel.offset)!!
 
         val resolved = reference.resolve()!!.navigationElement!!
@@ -24,5 +32,10 @@ abstract class AbstractScriptConfigurationNavigationTest : AbstractScriptConfigu
         val actualFile = GotoCheck.getFileWithDir(resolved)
 
         Assert.assertEquals(expectedFile, actualFile)
+    }
+
+    override fun tearDown() {
+        super.tearDown()
+        Registry.get("kotlin.scripting.index.dependencies.sources").resetToDefault()
     }
 }

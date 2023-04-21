@@ -39,7 +39,7 @@ import static com.intellij.openapi.actionSystem.ActionPlaces.CHANGES_VIEW_POPUP;
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
 import static com.intellij.openapi.ui.Messages.showYesNoDialog;
 import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
-import static com.intellij.openapi.vcs.changes.actions.RollbackFilesAction.isPreferCheckboxesOverSelection;
+import static com.intellij.openapi.vcs.changes.actions.RollbackFilesAction.Manager.isPreferCheckboxesOverSelection;
 import static com.intellij.util.containers.ContainerUtil.filter;
 import static com.intellij.util.containers.ContainerUtil.filterIsInstance;
 import static com.intellij.util.ui.UIUtil.removeMnemonic;
@@ -93,7 +93,7 @@ public class RollbackAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    if (!RollbackFilesAction.checkClmActive(e)) return;
+    if (!RollbackFilesAction.Manager.checkClmActive(e)) return;
 
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     List<FilePath> missingFiles = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.async.combineAndCollect
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.ComponentListPanelFactory
 import com.intellij.collaboration.ui.HorizontalListPanel
@@ -11,6 +12,7 @@ import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil.Thread
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil.Title
 import com.intellij.collaboration.ui.codereview.onHyperlinkActivated
 import com.intellij.collaboration.ui.codereview.setHtmlBody
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
@@ -29,7 +31,6 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.text.JBDateFormat
@@ -420,22 +421,11 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
   }
 
   private fun createThreadTagsPanel(thread: GHPRReviewThreadModel): JPanel {
-    val outdatedLabel = JBLabel(" ${GithubBundle.message("pull.request.review.thread.outdated")} ", UIUtil.ComponentStyle.SMALL).apply {
-      foreground = UIUtil.getContextHelpForeground()
-      background = UIUtil.getPanelBackground()
-    }.andOpaque()
+    val outdatedLabel = CollaborationToolsUIUtil.createTagLabel(GithubBundle.message("pull.request.review.thread.outdated"))
+    val resolvedLabel = CollaborationToolsUIUtil.createTagLabel(CollaborationToolsBundle.message("review.thread.resolved.tag"))
+    val pendingLabel = CollaborationToolsUIUtil.createTagLabel(GithubBundle.message("pull.request.review.comment.pending"))
 
-    val resolvedLabel = JBLabel(" ${GithubBundle.message("pull.request.review.comment.resolved")} ", UIUtil.ComponentStyle.SMALL).apply {
-      foreground = UIUtil.getContextHelpForeground()
-      background = UIUtil.getPanelBackground()
-    }.andOpaque()
-
-    val pendingLabel = JBLabel(" ${GithubBundle.message("pull.request.review.comment.pending")} ", UIUtil.ComponentStyle.SMALL).apply {
-      foreground = UIUtil.getContextHelpForeground()
-      background = UIUtil.getPanelBackground()
-    }.andOpaque()
-
-    val tagsPanel = HorizontalListPanel(10).apply {
+    val tagsPanel = HorizontalListPanel(Title.HORIZONTAL_GAP).apply {
       isOpaque = false
       add(outdatedLabel)
       add(resolvedLabel)

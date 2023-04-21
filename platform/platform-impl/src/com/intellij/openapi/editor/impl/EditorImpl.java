@@ -511,7 +511,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }, myCaretModel);
 
-    setFontSize(IdeScaleTransformer.INSTANCE.getCurrentEditorFontSize());
+    setFontSize(IdeScaleTransformer.getInstance().getCurrentEditorFontSize());
 
     myGutterComponent.updateSize();
     Dimension preferredSize = getPreferredSize();
@@ -4571,7 +4571,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         return myFontPreferences.getSize2D(myFontPreferences.getFontFamily());
       }
       if (myFontSize == FONT_SIZE_TO_IGNORE) {
-        return IdeScaleTransformer.INSTANCE.scaledEditorFontSize(getDelegate().getEditorFontSize2D());
+        return IdeScaleTransformer.getInstance().scaledEditorFontSize(getDelegate().getEditorFontSize2D());
       }
       return myFontSize;
     }
@@ -4597,7 +4597,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       myFontPreferencesAreSetExplicitly = false;
 
-      IdeScaleTransformer scaleTransformer = IdeScaleTransformer.INSTANCE;
+      IdeScaleTransformer scaleTransformer = IdeScaleTransformer.getInstance();
       if (!scaleTransformer.isEditorFontSizeForced() && fontSize == scaleTransformer.scaledEditorFontSize(super.getEditorFontSize2D())) {
         myFontSize = FONT_SIZE_TO_IGNORE;
       }

@@ -14,7 +14,9 @@ import com.intellij.ui.CheckBoxWithColorChooser
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.Cell
+import com.intellij.ui.layout.CellBuilder
+import com.intellij.ui.layout.panel
 
 internal class SetCaretVisualAttributesAction : AnAction(), DumbAware {
 
@@ -66,7 +68,6 @@ class CaretVisualAttributesDialog(project: Project, attributes: CaretVisualAttri
   }
 
   private fun Cell.floatTextField(getter: () -> Float, setter: (Float) -> Unit, min: Float, max: Float, columns: Int? = null): CellBuilder<JBTextField> {
-    PropertyBinding(getter, setter)
     return textField(
       { getter().toString() },
       { value -> value.toFloatOrNull()?.let { floatValue -> setter(floatValue.coerceIn(min, max)) } },

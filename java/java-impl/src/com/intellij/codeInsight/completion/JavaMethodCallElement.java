@@ -68,7 +68,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     myContainingClass = method.getContainingClass();
     myHelper = helper;
     PsiType type = method.getReturnType();
-    myNegatable = type != null && PsiType.BOOLEAN.isAssignableFrom(type);
+    myNegatable = type != null && PsiTypes.booleanType().isAssignableFrom(type);
   }
 
   public JavaMethodCallElement(PsiMethod method, boolean shouldImportStatic, boolean mergedOverloads) {

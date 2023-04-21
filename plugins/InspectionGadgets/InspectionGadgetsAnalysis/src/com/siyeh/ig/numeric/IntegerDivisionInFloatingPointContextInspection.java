@@ -87,7 +87,7 @@ public class IntegerDivisionInFloatingPointContextInspection extends BaseInspect
       final PsiExpression context = getContainingExpression(expression);
       final PsiType contextType = ExpectedTypeUtils.findExpectedType(context, true);
       String castTo;
-      if (PsiType.FLOAT.equals(contextType) || PsiType.DOUBLE.equals(contextType)) {
+      if (PsiTypes.floatType().equals(contextType) || PsiTypes.doubleType().equals(contextType)) {
         castTo = contextType.getCanonicalText();
       }
       else {

@@ -20,14 +20,10 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameUsagesCollector;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.ui.SimpleListCellRenderer;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public abstract class RenameChooser {
   @NonNls private static final String CODE_OCCURRENCES = "rename.string.select.code.occurrences";
@@ -49,7 +45,7 @@ public abstract class RenameChooser {
       return;
     }
 
-    JBPopupFactory.getInstance().createPopupChooserBuilder(ContainerUtil.newArrayList(CODE_OCCURRENCES, ALL_OCCURRENCES))
+    JBPopupFactory.getInstance().createPopupChooserBuilder(List.of(CODE_OCCURRENCES, ALL_OCCURRENCES))
       .setItemSelectedCallback(selectedValue -> {
         if (selectedValue == null) return;
         dropHighlighters();

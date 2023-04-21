@@ -8,8 +8,11 @@ interface GitNewProjectWizardData {
   val git: Boolean
 
   companion object {
+
     val KEY = Key.create<GitNewProjectWizardData>(GitNewProjectWizardData::class.java.name)
 
-    val NewProjectWizardStep.gitData: GitNewProjectWizardData? get() = data.getUserData(KEY)
+    @JvmStatic
+    val NewProjectWizardStep.gitData: GitNewProjectWizardData?
+      get() = data.getUserData(KEY)
   }
 }

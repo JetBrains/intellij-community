@@ -182,7 +182,9 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     }
 
     for (PsiClass aClass : classes) {
-      topLevelNodes.add(new JavaCoverageNode(myProject, aClass, mySuitesBundle, myStateBean));
+      final JavaCoverageNode node = new JavaCoverageNode(myProject, aClass, mySuitesBundle, myStateBean);
+      node.setFullyCovered(isFullyCovered(aClass));
+      topLevelNodes.add(node);
     }
     return topLevelNodes;
   }
@@ -201,6 +203,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
                                  GlobalSearchScope searchScope) {
     if (shouldIncludePackage(aPackage, searchScope)) {
       final JavaCoverageNode node = new JavaCoverageNode(aPackage.getProject(), aPackage, mySuitesBundle, myStateBean);
+      node.setFullyCovered(isFullyCovered(aPackage));
       children.add(node);
     }
     else if (!myStateBean.myFlattenPackages) {
@@ -216,7 +219,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
       if (!isInCoverageScope(aPackage)) return false;
       if (!myAnnotator.isLoading()) {
         final PackageAnnotator.PackageCoverageInfo info = getPackageCoverageInfo(aPackage);
-        if (info == null || myStateBean.myHideFullyCovered && info.isFullyCovered()) return false;
+        if (info == null) return false;
       }
       return !myStateBean.myFlattenPackages || aPackage.getClasses(searchScope).length != 0;
     });
@@ -225,9 +228,23 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   private boolean shouldIncludeClass(PsiClass aClass) {
     if (!myAnnotator.isLoading()) {
       final PackageAnnotator.ClassCoverageInfo info = getClassCoverageInfo(aClass);
-      if (info == null || myStateBean.myHideFullyCovered && info.isFullyCovered()) return false;
+      if (info == null) return false;
     }
     return true;
+  }
+
+  private boolean isFullyCovered(PsiNamedElement classOrPackage) {
+    final PackageAnnotator.SummaryCoverageInfo info;
+    if (classOrPackage instanceof PsiPackage psiPackage) {
+      info = getPackageCoverageInfo(psiPackage);
+    }
+    else if (classOrPackage instanceof PsiClass psiClass) {
+      info = getClassCoverageInfo(psiClass);
+    }
+    else {
+      return false;
+    }
+    return info != null && info.isFullyCovered();
   }
 
   @Override
@@ -259,7 +276,9 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
         for (CoverageSuite suite : mySuitesBundle.getSuites()) {
           final List<PsiClass> classes = ((JavaCoverageSuite)suite).getCurrentSuiteClasses(myProject);
           for (PsiClass aClass : classes) {
-            children.add(new JavaCoverageNode(myProject, aClass, mySuitesBundle, myStateBean));
+            final JavaCoverageNode classNode = new JavaCoverageNode(myProject, aClass, mySuitesBundle, myStateBean);
+            classNode.setFullyCovered(isFullyCovered(aClass));
+            children.add(classNode);
           }
         }
       }
@@ -283,7 +302,9 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
       PsiClass[] classes = ReadAction.compute(() -> file.isValid() ? ((PsiClassOwner)file).getClasses() : PsiClass.EMPTY_ARRAY);
       for (PsiClass aClass : classes) {
         if (shouldIncludeClass(aClass)) {
-          children.add(new JavaCoverageNode(myProject, aClass, mySuitesBundle, myStateBean));
+          final JavaCoverageNode node = new JavaCoverageNode(myProject, aClass, mySuitesBundle, myStateBean);
+          node.setFullyCovered(isFullyCovered(aClass));
+          children.add(node);
         }
       }
     }
@@ -359,5 +380,15 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   @Override
   public boolean supportFlattenPackages() {
     return true;
+  }
+
+  @Override
+  public String getElementsName() {
+    return JavaCoverageBundle.message("coverage.classes");
+  }
+
+  @Override
+  public String getElementsCapitalisedName() {
+    return JavaCoverageBundle.message("coverage.classes.capitalised");
   }
 }

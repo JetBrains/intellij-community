@@ -21,7 +21,10 @@ abstract class BaseProjectDirectories {
      */
     @RequiresReadLock
     @JvmStatic
-    fun Project.getBaseDirectories(): Sequence<VirtualFile> = service<BaseProjectDirectories>().getBaseDirectories()
+    fun Project.getBaseDirectories(): Sequence<VirtualFile> = getInstance(this).getBaseDirectories()
+
+    @JvmStatic
+    fun getInstance(project: Project): BaseProjectDirectories = project.service<BaseProjectDirectories>()
   }
 
   /**
@@ -29,4 +32,14 @@ abstract class BaseProjectDirectories {
    * return directories only, and none of the returned elements may be located under another.
    */
   protected abstract fun getBaseDirectories(): Sequence<VirtualFile>
+
+  /**
+   * Returns base directory for specific virtual file
+   */
+  abstract fun getBaseDirectoryFor(virtualFile: VirtualFile): VirtualFile?
+
+  /**
+   * Returns true if this file is located in one of base directories
+   */
+  fun contains(file: VirtualFile) = getBaseDirectoryFor(file) != null
 }

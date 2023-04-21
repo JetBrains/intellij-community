@@ -34,7 +34,7 @@ val <T : Any> ExtensionPointName<T>.extensionsFlow: Flow<List<T>>
     awaitClose { removeExtensionPointListener(listener) }
   }
 
-internal fun Project.beforeDispose(action: () -> Unit) =
+internal fun Project.onDispose(action: () -> Unit) =
   Disposer.register(this, action)
 
 internal fun <L : Any, K> Project.messageBusFlow(

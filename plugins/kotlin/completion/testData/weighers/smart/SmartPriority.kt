@@ -18,9 +18,9 @@ class C {
 // ORDER: "pFoo, s"
 // ORDER: this
 // ORDER: local
-// ORDER: nonNullable
 // ORDER: also
 // ORDER: apply
+// ORDER: nonNullable
 // ORDER: nullableX
 // ORDER: nullableX
 // ORDER: takeIf

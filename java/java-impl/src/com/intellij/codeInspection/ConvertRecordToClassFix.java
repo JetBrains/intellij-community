@@ -354,7 +354,7 @@ public class ConvertRecordToClassFix extends LocalQuickFixAndIntentionActionOnPs
   private static @NotNull String generateEqualsExpression(PsiRecordComponent component) {
     PsiType type = component.getType();
     if (type instanceof PsiPrimitiveType) {
-      if (TypeConversionUtil.isIntegralNumberType(type) || type.equals(PsiType.BOOLEAN)) {
+      if (TypeConversionUtil.isIntegralNumberType(type) || type.equals(PsiTypes.booleanType())) {
         return "this." + component.getName() + "==that." + component.getName();
       }
       if (TypeConversionUtil.isFloatOrDoubleType(type)) {

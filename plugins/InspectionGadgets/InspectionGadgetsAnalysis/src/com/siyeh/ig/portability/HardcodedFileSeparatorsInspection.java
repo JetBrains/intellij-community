@@ -16,41 +16,38 @@
 package com.siyeh.ig.portability;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.portability.mediatype.*;
 import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.MethodMatcher;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TimeZone;
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.codeInspection.options.OptPane.checkbox;
-import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class HardcodedFileSeparatorsInspection extends BaseInspection {
 
   private static final char BACKSLASH = '\\';
   private static final char SLASH = '/';
-  private static final CallMatcher IGNORED_CALLS = CallMatcher.anyOf(
-    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CLASS, "getResource", "getResourceAsStream"),
-    CallMatcher.instanceCall("java.lang.ClassLoader", "findResource", "getResource", "getResources",
-                             "resources"),
-    CallMatcher.staticCall("java.lang.ClassLoader", "getSystemResource", "getSystemResources",
-                           "getSystemResourceAsStream")
-  );
 
   private static class Holder {
   /**
@@ -117,10 +114,37 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
     ContainerUtil.addAll(timeZoneIds, TimeZone.getAvailableIDs());
   }
   }
+
+  private final MethodMatcher myMethodMatcher;
+
   /**
    * @noinspection PublicField
    */
   public boolean m_recognizeExampleMediaType = false;
+
+
+  public HardcodedFileSeparatorsInspection() {
+    myMethodMatcher = getMatcherByDefault();
+  }
+
+  private static MethodMatcher getMatcherByDefault() {
+    return new MethodMatcher(false, "ignoredCalls")
+      .add(CommonClassNames.JAVA_LANG_CLASS, "getResource|getResourceAsStream")
+      .add("java.lang.ClassLoader", "findResource|getResource|getResources|resources|getSystemResource|getSystemResources|getSystemResourceAsStream")
+      .finishDefault();
+  }
+
+    @Override
+  public void readSettings(@NotNull Element element) throws InvalidDataException {
+    super.readSettings(element);
+    myMethodMatcher.readSettings(element);
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element element) throws WriteExternalException {
+    super.writeSettings(element);
+    myMethodMatcher.writeSettings(element);
+  }
 
   @Override
   @NotNull
@@ -137,9 +161,35 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
 
   @Override
   public @NotNull OptPane getOptionsPane() {
+    //noinspection InjectedReferences
     return pane(
       checkbox("m_recognizeExampleMediaType", InspectionGadgetsBundle.message(
-        "hardcoded.file.separator.include.option")));
+        "hardcoded.file.separator.include.option")),
+      table(InspectionGadgetsBundle.message(
+              "hardcoded.file.separator.ignore.methods.option"),
+            stringList("myClassNames", InspectionGadgetsBundle.message("class.name"), new JavaClassValidator()),
+            stringList("myRegexMethods", InspectionGadgetsBundle.message("method.name.regex"))
+      ));
+  }
+
+  @Override
+  public @NotNull OptionController getOptionController() {
+    return super.getOptionController()
+      .onValue("myClassNames", getterFor(myMethodMatcher.getClassNames()), setterFor(myMethodMatcher.getClassNames()))
+      .onValue("myRegexMethods", getterFor(myMethodMatcher.getMethodNamePatterns()), setterFor(myMethodMatcher.getMethodNamePatterns()));
+  }
+
+  private static Consumer<List<String>> setterFor(List<String> patterns) {
+    return strings -> {
+      //there is a chance that strings and patterns refer to the same object
+      ArrayList<String> copy = new ArrayList<>(strings);
+      patterns.clear();
+      patterns.addAll(copy);
+    };
+  }
+
+  private static Supplier<List<String>> getterFor(List<String> list) {
+    return () -> list;
   }
 
   @Override
@@ -164,7 +214,7 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
           final PsiElement grandParent = parent.getParent();
           if (grandParent instanceof PsiMethodCallExpression) {
             final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
-            if (MethodCallUtils.isCallToRegexMethod(methodCallExpression) || IGNORED_CALLS.test(methodCallExpression)) {
+            if (MethodCallUtils.isCallToRegexMethod(methodCallExpression) || myMethodMatcher.matches(methodCallExpression)) {
               return;
             }
           }
@@ -177,7 +227,7 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
         }
         registerErrorInString(expression);
       }
-      else if (type != null && type.equals(PsiType.CHAR)) {
+      else if (type != null && type.equals(PsiTypes.charType())) {
         final Character value = (Character)expression.getValue();
         if (value == null) {
           return;

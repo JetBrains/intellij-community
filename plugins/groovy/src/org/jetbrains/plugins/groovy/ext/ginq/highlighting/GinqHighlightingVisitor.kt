@@ -3,7 +3,7 @@ package org.jetbrains.plugins.groovy.ext.ginq.highlighting
 
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.asSafely
 import org.jetbrains.plugins.groovy.GroovyBundle
@@ -43,7 +43,7 @@ class GinqHighlightingVisitor : GroovyRecursiveElementVisitor() {
     val filterResults = filteringFragments.mapNotNull { fragment ->
       val type = fragment.filter.type
       val parentCall = fragment.filter.parentOfType<GrMethodCall>()?.parentOfType<GrMethodCall>()?.invokedExpression?.asSafely<GrReferenceExpression>()?.takeIf { it.referenceName == "exists" }
-      if (type != PsiType.BOOLEAN && type?.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN) != true && parentCall == null) {
+      if (type != PsiTypes.booleanType() && type?.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN) != true && parentCall == null) {
         fragment.filter to GroovyBundle.message("ginq.error.message.boolean.condition.expected")
       }
       else {

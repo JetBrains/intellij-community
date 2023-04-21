@@ -15,9 +15,12 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
+import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.EntityReference
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2IntMaps
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
@@ -30,14 +33,17 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 internal class NonIncrementalContributors(private val project: Project,
                                           private val rootFileSupplier: RootFileSupplier) {
   private var allRoots = emptySet<VirtualFile>()
+  private var excludedUrls = emptySet<VirtualFileUrl>()
   @Volatile
   private var upToDate = false
   private val lock = Any()
 
-  fun updateIfNeeded(fileSets: MutableMap<VirtualFile, StoredFileSetCollection>, fileSetsByPackagePrefix: PackagePrefixStorage) {
+  fun updateIfNeeded(fileSets: MutableMap<VirtualFile, StoredFileSetCollection>,
+                     fileSetsByPackagePrefix: PackagePrefixStorage,
+                     nonExistingFilesRegistry: NonExistingWorkspaceRootsRegistry) {
     if (!upToDate) {
       ApplicationManager.getApplication().assertReadAccessAllowed()
-      val newExcludedRoots = computeCustomExcludedRoots()
+      val (newExcludedRoots, newExcludedUrls) = computeCustomExcludedRoots()
       val newFileSets = computeFileSets()
 
       /*
@@ -53,10 +59,16 @@ internal class NonIncrementalContributors(private val project: Project,
             fileSets.removeValueIf(file) { fileSet: StoredFileSet -> fileSet.entityReference === NonIncrementalMarker }
             fileSetsByPackagePrefix.removeByPrefixAndReference("", NonIncrementalMarker)
           }
+          excludedUrls.forEach {
+            nonExistingFilesRegistry.unregisterUrl(it, NonIncrementalMarker, EntityStorageKind.MAIN)
+          }
           val newRoots = HashSet<VirtualFile>()
           Object2IntMaps.fastForEach(newExcludedRoots) { 
             fileSets.putValue(it.key, ExcludedFileSet.ByFileKind(it.intValue, NonIncrementalMarker))
             newRoots.add(it.key)
+          }
+          newExcludedUrls.forEach {
+            nonExistingFilesRegistry.registerUrl(it, NonIncrementalMarker, EntityStorageKind.MAIN)
           }
           newFileSets.forEach { (root, sets) ->
             sets.forEach { set ->
@@ -69,20 +81,28 @@ internal class NonIncrementalContributors(private val project: Project,
             newRoots.add(root)
           }
           allRoots = newRoots
+          excludedUrls = newExcludedUrls
           upToDate = true
         }
       }
     }
   }
   
-  private fun computeCustomExcludedRoots(): Object2IntMap<VirtualFile> {
-    val result = Object2IntOpenHashMap<VirtualFile>()
+  private fun computeCustomExcludedRoots(): Pair<Object2IntMap<VirtualFile>, Set<VirtualFileUrl>> {
+    val virtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
+    val excludedFiles = Object2IntOpenHashMap<VirtualFile>()
+    val excludedUrls = HashSet<VirtualFileUrl>()
 
     DirectoryIndexExcludePolicy.EP_NAME.getExtensions(project).forEach { policy -> 
       policy.excludeUrlsForProject.forEach { url ->
         val file = rootFileSupplier.findFileByUrl(url)
-        if (file != null && RootFileSupplier.ensureValid(file, project, policy)) {
-          result.put(file, WorkspaceFileKindMask.ALL)
+        if (file != null) {
+          if (RootFileSupplier.ensureValid(file, project, policy)) {
+            excludedFiles.put(file, WorkspaceFileKindMask.ALL)
+          }
+        }
+        else {
+          excludedUrls.add(virtualFileUrlManager.fromUrl(url))
         }
       }
       policy.excludeSdkRootsStrategy?.let { strategy ->
@@ -93,7 +113,7 @@ internal class NonIncrementalContributors(private val project: Project,
             if (root !in sdkClasses) {
               val correctedRoot = rootFileSupplier.correctRoot(root, sdk, policy)
               if (correctedRoot != null) {
-                result.put(correctedRoot, WorkspaceFileKindMask.EXTERNAL or result.getInt(correctedRoot))
+                excludedFiles.put(correctedRoot, WorkspaceFileKindMask.EXTERNAL or excludedFiles.getInt(correctedRoot))
               }
             }
           }
@@ -105,13 +125,16 @@ internal class NonIncrementalContributors(private val project: Project,
           if (file != null) {
             val correctedRoot = rootFileSupplier.correctRoot(file, module, policy)
             if (correctedRoot != null) {
-              result.put(correctedRoot, WorkspaceFileKindMask.CONTENT or result.getInt(correctedRoot))
+              excludedFiles.put(correctedRoot, WorkspaceFileKindMask.CONTENT or excludedFiles.getInt(correctedRoot))
             }
+          }
+          else {
+            excludedUrls.add(virtualFileUrlManager.fromUrl(pointer.url))
           }
         }
       }
     }
-    return result
+    return excludedFiles to excludedUrls
   }
 
   private fun computeFileSets(): Map<VirtualFile, StoredFileSetCollection> {

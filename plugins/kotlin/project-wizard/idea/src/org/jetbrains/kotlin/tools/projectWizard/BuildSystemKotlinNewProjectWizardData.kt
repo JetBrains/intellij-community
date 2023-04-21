@@ -6,12 +6,13 @@ import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.util.Key
 
 interface BuildSystemKotlinNewProjectWizardData: BuildSystemNewProjectWizardData {
+
     companion object {
-        @JvmStatic val KEY = Key.create<BuildSystemKotlinNewProjectWizardData>(BuildSystemKotlinNewProjectWizardData::class.java.name)
 
-        @JvmStatic val NewProjectWizardStep.buildSystemData get() = data.getUserData(KEY)!!
+        val KEY = Key.create<BuildSystemKotlinNewProjectWizardData>(BuildSystemKotlinNewProjectWizardData::class.java.name)
 
-        @JvmStatic val NewProjectWizardStep.buildSystemProperty get() = buildSystemData.buildSystemProperty
-        @JvmStatic var NewProjectWizardStep.buildSystem get() = buildSystemData.buildSystem; set(it) { buildSystemData.buildSystem = it }
+        @JvmStatic
+        val NewProjectWizardStep.kotlinBuildSystemData: BuildSystemKotlinNewProjectWizardData?
+            get() = data.getUserData(KEY)
     }
 }

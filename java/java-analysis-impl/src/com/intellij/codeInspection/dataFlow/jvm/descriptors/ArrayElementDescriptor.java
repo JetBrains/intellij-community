@@ -175,7 +175,7 @@ public final class ArrayElementDescriptor extends JvmVariableDescriptor {
     DfType dfType = DfTypes.typedObject(type, NullabilityUtil.getExpressionNullability(expression));
     if (dfType instanceof DfPrimitiveType && targetType instanceof DfPrimitiveType && dfType.meet(targetType) == DfType.BOTTOM) {
       if (targetType instanceof DfIntegralType) {
-        if (targetType instanceof DfLongType) return factory.fromDfType(((DfPrimitiveType)dfType).castTo(PsiType.LONG));
+        if (targetType instanceof DfLongType) return factory.fromDfType(((DfPrimitiveType)dfType).castTo(PsiTypes.longType()));
       }
       return factory.fromDfType(targetType);
     }

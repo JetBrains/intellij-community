@@ -11,7 +11,7 @@ import com.intellij.ui.CollectionListModel
 import com.intellij.ui.components.JBList
 import icons.CollaborationToolsIcons
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortRestDTO
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeStatus
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
@@ -20,9 +20,9 @@ internal object GitLabMergeRequestsListComponentFactory {
   private const val AVATAR_SIZE = 20
 
   fun create(
-    listModel: CollectionListModel<GitLabMergeRequestShortRestDTO>,
+    listModel: CollectionListModel<GitLabMergeRequestDetails>,
     avatarIconsProvider: IconsProvider<GitLabUserDTO>
-  ): JBList<GitLabMergeRequestShortRestDTO> {
+  ): JBList<GitLabMergeRequestDetails> {
     return ReviewListComponentFactory(listModel).create { mergeRequest ->
       ReviewListItemPresentation.Simple(
         title = mergeRequest.title,
@@ -30,9 +30,9 @@ internal object GitLabMergeRequestsListComponentFactory {
         createdDate = mergeRequest.createdAt,
         author = userPresentation(mergeRequest.author, avatarIconsProvider),
         tagGroup = null,
-        mergeableStatus = getMergeableStatus(mergeRequest.mergeStatusEnum),
+        mergeableStatus = getMergeableStatus(mergeRequest.mergeStatus),
         buildStatus = null,
-        state = getMergeStateText(mergeRequest.stateEnum, mergeRequest.draft),
+        state = getMergeStateText(mergeRequest.state, mergeRequest.draft),
         userGroup1 = NamedCollection.create(
           GitLabBundle.message("merge.request.list.renderer.user.assignees", mergeRequest.assignees.size),
           mergeRequest.assignees.map { assignee -> userPresentation(assignee, avatarIconsProvider) }

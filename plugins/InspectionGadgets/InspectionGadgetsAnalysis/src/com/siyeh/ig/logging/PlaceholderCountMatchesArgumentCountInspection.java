@@ -389,7 +389,7 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
           continue;
         }
         final PsiType type = currentExpression.getType();
-        if (!TypeUtils.isJavaLangString(type) && !PsiType.CHAR.equals(type)) {
+        if (!TypeUtils.isJavaLangString(type) && !PsiTypes.charType().equals(type)) {
           parts.add(new PartHolder(null, true));
           continue;
         }

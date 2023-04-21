@@ -23,10 +23,10 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 import java.awt.event.InputEvent
 
-
 internal class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAwareAction(browser.name, null, browser.icon) {
-  companion object {
+  object Handler {
     private val LOG = logger<BaseOpenInBrowserAction>()
+
     @JvmStatic
     fun doUpdate(event: AnActionEvent): OpenInBrowserRequest? {
       val request = createRequest(event.dataContext, isForceFileUrlIfNoUrlProvider = false)
@@ -34,6 +34,7 @@ internal class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAw
       event.presentation.isEnabledAndVisible = applicable
       return if (applicable) request else  null
     }
+
     internal fun openInBrowser(request: OpenInBrowserRequest, preferLocalUrl: Boolean = false, browser: WebBrowser? = null) {
       try {
         val urls = WebBrowserService.getInstance().getUrlsToOpen(request, preferLocalUrl)
@@ -58,7 +59,6 @@ internal class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAw
         openInBrowser(it, BitUtil.isSet(event.modifiers, InputEvent.SHIFT_MASK), browser)
       }
     }
-
   }
 
   private fun getBrowser(): WebBrowser? {
@@ -88,7 +88,7 @@ internal class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAw
       result!!
     }
     else {
-      result = doUpdate(e) ?: return
+      result = Handler.doUpdate(e) ?: return
     }
 
     var description = templatePresentation.text
@@ -114,7 +114,7 @@ internal class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAw
 
   override fun actionPerformed(e: AnActionEvent) {
     getBrowser()?.let {
-      openInBrowser(e, it)
+      Handler.openInBrowser(e, it)
     }
   }
 }

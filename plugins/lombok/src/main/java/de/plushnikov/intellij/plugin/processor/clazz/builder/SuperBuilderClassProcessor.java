@@ -10,10 +10,10 @@ import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.handler.SuperBuilderHandler;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -33,20 +33,16 @@ public class SuperBuilderClassProcessor extends AbstractClassProcessor {
   }
 
   @Override
-  protected boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
-                                                   @NotNull PsiAnnotation psiAnnotation) {
-    if (null == nameHint) {
-      return true;
-    }
+  protected Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     final SuperBuilderHandler builderHandler = getBuilderHandler();
 
     final String builderClassName = builderHandler.getBuilderClassName(psiClass);
-    boolean foundPossibleMath = Objects.equals(nameHint, builderClassName);
-    if (!foundPossibleMath && !psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+
+    if (!psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
       final String builderImplClassName = builderHandler.getBuilderImplClassName(psiClass);
-      return Objects.equals(nameHint, builderImplClassName);
+      return List.of(builderClassName, builderImplClassName);
     }
-    return foundPossibleMath;
+    return Collections.singleton(builderClassName);
   }
 
   @Override
@@ -55,7 +51,9 @@ public class SuperBuilderClassProcessor extends AbstractClassProcessor {
   }
 
   @Override
-  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiClass psiClass,
+                                     @NotNull PsiAnnotation psiAnnotation,
+                                     @NotNull List<? super PsiElement> target) {
     SuperBuilderHandler builderHandler = getBuilderHandler();
     final String builderClassName = builderHandler.getBuilderClassName(psiClass);
 

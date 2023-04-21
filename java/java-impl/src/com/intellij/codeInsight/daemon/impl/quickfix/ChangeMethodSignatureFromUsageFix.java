@@ -364,7 +364,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
         else {
           if (PsiPolyExpressionUtil.isPolyExpression(expression)) return null;
           PsiType exprType = CommonJavaRefactoringUtil.getTypeByExpression(expression);
-          if (exprType == null || PsiType.VOID.equals(exprType)) return null;
+          if (exprType == null || PsiTypes.voidType().equals(exprType)) return null;
           if (exprType instanceof PsiDisjunctionType) {
             exprType = ((PsiDisjunctionType)exprType).getLeastUpperBound();
           }
@@ -458,7 +458,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
         if (varargParam != null && pi >= parameters.length) return false;
         if (PsiPolyExpressionUtil.isPolyExpression(expression)) return false;
         PsiType exprType = CommonJavaRefactoringUtil.getTypeByExpression(expression);
-        if (exprType == null || PsiType.VOID.equals(exprType)) return false;
+        if (exprType == null || PsiTypes.voidType().equals(exprType)) return false;
         if (exprType instanceof PsiDisjunctionType) {
           exprType = ((PsiDisjunctionType)exprType).getLeastUpperBound();
         }
@@ -485,7 +485,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
     if (expression == null || TypeConversionUtil.areTypesAssignmentCompatible(substitutor.substitute(((PsiEllipsisType)varargParam.getType()).getComponentType()), expression)) {
       final int lastExprIdx = expressions.length - 1;
       if (ei == lastExprIdx) return true;
-      return expressions[lastExprIdx].getType() != PsiType.NULL;
+      return expressions[lastExprIdx].getType() != PsiTypes.nullType();
     }
     return false;
   }

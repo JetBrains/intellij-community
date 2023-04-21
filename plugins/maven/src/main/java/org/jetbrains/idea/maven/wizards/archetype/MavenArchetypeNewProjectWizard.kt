@@ -8,16 +8,13 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
-import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.buildSystem
+import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.javaBuildSystemData
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.*
-import com.intellij.ide.wizard.LanguageNewProjectWizardData.Companion.language
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
-import com.intellij.ide.wizard.util.NewProjectLinkNewProjectWizardStep
-import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
+import com.intellij.ide.wizard.LanguageNewProjectWizardData.Companion.languageData
+import com.intellij.ide.wizard.comment.NewProjectLinkNewProjectWizardStep
+import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionRenderer.Companion.append
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBox
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBoxConverter
@@ -45,7 +42,6 @@ import icons.OpenapiIcons
 import org.jetbrains.idea.maven.indices.archetype.MavenCatalog
 import org.jetbrains.idea.maven.model.MavenArchetype
 import org.jetbrains.idea.maven.model.MavenId
-import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.wizards.InternalMavenModuleBuilder
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
@@ -61,13 +57,13 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
 
   override val icon: Icon = OpenapiIcons.RepositoryLibraryLogo
 
-  override fun createStep(context: WizardContext) =
-    RootNewProjectWizardStep(context).chain(
-      ::CommentStep,
-      ::newProjectWizardBaseStepWithoutGap,
-      ::GitNewProjectWizardStep,
-      ::Step
-    ).chain(::AssetsStep)
+  override fun createStep(context: WizardContext): NewProjectWizardStep =
+    RootNewProjectWizardStep(context)
+      .nextStep(::CommentStep)
+      .nextStep(::newProjectWizardBaseStepWithoutGap)
+      .nextStep(::GitNewProjectWizardStep)
+      .nextStep(::Step)
+      .nextStep(::AssetsStep)
 
   private class CommentStep(parent: NewProjectWizardStep) : NewProjectLinkNewProjectWizardStep(parent) {
     override fun getComment(name: String): String {
@@ -75,8 +71,8 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     }
 
     override fun onStepSelected(step: NewProjectWizardStep) {
-      step.language = JAVA
-      step.buildSystem = MAVEN
+      step.languageData!!.language = JAVA
+      step.javaBuildSystemData!!.buildSystem = MAVEN
     }
   }
 
@@ -326,6 +322,8 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
         name = parentStep.name
         contentEntryPath = "${parentStep.path}/${parentStep.name}"
 
+        isCreatingNewProject = context.isCreatingNewProject
+
         parentProject = parentData
         aggregatorProject = parentData
         projectId = MavenId(groupId, artifactId, version)
@@ -350,10 +348,6 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
           putAll(archetypeDescriptor)
         }
       }
-
-      ExternalProjectsManagerImpl.setupCreatedProject(project)
-      MavenProjectsManager.setupCreatedMavenProject(project)
-      project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true)
       builder.commit(project)
     }
   }
@@ -431,8 +425,8 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
   }
 
   private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
+
     override fun setupAssets(project: Project) {
-      outputDirectory = "$path/$name"
       addAssets(StandardAssetsProvider().getMavenIgnoreAssets())
     }
   }

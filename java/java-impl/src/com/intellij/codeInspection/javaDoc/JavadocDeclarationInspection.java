@@ -197,7 +197,7 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
         continue;
       }
       if ("return".equals(tag.getName())) {
-        if (!PsiType.VOID.equals(psiMethod.getReturnType()) && isEmptyTag(tag)) {
+        if (!PsiTypes.voidType().equals(psiMethod.getReturnType()) && isEmptyTag(tag)) {
           String tagText = "<code>@return</code>";
           LocalQuickFix fix = new JavaDocFixes.RemoveTagFix("return");
           holder.registerProblem(tag.getNameElement(), JavaBundle.message("inspection.javadoc.method.problem.missing.tag.description", tagText), fix);

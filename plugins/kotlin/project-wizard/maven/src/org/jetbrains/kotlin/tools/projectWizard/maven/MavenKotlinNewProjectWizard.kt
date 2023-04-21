@@ -1,15 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.maven
 
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logAddSampleCodeChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
-import com.intellij.ide.wizard.chain
+import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.observable.util.bindBooleanStorage
@@ -18,7 +16,6 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.whenStateChangedFromUi
-import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizard
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData
@@ -32,9 +29,9 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
 
     override val ordinal = 100
 
-    override fun createStep(parent: KotlinNewProjectWizard.Step): NewProjectWizardStep {
-        return Step(parent).chain(::AssetsStep)
-    }
+    override fun createStep(parent: KotlinNewProjectWizard.Step): NewProjectWizardStep =
+        Step(parent)
+            .nextStep(::AssetsStep)
 
     class Step(parent: KotlinNewProjectWizard.Step) :
         MavenNewProjectWizardStep<KotlinNewProjectWizard.Step>(parent),
@@ -67,7 +64,6 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
 
         override fun setupProject(project: Project) {
             ExternalProjectsManagerImpl.setupCreatedProject(project)
-            MavenProjectsManager.setupCreatedMavenProject(project)
             project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true)
 
             KotlinNewProjectWizard.generateProject(
@@ -85,8 +81,8 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
     }
 
     private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
+
         override fun setupAssets(project: Project) {
-            outputDirectory = "$path/$name"
             addAssets(StandardAssetsProvider().getMavenIgnoreAssets())
         }
     }

@@ -157,6 +157,11 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return getPopState(isSelected());
   }
 
+  @NotNull
+  public final Presentation getPresentation() {
+    return myPresentation;
+  }
+
   public final boolean isRollover() {
     return myRollover;
   }

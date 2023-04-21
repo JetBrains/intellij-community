@@ -37,10 +37,9 @@ public abstract class AbstractReplaceExplicitTypeWithVariableIntentionAction ext
       return false;
     }
     PsiElement declaredElement = declaredElements[0];
-    if (!(declaredElement instanceof PsiLocalVariable)) {
+    if (!(declaredElement instanceof PsiLocalVariable localVariable)) {
       return false;
     }
-    PsiLocalVariable localVariable = (PsiLocalVariable) declaredElement;
     if (!localVariable.hasInitializer()) {
       return false;
     }

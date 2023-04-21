@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.internal.statistic.StructuredIdeActivity
@@ -21,6 +21,7 @@ import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
@@ -96,6 +97,8 @@ internal class WorkspaceProjectImporter(
     val projectsWithModuleEntities = stats.recordPhase(MavenImportCollector.WORKSPACE_POPULATE_PHASE) {
       importModules(storageBeforeImport, builder, allProjectsToChanges, mavenProjectToModuleName, contextData, stats).also {
         beforeModelApplied(it, builder, contextData, stats)
+      }.apply {
+        ARTIFACT_MODEL_KEY[contextData].applyToStorage()
       }
     }
     val appliedProjectsWithModules = stats.recordPhase(MavenImportCollector.WORKSPACE_COMMIT_PHASE) {
@@ -203,11 +206,12 @@ internal class WorkspaceProjectImporter(
 
     val projectToModulesData = mutableMapOf<MavenProject, PartialModulesData>()
     val unloadedModuleNames = UnloadedModulesListStorage.getInstance(myProject).unloadedModuleNames.toSet()
-    
+
     for (importData in sortProjectsToImportByPrecedence(context)) {
       if (importData.moduleData.moduleName in unloadedModuleNames) continue
-      
+
       val moduleEntity = WorkspaceModuleImporter(myProject,
+                                                 storageBeforeImport,
                                                  importData,
                                                  virtualFileUrlManager,
                                                  builder,
@@ -260,7 +264,6 @@ internal class WorkspaceProjectImporter(
                                             contextData: UserDataHolderBase,
                                             stats: WorkspaceImportStats): List<MavenProjectWithModulesData<Module>> {
     val appliedModulesResult = mutableListOf<MavenProjectWithModulesData<Module>>()
-    ARTIFACT_MODEL_KEY[contextData].applyToStorage()
     updateProjectModelFastOrSlow(myProject, stats,
                                  { snapshot -> applyToCurrentStorage(mavenProjectsWithModules, snapshot, newStorage) },
                                  { applied ->
@@ -391,7 +394,7 @@ internal class WorkspaceProjectImporter(
                                builder: MutableEntityStorage,
                                contextDataHolder: UserDataHolderBase,
                                stats: WorkspaceImportStats) {
-    val context = object : MavenWorkspaceConfigurator.MutableMavenProjectContext, UserDataHolder by contextDataHolder {
+    val context = object : MavenWorkspaceConfigurator.MutableMavenProjectContext, UserDataHolderEx by contextDataHolder {
       override val project = myProject
       override val storage = builder
       override val mavenProjectsTree = myProjectsTree
@@ -415,7 +418,7 @@ internal class WorkspaceProjectImporter(
                                  builder: MutableEntityStorage,
                                  contextDataHolder: UserDataHolderBase,
                                  stats: WorkspaceImportStats) {
-    val context = object : MavenWorkspaceConfigurator.MutableModelContext, UserDataHolder by contextDataHolder {
+    val context = object : MavenWorkspaceConfigurator.MutableModelContext, UserDataHolderEx by contextDataHolder {
       override val project = myProject
       override val storage = builder
       override val mavenProjectsTree = myProjectsTree
@@ -438,7 +441,7 @@ internal class WorkspaceProjectImporter(
                                 builder: EntityStorage,
                                 contextDataHolder: UserDataHolderBase,
                                 stats: WorkspaceImportStats) {
-    val context = object : MavenWorkspaceConfigurator.AppliedModelContext, UserDataHolder by contextDataHolder {
+    val context = object : MavenWorkspaceConfigurator.AppliedModelContext, UserDataHolderEx by contextDataHolder {
       override val project = myProject
       override val storage = builder
       override val mavenProjectsTree = myProjectsTree

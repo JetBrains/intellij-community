@@ -45,19 +45,19 @@ public final class ClassUtils {
   private static final Set<PsiType> integralTypes = new HashSet<>(5);
 
   static {
-    integralTypes.add(PsiType.LONG);
-    integralTypes.add(PsiType.INT);
-    integralTypes.add(PsiType.SHORT);
-    integralTypes.add(PsiType.CHAR);
-    integralTypes.add(PsiType.BYTE);
+    integralTypes.add(PsiTypes.longType());
+    integralTypes.add(PsiTypes.intType());
+    integralTypes.add(PsiTypes.shortType());
+    integralTypes.add(PsiTypes.charType());
+    integralTypes.add(PsiTypes.byteType());
 
-    primitiveNumericTypes.add(PsiType.BYTE);
-    primitiveNumericTypes.add(PsiType.CHAR);
-    primitiveNumericTypes.add(PsiType.SHORT);
-    primitiveNumericTypes.add(PsiType.INT);
-    primitiveNumericTypes.add(PsiType.LONG);
-    primitiveNumericTypes.add(PsiType.FLOAT);
-    primitiveNumericTypes.add(PsiType.DOUBLE);
+    primitiveNumericTypes.add(PsiTypes.byteType());
+    primitiveNumericTypes.add(PsiTypes.charType());
+    primitiveNumericTypes.add(PsiTypes.shortType());
+    primitiveNumericTypes.add(PsiTypes.intType());
+    primitiveNumericTypes.add(PsiTypes.longType());
+    primitiveNumericTypes.add(PsiTypes.floatType());
+    primitiveNumericTypes.add(PsiTypes.doubleType());
 
     immutableTypes.add(CommonClassNames.JAVA_LANG_BOOLEAN);
     immutableTypes.add(CommonClassNames.JAVA_LANG_CHARACTER);

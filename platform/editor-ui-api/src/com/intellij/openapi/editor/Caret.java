@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
@@ -18,21 +18,15 @@ import org.jetbrains.annotations.Nullable;
  */
 @ApiStatus.NonExtendable
 public interface Caret extends UserDataHolderEx, Disposable {
-  /**
-   * Returns an instance of Editor, current caret belongs to.
-   */
-  @NotNull
-  Editor getEditor();
+  /** Returns the editor to which this caret belongs. */
+  @NotNull Editor getEditor();
+
+  /** Returns the model of which this caret is a part. */
+  @NotNull CaretModel getCaretModel();
 
   /**
-   * Returns an instance of CaretModel, current caret is associated with.
-   */
-  @NotNull
-  CaretModel getCaretModel();
-
-  /**
-   * Tells whether this caret is valid, i.e., recognized by the caret model currently. Caret is valid since its creation till its
-   * removal from caret model.
+   * Tells whether this caret is valid, i.e., recognized by the caret model currently.
+   * A caret is valid from its creation until it is removed from its caret model.
    *
    * @see CaretModel#addCaret(VisualPosition)
    * @see CaretModel#removeCaret(Caret)

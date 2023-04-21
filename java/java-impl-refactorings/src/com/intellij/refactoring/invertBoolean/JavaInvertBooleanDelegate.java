@@ -53,10 +53,10 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
   @Override
   public boolean isAvailableOnElement(@NotNull PsiElement element) {
     if (element instanceof PsiVariable) {
-      return PsiType.BOOLEAN.equals(((PsiVariable) element).getType());
+      return PsiTypes.booleanType().equals(((PsiVariable) element).getType());
     }
     else if (element instanceof PsiMethod) {
-      return PsiType.BOOLEAN.equals(((PsiMethod) element).getReturnType());
+      return PsiTypes.booleanType().equals(((PsiMethod) element).getReturnType());
     }
     return false;
   }
@@ -66,7 +66,7 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
     if (element instanceof PsiVariable) {
       PsiVariable var = (PsiVariable)element;
       final PsiType returnType = var.getType();
-      if (!PsiType.BOOLEAN.equals(returnType)) {
+      if (!PsiTypes.booleanType().equals(returnType)) {
         CommonRefactoringUtil.showErrorHint(project, editor,
                                             RefactoringBundle
                                               .getCannotRefactorMessage(JavaRefactoringBundle.message("invert.boolean.wrong.type")),
@@ -96,7 +96,7 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
     else if (element instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)element;
       final PsiType returnType = method.getReturnType();
-      if (!PsiType.BOOLEAN.equals(returnType)) {
+      if (!PsiTypes.booleanType().equals(returnType)) {
         CommonRefactoringUtil.showErrorHint(project, editor,
                                             RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("invert.boolean.wrong.type")),
                                             InvertBooleanHandler.getRefactoringName(),
@@ -263,7 +263,7 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
         method.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
             final PsiExpression returnValue = statement.getReturnValue();
-            if (returnValue != null && PsiType.BOOLEAN.equals(returnValue.getType())) {
+            if (returnValue != null && PsiTypes.booleanType().equals(returnValue.getType())) {
               elementsToInvert.add(returnValue);
             }
           }

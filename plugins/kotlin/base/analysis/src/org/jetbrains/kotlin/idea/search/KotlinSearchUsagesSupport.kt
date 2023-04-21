@@ -27,7 +27,9 @@ interface KotlinSearchUsagesSupport {
 
     companion object {
         fun getInstance(project: Project): KotlinSearchUsagesSupport = project.service()
+    }
 
+    object SearchUtils { // not a companion object to load less bytecode simultaneously with KotlinSearchUsagesSupport
         val KtParameter.dataClassComponentMethodName: String?
             get() {
                 if (!hasValOrVar() || containingClassOrObject?.hasModifier(KtTokens.DATA_KEYWORD) != true) return null
@@ -53,7 +55,6 @@ interface KotlinSearchUsagesSupport {
 
         fun PsiNamedElement.getClassNameForCompanionObject(): String? =
             getInstance(project).getClassNameToSearch(this)
-
 
         fun PsiReference.isCallableOverrideUsage(declaration: KtNamedDeclaration): Boolean =
             getInstance(declaration.project).isCallableOverrideUsage(this, declaration)
@@ -93,6 +94,7 @@ interface KotlinSearchUsagesSupport {
         fun KtDeclaration.isOverridable(): Boolean =
             getInstance(project).isOverridable(this)
 
+        @JvmStatic
         fun KtClass.isInheritable(): Boolean =
             getInstance(project).isInheritable(this)
 
@@ -157,7 +159,6 @@ interface KotlinSearchUsagesSupport {
     fun isOverridable(declaration: KtDeclaration): Boolean
 
     fun isInheritable(ktClass: KtClass): Boolean
-
 
     fun expectedDeclarationIfAny(declaration: KtDeclaration): KtDeclaration?
 

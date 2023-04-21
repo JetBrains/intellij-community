@@ -15,7 +15,7 @@ import java.io.InputStream
 
 class CefStreamResourceHandler(private val myStream: InputStream, private val myMimeType: String, parent: Disposable): CefResourceHandler, Disposable {
   init {
-    Disposer.register(parent, this);
+    Disposer.register(parent, this)
   }
 
   override fun processRequest(request: CefRequest, callback: CefCallback): Boolean {
@@ -36,7 +36,6 @@ class CefStreamResourceHandler(private val myStream: InputStream, private val my
       }
     }
     catch (e: IOException) {
-      Logger.getInstance(CefStreamResourceHandler::class.java).warn("Failed to read from the stream", e)
       callback.cancel()
     }
     bytesRead.set(0)

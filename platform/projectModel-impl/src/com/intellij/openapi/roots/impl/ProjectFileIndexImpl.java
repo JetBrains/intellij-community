@@ -320,6 +320,23 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
     return info.isInProject(fileOrDir) && info.getModule() != null;
   }
 
+  public @Nullable VirtualFile getModuleSourceOrLibraryClassesRoot(@NotNull VirtualFile file) {
+    if (myWorkspaceFileIndex != null) {
+      WorkspaceFileInternalInfo info = myWorkspaceFileIndex.getFileInfo(file, true, true, true, false);
+      WorkspaceFileSetWithCustomData<?> fileSet = info.findFileSet(it -> {
+        WorkspaceFileKind kind = it.getKind();
+        return (kind == WorkspaceFileKind.CONTENT || kind == WorkspaceFileKind.TEST_CONTENT) && it.getData() instanceof ModuleOrLibrarySourceRootData
+               || kind == WorkspaceFileKind.EXTERNAL;
+      });
+      return fileSet != null ? fileSet.getRoot() : null;
+    }
+    DirectoryInfo info = getInfoForFileOrDirectory(file);
+    if (isFileInContent(file, info)) {
+      return getSourceRootForFile(file, info);
+    }
+    return getClassRootForFile(file, info);
+  }
+
   @Override
   public boolean isInSourceContent(@NotNull VirtualFile fileOrDir) {
     if (myWorkspaceFileIndex != null) {

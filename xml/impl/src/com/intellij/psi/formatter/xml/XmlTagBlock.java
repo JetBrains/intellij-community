@@ -169,7 +169,11 @@ public class XmlTagBlock extends AbstractXmlBlock {
 
   @Override
   @Nullable
-  protected ASTNode processChild(List<Block> result, final ASTNode child, final Wrap wrap, final Alignment alignment, final Indent indent) {
+  protected ASTNode processChild(@NotNull List<Block> result,
+                                 final @NotNull ASTNode child,
+                                 final Wrap wrap,
+                                 final Alignment alignment,
+                                 final Indent indent) {
     IElementType type = child.getElementType();
     if (type == XmlElementType.XML_TEXT) {
       List<Block> injections = new SmartList<>();

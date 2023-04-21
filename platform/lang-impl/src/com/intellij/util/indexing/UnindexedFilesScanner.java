@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
@@ -79,7 +80,7 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
   protected final Project myProject;
   private final boolean myStartSuspended;
   private final boolean myOnProjectOpen;
-  private final @NonNls String myIndexingReason;
+  private final @NotNull @NonNls String myIndexingReason;
   private final @NotNull ScanningType myScanningType;
   private final PushedFilePropertiesUpdater myPusher;
   private final @Nullable StatusMark myProvidedStatusMark;
@@ -95,7 +96,7 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
     myProject = project;
     myStartSuspended = startSuspended;
     myOnProjectOpen = onProjectOpen;
-    myIndexingReason = indexingReason;
+    myIndexingReason = (indexingReason != null) ? indexingReason : "<unknown>";
     myScanningType = scanningType;
     myPusher = PushedFilePropertiesUpdater.getInstance(myProject);
     myProvidedStatusMark = predefinedIndexableFilesIterators == null ? null : mark;
@@ -217,7 +218,7 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
     if (!IndexInfrastructure.hasIndices()) {
       return;
     }
-    LOG.info("Started scanning for indexing of " + myProject.getName() + (myIndexingReason == null ? "" : ". Reason: " + myIndexingReason));
+    LOG.info("Started scanning for indexing of " + myProject.getName() + ". Reason: " + myIndexingReason);
 
     ProgressSuspender suspender = ProgressSuspender.getSuspender(indicator);
     if (suspender != null) {
@@ -373,6 +374,15 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
           provider.iterateFiles(project, collectingIterator, thisProviderDeduplicateFilter);
           perProviderSink.commit();
         }
+        catch (ProcessCanceledException pce) {
+          throw pce;
+        }
+        catch (Exception e) {
+          // CollectingIterator should skip failing files by itself. But if provider.iterateFiles cannot iterate files and throws exception,
+          // we want to ignore whole origin and let other origins to complete normally.
+          LOG.error("Error while scanning files of " + provider.getDebugName() + "\n" +
+                    "To reindex files under this origin IDEA has to be restarted", e);
+        }
         finally {
           scanningStatistics.setNumberOfSkippedFiles(thisProviderDeduplicateFilter.getNumberOfSkippedFiles());
           synchronized (allTasksFinished) {
@@ -453,6 +463,21 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
       if (subTaskIndicator.isCanceled()) {
         return false;
       }
+
+      try {
+        processFileRethrowExceptions(fileOrDir);
+      }
+      catch (ProcessCanceledException pce) {
+        throw pce;
+      }
+      catch (Exception e) {
+        LOG.error("Error while scanning " + fileOrDir.getPresentableUrl() + "\n" +
+                                     "To reindex this file IDEA has to be restarted", e);
+      }
+      return true;
+    }
+
+    private void processFileRethrowExceptions(@NotNull VirtualFile fileOrDir) {
       long scanningStart = System.nanoTime();
       PushedFilePropertiesUpdaterImpl.applyScannersToFile(fileOrDir, fileScannerVisitors);
       if (pushers != null && pushedFilePropertiesUpdater instanceof PushedFilePropertiesUpdaterImpl) {
@@ -477,7 +502,6 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
         scanningStatistics.addStatus(fileOrDir, status, statusTime, project);
       }
       scanningStatistics.addScanningTime(System.nanoTime() - scanningStart);
-      return true;
     }
   }
 

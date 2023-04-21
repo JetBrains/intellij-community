@@ -8,6 +8,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElementVisitor;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
@@ -16,7 +17,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 public class DeprecationInspection extends DeprecationInspectionBase {
   public static final String SHORT_NAME = DeprecationUtil.DEPRECATION_SHORT_NAME;
   public static final String ID = DeprecationUtil.DEPRECATION_ID;
-  public static final String IGNORE_METHODS_OF_DEPRECATED_NAME = "IGNORE_METHODS_OF_DEPRECATED";
+  @Language("jvm-field-name") public static final String IGNORE_METHODS_OF_DEPRECATED_NAME = "IGNORE_METHODS_OF_DEPRECATED";
 
   public boolean IGNORE_INSIDE_DEPRECATED = true;
   public boolean IGNORE_ABSTRACT_DEPRECATED_OVERRIDES = true;

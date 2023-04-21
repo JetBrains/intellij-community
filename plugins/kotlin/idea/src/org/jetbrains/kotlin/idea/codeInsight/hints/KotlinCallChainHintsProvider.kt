@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.types.isError
 open class KotlinCallChainHintsProvider : AbstractCallChainHintsProvider<KtQualifiedExpression, KotlinType, BindingContext>() {
 
     override val group: InlayGroup
-        get() = InlayGroup.TYPES_GROUP
+        get() = InlayGroup.METHOD_CHAINS_GROUP
 
     override val previewText: String
         get() = """
@@ -65,7 +65,7 @@ open class KotlinCallChainHintsProvider : AbstractCallChainHintsProvider<KtQuali
     override fun getCaseDescription(case: ImmediateConfigurable.Case): String? = case.extendedDescription
 
     override fun createFile(project: Project, fileType: FileType, document: Document): PsiFile =
-        KotlinAbstractHintsProvider.createKtFile(project, document, fileType)
+        createKtFile(project, document, fileType)
 
     override fun KotlinType.getInlayPresentation(
         expression: PsiElement,
@@ -76,7 +76,7 @@ open class KotlinCallChainHintsProvider : AbstractCallChainHintsProvider<KtQuali
         val inlayInfoDetails = HintsTypeRenderer
             .getInlayHintsTypeRenderer(context, expression as? KtElement ?: error("Only Kotlin psi are possible"))
             .renderTypeIntoInlayInfo(this)
-        return KotlinAbstractHintsProvider.getInlayPresentationForInlayInfoDetails(
+        return getInlayPresentationForInlayInfoDetails(
             expression,
             null,
             InlayInfoDetails(InlayInfo("", expression.textRange.endOffset), inlayInfoDetails),

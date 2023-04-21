@@ -70,6 +70,27 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
   }
 
   @Test
+  public void singleRecordWritten_AndCleaned_ReadsBackAsAllZeroes() throws Exception {
+    final int recordId = storage.allocateRecord();
+    final FSRecord recordOriginal = generateRecordFields(recordId);
+
+    recordOriginal.updateInStorage(storage);
+    storage.cleanRecord(recordId);
+    final FSRecord recordReadBack = FSRecord.readFromStorage(storage, recordOriginal.id);
+
+    //all fields are 0:
+    assertEquals("Cleaned record must have parent=0", recordReadBack.parentRef, 0);
+    assertEquals("Cleaned record must have name=0", recordReadBack.nameRef, 0);
+    assertEquals("Cleaned record must have flags=0", recordReadBack.flags, 0);
+    assertEquals("Cleaned record must have content=0", recordReadBack.contentRef, 0);
+    assertEquals("Cleaned record must have attribute=0", recordReadBack.attributeRef, 0);
+    assertEquals("Cleaned record must have length=0", recordReadBack.length, 0);
+    assertEquals("Cleaned record must have timestamp=0", recordReadBack.timestamp, 0);
+    assertEquals("Cleaned record must have modCount=0", recordReadBack.modCount, 0);
+  }
+
+
+  @Test
   public void manyRecordsWritten_CouldBeReadBackUnchanged() throws Exception {
     final FSRecord[] records = new FSRecord[maxRecordsToInsert];
 

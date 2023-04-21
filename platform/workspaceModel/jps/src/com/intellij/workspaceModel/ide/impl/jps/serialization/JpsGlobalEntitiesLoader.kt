@@ -4,7 +4,7 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable
-import com.intellij.workspaceModel.ide.JpsFileEntitySource
+import com.intellij.workspaceModel.ide.JpsGlobalFileEntitySource
 import com.intellij.workspaceModel.ide.getGlobalInstance
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -19,7 +19,7 @@ object JpsGlobalEntitiesSerializers {
     if (prohibited) return null
     val virtualFileUrlManager = VirtualFileUrlManager.getGlobalInstance()
     val globalLibrariesFile = virtualFileUrlManager.fromUrl(PathManager.getOptionsFile(ApplicationLibraryTable.getExternalFileName()).absolutePath)
-    val globalLibrariesEntitySource = JpsFileEntitySource.ExactGlobalFile(globalLibrariesFile)
+    val globalLibrariesEntitySource = JpsGlobalFileEntitySource(globalLibrariesFile)
     return JpsGlobalLibrariesFileSerializer(globalLibrariesEntitySource)
   }
 

@@ -9,12 +9,11 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.*
 import org.jetbrains.kotlin.asJava.elements.KtLightFieldForSourceDeclarationSupport
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.inspections.MayBeConstantInspection.Status.*
 import org.jetbrains.kotlin.idea.quickfix.AddConstModifierFix
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
-
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class FakeJvmFieldConstantInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
@@ -55,7 +54,7 @@ class FakeJvmFieldConstantInspection : AbstractKotlinInspection() {
     }
 
     private fun checkAssignmentChildren(right: PsiExpression, leftType: PsiPrimitiveType, holder: ProblemsHolder) {
-        if (leftType == PsiType.BOOLEAN || leftType == PsiType.CHAR || leftType == PsiType.VOID) return
+        if (leftType == PsiTypes.booleanType() || leftType == PsiTypes.charType() || leftType == PsiTypes.voidType()) return
         right.forEachDescendantOfType<PsiExpression>(canGoInside = { parentElement ->
             parentElement !is PsiCallExpression && parentElement !is PsiTypeCastExpression
         }) { rightPart ->

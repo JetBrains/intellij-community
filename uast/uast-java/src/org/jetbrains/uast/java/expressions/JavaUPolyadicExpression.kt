@@ -16,6 +16,7 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiPolyadicExpression
+import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
@@ -31,5 +32,5 @@ class JavaUPolyadicExpression(
 
   override val operands: List<UExpression> = PsiArrayToUElementListMappingView(sourcePsi.operands) { JavaConverter.convertOrEmpty(it, this) }
 
-  override val operator: UastBinaryOperator by lz { sourcePsi.operationTokenType.getOperatorType() }
+  override val operator: UastBinaryOperator by lazyPub { sourcePsi.operationTokenType.getOperatorType() }
 }

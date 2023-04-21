@@ -33,4 +33,8 @@ class BaseProjectDirectoriesImpl(project: Project) : BaseProjectDirectories() {
   override fun getBaseDirectories(): Sequence<VirtualFile> {
     return contentRoots.getRootSequence()
   }
+
+  override fun getBaseDirectoryFor(virtualFile: VirtualFile): VirtualFile? {
+    return contentRoots.getAncestors(virtualFile).firstOrNull()
+  }
 }

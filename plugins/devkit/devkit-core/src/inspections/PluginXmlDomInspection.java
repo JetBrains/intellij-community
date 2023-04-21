@@ -662,9 +662,9 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     }
 
     String epName = fragments.get(fragments.size() - 1);
-    fragments.remove(fragments.size() - 1);
+    List<String> butlast = fragments.subList(0, fragments.size() - 1);
     List<String> words = StringUtil.getWordsIn(epName);
-    return !ContainerUtil.exists(words, w -> ContainerUtil.exists(fragments, f -> StringUtil.equalsIgnoreCase(w, f)));
+    return !ContainerUtil.exists(words, w -> ContainerUtil.exists(butlast, f -> StringUtil.equalsIgnoreCase(w, f)));
   }
 
   private static void annotateExtensions(Extensions extensions, DomElementAnnotationHolder holder) {
@@ -1035,7 +1035,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       .setContainingClass(JavaPsiFacade.getInstance(actionGroupClass.getProject()).findClass(ActionGroup.class.getName(),
                                                                                              actionGroupClass.getResolveScope()))
       .setModifiers(PsiModifier.PUBLIC)
-      .setMethodReturnType(PsiType.BOOLEAN)
+      .setMethodReturnType(PsiTypes.booleanType())
       .addParameter("context", DataContext.class.getName());
 
     PsiMethod overriddenCanBePerformedMethod = actionGroupClass.findMethodBySignature(canBePerformedMethod, false);

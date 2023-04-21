@@ -104,6 +104,48 @@ public abstract class IndexedContainer {
     return null;
   }
 
+  /**
+   * Use to create IndexedContainer for the next case:
+   * <pre>{@code
+   *  int[] newArray = new int[arrayLength];
+   *  for (int i=0; i < arrayLength; i++) {
+   *    newArray[i] = 0;
+   *  }
+   * }</pre>
+   * Additionally, the method that newArray and arrayLength are not reassigned
+   *
+   * @param arrayAccessExpression expression to create an IndexedContainer from
+   * @param bound                 reference to arrayLength
+   * @return newly created IndexedContainer or null if it is impossible to resolve it
+   */
+  @Nullable
+  public static IndexedContainer arrayContainerWithBound(@NotNull PsiArrayAccessExpression arrayAccessExpression,
+                                                         @NotNull PsiExpression bound) {
+    PsiExpression arrayExpression = arrayAccessExpression.getArrayExpression();
+    if (arrayExpression instanceof PsiReferenceExpression reference &&
+        reference.resolve() instanceof PsiVariable arrayVariable) {
+      PsiExpression initializer = arrayVariable.getInitializer();
+      if (!(initializer instanceof PsiNewExpression newExpression)) {
+        return null;
+      }
+      PsiExpression[] dimensions = newExpression.getArrayDimensions();
+      if (dimensions.length != 1) {
+        return null;
+      }
+      PsiExpression dimension = dimensions[0];
+      PsiVariable dimensionVariable = ExpressionUtils.resolveVariable(dimension);
+      PsiVariable boundVariable = ExpressionUtils.resolveVariable(bound);
+      if (dimensionVariable == null || boundVariable == null || !dimensionVariable.isEquivalentTo(boundVariable)) {
+        return null;
+      }
+      if ((VariableAccessUtils.variableIsAssigned(dimensionVariable)) ||
+          (VariableAccessUtils.variableIsAssigned(arrayVariable))) {
+        return null;
+      }
+    }
+    return new ArrayIndexedContainer(arrayExpression);
+  }
+
   static class ArrayIndexedContainer extends IndexedContainer {
     ArrayIndexedContainer(@NotNull PsiExpression qualifier) {
       super(qualifier);
@@ -155,7 +197,7 @@ public abstract class IndexedContainer {
       if (!"get".equals(methodReference.getReferenceName())) return false;
       if (!isQualifierEquivalent(ExpressionUtils.getEffectiveQualifier(methodReference))) return false;
       PsiMethod method = ObjectUtils.tryCast(methodReference.resolve(), PsiMethod.class);
-      return method != null && MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_LIST, null, "get", PsiType.INT);
+      return method != null && MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_LIST, null, "get", PsiTypes.intType());
     }
 
     @Override
@@ -191,11 +233,11 @@ public abstract class IndexedContainer {
     }
 
     static boolean isGetCall(PsiMethodCallExpression call) {
-      return MethodCallUtils.isCallToMethod(call, CommonClassNames.JAVA_UTIL_LIST, null, "get", PsiType.INT);
+      return MethodCallUtils.isCallToMethod(call, CommonClassNames.JAVA_UTIL_LIST, null, "get", PsiTypes.intType());
     }
 
     static boolean isSizeCall(PsiMethodCallExpression call) {
-      return MethodCallUtils.isCallToMethod(call, CommonClassNames.JAVA_UTIL_LIST, PsiType.INT, "size");
+      return MethodCallUtils.isCallToMethod(call, CommonClassNames.JAVA_UTIL_LIST, PsiTypes.intType(), "size");
     }
   }
 }

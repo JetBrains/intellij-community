@@ -415,7 +415,7 @@ public final class FormatDecode {
     @Override
     public boolean valid(PsiType type) {
       final String text = type.getCanonicalText();
-      return PsiType.LONG.equals(type) ||
+      return PsiTypes.longType().equals(type) ||
              CommonClassNames.JAVA_LANG_LONG.equals(text) ||
              InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_DATE) ||
              InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_CALENDAR) ||
@@ -444,7 +444,8 @@ public final class FormatDecode {
 
     @Override
     public boolean valid(PsiType type) {
-      if (PsiType.CHAR.equals(type) || PsiType.BYTE.equals(type) || PsiType.SHORT.equals(type) || PsiType.INT.equals(type)) {
+      if (PsiTypes.charType().equals(type) || PsiTypes.byteType().equals(type) || PsiTypes.shortType().equals(type) || PsiTypes.intType()
+        .equals(type)) {
         return true;
       }
       final String text = type.getCanonicalText();
@@ -464,13 +465,13 @@ public final class FormatDecode {
     @Override
     public boolean valid(PsiType type) {
       final String text = type.getCanonicalText();
-      return PsiType.INT.equals(type) ||
+      return PsiTypes.intType().equals(type) ||
              CommonClassNames.JAVA_LANG_INTEGER.equals(text) ||
-             PsiType.LONG.equals(type) ||
+             PsiTypes.longType().equals(type) ||
              CommonClassNames.JAVA_LANG_LONG.equals(text) ||
-             PsiType.SHORT.equals(type) ||
+             PsiTypes.shortType().equals(type) ||
              CommonClassNames.JAVA_LANG_SHORT.equals(text) ||
-             PsiType.BYTE.equals(type) ||
+             PsiTypes.byteType().equals(type) ||
              CommonClassNames.JAVA_LANG_BYTE.equals(text) ||
              "java.math.BigInteger".equals(text);
     }
@@ -485,9 +486,9 @@ public final class FormatDecode {
     @Override
     public boolean valid(PsiType type) {
       final String text = type.getCanonicalText();
-      return PsiType.DOUBLE.equals(type) ||
+      return PsiTypes.doubleType().equals(type) ||
              CommonClassNames.JAVA_LANG_DOUBLE.equals(text) ||
-             PsiType.FLOAT.equals(type) ||
+             PsiTypes.floatType().equals(type) ||
              CommonClassNames.JAVA_LANG_FLOAT.equals(text) ||
              "java.math.BigDecimal".equals(text);
     }

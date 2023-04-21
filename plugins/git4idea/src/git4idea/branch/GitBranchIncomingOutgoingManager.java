@@ -339,8 +339,8 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
     }
 
     VcsFileUtil.chunkArguments(branchRefNames).forEach(refs -> {
-      List<String> params = ContainerUtil.newArrayList("--heads", remote.getName()); //NON-NLS
-      params.addAll(refs);
+      List<String> params = ContainerUtil.concat(List.of("--heads", remote.getName()), //NON-NLS
+      refs);
       GitCommandResult lsRemoteResult =
         Git.getInstance().runCommand(() -> createLsRemoteHandler(repository, remote, params, authenticationMode));
       if (lsRemoteResult.success()) {

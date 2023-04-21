@@ -44,7 +44,7 @@ class AntUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
     antBuildFiles.forEach { antConfiguration.addBuildFile(it) }
     if (antBuildFiles.isNotEmpty()) {
       val window = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.ANT_BUILD)
-                   ?: ActivateAntToolWindowAction.createToolWindow(project)
+                   ?: ActivateAntToolWindowAction.Manager.createToolWindow(project)
       window.activate(null)
     }
   }

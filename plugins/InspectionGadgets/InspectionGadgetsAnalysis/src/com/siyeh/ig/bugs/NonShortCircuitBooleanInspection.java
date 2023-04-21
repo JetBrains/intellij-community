@@ -129,7 +129,7 @@ public class NonShortCircuitBooleanInspection extends BaseInspection {
       if (type == null) {
         return;
       }
-      if (!type.equals(PsiType.BOOLEAN)) {
+      if (!type.equals(PsiTypes.booleanType())) {
         return;
       }
       registerError(expression);

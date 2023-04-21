@@ -4,6 +4,7 @@ package com.siyeh.ig.numeric;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -21,12 +22,12 @@ public class DoubleLiteralMayBeFloatLiteralInspection extends CastedLiteralMaybe
   @NotNull
   @Override
   PsiType getTypeBeforeCast() {
-    return PsiType.DOUBLE;
+    return PsiTypes.doubleType();
   }
 
   @NotNull
   @Override
   PsiPrimitiveType getCastType() {
-    return PsiType.FLOAT;
+    return PsiTypes.floatType();
   }
 }

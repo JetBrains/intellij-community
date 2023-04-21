@@ -18,8 +18,7 @@ public class UtilityClassModifierProcessor implements ModifierProcessor {
   public static boolean isModifierListSupported(@NotNull PsiModifierList modifierList) {
     PsiElement modifierListParent = modifierList.getParent();
 
-    if (modifierListParent instanceof PsiClass) {
-      PsiClass parentClass = (PsiClass) modifierListParent;
+    if (modifierListParent instanceof PsiClass parentClass) {
       if (PsiAnnotationSearchUtil.isAnnotatedWith(parentClass, LombokClassNames.UTILITY_CLASS)) {
         return UtilityClassProcessor.validateOnRightType(parentClass, new ProblemValidationSink());
       }
@@ -44,8 +43,7 @@ public class UtilityClassModifierProcessor implements ModifierProcessor {
     final PsiElement parent = modifierList.getParent();
 
     // FINAL
-    if (parent instanceof PsiClass) {
-      PsiClass psiClass = (PsiClass) parent;
+    if (parent instanceof PsiClass psiClass) {
       if (PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, LombokClassNames.UTILITY_CLASS)) {
         modifiers.add(PsiModifier.FINAL);
       }

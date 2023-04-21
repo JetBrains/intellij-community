@@ -31,13 +31,4 @@ class JupyterProgressBarUI : DarculaProgressBarUI() {
     val editor = getEditor(c)
     return editor?.notebookAppearance?.getCodeCellBackground(editor.colorsScheme) ?: Color.GRAY
   }
-
-  override fun getPreferredSize(c: JComponent?): Dimension {
-    val editor = getEditor(c)
-    if (editor != null) {
-      val notebookAppearance = editor.notebookAppearance
-      return Dimension(max(super.getPreferredSize(c)?.width ?: 0, editor.scrollingModel.visibleArea.width), notebookAppearance.PROGRESS_STATUS_HEIGHT)
-    }
-    return super.getPreferredSize(c)
-  }
 }

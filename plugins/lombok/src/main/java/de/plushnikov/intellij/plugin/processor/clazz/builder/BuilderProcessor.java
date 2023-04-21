@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.clazz.builder;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
@@ -11,11 +12,9 @@ import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Inspect and validate @Builder lombok annotation on a class.
@@ -42,21 +41,12 @@ public class BuilderProcessor extends AbstractClassProcessor {
   }
 
   @Override
-  protected boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
-                                                   @NotNull PsiAnnotation psiAnnotation) {
-    if (null == nameHint) {
-      return true;
-    }
+  protected Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+    final BuilderHandler builderHandler = getBuilderHandler();
 
-    boolean possibleMatchFound = Objects.equals(nameHint, psiClass.getName());
-    if (!possibleMatchFound) {
-      possibleMatchFound = Objects.equals(nameHint, BuilderHandler.TO_BUILDER_METHOD_NAME);
-      if (!possibleMatchFound) {
-        final String builderMethodName = getBuilderHandler().getBuilderMethodName(psiAnnotation);
-        possibleMatchFound = Objects.equals(nameHint, builderMethodName);
-      }
-    }
-    return possibleMatchFound;
+    final String builderMethodName = builderHandler.getBuilderMethodName(psiAnnotation);
+    final String constructorName = StringUtil.notNullize(psiClass.getName());
+    return List.of(builderMethodName, BuilderHandler.TO_BUILDER_METHOD_NAME, constructorName);
   }
 
   @NotNull

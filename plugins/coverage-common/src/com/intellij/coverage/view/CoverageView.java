@@ -4,6 +4,7 @@ package com.intellij.coverage.view;
 import com.intellij.CommonBundle;
 import com.intellij.coverage.CoverageBundle;
 import com.intellij.coverage.CoverageDataManager;
+import com.intellij.coverage.CoverageLogger;
 import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
@@ -17,6 +18,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -25,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -44,6 +47,7 @@ import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,23 +71,27 @@ import java.util.List;
 public class CoverageView extends BorderLayoutPanel implements DataProvider, Disposable {
   @NonNls private static final String ACTION_DRILL_DOWN = "DrillDown";
   @NonNls public static final String HELP_ID = "reference.toolWindows.Coverage";
+  public static final Icon FILTER_ICON = AllIcons.General.Filter;
 
   private final CoverageTableModel myModel;
   private final JBTreeTable myTable;
   private final Project myProject;
   private final CoverageViewManager.StateBean myStateBean;
+  private final CoverageSuitesBundle mySuitesBundle;
   private final CoverageViewExtension myViewExtension;
   private final CoverageViewTreeStructure myTreeStructure;
+  private boolean myHasVCSFilter = false;
+  private boolean myHasFullyCoveredFilter = false;
 
 
   public CoverageView(final Project project, final CoverageDataManager dataManager, CoverageViewManager.StateBean stateBean) {
     myProject = project;
     myStateBean = stateBean;
-    final CoverageSuitesBundle suitesBundle = dataManager.getCurrentSuitesBundle();
-    myViewExtension = suitesBundle.getCoverageEngine().createCoverageViewExtension(myProject, suitesBundle, myStateBean);
-    myTreeStructure = new CoverageViewTreeStructure(project, suitesBundle, stateBean);
+    mySuitesBundle = dataManager.getCurrentSuitesBundle();
+    myViewExtension = mySuitesBundle.getCoverageEngine().createCoverageViewExtension(myProject, mySuitesBundle, myStateBean);
+    myTreeStructure = new CoverageViewTreeStructure(project, mySuitesBundle, stateBean);
 
-    myModel = new CoverageTableModel(suitesBundle, stateBean, project, myTreeStructure);
+    myModel = new CoverageTableModel(mySuitesBundle, stateBean, project, myTreeStructure);
     Disposer.register(this, myModel);
     myTable = new JBTreeTable(myModel);
     TreeUtil.expand(myTable.getTree(), 2);
@@ -111,7 +119,43 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     });
     setUpShowRootNode();
 
-    addEmptyCoverageText(project, suitesBundle);
+    final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(CoverageViewManager.TOOLWINDOW_ID);
+    final boolean isHorizontalView = toolWindow != null && toolWindow.getAnchor().isHorizontal();
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("CoverageView", createToolbarActions(), !isHorizontalView);
+    actionToolbar.setTargetComponent(myTable);
+    final JComponent toolbarComponent = actionToolbar.getComponent();
+    if (isHorizontalView) {
+      addToLeft(toolbarComponent);
+    }
+    else {
+      addToTop(toolbarComponent);
+    }
+    CoverageLogger.logViewOpen(project, myStateBean.isShowOnlyModified(), myHasVCSFilter, myStateBean.isHideFullyCovered(), myHasFullyCoveredFilter);
+
+    setUpEmptyText(false, false);
+    if (myTreeStructure.getRootElement() instanceof CoverageListRootNode root) {
+      root.getState().afterChange(this, state -> {
+        if (state.myHasVCSFilteredChildren && myStateBean.isShowOnlyModified()
+            && myStateBean.isDefaultFilters()) {
+          if (root.getChildren().isEmpty()) {
+            myStateBean.setShowOnlyModified(false);
+            resetView();
+            return Unit.INSTANCE;
+          } else {
+            final String message = CoverageBundle.message("coverage.filter.gotit", myViewExtension.getElementsName());
+            final GotItTooltip gotIt = new GotItTooltip("coverage.view.elements.filter", message, this);
+            if (gotIt.canShow()) {
+              final JComponent filterAction = findToolbarActionButtonWithIcon(actionToolbar, FILTER_ICON);
+              if (filterAction != null) {
+                gotIt.show(filterAction, GotItTooltip.BOTTOM_MIDDLE);
+              }
+            }
+          }
+        }
+        setUpEmptyText(state.myHasVCSFilteredChildren, state.myHasFullyCoveredChildren);
+        return Unit.INSTANCE;
+      });
+    }
     final CoverageRowSorter rowSorter = new CoverageRowSorter(myTable, myModel);
     myTable.setRowSorter(rowSorter);
     if (stateBean.mySortingColumn < 0 || stateBean.mySortingColumn >= myModel.getColumnCount()) {
@@ -147,20 +191,10 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
         enterSelected(true);
       }
     });
-    final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(CoverageViewManager.TOOLWINDOW_ID);
-    final boolean isHorizontalView = toolWindow != null && toolWindow.getAnchor().isHorizontal();
-    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("CoverageView", createToolbarActions(), !isHorizontalView);
-    actionToolbar.setTargetComponent(myTable);
-    final JComponent toolbarComponent = actionToolbar.getComponent();
-    if (isHorizontalView) {
-      addToLeft(toolbarComponent);
-    }
-    else {
-      addToTop(toolbarComponent);
-    }
   }
 
   private void setUpShowRootNode() {
+    final var showFull = new Ref<>(false);
     myModel.addTreeModelListener(new TreeModelListener() {
       @Override
       public void treeNodesChanged(TreeModelEvent e) {
@@ -184,7 +218,11 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
       private void setUpRootVisible(TreeModelEvent e) {
         final Object root = myModel.getRoot();
         if (e.getTreePath().getLastPathComponent() == root) {
-          final boolean showRoot = myModel.getChildCount(root) > 1;
+          final int childCount = myModel.getChildCount(root);
+          final boolean showRoot = childCount > 1 || childCount == 1 && showFull.get();
+          if (showRoot && !myStateBean.isShowOnlyModified() && !myStateBean.isHideFullyCovered()) {
+            showFull.set(true);
+          }
           if (showRoot != myTable.getTree().isRootVisible()) {
             myTable.getTree().setRootVisible(showRoot);
           }
@@ -208,24 +246,37 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     FileStatusManager.getInstance(myProject).addFileStatusListener(fileStatusListener, this);
   }
 
-  private void addEmptyCoverageText(Project project, CoverageSuitesBundle suitesBundle) {
+  private void setUpEmptyText(boolean hasVcsFiltered, boolean hasFullyCovered) {
+    myTable.getTree().getEmptyText().clear();
     final StatusText emptyText = myTable.getTable().getEmptyText();
     emptyText.setText(CoverageBundle.message("coverage.view.no.coverage.results"));
-    final RunConfigurationBase<?> configuration = suitesBundle.getRunConfiguration();
+    final RunConfigurationBase<?> configuration = mySuitesBundle.getRunConfiguration();
     if (configuration != null) {
-      emptyText.appendText(" " + CoverageBundle.message("coverage.view.edit.run.configuration.0") + " ");
+      emptyText.appendLine(CoverageBundle.message("coverage.view.edit.run.configuration.0") + " ");
       emptyText.appendText(CoverageBundle.message("coverage.view.edit.run.configuration.1"), SimpleTextAttributes.LINK_ATTRIBUTES, e -> {
-        final RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(project).findSettings(configuration);
+        final RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(myProject).findSettings(configuration);
         if (configurationSettings != null) {
-          RunDialog.editConfiguration(project, configurationSettings,
+          RunDialog.editConfiguration(myProject, configurationSettings,
                                       ExecutionBundle.message("edit.run.configuration.for.item.dialog.title", configuration.getName()));
         }
         else {
-          Messages.showErrorDialog(project, CoverageBundle.message("coverage.view.configuration.was.not.found", configuration.getName()),
+          Messages.showErrorDialog(myProject, CoverageBundle.message("coverage.view.configuration.was.not.found", configuration.getName()),
                                    CommonBundle.getErrorTitle());
         }
       });
       emptyText.appendText(" " + CoverageBundle.message("coverage.view.edit.run.configuration.2"));
+    }
+    if (hasVcsFiltered && myStateBean.isShowOnlyModified()) {
+      emptyText.appendLine(CoverageBundle.message("coverage.show.unmodified.elements", myViewExtension.getElementsName()), SimpleTextAttributes.LINK_ATTRIBUTES, e -> {
+        myStateBean.setShowOnlyModified(false);
+        resetView();
+      });
+    }
+    if (hasFullyCovered && myStateBean.isHideFullyCovered()) {
+      emptyText.appendLine(CoverageBundle.message("coverage.show.fully.covered.elements", myViewExtension.getElementsName()), SimpleTextAttributes.LINK_ATTRIBUTES, e -> {
+        myStateBean.setHideFullyCovered(false);
+        resetView();
+      });
     }
   }
 
@@ -306,12 +357,6 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     if (myViewExtension.supportFlattenPackages()) {
       actionGroup.add(new FlattenPackagesAction());
-      actionGroup.add(new HideFullyCoveredAction());
-    }
-    if (ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) {
-      actionGroup.add(new ShowOnlyModifiedAction());
-    } else {
-      myStateBean.myShowOnlyModified = false;
     }
 
     installAutoScrollToSource(actionGroup);
@@ -321,6 +366,32 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
     List<AnAction> extraActions = myViewExtension.createExtraToolbarActions();
     extraActions.forEach(actionGroup::add);
+
+
+    boolean hasFilters = false;
+    final DefaultActionGroup filtersActionGroup = new DefaultActionGroup();
+    if (ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) {
+      filtersActionGroup.add(new ShowOnlyModifiedAction());
+      hasFilters = true;
+      myHasVCSFilter = true;
+    }
+    else {
+      myStateBean.setShowOnlyModified(false);
+    }
+    if (myViewExtension.supportFlattenPackages()) {
+      filtersActionGroup.add(new HideFullyCoveredAction());
+      hasFilters = true;
+      myHasFullyCoveredFilter = true;
+    }
+    else {
+      myStateBean.setHideFullyCovered(false);
+    }
+    if (hasFilters) {
+      filtersActionGroup.setPopup(true);
+      filtersActionGroup.getTemplatePresentation().setIcon(FILTER_ICON);
+      filtersActionGroup.getTemplatePresentation().setText(CoverageBundle.messagePointer("coverage.view.filters.group"));
+      actionGroup.add(filtersActionGroup);
+    }
 
     return actionGroup;
   }
@@ -431,19 +502,17 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   private final class HideFullyCoveredAction extends ToggleAction {
 
     private HideFullyCoveredAction() {
-      super(CoverageBundle.messagePointer("coverage.hide.fully.covered.elements"),
-            CoverageBundle.messagePointer("coverage.hide.fully.covered.elements.comment"),
-            AllIcons.General.Filter);
+      super(CoverageBundle.messagePointer("coverage.hide.fully.covered.elements", myViewExtension.getElementsCapitalisedName()));
     }
 
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
-      return myStateBean.myHideFullyCovered;
+      return myStateBean.isHideFullyCovered();
     }
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      myStateBean.myHideFullyCovered = state;
+      myStateBean.setHideFullyCovered(state);
       resetView();
     }
 
@@ -456,19 +525,17 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   private final class ShowOnlyModifiedAction extends ToggleAction {
 
     private ShowOnlyModifiedAction() {
-      super(CoverageBundle.messagePointer("coverage.show.only.modified.elements"),
-            CoverageBundle.messagePointer("coverage.show.only.modified.elements.comment"),
-            AllIcons.Vcs.Branch);
+      super(CoverageBundle.messagePointer("coverage.show.only.modified.elements", myViewExtension.getElementsCapitalisedName()));
     }
 
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
-      return myStateBean.myShowOnlyModified;
+      return myStateBean.isShowOnlyModified();
     }
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      myStateBean.myShowOnlyModified = state;
+      myStateBean.setShowOnlyModified(state);
       resetView();
     }
 
@@ -545,5 +612,12 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
         }
       }
     }
+  }
+
+  private static JComponent findToolbarActionButtonWithIcon(ActionToolbar toolbar, Icon icon) {
+    return UIUtil.uiTraverser(toolbar.getComponent())
+      .filter(ActionButton.class)
+      .filter(button -> button.getIcon() == icon)
+      .first();
   }
 }

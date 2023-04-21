@@ -21,7 +21,13 @@ abstract class LoggingInspectionTestBase : UastInspectionTestBase() {
       }
       public interface Logger { 
          void info(String format, Object... arguments); 
+         void debug(String format, Object... arguments); 
+         void warn(String format, Object... arguments); 
+         boolean isDebugEnabled();
+         boolean isInfoEnabled();
          LoggingEventBuilder atInfo(); 
+         LoggingEventBuilder atDebug(); 
+         LoggingEventBuilder atWarn(); 
          LoggingEventBuilder atError(); 
       }
     """.trimIndent())
@@ -29,12 +35,20 @@ abstract class LoggingInspectionTestBase : UastInspectionTestBase() {
       package org.apache.logging.log4j;
       import org.apache.logging.log4j.util.Supplier;
       public interface Logger {
+        boolean isDebugEnabled();
+        boolean isInfoEnabled();
         void info(String message, Object... params);
+        void debug(String message, Object... params);
+        void warn(String message, Object... params);
         void info(String message);
+        void debug(String message);
+        void warn(String message);
         void fatal(String message, Object... params);
         void error(Supplier<?> var1, Throwable var2);
         void info(String message, Supplier<?>... params);
         LogBuilder atInfo();
+        LogBuilder atDebug();
+        LogBuilder atWarn();
         LogBuilder atFatal();
         LogBuilder atError();
       }

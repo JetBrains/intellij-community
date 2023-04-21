@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.PsiWildcardType
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
@@ -22,7 +23,7 @@ class FunctionalExpressionConstraint(private val expression: GrFunctionalExpress
     if (TypesUtil.isClassType(leftType, GROOVY_LANG_CLOSURE)) {
       val parameters = leftType.parameters
       if (parameters.size != 1) return true
-      if (returnType == null || returnType == PsiType.VOID) {
+      if (returnType == null || returnType == PsiTypes.voidType()) {
         return true
       }
       constraints.add(TypeConstraint(unwrapWildcard(parameters[0]), returnType, expression))

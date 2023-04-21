@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -186,7 +185,7 @@ public class WrapExpressionFix implements IntentionAction {
       for (int j = 0; j < expressions.length; j++) {
         PsiExpression expression = expressions[j];
         final PsiType exprType = expression.getType();
-        if (exprType != null && !PsiType.NULL.equals(exprType)) {
+        if (exprType != null && !PsiTypes.nullType().equals(exprType)) {
           PsiType paramType = parameters[Math.min(j, parameters.length - 1)].getType();
           if (paramType instanceof PsiEllipsisType) {
             paramType = ((PsiEllipsisType)paramType).getComponentType();

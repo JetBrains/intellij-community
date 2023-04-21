@@ -406,6 +406,9 @@ public final class JpsProjectLoader extends JpsLoaderBase {
           Element rootManager = componentsByName.get("NewModuleRootManager");
           Element additionalElements = componentsByName.get("AdditionalModuleElements");
           if (rootManager != null && additionalElements != null) {
+            // Cleanup attributes that aren't needed
+            additionalElements.removeAttribute("name");
+            additionalElements.getChildren().forEach(o -> o.removeAttribute("dumb"));
             JDOMUtil.deepMerge(rootManager, additionalElements);
           }
         }

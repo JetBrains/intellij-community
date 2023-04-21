@@ -22,12 +22,20 @@ import java.time.Instant
 fun SettingsSnapshot.assertSettingsSnapshot(buildExpectedSnapshot: SettingsSnapshotBuilder.() -> Unit) {
   val settingsSnapshotBuilder = SettingsSnapshotBuilder()
   settingsSnapshotBuilder.buildExpectedSnapshot()
-  assertFileStates(settingsSnapshotBuilder.fileStates, fileStates)
-  assertFileStates(settingsSnapshotBuilder.additionalFiles, additionalFiles)
-  assertEquals(settingsSnapshotBuilder.plugins, plugins?.plugins ?: emptyMap<PluginId, PluginData>())
+  val expectedSnapshot = SettingsSnapshot(metaInfo, settingsSnapshotBuilder.fileStates,
+                                        SettingsSyncPluginsState(settingsSnapshotBuilder.plugins),
+                                        settingsSnapshotBuilder.settingsFromProviders, settingsSnapshotBuilder.additionalFiles)
+  assertSettingsSnapshotsEqual(expectedSnapshot, this)
 }
 
-private fun assertFileStates(expectedFileStates: List<FileState>, actualFileStates: Set<FileState>) {
+internal fun assertSettingsSnapshotsEqual(expectedSnapshot: SettingsSnapshot, actualSnapshot: SettingsSnapshot) {
+  assertFileStates(expectedSnapshot.fileStates, actualSnapshot.fileStates)
+  assertFileStates(expectedSnapshot.additionalFiles, actualSnapshot.additionalFiles)
+  assertEquals(expectedSnapshot.plugins?.plugins, actualSnapshot.plugins?.plugins ?: emptyMap<PluginId, PluginData>())
+  assertEquals("Unexpected settings from providers", expectedSnapshot.settingsFromProviders, actualSnapshot.settingsFromProviders)
+}
+
+private fun assertFileStates(expectedFileStates: Collection<FileState>, actualFileStates: Collection<FileState>) {
   val transformation = { fileState: FileState ->
     val content = if (fileState is FileState.Modified) String(fileState.content, StandardCharsets.UTF_8) else DELETED_FILE_MARKER
     fileState.file to content
@@ -38,8 +46,8 @@ private fun assertFileStates(expectedFileStates: List<FileState>, actualFileStat
     val missingKeys = expectedMap.keys - actualMap.keys
     val extraKeys = actualMap.keys - expectedMap.keys
     val message = StringBuilder()
-    if (missingKeys.isNotEmpty()) message.append("Missing: $missingKeys\n")
-    if (extraKeys.isNotEmpty()) message.append("Extra: $extraKeys\n")
+    if (missingKeys.isNotEmpty()) message.append("Missing settings file: $missingKeys\n")
+    if (extraKeys.isNotEmpty()) message.append("Extra settings file: $extraKeys\n")
     assertEquals("Incorrect snapshot: $message", expectedMap, actualMap)
   }
 }
@@ -69,28 +77,31 @@ internal fun settingsSnapshot(metaInfo: MetaInfo = MetaInfo(Instant.now(), getLo
   builder.build()
   return SettingsSnapshot(metaInfo, builder.fileStates.toSet(),
                           if (builder.pluginInformationExists) SettingsSyncPluginsState(builder.plugins) else null,
+                          builder.settingsFromProviders,
                           builder.additionalFiles.toSet())
 }
 
 @ApiStatus.Internal
 class SettingsSnapshotBuilder {
-  val fileStates = mutableListOf<FileState>()
+  val settingsFromProviders = mutableMapOf<String, Any>()
+  val fileStates = mutableSetOf<FileState>()
   val plugins = mutableMapOf<PluginId, PluginData>()
   var pluginInformationExists = false
-  val additionalFiles = mutableListOf<FileState>()
+  val additionalFiles = mutableSetOf<FileState>()
 
   fun fileState(function: () -> PersistentStateComponent<*>) {
     val component : PersistentStateComponent<*> = function()
     fileStates.add(component.toFileState())
   }
 
-  fun fileState(fileState: FileState) {
+  fun fileState(fileState: FileState): FileState {
     fileStates.add(fileState)
+    return fileState
   }
 
-  fun fileState(file: String, content: String) {
+  fun fileState(file: String, content: String): FileState {
     val byteArray = content.toByteArray()
-    fileState(FileState.Modified(file, byteArray))
+    return fileState(FileState.Modified(file, byteArray))
   }
 
   fun plugin(id: String,
@@ -106,5 +117,9 @@ class SettingsSnapshotBuilder {
 
   fun additionalFile(file: String, content: String) {
     additionalFiles += FileState.Modified(file, content.toByteArray())
+  }
+
+  fun provided(id: String, state: Any) {
+    settingsFromProviders[id] = state
   }
 }

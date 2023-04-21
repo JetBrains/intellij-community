@@ -1131,7 +1131,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       if (initializers.length != 1) return null;
       final PsiExpression initializer = initializers[0];
       final PsiType type = initializer.getType();
-      if (!PsiType.CHAR.equals(type) && !TypeUtils.typeEquals(JAVA_LANG_CHARACTER, type)) return null;
+      if (!PsiTypes.charType().equals(type) && !TypeUtils.typeEquals(JAVA_LANG_CHARACTER, type)) return null;
       return new CharArrayCreationArgument(newExpression, arrayInitializer, initializer);
     }
   }

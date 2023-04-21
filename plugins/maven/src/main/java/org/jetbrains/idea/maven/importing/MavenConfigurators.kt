@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -124,7 +125,7 @@ interface MavenWorkspaceConfigurator {
     val modules: List<ModuleWithType<M>>
   }
 
-  interface Context<S : EntityStorage> : UserDataHolder {
+  interface Context<S : EntityStorage> : UserDataHolderEx {
     val project: Project
     val storage: S
     val mavenProjectsTree: MavenProjectsTree

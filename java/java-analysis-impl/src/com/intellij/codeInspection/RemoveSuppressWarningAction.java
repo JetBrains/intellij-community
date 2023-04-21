@@ -16,6 +16,7 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -165,7 +166,7 @@ class RemoveSuppressWarningAction implements LocalQuickFix {
       text = text.substring(0, secondCommentIdx);
     }
     text = StringUtil.trimStart(text, SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME).trim();
-    List<String> ids = StringUtil.split(text, ",");
+    List<String> ids = new ArrayList<>(StringUtil.split(text, ","));
     int i = ArrayUtil.find(ids.toArray(), myID);
     if (i==-1) return null;
     ids.remove(i);

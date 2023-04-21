@@ -743,7 +743,7 @@ public class SrcRepositoryUseTest extends JavaPsiTestCase {
 
     PsiMethod[] methods = nonAnonClass.getMethods();
     assertEquals(1, methods.length);
-    PsiTypeElement newType = myJavaFacade.getElementFactory().createTypeElement(PsiType.FLOAT);
+    PsiTypeElement newType = myJavaFacade.getElementFactory().createTypeElement(PsiTypes.floatType());
     ApplicationManager.getApplication().runWriteAction(() -> {
       methods[0].getReturnTypeElement().replace(newType);
     });

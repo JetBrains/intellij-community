@@ -18,8 +18,9 @@ import kotlinx.coroutines.launch
 import javax.swing.JComponent
 
 object GitLabNoteEditorComponentFactory {
-  fun create(project: Project?, cs: CoroutineScope, vm: GitLabNoteEditingViewModel,
-             actions: CommentInputActionsComponentFactory.Config): JComponent {
+  fun create(project: Project, cs: CoroutineScope, vm: GitLabNoteEditingViewModel,
+             actions: CommentInputActionsComponentFactory.Config,
+             icon: CommentTextFieldFactory.IconConfig? = null): JComponent {
     val document = LanguageTextField.createDocument(
       "",
       getMarkdownLanguage() ?: PlainTextLanguage.INSTANCE,
@@ -52,7 +53,14 @@ object GitLabNoteEditorComponentFactory {
     }
 
     CollaborationToolsUIUtil.installValidator(textField, errorValue)
-    val inputField = CollaborationToolsUIUtil.wrapWithProgressOverlay(textField, busyValue)
+    val inputField = CollaborationToolsUIUtil.wrapWithProgressOverlay(textField, busyValue).let {
+      if (icon != null) {
+        CommentTextFieldFactory.wrapWithLeftIcon(icon, it)
+      }
+      else {
+        it
+      }
+    }
 
     return CommentInputActionsComponentFactory.attachActions(cs, inputField, actions)
   }

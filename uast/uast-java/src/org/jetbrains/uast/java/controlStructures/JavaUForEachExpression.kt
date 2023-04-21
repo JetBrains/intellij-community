@@ -17,6 +17,7 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiForeachStatement
 import com.intellij.psi.impl.source.tree.ChildRole
+import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 
@@ -35,8 +36,8 @@ class JavaUForEachExpression(
       return JavaUParameter(psiParameter, this)
     }
 
-  override val iteratedValue: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.iteratedValue, this) }
-  override val body: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.body, this) }
+  override val iteratedValue: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.iteratedValue, this) }
+  override val body: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.body, this) }
 
   override val forIdentifier: UIdentifier
     get() = UIdentifier(sourcePsi.getChildByRole(ChildRole.FOR_KEYWORD), this)

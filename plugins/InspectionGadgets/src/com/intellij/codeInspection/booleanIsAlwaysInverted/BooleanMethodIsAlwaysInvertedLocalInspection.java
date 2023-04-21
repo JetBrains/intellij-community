@@ -36,7 +36,7 @@ public class BooleanMethodIsAlwaysInvertedLocalInspection extends AbstractBaseJa
 
   @Override
   public ProblemDescriptor @Nullable [] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if (!PsiType.BOOLEAN.equals(method.getReturnType()) || MethodUtils.hasSuper(method) || RefUtil.isImplicitRead(method)) return null;
+    if (!PsiTypes.booleanType().equals(method.getReturnType()) || MethodUtils.hasSuper(method) || RefUtil.isImplicitRead(method)) return null;
 
     int[] usageCount = {0};
     if (!UnusedSymbolUtil.processUsages(manager.getProject(), method.getContainingFile(), method, new EmptyProgressIndicator(), null, u -> {

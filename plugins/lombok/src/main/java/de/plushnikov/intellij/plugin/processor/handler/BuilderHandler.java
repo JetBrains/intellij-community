@@ -639,7 +639,7 @@ public class BuilderHandler {
 
   private static boolean isNotBuilderDefaultSetterFields(@NotNull PsiField psiField) {
     boolean isBuilderDefaultSetter = false;
-    if (psiField.getName().endsWith("$set") && PsiType.BOOLEAN.equals(psiField.getType())) {
+    if (psiField.getName().endsWith("$set") && PsiTypes.booleanType().equals(psiField.getType())) {
       PsiElement navigationElement = psiField.getNavigationElement();
       if (navigationElement instanceof PsiField) {
         isBuilderDefaultSetter = PsiAnnotationSearchUtil.isAnnotatedWith((PsiField)navigationElement, LombokClassNames.BUILDER_DEFAULT);
@@ -764,7 +764,7 @@ public class BuilderHandler {
       callExpressionText = buildMethodReturnType.getPresentableText();
     }
     else {
-      if (PsiType.VOID.equals(buildMethodReturnType)) {
+      if (PsiTypes.voidType().equals(buildMethodReturnType)) {
         codeBlockFormat = "%s\n %s(%s);";
       }
       else {

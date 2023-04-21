@@ -151,7 +151,7 @@ public class JavaNoVariantsDelegator extends CompletionContributor implements Du
     JavaLookupElementHighlighter highlighter = JavaCompletionUtil.getHighlighterForPlace(position);
     for (LookupElement base : suggestQualifierItems(parameters, (PsiJavaCodeReferenceElement)qualifier, filter)) {
       PsiType type = JavaCompletionUtil.getLookupElementType(base);
-      if (type != null && !PsiType.VOID.equals(type)) {
+      if (type != null && !PsiTypes.voidType().equals(type)) {
         String separator = parent instanceof PsiMethodReferenceExpression ? "::" : ".";
         PsiReferenceExpression ref = ReferenceExpressionCompletionContributor.createMockReference(position, type, base, separator);
         if (ref != null) {

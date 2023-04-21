@@ -12,7 +12,7 @@ import org.jetbrains.plugins.gitlab.api.request.loadImage
 import java.awt.Image
 import javax.swing.Icon
 
-internal class GitLabImageLoader(
+class GitLabImageLoader(
   private val apiClient: GitLabApi,
   private val server: GitLabServerPath
 ) : AsyncImageIconsProvider.AsyncImageLoader<GitLabUserDTO> {

@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
@@ -54,14 +53,21 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
     log(String.format("Will tweak full screen mode for presentation=%b", inPresentation));
 
     UISettings settings = UISettings.getInstance();
-    float fontSize = inPresentation
-                     ? settings.getPresentationModeFontSize()
-                     : EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize2D();
 
-    IdeScaleTransformer.scaleToEditorFontSize(fontSize, () -> {
-      settings.setPresentationMode(inPresentation);
-      return null;
-    });
+    if (inPresentation) {
+      float fontSize = settings.getPresentationModeFontSize();
+      IdeScaleTransformer.getInstance().scaleToEditorFontSize(fontSize, () -> {
+        settings.setPresentationMode(inPresentation);
+        return null;
+      });
+    }
+    else {
+      IdeScaleTransformer.getInstance().resetToLastPersistedScale(() -> {
+        settings.setPresentationMode(inPresentation);
+        return null;
+      });
+    }
+
 
     Job callback = project == null ? CompletableDeferredKt.CompletableDeferred(Unit.INSTANCE) : tweakFrameFullScreen(project, inPresentation);
     callback.invokeOnCompletion(__ -> {

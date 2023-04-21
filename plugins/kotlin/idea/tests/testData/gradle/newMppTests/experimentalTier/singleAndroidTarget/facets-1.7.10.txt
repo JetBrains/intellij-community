@@ -1,0 +1,24 @@
+MODULES
+    project
+    project.androidTest
+        externalProjectId = project
+        languageLevel = 1.7
+        apiLevel = 1.7
+        mppVersion = M3
+        targetPlatform = JVM (1.8)
+    project.main
+        externalProjectId = project
+        languageLevel = 1.7
+        apiLevel = 1.7
+        mppVersion = M3
+        targetPlatform = JVM (1.8)
+    project.unitTest
+        externalProjectId = project
+        languageLevel = 1.7
+        apiLevel = 1.7
+        mppVersion = M3
+        targetPlatform = JVM (1.8)
+
+Test configuration:
+- hiding following roots: resources, android-specific roots, generated
+- hiding following standard dependencies: sdk, self

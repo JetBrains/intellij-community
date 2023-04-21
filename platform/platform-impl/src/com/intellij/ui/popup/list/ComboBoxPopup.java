@@ -62,7 +62,8 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     };
 
     if (selectedItem != null) {
-      step.setDefaultOptionIndex(step.getValues().indexOf(selectedItem));
+      List<T> stepValues = step.getValues();
+      step.setDefaultOptionIndex(stepValues.indexOf(selectedItem));
     }
     return step;
   }
@@ -247,17 +248,11 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     @Override
     public @Nullable ListSeparator getSeparatorAbove(T value) {
       final int index = getValues().indexOf(value);
-      if (index > 0 && getValues().get(index - 1) instanceof GroupedComboBoxRenderer.Item item && item.isSeparator()) {
-        return new ListSeparator(item.getSeparatorText(), item.getIcon());
+      if (myGetRenderer.get() instanceof GroupedComboBoxRenderer<?> renderer) {
+        return renderer.separatorFor(index);
       }
       return null;
     }
-  }
-
-  @Override
-  public boolean shouldBeShowing(Object value) {
-    if (value instanceof GroupedComboBoxRenderer.Item item && item.isSeparator()) return false;
-    return super.shouldBeShowing(value);
   }
 
   @NotNull

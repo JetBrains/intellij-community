@@ -5,7 +5,6 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionName
-import com.intellij.openapi.application.runReadAction
 import com.intellij.refactoring.suggested.createSmartPointer
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableTool
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.isApplicableWithAnalyze
@@ -36,7 +35,7 @@ abstract class AbstractKotlinApplicableInspection<ELEMENT : KtElement>(
     override fun getActionName(element: ELEMENT): @IntentionName String = getActionFamilyName()
 
     final override fun buildProblemInfo(element: ELEMENT): ProblemInfo? {
-        val isApplicable = runReadAction { isApplicableWithAnalyze(element) }
+        val isApplicable = isApplicableWithAnalyze(element)
         if (!isApplicable) return null
 
         val elementPointer = element.createSmartPointer()
@@ -45,6 +44,7 @@ abstract class AbstractKotlinApplicableInspection<ELEMENT : KtElement>(
                 apply(element, element.project, element.findExistingEditor())
             }
 
+            override fun shouldApplyInWriteAction(): Boolean = this@AbstractKotlinApplicableInspection.shouldApplyInWriteAction()
             override fun getFamilyName(): String = this@AbstractKotlinApplicableInspection.getActionFamilyName()
             override fun getName(): String = elementPointer.element?.let { getActionName(element) } ?: familyName
         }

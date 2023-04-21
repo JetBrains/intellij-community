@@ -80,7 +80,7 @@ public class CreateMethodFromUsageFix extends GrCreateFromUsageBaseFix implement
   private Data generateMethod(@NotNull PsiClass targetClass, boolean readOnly) {
     final JVMElementFactory factory = JVMElementFactories.getFactory(targetClass.getLanguage(), targetClass.getProject());
     assert factory != null;
-    PsiMethod method = factory.createMethod(getMethodName(), PsiType.VOID);
+    PsiMethod method = factory.createMethod(getMethodName(), PsiTypes.voidType());
 
     final GrReferenceExpression ref = getRefExpr();
     if (GrStaticChecker.isInStaticContext(ref, targetClass)) {
@@ -144,7 +144,7 @@ public class CreateMethodFromUsageFix extends GrCreateFromUsageBaseFix implement
     ChooseTypeExpression[] paramTypesExpressions = new ChooseTypeExpression[argTypes.length];
     for (int i = 0; i < argTypes.length; i++) {
       PsiType argType = TypesUtil.unboxPrimitiveTypeWrapper(argTypes[i]);
-      if (argType == null || argType == PsiType.NULL) argType = TypesUtil.getJavaLangObject(getRefExpr());
+      if (argType == null || argType == PsiTypes.nullType()) argType = TypesUtil.getJavaLangObject(getRefExpr());
       final PsiParameter p = factory.createParameter("o", argType);
       parameterList.add(p);
       TypeConstraint[] constraints = {SupertypeConstraint.create(argType)};
