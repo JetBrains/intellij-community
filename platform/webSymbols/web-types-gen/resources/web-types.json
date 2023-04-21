@@ -1131,7 +1131,7 @@
         "properties": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/generic-js-contribution"
+            "$ref": "#/definitions/js-property"
           },
           "description": "JavaScript properties of an object, HTML tag, framework component, etc."
         }
@@ -1212,6 +1212,23 @@
           "$ref": "#/definitions/js-contributions-host"
         }
       ]
+    },
+    "js-property": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/definitions/base-contribution"
+        },
+        {
+          "$ref": "#/definitions/js-contributions-host"
+        }
+      ],
+      "properties": {
+        "read-only": {
+          "description": "Specifies whether the property is read only.",
+          "type": "boolean"
+        }
+      }
     },
     "deprecated-types-syntax": {
       "oneOf": [

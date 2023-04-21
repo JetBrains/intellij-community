@@ -188,5 +188,10 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
      * to specify whether they require arguments. Defaults to false.
      **/
     const val PROP_ARGUMENTS = "arguments"
+    /**
+     * Name of boolean property used by JS properties to specify whether
+     * the property is read-only. Defaults to false.
+     **/
+    const val PROP_READ_ONLY = "read-only"
   }
 }

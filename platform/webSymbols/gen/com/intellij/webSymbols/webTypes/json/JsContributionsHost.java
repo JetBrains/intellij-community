@@ -38,14 +38,14 @@ public interface JsContributionsHost
      * 
      */
     @JsonProperty("properties")
-    public List<GenericJsContribution> getProperties();
+    public List<JsProperty> getProperties();
 
     /**
      * JavaScript properties of an object, HTML tag, framework component, etc.
      * 
      */
     @JsonProperty("properties")
-    public void setProperties(List<GenericJsContribution> properties);
+    public void setProperties(List<JsProperty> properties);
 
     @JsonAnyGetter
     public Map<String, GenericJsContributions> getAdditionalProperties();

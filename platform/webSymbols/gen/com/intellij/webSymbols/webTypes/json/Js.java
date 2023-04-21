@@ -39,7 +39,7 @@ public class Js implements JsContributionsHost
      */
     @JsonProperty("properties")
     @JsonPropertyDescription("JavaScript properties of an object, HTML tag, framework component, etc.")
-    private List<GenericJsContribution> properties = new ArrayList<GenericJsContribution>();
+    private List<JsProperty> properties = new ArrayList<JsProperty>();
     @JsonIgnore
     private Map<String, GenericJsContributions> additionalProperties = new HashMap<String, GenericJsContributions>();
 
@@ -66,7 +66,7 @@ public class Js implements JsContributionsHost
      * 
      */
     @JsonProperty("properties")
-    public List<GenericJsContribution> getProperties() {
+    public List<JsProperty> getProperties() {
         return properties;
     }
 
@@ -75,7 +75,7 @@ public class Js implements JsContributionsHost
      * 
      */
     @JsonProperty("properties")
-    public void setProperties(List<GenericJsContribution> properties) {
+    public void setProperties(List<JsProperty> properties) {
         this.properties = properties;
     }
 

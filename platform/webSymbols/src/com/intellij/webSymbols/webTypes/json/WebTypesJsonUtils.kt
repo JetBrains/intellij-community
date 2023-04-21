@@ -19,6 +19,7 @@ import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_JS
 import com.intellij.webSymbols.WebSymbol.Companion.PROP_ARGUMENTS
 import com.intellij.webSymbols.WebSymbol.Companion.PROP_DOC_HIDE_PATTERN
 import com.intellij.webSymbols.WebSymbol.Companion.PROP_HIDE_FROM_COMPLETION
+import com.intellij.webSymbols.WebSymbol.Companion.PROP_READ_ONLY
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules
@@ -120,11 +121,11 @@ private fun GenericContributionsHost.collectDirectContributions(framework: Frame
             .filter { it.second.isNotEmpty() })
 
 private fun JsGlobal.collectDirectContributions(): Sequence<Triple<SymbolNamespace, SymbolKind, List<BaseContribution>>> =
- (events?.let { sequenceOf(Triple(NAMESPACE_JS, KIND_JS_EVENTS, it)) } ?: emptySequence())
-   .plus(additionalProperties.asSequence()
-           .filter { (name, _) -> !WebTypesSymbol.WEB_TYPES_JS_FORBIDDEN_GLOBAL_KINDS.contains(name) }
-           .map { (name, list) -> Triple(NAMESPACE_JS, name, list?.mapNotNull { it?.value as? GenericContribution } ?: emptyList()) }
-           .filter { it.second.isNotEmpty() })
+  (events?.let { sequenceOf(Triple(NAMESPACE_JS, KIND_JS_EVENTS, it)) } ?: emptySequence())
+    .plus(additionalProperties.asSequence()
+            .filter { (name, _) -> !WebTypesSymbol.WEB_TYPES_JS_FORBIDDEN_GLOBAL_KINDS.contains(name) }
+            .map { (name, list) -> Triple(NAMESPACE_JS, name, list?.mapNotNull { it?.value as? GenericContribution } ?: emptyList()) }
+            .filter { it.second.isNotEmpty() })
 
 internal val GenericContributionsHost.genericContributions: Map<String, List<GenericContribution>>
   get() =
@@ -148,6 +149,7 @@ internal val GenericContributionsHost.genericProperties: Map<String, Any>
         when (this) {
           is CssPseudoClass -> sequenceOf(Pair(PROP_ARGUMENTS, this.arguments ?: false))
           is CssPseudoElement -> sequenceOf(Pair(PROP_ARGUMENTS, this.arguments ?: false))
+          is JsProperty -> if (this.readOnly == true) sequenceOf(Pair(PROP_READ_ONLY, true)) else emptySequence()
           else -> emptySequence()
         }
       )
@@ -379,7 +381,8 @@ private fun ReferenceWithProps.createNameConversionRules(context: WebSymbol?): L
       }
       is NameConversionRulesSingle -> buildNameConverters(value.additionalProperties, { mergeConverters(listOf(it)) }, addToBuilder)
       is NameConversionRulesMultiple -> buildNameConverters(value.additionalProperties, { mergeConverters(it) }, addToBuilder)
-      else -> throw IllegalArgumentException(value?.toString())
+      null -> {}
+      else -> throw IllegalArgumentException(value.toString())
     }
   }
 

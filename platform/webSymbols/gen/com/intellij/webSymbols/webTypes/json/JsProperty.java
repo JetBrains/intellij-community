@@ -15,14 +15,22 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
+    "read-only",
     "events",
     "properties"
 })
-public class GenericJsContribution
-    extends GenericContribution
+public class JsProperty
+    extends BaseContribution
     implements JsContributionsHost
 {
 
+    /**
+     * Specifies whether the property is read only.
+     * 
+     */
+    @JsonProperty("read-only")
+    @JsonPropertyDescription("Specifies whether the property is read only.")
+    private Boolean readOnly;
     /**
      * DOM events
      * 
@@ -39,6 +47,24 @@ public class GenericJsContribution
     private List<JsProperty> properties = new ArrayList<JsProperty>();
     @JsonIgnore
     private Map<String, GenericJsContributions> additionalProperties = new HashMap<String, GenericJsContributions>();
+
+    /**
+     * Specifies whether the property is read only.
+     * 
+     */
+    @JsonProperty("read-only")
+    public Boolean getReadOnly() {
+        return readOnly;
+    }
+
+    /**
+     * Specifies whether the property is read only.
+     * 
+     */
+    @JsonProperty("read-only")
+    public void setReadOnly(Boolean readOnly) {
+        this.readOnly = readOnly;
+    }
 
     /**
      * DOM events
