@@ -45,7 +45,7 @@ class ResizingHtmlImageView(element: Element) : View(element) {
       field = value
     }
   private val loader: ImageLoader
-    get() = _loader ?: run {
+    get() = _loader?.takeIf { it.isActual } ?: run {
       createImageLoader().also {
         _loader = it
       }
@@ -186,7 +186,7 @@ private class ImageLoader(
   private val baseUrl: URL?,
   private val src: String?,
   private val asyncLoader: AsyncHtmlImageLoader?,
-  private val isActual: () -> Boolean,
+  private val isActualTest: () -> Boolean,
   private val onStateChange: (old: State, new: State) -> Unit
 ) : ImageObserver {
 
@@ -196,6 +196,8 @@ private class ImageLoader(
   var state: State by observable(State.NotLoaded) { _, old, new ->
     onStateChange(old, new)
   }
+    private set
+  var isActual: Boolean = true
     private set
 
   private fun requestImage(): Job {
@@ -256,7 +258,14 @@ private class ImageLoader(
 
   override fun imageUpdate(img: Image, flags: Int, x: Int, y: Int, width: Int, height: Int): Boolean =
     invokeAndWaitIfNeeded {
-      if (!loadingJob.isCancelled && isActual()) doUpdate(img, flags, width, height) else false
+      isActual = isActualTest()
+      val updateResult = doUpdate(img, flags, width, height)
+      if (!loadingJob.isCancelled && isActual) {
+        updateResult
+      }
+      else {
+        false
+      }
     }
 
   private fun doUpdate(img: Image, flags: Int, width: Int, height: Int): Boolean {
