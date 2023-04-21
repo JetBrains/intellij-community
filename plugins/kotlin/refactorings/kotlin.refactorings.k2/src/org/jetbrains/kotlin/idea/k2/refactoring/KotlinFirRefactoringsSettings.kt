@@ -16,6 +16,11 @@ class KotlinFirRefactoringsSettings : PersistentStateComponent<KotlinFirRefactor
     var RENAME_SEARCH_IN_COMMENTS_FOR_FUNCTION: Boolean = false
     var RENAME_SEARCH_IN_COMMENTS_FOR_CLASS: Boolean = false
     var RENAME_SEARCH_IN_COMMENTS_FOR_PARAMETER: Boolean = false
+    var MOVE_PREVIEW_USAGES: Boolean = true
+    var MOVE_SEARCH_IN_COMMENTS: Boolean = true
+    var MOVE_SEARCH_FOR_TEXT: Boolean = true
+    var MOVE_DELETE_EMPTY_SOURCE_FILES: Boolean = true
+    var MOVE_MPP_DECLARATIONS: Boolean = true
     
     override fun getState() = this
 
