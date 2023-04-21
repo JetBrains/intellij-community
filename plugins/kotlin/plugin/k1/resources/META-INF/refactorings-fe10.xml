@@ -8,6 +8,10 @@
             qualifiedName="org.jetbrains.kotlin.foreignUsagesRenameProcessor"
             interface="org.jetbrains.kotlin.idea.refactoring.rename.ForeignUsagesRenameProcessor"
             dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.renameHandler"
+            interface="com.intellij.refactoring.rename.RenameHandler"
+            dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -40,6 +40,15 @@
             qualifiedName="org.jetbrains.kotlin.scripting.idea.listener"
             interface="org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangeListener"
             area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scriptDefinitionContributor"
+            interface="org.jetbrains.kotlin.idea.core.script.ScriptDefinitionContributor"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scriptTemplatesProvider"
+            interface="org.jetbrains.kotlin.script.ScriptTemplatesProvider"
+            area="IDEA_PROJECT"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
