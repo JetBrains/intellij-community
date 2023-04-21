@@ -76,14 +76,8 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
   init {
     val idToName = LinkedHashMap<String, String>()
     idToName.put(IdeActions.GROUP_MAIN_MENU, ActionsTreeUtil.getMainMenuTitle())
-    if (ExperimentalUI.isNewUI()) {
-      idToName.put(IdeActions.GROUP_MAIN_TOOLBAR_LEFT, ActionsTreeUtil.getMainToolbarLeft())
-      idToName.put(IdeActions.GROUP_MAIN_TOOLBAR_CENTER, ActionsTreeUtil.getMainToolbarCenter())
-      idToName.put(IdeActions.GROUP_MAIN_TOOLBAR_RIGHT, ActionsTreeUtil.getMainToolbarRight())
-    }
-    else {
-      idToName.put(IdeActions.GROUP_MAIN_TOOLBAR, ActionsTreeUtil.getMainToolbar())
-    }
+    val mainToolbarID = if (ExperimentalUI.isNewUI()) IdeActions.GROUP_MAIN_TOOLBAR_NEW_UI else IdeActions.GROUP_MAIN_TOOLBAR
+    idToName.put(mainToolbarID, ActionsTreeUtil.getMainToolbar())
     idToName.put(IdeActions.GROUP_EDITOR_POPUP, ActionsTreeUtil.getEditorPopup())
     idToName.put(IdeActions.GROUP_EDITOR_GUTTER, ActionsTreeUtil.getEditorGutterPopupMenu())
     idToName.put(IdeActions.GROUP_EDITOR_TAB_POPUP, ActionsTreeUtil.getEditorTabPopup())
@@ -278,7 +272,10 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
 
   fun getCorrectedAction(id: String): AnAction? {
     val name = idToName.get(id) ?: return ActionManager.getInstance().getAction(id)
+    return getCorrectedAction(id, name)
+  }
 
+  fun getCorrectedAction(id: String, name: String): ActionGroup? {
     idToActionGroup.get(id)?.let {
       return it
     }

@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
@@ -58,13 +59,13 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
 
     fun computeActionGroups(customActionSchema: CustomActionsSchema): List<Pair<ActionGroup, String>> {
       return sequenceOf(
-        HorizontalLayout.LEFT to "MainToolbarLeft",
-        HorizontalLayout.CENTER to "MainToolbarCenter",
-        HorizontalLayout.RIGHT to "MainToolbarRight",
+        GroupInfo("MainToolbarLeft", ActionsTreeUtil.getMainToolbarLeft(), HorizontalLayout.LEFT),
+        GroupInfo("MainToolbarCenter", ActionsTreeUtil.getMainToolbarCenter(), HorizontalLayout.CENTER),
+        GroupInfo("MainToolbarRight", ActionsTreeUtil.getMainToolbarRight(), HorizontalLayout.RIGHT)
       )
-        .mapNotNull { (position, id) ->
-          (customActionSchema.getCorrectedAction(id) as ActionGroup?)?.let {
-            it to position
+        .mapNotNull { info ->
+          (customActionSchema.getCorrectedAction(info.id, info.name) as ActionGroup?)?.let {
+            it to info.align
           }
         }
         .toList()
@@ -244,3 +245,5 @@ private class HeaderIconUpdater {
     })
   }
 }
+
+private data class GroupInfo(val id: String, val name: String, val align: String)
