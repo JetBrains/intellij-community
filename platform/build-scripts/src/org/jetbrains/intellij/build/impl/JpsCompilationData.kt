@@ -6,7 +6,10 @@ import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
 
-class JpsCompilationData(val dataStorageRoot: Path, val buildLogFile: Path, categoriesWithDebugLevelNullable: String?) {
+class JpsCompilationData(val dataStorageRoot: Path,
+                         private val classesOutputDirectory: Path,
+                         val buildLogFile: Path,
+                         categoriesWithDebugLevelNullable: String?) {
   val compiledModules: MutableSet<String> = LinkedHashSet()
   val compiledModuleTests: MutableSet<String> = LinkedHashSet()
   val builtArtifacts: MutableSet<String> = LinkedHashSet()
@@ -16,8 +19,11 @@ class JpsCompilationData(val dataStorageRoot: Path, val buildLogFile: Path, cate
 
   val categoriesWithDebugLevel: String = categoriesWithDebugLevelNullable ?: ""
   internal fun isIncrementalCompilationDataAvailable(): Boolean {
+    val productionClasses = classesOutputDirectory.resolve("production")
     return dataStorageRoot.exists() && dataStorageRoot.isDirectory() &&
-           dataStorageRoot.listDirectoryEntries().any()
+           dataStorageRoot.listDirectoryEntries().any() &&
+           productionClasses.exists() && productionClasses.isDirectory() &&
+           productionClasses.listDirectoryEntries().any()
   }
 
   fun reset() {
