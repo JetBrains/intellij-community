@@ -96,7 +96,7 @@ mod tests {
     #[test]
     fn selecting_jdk_home_env_runtime_test() {
         let test = prepare_test_env(LauncherLocation::Standard);
-        fs::remove_file(test.dist_root.join("jbr")).unwrap();  // the bundled one has a priority
+        fs::remove_dir(test.dist_root.join("jbr")).unwrap();  // the bundled one has a priority
         let expected_rt = test.create_jbr_link("_jdk_home_jbr");
         let env = HashMap::from([("JDK_HOME", expected_rt.to_str().unwrap())]);
 
@@ -108,7 +108,7 @@ mod tests {
     #[test]
     fn selecting_java_home_env_runtime_test() {
         let test = prepare_test_env(LauncherLocation::Standard);
-        fs::remove_file(test.dist_root.join("jbr")).unwrap();  // the bundled one has a priority
+        fs::remove_dir(test.dist_root.join("jbr")).unwrap();  // the bundled one has a priority
         let expected_rt = test.create_jbr_link("_java_home_jbr");
         let env = HashMap::from([("JAVA_HOME", expected_rt.to_str().unwrap())]);
 
@@ -122,7 +122,7 @@ mod tests {
             .find(|line| line.contains("Resolved runtime: "))
             .expect(format!("The 'resolved runtime' line is not in the output: {}", result.stdout).as_str());
         let resolved_rt = rt_line.split_once("Resolved runtime: ").unwrap().1;
-        let actual_rt = &resolved_rt[1..resolved_rt.len() - 1];
+        let actual_rt = &resolved_rt[1..resolved_rt.len() - 1].replace("\\\\", "\\");
 
         let adjusted_rt = if cfg!(target_os = "macos") { expected_rt.join("Contents/Home") } else { expected_rt };
 
