@@ -11,6 +11,7 @@ import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileTypes.FileType
@@ -34,7 +35,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
 
   override fun collectNotificationData(
     project: Project,
-    file: VirtualFile,
+    file: VirtualFile
   ): Function<in FileEditor, out JComponent?>? {
     val suggestionData = getSuggestionData(project, ApplicationInfo.getInstance().build.productCode, file.name, file.fileType)
 
@@ -62,7 +63,18 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
       return null
     }
 
-    return suggestionData
+    val providedSuggestion = SUGGESTION_EP_NAME.extensionList.asSequence()
+      .mapNotNull { it.getSuggestion(project, file) }
+      .firstOrNull()
+
+    if (providedSuggestion == null) {
+      return suggestionData
+    }
+
+    return Function { editor ->
+      suggestionData.apply(editor)
+      ?: providedSuggestion.apply(editor)
+    }
   }
 
   class AdvertiserSuggestion(
@@ -186,6 +198,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
   }
 
   companion object {
+    private val SUGGESTION_EP_NAME: ExtensionPointName<PluginSuggestionProvider> = ExtensionPointName.create("com.intellij.pluginSuggestionProvider")
 
     private val LOG = logger<PluginAdvertiserEditorNotificationProvider>()
 

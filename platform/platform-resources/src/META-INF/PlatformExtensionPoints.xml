@@ -280,6 +280,8 @@
     <extensionPoint name="search.optionContributor" interface="com.intellij.ide.ui.search.SearchableOptionContributor" dynamic="true"/>
 
     <extensionPoint name="pluginReplacement" interface="com.intellij.ide.plugins.PluginReplacement" dynamic="true"/>
+    <extensionPoint name="pluginSuggestionProvider" dynamic="true"
+                    interface="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestionProvider"/>
 
     <extensionPoint name="customPluginRepoContributor" interface="com.intellij.ide.plugins.CustomPluginRepoContributor" dynamic="true"/>
     <extensionPoint name="pluginRepositoryAuthProvider" interface="com.intellij.ide.plugins.auth.PluginRepositoryAuthProvider" dynamic="true"/>
