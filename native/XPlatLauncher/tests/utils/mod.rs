@@ -101,7 +101,7 @@ fn init_test_environment_once() -> Result<TestEnvironmentShared> {
     let project_root = env::current_dir().expect("Failed to get project root");
 
     let build_target = if cfg!(debug_assertions) { "debug" } else { "release" };
-    let bin_name = if cfg!(target = "windows") { "xplat-launcher.exe" } else { "xplat-launcher" };
+    let bin_name = if cfg!(target_os = "windows") { "xplat-launcher.exe" } else { "xplat-launcher" };
     let launcher_path = project_root.join("target").join(build_target).join(bin_name);
     if !launcher_path.exists() {
         bail!("Didn't find source launcher to layout, expected path: {:?}", launcher_path);
@@ -123,7 +123,7 @@ fn get_jbr_sdk_from_project_root(project_root: &Path) -> Result<PathBuf> {
     let gradle_jvm = project_root.join("resources").join("TestProject").join("gradle-jvm");
 
     // TODO: remove after wrapper with https://github.com/mfilippov/gradle-jvm-wrapper/pull/31
-    let java_dir_prefix = if cfg!(targget_os = "windows") { "jdk" } else { "jbrsdk" };
+    let java_dir_prefix = if cfg!(target_os = "windows") { "jdk" } else { "jbrsdk" };
 
     // jbrsdk-17.0.3-osx-x64-b469.37-f87880
     let sdk_gradle_parent = get_child_dir(&gradle_jvm, java_dir_prefix)?;
