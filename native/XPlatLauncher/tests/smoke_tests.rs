@@ -95,8 +95,7 @@ mod tests {
 
     #[test]
     fn selecting_jdk_home_env_runtime_test() {
-        let test = prepare_test_env(LauncherLocation::Standard);
-        fs::remove_dir(test.dist_root.join("jbr")).unwrap();  // the bundled one has a priority
+        let test = prepare_no_jbr_test_env(LauncherLocation::Standard);
         let expected_rt = test.create_jbr_link("_jdk_home_jbr");
         let env = HashMap::from([("JDK_HOME", expected_rt.to_str().unwrap())]);
 
@@ -107,8 +106,7 @@ mod tests {
 
     #[test]
     fn selecting_java_home_env_runtime_test() {
-        let test = prepare_test_env(LauncherLocation::Standard);
-        fs::remove_dir(test.dist_root.join("jbr")).unwrap();  // the bundled one has a priority
+        let test = prepare_no_jbr_test_env(LauncherLocation::Standard);
         let expected_rt = test.create_jbr_link("_java_home_jbr");
         let env = HashMap::from([("JAVA_HOME", expected_rt.to_str().unwrap())]);
 

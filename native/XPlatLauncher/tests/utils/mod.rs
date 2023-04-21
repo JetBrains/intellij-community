@@ -60,7 +60,14 @@ impl<'a> Drop for TestEnvironment<'a> {
 }
 
 pub fn prepare_test_env<'a>(launcher_location: LauncherLocation) -> TestEnvironment<'a> {
-    match prepare_test_env_impl(launcher_location) {
+    match prepare_test_env_impl(launcher_location, true) {
+        Ok(x) => x,
+        Err(e) => panic!("Failed to prepare test environment: {:?}", e),
+    }
+}
+
+pub fn prepare_no_jbr_test_env<'a>(launcher_location: LauncherLocation) -> TestEnvironment<'a> {
+    match prepare_test_env_impl(launcher_location, false) {
         Ok(x) => x,
         Err(e) => panic!("Failed to prepare test environment: {:?}", e),
     }
@@ -73,7 +80,7 @@ struct TestEnvironmentShared {
     product_info_path: PathBuf
 }
 
-fn prepare_test_env_impl<'a>(launcher_location: LauncherLocation) -> Result<TestEnvironment<'a>> {
+fn prepare_test_env_impl<'a>(launcher_location: LauncherLocation, with_jbr: bool) -> Result<TestEnvironment<'a>> {
     INIT.call_once(|| {
         let shared = init_test_environment_once().expect("Failed to init shared test environment");
         unsafe {
@@ -85,7 +92,7 @@ fn prepare_test_env_impl<'a>(launcher_location: LauncherLocation) -> Result<Test
 
     let temp_dir = tempfile::Builder::new().prefix("xplat_launcher_test_").tempdir().context(format!("Failed to create temp directory"))?;
 
-    let (dist_root, launcher_path) = layout_launcher(launcher_location, &temp_dir.path(), &shared_env)?;
+    let (dist_root, launcher_path) = layout_launcher(launcher_location, with_jbr, temp_dir.path(), shared_env)?;
 
     let project_dir = temp_dir.path().join("_project");
     fs::create_dir_all(&project_dir)?;
@@ -189,7 +196,12 @@ fn get_child_dir(parent: &Path, prefix: &str) -> Result<PathBuf> {
 }
 
 #[cfg(target_os = "linux")]
-fn layout_launcher(launcher_location: LauncherLocation, target_dir: &Path, shared_env: &TestEnvironmentShared) -> Result<(PathBuf, PathBuf)> {
+fn layout_launcher(
+    launcher_location: LauncherLocation,
+    include_jbr: bool,
+    target_dir: &Path,
+    shared_env: &TestEnvironmentShared
+) -> Result<(PathBuf, PathBuf)> {
     // .
     // ├── bin/
     // │   └── xplat-launcher | remote-dev-server
@@ -218,6 +230,7 @@ fn layout_launcher(launcher_location: LauncherLocation, target_dir: &Path, share
             (&shared_env.app_jar_path, "lib/app.jar"),
             (&shared_env.product_info_path, "product-info.json")
         ],
+        include_jbr,
         &shared_env.jbr_root
     )?;
 
@@ -225,7 +238,12 @@ fn layout_launcher(launcher_location: LauncherLocation, target_dir: &Path, share
 }
 
 #[cfg(target_os = "macos")]
-fn layout_launcher(launcher_location: LauncherLocation, target_dir: &Path, shared_env: &TestEnvironmentShared) -> Result<(PathBuf, PathBuf)> {
+fn layout_launcher(
+    launcher_location: LauncherLocation,
+    include_jbr: bool,
+    target_dir: &Path,
+    shared_env: &TestEnvironmentShared
+) -> Result<(PathBuf, PathBuf)> {
     // .
     // └── Contents
     //     ├── bin/
@@ -257,6 +275,7 @@ fn layout_launcher(launcher_location: LauncherLocation, target_dir: &Path, share
             (&shared_env.app_jar_path, "lib/app.jar"),
             (&shared_env.product_info_path, "Resources/product-info.json")
         ],
+        include_jbr,
         &shared_env.jbr_root
     )?;
 
@@ -265,7 +284,12 @@ fn layout_launcher(launcher_location: LauncherLocation, target_dir: &Path, share
 }
 
 #[cfg(target_os = "windows")]
-fn layout_launcher(launcher_location: LauncherLocation, target_dir: &Path, shared_env: &TestEnvironmentShared) -> Result<(PathBuf, PathBuf)> {
+fn layout_launcher(
+    launcher_location: LauncherLocation,
+    include_jbr: bool,
+    target_dir: &Path,
+    shared_env: &TestEnvironmentShared
+) -> Result<(PathBuf, PathBuf)> {
     // .
     // ├── bin/
     // │   └── xplat-launcher.exe | remote-dev-server.exe
@@ -294,6 +318,7 @@ fn layout_launcher(launcher_location: LauncherLocation, target_dir: &Path, share
             (&shared_env.app_jar_path, "lib\\app.jar"),
             (&shared_env.product_info_path, "product-info.json")
         ],
+        include_jbr,
         &shared_env.jbr_root
     )?;
 
@@ -304,6 +329,7 @@ fn layout_launcher_impl(
     target_dir: &Path,
     create_files: Vec<&str>,
     copy_files: Vec<(&Path, &str)>,
+    include_jbr: bool,
     jbr_path: &Path
 ) -> Result<()> {
     for file in create_files {
@@ -318,7 +344,9 @@ fn layout_launcher_impl(
         fs::copy(source, target).context(format!("Failed to copy from {source:?} to {target:?}"))?;
     }
 
-    symlink(jbr_path, &target_dir.join("jbr"))?;
+    if include_jbr {
+        symlink(jbr_path, &target_dir.join("jbr"))?;
+    }
 
     Ok(())
 }
