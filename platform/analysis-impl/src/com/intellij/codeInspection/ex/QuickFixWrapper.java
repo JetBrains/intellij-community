@@ -12,6 +12,10 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.QuickFix;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModCommandActionWrapper;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -39,6 +43,9 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     LOG.assertTrue(fixes != null && fixes.length > fixNumber);
 
     final QuickFix<?> fix = fixes[fixNumber];
+    if (fix instanceof ModCommandQuickFix modCommandFix) {
+      return new ModCommandQuickFixAction(descriptor, modCommandFix).asIntention();
+    }
     return fix instanceof IntentionAction ? (IntentionAction)fix : new QuickFixWrapper(descriptor, (LocalQuickFix)fix);
   }
 
@@ -50,10 +57,10 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     if (action instanceof QuickFixWrapper wrapper) {
       return wrapper.myFix;
     }
-    //if (action instanceof ModCommandActionWrapper wrapper &&
-    //    wrapper.action() instanceof ModCommandQuickFixAction qfAction) {
-    //  return qfAction.myFix;
-    //}
+    if (action instanceof ModCommandActionWrapper wrapper &&
+        wrapper.action() instanceof ModCommandQuickFixAction qfAction) {
+      return qfAction.myFix;
+    }
     return null;
   }
 
@@ -65,11 +72,11 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     if (action instanceof QuickFixWrapper wrapper) {
       return wrapper.getFile();
     }
-    //if (action instanceof ModCommandActionWrapper wrapper &&
-    //    wrapper.action() instanceof ModCommandQuickFixAction qfAction) {
-    //  PsiElement element = qfAction.myDescriptor.getPsiElement();
-    //  return element == null ? null : element.getContainingFile();
-    //}
+    if (action instanceof ModCommandActionWrapper wrapper &&
+        wrapper.action() instanceof ModCommandQuickFixAction qfAction) {
+      PsiElement element = qfAction.myDescriptor.getPsiElement();
+      return element == null ? null : element.getContainingFile();
+    }
     return null;
   }
 
@@ -182,5 +189,44 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
   @Override
   public @NotNull List<@NotNull RangeToHighlight> getRangesToHighlight(@NotNull Editor editor, @NotNull PsiFile file) {
     return myFix.getRangesToHighlight(editor.getProject(), myDescriptor);
+  }
+
+  private static class ModCommandQuickFixAction implements ModCommandAction {
+    private final @NotNull ProblemDescriptor myDescriptor;
+    private final @NotNull ModCommandQuickFix myFix;
+
+    private ModCommandQuickFixAction(@NotNull ProblemDescriptor descriptor, @NotNull ModCommandQuickFix fix) {
+      myDescriptor = descriptor;
+      myFix = fix;
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return myFix.getName();
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull ActionContext context) {
+      PsiElement psiElement = myDescriptor.getPsiElement();
+      if (psiElement == null || !psiElement.isValid()) return false;
+      PsiFile containingFile = psiElement.getContainingFile();
+      return containingFile == context.file() || containingFile == null ||
+             containingFile.getViewProvider().getVirtualFile().equals(context.file().getViewProvider().getVirtualFile());
+    }
+
+    @Override
+    public @NotNull ModCommand perform(@NotNull ActionContext context) {
+      return myFix.perform(context.project(), myDescriptor);
+    }
+
+    @Override
+    public @NotNull Priority getPriority() {
+      return myFix instanceof PriorityAction ? ((PriorityAction)myFix).getPriority() : Priority.NORMAL;
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull ActionContext context) {
+      return myFix.generatePreview(context.project(), myDescriptor.getDescriptorForPreview(context.file()));
+    }
   }
 }

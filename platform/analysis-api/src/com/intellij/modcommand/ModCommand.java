@@ -1,10 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcommand;
 
+import com.intellij.model.SideEffectGuard;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +17,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Supplier;
 
 /**
  * A transparent command, which modifies the project/workspace state (writes file, changes setting, moves editor caret, etc.),
@@ -21,7 +26,7 @@ import java.util.Set;
  * <p>
  * All inheritors are records, so the whole state is declarative and readable.
  */
-public sealed interface ModCommand permits ModCompositeCommand, ModLegacyBridge, ModNavigate, ModNothing, ModUpdatePsiFile {
+public sealed interface ModCommand permits ModCompositeCommand, ModNavigate, ModNothing, ModUpdatePsiFile {
   /**
    * Executes the command
    * 
@@ -104,5 +109,19 @@ public sealed interface ModCommand permits ModCompositeCommand, ModLegacyBridge,
    */
   default @NotNull List<@NotNull ModCommand> unpack() {
     return List.of(this);
+  }
+
+  /**
+   * @param supplier command supplier
+   * @return ModCommand safely obtained from the supplier
+   */
+  static @NotNull ModCommand retrieve(@NotNull Supplier<? extends @NotNull ModCommand> supplier) {
+    try {
+      return Objects.requireNonNull(ReadAction.nonBlocking(() -> SideEffectGuard.computeWithoutSideEffects(supplier::get))
+        .submit(AppExecutorUtil.getAppExecutorService()).get());
+    }
+    catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
   }
 }
