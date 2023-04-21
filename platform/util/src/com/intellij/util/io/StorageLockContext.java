@@ -4,6 +4,7 @@ package com.intellij.util.io;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.io.FileChannelInterruptsRetryer.FileChannelIdempotentOperation;
 import com.intellij.util.io.OpenChannelsCache.FileChannelOperation;
+import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
 import com.intellij.util.io.stats.FilePageCacheStatistics;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -33,10 +34,12 @@ public final class StorageLockContext {
 
   /** In general, null if {@link PageCacheUtils#LOCK_FREE_VFS_ENABLED} is false */
   private final @Nullable FilePageCacheLockFree myFilePageCacheLockFree;
+  private final PageContentLockingStrategy.SharedLockLockingStrategy pageContentLockingStrategy = new PageContentLockingStrategy.SharedLockLockingStrategy(myLock);
 
   private final boolean myUseReadWriteLock;
   private final boolean myCacheChannels;
   private final boolean myDisableAssertions;
+
 
   @VisibleForTesting
   StorageLockContext(@NotNull FilePageCache filePageCache,
@@ -170,6 +173,11 @@ public final class StorageLockContext {
       );
     }
     return myFilePageCacheLockFree;
+  }
+
+  @NotNull
+  public PageContentLockingStrategy lockingStrategyWithGlobalLock(){
+    return pageContentLockingStrategy;
   }
 
   @ApiStatus.Internal

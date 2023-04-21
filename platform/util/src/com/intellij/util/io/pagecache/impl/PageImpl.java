@@ -725,8 +725,8 @@ public abstract class PageImpl implements Page {
   //         resize -- on split, or regular insert. Better to have dedicated Page.copyRangeTo(Page) method
   //         for that, since now one need to acquire page locks, and they must be acquired in
   //         stable order to avoid deadlocks
-  @Deprecated
-  protected ByteBuffer duplicate() {
+  @ApiStatus.Obsolete
+  public ByteBuffer duplicate() {
     checkPageIsValidForAccess();
     return data.duplicate().order(data.order());
   }

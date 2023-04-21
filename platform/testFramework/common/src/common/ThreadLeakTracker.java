@@ -10,6 +10,7 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.util.FlushingDaemon;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.FilePageCacheLockFree;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus.Internal;
@@ -71,6 +72,7 @@ public final class ThreadLeakTracker {
       "Coroutines Debugger Cleaner", // kotlinx.coroutines.debug.internal.DebugProbesImpl.startWeakRefCleanerThread
       "dockerjava-netty",
       "External compiler",
+      FilePageCacheLockFree.DEFAULT_HOUSEKEEPER_THREAD_NAME,
       "Finalizer",
       FlushingDaemon.NAME,
       "HttpClient-",

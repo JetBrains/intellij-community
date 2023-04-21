@@ -4,59 +4,70 @@ package com.intellij.util.io.storage;
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.io.PagedFileStorage;
+import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
 import com.intellij.util.io.StorageLockContext;
+import com.intellij.util.io.pagecache.PagedStorage;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
 
-final class DataTable implements Closeable, Forceable {
+//TODO RC: thread-safety is unclear
+final class DataTable implements AutoCloseable, Forceable {
   private static final Logger LOG = Logger.getInstance(DataTable.class);
 
   private static final int HEADER_SIZE = 32;
   private static final int DIRTY_MAGIC = 0x12ad34e4;
   private static final int SAFELY_CLOSED_MAGIC = 0x1f2f3f4f;
 
-  private final PagedFileStorage myFile;
+  private final PagedStorage myFile;
   private volatile int myWasteSize;
 
   private static final int HEADER_MAGIC_OFFSET = 0;
   private static final int HEADER_WASTE_SIZE_OFFSET = 4;
   private volatile boolean myIsDirty;
 
-  DataTable(@NotNull Path filePath, @NotNull StorageLockContext context) throws IOException {
-    myFile = new PagedFileStorage(filePath, context, 8 * 1024, false, false);
-    myFile.lockWrite();
-    try {
-      if (myFile.length() == 0) {
-        markDirty();
-      }
-      else {
-        readInHeader(filePath);
-      }
+  DataTable(@NotNull Path filePath,
+            @NotNull StorageLockContext context) throws IOException {
+    myFile = new PagedFileStorageWithRWLockedPageContent(
+      filePath,
+      context,
+      /*pageSize: */ 8 * 1024,
+      /*nativeOrder: */ false,
+      context.lockingStrategyWithGlobalLock()
+    );
+
+    if (myFile.length() == 0) {
+      markDirty();
     }
-    finally {
-      myFile.unlockWrite();
+    else {
+      readInHeader(filePath);
     }
   }
 
   public boolean isCompactNecessary() {
-    return ((double)myWasteSize)/myFile.length() > 0.25 && myWasteSize > 3 * FileUtilRt.MEGABYTE;
+    return ((double)myWasteSize) / myFile.length() > 0.25 && myWasteSize > 3 * FileUtilRt.MEGABYTE;
   }
 
   private void readInHeader(@NotNull Path filePath) throws IOException {
     int magic = myFile.getInt(HEADER_MAGIC_OFFSET);
     if (magic != SAFELY_CLOSED_MAGIC) {
-      myFile.close();
-      throw new IOException("Records table for '" + filePath + "' haven't been closed correctly. Rebuild required.");
+      IOException ioError = new IOException(
+        "Records table for '" + filePath + "' haven't been closed correctly. Rebuild required."
+      );
+      try {
+        myFile.close();
+      }
+      catch (InterruptedException ite) {
+        ioError.addSuppressed(ite);
+      }
+      throw ioError;
     }
     myWasteSize = myFile.getInt(HEADER_WASTE_SIZE_OFFSET);
   }
 
   public void readBytes(long address, byte[] bytes) throws IOException {
-    myFile.get(address, bytes, 0, bytes.length, true);
+    myFile.get(address, bytes, 0, bytes.length);
   }
 
   public void writeBytes(long address, byte[] bytes) throws IOException {
@@ -89,7 +100,7 @@ final class DataTable implements Closeable, Forceable {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() throws IOException, InterruptedException {
     markClean();
     myFile.close();
   }

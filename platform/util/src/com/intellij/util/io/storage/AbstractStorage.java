@@ -191,7 +191,7 @@ public abstract class AbstractStorage implements IStorage {
         Files.move(newDataFile, oldDataFile, StandardCopyOption.REPLACE_EXISTING);
         myDataTable = new DataTable(oldDataFile, myContext);
       }
-      catch (IOException e) {
+      catch (InterruptedException | IOException e) {
         LOG.info("Compact failed", e);
       }
 
@@ -240,13 +240,7 @@ public abstract class AbstractStorage implements IStorage {
   @Override
   @TestOnly
   public RecordIdIterator createRecordIdIterator() throws IOException {
-    myRecordsTable.myStorage.lockWrite();
-    try {
-      return myRecordsTable.createRecordIdIterator();
-    }
-    finally {
-      myRecordsTable.myStorage.unlockWrite();
-    }
+    return myRecordsTable.createRecordIdIterator();
   }
 
   @Override

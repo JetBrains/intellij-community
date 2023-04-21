@@ -327,13 +327,28 @@ public final class IOUtil {
     return readStringCollection(in, ArrayList::new);
   }
 
-  public static void closeSafe(@NotNull Logger log, Closeable... closeables) {
+  public static void closeSafe(@NotNull Logger log,
+                               Closeable... closeables) {
     for (Closeable closeable : closeables) {
       if (closeable != null) {
         try {
           closeable.close();
         }
         catch (IOException e) {
+          log.error(e);
+        }
+      }
+    }
+  }
+
+  public static void closeSafe(@NotNull Logger log,
+                               AutoCloseable... closeables) {
+    for (AutoCloseable closeable : closeables) {
+      if (closeable != null) {
+        try {
+          closeable.close();
+        }
+        catch (Exception e) {
           log.error(e);
         }
       }

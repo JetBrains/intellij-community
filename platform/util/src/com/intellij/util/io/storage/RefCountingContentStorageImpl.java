@@ -155,7 +155,7 @@ public class RefCountingContentStorageImpl extends AbstractStorage implements Re
   }
 
   @Override
-  public void writeBytes(final int record, final ByteArraySequence bytes, final boolean fixedSize) throws IOException {
+  public void writeBytes(final int record, final @NotNull ByteArraySequence bytes, final boolean fixedSize) throws IOException {
     waitForPendingWriteForRecord(record);
 
     withWriteLock(() -> {

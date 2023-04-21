@@ -5,13 +5,15 @@ import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.PagedFileStorage;
+import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
 import com.intellij.util.io.StorageLockContext;
+import com.intellij.util.io.pagecache.PagedStorage;
+import com.intellij.util.io.pagecache.PagedStorageWithPageUnalignedAccess;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.text.MessageFormat;
@@ -19,13 +21,13 @@ import java.text.MessageFormat;
 /**
  * Table of indirect addressing, logically contains tuples (id, address, size, capacity), do
  * the mapping id -> (address, size, capacity), and stores tuples as fixed-size records on
- * the top of {@link PagedFileStorage}.
+ * the top of {@link PagedStorage}.
  * <br>
  * Subclasses could add fields to the tuple, and implement more efficient storage formats.
  * <br>
- * Thread safety is unclear: some methods are protected against concurrent access, some are not.
+ * TODO Thread safety is unclear: some methods are protected against concurrent access, some are not.
  */
-public abstract class AbstractRecordsTable implements Closeable, Forceable {
+public abstract class AbstractRecordsTable implements AutoCloseable, Forceable {
   private static final Logger LOG = Logger.getInstance(AbstractRecordsTable.class);
 
   private static final int HEADER_MAGIC_OFFSET = 0;
@@ -42,29 +44,43 @@ public abstract class AbstractRecordsTable implements Closeable, Forceable {
 
   protected static final int DEFAULT_RECORD_SIZE = CAPACITY_OFFSET + 4;
 
-  protected final PagedFileStorage myStorage;
+  protected final PagedStorage myStorage;
 
   private IntList myFreeRecordsList = null;
   private boolean myIsDirty = false;
   protected static final int SPECIAL_NEGATIVE_SIZE_FOR_REMOVED_RECORD = -1;
 
   public AbstractRecordsTable(@NotNull Path storageFilePath, @NotNull StorageLockContext context) throws IOException {
-    myStorage = new PagedFileStorage(storageFilePath, context, getPageSize(), areDataAlignedToPage(), false);
-    myStorage.lockWrite();
-    try {
-      if (myStorage.length() == 0) {
-        myStorage.put(0, new byte[getHeaderSize()], 0, getHeaderSize());
-        markDirty();
-      }
-      else {
-        if (myStorage.getInt(HEADER_MAGIC_OFFSET) != getSafelyClosedMagic()) {
-          myStorage.close();
-          throw new IOException("Records table for '" + storageFilePath + "' haven't been closed correctly. Rebuild required.");
-        }
-      }
+    PagedFileStorageWithRWLockedPageContent storage = new PagedFileStorageWithRWLockedPageContent(
+      storageFilePath,
+      context,
+      getPageSize(),
+      false,
+      context.lockingStrategyWithGlobalLock()
+    );
+    if (areDataAlignedToPage()) {
+      myStorage = storage;
     }
-    finally {
-      myStorage.unlockWrite();
+    else {
+      myStorage = new PagedStorageWithPageUnalignedAccess(storage);
+    }
+
+    if (myStorage.length() == 0) {
+      myStorage.put(0, new byte[getHeaderSize()], 0, getHeaderSize());
+      markDirty();
+    }
+    else {
+      if (myStorage.getInt(HEADER_MAGIC_OFFSET) != getSafelyClosedMagic()) {
+        final IOException ioError =
+          new IOException("Records table for '" + storageFilePath + "' haven't been closed correctly. Rebuild required.");
+        try {
+          myStorage.close();
+        }
+        catch (InterruptedException ite) {
+          ioError.addSuppressed(ite);
+        }
+        throw ioError;
+      }
     }
   }
 
@@ -236,7 +252,7 @@ public abstract class AbstractRecordsTable implements Closeable, Forceable {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() throws IOException, InterruptedException {
     markClean();
     myStorage.close();
   }

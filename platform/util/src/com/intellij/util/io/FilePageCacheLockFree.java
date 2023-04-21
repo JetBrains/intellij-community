@@ -38,6 +38,8 @@ import static java.util.Comparator.comparing;
 public final class FilePageCacheLockFree implements AutoCloseable {
   private static final Logger LOG = Logger.getInstance(FilePageCacheLockFree.class);
 
+  public static final String DEFAULT_HOUSEKEEPER_THREAD_NAME = "FilePageCache housekeeper";
+
   private static final int MAX_PAGES_TO_RECLAIM_AT_ONCE = 5;
   /** Initial size of page table hashmap in {@linkplain PagesTable} */
   private static final int INITIAL_PAGES_TABLE_SIZE = 1 << 5;
@@ -104,7 +106,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
 
 
   public FilePageCacheLockFree(final long cacheCapacityBytes) {
-    this(cacheCapacityBytes, r -> new Thread(r, "FilePageCache housekeeper"));
+    this(cacheCapacityBytes, r -> new Thread(r, DEFAULT_HOUSEKEEPER_THREAD_NAME));
   }
 
   public FilePageCacheLockFree(final long cacheCapacityBytes,
@@ -161,7 +163,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
   Future<?> enqueueStoragePagesClosing(final @NotNull PagedFileStorageWithRWLockedPageContent storage,
                                        final @NotNull CompletableFuture<Object> finish) {
     checkNotClosed();
-    final CloseStorageCommand task = new CloseStorageCommand(storage, finish);
+    final PostCloseStorageCleanupCommand task = new PostCloseStorageCleanupCommand(storage, finish);
     commandsQueue.add(task);
     return task.onFinish;
   }
@@ -366,28 +368,28 @@ public final class FilePageCacheLockFree implements AutoCloseable {
         break;
       }
 
-      if (command instanceof CloseStorageCommand) {
-        final CloseStorageCommand closeStorageCommand = (CloseStorageCommand)command;
+      if (command instanceof PostCloseStorageCleanupCommand) {
+        final PostCloseStorageCleanupCommand closeStorageCommand = (PostCloseStorageCleanupCommand)command;
         final PagedFileStorageWithRWLockedPageContent storage = closeStorageCommand.storageToClose;
         final CompletableFuture<?> futureToFinalize = closeStorageCommand.onFinish;
         if (!storage.isClosed()) {
           final AssertionError error =
-            new AssertionError("Code bug: storage " + storage + " must be closed before CloseStorageCommand is queued");
+            new AssertionError("Code bug: storage " + storage + " must be closed before PostCloseStorageCleanupCommand is queued");
           futureToFinalize.completeExceptionally(error);
           throw error;
         }
 
         final PagesTable pagesTable = storage.pages();
-        // RC: Actually, we don't need to _reclaim_ pages of .close()-ed storage -- we need to flush
+        // RC: Actually, we don't need to _reclaim_ pages of .close()-ed storage -- we need to .flush()
         //     them, but the pages themselves are owned by cache, not storage. So it may be
         //     reasonable to just leave pages there they are, until they are either reclaimed by
         //     a regular reclamation path (because their utility is completely decayed under no
         //     use), or re-used by a new storage opened for the same file. IMHO, for our use-cases,
-        //     the ability to re-use pages for re-opened storages is not so much important, but the
+        //     the ability to re-use pages for re-opened storages is not very important, but the
         //     opportunity to simplify .close() codepath may be worth it.
 
-        //TODO RC: catch UncheckedIOException from page.flush(), and collect them.
-        //         Do limited retries: count unsuccessful page.flush(), and give up after
+        //TODO RC: catch UncheckedIOException from page.flush() calls (in entombPageAndGetPageBuffer),
+        //         and collect them. Do limited retries: count unsuccessful page.flush(), and give up after
         //         N tries -- remove task from queue, rise an exception leading to app restart
         //         request (not worth to allow user continue working if we know work can't be
         //         saved)
@@ -617,12 +619,12 @@ public final class FilePageCacheLockFree implements AutoCloseable {
    * Command issued by {@link PagedFileStorageWithRWLockedPageContent} on a close -- request FilePageCache to clean
    * up all used data of the storage.
    */
-  protected static class CloseStorageCommand extends Command {
+  protected static class PostCloseStorageCleanupCommand extends Command {
     private final PagedFileStorageWithRWLockedPageContent storageToClose;
     private final CompletableFuture<?> onFinish;
 
-    protected CloseStorageCommand(final @NotNull PagedFileStorageWithRWLockedPageContent storageToClose,
-                                  final @NotNull CompletableFuture<Object> onFinish) {
+    protected PostCloseStorageCleanupCommand(final @NotNull PagedFileStorageWithRWLockedPageContent storageToClose,
+                                             final @NotNull CompletableFuture<Object> onFinish) {
       this.storageToClose = storageToClose;
       this.onFinish = onFinish;
     }
