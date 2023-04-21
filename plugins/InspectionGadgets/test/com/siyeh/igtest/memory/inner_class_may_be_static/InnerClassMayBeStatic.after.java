@@ -3,7 +3,7 @@ package com.siyeh.igtest.memory.inner_class_may_be_static;
 import javax.swing.*;
 
 public class InnerClassMayBeStatic {
-     class <warning descr="Inner class 'Nested' may be 'static'"><caret>Nested</warning> {
+     static class Nested {
          public void foo() {
              bar("InnerClassMayBeStaticInspection.this");
          }
@@ -57,13 +57,13 @@ class StaticInnerClass {
       foo = -1;
     }
   }
-  class <warning descr="Inner class 'C' may be 'static'">C</warning> extends StaticInnerClass {{
+  static class C extends StaticInnerClass {{
     bar = 1;
   }}
 }
 class SomeBeanUnitTest {
 
-  private class <warning descr="Inner class 'BeanCreator' may be 'static'">BeanCreator</warning> {
+  private static class BeanCreator {
 
     public BeanCreator  withQuery() {
       return null;
@@ -76,19 +76,19 @@ class Outer {
   }
   class B extends  A {} // may not be static
 
-  class <warning descr="Inner class 'C' may be 'static'">C</warning> { // may be static
+  static class C { // may be static
     D b;
     class D extends C {}
   }
 
   static class E {
     G.F b;
-    class <warning descr="Inner class 'G' may be 'static'">G</warning> { // may be static
+    static class G { // may be static
       class F extends  E {}
     }
   }
 
-  class <warning descr="Inner class 'H' may be 'static'">H</warning> { // may be static
+  static class H { // may be static
     J.I b;
     class J {
       class I extends  H {}
@@ -105,15 +105,15 @@ class Complex {
   static void n() {
   }
 
-  private class <warning descr="Inner class 'A' may be 'static'">A</warning> {
+  private static class A {
     private A() {
     }
   }
 
-  class <warning descr="Inner class 'B' may be 'static'">B</warning> {
+  static class B {
   }
 
-  class <warning descr="Inner class 'F' may be 'static'">F</warning> extends Complex {
+  static class F extends Complex {
     class G {
     }
 
@@ -147,7 +147,7 @@ class Test1<T> {
   }
 }
 class Test2 {
-  class <warning descr="Inner class 'Inner' may be 'static'">Inner</warning><T> {
+  static class Inner<T> {
     private final T test;
     public Inner(T test) {
       this.test = test;
@@ -164,7 +164,7 @@ class ImplicitConstructorReference {
     B m();
   }
 
-  class <warning descr="Inner class 'B' may be 'static'">B</warning> {}
+  static class B {}
 }
 class Scratch
 {
@@ -185,26 +185,26 @@ class JUnit5Test {
   }
 }
 abstract class JavaClass<T> {
-  public class <warning descr="Inner class 'InnerClass' may be 'static'">InnerClass</warning><M> {}
+  public static class InnerClass<M> {}
 
-  public static <K, L> JavaClass<K>.InnerClass<L> baz(K t) {
+  public static <K, L> JavaClass.InnerClass<L> baz(K t) {
     return null;
   }
 }
 class Simple {
-  class <warning descr="Inner class 'Inner' may be 'static'">Inner</warning> {}
+  static class Inner {}
 
   void m() {
     new Inner();
   }
 
   static void s(Simple s) {
-    s.new Inner();
+    new Inner();
   }
 }
 class X {
   X() {
-    new Simple().new Inner();
+    new Simple.Inner();
   }
 }
 class Usage {
@@ -213,7 +213,7 @@ class Usage {
     new Node(0, new Node(1, null));
   }
 
-  private class <warning descr="Inner class 'Node' may be 'static'">Node</warning> {
+  private static class Node {
     Node(int idx, Node next) {
     }
   }
@@ -228,7 +228,7 @@ class IdeaTest {
     System.out.println(foo);
   }
 
-  class <warning descr="Inner class 'InnerClass' may be 'static'">InnerClass</warning><T>{
+  static class InnerClass<T>{
     public T foo(T bar){
       return bar;
     }
@@ -247,7 +247,7 @@ class Feedback {
 
 class A {
 
-  protected class <warning descr="Inner class 'B' may be 'static'">B</warning> extends C1 {
+  protected static class B extends C1 {
 
     public B() {
       super(new Feedback() {

@@ -19,12 +19,14 @@ public class InnerClassMayBeStaticInspectionTest extends LightJavaInspectionTest
   public void testInnerClassMayBeStatic() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15, () -> {
       doTest();
+      checkQuickFixAll();
     });
   }
 
   public void testInnerStaticsJDK16() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_16, () -> {
       doTest();
+      checkQuickFixAll();
     });
   }
 
