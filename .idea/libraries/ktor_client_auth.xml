@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="ktor-client-auth" type="repository">
-    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-auth-jvm:2.2.4" />
+    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-auth-jvm:2.3.0" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-auth-jvm/2.2.4/ktor-client-auth-jvm-2.2.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-auth-jvm/2.3.0/ktor-client-auth-jvm-2.3.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-auth-jvm/2.2.4/ktor-client-auth-jvm-2.2.4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-auth-jvm/2.3.0/ktor-client-auth-jvm-2.3.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

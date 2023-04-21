@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="bouncy-castle-pgp" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.bouncycastle:bcpg-jdk18on:1.72.2" />
+    <properties include-transitive-deps="false" maven-id="org.bouncycastle:bcpg-jdk18on:1.73" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcpg-jdk18on/1.72.2/bcpg-jdk18on-1.72.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcpg-jdk18on/1.73/bcpg-jdk18on-1.73.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcpg-jdk18on/1.72.2/bcpg-jdk18on-1.72.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcpg-jdk18on/1.73/bcpg-jdk18on-1.73-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
