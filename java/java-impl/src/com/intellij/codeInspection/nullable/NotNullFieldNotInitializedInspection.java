@@ -8,25 +8,23 @@ import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddVariableInitializerFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.InitializeFinalFieldInConstructorFix;
+import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.SetInspectionOptionFix;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class NotNullFieldNotInitializedInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final String IGNORE_IMPLICITLY_WRITTEN_FIELDS_NAME = "IGNORE_IMPLICITLY_WRITTEN_FIELDS";
@@ -81,7 +79,7 @@ public class NotNullFieldNotInitializedInspection extends AbstractBaseJavaLocalI
                                                JavaBundle.message("inspection.notnull.field.not.initialized.option.setup"), true));
         }
         if (ownAnnotation) {
-          fixes.add(new DeleteElementFix(annotation, JavaBundle.message("quickfix.text.remove.not.null.annotation")));
+          fixes.add(QuickFixFactory.getInstance().createDeleteFix(annotation, JavaBundle.message("quickfix.text.remove.not.null.annotation")));
         }
         if (isOnTheFly) {
           fixes.add(new InitializeFinalFieldInConstructorFix(field));
