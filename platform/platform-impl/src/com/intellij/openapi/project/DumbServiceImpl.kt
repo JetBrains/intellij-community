@@ -429,9 +429,11 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   }
 
   private fun processQueueUnderModalProgress(): Boolean {
+    val startTrace = Throwable()
     NoAccessDuringPsiEvents.checkCallContext("modal indexing")
     return myGuiDumbTaskRunner.tryStartProcessInThisThread { processTask: AutoclosableProgressive ->
       try {
+        LOG.infoWithDebug("Processing dumb queue under modal progress (start)", startTrace)
         (ApplicationManager.getApplication() as ApplicationImpl).executeSuspendingWriteAction(myProject, IndexingBundle.message(
           "progress.indexing.title")) {
           processTask.use {
@@ -444,6 +446,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
         if (myTaskQueue.isEmpty) {
           enterSmartModeIfDumb()
         }
+        LOG.infoWithDebug("Processing dumb queue under modal progress (end)", startTrace)
       }
     }
   }
