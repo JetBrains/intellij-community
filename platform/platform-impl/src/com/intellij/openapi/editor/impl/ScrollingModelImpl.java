@@ -190,8 +190,7 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     if (editor.getSettings().isRefrainFromScrolling() && viewRect.contains(targetLocation)) {
       if (scrollType == ScrollType.CENTER ||
           scrollType == ScrollType.CENTER_DOWN ||
-          scrollType == ScrollType.CENTER_UP ||
-          scrollType == ScrollType.CENTER_CENTER) {
+          scrollType == ScrollType.CENTER_UP) {
         scrollType = ScrollType.RELATIVE;
       }
     }

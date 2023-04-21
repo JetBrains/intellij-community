@@ -21,5 +21,4 @@ public enum ScrollType {
   MAKE_VISIBLE,
   CENTER_UP,
   CENTER_DOWN,
-  CENTER_CENTER // center vertically and horizontally
 }
