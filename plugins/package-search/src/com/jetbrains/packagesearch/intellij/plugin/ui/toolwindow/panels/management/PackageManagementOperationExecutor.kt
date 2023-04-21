@@ -19,6 +19,7 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
+import com.intellij.dependencytoolwindow.DependencyToolWindowBundle
 import com.intellij.externalSystem.DependencyModifierService
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -239,7 +240,7 @@ internal class PackageManagementOperationExecutor(private val project: Project) 
         val suspender = coroutineSuspender()
         withBackgroundLoadingBar(
             project = project,
-            title = PackageSearchBundle.message("toolwindow.stripe.Dependencies"),
+            title = DependencyToolWindowBundle.getMessage("toolwindow.stripe.Dependencies"),
             isIndeterminate = false,
             cancellable = true,
             isPausable = true
