@@ -16,6 +16,7 @@ import com.intellij.util.text.UniqueNameGenerator
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.move.MoveConflictUsageInfo
 import org.jetbrains.kotlin.idea.refactoring.move.MoveConflictsFoundException
+import org.jetbrains.kotlin.idea.refactoring.move.MoveFilesWithDeclarationsViewDescriptor
 import org.jetbrains.kotlin.psi.KtFile
 
 class MoveToKotlinFileProcessor @JvmOverloads constructor(

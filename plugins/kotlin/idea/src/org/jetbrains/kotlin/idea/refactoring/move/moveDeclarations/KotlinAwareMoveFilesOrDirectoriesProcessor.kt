@@ -14,6 +14,7 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.idea.refactoring.move.MoveConflictsFoundException
+import org.jetbrains.kotlin.idea.refactoring.move.MoveFilesWithDeclarationsViewDescriptor
 import org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories.allElementsToMove
 import org.jetbrains.kotlin.psi.KtFile
 
