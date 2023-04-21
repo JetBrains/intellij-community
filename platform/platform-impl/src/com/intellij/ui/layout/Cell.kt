@@ -262,7 +262,7 @@ internal const val UNBOUND_RADIO_BUTTON = "unbound.radio.button"
 abstract class Cell : BaseBuilder {
   /**
    * Sets how keen the component should be to grow in relation to other component **in the same cell**. Use `push` in addition if need.
-   * If this constraint is not set the grow weight is set to 0 and the component will not grow (unless some automatic rule is not applied (see [com.intellij.ui.layout.panel])).
+   * If this constraint is not set the grow weight is set to 0 and the component will not grow (unless some automatic rule is not applied.
    * Grow weight will only be compared against the weights for the same cell.
    */
   @ApiStatus.ScheduledForRemoval
