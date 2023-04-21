@@ -13112,22 +13112,6 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         public void testReturn() throws Exception {
             runTest("testData/quickfix/replaceWithSafeCall/return.kt");
         }
-        
-           @TestMetadata("Test1.kt")
-        public void testTest1() throws Exception {
-            runTest("testData/quickfix/replaceWithSafeCall/Test1.kt");
-        }
-        
-        @TestMetadata("Test2.kt")
-        public void testTest2() throws Exception {
-            runTest("testData/quickfix/replaceWithSafeCall/Test2.kt");
-        }
-        
-        @TestMetadata("Test3.kt")
-        public void testTest3() throws Exception {
-            runTest("testData/quickfix/replaceWithSafeCall/Test3.kt");
-        }
-        
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
