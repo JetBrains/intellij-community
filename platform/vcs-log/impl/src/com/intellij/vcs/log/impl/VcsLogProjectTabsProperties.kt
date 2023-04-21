@@ -34,6 +34,7 @@ class VcsLogProjectTabsProperties : PersistentStateComponent<VcsLogProjectTabsPr
 
   fun removeTab(tabId: String) {
     _state.openTabs.remove(tabId)
+    resetState(tabId)
   }
 
   fun resetState(tabId: String) {
