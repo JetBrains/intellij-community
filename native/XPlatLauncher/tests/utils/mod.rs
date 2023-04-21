@@ -357,21 +357,6 @@ pub fn get_bin_java_path(java_home: &Path) -> PathBuf {
     java_home.join("Contents/Home/bin/java")
 }
 
-#[cfg(target_os = "linux")]
-pub fn get_jbr_home(jbr_dir: &PathBuf) -> Result<PathBuf> {
-    Ok(jbr_dir.canonicalize()?)
-}
-
-#[cfg(target_os = "macos")]
-pub fn get_jbr_home(jbr_dir: &PathBuf) -> Result<PathBuf> {
-    Ok(jbr_dir.join("Contents/Home").canonicalize()?)
-}
-
-#[cfg(target_os = "windows")]
-pub fn get_jbr_home(jbr_dir: &PathBuf) -> Result<PathBuf> {
-    Ok(junction::get_target(jbr_dir)?)
-}
-
 pub fn get_custom_config_dir() -> PathBuf {
     get_config_home().unwrap().join("JetBrains").join("XPlatLauncherTest")
 }
