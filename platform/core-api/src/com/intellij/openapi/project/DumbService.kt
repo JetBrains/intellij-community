@@ -362,13 +362,11 @@ abstract class DumbService {
     /**
      * The event arrives on EDT.
      */
-    @JvmDefault
     fun enteredDumbMode() {}
 
     /**
      * The event arrives on EDT.
      */
-    @JvmDefault
     fun exitDumbMode() {}
   }
 
