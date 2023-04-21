@@ -2,31 +2,33 @@
 package com.intellij.ide.util
 
 import com.intellij.ide.GeneralSettings
-import com.intellij.ide.util.TipAndTrickManager.Companion.DISABLE_TIPS_FOR_PROJECT
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.GotItTooltipService
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class TipAndTrickManagerImpl : TipAndTrickManager {
   private var openedDialog: TipDialog? = null
 
-  override fun showTipDialog(project: Project?) = showTipDialog(project, TipAndTrickBean.EP_NAME.extensionList)
+  override suspend fun showTipDialog(project: Project?) = showTipDialog(project = project, tips = TipAndTrickBean.EP_NAME.extensionList)
 
-  override fun showTipDialog(project: Project, tip: TipAndTrickBean) = showTipDialog(project, listOf(tip))
+  override suspend fun showTipDialog(project: Project, tip: TipAndTrickBean) = showTipDialog(project = project, tips = listOf(tip))
 
-  private fun showTipDialog(project: Project?, tips: List<TipAndTrickBean>) {
-    val sortingResult = if (tips.size > 1) TipsOrderUtil.getInstance().sort(tips, project) else TipsSortingResult(tips)
-    invokeLater {
+  private suspend fun showTipDialog(project: Project?, tips: List<TipAndTrickBean>) {
+    val sortingResult = if (tips.size > 1) TipOrderUtil.getInstance().sort(tips, project) else TipsSortingResult(tips)
+    withContext(Dispatchers.EDT) {
       if (project?.isDisposed != true) {
         closeTipDialog()
-        openedDialog = TipDialog(project, sortingResult).also { dialog ->
-          Disposer.register(dialog.disposable, Disposable { openedDialog = null })  // clear link to not leak the project
-          dialog.showWhenTipInstalled()
-        }
+        val dialog = TipDialog(project, sortingResult)
+        openedDialog = dialog
+        // clear link to not leak the project
+        Disposer.register(dialog.disposable, Disposable { openedDialog = null })
+        dialog.showWhenTipInstalled()
       }
     }
   }
@@ -37,10 +39,10 @@ class TipAndTrickManagerImpl : TipAndTrickManager {
 
   override fun canShowDialogAutomaticallyNow(project: Project): Boolean {
     return Registry.`is`("tips.of.the.day.force.show", false)
-           || GeneralSettings.getInstance().isShowTipsOnStartup
-           && !DISABLE_TIPS_FOR_PROJECT.get(project, false)
-           && !GotItTooltipService.getInstance().isFirstRun
-           && openedDialog?.isVisible != true
-           && !TipsUsageManager.getInstance().wereTipsShownToday()
+           || (GeneralSettings.getInstance().isShowTipsOnStartup
+               && !TipAndTrickManager.DISABLE_TIPS_FOR_PROJECT.get(project, false)
+               && !GotItTooltipService.getInstance().isFirstRun
+               && (openedDialog?.isVisible != true)
+               && !TipsUsageManager.getInstance().wereTipsShownToday())
   }
 }

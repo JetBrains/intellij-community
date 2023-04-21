@@ -7,22 +7,23 @@ import com.intellij.ide.util.TipAndTrickManager.Companion.getInstance
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.TaskCancellation
+import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.DumbAware
+import kotlinx.coroutines.launch
 
 private class ShowTipsAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
-    object : Task.Backgroundable(project, IdeBundle.message("tip.of.the.day.progress.title"), false) {
-      override fun run(indicator: ProgressIndicator) {
+    @Suppress("DEPRECATION")
+    (project?.coroutineScope ?: ApplicationManager.getApplication().coroutineScope).launch {
+      withBackgroundProgress(project!!, IdeBundle.message("tip.of.the.day.progress.title"), TaskCancellation.nonCancellable()) {
         TipsOfTheDayUsagesCollector.triggerDialogShown(TipsOfTheDayUsagesCollector.DialogType.manually)
         getInstance().showTipDialog(project)
       }
-    }.queue()
+    }
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }

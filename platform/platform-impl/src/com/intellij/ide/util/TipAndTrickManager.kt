@@ -4,7 +4,6 @@ package com.intellij.ide.util
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -16,13 +15,12 @@ interface TipAndTrickManager {
    * If a provided project is null, tip applicability will not be taken into account during sorting.
    * Also Features Trainer lessons promoter will not be shown.
    */
-  @RequiresBackgroundThread
-  fun showTipDialog(project: Project?)
+  suspend fun showTipDialog(project: Project?)
 
   /**
    * Show the dialog with one tip without "Next tip" and "Previous tip" buttons
    */
-  fun showTipDialog(project: Project, tip: TipAndTrickBean)
+  suspend fun showTipDialog(project: Project, tip: TipAndTrickBean)
 
   fun closeTipDialog()
 
