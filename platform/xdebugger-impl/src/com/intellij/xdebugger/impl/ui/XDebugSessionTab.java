@@ -121,7 +121,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     rebuildViews();
   }
 
-  public @Nullable <T> T getView(String viewId, Class<T> viewClass) {
+  protected @Nullable <T> T getView(String viewId, Class<T> viewClass) {
     return ObjectUtils.tryCast(myViews.get(viewId), viewClass);
   }
 
