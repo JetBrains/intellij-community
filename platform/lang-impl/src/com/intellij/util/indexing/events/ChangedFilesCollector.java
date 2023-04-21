@@ -296,14 +296,26 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     }
 
     try {
-      myWorkersFinishedSync.awaitAdvance(phase);
-    } catch (RejectedExecutionException e) {
+      awaitWithCheckCancelled(myWorkersFinishedSync, phase);
+    } catch (RejectedExecutionException | InterruptedException e) {
       LOG.warn(e);
       throw new ProcessCanceledException(e);
     }
 
     if (getEventMerger().getPublishedEventIndex() == publishedEventIndex) {
       myProcessedEventIndex.compareAndSet(processedEventIndex, publishedEventIndex);
+    }
+  }
+
+  private static void awaitWithCheckCancelled(Phaser phaser, int phase) throws InterruptedException {
+    while (true) {
+      ProgressManager.checkCanceled();
+      try {
+        phaser.awaitAdvanceInterruptibly(phase, 100, TimeUnit.MILLISECONDS);
+        break;
+      }
+      catch (TimeoutException ignored) {
+      }
     }
   }
 
