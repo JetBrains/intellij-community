@@ -9,8 +9,12 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.refactoring.CompositeRefactoringRunner
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveSource
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.*
+import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveDeclarationsDelegate
+import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveDeclarationsDescriptor
+import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsProcessor
+import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.Mover
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
@@ -43,7 +47,7 @@ abstract class MoveMemberOutOfObjectIntention(textGetter: () -> String) : SelfTa
         if (element is KtClassOrObject || !element.isPrivate() && destination is KtFile) {
             val moveDescriptor = MoveDeclarationsDescriptor(
                 project,
-                MoveSource(element),
+                KotlinMoveSource(element),
                 KotlinMoveTarget.ExistingElement(destination),
                 MoveDeclarationsDelegate.NestedClass()
             )

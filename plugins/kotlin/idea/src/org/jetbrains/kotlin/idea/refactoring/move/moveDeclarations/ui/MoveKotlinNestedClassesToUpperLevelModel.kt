@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.refactoring.createKotlinFile
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveSource
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
 import org.jetbrains.kotlin.idea.refactoring.move.getTargetPackageFqName
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.*
@@ -195,7 +196,7 @@ internal abstract class MoveKotlinNestedClassesToUpperLevelModel(
         val delegate = MoveDeclarationsDelegate.NestedClass(className, outerInstanceParameterName)
         val moveDescriptor = MoveDeclarationsDescriptor(
             project,
-            MoveSource(innerClass),
+            KotlinMoveSource(innerClass),
             moveTarget.first,
             delegate,
             searchInComments,

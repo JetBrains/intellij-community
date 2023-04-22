@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.refactoring.createKotlinFile
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveSource
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.MoveKotlinTopLevelDeclarationsDialog
 import org.jetbrains.kotlin.idea.refactoring.showWithTransaction
@@ -105,9 +106,9 @@ class ExtractDeclarationFromCurrentFileIntention : SelfTargetingRangeIntention<K
 
         val moveSource = element.tryGetExtraClassesToMove()
             ?.let { additionalElements ->
-                MoveSource(additionalElements.toMutableList().also { it.add(0, element) })
+                KotlinMoveSource(additionalElements.toMutableList().also { it.add(0, element) })
             }
-            ?: MoveSource(element)
+            ?: KotlinMoveSource(element)
 
         val moveCallBack = MoveCallback {
             val newFile = directory.findFile(targetFileName) as KtFile

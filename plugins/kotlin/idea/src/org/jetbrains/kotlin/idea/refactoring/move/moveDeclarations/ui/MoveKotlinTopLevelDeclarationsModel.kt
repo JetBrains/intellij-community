@@ -311,7 +311,7 @@ internal class MoveKotlinTopLevelDeclarationsModel(
 
         val options = MoveDeclarationsDescriptor(
             project,
-            MoveSource(elementsWithMPPIfNeeded),
+            KotlinMoveSource(elementsWithMPPIfNeeded),
             target,
             MoveDeclarationsDelegate.TopLevel,
             isSearchInComments,

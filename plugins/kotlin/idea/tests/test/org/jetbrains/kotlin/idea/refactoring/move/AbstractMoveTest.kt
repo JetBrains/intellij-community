@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.idea.refactoring.move.moveClassesOrPackages.KotlinAw
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveDeclarationsDelegate
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveDeclarationsDescriptor
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsProcessor
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveSource
 import org.jetbrains.kotlin.idea.refactoring.move.moveMethod.MoveKotlinMethodProcessor
 import org.jetbrains.kotlin.idea.refactoring.runRefactoringTest
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
@@ -241,7 +240,7 @@ enum class MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
                 )
             }
 
-            val descriptor = MoveDeclarationsDescriptor(project, MoveSource(elementsToMove), moveTarget, MoveDeclarationsDelegate.TopLevel)
+            val descriptor = MoveDeclarationsDescriptor(project, KotlinMoveSource(elementsToMove), moveTarget, MoveDeclarationsDelegate.TopLevel)
             MoveKotlinDeclarationsProcessor(descriptor).run()
         }
     },
@@ -303,7 +302,7 @@ enum class MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
                         createKotlinFile(fileName, targetDir, targetPackageFqName.asString())
                     }
                 }
-            val descriptor = MoveDeclarationsDescriptor(project, MoveSource(elementToMove), moveTarget, delegate)
+            val descriptor = MoveDeclarationsDescriptor(project, KotlinMoveSource(elementToMove), moveTarget, delegate)
             MoveKotlinDeclarationsProcessor(descriptor).run()
         }
     },

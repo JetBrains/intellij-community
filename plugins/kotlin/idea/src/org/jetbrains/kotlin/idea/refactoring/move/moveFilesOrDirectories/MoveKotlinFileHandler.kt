@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.idea.refactoring.move.*
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveDeclarationsDelegate
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveDeclarationsDescriptor
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsProcessor
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveSource
 import org.jetbrains.kotlin.idea.roots.isOutsideKotlinAwareSourceRoot
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -85,7 +84,7 @@ class MoveKotlinFileHandler : MoveFileHandler() {
         return MoveKotlinDeclarationsProcessor(
             MoveDeclarationsDescriptor(
                 project = project,
-                moveSource = MoveSource(psiFile),
+                moveSource = KotlinMoveSource(psiFile),
                 moveTarget = moveTarget,
                 delegate = MoveDeclarationsDelegate.TopLevel,
                 allElementsToMove = psiFile.allElementsToMove,

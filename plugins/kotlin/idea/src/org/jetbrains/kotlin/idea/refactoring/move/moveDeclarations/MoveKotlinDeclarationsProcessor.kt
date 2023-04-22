@@ -86,24 +86,9 @@ interface Mover : (KtNamedDeclaration, KtElement) -> KtNamedDeclaration {
     }
 }
 
-sealed class MoveSource {
-    abstract val elementsToMove: Collection<KtNamedDeclaration>
-
-    class Elements(override val elementsToMove: Collection<KtNamedDeclaration>) : MoveSource()
-
-    class File(val file: KtFile) : MoveSource() {
-        override val elementsToMove: Collection<KtNamedDeclaration>
-            get() = file.declarations.filterIsInstance<KtNamedDeclaration>()
-    }
-}
-
-fun MoveSource(declaration: KtNamedDeclaration) = MoveSource.Elements(listOf(declaration))
-fun MoveSource(declarations: Collection<KtNamedDeclaration>) = MoveSource.Elements(declarations)
-fun MoveSource(file: KtFile) = MoveSource.File(file)
-
 class MoveDeclarationsDescriptor @JvmOverloads constructor(
     val project: Project,
-    val moveSource: MoveSource,
+    val moveSource: KotlinMoveSource,
     val moveTarget: KotlinMoveTarget,
     val delegate: MoveDeclarationsDelegate,
     val searchInCommentsAndStrings: Boolean = true,
@@ -147,7 +132,7 @@ class MoveKotlinDeclarationsProcessor(
     val project get() = descriptor.project
 
     private var nonCodeUsages: Array<NonCodeUsageInfo>? = null
-    private val moveEntireFile = descriptor.moveSource is MoveSource.File
+    private val moveEntireFile = descriptor.moveSource is KotlinMoveSource.File
     private val elementsToMove = descriptor.moveSource.elementsToMove.filter { e ->
         e.parent != descriptor.moveTarget.getTargetPsiIfExists(e)
     }
