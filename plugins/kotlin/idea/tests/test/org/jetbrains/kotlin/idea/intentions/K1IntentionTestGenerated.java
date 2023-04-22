@@ -5442,6 +5442,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                 runTest("testData/intentions/convertForEachToForLoop/forEachIndexed/list.kt");
             }
 
+            @TestMetadata("nullableReceiver.kt")
+            public void testNullableReceiver() throws Exception {
+                runTest("testData/intentions/convertForEachToForLoop/forEachIndexed/nullableReceiver.kt");
+            }
+
             @TestMetadata("range.kt")
             public void testRange() throws Exception {
                 runTest("testData/intentions/convertForEachToForLoop/forEachIndexed/range.kt");
@@ -5498,6 +5503,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             @TestMetadata("keepComments.kt")
             public void testKeepComments() throws Exception {
                 runTest("testData/intentions/convertForEachToForLoop/keepComments.kt");
+            }
+
+            @TestMetadata("nullableReceiver.kt")
+            public void testNullableReceiver() throws Exception {
+                runTest("testData/intentions/convertForEachToForLoop/nullableReceiver.kt");
             }
 
             @TestMetadata("parenthesizedExpression.kt")
