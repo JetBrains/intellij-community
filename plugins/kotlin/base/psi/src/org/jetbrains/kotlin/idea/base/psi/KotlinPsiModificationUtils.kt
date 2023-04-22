@@ -4,6 +4,9 @@
 package org.jetbrains.kotlin.idea.base.psi
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiErrorElement
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -59,3 +62,20 @@ fun KtExpression.dropEnclosingParenthesesIfPossible(): KtExpression {
 }
 
 fun String.unquoteKotlinIdentifier(): String = KtPsiUtil.unquoteIdentifier(this)
+
+fun KtClass.getOrCreateCompanionObject(): KtObjectDeclaration {
+    companionObjects.firstOrNull()?.let { return it }
+    return appendDeclaration(KtPsiFactory(project).createCompanionObject())
+}
+
+inline fun <reified T : KtDeclaration> KtClass.appendDeclaration(declaration: T): T {
+    val body = getOrCreateBody()
+    val anchor = PsiTreeUtil.skipSiblingsBackward(body.rBrace ?: body.lastChild!!, PsiWhiteSpace::class.java)
+    val newDeclaration =
+        if (anchor?.nextSibling is PsiErrorElement)
+            body.addBefore(declaration, anchor)
+        else
+            body.addAfter(declaration, anchor)
+
+    return newDeclaration as T
+}

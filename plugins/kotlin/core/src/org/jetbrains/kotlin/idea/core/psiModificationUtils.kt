@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.core
 
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.psi.tree.IElementType
@@ -18,8 +17,9 @@ import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.extensions.DeclarationAttributeAltererExtension
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.appendDeclaration
+import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
 import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
@@ -52,10 +52,10 @@ import org.jetbrains.kotlin.resolve.sam.getFunctionTypeForPossibleSamType
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import org.jetbrains.kotlin.psi.psiUtil.parents
 
 fun KtLambdaArgument.moveInsideParentheses(bindingContext: BindingContext): KtCallExpression {
     val ktExpression = this.getArgumentExpression()
@@ -311,22 +311,17 @@ fun PsiElement.deleteSingle() {
     CodeEditUtil.removeChild(parent?.node ?: return, node ?: return)
 }
 
-fun KtClass.getOrCreateCompanionObject(): KtObjectDeclaration {
-    companionObjects.firstOrNull()?.let { return it }
-    return appendDeclaration(KtPsiFactory(project).createCompanionObject())
-}
+@Deprecated(
+    "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils' instead",
+    ReplaceWith("this.getOrCreateCompanionObject()", "org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject")
+)
+fun KtClass.getOrCreateCompanionObject(): KtObjectDeclaration = getOrCreateCompanionObject()
 
-inline fun <reified T : KtDeclaration> KtClass.appendDeclaration(declaration: T): T {
-    val body = getOrCreateBody()
-    val anchor = PsiTreeUtil.skipSiblingsBackward(body.rBrace ?: body.lastChild!!, PsiWhiteSpace::class.java)
-    val newDeclaration =
-        if (anchor?.nextSibling is PsiErrorElement)
-            body.addBefore(declaration, anchor)
-        else
-            body.addAfter(declaration, anchor)
-
-    return newDeclaration as T
-}
+@Deprecated(
+    "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils' instead",
+    ReplaceWith("this.appendDeclaration(declaration)", "org.jetbrains.kotlin.idea.base.psi.appendDeclaration")
+)
+inline fun <reified T : KtDeclaration> KtClass.appendDeclaration(declaration: T): T  = appendDeclaration(declaration)
 
 fun KtDeclaration.toDescriptor(): DeclarationDescriptor? {
     if (this is KtScriptInitializer) {
