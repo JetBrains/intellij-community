@@ -81,6 +81,10 @@ private class IdeKotlinDeclarationProvider(
         return KotlinFileFacadeClassByPackageIndex.get(packageFqName.asString(), project, scope)
     }
 
+    override fun findFilesForScript(scriptFqName: FqName): Collection<KtScript> {
+        return KotlinScriptFqnIndex[scriptFqName.asString(), project, scope]
+    }
+
     override fun findFilesForFacade(facadeFqName: FqName): Collection<KtFile> {
         return KotlinFileFacadeFqNameIndex.get(
             key = facadeFqName.asString(),
