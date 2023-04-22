@@ -2539,6 +2539,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/forEachIndexed/list.kt");
             }
 
+            @TestMetadata("nullableReceiver.kt")
+            public void testNullableReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/forEachIndexed/nullableReceiver.kt");
+            }
+
             @TestMetadata("range.kt")
             public void testRange() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/forEachIndexed/range.kt");
@@ -2595,6 +2600,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             @TestMetadata("keepComments.kt")
             public void testKeepComments() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/keepComments.kt");
+            }
+
+            @TestMetadata("nullableReceiver.kt")
+            public void testNullableReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/nullableReceiver.kt");
             }
 
             @TestMetadata("parenthesizedExpression.kt")

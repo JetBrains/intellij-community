@@ -10,10 +10,7 @@ import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.getFactoryForImplicitReceiverWithSubtypeOf
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.allChildren
-import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
@@ -21,6 +18,7 @@ import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.calls.util.getImplicitReceiverValue
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention<KtSimpleNameExpression>(
     KtSimpleNameExpression::class.java, KotlinBundle.lazyMessage("replace.with.a.for.loop")
@@ -58,8 +56,9 @@ class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention
 
         val isForEachIndexed = element.getReferencedName() == FOR_EACH_INDEXED_NAME
         val loop = generateLoop(functionLiteral, receiver, isForEachIndexed, context)
-        val result = expressionToReplace.replace(loop) as KtForExpression
-        result.loopParameter?.also { editor?.caretModel?.moveToOffset(it.startOffset) }
+        val result = expressionToReplace.replace(loop)
+        val forExpression = result.safeAs<KtForExpression>() ?: result.collectDescendantsOfType<KtForExpression>().first()
+        forExpression.loopParameter?.also { editor?.caretModel?.moveToOffset(it.startOffset) }
 
         commentSaver.restore(result)
     }
@@ -118,7 +117,7 @@ class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention
 
         val loopRange = KtPsiUtil.safeDeparenthesize(receiver)
         val parameters = functionLiteral.valueParameters
-        return if (isForEachIndexed) {
+        val loop = if (isForEachIndexed) {
             val loopRangeWithIndex = if (loopRange is KtThisExpression && loopRange.labelQualifier == null) {
                 psiFactory.createExpression("withIndex()")
             } else {
@@ -138,6 +137,12 @@ class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention
                 loopRange,
                 body.allChildren
             )
+        }
+
+        return if (loopRange.getQualifiedExpressionForReceiver() is KtSafeQualifiedExpression) {
+            psiFactory.createExpressionByPattern("if ($0 != null) { $1 }", loopRange, loop)
+        } else {
+            loop
         }
     }
 }
