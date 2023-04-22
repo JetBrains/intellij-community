@@ -1,12 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.sourceToSink;
 
+import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInspection.restriction.AnnotationContext;
 import com.intellij.codeInspection.restriction.RestrictionInfo;
 import com.intellij.codeInspection.restriction.RestrictionInfoFactory;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -27,15 +30,15 @@ class TaintValueFactory implements RestrictionInfoFactory<TaintValue> {
   @NotNull
   private final Set<String> myUnTaintedAnnotations;
 
-  @NotNull
-  private final String myDefaultUntaintedAnnotation;
+  @Nullable
+  private final String firstAnnotation;
 
   TaintValueFactory(@NotNull List<String> taintedAnnotations,
                     @NotNull List<String> unTaintedAnnotations,
-                    @NotNull String defaultUntaintedAnnotation) {
+                    @Nullable String firstAnnotation) {
     this.myTaintedAnnotations = new HashSet<>(taintedAnnotations);
     this.myUnTaintedAnnotations = new HashSet<>(unTaintedAnnotations);
-    this.myDefaultUntaintedAnnotation = defaultUntaintedAnnotation;
+    this.firstAnnotation = firstAnnotation;
   }
 
   @Override
@@ -171,8 +174,21 @@ class TaintValueFactory implements RestrictionInfoFactory<TaintValue> {
     return fromAnnotationOwner(type);
   }
 
+  @Nullable
+  public String getAnnotation() {
+    return firstAnnotation;
+  }
+
   @NotNull
-  public String getDefaultUntaintedAnnotation() {
-    return this.myDefaultUntaintedAnnotation;
+  public Set<PsiAnnotation.TargetType> getAnnotationTarget(@NotNull Project project, @NotNull GlobalSearchScope scope) {
+    if (firstAnnotation == null) {
+      return Set.of();
+    }
+    PsiClass annotationClass = JavaPsiFacade.getInstance(project).findClass(firstAnnotation, scope);
+    if (annotationClass == null) {
+      return Set.of();
+    }
+    Set<PsiAnnotation.TargetType> targets = AnnotationTargetUtil.getAnnotationTargets(annotationClass);
+    return targets == null ? Set.of() : targets;
   }
 }

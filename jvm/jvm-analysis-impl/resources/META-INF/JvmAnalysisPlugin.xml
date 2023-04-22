@@ -4,6 +4,12 @@
                     interface="com.intellij.codeInspection.blockingCallsDetection.BlockingMethodChecker" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.codeInsight.nonBlockingContextChecker"
                     interface="com.intellij.codeInspection.blockingCallsDetection.NonBlockingContextChecker" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.codeInspection.sourceToSinkProvider"
+                    dynamic="true"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.codeInspection.sourceToSink.SourceToSinkProvider"/>
+    </extensionPoint>
+
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <!--Test frameworks-->
@@ -190,6 +196,9 @@
   </extensions>
   <extensions defaultExtensionNs="com.intellij.codeInsight">
     <blockingMethodChecker implementation="com.intellij.codeInspection.blockingCallsDetection.ThrowsTypeBlockingMethodChecker"/>
+  </extensions>
+  <extensions defaultExtensionNs="com.intellij.codeInspection">
+    <sourceToSinkProvider language="JAVA" implementationClass="com.intellij.codeInspection.sourceToSink.JavaSourceToSinkProvider"/>
   </extensions>
   <actions>
     <group id="UastInternal" text="UAST" internal="true" popup="true">

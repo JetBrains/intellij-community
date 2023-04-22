@@ -6,7 +6,6 @@ import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.UntaintedAnnotationProvider;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.restriction.AnnotationContext;
 import com.intellij.codeInspection.restriction.StringFlowUtil;
@@ -52,8 +51,8 @@ public class SourceToSinkFlowInspection extends AbstractBaseJavaLocalInspectionT
       return PsiElementVisitor.EMPTY_VISITOR;
     }
 
-    TaintValueFactory factory = new TaintValueFactory(taintedAnnotations, untaintedAnnotations,
-                                                      firstAnnotation.orElse(UntaintedAnnotationProvider.DEFAULT_UNTAINTED_ANNOTATION));
+    TaintValueFactory factory =
+      new TaintValueFactory(taintedAnnotations, untaintedAnnotations, firstAnnotation.orElse(null));
     return new PsiElementVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {

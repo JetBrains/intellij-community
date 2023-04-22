@@ -89,3 +89,8 @@ fun createChangeTypeActions(target: JvmParameter, request: ChangeTypeRequest): L
     it.createChangeTypeActions(target, request)
   }
 }
+fun createChangeTypeActions(target: JvmField, request: ChangeTypeRequest): List<IntentionAction> {
+  return createActions {
+    it.createChangeTypeActions(target, request)
+  }
+}

@@ -579,6 +579,10 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
         val ktCallableDeclaration = (target as? KtLightElement<*, *>)?.kotlinOrigin as? KtCallableDeclaration ?: return emptyList()
         return listOfNotNull(ChangeType(ktCallableDeclaration, request))
     }
+    override fun createChangeTypeActions(target: JvmField, request: ChangeTypeRequest): List<IntentionAction> {
+        val ktCallableDeclaration = (target as? KtLightElement<*, *>)?.kotlinOrigin as? KtCallableDeclaration ?: return emptyList()
+        return listOfNotNull(ChangeType(ktCallableDeclaration, request))
+    }
 
     private class ChangeType(
         target: KtCallableDeclaration,
@@ -626,7 +630,7 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
         private fun KtCallableDeclaration.typeName(): String? {
             val typeReference = this.typeReference
             if (typeReference != null) return typeReference.typeElement?.text
-            if (this !is KtNamedFunction) return null
+            if ((this !is KtNamedFunction) && (this !is KtProperty)) return null
             val descriptor = this.resolveToDescriptorIfAny() as? CallableDescriptor ?: return null
             val returnType = descriptor.returnType ?: return null
             return IdeDescriptorRenderers.SOURCE_CODE.renderType(returnType)

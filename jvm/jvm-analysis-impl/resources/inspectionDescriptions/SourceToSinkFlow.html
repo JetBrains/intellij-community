@@ -41,7 +41,14 @@ Here we do not have non-safe string assignments to <code>s</code> so warning is 
 <p>
 Here we have a warning since <code>s1</code> has an unknown state after <code>foo</code> call result assignment.
   <!-- tooltip end -->
-<p>Use the <b>Untainted annotations</b> options to specify annotations, which will be used as <code>@Untainted</code> annotations during the analysis
-<p>Use the <b>Tainted annotations</b> options to specify annotations, which will be used as <code>@Tainted</code> annotations during the analysis
+<ul>
+  <li>
+    <p>Use the <b>Untainted annotations</b> options to specify annotations, which will be used as <code>@Untainted</code> annotations during the analysis.
+      The first annotation from this list will be used for propagation if it exists in classpath.
+  </li>
+  <li>
+    <p>Use the <b>Tainted annotations</b> options to specify annotations, which will be used as <code>@Tainted</code> annotations during the analysis
+  </li>
+</ul>
 <p><small>New in 2021.2</small></p>
 </body></html>

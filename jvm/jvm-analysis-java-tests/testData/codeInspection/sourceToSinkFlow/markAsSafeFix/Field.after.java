@@ -1,12 +1,12 @@
-// "Mark 'alias' as requiring validation" "true"
 package org.checkerframework.checker.tainting.qual;
 
 class Simple {
 
+    private @Untainted String s = foo();
+
     void simple() {
-      String s = foo();
-      String alias = s;
-      sink(<caret>alias);
+      String s2 = s;
+      sink(s2);
     }
 
     String foo() {

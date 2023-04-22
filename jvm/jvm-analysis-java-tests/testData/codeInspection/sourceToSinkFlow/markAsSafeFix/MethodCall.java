@@ -1,13 +1,12 @@
-// "Mark 'foo' as requiring validation" "true"
 package org.checkerframework.checker.tainting.qual;
 
 class Simple {
 
     void simple() {
-      sink(foo());
+      sink(<caret>foo());
     }
 
-    @Untainted String foo() {
+    String foo() {
       return "foo";
     }
 

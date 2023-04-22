@@ -5,6 +5,7 @@ import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.analysis.problemsView.toolWindow.ProblemsViewToolWindowUtils;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -40,6 +41,12 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     super(psiElement);
     myName = name;
     myTaintValueFactory = taintValueFactory;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    String message = JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.preview.propagate");
+    return new IntentionPreviewInfo.Html(message);
   }
 
   @Override
@@ -110,7 +117,7 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     List<TaintNode> nonMarkedNodes = ContainerUtil.filter(toAnnotate, this::isNonMarked);
     Set<PsiElement> psiElements = getPsiElements(nonMarkedNodes);
     if (psiElements == null) return;
-    MarkAsSafeFix.markAsSafe(project, psiElements, isHeadlessMode, this.myTaintValueFactory.getDefaultUntaintedAnnotation());
+    MarkAsSafeFix.markAsSafe(project, psiElements, isHeadlessMode, this.myTaintValueFactory);
   }
 
   private boolean isNonMarked(@NotNull TaintNode taintNode) {

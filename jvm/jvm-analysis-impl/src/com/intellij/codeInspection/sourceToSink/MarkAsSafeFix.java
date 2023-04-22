@@ -2,11 +2,13 @@
 package com.intellij.codeInspection.sourceToSink;
 
 import com.intellij.analysis.JvmAnalysisBundle;
+import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.lang.jvm.JvmField;
 import com.intellij.lang.jvm.JvmMethod;
 import com.intellij.lang.jvm.JvmModifiersOwner;
 import com.intellij.lang.jvm.JvmParameter;
@@ -18,20 +20,21 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.ExternalAnnotationsManager.AnnotationPlace;
@@ -77,8 +80,7 @@ public class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
     if (uExpression == null) return;
     List<PsiElement> elements = getElementsToMark(uExpression);
     if (elements == null) return;
-    markAsSafe(project, elements, ApplicationManager.getApplication().isHeadlessEnvironment(),
-               myTaintValueFactory.getDefaultUntaintedAnnotation());
+    markAsSafe(project, elements, ApplicationManager.getApplication().isHeadlessEnvironment(), myTaintValueFactory);
   }
 
   @Nullable
@@ -93,6 +95,7 @@ public class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
     UExpression uExpression = UastContextKt.toUElementOfExpectedTypes(previewDescriptor.getStartElement(),
                                                                       UCallExpression.class, UReferenceExpression.class);
+
     if (uExpression == null) return IntentionPreviewInfo.EMPTY;
     List<PsiElement> toAnnotate = getElementsToMark(uExpression);
     if (toAnnotate == null) return IntentionPreviewInfo.EMPTY;
@@ -105,13 +108,20 @@ public class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
       String message = JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.preview.multiple.files", fileNames);
       return new IntentionPreviewInfo.Html(message);
     }
-    if (ContainerUtil.exists(toAnnotate, e -> e.getContainingFile() != file)) return IntentionPreviewInfo.EMPTY;
-    annotateInCode(project, toAnnotate, myTaintValueFactory.getDefaultUntaintedAnnotation());
-    return IntentionPreviewInfo.DIFF;
+    if (ContainerUtil.exists(toAnnotate, e -> e.getContainingFile() != file)) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    ArrayList<PsiElement> ignoredElements = new ArrayList<>();
+    annotateInCode(project, toAnnotate, myTaintValueFactory, true, ignoredElements);
+    if (ignoredElements.isEmpty()) {
+      return IntentionPreviewInfo.DIFF;
+    }
+    String message = JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.preview");
+    return new IntentionPreviewInfo.Html(message);
   }
 
   public static void markAsSafe(@NotNull Project project, @NotNull Collection<PsiElement> toAnnotate, boolean isHeadlessMode,
-                                @NotNull String defaultUntaintedAnnotation) {
+                                @NotNull TaintValueFactory taintValueFactory) {
     AnnotationPlace place = getPlace(project, toAnnotate);
     if (place == AnnotationPlace.NEED_ASK_USER && !isHeadlessMode) {
       PsiModifierListOwner first = ContainerUtil.findInstance(toAnnotate, PsiModifierListOwner.class);
@@ -121,7 +131,7 @@ public class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
     }
     if (place != AnnotationPlace.EXTERNAL && place != AnnotationPlace.IN_CODE) return;
     boolean annotateExternally = place == AnnotationPlace.EXTERNAL;
-    annotate(project, toAnnotate, annotateExternally, defaultUntaintedAnnotation);
+    annotate(project, toAnnotate, annotateExternally, taintValueFactory);
   }
 
   private static @Nullable AnnotationPlace getPlace(Project project, @NotNull Collection<PsiElement> toAnnotate) {
@@ -144,16 +154,29 @@ public class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
   }
 
   private static void annotate(@NotNull Project project, @NotNull Collection<PsiElement> toAnnotate, boolean annotateExternally,
-                               @NotNull String defaultUntaintedAnnotation) {
+                               @NotNull TaintValueFactory taintValueFactory) {
     String title = JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.mark.as.safe.command.name");
     if (annotateExternally) {
       CommandProcessor.getInstance().executeCommand(project, () -> annotateExternally(project, toAnnotate),
                                                     title, null, UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION);
     }
     else {
+      ArrayList<PsiElement> ignoredElements = new ArrayList<>();
+      annotateInCode(project, toAnnotate, taintValueFactory, false, ignoredElements);
+      if (!ignoredElements.isEmpty()) {
+        MultiMap<PsiElement, String> problems = new MultiMap<>(ignoredElements.size());
+        for (PsiElement element : ignoredElements) {
+          problems.put(element,
+                       List.of(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.impossible", element.getText())));
+        }
+        ConflictsDialog conflictsDialog = new ConflictsDialog(project, problems);
+        if (!conflictsDialog.showAndGet()) {
+          return;
+        }
+      }
       PsiFile[] files = filesToAnnotate(toAnnotate);
       WriteCommandAction.runWriteCommandAction(project, title, null, () -> {
-        annotateInCode(project, toAnnotate, defaultUntaintedAnnotation);
+        annotateInCode(project, toAnnotate, taintValueFactory, true, new ArrayList<>());
       }, files);
     }
   }
@@ -171,7 +194,12 @@ public class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
       UElement uElement = UastContextKt.toUElement(element);
       if (uElement == null) continue;
       PsiElement sourcePsi = uElement.getSourcePsi();
-      if (sourcePsi == null) continue;
+      if (sourcePsi == null) {
+        SourceToSinkProvider provider = SourceToSinkProvider.sourceToSinkLanguageProvider.forLanguage(element.getLanguage());
+        if (provider == null) continue;
+        sourcePsi = provider.getPhysicalForLightElement(element);
+        if (sourcePsi == null) continue;
+      }
       files.add(sourcePsi.getContainingFile());
     }
     return files.toArray(PsiFile.EMPTY_ARRAY);
@@ -192,33 +220,74 @@ public class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
   }
 
   private static void annotateInCode(@NotNull Project project, @NotNull Collection<PsiElement> toAnnotate,
-                                     @NotNull String defaultUntaintedAnnotation) {
-    for (PsiElement element : toAnnotate) {
-      if (!element.isValid()) continue;
-      PsiFile psiFile = element.getContainingFile();
-      if (psiFile == null) continue;
-      JvmMethod jvmMethod = ObjectUtils.tryCast(element, JvmMethod.class);
-      if (jvmMethod != null) {
-        JvmType returnType = jvmMethod.getReturnType();
-        if (returnType == null) continue;
-        ChangeTypeRequest changeTypeRequest = createTypeRequest(returnType, defaultUntaintedAnnotation);
-        List<IntentionAction> actions = JvmElementActionFactories.createChangeTypeActions(jvmMethod, changeTypeRequest);
-        if (actions.size() == 1) actions.get(0).invoke(project, null, psiFile);
-        continue;
+                                     @NotNull TaintValueFactory taintValueFactory,
+                                     boolean makeAction,
+                                     @NotNull List<PsiElement> notProcessed) {
+    GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+    String annotation = taintValueFactory.getAnnotation();
+    Set<PsiAnnotation.TargetType> targets = taintValueFactory.getAnnotationTarget(project, scope);
+    if (!targets.isEmpty() && annotation != null) {
+      for (PsiElement element : toAnnotate) {
+        if (!annotateElement(project, annotation, targets, element, makeAction)) {
+          notProcessed.add(element);
+        }
       }
-      JvmParameter jvmParameter = ObjectUtils.tryCast(element, JvmParameter.class);
-      if (jvmParameter != null) {
-        ChangeTypeRequest changeTypeRequest = createTypeRequest(jvmParameter.getType(), defaultUntaintedAnnotation);
-        List<IntentionAction> actions = JvmElementActionFactories.createChangeTypeActions(jvmParameter, changeTypeRequest);
-        if (actions.size() == 1) actions.get(0).invoke(project, null, psiFile);
-        continue;
-      }
-      JvmModifiersOwner jvmModifiersOwner = ObjectUtils.tryCast(element, JvmModifiersOwner.class);
-      if (jvmModifiersOwner == null) continue;
-      AnnotationRequest request = AnnotationRequestsKt.annotationRequest(defaultUntaintedAnnotation);
-      List<IntentionAction> actions = JvmElementActionFactories.createAddAnnotationActions(jvmModifiersOwner, request);
-      if (actions.size() == 1) actions.get(0).invoke(project, null, psiFile);
     }
+    else {
+      notProcessed.addAll(toAnnotate);
+    }
+  }
+
+  private static boolean annotateElement(@NotNull Project project,
+                                         String annotation,
+                                         Set<PsiAnnotation.TargetType> targets,
+                                         PsiElement element, boolean makeAction) {
+    if (!element.isValid()) return false;
+    PsiFile psiFile = element.getContainingFile();
+    if (psiFile == null) return false;
+    PsiModifierListOwner listOwner = ObjectUtils.tryCast(element, PsiModifierListOwner.class);
+    if (listOwner == null) return false;
+    PsiAnnotation.TargetType[] location = AnnotationTargetUtil.getTargetsForLocation(listOwner.getModifierList());
+    Set<PsiAnnotation.TargetType> currentTypes = EnumSet.copyOf(targets);
+    currentTypes.retainAll(Arrays.asList(location));
+    if (currentTypes.size() == 0) {
+      return false;
+    }
+
+    if ((currentTypes.contains(PsiAnnotation.TargetType.TYPE_USE))) {
+      List<IntentionAction> actions = List.of();
+      if (listOwner instanceof JvmParameter jvmParameter) {
+        ChangeTypeRequest changeTypeRequest = createTypeRequest(jvmParameter.getType(), annotation);
+        actions = JvmElementActionFactories.createChangeTypeActions(jvmParameter, changeTypeRequest);
+      }
+      else if (listOwner instanceof JvmField jvmField) {
+        ChangeTypeRequest changeTypeRequest = createTypeRequest(jvmField.getType(), annotation);
+        actions = JvmElementActionFactories.createChangeTypeActions(jvmField, changeTypeRequest);
+      }
+      else if (listOwner instanceof JvmMethod jvmMethod) {
+        JvmType type = jvmMethod.getReturnType();
+        if (type == null) return false;
+        ChangeTypeRequest changeTypeRequest = createTypeRequest(type, annotation);
+        actions = JvmElementActionFactories.createChangeTypeActions(jvmMethod, changeTypeRequest);
+      }
+      if (actions.size() == 1) {
+        if (makeAction) {
+          actions.get(0).invoke(project, null, psiFile);
+        }
+        return true;
+      }
+    }
+    JvmModifiersOwner jvmModifiersOwner = ObjectUtils.tryCast(element, JvmModifiersOwner.class);
+    if (jvmModifiersOwner == null) return false;
+    AnnotationRequest request = AnnotationRequestsKt.annotationRequest(annotation);
+    List<IntentionAction> actions = JvmElementActionFactories.createAddAnnotationActions(jvmModifiersOwner, request);
+    if (actions.size() == 1) {
+      if (makeAction) {
+        actions.get(0).invoke(project, null, psiFile);
+      }
+      return true;
+    }
+    return false;
   }
 
   private static @NotNull ChangeTypeRequest createTypeRequest(@NotNull JvmType jvmType, @NotNull String defaultUntaintedAnnotation) {

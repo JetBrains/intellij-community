@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
+import com.intellij.psi.impl.light.LightRecordMember
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.suggested.createSmartPointer
@@ -81,7 +82,8 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
     }
   }
 
-  internal class ChangeModifierFix(declaration: PsiModifierListOwner, @FileModifier.SafeFieldForPreview val request: ChangeModifierRequest) :
+  internal class ChangeModifierFix(declaration: PsiModifierListOwner,
+                                   @FileModifier.SafeFieldForPreview val request: ChangeModifierRequest) :
     ModifierFix(declaration, request.modifier.toPsiModifier(), request.shouldBePresent(), true) {
     override fun isAvailable(): Boolean = request.isValid && super.isAvailable()
 
@@ -91,13 +93,13 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
                              startElement: PsiElement,
                              endElement: PsiElement): Boolean =
       request.isValid && super.isAvailable(project, file, editor, startElement, endElement)
-  } 
+  }
 
   override fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> {
-    val declaration = target as? PsiModifierListOwner ?: return emptyList()
+    var declaration = target as? PsiModifierListOwner ?: return emptyList()
     if (declaration.language != JavaLanguage.INSTANCE) return emptyList()
-
-    if (!AddAnnotationPsiFix.isAvailable(target, request.qualifiedName)) {
+    if (declaration is LightRecordMember) declaration = declaration.recordComponent
+    if (!AddAnnotationPsiFix.isAvailable(declaration, request.qualifiedName)) {
       return emptyList()
     }
     return listOf(CreateAnnotationAction(declaration, request))
@@ -125,7 +127,8 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
   override fun createAddFieldActions(targetClass: JvmClass, request: CreateFieldRequest): List<IntentionAction> {
     val javaClass = targetClass.toJavaClassOrNull() ?: return emptyList()
 
-    val constantRequested = request.isConstant || javaClass.isInterface || javaClass.isRecord || request.modifiers.containsAll(constantModifiers)
+    val constantRequested = request.isConstant || javaClass.isInterface || javaClass.isRecord || request.modifiers.containsAll(
+      constantModifiers)
     val result = ArrayList<IntentionAction>()
     if (canCreateEnumConstant(javaClass, request)) {
       result += CreateEnumConstantAction(javaClass, request)
@@ -190,6 +193,14 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
     val psiParameter = target as? PsiParameter ?: return emptyList()
     if (psiParameter.language != JavaLanguage.INSTANCE) return emptyList()
     val typeElement = psiParameter.typeElement ?: return emptyList()
+    return listOf(ChangeType(typeElement, request))
+  }
+
+  override fun createChangeTypeActions(target: JvmField, request: ChangeTypeRequest): List<IntentionAction> {
+    var psiField: PsiVariable = target as? PsiField ?: return emptyList()
+    psiField = if (psiField is LightRecordMember) psiField.recordComponent else psiField
+    if (psiField.language != JavaLanguage.INSTANCE) return emptyList()
+    val typeElement = psiField.typeElement ?: return emptyList()
     return listOf(ChangeType(typeElement, request))
   }
 }

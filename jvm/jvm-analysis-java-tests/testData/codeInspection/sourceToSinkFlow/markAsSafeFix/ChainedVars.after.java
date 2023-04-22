@@ -1,18 +1,16 @@
-// "Mark 'source' as requiring validation" "false"
 package org.checkerframework.checker.tainting.qual;
 
 class Simple {
 
     void simple() {
-      sink(<caret>source());
+      String s = foo();
+      String s1 = s;
+      String s2 = s1;
+      sink(s2);
     }
 
-    String foo() {
+    @Untainted String foo() {
       return "foo";
-    }
-  
-    @Tainted String source() {
-      return "source";
     }
 
     void sink(@Untainted String s1) {}

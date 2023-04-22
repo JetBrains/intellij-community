@@ -42,4 +42,6 @@ abstract class JvmElementActionsFactory {
   open fun createChangeTypeActions(target: JvmMethod, request: ChangeTypeRequest): List<IntentionAction> = emptyList()
 
   open fun createChangeTypeActions(target: JvmParameter, request: ChangeTypeRequest): List<IntentionAction> = emptyList()
+
+  open fun createChangeTypeActions(target: JvmField, request: ChangeTypeRequest): List<IntentionAction> = emptyList()
 }
