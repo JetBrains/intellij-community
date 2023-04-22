@@ -16,11 +16,11 @@ import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.packageMatchesDirectoryOrImplicit
 import org.jetbrains.kotlin.idea.refactoring.hasIdentifiersOnly
-import org.jetbrains.kotlin.idea.refactoring.move.ContainerChangeInfo
-import org.jetbrains.kotlin.idea.refactoring.move.ContainerInfo
-import org.jetbrains.kotlin.idea.refactoring.move.allElementsToMove
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.*
-import org.jetbrains.kotlin.idea.refactoring.move.updatePackageDirective
+import org.jetbrains.kotlin.idea.refactoring.move.*
+import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveDeclarationsDelegate
+import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveDeclarationsDescriptor
+import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsProcessor
+import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveSource
 import org.jetbrains.kotlin.idea.roots.isOutsideKotlinAwareSourceRoot
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -69,12 +69,12 @@ class MoveKotlinFileHandler : MoveFileHandler() {
         val project = psiFile.project
 
         val moveTarget = when (val newPackage = packageNameInfo.newContainer) {
-            ContainerInfo.UnknownPackage -> EmptyKotlinMoveTarget
+            ContainerInfo.UnknownPackage -> KotlinMoveTarget.Empty
 
             else -> if (newParent == null) {
                 return null
             } else {
-                KotlinMoveTargetForDeferredFile(newPackage.fqName!!, newParent.virtualFile) {
+                KotlinMoveTarget.DeferredFile(newPackage.fqName!!, newParent.virtualFile) {
                     MoveFilesOrDirectoriesUtil.doMoveFile(psiFile, newParent)
                     val file = newParent.findFile(psiFile.name) ?: error("Lost file after move")
                     file as KtFile

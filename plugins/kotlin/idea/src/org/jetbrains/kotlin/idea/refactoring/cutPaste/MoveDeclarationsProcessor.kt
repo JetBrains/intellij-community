@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.shorten.runRefactoringAndKeepDelayedRequests
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.refactoring.cutPaste.MoveDeclarationsTransferableData.Companion.STUB_RENDERER
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.*
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.getSourceRoot
@@ -138,7 +139,7 @@ class MoveDeclarationsProcessor(
         val declarationProcessor = MoveKotlinDeclarationsProcessor(
             MoveDeclarationsDescriptor(
                 moveSource = MoveSource(stubDeclarations),
-                moveTarget = KotlinMoveTargetForExistingElement(targetPsiFile),
+                moveTarget = KotlinMoveTarget.ExistingElement(targetPsiFile),
                 delegate = MoveDeclarationsDelegate.TopLevel,
                 project = project
             ),

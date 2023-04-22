@@ -55,7 +55,9 @@ import org.jetbrains.kotlin.idea.core.getPackage
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.refactoring.getUsageContext
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveUsage
+import org.jetbrains.kotlin.idea.refactoring.move.getTargetModule
 import org.jetbrains.kotlin.idea.refactoring.pullUp.renderForConflicts
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
@@ -114,7 +116,7 @@ class MoveConflictChecker(
 
     private fun KotlinMoveTarget.getContainerDescriptor(): DeclarationDescriptor? {
         return when (this) {
-            is KotlinMoveTargetForExistingElement -> when (val targetElement = targetElement) {
+            is KotlinMoveTarget.ExistingElement -> when (val targetElement = targetElement) {
                 is KtNamedDeclaration -> resolutionFacade.resolveToDescriptor(targetElement)
 
                 is KtFile -> {
@@ -129,7 +131,7 @@ class MoveConflictChecker(
                 else -> null
             }
 
-            is KotlinDirectoryMoveTarget, is KotlinMoveTargetForDeferredFile -> {
+            is KotlinMoveTarget.Directory, is KotlinMoveTarget.DeferredFile -> {
                 val packageFqName = targetContainerFqName ?: return null
                 val targetModuleDescriptor = targetFileOrDir?.let { getModuleDescriptor(it) ?: return null }
                     ?: resolutionFacade.moduleDescriptor
@@ -399,7 +401,7 @@ class MoveConflictChecker(
 
             if (referencedDescriptor is DeclarationDescriptorWithVisibility
                 && referencedDescriptor.visibility == DescriptorVisibilities.PUBLIC
-                && moveTarget is KotlinMoveTargetForExistingElement
+                && moveTarget is KotlinMoveTarget.ExistingElement
                 && moveTarget.targetElement.parentsWithSelf.filterIsInstance<KtClassOrObject>().all { it.isPublic }
             ) continue
 
@@ -796,8 +798,8 @@ class MoveConflictChecker(
                 return KotlinJavaPsiFacade.getInstance(project).findPackage(fqName.asString(), GlobalSearchScope.moduleScope(module))
             }
 
-            return (this as? KotlinDirectoryMoveTarget)?.targetFileOrDir?.toPsiDirectory(project)?.getPackage()
-                ?: (this as? KotlinMoveTargetForDeferredFile)?.targetFileOrDir?.toPsiDirectory(project)?.getPackage()
+            return (this as? KotlinMoveTarget.Directory)?.targetFileOrDir?.toPsiDirectory(project)?.getPackage()
+                ?: (this as? KotlinMoveTarget.DeferredFile)?.targetFileOrDir?.toPsiDirectory(project)?.getPackage()
                 ?: tryGetPackageFromTargetContainer()
         }
 

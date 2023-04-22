@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.getPackage
 import org.jetbrains.kotlin.idea.refactoring.invokeOnceOnCommandFinish
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.KotlinDirectoryMoveTarget
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsProcessor
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.analyzeConflictsInFile
 import org.jetbrains.kotlin.name.FqName
@@ -78,7 +78,7 @@ class KotlinMoveDirectoryWithClassesHelper : MoveDirectoryWithClassesHelper() {
         conflicts: MultiMap<PsiElement, String>
     ) {
         val psiPackage = directory?.getPackage() ?: return
-        val moveTarget = KotlinDirectoryMoveTarget(FqName(psiPackage.qualifiedName), directory.virtualFile)
+        val moveTarget = KotlinMoveTarget.Directory(FqName(psiPackage.qualifiedName), directory.virtualFile)
         for ((index, usageInfo) in infos.withIndex()) {
             if (usageInfo !is FileUsagesWrapper) continue
 

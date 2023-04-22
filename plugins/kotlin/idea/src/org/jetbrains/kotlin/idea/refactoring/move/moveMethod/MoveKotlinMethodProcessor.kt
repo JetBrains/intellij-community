@@ -17,13 +17,15 @@ import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilityUtils
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.caches.resolve.*
 import org.jetbrains.kotlin.idea.core.setVisibility
 import org.jetbrains.kotlin.idea.refactoring.move.*
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.KotlinMoveTargetForExistingElement
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveConflictChecker
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.Mover
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -70,7 +72,7 @@ class MoveKotlinMethodProcessor(
             ContainerInfo.Class(targetClassOrObject.fqName!!)
         )
         val conflictChecker =
-            MoveConflictChecker(myProject, listOf(method), KotlinMoveTargetForExistingElement(targetClassOrObject), method)
+            MoveConflictChecker(myProject, listOf(method), KotlinMoveTarget.ExistingElement(targetClassOrObject), method)
         val searchScope = myProject.projectScope()
         val internalUsages = mutableSetOf<UsageInfo>()
         val methodCallUsages = mutableSetOf<UsageInfo>()

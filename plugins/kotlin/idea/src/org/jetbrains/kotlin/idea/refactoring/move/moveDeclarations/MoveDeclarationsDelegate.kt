@@ -55,7 +55,7 @@ sealed class MoveDeclarationsDelegate {
     ) : MoveDeclarationsDelegate() {
         override fun getContainerChangeInfo(originalDeclaration: KtNamedDeclaration, moveTarget: KotlinMoveTarget): ContainerChangeInfo {
             val originalInfo = ContainerInfo.Class(originalDeclaration.containingClassOrObject!!.fqName!!)
-            val movingToClass = (moveTarget as? KotlinMoveTargetForExistingElement)?.targetElement is KtClassOrObject
+            val movingToClass = (moveTarget as? KotlinMoveTarget.ExistingElement)?.targetElement is KtClassOrObject
             val targetContainerFqName = moveTarget.targetContainerFqName
             val newInfo = when {
                 targetContainerFqName == null -> ContainerInfo.UnknownPackage
@@ -75,8 +75,8 @@ sealed class MoveDeclarationsDelegate {
             companionDescriptor: ClassDescriptor
         ): Boolean {
             return when (val moveTarget = moveDescriptor.moveTarget) {
-                is KotlinMoveTargetForCompanion -> true
-                is KotlinMoveTargetForExistingElement -> {
+                is KotlinMoveTarget.Companion -> true
+                is KotlinMoveTarget.ExistingElement -> {
                     val targetClass = moveTarget.targetElement as? KtClassOrObject ?: return false
                     val targetClassDescriptor = targetClass.unsafeResolveToDescriptor() as ClassDescriptor
                     val companionClassDescriptor = companionDescriptor.containingDeclaration as? ClassDescriptor ?: return false
@@ -122,7 +122,7 @@ sealed class MoveDeclarationsDelegate {
                 newClassName?.let { setName(it) }
 
                 if (this is KtClass) {
-                    if ((descriptor.moveTarget as? KotlinMoveTargetForExistingElement)?.targetElement !is KtClassOrObject) {
+                    if ((descriptor.moveTarget as? KotlinMoveTarget.ExistingElement)?.targetElement !is KtClassOrObject) {
                         if (hasModifier(KtTokens.INNER_KEYWORD)) removeModifier(KtTokens.INNER_KEYWORD)
                         if (hasModifier(KtTokens.PROTECTED_KEYWORD)) removeModifier(KtTokens.PROTECTED_KEYWORD)
                     }

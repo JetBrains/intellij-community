@@ -186,8 +186,8 @@ class MoveKotlinDeclarationsProcessor(
                 val javaScope = projectScope.restrictByFileType(JavaFileType.INSTANCE)
                 val currentFile = ktDeclaration.containingKtFile
                 val newFile = when (moveTarget) {
-                    is KotlinMoveTargetForExistingElement -> moveTarget.targetElement as? KtFile ?: return null
-                    is KotlinMoveTargetForDeferredFile -> return javaScope
+                    is KotlinMoveTarget.ExistingElement -> moveTarget.targetElement as? KtFile ?: return null
+                    is KotlinMoveTarget.DeferredFile -> return javaScope
                     else -> return null
                 }
                 val currentFacade = currentFile.findFacadeClass()

@@ -9,6 +9,7 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.refactoring.CompositeRefactoringRunner
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.*
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
@@ -43,7 +44,7 @@ abstract class MoveMemberOutOfObjectIntention(textGetter: () -> String) : SelfTa
             val moveDescriptor = MoveDeclarationsDescriptor(
                 project,
                 MoveSource(element),
-                KotlinMoveTargetForExistingElement(destination),
+                KotlinMoveTarget.ExistingElement(destination),
                 MoveDeclarationsDelegate.NestedClass()
             )
 
